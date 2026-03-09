@@ -1677,6 +1677,16 @@ async function fetchCoreMetrics() {
         'smart_construction_custom.group_sc_role_contract_manager',
       ]);
     }
+    if (model === 'project.risk') {
+      return hasAnyGroup([
+        'smart_construction_core.group_sc_cap_project_read',
+        'smart_construction_core.group_sc_cap_project_user',
+        'smart_construction_core.group_sc_cap_project_manager',
+        'smart_construction_custom.group_sc_role_project_read',
+        'smart_construction_custom.group_sc_role_project_user',
+        'smart_construction_custom.group_sc_role_project_manager',
+      ]);
+    }
     return true;
   };
   const markModelDenied = (model: string, reasonCode: string) => {
@@ -1727,12 +1737,11 @@ async function fetchCoreMetrics() {
     readTotal('project.project'),
     canReadModel('construction.contract')
       ? readAmount('construction.contract', ['amount_total', 'contract_amount', 'amount_untaxed'])
-      : (() => {
-          markModelDenied('construction.contract', 'PERMISSION_DENIED');
-          return Promise.resolve(0);
-        })(),
+      : Promise.resolve(0),
     readAmount('sc.settlement.order', ['amount_total', 'amount', 'total_amount']),
-    readTotal('project.risk'),
+    canReadModel('project.risk')
+      ? readTotal('project.risk')
+      : Promise.resolve(0),
   ]);
 
   const monthlyAnomalyCount = Math.max(

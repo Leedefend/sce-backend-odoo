@@ -31,6 +31,7 @@ ACL_ROLES = {
 # P0 models for audit output and expectations.
 ACL_AUDIT_MODELS = [
     "project.project",
+    "project.risk",
     "project.boq.line",
     "construction.contract",
     "construction.contract.line",
@@ -51,6 +52,8 @@ ACL_P1_MODELS = [
 ACL_EXPECTATIONS = [
     {"role": "project_read", "model": "project.project", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "project_manager", "model": "project.project", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
+    {"role": "project_read", "model": "project.risk", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
+    {"role": "project_manager", "model": "project.risk", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "project_read", "model": "project.boq.line", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "cost_manager", "model": "project.boq.line", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
     {"role": "contract_user", "model": "construction.contract", "rights": {"read": True, "create": True, "write": True, "unlink": False}},
