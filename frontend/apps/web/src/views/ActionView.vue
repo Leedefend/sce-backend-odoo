@@ -1,14 +1,14 @@
 <template>
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
-    <section v-if="appliedPresetLabel" class="route-preset">
+    <section v-if="pageSectionEnabled('route_preset', true) && pageSectionTagIs('route_preset', 'section') && appliedPresetLabel" class="route-preset" :style="pageSectionStyle('route_preset')">
       <p>
         {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
         <span v-if="routeContextSource">（{{ pageText('route_preset_source_prefix', '来源：') }}{{ routeContextSource }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ pageText('route_preset_clear', '清除推荐') }}</button>
     </section>
-    <section class="focus-strip">
+    <section v-if="pageSectionEnabled('focus_strip', true) && pageSectionTagIs('focus_strip', 'section')" class="focus-strip" :style="pageSectionStyle('focus_strip')">
       <div>
         <p class="focus-intent">{{ surfaceIntent.title }}</p>
         <p class="focus-summary">{{ surfaceIntent.summary }}</p>
@@ -19,7 +19,7 @@
         </button>
       </div>
     </section>
-    <section v-if="contractPrimaryFilterChips.length || contractOverflowFilterChips.length" class="contract-block">
+    <section v-if="pageSectionEnabled('quick_filters', true) && pageSectionTagIs('quick_filters', 'section') && (contractPrimaryFilterChips.length || contractOverflowFilterChips.length)" class="contract-block" :style="pageSectionStyle('quick_filters')">
       <p class="contract-label">{{ pageText('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -66,7 +66,7 @@
         </button>
       </div>
     </section>
-    <section v-if="savedFilterPrimaryChips.length || savedFilterOverflowChips.length" class="contract-block">
+    <section v-if="pageSectionEnabled('saved_filters', true) && pageSectionTagIs('saved_filters', 'section') && (savedFilterPrimaryChips.length || savedFilterOverflowChips.length)" class="contract-block" :style="pageSectionStyle('saved_filters')">
       <p class="contract-label">{{ pageText('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -113,7 +113,7 @@
         </button>
       </div>
     </section>
-    <section v-if="groupByPrimaryChips.length || groupByOverflowChips.length" class="contract-block">
+    <section v-if="pageSectionEnabled('group_view', true) && pageSectionTagIs('group_view', 'section') && (groupByPrimaryChips.length || groupByOverflowChips.length)" class="contract-block" :style="pageSectionStyle('group_view')">
       <p class="contract-label">{{ pageText('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -161,7 +161,8 @@
       </div>
     </section>
     <GroupSummaryBar
-      v-if="groupSummaryItems.length"
+      v-if="pageSectionEnabled('group_summary', true) && pageSectionTagIs('group_summary', 'section') && groupSummaryItems.length"
+      :style="pageSectionStyle('group_summary')"
       :items="groupSummaryItems"
       :group-by-label="activeGroupByLabel"
       :active-key="activeGroupSummaryKey"
@@ -177,7 +178,7 @@
       :on-prev-window="handleGroupWindowPrev"
       :on-next-window="handleGroupWindowNext"
     />
-    <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
+    <section v-if="pageSectionEnabled('quick_actions', true) && pageSectionTagIs('quick_actions', 'section') && (contractPrimaryActions.length || contractOverflowActions.length)" class="contract-block" :style="pageSectionStyle('quick_actions')">
       <p class="contract-label">{{ pageText('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
@@ -298,7 +299,7 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
-    <section v-else class="advanced-view">
+    <section v-else-if="pageSectionEnabled('advanced_view', true) && pageSectionTagIs('advanced_view', 'section')" class="advanced-view" :style="pageSectionStyle('advanced_view')">
       <header class="advanced-view-head">
         <h3>{{ advancedViewTitle }}</h3>
         <p>{{ advancedViewHint }}</p>
@@ -318,7 +319,7 @@
         <p class="empty-next-hint">{{ advancedViewHint }}</p>
       </section>
     </section>
-    <section v-if="pageStatus === 'empty'" class="empty-next">
+    <section v-if="pageSectionEnabled('empty_next', true) && pageSectionTagIs('empty_next', 'section') && pageStatus === 'empty'" class="empty-next" :style="pageSectionStyle('empty_next')">
       <p class="empty-next-title">{{ surfaceIntent.emptyTitle }}</p>
       <p class="empty-next-hint">{{ surfaceIntent.emptyHint }}</p>
       <p class="empty-next-reason">{{ emptyReasonText }}</p>
@@ -335,7 +336,8 @@
     </section>
 
     <DevContextPanel
-      :visible="showHud"
+      :visible="showHud && pageSectionEnabled('dev_context', true) && pageSectionTagIs('dev_context', 'div')"
+      :style="pageSectionStyle('dev_context')"
       title="View Context"
       :entries="hudEntries"
     />
@@ -397,6 +399,9 @@ const router = useRouter();
 const session = useSessionStore();
 const pageContract = usePageContract('action');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
@@ -809,8 +814,8 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
       { label: pageText('intent_action_default_home', '工作台'), to: '/' },
       { label: pageText('intent_action_default_my_work', '我的工作'), to: '/my-work' },
     ],
-    emptyTitle: pageText('empty_title_default', '当前视图暂无数据'),
-    emptyHint: pageText('empty_hint_default', '建议切换到我的工作或风险驾驶舱继续处理。'),
+    emptyTitle: pageText('empty_title_default', ''),
+    emptyHint: pageText('empty_hint_default', ''),
     primaryAction: { label: pageText('primary_action_default', '去我的工作'), to: '/my-work' },
     secondaryAction: { label: pageText('secondary_action_default', '去风险驾驶舱'), to: '/s/projects.dashboard' },
   };
@@ -823,7 +828,7 @@ const emptyReasonText = computed(() => {
   if (modelText === 'construction.work.breakdown') {
     return pageText('empty_reason_wbs', '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。');
   }
-  return pageText('empty_reason_default', '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。');
+  return pageText('empty_reason_default', '');
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));

@@ -1,17 +1,24 @@
 <template>
   <section class="menu-view">
-    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Resolving menu...')" variant="info" />
     <StatusPanel
-      v-else-if="info"
+      v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
+      :title="pageText('loading_title', 'Resolving menu...')"
+      variant="info"
+      :style="pageSectionStyle('status_loading')"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_info', true) && pageSectionTagIs('status_info', 'section') && info"
       :title="pageText('info_title', 'Menu group')"
       :message="info"
       variant="info"
+      :style="pageSectionStyle('status_info')"
     />
     <StatusPanel
-      v-else-if="error"
+      v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && error"
       :title="pageText('error_title', 'Menu resolve failed')"
       :message="error"
       variant="error"
+      :style="pageSectionStyle('status_error')"
     />
   </section>
 </template>
@@ -35,6 +42,9 @@ const info = ref('');
 const loading = ref(true);
 const pageContract = usePageContract('menu');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);

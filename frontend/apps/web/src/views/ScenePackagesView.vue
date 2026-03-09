@@ -1,6 +1,6 @@
 <template>
   <section class="scene-packages">
-    <header class="header">
+    <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <h2>{{ pageText('title', 'Scene Packages') }}</h2>
         <p>{{ pageText('subtitle', '导入、导出与审阅已安装的 Scene 能力包。') }}</p>
@@ -8,24 +8,42 @@
       <button class="secondary" :disabled="busy" @click="loadPackages">Refresh</button>
     </header>
 
-    <StatusPanel v-if="busy && !packages.length" :title="pageText('loading_title', 'Loading packages...')" variant="info" />
     <StatusPanel
-      v-else-if="errorText"
+      v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && busy && !packages.length"
+      :title="pageText('loading_title', 'Loading packages...')"
+      variant="info"
+      :style="pageSectionStyle('status_loading')"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && errorText"
       :title="pageText('error_title', 'Package operation failed')"
       :message="errorText"
       :trace-id="traceId || undefined"
       variant="error"
       :on-retry="loadPackages"
+      :style="pageSectionStyle('status_error')"
     />
 
-    <section v-else class="content">
-      <article class="card">
+    <section
+      v-else-if="pageSectionEnabled('content', true) && pageSectionTagIs('content', 'section')"
+      class="content"
+      :style="pageSectionStyle('content')"
+    >
+      <article
+        v-if="pageSectionEnabled('installed_packages', true) && pageSectionTagIs('installed_packages', 'section')"
+        class="card"
+        :style="pageSectionStyle('installed_packages')"
+      >
         <h3>Installed Packages</h3>
         <p class="hint">count: {{ packages.length }}</p>
         <pre>{{ JSON.stringify(packages, null, 2) }}</pre>
       </article>
 
-      <article class="card">
+      <article
+        v-if="pageSectionEnabled('import_package', true) && pageSectionTagIs('import_package', 'section')"
+        class="card"
+        :style="pageSectionStyle('import_package')"
+      >
         <h3>Import Package</h3>
         <label>
           <span>Package JSON</span>
@@ -50,7 +68,11 @@
         <pre v-if="dryRunResult">{{ JSON.stringify(dryRunResult, null, 2) }}</pre>
       </article>
 
-      <article class="card">
+      <article
+        v-if="pageSectionEnabled('export_package', true) && pageSectionTagIs('export_package', 'section')"
+        class="card"
+        :style="pageSectionStyle('export_package')"
+      >
         <h3>Export Package</h3>
         <label>
           <span>Package Name</span>
@@ -110,6 +132,9 @@ const exportReason = ref('phase10.6 package export');
 const exportResult = ref<Record<string, unknown> | null>(null);
 const pageContract = usePageContract('scene_packages');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 
 function parsePackageJson(): Record<string, unknown> {
   const raw = importText.value.trim();

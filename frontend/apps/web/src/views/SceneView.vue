@@ -1,8 +1,13 @@
 <template>
   <section class="scene">
-    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', '正在加载场景...')" variant="info" />
     <StatusPanel
-      v-else-if="status === 'error'"
+      v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && status === 'loading'"
+      :title="pageText('loading_title', '正在加载场景...')"
+      variant="info"
+      :style="pageSectionStyle('status_loading')"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && status === 'error'"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="error?.traceId"
@@ -14,14 +19,16 @@
       :hint="errorCopy.hint"
       :suggested-action="error?.suggestedAction"
       variant="error"
+      :style="pageSectionStyle('status_error')"
     />
     <StatusPanel
-      v-else-if="status === 'forbidden'"
+      v-else-if="pageSectionEnabled('status_forbidden', true) && pageSectionTagIs('status_forbidden', 'section') && status === 'forbidden'"
       :title="forbiddenCopy.title"
       :message="forbiddenCopy.message"
       :hint="forbiddenCopy.hint"
       variant="forbidden_capability"
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
+      :style="pageSectionStyle('status_forbidden')"
     />
   </section>
 </template>
@@ -48,6 +55,9 @@ const router = useRouter();
 const session = useSessionStore();
 const pageContract = usePageContract('scene');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
@@ -341,8 +351,8 @@ async function resolveScene() {
     }
 
     setError(
-      new Error(pageText('error_scene_target_unsupported', 'scene target unsupported')),
-      pageText('error_scene_target_unsupported', 'scene target unsupported'),
+      new Error(pageText('error_scene_target_unsupported', '')),
+      pageText('error_scene_target_unsupported', ''),
       ErrorCodes.SCENE_KIND_UNSUPPORTED,
     );
     errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));

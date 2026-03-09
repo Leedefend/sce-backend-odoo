@@ -1,6 +1,6 @@
 <template>
   <section class="workbench">
-    <header class="header">
+    <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '诊断页仅用于排查，不作为正式产品界面。') }}</p>
         <h2>{{ pageText('header_title', '页面暂时无法打开') }}</h2>
@@ -18,12 +18,14 @@
     </header>
 
     <StatusPanel
+      v-if="pageSectionEnabled('status_panel', true) && pageSectionTagIs('status_panel', 'section')"
       :title="pageText('panel_title', '页面暂时无法打开')"
       :message="message"
       :variant="panelVariant"
+      :style="pageSectionStyle('status_panel')"
     />
 
-    <section v-if="showTiles" class="tiles">
+    <section v-if="pageSectionEnabled('tiles', true) && pageSectionTagIs('tiles', 'section') && showTiles" class="tiles" :style="pageSectionStyle('tiles')">
       <button
         v-for="tile in tiles"
         :key="tile.key || tile.title"
@@ -41,7 +43,7 @@
       </button>
     </section>
 
-    <div v-if="showHud" class="details">
+    <div v-if="pageSectionEnabled('hud_details', true) && pageSectionTagIs('hud_details', 'div') && showHud" class="details" :style="pageSectionStyle('hud_details')">
       <div class="detail">
         <span class="label">{{ pageText('hud_label_reason', '原因') }}</span>
         <span class="value">{{ reasonLabel }}</span>
@@ -172,6 +174,9 @@ const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQu
 const session = useSessionStore();
 const pageContract = usePageContract('workbench');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');
@@ -235,11 +240,11 @@ const message = computed(() => {
     case ErrorCodes.ACT_NO_MODEL:
       return pageText('message_act_no_model', '当前动作对应的是自定义工作区，未绑定数据模型。');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return pageText('message_act_unsupported_type', '当前动作类型暂未在门户壳层支持。');
+      return pageText('message_act_unsupported_type', '');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
       return pageText('message_contract_context_missing', '页面缺少契约必需上下文（例如 action_id）。');
     case ErrorCodes.CAPABILITY_MISSING:
-      return pageText('message_capability_missing', '当前账号尚未开通该能力。');
+      return pageText('message_capability_missing', '');
     default:
       return pageText('message_default', '你可以返回工作台或打开菜单继续操作。');
   }

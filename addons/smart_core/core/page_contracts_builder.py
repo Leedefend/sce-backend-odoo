@@ -130,6 +130,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "login": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "card", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "form", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "error", "enabled": True, "order": 3, "tag": "section"},
+                ],
                 "texts": {
                     "title": "Login",
                     "username_label": "Username",
@@ -141,6 +146,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "menu": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "status_loading", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "status_info", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                ],
                 "texts": {
                     "loading_title": "Resolving menu...",
                     "info_title": "Menu group",
@@ -151,6 +161,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "placeholder": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "card", "enabled": True, "order": 1, "tag": "section"},
+                ],
                 "texts": {
                     "title": "Dynamic View Placeholder",
                     "route_label": "Route",
@@ -159,6 +172,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "workbench": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_panel", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "tiles", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "hud_details", "enabled": True, "order": 4, "tag": "div"},
+                ],
                 "texts": {
                     "header_title": "页面暂时无法打开",
                     "header_subtitle": "我们已为你保留可继续操作的入口。",
@@ -395,6 +414,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "scene": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "status_loading", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_forbidden", "enabled": True, "order": 3, "tag": "section"},
+                ],
                 "texts": {
                     "loading_title": "正在加载场景...",
                     "error_fallback": "场景加载失败",
@@ -415,11 +439,28 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "action": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "route_preset", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "focus_strip", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "quick_filters", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "saved_filters", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "group_view", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "group_summary", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "quick_actions", "enabled": True, "order": 7, "tag": "section"},
+                    {"key": "advanced_view", "enabled": True, "order": 8, "tag": "section"},
+                    {"key": "empty_next", "enabled": True, "order": 9, "tag": "section"},
+                    {"key": "dev_context", "enabled": True, "order": 10, "tag": "div"},
+                ],
                 "texts": {
                     "status_loading": "加载中",
                     "status_error": "加载失败",
                     "status_empty": "暂无数据",
                     "status_ready": "已就绪",
+                    "label.quick_filters": "快速筛选",
+                    "label.saved_filters": "已保存筛选",
+                    "label.group_view": "分组查看",
+                    "label.quick_actions": "快捷操作",
+                    "label.contract_summary": "契约摘要",
                     "intent_title_risk": "风险驾驶舱：先处理严重与逾期风险",
                     "intent_summary_risk": "优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。",
                     "intent_action_risk_todo": "待我处理风险",
@@ -581,6 +622,15 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "record": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "save_banner", "enabled": True, "order": 1, "tag": "div"},
+                    {"key": "project_summary", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "next_actions", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "stat_buttons", "enabled": True, "order": 4, "tag": "div"},
+                    {"key": "details_fallback", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "chatter", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "dev_context", "enabled": True, "order": 7, "tag": "div"},
+                ],
                 "texts": {
                     "loading_title": "Loading record...",
                     "saving_title": "Saving record...",
@@ -649,6 +699,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "scene_health": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_loading", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "content", "enabled": True, "order": 4, "tag": "div"},
+                    {"key": "cards", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "meta", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "governance", "enabled": True, "order": 7, "tag": "section"},
+                    {"key": "details_resolve_errors", "enabled": True, "order": 8, "tag": "details", "open": True},
+                    {"key": "details_drift", "enabled": True, "order": 9, "tag": "details", "open": False},
+                    {"key": "details_debt", "enabled": True, "order": 10, "tag": "details", "open": False},
+                ],
                 "texts": {
                     "title": "Scene Health Dashboard",
                     "subtitle": "可视化查看场景健康状态与自动降级结果。",
@@ -660,6 +722,15 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "scene_packages": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_loading", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "content", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "installed_packages", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "import_package", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "export_package", "enabled": True, "order": 7, "tag": "section"},
+                ],
                 "texts": {
                     "title": "Scene Packages",
                     "subtitle": "导入、导出与审阅已安装的 Scene 能力包。",
@@ -674,6 +745,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "usage_analytics": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_loading", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "slice_bar", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "summary_usage", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "summary_visibility", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "tables_top", "enabled": True, "order": 7, "tag": "section"},
+                    {"key": "tables_daily", "enabled": True, "order": 8, "tag": "section"},
+                    {"key": "tables_visibility", "enabled": True, "order": 9, "tag": "section"},
+                    {"key": "tables_role_user", "enabled": True, "order": 10, "tag": "section"},
+                ],
                 "texts": {
                     "title": "Usage Analytics",
                     "subtitle": "Scene / Capability 使用统计（按公司累计）。",
