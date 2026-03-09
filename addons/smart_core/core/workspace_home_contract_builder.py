@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from collections import Counter
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 from typing import Any, Dict, Iterable, List
 from urllib.parse import parse_qs, urlparse
 
@@ -21,6 +23,28 @@ BLOCK_TYPES = (
 
 STATE_TONES = ("success", "warning", "danger", "info", "neutral")
 PROGRESS_STATES = ("overdue", "blocked", "pending", "running", "completed")
+_ACTION_TARGET_RESOLVER = None
+
+
+def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    global _ACTION_TARGET_RESOLVER
+    if callable(_ACTION_TARGET_RESOLVER):
+        return _ACTION_TARGET_RESOLVER(action_key, page_key)
+    helper_path = Path(__file__).with_name("action_target_schema.py")
+    try:
+        spec = spec_from_file_location("smart_core_action_target_schema_workspace_home", helper_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        resolver = getattr(module, "resolve_action_target", None)
+        if callable(resolver):
+            _ACTION_TARGET_RESOLVER = resolver
+            return resolver(action_key, page_key)
+    except Exception:
+        pass
+    fallback_scene = str(page_key or "").strip().lower() or "portal.dashboard"
+    return {"kind": "scene.key", "scene_key": fallback_scene}
 
 
 def _to_text(value: Any) -> str:
@@ -567,15 +591,15 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         },
         "action_schema": {
             "actions": {
-                "open_landing": {"label": "打开默认入口", "intent": "ui.contract", "target": {"kind": "scene.key", "scene_key": "portal.dashboard"}},
-                "open_my_work": {"label": "查看全部", "intent": "ui.contract", "target": {"kind": "scene.key", "scene_key": "my_work.workspace"}},
+                "open_landing": {"label": "打开默认入口", "intent": "ui.contract", "target": _shared_action_target("open_landing", "portal.dashboard")},
+                "open_my_work": {"label": "查看全部", "intent": "ui.contract", "target": _shared_action_target("open_my_work", "portal.dashboard")},
                 "open_risk_dashboard": {
                     "label": "进入风险驾驶舱",
                     "intent": "ui.contract",
-                    "target": {"kind": "scene.key", "scene_key": "projects.dashboard"},
+                    "target": _shared_action_target("open_risk_dashboard", "portal.dashboard"),
                 },
-                "open_scene": {"label": "进入场景", "intent": "ui.contract", "target": {"kind": "scene.key", "scene_key": "projects.list"}},
-                "refresh": {"label": "刷新", "intent": "api.data", "target": {"kind": "page.refresh"}},
+                "open_scene": {"label": "进入场景", "intent": "ui.contract", "target": _shared_action_target("open_scene", "portal.dashboard")},
+                "refresh": {"label": "刷新", "intent": "api.data", "target": _shared_action_target("refresh", "portal.dashboard")},
             }
         },
         "render_hints": {
