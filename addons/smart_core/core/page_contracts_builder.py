@@ -415,6 +415,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "action": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "route_preset", "enabled": True},
+                    {"key": "focus_strip", "enabled": True},
+                    {"key": "quick_filters", "enabled": True},
+                    {"key": "saved_filters", "enabled": True},
+                    {"key": "group_view", "enabled": True},
+                    {"key": "group_summary", "enabled": True},
+                    {"key": "quick_actions", "enabled": True},
+                    {"key": "advanced_view", "enabled": True},
+                    {"key": "empty_next", "enabled": True},
+                    {"key": "dev_context", "enabled": True},
+                ],
                 "texts": {
                     "status_loading": "加载中",
                     "status_error": "加载失败",
@@ -581,6 +593,15 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "record": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "save_banner", "enabled": True},
+                    {"key": "project_summary", "enabled": True},
+                    {"key": "next_actions", "enabled": True},
+                    {"key": "stat_buttons", "enabled": True},
+                    {"key": "details_fallback", "enabled": True},
+                    {"key": "chatter", "enabled": True},
+                    {"key": "dev_context", "enabled": True},
+                ],
                 "texts": {
                     "loading_title": "Loading record...",
                     "saving_title": "Saving record...",

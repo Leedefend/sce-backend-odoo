@@ -14,6 +14,7 @@ ROUTER = ROOT / "frontend/apps/web/src/router/index.ts"
 REPORT_JSON = ROOT / "artifacts/backend/frontend_page_contract_boundary_report.json"
 REPORT_MD = ROOT / "docs/ops/audit/frontend_page_contract_boundary_report.md"
 WORKSPACE_HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
+PAGE_CONTRACTS_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 
 
 def _read(path: Path) -> str:
@@ -153,6 +154,9 @@ def main() -> int:
         "ActionView.vue": [
             "resolveAction(session.menuTree",
             "listRecords({",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('quick_filters', true)",
+            "pageSectionEnabled('quick_actions', true)",
             "keywordList('surface_kind_keywords_risk'",
             "keywordList('surface_kind_keywords_contract'",
             "keywordList('surface_kind_keywords_cost'",
@@ -169,6 +173,9 @@ def main() -> int:
             "contract-driven record view",
             "lastIntent.value = 'api.data.read'",
             "lastIntent.value = 'api.data.write'",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('project_summary', true)",
+            "pageSectionEnabled('chatter', true)",
         ],
         "MyWorkView.vue": [
             "fetchMyWorkSummary",
@@ -285,6 +292,25 @@ def main() -> int:
                 '"key": "scene_groups", "enabled": True, "tag": "div"',
             ],
             "workspace_home_contract_builder.py",
+            errors,
+        )
+
+    page_contracts_builder_text = _read(PAGE_CONTRACTS_BUILDER)
+    if not page_contracts_builder_text:
+        errors.append("missing file: addons/smart_core/core/page_contracts_builder.py")
+    else:
+        _check_required(
+            page_contracts_builder_text,
+            [
+                '"action": {',
+                '"sections": [',
+                '{"key": "quick_filters", "enabled": True}',
+                '{"key": "quick_actions", "enabled": True}',
+                '"record": {',
+                '{"key": "project_summary", "enabled": True}',
+                '{"key": "chatter", "enabled": True}',
+            ],
+            "page_contracts_builder.py",
             errors,
         )
 
