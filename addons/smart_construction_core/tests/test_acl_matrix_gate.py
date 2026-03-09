@@ -25,6 +25,7 @@ ACL_ROLES = {
     "settlement_read": ["smart_construction_core.group_sc_cap_settlement_read"],
     "settlement_user": ["smart_construction_core.group_sc_cap_settlement_user"],
     "settlement_manager": ["smart_construction_core.group_sc_cap_settlement_manager"],
+    "system_admin": ["base.group_system"],
 }
 
 # P0 models for audit output and expectations.
@@ -73,6 +74,8 @@ ACL_EXPECTATIONS = [
     {"role": "settlement_read", "model": "sc.settlement.order.line", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "settlement_user", "model": "sc.settlement.order.line", "rights": {"read": True, "create": True, "write": True, "unlink": False}},
     {"role": "settlement_manager", "model": "sc.settlement.order.line", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
+    {"role": "system_admin", "model": "sc.settlement.order", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
+    {"role": "system_admin", "model": "sc.settlement.order.line", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
 ]
 
 
