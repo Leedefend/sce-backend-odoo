@@ -30,8 +30,8 @@
       </div>
     </header>
 
-    <StatusPanel v-if="status === 'loading'" title="Loading record..." variant="info" />
-    <StatusPanel v-else-if="status === 'saving'" title="Saving record..." variant="info" />
+    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', 'Loading record...')" variant="info" />
+    <StatusPanel v-else-if="status === 'saving'" :title="pageText('saving_title', 'Saving record...')" variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -188,6 +188,7 @@ import { isHudEnabled } from '../config/debug';
 import { resolveEmptyCopy, resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { useEditTx } from '../composables/useEditTx';
 import { useSessionStore } from '../stores/session';
+import { usePageContract } from '../app/pageContract';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
@@ -291,6 +292,8 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const session = useSessionStore();
+const pageContract = usePageContract('record');
+const pageText = pageContract.text;
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const statusLabel = computed(() => {
   if (status.value === 'editing') return 'Editing';
@@ -305,7 +308,7 @@ const statusTone = computed(() => {
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
   return 'ok';
 });
-const errorCopy = computed(() => resolveErrorCopy(error.value, 'Record load failed'));
+const errorCopy = computed(() => resolveErrorCopy(error.value, pageText('error_fallback', 'Record load failed')));
 const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => 'layout_tree');
 const renderRecord = computed(() => {

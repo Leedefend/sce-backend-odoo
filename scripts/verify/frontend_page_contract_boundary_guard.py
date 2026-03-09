@@ -101,6 +101,8 @@ def main() -> int:
         if not text:
             errors.append(f"{rel}: unreadable")
             continue
+        if "usePageContract(" not in text:
+            errors.append(f"{rel}: missing token: usePageContract(")
         _check_forbidden(text, global_forbidden_tokens, rel, errors)
         if view.name != "ActionView.vue":
             _check_forbidden(text, ["listRecords("], rel, errors)

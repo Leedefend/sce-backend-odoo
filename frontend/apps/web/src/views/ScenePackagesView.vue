@@ -2,16 +2,16 @@
   <section class="scene-packages">
     <header class="header">
       <div>
-        <h2>Scene Packages</h2>
-        <p>导入、导出与审阅已安装的 Scene 能力包。</p>
+        <h2>{{ pageText('title', 'Scene Packages') }}</h2>
+        <p>{{ pageText('subtitle', '导入、导出与审阅已安装的 Scene 能力包。') }}</p>
       </div>
       <button class="secondary" :disabled="busy" @click="loadPackages">Refresh</button>
     </header>
 
-    <StatusPanel v-if="busy && !packages.length" title="Loading packages..." variant="info" />
+    <StatusPanel v-if="busy && !packages.length" :title="pageText('loading_title', 'Loading packages...')" variant="info" />
     <StatusPanel
       v-else-if="errorText"
-      title="Package operation failed"
+      :title="pageText('error_title', 'Package operation failed')"
       :message="errorText"
       :trace-id="traceId || undefined"
       variant="error"
@@ -84,6 +84,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import { usePageContract } from '../app/pageContract';
 import {
   scenePackageDryRunImport,
   scenePackageExport,
@@ -107,6 +108,8 @@ const exportVersion = ref('1.0.0');
 const exportChannel = ref<SceneChannel>('stable');
 const exportReason = ref('phase10.6 package export');
 const exportResult = ref<Record<string, unknown> | null>(null);
+const pageContract = usePageContract('scene_packages');
+const pageText = pageContract.text;
 
 function parsePackageJson(): Record<string, unknown> {
   const raw = importText.value.trim();

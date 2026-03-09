@@ -59,7 +59,9 @@ def main() -> int:
     ]
     required_backend_tokens = [
         "from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract",
+        "from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts",
         "data[\"workspace_home\"] = build_workspace_home_contract(data)",
+        "data[\"page_contracts\"] = build_page_contracts(data)",
     ]
     required_builder_tokens = [
         "\"layout\":",

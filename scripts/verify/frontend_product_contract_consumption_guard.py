@@ -44,6 +44,8 @@ def main() -> int:
         "capabilityCatalog",
         "this.capabilityCatalog = rawCapabilities.reduce",
         "this.capabilityGroups = rawCapabilityGroups",
+        "pageContracts:",
+        "this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});",
         "const extFacts =",
         "const productFacts =",
         "this.productFacts =",

@@ -75,6 +75,13 @@ export interface WorkspaceHomeContract {
   advice?: unknown[];
 }
 
+export interface PageContract {
+  schema_version?: string;
+  texts?: Record<string, unknown>;
+  sections?: Array<{ key?: string; enabled?: boolean }>;
+  actions?: Record<string, unknown>;
+}
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -90,6 +97,7 @@ export interface SessionState {
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
   workspaceHome: WorkspaceHomeContract | null;
+  pageContracts: Record<string, PageContract>;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -125,6 +133,7 @@ export const useSessionStore = defineStore('session', {
       bundle: null,
     },
     workspaceHome: null,
+    pageContracts: {},
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -160,6 +169,7 @@ export const useSessionStore = defineStore('session', {
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           this.workspaceHome = parsed.workspaceHome ?? null;
+          this.pageContracts = parsed.pageContracts ?? {};
           if (this.scenes.length) {
             setSceneRegistry(this.scenes);
           }
@@ -198,6 +208,7 @@ export const useSessionStore = defineStore('session', {
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
       this.workspaceHome = null;
+      this.pageContracts = {};
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -251,6 +262,7 @@ export const useSessionStore = defineStore('session', {
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
         workspaceHome: this.workspaceHome,
+        pageContracts: this.pageContracts,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -465,6 +477,7 @@ export const useSessionStore = defineStore('session', {
           : null,
       };
       this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
+      this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});
       setSceneRegistry(this.scenes);
       this.initMeta = {
         ...(result.meta ?? {}),

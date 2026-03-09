@@ -38,6 +38,7 @@ from odoo.addons.smart_core.core.system_init_runtime_context import SystemInitRu
 from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
+from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -265,6 +266,7 @@ class SystemInitHandler(BaseIntentHandler):
         )
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
         data["workspace_home"] = build_workspace_home_contract(data)
+        data["page_contracts"] = build_page_contracts(data)
         role_surface = data.get("role_surface") if isinstance(data, dict) else {}
         role_pruned = False
         if isinstance(role_surface, dict) and isinstance(data.get("nav"), list):
