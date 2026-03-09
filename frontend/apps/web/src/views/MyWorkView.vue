@@ -296,75 +296,75 @@
             v-model.trim="searchText"
             class="search-input"
             type="search"
-            placeholder="搜索事项 / 来源 / 动作"
+            :placeholder="pageText('filter_search_placeholder', '搜索事项 / 来源 / 动作')"
             @keydown.enter="applyFilters"
           />
           <button class="link-btn mini-btn" @click="showAdvancedFilters = !showAdvancedFilters">
-            {{ showAdvancedFilters ? '收起筛选' : '展开筛选' }}
+            {{ showAdvancedFilters ? pageText('action_collapse_filters', '收起筛选') : pageText('action_expand_filters', '展开筛选') }}
           </button>
-          <button class="link-btn mini-btn" @click="applyFilters">应用</button>
-          <button class="link-btn mini-btn" @click="resetFilters">重置</button>
+          <button class="link-btn mini-btn" @click="applyFilters">{{ pageText('action_apply_filters', '应用') }}</button>
+          <button class="link-btn mini-btn" @click="resetFilters">{{ pageText('action_reset_filters', '重置') }}</button>
         </div>
         <div v-if="showAdvancedFilters" class="filter-advanced">
           <select v-model="sourceFilter" class="filter-select">
-            <option value="ALL">全部来源</option>
+            <option value="ALL">{{ pageText('filter_source_all', '全部来源') }}</option>
             <option v-for="source in sourceOptions" :key="`src-${source}`" :value="source">
               {{ source }}
             </option>
           </select>
           <select v-model="reasonFilter" class="filter-select">
-            <option value="ALL">全部原因码</option>
+            <option value="ALL">{{ pageText('filter_reason_all', '全部原因码') }}</option>
             <option v-for="reason in reasonOptions" :key="`reason-${reason}`" :value="reason">
               {{ reason }}
             </option>
           </select>
           <select v-model="sortBy" class="filter-select">
-            <option value="priority">排序：优先级</option>
-            <option value="deadline">排序：截止日</option>
-            <option value="title">排序：事项标题</option>
-            <option value="reason_code">排序：原因码</option>
-            <option value="source">排序：来源</option>
-            <option value="id">排序：ID</option>
+            <option value="priority">{{ pageText('sort_priority', '排序：优先级') }}</option>
+            <option value="deadline">{{ pageText('sort_deadline', '排序：截止日') }}</option>
+            <option value="title">{{ pageText('sort_title', '排序：事项标题') }}</option>
+            <option value="reason_code">{{ pageText('sort_reason_code', '排序：原因码') }}</option>
+            <option value="source">{{ pageText('sort_source', '排序：来源') }}</option>
+            <option value="id">{{ pageText('sort_id', '排序：ID') }}</option>
           </select>
           <select v-model="sortDir" class="filter-select">
-            <option value="desc">降序</option>
-            <option value="asc">升序</option>
+            <option value="desc">{{ pageText('sort_desc', '降序') }}</option>
+            <option value="asc">{{ pageText('sort_asc', '升序') }}</option>
           </select>
           <select v-model.number="pageSize" class="filter-select">
-            <option :value="10">每页 10</option>
-            <option :value="20">每页 20</option>
-            <option :value="40">每页 40</option>
+            <option :value="10">{{ pageText('page_size_10', '每页 10') }}</option>
+            <option :value="20">{{ pageText('page_size_20', '每页 20') }}</option>
+            <option :value="40">{{ pageText('page_size_40', '每页 40') }}</option>
           </select>
           <div class="preset-actions">
-            <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
-            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
-            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
+            <button class="link-btn mini-btn" @click="saveFilterPreset">{{ pageText('action_save_preset', '保存常用筛选') }}</button>
+            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">{{ pageText('action_apply_preset', '应用常用筛选') }}</button>
+            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">{{ pageText('action_clear_saved_preset', '清除预设') }}</button>
           </div>
         </div>
       </section>
       <p v-if="summaryStatus?.hint && summaryStatus?.state !== 'FILTER_EMPTY'" class="status-hint">{{ summaryStatus.hint }}</p>
       <section v-if="showFilterEmptyGuide" class="filter-empty-guide">
-        <p class="guide-title">当前筛选条件没有匹配结果</p>
-        <p class="guide-text">建议先恢复推荐视图，或一键清空筛选后重试。</p>
+        <p class="guide-title">{{ pageText('filter_empty_title', '当前筛选条件没有匹配结果') }}</p>
+        <p class="guide-text">{{ pageText('filter_empty_desc', '建议先恢复推荐视图，或一键清空筛选后重试。') }}</p>
         <div class="guide-actions">
-          <button class="guide-btn primary" @click="applyRecommendedView">恢复推荐视图</button>
-          <button class="guide-btn" @click="resetFilters">清空筛选</button>
+          <button class="guide-btn primary" @click="applyRecommendedView">{{ pageText('action_restore_recommended_view', '恢复推荐视图') }}</button>
+          <button class="guide-btn" @click="resetFilters">{{ pageText('action_clear_filters', '清空筛选') }}</button>
         </div>
       </section>
 
       <section v-if="todoSelectionIds.length" class="batch-bar">
-        <span>已选 {{ todoSelectionIds.length }} 条待办</span>
-        <button class="link-btn done-btn" :disabled="loading" @click="completeSelectedTodos">批量完成</button>
-        <button class="link-btn secondary-btn" :disabled="loading" @click="clearTodoSelection">清空</button>
+        <span>{{ pageText('batch_selected_prefix', '已选 ') }}{{ todoSelectionIds.length }}{{ pageText('batch_selected_suffix', ' 条待办') }}</span>
+        <button class="link-btn done-btn" :disabled="loading" @click="completeSelectedTodos">{{ pageText('action_batch_complete', '批量完成') }}</button>
+        <button class="link-btn secondary-btn" :disabled="loading" @click="clearTodoSelection">{{ pageText('action_clear_selection', '清空') }}</button>
       </section>
 
       <section class="table-wrap">
         <section v-if="!displayItems.length && !showFilterEmptyGuide" class="empty-guide">
-          <p class="empty-title">{{ summaryStatus?.message || '当前无待处理事项' }}</p>
-          <p class="empty-desc">状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。</p>
+          <p class="empty-title">{{ summaryStatus?.message || pageText('empty_title_default', '当前无待处理事项') }}</p>
+          <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。') }}</p>
           <div class="guide-actions">
-            <button class="guide-btn primary" @click="goWorkbench">去工作台</button>
-            <button class="guide-btn" @click="goRiskCockpit">去风险驾驶舱</button>
+            <button class="guide-btn primary" @click="goWorkbench">{{ pageText('action_go_workbench', '去工作台') }}</button>
+            <button class="guide-btn" @click="goRiskCockpit">{{ pageText('action_go_risk_cockpit', '去风险驾驶舱') }}</button>
           </div>
         </section>
         <table>
@@ -378,11 +378,11 @@
                   @change="toggleAllTodoSelection($event)"
                 />
               </th>
-              <th>事项</th>
-              <th>动作</th>
-              <th>截止日</th>
-              <th>优先级</th>
-              <th>原因码</th>
+              <th>{{ pageText('table_col_item', '事项') }}</th>
+              <th>{{ pageText('table_col_action', '动作') }}</th>
+              <th>{{ pageText('table_col_deadline', '截止日') }}</th>
+              <th>{{ pageText('table_col_priority', '优先级') }}</th>
+              <th>{{ pageText('table_col_reason_code', '原因码') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -419,9 +419,9 @@
       </section>
 
       <section class="pager">
-        <button class="link-btn" :disabled="loading || page <= 1" @click="goToPage(page - 1)">上一页</button>
-        <span>第 {{ page }} / {{ totalPages }} 页</span>
-        <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">下一页</button>
+        <button class="link-btn" :disabled="loading || page <= 1" @click="goToPage(page - 1)">{{ pageText('pager_prev', '上一页') }}</button>
+        <span>{{ pageText('pager_middle_prefix', '第 ') }}{{ page }}{{ pageText('pager_middle_sep', ' / ') }}{{ totalPages }}{{ pageText('pager_middle_suffix', ' 页') }}</span>
+        <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">{{ pageText('pager_next', '下一页') }}</button>
       </section>
     </template>
   </section>
