@@ -93,6 +93,21 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
     if not isinstance(action_registry, dict):
         errors.append(f"pages.{page_key}.action_schema.actions must be object")
         action_registry = {}
+    global_actions = page.get("global_actions") if isinstance(page, dict) else None
+    if global_actions is not None and not isinstance(global_actions, list):
+        errors.append(f"pages.{page_key}.page.global_actions must be list when present")
+    if isinstance(global_actions, list):
+        for aidx, action in enumerate(global_actions):
+            aprefix = f"pages.{page_key}.page.global_actions[{aidx}]"
+            if not isinstance(action, dict):
+                errors.append(f"{aprefix} must be object")
+                continue
+            action_key = str(action.get("key") or "").strip()
+            if not action_key:
+                errors.append(f"{aprefix}.key must be non-empty")
+                continue
+            if action_key not in action_registry:
+                errors.append(f"{aprefix}.key not declared in action_schema.actions: {action_key}")
 
     zones = orch.get("zones")
     if not isinstance(zones, list) or not zones:

@@ -11,6 +11,7 @@ WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 SCENE_HEALTH_VIEW = ROOT / "frontend/apps/web/src/views/SceneHealthView.vue"
 USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+SCENE_PACKAGES_VIEW = ROOT / "frontend/apps/web/src/views/ScenePackagesView.vue"
 PAGE_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/pageContractActionRuntime.ts"
 
 
@@ -38,6 +39,7 @@ def main() -> int:
     scene_health_text = _read(SCENE_HEALTH_VIEW)
     usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
     home_text = _read(HOME_VIEW)
+    scene_packages_text = _read(SCENE_PACKAGES_VIEW)
     action_runtime_text = _read(PAGE_ACTION_RUNTIME)
     errors: list[str] = []
 
@@ -53,6 +55,8 @@ def main() -> int:
         errors.append(f"missing file: {USAGE_ANALYTICS_VIEW.relative_to(ROOT).as_posix()}")
     if not home_text:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
+    if not scene_packages_text:
+        errors.append(f"missing file: {SCENE_PACKAGES_VIEW.relative_to(ROOT).as_posix()}")
     if not action_runtime_text:
         errors.append(f"missing file: {PAGE_ACTION_RUNTIME.relative_to(ROOT).as_posix()}")
     if errors:
@@ -86,7 +90,7 @@ def main() -> int:
             'if key == "open_usage_analytics":',
             '{"kind": "route.path", "path": "/admin/usage-analytics"}',
             '{"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"}',
-            'if key in {"scene_health", "usage_analytics"}:',
+            'if key in {"scene_health", "usage_analytics", "scene_packages"}:',
         ],
         errors,
     )
@@ -100,6 +104,23 @@ def main() -> int:
             "if (kind === 'route.path') {",
             "if (intent === 'ui.contract' && scene) {",
             "if (deps.onFallback) {",
+        ],
+        errors,
+    )
+    _expect(
+        scene_packages_text,
+        "ScenePackagesView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: loadPackages,",
         ],
         errors,
     )
