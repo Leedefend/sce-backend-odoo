@@ -145,6 +145,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import {
   fetchSceneHealth,
   governanceExportContract,
@@ -259,18 +260,22 @@ async function loadHealth() {
 }
 
 async function executeHeaderAction(actionKey: string) {
-  const intent = pageActionIntent(actionKey, 'ui.contract');
-  const target = pageActionTarget(actionKey);
-  const kind = String(target.kind || '');
-  const scene = String(target.scene_key || '');
-
-  if (kind === 'page.refresh' || actionKey === 'refresh_page') {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    onRefresh: loadHealth,
+    onFallback: async (key) => {
+      if (key === 'refresh_page') {
+        await loadHealth();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'refresh_page') {
     await loadHealth();
-    return;
-  }
-  if (intent === 'ui.contract' && scene) {
-    await router.push({ path: `/s/${scene}` });
-    return;
   }
 }
 
