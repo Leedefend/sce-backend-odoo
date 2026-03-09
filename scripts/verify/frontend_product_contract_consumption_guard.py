@@ -171,6 +171,7 @@ def main() -> int:
         "const pageContract = usePageContract('login');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
         "const pageSectionStyle = pageContract.sectionStyle;",
+        "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('card', true)",
         "pageSectionEnabled('form', true)",
     ]
@@ -178,6 +179,7 @@ def main() -> int:
         "const pageContract = usePageContract('menu');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
         "const pageSectionStyle = pageContract.sectionStyle;",
+        "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('status_loading', true)",
         "pageSectionEnabled('status_error', true)",
     ]
@@ -185,6 +187,7 @@ def main() -> int:
         "const pageContract = usePageContract('placeholder');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
         "const pageSectionStyle = pageContract.sectionStyle;",
+        "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('card', true)",
     ]
     required_scene_health_tokens = [
@@ -192,6 +195,7 @@ def main() -> int:
         "const pageSectionEnabled = pageContract.sectionEnabled;",
         "const pageSectionStyle = pageContract.sectionStyle;",
         "const pageSectionOpenDefault = pageContract.sectionOpenDefault;",
+        "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('header', true)",
         "pageSectionEnabled('governance', true)",
         "pageSectionOpenDefault('details_resolve_errors', true)",
@@ -200,6 +204,7 @@ def main() -> int:
         "const pageContract = usePageContract('scene_packages');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
         "const pageSectionStyle = pageContract.sectionStyle;",
+        "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('installed_packages', true)",
         "pageSectionEnabled('import_package', true)",
         "pageSectionEnabled('export_package', true)",

@@ -1,6 +1,6 @@
 <template>
   <section class="scene-health">
-    <header v-if="pageSectionEnabled('header', true)" class="header" :style="pageSectionStyle('header')">
+    <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <h2>{{ pageText('title', 'Scene Health Dashboard') }}</h2>
         <p>{{ pageText('subtitle', '可视化查看场景健康状态与自动降级结果。') }}</p>
@@ -20,13 +20,13 @@
     </header>
 
     <StatusPanel
-      v-if="pageSectionEnabled('status_loading', true) && loading"
+      v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
       :title="pageText('loading_title', 'Loading scene health...')"
       variant="info"
       :style="pageSectionStyle('status_loading')"
     />
     <StatusPanel
-      v-else-if="pageSectionEnabled('status_error', true) && errorText"
+      v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && errorText"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="statusError?.traceId || errorTraceId || undefined"
@@ -42,7 +42,11 @@
       :style="pageSectionStyle('status_error')"
     />
 
-    <div v-else-if="pageSectionEnabled('content', true) && health" class="content" :style="pageSectionStyle('content')">
+    <div
+      v-else-if="pageSectionEnabled('content', true) && pageSectionTagIs('content', 'div') && health"
+      class="content"
+      :style="pageSectionStyle('content')"
+    >
       <article class="pill-row">
         <span class="pill">channel: {{ health.scene_channel || '-' }}</span>
         <span class="pill" :class="{ warn: health.rollback_active }">
@@ -52,7 +56,7 @@
         <span class="pill">schema: {{ health.schema_version || '-' }}</span>
       </article>
 
-      <section v-if="pageSectionEnabled('cards', true)" class="cards" :style="pageSectionStyle('cards')">
+      <section v-if="pageSectionEnabled('cards', true) && pageSectionTagIs('cards', 'section')" class="cards" :style="pageSectionStyle('cards')">
         <article class="card danger">
           <h3>Critical Resolve Errors</h3>
           <p>{{ health.summary.critical_resolve_errors_count }}</p>
@@ -67,7 +71,7 @@
         </article>
       </section>
 
-      <article v-if="pageSectionEnabled('meta', true)" class="meta" :style="pageSectionStyle('meta')">
+      <article v-if="pageSectionEnabled('meta', true) && pageSectionTagIs('meta', 'section')" class="meta" :style="pageSectionStyle('meta')">
         <p><strong>contract_ref:</strong> {{ health.contract_ref || '-' }}</p>
         <p><strong>trace_id:</strong> {{ health.trace_id || '-' }}</p>
         <p><strong>updated_at:</strong> {{ health.last_updated_at || '-' }}</p>
@@ -75,7 +79,7 @@
         <p v-if="governanceTraceId"><strong>governance_trace:</strong> {{ governanceTraceId }}</p>
       </article>
 
-      <section v-if="pageSectionEnabled('governance', true)" class="governance" :style="pageSectionStyle('governance')">
+      <section v-if="pageSectionEnabled('governance', true) && pageSectionTagIs('governance', 'section')" class="governance" :style="pageSectionStyle('governance')">
         <h3>Governance Actions</h3>
         <div class="governance-grid">
           <label>
@@ -100,7 +104,7 @@
       </section>
 
       <details
-        v-if="pageSectionEnabled('details_resolve_errors', true)"
+        v-if="pageSectionEnabled('details_resolve_errors', true) && pageSectionTagIs('details_resolve_errors', 'details')"
         :style="pageSectionStyle('details_resolve_errors')"
         :open="pageSectionOpenDefault('details_resolve_errors', true)"
       >
@@ -108,7 +112,7 @@
         <pre>{{ JSON.stringify(health.details?.resolve_errors || [], null, 2) }}</pre>
       </details>
       <details
-        v-if="pageSectionEnabled('details_drift', true)"
+        v-if="pageSectionEnabled('details_drift', true) && pageSectionTagIs('details_drift', 'details')"
         :style="pageSectionStyle('details_drift')"
         :open="pageSectionOpenDefault('details_drift', false)"
       >
@@ -116,7 +120,7 @@
         <pre>{{ JSON.stringify(health.details?.drift || [], null, 2) }}</pre>
       </details>
       <details
-        v-if="pageSectionEnabled('details_debt', true)"
+        v-if="pageSectionEnabled('details_debt', true) && pageSectionTagIs('details_debt', 'details')"
         :style="pageSectionStyle('details_debt')"
         :open="pageSectionOpenDefault('details_debt', false)"
       >
@@ -158,6 +162,7 @@ const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionOpenDefault = pageContract.sectionOpenDefault;
+const pageSectionTagIs = pageContract.sectionTagIs;
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'health request failed')));
 
 const autoDegradeLabel = computed(() => {
