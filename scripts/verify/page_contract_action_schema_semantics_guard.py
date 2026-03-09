@@ -12,6 +12,7 @@ BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 
 ALLOWED_INTENTS = {"ui.contract", "api.data", "execute_button", "file.download"}
 ALLOWED_TARGET_KINDS = {"page.refresh", "menu.first_reachable", "route.path", "scene.key"}
+UI_CONTRACT_TARGET_KINDS = {"scene.key", "menu.first_reachable", "route.path"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -60,11 +61,11 @@ def _validate_action(page_key: str, action_key: str, action: Any, errors: list[s
             scene_key = target.get("scene_key")
             if not isinstance(scene_key, str) or not scene_key.strip():
                 errors.append(f"{prefix}.target.scene_key must be non-empty string when kind=scene.key")
+        if intent == "ui.contract" and kind not in UI_CONTRACT_TARGET_KINDS:
+            errors.append(f"{prefix}.target.kind invalid for ui.contract: {kind}")
     else:
         if intent == "ui.contract":
-            scene_key = target.get("scene_key")
-            if not isinstance(scene_key, str) or not scene_key.strip():
-                errors.append(f"{prefix}.target.scene_key must be non-empty string for ui.contract")
+            errors.append(f"{prefix}.target.kind required for ui.contract")
 
 
 def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -> None:
