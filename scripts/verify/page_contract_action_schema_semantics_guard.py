@@ -40,6 +40,7 @@ def _validate_action(page_key: str, action_key: str, action: Any, errors: list[s
     label = action.get("label")
     intent = str(action.get("intent") or "").strip()
     target = action.get("target")
+    visibility = action.get("visibility")
 
     if not isinstance(label, str) or not label.strip():
         errors.append(f"{prefix}.label must be non-empty string")
@@ -48,6 +49,15 @@ def _validate_action(page_key: str, action_key: str, action: Any, errors: list[s
     if not isinstance(target, dict):
         errors.append(f"{prefix}.target must be object")
         return
+    if not isinstance(visibility, dict):
+        errors.append(f"{prefix}.visibility must be object")
+    else:
+        roles = visibility.get("roles")
+        capabilities = visibility.get("capabilities")
+        if not isinstance(roles, list):
+            errors.append(f"{prefix}.visibility.roles must be list")
+        if not isinstance(capabilities, list):
+            errors.append(f"{prefix}.visibility.capabilities must be list")
 
     kind = str(target.get("kind") or "").strip()
     if kind:

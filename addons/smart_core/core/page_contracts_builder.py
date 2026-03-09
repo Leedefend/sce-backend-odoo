@@ -342,6 +342,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "label": str(action.get("label") or action_key),
             "intent": str(action.get("intent") or "ui.contract"),
             "target": _action_target(action_key, page_key),
+            "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
         }
     for zone in zones:
         blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
@@ -361,6 +362,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
                     "label": str(action.get("label") or action_key),
                     "intent": str(action.get("intent") or "ui.contract"),
                     "target": _action_target(action_key, page_key),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
                 }
 
     return {

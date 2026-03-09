@@ -4,6 +4,11 @@ import { useSessionStore, type PageContract } from '../stores/session';
 function asText(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
+function asTextList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => asText(item)).filter(Boolean)
+    : [];
+}
 
 type SectionTag = 'header' | 'section' | 'details' | 'div' | '';
 type SectionConfig = { enabled: boolean; order: number; tag: SectionTag; open: boolean | null };
@@ -90,6 +95,16 @@ export function usePageContract(pageKey: string) {
     const actionsRow = (raw as Record<string, unknown>).actions;
     return actionsRow && typeof actionsRow === 'object' ? actionsRow as Record<string, unknown> : {};
   });
+  const runtimeRoleCode = computed(() => {
+    const fromSurface = asText(session.roleSurface?.role_code);
+    if (fromSurface) return fromSurface;
+    const page = contract.value?.page_orchestration_v1?.page;
+    const context = page && typeof page === 'object' ? (page as Record<string, unknown>).context : null;
+    if (context && typeof context === 'object') {
+      return asText((context as Record<string, unknown>).role_code);
+    }
+    return '';
+  });
   const globalActions = computed<GlobalActionConfig[]>(() => {
     const page = contract.value?.page_orchestration_v1?.page;
     if (!page || typeof page !== 'object') return [];
@@ -101,6 +116,7 @@ export function usePageContract(pageKey: string) {
       const row = item as Record<string, unknown>;
       const key = asText(row.key);
       if (!key) return;
+      if (!actionVisible(key)) return;
       const label = asText(row.label) || actionText(key, key);
       const intent = asText(row.intent) || actionIntent(key, 'ui.contract');
       result.push({ key, label, intent });
@@ -159,6 +175,24 @@ export function usePageContract(pageKey: string) {
     return target && typeof target === 'object' ? target as Record<string, unknown> : {};
   }
 
+  function actionVisible(key: string): boolean {
+    const row = orchestrationActions.value[key];
+    if (!row || typeof row !== 'object') return true;
+    const visibility = (row as Record<string, unknown>).visibility;
+    if (!visibility || typeof visibility !== 'object') return true;
+    const visibilityRow = visibility as Record<string, unknown>;
+    const roles = asTextList(visibilityRow.roles);
+    const capabilities = asTextList(visibilityRow.capabilities);
+    const roleCode = runtimeRoleCode.value;
+    if (roles.length && roleCode && !roles.includes(roleCode)) return false;
+    if (capabilities.length) {
+      const enabled = new Set((session.capabilities || []).map((item) => asText(item)).filter(Boolean));
+      const hasAny = capabilities.some((keyName) => enabled.has(keyName));
+      if (!hasAny) return false;
+    }
+    return true;
+  }
+
   function dataSourceSpec(key: string): Record<string, unknown> {
     const row = orchestrationDataSources.value[key];
     return row && typeof row === 'object' ? row as Record<string, unknown> : {};
@@ -183,6 +217,7 @@ export function usePageContract(pageKey: string) {
     actionText,
     actionIntent,
     actionTarget,
+    actionVisible,
     dataSourceSpec,
     dataSourceType,
     hasDataSource,
