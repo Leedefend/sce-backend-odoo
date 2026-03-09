@@ -161,6 +161,18 @@ def main() -> int:
             "exportUsageCsv",
         ],
     }
+    per_view_forbidden = {
+        "HomeView.vue": [
+            "return '审核付款申请';",
+            "return '查看合同异常';",
+            "return '处理风险事项';",
+            "return '确认变更事项';",
+            "return '处理任务';",
+            "return '查看详情';",
+            "return '→ 0%';",
+            "`T-${idx + 1}`",
+        ],
+    }
     for name, tokens in per_view_required.items():
         target = VIEWS_DIR / name
         text = _read(target)
@@ -168,6 +180,13 @@ def main() -> int:
             errors.append(f"missing file: {target.relative_to(ROOT).as_posix()}")
             continue
         _check_required(text, tokens, target.relative_to(ROOT).as_posix(), errors)
+    for name, tokens in per_view_forbidden.items():
+        target = VIEWS_DIR / name
+        text = _read(target)
+        if not text:
+            errors.append(f"missing file: {target.relative_to(ROOT).as_posix()}")
+            continue
+        _check_forbidden(text, tokens, target.relative_to(ROOT).as_posix(), errors)
 
     app_shell_text = _read(APP_SHELL)
     menu_tree_text = _read(MENU_TREE)
