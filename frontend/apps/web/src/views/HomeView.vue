@@ -69,7 +69,7 @@
           <p class="today-title">
             <span>{{ item.title }}</span>
             <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
-              {{ item.status === 'urgent' ? '紧急' : '普通' }}
+              {{ item.status === 'urgent' ? homeLayoutText('today_actions.status_urgent', '紧急') : homeLayoutText('today_actions.status_normal', '普通') }}
             </span>
           </p>
           <p class="today-desc">{{ item.description }}</p>
@@ -183,7 +183,7 @@
       </section>
     </details>
 
-    <section v-if="isHomeSectionEnabled('group_overview') && capabilityGroupCards.length" class="group-overview" aria-label="辅助入口区">
+    <section v-if="isHomeSectionEnabled('group_overview') && capabilityGroupCards.length" class="group-overview" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
       <header class="group-overview-header">
         <h3>{{ homeLayoutText('group_overview.title', '辅助入口') }}</h3>
         <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
