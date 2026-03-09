@@ -58,7 +58,7 @@ def main() -> int:
         "capabilityStateLabel(",
         "const capabilityGroupScoreMap = computed(() => {",
         "group.state_counts?.READY",
-        "suggestionEntryScore(",
+        "const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);",
         "capabilityStateFilter",
         "capabilityStateCounts",
         "capability_state_filter",
