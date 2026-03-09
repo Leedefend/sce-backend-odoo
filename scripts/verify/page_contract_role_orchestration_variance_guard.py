@@ -65,6 +65,24 @@ def _find_block(payload: dict[str, Any], page_key: str, section_key: str) -> dic
     return {}
 
 
+def _zone_order(payload: dict[str, Any], page_key: str) -> list[str]:
+    pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
+    page = pages.get(page_key) if isinstance(pages.get(page_key), dict) else {}
+    orch = page.get("page_orchestration_v1") if isinstance(page.get("page_orchestration_v1"), dict) else {}
+    zones = orch.get("zones") if isinstance(orch.get("zones"), list) else []
+    rows: list[tuple[str, int]] = []
+    for zone in zones:
+        if not isinstance(zone, dict):
+            continue
+        key = str(zone.get("key") or "").strip()
+        if not key:
+            continue
+        priority = int(zone.get("priority") or 0)
+        rows.append((key, priority))
+    rows.sort(key=lambda item: item[1], reverse=True)
+    return [item[0] for item in rows]
+
+
 def main() -> int:
     if not BUILDER.is_file():
         return _fail([f"missing file: {BUILDER}"])
@@ -106,6 +124,23 @@ def main() -> int:
     pm_block = _find_block(pm, "workbench", "hud_details")
     if str(pm_block.get("progress") or "") != "running":
         errors.append("pm: workbench.hud_details orchestration block progress must be running")
+
+    pm_zone_order = _zone_order(pm, "action")
+    finance_zone_order = _zone_order(finance, "action")
+    owner_zone_order = _zone_order(owner, "action")
+    if not pm_zone_order or not finance_zone_order or not owner_zone_order:
+        errors.append("action: zone order must be available for pm/finance/owner")
+    elif pm_zone_order == finance_zone_order == owner_zone_order:
+        errors.append("action: zone order must differ across roles for heterogeneous orchestration")
+
+    pm_focus_block = _find_block(pm, "action", "quick_actions")
+    finance_focus_block = _find_block(finance, "action", "quick_actions")
+    if int(pm_focus_block.get("priority") or 0) <= int(finance_focus_block.get("priority") or 0):
+        errors.append("action: pm quick_actions priority must be higher than finance")
+
+    owner_focus_strip = _find_block(owner, "action", "focus_strip")
+    if owner_focus_strip.get("focus") is not True:
+        errors.append("owner: action.focus_strip must be marked focus=true")
 
     if errors:
         return _fail(errors)

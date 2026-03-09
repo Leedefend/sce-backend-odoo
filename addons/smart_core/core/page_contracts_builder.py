@@ -84,6 +84,48 @@ def _apply_role_section_policy(payload: Dict[str, Any], role_code: str) -> None:
                 section["enabled"] = False
 
 
+def _role_zone_order(role_code: str, page_type: str, page_key: str = "") -> list[str]:
+    page = str(page_key or "").strip().lower()
+    if page == "action":
+        if role_code == "finance":
+            return ["secondary", "primary", "hero", "supporting"]
+        if role_code == "owner":
+            return ["primary", "secondary", "hero", "supporting"]
+        return ["primary", "secondary", "hero", "supporting"]
+    if page_type == "monitor":
+        return ["hero", "secondary", "primary", "supporting"] if role_code == "finance" else ["hero", "primary", "secondary", "supporting"]
+    if page_type == "approval":
+        return ["hero", "primary", "supporting", "secondary"] if role_code == "pm" else ["hero", "secondary", "primary", "supporting"]
+    if page_type == "detail":
+        return ["hero", "primary", "secondary", "supporting"] if role_code != "owner" else ["hero", "supporting", "primary", "secondary"]
+    return ["hero", "primary", "secondary", "supporting"]
+
+
+def _role_focus_sections(role_code: str, page_key: str) -> list[str]:
+    page = str(page_key or "").strip().lower()
+    mapping: Dict[str, Dict[str, list[str]]] = {
+        "pm": {
+            "workbench": ["status_panel", "tiles"],
+            "action": ["quick_actions", "quick_filters"],
+            "record": ["project_summary", "next_actions"],
+            "my_work": ["todo_focus", "list_main"],
+        },
+        "finance": {
+            "workbench": ["status_panel"],
+            "action": ["quick_filters", "group_summary"],
+            "record": ["project_summary"],
+            "usage_analytics": ["summary_usage", "tables_daily"],
+        },
+        "owner": {
+            "workbench": ["header", "status_panel"],
+            "scene_health": ["cards", "governance"],
+            "usage_analytics": ["summary_visibility", "tables_top"],
+            "action": ["focus_strip"],
+        },
+    }
+    return mapping.get(role_code, {}).get(page, [])
+
+
 def _zone_from_tag(tag: str) -> Dict[str, str]:
     normalized = str(tag or "").strip().lower()
     if normalized == "header":
@@ -149,6 +191,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
     audience = _page_audience(page_key)
     page_type = _normalize_page_type(page_key)
     zone_buckets: Dict[str, Dict[str, Any]] = {}
+    focus_sections = {key: idx + 1 for idx, key in enumerate(_role_focus_sections(role_code, page_key))}
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):
             continue
@@ -196,7 +239,17 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             }
         )
 
+        if section_key in focus_sections:
+            zone["blocks"][-1]["priority"] = 200 - focus_sections[section_key]
+            zone["blocks"][-1]["focus"] = True
+        else:
+            zone["blocks"][-1]["focus"] = False
+
     zones = list(zone_buckets.values())
+    zone_rank = {key: idx + 1 for idx, key in enumerate(_role_zone_order(role_code, page_type, page_key))}
+    for zone in zones:
+        zone_key = str(zone.get("key") or "").strip()
+        zone["priority"] = 100 - ((zone_rank.get(zone_key, 99) - 1) * 10)
     for zone in zones:
         zone["blocks"] = sorted(
             zone.get("blocks") if isinstance(zone.get("blocks"), list) else [],
@@ -248,6 +301,8 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "page_key": page_key,
             "role_variant": role_code,
             "semantic_profile": page_type,
+            "role_zone_order": _role_zone_order(role_code, page_type, page_key),
+            "role_focus_sections": list(focus_sections.keys()),
         },
     }
 
