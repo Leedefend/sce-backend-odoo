@@ -677,22 +677,22 @@ function findRecommendedSectionKey() {
 
 function mapRestrictedModelLabel(modelName: string) {
   const mapping: Record<string, string> = {
-    'sc.workflow.workitem': '流程待办',
-    'tier.review': '审批复核',
-    'mail.activity': '待办活动',
-    'project.task': '项目任务',
-    'project.project': '项目主数据',
-    'mail.message': '消息提醒',
-    'mail.followers': '关注记录',
+    'sc.workflow.workitem': pageText('model_label_sc_workflow_workitem', '流程待办'),
+    'tier.review': pageText('model_label_tier_review', '审批复核'),
+    'mail.activity': pageText('model_label_mail_activity', '待办活动'),
+    'project.task': pageText('model_label_project_task', '项目任务'),
+    'project.project': pageText('model_label_project_project', '项目主数据'),
+    'mail.message': pageText('model_label_mail_message', '消息提醒'),
+    'mail.followers': pageText('model_label_mail_followers', '关注记录'),
   };
   return mapping[modelName] || modelName;
 }
 
 function formatPriority(priority: string | undefined) {
   const raw = String(priority || '').trim().toLowerCase();
-  if (raw === 'high') return '高';
-  if (raw === 'low') return '低';
-  return '中';
+  if (raw === 'high') return pageText('priority_high', '高');
+  if (raw === 'low') return pageText('priority_low', '低');
+  return pageText('priority_medium', '中');
 }
 
 function setActionFeedback(message: string, isError = false, autoClearMs = 0) {
@@ -1196,8 +1196,12 @@ function clearReasonFilterFromFailure() {
 
 function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
   const actionHint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-  const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
-  return [`#${item.id} ${item.reason_code || 'UNKNOWN'} ${item.message || '-'}`, retryTag, actionHint]
+  const retryTag = item.retryable === true
+    ? pageText('retry_tag_retryable', '可重试')
+    : item.retryable === false
+      ? pageText('retry_tag_non_retryable', '不可重试')
+      : '';
+  return [`#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', 'UNKNOWN')} ${item.message || '-'}`, retryTag, actionHint]
     .filter(Boolean)
     .join(' | ');
 }
@@ -1206,16 +1210,18 @@ function buildRetrySummaryText() {
   if (!retryFailedItems.value.length) return '';
   const reasons = retryFailedGroups.value.length
     ? retryFailedGroups.value
-        .map((item) => `${item.reason_code} x ${item.count} (可重试 ${item.retryable_count})`)
+        .map((item) =>
+          `${item.reason_code}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}${pageText('retry_summary_group_retryable_left', ' (')}${pageText('retry_group_retryable_prefix', '可重试 ')}${item.retryable_count}${pageText('retry_summary_group_retryable_right', ')')}`,
+        )
         .join('; ')
     : retryReasonSummary.value
-    .map((item) => `${item.reason_code} x ${item.count}`)
+    .map((item) => `${item.reason_code}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}`)
     .join('; ');
   const lines = retryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
-    `失败待办 ${retryFailedIds.value.length} 条`,
-    reasons ? `原因分布: ${reasons}` : '',
-    typeof todoRemaining.value === 'number' ? `剩余待办: ${todoRemaining.value}` : '',
+    `${pageText('retry_summary_header_prefix', '失败待办 ')}${retryFailedIds.value.length}${pageText('retry_summary_header_suffix', ' 条')}`,
+    reasons ? `${pageText('retry_summary_reason_dist_prefix', '原因分布: ')}${reasons}` : '',
+    typeof todoRemaining.value === 'number' ? `${pageText('retry_summary_remaining_prefix', '剩余待办: ')}${todoRemaining.value}` : '',
     ...lines,
   ]
     .filter(Boolean)
@@ -1225,9 +1231,9 @@ function buildRetrySummaryText() {
 function buildVisibleRetrySummaryText() {
   const lines = visibleRetryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
-    `筛选模式: ${retryFilterMode.value}`,
-    `显示模式: ${retryGroupByReason.value ? 'grouped' : 'flat'}`,
-    `当前视图条目: ${visibleRetryFailedItems.value.length}`,
+    `${pageText('retry_visible_mode_prefix', '筛选模式: ')}${retryFilterMode.value}`,
+    `${pageText('retry_visible_display_prefix', '显示模式: ')}${retryGroupByReason.value ? pageText('retry_visible_display_grouped', 'grouped') : pageText('retry_visible_display_flat', 'flat')}`,
+    `${pageText('retry_visible_items_prefix', '当前视图条目: ')}${visibleRetryFailedItems.value.length}`,
     ...lines,
   ]
     .filter(Boolean)
@@ -1426,7 +1432,7 @@ async function completeSelectedTodos() {
       note: 'Completed from my-work batch action.',
       request_id: buildBatchRequestId('mw_batch_ui'),
     });
-    applyBatchFeedback(result, '批量完成');
+    applyBatchFeedback(result, pageText('batch_action_complete', '批量完成'));
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : pageText('error_batch_complete_failed', '批量完成待办失败');
@@ -1444,7 +1450,7 @@ async function retryFailedTodos() {
     resolveRetryNote('Retry failed items from my-work.'),
     retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     retryRequestParams.value?.source || 'mail.activity',
-    '重试',
+    pageText('batch_action_retry', '重试'),
   );
 }
 
@@ -1454,7 +1460,7 @@ async function retryByReasonGroup(reasonCode: string) {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = `原因组 ${reasonCode} 没有可重试项`;
+    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonCode}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
     actionFeedbackError.value = true;
     return;
   }
@@ -1463,7 +1469,7 @@ async function retryByReasonGroup(reasonCode: string) {
     resolveRetryNote(`Retry failed group ${reasonCode} from my-work.`),
     buildBatchRequestId('mw_retry_group'),
     retryRequestParams.value?.source || 'mail.activity',
-    `重试(${reasonCode})`,
+    `${pageText('batch_action_retry_group_left', '重试(')}${reasonCode}${pageText('batch_action_retry_group_right', ')')}`,
   );
 }
 
@@ -1485,14 +1491,14 @@ function selectRetryableByReasonGroup(reasonCode: string) {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = `原因组 ${reasonCode} 没有可重试项`;
+    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonCode}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   ids.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${ids.length} 条 ${reasonCode} 可重试项`;
+  actionFeedback.value = `${pageText('feedback_selected_reason_retryable_prefix', '已选中 ')}${ids.length}${pageText('feedback_selected_reason_retryable_middle', ' 条 ')}${reasonCode}${pageText('feedback_selected_reason_retryable_suffix', ' 可重试项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1592,18 +1598,18 @@ function applyBatchFeedback(
       .slice(0, 3)
       .map((item) => formatFailedItemText(item))
       .join('；');
-    actionFeedback.value = `${actionLabel}部分失败：${result.done_count} 成功，${result.failed_count} 失败${
-      failedPreview ? `（${failedPreview}）` : ''
-    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}${
-      lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''
+    actionFeedback.value = `${actionLabel}${pageText('batch_feedback_partial_suffix', '部分失败：')}${result.done_count}${pageText('batch_feedback_success_count_suffix', ' 成功，')}${result.failed_count}${pageText('batch_feedback_failed_count_suffix', ' 失败')}${
+      failedPreview ? `${pageText('batch_feedback_preview_left', '（')}${failedPreview}${pageText('batch_feedback_preview_right', '）')}` : ''
+    }${typeof todoRemaining.value === 'number' ? `${pageText('batch_feedback_remaining_prefix', '，剩余待办 ')}${todoRemaining.value}${pageText('batch_feedback_remaining_suffix', ' 条')}` : ''}${
+      lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，命中重放#')}${lastReplayAuditId.value || 0}` : ''
     }`;
     actionFeedbackError.value = true;
     return;
   }
 
-  actionFeedback.value = `${actionLabel}成功：${result.done_count} 条${
-    typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''
-  }${lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''}`;
+  actionFeedback.value = `${actionLabel}${pageText('batch_feedback_success_suffix', '成功：')}${result.done_count}${pageText('batch_feedback_done_suffix', ' 条')}${
+    typeof todoRemaining.value === 'number' ? `${pageText('batch_feedback_remaining_prefix', '，剩余待办 ')}${todoRemaining.value}${pageText('batch_feedback_remaining_suffix', ' 条')}` : ''
+  }${lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，命中重放#')}${lastReplayAuditId.value || 0}` : ''}`;
   actionFeedbackError.value = false;
 }
 
