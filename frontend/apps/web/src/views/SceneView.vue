@@ -1,8 +1,12 @@
 <template>
   <section class="scene">
-    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', '正在加载场景...')" variant="info" />
     <StatusPanel
-      v-else-if="status === 'error'"
+      v-if="pageSectionEnabled('status_loading', true) && status === 'loading'"
+      :title="pageText('loading_title', '正在加载场景...')"
+      variant="info"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_error', true) && status === 'error'"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="error?.traceId"
@@ -16,7 +20,7 @@
       variant="error"
     />
     <StatusPanel
-      v-else-if="status === 'forbidden'"
+      v-else-if="pageSectionEnabled('status_forbidden', true) && status === 'forbidden'"
       :title="forbiddenCopy.title"
       :message="forbiddenCopy.message"
       :hint="forbiddenCopy.hint"
@@ -48,6 +52,7 @@ const router = useRouter();
 const session = useSessionStore();
 const pageContract = usePageContract('scene');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();

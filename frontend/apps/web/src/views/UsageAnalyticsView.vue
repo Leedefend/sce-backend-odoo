@@ -1,6 +1,6 @@
 <template>
   <section class="usage-analytics">
-    <header class="header">
+    <header v-if="pageSectionEnabled('header', true)" class="header">
       <div>
         <h2>{{ pageText('title', 'Usage Analytics') }}</h2>
         <p>{{ pageText('subtitle', 'Scene / Capability 使用统计（按公司累计）。') }}</p>
@@ -79,9 +79,13 @@
       </div>
     </header>
 
-    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Loading usage report...')" variant="info" />
     <StatusPanel
-      v-else-if="errorText"
+      v-if="pageSectionEnabled('status_loading', true) && loading"
+      :title="pageText('loading_title', 'Loading usage report...')"
+      variant="info"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_error', true) && errorText"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="statusError?.traceId || errorTraceId || undefined"
@@ -97,7 +101,7 @@
     />
 
     <template v-else>
-      <section class="slice-bar">
+      <section v-if="pageSectionEnabled('slice_bar', true)" class="slice-bar">
         <span>{{ pageText('slice_window_prefix', '窗口：') }}{{ report?.filters?.day_from || '-' }} ~ {{ report?.filters?.day_to || '-' }}</span>
         <span>{{ pageText('slice_role_prefix', '角色：') }}{{ report?.filters?.role_code || pageText('option_all', '全部') }}</span>
         <span>{{ pageText('slice_user_prefix', '用户：') }}{{ report?.filters?.user_id || 0 }}</span>
@@ -105,7 +109,7 @@
         <span>{{ pageText('slice_capability_prefix_label', 'Capability 前缀：') }}{{ report?.filters?.capability_key_prefix || '-' }}</span>
       </section>
 
-      <section class="summary-grid">
+      <section v-if="pageSectionEnabled('summary_usage', true)" class="summary-grid">
         <article class="summary-card">
           <p class="label">{{ pageText('summary_scene_open_total', 'Scene Open Total') }}</p>
           <p class="count">{{ report?.totals.scene_open_total ?? 0 }}</p>
@@ -120,7 +124,7 @@
         </article>
       </section>
 
-      <section class="summary-grid">
+      <section v-if="pageSectionEnabled('summary_visibility', true)" class="summary-grid">
         <article class="summary-card">
           <p class="label">{{ pageText('summary_capability_total', 'Capability Total') }}</p>
           <p class="count">{{ visibility?.summary.total ?? 0 }}</p>
@@ -141,7 +145,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_top', true)" class="tables">
         <article class="table-card">
           <h3>{{ pageText('table_top_scenes', 'Top Scenes') }}</h3>
           <table>
@@ -175,7 +179,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_daily', true)" class="tables">
         <article class="table-card">
           <h3>{{ pageText('table_scene_open_last_7_days', 'Scene Open (Last 7 Days)') }}</h3>
           <table>
@@ -209,7 +213,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_visibility', true)" class="tables">
         <article class="table-card">
           <h3>{{ pageText('table_visibility_reason_counts', 'Visibility Reason Counts') }}</h3>
           <table>
@@ -243,7 +247,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_role_user', true)" class="tables">
         <article class="table-card">
           <h3>{{ pageText('table_role_top', 'Role Top') }}</h3>
           <table>
@@ -318,6 +322,7 @@ const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
 const pageContract = usePageContract('usage_analytics');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
