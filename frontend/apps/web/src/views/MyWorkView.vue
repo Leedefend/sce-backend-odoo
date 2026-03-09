@@ -1,14 +1,25 @@
 <template>
   <section class="my-work">
     <!-- Page intent: 聚合待办并提供可执行入口，默认进入即可开工。 -->
-    <header class="hero">
+    <header
+      v-if="pageSectionEnabled('hero', true) && pageSectionTagIs('hero', 'header')"
+      class="hero"
+      :style="pageSectionStyle('hero')"
+    >
       <div class="hero-main">
         <div>
           <h2>{{ pageText('title', '我的工作') }}</h2>
           <p>{{ pageText('hero_subtitle', '聚合待办并直接处理，默认从“待我处理”开工。') }}</p>
         </div>
         <div class="hero-tools">
-          <button class="secondary" @click="load">{{ pageText('action_refresh', '刷新') }}</button>
+          <button
+            v-for="action in headerActions"
+            :key="action.key"
+            class="secondary"
+            @click="executeHeaderAction(action.key)"
+          >
+            {{ action.label || action.key }}
+          </button>
         </div>
       </div>
       <div v-if="!loading && !errorText && (generatedAtText || appliedPresetLabel || visibilityNotice)" class="hero-context">
@@ -46,7 +57,12 @@
     <p v-if="!loading && !errorText && batchEvidenceText" class="batch-evidence">
       {{ batchEvidenceText }}
     </p>
-    <details v-if="!loading && !errorText && retryFailedIds.length" class="retry-panel">
+    <details
+      v-if="!loading && !errorText && retryFailedIds.length && pageSectionEnabled('retry_panel', true) && pageSectionTagIs('retry_panel', 'details')"
+      class="retry-panel"
+      :open="pageSectionOpenDefault('retry_panel', false)"
+      :style="pageSectionStyle('retry_panel')"
+    >
       <summary class="retry-bar">
         <span>{{ pageText('retry_failed_prefix', '失败待办 ') }}{{ retryFailedIds.length }}{{ pageText('retry_failed_suffix', ' 条') }}</span>
         <span v-if="lastBatchExecutionMode" class="meta-chip">{{ pageText('retry_mode_prefix', '模式: ') }}{{ lastBatchExecutionMode }}</span>
@@ -264,7 +280,11 @@
       </section>
     </details>
     <template v-if="!loading && !errorText">
-      <section class="summary-grid">
+      <section
+        v-if="pageSectionEnabled('todo_focus', true) && pageSectionTagIs('todo_focus', 'section')"
+        class="summary-grid"
+        :style="pageSectionStyle('todo_focus')"
+      >
         <article
           v-for="item in summaryCards"
           :key="item.key"
@@ -277,7 +297,11 @@
         </article>
       </section>
 
-      <section class="tabs">
+      <section
+        v-if="pageSectionEnabled('todo_focus', true) && pageSectionTagIs('todo_focus', 'section')"
+        class="tabs"
+        :style="pageSectionStyle('todo_focus')"
+      >
         <button
           v-for="sec in sections"
           :key="sec.key"
@@ -290,7 +314,11 @@
         </button>
       </section>
 
-      <section class="filters">
+      <section
+        v-if="pageSectionEnabled('todo_focus', true) && pageSectionTagIs('todo_focus', 'section')"
+        class="filters"
+        :style="pageSectionStyle('todo_focus')"
+      >
         <div class="filter-bar">
           <input
             v-model.trim="searchText"
@@ -358,7 +386,11 @@
         <button class="link-btn secondary-btn" :disabled="loading" @click="clearTodoSelection">{{ pageText('action_clear_selection', '清空') }}</button>
       </section>
 
-      <section class="table-wrap">
+      <section
+        v-if="pageSectionEnabled('list_main', true) && pageSectionTagIs('list_main', 'section')"
+        class="table-wrap"
+        :style="pageSectionStyle('list_main')"
+      >
         <section v-if="!displayItems.length && !showFilterEmptyGuide" class="empty-guide">
           <p class="empty-title">{{ summaryStatus?.message || pageText('empty_title_default', '当前无待处理事项') }}</p>
           <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。') }}</p>
@@ -418,7 +450,11 @@
         </table>
       </section>
 
-      <section class="pager">
+      <section
+        v-if="pageSectionEnabled('list_main', true) && pageSectionTagIs('list_main', 'section')"
+        class="pager"
+        :style="pageSectionStyle('list_main')"
+      >
         <button class="link-btn" :disabled="loading || page <= 1" @click="goToPage(page - 1)">{{ pageText('pager_prev', '上一页') }}</button>
         <span>{{ pageText('pager_middle_prefix', '第 ') }}{{ page }}{{ pageText('pager_middle_sep', ' / ') }}{{ totalPages }}{{ pageText('pager_middle_suffix', ' 页') }}</span>
         <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">{{ pageText('pager_next', '下一页') }}</button>
@@ -439,6 +475,7 @@ import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspa
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionNodeByModel } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
@@ -446,6 +483,13 @@ const route = useRoute();
 const session = useSessionStore();
 const pageContract = usePageContract('my_work');
 const pageText = pageContract.text;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionOpenDefault = pageContract.sectionOpenDefault;
+const pageSectionTagIs = pageContract.sectionTagIs;
+const pageSectionStyle = pageContract.sectionStyle;
 
 const loading = ref(false);
 const errorText = ref('');
@@ -666,6 +710,7 @@ const groupedVisibleRetryItems = computed(() => {
   }
   return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
+const headerActions = computed(() => pageGlobalActions.value);
 let autoSectionAligned = false;
 
 function findRecommendedSectionKey() {
@@ -895,6 +940,35 @@ function goWorkbench() {
 
 function goRiskCockpit() {
   router.push({ path: '/s/projects.dashboard' }).catch(() => {});
+}
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: resolveWorkspaceContextQuery(),
+    onRefresh: load,
+    onFallback: async (key) => {
+      if (key === 'open_workbench') {
+        goWorkbench();
+        return true;
+      }
+      if (key === 'open_risk_dashboard') {
+        goRiskCockpit();
+        return true;
+      }
+      if (key === 'refresh_page' || key === 'refresh') {
+        await load();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled) {
+    setActionFeedback(pageText('enter_error_message_fallback', '功能入口暂时不可用'), true);
+  }
 }
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {

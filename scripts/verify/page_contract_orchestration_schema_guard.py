@@ -10,6 +10,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 SEMANTICS = ROOT / "addons/smart_core/core/orchestration_semantics.py"
+SECTIONS_OPTIONAL_PAGES = {"home"}
 
 REQUIRED_TOP_LEVEL = {
     "contract_version",
@@ -91,7 +92,9 @@ def _load_builder_module(path: Path) -> ModuleType:
 def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -> None:
     sections = page_obj.get("sections") if isinstance(page_obj.get("sections"), list) else []
     if not sections:
-        return
+        if page_key in SECTIONS_OPTIONAL_PAGES:
+            return
+        errors.append(f"pages.{page_key}.sections must be non-empty list")
 
     orch = page_obj.get("page_orchestration_v1")
     if not isinstance(orch, dict):
@@ -342,8 +345,6 @@ def main() -> int:
     for page_key, page_obj in pages.items():
         if not isinstance(page_obj, dict):
             errors.append(f"pages.{page_key} must be object")
-            continue
-        if "sections" not in page_obj:
             continue
         checked += 1
         _validate_page(str(page_key), page_obj, errors)
