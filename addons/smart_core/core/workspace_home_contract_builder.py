@@ -535,15 +535,19 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         },
         "zones": zones,
         "data_sources": {
-            "ds_hero": {"source_type": "computed", "provider": "workspace.hero"},
-            "ds_metrics": {"source_type": "computed", "provider": "workspace.metrics.summary"},
-            "ds_today_todos": {"source_type": "computed", "provider": "workspace.todo.today"},
-            "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts"},
-            "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary"},
-            "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups"},
-            "ds_capability_groups": {"source_type": "capability_registry", "provider": "workspace.capability.groups"},
-            "ds_advice": {"source_type": "computed", "provider": "workspace.advice"},
-            "ds_filters": {"source_type": "static", "provider": "workspace.filters"},
+            "ds_hero": {"source_type": "computed", "provider": "workspace.hero", "section_keys": ["hero"]},
+            "ds_metrics": {"source_type": "computed", "provider": "workspace.metrics.summary", "section_keys": ["metrics"]},
+            "ds_today_todos": {"source_type": "computed", "provider": "workspace.todo.today", "section_keys": ["today_actions"]},
+            "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts", "section_keys": ["risk"]},
+            "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary", "section_keys": ["ops"]},
+            "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups", "section_keys": ["scene_groups"]},
+            "ds_capability_groups": {
+                "source_type": "capability_registry",
+                "provider": "workspace.capability.groups",
+                "section_keys": ["group_overview"],
+            },
+            "ds_advice": {"source_type": "computed", "provider": "workspace.advice", "section_keys": ["advice"]},
+            "ds_filters": {"source_type": "static", "provider": "workspace.filters", "section_keys": ["filters"]},
         },
         "state_schema": {
             "tones": {
