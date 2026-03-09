@@ -1,38 +1,38 @@
 <template>
   <section class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
-    <header class="hero">
+    <header v-if="isHomeSectionEnabled('hero')" class="hero">
       <div class="hero-main">
         <h2>{{ heroTitle }}</h2>
         <p class="lead">{{ heroLead }}</p>
         <div class="hero-info-row">
           <p class="role-line">
-            <span>当前角色：{{ roleLabel }}</span>
+            <span>{{ homeLayoutText('hero.role_label', '当前角色') }}：{{ roleLabel }}</span>
             <span class="dot">·</span>
-            <span>默认入口：{{ roleLandingLabel }}</span>
-            <button class="inline-link" @click="openRoleLanding">打开默认入口</button>
+            <span>{{ homeLayoutText('hero.landing_label', '默认入口') }}：{{ roleLandingLabel }}</span>
+            <button class="inline-link" @click="openRoleLanding">{{ homeLayoutText('hero.open_landing_action', '打开默认入口') }}</button>
           </p>
           <div class="view-toggle">
-            <button class="my-work-btn" @click="goToMyWork">我的工作</button>
+            <button class="my-work-btn" @click="goToMyWork">{{ homeLayoutText('hero.open_my_work_action', '我的工作') }}</button>
             <button
               v-if="isAdmin"
               class="my-work-btn"
               @click="goToUsageAnalytics"
             >
-              使用分析
+              {{ homeLayoutText('hero.open_usage_action', '使用分析') }}
             </button>
-            <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">卡片</button>
-            <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">列表</button>
+            <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">{{ homeLayoutText('hero.view_mode_card', '卡片') }}</button>
+            <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">{{ homeLayoutText('hero.view_mode_list', '列表') }}</button>
           </div>
         </div>
         <p class="product-line">
           <span v-for="tag in heroProductTags" :key="`hero-tag-${tag}`" class="product-pill">{{ tag }}</span>
         </p>
         <p class="bundle-line">
-          <span>数据更新时间：{{ dataUpdatedAt }}</span>
+          <span>{{ homeLayoutText('hero.updated_at_label', '数据更新时间') }}：{{ dataUpdatedAt }}</span>
           <span class="dot">·</span>
           <span :class="partialDataNotice ? 'partial-data' : 'steady-data'">
-            {{ partialDataNotice || '当前运行平稳' }}
+            {{ partialDataNotice || homeLayoutText('hero.steady_notice', '当前运行平稳') }}
           </span>
         </p>
         <p v-if="partialDataDetailLine" class="bundle-line partial-data-detail">
@@ -47,7 +47,7 @@
       </div>
     </header>
 
-    <section class="value-grid" aria-label="核心价值区">
+    <section v-if="isHomeSectionEnabled('metrics')" class="value-grid" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
       <article v-for="metric in coreMetrics" :key="metric.key" class="value-card">
         <p class="value-label">{{ metric.label }}</p>
         <p class="value-number">{{ metric.value }}</p>
@@ -59,10 +59,10 @@
       </article>
     </section>
 
-    <section class="today-actions" aria-label="今日建议">
+    <section v-if="isHomeSectionEnabled('today_actions')" class="today-actions" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
       <header class="today-actions-header">
-        <h3>今日待办</h3>
-        <p>点击可直接进入处理界面。</p>
+        <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
+        <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
       </header>
       <div class="today-actions-grid">
         <article v-for="item in concreteTodos" :key="item.id" class="today-card">
@@ -73,36 +73,36 @@
             </span>
           </p>
           <p class="today-desc">{{ item.description }}</p>
-          <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
+          <p v-if="typeof item.count === 'number'" class="today-count">{{ homeLayoutText('today_actions.count_prefix', '待处理') }} {{ item.count }}</p>
           <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
-            {{ item.ready === false ? '即将开放' : todoActionLabel(item.title) }}
+            {{ item.ready === false ? homeLayoutText('today_actions.coming_soon_action', '即将开放') : todoActionLabel(item.title) }}
           </button>
         </article>
       </div>
     </section>
 
-    <section class="risk-section" aria-label="关键风险区">
+    <section v-if="isHomeSectionEnabled('risk')" class="risk-section" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
       <header class="risk-header">
-        <h3>关键风险</h3>
-        <p>10 秒识别整体风险态势。</p>
+        <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
+        <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
         <p class="risk-summary">{{ riskSummaryLine }}</p>
       </header>
       <div class="risk-grid">
         <article class="risk-card risk-red" :class="{ glow: riskBuckets.red >= 3 }">
-          <p>严重 ⚠</p>
+          <p>{{ homeLayoutText('risk.bucket.red', '严重 ⚠') }}</p>
           <strong>{{ riskBuckets.red }}</strong>
         </article>
         <article class="risk-card risk-amber" :class="{ glow: riskBuckets.amber >= 4 }">
-          <p>关注 ⏳</p>
+          <p>{{ homeLayoutText('risk.bucket.amber', '关注 ⏳') }}</p>
           <strong>{{ riskBuckets.amber }}</strong>
         </article>
         <article class="risk-card risk-green">
-          <p>正常 ✓</p>
+          <p>{{ homeLayoutText('risk.bucket.green', '正常 ✓') }}</p>
           <strong>{{ riskBuckets.green }}</strong>
         </article>
       </div>
       <div class="risk-trend">
-        <p class="risk-subtitle">风险趋势（7/30 天）</p>
+        <p class="risk-subtitle">{{ homeLayoutText('risk.trend_title', '风险趋势（7/30 天）') }}</p>
         <div class="trend-bars">
           <div v-for="(item, idx) in riskTrend" :key="`trend-${idx}`" class="trend-item">
             <span class="trend-label">{{ item.label }}</span>
@@ -112,67 +112,67 @@
         </div>
       </div>
       <div class="risk-source">
-        <p class="risk-subtitle">风险来源分布</p>
+        <p class="risk-subtitle">{{ homeLayoutText('risk.sources_title', '风险来源分布') }}</p>
         <div class="source-tags">
           <span v-for="item in riskSources" :key="`source-${item.label}`" class="source-tag">{{ item.label }} {{ item.count }}</span>
         </div>
       </div>
       <div class="risk-actions">
-        <p class="risk-subtitle">风险待处理清单</p>
+        <p class="risk-subtitle">{{ homeLayoutText('risk.actions_title', '风险待处理清单') }}</p>
         <div class="risk-action-list">
           <article v-for="item in riskActionItems" :key="item.id" class="risk-action-item">
             <p class="risk-action-title">{{ item.title }}</p>
             <p class="risk-action-desc">{{ item.description }}</p>
             <div class="risk-action-buttons">
-              <button @click="openRiskAction(item, 'detail')">看详情</button>
-              <button @click="openRiskAction(item, 'assign')">分派</button>
-              <button @click="openRiskAction(item, 'close')">关闭</button>
-              <button @click="openRiskAction(item, 'approve')">发起审批</button>
+              <button @click="openRiskAction(item, 'detail')">{{ homeLayoutText('risk.actions.detail', '看详情') }}</button>
+              <button @click="openRiskAction(item, 'assign')">{{ homeLayoutText('risk.actions.assign', '分派') }}</button>
+              <button @click="openRiskAction(item, 'close')">{{ homeLayoutText('risk.actions.close', '关闭') }}</button>
+              <button @click="openRiskAction(item, 'approve')">{{ homeLayoutText('risk.actions.approve', '发起审批') }}</button>
             </div>
           </article>
         </div>
       </div>
     </section>
 
-    <details class="secondary-panel">
-      <summary>项目经营概览</summary>
-      <section class="ops-section" aria-label="项目经营概览区">
+    <details v-if="isHomeSectionEnabled('ops')" class="secondary-panel">
+      <summary>{{ homeLayoutText('ops.title', '项目经营概览') }}</summary>
+      <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目经营概览区')">
         <div class="ops-grid">
           <article class="ops-card">
-            <p>合同额 vs 累计产值</p>
+            <p>{{ homeLayoutText('ops.compare.title', '合同额 vs 累计产值') }}</p>
             <div class="compare-line">
-              <span>合同额</span>
+              <span>{{ homeLayoutText('ops.compare.contract', '合同额') }}</span>
               <div class="compare-track"><div class="compare-fill contract" :style="{ width: `${opsBars.contract}%` }"></div></div>
               <strong>{{ opsBars.contract }}%</strong>
             </div>
             <div class="compare-line">
-              <span>累计产值</span>
+              <span>{{ homeLayoutText('ops.compare.output', '累计产值') }}</span>
               <div class="compare-track"><div class="compare-fill output" :style="{ width: `${opsBars.output}%` }"></div></div>
               <strong>{{ opsBars.output }}%</strong>
             </div>
           </article>
           <article class="ops-card">
-            <p>成本执行率</p>
+            <p>{{ homeLayoutText('ops.kpi.cost_rate', '成本执行率') }}</p>
             <h4>{{ opsKpi.costRate }}%</h4>
             <small>{{ trendText(opsKpi.costRateDelta) }}</small>
           </article>
           <article class="ops-card">
-            <p>资金支付比例</p>
+            <p>{{ homeLayoutText('ops.kpi.payment_rate', '资金支付比例') }}</p>
             <h4>{{ opsKpi.paymentRate }}%</h4>
             <small>{{ trendText(opsKpi.paymentRateDelta) }}</small>
           </article>
           <article class="ops-card">
-            <p>本月产值趋势</p>
+            <p>{{ homeLayoutText('ops.kpi.output_trend', '本月产值趋势') }}</p>
             <h4>{{ trendText(opsKpi.outputTrendDelta) }}</h4>
-            <small>基于当前可见业务数据</small>
+            <small>{{ homeLayoutText('ops.kpi.output_note', '基于当前可见业务数据') }}</small>
           </article>
         </div>
       </section>
     </details>
 
-    <details class="secondary-panel">
-      <summary>系统建议关注事项</summary>
-      <section class="advice-section" aria-label="系统建议关注事项">
+    <details v-if="isHomeSectionEnabled('advice')" class="secondary-panel">
+      <summary>{{ homeLayoutText('advice.title', '系统建议关注事项') }}</summary>
+      <section class="advice-section" :aria-label="homeLayoutText('advice.aria_label', '系统建议关注事项')">
         <div class="advice-list">
           <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
             <p class="advice-title">{{ item.title }}</p>
@@ -183,23 +183,23 @@
       </section>
     </details>
 
-    <section v-if="capabilityGroupCards.length" class="group-overview" aria-label="辅助入口区">
+    <section v-if="isHomeSectionEnabled('group_overview') && capabilityGroupCards.length" class="group-overview" aria-label="辅助入口区">
       <header class="group-overview-header">
-        <h3>辅助入口</h3>
-        <p>按业务域查看功能分组与可用状态。</p>
+        <h3>{{ homeLayoutText('group_overview.title', '辅助入口') }}</h3>
+        <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
       </header>
       <div class="group-overview-grid">
         <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card">
           <p class="group-title">{{ group.label }}</p>
-          <p class="group-meta">功能数 {{ group.capabilityCount }}</p>
+          <p class="group-meta">{{ homeLayoutText('group_overview.capability_count_prefix', '功能数') }} {{ group.capabilityCount }}</p>
           <p class="group-meta">
-            可用 {{ group.allowCount }} · 只读 {{ group.readonlyCount }} · 禁用 {{ group.denyCount }}
+            {{ homeLayoutText('group_overview.allow_prefix', '可用') }} {{ group.allowCount }} · {{ homeLayoutText('group_overview.readonly_prefix', '只读') }} {{ group.readonlyCount }} · {{ homeLayoutText('group_overview.deny_prefix', '禁用') }} {{ group.denyCount }}
           </p>
         </article>
       </div>
     </section>
 
-    <section class="filters">
+    <section v-if="isHomeSectionEnabled('filters')" class="filters">
       <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
         <p class="status-title">进入失败：{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
@@ -331,7 +331,7 @@
       </template>
     </div>
 
-    <div v-else class="scene-groups">
+    <div v-else-if="isHomeSectionEnabled('scene_groups')" class="scene-groups">
       <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
         <header class="scene-group-header">
           <button class="scene-toggle" @click="toggleSceneGroup(group.sceneKey)">
@@ -490,6 +490,33 @@ const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
 const capabilityGroups = computed(() => session.capabilityGroups);
 const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);
+const workspaceLayout = computed(() => (
+  workspaceHome.value.layout && typeof workspaceHome.value.layout === 'object'
+    ? workspaceHome.value.layout as Record<string, unknown>
+    : {}
+));
+const workspaceLayoutTexts = computed(() => (
+  workspaceLayout.value.texts && typeof workspaceLayout.value.texts === 'object'
+    ? workspaceLayout.value.texts as Record<string, unknown>
+    : {}
+));
+const workspaceLayoutActions = computed(() => (
+  workspaceLayout.value.actions && typeof workspaceLayout.value.actions === 'object'
+    ? workspaceLayout.value.actions as Record<string, unknown>
+    : {}
+));
+const workspaceLayoutSections = computed(() => {
+  const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
+  const map = new Map<string, boolean>();
+  source.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const row = item as Record<string, unknown>;
+    const key = asText(row.key);
+    if (!key) return;
+    map.set(key, row.enabled !== false);
+  });
+  return map;
+});
 const workspaceHero = computed(() => (workspaceHome.value.hero && typeof workspaceHome.value.hero === 'object'
   ? workspaceHome.value.hero as Record<string, unknown>
   : {}));
@@ -593,6 +620,17 @@ const searchKeyword = computed(() => searchText.value.trim());
 const workspaceContextQuery = computed(() => {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 });
+
+function homeLayoutText(key: string, fallback: string) {
+  const value = asText(workspaceLayoutTexts.value[key]);
+  return value || fallback;
+}
+
+function isHomeSectionEnabled(key: string) {
+  const sectionMap = workspaceLayoutSections.value;
+  if (!sectionMap.size) return true;
+  return sectionMap.get(key) !== false;
+}
 
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
@@ -929,12 +967,22 @@ function trendText(delta: number) {
 
 function todoActionLabel(title: string) {
   const text = String(title || '').toLowerCase();
-  if (includesAny(text, ['付款', '支付', 'approval', '审批'])) return '审核付款申请';
-  if (includesAny(text, ['合同', 'contract'])) return '查看合同异常';
-  if (includesAny(text, ['风险', 'risk'])) return '处理风险事项';
-  if (includesAny(text, ['变更', 'change'])) return '确认变更事项';
-  if (includesAny(text, ['逾期', '任务', 'todo'])) return '处理逾期任务';
-  return '查看详情';
+  if (includesAny(text, ['付款', '支付', 'approval', '审批'])) {
+    return homeLayoutText('actions.todo_approval', '审核付款申请');
+  }
+  if (includesAny(text, ['合同', 'contract'])) {
+    return homeLayoutText('actions.todo_contract', '查看合同异常');
+  }
+  if (includesAny(text, ['风险', 'risk'])) {
+    return homeLayoutText('actions.todo_risk', '处理风险事项');
+  }
+  if (includesAny(text, ['变更', 'change'])) {
+    return homeLayoutText('actions.todo_change', '确认变更事项');
+  }
+  if (includesAny(text, ['逾期', '任务', 'todo'])) {
+    return homeLayoutText('actions.todo_overdue', '处理逾期任务');
+  }
+  return asText(workspaceLayoutActions.value.todo_default) || homeLayoutText('actions.todo_default', '查看详情');
 }
 
 const systemAdvice = computed<AdviceItem[]>(() => {

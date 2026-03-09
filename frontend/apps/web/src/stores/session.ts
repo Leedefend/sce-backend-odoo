@@ -62,6 +62,11 @@ export interface ProductFacts {
 
 export interface WorkspaceHomeContract {
   schema_version?: string;
+  layout?: {
+    sections?: Array<{ key?: string; enabled?: boolean }>;
+    texts?: Record<string, unknown>;
+    actions?: Record<string, unknown>;
+  };
   hero?: Record<string, unknown>;
   metrics?: unknown[];
   today_actions?: unknown[];
