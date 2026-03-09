@@ -1473,6 +1473,10 @@ verify.page_contract.role_orchestration_variance.guard: guard.prod.forbid
 verify.page_contract.action_schema_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/page_contract_action_schema_semantics_guard.py
 
+.PHONY: verify.page_contract.data_source_semantics.guard
+verify.page_contract.data_source_semantics.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_data_source_semantics_guard.py
+
 .PHONY: verify.page_contract.text_key_coverage.guard
 verify.page_contract.text_key_coverage.guard: guard.prod.forbid
 	@python3 scripts/verify/page_contract_text_key_coverage_guard.py
@@ -1526,6 +1530,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.page_contract.orchestration_schema.guard \
 	verify.page_contract.role_orchestration_variance.guard \
 	verify.page_contract.action_schema_semantics.guard \
+	verify.page_contract.data_source_semantics.guard \
 	verify.page_contract.text_key_coverage.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
