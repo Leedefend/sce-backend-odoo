@@ -1660,6 +1660,37 @@ async function fetchCoreMetrics() {
   const deniedModels = new Set<string>();
   const deniedReasonCodes = new Set<string>();
   const deniedIssueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
+  const currentGroups = new Set((session.user?.groups_xmlids || []).map((row) => String(row || '').trim()).filter(Boolean));
+  const hasAnyGroup = (groups: string[]) => groups.some((group) => currentGroups.has(group));
+  const canReadModel = (model: string) => {
+    if (currentGroups.has('base.group_system')) return true;
+    if (model === 'construction.contract') {
+      return hasAnyGroup([
+        'smart_construction_core.group_sc_cap_contract_read',
+        'smart_construction_core.group_sc_cap_contract_user',
+        'smart_construction_core.group_sc_cap_contract_manager',
+        'smart_construction_core.group_sc_cap_finance_read',
+        'smart_construction_core.group_sc_cap_finance_user',
+        'smart_construction_core.group_sc_cap_finance_manager',
+        'smart_construction_custom.group_sc_role_contract_read',
+        'smart_construction_custom.group_sc_role_contract_user',
+        'smart_construction_custom.group_sc_role_contract_manager',
+      ]);
+    }
+    return true;
+  };
+  const markModelDenied = (model: string, reasonCode: string) => {
+    deniedModels.add(model);
+    deniedReasonCodes.add(reasonCode);
+    const key = `${model}:list:${reasonCode}`;
+    const prev = deniedIssueCounter.get(key);
+    deniedIssueCounter.set(key, {
+      model,
+      op: 'list',
+      reasonCode,
+      count: (prev?.count || 0) + 1,
+    });
+  };
   const collectDeniedContext = (fallbackModel: string, error: unknown) => {
     deniedModels.add(fallbackModel);
     const issue = collectErrorContextIssue(deniedIssueCounter, error, { model: fallbackModel });
@@ -1694,7 +1725,12 @@ async function fetchCoreMetrics() {
 
   const [projectCount, contractAmount, outputValue, riskModelCount] = await Promise.all([
     readTotal('project.project'),
-    readAmount('construction.contract', ['amount_total', 'contract_amount', 'amount_untaxed']),
+    canReadModel('construction.contract')
+      ? readAmount('construction.contract', ['amount_total', 'contract_amount', 'amount_untaxed'])
+      : (() => {
+          markModelDenied('construction.contract', 'PERMISSION_DENIED');
+          return Promise.resolve(0);
+        })(),
     readAmount('sc.settlement.order', ['amount_total', 'amount', 'total_amount']),
     readTotal('project.risk'),
   ]);
