@@ -754,7 +754,7 @@ async function load() {
       activeSection.value = sections.value[0].key;
     }
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '请求失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_request_failed', '请求失败');
     statusError.value = buildStatusError(err, errorText.value);
     summaryVisibility.value = null;
   } finally {
@@ -809,7 +809,7 @@ function saveFilterPreset() {
     actionFeedback.value = '常用筛选已保存';
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '保存常用筛选失败';
+    actionFeedback.value = pageText('feedback_save_preset_failed', '保存常用筛选失败');
     actionFeedbackError.value = true;
   }
 }
@@ -839,7 +839,7 @@ function applyFilterPreset() {
     page.value = 1;
     void load();
   } catch {
-    actionFeedback.value = '应用常用筛选失败';
+    actionFeedback.value = pageText('feedback_apply_preset_failed', '应用常用筛选失败');
     actionFeedbackError.value = true;
   }
 }
@@ -851,7 +851,7 @@ function clearFilterPreset() {
     actionFeedback.value = '已清除常用筛选';
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '清除常用筛选失败';
+    actionFeedback.value = pageText('feedback_clear_preset_failed', '清除常用筛选失败');
     actionFeedbackError.value = true;
   }
 }

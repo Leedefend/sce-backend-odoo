@@ -131,7 +131,7 @@ async function loadPackages() {
     packages.value = Array.isArray(res.data.items) ? res.data.items : [];
     traceId.value = res.traceId || '';
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'load packages failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_load_failed', 'load packages failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
@@ -150,7 +150,7 @@ async function runDryRun() {
     dryRunResult.value = res.data;
     traceId.value = res.traceId || '';
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'dry-run failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_dry_run_failed', 'dry-run failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
@@ -162,7 +162,7 @@ async function runDryRun() {
 async function runImport() {
   const reason = importReason.value.trim();
   if (!reason) {
-    errorText.value = 'reason is required for import';
+    errorText.value = pageText('error_reason_required', 'reason is required for import');
     return;
   }
   busy.value = true;
@@ -178,7 +178,7 @@ async function runImport() {
     traceId.value = res.traceId || '';
     await loadPackages();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'import failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_import_failed', 'import failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
@@ -201,7 +201,7 @@ async function runExport() {
     exportResult.value = res.data.package;
     traceId.value = res.traceId || '';
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'export failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_export_failed', 'export failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
