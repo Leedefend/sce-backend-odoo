@@ -9,7 +9,25 @@ from urllib.parse import parse_qs, urlparse
 
 from odoo import fields
 
-BLOCK_TYPES = (
+def _load_semantics_registry() -> Dict[str, Any]:
+    registry_path = Path(__file__).with_name("orchestration_semantics.py")
+    try:
+        spec = spec_from_file_location("smart_core_orchestration_semantics_workspace_home", registry_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return {
+            "BLOCK_TYPES": tuple(getattr(module, "BLOCK_TYPES", ()) or ()),
+            "STATE_TONES": tuple(getattr(module, "STATE_TONES", ()) or ()),
+            "PROGRESS_STATES": tuple(getattr(module, "PROGRESS_STATES", ()) or ()),
+        }
+    except Exception:
+        return {}
+
+
+_SEM = _load_semantics_registry()
+BLOCK_TYPES = _SEM.get("BLOCK_TYPES") or (
     "hero_metric",
     "metric_row",
     "todo_list",
@@ -20,9 +38,8 @@ BLOCK_TYPES = (
     "record_summary",
     "activity_feed",
 )
-
-STATE_TONES = ("success", "warning", "danger", "info", "neutral")
-PROGRESS_STATES = ("overdue", "blocked", "pending", "running", "completed")
+STATE_TONES = _SEM.get("STATE_TONES") or ("success", "warning", "danger", "info", "neutral")
+PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending", "running", "completed")
 _ACTION_TARGET_RESOLVER = None
 
 

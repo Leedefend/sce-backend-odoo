@@ -6,9 +6,25 @@ from pathlib import Path
 import re
 from typing import Any, Dict
 
+def _load_semantics_registry() -> Dict[str, Any]:
+    registry_path = Path(__file__).with_name("orchestration_semantics.py")
+    try:
+        spec = spec_from_file_location("smart_core_orchestration_semantics_page_contracts", registry_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return {
+            "STATE_TONES": tuple(getattr(module, "STATE_TONES", ()) or ()),
+            "PROGRESS_STATES": tuple(getattr(module, "PROGRESS_STATES", ()) or ()),
+        }
+    except Exception:
+        return {}
 
-STATE_TONES = ("success", "warning", "danger", "info", "neutral")
-PROGRESS_STATES = ("overdue", "blocked", "pending", "running", "completed")
+
+_SEM = _load_semantics_registry()
+STATE_TONES = _SEM.get("STATE_TONES") or ("success", "warning", "danger", "info", "neutral")
+PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending", "running", "completed")
 SUPPORTED_ROLE_CODES = {"pm", "finance", "owner"}
 _ACTION_TARGET_RESOLVER = None
 
