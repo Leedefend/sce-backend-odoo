@@ -27,6 +27,7 @@ STATE_TONES = _SEM.get("STATE_TONES") or ("success", "warning", "danger", "info"
 PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending", "running", "completed")
 SUPPORTED_ROLE_CODES = {"pm", "finance", "owner"}
 _ACTION_TARGET_RESOLVER = None
+_DATA_PROVIDER_MODULE = None
 
 
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
@@ -50,6 +51,24 @@ def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     return {"kind": "scene.key", "scene_key": fallback_scene}
 
 
+def _load_data_provider():
+    global _DATA_PROVIDER_MODULE
+    if _DATA_PROVIDER_MODULE is not None:
+        return _DATA_PROVIDER_MODULE
+    provider_path = Path(__file__).with_name("page_orchestration_data_provider.py")
+    try:
+        spec = spec_from_file_location("smart_core_page_orchestration_data_provider", provider_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _DATA_PROVIDER_MODULE = module
+        return module
+    except Exception:
+        _DATA_PROVIDER_MODULE = False
+        return None
+
+
 def _normalize_role_code(data: Dict[str, Any]) -> str:
     role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
     role_code = str(role_surface.get("role_code") or "").strip().lower()
@@ -59,6 +78,13 @@ def _normalize_role_code(data: Dict[str, Any]) -> str:
 
 
 def _normalize_page_type(page_key: str) -> str:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_page_type", None)
+        if callable(fn):
+            value = str(fn(page_key) or "").strip()
+            if value:
+                return value
     key = str(page_key or "").strip().lower()
     if key in {"home", "workbench"}:
         return "workspace"
@@ -74,6 +100,13 @@ def _normalize_page_type(page_key: str) -> str:
 
 
 def _page_audience(page_key: str) -> list[str]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_page_audience", None)
+        if callable(fn):
+            value = fn(page_key)
+            if isinstance(value, list) and value:
+                return value
     key = str(page_key or "").strip().lower()
     if key in {"usage_analytics", "scene_health"}:
         return ["executive", "owner", "project_manager"]
@@ -85,6 +118,13 @@ def _page_audience(page_key: str) -> list[str]:
 
 
 def _role_section_policy(role_code: str) -> Dict[str, Dict[str, list[str]]]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_role_section_policy", None)
+        if callable(fn):
+            value = fn(role_code)
+            if isinstance(value, dict):
+                return value
     policies: Dict[str, Dict[str, Dict[str, list[str]]]] = {
         "pm": {
             "usage_analytics": {"disable": ["tables_role_user"]},
@@ -126,6 +166,13 @@ def _apply_role_section_policy(payload: Dict[str, Any], role_code: str) -> None:
 
 
 def _role_zone_order(role_code: str, page_type: str, page_key: str = "") -> list[str]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_role_zone_order", None)
+        if callable(fn):
+            value = fn(role_code, page_type, page_key)
+            if isinstance(value, list) and value:
+                return value
     page = str(page_key or "").strip().lower()
     if page == "action":
         if role_code == "finance":
@@ -143,6 +190,13 @@ def _role_zone_order(role_code: str, page_type: str, page_key: str = "") -> list
 
 
 def _role_focus_sections(role_code: str, page_key: str) -> list[str]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_role_focus_sections", None)
+        if callable(fn):
+            value = fn(role_code, page_key)
+            if isinstance(value, list):
+                return value
     page = str(page_key or "").strip().lower()
     mapping: Dict[str, Dict[str, list[str]]] = {
         "pm": {
@@ -168,6 +222,13 @@ def _role_focus_sections(role_code: str, page_key: str) -> list[str]:
 
 
 def _zone_from_tag(tag: str) -> Dict[str, str]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_zone_from_tag", None)
+        if callable(fn):
+            payload = fn(tag)
+            if isinstance(payload, dict) and payload:
+                return payload
     normalized = str(tag or "").strip().lower()
     if normalized == "header":
         return {"key": "hero", "title": "页面头部", "zone_type": "hero", "display_mode": "stack"}
@@ -179,6 +240,13 @@ def _zone_from_tag(tag: str) -> Dict[str, str]:
 
 
 def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[str, Any]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_semantic_from_section", None)
+        if callable(fn):
+            payload = fn(page_key, section_key, tag)
+            if isinstance(payload, dict) and payload:
+                return payload
     key = str(section_key or "").strip().lower()
     page = str(page_key or "").strip().lower()
     normalized_tag = str(tag or "").strip().lower()
@@ -208,6 +276,13 @@ def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[st
 
 
 def _action_templates(section_key: str) -> list[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_action_templates", None)
+        if callable(fn):
+            payload = fn(section_key)
+            if isinstance(payload, list):
+                return payload
     key = str(section_key or "").strip().lower()
     if "risk" in key:
         return [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}]
@@ -225,6 +300,13 @@ def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
 
 
 def _data_source_key(section_key: str) -> str:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_section_data_source_key", None)
+        if callable(fn):
+            value = str(fn(section_key) or "").strip()
+            if value:
+                return value
     token = re.sub(r"[^a-z0-9_]+", "_", str(section_key or "").strip().lower())
     token = re.sub(r"_+", "_", token).strip("_")
     if not token:
@@ -232,7 +314,45 @@ def _data_source_key(section_key: str) -> str:
     return f"ds_section_{token}"
 
 
+def _base_data_sources() -> Dict[str, Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_base_data_sources", None)
+        if callable(fn):
+            payload = fn()
+            if isinstance(payload, dict) and payload:
+                return payload
+    return {
+        "ds_sections": {"source_type": "static", "provider": "page_contract.sections", "section_keys": ["_all"]},
+    }
+
+
+def _section_data_source(page_key: str, section_key: str, section_tag: str) -> Dict[str, Any]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_section_data_source", None)
+        if callable(fn):
+            payload = fn(page_key, section_key, section_tag)
+            if isinstance(payload, dict) and payload:
+                return payload
+    return {
+        "source_type": "scene_context",
+        "provider": "page_contract.section",
+        "page_key": page_key,
+        "section_key": section_key,
+        "section_tag": section_tag,
+        "section_keys": [section_key],
+    }
+
+
 def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_default_page_actions", None)
+        if callable(fn):
+            payload = fn(page_key)
+            if isinstance(payload, list) and payload:
+                return payload
     key = str(page_key or "").strip().lower()
     if key == "home":
         return [
@@ -277,9 +397,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
     audience = _page_audience(page_key)
     page_type = _normalize_page_type(page_key)
     zone_buckets: Dict[str, Dict[str, Any]] = {}
-    data_sources: Dict[str, Dict[str, Any]] = {
-        "ds_sections": {"source_type": "static", "provider": "page_contract.sections", "section_keys": ["_all"]},
-    }
+    data_sources: Dict[str, Dict[str, Any]] = _base_data_sources()
     focus_sections = {key: idx + 1 for idx, key in enumerate(_role_focus_sections(role_code, page_key))}
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):
@@ -309,14 +427,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
 
         semantic = _semantic_from_section(page_key, section_key, tag)
         data_source = _data_source_key(section_key)
-        data_sources[data_source] = {
-            "source_type": "scene_context",
-            "provider": "page_contract.section",
-            "page_key": page_key,
-            "section_key": section_key,
-            "section_tag": tag,
-            "section_keys": [section_key],
-        }
+        data_sources[data_source] = _section_data_source(page_key, section_key, tag)
         zone["blocks"].append(
             {
                 "key": f"{page_key}.{section_key}",

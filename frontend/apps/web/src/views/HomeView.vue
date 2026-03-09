@@ -1,5 +1,12 @@
 <template>
-  <section class="capability-home">
+  <PageRenderer
+    v-if="useUnifiedHomeRenderer"
+    :contract="homeOrchestrationContract"
+    :datasets="homeOrchestrationDatasets"
+    @action="handleHomeBlockAction"
+  />
+
+  <section v-else class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
     <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :class="homeSectionClass('hero')" :style="homeSectionStyle('hero')">
       <div class="hero-main">
@@ -400,6 +407,8 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import PageRenderer from '../components/page/PageRenderer.vue';
+import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type MetricLevel = 'green' | 'amber' | 'red';
@@ -480,6 +489,12 @@ const pageTextByPageContract = pageContract.text;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
+const homeOrchestrationActions = computed<Record<string, unknown>>(() => {
+  const actionSchema = workspacePageOrchestrationV1.value.action_schema;
+  if (!actionSchema || typeof actionSchema !== 'object') return {};
+  const actions = (actionSchema as Record<string, unknown>).actions;
+  return actions && typeof actions === 'object' ? actions as Record<string, unknown> : {};
+});
 const pageText = (key: string, fallback: string) => pageTextByPageContract(key, fallback);
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
@@ -577,6 +592,17 @@ const workspacePageOrchestrationV1DataSources = computed(() => (
     ? workspacePageOrchestrationV1.value.data_sources as Record<string, unknown>
     : {}
 ));
+const homeOrchestrationContract = computed<PageOrchestrationContract>(() => {
+  return workspacePageOrchestrationV1.value as PageOrchestrationContract;
+});
+const useUnifiedHomeRenderer = computed(() => {
+  if (asText(route.query.legacy_home) === '1') return false;
+  const contract = homeOrchestrationContract.value || {};
+  const hasV1 = asText(contract.contract_version) === 'page_orchestration_v1';
+  const isDashboard = asText(contract.scene_key) === 'portal.dashboard';
+  const zones = Array.isArray(contract.zones) ? contract.zones : [];
+  return hasV1 && isDashboard && zones.length > 0;
+});
 const orchestrationBlocks = computed(() => {
   const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
     ? workspacePageOrchestrationV1.value.zones
@@ -1418,6 +1444,75 @@ const groupedEntries = computed(() => {
   return [{ sceneKey: '__recent__', sceneTitle: pageText('recent_group_title', '最近使用'), sceneSummary: '', items: recentItems }, ...grouped];
 });
 const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
+const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
+  const readyEntries = entries.value
+    .filter((entry) => entry.state === 'READY')
+    .slice(0, 12)
+    .map((entry) => ({
+      id: entry.id,
+      key: entry.key,
+      title: entry.title,
+      hint: entry.subtitle,
+      scene_key: entry.sceneKey,
+      route: entry.route,
+      action_id: entry.targetActionId,
+      menu_id: entry.targetMenuId,
+      entry_id: entry.id,
+    }));
+  const capabilityEntries = capabilityGroupCards.value
+    .slice(0, 8)
+    .map((group) => ({
+      id: group.key,
+      key: group.key,
+      title: group.label,
+      hint: `${homeLayoutText('group_overview.capability_count_prefix', '功能数')} ${group.capabilityCount}`,
+      action_key: '',
+    }));
+  const riskAlerts = riskActionItems.value.slice(0, 10).map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    tone: 'danger',
+    scene_key: item.sceneKey,
+    path: item.path,
+    query: item.query,
+    entry_key: item.entryKey,
+  }));
+  return {
+    ds_hero: {
+      title: heroTitle.value,
+      lead: heroLead.value,
+      role_label: roleLabel.value,
+      landing_label: roleLandingLabel.value,
+      updated_at: dataUpdatedAt.value,
+      status_notice: partialDataNotice.value,
+      status_detail: partialDataDetailLine.value,
+    },
+    ds_metrics: coreMetrics.value,
+    ds_today_todos: concreteTodos.value.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      tone: item.tone || 'warning',
+      action_label: todoActionLabel(item.title),
+      entry_id: item.entryId,
+      action_key: 'open_scene',
+    })),
+    ds_risk_alerts: riskAlerts,
+    ds_ops_progress: {
+      bars: opsBars.value,
+      kpi: opsKpi.value,
+      summary: riskSummaryLine.value,
+    },
+    ds_scene_groups: readyEntries,
+    ds_capability_groups: capabilityEntries,
+    ds_advice: systemAdvice.value,
+    ds_filters: {
+      result_summary: resultSummaryText.value,
+      active_filters: activeFilterChips.value,
+    },
+  };
+});
 
 const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
@@ -1501,6 +1596,92 @@ function actionLabel(entry: CapabilityEntry) {
   if (includesAny(mergeText, keywordList('action_enter_keywords_change', 'change,变更'))) return pageText('action_enter_change', '确认变更事项');
   if (includesAny(mergeText, keywordList('action_enter_keywords_task', 'task,任务,todo,待办'))) return pageText('action_enter_task', '处理任务');
   return pageText('action_enter_default', '进入处理');
+}
+
+function orchestrationActionIntent(key: string, fallback = 'ui.contract') {
+  const row = homeOrchestrationActions.value[key];
+  if (!row || typeof row !== 'object') return fallback;
+  const intent = asText((row as Record<string, unknown>).intent);
+  return intent || fallback;
+}
+
+function orchestrationActionTarget(key: string) {
+  const row = homeOrchestrationActions.value[key];
+  if (!row || typeof row !== 'object') return {};
+  const target = (row as Record<string, unknown>).target;
+  return target && typeof target === 'object' ? target as Record<string, unknown> : {};
+}
+
+function findEntryForActionItem(item: Record<string, unknown>) {
+  const entryId = asText(item.entry_id || item.entryId);
+  if (entryId) {
+    const byId = entries.value.find((entry) => entry.id === entryId);
+    if (byId) return byId;
+  }
+  const entryKey = asText(item.entry_key || item.entryKey || item.key);
+  if (entryKey) {
+    const byKey = entries.value.find((entry) => entry.key === entryKey && entry.state === 'READY');
+    if (byKey) return byKey;
+  }
+  const sceneKey = asText(item.scene_key || item.sceneKey);
+  if (sceneKey) {
+    const byScene = entries.value.find((entry) => entry.sceneKey === sceneKey && entry.state === 'READY');
+    if (byScene) return byScene;
+  }
+  return null;
+}
+
+async function handleHomeBlockAction(event: PageBlockActionEvent) {
+  const actionKey = asText(event.actionKey);
+  const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
+  const linkedEntry = findEntryForActionItem(item);
+  if (linkedEntry) {
+    await openScene(linkedEntry);
+    return;
+  }
+
+  const path = asText(item.path || item.route);
+  if (path) {
+    await router.push({ path, query: normalizeContextQuery(item.query) || workspaceContextQuery.value });
+    return;
+  }
+
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: orchestrationActionIntent,
+    actionTarget: orchestrationActionTarget,
+    query: workspaceContextQuery.value,
+    onRefresh: async () => {
+      await session.bootstrap();
+    },
+    onFallback: async (key) => {
+      if (key === 'open_my_work') {
+        goToMyWork();
+        return true;
+      }
+      if (key === 'open_landing') {
+        openRoleLanding();
+        return true;
+      }
+      if (key === 'open_risk_dashboard') {
+        await router.push({ path: '/s/portal.lifecycle', query: workspaceContextQuery.value });
+        return true;
+      }
+      if (key === 'open_scene') {
+        const sceneKey = asText(item.scene_key || item.sceneKey);
+        if (sceneKey) {
+          await router.push({ path: `/s/${sceneKey}`, query: workspaceContextQuery.value });
+          return true;
+        }
+      }
+      return false;
+    },
+  });
+
+  if (!handled && actionKey === 'refresh') {
+    await session.bootstrap();
+  }
 }
 
 async function openScene(entry: CapabilityEntry) {
