@@ -7,6 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 PAGE_CONTRACT_TS = ROOT / "frontend/apps/web/src/app/pageContract.ts"
 PAGE_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
+ACTION_TARGET_SCHEMA = ROOT / "addons/smart_core/core/action_target_schema.py"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 SCENE_HEALTH_VIEW = ROOT / "frontend/apps/web/src/views/SceneHealthView.vue"
 USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
@@ -35,6 +36,7 @@ def _expect(text: str, scope: str, tokens: list[str], errors: list[str]) -> None
 def main() -> int:
     page_contract_text = _read(PAGE_CONTRACT_TS)
     page_builder_text = _read(PAGE_BUILDER)
+    action_target_schema_text = _read(ACTION_TARGET_SCHEMA)
     workbench_text = _read(WORKBENCH_VIEW)
     scene_health_text = _read(SCENE_HEALTH_VIEW)
     usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
@@ -49,6 +51,8 @@ def main() -> int:
         errors.append(f"missing file: {PAGE_BUILDER.relative_to(ROOT).as_posix()}")
     if not workbench_text:
         errors.append(f"missing file: {WORKBENCH_VIEW.relative_to(ROOT).as_posix()}")
+    if not action_target_schema_text:
+        errors.append(f"missing file: {ACTION_TARGET_SCHEMA.relative_to(ROOT).as_posix()}")
     if not scene_health_text:
         errors.append(f"missing file: {SCENE_HEALTH_VIEW.relative_to(ROOT).as_posix()}")
     if not usage_analytics_text:
@@ -98,13 +102,28 @@ def main() -> int:
         [
             '"action_schema": {"actions": action_schema_actions},',
             '"actions": _action_templates(section_key),',
+            "def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:",
+            'helper_path = Path(__file__).with_name("action_target_schema.py")',
             "def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:",
             'if key == "home":',
             '{"key": "open_usage_analytics", "label": "使用分析", "intent": "ui.contract"}',
-            'if key == "open_usage_analytics":',
-            '{"kind": "route.path", "path": "/admin/usage-analytics"}',
             '{"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"}',
             'if key in {"scene_health", "usage_analytics", "scene_packages"}:',
+        ],
+        errors,
+    )
+    _expect(
+        action_target_schema_text,
+        "action_target_schema.py",
+        [
+            "def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:",
+            'if key == "open_usage_analytics":',
+            'return route_path_target("/admin/usage-analytics")',
+            'if key in {"refresh_page", "refresh"}:',
+            "return page_refresh_target()",
+            'if key == "open_menu":',
+            "return menu_first_reachable_target()",
+            "return scene_target(page)",
         ],
         errors,
     )

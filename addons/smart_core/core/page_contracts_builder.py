@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 import re
 from typing import Any, Dict
 
@@ -8,6 +10,28 @@ from typing import Any, Dict
 STATE_TONES = ("success", "warning", "danger", "info", "neutral")
 PROGRESS_STATES = ("overdue", "blocked", "pending", "running", "completed")
 SUPPORTED_ROLE_CODES = {"pm", "finance", "owner"}
+_ACTION_TARGET_RESOLVER = None
+
+
+def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    global _ACTION_TARGET_RESOLVER
+    if callable(_ACTION_TARGET_RESOLVER):
+        return _ACTION_TARGET_RESOLVER(action_key, page_key)
+    helper_path = Path(__file__).with_name("action_target_schema.py")
+    try:
+        spec = spec_from_file_location("smart_core_action_target_schema_page_contracts", helper_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        resolver = getattr(module, "resolve_action_target", None)
+        if callable(resolver):
+            _ACTION_TARGET_RESOLVER = resolver
+            return resolver(action_key, page_key)
+    except Exception:
+        pass
+    fallback_scene = str(page_key or "").strip().lower() or "portal.dashboard"
+    return {"kind": "scene.key", "scene_key": fallback_scene}
 
 
 def _normalize_role_code(data: Dict[str, Any]) -> str:
@@ -181,30 +205,7 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
 
 
 def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
-    def _scene_target(scene_key: str) -> Dict[str, Any]:
-        return {"kind": "scene.key", "scene_key": scene_key}
-
-    key = str(action_key or "").strip().lower()
-    page = str(page_key or "").strip().lower()
-    if key == "open_risk_dashboard":
-        return _scene_target("projects.dashboard")
-    if key == "open_my_work":
-        return _scene_target("my_work.workspace")
-    if key == "apply_filters":
-        return _scene_target(page)
-    if key == "open_list":
-        if page in {"usage_analytics", "scene_health"}:
-            return _scene_target(page)
-        return _scene_target("projects.list")
-    if key == "open_workbench":
-        return _scene_target("portal.dashboard")
-    if key == "open_menu":
-        return {"kind": "menu.first_reachable"}
-    if key == "refresh_page":
-        return {"kind": "page.refresh"}
-    if key == "open_usage_analytics":
-        return {"kind": "route.path", "path": "/admin/usage-analytics"}
-    return _scene_target(page)
+    return _shared_action_target(action_key, page_key)
 
 
 def _data_source_key(section_key: str) -> str:
