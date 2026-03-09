@@ -74,6 +74,16 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             errors.append(f"{prefix}.provider must be non-empty")
         if not isinstance(section_keys, list) or not [str(item).strip() for item in section_keys if str(item).strip()]:
             errors.append(f"{prefix}.section_keys must be non-empty list")
+        if source_type == "api.data":
+            intent = str(ds.get("intent") or "").strip()
+            model = str(ds.get("model") or "").strip()
+            if intent != "api.data":
+                errors.append(f"{prefix}.intent must be api.data when source_type=api.data")
+            if not model:
+                errors.append(f"{prefix}.model required when source_type=api.data")
+            params = ds.get("params")
+            if params is not None and not isinstance(params, dict):
+                errors.append(f"{prefix}.params must be object when present")
 
     zones = orch.get("zones") if isinstance(orch.get("zones"), list) else []
     for zone_idx, zone in enumerate(zones):

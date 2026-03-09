@@ -199,6 +199,20 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
             section_keys = ds.get("section_keys")
             if not isinstance(section_keys, list) or not [str(item).strip() for item in section_keys if str(item).strip()]:
                 errors.append(f"{dprefix}.section_keys must be non-empty list")
+            if source_type == "api.data":
+                intent = str(ds.get("intent") or "").strip()
+                model = str(ds.get("model") or "").strip()
+                if intent != "api.data":
+                    errors.append(f"{dprefix}.intent must be api.data when source_type=api.data")
+                if not model:
+                    errors.append(f"{dprefix}.model required when source_type=api.data")
+                params = ds.get("params")
+                if params is not None and not isinstance(params, dict):
+                    errors.append(f"{dprefix}.params must be object when present")
+            if source_type == "capability_registry":
+                group_key = str(ds.get("group_key") or "").strip()
+                if group_key and not group_key.replace("_", "").isalnum():
+                    errors.append(f"{dprefix}.group_key invalid: {group_key}")
             if source_type in {"computed", "scene_context", "capability_registry", "static"} and not provider.startswith("workspace."):
                 errors.append(f"{dprefix}.provider must start with workspace.")
     if not isinstance(state_schema, dict):
