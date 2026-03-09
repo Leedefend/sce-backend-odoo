@@ -260,7 +260,7 @@ class UiContractHandler(BaseIntentHandler):
 
         view_id = action.view_id.id if action.view_id else None
         if not view_id:
-            View = self.env["ir.ui.view"].with_context(ctx)
+            View = self.env["ir.ui.view"].sudo().with_context(ctx)
             v = View.search([("model","=",model),("type","=",primary_vm)], limit=1, order="priority,id")
             view_id = v.id or None
 
@@ -268,7 +268,7 @@ class UiContractHandler(BaseIntentHandler):
         # 收集各类视图 id
         view_ids_by_type = {}
         try:
-            View = self.env["ir.ui.view"].with_context(ctx)
+            View = self.env["ir.ui.view"].sudo().with_context(ctx)
             for v in view_modes:
                 odoo_type = _VIEW_INV.get(v, v)
                 vv = View.search([("model","=",model),("type","=",odoo_type)], limit=1, order="priority,id")
