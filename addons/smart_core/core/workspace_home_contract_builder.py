@@ -591,15 +591,36 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         },
         "action_schema": {
             "actions": {
-                "open_landing": {"label": "打开默认入口", "intent": "ui.contract", "target": _shared_action_target("open_landing", "portal.dashboard")},
-                "open_my_work": {"label": "查看全部", "intent": "ui.contract", "target": _shared_action_target("open_my_work", "portal.dashboard")},
+                "open_landing": {
+                    "label": "打开默认入口",
+                    "intent": "ui.contract",
+                    "target": _shared_action_target("open_landing", "portal.dashboard"),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+                },
+                "open_my_work": {
+                    "label": "查看全部",
+                    "intent": "ui.contract",
+                    "target": _shared_action_target("open_my_work", "portal.dashboard"),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+                },
                 "open_risk_dashboard": {
                     "label": "进入风险驾驶舱",
                     "intent": "ui.contract",
                     "target": _shared_action_target("open_risk_dashboard", "portal.dashboard"),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
                 },
-                "open_scene": {"label": "进入场景", "intent": "ui.contract", "target": _shared_action_target("open_scene", "portal.dashboard")},
-                "refresh": {"label": "刷新", "intent": "api.data", "target": _shared_action_target("refresh", "portal.dashboard")},
+                "open_scene": {
+                    "label": "进入场景",
+                    "intent": "ui.contract",
+                    "target": _shared_action_target("open_scene", "portal.dashboard"),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+                },
+                "refresh": {
+                    "label": "刷新",
+                    "intent": "api.data",
+                    "target": _shared_action_target("refresh", "portal.dashboard"),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+                },
             }
         },
         "render_hints": {

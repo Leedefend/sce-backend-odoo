@@ -294,11 +294,19 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
             continue
         intent = str(action.get("intent") or "").strip()
         target = action.get("target")
+        visibility = action.get("visibility")
         if intent not in ALLOWED_ACTION_INTENTS:
             errors.append(f"{aprefix}.intent invalid: {intent}")
         if not isinstance(target, dict):
             errors.append(f"{aprefix}.target must be object")
             continue
+        if not isinstance(visibility, dict):
+            errors.append(f"{aprefix}.visibility must be object")
+        else:
+            if not isinstance(visibility.get("roles"), list):
+                errors.append(f"{aprefix}.visibility.roles must be list")
+            if not isinstance(visibility.get("capabilities"), list):
+                errors.append(f"{aprefix}.visibility.capabilities must be list")
         kind = str(target.get("kind") or "").strip()
         if kind not in ALLOWED_ACTION_TARGET_KINDS:
             errors.append(f"{aprefix}.target.kind invalid: {kind}")
