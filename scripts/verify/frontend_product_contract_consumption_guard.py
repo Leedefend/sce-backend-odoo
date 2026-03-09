@@ -160,29 +160,36 @@ def main() -> int:
     required_login_tokens = [
         "const pageContract = usePageContract('login');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('card', true)",
         "pageSectionEnabled('form', true)",
     ]
     required_menu_tokens = [
         "const pageContract = usePageContract('menu');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('status_loading', true)",
         "pageSectionEnabled('status_error', true)",
     ]
     required_placeholder_tokens = [
         "const pageContract = usePageContract('placeholder');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('card', true)",
     ]
     required_scene_health_tokens = [
         "const pageContract = usePageContract('scene_health');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
+        "const pageSectionOpenDefault = pageContract.sectionOpenDefault;",
         "pageSectionEnabled('header', true)",
         "pageSectionEnabled('governance', true)",
+        "pageSectionOpenDefault('details_resolve_errors', true)",
     ]
     required_scene_packages_tokens = [
         "const pageContract = usePageContract('scene_packages');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('installed_packages', true)",
         "pageSectionEnabled('import_package', true)",
         "pageSectionEnabled('export_package', true)",

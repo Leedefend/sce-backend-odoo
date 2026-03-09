@@ -4,18 +4,21 @@
       v-if="pageSectionEnabled('status_loading', true) && loading"
       :title="pageText('loading_title', 'Resolving menu...')"
       variant="info"
+      :style="pageSectionStyle('status_loading')"
     />
     <StatusPanel
       v-else-if="pageSectionEnabled('status_info', true) && info"
       :title="pageText('info_title', 'Menu group')"
       :message="info"
       variant="info"
+      :style="pageSectionStyle('status_info')"
     />
     <StatusPanel
       v-else-if="pageSectionEnabled('status_error', true) && error"
       :title="pageText('error_title', 'Menu resolve failed')"
       :message="error"
       variant="error"
+      :style="pageSectionStyle('status_error')"
     />
   </section>
 </template>
@@ -40,6 +43,7 @@ const loading = ref(true);
 const pageContract = usePageContract('menu');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);

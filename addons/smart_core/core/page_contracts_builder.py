@@ -131,9 +131,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "login": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "card", "enabled": True},
-                    {"key": "form", "enabled": True},
-                    {"key": "error", "enabled": True},
+                    {"key": "card", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "form", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "error", "enabled": True, "order": 3, "tag": "section"},
                 ],
                 "texts": {
                     "title": "Login",
@@ -147,9 +147,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "menu": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "status_loading", "enabled": True},
-                    {"key": "status_info", "enabled": True},
-                    {"key": "status_error", "enabled": True},
+                    {"key": "status_loading", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "status_info", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
                 ],
                 "texts": {
                     "loading_title": "Resolving menu...",
@@ -162,7 +162,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "placeholder": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "card", "enabled": True},
+                    {"key": "card", "enabled": True, "order": 1, "tag": "section"},
                 ],
                 "texts": {
                     "title": "Dynamic View Placeholder",
@@ -695,16 +695,16 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "scene_health": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "header", "enabled": True},
-                    {"key": "status_loading", "enabled": True},
-                    {"key": "status_error", "enabled": True},
-                    {"key": "content", "enabled": True},
-                    {"key": "cards", "enabled": True},
-                    {"key": "meta", "enabled": True},
-                    {"key": "governance", "enabled": True},
-                    {"key": "details_resolve_errors", "enabled": True},
-                    {"key": "details_drift", "enabled": True},
-                    {"key": "details_debt", "enabled": True},
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_loading", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "content", "enabled": True, "order": 4, "tag": "div"},
+                    {"key": "cards", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "meta", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "governance", "enabled": True, "order": 7, "tag": "section"},
+                    {"key": "details_resolve_errors", "enabled": True, "order": 8, "tag": "details", "open": True},
+                    {"key": "details_drift", "enabled": True, "order": 9, "tag": "details", "open": False},
+                    {"key": "details_debt", "enabled": True, "order": 10, "tag": "details", "open": False},
                 ],
                 "texts": {
                     "title": "Scene Health Dashboard",
@@ -718,13 +718,13 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "scene_packages": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "header", "enabled": True},
-                    {"key": "status_loading", "enabled": True},
-                    {"key": "status_error", "enabled": True},
-                    {"key": "content", "enabled": True},
-                    {"key": "installed_packages", "enabled": True},
-                    {"key": "import_package", "enabled": True},
-                    {"key": "export_package", "enabled": True},
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_loading", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "content", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "installed_packages", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "import_package", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "export_package", "enabled": True, "order": 7, "tag": "section"},
                 ],
                 "texts": {
                     "title": "Scene Packages",
