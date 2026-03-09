@@ -52,6 +52,20 @@ BLOCK_PAYLOAD_KEYS = {
     "activity_feed": {"stream"},
 }
 COMMON_PAYLOAD_KEYS = {"tag", "enabled", "open"}
+FORBIDDEN_LAYOUT_KEYS = {"left", "top", "width", "height", "x", "y", "color", "background", "font_size"}
+
+
+def _scan_forbidden_layout_keys(value: Any, prefix: str, errors: list[str]) -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            key_text = str(key).strip().lower()
+            next_prefix = f"{prefix}.{key}" if prefix else str(key)
+            if key_text in FORBIDDEN_LAYOUT_KEYS:
+                errors.append(f"{next_prefix} uses forbidden pixel/layout key: {key}")
+            _scan_forbidden_layout_keys(child, next_prefix, errors)
+    elif isinstance(value, list):
+        for idx, item in enumerate(value):
+            _scan_forbidden_layout_keys(item, f"{prefix}[{idx}]", errors)
 
 
 def _fail(errors: list[str]) -> int:
@@ -101,6 +115,22 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             errors.append(f"pages.{page_key}.page.layout_mode invalid: {layout_mode}")
         if priority_model not in ALLOWED_PRIORITY_MODELS:
             errors.append(f"pages.{page_key}.page.priority_model invalid: {priority_model}")
+        header = page.get("header")
+        if header is not None and not isinstance(header, dict):
+            errors.append(f"pages.{page_key}.page.header must be object when present")
+        if isinstance(header, dict):
+            badges = header.get("badges")
+            if badges is not None and not isinstance(badges, list):
+                errors.append(f"pages.{page_key}.page.header.badges must be list when present")
+            if isinstance(badges, list):
+                for idx, badge in enumerate(badges):
+                    bprefix = f"pages.{page_key}.page.header.badges[{idx}]"
+                    if not isinstance(badge, dict):
+                        errors.append(f"{bprefix} must be object")
+                        continue
+                    tone = str(badge.get("tone") or "").strip()
+                    if tone and tone not in ALLOWED_TONES:
+                        errors.append(f"{bprefix}.tone invalid: {tone}")
 
     state_schema = orch.get("state_schema")
     if not isinstance(state_schema, dict):
@@ -259,6 +289,10 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
         unused_data_sources = sorted(set(data_sources.keys()) - block_data_sources - {"ds_sections"})
         if unused_data_sources:
             errors.append(f"pages.{page_key}: data_sources unused by blocks: {', '.join(unused_data_sources)}")
+
+    _scan_forbidden_layout_keys(page, f"pages.{page_key}.page", errors)
+    _scan_forbidden_layout_keys(zones, f"pages.{page_key}.zones", errors)
+    _scan_forbidden_layout_keys(orch.get("render_hints"), f"pages.{page_key}.render_hints", errors)
 
 
 def main() -> int:
