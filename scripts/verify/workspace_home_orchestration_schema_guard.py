@@ -133,6 +133,11 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
                 errors.append(f"{dprefix}.source_type invalid: {source_type}")
             if not provider:
                 errors.append(f"{dprefix}.provider must be non-empty")
+            section_keys = ds.get("section_keys")
+            if not isinstance(section_keys, list) or not [str(item).strip() for item in section_keys if str(item).strip()]:
+                errors.append(f"{dprefix}.section_keys must be non-empty list")
+            if source_type in {"computed", "scene_context", "capability_registry", "static"} and not provider.startswith("workspace."):
+                errors.append(f"{dprefix}.provider must start with workspace.")
     if not isinstance(state_schema, dict):
         errors.append(f"{role_code}: page_orchestration_v1.state_schema must be object")
     else:
@@ -195,6 +200,12 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
                 errors.append(f"{prefix}.data_source required")
             elif data_source not in data_sources:
                 errors.append(f"{prefix}.data_source missing in data_sources: {data_source}")
+            else:
+                ds = data_sources.get(data_source)
+                if isinstance(ds, dict):
+                    section_keys = [str(item).strip() for item in (ds.get("section_keys") if isinstance(ds.get("section_keys"), list) else []) if str(item).strip()]
+                    if section_keys and section_key not in section_keys:
+                        errors.append(f"{prefix}.section_key not declared in data_sources.{data_source}.section_keys")
             visibility = block.get("visibility")
             if not isinstance(visibility, dict):
                 errors.append(f"{prefix}.visibility must be object")
