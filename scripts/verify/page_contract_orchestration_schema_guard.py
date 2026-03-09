@@ -126,6 +126,13 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
                 errors.append(f"{dprefix}.source_type invalid: {source_type}")
             if not provider:
                 errors.append(f"{dprefix}.provider must be non-empty string")
+            if source_type == "scene_context":
+                section_key = str(ds.get("section_key") or "").strip()
+                ds_page_key = str(ds.get("page_key") or "").strip()
+                if not section_key:
+                    errors.append(f"{dprefix}.section_key required when source_type=scene_context")
+                if ds_page_key != page_key:
+                    errors.append(f"{dprefix}.page_key must equal page key ({page_key}) when source_type=scene_context")
 
     zones = orch.get("zones")
     if not isinstance(zones, list) or not zones:
@@ -175,6 +182,14 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
                 block_data_sources.add(data_source)
                 if data_source not in data_sources:
                     errors.append(f"{bprefix}.data_source not found in data_sources: {data_source}")
+                else:
+                    ds = data_sources.get(data_source)
+                    if isinstance(ds, dict) and str(ds.get("source_type") or "").strip() == "scene_context":
+                        ds_section_key = str(ds.get("section_key") or "").strip()
+                        if ds_section_key and ds_section_key != section_key:
+                            errors.append(
+                                f"{bprefix}.section_key mismatch with data_sources.{data_source}.section_key: {section_key} != {ds_section_key}"
+                            )
             actions = block.get("actions")
             if actions is not None and not isinstance(actions, list):
                 errors.append(f"{bprefix}.actions must be list when present")
