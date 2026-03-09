@@ -113,6 +113,9 @@ def main() -> int:
         "LoginView.vue": [
             "await session.loadAppInit();",
             "session.resolveLandingPath('/')",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('card', true)",
+            "pageSectionEnabled('form', true)",
         ],
         "HomeView.vue": [
             "session.workspaceHome",
@@ -145,6 +148,13 @@ def main() -> int:
         "MenuView.vue": [
             "resolveMenuAction(",
             "evaluateCapabilityPolicy(",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('status_loading', true)",
+            "pageSectionEnabled('status_error', true)",
+        ],
+        "PlaceholderView.vue": [
+            "pageSectionEnabled(",
+            "pageSectionEnabled('card', true)",
         ],
         "SceneView.vue": [
             "getSceneByKey",
@@ -199,10 +209,17 @@ def main() -> int:
         "SceneHealthView.vue": [
             "fetchSceneHealth",
             "governanceSetChannel",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('header', true)",
+            "pageSectionEnabled('governance', true)",
         ],
         "ScenePackagesView.vue": [
             "scenePackageImport",
             "scenePackageExport",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('installed_packages', true)",
+            "pageSectionEnabled('import_package', true)",
+            "pageSectionEnabled('export_package', true)",
         ],
         "UsageAnalyticsView.vue": [
             "fetchUsageReport",
@@ -325,6 +342,9 @@ def main() -> int:
                 '{"key": "status_panel", "enabled": True}',
                 '{"key": "tables_top", "enabled": True}',
                 '{"key": "tables_role_user", "enabled": True}',
+                '{"key": "status_info", "enabled": True}',
+                '{"key": "installed_packages", "enabled": True}',
+                '{"key": "details_resolve_errors", "enabled": True}',
                 '"record": {',
                 '{"key": "project_summary", "enabled": True}',
                 '{"key": "chatter", "enabled": True}',

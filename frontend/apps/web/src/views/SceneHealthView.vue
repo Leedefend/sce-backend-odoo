@@ -1,6 +1,6 @@
 <template>
   <section class="scene-health">
-    <header class="header">
+    <header v-if="pageSectionEnabled('header', true)" class="header">
       <div>
         <h2>{{ pageText('title', 'Scene Health Dashboard') }}</h2>
         <p>{{ pageText('subtitle', '可视化查看场景健康状态与自动降级结果。') }}</p>
@@ -19,9 +19,13 @@
       </div>
     </header>
 
-    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Loading scene health...')" variant="info" />
     <StatusPanel
-      v-else-if="errorText"
+      v-if="pageSectionEnabled('status_loading', true) && loading"
+      :title="pageText('loading_title', 'Loading scene health...')"
+      variant="info"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_error', true) && errorText"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="statusError?.traceId || errorTraceId || undefined"
@@ -36,7 +40,7 @@
       :on-retry="loadHealth"
     />
 
-    <div v-else-if="health" class="content">
+    <div v-else-if="pageSectionEnabled('content', true) && health" class="content">
       <article class="pill-row">
         <span class="pill">channel: {{ health.scene_channel || '-' }}</span>
         <span class="pill" :class="{ warn: health.rollback_active }">
@@ -46,7 +50,7 @@
         <span class="pill">schema: {{ health.schema_version || '-' }}</span>
       </article>
 
-      <section class="cards">
+      <section v-if="pageSectionEnabled('cards', true)" class="cards">
         <article class="card danger">
           <h3>Critical Resolve Errors</h3>
           <p>{{ health.summary.critical_resolve_errors_count }}</p>
@@ -61,7 +65,7 @@
         </article>
       </section>
 
-      <article class="meta">
+      <article v-if="pageSectionEnabled('meta', true)" class="meta">
         <p><strong>contract_ref:</strong> {{ health.contract_ref || '-' }}</p>
         <p><strong>trace_id:</strong> {{ health.trace_id || '-' }}</p>
         <p><strong>updated_at:</strong> {{ health.last_updated_at || '-' }}</p>
@@ -69,7 +73,7 @@
         <p v-if="governanceTraceId"><strong>governance_trace:</strong> {{ governanceTraceId }}</p>
       </article>
 
-      <section class="governance">
+      <section v-if="pageSectionEnabled('governance', true)" class="governance">
         <h3>Governance Actions</h3>
         <div class="governance-grid">
           <label>
@@ -93,15 +97,15 @@
         </div>
       </section>
 
-      <details open>
+      <details v-if="pageSectionEnabled('details_resolve_errors', true)" open>
         <summary>Resolve Errors ({{ health.details?.resolve_errors?.length || 0 }})</summary>
         <pre>{{ JSON.stringify(health.details?.resolve_errors || [], null, 2) }}</pre>
       </details>
-      <details>
+      <details v-if="pageSectionEnabled('details_drift', true)">
         <summary>Drift ({{ health.details?.drift?.length || 0 }})</summary>
         <pre>{{ JSON.stringify(health.details?.drift || [], null, 2) }}</pre>
       </details>
-      <details>
+      <details v-if="pageSectionEnabled('details_debt', true)">
         <summary>Debt ({{ health.details?.debt?.length || 0 }})</summary>
         <pre>{{ JSON.stringify(health.details?.debt || [], null, 2) }}</pre>
       </details>
@@ -137,6 +141,7 @@ const governanceReason = ref('');
 const governanceTraceId = ref('');
 const pageContract = usePageContract('scene_health');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'health request failed')));
 
 const autoDegradeLabel = computed(() => {
