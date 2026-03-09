@@ -618,10 +618,10 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "record": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "save_banner", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "save_banner", "enabled": True, "order": 1, "tag": "div"},
                     {"key": "project_summary", "enabled": True, "order": 2, "tag": "section"},
                     {"key": "next_actions", "enabled": True, "order": 3, "tag": "section"},
-                    {"key": "stat_buttons", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "stat_buttons", "enabled": True, "order": 4, "tag": "div"},
                     {"key": "details_fallback", "enabled": True, "order": 5, "tag": "section"},
                     {"key": "chatter", "enabled": True, "order": 6, "tag": "section"},
                     {"key": "dev_context", "enabled": True, "order": 7, "tag": "div"},

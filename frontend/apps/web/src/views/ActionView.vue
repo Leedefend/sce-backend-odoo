@@ -1,14 +1,14 @@
 <template>
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
-    <section v-if="pageSectionEnabled('route_preset', true) && appliedPresetLabel" class="route-preset" :style="pageSectionStyle('route_preset')">
+    <section v-if="pageSectionEnabled('route_preset', true) && pageSectionTagIs('route_preset', 'section') && appliedPresetLabel" class="route-preset" :style="pageSectionStyle('route_preset')">
       <p>
         {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
         <span v-if="routeContextSource">（{{ pageText('route_preset_source_prefix', '来源：') }}{{ routeContextSource }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ pageText('route_preset_clear', '清除推荐') }}</button>
     </section>
-    <section v-if="pageSectionEnabled('focus_strip', true)" class="focus-strip" :style="pageSectionStyle('focus_strip')">
+    <section v-if="pageSectionEnabled('focus_strip', true) && pageSectionTagIs('focus_strip', 'section')" class="focus-strip" :style="pageSectionStyle('focus_strip')">
       <div>
         <p class="focus-intent">{{ surfaceIntent.title }}</p>
         <p class="focus-summary">{{ surfaceIntent.summary }}</p>
@@ -19,7 +19,7 @@
         </button>
       </div>
     </section>
-    <section v-if="pageSectionEnabled('quick_filters', true) && (contractPrimaryFilterChips.length || contractOverflowFilterChips.length)" class="contract-block" :style="pageSectionStyle('quick_filters')">
+    <section v-if="pageSectionEnabled('quick_filters', true) && pageSectionTagIs('quick_filters', 'section') && (contractPrimaryFilterChips.length || contractOverflowFilterChips.length)" class="contract-block" :style="pageSectionStyle('quick_filters')">
       <p class="contract-label">{{ pageText('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -66,7 +66,7 @@
         </button>
       </div>
     </section>
-    <section v-if="pageSectionEnabled('saved_filters', true) && (savedFilterPrimaryChips.length || savedFilterOverflowChips.length)" class="contract-block" :style="pageSectionStyle('saved_filters')">
+    <section v-if="pageSectionEnabled('saved_filters', true) && pageSectionTagIs('saved_filters', 'section') && (savedFilterPrimaryChips.length || savedFilterOverflowChips.length)" class="contract-block" :style="pageSectionStyle('saved_filters')">
       <p class="contract-label">{{ pageText('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -113,7 +113,7 @@
         </button>
       </div>
     </section>
-    <section v-if="pageSectionEnabled('group_view', true) && (groupByPrimaryChips.length || groupByOverflowChips.length)" class="contract-block" :style="pageSectionStyle('group_view')">
+    <section v-if="pageSectionEnabled('group_view', true) && pageSectionTagIs('group_view', 'section') && (groupByPrimaryChips.length || groupByOverflowChips.length)" class="contract-block" :style="pageSectionStyle('group_view')">
       <p class="contract-label">{{ pageText('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -161,7 +161,7 @@
       </div>
     </section>
     <GroupSummaryBar
-      v-if="pageSectionEnabled('group_summary', true) && groupSummaryItems.length"
+      v-if="pageSectionEnabled('group_summary', true) && pageSectionTagIs('group_summary', 'section') && groupSummaryItems.length"
       :style="pageSectionStyle('group_summary')"
       :items="groupSummaryItems"
       :group-by-label="activeGroupByLabel"
@@ -178,7 +178,7 @@
       :on-prev-window="handleGroupWindowPrev"
       :on-next-window="handleGroupWindowNext"
     />
-    <section v-if="pageSectionEnabled('quick_actions', true) && (contractPrimaryActions.length || contractOverflowActions.length)" class="contract-block" :style="pageSectionStyle('quick_actions')">
+    <section v-if="pageSectionEnabled('quick_actions', true) && pageSectionTagIs('quick_actions', 'section') && (contractPrimaryActions.length || contractOverflowActions.length)" class="contract-block" :style="pageSectionStyle('quick_actions')">
       <p class="contract-label">{{ pageText('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
@@ -299,7 +299,7 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
-    <section v-else-if="pageSectionEnabled('advanced_view', true)" class="advanced-view" :style="pageSectionStyle('advanced_view')">
+    <section v-else-if="pageSectionEnabled('advanced_view', true) && pageSectionTagIs('advanced_view', 'section')" class="advanced-view" :style="pageSectionStyle('advanced_view')">
       <header class="advanced-view-head">
         <h3>{{ advancedViewTitle }}</h3>
         <p>{{ advancedViewHint }}</p>
@@ -319,7 +319,7 @@
         <p class="empty-next-hint">{{ advancedViewHint }}</p>
       </section>
     </section>
-    <section v-if="pageSectionEnabled('empty_next', true) && pageStatus === 'empty'" class="empty-next" :style="pageSectionStyle('empty_next')">
+    <section v-if="pageSectionEnabled('empty_next', true) && pageSectionTagIs('empty_next', 'section') && pageStatus === 'empty'" class="empty-next" :style="pageSectionStyle('empty_next')">
       <p class="empty-next-title">{{ surfaceIntent.emptyTitle }}</p>
       <p class="empty-next-hint">{{ surfaceIntent.emptyHint }}</p>
       <p class="empty-next-reason">{{ emptyReasonText }}</p>
@@ -336,7 +336,7 @@
     </section>
 
     <DevContextPanel
-      :visible="showHud && pageSectionEnabled('dev_context', true)"
+      :visible="showHud && pageSectionEnabled('dev_context', true) && pageSectionTagIs('dev_context', 'div')"
       :style="pageSectionStyle('dev_context')"
       title="View Context"
       :entries="hudEntries"
@@ -401,6 +401,7 @@ const pageContract = usePageContract('action');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');

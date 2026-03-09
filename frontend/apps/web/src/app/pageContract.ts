@@ -65,10 +65,15 @@ export function usePageContract(pageKey: string) {
     return sections.value.get(key)?.open === true;
   }
 
+  function sectionTagIs(key: string, expected: Exclude<SectionTag, ''>, fallback = true): boolean {
+    if (!sections.value.size) return fallback;
+    return sections.value.get(key)?.tag === expected;
+  }
+
   function actionText(key: string, fallback: string): string {
     const value = asText(actions.value[key]);
     return value || fallback;
   }
 
-  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, actionText };
+  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText };
 }
