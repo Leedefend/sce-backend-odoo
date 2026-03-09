@@ -179,10 +179,13 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
                 continue
             source_type = str(ds.get("source_type") or "").strip()
             provider = str(ds.get("provider") or "").strip()
+            section_keys = ds.get("section_keys")
             if source_type not in ALLOWED_DATA_SOURCE_TYPES:
                 errors.append(f"{dprefix}.source_type invalid: {source_type}")
             if not provider:
                 errors.append(f"{dprefix}.provider must be non-empty string")
+            if not isinstance(section_keys, list) or not [str(item).strip() for item in section_keys if str(item).strip()]:
+                errors.append(f"{dprefix}.section_keys must be non-empty list")
             if source_type == "scene_context":
                 section_key = str(ds.get("section_key") or "").strip()
                 ds_page_key = str(ds.get("page_key") or "").strip()
@@ -247,12 +250,16 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
                     errors.append(f"{bprefix}.data_source not found in data_sources: {data_source}")
                 else:
                     ds = data_sources.get(data_source)
-                    if isinstance(ds, dict) and str(ds.get("source_type") or "").strip() == "scene_context":
-                        ds_section_key = str(ds.get("section_key") or "").strip()
-                        if ds_section_key and ds_section_key != section_key:
-                            errors.append(
-                                f"{bprefix}.section_key mismatch with data_sources.{data_source}.section_key: {section_key} != {ds_section_key}"
-                            )
+                    if isinstance(ds, dict):
+                        ds_section_keys = [str(item).strip() for item in (ds.get("section_keys") if isinstance(ds.get("section_keys"), list) else []) if str(item).strip()]
+                        if ds_section_keys and "_all" not in ds_section_keys and section_key not in ds_section_keys:
+                            errors.append(f"{bprefix}.section_key not declared in data_sources.{data_source}.section_keys")
+                        if str(ds.get("source_type") or "").strip() == "scene_context":
+                            ds_section_key = str(ds.get("section_key") or "").strip()
+                            if ds_section_key and ds_section_key != section_key:
+                                errors.append(
+                                    f"{bprefix}.section_key mismatch with data_sources.{data_source}.section_key: {section_key} != {ds_section_key}"
+                                )
             actions = block.get("actions")
             if actions is not None and not isinstance(actions, list):
                 errors.append(f"{bprefix}.actions must be list when present")

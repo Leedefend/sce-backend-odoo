@@ -55,6 +55,10 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             errors.append(f"pages.{page_key}.data_sources.ds_sections.source_type must be static")
         if str(ds_sections.get("provider") or "").strip() != "page_contract.sections":
             errors.append(f"pages.{page_key}.data_sources.ds_sections.provider must be page_contract.sections")
+        section_keys = ds_sections.get("section_keys")
+        normalized = [str(item).strip() for item in section_keys] if isinstance(section_keys, list) else []
+        if "_all" not in normalized:
+            errors.append(f"pages.{page_key}.data_sources.ds_sections.section_keys must include _all")
 
     for ds_key, ds in data_sources.items():
         prefix = f"pages.{page_key}.data_sources.{ds_key}"
@@ -63,10 +67,13 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             continue
         source_type = str(ds.get("source_type") or "").strip()
         provider = str(ds.get("provider") or "").strip()
+        section_keys = ds.get("section_keys")
         if source_type not in ALLOWED_SOURCE_TYPES:
             errors.append(f"{prefix}.source_type invalid: {source_type}")
         if not provider:
             errors.append(f"{prefix}.provider must be non-empty")
+        if not isinstance(section_keys, list) or not [str(item).strip() for item in section_keys if str(item).strip()]:
+            errors.append(f"{prefix}.section_keys must be non-empty list")
 
     zones = orch.get("zones") if isinstance(orch.get("zones"), list) else []
     for zone_idx, zone in enumerate(zones):
@@ -98,6 +105,9 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
                 errors.append(f"{prefix}.data_source.page_key must be {page_key}")
             if str(ds.get("section_key") or "").strip() != section_key:
                 errors.append(f"{prefix}.data_source.section_key must match block.section_key")
+            ds_section_keys = [str(item).strip() for item in (ds.get("section_keys") if isinstance(ds.get("section_keys"), list) else []) if str(item).strip()]
+            if section_key not in ds_section_keys:
+                errors.append(f"{prefix}.data_source.section_keys must contain block.section_key")
 
 
 def main() -> int:
@@ -136,4 +146,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
