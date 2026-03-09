@@ -23,6 +23,17 @@ def _normalize_page_type(page_key: str) -> str:
     return "list"
 
 
+def _page_audience(page_key: str) -> list[str]:
+    key = str(page_key or "").strip().lower()
+    if key in {"usage_analytics", "scene_health"}:
+        return ["executive", "owner", "project_manager"]
+    if key in {"my_work", "action", "record"}:
+        return ["project_manager", "finance_manager", "owner"]
+    if key in {"home", "workbench"}:
+        return ["project_manager", "finance_manager", "owner", "executive"]
+    return ["generic_user"]
+
+
 def _zone_from_tag(tag: str) -> Dict[str, str]:
     normalized = str(tag or "").strip().lower()
     if normalized == "header":
@@ -34,15 +45,46 @@ def _zone_from_tag(tag: str) -> Dict[str, str]:
     return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
 
 
-def _block_type_from_tag(tag: str) -> str:
-    normalized = str(tag or "").strip().lower()
-    if normalized == "header":
-        return "record_summary"
-    if normalized == "details":
-        return "fold_section"
-    if normalized == "div":
-        return "activity_feed"
-    return "record_summary"
+def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[str, Any]:
+    key = str(section_key or "").strip().lower()
+    page = str(page_key or "").strip().lower()
+    normalized_tag = str(tag or "").strip().lower()
+
+    if normalized_tag == "header":
+        return {"block_type": "record_summary", "tone": "info", "progress": "running", "importance": "high"}
+    if normalized_tag == "details":
+        return {"block_type": "fold_section", "tone": "neutral", "progress": "completed", "importance": "medium"}
+    if normalized_tag == "div":
+        return {"block_type": "activity_feed", "tone": "neutral", "progress": "running", "importance": "medium"}
+
+    if any(token in key for token in ("error", "forbidden", "risk", "warning", "blocked")):
+        return {"block_type": "alert_panel", "tone": "danger", "progress": "blocked", "importance": "high"}
+    if any(token in key for token in ("loading", "pending", "status_loading")):
+        return {"block_type": "progress_group", "tone": "info", "progress": "running", "importance": "medium"}
+    if any(token in key for token in ("summary", "kpi", "metric", "cards", "hero", "project_summary")):
+        return {"block_type": "kpi_row", "tone": "info", "progress": "running", "importance": "high"}
+    if any(token in key for token in ("todo", "approval", "quick_actions", "next_actions")):
+        return {"block_type": "todo_list", "tone": "warning", "progress": "pending", "importance": "high"}
+    if any(token in key for token in ("filter", "group", "slice", "preset", "tiles")):
+        return {"block_type": "quick_entry_grid", "tone": "neutral", "progress": "completed", "importance": "medium"}
+    if any(token in key for token in ("table", "list", "daily", "top", "visibility")):
+        return {"block_type": "activity_feed", "tone": "neutral", "progress": "running", "importance": "medium"}
+    if page in {"login", "menu", "placeholder"}:
+        return {"block_type": "record_summary", "tone": "neutral", "progress": "running", "importance": "medium"}
+    return {"block_type": "record_summary", "tone": "neutral", "progress": "running", "importance": "medium"}
+
+
+def _action_templates(section_key: str) -> list[Dict[str, Any]]:
+    key = str(section_key or "").strip().lower()
+    if "risk" in key:
+        return [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}]
+    if any(token in key for token in ("approval", "todo", "next_actions")):
+        return [{"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"}]
+    if any(token in key for token in ("filter", "group", "slice")):
+        return [{"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"}]
+    if any(token in key for token in ("table", "list", "records")):
+        return [{"key": "open_list", "label": "查看明细", "intent": "ui.contract"}]
+    return []
 
 
 def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[str, Any]:
@@ -54,6 +96,8 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
     if not title:
         title = page_key.replace("_", " ").strip().title() or "Page"
 
+    audience = _page_audience(page_key)
+    page_type = _normalize_page_type(page_key)
     zone_buckets: Dict[str, Dict[str, Any]] = {}
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):
@@ -76,27 +120,28 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
                 "zone_type": zone_cfg["zone_type"],
                 "display_mode": zone_cfg["display_mode"],
                 "priority": 100 - (len(zone_buckets) * 10),
-                "visibility": {"roles": ["generic_user"], "capabilities": [], "expr": None},
+                "visibility": {"roles": audience, "capabilities": [], "expr": None},
                 "blocks": [],
             }
             zone_buckets[zone_key] = zone
 
+        semantic = _semantic_from_section(page_key, section_key, tag)
         zone["blocks"].append(
             {
                 "key": f"{page_key}.{section_key}",
-                "block_type": _block_type_from_tag(tag),
+                "block_type": semantic["block_type"],
                 "title": section_key,
                 "priority": max(1, 100 - order),
-                "importance": "high" if tag == "header" else "medium",
-                "tone": "info" if tag == "header" else "neutral",
-                "progress": "running" if enabled else "pending",
+                "importance": semantic["importance"],
+                "tone": semantic["tone"],
+                "progress": semantic["progress"] if enabled else "pending",
                 "section_key": section_key,
                 "data_source": "ds_sections",
                 "loading_strategy": "eager" if tag == "header" else "lazy",
                 "refreshable": True,
                 "collapsible": bool(tag == "details"),
-                "visibility": {"roles": ["generic_user"], "capabilities": [], "expr": None},
-                "actions": [],
+                "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                "actions": _action_templates(section_key),
                 "payload": {"tag": tag, "enabled": enabled, "open": bool(section.get("open") is True)},
             }
         )
@@ -116,12 +161,12 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
             "key": page_key,
             "title": title,
             "subtitle": "",
-            "page_type": _normalize_page_type(page_key),
+            "page_type": page_type,
             "intent": "ui.contract",
             "scene_key": page_key,
-            "layout_mode": "single_flow",
-            "audience": ["generic_user"],
-            "priority_model": "role_first",
+            "layout_mode": "monitoring" if page_type == "monitor" else "single_flow",
+            "audience": audience,
+            "priority_model": "risk_first" if page_type == "monitor" else "task_first" if page_type == "approval" else "role_first",
             "status": "ready",
             "breadcrumbs": [],
             "header": {},
@@ -135,12 +180,15 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
         },
         "state_schema": {
             "tones": {key: {"icon": key} for key in STATE_TONES},
-            "business_states": {key: {"tone": ("danger" if key in {"blocked", "overdue"} else "info"), "label": key} for key in PROGRESS_STATES},
+            "business_states": {
+                key: {"tone": ("danger" if key in {"blocked", "overdue"} else "success" if key == "completed" else "info"), "label": key}
+                for key in PROGRESS_STATES
+            },
         },
         "action_schema": {"actions": {}},
         "render_hints": {
             "dense_mode": False,
-            "preferred_columns": 1,
+            "preferred_columns": 2 if page_type in {"monitor", "dashboard"} else 1,
             "mobile_priority": [zone.get("key") for zone in zones if isinstance(zone, dict)],
             "sticky_header": True,
         },
@@ -148,6 +196,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
             "generated_by": "smart_core.page_contracts_builder",
             "schema_version": "1.0.0",
             "page_key": page_key,
+            "semantic_profile": page_type,
         },
     }
 

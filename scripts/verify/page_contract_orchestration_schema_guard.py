@@ -21,6 +21,19 @@ REQUIRED_TOP_LEVEL = {
     "render_hints",
     "meta",
 }
+ALLOWED_BLOCK_TYPES = {
+    "hero_metric",
+    "kpi_row",
+    "todo_list",
+    "alert_panel",
+    "progress_group",
+    "quick_entry_grid",
+    "fold_section",
+    "record_summary",
+    "activity_feed",
+}
+ALLOWED_TONES = {"success", "warning", "danger", "info", "neutral"}
+ALLOWED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -55,6 +68,26 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
 
     if str(orch.get("contract_version") or "") != "page_orchestration_v1":
         errors.append(f"pages.{page_key}.page_orchestration_v1.contract_version must be page_orchestration_v1")
+    page = orch.get("page")
+    if not isinstance(page, dict):
+        errors.append(f"pages.{page_key}.page_orchestration_v1.page must be object")
+    elif not isinstance(page.get("audience"), list) or not page.get("audience"):
+        errors.append(f"pages.{page_key}.page_orchestration_v1.page.audience must be non-empty list")
+
+    state_schema = orch.get("state_schema")
+    if not isinstance(state_schema, dict):
+        errors.append(f"pages.{page_key}.page_orchestration_v1.state_schema must be object")
+    else:
+        tones = state_schema.get("tones")
+        progress = state_schema.get("business_states")
+        tone_keys = set(tones.keys()) if isinstance(tones, dict) else set()
+        progress_keys = set(progress.keys()) if isinstance(progress, dict) else set()
+        if tone_keys != ALLOWED_TONES:
+            errors.append(f"pages.{page_key}.state_schema.tones mismatch expected={sorted(ALLOWED_TONES)} got={sorted(tone_keys)}")
+        if progress_keys != ALLOWED_PROGRESS:
+            errors.append(
+                f"pages.{page_key}.state_schema.business_states mismatch expected={sorted(ALLOWED_PROGRESS)} got={sorted(progress_keys)}"
+            )
 
     zones = orch.get("zones")
     if not isinstance(zones, list) or not zones:
@@ -83,7 +116,16 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             if not isinstance(block, dict):
                 errors.append(f"{bprefix} must be object")
                 continue
+            block_type = str(block.get("block_type") or "").strip()
+            tone = str(block.get("tone") or "").strip()
+            progress = str(block.get("progress") or "").strip()
             section_key = str(block.get("section_key") or "").strip()
+            if block_type not in ALLOWED_BLOCK_TYPES:
+                errors.append(f"{bprefix}.block_type invalid: {block_type}")
+            if tone not in ALLOWED_TONES:
+                errors.append(f"{bprefix}.tone invalid: {tone}")
+            if progress not in ALLOWED_PROGRESS:
+                errors.append(f"{bprefix}.progress invalid: {progress}")
             if not section_key:
                 errors.append(f"{bprefix}.section_key must be non-empty")
                 continue
