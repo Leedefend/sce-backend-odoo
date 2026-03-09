@@ -1,6 +1,6 @@
 <template>
   <section class="usage-analytics">
-    <header class="header">
+    <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <h2>{{ pageText('title', 'Usage Analytics') }}</h2>
         <p>{{ pageText('subtitle', 'Scene / Capability 使用统计（按公司累计）。') }}</p>
@@ -79,9 +79,14 @@
       </div>
     </header>
 
-    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Loading usage report...')" variant="info" />
     <StatusPanel
-      v-else-if="errorText"
+      v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
+      :title="pageText('loading_title', 'Loading usage report...')"
+      variant="info"
+      :style="pageSectionStyle('status_loading')"
+    />
+    <StatusPanel
+      v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && errorText"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="statusError?.traceId || errorTraceId || undefined"
@@ -94,10 +99,11 @@
       :suggested-action="statusError?.suggestedAction"
       variant="error"
       :on-retry="load"
+      :style="pageSectionStyle('status_error')"
     />
 
     <template v-else>
-      <section class="slice-bar">
+      <section v-if="pageSectionEnabled('slice_bar', true) && pageSectionTagIs('slice_bar', 'section')" class="slice-bar" :style="pageSectionStyle('slice_bar')">
         <span>{{ pageText('slice_window_prefix', '窗口：') }}{{ report?.filters?.day_from || '-' }} ~ {{ report?.filters?.day_to || '-' }}</span>
         <span>{{ pageText('slice_role_prefix', '角色：') }}{{ report?.filters?.role_code || pageText('option_all', '全部') }}</span>
         <span>{{ pageText('slice_user_prefix', '用户：') }}{{ report?.filters?.user_id || 0 }}</span>
@@ -105,7 +111,7 @@
         <span>{{ pageText('slice_capability_prefix_label', 'Capability 前缀：') }}{{ report?.filters?.capability_key_prefix || '-' }}</span>
       </section>
 
-      <section class="summary-grid">
+      <section v-if="pageSectionEnabled('summary_usage', true) && pageSectionTagIs('summary_usage', 'section')" class="summary-grid" :style="pageSectionStyle('summary_usage')">
         <article class="summary-card">
           <p class="label">{{ pageText('summary_scene_open_total', 'Scene Open Total') }}</p>
           <p class="count">{{ report?.totals.scene_open_total ?? 0 }}</p>
@@ -120,7 +126,7 @@
         </article>
       </section>
 
-      <section class="summary-grid">
+      <section v-if="pageSectionEnabled('summary_visibility', true) && pageSectionTagIs('summary_visibility', 'section')" class="summary-grid" :style="pageSectionStyle('summary_visibility')">
         <article class="summary-card">
           <p class="label">{{ pageText('summary_capability_total', 'Capability Total') }}</p>
           <p class="count">{{ visibility?.summary.total ?? 0 }}</p>
@@ -141,7 +147,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_top', true) && pageSectionTagIs('tables_top', 'section')" class="tables" :style="pageSectionStyle('tables_top')">
         <article class="table-card">
           <h3>{{ pageText('table_top_scenes', 'Top Scenes') }}</h3>
           <table>
@@ -175,7 +181,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_daily', true) && pageSectionTagIs('tables_daily', 'section')" class="tables" :style="pageSectionStyle('tables_daily')">
         <article class="table-card">
           <h3>{{ pageText('table_scene_open_last_7_days', 'Scene Open (Last 7 Days)') }}</h3>
           <table>
@@ -209,7 +215,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_visibility', true) && pageSectionTagIs('tables_visibility', 'section')" class="tables" :style="pageSectionStyle('tables_visibility')">
         <article class="table-card">
           <h3>{{ pageText('table_visibility_reason_counts', 'Visibility Reason Counts') }}</h3>
           <table>
@@ -243,7 +249,7 @@
         </article>
       </section>
 
-      <section class="tables">
+      <section v-if="pageSectionEnabled('tables_role_user', true) && pageSectionTagIs('tables_role_user', 'section')" class="tables" :style="pageSectionStyle('tables_role_user')">
         <article class="table-card">
           <h3>{{ pageText('table_role_top', 'Role Top') }}</h3>
           <table>
@@ -318,6 +324,9 @@ const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
 const pageContract = usePageContract('usage_analytics');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);

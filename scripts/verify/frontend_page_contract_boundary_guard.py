@@ -13,6 +13,8 @@ ROUTER = ROOT / "frontend/apps/web/src/router/index.ts"
 
 REPORT_JSON = ROOT / "artifacts/backend/frontend_page_contract_boundary_report.json"
 REPORT_MD = ROOT / "docs/ops/audit/frontend_page_contract_boundary_report.md"
+WORKSPACE_HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
+PAGE_CONTRACTS_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 
 
 def _read(path: Path) -> str:
@@ -111,12 +113,27 @@ def main() -> int:
         "LoginView.vue": [
             "await session.loadAppInit();",
             "session.resolveLandingPath('/')",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('card', true)",
+            "pageSectionEnabled('form', true)",
         ],
         "HomeView.vue": [
             "session.workspaceHome",
             "workspaceHome.value.layout",
             "homeLayoutText(",
             "isHomeSectionEnabled(",
+            "isHomeSectionTag(",
+            "isHomeSectionOpenDefault(",
+            "homeSectionOrderMap",
+            "homeSectionStyle('hero')",
+            "homeSectionStyle('metrics')",
+            "homeSectionStyle('scene_groups')",
+            "isHomeSectionTag('hero', 'header')",
+            "isHomeSectionTag('ops', 'details')",
+            "isHomeSectionOpenDefault('ops')",
+            "isHomeSectionOpenDefault('advice')",
             "Array.isArray(workspaceHome.value.metrics)",
             "Array.isArray(workspaceHome.value.today_actions)",
             "keywordList('todo_keywords_approval'",
@@ -133,15 +150,37 @@ def main() -> int:
         "MenuView.vue": [
             "resolveMenuAction(",
             "evaluateCapabilityPolicy(",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('status_loading', true)",
+            "pageSectionEnabled('status_error', true)",
+        ],
+        "PlaceholderView.vue": [
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('card', true)",
         ],
         "SceneView.vue": [
             "getSceneByKey",
             "evaluateCapabilityPolicy(",
             "resolveVisibleActionTarget(",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('status_loading', true)",
+            "pageSectionEnabled('status_error', true)",
+            "pageSectionEnabled('status_forbidden', true)",
         ],
         "ActionView.vue": [
             "resolveAction(session.menuTree",
             "listRecords({",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('quick_filters', true)",
+            "pageSectionEnabled('quick_actions', true)",
             "keywordList('surface_kind_keywords_risk'",
             "keywordList('surface_kind_keywords_contract'",
             "keywordList('surface_kind_keywords_cost'",
@@ -158,6 +197,11 @@ def main() -> int:
             "contract-driven record view",
             "lastIntent.value = 'api.data.read'",
             "lastIntent.value = 'api.data.write'",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('project_summary', true)",
+            "pageSectionEnabled('chatter', true)",
         ],
         "MyWorkView.vue": [
             "fetchMyWorkSummary",
@@ -166,20 +210,46 @@ def main() -> int:
         ],
         "WorkbenchView.vue": [
             "diagnostic-only surface",
-            "当前动作类型暂未在门户壳层支持。",
-            "当前账号尚未开通该能力。",
+            "pageText('message_act_unsupported_type'",
+            "pageText('message_capability_missing'",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('header', true)",
+            "pageSectionEnabled('status_panel', true)",
+            "pageSectionEnabled('tiles', true)",
+            "pageSectionEnabled('hud_details', true)",
         ],
         "SceneHealthView.vue": [
             "fetchSceneHealth",
             "governanceSetChannel",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionOpenDefault(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('header', true)",
+            "pageSectionEnabled('governance', true)",
+            "pageSectionOpenDefault('details_resolve_errors', true)",
         ],
         "ScenePackagesView.vue": [
             "scenePackageImport",
             "scenePackageExport",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('installed_packages', true)",
+            "pageSectionEnabled('import_package', true)",
+            "pageSectionEnabled('export_package', true)",
         ],
         "UsageAnalyticsView.vue": [
             "fetchUsageReport",
             "exportUsageCsv",
+            "pageSectionEnabled(",
+            "pageSectionStyle(",
+            "pageSectionTagIs(",
+            "pageSectionEnabled('header', true)",
+            "pageSectionEnabled('tables_top', true)",
+            "pageSectionEnabled('tables_role_user', true)",
         ],
     }
     per_view_forbidden = {
@@ -260,6 +330,51 @@ def main() -> int:
         errors.append("missing file: frontend/apps/web/src/components/MenuTree.vue")
     else:
         _check_forbidden(menu_tree_text, ["fixture"], "components/MenuTree.vue", errors)
+
+    workspace_home_builder_text = _read(WORKSPACE_HOME_BUILDER)
+    if not workspace_home_builder_text:
+        errors.append("missing file: addons/smart_core/core/workspace_home_contract_builder.py")
+    else:
+        _check_required(
+            workspace_home_builder_text,
+            [
+                '"key": "hero", "enabled": True, "tag": "header"',
+                '"key": "ops", "enabled": True, "tag": "details", "open": False',
+                '"key": "advice", "enabled": True, "tag": "details", "open": False',
+                '"key": "scene_groups", "enabled": True, "tag": "div"',
+            ],
+            "workspace_home_contract_builder.py",
+            errors,
+        )
+
+    page_contracts_builder_text = _read(PAGE_CONTRACTS_BUILDER)
+    if not page_contracts_builder_text:
+        errors.append("missing file: addons/smart_core/core/page_contracts_builder.py")
+    else:
+        _check_required(
+            page_contracts_builder_text,
+            [
+                '"action": {',
+                '"sections": [',
+                '"key": "quick_filters"',
+                '"key": "quick_actions"',
+                '"key": "status_loading"',
+                '"key": "status_error"',
+                '"key": "status_forbidden"',
+                '"key": "status_panel"',
+                '"key": "tables_top"',
+                '"key": "tables_role_user"',
+                '"key": "status_info"',
+                '"key": "installed_packages"',
+                '"key": "details_resolve_errors"',
+                '"tag": "details", "open": True',
+                '"record": {',
+                '"key": "project_summary"',
+                '"key": "chatter"',
+            ],
+            "page_contracts_builder.py",
+            errors,
+        )
 
     report = {
         "ok": len(errors) == 0,

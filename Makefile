@@ -1413,9 +1413,45 @@ verify.frontend.runtime_navigation_hud.guard: guard.prod.forbid
 verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_suggestion_semantics_guard.py
 
+.PHONY: verify.frontend.home_layout_section_coverage.guard
+verify.frontend.home_layout_section_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_home_layout_section_coverage_guard.py
+
+.PHONY: verify.workspace_home.sections_schema.guard
+verify.workspace_home.sections_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/workspace_home_sections_schema_guard.py
+
+.PHONY: verify.frontend.contract_text_hardcode.guard
+verify.frontend.contract_text_hardcode.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_contract_text_hardcode_guard.py
+
 .PHONY: verify.frontend.page_contract_boundary.guard
 verify.frontend.page_contract_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
+
+.PHONY: verify.frontend.page_contract.sections_coverage.guard
+verify.frontend.page_contract.sections_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_sections_coverage_guard.py
+
+.PHONY: verify.frontend.page_contract.key_consistency.guard
+verify.frontend.page_contract.key_consistency.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_key_consistency_guard.py
+
+.PHONY: verify.frontend.page_contract.section_tag_coverage.guard
+verify.frontend.page_contract.section_tag_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_section_tag_coverage_guard.py
+
+.PHONY: verify.frontend.page_contract.section_style_coverage.guard
+verify.frontend.page_contract.section_style_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_section_style_coverage_guard.py
+
+.PHONY: verify.page_contract.sections_schema.guard
+verify.page_contract.sections_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_sections_schema_guard.py
+
+.PHONY: verify.page_contract.text_key_coverage.guard
+verify.page_contract.text_key_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_text_key_coverage_guard.py
 
 .PHONY: verify.list.surface.clean
 verify.list.surface.clean: guard.prod.forbid
@@ -1451,7 +1487,16 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.product.contract_consumption.guard \
 	verify.frontend.runtime_navigation_hud.guard \
 	verify.frontend.home_suggestion_semantics.guard \
+	verify.frontend.home_layout_section_coverage.guard \
+	verify.workspace_home.sections_schema.guard \
+	verify.frontend.contract_text_hardcode.guard \
 	verify.frontend.page_contract_boundary.guard \
+	verify.frontend.page_contract.sections_coverage.guard \
+	verify.frontend.page_contract.key_consistency.guard \
+	verify.frontend.page_contract.section_tag_coverage.guard \
+	verify.frontend.page_contract.section_style_coverage.guard \
+	verify.page_contract.sections_schema.guard \
+	verify.page_contract.text_key_coverage.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
 	verify.frontend.error_context.contract.guard \
