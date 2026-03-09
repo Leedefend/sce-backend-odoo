@@ -1417,6 +1417,10 @@ verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
 verify.frontend.page_contract_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
 
+.PHONY: verify.page_contract.sections_schema.guard
+verify.page_contract.sections_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_sections_schema_guard.py
+
 .PHONY: verify.list.surface.clean
 verify.list.surface.clean: guard.prod.forbid
 	@python3 scripts/verify/list_surface_clean_guard.py
@@ -1452,6 +1456,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.runtime_navigation_hud.guard \
 	verify.frontend.home_suggestion_semantics.guard \
 	verify.frontend.page_contract_boundary.guard \
+	verify.page_contract.sections_schema.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
 	verify.frontend.error_context.contract.guard \
