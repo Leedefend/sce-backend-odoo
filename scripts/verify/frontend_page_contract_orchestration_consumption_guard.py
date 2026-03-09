@@ -112,6 +112,7 @@ def main() -> int:
             "if (kind === 'page.refresh') {",
             "if (kind === 'menu.first_reachable') {",
             "if (kind === 'route.path') {",
+            "if (kind === 'scene.key') {",
             "if (intent === 'ui.contract' && scene) {",
             "if (deps.onFallback) {",
         ],
