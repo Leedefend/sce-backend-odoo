@@ -156,6 +156,11 @@ export function usePageContract(pageKey: string) {
     return row && typeof row === 'object' ? row as Record<string, unknown> : {};
   }
 
+  function dataSourceType(key: string): string {
+    const row = dataSourceSpec(key);
+    return asText(row.source_type);
+  }
+
   function hasDataSource(key: string): boolean {
     return Object.keys(dataSourceSpec(key)).length > 0;
   }
@@ -171,6 +176,7 @@ export function usePageContract(pageKey: string) {
     actionIntent,
     actionTarget,
     dataSourceSpec,
+    dataSourceType,
     hasDataSource,
     globalActions,
   };
