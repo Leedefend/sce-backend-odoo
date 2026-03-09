@@ -88,6 +88,11 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             errors.append(
                 f"pages.{page_key}.state_schema.business_states mismatch expected={sorted(ALLOWED_PROGRESS)} got={sorted(progress_keys)}"
             )
+    action_schema = orch.get("action_schema")
+    action_registry = action_schema.get("actions") if isinstance(action_schema, dict) and isinstance(action_schema.get("actions"), dict) else {}
+    if not isinstance(action_registry, dict):
+        errors.append(f"pages.{page_key}.action_schema.actions must be object")
+        action_registry = {}
 
     zones = orch.get("zones")
     if not isinstance(zones, list) or not zones:
@@ -129,6 +134,21 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             if not section_key:
                 errors.append(f"{bprefix}.section_key must be non-empty")
                 continue
+            actions = block.get("actions")
+            if actions is not None and not isinstance(actions, list):
+                errors.append(f"{bprefix}.actions must be list when present")
+            if isinstance(actions, list):
+                for aidx, action in enumerate(actions):
+                    aprefix = f"{bprefix}.actions[{aidx}]"
+                    if not isinstance(action, dict):
+                        errors.append(f"{aprefix} must be object")
+                        continue
+                    action_key = str(action.get("key") or "").strip()
+                    if not action_key:
+                        errors.append(f"{aprefix}.key must be non-empty")
+                        continue
+                    if action_key not in action_registry:
+                        errors.append(f"{aprefix}.key not declared in action_schema.actions: {action_key}")
             block_section_keys.add(section_key)
 
     if section_keys != block_section_keys:
