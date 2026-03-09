@@ -54,6 +54,8 @@ def _validate_action(page_key: str, action_key: str, action: Any, errors: list[s
     else:
         roles = visibility.get("roles")
         capabilities = visibility.get("capabilities")
+        if "expr" not in visibility:
+            errors.append(f"{prefix}.visibility.expr must be present (nullable)")
         if not isinstance(roles, list):
             errors.append(f"{prefix}.visibility.roles must be list")
         if not isinstance(capabilities, list):

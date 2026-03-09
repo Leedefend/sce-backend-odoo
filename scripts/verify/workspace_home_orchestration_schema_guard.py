@@ -357,6 +357,8 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
                 errors.append(f"{aprefix}.visibility.roles must be list")
             if not isinstance(visibility.get("capabilities"), list):
                 errors.append(f"{aprefix}.visibility.capabilities must be list")
+            if "expr" not in visibility:
+                errors.append(f"{aprefix}.visibility.expr must be present (nullable)")
         kind = str(target.get("kind") or "").strip()
         if kind not in ALLOWED_ACTION_TARGET_KINDS:
             errors.append(f"{aprefix}.target.kind invalid: {kind}")
