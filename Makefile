@@ -1158,7 +1158,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.contract.operation_gateway.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.contract.operation_gateway.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
 
 fe.install:
 	@pnpm -C frontend install
@@ -1180,6 +1180,9 @@ verify.frontend.lint.src: guard.prod.forbid
 
 verify.frontend.relation_entry.contract_guard: guard.prod.forbid
 	@python3 scripts/verify/relation_entry_contract_guard.py
+
+verify.frontend.relation_read_closure.guard: guard.prod.forbid
+	@python3 scripts/verify/relation_read_closure_guard.py
 
 verify.frontend.modifiers_runtime.guard: guard.prod.forbid
 	@python3 scripts/verify/modifiers_runtime_guard.py
@@ -1281,7 +1284,7 @@ verify.grouped.governance.bundle: guard.prod.forbid verify.frontend.grouped_rows
 verify.contract.operation_gateway.guard: guard.prod.forbid
 	@python3 scripts/verify/operation_gateway_contract_guard.py
 
-verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.quick.gate done"
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
@@ -1544,6 +1547,10 @@ verify.contract.assembler.semantic.schema.guard: guard.prod.forbid verify.contra
 
 verify.project.form.contract.surface.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/project_form_contract_surface_guard.py
+
+.PHONY: verify.relation.access_policy.consistency.audit
+verify.relation.access_policy.consistency.audit: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/relation_access_policy_consistency_audit.py
 
 .PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard verify.contract.native_integrity_guard verify.contract.governed_policy_guard verify.contract.surface_mapping_guard verify.contract.parse_boundary.guard verify.contract.production_chain.guard
 verify.native_surface_integrity_guard: guard.prod.forbid verify.role.capability_floor.prod_like
@@ -2034,6 +2041,7 @@ verify.capability.orphan.report: guard.prod.forbid
 
 .PHONY: verify.platform.security.ready
 verify.platform.security.ready: guard.prod.forbid \
+	verify.system_group.business_acl.guard \
 	verify.intent.write.guard \
 	verify.intent.acl.mode \
 	verify.intent.write.smoke \
@@ -2042,6 +2050,10 @@ verify.platform.security.ready: guard.prod.forbid \
 	verify.scene.governance.smoke \
 	verify.intent.permission.matrix.guard
 	@echo "[OK] verify.platform.security.ready done"
+
+.PHONY: verify.system_group.business_acl.guard
+verify.system_group.business_acl.guard: guard.prod.forbid
+	@python3 scripts/verify/system_group_business_acl_guard.py
 
 verify.platform.kernel.ready: guard.prod.forbid \
 	verify.platform.security.ready \
@@ -2279,6 +2291,8 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.scene_coverage.guard
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
 	@$(MAKE) --no-print-directory verify.project.form.contract.surface.guard
+	@$(MAKE) --no-print-directory verify.relation.access_policy.consistency.audit
+	@$(MAKE) --no-print-directory verify.system_group.business_acl.guard
 	@$(MAKE) --no-print-directory verify.native_surface_integrity_guard
 	@$(MAKE) --no-print-directory verify.governed_surface_policy_guard
 	@$(MAKE) --no-print-directory verify.contract.surface_mapping_guard

@@ -414,6 +414,33 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("name", fields)
         self.assertNotIn("message_ids", fields)
 
+    def test_user_mode_realigns_access_policy_after_field_governance(self):
+        data = _sample_payload()
+        data["access_policy"] = {
+            "mode": "block",
+            "reason_code": "RELATION_READ_FORBIDDEN_CORE",
+            "message": "core field access blocked: alias_model_id",
+            "policy_source": "core_fields",
+            "blocked_fields": [
+                {"field": "alias_model_id", "model": "ir.model", "reason_code": "RELATION_READ_FORBIDDEN"},
+            ],
+            "degraded_fields": [
+                {"field": "message_ids", "model": "mail.message", "reason_code": "RELATION_READ_FORBIDDEN"},
+            ],
+        }
+        data["warnings"] = ["access_policy:block:RELATION_READ_FORBIDDEN_CORE", "other_warning"]
+
+        out = apply_contract_governance(data, "user")
+        policy = out.get("access_policy") or {}
+        self.assertEqual(policy.get("mode"), "allow")
+        self.assertEqual(policy.get("reason_code"), "")
+        self.assertEqual(policy.get("blocked_fields"), [])
+        self.assertEqual(policy.get("degraded_fields"), [])
+
+        warnings = out.get("warnings") or []
+        self.assertNotIn("access_policy:block:RELATION_READ_FORBIDDEN_CORE", warnings)
+        self.assertEqual(warnings, ["other_warning"])
+
 
 if __name__ == "__main__":
     unittest.main()

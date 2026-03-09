@@ -27,6 +27,9 @@
         "smart_construction_core.group_sc_role_finance_manager",
         "smart_construction_core.group_sc_role_contract_admin"
       ],
+      "read_models": [
+        "sc.settlement.order"
+      ],
       "min_capabilities": 1
     },
     {

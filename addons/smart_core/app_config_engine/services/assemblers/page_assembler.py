@@ -92,6 +92,14 @@ class PageAssembler:
             "degraded": False,
             "missing_models": [],
             "warnings": [],
+            "access_policy": {
+                "mode": "allow",
+                "reason_code": "",
+                "message": "",
+                "policy_source": "none",
+                "blocked_fields": [],
+                "degraded_fields": [],
+            },
         }
         versions = {}
 
@@ -250,6 +258,11 @@ class PageAssembler:
                 }
             }
 
+        # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
+        self._apply_access_policy(data, model_name=model)
+        if isinstance(data.get("head"), dict) and isinstance(data.get("access_policy"), dict):
+            data["head"]["access_policy"] = dict(data.get("access_policy") or {})
+
         # 9) with_data：首屏数据（列表/表单）——必须用“当前用户 env”以自动应用记录规则
         if p.get("with_data"):
             data["data"] = self._fetch_initial_data(env, model, view_types, p, data)
@@ -260,6 +273,155 @@ class PageAssembler:
         if warnings:
             data["warnings"] = warnings
         return data, versions
+
+    def _safe_model_can_read(self, model_name):
+        name = str(model_name or "").strip()
+        if not name:
+            return True
+        try:
+            return bool(self.env[name].check_access_rights("read", raise_exception=False))
+        except Exception:
+            return True
+
+    @staticmethod
+    def _normalize_field_list(values):
+        out = []
+        for item in values or []:
+            name = str(item or "").strip()
+            if name and name not in out:
+                out.append(name)
+        return out
+
+    def _extract_core_field_names(self, data):
+        if not isinstance(data, dict):
+            return []
+        fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+
+        # Priority 1: explicit field_groups.core
+        groups = data.get("field_groups")
+        if isinstance(groups, list):
+            for item in groups:
+                if not isinstance(item, dict):
+                    continue
+                if str(item.get("name") or "").strip().lower() != "core":
+                    continue
+                rows = self._normalize_field_list(item.get("fields") if isinstance(item.get("fields"), list) else [])
+                if rows:
+                    return rows
+
+        # Priority 2: form profile core_fields
+        form_view = (data.get("views") or {}).get("form") if isinstance(data.get("views"), dict) else {}
+        form_profile = form_view.get("form_profile") if isinstance(form_view, dict) else {}
+        if not isinstance(form_profile, dict):
+            form_profile = data.get("form_profile") if isinstance(data.get("form_profile"), dict) else {}
+        if isinstance(form_profile, dict):
+            rows = self._normalize_field_list(
+                form_profile.get("core_fields") if isinstance(form_profile.get("core_fields"), list) else []
+            )
+            if rows:
+                return rows
+
+        # Priority 3: semantic surface_role=core
+        semantic_core = []
+        for name, desc in fields.items():
+            if not isinstance(desc, dict):
+                continue
+            role = str(desc.get("surface_role") or "").strip().lower()
+            if role == "core":
+                semantic_core.append(str(name or "").strip())
+        semantic_core = self._normalize_field_list(semantic_core)
+        if semantic_core:
+            return semantic_core
+
+        # Priority 4: fallback to required relation fields
+        required_relation = []
+        for name, desc in fields.items():
+            if not isinstance(desc, dict):
+                continue
+            ttype = str(desc.get("type") or desc.get("ttype") or "").strip().lower()
+            relation = str(desc.get("relation") or "").strip()
+            if ttype in {"many2one", "many2many", "one2many"} and relation and bool(desc.get("required")):
+                required_relation.append(str(name or "").strip())
+        return self._normalize_field_list(required_relation)
+
+    def _apply_access_policy(self, data, model_name=""):
+        if not isinstance(data, dict):
+            return
+        fields = data.get("fields")
+        if not isinstance(fields, dict):
+            fields = {}
+
+        blocked_fields = []
+        degraded_fields = []
+        policy_source = "none"
+
+        model = str(model_name or "").strip()
+        if model and not self._safe_model_can_read(model):
+            blocked_fields.append(
+                {
+                    "field": "__model__",
+                    "model": model,
+                    "reason_code": "MODEL_READ_FORBIDDEN",
+                }
+            )
+            policy_source = "model_acl"
+        else:
+            core_fields = set(self._extract_core_field_names(data))
+            if core_fields:
+                policy_source = "core_fields"
+            for field_name, desc in fields.items():
+                if not isinstance(desc, dict):
+                    continue
+                relation_entry = desc.get("relation_entry")
+                if not isinstance(relation_entry, dict):
+                    continue
+                can_read = relation_entry.get("can_read")
+                if can_read is not False:
+                    continue
+                relation = str(desc.get("relation") or relation_entry.get("model") or "").strip()
+                row = {
+                    "field": str(field_name or "").strip(),
+                    "model": relation,
+                    "reason_code": str(relation_entry.get("reason_code") or "RELATION_READ_FORBIDDEN"),
+                }
+                if str(field_name or "").strip() in core_fields:
+                    blocked_fields.append(row)
+                else:
+                    degraded_fields.append(row)
+
+        mode = "allow"
+        reason_code = ""
+        message = ""
+        if blocked_fields:
+            mode = "block"
+            first = blocked_fields[0]
+            reason_code = str(first.get("reason_code") or "RELATION_READ_FORBIDDEN_CORE")
+            if reason_code == "RELATION_READ_FORBIDDEN":
+                reason_code = "RELATION_READ_FORBIDDEN_CORE"
+            label = str(first.get("field") or first.get("model") or "unknown")
+            message = f"core field access blocked: {label}"
+        elif degraded_fields:
+            mode = "degrade"
+            first = degraded_fields[0]
+            reason_code = str(first.get("reason_code") or "RELATION_READ_FORBIDDEN")
+            label = str(first.get("field") or first.get("model") or "unknown")
+            message = f"relation access degraded: {label}"
+
+        data["access_policy"] = {
+            "mode": mode,
+            "reason_code": reason_code,
+            "message": message,
+            "policy_source": policy_source,
+            "blocked_fields": blocked_fields,
+            "degraded_fields": degraded_fields,
+        }
+
+        if mode in {"block", "degrade"}:
+            warnings = data.get("warnings") if isinstance(data.get("warnings"), list) else []
+            marker = f"access_policy:{mode}:{reason_code or 'UNKNOWN'}"
+            if marker not in warnings:
+                warnings.append(marker)
+            data["warnings"] = warnings
 
     def _coerce_view_contract_semantics(self, view_type, contract):
         """标准化高级视图关键语义键，避免前端消费时出现结构漂移。"""
@@ -370,6 +532,7 @@ class PageAssembler:
     def _build_relation_entry_for_field(self, field_name, descriptor, base_entry, model_name=""):
         entry = dict(base_entry or {})
         relation = str(descriptor.get("relation") or "").strip()
+        can_read = bool(entry.get("can_read", True))
         can_create = bool(entry.get("can_create"))
         has_page = bool(entry.get("action_id"))
         default_vals = {}
@@ -384,7 +547,10 @@ class PageAssembler:
             if dict_type:
                 default_vals = {"type": dict_type}
 
-        if has_page:
+        if not can_read:
+            create_mode = "disabled"
+            reason_code = "RELATION_READ_FORBIDDEN"
+        elif has_page:
             create_mode = "page"
             if can_create:
                 reason_code = reason_code or "PAGE_ENTRY_READY"
@@ -404,6 +570,7 @@ class PageAssembler:
                 "field": str(field_name or "").strip(),
                 "create_mode": create_mode,
                 "default_vals": default_vals,
+                "can_read": can_read,
                 "reason_code": reason_code,
             }
         )
@@ -422,6 +589,11 @@ class PageAssembler:
         def _safe_can_create(model_name):
             try:
                 return bool(self.env[model_name].check_access_rights("create", raise_exception=False))
+            except Exception:
+                return False
+        def _safe_can_read(model_name):
+            try:
+                return bool(self.env[model_name].check_access_rights("read", raise_exception=False))
             except Exception:
                 return False
 
@@ -464,6 +636,7 @@ class PageAssembler:
                     "menu_id": int(menu_by_action.get(act.id) or 0) or None,
                     "view_type": "form",
                     "view_mode": str(act.view_mode or "form"),
+                    "can_read": _safe_can_read(relation),
                     "can_create": _safe_can_create(relation),
                     "source": "backend_contract",
                 }
@@ -474,6 +647,7 @@ class PageAssembler:
                 "menu_id": None,
                 "view_type": "form",
                 "view_mode": "form",
+                "can_read": _safe_can_read(relation),
                 "can_create": _safe_can_create(relation),
                 "source": "backend_contract",
                 "reason_code": "NO_VISIBLE_ACTION",

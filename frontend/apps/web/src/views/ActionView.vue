@@ -344,7 +344,12 @@ import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
-import { parseContractContextRaw, resolveContractReadRight, resolveContractViewMode } from '../app/contractActionRuntime';
+import {
+  parseContractContextRaw,
+  resolveContractAccessPolicy,
+  resolveContractReadRight,
+  resolveContractViewMode,
+} from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
@@ -1076,6 +1081,24 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   return {
     ...pickContractNavQuery(route.query as Record<string, unknown>, extra),
     ...resolveWorkspaceContextQuery(),
+  };
+}
+
+function resolveWorkbenchQuery(
+  reason: string,
+  payload?: { public?: Record<string, unknown>; diag?: Record<string, unknown> },
+) {
+  return {
+    reason,
+    ...resolveWorkspaceContextQuery(),
+    ...(payload?.public || {}),
+    ...(showHud.value
+      ? {
+          menu_id: menuId.value || undefined,
+          action_id: actionId.value || undefined,
+          ...(payload?.diag || {}),
+        }
+      : {}),
   };
 }
 
@@ -2198,14 +2221,13 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
     const contractType = String(typed.data?.type || '').toLowerCase();
     await router.replace({
       name: 'workbench',
-      query: {
-        menu_id: menuId.value || undefined,
-        action_id: actionId.value || undefined,
-        reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
-        diag: 'act_url_empty',
-        diag_action_type: actionType || undefined,
-        diag_contract_type: contractType || undefined,
-      },
+      query: resolveWorkbenchQuery(ErrorCodes.ACT_UNSUPPORTED_TYPE, {
+        diag: {
+          diag: 'act_url_empty',
+          diag_action_type: actionType || undefined,
+          diag_contract_type: contractType || undefined,
+        },
+      }),
     });
     return true;
   }
@@ -2462,18 +2484,20 @@ async function load() {
       const defaultGroupBy = contractGroupByChips.value.find((item) => item.isDefault);
       if (defaultGroupBy) activeGroupByField.value = defaultGroupBy.field;
     }
+    const accessPolicy = resolveContractAccessPolicy(typedContract);
     contractReadAllowed.value = resolveContractReadRight(typedContract);
     contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
     contractDegraded.value = Boolean(typedContract.degraded);
     if (!contractReadAllowed.value) {
       await router.replace({
         name: 'workbench',
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: actionId.value || undefined,
-          reason: ErrorCodes.CAPABILITY_MISSING,
-          diag: 'contract_read_forbidden',
-        },
+        query: resolveWorkbenchQuery(ErrorCodes.CAPABILITY_MISSING, {
+          diag: {
+            diag: 'contract_read_forbidden',
+            diag_reason_code: accessPolicy.reasonCode || undefined,
+            diag_access_mode: accessPolicy.mode,
+          },
+        }),
       });
       return;
     }
@@ -2505,12 +2529,9 @@ async function load() {
     if (policy.state !== 'enabled') {
       await router.replace({
         name: 'workbench',
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: actionId.value || undefined,
-          reason: ErrorCodes.CAPABILITY_MISSING,
-          missing: policy.missing.join(','),
-        },
+        query: resolveWorkbenchQuery(ErrorCodes.CAPABILITY_MISSING, {
+          public: { missing: policy.missing.join(',') || undefined },
+        }),
       });
       return;
     }
@@ -2524,11 +2545,7 @@ async function load() {
       if (isClientAction(meta)) {
         await router.replace({
           name: 'workbench',
-          query: {
-            menu_id: menuId.value || undefined,
-            action_id: actionId.value || undefined,
-            reason: ErrorCodes.ACT_NO_MODEL,
-          },
+          query: resolveWorkbenchQuery(ErrorCodes.ACT_NO_MODEL),
         });
         return;
       }
@@ -2540,16 +2557,15 @@ async function load() {
         const metaUrl = String((meta as ActionMetaLoose | undefined)?.url || '');
         await router.replace({
           name: 'workbench',
-          query: {
-            menu_id: menuId.value || undefined,
-            action_id: actionId.value || undefined,
-            reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
-            diag: 'non_window_action',
-            diag_action_type: actionType || undefined,
-            diag_contract_type: contractType || undefined,
-            diag_contract_url: contractUrl || undefined,
-            diag_meta_url: metaUrl || undefined,
-          },
+          query: resolveWorkbenchQuery(ErrorCodes.ACT_UNSUPPORTED_TYPE, {
+            diag: {
+              diag: 'non_window_action',
+              diag_action_type: actionType || undefined,
+              diag_contract_type: contractType || undefined,
+              diag_contract_url: contractUrl || undefined,
+              diag_meta_url: metaUrl || undefined,
+            },
+          }),
         });
         return;
       }

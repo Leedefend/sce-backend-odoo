@@ -234,6 +234,36 @@ def _system_init_capability_count(intent_url: str, token: str) -> int:
     return len(caps)
 
 
+def _probe_model_read(intent_url: str, token: str, model: str) -> tuple[bool, str]:
+    status, resp = http_post_json(
+        intent_url,
+        {
+            "intent": "api.data",
+            "params": {
+                "op": "list",
+                "model": model,
+                "fields": ["id", "display_name"],
+                "limit": 1,
+                "offset": 0,
+                "order": "id desc",
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    ok = bool(status < 400 and isinstance(resp, dict) and resp.get("ok") is True)
+    if ok:
+        return True, "ok"
+    if isinstance(resp, dict):
+        err = resp.get("error") if isinstance(resp.get("error"), dict) else {}
+        code = str(err.get("code") or "").strip()
+        msg = str(err.get("message") or "").strip()
+        if code:
+            return False, code
+        if msg:
+            return False, msg
+    return False, f"http_{status}"
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_JSON)
     if not baseline:
@@ -283,6 +313,7 @@ def main() -> int:
             "groups_xmlids": [],
             "capability_count": 0,
             "journey": [],
+            "read_probes": [],
             "failure_reason": "",
         }
         try:
@@ -299,6 +330,13 @@ def main() -> int:
                 journey.append({"intent": intent, "ok": ok, "reason": reason})
                 if not ok:
                     raise RuntimeError(f"journey intent failed: {intent} ({reason})")
+            read_models = [str(x).strip() for x in (fixture.get("read_models") or []) if str(x).strip()]
+            read_probes = []
+            for model in read_models:
+                ok, reason = _probe_model_read(intent_url, token, model)
+                read_probes.append({"model": model, "ok": ok, "reason": reason})
+                if not ok:
+                    raise RuntimeError(f"read probe failed: {model} ({reason})")
             row.update(
                 {
                     "ok": True,
@@ -306,6 +344,7 @@ def main() -> int:
                     "groups_xmlids": groups_xmlids,
                     "capability_count": cap_count,
                     "journey": journey,
+                    "read_probes": read_probes,
                 }
             )
         except Exception as exc:

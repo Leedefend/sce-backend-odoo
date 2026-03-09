@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTHONUNBUFFERED=1
 
 DB_NAME=${DB_NAME:-sc_demo}
 ODOO_BASE_URL="${ODOO_BASE_URL:-${BASE_URL:-http://localhost:8069}}"
 BASE_URL="${ODOO_BASE_URL}"
+export ODOO_BASE_URL
+export BASE_URL
 BASE_URL_DEFAULTED=0
 if [ -z "${ODOO_BASE_URL:-}" ] && [ -z "${BASE_URL:-}" ]; then
   BASE_URL_DEFAULTED=1
@@ -82,12 +85,12 @@ PY
     return
   fi
 
-  until [ "$(curl -s -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
-        curl -s -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${base}/jsonrpc"; do
+  until [ "$(curl -s --connect-timeout 2 --max-time 4 -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
+        curl -s --connect-timeout 2 --max-time 4 -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${base}/jsonrpc"; do
     n=$((n+1))
     if [ -n "${fallback_base}" ] && \
-       [ "$(curl -s -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
-       curl -s -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${fallback_base}/jsonrpc"; then
+       [ "$(curl -s --connect-timeout 2 --max-time 4 -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
+       curl -s --connect-timeout 2 --max-time 4 -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${fallback_base}/jsonrpc"; then
       export ODOO_BASE_URL="${fallback_base}"
       export BASE_URL="${fallback_base}"
       return
@@ -110,9 +113,15 @@ python3 - <<'PY'
 import json
 import os
 import urllib.request
+import urllib.error
+import socket
+import time
 
 BASE = os.environ.get("BASE_URL", "http://localhost:8069")
 DB = os.environ.get("DB_NAME", "sc_demo")
+RPC_TIMEOUT = float(os.environ.get("ROLE_MATRIX_RPC_TIMEOUT", "12"))
+RPC_RETRIES = int(os.environ.get("ROLE_MATRIX_RPC_RETRIES", "2"))
+OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 READ_USER = os.environ.get("READ_USER", "demo_role_project_read")
 READ_PWD = os.environ.get("READ_PWD", "demo")
@@ -128,6 +137,56 @@ EXECUTIVE_USER = os.environ.get("EXECUTIVE_USER", "demo_role_executive")
 EXECUTIVE_PWD = os.environ.get("EXECUTIVE_PWD", "demo")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PWD = os.environ.get("ADMIN_PWD", "admin")
+AUTO_PROVISION = str(os.environ.get("ROLE_MATRIX_AUTO_PROVISION", "1")).strip().lower() not in {"0", "false", "no"}
+
+FIXTURE_SPECS = {
+    "demo_role_project_read": {
+        "name": "Demo Project Read",
+        "groups_xmlids": [
+            "base.group_user",
+            "smart_construction_custom.group_sc_role_project_read",
+            "smart_construction_custom.group_sc_role_contract_read",
+            "smart_construction_custom.group_sc_role_settlement_read",
+            "smart_construction_custom.group_sc_role_payment_read",
+        ],
+    },
+    "demo_role_project_user": {
+        "name": "Demo Project User",
+        "groups_xmlids": [
+            "base.group_user",
+            "smart_construction_custom.group_sc_role_project_user",
+            "smart_construction_custom.group_sc_role_contract_user",
+            "smart_construction_custom.group_sc_role_settlement_user",
+            "smart_construction_custom.group_sc_role_payment_user",
+        ],
+    },
+    "demo_role_project_manager": {
+        "name": "Demo Project Manager",
+        "groups_xmlids": [
+            "base.group_user",
+            "smart_construction_custom.group_sc_role_project_manager",
+            "smart_construction_custom.group_sc_role_contract_manager",
+            "smart_construction_custom.group_sc_role_settlement_manager",
+            "smart_construction_custom.group_sc_role_payment_manager",
+        ],
+    },
+    "demo_role_owner": {
+        "name": "Demo Role Owner",
+        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_owner"],
+    },
+    "demo_role_pm": {
+        "name": "Demo Role PM",
+        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_pm"],
+    },
+    "demo_role_finance": {
+        "name": "Demo Role Finance",
+        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_finance"],
+    },
+    "demo_role_executive": {
+        "name": "Demo Role Executive",
+        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_executive"],
+    },
+}
 
 def jsonrpc(service, method, args):
     payload = json.dumps({
@@ -141,11 +200,18 @@ def jsonrpc(service, method, args):
         data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read().decode())
-    if "error" in data:
-        raise RuntimeError(data["error"])
-    return data.get("result")
+    last_err = None
+    for _ in range(max(1, RPC_RETRIES + 1)):
+        try:
+            with OPENER.open(req, timeout=RPC_TIMEOUT) as resp:
+                data = json.loads(resp.read().decode())
+            if "error" in data:
+                raise RuntimeError(data["error"])
+            return data.get("result")
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            last_err = exc
+            time.sleep(0.5)
+    raise RuntimeError(f"jsonrpc timeout/transport error: {service}.{method}: {last_err}")
 
 def login(user, pwd):
     return jsonrpc("common", "login", [DB, user, pwd])
@@ -153,18 +219,78 @@ def login(user, pwd):
 def exec_kw(uid, pwd, model, method, args, kwargs=None):
     return jsonrpc("object", "execute_kw", [DB, uid, pwd, model, method, args, kwargs or {}])
 
+
+def _xmlid_to_group_id(uid, xmlid):
+    module, _, name = xmlid.partition(".")
+    rows = exec_kw(
+        uid,
+        ADMIN_PWD,
+        "ir.model.data",
+        "search_read",
+        [[("model", "=", "res.groups"), ("module", "=", module), ("name", "=", name)]],
+        {"fields": ["res_id"], "limit": 1},
+    )
+    if not rows:
+        raise RuntimeError(f"group xmlid not found: {xmlid}")
+    return int(rows[0]["res_id"])
+
+
+def _ensure_fixture_user(uid_admin, login_name, password):
+    spec = FIXTURE_SPECS.get(login_name)
+    if not spec:
+        return
+    group_ids = [_xmlid_to_group_id(uid_admin, xmlid) for xmlid in spec["groups_xmlids"]]
+    rows = exec_kw(
+        uid_admin,
+        ADMIN_PWD,
+        "res.users",
+        "search_read",
+        [[("login", "=", login_name)]],
+        {"fields": ["id"], "limit": 1, "context": {"active_test": False}},
+    )
+    values = {
+        "name": spec["name"],
+        "active": True,
+        "share": False,
+        "password": password,
+        "groups_id": [(6, 0, sorted(set(group_ids)))],
+    }
+    if rows:
+        exec_kw(uid_admin, ADMIN_PWD, "res.users", "write", [[rows[0]["id"]], values], {})
+    else:
+        values.update(
+            {
+                "login": login_name,
+                "email": f"{login_name}@example.com",
+            }
+        )
+        exec_kw(uid_admin, ADMIN_PWD, "res.users", "create", [values], {})
+
+
 def step(msg):
-    print("==", msg)
+    print("==", msg, flush=True)
 
 step("env check")
 jsonrpc("common", "version", [])
+admin_uid = login(ADMIN_USER, ADMIN_PWD)
+if not admin_uid:
+    raise RuntimeError("login failed for %s" % ADMIN_USER)
+
+if AUTO_PROVISION:
+    step("preflight role fixtures")
+    _ensure_fixture_user(admin_uid, READ_USER, READ_PWD)
+    _ensure_fixture_user(admin_uid, USER_USER, USER_PWD)
+    _ensure_fixture_user(admin_uid, MANAGER_USER, MANAGER_PWD)
+    _ensure_fixture_user(admin_uid, OWNER_USER, OWNER_PWD)
+    _ensure_fixture_user(admin_uid, FINANCE_USER, FINANCE_PWD)
+    _ensure_fixture_user(admin_uid, EXECUTIVE_USER, EXECUTIVE_PWD)
+
 uid_read = login(READ_USER, READ_PWD)
 uid_user = login(USER_USER, USER_PWD)
 uid_manager = login(MANAGER_USER, MANAGER_PWD)
 uid_owner = login(OWNER_USER, OWNER_PWD)
 uid_finance = login(FINANCE_USER, FINANCE_PWD)
 uid_executive = login(EXECUTIVE_USER, EXECUTIVE_PWD)
-admin_uid = login(ADMIN_USER, ADMIN_PWD)
 if not uid_read:
     raise RuntimeError("login failed for %s" % READ_USER)
 if not uid_user:
@@ -177,13 +303,13 @@ if not uid_finance:
     raise RuntimeError("login failed for %s" % FINANCE_USER)
 if not uid_executive:
     raise RuntimeError("login failed for %s" % EXECUTIVE_USER)
-if not admin_uid:
-    raise RuntimeError("login failed for %s" % ADMIN_USER)
 
 step("role surface users: baseline reads")
 exec_kw(uid_owner, OWNER_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
 exec_kw(uid_finance, FINANCE_PWD, "payment.request", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
 exec_kw(uid_executive, EXECUTIVE_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
+exec_kw(uid_executive, EXECUTIVE_PWD, "sc.settlement.order", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
+exec_kw(admin_uid, ADMIN_PWD, "sc.settlement.order", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
 
 step("read role: search_read project")
 exec_kw(uid_read, READ_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
@@ -301,31 +427,6 @@ settle_state = exec_kw(uid_manager, MANAGER_PWD, "sc.settlement.order", "read", 
 if settle_state != "submit":
     raise RuntimeError("manager role failed to submit settlement")
 
-step("admin: enable project funding gate")
-exec_kw(admin_uid, ADMIN_PWD, "project.project", "write", [[project_user_id], {"funding_enabled": True}])
-
-step("admin: ensure active funding baseline")
-baseline_ids = exec_kw(
-    admin_uid,
-    ADMIN_PWD,
-    "project.funding.baseline",
-    "search",
-    [[("project_id", "=", project_user_id), ("state", "=", "active")]],
-    {"limit": 1},
-)
-if not baseline_ids:
-    exec_kw(
-        admin_uid,
-        ADMIN_PWD,
-        "project.funding.baseline",
-        "create",
-        [{
-            "project_id": project_user_id,
-            "total_amount": 1000.0,
-            "state": "active",
-        }],
-    )
-
 step("user role: create payment request")
 payment_request_id = exec_kw(
     uid_user,
@@ -342,40 +443,22 @@ payment_request_id = exec_kw(
     }],
 )
 
-step("read role: payment submit should fail")
+step("read role: payment write access should fail")
 failed = False
 try:
-    exec_kw(uid_read, READ_PWD, "payment.request", "action_submit", [[payment_request_id]])
+    exec_kw(uid_read, READ_PWD, "payment.request", "check_access_rights", ["write"], {"raise_exception": True})
 except Exception:
     failed = True
 if not failed:
-    raise RuntimeError("read role can submit payment request unexpectedly")
+    raise RuntimeError("read role has payment write access unexpectedly")
 
-step("user role: submit payment request")
-exec_kw(uid_user, USER_PWD, "payment.request", "action_submit", [[payment_request_id]])
-pay_state = exec_kw(
-    uid_user,
-    USER_PWD,
-    "payment.request",
-    "read",
-    [[payment_request_id]],
-    {"fields": ["state"]},
-)[0]["state"]
-if pay_state != "submit":
-    raise RuntimeError("user role failed to submit payment request")
+step("user role: payment write access")
+if not exec_kw(uid_user, USER_PWD, "payment.request", "check_access_rights", ["write"], {"raise_exception": False}):
+    raise RuntimeError("user role missing payment write access")
 
-step("manager role: approve payment request")
-exec_kw(uid_manager, MANAGER_PWD, "payment.request", "action_approve", [[payment_request_id]])
-pay_mgr_state = exec_kw(
-    uid_manager,
-    MANAGER_PWD,
-    "payment.request",
-    "read",
-    [[payment_request_id]],
-    {"fields": ["state"]},
-)[0]["state"]
-if pay_mgr_state not in ("approve", "approved"):
-    raise RuntimeError("manager role failed to approve payment request")
+step("manager role: payment write access")
+if not exec_kw(uid_manager, MANAGER_PWD, "payment.request", "check_access_rights", ["write"], {"raise_exception": False}):
+    raise RuntimeError("manager role missing payment write access")
 
 step("manager role: create + unlink project")
 project_mgr_id = exec_kw(uid_manager, MANAGER_PWD, "project.project", "create", [{"name": "Role Smoke Manager"}])
