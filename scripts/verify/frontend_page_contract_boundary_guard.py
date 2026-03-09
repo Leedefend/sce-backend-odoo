@@ -13,6 +13,7 @@ ROUTER = ROOT / "frontend/apps/web/src/router/index.ts"
 
 REPORT_JSON = ROOT / "artifacts/backend/frontend_page_contract_boundary_report.json"
 REPORT_MD = ROOT / "docs/ops/audit/frontend_page_contract_boundary_report.md"
+WORKSPACE_HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
 
 
 def _read(path: Path) -> str:
@@ -117,10 +118,16 @@ def main() -> int:
             "workspaceHome.value.layout",
             "homeLayoutText(",
             "isHomeSectionEnabled(",
+            "isHomeSectionTag(",
+            "isHomeSectionOpenDefault(",
             "homeSectionOrderMap",
             "homeSectionStyle('hero')",
             "homeSectionStyle('metrics')",
             "homeSectionStyle('scene_groups')",
+            "isHomeSectionTag('hero', 'header')",
+            "isHomeSectionTag('ops', 'details')",
+            "isHomeSectionOpenDefault('ops')",
+            "isHomeSectionOpenDefault('advice')",
             "Array.isArray(workspaceHome.value.metrics)",
             "Array.isArray(workspaceHome.value.today_actions)",
             "keywordList('todo_keywords_approval'",
@@ -264,6 +271,22 @@ def main() -> int:
         errors.append("missing file: frontend/apps/web/src/components/MenuTree.vue")
     else:
         _check_forbidden(menu_tree_text, ["fixture"], "components/MenuTree.vue", errors)
+
+    workspace_home_builder_text = _read(WORKSPACE_HOME_BUILDER)
+    if not workspace_home_builder_text:
+        errors.append("missing file: addons/smart_core/core/workspace_home_contract_builder.py")
+    else:
+        _check_required(
+            workspace_home_builder_text,
+            [
+                '"key": "hero", "enabled": True, "tag": "header"',
+                '"key": "ops", "enabled": True, "tag": "details", "open": False',
+                '"key": "advice", "enabled": True, "tag": "details", "open": False',
+                '"key": "scene_groups", "enabled": True, "tag": "div"',
+            ],
+            "workspace_home_contract_builder.py",
+            errors,
+        )
 
     report = {
         "ok": len(errors) == 0,
