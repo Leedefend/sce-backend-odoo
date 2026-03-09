@@ -35,6 +35,18 @@ ALLOWED_BLOCK_TYPES = {
 ALLOWED_TONES = {"success", "warning", "danger", "info", "neutral"}
 ALLOWED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
 ALLOWED_DATA_SOURCE_TYPES = {"static", "scene_context", "api.data", "computed", "capability_registry", "role_profile", "mixed"}
+BLOCK_PAYLOAD_KEYS = {
+    "hero_metric": {"main_value_field", "label_field", "trend_field", "status_field", "click_action"},
+    "metric_row": {"items", "show_trend"},
+    "todo_list": {"item_layout", "fields", "max_items", "sort_by"},
+    "alert_panel": {"alert_level_field", "title_field", "desc_field", "group_by", "max_items", "show_counts"},
+    "progress_summary": {"bars", "show_percentage", "show_target"},
+    "entry_grid": {"entry_source", "group_key", "layout", "show_icon", "show_hint", "entry_action_intent"},
+    "accordion_group": {"mode"},
+    "record_summary": {"tag", "enabled", "open", "style_variant"},
+    "activity_feed": {"stream"},
+}
+COMMON_PAYLOAD_KEYS = {"tag", "enabled", "open"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -193,6 +205,14 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             actions = block.get("actions")
             if actions is not None and not isinstance(actions, list):
                 errors.append(f"{bprefix}.actions must be list when present")
+            payload = block.get("payload")
+            if payload is not None and not isinstance(payload, dict):
+                errors.append(f"{bprefix}.payload must be object when present")
+            if isinstance(payload, dict):
+                allowed_keys = BLOCK_PAYLOAD_KEYS.get(block_type, set()) | COMMON_PAYLOAD_KEYS
+                unexpected = sorted(set(str(key) for key in payload.keys()) - allowed_keys)
+                if unexpected:
+                    errors.append(f"{bprefix}.payload unexpected keys for block_type={block_type}: {', '.join(unexpected)}")
             if isinstance(actions, list):
                 for aidx, action in enumerate(actions):
                     aprefix = f"{bprefix}.actions[{aidx}]"
