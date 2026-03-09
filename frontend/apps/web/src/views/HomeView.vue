@@ -823,7 +823,14 @@ const entries = computed<CapabilityEntry[]>(() => {
 function includesAny(value: string, keywords: string[]) {
   const text = String(value || '').toLowerCase();
   if (!text) return false;
-  return keywords.some((item) => text.includes(item));
+  return keywords.some((item) => text.includes(String(item || '').toLowerCase()));
+}
+
+function keywordList(key: string, fallbackCsv: string) {
+  return String(pageText(key, fallbackCsv) || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
 }
 
 const coreMetrics = computed<CoreMetric[]>(() => {
@@ -974,19 +981,19 @@ function trendText(delta: number) {
 
 function todoActionLabel(title: string) {
   const text = String(title || '').toLowerCase();
-  if (includesAny(text, ['付款', '支付', 'approval', '审批'])) {
+  if (includesAny(text, keywordList('todo_keywords_approval', '付款,支付,approval,审批'))) {
     return homeLayoutText('actions.todo_approval', pageText('todo_label_approval', '审核付款申请'));
   }
-  if (includesAny(text, ['合同', 'contract'])) {
+  if (includesAny(text, keywordList('todo_keywords_contract', '合同,contract'))) {
     return homeLayoutText('actions.todo_contract', pageText('todo_label_contract', '查看合同异常'));
   }
-  if (includesAny(text, ['风险', 'risk'])) {
+  if (includesAny(text, keywordList('todo_keywords_risk', '风险,risk'))) {
     return homeLayoutText('actions.todo_risk', pageText('todo_label_risk', '处理风险事项'));
   }
-  if (includesAny(text, ['变更', 'change'])) {
+  if (includesAny(text, keywordList('todo_keywords_change', '变更,change'))) {
     return homeLayoutText('actions.todo_change', pageText('todo_label_change', '确认变更事项'));
   }
-  if (includesAny(text, ['逾期', '任务', 'todo'])) {
+  if (includesAny(text, keywordList('todo_keywords_overdue', '逾期,任务,todo'))) {
     return homeLayoutText('actions.todo_overdue', pageText('todo_label_overdue', '处理逾期任务'));
   }
   return asText(workspaceLayoutActions.value.todo_default) || homeLayoutText('actions.todo_default', pageText('todo_label_default', '查看详情'));
@@ -1279,11 +1286,11 @@ function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
   if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
   const mergeText = `${entry.title} ${entry.subtitle} ${entry.key} ${entry.sceneKey}`.toLowerCase();
-  if (includesAny(mergeText, ['payment', '付款', '支付', 'approval', '审批'])) return pageText('action_enter_approval', '审核付款申请');
-  if (includesAny(mergeText, ['contract', '合同'])) return pageText('action_enter_contract', '查看合同异常');
-  if (includesAny(mergeText, ['risk', '风险', '预警'])) return pageText('action_enter_risk', '处理风险事项');
-  if (includesAny(mergeText, ['change', '变更'])) return pageText('action_enter_change', '确认变更事项');
-  if (includesAny(mergeText, ['task', '任务', 'todo', '待办'])) return pageText('action_enter_task', '处理任务');
+  if (includesAny(mergeText, keywordList('action_enter_keywords_approval', 'payment,付款,支付,approval,审批'))) return pageText('action_enter_approval', '审核付款申请');
+  if (includesAny(mergeText, keywordList('action_enter_keywords_contract', 'contract,合同'))) return pageText('action_enter_contract', '查看合同异常');
+  if (includesAny(mergeText, keywordList('action_enter_keywords_risk', 'risk,风险,预警'))) return pageText('action_enter_risk', '处理风险事项');
+  if (includesAny(mergeText, keywordList('action_enter_keywords_change', 'change,变更'))) return pageText('action_enter_change', '确认变更事项');
+  if (includesAny(mergeText, keywordList('action_enter_keywords_task', 'task,任务,todo,待办'))) return pageText('action_enter_task', '处理任务');
   return pageText('action_enter_default', '进入处理');
 }
 

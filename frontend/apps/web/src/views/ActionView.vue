@@ -658,16 +658,27 @@ const viewMode = computed(() => {
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
 const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
+function keywordList(key: string, fallbackCsv: string) {
+  return String(pageText(key, fallbackCsv) || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+function includesAnyKeyword(text: string, keywords: string[]) {
+  const raw = String(text || '').toLowerCase();
+  if (!raw) return false;
+  return keywords.some((item) => raw.includes(String(item || '').toLowerCase()));
+}
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
   const key = surfaceKey.value;
   const sceneKeyText = String(sceneKey.value || '').toLowerCase();
   const modelText = effectiveSurfaceModel.value;
-  if (key.includes('risk') || key.includes('风险')) return 'risk';
-  if (key.includes('contract') || key.includes('合同')) return 'contract';
-  if (key.includes('cost') || key.includes('成本')) return 'cost';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) return 'risk';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) return 'contract';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) return 'cost';
   if (sceneKeyText.startsWith('projects.') || sceneKeyText.startsWith('project.')) return 'project';
   if (modelText.startsWith('project.') || modelText.startsWith('construction.')) return 'project';
-  if (key.includes('project') || key.includes('项目')) return 'project';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) return 'project';
   return 'generic';
 });
 const sortOptions = computed(() => {
@@ -735,7 +746,7 @@ const pageTitle = computed(() => {
 });
 const surfaceIntent = computed<SurfaceIntent>(() => {
   const key = surfaceKey.value;
-  if (key.includes('risk') || key.includes('风险')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) {
     return {
       title: pageText('intent_title_risk', '风险驾驶舱：先处理严重与逾期风险'),
       summary: pageText('intent_summary_risk', '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。'),
@@ -749,7 +760,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
       secondaryAction: { label: pageText('secondary_action_risk', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
-  if (key.includes('contract') || key.includes('合同')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) {
     return {
       title: pageText('intent_title_contract', '合同执行：优先识别付款与变更风险'),
       summary: pageText('intent_summary_contract', '先看执行率与付款状态，再进入异常合同处理。'),
@@ -763,7 +774,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
       secondaryAction: { label: pageText('secondary_action_contract', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
-  if (key.includes('cost') || key.includes('成本')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) {
     return {
       title: pageText('intent_title_cost', '成本执行：先回答是否超支'),
       summary: pageText('intent_summary_cost', '优先关注超支金额与超支项，再下钻到具体偏差来源。'),
@@ -777,7 +788,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
       secondaryAction: { label: pageText('secondary_action_cost', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
-  if (key.includes('project') || key.includes('项目')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) {
     return {
       title: pageText('intent_title_project', '项目视角：先判断是否可控'),
       summary: pageText('intent_summary_project', '优先查看风险、审批与经营指标，再决定下一步动作。'),
@@ -1055,10 +1066,13 @@ const contractActionGroups = computed<Array<{ key: string; label: string; action
       grouped.push({ key: groupKey, label: String(row?.label || groupKey), actions });
     }
   }
-    if (!grouped.length) {
-    const basic = all.filter((item) => /创建|保存|submit|create|save/i.test(item.label));
-    const workflow = all.filter((item) => /阶段|审批|workflow|transition/i.test(item.label));
-    const drilldown = all.filter((item) => /查看|列表|看板|open|view/i.test(item.label));
+  if (!grouped.length) {
+    const basicKeywords = keywordList('group_keywords_basic', '创建,保存,submit,create,save');
+    const workflowKeywords = keywordList('group_keywords_workflow', '阶段,审批,workflow,transition');
+    const drilldownKeywords = keywordList('group_keywords_drilldown', '查看,列表,看板,open,view');
+    const basic = all.filter((item) => includesAnyKeyword(item.label, basicKeywords));
+    const workflow = all.filter((item) => includesAnyKeyword(item.label, workflowKeywords));
+    const drilldown = all.filter((item) => includesAnyKeyword(item.label, drilldownKeywords));
     const other = all.filter((item) => !basic.includes(item) && !workflow.includes(item) && !drilldown.includes(item));
     if (basic.length) grouped.push({ key: 'basic', label: pageText('group_label_basic', '基础操作'), actions: basic });
     if (workflow.length) grouped.push({ key: 'workflow', label: pageText('group_label_workflow', '流程推进'), actions: workflow });
@@ -2012,39 +2026,39 @@ function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, 
   const buckets: string[][] = [];
   if (surfaceKind.value === 'risk') {
     buckets.push(
-      pick(['title', 'name', '风险', '事项']),
-      pick(['priority', 'severity', '优先级', '严重']),
-      pick(['deadline', 'date_deadline', '截止', '逾期']),
-      pick(['user_id', 'owner', 'assignee', '负责人', '分派']),
-      pick(['state', 'stage', 'status', '状态']),
-      pick(['reason', '原因']),
+      pick(keywordList('columns_risk_bucket_identity', 'title,name,风险,事项')),
+      pick(keywordList('columns_risk_bucket_priority', 'priority,severity,优先级,严重')),
+      pick(keywordList('columns_risk_bucket_deadline', 'deadline,date_deadline,截止,逾期')),
+      pick(keywordList('columns_risk_bucket_owner', 'user_id,owner,assignee,负责人,分派')),
+      pick(keywordList('columns_risk_bucket_state', 'state,stage,status,状态')),
+      pick(keywordList('columns_risk_bucket_reason', 'reason,原因')),
     );
   } else if (surfaceKind.value === 'contract') {
     buckets.push(
-      pick(['amount_total', 'contract_amount', '金额', '合同额']),
-      pick(['execute', 'execution', 'progress', '执行率']),
-      pick(['paid', 'payment', '付款', '支付']),
-      pick(['risk', '风险', 'alert']),
-      pick(['change', '变更', 'write_date', '最近']),
-      pick(['title', 'name', '合同']),
+      pick(keywordList('columns_contract_bucket_amount', 'amount_total,contract_amount,金额,合同额')),
+      pick(keywordList('columns_contract_bucket_execution', 'execute,execution,progress,执行率')),
+      pick(keywordList('columns_contract_bucket_payment', 'paid,payment,付款,支付')),
+      pick(keywordList('columns_contract_bucket_risk', 'risk,风险,alert')),
+      pick(keywordList('columns_contract_bucket_change', 'change,变更,write_date,最近')),
+      pick(keywordList('columns_contract_bucket_identity', 'title,name,合同')),
     );
   } else if (surfaceKind.value === 'cost') {
     buckets.push(
-      pick(['cost', '执行率', 'rate']),
-      pick(['over', 'overrun', '超支', '偏差']),
-      pick(['count', '项数']),
-      pick(['deadline', '截止']),
-      pick(['priority', '优先级']),
-      pick(['title', 'name', '项目']),
+      pick(keywordList('columns_cost_bucket_execution', 'cost,执行率,rate')),
+      pick(keywordList('columns_cost_bucket_overrun', 'over,overrun,超支,偏差')),
+      pick(keywordList('columns_cost_bucket_count', 'count,项数')),
+      pick(keywordList('columns_cost_bucket_deadline', 'deadline,截止')),
+      pick(keywordList('columns_cost_bucket_priority', 'priority,优先级')),
+      pick(keywordList('columns_cost_bucket_identity', 'title,name,项目')),
     );
   } else if (surfaceKind.value === 'project') {
     buckets.push(
-      pick(['title', 'name', '项目']),
-      pick(['state', 'stage', 'status', '状态', '阶段']),
-      pick(['risk', '风险']),
-      pick(['payment', '付款']),
-      pick(['output', '产值']),
-      pick(['cost', '成本']),
+      pick(keywordList('columns_project_bucket_identity', 'title,name,项目')),
+      pick(keywordList('columns_project_bucket_state', 'state,stage,status,状态,阶段')),
+      pick(keywordList('columns_project_bucket_risk', 'risk,风险')),
+      pick(keywordList('columns_project_bucket_payment', 'payment,付款')),
+      pick(keywordList('columns_project_bucket_output', 'output,产值')),
+      pick(keywordList('columns_project_bucket_cost', 'cost,成本')),
     );
   }
 
