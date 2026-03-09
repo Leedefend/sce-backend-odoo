@@ -238,11 +238,16 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
                     errors.append(f"{aprefix} must be object")
                     continue
                 action_key = str(action.get("key") or "").strip()
+                intent = str(action.get("intent") or "").strip()
                 if not action_key:
                     errors.append(f"{aprefix}.key required")
                     continue
                 if action_key not in action_registry:
                     errors.append(f"{aprefix}.key not declared in action_schema.actions: {action_key}")
+                    continue
+                schema_intent = str((action_registry.get(action_key) or {}).get("intent") or "").strip()
+                if intent and schema_intent and intent != schema_intent:
+                    errors.append(f"{aprefix}.intent mismatch with action_schema: {intent} != {schema_intent}")
 
     for action_key, action in action_registry.items():
         aprefix = f"{role_code}: action_schema.actions.{action_key}"
