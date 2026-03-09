@@ -887,7 +887,7 @@ const riskTrend = computed(() => {
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
     return {
-      label: asText(row.label) || `T-${idx + 1}`,
+      label: asText(row.label) || `${pageText('risk_trend_label_prefix', 'T-')}${idx + 1}`,
       value: Number(row.value || 0),
       percent: Number(row.percent || 0),
     };
@@ -967,29 +967,29 @@ function levelLabel(level: MetricLevel) {
 
 function trendText(delta: number) {
   const value = Number(delta || 0);
-  if (value > 0) return `↑ ${Math.abs(value)}%`;
-  if (value < 0) return `↓ ${Math.abs(value)}%`;
-  return '→ 0%';
+  if (value > 0) return `${pageText('trend_up_prefix', '↑ ')}${Math.abs(value)}%`;
+  if (value < 0) return `${pageText('trend_down_prefix', '↓ ')}${Math.abs(value)}%`;
+  return pageText('trend_flat', '→ 0%');
 }
 
 function todoActionLabel(title: string) {
   const text = String(title || '').toLowerCase();
   if (includesAny(text, ['付款', '支付', 'approval', '审批'])) {
-    return homeLayoutText('actions.todo_approval', '审核付款申请');
+    return homeLayoutText('actions.todo_approval', pageText('todo_label_approval', '审核付款申请'));
   }
   if (includesAny(text, ['合同', 'contract'])) {
-    return homeLayoutText('actions.todo_contract', '查看合同异常');
+    return homeLayoutText('actions.todo_contract', pageText('todo_label_contract', '查看合同异常'));
   }
   if (includesAny(text, ['风险', 'risk'])) {
-    return homeLayoutText('actions.todo_risk', '处理风险事项');
+    return homeLayoutText('actions.todo_risk', pageText('todo_label_risk', '处理风险事项'));
   }
   if (includesAny(text, ['变更', 'change'])) {
-    return homeLayoutText('actions.todo_change', '确认变更事项');
+    return homeLayoutText('actions.todo_change', pageText('todo_label_change', '确认变更事项'));
   }
   if (includesAny(text, ['逾期', '任务', 'todo'])) {
-    return homeLayoutText('actions.todo_overdue', '处理逾期任务');
+    return homeLayoutText('actions.todo_overdue', pageText('todo_label_overdue', '处理逾期任务'));
   }
-  return asText(workspaceLayoutActions.value.todo_default) || homeLayoutText('actions.todo_default', '查看详情');
+  return asText(workspaceLayoutActions.value.todo_default) || homeLayoutText('actions.todo_default', pageText('todo_label_default', '查看详情'));
 }
 
 const systemAdvice = computed<AdviceItem[]>(() => {
@@ -1279,11 +1279,11 @@ function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
   if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
   const mergeText = `${entry.title} ${entry.subtitle} ${entry.key} ${entry.sceneKey}`.toLowerCase();
-  if (includesAny(mergeText, ['payment', '付款', '支付', 'approval', '审批'])) return '审核付款申请';
-  if (includesAny(mergeText, ['contract', '合同'])) return '查看合同异常';
-  if (includesAny(mergeText, ['risk', '风险', '预警'])) return '处理风险事项';
-  if (includesAny(mergeText, ['change', '变更'])) return '确认变更事项';
-  if (includesAny(mergeText, ['task', '任务', 'todo', '待办'])) return '处理任务';
+  if (includesAny(mergeText, ['payment', '付款', '支付', 'approval', '审批'])) return pageText('action_enter_approval', '审核付款申请');
+  if (includesAny(mergeText, ['contract', '合同'])) return pageText('action_enter_contract', '查看合同异常');
+  if (includesAny(mergeText, ['risk', '风险', '预警'])) return pageText('action_enter_risk', '处理风险事项');
+  if (includesAny(mergeText, ['change', '变更'])) return pageText('action_enter_change', '确认变更事项');
+  if (includesAny(mergeText, ['task', '任务', 'todo', '待办'])) return pageText('action_enter_task', '处理任务');
   return pageText('action_enter_default', '进入处理');
 }
 
