@@ -179,6 +179,22 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
     return []
 
 
+def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    key = str(action_key or "").strip().lower()
+    page = str(page_key or "").strip().lower()
+    if key == "open_risk_dashboard":
+        return {"scene_key": "projects.dashboard"}
+    if key == "open_my_work":
+        return {"scene_key": "my_work.workspace"}
+    if key == "apply_filters":
+        return {"scene_key": page}
+    if key == "open_list":
+        if page in {"usage_analytics", "scene_health"}:
+            return {"scene_key": page}
+        return {"scene_key": "projects.list"}
+    return {"scene_key": page}
+
+
 def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code: str) -> Dict[str, Any]:
     sections = page.get("sections") if isinstance(page.get("sections"), list) else []
     title = ""
@@ -257,6 +273,27 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             reverse=True,
         )
 
+    action_schema_actions: Dict[str, Any] = {}
+    for zone in zones:
+        blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            actions = block.get("actions") if isinstance(block.get("actions"), list) else []
+            for action in actions:
+                if not isinstance(action, dict):
+                    continue
+                action_key = str(action.get("key") or "").strip()
+                if not action_key:
+                    continue
+                if action_key in action_schema_actions:
+                    continue
+                action_schema_actions[action_key] = {
+                    "label": str(action.get("label") or action_key),
+                    "intent": str(action.get("intent") or "ui.contract"),
+                    "target": _action_target(action_key, page_key),
+                }
+
     return {
         "contract_version": "page_orchestration_v1",
         "scene_key": page_key,
@@ -273,7 +310,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "status": "ready",
             "breadcrumbs": [],
             "header": {},
-            "global_actions": [],
+            "global_actions": [{"key": "refresh", "label": "刷新", "intent": "api.data"}],
             "filters": [],
             "context": {"role_code": role_code},
         },
@@ -288,7 +325,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
                 for key in PROGRESS_STATES
             },
         },
-        "action_schema": {"actions": {}},
+        "action_schema": {"actions": action_schema_actions},
         "render_hints": {
             "dense_mode": False,
             "preferred_columns": 2 if page_type in {"monitor", "dashboard"} else 1,
