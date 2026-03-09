@@ -2,10 +2,9 @@
   <section class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
     <header class="hero">
-      <span v-if="mode === 'demo'" class="demo-badge">DEMO</span>
       <div class="hero-main">
-        <h2>工作台</h2>
-        <p class="lead">围绕项目经营、风险与审批，优先处理今天最关键事项。</p>
+        <h2>{{ heroTitle }}</h2>
+        <p class="lead">{{ heroLead }}</p>
         <div class="hero-info-row">
           <p class="role-line">
             <span>当前角色：{{ roleLabel }}</span>
@@ -14,9 +13,6 @@
             <button class="inline-link" @click="openRoleLanding">打开默认入口</button>
           </p>
           <div class="view-toggle">
-            <button :class="{ active: mode === 'demo' }" @click="toggleMode">
-              {{ mode === 'demo' ? '演示模式' : '正式模式' }}
-            </button>
             <button class="my-work-btn" @click="goToMyWork">我的工作</button>
             <button
               v-if="isAdmin"
@@ -30,10 +26,7 @@
           </div>
         </div>
         <p class="product-line">
-          <span class="product-pill">管理工具</span>
-          <span class="product-pill">项目管理</span>
-          <span class="product-pill">经营分析</span>
-          <span class="product-pill">风险管控</span>
+          <span v-for="tag in heroProductTags" :key="`hero-tag-${tag}`" class="product-pill">{{ tag }}</span>
         </p>
         <p class="bundle-line">
           <span>数据更新时间：{{ dataUpdatedAt }}</span>
@@ -45,7 +38,6 @@
         <p v-if="partialDataDetailLine" class="bundle-line partial-data-detail">
           {{ partialDataDetailLine }}
         </p>
-        <p v-if="mode === 'demo'" class="demo-hint">当前为模拟经营数据，仅用于演示推演，不代表真实业务结论。</p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
@@ -142,19 +134,6 @@
       </div>
     </section>
 
-    <details v-if="mode === 'demo'" class="secondary-panel demo-story-panel">
-      <summary>演示项目故事线</summary>
-      <section class="story-section" aria-label="演示项目故事线">
-        <div class="story-grid">
-          <article v-for="story in demoStories" :key="story.id" class="story-card" :class="`story-${story.level}`">
-            <p class="story-title">{{ story.project }} · {{ story.conflict }}</p>
-            <p class="story-desc">{{ story.summary }}</p>
-            <button class="story-btn" @click="openDemoStory(story)">{{ story.actionLabel }}</button>
-          </article>
-        </div>
-      </section>
-    </details>
-
     <details class="secondary-panel">
       <summary>项目经营概览</summary>
       <section class="ops-section" aria-label="项目经营概览区">
@@ -164,12 +143,12 @@
             <div class="compare-line">
               <span>合同额</span>
               <div class="compare-track"><div class="compare-fill contract" :style="{ width: `${opsBars.contract}%` }"></div></div>
-              <strong>{{ formatAmountWan(coreValue.contractAmount) }}</strong>
+              <strong>{{ opsBars.contract }}%</strong>
             </div>
             <div class="compare-line">
               <span>累计产值</span>
               <div class="compare-track"><div class="compare-fill output" :style="{ width: `${opsBars.output}%` }"></div></div>
-              <strong>{{ formatAmountWan(coreValue.outputValue) }}</strong>
+              <strong>{{ opsBars.output }}%</strong>
             </div>
           </article>
           <article class="ops-card">
@@ -414,9 +393,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
-import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
-import { listRecords } from '../api/data';
-import { collectErrorContextIssue, issueScopeLabel, summarizeErrorContextIssues } from '../app/errorContext';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 
@@ -481,16 +457,7 @@ type RiskActionItem = {
   sceneKey?: string;
   path?: string;
   query?: Record<string, string>;
-};
-type DemoStory = {
-  id: string;
-  project: string;
-  conflict: string;
-  summary: string;
-  level: 'red' | 'amber' | 'green';
-  actionLabel: string;
-  actionPath: string;
-  actionQuery?: Record<string, string>;
+  entryKey?: string;
 };
 type FilterChip = { key: string; label: string };
 
@@ -513,18 +480,6 @@ const lastTrackedFilterSignature = ref('');
 const lastTrackedViewMode = ref('');
 const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
-const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
-const mode = ref<'live' | 'demo'>('live');
-const coreValue = ref({
-  projectCount: 0,
-  contractAmount: 0,
-  outputValue: 0,
-  riskCount: 0,
-  monthlyAnomalyCount: 0,
-});
-const dataUpdatedAt = ref('--:--');
-const partialDataNotice = ref('');
-const partialDataDetailLine = ref('');
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
@@ -534,6 +489,19 @@ const isAdmin = computed(() => {
 const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
 const capabilityGroups = computed(() => session.capabilityGroups);
+const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);
+const workspaceHero = computed(() => (workspaceHome.value.hero && typeof workspaceHome.value.hero === 'object'
+  ? workspaceHome.value.hero as Record<string, unknown>
+  : {}));
+const heroTitle = computed(() => asText(workspaceHero.value.title) || '工作台');
+const heroLead = computed(() => asText(workspaceHero.value.lead) || '围绕项目经营、风险与审批，优先处理今天最关键事项。');
+const heroProductTags = computed(() => {
+  const raw = Array.isArray(workspaceHero.value.product_tags) ? workspaceHero.value.product_tags : [];
+  return raw.map((item) => asText(item)).filter(Boolean);
+});
+const dataUpdatedAt = computed(() => asText(workspaceHero.value.updated_at) || '--:--');
+const partialDataNotice = computed(() => asText(workspaceHero.value.status_notice));
+const partialDataDetailLine = computed(() => asText(workspaceHero.value.status_detail));
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
@@ -586,66 +554,6 @@ const defaultSceneKey = computed(() => {
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value);
 const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
-const demoSummarySeed: MyWorkSummaryItem[] = [
-  { key: 'todo', label: '待办总量', count: 18, scene_key: 'projects.ledger' },
-  { key: 'payment_approval', label: '付款审批', count: 6, scene_key: 'finance.payment_requests' },
-  { key: 'contract_sign', label: '合同签署', count: 4, scene_key: 'projects.ledger' },
-  { key: 'risk_handle', label: '风险处置', count: 5, scene_key: 'projects.dashboard' },
-  { key: 'overdue_task', label: '逾期任务', count: 3, scene_key: 'projects.ledger' },
-];
-const summarySource = computed(() => (mode.value === 'demo' ? demoSummarySeed : myWorkSummary.value));
-const demoStories = computed<DemoStory[]>(() => [
-  {
-    id: 's1',
-    project: 'A1 产业园',
-    conflict: '合同未签先干',
-    summary: '土建已开工 14 天，主合同未完成法务盖章，存在履约与结算争议风险。',
-    level: 'red',
-    actionLabel: '查看合同闭环',
-    actionPath: '/my-work',
-    actionQuery: { section: 'todo', source: 'tier.review', reason: 'TIER_REVIEW_PENDING', search: '合同' },
-  },
-  {
-    id: 's2',
-    project: 'B3 市政综合体',
-    conflict: '付款超预算预警',
-    summary: '本周付款申请累计超预算阈值，审批链条积压，资金风险上行。',
-    level: 'red',
-    actionLabel: '进入付款审批',
-    actionPath: '/my-work',
-    actionQuery: { section: 'todo', search: '付款' },
-  },
-  {
-    id: 's3',
-    project: 'C2 物流中心',
-    conflict: '进度滞后 + 成本偏差',
-    summary: '关键里程碑连续延后，成本执行率上升，需启动纠偏方案。',
-    level: 'amber',
-    actionLabel: '处理风险事项',
-    actionPath: '/my-work',
-    actionQuery: { section: 'todo', source: 'project.risk', search: '风险' },
-  },
-  {
-    id: 's4',
-    project: 'D5 公建项目',
-    conflict: '变更未确认',
-    summary: '现场签证与合同变更单未闭环，后续产值确认受阻。',
-    level: 'amber',
-    actionLabel: '确认变更任务',
-    actionPath: '/my-work',
-    actionQuery: { section: 'todo', source: 'project.task', search: '变更' },
-  },
-  {
-    id: 's5',
-    project: 'E7 住宅配套',
-    conflict: '审批链路断点',
-    summary: '跨部门流程节点无人处理，任务接力断档，存在延期交付风险。',
-    level: 'green',
-    actionLabel: '打开待办链路',
-    actionPath: '/my-work',
-    actionQuery: { section: 'todo' },
-  },
-]);
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -867,229 +775,144 @@ const entries = computed<CapabilityEntry[]>(() => {
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
 
-function formatCompactNumber(value: number) {
-  const numeric = Number(value || 0);
-  if (!Number.isFinite(numeric)) return '0';
-  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0 }).format(numeric);
-}
-
-function formatAmountWan(value: number) {
-  const numeric = Number(value || 0);
-  if (!Number.isFinite(numeric) || numeric <= 0) return '0 万';
-  return `${(numeric / 10000).toFixed(1)} 万`;
-}
-
-function pickNumericField(record: Record<string, unknown>, candidates: string[]) {
-  for (const key of candidates) {
-    const raw = record[key];
-    const parsed = Number(raw);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return 0;
-}
-
-function resolveMetricLevel(value: number, amber: number, red: number): MetricLevel {
-  if (value >= red) return 'red';
-  if (value >= amber) return 'amber';
-  return 'green';
-}
-
-const coreMetrics = computed<CoreMetric[]>(() => {
-  return [
-    {
-      key: 'projects',
-      label: '当前在管项目',
-      value: formatCompactNumber(coreValue.value.projectCount),
-      level: coreValue.value.projectCount > 0 ? 'green' : 'amber',
-      delta: '项目规模可见',
-      hint: coreValue.value.projectCount > 0 ? '项目分布已建立，持续关注关键节点。' : '暂无项目数据，请确认权限或数据初始化。',
-    },
-    {
-      key: 'contract',
-      label: '合同总额',
-      value: formatAmountWan(coreValue.value.contractAmount),
-      level: coreValue.value.contractAmount > 0 ? 'green' : 'amber',
-      delta: '合同执行基线',
-      hint: coreValue.value.contractAmount > 0 ? '合同基线已建立，可继续跟踪履约。' : '当前合同金额为 0，建议检查合同台账。',
-    },
-    {
-      key: 'output',
-      label: '累计产值',
-      value: formatAmountWan(coreValue.value.outputValue),
-      level: coreValue.value.outputValue > 0 ? 'green' : 'amber',
-      delta: '当前产值沉淀',
-      hint: coreValue.value.outputValue > 0 ? '产值持续沉淀，可对照合同进度复核。' : '暂无产值沉淀，建议核对产值上报链路。',
-    },
-    {
-      key: 'risk',
-      label: '当前风险数量',
-      value: formatCompactNumber(coreValue.value.riskCount),
-      level: resolveMetricLevel(coreValue.value.riskCount, 3, 8),
-      delta: '需持续跟进',
-      hint:
-        coreValue.value.riskCount > 0
-          ? `存在 ${formatCompactNumber(coreValue.value.riskCount)} 项风险，优先闭环严重项。`
-          : '当前暂无风险告警，运行平稳。',
-    },
-    {
-      key: 'abnormal',
-      label: '本月异常事项',
-      value: formatCompactNumber(coreValue.value.monthlyAnomalyCount),
-      level: resolveMetricLevel(coreValue.value.monthlyAnomalyCount, 4, 10),
-      delta: '关注异常闭环',
-      hint:
-        coreValue.value.monthlyAnomalyCount > 0
-          ? '存在异常事项，建议今日完成闭环。'
-          : '本月暂无异常事项，保持日常巡检。',
-    },
-  ];
-});
-
 function includesAny(value: string, keywords: string[]) {
   const text = String(value || '').toLowerCase();
   if (!text) return false;
   return keywords.some((item) => text.includes(item));
 }
 
-const riskKeywords = ['risk', 'alert', 'warning', '风险', '预警', '告警'];
-const approvalKeywords = ['approval', 'approve', 'payment', 'settlement', '审批', '付款', '支付', '结算'];
-
-const riskCount = computed(() => {
-  return summarySource.value
-    .filter((item) => includesAny(item.key, riskKeywords) || includesAny(item.label, riskKeywords) || includesAny(item.scene_key, riskKeywords))
-    .reduce((sum, item) => sum + Number(item.count || 0), 0);
+const coreMetrics = computed<CoreMetric[]>(() => {
+  const source = Array.isArray(workspaceHome.value.metrics) ? workspaceHome.value.metrics : [];
+  return source
+    .map((item, idx) => {
+      const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+      const levelRaw = asText(row.level).toLowerCase();
+      const level: MetricLevel = levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green';
+      return {
+        key: asText(row.key) || `metric-${idx + 1}`,
+        label: asText(row.label) || `指标 ${idx + 1}`,
+        value: asText(row.value) || '0',
+        level,
+        delta: asText(row.delta) || '',
+        hint: asText(row.hint) || '',
+      };
+    })
+    .filter((item) => item.label);
 });
-
-const approvalCount = computed(() => {
-  return summarySource.value
-    .filter((item) => includesAny(item.key, approvalKeywords) || includesAny(item.label, approvalKeywords) || includesAny(item.scene_key, approvalKeywords))
-    .reduce((sum, item) => sum + Number(item.count || 0), 0);
-});
-
-const todoCount = computed(() => {
-  const explicitTodo = summarySource.value.find((item) => String(item.key || '').toLowerCase() === 'todo');
-  if (explicitTodo) return Number(explicitTodo.count || 0);
-  return summarySource.value.reduce((sum, item) => sum + Number(item.count || 0), 0);
-});
-
 
 const concreteTodos = computed<SuggestionItem[]>(() => {
-  const entriesReady = entries.value
-    .filter((entry) => entry.state === 'READY')
-    .sort((a, b) => suggestionEntryScore(b) - suggestionEntryScore(a));
-  const byKeywords = (keywords: string[]) =>
-    entriesReady.find((entry) => includesAny(entry.title, keywords) || includesAny(entry.key, keywords) || includesAny(entry.sceneKey, keywords));
-  const bySceneCount = (sceneKey: string) => resolveSuggestionCount(sceneKey) ?? 0;
-  const todoDefs = [
-    { id: 'todo-payment', title: '待审批付款申请', desc: '优先处理付款审批，避免资金链阻塞。', keywords: ['payment', '付款', '支付', '审批'], status: 'urgent' as SuggestionStatus },
-    { id: 'todo-contract', title: '待签合同', desc: '跟进合同签署与条款确认。', keywords: ['contract', '合同', '签约'], status: 'normal' as SuggestionStatus },
-    { id: 'todo-change', title: '待确认变更', desc: '确认变更影响范围与责任归属。', keywords: ['change', '变更', '签证'], status: 'normal' as SuggestionStatus },
-    { id: 'todo-risk', title: '待处理风险', desc: '优先闭环高风险事项。', keywords: ['risk', '风险', '预警'], status: 'urgent' as SuggestionStatus },
-    { id: 'todo-overdue', title: '逾期任务', desc: '清理逾期任务，恢复计划节奏。', keywords: ['task', 'todo', '逾期', '任务'], status: 'urgent' as SuggestionStatus },
-  ];
-  return todoDefs.map((item) => {
-    const entry = byKeywords(item.keywords);
-    const count = entry ? bySceneCount(entry.sceneKey) : 0;
-    const score = entry ? suggestionEntryScore(entry) : 0;
+  const source = Array.isArray(workspaceHome.value.today_actions) ? workspaceHome.value.today_actions : [];
+  return source.map((item, idx) => {
+    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    const entryKey = asText(row.entry_key);
+    const sceneKey = asText(row.scene_key);
+    const matched = entries.value.find((entry) => (entryKey && entry.key === entryKey) || (sceneKey && entry.sceneKey === sceneKey));
+    const statusRaw = asText(row.status).toLowerCase();
     return {
-      id: item.id,
-      title: item.title,
-      description: item.desc,
-      count: count + Math.max(0, score - score),
-      status: item.status,
-      ready: Boolean(entry),
-      entryId: entry?.id || '',
+      id: asText(row.id) || `todo-${idx + 1}`,
+      title: asText(row.title) || `待办 ${idx + 1}`,
+      description: asText(row.description) || '点击进入处理',
+      count: Number(row.count || 0),
+      status: statusRaw === 'urgent' ? 'urgent' : 'normal',
+      ready: matched ? matched.state === 'READY' : Boolean(row.ready),
+      entryId: matched?.id || '',
     };
   });
 });
 
 const riskBuckets = computed(() => {
-  const red = Math.max(0, Math.min(coreValue.value.riskCount, Math.ceil(coreValue.value.riskCount * 0.35)));
-  const amber = Math.max(0, Math.ceil(coreValue.value.riskCount * 0.4));
-  const green = Math.max(0, coreValue.value.riskCount - red - amber);
-  return { red, amber, green };
+  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
+    ? workspaceHome.value.risk as Record<string, unknown>
+    : {};
+  const buckets = (risk.buckets && typeof risk.buckets === 'object')
+    ? risk.buckets as Record<string, unknown>
+    : {};
+  return {
+    red: Number(buckets.red || 0),
+    amber: Number(buckets.amber || 0),
+    green: Number(buckets.green || 0),
+  };
 });
 
 const riskTrend = computed(() => {
-  const now = coreValue.value.riskCount;
-  const d7 = Math.max(0, Math.round(now * 0.88));
-  const d30 = Math.max(0, Math.round(now * 0.72));
-  const max = Math.max(now, d7, d30, 1);
-  return [
-    { label: '30天前', value: d30, percent: Math.round((d30 / max) * 100) },
-    { label: '7天前', value: d7, percent: Math.round((d7 / max) * 100) },
-    { label: '当前', value: now, percent: Math.round((now / max) * 100) },
-  ];
+  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
+    ? workspaceHome.value.risk as Record<string, unknown>
+    : {};
+  const source = Array.isArray(risk.trend) ? risk.trend : [];
+  return source.map((item, idx) => {
+    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    return {
+      label: asText(row.label) || `T-${idx + 1}`,
+      value: Number(row.value || 0),
+      percent: Number(row.percent || 0),
+    };
+  });
 });
+
 const riskSummaryLine = computed(() => {
-  if (riskBuckets.value.red >= 3) return '高风险集中在成本偏差与付款节点，建议今日优先闭环。';
-  if (riskBuckets.value.red >= 1) return '存在高风险项，建议先处理严重项再推进常规工作。';
-  return '当前未出现严重风险，建议保持日常巡检节奏。';
+  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
+    ? workspaceHome.value.risk as Record<string, unknown>
+    : {};
+  return asText(risk.summary) || '当前未出现严重风险，建议保持日常巡检节奏。';
 });
-const riskActionItems = computed<RiskActionItem[]>(() => [
-  {
-    id: 'risk-cost',
-    title: '成本执行偏差超阈值',
-    description: '2 个项目成本执行率 > 85%，需立即核查偏差明细。',
-    sceneKey: 'projects.ledger',
-    path: '/my-work',
-    query: { section: 'todo', source: 'project.risk', search: '成本' },
-  },
-  {
-    id: 'risk-payment',
-    title: '付款节点风险积压',
-    description: '付款审批链路出现积压，影响合同履约与供应商稳定性。',
-    sceneKey: 'finance.payment_requests',
-    path: '/my-work',
-    query: { section: 'todo', search: '付款' },
-  },
-  {
-    id: 'risk-schedule',
-    title: '关键路径进度滞后',
-    description: '关键里程碑滞后超过预警阈值，需明确责任人与纠偏计划。',
-    sceneKey: 'projects.list',
-    path: '/my-work',
-    query: { section: 'todo', source: 'project.task', search: '逾期' },
-  },
-]);
+
+const riskActionItems = computed<RiskActionItem[]>(() => {
+  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
+    ? workspaceHome.value.risk as Record<string, unknown>
+    : {};
+  const source = Array.isArray(risk.actions) ? risk.actions : [];
+  return source.map((item, idx) => {
+    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    return {
+      id: asText(row.id) || `risk-${idx + 1}`,
+      title: asText(row.title) || `风险事项 ${idx + 1}`,
+      description: asText(row.description) || '',
+      entryKey: asText(row.entry_key),
+      sceneKey: asText(row.scene_key),
+      path: asText(row.path),
+      query: normalizeContextQuery(row.query),
+    };
+  });
+});
 
 const riskSources = computed(() => {
-  return [
-    { label: '合同履约', count: Math.max(0, Math.round(coreValue.value.riskCount * 0.3)) },
-    { label: '成本偏差', count: Math.max(0, Math.round(coreValue.value.riskCount * 0.35)) },
-    { label: '进度滞后', count: Math.max(0, Math.round(coreValue.value.riskCount * 0.2)) },
-    { label: '付款节点', count: Math.max(0, coreValue.value.riskCount - Math.round(coreValue.value.riskCount * 0.85)) },
-  ];
+  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
+    ? workspaceHome.value.risk as Record<string, unknown>
+    : {};
+  const source = Array.isArray(risk.sources) ? risk.sources : [];
+  return source.map((item, idx) => {
+    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    return {
+      label: asText(row.label) || `来源 ${idx + 1}`,
+      count: Number(row.count || 0),
+    };
+  });
 });
 
 const opsBars = computed(() => {
-  const contract = Math.max(coreValue.value.contractAmount, 1);
-  const output = Math.max(0, coreValue.value.outputValue);
-  const outputPct = Math.max(0, Math.min(100, Math.round((output / contract) * 100)));
+  const ops = (workspaceHome.value.ops && typeof workspaceHome.value.ops === 'object')
+    ? workspaceHome.value.ops as Record<string, unknown>
+    : {};
+  const bars = (ops.bars && typeof ops.bars === 'object') ? ops.bars as Record<string, unknown> : {};
   return {
-    contract: 100,
-    output: outputPct,
+    contract: Number(bars.contract || 100),
+    output: Number(bars.output || 0),
   };
 });
 
 const opsKpi = computed(() => {
-  const costRate = Math.max(20, Math.min(98, Math.round(55 + (coreValue.value.projectCount % 30))));
-  const paymentRate = Math.max(15, Math.min(95, Math.round(45 + (coreValue.value.monthlyAnomalyCount % 20))));
-  const outputTrendDelta = Math.round((opsBars.value.output - 50) * 0.2);
+  const ops = (workspaceHome.value.ops && typeof workspaceHome.value.ops === 'object')
+    ? workspaceHome.value.ops as Record<string, unknown>
+    : {};
+  const kpi = (ops.kpi && typeof ops.kpi === 'object') ? ops.kpi as Record<string, unknown> : {};
   return {
-    costRate,
-    paymentRate,
-    costRateDelta: Math.max(-8, Math.min(8, Math.round((costRate - 60) * 0.3))),
-    paymentRateDelta: Math.max(-8, Math.min(8, Math.round((paymentRate - 55) * 0.3))),
-    outputTrendDelta,
+    costRate: Number(kpi.cost_rate || 0),
+    paymentRate: Number(kpi.payment_rate || 0),
+    costRateDelta: Number(kpi.cost_rate_delta || 0),
+    paymentRateDelta: Number(kpi.payment_rate_delta || 0),
+    outputTrendDelta: Number(kpi.output_trend_delta || 0),
   };
 });
-
-function resolveSuggestionCount(sceneKey: string) {
-  const byScene = summarySource.value.find((item) => String(item.scene_key || '') === sceneKey);
-  if (byScene) return Number(byScene.count || 0);
-  return undefined;
-}
 
 function levelLabel(level: MetricLevel) {
   if (level === 'red') return '严重';
@@ -1115,60 +938,21 @@ function todoActionLabel(title: string) {
 }
 
 const systemAdvice = computed<AdviceItem[]>(() => {
-  const advice: AdviceItem[] = [];
-  const pickEntry = (keywords: string[]) =>
-    entries.value.find((entry) => includesAny(entry.title, keywords) || includesAny(entry.key, keywords) || includesAny(entry.sceneKey, keywords));
-  if (opsKpi.value.costRate >= 80) {
-    const target = pickEntry(['cost', '成本', 'ledger', '项目']);
-    advice.push({
-      id: 'cost-high',
-      level: 'red',
-      title: '发现成本执行率偏高',
-      description: `当前成本执行率 ${opsKpi.value.costRate}% ，建议优先核查成本偏差来源。`,
-      actionLabel: target ? '进入成本处理' : '打开我的工作',
-      actionEntryId: target?.id,
-      actionPath: target ? undefined : '/my-work',
-      actionQuery: target ? undefined : { section: 'todo', search: '成本' },
-    });
-  }
-  if (approvalCount.value >= 5) {
-    const target = pickEntry(['payment', '付款', '审批', 'finance']);
-    advice.push({
-      id: 'approval-pending',
-      level: 'amber',
-      title: '付款审批积压需关注',
-      description: `待审批付款申请 ${approvalCount.value} 项，建议今日优先清理。`,
-      actionLabel: target ? '进入付款审批' : '打开我的工作',
-      actionEntryId: target?.id,
-      actionPath: target ? undefined : '/my-work',
-      actionQuery: target ? undefined : { section: 'todo', search: '付款' },
-    });
-  }
-  if (riskBuckets.value.red >= 2) {
-    const target = pickEntry(['risk', '风险', 'warning']);
-    advice.push({
-      id: 'risk-red',
-      level: 'red',
-      title: '存在高风险事项未闭环',
-      description: `当前严重风险 ${riskBuckets.value.red} 项，建议立即组织专项处理。`,
-      actionLabel: target ? '处理风险事项' : '打开我的工作',
-      actionEntryId: target?.id,
-      actionPath: target ? undefined : '/my-work',
-      actionQuery: target ? undefined : { section: 'todo', source: 'project.risk', search: '风险' },
-    });
-  }
-  if (!advice.length) {
-    advice.push({
-      id: 'stable',
-      level: 'green',
-      title: '当前整体运行稳定',
-      description: '建议持续关注审批时效与风险趋势，保持项目运行节奏。',
-      actionLabel: '查看今日待办',
-      actionPath: '/my-work',
-      actionQuery: { section: 'todo' },
-    });
-  }
-  return advice.slice(0, 3);
+  const source = Array.isArray(workspaceHome.value.advice) ? workspaceHome.value.advice : [];
+  return source.map((item, idx) => {
+    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    const levelRaw = asText(row.level).toLowerCase();
+    return {
+      id: asText(row.id) || `advice-${idx + 1}`,
+      level: levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green',
+      title: asText(row.title) || `建议 ${idx + 1}`,
+      description: asText(row.description),
+      actionLabel: asText(row.action_label),
+      actionEntryId: asText(row.entry_id),
+      actionPath: asText(row.path),
+      actionQuery: normalizeContextQuery(row.query),
+    };
+  });
 });
 
 function openAdvice(item: AdviceItem) {
@@ -1198,12 +982,15 @@ function openBundleDashboard() {
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
-function openDemoStory(story: DemoStory) {
-  router.push({ path: story.actionPath, query: story.actionQuery || {} }).catch(() => {});
-}
-
 function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
   void trackUsageEvent('workspace.risk_action_click', { item_id: item.id, action }).catch(() => {});
+  if (item.entryKey) {
+    const byKey = entries.value.find((candidate) => candidate.key === item.entryKey && candidate.state === 'READY');
+    if (byKey) {
+      void openScene(byKey);
+      return;
+    }
+  }
   if (item.sceneKey) {
     const entry = entries.value.find((candidate) => candidate.sceneKey === item.sceneKey && candidate.state === 'READY');
     if (entry) {
@@ -1212,22 +999,6 @@ function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'clo
     }
   }
   router.push({ path: item.path || '/my-work', query: item.query || { section: 'todo' } }).catch(() => {});
-}
-
-function toggleMode() {
-  mode.value = mode.value === 'demo' ? 'live' : 'demo';
-  if (mode.value === 'demo') {
-    coreValue.value = {
-      projectCount: 8,
-      contractAmount: 186000000,
-      outputValue: 124000000,
-      riskCount: 11,
-      monthlyAnomalyCount: 7,
-    };
-    partialDataNotice.value = '';
-  } else {
-    void fetchCoreMetrics();
-  }
 }
 
 function matchesSearch(entry: CapabilityEntry, query: string) {
@@ -1392,15 +1163,6 @@ function toggleSceneGroup(sceneKey: string) {
     scene_key: sceneKey,
     action: expanded ? 'expand' : 'collapse',
   }).catch(() => {});
-}
-
-function suggestionEntryScore(entry: CapabilityEntry) {
-  let stateBase = entry.state === 'READY' ? 2 : entry.state === 'PREVIEW' ? 1 : 0;
-  if (entry.capabilityState === 'readonly') stateBase += 0.5;
-  if (entry.capabilityState === 'deny') stateBase -= 1;
-  const groupScore = capabilityGroupScoreMap.value.get(entry.groupKey) || 0;
-  const pendingCount = resolveSuggestionCount(entry.sceneKey) || 0;
-  return stateBase + Math.min(3, groupScore / 10) + Math.min(2, pendingCount / 5);
 }
 
 function expandAllSceneGroups() {
@@ -1656,123 +1418,6 @@ function clearEnterError() {
   lastFailedEntry.value = null;
 }
 
-async function fetchCoreMetrics() {
-  const deniedModels = new Set<string>();
-  const deniedReasonCodes = new Set<string>();
-  const deniedIssueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
-  const currentGroups = new Set((session.user?.groups_xmlids || []).map((row) => String(row || '').trim()).filter(Boolean));
-  const hasAnyGroup = (groups: string[]) => groups.some((group) => currentGroups.has(group));
-  const canReadModel = (model: string) => {
-    if (currentGroups.has('base.group_system')) return true;
-    if (model === 'construction.contract') {
-      return hasAnyGroup([
-        'smart_construction_core.group_sc_cap_contract_read',
-        'smart_construction_core.group_sc_cap_contract_user',
-        'smart_construction_core.group_sc_cap_contract_manager',
-        'smart_construction_core.group_sc_cap_finance_read',
-        'smart_construction_core.group_sc_cap_finance_user',
-        'smart_construction_core.group_sc_cap_finance_manager',
-        'smart_construction_custom.group_sc_role_contract_read',
-        'smart_construction_custom.group_sc_role_contract_user',
-        'smart_construction_custom.group_sc_role_contract_manager',
-      ]);
-    }
-    if (model === 'project.risk') {
-      return hasAnyGroup([
-        'smart_construction_core.group_sc_cap_project_read',
-        'smart_construction_core.group_sc_cap_project_user',
-        'smart_construction_core.group_sc_cap_project_manager',
-        'smart_construction_custom.group_sc_role_project_read',
-        'smart_construction_custom.group_sc_role_project_user',
-        'smart_construction_custom.group_sc_role_project_manager',
-      ]);
-    }
-    return true;
-  };
-  const markModelDenied = (model: string, reasonCode: string) => {
-    deniedModels.add(model);
-    deniedReasonCodes.add(reasonCode);
-    const key = `${model}:list:${reasonCode}`;
-    const prev = deniedIssueCounter.get(key);
-    deniedIssueCounter.set(key, {
-      model,
-      op: 'list',
-      reasonCode,
-      count: (prev?.count || 0) + 1,
-    });
-  };
-  const collectDeniedContext = (fallbackModel: string, error: unknown) => {
-    deniedModels.add(fallbackModel);
-    const issue = collectErrorContextIssue(deniedIssueCounter, error, { model: fallbackModel });
-    if (issue.model) deniedModels.add(issue.model);
-    if (issue.reasonCode) deniedReasonCodes.add(issue.reasonCode);
-  };
-  const readTotal = async (model: string, domain: unknown[] = []) => {
-    try {
-      const result = await listRecords({ model, fields: ['id'], limit: 1, domain, silentErrors: true });
-      return Number(result.total || result.records?.length || 0);
-    } catch (error) {
-      collectDeniedContext(model, error);
-      return 0;
-    }
-  };
-  const readAmount = async (model: string, fieldCandidates: string[]) => {
-    try {
-      const result = await listRecords({
-        model,
-        fields: ['id', ...fieldCandidates],
-        limit: 200,
-        order: 'id desc',
-        silentErrors: true,
-      });
-      const records = Array.isArray(result.records) ? result.records : [];
-      return records.reduce((sum, item) => sum + pickNumericField(item, fieldCandidates), 0);
-    } catch (error) {
-      collectDeniedContext(model, error);
-      return 0;
-    }
-  };
-
-  const [projectCount, contractAmount, outputValue, riskModelCount] = await Promise.all([
-    readTotal('project.project'),
-    canReadModel('construction.contract')
-      ? readAmount('construction.contract', ['amount_total', 'contract_amount', 'amount_untaxed'])
-      : Promise.resolve(0),
-    readAmount('sc.settlement.order', ['amount_total', 'amount', 'total_amount']),
-    canReadModel('project.risk')
-      ? readTotal('project.risk')
-      : Promise.resolve(0),
-  ]);
-
-  const monthlyAnomalyCount = Math.max(
-    0,
-    entries.value.filter((entry) => entry.state === 'LOCKED').length,
-  );
-
-  coreValue.value = {
-    projectCount,
-    contractAmount,
-    outputValue,
-    riskCount: riskModelCount || riskCount.value,
-    monthlyAnomalyCount,
-  };
-  const now = new Date();
-  dataUpdatedAt.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  if (!deniedModels.size) {
-    partialDataNotice.value = '';
-    partialDataDetailLine.value = '';
-    return;
-  }
-  const modelsText = Array.from(deniedModels).slice(0, 2).join('、');
-  const isPermissionDenied = deniedReasonCodes.has('PERMISSION_DENIED');
-  partialDataNotice.value = isPermissionDenied
-    ? `部分数据未显示（${modelsText} 权限受限）`
-    : `部分数据未显示（${modelsText} 暂不可用）`;
-  const topIssues = summarizeErrorContextIssues(deniedIssueCounter, 3)
-    .map((item) => `${issueScopeLabel(item)}[${item.reasonCode}] x${item.count}`);
-  partialDataDetailLine.value = topIssues.length ? `受限明细：${topIssues.join('；')}` : '';
-}
-
 function handleKeydown(event: KeyboardEvent) {
   if (event.key !== 'Escape') return;
   if (enterError.value) {
@@ -1810,16 +1455,6 @@ onMounted(() => {
     role_key: asText(roleSurface.value?.role_code) || 'unknown',
     landing_scene_key: roleLandingScene.value,
   }).catch(() => {});
-  fetchMyWorkSummary(20, 8)
-    .then((result) => {
-      myWorkSummary.value = Array.isArray(result.summary) ? result.summary : [];
-    })
-    .catch(() => {
-      myWorkSummary.value = [];
-    })
-    .finally(() => {
-      void fetchCoreMetrics();
-    });
   try {
     const raw = window.localStorage.getItem(homeCollapseStorageKey.value);
     if (raw) {
