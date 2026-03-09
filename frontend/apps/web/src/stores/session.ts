@@ -60,6 +60,16 @@ export interface ProductFacts {
   } | null;
 }
 
+export interface WorkspaceHomeContract {
+  schema_version?: string;
+  hero?: Record<string, unknown>;
+  metrics?: unknown[];
+  today_actions?: unknown[];
+  risk?: Record<string, unknown>;
+  ops?: Record<string, unknown>;
+  advice?: unknown[];
+}
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -74,6 +84,7 @@ export interface SessionState {
   capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
+  workspaceHome: WorkspaceHomeContract | null;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -108,6 +119,7 @@ export const useSessionStore = defineStore('session', {
       license: null,
       bundle: null,
     },
+    workspaceHome: null,
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -142,6 +154,7 @@ export const useSessionStore = defineStore('session', {
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
+          this.workspaceHome = parsed.workspaceHome ?? null;
           if (this.scenes.length) {
             setSceneRegistry(this.scenes);
           }
@@ -179,6 +192,7 @@ export const useSessionStore = defineStore('session', {
       this.capabilityCatalog = {};
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
+      this.workspaceHome = null;
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -231,6 +245,7 @@ export const useSessionStore = defineStore('session', {
         capabilityCatalog: this.capabilityCatalog,
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
+        workspaceHome: this.workspaceHome,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -444,6 +459,7 @@ export const useSessionStore = defineStore('session', {
             }
           : null,
       };
+      this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
       setSceneRegistry(this.scenes);
       this.initMeta = {
         ...(result.meta ?? {}),
