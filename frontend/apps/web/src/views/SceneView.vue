@@ -351,8 +351,8 @@ async function resolveScene() {
     }
 
     setError(
-      new Error(pageText('error_scene_target_unsupported', 'scene target unsupported')),
-      pageText('error_scene_target_unsupported', 'scene target unsupported'),
+      new Error(pageText('error_scene_target_unsupported', '')),
+      pageText('error_scene_target_unsupported', ''),
       ErrorCodes.SCENE_KIND_UNSUPPORTED,
     );
     errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));

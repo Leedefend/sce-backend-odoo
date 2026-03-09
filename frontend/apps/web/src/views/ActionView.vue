@@ -814,8 +814,8 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
       { label: pageText('intent_action_default_home', '工作台'), to: '/' },
       { label: pageText('intent_action_default_my_work', '我的工作'), to: '/my-work' },
     ],
-    emptyTitle: pageText('empty_title_default', '当前视图暂无数据'),
-    emptyHint: pageText('empty_hint_default', '建议切换到我的工作或风险驾驶舱继续处理。'),
+    emptyTitle: pageText('empty_title_default', ''),
+    emptyHint: pageText('empty_hint_default', ''),
     primaryAction: { label: pageText('primary_action_default', '去我的工作'), to: '/my-work' },
     secondaryAction: { label: pageText('secondary_action_default', '去风险驾驶舱'), to: '/s/projects.dashboard' },
   };
@@ -828,7 +828,7 @@ const emptyReasonText = computed(() => {
   if (modelText === 'construction.work.breakdown') {
     return pageText('empty_reason_wbs', '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。');
   }
-  return pageText('empty_reason_default', '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。');
+  return pageText('empty_reason_default', '');
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));

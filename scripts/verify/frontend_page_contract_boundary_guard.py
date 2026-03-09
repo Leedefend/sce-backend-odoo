@@ -210,8 +210,8 @@ def main() -> int:
         ],
         "WorkbenchView.vue": [
             "diagnostic-only surface",
-            "当前动作类型暂未在门户壳层支持。",
-            "当前账号尚未开通该能力。",
+            "pageText('message_act_unsupported_type'",
+            "pageText('message_capability_missing'",
             "pageSectionEnabled(",
             "pageSectionStyle(",
             "pageSectionTagIs(",
