@@ -4,8 +4,156 @@ from __future__ import annotations
 from typing import Any, Dict
 
 
-def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
+STATE_TONES = ("success", "warning", "danger", "info", "neutral")
+PROGRESS_STATES = ("overdue", "blocked", "pending", "running", "completed")
+
+
+def _normalize_page_type(page_key: str) -> str:
+    key = str(page_key or "").strip().lower()
+    if key in {"home", "workbench"}:
+        return "workspace"
+    if key in {"login", "menu", "placeholder"}:
+        return "entry_hub"
+    if key in {"my_work"}:
+        return "approval"
+    if key in {"scene_health", "usage_analytics"}:
+        return "monitor"
+    if key in {"action", "record", "scene"}:
+        return "detail"
+    return "list"
+
+
+def _zone_from_tag(tag: str) -> Dict[str, str]:
+    normalized = str(tag or "").strip().lower()
+    if normalized == "header":
+        return {"key": "hero", "title": "页面头部", "zone_type": "hero", "display_mode": "stack"}
+    if normalized == "details":
+        return {"key": "supporting", "title": "辅助信息", "zone_type": "supporting", "display_mode": "accordion"}
+    if normalized == "div":
+        return {"key": "secondary", "title": "扩展信息", "zone_type": "secondary", "display_mode": "flow"}
+    return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
+
+
+def _block_type_from_tag(tag: str) -> str:
+    normalized = str(tag or "").strip().lower()
+    if normalized == "header":
+        return "record_summary"
+    if normalized == "details":
+        return "fold_section"
+    if normalized == "div":
+        return "activity_feed"
+    return "record_summary"
+
+
+def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[str, Any]:
+    sections = page.get("sections") if isinstance(page.get("sections"), list) else []
+    title = ""
+    texts = page.get("texts") if isinstance(page.get("texts"), dict) else {}
+    if isinstance(texts, dict):
+        title = str(texts.get("title") or "").strip()
+    if not title:
+        title = page_key.replace("_", " ").strip().title() or "Page"
+
+    zone_buckets: Dict[str, Dict[str, Any]] = {}
+    for idx, section in enumerate(sections):
+        if not isinstance(section, dict):
+            continue
+        section_key = str(section.get("key") or "").strip()
+        if not section_key:
+            continue
+        tag = str(section.get("tag") or "section").strip().lower()
+        enabled = bool(section.get("enabled") is True)
+        order_raw = section.get("order")
+        order = int(order_raw) if isinstance(order_raw, int) and order_raw > 0 else idx + 1
+        zone_cfg = _zone_from_tag(tag)
+        zone_key = zone_cfg["key"]
+        zone = zone_buckets.get(zone_key)
+        if zone is None:
+            zone = {
+                "key": zone_key,
+                "title": zone_cfg["title"],
+                "description": f"{page_key}::{zone_key}",
+                "zone_type": zone_cfg["zone_type"],
+                "display_mode": zone_cfg["display_mode"],
+                "priority": 100 - (len(zone_buckets) * 10),
+                "visibility": {"roles": ["generic_user"], "capabilities": [], "expr": None},
+                "blocks": [],
+            }
+            zone_buckets[zone_key] = zone
+
+        zone["blocks"].append(
+            {
+                "key": f"{page_key}.{section_key}",
+                "block_type": _block_type_from_tag(tag),
+                "title": section_key,
+                "priority": max(1, 100 - order),
+                "importance": "high" if tag == "header" else "medium",
+                "tone": "info" if tag == "header" else "neutral",
+                "progress": "running" if enabled else "pending",
+                "section_key": section_key,
+                "data_source": "ds_sections",
+                "loading_strategy": "eager" if tag == "header" else "lazy",
+                "refreshable": True,
+                "collapsible": bool(tag == "details"),
+                "visibility": {"roles": ["generic_user"], "capabilities": [], "expr": None},
+                "actions": [],
+                "payload": {"tag": tag, "enabled": enabled, "open": bool(section.get("open") is True)},
+            }
+        )
+
+    zones = list(zone_buckets.values())
+    for zone in zones:
+        zone["blocks"] = sorted(
+            zone.get("blocks") if isinstance(zone.get("blocks"), list) else [],
+            key=lambda item: int(item.get("priority") or 0),
+            reverse=True,
+        )
+
     return {
+        "contract_version": "page_orchestration_v1",
+        "scene_key": page_key,
+        "page": {
+            "key": page_key,
+            "title": title,
+            "subtitle": "",
+            "page_type": _normalize_page_type(page_key),
+            "intent": "ui.contract",
+            "scene_key": page_key,
+            "layout_mode": "single_flow",
+            "audience": ["generic_user"],
+            "priority_model": "role_first",
+            "status": "ready",
+            "breadcrumbs": [],
+            "header": {},
+            "global_actions": [],
+            "filters": [],
+            "context": {},
+        },
+        "zones": zones,
+        "data_sources": {
+            "ds_sections": {"source_type": "static", "provider": "page_contract.sections"},
+        },
+        "state_schema": {
+            "tones": {key: {"icon": key} for key in STATE_TONES},
+            "business_states": {key: {"tone": ("danger" if key in {"blocked", "overdue"} else "info"), "label": key} for key in PROGRESS_STATES},
+        },
+        "action_schema": {"actions": {}},
+        "render_hints": {
+            "dense_mode": False,
+            "preferred_columns": 1,
+            "mobile_priority": [zone.get("key") for zone in zones if isinstance(zone, dict)],
+            "sticky_header": True,
+        },
+        "meta": {
+            "generated_by": "smart_core.page_contracts_builder",
+            "schema_version": "1.0.0",
+            "page_key": page_key,
+        },
+    }
+
+
+def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
+    payload = {
         "schema_version": "v1",
         "pages": {
             "home": {
@@ -820,3 +968,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
         },
     }
+    pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
+    for key, page in pages.items():
+        if not isinstance(page, dict):
+            continue
+        if isinstance(page.get("page_orchestration_v1"), dict):
+            continue
+        page["page_orchestration_v1"] = _build_page_orchestration_v1(str(key), page)
+    return payload
