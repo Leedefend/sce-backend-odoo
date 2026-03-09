@@ -13,12 +13,12 @@ HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py
 
 REQUIRED_BLOCK_TYPES = {
     "hero_metric",
-    "kpi_row",
+    "metric_row",
     "todo_list",
     "alert_panel",
-    "progress_group",
-    "quick_entry_grid",
-    "fold_section",
+    "progress_summary",
+    "entry_grid",
+    "accordion_group",
     "record_summary",
     "activity_feed",
 }

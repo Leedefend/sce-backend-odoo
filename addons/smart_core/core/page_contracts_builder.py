@@ -170,20 +170,20 @@ def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[st
     if normalized_tag == "header":
         return {"block_type": "record_summary", "tone": "info", "progress": "running", "importance": "high"}
     if normalized_tag == "details":
-        return {"block_type": "fold_section", "tone": "neutral", "progress": "completed", "importance": "medium"}
+        return {"block_type": "accordion_group", "tone": "neutral", "progress": "completed", "importance": "medium"}
     if normalized_tag == "div":
         return {"block_type": "activity_feed", "tone": "neutral", "progress": "running", "importance": "medium"}
 
     if any(token in key for token in ("error", "forbidden", "risk", "warning", "blocked")):
         return {"block_type": "alert_panel", "tone": "danger", "progress": "blocked", "importance": "high"}
     if any(token in key for token in ("loading", "pending", "status_loading")):
-        return {"block_type": "progress_group", "tone": "info", "progress": "running", "importance": "medium"}
+        return {"block_type": "progress_summary", "tone": "info", "progress": "running", "importance": "medium"}
     if any(token in key for token in ("summary", "kpi", "metric", "cards", "hero", "project_summary")):
-        return {"block_type": "kpi_row", "tone": "info", "progress": "running", "importance": "high"}
+        return {"block_type": "metric_row", "tone": "info", "progress": "running", "importance": "high"}
     if any(token in key for token in ("todo", "approval", "quick_actions", "next_actions")):
         return {"block_type": "todo_list", "tone": "warning", "progress": "pending", "importance": "high"}
     if any(token in key for token in ("filter", "group", "slice", "preset", "tiles")):
-        return {"block_type": "quick_entry_grid", "tone": "neutral", "progress": "completed", "importance": "medium"}
+        return {"block_type": "entry_grid", "tone": "neutral", "progress": "completed", "importance": "medium"}
     if any(token in key for token in ("table", "list", "daily", "top", "visibility")):
         return {"block_type": "activity_feed", "tone": "neutral", "progress": "running", "importance": "medium"}
     if page in {"login", "menu", "placeholder"}:
