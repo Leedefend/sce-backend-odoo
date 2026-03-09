@@ -16,11 +16,39 @@ export function usePageContract(pageKey: string) {
     return raw && typeof raw === 'object' ? raw : {};
   });
   const sections = computed<Map<string, SectionConfig>>(() => {
-    const raw = Array.isArray(contract.value?.sections) ? contract.value.sections : [];
+    const fromV1: Array<Record<string, unknown>> = [];
+    const orchestrationV1 = contract.value?.page_orchestration_v1;
+    const zones = Array.isArray(orchestrationV1?.zones) ? orchestrationV1.zones : [];
+    zones.forEach((zone) => {
+      if (!zone || typeof zone !== 'object') return;
+      const zoneRow = zone as Record<string, unknown>;
+      const blocks = Array.isArray(zoneRow.blocks) ? zoneRow.blocks : [];
+      blocks.forEach((block) => {
+        if (!block || typeof block !== 'object') return;
+        const row = block as Record<string, unknown>;
+        const sectionKey = asText(row.section_key);
+        if (!sectionKey) return;
+        const payload = (row.payload && typeof row.payload === 'object') ? row.payload as Record<string, unknown> : {};
+        const tag = asText(payload.tag) || 'section';
+        const priorityRaw = Number(row.priority);
+        const order = Number.isFinite(priorityRaw) && priorityRaw > 0 ? Math.max(1, 101 - Math.trunc(priorityRaw)) : 999;
+        fromV1.push({
+          key: sectionKey,
+          enabled: payload.enabled !== false,
+          order,
+          tag,
+          open: payload.open === true,
+        });
+      });
+    });
+    const raw = fromV1.length
+      ? fromV1
+      : (Array.isArray(contract.value?.sections) ? contract.value.sections : []);
     const map = new Map<string, SectionConfig>();
     raw.forEach((item, idx) => {
       const key = asText(item?.key);
       if (!key) return;
+      if (map.has(key)) return;
       const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
       const tagRaw = asText(row.tag).toLowerCase();
       const tag: SectionTag = (

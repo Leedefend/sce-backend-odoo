@@ -125,7 +125,18 @@ export interface WorkspaceHomeContract {
 export interface PageContract {
   schema_version?: string;
   texts?: Record<string, unknown>;
-  sections?: Array<{ key?: string; enabled?: boolean }>;
+  sections?: Array<{ key?: string; enabled?: boolean; order?: number; tag?: string; open?: boolean }>;
+  page_orchestration_v1?: {
+    contract_version?: string;
+    scene_key?: string;
+    page?: Record<string, unknown>;
+    zones?: Array<Record<string, unknown>>;
+    data_sources?: Record<string, unknown>;
+    state_schema?: Record<string, unknown>;
+    action_schema?: Record<string, unknown>;
+    render_hints?: Record<string, unknown>;
+    meta?: Record<string, unknown>;
+  };
   actions?: Record<string, unknown>;
 }
 
