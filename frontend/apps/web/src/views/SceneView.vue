@@ -196,7 +196,7 @@ async function resolveScene() {
           if (!meta) return key;
           const reason = String(meta.reason || '').trim();
           if (!reason) return meta.label || key;
-          return `${meta.label || key}（${reason}）`;
+          return `${meta.label || key}${pageText('forbidden_detail_reason_left', '（')}${reason}${pageText('forbidden_detail_reason_right', '）')}`;
         })
         .slice(0, 4);
       const level = String(session.productFacts.license?.level || '').trim();
@@ -206,9 +206,11 @@ async function resolveScene() {
             ? pageText('forbidden_title_permission', '权限不足')
             : pageText('forbidden_title', '能力未开通'),
         message: details.length
-          ? `缺少能力：${details.join('、')}`
+          ? `${pageText('forbidden_message_missing_prefix', '缺少能力：')}${details.join(pageText('forbidden_message_missing_sep', '、'))}`
           : pageText('forbidden_message_scope_missing', '当前角色能力范围不包含该场景所需能力。'),
-        hint: level && level !== 'enterprise' ? `当前 License：${level}，可联系管理员评估升级或开通。` : '可联系管理员开通对应能力。',
+        hint: level && level !== 'enterprise'
+          ? `${pageText('forbidden_hint_license_prefix', '当前 License：')}${level}${pageText('forbidden_hint_license_suffix', '，可联系管理员评估升级或开通。')}`
+          : pageText('forbidden_hint_default', '可联系管理员开通对应能力。'),
       };
       status.value = 'forbidden';
       return;
