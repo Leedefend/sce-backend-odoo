@@ -1,11 +1,444 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+import re
 from typing import Any, Dict
+
+def _load_semantics_registry() -> Dict[str, Any]:
+    registry_path = Path(__file__).with_name("orchestration_semantics.py")
+    try:
+        spec = spec_from_file_location("smart_core_orchestration_semantics_page_contracts", registry_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return {
+            "STATE_TONES": tuple(getattr(module, "STATE_TONES", ()) or ()),
+            "PROGRESS_STATES": tuple(getattr(module, "PROGRESS_STATES", ()) or ()),
+        }
+    except Exception:
+        return {}
+
+
+_SEM = _load_semantics_registry()
+STATE_TONES = _SEM.get("STATE_TONES") or ("success", "warning", "danger", "info", "neutral")
+PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending", "running", "completed")
+SUPPORTED_ROLE_CODES = {"pm", "finance", "owner"}
+_ACTION_TARGET_RESOLVER = None
+
+
+def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    global _ACTION_TARGET_RESOLVER
+    if callable(_ACTION_TARGET_RESOLVER):
+        return _ACTION_TARGET_RESOLVER(action_key, page_key)
+    helper_path = Path(__file__).with_name("action_target_schema.py")
+    try:
+        spec = spec_from_file_location("smart_core_action_target_schema_page_contracts", helper_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        resolver = getattr(module, "resolve_action_target", None)
+        if callable(resolver):
+            _ACTION_TARGET_RESOLVER = resolver
+            return resolver(action_key, page_key)
+    except Exception:
+        pass
+    fallback_scene = str(page_key or "").strip().lower() or "portal.dashboard"
+    return {"kind": "scene.key", "scene_key": fallback_scene}
+
+
+def _normalize_role_code(data: Dict[str, Any]) -> str:
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    role_code = str(role_surface.get("role_code") or "").strip().lower()
+    if role_code in SUPPORTED_ROLE_CODES:
+        return role_code
+    return "owner"
+
+
+def _normalize_page_type(page_key: str) -> str:
+    key = str(page_key or "").strip().lower()
+    if key in {"home", "workbench"}:
+        return "workspace"
+    if key in {"login", "menu", "placeholder"}:
+        return "entry_hub"
+    if key in {"my_work"}:
+        return "approval"
+    if key in {"scene_health", "usage_analytics"}:
+        return "monitor"
+    if key in {"action", "record", "scene"}:
+        return "detail"
+    return "list"
+
+
+def _page_audience(page_key: str) -> list[str]:
+    key = str(page_key or "").strip().lower()
+    if key in {"usage_analytics", "scene_health"}:
+        return ["executive", "owner", "project_manager"]
+    if key in {"my_work", "action", "record"}:
+        return ["project_manager", "finance_manager", "owner"]
+    if key in {"home", "workbench"}:
+        return ["project_manager", "finance_manager", "owner", "executive"]
+    return ["generic_user"]
+
+
+def _role_section_policy(role_code: str) -> Dict[str, Dict[str, list[str]]]:
+    policies: Dict[str, Dict[str, Dict[str, list[str]]]] = {
+        "pm": {
+            "usage_analytics": {"disable": ["tables_role_user"]},
+            "scene_health": {"disable": ["details_debt"]},
+        },
+        "finance": {
+            "action": {"disable": ["group_view"]},
+            "record": {"disable": ["dev_context"]},
+        },
+        "owner": {
+            "workbench": {"disable": ["hud_details"]},
+            "action": {"disable": ["advanced_view", "dev_context"]},
+            "record": {"disable": ["dev_context"]},
+            "scene_health": {"disable": ["details_drift", "details_debt"]},
+        },
+    }
+    return policies.get(role_code, {})
+
+
+def _apply_role_section_policy(payload: Dict[str, Any], role_code: str) -> None:
+    pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
+    if not isinstance(pages, dict):
+        return
+    policies = _role_section_policy(role_code)
+    if not policies:
+        return
+    for page_key, cfg in policies.items():
+        page = pages.get(page_key) if isinstance(pages.get(page_key), dict) else {}
+        sections = page.get("sections") if isinstance(page.get("sections"), list) else []
+        disable = {str(key).strip() for key in (cfg.get("disable") or []) if str(key).strip()}
+        if not disable:
+            continue
+        for section in sections:
+            if not isinstance(section, dict):
+                continue
+            section_key = str(section.get("key") or "").strip()
+            if section_key in disable:
+                section["enabled"] = False
+
+
+def _role_zone_order(role_code: str, page_type: str, page_key: str = "") -> list[str]:
+    page = str(page_key or "").strip().lower()
+    if page == "action":
+        if role_code == "finance":
+            return ["secondary", "primary", "hero", "supporting"]
+        if role_code == "owner":
+            return ["primary", "secondary", "hero", "supporting"]
+        return ["primary", "secondary", "hero", "supporting"]
+    if page_type == "monitor":
+        return ["hero", "secondary", "primary", "supporting"] if role_code == "finance" else ["hero", "primary", "secondary", "supporting"]
+    if page_type == "approval":
+        return ["hero", "primary", "supporting", "secondary"] if role_code == "pm" else ["hero", "secondary", "primary", "supporting"]
+    if page_type == "detail":
+        return ["hero", "primary", "secondary", "supporting"] if role_code != "owner" else ["hero", "supporting", "primary", "secondary"]
+    return ["hero", "primary", "secondary", "supporting"]
+
+
+def _role_focus_sections(role_code: str, page_key: str) -> list[str]:
+    page = str(page_key or "").strip().lower()
+    mapping: Dict[str, Dict[str, list[str]]] = {
+        "pm": {
+            "workbench": ["status_panel", "tiles"],
+            "action": ["quick_actions", "quick_filters"],
+            "record": ["project_summary", "next_actions"],
+            "my_work": ["todo_focus", "list_main"],
+        },
+        "finance": {
+            "workbench": ["status_panel"],
+            "action": ["quick_filters", "group_summary"],
+            "record": ["project_summary"],
+            "usage_analytics": ["summary_usage", "tables_daily"],
+        },
+        "owner": {
+            "workbench": ["header", "status_panel"],
+            "scene_health": ["cards", "governance"],
+            "usage_analytics": ["summary_visibility", "tables_top"],
+            "action": ["focus_strip"],
+        },
+    }
+    return mapping.get(role_code, {}).get(page, [])
+
+
+def _zone_from_tag(tag: str) -> Dict[str, str]:
+    normalized = str(tag or "").strip().lower()
+    if normalized == "header":
+        return {"key": "hero", "title": "页面头部", "zone_type": "hero", "display_mode": "stack"}
+    if normalized == "details":
+        return {"key": "supporting", "title": "辅助信息", "zone_type": "supporting", "display_mode": "accordion"}
+    if normalized == "div":
+        return {"key": "secondary", "title": "扩展信息", "zone_type": "secondary", "display_mode": "flow"}
+    return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
+
+
+def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[str, Any]:
+    key = str(section_key or "").strip().lower()
+    page = str(page_key or "").strip().lower()
+    normalized_tag = str(tag or "").strip().lower()
+
+    if normalized_tag == "header":
+        return {"block_type": "record_summary", "tone": "info", "progress": "running", "importance": "high"}
+    if normalized_tag == "details":
+        return {"block_type": "accordion_group", "tone": "neutral", "progress": "completed", "importance": "medium"}
+    if normalized_tag == "div":
+        return {"block_type": "activity_feed", "tone": "neutral", "progress": "running", "importance": "medium"}
+
+    if any(token in key for token in ("error", "forbidden", "risk", "warning", "blocked")):
+        return {"block_type": "alert_panel", "tone": "danger", "progress": "blocked", "importance": "high"}
+    if any(token in key for token in ("loading", "pending", "status_loading")):
+        return {"block_type": "progress_summary", "tone": "info", "progress": "running", "importance": "medium"}
+    if any(token in key for token in ("summary", "kpi", "metric", "cards", "hero", "project_summary")):
+        return {"block_type": "metric_row", "tone": "info", "progress": "running", "importance": "high"}
+    if any(token in key for token in ("todo", "approval", "quick_actions", "next_actions")):
+        return {"block_type": "todo_list", "tone": "warning", "progress": "pending", "importance": "high"}
+    if any(token in key for token in ("filter", "group", "slice", "preset", "tiles")):
+        return {"block_type": "entry_grid", "tone": "neutral", "progress": "completed", "importance": "medium"}
+    if any(token in key for token in ("table", "list", "daily", "top", "visibility")):
+        return {"block_type": "activity_feed", "tone": "neutral", "progress": "running", "importance": "medium"}
+    if page in {"login", "menu", "placeholder"}:
+        return {"block_type": "record_summary", "tone": "neutral", "progress": "running", "importance": "medium"}
+    return {"block_type": "record_summary", "tone": "neutral", "progress": "running", "importance": "medium"}
+
+
+def _action_templates(section_key: str) -> list[Dict[str, Any]]:
+    key = str(section_key or "").strip().lower()
+    if "risk" in key:
+        return [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}]
+    if any(token in key for token in ("approval", "todo", "next_actions")):
+        return [{"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"}]
+    if any(token in key for token in ("filter", "group", "slice")):
+        return [{"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"}]
+    if any(token in key for token in ("table", "list", "records")):
+        return [{"key": "open_list", "label": "查看明细", "intent": "ui.contract"}]
+    return []
+
+
+def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    return _shared_action_target(action_key, page_key)
+
+
+def _data_source_key(section_key: str) -> str:
+    token = re.sub(r"[^a-z0-9_]+", "_", str(section_key or "").strip().lower())
+    token = re.sub(r"_+", "_", token).strip("_")
+    if not token:
+        token = "section"
+    return f"ds_section_{token}"
+
+
+def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
+    key = str(page_key or "").strip().lower()
+    if key == "home":
+        return [
+            {"key": "open_my_work", "label": "我的工作", "intent": "ui.contract"},
+            {"key": "open_usage_analytics", "label": "使用分析", "intent": "ui.contract"},
+        ]
+    if key == "my_work":
+        return [
+            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
+    if key == "workbench":
+        return [
+            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_menu", "label": "打开菜单", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
+    if key in {"scene_health", "usage_analytics", "scene_packages"}:
+        return [
+            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
+    if key in {"action", "record", "scene"}:
+        return [
+            {"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"},
+            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
+    return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]
+
+
+def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code: str) -> Dict[str, Any]:
+    sections = page.get("sections") if isinstance(page.get("sections"), list) else []
+    title = ""
+    texts = page.get("texts") if isinstance(page.get("texts"), dict) else {}
+    if isinstance(texts, dict):
+        title = str(texts.get("title") or "").strip()
+    if not title:
+        title = page_key.replace("_", " ").strip().title() or "Page"
+
+    audience = _page_audience(page_key)
+    page_type = _normalize_page_type(page_key)
+    zone_buckets: Dict[str, Dict[str, Any]] = {}
+    data_sources: Dict[str, Dict[str, Any]] = {
+        "ds_sections": {"source_type": "static", "provider": "page_contract.sections", "section_keys": ["_all"]},
+    }
+    focus_sections = {key: idx + 1 for idx, key in enumerate(_role_focus_sections(role_code, page_key))}
+    for idx, section in enumerate(sections):
+        if not isinstance(section, dict):
+            continue
+        section_key = str(section.get("key") or "").strip()
+        if not section_key:
+            continue
+        tag = str(section.get("tag") or "section").strip().lower()
+        enabled = bool(section.get("enabled") is True)
+        order_raw = section.get("order")
+        order = int(order_raw) if isinstance(order_raw, int) and order_raw > 0 else idx + 1
+        zone_cfg = _zone_from_tag(tag)
+        zone_key = zone_cfg["key"]
+        zone = zone_buckets.get(zone_key)
+        if zone is None:
+            zone = {
+                "key": zone_key,
+                "title": zone_cfg["title"],
+                "description": f"{page_key}::{zone_key}",
+                "zone_type": zone_cfg["zone_type"],
+                "display_mode": zone_cfg["display_mode"],
+                "priority": 100 - (len(zone_buckets) * 10),
+                "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                "blocks": [],
+            }
+            zone_buckets[zone_key] = zone
+
+        semantic = _semantic_from_section(page_key, section_key, tag)
+        data_source = _data_source_key(section_key)
+        data_sources[data_source] = {
+            "source_type": "scene_context",
+            "provider": "page_contract.section",
+            "page_key": page_key,
+            "section_key": section_key,
+            "section_tag": tag,
+            "section_keys": [section_key],
+        }
+        zone["blocks"].append(
+            {
+                "key": f"{page_key}.{section_key}",
+                "block_type": semantic["block_type"],
+                "title": section_key,
+                "priority": max(1, 100 - order),
+                "importance": semantic["importance"],
+                "tone": semantic["tone"],
+                "progress": semantic["progress"] if enabled else "pending",
+                "section_key": section_key,
+                "data_source": data_source,
+                "loading_strategy": "eager" if tag == "header" else "lazy",
+                "refreshable": True,
+                "collapsible": bool(tag == "details"),
+                "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                "actions": _action_templates(section_key),
+                "payload": {"tag": tag, "enabled": enabled, "open": bool(section.get("open") is True)},
+            }
+        )
+
+        if section_key in focus_sections:
+            zone["blocks"][-1]["priority"] = 200 - focus_sections[section_key]
+            zone["blocks"][-1]["focus"] = True
+        else:
+            zone["blocks"][-1]["focus"] = False
+
+    zones = list(zone_buckets.values())
+    zone_rank = {key: idx + 1 for idx, key in enumerate(_role_zone_order(role_code, page_type, page_key))}
+    for zone in zones:
+        zone_key = str(zone.get("key") or "").strip()
+        zone["priority"] = 100 - ((zone_rank.get(zone_key, 99) - 1) * 10)
+    for zone in zones:
+        zone["blocks"] = sorted(
+            zone.get("blocks") if isinstance(zone.get("blocks"), list) else [],
+            key=lambda item: int(item.get("priority") or 0),
+            reverse=True,
+        )
+
+    action_schema_actions: Dict[str, Any] = {}
+    page_actions = _default_page_actions(page_key)
+    for action in page_actions:
+        action_key = str(action.get("key") or "").strip()
+        if not action_key:
+            continue
+        action_schema_actions[action_key] = {
+            "label": str(action.get("label") or action_key),
+            "intent": str(action.get("intent") or "ui.contract"),
+            "target": _action_target(action_key, page_key),
+            "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+        }
+    for zone in zones:
+        blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            actions = block.get("actions") if isinstance(block.get("actions"), list) else []
+            for action in actions:
+                if not isinstance(action, dict):
+                    continue
+                action_key = str(action.get("key") or "").strip()
+                if not action_key:
+                    continue
+                if action_key in action_schema_actions:
+                    continue
+                action_schema_actions[action_key] = {
+                    "label": str(action.get("label") or action_key),
+                    "intent": str(action.get("intent") or "ui.contract"),
+                    "target": _action_target(action_key, page_key),
+                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+                }
+
+    return {
+        "contract_version": "page_orchestration_v1",
+        "scene_key": page_key,
+        "page": {
+            "key": page_key,
+            "title": title,
+            "subtitle": "",
+            "page_type": page_type,
+            "intent": "ui.contract",
+            "scene_key": page_key,
+            "layout_mode": "monitoring" if page_type == "monitor" else "single_flow",
+            "audience": audience,
+            "priority_model": "risk_first" if page_type == "monitor" else "task_first" if page_type == "approval" else "role_first",
+            "status": "ready",
+            "breadcrumbs": [],
+            "header": {},
+            "global_actions": page_actions,
+            "filters": [],
+            "context": {"role_code": role_code},
+        },
+        "zones": zones,
+        "data_sources": data_sources,
+        "state_schema": {
+            "tones": {key: {"icon": key} for key in STATE_TONES},
+            "business_states": {
+                key: {"tone": ("danger" if key in {"blocked", "overdue"} else "success" if key == "completed" else "info"), "label": key}
+                for key in PROGRESS_STATES
+            },
+        },
+        "action_schema": {"actions": action_schema_actions},
+        "render_hints": {
+            "dense_mode": False,
+            "preferred_columns": 2 if page_type in {"monitor", "dashboard"} else 1,
+            "mobile_priority": [zone.get("key") for zone in zones if isinstance(zone, dict)],
+            "sticky_header": True,
+        },
+        "meta": {
+            "generated_by": "smart_core.page_contracts_builder",
+            "schema_version": "1.0.0",
+            "page_key": page_key,
+            "role_variant": role_code,
+            "semantic_profile": page_type,
+            "role_zone_order": _role_zone_order(role_code, page_type, page_key),
+            "role_focus_sections": list(focus_sections.keys()),
+        },
+    }
 
 
 def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
-    return {
+    role_code = _normalize_role_code(_data if isinstance(_data, dict) else {})
+    payload = {
         "schema_version": "v1",
         "pages": {
             "home": {
@@ -198,6 +631,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "hud_label_meta_url": "元信息链接",
                     "hud_label_last_intent": "最近意图",
                     "hud_label_trace_id": "追踪 ID",
+                    "hud_label_data_source": "数据源协议",
+                    "hud_value_ready": "就绪",
+                    "hud_value_missing": "缺失",
                     "hud_value_na": "N/A",
                     "action_copy": "复制",
                     "panel_title": "页面暂时无法打开",
@@ -217,6 +653,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "my_work": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "hero", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "todo_focus", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "retry_panel", "enabled": True, "order": 3, "tag": "details", "open": False},
+                    {"key": "list_main", "enabled": True, "order": 4, "tag": "section"},
+                ],
                 "texts": {
                     "title": "我的工作",
                     "loading_title": "加载我的工作中...",
@@ -375,6 +817,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "confirm_batch_complete_suffix": " 条待办？",
                     "error_complete_todo_failed": "完成待办失败",
                     "error_batch_complete_failed": "批量完成待办失败",
+                    "enter_error_message_fallback": "功能入口暂时不可用",
                     "feedback_reason_group_no_retry_prefix": "原因组 ",
                     "feedback_reason_group_no_retry_suffix": " 没有可重试项",
                     "feedback_selected_reason_retryable_prefix": "已选中 ",
@@ -452,6 +895,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     {"key": "dev_context", "enabled": True, "order": 10, "tag": "div"},
                 ],
                 "texts": {
+                    "error_fallback": "操作暂不可用",
                     "status_loading": "加载中",
                     "status_error": "加载失败",
                     "status_empty": "暂无数据",
@@ -820,3 +1264,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
         },
     }
+    _apply_role_section_policy(payload, role_code)
+    pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
+    for key, page in pages.items():
+        if not isinstance(page, dict):
+            continue
+        if isinstance(page.get("page_orchestration_v1"), dict):
+            continue
+        page["page_orchestration_v1"] = _build_page_orchestration_v1(str(key), page, role_code)
+    return payload

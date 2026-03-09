@@ -1,5 +1,16 @@
 <template>
   <section class="menu-view">
+    <section v-if="headerActions.length" class="menu-actions">
+      <button
+        v-for="action in headerActions"
+        :key="`menu-header-${action.key}`"
+        class="ghost"
+        :disabled="loading"
+        @click="executeHeaderAction(action.key)"
+      >
+        {{ action.label || action.key }}
+      </button>
+    </section>
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
       :title="pageText('loading_title', 'Resolving menu...')"
@@ -24,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
@@ -33,6 +44,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 const route = useRoute();
 const router = useRouter();
@@ -45,6 +57,10 @@ const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
+const headerActions = computed(() => pageGlobalActions.value);
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
@@ -135,6 +151,27 @@ async function resolve() {
   }
 }
 
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: resolveCarryQuery(),
+    onRefresh: resolve,
+    onFallback: async (key) => {
+      if (key === 'open_workbench' || key === 'open_landing') {
+        await router.replace('/');
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled) {
+    error.value = pageText('error_resolve_failed', 'resolve menu failed');
+  }
+}
+
 watch(
   () => route.params.menuId,
   () => {
@@ -146,5 +183,21 @@ watch(
 <style scoped>
 .menu-view {
   padding: 12px;
+}
+
+.menu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ghost {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
 }
 </style>

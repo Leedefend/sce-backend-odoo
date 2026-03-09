@@ -1,5 +1,16 @@
 <template>
   <section class="scene">
+    <section v-if="headerActions.length" class="scene-actions">
+      <button
+        v-for="action in headerActions"
+        :key="`scene-header-${action.key}`"
+        class="ghost"
+        :disabled="status === 'loading'"
+        @click="executeHeaderAction(action.key)"
+      >
+        {{ action.label || action.key }}
+      </button>
+    </section>
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && status === 'loading'"
       :title="pageText('loading_title', '正在加载场景...')"
@@ -34,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
@@ -47,6 +58,7 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { NavNode } from '@sc/schema';
 import type { SceneTarget } from '../app/resolvers/sceneRegistry';
 
@@ -58,6 +70,10 @@ const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
+const headerActions = computed(() => pageGlobalActions.value);
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
@@ -93,6 +109,31 @@ function goUnifiedHome() {
     path: '/',
     query: resolveWorkspaceContextQuery(),
   }).catch(() => {});
+}
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: resolveWorkspaceContextQuery(),
+    onRefresh: resolveScene,
+    onFallback: async (key) => {
+      if (key === 'open_workbench') {
+        goWorkbench();
+        return true;
+      }
+      if (key === 'refresh_page' || key === 'refresh') {
+        await resolveScene();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled) {
+    goWorkbench(ErrorCodes.ACT_UNSUPPORTED_TYPE);
+  }
 }
 
 function isScenePlaceholderRoute() {
@@ -421,5 +462,12 @@ watch(
 <style scoped>
 .scene {
   padding: 12px;
+}
+
+.scene-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 </style>

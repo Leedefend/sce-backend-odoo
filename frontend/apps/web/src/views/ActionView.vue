@@ -1,6 +1,11 @@
 <template>
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
+    <section v-if="headerActions.length" class="page-actions">
+      <button v-for="action in headerActions" :key="`header-${action.key}`" class="contract-chip ghost" @click="executeHeaderAction(action.key)">
+        {{ action.label || action.key }}
+      </button>
+    </section>
     <section v-if="pageSectionEnabled('route_preset', true) && pageSectionTagIs('route_preset', 'section') && appliedPresetLabel" class="route-preset" :style="pageSectionStyle('route_preset')">
       <p>
         {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
@@ -377,6 +382,7 @@ import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -402,6 +408,9 @@ const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
@@ -466,6 +475,7 @@ const groupWindowDigest = ref('');
 const groupWindowIdentityKey = ref('');
 const groupWindowPrevOffset = ref<number | null>(null);
 const groupWindowNextOffset = ref<number | null>(null);
+const headerActions = computed(() => pageGlobalActions.value);
 const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
@@ -1727,6 +1737,35 @@ function openFocusAction(action: FocusNavAction | string) {
   const path = typeof action === 'string' ? action : action.to;
   const query = typeof action === 'string' ? undefined : action.query;
   router.push({ path, query: query ? { ...resolveWorkspaceContextQuery(), ...query } : undefined }).catch(() => {});
+}
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: resolveWorkspaceContextQuery(),
+    onRefresh: reload,
+    onFallback: async (key) => {
+      if (key === 'open_my_work') {
+        openFocusAction('/my-work');
+        return true;
+      }
+      if (key === 'open_risk_dashboard') {
+        openFocusAction('/s/projects.dashboard');
+        return true;
+      }
+      if (key === 'refresh_page' || key === 'refresh') {
+        reload();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled) {
+    batchMessage.value = pageText('error_fallback', '操作暂不可用');
+  }
 }
 
 function resolveDefaultSort(contract: ActionContractLoose) {
@@ -3362,6 +3401,12 @@ watch(
 .page {
   display: grid;
   gap: 16px;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .route-preset {

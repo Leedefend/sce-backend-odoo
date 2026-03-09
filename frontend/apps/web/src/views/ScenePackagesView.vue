@@ -5,7 +5,15 @@
         <h2>{{ pageText('title', 'Scene Packages') }}</h2>
         <p>{{ pageText('subtitle', '导入、导出与审阅已安装的 Scene 能力包。') }}</p>
       </div>
-      <button class="secondary" :disabled="busy" @click="loadPackages">Refresh</button>
+      <button
+        v-for="action in headerActions"
+        :key="action.key"
+        class="secondary"
+        :disabled="busy"
+        @click="executeHeaderAction(action.key)"
+      >
+        {{ action.label }}
+      </button>
     </header>
 
     <StatusPanel
@@ -104,9 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import {
   scenePackageDryRunImport,
   scenePackageExport,
@@ -130,11 +140,16 @@ const exportVersion = ref('1.0.0');
 const exportChannel = ref<SceneChannel>('stable');
 const exportReason = ref('phase10.6 package export');
 const exportResult = ref<Record<string, unknown> | null>(null);
+const router = useRouter();
 const pageContract = usePageContract('scene_packages');
 const pageText = pageContract.text;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const headerActions = computed(() => pageGlobalActions.value);
 
 function parsePackageJson(): Record<string, unknown> {
   const raw = importText.value.trim();
@@ -236,6 +251,26 @@ async function runExport() {
 }
 
 onMounted(loadPackages);
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    onRefresh: loadPackages,
+    onFallback: async (key) => {
+      if (key === 'refresh_page') {
+        await loadPackages();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'refresh_page') {
+    await loadPackages();
+  }
+}
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 <template>
   <section class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
-    <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :style="homeSectionStyle('hero')">
+    <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :class="homeSectionClass('hero')" :style="homeSectionStyle('hero')">
       <div class="hero-main">
         <h2>{{ heroTitle }}</h2>
         <p class="lead">{{ heroLead }}</p>
@@ -13,13 +13,13 @@
             <button class="inline-link" @click="openRoleLanding">{{ homeLayoutText('hero.open_landing_action', '打开默认入口') }}</button>
           </p>
           <div class="view-toggle">
-            <button class="my-work-btn" @click="goToMyWork">{{ homeLayoutText('hero.open_my_work_action', '我的工作') }}</button>
             <button
-              v-if="isAdmin"
+              v-for="action in heroQuickActions"
+              :key="`hero-action-${action.key}`"
               class="my-work-btn"
-              @click="goToUsageAnalytics"
+              @click="executeHeroAction(action.key)"
             >
-              {{ homeLayoutText('hero.open_usage_action', '使用分析') }}
+              {{ action.label }}
             </button>
             <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">{{ homeLayoutText('hero.view_mode_card', '卡片') }}</button>
             <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">{{ homeLayoutText('hero.view_mode_list', '列表') }}</button>
@@ -44,11 +44,14 @@
         <p v-if="isHudEnabled" class="hud-line">
           HUD: internal_tiles={{ internalTileCount }} · visible_mode=show_all
         </p>
+        <p v-if="isHudEnabled" class="hud-line">
+          HUD: orchestration_blocks={{ orchestrationBlocks.length }} · role_variant={{ roleVariantCode || '-' }}
+        </p>
       </div>
     </header>
 
-    <section v-if="isHomeSectionEnabled('metrics') && isHomeSectionTag('metrics', 'section')" class="value-grid" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
-      <article v-for="metric in coreMetrics" :key="metric.key" class="value-card">
+    <section v-if="isHomeSectionEnabled('metrics') && isHomeSectionTag('metrics', 'section')" class="value-grid" :class="homeSectionClass('metrics')" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
+      <article v-for="metric in coreMetrics" :key="metric.key" class="value-card" :class="[`tone-${metric.tone || 'neutral'}`, `progress-${metric.progress || 'running'}`]">
         <p class="value-label">{{ metric.label }}</p>
         <p class="value-number">{{ metric.value }}</p>
         <p class="value-meta">
@@ -59,13 +62,13 @@
       </article>
     </section>
 
-    <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
+    <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :class="homeSectionClass('today_actions')" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
       <header class="today-actions-header">
         <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
         <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
       </header>
       <div class="today-actions-grid">
-        <article v-for="item in concreteTodos" :key="item.id" class="today-card">
+        <article v-for="item in concreteTodos" :key="item.id" class="today-card" :class="[`tone-${item.tone || 'info'}`, `progress-${item.progress || 'pending'}`]">
           <p class="today-title">
             <span>{{ item.title }}</span>
             <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
@@ -81,7 +84,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
+    <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :class="homeSectionClass('risk')" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
       <header class="risk-header">
         <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
         <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
@@ -134,7 +137,7 @@
       </div>
     </section>
 
-    <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
+    <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :class="homeSectionClass('ops')" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
       <summary>{{ homeLayoutText('ops.title', '项目经营概览') }}</summary>
       <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目经营概览区')">
         <div class="ops-grid">
@@ -170,7 +173,7 @@
       </section>
     </details>
 
-    <details v-if="isHomeSectionEnabled('advice') && isHomeSectionTag('advice', 'details')" class="secondary-panel" :style="homeSectionStyle('advice')" :open="isHomeSectionOpenDefault('advice')">
+    <details v-if="isHomeSectionEnabled('advice') && isHomeSectionTag('advice', 'details')" class="secondary-panel" :class="homeSectionClass('advice')" :style="homeSectionStyle('advice')" :open="isHomeSectionOpenDefault('advice')">
       <summary>{{ homeLayoutText('advice.title', '系统建议关注事项') }}</summary>
       <section class="advice-section" :aria-label="homeLayoutText('advice.aria_label', '系统建议关注事项')">
         <div class="advice-list">
@@ -183,7 +186,7 @@
       </section>
     </details>
 
-    <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
+    <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :class="homeSectionClass('group_overview')" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
       <header class="group-overview-header">
         <h3>{{ homeLayoutText('group_overview.title', '辅助入口') }}</h3>
         <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
@@ -199,7 +202,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('filters') && isHomeSectionTag('filters', 'section')" class="filters" :style="homeSectionStyle('filters')">
+    <section v-if="isHomeSectionEnabled('filters') && isHomeSectionTag('filters', 'section')" class="filters" :class="homeSectionClass('filters')" :style="homeSectionStyle('filters')">
       <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
         <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
@@ -331,7 +334,7 @@
       </template>
     </div>
 
-    <div v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div')" class="scene-groups" :style="homeSectionStyle('scene_groups')">
+    <div v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div')" class="scene-groups" :class="homeSectionClass('scene_groups')" :style="homeSectionStyle('scene_groups')">
       <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
         <header class="scene-group-header">
           <button class="scene-toggle" @click="toggleSceneGroup(group.sceneKey)">
@@ -396,10 +399,13 @@ import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type MetricLevel = 'green' | 'amber' | 'red';
 type SuggestionStatus = 'urgent' | 'normal';
+type SemanticTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+type SemanticProgress = 'overdue' | 'blocked' | 'pending' | 'running' | 'completed';
 type CapabilityEntry = {
   id: string;
   key: string;
@@ -430,6 +436,8 @@ type SuggestionItem = {
   description: string;
   count?: number;
   status?: SuggestionStatus;
+  tone?: SemanticTone;
+  progress?: SemanticProgress;
   ready?: boolean;
   entryId: string;
 };
@@ -438,6 +446,8 @@ type CoreMetric = {
   label: string;
   value: string;
   level: MetricLevel;
+  tone?: SemanticTone;
+  progress?: SemanticProgress;
   delta: string;
   hint: string;
 };
@@ -467,6 +477,9 @@ const route = useRoute();
 const session = useSessionStore();
 const pageContract = usePageContract('home');
 const pageTextByPageContract = pageContract.text;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const pageText = (key: string, fallback: string) => pageTextByPageContract(key, fallback);
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
@@ -489,6 +502,20 @@ const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
+});
+const heroQuickActions = computed(() => {
+  const supported = new Set(['open_my_work', 'open_usage_analytics']);
+  const actions = pageGlobalActions.value.filter((item) => {
+    if (!supported.has(item.key)) return false;
+    if (item.key === 'open_usage_analytics' && !isAdmin.value) return false;
+    return true;
+  });
+  if (actions.length) return actions;
+  const fallback = [{ key: 'open_my_work', label: homeLayoutText('hero.open_my_work_action', '我的工作'), intent: 'ui.contract' }];
+  if (isAdmin.value) {
+    fallback.push({ key: 'open_usage_analytics', label: homeLayoutText('hero.open_usage_action', '使用分析'), intent: 'ui.contract' });
+  }
+  return fallback;
 });
 const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
@@ -535,6 +562,102 @@ const workspaceLayoutSections = computed(() => {
   });
   return map;
 });
+const workspacePageOrchestration = computed(() => (
+  workspaceHome.value.page_orchestration && typeof workspaceHome.value.page_orchestration === 'object'
+    ? workspaceHome.value.page_orchestration as Record<string, unknown>
+    : {}
+));
+const workspacePageOrchestrationV1 = computed(() => (
+  workspaceHome.value.page_orchestration_v1 && typeof workspaceHome.value.page_orchestration_v1 === 'object'
+    ? workspaceHome.value.page_orchestration_v1 as Record<string, unknown>
+    : {}
+));
+const workspacePageOrchestrationV1DataSources = computed(() => (
+  workspacePageOrchestrationV1.value.data_sources && typeof workspacePageOrchestrationV1.value.data_sources === 'object'
+    ? workspacePageOrchestrationV1.value.data_sources as Record<string, unknown>
+    : {}
+));
+const orchestrationBlocks = computed(() => {
+  const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
+    ? workspacePageOrchestrationV1.value.zones
+    : [];
+  const hasV1Zones = zones.length > 0;
+  const dataSources = workspacePageOrchestrationV1DataSources.value;
+  const flattenedV1: Record<string, unknown>[] = [];
+  zones.forEach((zone) => {
+    if (!zone || typeof zone !== 'object') return;
+    const zoneRow = zone as Record<string, unknown>;
+    const zoneType = asText(zoneRow.zone_type);
+    const blocks = Array.isArray(zoneRow.blocks) ? zoneRow.blocks : [];
+    blocks.forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+      const blockRow = item as Record<string, unknown>;
+      const sectionKey = asText(blockRow.section_key);
+      const dataSourceKey = asText(blockRow.data_source);
+      if (!sectionKey || !dataSourceKey) return;
+      const dataSource = dataSources[dataSourceKey];
+      if (!dataSource || typeof dataSource !== 'object') return;
+      const sourceType = asText((dataSource as Record<string, unknown>).source_type);
+      if (!sourceType) return;
+      flattenedV1.push({
+        ...blockRow,
+        zone: asText(blockRow.zone) || zoneType || 'support',
+      });
+    });
+  });
+  if (hasV1Zones) {
+    return flattenedV1;
+  }
+  const legacy = Array.isArray(workspacePageOrchestration.value.blocks)
+    ? workspacePageOrchestration.value.blocks
+    : [];
+  return legacy
+    .map((item) => (item && typeof item === 'object' ? item as Record<string, unknown> : null))
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+});
+const roleVariantCode = computed(() => {
+  const roleVariant = workspaceHome.value.role_variant;
+  if (roleVariant && typeof roleVariant === 'object') {
+    const roleCode = asText((roleVariant as Record<string, unknown>).role_code);
+    if (roleCode) return roleCode;
+  }
+  const orchestrationPage = workspacePageOrchestrationV1.value.page;
+  if (orchestrationPage && typeof orchestrationPage === 'object') {
+    return asText((orchestrationPage as Record<string, unknown>).role_code);
+  }
+  return '';
+});
+const orchestrationSectionOrderMap = computed(() => {
+  const map = new Map<string, number>();
+  orchestrationBlocks.value.forEach((block, idx) => {
+    const visible = typeof block.visible === 'boolean' ? block.visible : true;
+    if (!visible) return;
+    const sourcePath = asText(block.source_path);
+    const sectionKey = asText(block.section_key) || (sourcePath ? sourcePath.split('.')[0] || '' : '');
+    if (!sectionKey || map.has(sectionKey)) return;
+    const orderRaw = Number(block.order);
+    const order = Number.isFinite(orderRaw) && orderRaw > 0 ? Math.trunc(orderRaw) : idx + 1;
+    map.set(sectionKey, order);
+  });
+  return map;
+});
+const orchestrationSectionSemanticMap = computed(() => {
+  const map = new Map<string, { zone: string; focus: boolean; tone: SemanticTone; progress: SemanticProgress }>();
+  orchestrationBlocks.value.forEach((block) => {
+    const visible = typeof block.visible === 'boolean' ? block.visible : true;
+    if (!visible) return;
+    const sourcePath = asText(block.source_path);
+    const sectionKey = asText(block.section_key) || (sourcePath ? sourcePath.split('.')[0] || '' : '');
+    if (!sectionKey || map.has(sectionKey)) return;
+    map.set(sectionKey, {
+      zone: asText(block.zone) || 'support',
+      focus: block.focus === true,
+      tone: normalizeTone(block.tone, 'neutral'),
+      progress: normalizeProgress(block.progress, 'running'),
+    });
+  });
+  return map;
+});
 const homeSectionOrderMap = computed(() => {
   const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
   const map = new Map<string, number>();
@@ -542,7 +665,13 @@ const homeSectionOrderMap = computed(() => {
     if (!item || typeof item !== 'object') return;
     const key = asText((item as Record<string, unknown>).key);
     if (!key || map.has(key)) return;
-    map.set(key, idx + 1);
+    const orchestrationOrder = orchestrationSectionOrderMap.value.get(key);
+    map.set(key, orchestrationOrder || idx + 1);
+  });
+  orchestrationSectionOrderMap.value.forEach((order, key) => {
+    if (!map.has(key)) {
+      map.set(key, order);
+    }
   });
   return map;
 });
@@ -679,10 +808,43 @@ function homeSectionStyle(key: string) {
   return { order: String(order) };
 }
 
+function homeSectionClass(key: string) {
+  const semantic = orchestrationSectionSemanticMap.value.get(key);
+  if (!semantic) return [];
+  return [
+    `zone-${semantic.zone || 'support'}`,
+    `tone-${semantic.tone}`,
+    `progress-${semantic.progress}`,
+    semantic.focus ? 'is-focus' : 'is-secondary',
+  ];
+}
+
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
   if (!text || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return '';
   return text;
+}
+
+function normalizeTone(value: unknown, fallback: SemanticTone = 'neutral'): SemanticTone {
+  const tone = asText(value).toLowerCase();
+  if (tone === 'success' || tone === 'warning' || tone === 'danger' || tone === 'info' || tone === 'neutral') {
+    return tone;
+  }
+  return fallback;
+}
+
+function normalizeProgress(value: unknown, fallback: SemanticProgress = 'running'): SemanticProgress {
+  const progress = asText(value).toLowerCase();
+  if (
+    progress === 'overdue'
+    || progress === 'blocked'
+    || progress === 'pending'
+    || progress === 'running'
+    || progress === 'completed'
+  ) {
+    return progress;
+  }
+  return fallback;
 }
 
 function hasInternalTag(raw: unknown) {
@@ -888,6 +1050,8 @@ const coreMetrics = computed<CoreMetric[]>(() => {
         label: asText(row.label) || `${pageText('metric_title_fallback_prefix', '指标 ')}${idx + 1}`,
         value: asText(row.value) || '0',
         level,
+        tone: normalizeTone(row.tone),
+        progress: normalizeProgress(row.progress),
         delta: asText(row.delta) || '',
         hint: asText(row.hint) || '',
       };
@@ -909,6 +1073,8 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
       description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
+      tone: normalizeTone(row.tone, statusRaw === 'urgent' ? 'danger' : 'info'),
+      progress: normalizeProgress(row.progress, 'pending'),
       ready: matched ? matched.state === 'READY' : Boolean(row.ready),
       entryId: matched?.id || '',
     };
@@ -1411,6 +1577,34 @@ function goToUsageAnalytics() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: '/admin/usage-analytics' }).catch(() => {});
+}
+
+async function executeHeroAction(actionKey: string) {
+  void trackUsageEvent('workspace.nav_click', {
+    target: actionKey,
+    from: 'workspace.home',
+  }).catch(() => {});
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: workspaceContextQuery.value,
+    onFallback: async (key) => {
+      if (key === 'open_my_work') {
+        router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
+        return true;
+      }
+      if (key === 'open_usage_analytics' && isAdmin.value) {
+        router.push({ path: '/admin/usage-analytics' }).catch(() => {});
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'open_my_work') {
+    router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
+  }
 }
 
 function goHome() {
@@ -2777,5 +2971,25 @@ function highlightParts(raw: string) {
 
 .state-locked .state {
   color: #b91c1c;
+}
+
+.is-focus {
+  box-shadow: 0 0 0 2px rgba(42, 146, 255, 0.28);
+}
+
+.is-secondary {
+  opacity: 0.98;
+}
+
+.zone-primary {
+  border-left: 3px solid #2a92ff;
+}
+
+.zone-analysis {
+  border-left: 3px solid #6b7b8c;
+}
+
+.zone-support {
+  border-left: 3px solid #93a1b0;
 }
 </style>

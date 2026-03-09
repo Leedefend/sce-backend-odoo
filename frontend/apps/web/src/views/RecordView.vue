@@ -12,6 +12,15 @@
       </div>
       <div class="actions">
         <button
+          v-for="action in headerActions"
+          :key="`header-${action.key}`"
+          class="ghost"
+          :disabled="status === 'loading' || status === 'saving'"
+          @click="executeHeaderAction(action.key)"
+        >
+          {{ action.label || action.key }}
+        </button>
+        <button
           v-for="btn in headerButtons"
           :key="btn.name ?? btn.string"
           :disabled="status !== 'ok' || !recordId || executing === btn.name || buttonState(btn).state !== 'enabled'"
@@ -194,6 +203,7 @@ import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPo
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 const route = useRoute();
 const router = useRouter();
@@ -309,6 +319,9 @@ const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const statusLabel = computed(() => {
   if (status.value === 'editing') return pageText('status_editing', 'Editing');
@@ -318,6 +331,7 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return pageText('status_empty', 'Empty');
   return pageText('status_ready', 'Ready');
 });
+const headerActions = computed(() => pageGlobalActions.value);
 const statusTone = computed(() => {
   if (status.value === 'error') return 'danger';
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
@@ -1019,6 +1033,39 @@ async function save() {
 
 function goBack() {
   router.back();
+}
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: resolveCarryQuery(),
+    onRefresh: reload,
+    onFallback: async (key) => {
+      if (key === 'open_my_work') {
+        await router.push({ path: '/my-work', query: resolveCarryQuery() });
+        return true;
+      }
+      if (key === 'open_risk_dashboard') {
+        await router.push({ path: '/s/projects.dashboard', query: resolveCarryQuery() });
+        return true;
+      }
+      if (key === 'refresh_page' || key === 'refresh') {
+        reload();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled) {
+    actionFeedback.value = {
+      message: pageText('error_fallback', 'Record load failed'),
+      reasonCode: 'ACTION_UNSUPPORTED',
+      success: false,
+    };
+  }
 }
 
 onMounted(load);

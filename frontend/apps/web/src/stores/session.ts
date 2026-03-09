@@ -62,10 +62,57 @@ export interface ProductFacts {
 
 export interface WorkspaceHomeContract {
   schema_version?: string;
+  semantic_protocol?: {
+    block_types?: string[];
+    state_tones?: string[];
+    progress_states?: string[];
+  };
   layout?: {
-    sections?: Array<{ key?: string; enabled?: boolean }>;
+    sections?: Array<{ key?: string; enabled?: boolean; order?: number; tag?: string; open?: boolean }>;
     texts?: Record<string, unknown>;
     actions?: Record<string, unknown>;
+  };
+  page_orchestration?: {
+    schema_version?: string;
+    page?: {
+      key?: string;
+      intent?: string;
+      role_code?: string;
+      render_mode?: string;
+    };
+    zones?: Array<{ key?: string; label?: string; order?: number }>;
+    blocks?: Array<{
+      key?: string;
+      type?: string;
+      zone?: string;
+      order?: number;
+      source_path?: string;
+      visible?: boolean;
+      tone?: string;
+      progress?: string;
+      focus?: boolean;
+    }>;
+    role_layout?: {
+      mode?: string;
+      variant?: string;
+      focus_blocks?: string[];
+    };
+  };
+  page_orchestration_v1?: {
+    contract_version?: string;
+    scene_key?: string;
+    page?: Record<string, unknown>;
+    zones?: Array<Record<string, unknown>>;
+    data_sources?: Record<string, unknown>;
+    state_schema?: Record<string, unknown>;
+    action_schema?: Record<string, unknown>;
+    render_hints?: Record<string, unknown>;
+    meta?: Record<string, unknown>;
+  };
+  role_variant?: {
+    role_code?: string;
+    mode?: string;
+    focus?: string[];
   };
   hero?: Record<string, unknown>;
   metrics?: unknown[];
@@ -78,7 +125,18 @@ export interface WorkspaceHomeContract {
 export interface PageContract {
   schema_version?: string;
   texts?: Record<string, unknown>;
-  sections?: Array<{ key?: string; enabled?: boolean }>;
+  sections?: Array<{ key?: string; enabled?: boolean; order?: number; tag?: string; open?: boolean }>;
+  page_orchestration_v1?: {
+    contract_version?: string;
+    scene_key?: string;
+    page?: Record<string, unknown>;
+    zones?: Array<Record<string, unknown>>;
+    data_sources?: Record<string, unknown>;
+    state_schema?: Record<string, unknown>;
+    action_schema?: Record<string, unknown>;
+    render_hints?: Record<string, unknown>;
+    meta?: Record<string, unknown>;
+  };
   actions?: Record<string, unknown>;
 }
 
