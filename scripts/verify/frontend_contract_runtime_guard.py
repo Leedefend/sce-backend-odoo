@@ -43,7 +43,6 @@ SESSION_STORE_ONLY_PATTERNS = [
 
 SCENE_VIEW_ONLY_PATTERNS = [
     "findActionNodeByModel(",
-    "findActionNodeBySceneKey(",
 ]
 
 ACTION_CONTEXT_ONLY_PATTERNS = [
