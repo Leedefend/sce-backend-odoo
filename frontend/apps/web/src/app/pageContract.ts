@@ -16,10 +16,16 @@ export function usePageContract(pageKey: string) {
     const raw = contract.value?.texts;
     return raw && typeof raw === 'object' ? raw : {};
   });
+  const orchestrationDataSources = computed<Record<string, unknown>>(() => {
+    const raw = contract.value?.page_orchestration_v1?.data_sources;
+    return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  });
   const sections = computed<Map<string, SectionConfig>>(() => {
     const fromV1: Array<Record<string, unknown>> = [];
     const orchestrationV1 = contract.value?.page_orchestration_v1;
     const zones = Array.isArray(orchestrationV1?.zones) ? orchestrationV1.zones : [];
+    const hasV1Zones = zones.length > 0;
+    const dataSourcesRow = orchestrationDataSources.value;
     zones.forEach((zone) => {
       if (!zone || typeof zone !== 'object') return;
       const zoneRow = zone as Record<string, unknown>;
@@ -29,6 +35,12 @@ export function usePageContract(pageKey: string) {
         const row = block as Record<string, unknown>;
         const sectionKey = asText(row.section_key);
         if (!sectionKey) return;
+        const dataSourceKey = asText(row.data_source);
+        if (!dataSourceKey) return;
+        const dataSource = dataSourcesRow[dataSourceKey];
+        if (!dataSource || typeof dataSource !== 'object') return;
+        const sourceType = asText((dataSource as Record<string, unknown>).source_type);
+        if (!sourceType) return;
         const payload = (row.payload && typeof row.payload === 'object') ? row.payload as Record<string, unknown> : {};
         const tag = asText(payload.tag) || 'section';
         const priorityRaw = Number(row.priority);
@@ -42,7 +54,7 @@ export function usePageContract(pageKey: string) {
         });
       });
     });
-    const raw = fromV1.length
+    const raw = hasV1Zones
       ? fromV1
       : (Array.isArray(contract.value?.sections) ? contract.value.sections : []);
     const map = new Map<string, SectionConfig>();
@@ -77,10 +89,6 @@ export function usePageContract(pageKey: string) {
     if (!raw || typeof raw !== 'object') return {};
     const actionsRow = (raw as Record<string, unknown>).actions;
     return actionsRow && typeof actionsRow === 'object' ? actionsRow as Record<string, unknown> : {};
-  });
-  const orchestrationDataSources = computed<Record<string, unknown>>(() => {
-    const raw = contract.value?.page_orchestration_v1?.data_sources;
-    return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
   });
   const globalActions = computed<GlobalActionConfig[]>(() => {
     const page = contract.value?.page_orchestration_v1?.page;
