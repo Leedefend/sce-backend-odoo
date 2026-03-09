@@ -344,6 +344,33 @@ def main() -> int:
         if pm_focus == finance_focus == owner_focus:
             errors.append("role_variant.focus must differ across pm/finance/owner for heterogeneous layout")
 
+        priority_models = {
+            role: str(((contracts[role].get("page_orchestration_v1") or {}).get("page") or {}).get("priority_model") or "").strip()
+            for role in ("pm", "finance", "owner")
+        }
+        if len(set(priority_models.values())) < 2:
+            errors.append("page.priority_model should vary across roles (pm/finance/owner)")
+
+        def _zone_order(role: str) -> list[str]:
+            orch = contracts[role].get("page_orchestration_v1") if isinstance(contracts[role].get("page_orchestration_v1"), dict) else {}
+            zones = orch.get("zones") if isinstance(orch.get("zones"), list) else []
+            normalized: list[tuple[int, str]] = []
+            for zone in zones:
+                if not isinstance(zone, dict):
+                    continue
+                key = str(zone.get("key") or "").strip()
+                priority = int(zone.get("priority") or 0)
+                if key:
+                    normalized.append((priority, key))
+            normalized.sort(key=lambda item: item[0], reverse=True)
+            return [key for _, key in normalized]
+
+        pm_order = _zone_order("pm")
+        finance_order = _zone_order("finance")
+        owner_order = _zone_order("owner")
+        if pm_order == finance_order == owner_order:
+            errors.append("zone priority order should vary across pm/finance/owner for heterogeneous same-page layout")
+
     if errors:
         return _fail(errors)
 
