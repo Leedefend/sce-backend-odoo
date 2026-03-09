@@ -24,6 +24,9 @@ REQUIRED_BLOCK_TYPES = {
 }
 REQUIRED_TONES = {"success", "warning", "danger", "info", "neutral"}
 REQUIRED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
+ALLOWED_DATA_SOURCE_TYPES = {"static", "scene_context", "api.data", "computed", "capability_registry", "role_profile", "mixed"}
+ALLOWED_ACTION_INTENTS = {"ui.contract", "api.data", "execute_button", "file.download"}
+ALLOWED_ACTION_TARGET_KINDS = {"scene.key", "page.refresh", "menu.first_reachable", "route.path"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -117,6 +120,19 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
         return
     if not isinstance(data_sources, dict) or not data_sources:
         errors.append(f"{role_code}: page_orchestration_v1.data_sources must be non-empty object")
+        data_sources = {}
+    else:
+        for ds_key, ds in data_sources.items():
+            dprefix = f"{role_code}: data_sources.{ds_key}"
+            if not isinstance(ds, dict):
+                errors.append(f"{dprefix} must be object")
+                continue
+            source_type = str(ds.get("source_type") or "").strip()
+            provider = str(ds.get("provider") or "").strip()
+            if source_type not in ALLOWED_DATA_SOURCE_TYPES:
+                errors.append(f"{dprefix}.source_type invalid: {source_type}")
+            if not provider:
+                errors.append(f"{dprefix}.provider must be non-empty")
     if not isinstance(state_schema, dict):
         errors.append(f"{role_code}: page_orchestration_v1.state_schema must be object")
     else:
@@ -128,8 +144,10 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
             errors.append(
                 f"{role_code}: state_schema.business_states mismatch expected={sorted(REQUIRED_PROGRESS)} got={sorted(business_state_keys)}"
             )
-    if not isinstance(action_schema, dict) or not isinstance(action_schema.get("actions"), dict):
+    action_registry = action_schema.get("actions") if isinstance(action_schema, dict) and isinstance(action_schema.get("actions"), dict) else {}
+    if not isinstance(action_registry, dict):
         errors.append(f"{role_code}: page_orchestration_v1.action_schema.actions must be object")
+        action_registry = {}
     if not isinstance(render_hints, dict):
         errors.append(f"{role_code}: page_orchestration_v1.render_hints must be object")
     if not isinstance(meta, dict):
@@ -172,11 +190,72 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
                 errors.append(f"{prefix}.progress invalid: {prog}")
             if not section_key:
                 errors.append(f"{prefix}.section_key required")
+            data_source = str(block.get("data_source") or "").strip()
+            if not data_source:
+                errors.append(f"{prefix}.data_source required")
+            elif data_source not in data_sources:
+                errors.append(f"{prefix}.data_source missing in data_sources: {data_source}")
             visibility = block.get("visibility")
             if not isinstance(visibility, dict):
                 errors.append(f"{prefix}.visibility must be object")
             elif not isinstance(visibility.get("roles"), list):
                 errors.append(f"{prefix}.visibility.roles must be list")
+            actions = block.get("actions")
+            if actions is not None and not isinstance(actions, list):
+                errors.append(f"{prefix}.actions must be list when present")
+            if isinstance(actions, list):
+                for action_idx, action in enumerate(actions):
+                    aprefix = f"{prefix}.actions[{action_idx}]"
+                    if not isinstance(action, dict):
+                        errors.append(f"{aprefix} must be object")
+                        continue
+                    action_key = str(action.get("key") or "").strip()
+                    if not action_key:
+                        errors.append(f"{aprefix}.key required")
+                        continue
+                    if action_key not in action_registry:
+                        errors.append(f"{aprefix}.key not declared in action_schema.actions: {action_key}")
+
+    if isinstance(page, dict):
+        global_actions = page.get("global_actions")
+        if global_actions is not None and not isinstance(global_actions, list):
+            errors.append(f"{role_code}: page.global_actions must be list when present")
+        if isinstance(global_actions, list):
+            for action_idx, action in enumerate(global_actions):
+                aprefix = f"{role_code}: page.global_actions[{action_idx}]"
+                if not isinstance(action, dict):
+                    errors.append(f"{aprefix} must be object")
+                    continue
+                action_key = str(action.get("key") or "").strip()
+                if not action_key:
+                    errors.append(f"{aprefix}.key required")
+                    continue
+                if action_key not in action_registry:
+                    errors.append(f"{aprefix}.key not declared in action_schema.actions: {action_key}")
+
+    for action_key, action in action_registry.items():
+        aprefix = f"{role_code}: action_schema.actions.{action_key}"
+        if not isinstance(action, dict):
+            errors.append(f"{aprefix} must be object")
+            continue
+        intent = str(action.get("intent") or "").strip()
+        target = action.get("target")
+        if intent not in ALLOWED_ACTION_INTENTS:
+            errors.append(f"{aprefix}.intent invalid: {intent}")
+        if not isinstance(target, dict):
+            errors.append(f"{aprefix}.target must be object")
+            continue
+        kind = str(target.get("kind") or "").strip()
+        if kind not in ALLOWED_ACTION_TARGET_KINDS:
+            errors.append(f"{aprefix}.target.kind invalid: {kind}")
+        if kind == "scene.key":
+            scene_key = str(target.get("scene_key") or "").strip()
+            if not scene_key:
+                errors.append(f"{aprefix}.target.scene_key required when kind=scene.key")
+        if kind == "route.path":
+            path = str(target.get("path") or "").strip()
+            if not path.startswith("/"):
+                errors.append(f"{aprefix}.target.path must be absolute when kind=route.path")
 
     orchestration_legacy = contract.get("page_orchestration")
     if not isinstance(orchestration_legacy, dict):
