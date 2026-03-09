@@ -130,6 +130,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "login": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "card", "enabled": True},
+                    {"key": "form", "enabled": True},
+                    {"key": "error", "enabled": True},
+                ],
                 "texts": {
                     "title": "Login",
                     "username_label": "Username",
@@ -141,6 +146,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "menu": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "status_loading", "enabled": True},
+                    {"key": "status_info", "enabled": True},
+                    {"key": "status_error", "enabled": True},
+                ],
                 "texts": {
                     "loading_title": "Resolving menu...",
                     "info_title": "Menu group",
@@ -151,6 +161,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "placeholder": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "card", "enabled": True},
+                ],
                 "texts": {
                     "title": "Dynamic View Placeholder",
                     "route_label": "Route",
@@ -681,6 +694,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "scene_health": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True},
+                    {"key": "status_loading", "enabled": True},
+                    {"key": "status_error", "enabled": True},
+                    {"key": "content", "enabled": True},
+                    {"key": "cards", "enabled": True},
+                    {"key": "meta", "enabled": True},
+                    {"key": "governance", "enabled": True},
+                    {"key": "details_resolve_errors", "enabled": True},
+                    {"key": "details_drift", "enabled": True},
+                    {"key": "details_debt", "enabled": True},
+                ],
                 "texts": {
                     "title": "Scene Health Dashboard",
                     "subtitle": "可视化查看场景健康状态与自动降级结果。",
@@ -692,6 +717,15 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "scene_packages": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True},
+                    {"key": "status_loading", "enabled": True},
+                    {"key": "status_error", "enabled": True},
+                    {"key": "content", "enabled": True},
+                    {"key": "installed_packages", "enabled": True},
+                    {"key": "import_package", "enabled": True},
+                    {"key": "export_package", "enabled": True},
+                ],
                 "texts": {
                     "title": "Scene Packages",
                     "subtitle": "导入、导出与审阅已安装的 Scene 能力包。",
