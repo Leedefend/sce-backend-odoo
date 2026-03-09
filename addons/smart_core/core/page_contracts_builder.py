@@ -192,7 +192,30 @@ def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
         if page in {"usage_analytics", "scene_health"}:
             return {"scene_key": page}
         return {"scene_key": "projects.list"}
+    if key == "open_workbench":
+        return {"scene_key": "portal.dashboard"}
+    if key == "open_menu":
+        return {"kind": "menu.first_reachable"}
+    if key == "refresh_page":
+        return {"kind": "page.refresh"}
     return {"scene_key": page}
+
+
+def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
+    key = str(page_key or "").strip().lower()
+    if key == "workbench":
+        return [
+            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_menu", "label": "打开菜单", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
+    if key in {"action", "record", "scene"}:
+        return [
+            {"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"},
+            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
+    return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]
 
 
 def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code: str) -> Dict[str, Any]:
@@ -274,6 +297,16 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
         )
 
     action_schema_actions: Dict[str, Any] = {}
+    page_actions = _default_page_actions(page_key)
+    for action in page_actions:
+        action_key = str(action.get("key") or "").strip()
+        if not action_key:
+            continue
+        action_schema_actions[action_key] = {
+            "label": str(action.get("label") or action_key),
+            "intent": str(action.get("intent") or "ui.contract"),
+            "target": _action_target(action_key, page_key),
+        }
     for zone in zones:
         blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
         for block in blocks:
@@ -310,7 +343,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "status": "ready",
             "breadcrumbs": [],
             "header": {},
-            "global_actions": [{"key": "refresh", "label": "刷新", "intent": "api.data"}],
+            "global_actions": page_actions,
             "filters": [],
             "context": {"role_code": role_code},
         },

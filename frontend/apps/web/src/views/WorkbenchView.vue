@@ -11,9 +11,9 @@
         </p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="goToProjects">{{ pageText('action_go_workbench', '返回工作台') }}</button>
-        <button class="ghost" @click="openFirstReachableMenu">{{ pageText('action_open_menu', '打开菜单') }}</button>
-        <button class="ghost" @click="refresh">{{ pageText('action_refresh', '刷新') }}</button>
+        <button class="ghost" @click="goToProjects">{{ pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')) }}</button>
+        <button class="ghost" @click="openFirstReachableMenu">{{ pageActionText('open_menu', pageText('action_open_menu', '打开菜单')) }}</button>
+        <button class="ghost" @click="refresh">{{ pageActionText('refresh_page', pageText('action_refresh', '刷新')) }}</button>
       </div>
     </header>
 
@@ -174,6 +174,8 @@ const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQu
 const session = useSessionStore();
 const pageContract = usePageContract('workbench');
 const pageText = pageContract.text;
+const pageActionText = pageContract.actionText;
+const pageActionTarget = pageContract.actionTarget;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
@@ -275,14 +277,35 @@ onMounted(() => {
 });
 
 function refresh() {
+  const target = pageActionTarget('refresh_page');
+  if (String(target.kind || '') === 'page.refresh') {
+    window.location.reload();
+    return;
+  }
   window.location.reload();
 }
 
 async function goToProjects() {
+  const target = pageActionTarget('open_workbench');
+  const scene = String(target.scene_key || '');
+  if (scene) {
+    await router.push({ path: `/s/${scene}`, query: workspaceContextQuery.value });
+    return;
+  }
   await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
 async function openFirstReachableMenu() {
+  const target = pageActionTarget('open_menu');
+  if (String(target.kind || '') === 'menu.first_reachable' && firstReachableMenuId.value) {
+    await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
+    return;
+  }
+  const scene = String(target.scene_key || '');
+  if (scene) {
+    await router.push({ path: `/s/${scene}`, query: workspaceContextQuery.value });
+    return;
+  }
   if (firstReachableMenuId.value) {
     await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
     return;
