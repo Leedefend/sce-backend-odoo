@@ -2,8 +2,11 @@
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <section v-if="appliedPresetLabel" class="route-preset">
-      <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
-      <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
+      <p>
+        {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
+        <span v-if="routeContextSource">（{{ pageText('route_preset_source_prefix', '来源：') }}{{ routeContextSource }}）</span>
+      </p>
+      <button class="clear-btn" @click="clearRoutePreset">{{ pageText('route_preset_clear', '清除推荐') }}</button>
     </section>
     <section class="focus-strip">
       <div>
@@ -35,7 +38,7 @@
           :disabled="status === 'loading' || batchBusy"
           @click="clearContractFilter"
         >
-          清除
+          {{ pageText('chip_action_clear', '清除') }}
         </button>
         <button
           v-if="contractOverflowFilterChips.length"
@@ -43,7 +46,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreContractFilters = !showMoreContractFilters"
         >
-          {{ showMoreContractFilters ? '收起更多筛选' : `更多筛选 (${contractOverflowFilterChips.length})` }}
+          {{
+            showMoreContractFilters
+              ? pageText('chip_more_filters_collapse', '收起更多筛选')
+              : `${pageText('chip_more_filters_expand', '更多筛选')} (${contractOverflowFilterChips.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreContractFilters && contractOverflowFilterChips.length" class="contract-chips">
@@ -78,7 +85,7 @@
           :disabled="status === 'loading' || batchBusy"
           @click="clearSavedFilter"
         >
-          清除
+          {{ pageText('chip_action_clear', '清除') }}
         </button>
         <button
           v-if="savedFilterOverflowChips.length"
@@ -86,7 +93,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreSavedFilters = !showMoreSavedFilters"
         >
-          {{ showMoreSavedFilters ? '收起更多筛选' : `更多筛选 (${savedFilterOverflowChips.length})` }}
+          {{
+            showMoreSavedFilters
+              ? pageText('chip_more_filters_collapse', '收起更多筛选')
+              : `${pageText('chip_more_filters_expand', '更多筛选')} (${savedFilterOverflowChips.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreSavedFilters && savedFilterOverflowChips.length" class="contract-chips">
@@ -121,7 +132,7 @@
           :disabled="status === 'loading' || batchBusy"
           @click="clearGroupBy"
         >
-          清除
+          {{ pageText('chip_action_clear', '清除') }}
         </button>
         <button
           v-if="groupByOverflowChips.length"
@@ -129,7 +140,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreGroupBy = !showMoreGroupBy"
         >
-          {{ showMoreGroupBy ? '收起更多分组' : `更多分组 (${groupByOverflowChips.length})` }}
+          {{
+            showMoreGroupBy
+              ? pageText('chip_more_group_collapse', '收起更多分组')
+              : `${pageText('chip_more_group_expand', '更多分组')} (${groupByOverflowChips.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreGroupBy && groupByOverflowChips.length" class="contract-chips">
@@ -181,7 +196,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreContractActions = !showMoreContractActions"
         >
-          {{ showMoreContractActions ? '收起更多操作' : `更多操作 (${contractOverflowActions.length})` }}
+          {{
+            showMoreContractActions
+              ? pageText('chip_more_actions_collapse', '收起更多操作')
+              : `${pageText('chip_more_actions_expand', '更多操作')} (${contractOverflowActions.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreContractActions && contractOverflowActionGroups.length" class="contract-groups">
@@ -654,19 +673,22 @@ const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic
 const sortOptions = computed(() => {
   if (surfaceKind.value === 'risk' || surfaceKind.value === 'cost') {
     return [
-      { label: '优先级↓ / 截止日↑', value: 'priority desc,deadline asc,write_date desc' },
-      { label: '截止日↑ / 更新时间↓', value: 'deadline asc,write_date desc' },
-      { label: '更新时间↓ / ID↓', value: 'write_date desc,id desc' },
+      { label: pageText('sort_option_priority_deadline', '优先级↓ / 截止日↑'), value: 'priority desc,deadline asc,write_date desc' },
+      { label: pageText('sort_option_deadline_updated', '截止日↑ / 更新时间↓'), value: 'deadline asc,write_date desc' },
+      { label: pageText('sort_option_updated_id', '更新时间↓ / ID↓'), value: 'write_date desc,id desc' },
     ];
   }
   return [
-    { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
-    { label: '更新时间↑ / 名称↑', value: 'write_date asc,name asc' },
-    { label: '名称↑ / 更新时间↓', value: 'name asc,write_date desc' },
-    { label: '名称↓ / 更新时间↓', value: 'name desc,write_date desc' },
+    { label: pageText('sort_option_updated_name_asc', '更新时间↓ / 名称↑'), value: 'write_date desc,name asc' },
+    { label: pageText('sort_option_updated_asc_name_asc', '更新时间↑ / 名称↑'), value: 'write_date asc,name asc' },
+    { label: pageText('sort_option_name_updated', '名称↑ / 更新时间↓'), value: 'name asc,write_date desc' },
+    { label: pageText('sort_option_name_desc_updated', '名称↓ / 更新时间↓'), value: 'name desc,write_date desc' },
   ];
 });
-const subtitle = computed(() => `${records.value.length} 条记录 · 排序：${sortLabel.value}`);
+const subtitle = computed(
+  () =>
+    `${records.value.length}${pageText('subtitle_records_suffix', ' 条记录')} · ${pageText('subtitle_sort_prefix', '排序：')}${sortLabel.value}`,
+);
 const kanbanTitleField = computed(() => {
   if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
     return kanbanTitleFieldHint.value;
@@ -686,30 +708,30 @@ const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
 );
 const advancedViewTitle = computed(() => {
   const labels: Record<string, string> = {
-    pivot: '数据透视视图',
-    graph: '图表视图',
-    calendar: '日历视图',
-    gantt: '甘特视图',
-    activity: '活动视图',
-    dashboard: '仪表板视图',
+    pivot: pageText('advanced_title_pivot', '数据透视视图'),
+    graph: pageText('advanced_title_graph', '图表视图'),
+    calendar: pageText('advanced_title_calendar', '日历视图'),
+    gantt: pageText('advanced_title_gantt', '甘特视图'),
+    activity: pageText('advanced_title_activity', '活动视图'),
+    dashboard: pageText('advanced_title_dashboard', '仪表板视图'),
   };
-  return labels[viewMode.value] || '高级视图';
+  return labels[viewMode.value] || pageText('advanced_title_default', '高级视图');
 });
 const advancedViewHint = computed(() => {
   const hints: Record<string, string> = {
-    pivot: '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。',
-    graph: '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。',
-    calendar: '当前为可读降级视图，可查看时间相关记录并继续下钻到列表/表单。',
-    gantt: '当前为可读降级视图，可查看进度相关记录并继续下钻到列表/表单。',
-    activity: '当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。',
-    dashboard: '当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。',
+    pivot: pageText('advanced_hint_pivot', '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。'),
+    graph: pageText('advanced_hint_graph', '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。'),
+    calendar: pageText('advanced_hint_calendar', '当前为可读降级视图，可查看时间相关记录并继续下钻到列表/表单。'),
+    gantt: pageText('advanced_hint_gantt', '当前为可读降级视图，可查看进度相关记录并继续下钻到列表/表单。'),
+    activity: pageText('advanced_hint_activity', '当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。'),
+    dashboard: pageText('advanced_hint_dashboard', '当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。'),
   };
-  return hints[viewMode.value] || '当前视图使用可读降级渲染。';
+  return hints[viewMode.value] || pageText('advanced_hint_default', '当前视图使用可读降级渲染。');
 });
 const pageTitle = computed(() => {
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
-  return injectedTitle?.value || actionMeta.value?.name || '工作台';
+  return injectedTitle?.value || actionMeta.value?.name || pageText('page_title_fallback', '工作台');
 });
 const surfaceIntent = computed<SurfaceIntent>(() => {
   const key = surfaceKey.value;
@@ -966,9 +988,9 @@ function toContractActionButton(
     ? enabledBySelection
       ? ''
       : selection === 'single'
-        ? '请选择 1 条记录'
-        : '请先选择记录'
-    : '权限不足';
+        ? pageText('hint_select_single_record', '请选择 1 条记录')
+        : pageText('hint_select_record_first', '请先选择记录')
+    : pageText('hint_permission_denied', '权限不足');
   return {
     key,
     label: rawLabel,
@@ -1033,15 +1055,15 @@ const contractActionGroups = computed<Array<{ key: string; label: string; action
       grouped.push({ key: groupKey, label: String(row?.label || groupKey), actions });
     }
   }
-  if (!grouped.length) {
+    if (!grouped.length) {
     const basic = all.filter((item) => /创建|保存|submit|create|save/i.test(item.label));
     const workflow = all.filter((item) => /阶段|审批|workflow|transition/i.test(item.label));
     const drilldown = all.filter((item) => /查看|列表|看板|open|view/i.test(item.label));
     const other = all.filter((item) => !basic.includes(item) && !workflow.includes(item) && !drilldown.includes(item));
-    if (basic.length) grouped.push({ key: 'basic', label: '基础操作', actions: basic });
-    if (workflow.length) grouped.push({ key: 'workflow', label: '流程推进', actions: workflow });
-    if (drilldown.length) grouped.push({ key: 'drilldown', label: '业务查看', actions: drilldown });
-    if (other.length) grouped.push({ key: 'other', label: '更多操作', actions: other });
+    if (basic.length) grouped.push({ key: 'basic', label: pageText('group_label_basic', '基础操作'), actions: basic });
+    if (workflow.length) grouped.push({ key: 'workflow', label: pageText('group_label_workflow', '流程推进'), actions: workflow });
+    if (drilldown.length) grouped.push({ key: 'drilldown', label: pageText('group_label_drilldown', '业务查看'), actions: drilldown });
+    if (other.length) grouped.push({ key: 'other', label: pageText('group_label_other', '更多操作'), actions: other });
   }
   return grouped;
 });
@@ -1189,11 +1211,11 @@ function applyRoutePreset() {
     setIfDiff(filterValue, routeActiveFilter);
   }
   if (!preset && presetFilter) {
-    appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
+    appliedPresetLabel.value = `${pageText('preset_label_contract_filter_prefix', '契约筛选: ')}${presetFilter}`;
     setIfDiff(searchTerm, routeSearch || presetFilter);
   }
   if (savedFilter) {
-    appliedPresetLabel.value = appliedPresetLabel.value || `保存筛选: ${savedFilter}`;
+    appliedPresetLabel.value = appliedPresetLabel.value || `${pageText('preset_label_saved_filter_prefix', '保存筛选: ')}${savedFilter}`;
     setIfDiff(activeSavedFilterKey, savedFilter);
   } else {
     setIfDiff(activeSavedFilterKey, '');
@@ -1913,7 +1935,11 @@ function applyBatchFailureArtifacts(result: {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
   const lines: BatchDetailLine[] = preview.map((item) => {
     const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-    const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
+    const retryTag = item.retryable === true
+      ? pageText('retry_tag_retryable', '可重试')
+      : item.retryable === false
+        ? pageText('retry_tag_non_retryable', '不可重试')
+        : '';
     const text = [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
     const action = describeSuggestedAction(item.suggested_action, {
       hasRetryHandler: true,
@@ -2103,7 +2129,7 @@ function extractAdvancedViewFields(contract: Awaited<ReturnType<typeof loadActio
 }
 
 function advancedRowTitle(row: Record<string, unknown>) {
-  return String(row.display_name || row.name || row.id || '记录').trim();
+  return String(row.display_name || row.name || row.id || pageText('advanced_row_title_fallback', '记录')).trim();
 }
 
 function advancedFieldLabel(field: string) {
@@ -2118,7 +2144,7 @@ function advancedRowMeta(row: Record<string, unknown>) {
     .filter((key) => key !== 'id' && key !== 'name' && key !== 'display_name' && key in row)
     .slice(0, 3)
     .map((key) => `${advancedFieldLabel(key)}: ${String(row[key] ?? '-')}`);
-  if (!entries.length) return '无附加字段';
+  if (!entries.length) return pageText('advanced_row_meta_empty', '无附加字段');
   return entries.join(' · ');
 }
 
@@ -2310,23 +2336,26 @@ async function runContractAction(action: ContractActionButton) {
       window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
       return;
     }
-    batchMessage.value = '契约动作缺少 action_id，无法打开目标页面';
+    batchMessage.value = pageText('batch_msg_contract_action_missing_action_id', '契约动作缺少 action_id，无法打开目标页面');
     return;
   }
 
   const ids = resolveSelectedIdsForAction(action.selection);
   if (action.selection !== 'none' && !ids.length) {
-    batchMessage.value = action.selection === 'single' ? '请选择 1 条记录后再执行' : '请先选择记录后再执行';
+    batchMessage.value =
+      action.selection === 'single'
+        ? pageText('batch_msg_select_single_before_run', '请选择 1 条记录后再执行')
+        : pageText('batch_msg_select_records_before_run', '请先选择记录后再执行');
     return;
   }
   if (!action.model) {
-    batchMessage.value = '契约动作缺少 model，无法执行';
+    batchMessage.value = pageText('batch_msg_contract_action_missing_model', '契约动作缺少 model，无法执行');
     return;
   }
   const contextRecordId = resolveActionContextRecordId();
   const execIds = ids.length ? ids : contextRecordId ? [contextRecordId] : [];
   if (!execIds.length) {
-    batchMessage.value = '当前动作需要记录上下文，暂不支持无记录执行';
+    batchMessage.value = pageText('batch_msg_action_requires_record_context', '当前动作需要记录上下文，暂不支持无记录执行');
     return;
   }
 
@@ -2359,7 +2388,7 @@ async function runContractAction(action: ContractActionButton) {
         failureCount += 1;
       }
     }
-    batchMessage.value = `契约动作执行完成：成功 ${successCount}，失败 ${failureCount}`;
+    batchMessage.value = `${pageText('batch_msg_contract_action_done_prefix', '契约动作执行完成：成功 ')}${successCount}${pageText('batch_msg_contract_action_done_middle', '，失败 ')}${failureCount}`;
     if (successCount > 0) {
       await load();
     }
@@ -2401,7 +2430,7 @@ async function loadAssigneeOptions() {
     if (error instanceof ApiError && String(error.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED') {
       const model = String(error.details?.model || 'res.users').trim();
       const op = String(error.details?.op || 'list').trim().toLowerCase();
-      batchMessage.value = `负责人候选加载受限（${model}/${op}）`;
+      batchMessage.value = `${pageText('batch_msg_assignee_options_limited_prefix', '负责人候选加载受限（')}${model}/${op}${pageText('batch_msg_assignee_options_limited_suffix', '）')}`;
     }
   }
 }
@@ -2800,7 +2829,8 @@ async function load() {
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
       .map((row) => {
         const item = row as Record<string, unknown>;
-        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
+          || pageText('group_label_unset', '未设置');
         const backendGroupKey = String(item.group_key || '').trim();
         return {
           key: backendGroupKey || buildGroupKey(item.field, item.value, label),
@@ -2851,7 +2881,8 @@ async function load() {
           && typeof (result.data as Record<string, unknown>).group_paging === 'object'
           ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>).page_size
           : 0) || groupSampleLimit.value || 3;
-        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
+          || pageText('group_label_unset', '未设置');
         const fallbackKey = buildGroupKey(item.field, item.value, label);
         return {
           key: String(item.group_key || fallbackKey),
@@ -3044,12 +3075,12 @@ function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string
   const issueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
   const issue = collectErrorContextIssue(issueCounter, err, { model: fallback.model, op: fallback.op });
   const scope = issueScopeLabel(issue);
-  const reasonText = issue.reasonCode ? `原因=${issue.reasonCode}` : '';
+  const reasonText = issue.reasonCode ? `${pageText('batch_error_reason_prefix', '原因=')}${issue.reasonCode}` : '';
   if (!(err instanceof ApiError)) {
-    return [fallback.label, scope ? `范围=${scope}` : '', reasonText].filter(Boolean).join(' | ');
+    return [fallback.label, scope ? `${pageText('batch_error_scope_prefix', '范围=')}${scope}` : '', reasonText].filter(Boolean).join(' | ');
   }
   const hint = resolveSuggestedAction(err.suggestedAction, err.reasonCode, err.retryable);
-  return [fallback.label, scope ? `范围=${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
+  return [fallback.label, scope ? `${pageText('batch_error_scope_prefix', '范围=')}${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
 }
 
 async function handleBatchAction(action: 'archive' | 'activate') {
@@ -3063,7 +3094,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel || !selectedIds.value.length) return;
   if (!hasActiveField.value) {
-    batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
+    batchMessage.value = pageText('batch_msg_model_no_active_field', '当前模型不支持 active 字段，无法批量归档/激活');
     return;
   }
   batchBusy.value = true;
@@ -3092,24 +3123,28 @@ async function handleBatchAction(action: 'archive' | 'activate') {
       context: requestContext,
     };
     if (result.idempotent_replay) {
-      batchMessage.value = '批量操作已幂等处理（重复请求被忽略）';
+      batchMessage.value = pageText('batch_msg_idempotent_replay', '批量操作已幂等处理（重复请求被忽略）');
     } else {
-    batchMessage.value =
-      action === 'activate'
-        ? `批量激活完成：成功 ${result.succeeded}，失败 ${result.failed}`
-        : `批量归档完成：成功 ${result.succeeded}，失败 ${result.failed}`;
+      batchMessage.value =
+        action === 'activate'
+          ? `${pageText('batch_msg_activate_done_prefix', '批量激活完成：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`
+          : `${pageText('batch_msg_archive_done_prefix', '批量归档完成：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`;
     }
     applyBatchFailureArtifacts(result);
     clearSelection();
     await load();
   } catch (err) {
     setError(err, 'batch operation failed');
-    batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
+    batchMessage.value = action === 'activate'
+      ? pageText('batch_msg_activate_failed', '批量激活失败')
+      : pageText('batch_msg_archive_failed', '批量归档失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: action,
-        label: action === 'activate' ? '批量激活' : '批量归档',
+        label: action === 'activate'
+          ? pageText('batch_label_activate', '批量激活')
+          : pageText('batch_label_archive', '批量归档'),
       }),
     }];
     failedCsvFileName.value = '';
@@ -3133,11 +3168,11 @@ async function handleBatchAssign(assigneeId: number) {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel || !selectedIds.value.length) return;
   if (!hasAssigneeField.value) {
-    batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
+    batchMessage.value = pageText('batch_msg_model_no_assignee_field', '当前模型不支持负责人字段，无法批量指派');
     return;
   }
   if (!assigneeId) {
-    batchMessage.value = '请先选择负责人';
+    batchMessage.value = pageText('batch_msg_select_assignee_first', '请先选择负责人');
     return;
   }
   batchBusy.value = true;
@@ -3169,21 +3204,21 @@ async function handleBatchAssign(assigneeId: number) {
     };
     const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
     if (result.idempotent_replay) {
-      batchMessage.value = `批量指派给 ${assignee} 已幂等处理（重复请求被忽略）`;
+      batchMessage.value = `${pageText('batch_msg_assign_idempotent_prefix', '批量指派给 ')}${assignee}${pageText('batch_msg_assign_idempotent_suffix', ' 已幂等处理（重复请求被忽略）')}`;
     } else {
-      batchMessage.value = `批量指派给 ${assignee}：成功 ${result.succeeded}，失败 ${result.failed}`;
+      batchMessage.value = `${pageText('batch_msg_assign_done_prefix', '批量指派给 ')}${assignee}${pageText('batch_msg_assign_done_middle', '：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`;
     }
     applyBatchFailureArtifacts(result);
     clearSelection();
     await load();
   } catch (err) {
     setError(err, 'batch assign failed');
-    batchMessage.value = '批量指派失败';
+    batchMessage.value = pageText('batch_msg_assign_failed', '批量指派失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: 'assign',
-        label: '批量指派',
+        label: pageText('batch_label_assign', '批量指派'),
       }),
     }];
     failedCsvFileName.value = '';
@@ -3208,7 +3243,7 @@ async function exportByBackend(scope: 'selected' | 'all') {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel) return;
   if (scope === 'selected' && !selectedIds.value.length) {
-    batchMessage.value = '没有可导出的选中记录';
+    batchMessage.value = pageText('batch_msg_no_selected_records_export', '没有可导出的选中记录');
     return;
   }
   batchBusy.value = true;
@@ -3231,19 +3266,19 @@ async function exportByBackend(scope: 'selected' | 'all') {
       context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
     });
     if (!result.content_b64) {
-      batchMessage.value = '没有可导出的记录';
+      batchMessage.value = pageText('batch_msg_no_records_export', '没有可导出的记录');
       return;
     }
     downloadCsvBase64(result.file_name, result.mime_type, result.content_b64);
-    batchMessage.value = `已导出 ${result.count} 条记录`;
+    batchMessage.value = `${pageText('batch_msg_export_done_prefix', '已导出 ')}${result.count}${pageText('batch_msg_export_done_suffix', ' 条记录')}`;
   } catch (err) {
     setError(err, 'batch export failed');
-    batchMessage.value = '批量导出失败';
+    batchMessage.value = pageText('batch_msg_export_failed', '批量导出失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: 'export_csv',
-        label: '批量导出',
+        label: pageText('batch_label_export', '批量导出'),
       }),
     }];
   } finally {
@@ -3281,7 +3316,7 @@ async function handleLoadMoreFailures() {
       text: buildBatchErrorLine(err, {
         model: req.model,
         op: req.action,
-        label: '加载更多失败',
+        label: pageText('batch_label_load_more_failed', '加载更多失败'),
       }),
     }];
   } finally {
