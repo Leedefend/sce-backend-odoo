@@ -687,6 +687,18 @@ function normalizeViewMode(raw: unknown): string {
 }
 
 function parseViewModes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    raw
+      .map((item) => normalizeViewMode(item))
+      .forEach((mode) => {
+        if (!mode || seen.has(mode)) return;
+        seen.add(mode);
+        out.push(mode);
+      });
+    return out;
+  }
   const out: string[] = [];
   const seen = new Set<string>();
   String(raw || '')
@@ -700,7 +712,59 @@ function parseViewModes(raw: unknown): string[] {
   return out;
 }
 
-const availableViewModes = computed(() => parseViewModes(contractViewType.value));
+function collectContractViewModes(contract: ActionContractLoose | null): string[] {
+  if (!contract) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const addMode = (raw: unknown) => {
+    const mode = normalizeViewMode(raw);
+    if (!mode || seen.has(mode)) return;
+    seen.add(mode);
+    out.push(mode);
+  };
+  const addModes = (raw: unknown) => {
+    parseViewModes(raw).forEach((mode) => addMode(mode));
+  };
+
+  addModes(contract.head?.view_type);
+  addModes(contract.view_type);
+  addModes(contract.ui_contract?.head?.view_type);
+  addModes(contract.ui_contract?.view_type);
+
+  const views = contract.views || {};
+  const nestedViews = contract.ui_contract?.views || {};
+  if (views.tree || views.list || nestedViews.tree || nestedViews.list) addMode('tree');
+  if (views.kanban || nestedViews.kanban) addMode('kanban');
+  if (views.pivot || nestedViews.pivot) addMode('pivot');
+  if (views.graph || nestedViews.graph) addMode('graph');
+  if (views.calendar || nestedViews.calendar) addMode('calendar');
+  if (views.gantt || nestedViews.gantt) addMode('gantt');
+  if (views.activity || nestedViews.activity) addMode('activity');
+  if (views.dashboard || nestedViews.dashboard) addMode('dashboard');
+  return out;
+}
+
+function resolveAvailableViewModes(meta: NavNode['meta'] | null | undefined, contract: ActionContractLoose | null, contractViewTypeRaw: unknown) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const addMode = (raw: unknown) => {
+    const mode = normalizeViewMode(raw);
+    if (!mode || mode === 'form' || seen.has(mode)) return;
+    seen.add(mode);
+    out.push(mode);
+  };
+  const addModes = (raw: unknown) => {
+    parseViewModes(raw).forEach((mode) => addMode(mode));
+  };
+  addModes(contractViewTypeRaw);
+  addModes((meta as { view_modes?: unknown } | null)?.view_modes);
+  collectContractViewModes(contract).forEach((mode) => addMode(mode));
+  return out;
+}
+
+const availableViewModes = computed(() =>
+  resolveAvailableViewModes(actionMeta.value, actionContract.value, contractViewType.value),
+);
 const viewMode = computed(() => {
   const modes = availableViewModes.value;
   const mode = normalizeViewMode(preferredViewMode.value) || modes[0] || '';
@@ -2629,7 +2693,7 @@ async function load() {
       return;
     }
     {
-      const candidates = parseViewModes(contractViewType.value);
+      const candidates = resolveAvailableViewModes(meta || null, typedContract, contractViewType.value);
       const routeMode = normalizeViewMode(route.query.view_mode);
       if (routeMode && candidates.includes(routeMode)) {
         preferredViewMode.value = routeMode;
