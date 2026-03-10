@@ -63,3 +63,43 @@ class TestSceneDeliveryPolicy(TransactionCase):
             str((result.get("meta") or {}).get("surface_policy_source") or ""),
             {"file", "builtin"},
         )
+
+    def test_exec_surface_policy_filters_nav_and_deep_link(self):
+        scenes = [
+            {
+                "code": "projects.dashboard",
+                "name": "项目驾驶舱",
+                "state": "published",
+                "target": {"route": "/s/projects.dashboard"},
+            },
+            {
+                "code": "projects.ledger",
+                "name": "项目台账",
+                "state": "published",
+                "target": {"route": "/s/projects.ledger"},
+            },
+            {
+                "code": "unknown.scene",
+                "name": "未知场景",
+                "state": "published",
+                "target": {"route": "/s/unknown.scene"},
+            },
+        ]
+
+        result = filter_delivery_scenes(
+            scenes,
+            surface="construction_exec_v1",
+            role_surface={},
+            contract_mode="user",
+            runtime_env="dev",
+            enabled=True,
+        )
+
+        delivery_codes = {str(item.get("code") or "").strip() for item in (result.get("delivery_scenes") or [])}
+        deep_link_codes = {str(item.get("code") or "").strip() for item in (result.get("deep_link_scenes") or [])}
+        reason_counts = (result.get("meta") or {}).get("excluded_reason_counts") or {}
+
+        self.assertSetEqual(delivery_codes, {"projects.dashboard"})
+        self.assertSetEqual(deep_link_codes, {"projects.ledger"})
+        self.assertGreaterEqual(int(reason_counts.get(REASON_SCENE_DELIVERY_DEEP_LINK_ONLY, 0)), 1)
+        self.assertGreaterEqual(int(reason_counts.get(REASON_SCENE_SURFACE_MISMATCH, 0)), 1)
