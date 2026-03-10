@@ -35,6 +35,19 @@ GROUP_ALIASES = {
     "project": "projects",
 }
 
+EXCLUDED_REASON_NO_CODE = "no_code"
+EXCLUDED_REASON_IMPORTED_PKG = "imported_pkg_variant"
+EXCLUDED_REASON_SMOKE_CODE = "smoke_code"
+EXCLUDED_REASON_INTERNAL_TAG = "internal_or_smoke_tag"
+EXCLUDED_REASON_NO_TARGET = "missing_target"
+EXCLUDED_REASON_DEFAULT_PLACEHOLDER = "default_placeholder"
+EXCLUDED_REASON_SHOWCASE = "showcase_or_demo"
+EXCLUDED_REASON_PORTAL_LEGACY = "portal_legacy"
+EXCLUDED_REASON_NOT_SPA_READY = "portal_only_not_spa_ready"
+EXCLUDED_REASON_DEMO_TARGET = "demo_target"
+EXCLUDED_REASON_NO_NAV_TARGET = "target_fields_empty"
+EXCLUDED_REASON_ACCESS_DENIED = "access_denied"
+
 
 def _to_bool(value, default=False) -> bool:
     if isinstance(value, bool):
@@ -48,17 +61,19 @@ def _to_bool(value, default=False) -> bool:
     return default
 
 
-def _is_delivery_ready(scene: dict, code: str, target: dict) -> bool:
+def _delivery_gate_reason(scene: dict, code: str, target: dict) -> str | None:
+    if code == "default":
+        return EXCLUDED_REASON_DEFAULT_PLACEHOLDER
     lowered = code.lower()
     if "showcase" in lowered or ".demo" in lowered or lowered.endswith(".demo"):
-        return False
+        return EXCLUDED_REASON_SHOWCASE
     portal_only = _to_bool(scene.get("portal_only"), False)
     spa_ready = _to_bool(scene.get("spa_ready"), True)
     if portal_only and not spa_ready:
-        return False
+        return EXCLUDED_REASON_NOT_SPA_READY
     route = str(target.get("route") or "").strip().lower()
-    if route.startswith("/portal/"):
-        return False
+    if route.startswith("/portal/") or route.startswith("/workbench"):
+        return EXCLUDED_REASON_PORTAL_LEGACY
     target_text = " ".join(
         [
             str(target.get("action_xmlid") or ""),
@@ -67,8 +82,8 @@ def _is_delivery_ready(scene: dict, code: str, target: dict) -> bool:
         ]
     ).lower()
     if "smart_construction_demo" in target_text:
-        return False
-    return True
+        return EXCLUDED_REASON_DEMO_TARGET
+    return None
 
 
 def _synthetic_menu_id(key: str, base: int = 700_000_000, span: int = 200_000_000) -> int:
@@ -85,29 +100,34 @@ def _scene_allowed(scene: dict) -> bool:
     return True
 
 
-def _scene_valid(scene: dict) -> bool:
+def _scene_valid(scene: dict) -> tuple[bool, str | None]:
     code = str(scene.get("code") or scene.get("key") or "").strip()
     if not code:
-        return False
+        return False, EXCLUDED_REASON_NO_CODE
     if "__pkg" in code:
-        return False
+        return False, EXCLUDED_REASON_IMPORTED_PKG
     if code.startswith("scene_smoke_"):
-        return False
+        return False, EXCLUDED_REASON_SMOKE_CODE
     tags = scene.get("tags")
     if isinstance(tags, list):
         tags_norm = {str(t or "").strip().lower() for t in tags}
         if "internal" in tags_norm or "smoke" in tags_norm:
-            return False
+            return False, EXCLUDED_REASON_INTERNAL_TAG
     target = scene.get("target")
     if not isinstance(target, dict):
-        return False
-    if not _is_delivery_ready(scene, code, target):
-        return False
+        return False, EXCLUDED_REASON_NO_TARGET
+    gate_reason = _delivery_gate_reason(scene, code, target)
+    if gate_reason:
+        return False, gate_reason
     has_target = any(
         bool(target.get(k))
         for k in ("route", "action_id", "action_xmlid", "menu_id", "menu_xmlid", "model")
     )
-    return has_target and _scene_allowed(scene)
+    if not has_target:
+        return False, EXCLUDED_REASON_NO_NAV_TARGET
+    if not _scene_allowed(scene):
+        return False, EXCLUDED_REASON_ACCESS_DENIED
+    return True, None
 
 
 def _group_key(scene_key: str) -> str:
@@ -174,11 +194,23 @@ def build_scene_nav_contract(data: dict) -> dict:
         if str(x or "").strip()
     ]
     scene_map: Dict[str, dict] = {}
+    excluded: List[dict] = []
+    reason_counts: Dict[str, int] = {}
+
+    def _append_excluded(code: str, reason: str):
+        safe_code = str(code or "").strip()
+        safe_reason = str(reason or "").strip() or "unknown"
+        reason_counts[safe_reason] = int(reason_counts.get(safe_reason, 0)) + 1
+        excluded.append({"code": safe_code, "reason": safe_reason})
+
     for item in scenes:
         if isinstance(item, dict):
             code = str(item.get("code") or item.get("key") or "").strip()
-            if code and _scene_valid(item):
+            valid, reason = _scene_valid(item)
+            if code and valid:
                 scene_map[code] = item
+            elif reason:
+                _append_excluded(code, reason)
 
     candidate_leaves = [_to_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
     remaining = [v for k, v in scene_map.items() if k not in set(role_candidates)]
@@ -225,7 +257,11 @@ def build_scene_nav_contract(data: dict) -> dict:
         "nav": [root],
         "default_route": {"menu_id": (first_leaf or {}).get("menu_id")},
         "meta": {
+            "scene_input_count": len([item for item in scenes if isinstance(item, dict)]),
             "scene_count": len(scene_map),
+            "excluded_scene_count": len(excluded),
+            "excluded_reason_counts": reason_counts,
+            "excluded_scenes_sample": excluded[:20],
             "candidate_count": len(candidate_leaves),
             "group_count": len(primary_children),
         },
