@@ -29,6 +29,35 @@
         "risk.monitor",
         "task.center"
       ]
+    },
+    "construction_exec_v1": {
+      "nav_allowlist": [
+        "projects.dashboard",
+        "finance.operating_metrics",
+        "risk.monitor",
+        "contract.center"
+      ],
+      "deep_link_allowlist": [
+        "project.management",
+        "projects.ledger",
+        "projects.intake",
+        "my_work.workspace",
+        "cost.budget_alloc",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.project_progress",
+        "data.dictionary",
+        "finance.center",
+        "finance.payment_ledger",
+        "finance.payment_requests",
+        "finance.settlement_orders",
+        "finance.treasury_ledger",
+        "config.project_cost_code",
+        "task.center"
+      ]
     }
   }
 }

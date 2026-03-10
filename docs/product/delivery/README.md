@@ -4,7 +4,7 @@ This directory contains productized delivery definitions and handoff materials.
 
 ## Versioned Delivery Packages
 - `v1/`: Phase A delivery package (pilot-ready baseline)
-  - `v1/construction_pm_v1_scene_surface_policy.json`: scene delivery surface policy (nav vs deep-link)
+  - `v1/construction_pm_v1_scene_surface_policy.json`: scene delivery surface policy (`construction_pm_v1`, `construction_exec_v1`)
 
 ## Rules
 - Keep all delivery-scoped artifacts under a version folder (`v1`, `v2`, ...).
