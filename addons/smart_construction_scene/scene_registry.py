@@ -387,17 +387,17 @@ def load_scene_configs(env, drift=None):
         {
             "code": "portal.lifecycle",
             "name": "生命周期驾驶舱",
-            "target": {"route": "/portal/lifecycle"},
+            "target": {"route": "/s/projects.dashboard"},
         },
         {
             "code": "portal.capability_matrix",
             "name": "能力矩阵",
-            "target": {"route": "/portal/capability-matrix"},
+            "target": {"route": "/s/project.management"},
         },
         {
             "code": "portal.dashboard",
             "name": "工作台",
-            "target": {"route": "/portal/dashboard"},
+            "target": {"route": "/s/projects.list"},
         },
     ]
     if not db_scenes:
