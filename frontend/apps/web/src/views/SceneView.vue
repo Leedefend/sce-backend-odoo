@@ -314,7 +314,11 @@ async function resolveScene() {
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
-          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
+          query: {
+            menu_id: resolvedAction.menuId,
+            scene_key: sceneKey || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -335,7 +339,11 @@ async function resolveScene() {
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
-          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
+          query: {
+            menu_id: resolvedAction.menuId,
+            scene_key: sceneKey || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -366,7 +374,11 @@ async function resolveScene() {
       if (target.action_id && !session.menuTree.length) {
         await router.replace({
           path: `/a/${target.action_id}`,
-          query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
+          query: {
+            menu_id: target.menu_id || undefined,
+            scene_key: sceneKey || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -377,7 +389,11 @@ async function resolveScene() {
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
-          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
+          query: {
+            menu_id: resolvedAction.menuId,
+            scene_key: sceneKey || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }

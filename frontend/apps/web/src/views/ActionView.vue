@@ -397,7 +397,7 @@ import {
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
-import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, type Scene, type SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
@@ -659,6 +659,15 @@ type SurfaceIntent = {
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
+const routeSceneKey = computed(() =>
+  String(route.query.scene_key || route.query.scene || route.query.sceneKey || '').trim(),
+);
+const routeSceneLabel = computed(() => {
+  const key = routeSceneKey.value;
+  if (!key) return '';
+  const scene = getSceneByKey(key);
+  return String(scene?.label || '').trim();
+});
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
@@ -879,6 +888,7 @@ const advancedViewHint = computed(() => {
   return hints[viewMode.value] || pageText('advanced_hint_default', '当前视图使用可读降级渲染。');
 });
 const pageTitle = computed(() => {
+  if (routeSceneLabel.value) return routeSceneLabel.value;
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
   return injectedTitle?.value || actionMeta.value?.name || pageText('page_title_fallback', '工作台');
