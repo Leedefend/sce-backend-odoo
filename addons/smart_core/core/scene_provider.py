@@ -7,6 +7,14 @@ from typing import Callable
 
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
+CRITICAL_SCENE_TARGET_OVERRIDES = {
+    "projects.list",
+    "projects.intake",
+    "projects.ledger",
+    "project.management",
+    "portal.dashboard",
+    "finance.payment_requests",
+}
 
 
 def _normalize_scene_channel(value: str | None) -> str | None:
@@ -115,6 +123,15 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
     except Exception:
         return scenes
     current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
+    dropped_pkg_variants = []
+    filtered = []
+    for scene in current:
+        code = str(scene.get("code") or scene.get("key") or "").strip()
+        if "__pkg" in code:
+            dropped_pkg_variants.append(code)
+            continue
+        filtered.append(scene)
+    current = filtered
     existing = {
         str(scene.get("code") or scene.get("key") or "").strip()
         for scene in current
@@ -122,12 +139,40 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
     }
     existing = {code for code in existing if code}
     registry_scenes = load_scene_configs(env) or []
+    registry_map = {}
+    for scene in registry_scenes:
+        if not isinstance(scene, dict):
+            continue
+        code = str(scene.get("code") or scene.get("key") or "").strip()
+        if not code or "__pkg" in code:
+            continue
+        registry_map.setdefault(code, scene)
+
+    reconciled = []
+    for scene in current:
+        if not isinstance(scene, dict):
+            continue
+        code = str(scene.get("code") or scene.get("key") or "").strip()
+        if not code:
+            continue
+        if code not in CRITICAL_SCENE_TARGET_OVERRIDES:
+            continue
+        registry_scene = registry_map.get(code) or {}
+        registry_target = registry_scene.get("target")
+        if not isinstance(registry_target, dict) or not registry_target:
+            continue
+        current_target = scene.get("target")
+        if current_target == registry_target:
+            continue
+        scene["target"] = dict(registry_target)
+        reconciled.append(code)
+
     appended = []
     for scene in registry_scenes:
         if not isinstance(scene, dict):
             continue
         code = str(scene.get("code") or scene.get("key") or "").strip()
-        if not code or code in existing:
+        if not code or "__pkg" in code or code in existing:
             continue
         item = dict(scene)
         target = item.get("target")
@@ -146,6 +191,28 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
             "reason": "contract_gap",
             "count": len(appended),
             "scene_codes": appended[:20],
+        })
+    if dropped_pkg_variants and isinstance(warnings, list):
+        warnings.append({
+            "code": "SCENE_PKG_VARIANTS_DROPPED",
+            "severity": "info",
+            "scene_key": "",
+            "message": "imported package variant scenes removed from runtime payload",
+            "field": "scenes",
+            "reason": "pkg_variant_noise",
+            "count": len(dropped_pkg_variants),
+            "scene_codes": dropped_pkg_variants[:20],
+        })
+    if reconciled and isinstance(warnings, list):
+        warnings.append({
+            "code": "SCENE_TARGET_RECONCILED",
+            "severity": "warn",
+            "scene_key": "",
+            "message": "critical scene targets reconciled from registry defaults",
+            "field": "scenes.target",
+            "reason": "contract_target_drift",
+            "count": len(reconciled),
+            "scene_codes": sorted(set(reconciled))[:20],
         })
     return current
 
