@@ -441,7 +441,7 @@ def load_scene_configs(env, drift=None):
         {
             "code": "portal.dashboard",
             "name": "工作台",
-            "target": {"route": "/s/projects.list"},
+            "target": {"route": "/"},
         },
     ]
     if not db_scenes:
