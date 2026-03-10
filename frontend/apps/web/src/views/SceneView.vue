@@ -283,10 +283,8 @@ async function resolveScene() {
           await router.replace({ path: normalizedRoute, query: workspaceContextQuery });
           return;
         }
-        if (isScenePlaceholderRoute()) {
-          goWorkbench();
-          return;
-        }
+        // Keep evaluating action/menu/model targets for self-routed scene entries
+        // such as /s/project.management?project_id=<id>.
       }
       // Workspace scene may still provide action/menu/model targets.
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
@@ -385,10 +383,7 @@ async function resolveScene() {
         await router.replace({ path: target.route, query: workspaceContextQuery });
         return;
       }
-      if (isScenePlaceholderRoute()) {
-        goWorkbench();
-        return;
-      }
+      // Do not early-fallback here; let explicit target/action resolution decide.
     }
 
     setError(

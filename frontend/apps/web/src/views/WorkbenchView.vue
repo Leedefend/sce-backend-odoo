@@ -233,6 +233,7 @@ const workspaceContextSummary = computed(() => {
   if (workspaceContextQuery.value.preset) parts.push(`preset=${workspaceContextQuery.value.preset}`);
   if (workspaceContextQuery.value.search) parts.push(`search=${workspaceContextQuery.value.search}`);
   if (workspaceContextQuery.value.ctx_source) parts.push(`source=${workspaceContextQuery.value.ctx_source}`);
+  if (workspaceContextQuery.value.project_id) parts.push(`project_id=${workspaceContextQuery.value.project_id}`);
   return parts.join(' · ');
 });
 const scene = computed<Scene | null>(() => {
