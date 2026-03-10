@@ -1401,6 +1401,10 @@ verify.project.dashboard.snapshot: guard.prod.forbid
 verify.project.dashboard.evidence: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_evidence_export.py
 
+.PHONY: verify.project.management.productization
+verify.project.management.productization: guard.prod.forbid verify.project.dashboard.contract verify.project.dashboard.snapshot
+	@python3 scripts/verify/project_management_productization_flow_guard.py
+
 verify.frontend.intent_channel.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_intent_channel_guard.py
 
