@@ -227,6 +227,15 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "project.management",
+            "name": "项目管理控制台",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+                "route": "/s/project.management",
+            },
+        },
+        {
             "code": "projects.intake",
             "name": "项目立项",
             "target": {
