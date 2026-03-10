@@ -17,6 +17,7 @@
   - `make verify.project.management.acceptance`
 - This command includes:
   - `make verify.project.management.productization`
+  - `make verify.frontend.project_management.scene_bridge.guard`
   - `python3 scripts/verify/project_management_productization_acceptance_export.py`
 
 ## Evidence Outputs
