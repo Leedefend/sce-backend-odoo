@@ -2694,6 +2694,8 @@ async function load() {
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
       return;
     }
+    const typedContract = contract as ActionContractLoose;
+    actionContract.value = typedContract;
     {
       const candidates = resolveAvailableViewModes(meta || null, typedContract, contractViewType.value);
       const routeMode = normalizeViewMode(route.query.view_mode);
@@ -2703,8 +2705,6 @@ async function load() {
         preferredViewMode.value = candidates[0] || '';
       }
     }
-    const typedContract = contract as ActionContractLoose;
-    actionContract.value = typedContract;
     const routeFilter = String(route.query.preset_filter || '').trim();
     const routeSavedFilter = String(route.query.saved_filter || '').trim();
     const routeGroupBy = String(route.query.group_by || '').trim();
@@ -2762,7 +2762,6 @@ async function load() {
       return;
     }
     if (!sortValue.value) {
-      const typedContract = contract as ActionContractLoose;
       const searchDefaults = typedContract.search?.defaults;
       const searchOrder = searchDefaults?.order;
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
@@ -2807,7 +2806,6 @@ async function load() {
       }
       if (!isWindowAction(meta)) {
         const actionType = getActionType(meta);
-        const typedContract = contract as ActionContractLoose;
         const contractType = String(typedContract.data?.type || '').toLowerCase();
         const contractUrl = String(typedContract.data?.url || '');
         const metaUrl = String((meta as ActionMetaLoose | undefined)?.url || '');
