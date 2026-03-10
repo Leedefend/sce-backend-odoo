@@ -28,6 +28,7 @@ const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-6', ts);
 const TARGETS = [
   { xmlid: 'smart_construction_demo.menu_sc_project_list_showcase', scene: 'projects.list' },
   { xmlid: 'smart_construction_core.menu_sc_project_initiation', scene: 'projects.intake' },
+  { xmlid: 'smart_construction_core.menu_sc_project_management_scene', scene: 'project.management' },
 ];
 
 function log(msg) {
@@ -165,10 +166,11 @@ async function main() {
       return item.xmlid === target.xmlid || meta.menu_xmlid === target.xmlid;
     });
     if (!node) {
-      return { target: target.xmlid, found: false, scene_key: null, xmlid: null };
+      return { target: target.xmlid, expected_scene: target.scene, found: false, scene_key: null, xmlid: null };
     }
     return {
       target: target.xmlid,
+      expected_scene: target.scene,
       found: true,
       scene_key: node.scene_key || (node.meta && node.meta.scene_key) || null,
       xmlid: node.xmlid || (node.meta && node.meta.menu_xmlid) || null,
@@ -176,13 +178,17 @@ async function main() {
   });
 
   results.forEach((row) => {
-    summary.push(`${row.target}: found=${row.found} xmlid=${row.xmlid || '-'} scene_key=${row.scene_key || '-'}`);
+    summary.push(`${row.target}: found=${row.found} xmlid=${row.xmlid || '-'} scene_key=${row.scene_key || '-'} expected=${row.expected_scene || '-'}`);
   });
   writeSummary(summary);
 
   const missing = results.filter((row) => row.found && !row.scene_key);
   if (missing.length) {
     throw new Error(`scene_key missing for ${missing.map((row) => row.target).join(', ')}`);
+  }
+  const mismatched = results.filter((row) => row.found && row.scene_key && row.expected_scene && row.scene_key !== row.expected_scene);
+  if (mismatched.length) {
+    throw new Error(`scene_key mismatch for ${mismatched.map((row) => `${row.target}:${row.scene_key}->${row.expected_scene}`).join(', ')}`);
   }
   const skipped = results.filter((row) => !row.found);
   if (skipped.length) {
