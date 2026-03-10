@@ -6,6 +6,7 @@
             <field name="state">published</field>
             <field name="version">v2</field>
             <field name="is_default">1</field>
+            <field name="is_test">1</field>
         </record>
 
         <!-- Smoke scene for system-bound tests -->
@@ -16,6 +17,7 @@
             <field name="layout">grid</field>
             <field name="state">published</field>
             <field name="version">v2</field>
+            <field name="is_test">1</field>
         </record>
 
         <!-- Projects list scene -->
@@ -106,6 +108,7 @@
             <field name="layout">grid</field>
             <field name="state">published</field>
             <field name="version">v2</field>
+            <field name="is_test">1</field>
         </record>
 
         <!-- Project management scene -->

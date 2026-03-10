@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast
+import argparse
 import json
+import os
 from pathlib import Path
 
 
@@ -27,7 +29,24 @@ def _load_fallback_scenes() -> list[dict]:
     raise RuntimeError("failed to locate fallback scene list in scene_registry.py")
 
 
+def _default_include_tests() -> bool:
+    runtime_env = str(os.environ.get("ENV") or "").strip().lower()
+    if runtime_env in {"prod", "production"}:
+        return False
+    return runtime_env in {"dev", "test"}
+
+
+def _filter_test_scenes(items: list[dict], include_tests: bool) -> list[dict]:
+    if include_tests:
+        return list(items or [])
+    return [row for row in (items or []) if isinstance(row, dict) and not bool(row.get("is_test"))]
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Scene delivery-gap audit report")
+    parser.add_argument("--include-tests", action="store_true", help="Include is_test scenes in audit input")
+    args = parser.parse_args()
+
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("scene_nav_contract_builder", SCENE_BUILDER_PATH)
@@ -37,10 +56,14 @@ def main() -> None:
     spec.loader.exec_module(module)
 
     fallback_scenes = _load_fallback_scenes()
-    report = module.build_scene_delivery_report(fallback_scenes)
+    include_tests = bool(args.include_tests or _default_include_tests())
+    effective_scenes = _filter_test_scenes(fallback_scenes, include_tests=include_tests)
+    report = module.build_scene_delivery_report(effective_scenes)
     output = {
         "source": str(SCENE_REGISTRY_PATH),
         "fallback_scene_total": len(fallback_scenes),
+        "effective_scene_total": len(effective_scenes),
+        "include_tests": include_tests,
         **report,
     }
     print(json.dumps(output, ensure_ascii=False, indent=2, sort_keys=True))
