@@ -80,3 +80,35 @@ class TestSceneNavContractBuilder(TransactionCase):
         group_keys = _collect_group_keys(payload)
         self.assertIn("group:projects", group_keys)
         self.assertNotIn("group:project", group_keys)
+
+    def test_meta_contains_excluded_reason_stats(self):
+        payload = build_scene_nav_contract(
+            {
+                "scenes": [
+                    {
+                        "code": "default",
+                        "name": "默认场景",
+                        "target": {"route": "/workbench?scene=default"},
+                    },
+                    {
+                        "code": "portal.dashboard",
+                        "name": "工作台",
+                        "portal_only": True,
+                        "spa_ready": False,
+                        "target": {"route": "/portal/dashboard"},
+                    },
+                    {
+                        "code": "projects.list",
+                        "name": "项目列表",
+                        "target": {"action_xmlid": "smart_construction_core.action_sc_project_list"},
+                    },
+                ]
+            }
+        )
+        meta = payload.get("meta") or {}
+        reason_counts = meta.get("excluded_reason_counts") or {}
+        self.assertEqual(meta.get("scene_input_count"), 3)
+        self.assertEqual(meta.get("scene_count"), 1)
+        self.assertEqual(meta.get("excluded_scene_count"), 2)
+        self.assertGreaterEqual(int(reason_counts.get("default_placeholder", 0)), 1)
+        self.assertGreaterEqual(int(reason_counts.get("portal_only_not_spa_ready", 0)), 1)
