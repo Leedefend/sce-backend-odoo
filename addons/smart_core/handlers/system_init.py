@@ -39,6 +39,7 @@ from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSu
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
+from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -277,6 +278,20 @@ class SystemInitHandler(BaseIntentHandler):
             if isinstance(data.get("nav_meta"), dict):
                 data["nav_meta"]["role_surface_pruned"] = role_pruned
                 data["nav_meta"]["role_surface_code"] = role_surface.get("role_code")
+
+        # Scene-first nav contract (v1): sidebar nav source switches from native menu facts
+        # to scene orchestration contract. Keep legacy nav for rollback/diagnostics.
+        scene_nav_contract = build_scene_nav_contract(data)
+        if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
+            data["nav_legacy"] = data.get("nav") or []
+            data["nav_contract"] = scene_nav_contract
+            data["nav"] = scene_nav_contract.get("nav") or []
+            data["default_route"] = scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
+            if isinstance(data.get("nav_meta"), dict):
+                data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
+                contract_meta = scene_nav_contract.get("meta")
+                if isinstance(contract_meta, dict):
+                    data["nav_meta"]["scene_nav_meta"] = contract_meta
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 
