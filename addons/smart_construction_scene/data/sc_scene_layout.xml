@@ -97,7 +97,7 @@
                 'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/s/projects.list'
+                    'route': '/'
                 }
             }"/>
         </record>
