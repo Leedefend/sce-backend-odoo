@@ -106,6 +106,28 @@
             <field name="active_version_id" ref="sc_scene_version_portal_dashboard_v2"/>
         </record>
 
+        <!-- My work scene -->
+        <record id="sc_scene_version_my_work_workspace_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_my_work_workspace"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'my_work.workspace',
+                'name': '我的工作',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/my-work'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_my_work_workspace" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_my_work_workspace_v2"/>
+        </record>
+
         <!-- Project dashboard scene -->
         <record id="sc_scene_version_projects_dashboard_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_projects_dashboard"/>
