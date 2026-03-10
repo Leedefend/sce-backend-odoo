@@ -271,6 +271,10 @@ async function resolveScene() {
     const target = scene.target || {};
     const layout = resolveSceneLayout(scene);
     const workspaceContextQuery = resolveWorkspaceContextQuery();
+    if (sceneKey === 'project.management') {
+      await router.replace({ path: '/pm/dashboard', query: workspaceContextQuery });
+      return;
+    }
     if (layout.kind === 'workspace') {
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);
