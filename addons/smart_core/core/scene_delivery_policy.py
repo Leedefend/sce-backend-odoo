@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
@@ -35,7 +36,7 @@ DELIVERY_MODE_DEMO = "demo"
 DELIVERY_MODE_DEEP_LINK_ONLY = "deep_link_only"
 
 SURFACE_POLICY_CONSTRUCTION_PM_V1 = "construction_pm_v1"
-SURFACE_NAV_ALLOWLIST = {
+BUILTIN_SURFACE_NAV_ALLOWLIST = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: {
         "project.management",
         "projects.dashboard",
@@ -44,7 +45,7 @@ SURFACE_NAV_ALLOWLIST = {
         "my_work.workspace",
     },
 }
-SURFACE_DEEP_LINK_ALLOWLIST = {
+BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: (
         "contract.center",
         "cost.budget_alloc",
@@ -66,6 +67,8 @@ SURFACE_DEEP_LINK_ALLOWLIST = {
         "task.center",
     ),
 }
+SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
+_SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "data": {}}
 
 
 def _to_bool(value: Any, default: bool = False) -> bool:
@@ -124,23 +127,92 @@ def _normalize_surfaces(raw: Any) -> list[str]:
     return out
 
 
+def _resolve_policy_file_path() -> str | None:
+    explicit = str(os.environ.get("SCENE_DELIVERY_POLICY_FILE") or "").strip()
+    rel_path = explicit or SURFACE_POLICY_FILE_DEFAULT
+    candidates = [
+        rel_path,
+        os.path.join("/mnt/e/sc-backend-odoo", rel_path),
+        os.path.join("/mnt/extra-addons", rel_path),
+        os.path.join("/mnt/addons_external", rel_path),
+        os.path.join("/mnt/odoo", rel_path),
+        os.path.join("/mnt", rel_path),
+    ]
+    for item in candidates:
+        if item and os.path.isfile(item):
+            return item
+    return None
+
+
+def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
+    path = _resolve_policy_file_path()
+    if not path:
+        return {}
+    try:
+        mtime = float(os.path.getmtime(path))
+    except Exception:
+        mtime = -1.0
+    cached_path = str(_SURFACE_POLICY_CACHE.get("path") or "")
+    cached_mtime = float(_SURFACE_POLICY_CACHE.get("mtime") or -1.0)
+    if cached_path == path and cached_mtime == mtime:
+        cached_data = _SURFACE_POLICY_CACHE.get("data")
+        return cached_data if isinstance(cached_data, dict) else {}
+    try:
+        payload = json.loads(open(path, "r", encoding="utf-8").read() or "{}")
+    except Exception:
+        return {}
+    surfaces = payload.get("surfaces") if isinstance(payload.get("surfaces"), dict) else {}
+    out = {}
+    for surface_key, policy in surfaces.items():
+        key = _normalize_surface(surface_key)
+        if not key or not isinstance(policy, dict):
+            continue
+        nav_raw = policy.get("nav_allowlist")
+        deep_raw = policy.get("deep_link_allowlist")
+        nav_allowlist = {str(x or "").strip() for x in (nav_raw if isinstance(nav_raw, list) else []) if str(x or "").strip()}
+        deep_link_allowlist = {str(x or "").strip() for x in (deep_raw if isinstance(deep_raw, list) else []) if str(x or "").strip()}
+        if nav_allowlist or deep_link_allowlist:
+            out[key] = {
+                "nav_allowlist": nav_allowlist,
+                "deep_link_allowlist": deep_link_allowlist,
+            }
+    _SURFACE_POLICY_CACHE["path"] = path
+    _SURFACE_POLICY_CACHE["mtime"] = mtime
+    _SURFACE_POLICY_CACHE["data"] = out
+    return out
+
+
 def _select_surface_policy(surface: str) -> dict:
     key = _normalize_surface(surface)
+    file_policy_map = _load_surface_policy_from_file()
+    file_policy = file_policy_map.get(key) if isinstance(file_policy_map, dict) else None
+    if isinstance(file_policy, dict):
+        nav_allowlist = set(file_policy.get("nav_allowlist") or set())
+        deep_link_allowlist = set(file_policy.get("deep_link_allowlist") or set())
+        if nav_allowlist or deep_link_allowlist:
+            return {
+                "name": key,
+                "enabled": True,
+                "source": "file",
+                "nav_allowlist": nav_allowlist,
+                "deep_link_allowlist": deep_link_allowlist,
+            }
     nav_allowlist = {
         str(item or "").strip()
-        for item in (SURFACE_NAV_ALLOWLIST.get(key) or set())
+        for item in (BUILTIN_SURFACE_NAV_ALLOWLIST.get(key) or set())
         if str(item or "").strip()
     }
     deep_link_allowlist = {
         str(item or "").strip()
-        for item in (SURFACE_DEEP_LINK_ALLOWLIST.get(key) or ())
+        for item in (BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST.get(key) or ())
         if str(item or "").strip()
     }
     if not nav_allowlist and not deep_link_allowlist:
-        return {"name": "", "enabled": False, "nav_allowlist": set(), "deep_link_allowlist": set()}
+        return {"name": "", "enabled": False, "source": "none", "nav_allowlist": set(), "deep_link_allowlist": set()}
     return {
         "name": key,
         "enabled": True,
+        "source": "builtin",
         "nav_allowlist": nav_allowlist,
         "deep_link_allowlist": deep_link_allowlist,
     }
@@ -250,6 +322,7 @@ def filter_delivery_scenes(
                 "policy_version": "v1.1",
                 "surface_policy_applied": bool(surface_policy.get("enabled")),
                 "surface_policy_name": str(surface_policy.get("name") or ""),
+                "surface_policy_source": str(surface_policy.get("source") or "none"),
                 "delivery_scene_codes_sample": sorted(
                     str((item or {}).get("code") or (item or {}).get("key") or "").strip()
                     for item in scene_items
@@ -343,6 +416,7 @@ def filter_delivery_scenes(
             "policy_version": "v1.1",
             "surface_policy_applied": bool(surface_policy.get("enabled")),
             "surface_policy_name": str(surface_policy.get("name") or ""),
+            "surface_policy_source": str(surface_policy.get("source") or "none"),
             "surface_nav_allowlist_size": len(surface_policy.get("nav_allowlist") or set()),
             "surface_deep_link_allowlist_size": len(surface_policy.get("deep_link_allowlist") or set()),
             "delivery_scene_codes_sample": sorted(

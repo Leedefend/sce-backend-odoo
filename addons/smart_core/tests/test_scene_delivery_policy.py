@@ -59,3 +59,7 @@ class TestSceneDeliveryPolicy(TransactionCase):
         self.assertGreaterEqual(int(reason_counts.get(REASON_SCENE_DELIVERY_DEEP_LINK_ONLY, 0)), 1)
         self.assertGreaterEqual(int(reason_counts.get(REASON_SCENE_SURFACE_MISMATCH, 0)), 1)
         self.assertTrue(bool((result.get("meta") or {}).get("surface_policy_applied")))
+        self.assertIn(
+            str((result.get("meta") or {}).get("surface_policy_source") or ""),
+            {"file", "builtin"},
+        )
