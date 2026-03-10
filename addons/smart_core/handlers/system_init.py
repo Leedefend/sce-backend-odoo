@@ -299,6 +299,7 @@ class SystemInitHandler(BaseIntentHandler):
         # to scene orchestration contract. Keep legacy nav for rollback/diagnostics.
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
+        nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
         scene_nav_contract = build_scene_nav_contract(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
             data["nav_legacy"] = data.get("nav") or []

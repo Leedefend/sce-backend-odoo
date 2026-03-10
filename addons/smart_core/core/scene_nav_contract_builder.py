@@ -130,7 +130,23 @@ def _scene_valid(scene: dict) -> tuple[bool, str | None]:
     return True, None
 
 
-def build_scene_delivery_report(scenes: list[dict] | None) -> dict:
+def _scene_structurally_valid(scene: dict) -> tuple[bool, str | None]:
+    code = str(scene.get("code") or scene.get("key") or "").strip()
+    if not code:
+        return False, EXCLUDED_REASON_NO_CODE
+    target = scene.get("target")
+    if not isinstance(target, dict):
+        return False, EXCLUDED_REASON_NO_TARGET
+    has_target = any(
+        bool(target.get(k))
+        for k in ("route", "action_id", "action_xmlid", "menu_id", "menu_xmlid", "model")
+    )
+    if not has_target:
+        return False, EXCLUDED_REASON_NO_NAV_TARGET
+    return True, None
+
+
+def build_scene_delivery_report(scenes: list[dict] | None, *, policy_applied: bool = False) -> dict:
     input_items = [item for item in (scenes or []) if isinstance(item, dict)]
     ready_codes: List[str] = []
     excluded: List[dict] = []
@@ -138,7 +154,7 @@ def build_scene_delivery_report(scenes: list[dict] | None) -> dict:
 
     for item in input_items:
         code = str(item.get("code") or item.get("key") or "").strip()
-        valid, reason = _scene_valid(item)
+        valid, reason = _scene_structurally_valid(item) if policy_applied else _scene_valid(item)
         if code and valid:
             ready_codes.append(code)
             continue
@@ -220,7 +236,8 @@ def build_scene_nav_contract(data: dict) -> dict:
         for x in (role_surface.get("scene_candidates") or [])
         if str(x or "").strip()
     ]
-    delivery_report = build_scene_delivery_report(scenes)
+    policy_applied = bool(data.get("delivery_policy_applied"))
+    delivery_report = build_scene_delivery_report(scenes, policy_applied=policy_applied)
     ready_codes = set(delivery_report.get("delivery_ready_scene_codes") or [])
     scene_map: Dict[str, dict] = {}
     for item in scenes:
@@ -282,5 +299,6 @@ def build_scene_nav_contract(data: dict) -> dict:
             "excluded_scenes_sample": (delivery_report.get("excluded_scenes") or [])[:20],
             "candidate_count": len(candidate_leaves),
             "group_count": len(primary_children),
+            "policy_applied": policy_applied,
         },
     }
