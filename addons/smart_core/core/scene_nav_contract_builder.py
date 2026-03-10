@@ -1,0 +1,191 @@
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import zlib
+from typing import Dict, List, Tuple
+
+
+GROUP_LABELS = {
+    "portal": "工作台",
+    "projects": "项目管理",
+    "project": "项目管理",
+    "cost": "成本管理",
+    "contract": "合同管理",
+    "finance": "资金财务",
+    "risk": "风险管理",
+    "task": "任务管理",
+    "data": "数据与字典",
+    "config": "配置中心",
+}
+
+GROUP_ORDER = {
+    "portal": 10,
+    "projects": 20,
+    "project": 20,
+    "task": 30,
+    "risk": 40,
+    "cost": 50,
+    "contract": 60,
+    "finance": 70,
+    "data": 80,
+    "config": 90,
+}
+
+
+def _synthetic_menu_id(key: str, base: int = 700_000_000, span: int = 200_000_000) -> int:
+    raw = zlib.crc32(str(key or "").encode("utf-8")) & 0xFFFFFFFF
+    return int(base + (raw % span))
+
+
+def _scene_allowed(scene: dict) -> bool:
+    access = scene.get("access")
+    if isinstance(access, dict):
+        allowed = access.get("allowed")
+        if isinstance(allowed, bool):
+            return allowed
+    return True
+
+
+def _scene_valid(scene: dict) -> bool:
+    code = str(scene.get("code") or scene.get("key") or "").strip()
+    if not code:
+        return False
+    if "__pkg" in code:
+        return False
+    if code.startswith("scene_smoke_"):
+        return False
+    tags = scene.get("tags")
+    if isinstance(tags, list):
+        tags_norm = {str(t or "").strip().lower() for t in tags}
+        if "internal" in tags_norm or "smoke" in tags_norm:
+            return False
+    target = scene.get("target")
+    if not isinstance(target, dict):
+        return False
+    has_target = any(
+        bool(target.get(k))
+        for k in ("route", "action_id", "action_xmlid", "menu_id", "menu_xmlid", "model")
+    )
+    return has_target and _scene_allowed(scene)
+
+
+def _group_key(scene_key: str) -> str:
+    key = str(scene_key or "").strip().lower()
+    if not key:
+        return "others"
+    return key.split(".", 1)[0]
+
+
+def _to_leaf(scene: dict) -> dict:
+    scene_key = str(scene.get("code") or scene.get("key") or "").strip()
+    scene_name = str(scene.get("name") or scene_key).strip() or scene_key
+    menu_id = _synthetic_menu_id(f"scene:{scene_key}")
+    return {
+        "key": f"scene:{scene_key}",
+        "label": scene_name,
+        "title": scene_name,
+        "menu_id": menu_id,
+        "children": [],
+        "scene_key": scene_key,
+        "meta": {
+            "scene_key": scene_key,
+            "action_type": "scene.contract",
+            "menu_xmlid": f"scene.contract.{scene_key.replace('.', '_')}",
+            "scene_source": "scene_contract",
+        },
+    }
+
+
+def _build_group_nodes(leaves: List[dict]) -> List[dict]:
+    grouped: Dict[str, List[dict]] = {}
+    for leaf in leaves:
+        group = _group_key(leaf.get("scene_key") or "")
+        grouped.setdefault(group, []).append(leaf)
+
+    out: List[Tuple[int, str, dict]] = []
+    for group, items in grouped.items():
+        items_sorted = sorted(items, key=lambda x: str(x.get("label") or ""))
+        label = GROUP_LABELS.get(group, "其他场景")
+        order = GROUP_ORDER.get(group, 999)
+        node = {
+            "key": f"group:{group}",
+            "label": label,
+            "title": label,
+            "menu_id": _synthetic_menu_id(f"group:{group}", base=640_000_000, span=40_000_000),
+            "children": items_sorted,
+            "meta": {
+                "scene_source": "scene_contract",
+                "group_key": group,
+            },
+        }
+        out.append((order, label, node))
+    out.sort(key=lambda x: (x[0], x[1]))
+    return [item[2] for item in out]
+
+
+def build_scene_nav_contract(data: dict) -> dict:
+    scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    role_candidates = [
+        str(x or "").strip()
+        for x in (role_surface.get("scene_candidates") or [])
+        if str(x or "").strip()
+    ]
+    scene_map: Dict[str, dict] = {}
+    for item in scenes:
+        if isinstance(item, dict):
+            code = str(item.get("code") or item.get("key") or "").strip()
+            if code and _scene_valid(item):
+                scene_map[code] = item
+
+    candidate_leaves = [_to_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
+    remaining = [v for k, v in scene_map.items() if k not in set(role_candidates)]
+    remaining_leaves = [_to_leaf(v) for v in remaining]
+    grouped = _build_group_nodes(remaining_leaves)
+
+    primary_children = []
+    if candidate_leaves:
+        primary_children.append({
+            "key": "group:role_primary",
+            "label": "我的场景",
+            "title": "我的场景",
+            "menu_id": _synthetic_menu_id("group:role_primary", base=640_000_000, span=40_000_000),
+            "children": candidate_leaves,
+            "meta": {
+                "scene_source": "scene_contract",
+                "group_key": "role_primary",
+            },
+        })
+    primary_children.extend(grouped)
+
+    root = {
+        "key": "root:scene_contract",
+        "label": "场景导航",
+        "title": "场景导航",
+        "menu_id": _synthetic_menu_id("root:scene_contract", base=600_000_000, span=20_000_000),
+        "children": primary_children,
+        "meta": {
+            "scene_source": "scene_contract",
+            "menu_xmlid": "scene.contract.root",
+        },
+    }
+
+    first_leaf = None
+    for group in primary_children:
+        for child in group.get("children") or []:
+            first_leaf = child
+            break
+        if first_leaf:
+            break
+
+    return {
+        "source": "scene_contract_v1",
+        "nav": [root],
+        "default_route": {"menu_id": (first_leaf or {}).get("menu_id")},
+        "meta": {
+            "scene_count": len(scene_map),
+            "candidate_count": len(candidate_leaves),
+            "group_count": len(primary_children),
+        },
+    }
+
