@@ -291,7 +291,7 @@ async function resolveScene() {
     const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
     const workspaceContextQuery = resolveWorkspaceContextQuery();
-    if (sceneKey === 'project.management') {
+    if (sceneKey === 'project.management' || sceneKey === 'projects.dashboard') {
       await router.replace({ path: '/pm/dashboard', query: workspaceContextQuery });
       return;
     }
