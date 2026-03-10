@@ -130,6 +130,33 @@ def _scene_valid(scene: dict) -> tuple[bool, str | None]:
     return True, None
 
 
+def build_scene_delivery_report(scenes: list[dict] | None) -> dict:
+    input_items = [item for item in (scenes or []) if isinstance(item, dict)]
+    ready_codes: List[str] = []
+    excluded: List[dict] = []
+    reason_counts: Dict[str, int] = {}
+
+    for item in input_items:
+        code = str(item.get("code") or item.get("key") or "").strip()
+        valid, reason = _scene_valid(item)
+        if code and valid:
+            ready_codes.append(code)
+            continue
+        safe_reason = str(reason or "unknown").strip() or "unknown"
+        safe_code = code
+        reason_counts[safe_reason] = int(reason_counts.get(safe_reason, 0)) + 1
+        excluded.append({"code": safe_code, "reason": safe_reason})
+
+    return {
+        "scene_input_count": len(input_items),
+        "scene_count": len(ready_codes),
+        "excluded_scene_count": len(excluded),
+        "excluded_reason_counts": reason_counts,
+        "excluded_scenes": excluded,
+        "delivery_ready_scene_codes": sorted(set(ready_codes)),
+    }
+
+
 def _group_key(scene_key: str) -> str:
     key = str(scene_key or "").strip().lower()
     if not key:
@@ -193,24 +220,15 @@ def build_scene_nav_contract(data: dict) -> dict:
         for x in (role_surface.get("scene_candidates") or [])
         if str(x or "").strip()
     ]
+    delivery_report = build_scene_delivery_report(scenes)
+    ready_codes = set(delivery_report.get("delivery_ready_scene_codes") or [])
     scene_map: Dict[str, dict] = {}
-    excluded: List[dict] = []
-    reason_counts: Dict[str, int] = {}
-
-    def _append_excluded(code: str, reason: str):
-        safe_code = str(code or "").strip()
-        safe_reason = str(reason or "").strip() or "unknown"
-        reason_counts[safe_reason] = int(reason_counts.get(safe_reason, 0)) + 1
-        excluded.append({"code": safe_code, "reason": safe_reason})
-
     for item in scenes:
-        if isinstance(item, dict):
-            code = str(item.get("code") or item.get("key") or "").strip()
-            valid, reason = _scene_valid(item)
-            if code and valid:
-                scene_map[code] = item
-            elif reason:
-                _append_excluded(code, reason)
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code") or item.get("key") or "").strip()
+        if code and code in ready_codes:
+            scene_map[code] = item
 
     candidate_leaves = [_to_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
     remaining = [v for k, v in scene_map.items() if k not in set(role_candidates)]
@@ -257,11 +275,11 @@ def build_scene_nav_contract(data: dict) -> dict:
         "nav": [root],
         "default_route": {"menu_id": (first_leaf or {}).get("menu_id")},
         "meta": {
-            "scene_input_count": len([item for item in scenes if isinstance(item, dict)]),
-            "scene_count": len(scene_map),
-            "excluded_scene_count": len(excluded),
-            "excluded_reason_counts": reason_counts,
-            "excluded_scenes_sample": excluded[:20],
+            "scene_input_count": int(delivery_report.get("scene_input_count") or 0),
+            "scene_count": int(delivery_report.get("scene_count") or 0),
+            "excluded_scene_count": int(delivery_report.get("excluded_scene_count") or 0),
+            "excluded_reason_counts": delivery_report.get("excluded_reason_counts") or {},
+            "excluded_scenes_sample": (delivery_report.get("excluded_scenes") or [])[:20],
             "candidate_count": len(candidate_leaves),
             "group_count": len(primary_children),
         },
