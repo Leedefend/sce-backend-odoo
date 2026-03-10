@@ -56,7 +56,7 @@ import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
-import { findActionNodeByModel, findMenuNode } from '../app/menu';
+import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { NavNode } from '@sc/schema';
@@ -155,7 +155,9 @@ function resolveRecordId(targetRecord: unknown) {
 function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
-    return { actionId, menuId: Number(target.menu_id || 0) || undefined };
+    if (!session.menuTree.length || findActionMeta(session.menuTree, actionId)) {
+      return { actionId, menuId: Number(target.menu_id || 0) || undefined };
+    }
   }
 
   const targetMenuId = Number(target.menu_id || 0);
