@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo.tests.common import TransactionCase, tagged
 
-from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.scene_nav_contract_builder import (
+    build_scene_delivery_report,
+    build_scene_nav_contract,
+)
 
 
 def _collect_scene_keys(nav_payload: dict) -> set[str]:
@@ -31,6 +34,27 @@ def _collect_group_keys(nav_payload: dict) -> set[str]:
 
 @tagged("post_install", "-at_install", "smart_core", "scene_nav_contract")
 class TestSceneNavContractBuilder(TransactionCase):
+    def test_delivery_report_summary(self):
+        report = build_scene_delivery_report(
+            [
+                {
+                    "code": "default",
+                    "name": "默认场景",
+                    "target": {"route": "/workbench?scene=default"},
+                },
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "target": {"action_xmlid": "smart_construction_core.action_sc_project_list"},
+                },
+            ]
+        )
+        self.assertEqual(report.get("scene_input_count"), 2)
+        self.assertEqual(report.get("scene_count"), 1)
+        self.assertEqual(report.get("excluded_scene_count"), 1)
+        self.assertIn("projects.list", report.get("delivery_ready_scene_codes") or [])
+        self.assertGreaterEqual(int((report.get("excluded_reason_counts") or {}).get("default_placeholder", 0)), 1)
+
     def test_filters_non_delivery_scenes(self):
         payload = build_scene_nav_contract(
             {
