@@ -12,6 +12,13 @@
   - `make verify.project.dashboard.snapshot`
   - `python3 scripts/verify/project_management_productization_flow_guard.py`
 
+## Acceptance Entry
+- Command:
+  - `make verify.project.management.acceptance`
+- This command includes:
+  - `make verify.project.management.productization`
+  - `python3 scripts/verify/project_management_productization_acceptance_export.py`
+
 ## Evidence Outputs
 - Snapshot:
   - `tmp/project_dashboard_contract_snapshot_v1.json`
@@ -20,6 +27,9 @@
 - Productization flow report:
   - `tmp/project_management_productization_flow_report.json`
   - `tmp/project_management_productization_flow_report.md`
+- Acceptance report:
+  - `tmp/project_management_scene_v0_1_acceptance_report.json`
+  - `tmp/project_management_scene_v0_1_acceptance_report.md`
 
 ## Release Gate (v0.1)
 - Scene and contract docs exist:
