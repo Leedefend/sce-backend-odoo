@@ -6,6 +6,25 @@
         {{ action.label || action.key }}
       </button>
     </section>
+    <section
+      v-if="availableViewModes.length > 1 && pageSectionEnabled('view_switch', true) && pageSectionTagIs('view_switch', 'section')"
+      class="view-switch"
+      :style="pageSectionStyle('view_switch')"
+    >
+      <p class="contract-label">{{ pageText('label.view_switch', '视图切换') }}</p>
+      <div class="contract-chips">
+        <button
+          v-for="mode in availableViewModes"
+          :key="`view-mode-${mode}`"
+          class="contract-chip"
+          :class="{ active: viewMode === mode }"
+          :disabled="status === 'loading' || batchBusy || viewMode === mode"
+          @click="switchViewMode(mode)"
+        >
+          {{ viewModeLabel(mode) }}
+        </button>
+      </div>
+    </section>
     <section v-if="pageSectionEnabled('route_preset', true) && pageSectionTagIs('route_preset', 'section') && appliedPresetLabel" class="route-preset" :style="pageSectionStyle('route_preset')">
       <p>
         {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
@@ -658,11 +677,33 @@ const showMoreContractActions = ref(false);
 const showMoreContractFilters = ref(false);
 const showMoreSavedFilters = ref(false);
 const showMoreGroupBy = ref(false);
-const viewMode = computed(() => {
-  const mode = String(contractViewType.value || '')
+const preferredViewMode = ref('');
+
+function normalizeViewMode(raw: unknown): string {
+  const mode = String(raw || '').trim().toLowerCase();
+  if (!mode) return '';
+  if (mode === 'list') return 'tree';
+  return mode;
+}
+
+function parseViewModes(raw: unknown): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  String(raw || '')
     .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .find(Boolean) || '';
+    .map((item) => normalizeViewMode(item))
+    .forEach((mode) => {
+      if (!mode || seen.has(mode)) return;
+      seen.add(mode);
+      out.push(mode);
+    });
+  return out;
+}
+
+const availableViewModes = computed(() => parseViewModes(contractViewType.value));
+const viewMode = computed(() => {
+  const modes = availableViewModes.value;
+  const mode = normalizeViewMode(preferredViewMode.value) || modes[0] || '';
   if (mode === 'kanban') return 'kanban';
   if (mode === 'list' || mode === 'tree') return 'tree';
   if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
@@ -670,6 +711,25 @@ const viewMode = computed(() => {
   }
   return '';
 });
+
+function viewModeLabel(mode: string) {
+  if (mode === 'tree') return pageText('view_mode_tree', '列表');
+  if (mode === 'kanban') return pageText('view_mode_kanban', '看板');
+  if (mode === 'pivot') return pageText('view_mode_pivot', '透视');
+  if (mode === 'graph') return pageText('view_mode_graph', '图表');
+  if (mode === 'calendar') return pageText('view_mode_calendar', '日历');
+  if (mode === 'gantt') return pageText('view_mode_gantt', '甘特');
+  if (mode === 'activity') return pageText('view_mode_activity', '活动');
+  if (mode === 'dashboard') return pageText('view_mode_dashboard', '仪表板');
+  return mode;
+}
+
+function switchViewMode(mode: string) {
+  const normalized = normalizeViewMode(mode);
+  if (!normalized || normalized === viewMode.value) return;
+  preferredViewMode.value = normalized;
+  void load();
+}
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
 const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
@@ -2568,6 +2628,15 @@ async function load() {
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
       return;
     }
+    {
+      const candidates = parseViewModes(contractViewType.value);
+      const routeMode = normalizeViewMode(route.query.view_mode);
+      if (routeMode && candidates.includes(routeMode)) {
+        preferredViewMode.value = routeMode;
+      } else if (!preferredViewMode.value || !candidates.includes(normalizeViewMode(preferredViewMode.value))) {
+        preferredViewMode.value = candidates[0] || '';
+      }
+    }
     const typedContract = contract as ActionContractLoose;
     actionContract.value = typedContract;
     const routeFilter = String(route.query.preset_filter || '').trim();
@@ -3428,6 +3497,11 @@ watch(
 .page-actions {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.view-switch {
+  display: grid;
   gap: 8px;
 }
 
