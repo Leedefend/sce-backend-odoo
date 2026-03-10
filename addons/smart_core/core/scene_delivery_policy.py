@@ -45,17 +45,25 @@ SURFACE_NAV_ALLOWLIST = {
     },
 }
 SURFACE_DEEP_LINK_ALLOWLIST = {
-    SURFACE_POLICY_CONSTRUCTION_PM_V1: set(),
-}
-SURFACE_DEEP_LINK_PREFIXES = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: (
-        "finance.",
-        "cost.",
-        "contract.",
-        "data.",
-        "config.",
-        "risk.",
-        "task.",
+        "contract.center",
+        "cost.budget_alloc",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.project_progress",
+        "data.dictionary",
+        "finance.center",
+        "finance.operating_metrics",
+        "finance.payment_ledger",
+        "finance.payment_requests",
+        "finance.settlement_orders",
+        "finance.treasury_ledger",
+        "config.project_cost_code",
+        "risk.monitor",
+        "task.center",
     ),
 }
 
@@ -125,22 +133,16 @@ def _select_surface_policy(surface: str) -> dict:
     }
     deep_link_allowlist = {
         str(item or "").strip()
-        for item in (SURFACE_DEEP_LINK_ALLOWLIST.get(key) or set())
+        for item in (SURFACE_DEEP_LINK_ALLOWLIST.get(key) or ())
         if str(item or "").strip()
     }
-    deep_link_prefixes = tuple(
-        str(item or "").strip()
-        for item in (SURFACE_DEEP_LINK_PREFIXES.get(key) or ())
-        if str(item or "").strip()
-    )
-    if not nav_allowlist and not deep_link_allowlist and not deep_link_prefixes:
-        return {"name": "", "enabled": False, "nav_allowlist": set(), "deep_link_allowlist": set(), "deep_link_prefixes": ()}
+    if not nav_allowlist and not deep_link_allowlist:
+        return {"name": "", "enabled": False, "nav_allowlist": set(), "deep_link_allowlist": set()}
     return {
         "name": key,
         "enabled": True,
         "nav_allowlist": nav_allowlist,
         "deep_link_allowlist": deep_link_allowlist,
-        "deep_link_prefixes": deep_link_prefixes,
     }
 
 
@@ -153,9 +155,6 @@ def _classify_scene_surface_delivery(code: str, policy: dict) -> str:
         return "nav"
     deep_link_allowlist = policy.get("deep_link_allowlist") if isinstance(policy, dict) else set()
     if scene_code in (deep_link_allowlist or set()):
-        return "deep_link"
-    deep_link_prefixes = policy.get("deep_link_prefixes") if isinstance(policy, dict) else ()
-    if any(scene_code.startswith(prefix) for prefix in (deep_link_prefixes or ())):
         return "deep_link"
     return "exclude"
 
@@ -251,6 +250,11 @@ def filter_delivery_scenes(
                 "policy_version": "v1.1",
                 "surface_policy_applied": bool(surface_policy.get("enabled")),
                 "surface_policy_name": str(surface_policy.get("name") or ""),
+                "delivery_scene_codes_sample": sorted(
+                    str((item or {}).get("code") or (item or {}).get("key") or "").strip()
+                    for item in scene_items
+                    if isinstance(item, dict) and str(item.get("code") or item.get("key") or "").strip()
+                )[:20],
                 "scene_input_count": len(scene_items),
                 "delivery_scene_count": len(scene_items),
                 "deep_link_scene_count": 0,
@@ -341,7 +345,16 @@ def filter_delivery_scenes(
             "surface_policy_name": str(surface_policy.get("name") or ""),
             "surface_nav_allowlist_size": len(surface_policy.get("nav_allowlist") or set()),
             "surface_deep_link_allowlist_size": len(surface_policy.get("deep_link_allowlist") or set()),
-            "surface_deep_link_prefix_count": len(surface_policy.get("deep_link_prefixes") or ()),
+            "delivery_scene_codes_sample": sorted(
+                str((item or {}).get("code") or (item or {}).get("key") or "").strip()
+                for item in delivery_scenes
+                if isinstance(item, dict) and str(item.get("code") or item.get("key") or "").strip()
+            )[:20],
+            "deep_link_scene_codes_sample": sorted(
+                str((item or {}).get("code") or (item or {}).get("key") or "").strip()
+                for item in deep_link_scenes
+                if isinstance(item, dict) and str(item.get("code") or item.get("key") or "").strip()
+            )[:20],
             "scene_input_count": len(scene_items),
             "delivery_scene_count": len(delivery_scenes),
             "deep_link_scene_count": len(deep_link_scenes),
