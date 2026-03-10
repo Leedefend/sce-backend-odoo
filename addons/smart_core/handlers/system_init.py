@@ -40,6 +40,10 @@ from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSu
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.scene_delivery_policy import (
+    filter_delivery_scenes,
+    resolve_delivery_policy_runtime,
+)
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -279,9 +283,23 @@ class SystemInitHandler(BaseIntentHandler):
                 data["nav_meta"]["role_surface_pruned"] = role_pruned
                 data["nav_meta"]["role_surface_code"] = role_surface.get("role_code")
 
+        delivery_runtime = resolve_delivery_policy_runtime(env, params)
+        delivery_result = filter_delivery_scenes(
+            data.get("scenes") if isinstance(data, dict) else [],
+            surface=delivery_runtime.get("surface") or "default",
+            role_surface=role_surface if isinstance(role_surface, dict) else {},
+            contract_mode=contract_mode,
+            runtime_env=delivery_runtime.get("runtime_env") or "dev",
+            enabled=bool(delivery_runtime.get("enabled")),
+        )
+        if isinstance(data.get("nav_meta"), dict):
+            data["nav_meta"]["delivery_policy"] = delivery_result.get("meta") or {}
+
         # Scene-first nav contract (v1): sidebar nav source switches from native menu facts
         # to scene orchestration contract. Keep legacy nav for rollback/diagnostics.
-        scene_nav_contract = build_scene_nav_contract(data)
+        nav_contract_input = dict(data)
+        nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
+        scene_nav_contract = build_scene_nav_contract(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
             data["nav_legacy"] = data.get("nav") or []
             data["nav_contract"] = scene_nav_contract
