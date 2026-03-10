@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
@@ -24,6 +25,44 @@ def get_scene_version():
 
 def get_schema_version():
     return SCHEMA_VERSION
+
+
+def _to_bool(value, default=False):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"1", "true", "yes", "on"}:
+            return True
+        if text in {"0", "false", "no", "off"}:
+            return False
+    return default
+
+
+def _include_test_scenes(env) -> bool:
+    try:
+        cfg = env["ir.config_parameter"].sudo().get_param("sc.scene.include_tests") if env is not None else ""
+    except Exception:
+        cfg = ""
+    if str(cfg or "").strip():
+        return _to_bool(cfg, False)
+    runtime_env = str(os.environ.get("ENV") or "").strip().lower()
+    if runtime_env in {"prod", "production"}:
+        return False
+    return runtime_env in {"dev", "test"}
+
+
+def _filter_test_scenes(scenes, include_tests: bool):
+    if include_tests:
+        return list(scenes or [])
+    out = []
+    for scene in scenes or []:
+        if not isinstance(scene, dict):
+            continue
+        if bool(scene.get("is_test")):
+            continue
+        out.append(scene)
+    return out
 
 def has_db_scenes(env):
     if env is None:
@@ -180,11 +219,14 @@ def load_scene_configs(env, drift=None):
     # Prefer DB scenes if present; fallback to code-defined scenes.
     db_scenes = _load_from_db(env, drift=drift)
     imported_scenes = _load_imported_scenes(env, drift=drift)
+    include_tests = _include_test_scenes(env)
     # Note: keep configs data-only; target IDs are resolved by system_init.
     fallback = [
         {
             "code": "default",
             "name": "默认场景",
+            "is_test": True,
+            "tags": ["internal"],
             "target": {"route": "/workbench?scene=default"},
         },
         {
@@ -229,6 +271,8 @@ def load_scene_configs(env, drift=None):
         {
             "code": "projects.dashboard_showcase",
             "name": "项目驾驶舱（演示）",
+            "is_test": True,
+            "tags": ["internal"],
             "target": {
                 "menu_xmlid": "smart_construction_demo.menu_sc_project_dashboard_showcase",
                 "action_xmlid": "smart_construction_demo.action_project_dashboard_showcase",
@@ -402,13 +446,13 @@ def load_scene_configs(env, drift=None):
     ]
     if not db_scenes:
         if not imported_scenes:
-            return fallback
+            return _filter_test_scenes(fallback, include_tests)
         imported_codes = {scene.get("code") for scene in imported_scenes if scene.get("code")}
         merged = list(imported_scenes)
         for scene in fallback:
             if scene.get("code") not in imported_codes:
                 merged.append(scene)
-        return merged
+        return _filter_test_scenes(merged, include_tests)
 
     fallback_map = {scene.get("code"): scene for scene in fallback}
     imported_map = {scene.get("code"): scene for scene in imported_scenes if scene.get("code")}
@@ -474,4 +518,4 @@ def load_scene_configs(env, drift=None):
     for code, scene in fallback_map.items():
         if code not in seen:
             db_scenes.append(scene)
-    return db_scenes
+    return _filter_test_scenes(db_scenes, include_tests)
