@@ -153,9 +153,28 @@ function resolveRecordId(targetRecord: unknown) {
 }
 
 function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
+  const isSceneContractNav = (() => {
+    const navMeta = (session.initMeta as Record<string, unknown> | null)?.nav_meta as Record<string, unknown> | undefined;
+    if (String(navMeta?.nav_source || '') === 'scene_contract_v1') {
+      return true;
+    }
+    const walk = (nodes: NavNode[]): boolean => {
+      for (const node of nodes || []) {
+        if (String(node.meta?.scene_source || '') === 'scene_contract') {
+          return true;
+        }
+        if (node.children?.length && walk(node.children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    return walk(session.menuTree || []);
+  })();
+
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
-    if (!session.menuTree.length || findActionMeta(session.menuTree, actionId)) {
+    if (!session.menuTree.length || findActionMeta(session.menuTree, actionId) || isSceneContractNav) {
       return { actionId, menuId: Number(target.menu_id || 0) || undefined };
     }
   }
