@@ -34,6 +34,31 @@ DELIVERY_MODE_INTERNAL = "internal"
 DELIVERY_MODE_DEMO = "demo"
 DELIVERY_MODE_DEEP_LINK_ONLY = "deep_link_only"
 
+SURFACE_POLICY_CONSTRUCTION_PM_V1 = "construction_pm_v1"
+SURFACE_NAV_ALLOWLIST = {
+    SURFACE_POLICY_CONSTRUCTION_PM_V1: {
+        "project.management",
+        "projects.dashboard",
+        "projects.ledger",
+        "projects.intake",
+        "my_work.workspace",
+    },
+}
+SURFACE_DEEP_LINK_ALLOWLIST = {
+    SURFACE_POLICY_CONSTRUCTION_PM_V1: set(),
+}
+SURFACE_DEEP_LINK_PREFIXES = {
+    SURFACE_POLICY_CONSTRUCTION_PM_V1: (
+        "finance.",
+        "cost.",
+        "contract.",
+        "data.",
+        "config.",
+        "risk.",
+        "task.",
+    ),
+}
+
 
 def _to_bool(value: Any, default: bool = False) -> bool:
     if isinstance(value, bool):
@@ -91,6 +116,50 @@ def _normalize_surfaces(raw: Any) -> list[str]:
     return out
 
 
+def _select_surface_policy(surface: str) -> dict:
+    key = _normalize_surface(surface)
+    nav_allowlist = {
+        str(item or "").strip()
+        for item in (SURFACE_NAV_ALLOWLIST.get(key) or set())
+        if str(item or "").strip()
+    }
+    deep_link_allowlist = {
+        str(item or "").strip()
+        for item in (SURFACE_DEEP_LINK_ALLOWLIST.get(key) or set())
+        if str(item or "").strip()
+    }
+    deep_link_prefixes = tuple(
+        str(item or "").strip()
+        for item in (SURFACE_DEEP_LINK_PREFIXES.get(key) or ())
+        if str(item or "").strip()
+    )
+    if not nav_allowlist and not deep_link_allowlist and not deep_link_prefixes:
+        return {"name": "", "enabled": False, "nav_allowlist": set(), "deep_link_allowlist": set(), "deep_link_prefixes": ()}
+    return {
+        "name": key,
+        "enabled": True,
+        "nav_allowlist": nav_allowlist,
+        "deep_link_allowlist": deep_link_allowlist,
+        "deep_link_prefixes": deep_link_prefixes,
+    }
+
+
+def _classify_scene_surface_delivery(code: str, policy: dict) -> str:
+    scene_code = str(code or "").strip()
+    if not scene_code:
+        return "exclude"
+    nav_allowlist = policy.get("nav_allowlist") if isinstance(policy, dict) else set()
+    if scene_code in (nav_allowlist or set()):
+        return "nav"
+    deep_link_allowlist = policy.get("deep_link_allowlist") if isinstance(policy, dict) else set()
+    if scene_code in (deep_link_allowlist or set()):
+        return "deep_link"
+    deep_link_prefixes = policy.get("deep_link_prefixes") if isinstance(policy, dict) else ()
+    if any(scene_code.startswith(prefix) for prefix in (deep_link_prefixes or ())):
+        return "deep_link"
+    return "exclude"
+
+
 def resolve_delivery_policy_runtime(env, params: dict | None) -> dict:
     params = params or {}
     enabled = None
@@ -120,7 +189,7 @@ def resolve_delivery_policy_runtime(env, params: dict | None) -> dict:
     if not surface:
         surface = str(os.environ.get("SCENE_DELIVERY_SURFACE") or "").strip()
     if not surface:
-        surface = "default"
+        surface = SURFACE_POLICY_CONSTRUCTION_PM_V1 if bool(enabled) else "default"
 
     runtime_env = str(os.environ.get("ENV") or "dev").strip().lower() or "dev"
     return {
@@ -145,6 +214,7 @@ def filter_delivery_scenes(
     excluded = []
     reason_counts = {}
     normalized_surface = _normalize_surface(surface)
+    surface_policy = _select_surface_policy(normalized_surface)
 
     def _exclude(scene_code: str, reason_code: str):
         safe_reason = reason_code if reason_code in ALLOWED_REASON_CODES else REASON_SCENE_INVALID
@@ -179,6 +249,8 @@ def filter_delivery_scenes(
                 "contract_mode": str(contract_mode or "user"),
                 "runtime_env": str(runtime_env or "dev"),
                 "policy_version": "v1.1",
+                "surface_policy_applied": bool(surface_policy.get("enabled")),
+                "surface_policy_name": str(surface_policy.get("name") or ""),
                 "scene_input_count": len(scene_items),
                 "delivery_scene_count": len(scene_items),
                 "deep_link_scene_count": 0,
@@ -221,6 +293,16 @@ def filter_delivery_scenes(
         if surfaces and normalized_surface not in surfaces:
             _exclude(code, REASON_SCENE_SURFACE_MISMATCH)
             continue
+        if bool(surface_policy.get("enabled")):
+            route_mode = _classify_scene_surface_delivery(code, surface_policy)
+            if route_mode == "exclude":
+                _exclude(code, REASON_SCENE_SURFACE_MISMATCH)
+                continue
+            if route_mode == "deep_link":
+                _exclude(code, REASON_SCENE_DELIVERY_DEEP_LINK_ONLY)
+                if _scene_entry_allowed(scene):
+                    _append_deep_link(scene)
+                continue
 
         access = scene.get("access") if isinstance(scene.get("access"), dict) else {}
         if isinstance(access, dict) and "allowed" in access and not _to_bool(access.get("allowed"), True):
@@ -255,6 +337,11 @@ def filter_delivery_scenes(
             "contract_mode": str(contract_mode or "user"),
             "runtime_env": str(runtime_env or "dev"),
             "policy_version": "v1.1",
+            "surface_policy_applied": bool(surface_policy.get("enabled")),
+            "surface_policy_name": str(surface_policy.get("name") or ""),
+            "surface_nav_allowlist_size": len(surface_policy.get("nav_allowlist") or set()),
+            "surface_deep_link_allowlist_size": len(surface_policy.get("deep_link_allowlist") or set()),
+            "surface_deep_link_prefix_count": len(surface_policy.get("deep_link_prefixes") or ()),
             "scene_input_count": len(scene_items),
             "delivery_scene_count": len(delivery_scenes),
             "deep_link_scene_count": len(deep_link_scenes),
