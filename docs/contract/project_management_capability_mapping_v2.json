@@ -1,0 +1,68 @@
+{
+  "version": "v2",
+  "scene_key": "project.management",
+  "page_key": "project.management.dashboard",
+  "naming_rule": "<domain>.<object>.<action>",
+  "mappings": [
+    {
+      "zone_key": "zone.header",
+      "block_key": "block.project.header",
+      "capability_key": "project.dashboard.open",
+      "source_model": "project.project",
+      "source_action": "smart_construction_core.action_sc_project_kanban_lifecycle",
+      "intent_key": "project.dashboard"
+    },
+    {
+      "zone_key": "zone.metrics",
+      "block_key": "block.project.metrics",
+      "capability_key": "project.dashboard.open",
+      "source_model": "project.project",
+      "source_action": "smart_construction_core.action_project_dashboard",
+      "intent_key": "project.dashboard"
+    },
+    {
+      "zone_key": "zone.progress",
+      "block_key": "block.project.progress",
+      "capability_key": "cost.progress.report",
+      "source_model": "project.progress.entry",
+      "source_action": "smart_construction_core.action_project_progress_entry",
+      "intent_key": "project.dashboard"
+    },
+    {
+      "zone_key": "zone.contract",
+      "block_key": "block.project.contract",
+      "capability_key": "contract.center.open",
+      "source_model": "construction.contract",
+      "source_action": "smart_construction_core.action_construction_contract_my",
+      "intent_key": "project.dashboard"
+    },
+    {
+      "zone_key": "zone.cost",
+      "block_key": "block.project.cost",
+      "capability_key": "cost.ledger.open",
+      "source_model": "project.cost.ledger",
+      "source_action": "smart_construction_core.action_project_cost_ledger",
+      "intent_key": "project.dashboard"
+    },
+    {
+      "zone_key": "zone.finance",
+      "block_key": "block.project.finance",
+      "capability_key": "finance.payment_request.list",
+      "source_model": "payment.request",
+      "source_action": "smart_construction_core.action_payment_request",
+      "intent_key": "project.dashboard"
+    },
+    {
+      "zone_key": "zone.risk",
+      "block_key": "block.project.risk",
+      "capability_key": "project.risk.list",
+      "source_model": "project.project",
+      "source_action": "smart_construction_core.action_project_dashboard",
+      "intent_key": "project.dashboard"
+    }
+  ],
+  "meta": {
+    "compatibility": "reuse-existing-capability-keys",
+    "new_capability_keys_introduced": false
+  }
+}
