@@ -41,12 +41,14 @@
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
       :style="pageSectionStyle('status_forbidden')"
     />
+    <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import ActionView from './ActionView.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
@@ -83,6 +85,7 @@ const forbiddenCopy = ref({
   message: pageText('forbidden_message', '当前角色无法进入该场景。'),
   hint: '',
 });
+const embeddedActionId = ref(0);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -248,6 +251,7 @@ async function resolveScene() {
   try {
     status.value = 'loading';
     clearError();
+    embeddedActionId.value = 0;
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
@@ -391,15 +395,25 @@ async function resolveScene() {
     if (layout.kind === 'list' || layout.kind === 'ledger') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
-        await router.replace({
-          path: `/a/${resolvedAction.actionId}`,
-          query: {
-            menu_id: resolvedAction.menuId,
-            scene_key: sceneKey || undefined,
-            scene_label: sceneLabel || undefined,
-            ...workspaceContextQuery,
-          },
-        });
+        const nextQuery = {
+          menu_id: resolvedAction.menuId,
+          action_id: resolvedAction.actionId,
+          scene_key: sceneKey || undefined,
+          scene_label: sceneLabel || undefined,
+          ...workspaceContextQuery,
+        };
+        const currentActionId = Number(route.query.action_id || 0);
+        const currentMenuId = Number(route.query.menu_id || 0);
+        const sameEmbeddedRouteState =
+          currentActionId === resolvedAction.actionId
+          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && String(route.query.scene_key || '') === sceneKey;
+        if (!sameEmbeddedRouteState) {
+          await router.replace({ path: route.path, query: nextQuery });
+          return;
+        }
+        embeddedActionId.value = resolvedAction.actionId;
+        status.value = 'idle';
         return;
       }
       if (target.model && target.record_id) {
