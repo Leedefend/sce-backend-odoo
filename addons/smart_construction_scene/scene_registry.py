@@ -444,6 +444,11 @@ def load_scene_configs(env, drift=None):
             "name": "工作台",
             "target": {"route": "/"},
         },
+        {
+            "code": "my_work.workspace",
+            "name": "我的工作",
+            "target": {"route": "/my-work"},
+        },
     ]
     if not db_scenes:
         if not imported_scenes:
