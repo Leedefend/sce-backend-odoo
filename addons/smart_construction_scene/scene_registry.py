@@ -198,8 +198,8 @@ def load_scene_configs(env, drift=None):
             "code": "projects.list",
             "name": "项目列表",
             "target": {
-                "menu_xmlid": "smart_construction_demo.menu_sc_project_list_showcase",
-                "action_xmlid": "smart_construction_demo.action_sc_project_list_showcase",
+                "menu_xmlid": "smart_construction_core.menu_sc_root",
+                "action_xmlid": "smart_construction_core.action_sc_project_list",
             },
         },
         {
