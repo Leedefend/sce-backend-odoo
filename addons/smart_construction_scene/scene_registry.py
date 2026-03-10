@@ -264,6 +264,7 @@ def load_scene_configs(env, drift=None):
             "code": "projects.dashboard",
             "name": "项目驾驶舱",
             "target": {
+                "route": "/pm/dashboard",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
                 "action_xmlid": "smart_construction_core.action_project_dashboard",
             },

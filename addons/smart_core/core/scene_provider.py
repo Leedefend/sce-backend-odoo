@@ -11,6 +11,7 @@ CRITICAL_SCENE_TARGET_OVERRIDES = {
     "projects.list",
     "projects.intake",
     "projects.ledger",
+    "projects.dashboard",
     "project.management",
     "portal.dashboard",
     "finance.payment_requests",
