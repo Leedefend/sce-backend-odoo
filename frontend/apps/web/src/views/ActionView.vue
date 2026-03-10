@@ -1165,12 +1165,21 @@ function resolveWorkbenchQuery(
   };
 }
 
-function resolveActionViewType(_meta: unknown, contract: unknown) {
+function resolveActionViewType(meta: unknown, contract: unknown) {
   const typedContract = contract as ActionContractLoose;
-  const fromHead = String(typedContract.head?.view_type || '').trim();
+  const nestedContract = (typedContract.ui_contract_raw || typedContract.ui_contract || {}) as ActionContractLoose;
+  const fromHead = String(typedContract.head?.view_type || nestedContract.head?.view_type || '').trim();
   if (fromHead) return fromHead;
-  const fromContract = String(typedContract.view_type || '').trim();
+  const fromContract = String(typedContract.view_type || nestedContract.view_type || '').trim();
   if (fromContract) return fromContract;
+  const metaViewModes = (meta as { view_modes?: unknown } | null)?.view_modes;
+  if (Array.isArray(metaViewModes) && metaViewModes.length) {
+    const normalized = metaViewModes
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .join(',');
+    if (normalized) return normalized;
+  }
   return '';
 }
 
@@ -2216,17 +2225,30 @@ function buildGroupKey(field: unknown, value: unknown, fallback: unknown) {
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
   const typed = contract as ActionContractLoose;
+  const nested = (typed.ui_contract_raw || typed.ui_contract || {}) as ActionContractLoose;
   const direct = typed.model;
   if (typeof direct === 'string' && direct.trim()) {
     return direct.trim();
+  }
+  const nestedDirect = nested.model;
+  if (typeof nestedDirect === 'string' && nestedDirect.trim()) {
+    return nestedDirect.trim();
   }
   const headModel = typed.head?.model;
   if (typeof headModel === 'string' && headModel.trim()) {
     return headModel.trim();
   }
+  const nestedHeadModel = nested.head?.model;
+  if (typeof nestedHeadModel === 'string' && nestedHeadModel.trim()) {
+    return nestedHeadModel.trim();
+  }
   const viewModel = typed.views?.tree?.model || typed.views?.form?.model || typed.views?.kanban?.model;
   if (typeof viewModel === 'string' && viewModel.trim()) {
     return viewModel.trim();
+  }
+  const nestedViewModel = nested.views?.tree?.model || nested.views?.form?.model || nested.views?.kanban?.model;
+  if (typeof nestedViewModel === 'string' && nestedViewModel.trim()) {
+    return nestedViewModel.trim();
   }
   return '';
 }

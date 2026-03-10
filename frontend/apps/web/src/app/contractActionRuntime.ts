@@ -8,10 +8,26 @@ export interface ContractAccessPolicySnapshot {
   reasonCode: string;
 }
 
+function pickNestedContract(contract: ActionContract | null): ActionContract | null {
+  if (!contract || typeof contract !== 'object') return null;
+  const raw = contract as ActionContract & {
+    ui_contract?: ActionContract;
+    ui_contract_raw?: ActionContract;
+  };
+  if (raw.ui_contract_raw && typeof raw.ui_contract_raw === 'object') {
+    return raw.ui_contract_raw;
+  }
+  if (raw.ui_contract && typeof raw.ui_contract === 'object') {
+    return raw.ui_contract;
+  }
+  return contract;
+}
+
 export function resolveContractViewMode(contract: ActionContract | null, fallback = '') {
-  const headMode = String(contract?.head?.view_type || '').trim();
+  const normalized = pickNestedContract(contract);
+  const headMode = String(normalized?.head?.view_type || '').trim();
   if (headMode) return headMode;
-  const rootMode = String(contract?.view_type || '').trim();
+  const rootMode = String(normalized?.view_type || '').trim();
   if (rootMode) return rootMode;
   return fallback;
 }
