@@ -41,6 +41,8 @@
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
       :style="pageSectionStyle('status_forbidden')"
     />
+    <ProjectManagementDashboardView v-else-if="status === 'idle' && embeddedWorkspaceDashboard" />
+    <ContractFormPage v-else-if="status === 'idle' && embeddedRecordActionId > 0" />
     <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
 </template>
@@ -49,6 +51,8 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActionView from './ActionView.vue';
+import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
+import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
@@ -86,6 +90,8 @@ const forbiddenCopy = ref({
   hint: '',
 });
 const embeddedActionId = ref(0);
+const embeddedRecordActionId = ref(0);
+const embeddedWorkspaceDashboard = ref(false);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -252,6 +258,8 @@ async function resolveScene() {
     status.value = 'loading';
     clearError();
     embeddedActionId.value = 0;
+    embeddedRecordActionId.value = 0;
+    embeddedWorkspaceDashboard.value = false;
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
@@ -295,8 +303,9 @@ async function resolveScene() {
     const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
     const workspaceContextQuery = resolveWorkspaceContextQuery();
-    if (sceneKey === 'project.management') {
-      await router.replace({ path: '/pm/dashboard', query: workspaceContextQuery });
+    if (sceneKey === 'project.management' || sceneKey === 'projects.dashboard') {
+      embeddedWorkspaceDashboard.value = true;
+      status.value = 'idle';
       return;
     }
     if (layout.kind === 'workspace') {
@@ -343,15 +352,25 @@ async function resolveScene() {
     if (layout.kind === 'record') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
-        await router.replace({
-          path: `/a/${resolvedAction.actionId}`,
-          query: {
-            menu_id: resolvedAction.menuId,
-            scene_key: sceneKey || undefined,
-            scene_label: sceneLabel || undefined,
-            ...workspaceContextQuery,
-          },
-        });
+        const nextQuery = {
+          menu_id: resolvedAction.menuId,
+          action_id: resolvedAction.actionId,
+          scene_key: sceneKey || undefined,
+          scene_label: sceneLabel || undefined,
+          ...workspaceContextQuery,
+        };
+        const currentActionId = Number(route.query.action_id || 0);
+        const currentMenuId = Number(route.query.menu_id || 0);
+        const sameEmbeddedRouteState =
+          currentActionId === resolvedAction.actionId
+          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && String(route.query.scene_key || '') === sceneKey;
+        if (!sameEmbeddedRouteState) {
+          await router.replace({ path: route.path, query: nextQuery });
+          return;
+        }
+        embeddedRecordActionId.value = resolvedAction.actionId;
+        status.value = 'idle';
         return;
       }
       if (target.model) {
