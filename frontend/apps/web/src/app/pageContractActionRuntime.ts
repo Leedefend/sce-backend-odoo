@@ -1,11 +1,11 @@
-import type { Router } from 'vue-router';
+import type { LocationQueryRaw, Router } from 'vue-router';
 
 export type ContractActionDeps = {
   actionKey: string;
   router: Router;
   actionIntent: (key: string, fallback?: string) => string;
   actionTarget: (key: string) => Record<string, unknown>;
-  query?: Record<string, unknown>;
+  query?: LocationQueryRaw;
   onRefresh?: () => Promise<void> | void;
   onOpenMenuFirstReachable?: () => Promise<boolean> | boolean;
   onFallback?: (actionKey: string) => Promise<boolean> | boolean;
