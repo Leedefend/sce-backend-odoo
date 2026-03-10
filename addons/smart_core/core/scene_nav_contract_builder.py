@@ -36,6 +36,41 @@ GROUP_ALIASES = {
 }
 
 
+def _to_bool(value, default=False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"1", "true", "yes", "on"}:
+            return True
+        if text in {"0", "false", "no", "off"}:
+            return False
+    return default
+
+
+def _is_delivery_ready(scene: dict, code: str, target: dict) -> bool:
+    lowered = code.lower()
+    if "showcase" in lowered or ".demo" in lowered or lowered.endswith(".demo"):
+        return False
+    portal_only = _to_bool(scene.get("portal_only"), False)
+    spa_ready = _to_bool(scene.get("spa_ready"), True)
+    if portal_only and not spa_ready:
+        return False
+    route = str(target.get("route") or "").strip().lower()
+    if route.startswith("/portal/"):
+        return False
+    target_text = " ".join(
+        [
+            str(target.get("action_xmlid") or ""),
+            str(target.get("menu_xmlid") or ""),
+            str(target.get("route") or ""),
+        ]
+    ).lower()
+    if "smart_construction_demo" in target_text:
+        return False
+    return True
+
+
 def _synthetic_menu_id(key: str, base: int = 700_000_000, span: int = 200_000_000) -> int:
     raw = zlib.crc32(str(key or "").encode("utf-8")) & 0xFFFFFFFF
     return int(base + (raw % span))
@@ -65,6 +100,8 @@ def _scene_valid(scene: dict) -> bool:
             return False
     target = scene.get("target")
     if not isinstance(target, dict):
+        return False
+    if not _is_delivery_ready(scene, code, target):
         return False
     has_target = any(
         bool(target.get(k))
