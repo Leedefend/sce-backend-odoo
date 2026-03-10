@@ -288,6 +288,7 @@ async function resolveScene() {
     void trackSceneOpen(sceneKey).catch(() => {});
 
     const target = scene.target || {};
+    const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
     const workspaceContextQuery = resolveWorkspaceContextQuery();
     if (sceneKey === 'project.management') {
@@ -317,6 +318,7 @@ async function resolveScene() {
           query: {
             menu_id: resolvedAction.menuId,
             scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
             ...workspaceContextQuery,
           },
         });
@@ -342,6 +344,7 @@ async function resolveScene() {
           query: {
             menu_id: resolvedAction.menuId,
             scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
             ...workspaceContextQuery,
           },
         });
@@ -377,6 +380,7 @@ async function resolveScene() {
           query: {
             menu_id: target.menu_id || undefined,
             scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
             ...workspaceContextQuery,
           },
         });
@@ -392,6 +396,7 @@ async function resolveScene() {
           query: {
             menu_id: resolvedAction.menuId,
             scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
             ...workspaceContextQuery,
           },
         });

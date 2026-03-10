@@ -397,7 +397,7 @@ import {
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
-import { getSceneByKey, type Scene, type SceneListProfile } from '../app/resolvers/sceneRegistry';
+import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
@@ -659,15 +659,7 @@ type SurfaceIntent = {
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
-const routeSceneKey = computed(() =>
-  String(route.query.scene_key || route.query.scene || route.query.sceneKey || '').trim(),
-);
-const routeSceneLabel = computed(() => {
-  const key = routeSceneKey.value;
-  if (!key) return '';
-  const scene = getSceneByKey(key);
-  return String(scene?.label || '').trim();
-});
+const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
