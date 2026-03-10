@@ -447,7 +447,7 @@ def load_scene_configs(env, drift=None):
         {
             "code": "my_work.workspace",
             "name": "我的工作",
-            "target": {"route": "/my-work"},
+            "target": {"route": "/s/my_work.workspace"},
         },
     ]
     if not db_scenes:

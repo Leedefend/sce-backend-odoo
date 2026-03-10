@@ -13,6 +13,7 @@ CRITICAL_SCENE_TARGET_OVERRIDES = {
     "projects.ledger",
     "projects.dashboard",
     "project.management",
+    "my_work.workspace",
     "portal.dashboard",
     "finance.payment_requests",
 }
