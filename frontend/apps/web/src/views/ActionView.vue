@@ -657,10 +657,16 @@ type SurfaceIntent = {
   secondaryAction?: FocusNavAction;
 };
 
-const actionId = computed(() => Number(route.params.actionId));
+const actionId = computed(() => {
+  const fromParam = Number(route.params.actionId || 0);
+  if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
+  const fromQuery = Number(route.query.action_id || 0);
+  return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
+});
 const actionMeta = computed(() => session.currentAction);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
+const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
 const sceneKey = computed(() => {
   const metaKey = route.meta?.sceneKey as string | undefined;
   if (metaKey) return metaKey;
@@ -692,6 +698,10 @@ const showMoreContractFilters = ref(false);
 const showMoreSavedFilters = ref(false);
 const showMoreGroupBy = ref(false);
 const preferredViewMode = ref('');
+
+function replaceCurrentRouteQuery(query: Record<string, unknown>) {
+  router.replace({ path: route.path, query }).catch(() => {});
+}
 
 function normalizeViewMode(raw: unknown): string {
   const mode = String(raw || '').trim().toLowerCase();
@@ -1447,7 +1457,7 @@ function clearRoutePreset() {
   routeContextSource.value = '';
   const nextQuery = stripWorkspaceContext(route.query as Record<string, unknown>);
   void trackUsageEvent('workspace.preset.clear', { view: 'action' }).catch(() => {});
-  router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
+  replaceCurrentRouteQuery(nextQuery);
 }
 
 function syncRouteListState(extra?: Record<string, unknown>) {
@@ -1468,7 +1478,7 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     group_wik: activeGroupByField.value && groupWindowIdentityKey.value ? groupWindowIdentityKey.value : undefined,
     ...extra,
   });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
 }
 
 function parseGroupPageOffsets(raw: string) {
@@ -1499,7 +1509,7 @@ function applyContractFilter(key: string) {
   showMoreContractFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: key });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1509,7 +1519,7 @@ function applySavedFilter(key: string) {
   showMoreSavedFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: key });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1518,7 +1528,7 @@ function clearContractFilter() {
   showMoreContractFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: undefined });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1527,7 +1537,7 @@ function clearSavedFilter() {
   showMoreSavedFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: undefined });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1560,7 +1570,7 @@ function applyGroupBy(field: string) {
     group_wdg: undefined,
     group_wik: undefined,
   });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1592,7 +1602,7 @@ function clearGroupBy() {
     group_wdg: undefined,
     group_wik: undefined,
   });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1643,7 +1653,7 @@ function clearGroupSummaryDrilldown() {
     group_wdg: undefined,
     group_wik: undefined,
   });
-  router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
+  replaceCurrentRouteQuery(q);
   void load();
 }
 
@@ -2526,15 +2536,20 @@ async function runContractAction(action: ContractActionButton) {
   if (!action.enabled) return;
   if (action.kind === 'open') {
     if (action.actionId) {
-      await router.push({
-        name: 'action',
-        params: { actionId: action.actionId },
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: action.actionId,
-          ...resolveCarryQuery(),
-        },
-      });
+      const nextQuery = {
+        ...resolveCarryQuery(),
+        menu_id: menuId.value || undefined,
+        action_id: action.actionId,
+      };
+      if (keepSceneRoute.value) {
+        await router.push({ path: route.path, query: nextQuery });
+      } else {
+        await router.push({
+          name: 'action',
+          params: { actionId: action.actionId },
+          query: nextQuery,
+        });
+      }
       return;
     }
     if (action.url) {
@@ -2578,15 +2593,20 @@ async function runContractAction(action: ContractActionButton) {
           context: action.context,
         });
         if (response?.result?.action_id) {
-          await router.push({
-            name: 'action',
-            params: { actionId: response.result.action_id },
-            query: {
-              menu_id: menuId.value || undefined,
-              action_id: response.result.action_id,
-              ...resolveCarryQuery(),
-            },
-          });
+          const nextQuery = {
+            ...resolveCarryQuery(),
+            menu_id: menuId.value || undefined,
+            action_id: response.result.action_id,
+          };
+          if (keepSceneRoute.value) {
+            await router.push({ path: route.path, query: nextQuery });
+          } else {
+            await router.push({
+              name: 'action',
+              params: { actionId: response.result.action_id },
+              query: nextQuery,
+            });
+          }
           return;
         }
         successCount += 1;
