@@ -31,6 +31,10 @@ GROUP_ORDER = {
     "config": 90,
 }
 
+GROUP_ALIASES = {
+    "project": "projects",
+}
+
 
 def _synthetic_menu_id(key: str, base: int = 700_000_000, span: int = 200_000_000) -> int:
     raw = zlib.crc32(str(key or "").encode("utf-8")) & 0xFFFFFFFF
@@ -73,7 +77,8 @@ def _group_key(scene_key: str) -> str:
     key = str(scene_key or "").strip().lower()
     if not key:
         return "others"
-    return key.split(".", 1)[0]
+    raw_group = key.split(".", 1)[0]
+    return GROUP_ALIASES.get(raw_group, raw_group)
 
 
 def _to_leaf(scene: dict) -> dict:
@@ -188,4 +193,3 @@ def build_scene_nav_contract(data: dict) -> dict:
             "group_count": len(primary_children),
         },
     }
-
