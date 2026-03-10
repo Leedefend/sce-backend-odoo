@@ -211,6 +211,14 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "config.project_cost_code",
+            "name": "成本科目",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_code",
+                "action_xmlid": "smart_construction_core.action_project_cost_code",
+            },
+        },
+        {
             "code": "projects.dashboard",
             "name": "项目驾驶舱",
             "target": {
@@ -230,8 +238,7 @@ def load_scene_configs(env, drift=None):
             "code": "project.management",
             "name": "项目管理控制台",
             "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
-                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_management_scene",
                 "route": "/s/project.management",
             },
         },
