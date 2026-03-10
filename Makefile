@@ -1378,6 +1378,29 @@ verify.usage.product.clean: guard.prod.forbid
 verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/frontend_api_smoke.py
 
+.PHONY: verify.project.dashboard.contract
+verify.project.dashboard.contract: guard.prod.forbid
+	@python3 scripts/verify/project_management_contract_guard.py
+	@python3 scripts/verify/project_dashboard_assembly_guard.py
+	@python3 scripts/verify/project_dashboard_block_schema_guard.py
+	@python3 scripts/verify/project_dashboard_block_payload_guard.py
+	@python3 scripts/verify/project_dashboard_intent_guard.py
+	@python3 scripts/verify/project_dashboard_runtime_chain_guard.py
+	@python3 scripts/verify/project_dashboard_project_id_order_guard.py
+	@python3 -m py_compile addons/smart_construction_core/handlers/project_dashboard.py addons/smart_construction_core/services/project_dashboard_service.py addons/smart_construction_core/services/project_dashboard_builders/base.py addons/smart_construction_core/services/project_dashboard_builders/project_header_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_metrics_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_progress_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_contract_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_cost_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_finance_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_risk_builder.py
+	@echo "[OK] verify.project.dashboard.contract done"
+
+.PHONY: verify.project.dashboard.snapshot
+verify.project.dashboard.snapshot: guard.prod.forbid
+	@python3 scripts/verify/project_dashboard_contract_snapshot_export.py
+	@python3 scripts/verify/project_dashboard_snapshot_schema_guard.py
+	@python3 scripts/verify/project_dashboard_snapshot_freshness_guard.py
+	@python3 scripts/verify/project_dashboard_evidence_export.py
+
+.PHONY: verify.project.dashboard.evidence
+verify.project.dashboard.evidence: guard.prod.forbid
+	@python3 scripts/verify/project_dashboard_evidence_export.py
+
 verify.frontend.intent_channel.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_intent_channel_guard.py
 
