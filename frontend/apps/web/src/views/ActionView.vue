@@ -660,10 +660,23 @@ type SurfaceIntent = {
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
+const menuId = computed(() => Number(route.query.menu_id ?? 0));
+const sceneKey = computed(() => {
+  const metaKey = route.meta?.sceneKey as string | undefined;
+  if (metaKey) return metaKey;
+  const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
+  if (queryKey) return String(queryKey);
+  const node = findMenuNode(session.menuTree, menuId.value);
+  return node ? resolveNodeSceneKey(node) : '';
+});
+const scene = computed<Scene | null>(() => {
+  if (!sceneKey.value) return null;
+  return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
+});
+const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
-const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const contractViewType = ref('');
 const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
@@ -968,19 +981,6 @@ const emptyReasonText = computed(() => {
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
-const sceneKey = computed(() => {
-  const metaKey = route.meta?.sceneKey as string | undefined;
-  if (metaKey) return metaKey;
-  const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
-  if (queryKey) return String(queryKey);
-  const node = findMenuNode(session.menuTree, menuId.value);
-  return node ? resolveNodeSceneKey(node) : '';
-});
-const scene = computed<Scene | null>(() => {
-  if (!sceneKey.value) return null;
-  return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
-});
-const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 const hudEntries = computed(() => [
   { label: 'action_id', value: actionId.value || '-' },
   { label: 'menu_id', value: menuId.value || '-' },
