@@ -99,6 +99,13 @@ async function resolve() {
       return;
     }
     if (result.kind === 'redirect') {
+      if (result.target.scene_key) {
+        await router.replace({
+          path: `/s/${result.target.scene_key}`,
+          query: resolveCarryQuery({ menu_id: result.target.menu_id }),
+        });
+        return;
+      }
       if (result.target.action_id) {
         const policy = evaluateCapabilityPolicy({ source: result.target.meta, available: session.capabilities });
         if (policy.state !== 'enabled') {
@@ -120,13 +127,6 @@ async function resolve() {
           name: 'action',
           params: { actionId: result.target.action_id },
           query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
-        });
-        return;
-      }
-      if (result.target.scene_key) {
-        await router.replace({
-          path: `/s/${result.target.scene_key}`,
-          query: resolveCarryQuery({ menu_id: result.target.menu_id }),
         });
         return;
       }
