@@ -49,11 +49,11 @@
                 'code': 'portal.lifecycle',
                 'name': '生命周期驾驶舱',
                 'version': 'v2',
-                'portal_only': True,
-                'spa_ready': False,
+                'portal_only': False,
+                'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/portal/lifecycle'
+                    'route': '/s/projects.dashboard'
                 }
             }"/>
         </record>
@@ -71,11 +71,11 @@
                 'code': 'portal.capability_matrix',
                 'name': '能力矩阵',
                 'version': 'v2',
-                'portal_only': True,
-                'spa_ready': False,
+                'portal_only': False,
+                'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/portal/capability-matrix'
+                    'route': '/s/project.management'
                 }
             }"/>
         </record>
@@ -93,11 +93,11 @@
                 'code': 'portal.dashboard',
                 'name': '工作台',
                 'version': 'v2',
-                'portal_only': True,
-                'spa_ready': False,
+                'portal_only': False,
+                'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/portal/dashboard'
+                    'route': '/s/projects.list'
                 }
             }"/>
         </record>
