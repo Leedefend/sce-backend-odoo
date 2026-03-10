@@ -119,7 +119,7 @@
                 'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/my-work'
+                    'route': '/s/my_work.workspace'
                 }
             }"/>
         </record>
