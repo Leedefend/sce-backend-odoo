@@ -28,6 +28,8 @@
 - Execution board: `docs/releases/construction_system_v1_execution_board.en.md`
 - Phase 0 execution record: `docs/releases/phase_0_scope_freeze_execution.en.md`
 - Phase 1 checklist: `docs/releases/phase_1_navigation_convergence_checklist.en.md`
+- Phase 1 mapping: `docs/releases/phase_1_navigation_scene_mapping.en.md`
+- Phase 1 convergence report: `docs/releases/phase_1_navigation_convergence_report.en.md`
 - Phase 2 checklist: `docs/releases/phase_2_core_scenarios_closure_checklist.en.md`
 - Phase 3 checklist: `docs/releases/phase_3_role_permission_system_checklist.en.md`
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
