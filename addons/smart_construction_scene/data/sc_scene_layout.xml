@@ -211,11 +211,38 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'risk.center.workspace',
+                    'title': '风险工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
                     'route': '/s/risk.center',
                     'action_xmlid': 'smart_construction_core.action_sc_operating_drill_overpay_risk_pr'
-                }
+                },
+                'list_profile': {
+                    'columns': [
+                        'name',
+                        'state',
+                        'project_id',
+                        'partner_id',
+                        'amount',
+                        'date_request'
+                    ],
+                    'column_labels': {
+                        'name': '风险单号',
+                        'state': '风险状态',
+                        'project_id': '项目',
+                        'partner_id': '往来单位',
+                        'amount': '风险金额',
+                        'date_request': '触发日期'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'project_id'
+                },
+                'default_sort': 'write_date desc'
             }"/>
         </record>
 
