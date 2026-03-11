@@ -7,7 +7,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase | Goal | Status | Key Output |
 |---|---|---|---|
 | Phase 0 | Scope freeze | DONE | `release_scope_v1.en.md` `system_asset_inventory.en.md` `release_gap_analysis.en.md` |
-| Phase 1 | Navigation convergence | TODO | delivery-policy main-nav lock report |
+| Phase 1 | Navigation convergence | DOING | delivery-policy main-nav lock report |
 | Phase 2 | Core scenario closure | TODO | acceptance records for 4 key scenarios |
 | Phase 3 | Role/permission system | TODO | role matrix + ACL/visibility verification |
 | Phase 4 | Frontend stability | TODO | unified page framework and block conventions |
@@ -15,6 +15,8 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 6 | Pilot and launch | TODO | pilot report + v1.0 release record |
 
 ## 2. Current Window (W1)
+
+- Release-branch kickoff record: `docs/releases/phase_0_scope_freeze_execution.en.md`
 
 ### W1 Goals
 - Finish Phase 1 (navigation convergence)
@@ -47,4 +49,3 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 ### Phase 2 -> Phase 3
 - 4 core scenarios demo-ready
 - `project.management` 7-block contract passes verification
-
