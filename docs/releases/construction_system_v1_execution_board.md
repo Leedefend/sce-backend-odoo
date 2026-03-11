@@ -12,7 +12,7 @@
 | Phase 3 | 角色权限体系 | DONE | 角色矩阵 + ACL/可见性校验 + 退出就绪报告 |
 | Phase 4 | 前端体验稳定 | DONE | 页面框架和 block 规范收敛（含 user/hud 与容器 smoke 证据） |
 | Phase 5 | 验证与部署 | DONE | 发布验证包 + 部署文档 + 部署/回滚演练证据 |
-| Phase 6 | 试运行首发 | TODO | 试运行报告 + v1.0 发布记录 |
+| Phase 6 | 试运行首发 | DOING | 试运行启动报告 + v1.0 发布记录 |
 
 ## 2. 当前执行窗口（W1）
 
@@ -76,6 +76,14 @@
 | W5-03 | 部署/演示/验收文档补齐 | P5 | DONE | deploy/demo/UAT 文档齐套 |
 | W5-04 | 部署与回滚演练证据 | P5 | DONE | `make up`/`make mod.install`/`make mod.upgrade`/`make scene.rollback.stable` PASS |
 | W5-05 | 发布结论归档 | P5 | DONE | Phase 5 报告与清单均明确记录“通过” |
+
+### W6-任务（Phase 6 试运行与首发）
+
+| ID | 任务 | Phase | 状态 | 验收标准 |
+|---|---|---|---|---|
+| W6-01 | 试运行组织与样本数据冻结 | P6 | DOING | 角色名单、项目样本、问题提报路径明确 |
+| W6-02 | 核心路径试运行与问题分级闭环 | P6 | TODO | 全链路演练完成且 P0 阻断项清零 |
+| W6-03 | 首发发布与 24h 观测复盘 | P6 | TODO | 发布记录、spot-check、24h 监控结论齐套 |
 
 ## 5. 进入下一阶段条件
 

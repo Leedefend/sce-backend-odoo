@@ -48,3 +48,4 @@ status: active
 - 演示脚本：`docs/demo/system_demo_v1.md`
 - 用户验收清单：`docs/releases/user_acceptance_checklist.md`
 - Phase 6 清单：`docs/releases/phase_6_pilot_launch_checklist.md`
+- Phase 6（执行报告）：`docs/releases/phase_6_pilot_launch_execution_report.md`
