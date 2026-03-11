@@ -16,8 +16,8 @@
 - [ ] 空状态、加载状态、错误状态表现一致
 
 ### B. 区块组件一致性
-- [ ] 7-block 在视觉层次与数据呈现方式上统一
-- [ ] 指标卡、表格、告警组件遵循统一 props/数据契约
+- [x] 7-block 在视觉层次与数据呈现方式上统一
+- [x] 指标卡、表格、告警组件遵循统一 props/数据契约
 - [ ] 区块缺数据时采用统一降级样式与文案
 
 ### C. 交互规范一致性
@@ -32,13 +32,17 @@
 
 ### E. 稳定性与可观测性
 - [ ] 页面关键操作无控制台严重报错
-- [ ] 前端关键 smoke 脚本通过
+- [x] 前端关键 smoke 脚本通过
 - [ ] 关键失败场景可定位（日志/报错信息足够）
 
 ## 4. 建议验证命令
 - `make verify.frontend.build`
 - `make verify.frontend.typecheck.strict`
 - `make verify.frontend.lint.src`
+- `make verify.frontend.page_contract.runtime_universal.guard`
+- `make verify.frontend.page_block_registry_guard`
+- `make verify.frontend.page_renderer_default_guard`
+- `make verify.frontend.page_block_renderer_smoke`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. 交付产物
@@ -49,4 +53,3 @@
 - 清单项全部打勾
 - 核心场景在 user/hud 模式均可稳定演示
 - 执行看板 Phase 4 状态更新为 `DONE`
-
