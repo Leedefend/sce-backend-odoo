@@ -21,3 +21,5 @@ status: active
 - 范围冻结：`docs/releases/release_scope_v1.md`
 - 系统资产盘点：`docs/releases/system_asset_inventory.md`
 - 发布缺口分析：`docs/releases/release_gap_analysis.md`
+- 执行看板：`docs/releases/construction_system_v1_execution_board.md`
+- Phase 1 清单：`docs/releases/phase_1_navigation_convergence_checklist.md`
