@@ -65,3 +65,8 @@
 - Phase 5 verification command chain passes.
 - Evidence artifacts are archived under `artifacts/`.
 
+## 7. Production Simulation (Isolated, Port 80 to Frontend)
+- Use isolated env file: `.env.prod.sim` (dedicated `COMPOSE_PROJECT_NAME`/DB/volumes).
+- Reverse proxy behavior: `80 -> frontend static site`, `/api/* -> Odoo`.
+- One-click deploy command (ready for server use):
+  - `make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim`
