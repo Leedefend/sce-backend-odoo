@@ -62,7 +62,7 @@
 |---|---|---|---|---|
 | W4-01 | 前端页面/区块静态 guard 基线 | P4 | DONE | 9 个 frontend guard 全部 PASS |
 | W4-02 | 构建与类型检查基线 | P4 | DONE | `verify.frontend.build` + `verify.frontend.typecheck.strict` PASS |
-| W4-03 | lint 基线债务收口 | P4 | DOING | `verify.frontend.lint.src` errors 清零 |
+| W4-03 | lint 基线债务收口 | P4 | DONE | `verify.frontend.lint.src` 0 errors（剩余 6 warnings） |
 
 ## 5. 进入下一阶段条件
 

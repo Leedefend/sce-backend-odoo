@@ -473,7 +473,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
+import { completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import { trackUsageEvent } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
@@ -580,7 +580,7 @@ const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const generatedAtText = computed(() => {
   const raw = String(generatedAt.value || '').trim();
   if (!raw) return '';
-  const hasZone = /([zZ]|[+\-]\d{2}:?\d{2})$/.test(raw);
+  const hasZone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(raw);
   const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T');
   const normalized = hasZone ? isoLike : `${isoLike}Z`;
   const dt = new Date(normalized);
@@ -1538,36 +1538,6 @@ function exportRetryFailedCsv() {
   } catch {
     actionFeedback.value = pageText('feedback_export_failed_csv_failed', '导出失败明细 CSV 失败');
     actionFeedbackError.value = true;
-  }
-}
-
-async function completeItem(item: MyWorkRecordItem) {
-  if (!item?.id || !item?.source) return;
-  loading.value = true;
-  actionFeedback.value = '';
-  actionFeedbackError.value = false;
-  retryFailedIds.value = [];
-  retryFailedItems.value = [];
-  retryReasonSummary.value = [];
-  try {
-    const result = await completeMyWorkItem({
-      id: item.id,
-      source: item.source,
-      note: 'Completed from my-work UI.',
-    });
-    const actionHint = resolveSuggestedAction(result.suggested_action, result.reason_code, result.retryable);
-    actionFeedback.value = [result.message || (result.success
-      ? pageText('feedback_todo_done_ok', '待办已完成')
-      : pageText('feedback_todo_done_failed', '完成待办失败')), actionHint]
-      .filter(Boolean)
-      .join(' | ');
-    actionFeedbackError.value = !result.success;
-    await load();
-  } catch (err) {
-    errorText.value = err instanceof Error ? err.message : pageText('error_complete_todo_failed', '完成待办失败');
-    statusError.value = buildStatusError(err, errorText.value);
-  } finally {
-    loading.value = false;
   }
 }
 

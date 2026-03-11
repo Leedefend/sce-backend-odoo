@@ -758,7 +758,6 @@ const capabilityGroupScoreMap = computed(() => {
 });
 const licenseLevelLabel = computed(() => String(productFacts.value?.license?.level || '').trim() || 'unknown');
 const bundleNameLabel = computed(() => String(productFacts.value?.bundle?.name || '').trim() || 'default');
-const showGroupOverview = computed(() => !isDeliveryMode.value && capabilityGroupCards.value.length > 0);
 const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
   return first ? asText(first.key) : '';
@@ -1750,14 +1749,6 @@ function goToMyWork() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
-}
-
-function goToUsageAnalytics() {
-  void trackUsageEvent('workspace.nav_click', {
-    target: 'usage_analytics',
-    from: 'workspace.home',
-  }).catch(() => {});
-  router.push({ path: '/admin/usage-analytics' }).catch(() => {});
 }
 
 async function executeHeroAction(actionKey: string) {

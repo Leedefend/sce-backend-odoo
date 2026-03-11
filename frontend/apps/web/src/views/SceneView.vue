@@ -148,11 +148,6 @@ async function executeHeaderAction(actionKey: string) {
   }
 }
 
-function isScenePlaceholderRoute() {
-  const name = String(route.name || '').toLowerCase();
-  return name === 'scene' || String(route.path || '').startsWith('/scene/');
-}
-
 function resolveRecordId(targetRecord: unknown) {
   if (typeof targetRecord === 'string' && targetRecord.startsWith(':')) {
     const key = targetRecord.slice(1);

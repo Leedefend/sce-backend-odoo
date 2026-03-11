@@ -1,8 +1,8 @@
-# SCEMS v1.0 Phase 4：前端体验稳定执行报告（第一轮）
+# SCEMS v1.0 Phase 4：前端体验稳定执行报告（第二轮）
 
 ## 1. 执行结论
 - 状态：`DOING`
-- 结论：已完成一轮前端稳定性基线验证，静态 guard 与 build/typecheck 通过；lint 存在既有基线问题，暂不在本轮越界修复。
+- 结论：已完成 lint 第一批收口，`verify.frontend.lint.src` errors 清零（剩余 6 条样式顺序 warning）。
 
 ## 2. 本轮验证结果
 
@@ -20,13 +20,12 @@
 ### 2.2 工程质量命令
 - `make verify.frontend.build`：`PASS`
 - `make verify.frontend.typecheck.strict`：`PASS`
-- `make verify.frontend.lint.src`：`FAIL`（23 errors / 6 warnings，属现有基线债务）
+- `make verify.frontend.lint.src`：`PASS`（0 errors / 6 warnings）
 
-## 3. 主要阻塞项
-- lint 报错集中在 `frontend/apps/web/src/` 多个文件，包含：未使用变量、`no-undef`、`no-unsafe-optional-chaining`、少量样式顺序 warning。
-- 本轮以发布计划推进为主，未对既有非本任务代码质量债务做大范围修复。
+## 3. 当前阻塞项
+- 当前仅剩 `vue/attributes-order` warning（6 条），不阻塞 lint 通过。
+- Phase 4 仍需补 user/hud 模式渲染与模式切换稳定性的专项证据。
 
 ## 4. 下一步
-- 进入 Phase 4 第二轮：按“最小扰动”策略分批清理 lint 高优先错误（先 `no-undef` / `no-unsafe-optional-chaining`）。
-- 完成 user/hud 渲染与模式切换的专项 smoke 证据后，再评估 Phase 4 退出。
-
+- 进入 Phase 4 第三轮：补 user/hud 模式渲染与模式切换专项 smoke 证据。
+- 视需要统一处理 `vue/attributes-order` warning 并保持规范一致。

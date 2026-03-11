@@ -1741,7 +1741,7 @@ async function handleGroupedRowsPageChange(group: {
       model: targetModel,
       fields: resolveGroupedPageFields(),
       domain: Array.isArray(group.domain) ? group.domain : [],
-      context: mergeContext(meta.value?.context, resolveEffectiveRequestContext()),
+      context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
       limit: pageLimit,
       offset: nextOffset,
@@ -1798,7 +1798,7 @@ async function hydrateGroupedRowsByOffset() {
           model: targetModel,
           fields,
           domain: Array.isArray(item.domain) ? item.domain : [],
-          context: mergeContext(meta.value?.context, resolveEffectiveRequestContext()),
+          context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
           context_raw: resolveEffectiveRequestContextRaw(),
           limit,
           offset,
@@ -3058,8 +3058,14 @@ async function load() {
     } else if (activeGroupByField.value && !groupWindowIdentityKey.value && routeGroupWindowIdentityKey) {
       syncRouteListState({ group_wik: undefined });
     }
-    records.value = result.data?.records ?? [];
-    groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
+    const resultData = result.data && typeof result.data === 'object'
+      ? (result.data as Record<string, unknown>)
+      : {};
+    records.value = Array.isArray(resultData.records) ? (resultData.records as Array<Record<string, unknown>>) : [];
+    const groupSummaryRows = Array.isArray(resultData.group_summary)
+      ? (resultData.group_summary as Array<Record<string, unknown>>)
+      : [];
+    groupSummaryItems.value = groupSummaryRows
       .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
@@ -3107,13 +3113,17 @@ async function load() {
         : effectiveGroupOffset > 0
           ? Math.max(0, effectiveGroupOffset - Math.max(1, groupSummaryItems.value.length || groupWindowCount.value || 1))
           : null;
-    groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
+    const groupedRowsRaw = Array.isArray(resultData.grouped_rows)
+      ? (resultData.grouped_rows as Array<Record<string, unknown>>)
+      : [];
+    groupedRows.value = groupedRowsRaw
       .map((row) => {
         const item = row as Record<string, unknown>;
-        const fallbackPageSize = Number((result.data as Record<string, unknown> | undefined)?.group_paging
-          && typeof (result.data as Record<string, unknown>).group_paging === 'object'
-          ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>).page_size
-          : 0) || groupSampleLimit.value || 3;
+        const fallbackPageSize = Number(
+          resultData.group_paging && typeof resultData.group_paging === 'object'
+            ? ((resultData.group_paging as Record<string, unknown>).page_size)
+            : 0,
+        ) || groupSampleLimit.value || 3;
         const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
           || pageText('group_label_unset', '未设置');
         const fallbackKey = buildGroupKey(item.field, item.value, label);
@@ -3526,9 +3536,9 @@ function handleDownloadFailedCsv() {
 
 async function handleLoadMoreFailures() {
   if (!lastBatchRequest.value || !batchHasMoreFailures.value) return;
+  const req = lastBatchRequest.value;
   batchBusy.value = true;
   try {
-    const req = lastBatchRequest.value;
     const result = await batchUpdateRecords({
       model: req.model,
       ids: req.ids,

@@ -39,7 +39,6 @@ import { computed, ref, onMounted, watchEffect } from 'vue';
 import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useSessionStore } from '../stores/session';
-import { isDeliveryModeEnabled } from '../config/debug';
 
 const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[] }>();
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
@@ -47,7 +46,6 @@ const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 const session = useSessionStore();
 const expanded = computed(() => new Set(session.menuExpandedKeys));
 const activeParents = ref<Set<string>>(new Set());
-const isDeliveryMode = isDeliveryModeEnabled();
 
 const sorted = computed(() => {
   return [...props.nodes].sort((a, b) => {
