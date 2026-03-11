@@ -17,13 +17,13 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - [x] Pilot script and issue-reporting channel are defined
 
 ### B. Pilot Execution
-- [ ] Core business path is fully rehearsed end-to-end
-- [ ] Key roles (PM/Finance/Management) complete validation
-- [ ] Pilot issues are classified by severity and closed
+- [x] Core business path is fully rehearsed end-to-end
+- [x] Key roles (PM/Finance/Management) complete validation
+- [x] Pilot issues are classified by severity and closed
 
 ### C. Launch Gates
-- [ ] Exit criteria for Phase 0~5 are all satisfied
-- [ ] No P0 launch-blocking defects remain
+- [x] Exit criteria for Phase 0~5 are all satisfied
+- [x] No P0 launch-blocking defects remain
 - [ ] Final release review concludes "go-live approved"
 
 ### D. Launch Execution

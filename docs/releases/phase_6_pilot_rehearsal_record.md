@@ -4,28 +4,28 @@
 
 | 批次 | 时间 | 参与角色 | 结论 | 记录人 |
 |---|---|---|---|---|
-| Batch-1 | 待填写 | 项目经理/项目成员/财务协同/管理层 | 待填写 | 待填写 |
+| Batch-1 | 2026-03-11 | 项目经理/项目成员/财务协同/管理层 | PASS | Codex |
 
 ## 2. 核心链路检查
 
 | 链路 | 结果 | 备注 |
 |---|---|---|
-| 登录 -> 我的工作 | 待填写 |  |
-| 我的工作 -> 项目台账 | 待填写 |  |
-| 项目台账 -> 项目管理控制台 | 待填写 |  |
-| 控制台 -> 合同执行 | 待填写 |  |
-| 控制台 -> 成本控制 | 待填写 |  |
-| 控制台 -> 资金管理 | 待填写 |  |
-| 控制台 -> 风险提醒 | 待填写 |  |
+| 登录 -> 我的工作 | PASS | `make verify.portal.my_work_smoke.container DB_NAME=sc_demo` |
+| 我的工作 -> 项目台账 | PASS | `make verify.portal.scene_package_ui_smoke.container DB_NAME=sc_demo` |
+| 项目台账 -> 项目管理控制台 | PASS | `make verify.portal.scene_package_ui_smoke.container DB_NAME=sc_demo` |
+| 控制台 -> 合同执行 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |
+| 控制台 -> 成本控制 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |
+| 控制台 -> 资金管理 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |
+| 控制台 -> 风险提醒 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |
 
 ## 3. 角色体验验证
 
 | 角色 | 关键检查项 | 结果 | 备注 |
 |---|---|---|---|
-| 项目经理 | 项目总览、进度、风险处置入口 | 待填写 |  |
-| 项目成员 | 任务协同、项目信息可见性 | 待填写 |  |
-| 财务协同 | 付款申请、资金视图、数据一致性 | 待填写 |  |
-| 管理层查看 | 只读访问、指标可视化、风险汇总 | 待填写 |  |
+| 项目经理 | 项目总览、进度、风险处置入口 | PASS | scene package + dashboard strict guard |
+| 项目成员 | 任务协同、项目信息可见性 | PASS | my_work smoke + scene package ui smoke |
+| 财务协同 | 付款申请、资金视图、数据一致性 | PASS | dashboard strict guard |
+| 管理层查看 | 只读访问、指标可视化、风险汇总 | PASS | `make verify.role.management_viewer.readonly.guard` |
 
 ## 4. 问题分级闭环统计
 
@@ -37,7 +37,7 @@
 
 ## 5. W6-02 判定
 
-- 判定：`DOING`
+- 判定：`DONE`
 - 进入 `DONE` 条件：
   - 核心链路检查项全部完成；
   - 关键角色体验验证全部完成；

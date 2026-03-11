@@ -56,6 +56,8 @@
 - Phase 6 (scope definition): `docs/releases/phase_6_pilot_scope_definition.en.md`
 - Phase 6 (rehearsal record): `docs/releases/phase_6_pilot_rehearsal_record.en.md`
 - Phase 6 (issue ledger): `docs/releases/phase_6_issue_ledger.en.md`
+- Launch record: `docs/ops/releases/current/scems_v1_0_launch.en.md`
+- Post-launch review: `docs/releases/scems_v1_0_post_launch_review.en.md`
 
 ## 快速生成/导出（现有 Make 目标）
 ```bash

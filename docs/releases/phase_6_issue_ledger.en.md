@@ -4,7 +4,12 @@
 
 | ID | Time | Scenario | Step | Role | Severity | Symptom | Root Cause | Owner | Status | Closed Time |
 |---|---|---|---|---|---|---|---|---|---|---|
-| P6-001 | TBA | TBA | TBA | TBA | P2 | TBA | pending analysis | unassigned | OPEN | - |
+| P6-001 | 2026-03-11 | W6-02 rehearsal batch | Batch-1 | all roles | P2 | No launch-blocking defect found in first rehearsal; recorded as baseline item | none | release manager | CLOSED | 2026-03-11 |
+
+## Round-1 Conclusion (2026-03-11)
+- Open `P0`: `0`
+- Open `P1`: `0`
+- Launch blockers: none
 
 ## Severity Rules
 - `P0`: launch-blocking or core path unavailable; must be zero before launch.

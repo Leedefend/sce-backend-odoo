@@ -52,3 +52,5 @@ status: active
 - Phase 6（范围定义）：`docs/releases/phase_6_pilot_scope_definition.md`
 - Phase 6（演练记录）：`docs/releases/phase_6_pilot_rehearsal_record.md`
 - Phase 6（问题台账）：`docs/releases/phase_6_issue_ledger.md`
+- 首发发布记录：`docs/ops/releases/current/scems_v1_0_launch.md`
+- 发布后复盘：`docs/releases/scems_v1_0_post_launch_review.md`
