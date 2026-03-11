@@ -9,7 +9,7 @@
 | Phase 0 | 范围冻结 | DONE | `release_scope_v1.md` `system_asset_inventory.md` `release_gap_analysis.md` |
 | Phase 1 | 导航收口 | DONE | delivery policy 主导航锁定报告 |
 | Phase 2 | 核心场景闭环 | DOING | 4 大场景可用性验收记录（workspace 基线已收口） |
-| Phase 3 | 角色权限体系 | TODO | 角色矩阵 + ACL/可见性校验 |
+| Phase 3 | 角色权限体系 | DOING | 角色矩阵 + ACL/可见性校验 |
 | Phase 4 | 前端体验稳定 | TODO | 页面框架和 block 规范收敛 |
 | Phase 5 | 验证与部署 | TODO | 发布验证包 + 部署文档 |
 | Phase 6 | 试运行首发 | TODO | 试运行报告 + v1.0 发布记录 |

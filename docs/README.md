@@ -40,6 +40,8 @@
 - Phase 2 (`risk.center` implementation): `docs/releases/phase_2_risk_center_implementation_report.en.md`
 - Phase 2 (workspace closure report): `docs/releases/phase_2_workspace_closure_report.en.md`
 - Phase 3 checklist: `docs/releases/phase_3_role_permission_system_checklist.en.md`
+- Phase 3 (role-permission matrix): `docs/releases/role_permission_matrix_v1.en.md`
+- Phase 3 (execution report): `docs/releases/phase_3_role_permission_execution_report.en.md`
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
 - Phase 5 checklist: `docs/releases/phase_5_verification_deployment_checklist.en.md`
 - Phase 6 checklist: `docs/releases/phase_6_pilot_launch_checklist.en.md`
