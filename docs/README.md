@@ -38,6 +38,7 @@
 - Phase 2 (`cost.analysis` implementation): `docs/releases/phase_2_cost_analysis_implementation_report.en.md`
 - Phase 2 (`finance.workspace` implementation): `docs/releases/phase_2_finance_workspace_implementation_report.en.md`
 - Phase 2 (`risk.center` implementation): `docs/releases/phase_2_risk_center_implementation_report.en.md`
+- Phase 2 (workspace closure report): `docs/releases/phase_2_workspace_closure_report.en.md`
 - Phase 3 checklist: `docs/releases/phase_3_role_permission_system_checklist.en.md`
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
 - Phase 5 checklist: `docs/releases/phase_5_verification_deployment_checklist.en.md`
