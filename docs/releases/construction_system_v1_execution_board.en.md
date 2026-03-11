@@ -7,8 +7,8 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase | Goal | Status | Key Output |
 |---|---|---|---|
 | Phase 0 | Scope freeze | DONE | `release_scope_v1.en.md` `system_asset_inventory.en.md` `release_gap_analysis.en.md` |
-| Phase 1 | Navigation convergence | DOING | delivery-policy main-nav lock report |
-| Phase 2 | Core scenario closure | TODO | acceptance records for 4 key scenarios |
+| Phase 1 | Navigation convergence | DONE | delivery-policy main-nav lock report |
+| Phase 2 | Core scenario closure | DOING | acceptance records for 4 key scenarios |
 | Phase 3 | Role/permission system | TODO | role matrix + ACL/visibility verification |
 | Phase 4 | Frontend stability | TODO | unified page framework and block conventions |
 | Phase 5 | Verification/deployment | TODO | release verification bundle + deployment docs |
