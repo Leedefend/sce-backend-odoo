@@ -11,12 +11,12 @@
 ## 3. Verification Results
 - `make verify.role.capability_floor.prod_like`: `PASS`
 - `make verify.role.capability_floor.prod_like.schema.guard`: `PASS`
+- `make verify.role.management_viewer.readonly.guard`: `PASS`
 
 ## 4. Current Risks
 - "Project member" is still split across `material_user/cost_user`; semantic unification is pending.
-- "Management viewer" needs dedicated read-only verification.
+- Management read-only now has a first-iteration guard; runtime write-probe coverage still needs expansion.
 
 ## 5. Next
 - Define unified `project_member` role mapping.
-- Add management read-only guard script into Phase 3 verification chain.
-
+- Extend management read-only guard with stronger write-intent runtime probes.

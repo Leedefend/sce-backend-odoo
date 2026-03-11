@@ -41,6 +41,7 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 ## 4. Suggested Verification Commands
 - `make verify.role.capability_floor.prod_like`
 - `make verify.role.capability_floor.prod_like.schema.guard`
+- `make verify.role.management_viewer.readonly.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 
@@ -53,4 +54,3 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 - All checklist items complete
 - Core role paths pass verification (PM, Finance, Management Viewer)
 - Execution board Phase 3 is updated to `DONE`
-
