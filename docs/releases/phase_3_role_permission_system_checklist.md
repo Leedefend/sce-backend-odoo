@@ -25,13 +25,13 @@
 
 ### C. Capability 与 Block 可见性
 - [x] 核心 capability 按角色矩阵可控
-- [ ] `project.management` 的 7-block 可按角色做可见/只读控制
+- [x] `project.management` 的 7-block 可按角色做可见/只读控制
 - [x] 未授权 capability 在 contract 中应被拒绝或降级
 
 ### D. 场景与路由权限
 - [x] 主导航场景按角色显示一致
-- [ ] 无权限场景返回规范 reason_code（非空白页）
-- [ ] 深链访问（deep link）遵循同等权限策略
+- [x] 无权限场景返回规范 reason_code（非空白页）
+- [x] 深链访问（deep link）遵循同等权限策略
 
 ### E. 演示账号与证据
 - [x] prod-like 角色账号齐备并可登录
@@ -48,6 +48,8 @@
 - `make verify.relation.access_policy.consistency.audit`
 - `make verify.portal.role_scene_navigation_guard`
 - `make verify.scene.contract.shape`
+- `make verify.project.dashboard.role_runtime.guard`
+- `make verify.scene.permission_reasoncode_deeplink.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 
