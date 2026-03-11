@@ -1,8 +1,8 @@
-# SCEMS v1.0 Phase 4：前端体验稳定执行报告（第二轮）
+# SCEMS v1.0 Phase 4：前端体验稳定执行报告（第三轮）
 
 ## 1. 执行结论
 - 状态：`DOING`
-- 结论：已完成 lint 第一批收口，`verify.frontend.lint.src` errors 清零（剩余 6 条样式顺序 warning）。
+- 结论：已补齐 user/hud 跨模式稳定性证据，模式相关专项验证全部通过。
 
 ## 2. 本轮验证结果
 
@@ -22,10 +22,16 @@
 - `make verify.frontend.typecheck.strict`：`PASS`
 - `make verify.frontend.lint.src`：`PASS`（0 errors / 6 warnings）
 
+### 2.3 跨模式（user/hud）专项
+- `make verify.frontend.runtime_navigation_hud.guard`：`PASS`
+- `make verify.page_contract.role_orchestration_variance.guard`：`PASS`
+- `make verify.scene.hud.trace.smoke`：`PASS`
+- `make verify.scene.meta.trace.smoke`：`PASS`
+
 ## 3. 当前阻塞项
 - 当前仅剩 `vue/attributes-order` warning（6 条），不阻塞 lint 通过。
 - Phase 4 仍需补 user/hud 模式渲染与模式切换稳定性的专项证据。
 
 ## 4. 下一步
-- 进入 Phase 4 第三轮：补 user/hud 模式渲染与模式切换专项 smoke 证据。
+- 推进页面框架与交互规范剩余项（A/C），补“控制台严重报错”专项证据。
 - 视需要统一处理 `vue/attributes-order` warning 并保持规范一致。
