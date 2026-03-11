@@ -68,7 +68,7 @@ BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {
     ),
 }
 SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
-_SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "data": {}}
+_SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "payload": {}}
 
 
 def _to_bool(value: Any, default: bool = False) -> bool:
@@ -86,6 +86,13 @@ def _to_bool(value: Any, default: bool = False) -> bool:
 def _normalize_surface(value: Any) -> str:
     text = str(value or "").strip().lower()
     return text or "default"
+
+
+def _coerce_surface_input(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    if text in {"", "false", "none", "null", "0"}:
+        return ""
+    return text
 
 
 def _is_internal_surface(surface: str) -> bool:
@@ -144,7 +151,7 @@ def _resolve_policy_file_path() -> str | None:
     return None
 
 
-def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
+def _load_surface_policy_payload_from_file() -> dict:
     path = _resolve_policy_file_path()
     if not path:
         return {}
@@ -155,12 +162,21 @@ def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
     cached_path = str(_SURFACE_POLICY_CACHE.get("path") or "")
     cached_mtime = float(_SURFACE_POLICY_CACHE.get("mtime") or -1.0)
     if cached_path == path and cached_mtime == mtime:
-        cached_data = _SURFACE_POLICY_CACHE.get("data")
-        return cached_data if isinstance(cached_data, dict) else {}
+        cached_payload = _SURFACE_POLICY_CACHE.get("payload")
+        return cached_payload if isinstance(cached_payload, dict) else {}
     try:
         payload = json.loads(open(path, "r", encoding="utf-8").read() or "{}")
     except Exception:
         return {}
+    normalized = payload if isinstance(payload, dict) else {}
+    _SURFACE_POLICY_CACHE["path"] = path
+    _SURFACE_POLICY_CACHE["mtime"] = mtime
+    _SURFACE_POLICY_CACHE["payload"] = normalized
+    return normalized
+
+
+def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
+    payload = _load_surface_policy_payload_from_file()
     surfaces = payload.get("surfaces") if isinstance(payload.get("surfaces"), dict) else {}
     out = {}
     for surface_key, policy in surfaces.items():
@@ -176,10 +192,14 @@ def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
                 "nav_allowlist": nav_allowlist,
                 "deep_link_allowlist": deep_link_allowlist,
             }
-    _SURFACE_POLICY_CACHE["path"] = path
-    _SURFACE_POLICY_CACHE["mtime"] = mtime
-    _SURFACE_POLICY_CACHE["data"] = out
     return out
+
+
+def _resolve_default_surface_from_file() -> str:
+    payload = _load_surface_policy_payload_from_file()
+    raw = payload.get("default_surface") if isinstance(payload, dict) else ""
+    value = _normalize_surface(raw)
+    return value if value and value != "default" else ""
 
 
 def _select_surface_policy(surface: str) -> dict:
@@ -249,18 +269,19 @@ def resolve_delivery_policy_runtime(env, params: dict | None) -> dict:
 
     surface = ""
     if isinstance(params, dict):
-        surface = str(params.get("scene_surface") or params.get("surface") or "").strip()
+        surface = _coerce_surface_input(params.get("scene_surface") or params.get("surface"))
     if not surface:
         try:
-            surface = str(
+            surface = _coerce_surface_input(
                 env["ir.config_parameter"].sudo().get_param("sc.scene.delivery.surface.default") if env is not None else ""
-            ).strip()
+            )
         except Exception:
             surface = ""
     if not surface:
-        surface = str(os.environ.get("SCENE_DELIVERY_SURFACE") or "").strip()
+        surface = _coerce_surface_input(os.environ.get("SCENE_DELIVERY_SURFACE"))
     if not surface:
-        surface = SURFACE_POLICY_CONSTRUCTION_PM_V1 if bool(enabled) else "default"
+        file_default = _resolve_default_surface_from_file() if bool(enabled) else ""
+        surface = file_default or (SURFACE_POLICY_CONSTRUCTION_PM_V1 if bool(enabled) else "default")
 
     runtime_env = str(os.environ.get("ENV") or "dev").strip().lower() or "dev"
     return {
