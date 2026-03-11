@@ -14,6 +14,10 @@
 - `make verify.role.management_viewer.readonly.guard`: `PASS`
 - `make verify.role.project_member.unification.guard`: `PASS`
 - `make verify.role.system_admin.minimum_permission_audit.guard`: `PASS`
+- `make verify.role.acl.minimum_set.guard`: `PASS`
+- `make verify.relation.access_policy.consistency.audit`: `PASS`
+- `make verify.portal.role_scene_navigation_guard`: `PASS`
+- `make verify.scene.contract.shape`: `PASS`
 
 ## 4. Current Risks
 - Management read-only now has a first-iteration guard; runtime write-probe coverage still needs expansion.
@@ -21,3 +25,4 @@
 ## 5. Next
 - Extend management read-only guard with stronger write-intent runtime probes.
 - Close ACL/record-rule per-model evidence and move toward Phase 3 exit acceptance.
+- Add three runtime-focused acceptances: 7-block role visibility/readonly, unauthorized-scene reason-code, deep-link policy equivalence.

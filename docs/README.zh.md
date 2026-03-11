@@ -39,6 +39,7 @@ status: active
 - Phase 3（角色权限矩阵）：`docs/releases/role_permission_matrix_v1.md`
 - Phase 3（执行报告）：`docs/releases/phase_3_role_permission_execution_report.md`
 - Phase 3（系统管理员最小权限审计）：`docs/releases/phase_3_system_admin_minimum_permission_audit_report.md`
+- Phase 3（退出就绪度）：`docs/releases/phase_3_exit_readiness_report.md`
 - Phase 4 清单：`docs/releases/phase_4_frontend_stability_checklist.md`
 - Phase 5 清单：`docs/releases/phase_5_verification_deployment_checklist.md`
 - Phase 6 清单：`docs/releases/phase_6_pilot_launch_checklist.md`

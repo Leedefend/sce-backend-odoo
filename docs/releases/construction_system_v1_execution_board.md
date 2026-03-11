@@ -48,6 +48,14 @@
 | W2-02 | 统一 project_member 角色映射 | P3 | DONE | `verify.role.project_member.unification.guard` PASS |
 | W2-03 | 系统管理员最小权限审计报告 | P3 | DONE | `verify.role.system_admin.minimum_permission_audit.guard` PASS |
 
+### W3-任务（Phase 3 退出收口）
+
+| ID | 任务 | Phase | 状态 | 验收标准 |
+|---|---|---|---|---|
+| W3-01 | ACL 最小权限集 guard | P3 | DONE | `verify.role.acl.minimum_set.guard` PASS |
+| W3-02 | 关系访问策略一致性审计 | P3 | DONE | `verify.relation.access_policy.consistency.audit` PASS |
+| W3-03 | 三项运行时专项补齐 | P3 | DOING | 7-block/scene reason_code/deep-link 一致性通过 |
+
 ## 5. 进入下一阶段条件
 
 ### Phase 1 -> Phase 2
