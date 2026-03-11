@@ -31,6 +31,9 @@
 - Phase 1 mapping: `docs/releases/phase_1_navigation_scene_mapping.en.md`
 - Phase 1 convergence report: `docs/releases/phase_1_navigation_convergence_report.en.md`
 - Phase 2 checklist: `docs/releases/phase_2_core_scenarios_closure_checklist.en.md`
+- Phase 2 W1 (7-block verify): `docs/releases/phase_2_w1_project_management_7block_verify_report.en.md`
+- Phase 2 W1 (my-work minimum loop): `docs/releases/phase_2_w1_my_work_minimum_loop_report.en.md`
+- Phase 2 W1 (ledger-to-management route): `docs/releases/phase_2_w1_ledger_to_management_route_report.en.md`
 - Phase 3 checklist: `docs/releases/phase_3_role_permission_system_checklist.en.md`
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
 - Phase 5 checklist: `docs/releases/phase_5_verification_deployment_checklist.en.md`
