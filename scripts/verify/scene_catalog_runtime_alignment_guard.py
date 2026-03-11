@@ -36,6 +36,21 @@ def _extract_scene_count(payload: dict) -> int:
     return len(scenes)
 
 
+def _extract_scene_codes(payload: dict) -> set[str]:
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    if isinstance(data.get("data"), dict):
+        data = data.get("data") or data
+    scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+    out: set[str] = set()
+    for item in scenes:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code") or item.get("scene_key") or item.get("key") or "").strip()
+        if code:
+            out.add(code)
+    return out
+
+
 def _login_token(intent_url: str, db_name: str, login: str, password: str) -> str:
     status, login_resp = http_post_json(
         intent_url,
@@ -128,13 +143,45 @@ def main() -> None:
     intent_url = f"{base_url}/api/v1/intent"
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
     probe_login, token, probe_source = _login_token_with_fallback(intent_url, db_name)
+    init_params = {
+        "contract_mode": "hud",
+        "scene_delivery_policy_enabled": False,
+    }
     status, init_resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "hud"}},
+        {"intent": "system.init", "params": init_params},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init hud")
-    runtime_scene_count = _extract_scene_count(init_resp)
+    runtime_scene_codes = _extract_scene_codes(init_resp)
+    runtime_scene_count = len(runtime_scene_codes) or _extract_scene_count(init_resp)
+
+    runtime_aggregate_source = "single_probe"
+    runtime_probe_success_count = 1
+    if probe_source == "prod_like_baseline":
+        prod_like_logins = _load_prod_like_logins()
+        if prod_like_logins:
+            prod_like_password = str(os.getenv("E2E_PROD_LIKE_PASSWORD") or "prod_like").strip()
+            aggregate_codes: set[str] = set()
+            success_count = 0
+            for login in prod_like_logins:
+                try:
+                    login_token = _login_token(intent_url, db_name, login, prod_like_password)
+                    st_i, init_i = http_post_json(
+                        intent_url,
+                        {"intent": "system.init", "params": init_params},
+                        headers={"Authorization": f"Bearer {login_token}"},
+                    )
+                    require_ok(st_i, init_i, f"system.init hud ({login})")
+                    aggregate_codes.update(_extract_scene_codes(init_i))
+                    success_count += 1
+                except Exception:
+                    continue
+            if success_count > 0 and aggregate_codes:
+                runtime_scene_codes = aggregate_codes
+                runtime_scene_count = len(runtime_scene_codes)
+                runtime_aggregate_source = "prod_like_union"
+                runtime_probe_success_count = success_count
 
     ratio = 0.0
     if runtime_scene_count > 0:
@@ -181,6 +228,8 @@ def main() -> None:
             "catalog_runtime_ratio": ratio,
             "probe_login": probe_login,
             "probe_source": probe_source,
+            "runtime_aggregate_source": runtime_aggregate_source,
+            "runtime_probe_success_count": runtime_probe_success_count,
             "error_count": len(errors),
         },
         "errors": errors,
@@ -197,6 +246,8 @@ def main() -> None:
         f"- catalog_runtime_ratio: {ratio}",
         f"- probe_login: {probe_login}",
         f"- probe_source: {probe_source}",
+        f"- runtime_aggregate_source: {runtime_aggregate_source}",
+        f"- runtime_probe_success_count: {runtime_probe_success_count}",
         f"- error_count: {len(errors)}",
     ]
     if errors:
