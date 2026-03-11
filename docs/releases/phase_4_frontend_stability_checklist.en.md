@@ -26,14 +26,14 @@ Unify page framework, block components, and interaction conventions to make V1 f
 - [ ] Search/filter/sort feedback is consistent (no silent failures)
 
 ### D. Cross-Mode Consistency (user/hud)
-- [ ] Key pages render in both user and hud modes
-- [ ] contract_mode differences are explainable and non-breaking
-- [ ] No critical component loss after mode switch
+- [x] Key pages render in both user and hud modes
+- [x] contract_mode differences are explainable and non-breaking
+- [x] No critical component loss after mode switch
 
 ### E. Stability and Observability
 - [ ] No severe frontend console errors during key operations
 - [x] Key frontend smoke scripts pass
-- [ ] Critical failures are diagnosable (sufficient logs/errors)
+- [x] Critical failures are diagnosable (sufficient logs/errors)
 
 ## 4. Suggested Verification Commands
 - `make verify.frontend.build`
@@ -43,6 +43,10 @@ Unify page framework, block components, and interaction conventions to make V1 f
 - `make verify.frontend.page_block_registry_guard`
 - `make verify.frontend.page_renderer_default_guard`
 - `make verify.frontend.page_block_renderer_smoke`
+- `make verify.frontend.runtime_navigation_hud.guard`
+- `make verify.page_contract.role_orchestration_variance.guard`
+- `make verify.scene.hud.trace.smoke`
+- `make verify.scene.meta.trace.smoke`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. Deliverables

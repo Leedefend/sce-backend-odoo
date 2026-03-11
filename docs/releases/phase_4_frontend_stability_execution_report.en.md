@@ -1,8 +1,8 @@
-# SCEMS v1.0 Phase 4: Frontend Stability Execution Report (Round 2)
+# SCEMS v1.0 Phase 4: Frontend Stability Execution Report (Round 3)
 
 ## 1. Summary
 - Status: `DOING`
-- Conclusion: first lint closeout batch is completed; `verify.frontend.lint.src` now has zero errors (6 style-order warnings remain).
+- Conclusion: user/hud cross-mode stability evidence is now in place and all mode-focused checks pass.
 
 ## 2. Verification Results
 
@@ -22,10 +22,16 @@
 - `make verify.frontend.typecheck.strict`: `PASS`
 - `make verify.frontend.lint.src`: `PASS` (0 errors / 6 warnings)
 
+### 2.3 Cross-mode (user/hud) checks
+- `make verify.frontend.runtime_navigation_hud.guard`: `PASS`
+- `make verify.page_contract.role_orchestration_variance.guard`: `PASS`
+- `make verify.scene.hud.trace.smoke`: `PASS`
+- `make verify.scene.meta.trace.smoke`: `PASS`
+
 ## 3. Current Blockers
 - Remaining lint items are only `vue/attributes-order` warnings (6 occurrences), not blocking lint pass.
 - Phase 4 still needs dedicated user/hud render and mode-switch stability evidence.
 
 ## 4. Next
-- Move to Phase 4 round 3: add user/hud render and mode-switch smoke evidence.
+- Continue with remaining page-framework and interaction-consistency items (A/C), and add severe-console-error evidence.
 - Optionally normalize `vue/attributes-order` warnings for style consistency.

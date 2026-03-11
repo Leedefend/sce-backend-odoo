@@ -26,14 +26,14 @@
 - [ ] 搜索、筛选、排序反馈一致（无无响应状态）
 
 ### D. 跨模式一致性（user/hud）
-- [ ] user 与 hud 模式下关键页面可渲染
-- [ ] contract_mode 差异可解释且无破坏性偏差
-- [ ] 页面在模式切换后无关键组件丢失
+- [x] user 与 hud 模式下关键页面可渲染
+- [x] contract_mode 差异可解释且无破坏性偏差
+- [x] 页面在模式切换后无关键组件丢失
 
 ### E. 稳定性与可观测性
 - [ ] 页面关键操作无控制台严重报错
 - [x] 前端关键 smoke 脚本通过
-- [ ] 关键失败场景可定位（日志/报错信息足够）
+- [x] 关键失败场景可定位（日志/报错信息足够）
 
 ## 4. 建议验证命令
 - `make verify.frontend.build`
@@ -43,6 +43,10 @@
 - `make verify.frontend.page_block_registry_guard`
 - `make verify.frontend.page_renderer_default_guard`
 - `make verify.frontend.page_block_renderer_smoke`
+- `make verify.frontend.runtime_navigation_hud.guard`
+- `make verify.page_contract.role_orchestration_variance.guard`
+- `make verify.scene.hud.trace.smoke`
+- `make verify.scene.meta.trace.smoke`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. 交付产物

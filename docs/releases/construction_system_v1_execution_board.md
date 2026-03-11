@@ -63,6 +63,8 @@
 | W4-01 | 前端页面/区块静态 guard 基线 | P4 | DONE | 9 个 frontend guard 全部 PASS |
 | W4-02 | 构建与类型检查基线 | P4 | DONE | `verify.frontend.build` + `verify.frontend.typecheck.strict` PASS |
 | W4-03 | lint 基线债务收口 | P4 | DONE | `verify.frontend.lint.src` 0 errors（剩余 6 warnings） |
+| W4-04 | user/hud 跨模式稳定性专项 | P4 | DONE | hud 导航/编排方差/trace smoke 全 PASS |
+| W4-05 | 页面框架与交互规范收口 | P4 | DOING | A/C 类检查项完成并可演示 |
 
 ## 5. 进入下一阶段条件
 
