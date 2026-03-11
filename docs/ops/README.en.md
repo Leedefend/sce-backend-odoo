@@ -3,6 +3,7 @@
 This directory hosts release, verification, and operational governance documentation.
 
 ## Primary Entry Points
+- prod-sim isolation runbook: `docs/ops/runbook_prod_sim_isolation.en.md`
 - Release evidence directory: `docs/ops/releases/`
 - Verification entry (including strict/compat modes): `docs/ops/verify/README.md`
 - Baseline freeze policy: `docs/ops/baseline_freeze_policy.en.md`

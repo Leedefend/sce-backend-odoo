@@ -348,6 +348,8 @@ help:
 	@echo "Targets:"
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
 	@echo "  make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim"
+	@echo "  make verify.prod.sim.isolation   # prod-sim 一键隔离验证"
+	@echo "  make verify.prod.sim.isolation.quick   # prod-sim 快速隔离验证（不reset）"
 	@echo "  make db.reset DB=<name> | demo.reset DB=<name> | gate.demo"
 	@echo "  make verify.platform_baseline|verify.business_baseline|verify.baseline.all DB_NAME=<name>"
 	@echo "  make gate.platform_baseline|gate.business_baseline|gate.baseline.all DB_NAME=<name>"
@@ -2068,6 +2070,53 @@ verify.ui.surface.stability.ready: guard.prod.forbid
 verify.delivery.simulation.ready: guard.prod.forbid
 	@python3 scripts/verify/delivery_simulation_ready.py
 
+# prod-sim 全量隔离验证：适合发布前/环境漂移后（会重置并重建 sc_prod_sim）
+.PHONY: verify.prod.sim.isolation
+verify.prod.sim.isolation: guard.prod.forbid
+	@echo "[verify.prod.sim.isolation] step=up"
+	@$(MAKE) up \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation] step=demo.reset"
+	@$(MAKE) demo.reset CODEX_MODE=gate \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation] step=odoo.recreate"
+	@$(MAKE) odoo.recreate \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation] step=wait.odoo.ready"
+	@bash -lc 'for i in $$(seq 1 30); do \
+	  if curl -fsS --max-time 2 http://127.0.0.1:18069/web/login >/dev/null 2>/dev/null; then exit 0; fi; \
+	  sleep 2; \
+	done; \
+	echo "❌ odoo not ready on :18069"; exit 2'
+	@echo "[verify.prod.sim.isolation] step=delivery.simulation.ready"
+	@E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo \
+	$(MAKE) verify.delivery.simulation.ready \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim
+	@echo "[verify.prod.sim.isolation] PASS"
+
+# prod-sim 快速隔离回归：适合日常联调（不 reset，仅健康检查 + e2e 验证）
+.PHONY: verify.prod.sim.isolation.quick
+verify.prod.sim.isolation.quick: guard.prod.forbid
+	@echo "[verify.prod.sim.isolation.quick] step=up"
+	@$(MAKE) up \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation.quick] step=wait.odoo.ready"
+	@bash -lc 'for i in $$(seq 1 30); do \
+	  if curl -fsS --max-time 2 http://127.0.0.1:18069/web/login >/dev/null 2>/dev/null; then exit 0; fi; \
+	  sleep 2; \
+	done; \
+	echo "❌ odoo not ready on :18069"; exit 2'
+	@echo "[verify.prod.sim.isolation.quick] step=delivery.simulation.ready"
+	@E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo \
+	$(MAKE) verify.delivery.simulation.ready \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim
+	@echo "[verify.prod.sim.isolation.quick] PASS"
+
+
 .PHONY: verify.product.delivery.gap
 verify.product.delivery.gap: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_gap_report.py
@@ -2821,3 +2870,4 @@ cn.help:
 	@echo "  - 确保已安装 Continue CLI: npm install -g @continuedev/cli"
 
 .PHONY: cn.p cn.p.stdin cn.tui cn.test cn.help guard.cn.prompt
+
