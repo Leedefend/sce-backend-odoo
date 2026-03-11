@@ -92,6 +92,20 @@ def _session_auth(base_url: str, db_name: str, login: str, password: str) -> Coo
     return jar
 
 
+def _session_auth_with_fallback(base_url: str, db_name: str, login: str, password_candidates: list[str]) -> tuple[CookieJar, str]:
+    last_error = ""
+    for candidate in password_candidates:
+        pwd = str(candidate or "").strip()
+        if not pwd:
+            continue
+        try:
+            return _session_auth(base_url, db_name, login, pwd), pwd
+        except Exception as exc:
+            last_error = str(exc)
+            continue
+    raise RuntimeError(last_error or "admin session auth failed")
+
+
 def _call_kw(
     base_url: str,
     cookie_jar: CookieJar,
@@ -278,7 +292,16 @@ def main() -> int:
 
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
     admin_login = str(os.getenv("E2E_ADMIN_LOGIN") or os.getenv("E2E_LOGIN") or "admin").strip()
-    admin_password = str(os.getenv("E2E_ADMIN_PASSWORD") or os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
+    admin_password_candidates: list[str] = []
+    for item in (
+        os.getenv("E2E_ADMIN_PASSWORD"),
+        os.getenv("E2E_PASSWORD"),
+        os.getenv("ADMIN_PASSWD"),
+        "admin",
+    ):
+        text = str(item or "").strip()
+        if text and text not in admin_password_candidates:
+            admin_password_candidates.append(text)
     fixture_password = str(os.getenv("E2E_PROD_LIKE_PASSWORD") or baseline.get("fixture_password") or "prod_like").strip()
     base_url = get_base_url()
     intent_url = f"{base_url}/api/v1/intent"
@@ -293,7 +316,7 @@ def main() -> int:
     errors: list[str] = []
     rows: list[dict] = []
     try:
-        admin_session = _session_auth(base_url, db_name, admin_login, admin_password)
+        admin_session, _ = _session_auth_with_fallback(base_url, db_name, admin_login, admin_password_candidates)
     except Exception as exc:
         print("[role_capability_floor_prod_like] FAIL")
         print(f"admin session setup failed: {exc}")
