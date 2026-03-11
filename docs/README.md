@@ -53,6 +53,7 @@
 - User acceptance checklist: `docs/releases/user_acceptance_checklist.en.md`
 - Phase 6 checklist: `docs/releases/phase_6_pilot_launch_checklist.en.md`
 - Phase 6 (execution report): `docs/releases/phase_6_pilot_launch_execution_report.en.md`
+- Phase 6 (scope definition): `docs/releases/phase_6_pilot_scope_definition.en.md`
 
 ## 快速生成/导出（现有 Make 目标）
 ```bash

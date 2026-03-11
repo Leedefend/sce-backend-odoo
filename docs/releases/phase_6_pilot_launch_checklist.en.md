@@ -12,9 +12,9 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 ## 3. Required Items
 
 ### A. Pilot Preparation
-- [ ] Pilot scope, org units, and role participants are defined
-- [ ] Pilot data set is ready (project/contract/cost/fund/risk samples)
-- [ ] Pilot script and issue-reporting channel are defined
+- [x] Pilot scope, org units, and role participants are defined
+- [x] Pilot data set is ready (project/contract/cost/fund/risk samples)
+- [x] Pilot script and issue-reporting channel are defined
 
 ### B. Pilot Execution
 - [ ] Core business path is fully rehearsed end-to-end
@@ -50,4 +50,3 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - All checklist items complete
 - v1.0 launch completed and auditable
 - Execution board Phase 6 updated to `DONE`
-
