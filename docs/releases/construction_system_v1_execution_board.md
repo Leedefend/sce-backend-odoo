@@ -46,7 +46,7 @@
 |---|---|---|---|---|
 | W2-01 | 建立管理层只读 guard | P3 | DONE | `verify.role.management_viewer.readonly.guard` PASS |
 | W2-02 | 统一 project_member 角色映射 | P3 | DONE | `verify.role.project_member.unification.guard` PASS |
-| W2-03 | 系统管理员最小权限审计报告 | P3 | DOING | 形成独立报告并可复现 |
+| W2-03 | 系统管理员最小权限审计报告 | P3 | DONE | `verify.role.system_admin.minimum_permission_audit.guard` PASS |
 
 ## 5. 进入下一阶段条件
 

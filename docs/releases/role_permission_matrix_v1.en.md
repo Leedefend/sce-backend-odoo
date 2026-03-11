@@ -46,4 +46,4 @@ Define the V1 role-permission baseline across ACL, record rules, capabilities, a
 
 ## 5. Pending Improvements
 - Add explicit read-only verification for management viewer.
-- Add release-time minimum-permission audit for system admin.
+- Extend management-viewer read-only checks from contract-level to runtime write-intent probes.

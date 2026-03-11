@@ -13,11 +13,11 @@
 - `make verify.role.capability_floor.prod_like.schema.guard`：`PASS`
 - `make verify.role.management_viewer.readonly.guard`：`PASS`
 - `make verify.role.project_member.unification.guard`：`PASS`
+- `make verify.role.system_admin.minimum_permission_audit.guard`：`PASS`
 
 ## 4. 当前风险
 - 管理层只读约束已接入第一版 guard，后续需扩展到写意图运行时探测。
-- 系统管理员发布态最小权限审计尚未形成独立报告。
 
 ## 5. 下一步
 - 扩展管理层只读 guard 到更强的写操作探测样例。
-- 产出系统管理员最小权限审计报告并收口 Phase 3 退出条件。
+- 收口 ACL / record rule 的逐模型证据，并推进 Phase 3 退出验收。

@@ -43,6 +43,7 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 - `make verify.role.capability_floor.prod_like.schema.guard`
 - `make verify.role.management_viewer.readonly.guard`
 - `make verify.role.project_member.unification.guard`
+- `make verify.role.system_admin.minimum_permission_audit.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 

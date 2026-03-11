@@ -46,7 +46,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 |---|---|---|---|---|
 | W2-01 | Add management-viewer readonly guard | P3 | DONE | `verify.role.management_viewer.readonly.guard` PASS |
 | W2-02 | Unify `project_member` role mapping | P3 | DONE | `verify.role.project_member.unification.guard` PASS |
-| W2-03 | Add system-admin minimum-permission audit report | P3 | DOING | dedicated report exists and reproducible |
+| W2-03 | Add system-admin minimum-permission audit report | P3 | DONE | `verify.role.system_admin.minimum_permission_audit.guard` PASS |
 
 ## 5. Phase Entry Criteria
 

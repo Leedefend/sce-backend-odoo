@@ -13,11 +13,11 @@
 - `make verify.role.capability_floor.prod_like.schema.guard`: `PASS`
 - `make verify.role.management_viewer.readonly.guard`: `PASS`
 - `make verify.role.project_member.unification.guard`: `PASS`
+- `make verify.role.system_admin.minimum_permission_audit.guard`: `PASS`
 
 ## 4. Current Risks
 - Management read-only now has a first-iteration guard; runtime write-probe coverage still needs expansion.
-- A dedicated release-time minimum-permission audit report for system administrator is still pending.
 
 ## 5. Next
 - Extend management read-only guard with stronger write-intent runtime probes.
-- Produce system-admin minimum-permission audit evidence and close Phase 3 exit criteria.
+- Close ACL/record-rule per-model evidence and move toward Phase 3 exit acceptance.
