@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import json
+import os
+import tempfile
+
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.core.scene_delivery_policy import (
@@ -103,3 +107,36 @@ class TestSceneDeliveryPolicy(TransactionCase):
         self.assertSetEqual(deep_link_codes, {"projects.ledger"})
         self.assertGreaterEqual(int(reason_counts.get(REASON_SCENE_DELIVERY_DEEP_LINK_ONLY, 0)), 1)
         self.assertGreaterEqual(int(reason_counts.get(REASON_SCENE_SURFACE_MISMATCH, 0)), 1)
+
+    def test_runtime_uses_policy_file_default_surface(self):
+        fd, path = tempfile.mkstemp(prefix="scene_delivery_policy_", suffix=".json")
+        os.close(fd)
+        payload = {
+            "version": "v1",
+            "default_surface": "construction_exec_v1",
+            "surfaces": {
+                "construction_exec_v1": {
+                    "nav_allowlist": ["projects.dashboard"],
+                    "deep_link_allowlist": [],
+                }
+            },
+        }
+        old = os.environ.get("SCENE_DELIVERY_POLICY_FILE")
+        try:
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(json.dumps(payload, ensure_ascii=False))
+            os.environ["SCENE_DELIVERY_POLICY_FILE"] = path
+            runtime = resolve_delivery_policy_runtime(
+                None,
+                {"scene_delivery_policy_enabled": True},
+            )
+            self.assertEqual(runtime.get("surface"), "construction_exec_v1")
+        finally:
+            if old is None:
+                os.environ.pop("SCENE_DELIVERY_POLICY_FILE", None)
+            else:
+                os.environ["SCENE_DELIVERY_POLICY_FILE"] = old
+            try:
+                os.remove(path)
+            except Exception:
+                pass

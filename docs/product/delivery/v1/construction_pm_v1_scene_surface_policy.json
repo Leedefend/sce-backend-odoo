@@ -1,5 +1,6 @@
 {
   "version": "v1",
+  "default_surface": "construction_pm_v1",
   "surfaces": {
     "construction_pm_v1": {
       "nav_allowlist": [
