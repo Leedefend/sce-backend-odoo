@@ -26,6 +26,7 @@
 - System asset inventory: `docs/releases/system_asset_inventory.en.md`
 - Release gap analysis: `docs/releases/release_gap_analysis.en.md`
 - Execution board: `docs/releases/construction_system_v1_execution_board.en.md`
+- Phase 0 execution record: `docs/releases/phase_0_scope_freeze_execution.en.md`
 - Phase 1 checklist: `docs/releases/phase_1_navigation_convergence_checklist.en.md`
 - Phase 2 checklist: `docs/releases/phase_2_core_scenarios_closure_checklist.en.md`
 - Phase 3 checklist: `docs/releases/phase_3_role_permission_system_checklist.en.md`
