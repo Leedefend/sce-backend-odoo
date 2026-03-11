@@ -10,7 +10,7 @@ docker run --rm \
   -v "${ROOT_DIR}:/workspace" \
   -w /workspace/frontend \
   node:20-alpine \
-  sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= pnpm build"
+  sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=${DB_NAME} VITE_APP_ENV=prod-sim pnpm build"
 
 log "prod-sim deploy: validate compose manifest"
 # shellcheck disable=SC2086
