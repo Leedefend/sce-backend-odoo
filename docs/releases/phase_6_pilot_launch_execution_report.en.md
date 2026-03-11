@@ -10,8 +10,8 @@
 - Pilot objective: validate that the core business chain is executable, observable, and rollback-ready.
 
 ## 3. Current Task Status (W6)
-- `W6-01`: in progress (freeze org scope and sample data set).
-- `W6-02`: pending (core-path pilot run and severity-based closure).
+- `W6-01`: completed (`docs/releases/phase_6_pilot_scope_definition.en.md` is published).
+- `W6-02`: in progress (core-path pilot run and severity-based closure).
 - `W6-03`: pending (launch execution and 24h observation review).
 
 ## 4. Phase Gate (Kickoff Baseline)
