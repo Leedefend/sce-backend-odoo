@@ -96,6 +96,20 @@ def _record_strict_issue(*, strict: bool, errors: list[str], warnings: list[str]
         warnings.append(message)
 
 
+def _count_layout_field_nodes(nodes: object) -> int:
+    if not isinstance(nodes, list):
+        return 0
+    count = 0
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if str(node.get("type") or "").strip().lower() == "field":
+            count += 1
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            count += _count_layout_field_nodes(node.get(key))
+    return count
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_JSON)
     if not baseline:
@@ -362,13 +376,7 @@ def main() -> int:
             row["user_mode"]["ui_contract_form"] = {
                 "contract_mode_meta": meta_fu.get("contract_mode"),
                 "field_count": len(fields_fu),
-                "layout_field_count": len(
-                    [
-                        item
-                        for item in layout_fu
-                        if isinstance(item, dict) and str(item.get("type") or "").strip().lower() == "field"
-                    ]
-                ),
+                "layout_field_count": _count_layout_field_nodes(layout_fu),
                 "toolbar_header_count": len(toolbar_header_fu) if isinstance(toolbar_header_fu, list) else 0,
                 "header_button_count": len(header_buttons_fu),
                 "smart_button_count": len(smart_buttons_fu),
@@ -468,10 +476,7 @@ def main() -> int:
                 )
             if not isinstance(layout_fu, list) or not layout_fu:
                 errors.append(f"{role}.ui.contract.form.user layout missing")
-            if not any(
-                isinstance(item, dict) and str(item.get("type") or "").strip().lower() == "field"
-                for item in layout_fu
-            ):
+            if _count_layout_field_nodes(layout_fu) <= 0:
                 errors.append(f"{role}.ui.contract.form.user layout has no field nodes")
             if row["user_mode"]["ui_contract_form"]["layout_field_count"] < min(len(fields_fu), 12):
                 errors.append(
