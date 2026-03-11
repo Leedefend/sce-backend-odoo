@@ -23,7 +23,7 @@
 ## 3. 问题提报路径与分级
 
 - 提报入口：`docs/demo/system_demo_v1.md` 对应步骤编号 + 实际截图。
-- 台账文件：`artifacts/release/phase6_issue_ledger.md`。
+- 台账文件：`docs/releases/phase_6_issue_ledger.md`。
 - 分级标准：
   - `P0`：阻断首发或核心链路不可用。
   - `P1`：核心功能可用但结果错误或高风险。
