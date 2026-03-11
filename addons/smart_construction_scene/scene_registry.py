@@ -319,6 +319,15 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "contracts.workspace",
+            "name": "合同管理工作台",
+            "target": {
+                "route": "/s/contracts.workspace",
+                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
+                "action_xmlid": "smart_construction_core.action_construction_contract_my",
+            },
+        },
+        {
             "code": "risk.monitor",
             "name": "风险监控",
             "target": {
