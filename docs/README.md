@@ -30,6 +30,7 @@
 - Phase 2 checklist: `docs/releases/phase_2_core_scenarios_closure_checklist.en.md`
 - Phase 3 checklist: `docs/releases/phase_3_role_permission_system_checklist.en.md`
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
+- Phase 5 checklist: `docs/releases/phase_5_verification_deployment_checklist.en.md`
 
 ## 快速生成/导出（现有 Make 目标）
 ```bash

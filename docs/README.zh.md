@@ -26,3 +26,4 @@ status: active
 - Phase 2 清单：`docs/releases/phase_2_core_scenarios_closure_checklist.md`
 - Phase 3 清单：`docs/releases/phase_3_role_permission_system_checklist.md`
 - Phase 4 清单：`docs/releases/phase_4_frontend_stability_checklist.md`
+- Phase 5 清单：`docs/releases/phase_5_verification_deployment_checklist.md`
