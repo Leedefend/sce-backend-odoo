@@ -28,9 +28,9 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 |---|---|---|---|---|
 | W1-01 | Lock `construction_pm_v1` main-nav allowlist | P1 | DONE | policy and runtime output are aligned |
 | W1-02 | Publish nav-to-scene mapping | P1 | DONE | all 7 nav items are traceable |
-| W1-03 | Add `project.management` 7-block contract verify | P2 | TODO | verify can assert all 7 blocks |
-| W1-04 | Close minimum loop for `my_work.workspace` | P2 | TODO | todo/my projects/quick links visible |
-| W1-05 | Close ledger-to-management route chain | P2 | TODO | `projects.ledger -> project.management` reachable |
+| W1-03 | Add `project.management` 7-block contract verify | P2 | DONE | verify can assert all 7 blocks |
+| W1-04 | Close minimum loop for `my_work.workspace` | P2 | DONE | todo/my projects/quick links visible |
+| W1-05 | Close ledger-to-management route chain | P2 | DONE | `projects.ledger -> project.management` reachable |
 
 ## 3. Risk List
 
