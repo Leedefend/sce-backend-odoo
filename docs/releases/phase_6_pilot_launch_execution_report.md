@@ -20,6 +20,6 @@
 - 发布结论仅在 `W6-03` 完成后更新为 `PASS` 或 `BLOCKED`。
 
 ## 5. 下一步
-- 输出试运行角色名单、样本项目与问题提报通道清单。
-- 启动核心路径演练并形成问题分级台账。
-- 形成首发窗口、回滚窗口和责任人确认记录。
+- 启动核心路径演练并在 `docs/releases/phase_6_pilot_rehearsal_record.md` 记录结果。
+- 按 `docs/releases/phase_6_issue_ledger.md` 维护 P0/P1/P2 问题闭环。
+- 完成首发窗口、回滚窗口和责任人确认记录。

@@ -23,7 +23,7 @@
 ## 3. Issue Reporting Path and Severity
 
 - Reporting entry: step number from `docs/demo/system_demo_v1.en.md` + real screenshot.
-- Ledger file: `artifacts/release/phase6_issue_ledger.md`.
+- Ledger file: `docs/releases/phase_6_issue_ledger.en.md`.
 - Severity levels:
   - `P0`: launch-blocking or core-chain unavailable.
   - `P1`: core function available but incorrect result/high risk.

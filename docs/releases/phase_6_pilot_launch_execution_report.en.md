@@ -20,6 +20,6 @@
 - Release conclusion is updated to `PASS` or `BLOCKED` only after `W6-03` is complete.
 
 ## 5. Next
-- Publish participant list, sample project list, and issue-reporting channel.
-- Start core-path rehearsals and produce a severity tracking ledger.
+- Start core-path rehearsals and record outcomes in `docs/releases/phase_6_pilot_rehearsal_record.en.md`.
+- Maintain P0/P1/P2 closure in `docs/releases/phase_6_issue_ledger.en.md`.
 - Finalize launch window, rollback window, and ownership confirmations.

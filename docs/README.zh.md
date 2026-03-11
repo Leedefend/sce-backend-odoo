@@ -50,3 +50,5 @@ status: active
 - Phase 6 清单：`docs/releases/phase_6_pilot_launch_checklist.md`
 - Phase 6（执行报告）：`docs/releases/phase_6_pilot_launch_execution_report.md`
 - Phase 6（范围定义）：`docs/releases/phase_6_pilot_scope_definition.md`
+- Phase 6（演练记录）：`docs/releases/phase_6_pilot_rehearsal_record.md`
+- Phase 6（问题台账）：`docs/releases/phase_6_issue_ledger.md`
