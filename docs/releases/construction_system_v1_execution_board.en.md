@@ -9,7 +9,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 0 | Scope freeze | DONE | `release_scope_v1.en.md` `system_asset_inventory.en.md` `release_gap_analysis.en.md` |
 | Phase 1 | Navigation convergence | DONE | delivery-policy main-nav lock report |
 | Phase 2 | Core scenario closure | DOING | acceptance records for 4 key scenarios (workspace baseline closed) |
-| Phase 3 | Role/permission system | DOING | role matrix + ACL/visibility verification |
+| Phase 3 | Role/permission system | DONE | role matrix + ACL/visibility verification + exit-readiness report |
 | Phase 4 | Frontend stability | TODO | unified page framework and block conventions |
 | Phase 5 | Verification/deployment | TODO | release verification bundle + deployment docs |
 | Phase 6 | Pilot and launch | TODO | pilot report + v1.0 release record |
@@ -54,7 +54,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 |---|---|---|---|---|
 | W3-01 | ACL minimum-set guard | P3 | DONE | `verify.role.acl.minimum_set.guard` PASS |
 | W3-02 | Relation access-policy consistency audit | P3 | DONE | `verify.relation.access_policy.consistency.audit` PASS |
-| W3-03 | Close 3 runtime-focused cases | P3 | DOING | 7-block/scene reason-code/deep-link policy checks pass |
+| W3-03 | Close 3 runtime-focused cases | P3 | DONE | `verify.project.dashboard.role_runtime.guard` + `verify.scene.permission_reasoncode_deeplink.guard` PASS |
 
 ## 5. Phase Entry Criteria
 

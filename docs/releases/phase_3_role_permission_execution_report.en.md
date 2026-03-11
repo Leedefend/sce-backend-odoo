@@ -1,4 +1,4 @@
-# SCEMS v1.0 Phase 3: Role Permission Execution Report (Round 2)
+# SCEMS v1.0 Phase 3: Role Permission Execution Report (Round 3 / Closeout)
 
 ## 1. Summary
 - Status: `DOING`
@@ -18,11 +18,11 @@
 - `make verify.relation.access_policy.consistency.audit`: `PASS`
 - `make verify.portal.role_scene_navigation_guard`: `PASS`
 - `make verify.scene.contract.shape`: `PASS`
+- `make verify.project.dashboard.role_runtime.guard`: `PASS`
+- `make verify.scene.permission_reasoncode_deeplink.guard`: `PASS`
 
 ## 4. Current Risks
-- Management read-only now has a first-iteration guard; runtime write-probe coverage still needs expansion.
+- Management read-only guard is in place; runtime write-probe coverage can be expanded further (non-blocking for Phase 3 exit).
 
 ## 5. Next
-- Extend management read-only guard with stronger write-intent runtime probes.
-- Close ACL/record-rule per-model evidence and move toward Phase 3 exit acceptance.
-- Add three runtime-focused acceptances: 7-block role visibility/readonly, unauthorized-scene reason-code, deep-link policy equivalence.
+- Mark Phase 3 as `DONE` and move into Phase 4 (frontend stability) execution window.

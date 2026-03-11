@@ -28,5 +28,4 @@ Advance Phase 3 exit criteria by closing ACL minimum-set evidence and scene-perm
   - runtime test for deep-link policy equivalence.
 
 ## 5. Conclusion
-Phase 3 remains `DOING`, now in final closeout window focused on three runtime-focused acceptance cases.
-
+Phase 3 exit criteria are satisfied and status is updated to `DONE`; execution can proceed to Phase 4.

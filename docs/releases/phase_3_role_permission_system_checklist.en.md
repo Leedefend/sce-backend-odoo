@@ -25,13 +25,13 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 
 ### C. Capability and Block Visibility
 - [x] Core capabilities are controlled via role matrix
-- [ ] 7 blocks in `project.management` support role-based visible/readonly behavior
+- [x] 7 blocks in `project.management` support role-based visible/readonly behavior
 - [x] Unauthorized capabilities are denied/degraded in contract output
 
 ### D. Scene and Route Permissions
 - [x] Main navigation scene visibility matches role policy
-- [ ] Unauthorized scene access returns structured reason codes (no blank page)
-- [ ] Deep-link access follows the same permission policy
+- [x] Unauthorized scene access returns structured reason codes (no blank page)
+- [x] Deep-link access follows the same permission policy
 
 ### E. Demo Accounts and Evidence
 - [x] Prod-like fixture accounts are available and login-ready
@@ -48,6 +48,8 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 - `make verify.relation.access_policy.consistency.audit`
 - `make verify.portal.role_scene_navigation_guard`
 - `make verify.scene.contract.shape`
+- `make verify.project.dashboard.role_runtime.guard`
+- `make verify.scene.permission_reasoncode_deeplink.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 

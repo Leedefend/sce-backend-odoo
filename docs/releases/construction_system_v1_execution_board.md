@@ -9,7 +9,7 @@
 | Phase 0 | 范围冻结 | DONE | `release_scope_v1.md` `system_asset_inventory.md` `release_gap_analysis.md` |
 | Phase 1 | 导航收口 | DONE | delivery policy 主导航锁定报告 |
 | Phase 2 | 核心场景闭环 | DOING | 4 大场景可用性验收记录（workspace 基线已收口） |
-| Phase 3 | 角色权限体系 | DOING | 角色矩阵 + ACL/可见性校验 |
+| Phase 3 | 角色权限体系 | DONE | 角色矩阵 + ACL/可见性校验 + 退出就绪报告 |
 | Phase 4 | 前端体验稳定 | TODO | 页面框架和 block 规范收敛 |
 | Phase 5 | 验证与部署 | TODO | 发布验证包 + 部署文档 |
 | Phase 6 | 试运行首发 | TODO | 试运行报告 + v1.0 发布记录 |
@@ -54,7 +54,7 @@
 |---|---|---|---|---|
 | W3-01 | ACL 最小权限集 guard | P3 | DONE | `verify.role.acl.minimum_set.guard` PASS |
 | W3-02 | 关系访问策略一致性审计 | P3 | DONE | `verify.relation.access_policy.consistency.audit` PASS |
-| W3-03 | 三项运行时专项补齐 | P3 | DOING | 7-block/scene reason_code/deep-link 一致性通过 |
+| W3-03 | 三项运行时专项补齐 | P3 | DONE | `verify.project.dashboard.role_runtime.guard` + `verify.scene.permission_reasoncode_deeplink.guard` PASS |
 
 ## 5. 进入下一阶段条件
 

@@ -1,4 +1,4 @@
-# SCEMS v1.0 Phase 3：角色权限体系执行报告（第二轮）
+# SCEMS v1.0 Phase 3：角色权限体系执行报告（第三轮 / 收口）
 
 ## 1. 执行结论
 - 状态：`DOING`
@@ -18,11 +18,11 @@
 - `make verify.relation.access_policy.consistency.audit`：`PASS`
 - `make verify.portal.role_scene_navigation_guard`：`PASS`
 - `make verify.scene.contract.shape`：`PASS`
+- `make verify.project.dashboard.role_runtime.guard`：`PASS`
+- `make verify.scene.permission_reasoncode_deeplink.guard`：`PASS`
 
 ## 4. 当前风险
-- 管理层只读约束已接入第一版 guard，后续需扩展到写意图运行时探测。
+- 管理层只读约束已接入 guard，后续可继续扩展写意图运行时探测覆盖率（不阻塞 Phase 3 退出）。
 
 ## 5. 下一步
-- 扩展管理层只读 guard 到更强的写操作探测样例。
-- 收口 ACL / record rule 的逐模型证据，并推进 Phase 3 退出验收。
-- 补三项运行时专项：7-block 角色可见/只读、无权限场景 reason_code、deep link 权限一致性。
+- Phase 3 标记 `DONE`，进入 Phase 4（前端体验稳定）执行窗口。

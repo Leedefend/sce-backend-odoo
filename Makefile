@@ -1750,6 +1750,12 @@ verify.role.system_admin.minimum_permission_audit.guard: guard.prod.forbid verif
 verify.role.acl.minimum_set.guard: guard.prod.forbid
 	@python3 scripts/verify/role_acl_minimum_set_guard.py
 
+verify.project.dashboard.role_runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/project_dashboard_role_runtime_guard.py
+
+verify.scene.permission_reasoncode_deeplink.guard: guard.prod.forbid verify.release.capability.audit.schema.guard verify.scene.contract.shape verify.project.dashboard.snapshot
+	@python3 scripts/verify/scene_permission_reasoncode_deeplink_guard.py
+
 verify.contract.assembler.semantic.smoke: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/contract_assembler_semantic_smoke.py
 
