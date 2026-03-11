@@ -141,6 +141,16 @@
             <field name="version">v2</field>
         </record>
 
+        <!-- Cost analysis workspace scene -->
+        <record id="sc_scene_cost_analysis" model="sc.scene">
+            <field name="sequence">74</field>
+            <field name="name">成本控制工作台</field>
+            <field name="code">cost.analysis</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
         <!-- Dictionary scene -->
         <record id="sc_scene_data_dictionary" model="sc.scene">
             <field name="sequence">80</field>

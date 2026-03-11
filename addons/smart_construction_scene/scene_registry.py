@@ -415,6 +415,15 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "cost.analysis",
+            "name": "成本控制工作台",
+            "target": {
+                "route": "/s/cost.analysis",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
+                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
+            },
+        },
+        {
             "code": "cost.project_progress",
             "name": "进度填报",
             "target": {

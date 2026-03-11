@@ -31,6 +31,7 @@ status: active
 - Phase 2 W1（我的工作闭环）：`docs/releases/phase_2_w1_my_work_minimum_loop_report.md`
 - Phase 2 W1（台账到控制台链路）：`docs/releases/phase_2_w1_ledger_to_management_route_report.md`
 - Phase 2（contracts.workspace 落地）：`docs/releases/phase_2_contracts_workspace_implementation_report.md`
+- Phase 2（cost.analysis 落地）：`docs/releases/phase_2_cost_analysis_implementation_report.md`
 - Phase 3 清单：`docs/releases/phase_3_role_permission_system_checklist.md`
 - Phase 4 清单：`docs/releases/phase_4_frontend_stability_checklist.md`
 - Phase 5 清单：`docs/releases/phase_5_verification_deployment_checklist.md`
