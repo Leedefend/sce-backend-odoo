@@ -113,6 +113,13 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 ## Current Review Baseline
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
+- Project management scene productization (v0.1):
+  - release flow doc: `docs/ops/releases/current/project_management_scene_v0_1_productization.md`
+  - productization gate: `make verify.project.management.productization`
+  - acceptance gate: `make verify.project.management.acceptance`
+  - acceptance evidence:
+    - `tmp/project_management_productization_flow_report.json`
+    - `tmp/project_management_scene_v0_1_acceptance_report.json`
 - Frontend contract-driven runtime (all views use contract as the only render source):
   - `make verify.frontend.contract_route.guard`
   - `make verify.frontend.contract_runtime.guard`
