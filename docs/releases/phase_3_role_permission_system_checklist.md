@@ -41,6 +41,7 @@
 ## 4. 建议验证命令
 - `make verify.role.capability_floor.prod_like`
 - `make verify.role.capability_floor.prod_like.schema.guard`
+- `make verify.role.management_viewer.readonly.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 
@@ -53,4 +54,3 @@
 - 清单项全部打勾
 - 主要角色链路验证通过（项目经理、财务协同、管理层查看）
 - 执行看板 Phase 3 状态更新为 `DONE`
-

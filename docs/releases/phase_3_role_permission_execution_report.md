@@ -11,12 +11,12 @@
 ## 3. 验证结果
 - `make verify.role.capability_floor.prod_like`：`PASS`
 - `make verify.role.capability_floor.prod_like.schema.guard`：`PASS`
+- `make verify.role.management_viewer.readonly.guard`：`PASS`
 
 ## 4. 当前风险
 - “项目成员”仍由 `material_user/cost_user` 拆分承接，语义需统一。
-- “管理层查看”需要补充只读约束专项校验。
+- 管理层只读约束已接入第一版 guard，后续需扩展到写意图运行时探测。
 
 ## 5. 下一步
 - 建立 `project_member` 统一角色映射方案。
-- 新增管理层只读校验脚本并纳入 Phase 3 验证链。
-
+- 扩展管理层只读 guard 到更强的写操作探测样例。
