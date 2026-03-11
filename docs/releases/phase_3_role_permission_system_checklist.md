@@ -21,10 +21,10 @@
 ### B. 记录规则（Record Rules）
 - [ ] 项目成员仅可见被分配/授权项目数据
 - [ ] 财务协同可见资金相关数据且不越权修改非财务对象
-- [ ] 管理层查看角色为只读视角
+- [x] 管理层查看角色为只读视角
 
 ### C. Capability 与 Block 可见性
-- [ ] 核心 capability 按角色矩阵可控
+- [x] 核心 capability 按角色矩阵可控
 - [ ] `project.management` 的 7-block 可按角色做可见/只读控制
 - [ ] 未授权 capability 在 contract 中应被拒绝或降级
 
@@ -34,14 +34,15 @@
 - [ ] 深链访问（deep link）遵循同等权限策略
 
 ### E. 演示账号与证据
-- [ ] prod-like 角色账号齐备并可登录
-- [ ] 角色矩阵验证报告可复现
-- [ ] 关键权限校验产物可归档
+- [x] prod-like 角色账号齐备并可登录
+- [x] 角色矩阵验证报告可复现
+- [x] 关键权限校验产物可归档
 
 ## 4. 建议验证命令
 - `make verify.role.capability_floor.prod_like`
 - `make verify.role.capability_floor.prod_like.schema.guard`
 - `make verify.role.management_viewer.readonly.guard`
+- `make verify.role.project_member.unification.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 

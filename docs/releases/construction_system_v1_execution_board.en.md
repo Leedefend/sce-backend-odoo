@@ -40,7 +40,15 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Role visibility inconsistency | Medium | unstable cross-role visibility | add role-matrix verification scripts |
 | Doc/implementation divergence | Medium | docs lag behind delivery | mandatory board update per phase close |
 
-## 4. Phase Entry Criteria
+## 4. Current Window (W2)
+
+| ID | Task | Phase | Status | Acceptance |
+|---|---|---|---|---|
+| W2-01 | Add management-viewer readonly guard | P3 | DONE | `verify.role.management_viewer.readonly.guard` PASS |
+| W2-02 | Unify `project_member` role mapping | P3 | DONE | `verify.role.project_member.unification.guard` PASS |
+| W2-03 | Add system-admin minimum-permission audit report | P3 | DOING | dedicated report exists and reproducible |
+
+## 5. Phase Entry Criteria
 
 ### Phase 1 -> Phase 2
 - `construction_pm_v1` main navigation lock completed

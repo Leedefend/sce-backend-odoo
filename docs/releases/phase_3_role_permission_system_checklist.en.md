@@ -21,10 +21,10 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 ### B. Record Rules
 - [ ] Project members only access assigned/authorized project records
 - [ ] Finance collaborators can access fund-related data without cross-domain write overreach
-- [ ] Management viewer is strictly read-only
+- [x] Management viewer is strictly read-only
 
 ### C. Capability and Block Visibility
-- [ ] Core capabilities are controlled via role matrix
+- [x] Core capabilities are controlled via role matrix
 - [ ] 7 blocks in `project.management` support role-based visible/readonly behavior
 - [ ] Unauthorized capabilities are denied/degraded in contract output
 
@@ -34,14 +34,15 @@ Build a complete V1 role-permission loop so users only see, access, and operate 
 - [ ] Deep-link access follows the same permission policy
 
 ### E. Demo Accounts and Evidence
-- [ ] Prod-like fixture accounts are available and login-ready
-- [ ] Role matrix verification report is reproducible
-- [ ] Key permission evidence artifacts are archivable
+- [x] Prod-like fixture accounts are available and login-ready
+- [x] Role matrix verification report is reproducible
+- [x] Key permission evidence artifacts are archivable
 
 ## 4. Suggested Verification Commands
 - `make verify.role.capability_floor.prod_like`
 - `make verify.role.capability_floor.prod_like.schema.guard`
 - `make verify.role.management_viewer.readonly.guard`
+- `make verify.role.project_member.unification.guard`
 - `make verify.project.form.contract.surface.guard`
 - `make verify.phase_next.evidence.bundle`
 
