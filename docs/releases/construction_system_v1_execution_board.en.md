@@ -12,7 +12,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 3 | Role/permission system | DONE | role matrix + ACL/visibility verification + exit-readiness report |
 | Phase 4 | Frontend stability | DONE | unified page framework and block conventions (with user/hud and container smoke evidence) |
 | Phase 5 | Verification/deployment | DONE | release verification bundle + deployment docs + deployment/rollback rehearsal evidence |
-| Phase 6 | Pilot and launch | TODO | pilot report + v1.0 release record |
+| Phase 6 | Pilot and launch | DOING | pilot kickoff report + v1.0 release record |
 
 ## 2. Current Window (W1)
 
@@ -76,6 +76,14 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | W5-03 | Deployment/demo/UAT docs completion | P5 | DONE | deploy/demo/UAT docs available |
 | W5-04 | Deployment and rollback rehearsal evidence | P5 | DONE | `make up`/`make mod.install`/`make mod.upgrade`/`make scene.rollback.stable` PASS |
 | W5-05 | Release conclusion archival | P5 | DONE | Phase 5 report and checklist explicitly record a pass |
+
+### W6 Tasks (Phase 6 Pilot and Launch)
+
+| ID | Task | Phase | Status | Acceptance |
+|---|---|---|---|---|
+| W6-01 | Freeze pilot org and sample data scope | P6 | DOING | role list, project samples, and issue channel defined |
+| W6-02 | Run core-path pilot and severity closure | P6 | TODO | full-chain rehearsal done and P0 blockers reduced to zero |
+| W6-03 | Execute launch and 24h observation review | P6 | TODO | launch record, spot-check, and 24h monitoring conclusion available |
 
 ## 5. Phase Entry Criteria
 
