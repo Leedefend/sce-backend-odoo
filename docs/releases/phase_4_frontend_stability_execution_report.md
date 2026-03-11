@@ -1,8 +1,8 @@
-# SCEMS v1.0 Phase 4：前端体验稳定执行报告（第四轮）
+# SCEMS v1.0 Phase 4：前端体验稳定执行报告（第五轮 / 收口）
 
 ## 1. 执行结论
-- 状态：`DOING`
-- 结论：A/C 类页面框架与交互一致性校验已收口，`frontend_page_contract_boundary_guard` 也已纳入新增页面并通过。
+- 状态：`DONE`
+- 结论：已补齐“控制台严重报错”容器 smoke 证据，Phase 4 退出条件满足。
 
 ## 2. 本轮验证结果
 
@@ -38,10 +38,15 @@
 - `make verify.frontend.search_groupby_savedfilters.guard`：`PASS`
 - `make verify.ui.product.stability`：`PASS`
 
+### 2.5 控制台严重报错专项（W4-06）
+- `make verify.portal.fe_smoke.container`：`PASS`
+- `make verify.portal.recordview_hud_smoke.container`：`PASS`
+- `make verify.portal.view_render_mode_smoke.container`：`PASS`
+
 ## 3. 当前阻塞项
 - 当前仅剩 `vue/attributes-order` warning（6 条），不阻塞 lint 通过。
-- 仍需补“页面关键操作无控制台严重报错”的独立证据（建议通过容器端前端 smoke 组合命令固化）。
+
 
 ## 4. 下一步
-- 补“控制台严重报错”专项证据后，评估将 Phase 4 更新为 `DONE`。
+- Phase 4 已收口，进入 Phase 5（验证与部署）执行窗口。
 - 视需要统一处理 `vue/attributes-order` warning 并保持规范一致。

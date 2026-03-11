@@ -10,7 +10,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 1 | Navigation convergence | DONE | delivery-policy main-nav lock report |
 | Phase 2 | Core scenario closure | DOING | acceptance records for 4 key scenarios (workspace baseline closed) |
 | Phase 3 | Role/permission system | DONE | role matrix + ACL/visibility verification + exit-readiness report |
-| Phase 4 | Frontend stability | DOING | unified page framework and block conventions (W1 baseline complete) |
+| Phase 4 | Frontend stability | DONE | unified page framework and block conventions (with user/hud and container smoke evidence) |
 | Phase 5 | Verification/deployment | TODO | release verification bundle + deployment docs |
 | Phase 6 | Pilot and launch | TODO | pilot report + v1.0 release record |
 
@@ -65,7 +65,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | W4-03 | Lint baseline debt closeout | P4 | DONE | `verify.frontend.lint.src` 0 errors (6 warnings remain) |
 | W4-04 | user/hud cross-mode stability checks | P4 | DONE | hud navigation/orchestration variance/trace smoke all PASS |
 | W4-05 | Page framework and interaction closeout | P4 | DONE | A/C verification command chain all PASS |
-| W4-06 | Severe-console-error evidence | P4 | DOING | frontend container smoke evidence passes |
+| W4-06 | Severe-console-error evidence | P4 | DONE | fe/hud/render-mode container smoke all PASS |
 
 ## 5. Phase Entry Criteria
 

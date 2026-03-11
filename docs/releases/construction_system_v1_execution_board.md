@@ -10,7 +10,7 @@
 | Phase 1 | 导航收口 | DONE | delivery policy 主导航锁定报告 |
 | Phase 2 | 核心场景闭环 | DOING | 4 大场景可用性验收记录（workspace 基线已收口） |
 | Phase 3 | 角色权限体系 | DONE | 角色矩阵 + ACL/可见性校验 + 退出就绪报告 |
-| Phase 4 | 前端体验稳定 | DOING | 页面框架和 block 规范收敛（W1 基线完成） |
+| Phase 4 | 前端体验稳定 | DONE | 页面框架和 block 规范收敛（含 user/hud 与容器 smoke 证据） |
 | Phase 5 | 验证与部署 | TODO | 发布验证包 + 部署文档 |
 | Phase 6 | 试运行首发 | TODO | 试运行报告 + v1.0 发布记录 |
 
@@ -65,7 +65,7 @@
 | W4-03 | lint 基线债务收口 | P4 | DONE | `verify.frontend.lint.src` 0 errors（剩余 6 warnings） |
 | W4-04 | user/hud 跨模式稳定性专项 | P4 | DONE | hud 导航/编排方差/trace smoke 全 PASS |
 | W4-05 | 页面框架与交互规范收口 | P4 | DONE | A/C 类校验命令链路全 PASS |
-| W4-06 | 控制台严重报错专项证据 | P4 | DOING | 前端容器 smoke 组合证据通过 |
+| W4-06 | 控制台严重报错专项证据 | P4 | DONE | fe/hud/render-mode 容器 smoke 全 PASS |
 
 ## 5. 进入下一阶段条件
 
