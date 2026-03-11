@@ -20,6 +20,12 @@
 - Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
 - Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 
+## SCEMS v1.0 Release Planning
+- Master release plan: `docs/releases/construction_system_v1_release_plan.en.md`
+- Scope freeze: `docs/releases/release_scope_v1.en.md`
+- System asset inventory: `docs/releases/system_asset_inventory.en.md`
+- Release gap analysis: `docs/releases/release_gap_analysis.en.md`
+
 ## 快速生成/导出（现有 Make 目标）
 ```bash
 make contract.catalog.export
