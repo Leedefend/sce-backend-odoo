@@ -335,9 +335,26 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "risk.center",
+            "name": "风险提醒工作台",
+            "target": {
+                "route": "/s/risk.center",
+                "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
+            },
+        },
+        {
             "code": "finance.center",
             "name": "财务中心",
             "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
+                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
+            },
+        },
+        {
+            "code": "finance.workspace",
+            "name": "资金管理工作台",
+            "target": {
+                "route": "/s/finance.workspace",
                 "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
                 "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
             },

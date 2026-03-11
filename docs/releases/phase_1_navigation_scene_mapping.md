@@ -10,10 +10,10 @@
 | 我的工作 | `my_work.workspace` | 已存在 | 可作为稳定入口 |
 | 项目台账 | `projects.ledger` | 已存在 | 与项目控制台联动 |
 | 项目管理 | `project.management` | 已存在 | 核心控制台场景 |
-| 合同管理 | `contracts.workspace` | 待补齐 | 过渡可由 `contract.center` 承接深链 |
-| 成本控制 | `cost.analysis` | 待补齐 | 过渡可由 `cost.*` 场景承接深链 |
-| 资金管理 | `finance.workspace` | 待补齐 | 过渡可由 `finance.center` 承接深链 |
-| 风险提醒 | `risk.center` | 待补齐 | 过渡可由 `risk.monitor` 承接深链 |
+| 合同管理 | `contracts.workspace` | 已落地（最小可用） | 保留 `contract.center` 过渡深链 |
+| 成本控制 | `cost.analysis` | 已落地（最小可用） | 保留 `cost.*` 过渡深链 |
+| 资金管理 | `finance.workspace` | 已落地（最小可用） | 保留 `finance.center` 过渡深链 |
+| 风险提醒 | `risk.center` | 已落地（最小可用） | 保留 `risk.monitor` 过渡深链 |
 
 ## 3. 当前策略落地
 - 已将 `docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json` 的 `construction_pm_v1.nav_allowlist` 固化为上述 7 项。
@@ -22,4 +22,3 @@
 ## 4. 后续动作（衔接 Phase 2）
 - 优先补齐 `contracts.workspace` / `cost.analysis` / `finance.workspace` / `risk.center` 的场景定义与契约。
 - 在补齐前，保留过渡深链能力，避免关键业务入口中断。
-
