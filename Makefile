@@ -200,7 +200,7 @@ IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
 IS_PROD := 1
 endif
-ifneq (,$(findstring .env.prod,$(ENV_FILE)))
+ifneq (,$(filter .env.prod,$(notdir $(ENV_FILE))))
 IS_PROD := 1
 endif
 
