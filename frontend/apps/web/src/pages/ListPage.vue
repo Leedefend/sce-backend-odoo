@@ -22,6 +22,13 @@
       :on-filter="onFilter"
     />
 
+    <section v-if="summaryItems.length" class="summary-strip">
+      <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
+        <p class="summary-label">{{ item.label }}</p>
+        <p class="summary-value">{{ item.value }}</p>
+      </article>
+    </section>
+
     <StatusPanel v-if="loading" title="正在加载列表..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
@@ -297,6 +304,7 @@ const props = defineProps<{
   listProfile?: SceneListProfile | null;
   columnLabels?: Record<string, string>;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
+  summaryItems?: Array<{ key: string; label: string; value: string; tone?: string }>;
   selectedIds?: number[];
   onToggleSelection?: (id: number, selected: boolean) => void;
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
@@ -375,6 +383,7 @@ const sortedGroupedRows = computed(() => {
   return rows;
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const recordCountSafe = computed(() => {
   const raw = Number(props.recordCount);
   if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
@@ -734,6 +743,36 @@ function columnLabel(col: string) {
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.summary-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+
+.summary-label {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.summary-value {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.summary-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+.summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+.summary-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
 
 .grouped-table {
   display: grid;
