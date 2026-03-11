@@ -16,7 +16,7 @@ const allowLocalFallbackDb = appEnv === 'dev' || appEnv === 'test' || appEnv ===
 const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
 
 export const config = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8070',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
   appEnv,
   tenant: import.meta.env.VITE_TENANT ?? 'default',
   featureFlags: (import.meta.env.VITE_FEATURE_FLAGS ?? '')
