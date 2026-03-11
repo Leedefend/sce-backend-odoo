@@ -35,10 +35,6 @@ type FormPageNode = {
   groups?: FormGroupNode[];
 };
 
-type FormNotebookNode = {
-  pages?: FormPageNode[];
-};
-
 type RawFormLayoutNode = {
   type?: string;
   name?: string;

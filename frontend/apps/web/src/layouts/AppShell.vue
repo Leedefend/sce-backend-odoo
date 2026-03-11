@@ -280,7 +280,7 @@ function normalizeDeliveryText(input: string) {
 
 function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
   const normalizedLabel = normalizeDeliveryText(roleLabelRaw);
-  if (/[^\x00-\x7F]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
+  if (/[^\u0020-\u007e]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
   const code = String(roleCodeRaw || '').trim().toLowerCase();
   if (/pm|project/.test(code)) return '项目经理';
   if (/finance/.test(code)) return '财务主管';
@@ -464,13 +464,13 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
 
 onMounted(() => {
   if (typeof window === 'undefined') return;
-  window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as EventListener);
+  window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   handleTraceUpdate();
 });
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
-  window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as EventListener);
+  window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
 });
 
 function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {

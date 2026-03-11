@@ -1,8 +1,8 @@
-# SCEMS v1.0 Phase 4: Frontend Stability Execution Report (Round 1)
+# SCEMS v1.0 Phase 4: Frontend Stability Execution Report (Round 2)
 
 ## 1. Summary
 - Status: `DOING`
-- Conclusion: first-round frontend stability baseline is established; static guards and build/typecheck pass; lint has existing baseline debt and is not over-fixed in this round.
+- Conclusion: first lint closeout batch is completed; `verify.frontend.lint.src` now has zero errors (6 style-order warnings remain).
 
 ## 2. Verification Results
 
@@ -20,13 +20,12 @@
 ### 2.2 Engineering quality commands
 - `make verify.frontend.build`: `PASS`
 - `make verify.frontend.typecheck.strict`: `PASS`
-- `make verify.frontend.lint.src`: `FAIL` (23 errors / 6 warnings, existing baseline debt)
+- `make verify.frontend.lint.src`: `PASS` (0 errors / 6 warnings)
 
-## 3. Main Blockers
-- Lint failures are spread across multiple files under `frontend/apps/web/src/`, including unused vars, `no-undef`, `no-unsafe-optional-chaining`, and a few attribute-order warnings.
-- This round prioritizes release-plan progress and does not perform broad unrelated quality-debt cleanup.
+## 3. Current Blockers
+- Remaining lint items are only `vue/attributes-order` warnings (6 occurrences), not blocking lint pass.
+- Phase 4 still needs dedicated user/hud render and mode-switch stability evidence.
 
 ## 4. Next
-- Move to Phase 4 round 2 with a minimum-change lint cleanup strategy (start with `no-undef` / `no-unsafe-optional-chaining`).
-- Add user/hud render and mode-switch smoke evidence before reevaluating Phase 4 exit.
-
+- Move to Phase 4 round 3: add user/hud render and mode-switch smoke evidence.
+- Optionally normalize `vue/attributes-order` warnings for style consistency.

@@ -737,17 +737,6 @@ function canEditField(fieldName: string) {
   return !descriptor.readonly;
 }
 
-function isSelectionField(fieldName: string) {
-  const descriptor = viewContract.value?.fields?.[fieldName];
-  const ttype = descriptor?.ttype || descriptor?.type;
-  return ttype === 'selection';
-}
-
-function selectionOptions(fieldName: string) {
-  const descriptor = viewContract.value?.fields?.[fieldName];
-  return Array.isArray(descriptor?.selection) ? descriptor.selection : [];
-}
-
 function formatFieldValue(value: unknown) {
   if (value === null || value === undefined || value === false) return '-';
   if (Array.isArray(value)) {
@@ -764,30 +753,6 @@ function formatFieldValue(value: unknown) {
     }
   }
   return String(value);
-}
-
-function fieldInputType(fieldName: string) {
-  const descriptor = viewContract.value?.fields?.[fieldName];
-  const ttype = descriptor?.ttype || descriptor?.type;
-  switch (ttype) {
-    case 'integer':
-    case 'float':
-    case 'monetary':
-      return 'number';
-    case 'date':
-      return 'date';
-    case 'datetime':
-      return 'datetime-local';
-    default:
-      return 'text';
-  }
-}
-
-function resolveDraftValue(fieldName: string) {
-  if (fieldName in draftValues.value) {
-    return draftValues.value[fieldName];
-  }
-  return recordData.value?.[fieldName];
 }
 
 function updateDraftField(fieldName: string, value: unknown) {

@@ -62,7 +62,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 |---|---|---|---|---|
 | W4-01 | Frontend page/block static guard baseline | P4 | DONE | 9 frontend guards PASS |
 | W4-02 | Build and typecheck baseline | P4 | DONE | `verify.frontend.build` + `verify.frontend.typecheck.strict` PASS |
-| W4-03 | Lint baseline debt closeout | P4 | DOING | `verify.frontend.lint.src` errors reduced to zero |
+| W4-03 | Lint baseline debt closeout | P4 | DONE | `verify.frontend.lint.src` 0 errors (6 warnings remain) |
 
 ## 5. Phase Entry Criteria
 

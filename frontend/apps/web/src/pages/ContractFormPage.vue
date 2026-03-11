@@ -120,7 +120,7 @@
                   >
                     <option value="">请选择</option>
                     <option
-                      v-for="option in relationOptionsForField(node.name, node.descriptor)"
+                      v-for="option in relationOptionsForField(node.name)"
                       :key="`${node.name}-${option.id}`"
                       :value="String(option.id)"
                     >
@@ -147,7 +147,7 @@
                     @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
                   >
                     <option
-                      v-for="option in filteredRelationOptions(node.name, node.descriptor)"
+                      v-for="option in filteredRelationOptions(node.name)"
                       :key="`${node.name}-${option.id}`"
                       :value="String(option.id)"
                     >
@@ -625,7 +625,7 @@ const searchFilters = computed(() => {
 const showSearchFilters = computed(() => {
   if (!contract.value) return true;
   if (renderProfile.value !== 'create') return true;
-  return !Boolean(contract.value.hide_filters_on_create);
+  return !contract.value.hide_filters_on_create;
 });
 
 function fieldType(descriptor?: FieldDescriptor | null) {
@@ -666,7 +666,7 @@ function many2oneValue(name: string) {
   return ids.length ? String(ids[0]) : '';
 }
 
-function relationOptionsForField(name: string, descriptor?: FieldDescriptor) {
+function relationOptionsForField(name: string) {
   const rows = relationOptions.value[name];
   if (Array.isArray(rows) && rows.length) return rows;
   const ids = relationIds(name);
@@ -1069,8 +1069,8 @@ function setRelationKeyword(name: string, keyword: string) {
   }, 260);
 }
 
-function filteredRelationOptions(name: string, descriptor?: FieldDescriptor) {
-  const rows = relationOptionsForField(name, descriptor);
+function filteredRelationOptions(name: string) {
+  const rows = relationOptionsForField(name);
   const kw = relationKeyword(name).trim().toLowerCase();
   if (!kw) return rows;
   return rows.filter((row) => row.label.toLowerCase().includes(kw) || String(row.id).includes(kw));
@@ -1116,12 +1116,7 @@ function relationEntry(descriptor?: FieldDescriptor) {
   };
 }
 
-function canOpenRelationCreatePage(fieldName: string, descriptor?: FieldDescriptor) {
-  const entry = relationEntry(descriptor);
-  return Boolean(entry?.actionId && entry?.createMode === 'page');
-}
-
-function relationCreateMode(fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
+function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
   const entry = relationEntry(descriptor);
   if (!entry) return 'none';
   if (entry.createMode === 'page' && entry.actionId) return 'page';
