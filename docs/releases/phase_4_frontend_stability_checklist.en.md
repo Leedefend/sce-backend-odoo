@@ -31,7 +31,7 @@ Unify page framework, block components, and interaction conventions to make V1 f
 - [x] No critical component loss after mode switch
 
 ### E. Stability and Observability
-- [ ] No severe frontend console errors during key operations
+- [x] No severe frontend console errors during key operations
 - [x] Key frontend smoke scripts pass
 - [x] Critical failures are diagnosable (sufficient logs/errors)
 
