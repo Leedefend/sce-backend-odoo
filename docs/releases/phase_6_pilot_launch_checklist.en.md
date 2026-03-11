@@ -24,12 +24,12 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 ### C. Launch Gates
 - [x] Exit criteria for Phase 0~5 are all satisfied
 - [x] No P0 launch-blocking defects remain
-- [ ] Final release review concludes "go-live approved"
+- [x] Final release review concludes "go-live approved"
 
 ### D. Launch Execution
-- [ ] Release window, rollback window, and owners are confirmed
-- [ ] Release steps executed by script and recorded
-- [ ] Post-release key feature spot-check passes
+- [x] Release window, rollback window, and owners are confirmed
+- [x] Release steps executed by script and recorded
+- [x] Post-release key feature spot-check passes
 
 ### E. Post-launch Operation
 - [ ] Key indicators are healthy in first 24 hours
