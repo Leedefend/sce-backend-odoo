@@ -26,8 +26,8 @@
 
 | ID | 任务 | Phase | 状态 | 验收标准 |
 |---|---|---|---|---|
-| W1-01 | 固化 `construction_pm_v1` 主导航 allowlist | P1 | TODO | policy 文件与运行结果一致 |
-| W1-02 | 输出主导航与 Scene 映射清单 | P1 | TODO | 7 个主导航项全部可追踪 |
+| W1-01 | 固化 `construction_pm_v1` 主导航 allowlist | P1 | DONE | policy 文件与运行结果一致 |
+| W1-02 | 输出主导航与 Scene 映射清单 | P1 | DONE | 7 个主导航项全部可追踪 |
 | W1-03 | 建立 `project.management` 7-block 契约检查脚本 | P2 | TODO | verify 能识别 7 个 block |
 | W1-04 | 梳理“我的工作”最小闭环数据 | P2 | TODO | 待办/我的项目/快捷入口可见 |
 | W1-05 | 梳理“项目台账”入口到控制台链路 | P2 | TODO | ledger -> management 可达 |
