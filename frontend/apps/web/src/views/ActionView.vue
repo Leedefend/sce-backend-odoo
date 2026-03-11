@@ -300,6 +300,7 @@
       :scene-key="sceneKey"
       :page-mode="pageMode"
       :record-count="records.length"
+      :summary-items="listSummaryItems"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
       :batch-details="batchDetails"
@@ -670,6 +671,47 @@ type SurfaceIntent = {
   secondaryAction?: FocusNavAction;
 };
 
+const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
+  'task.center': {
+    columns: ['name', 'kanban_state', 'user_ids', 'date_deadline', 'write_date'],
+    column_labels: {
+      name: '任务名称',
+      kanban_state: '状态',
+      user_ids: '负责人',
+      date_deadline: '截止日期',
+      write_date: '更新时间',
+    },
+    row_primary: 'name',
+    row_secondary: 'user_ids',
+  },
+  'risk.center': {
+    columns: ['name', 'state', 'project_id', 'partner_id', 'amount', 'date_request'],
+    column_labels: {
+      name: '风险单号',
+      state: '风险状态',
+      project_id: '项目',
+      partner_id: '往来单位',
+      amount: '风险金额',
+      date_request: '触发日期',
+    },
+    row_primary: 'name',
+    row_secondary: 'project_id',
+  },
+  'cost.project_boq': {
+    columns: ['name', 'project_id', 'quantity', 'price', 'amount_total', 'write_date'],
+    column_labels: {
+      name: '清单名称',
+      project_id: '项目',
+      quantity: '工程量',
+      price: '单价',
+      amount_total: '金额',
+      write_date: '更新时间',
+    },
+    row_primary: 'name',
+    row_secondary: 'project_id',
+  },
+};
+
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
@@ -693,7 +735,41 @@ const scene = computed<Scene | null>(() => {
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
-const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
+function mergeColumnsWithPreset(baseColumns: string[], presetColumns: string[]) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  presetColumns.forEach((col) => {
+    const key = String(col || '').trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(key);
+  });
+  baseColumns.forEach((col) => {
+    const key = String(col || '').trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(key);
+  });
+  return out;
+}
+
+const listProfile = computed<SceneListProfile | null>(() => {
+  const base = (scene.value?.list_profile as SceneListProfile) || null;
+  const preset = SCENE_LIST_PROFILE_PRESETS[sceneKey.value || ''];
+  if (!base && !preset) return null;
+  if (!base) return preset;
+  if (!preset) return base;
+  return {
+    ...base,
+    columns: mergeColumnsWithPreset(base.columns || [], preset.columns || []),
+    column_labels: {
+      ...(base.column_labels || {}),
+      ...(preset.column_labels || {}),
+    },
+    row_primary: preset.row_primary || base.row_primary,
+    row_secondary: preset.row_secondary || base.row_secondary,
+  };
+});
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
@@ -894,6 +970,51 @@ const ledgerOverviewItems = computed(() => {
     { key: 'done', label: '已完工项目数', value: String(done), tone: 'success' },
     { key: 'metric', label: '项目群规模', value: `${total} 个项目`, tone: 'neutral' },
   ];
+});
+const listSummaryItems = computed(() => {
+  const rows = records.value || [];
+  if (sceneKey.value === 'task.center') {
+    let done = 0;
+    let pending = 0;
+    let blocked = 0;
+    rows.forEach((row) => {
+      const state = semanticStatus(row.kanban_state || row.state || row.status);
+      if (state.tone === 'success') done += 1;
+      else if (state.tone === 'danger') blocked += 1;
+      else pending += 1;
+    });
+    return [
+      { key: 'task_total', label: '任务总数', value: String(rows.length), tone: 'info' },
+      { key: 'task_pending', label: '待处理', value: String(pending), tone: pending > 0 ? 'warning' : 'success' },
+      { key: 'task_blocked', label: '受阻/风险', value: String(blocked), tone: blocked > 0 ? 'danger' : 'success' },
+      { key: 'task_done', label: '已完成', value: String(done), tone: 'success' },
+    ];
+  }
+  if (sceneKey.value === 'risk.center') {
+    let high = 0;
+    let warning = 0;
+    rows.forEach((row) => {
+      const state = semanticStatus(row.state || row.status || row.level);
+      if (state.tone === 'danger') high += 1;
+      else if (state.tone === 'warning') warning += 1;
+    });
+    return [
+      { key: 'risk_total', label: '风险记录数', value: String(rows.length), tone: 'info' },
+      { key: 'risk_high', label: '高风险', value: String(high), tone: high > 0 ? 'danger' : 'success' },
+      { key: 'risk_warning', label: '预警', value: String(warning), tone: warning > 0 ? 'warning' : 'neutral' },
+    ];
+  }
+  if (sceneKey.value === 'cost.project_boq') {
+    let quantity = 0;
+    rows.forEach((row) => {
+      quantity += Number(row.quantity || 0) || 0;
+    });
+    return [
+      { key: 'boq_total', label: '清单行数', value: String(rows.length), tone: 'info' },
+      { key: 'boq_qty', label: '总工程量', value: `${Math.round(quantity * 100) / 100}`, tone: 'neutral' },
+    ];
+  }
+  return [];
 });
 const kanbanTitleField = computed(() => {
   if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
