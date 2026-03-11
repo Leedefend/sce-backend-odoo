@@ -347,6 +347,7 @@ check-odoo-conf:
 help:
 	@echo "Targets:"
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim"
 	@echo "  make db.reset DB=<name> | demo.reset DB=<name> | gate.demo"
 	@echo "  make verify.platform_baseline|verify.business_baseline|verify.baseline.all DB_NAME=<name>"
 	@echo "  make gate.platform_baseline|gate.business_baseline|gate.baseline.all DB_NAME=<name>"
@@ -389,7 +390,7 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -409,6 +410,9 @@ prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
 prod.restart.full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/down.sh
 	@$(RUN_ENV) bash scripts/dev/up.sh
+
+deploy.prod.sim.oneclick: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
+	@$(RUN_ENV) COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" bash scripts/deploy/prod_sim_oneclick.sh
 
 .PHONY: dev.rebuild
 dev.rebuild: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env gate.compose.config

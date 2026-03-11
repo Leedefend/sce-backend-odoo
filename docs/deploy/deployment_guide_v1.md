@@ -65,3 +65,8 @@
 - Phase 5 验证命令链通过。
 - 验证证据产物已归档到 `artifacts/`。
 
+## 7. 生产模拟（隔离环境，80 直达前端）
+- 使用隔离环境文件：`.env.prod.sim`（独立 `COMPOSE_PROJECT_NAME`/DB/Volume）。
+- 反向代理行为：`80 -> 前端静态站点`，`/api/* -> Odoo`。
+- 一键部署命令（服务器可直接执行）：
+  - `make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim`
