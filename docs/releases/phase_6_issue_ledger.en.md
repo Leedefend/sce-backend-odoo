@@ -5,6 +5,7 @@
 | ID | Time | Scenario | Step | Role | Severity | Symptom | Root Cause | Owner | Status | Closed Time |
 |---|---|---|---|---|---|---|---|---|---|---|
 | P6-001 | 2026-03-11 | W6-02 rehearsal batch | Batch-1 | all roles | P2 | No launch-blocking defect found in first rehearsal; recorded as baseline item | none | release manager | CLOSED | 2026-03-11 |
+| P6-002 | 2026-03-11 | W6-03 launch execution | release window / spot-check | all roles | P2 | Launch execution and spot-check passed; no new blockers | none | release manager | CLOSED | 2026-03-11 |
 
 ## Round-1 Conclusion (2026-03-11)
 - Open `P0`: `0`
