@@ -25,6 +25,7 @@ import { intentRequest } from '../api/intents';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { PageBlockActionEvent, PageOrchestrationContract, PageOrchestrationZone } from '../app/pageOrchestration';
 import { readWorkspaceContext } from '../app/workspaceContext';
+import { formatAmountCN } from '../utils/semantic';
 
 type RawBlock = {
   block_key: string;
@@ -88,7 +89,7 @@ function resolveActionTarget(key: string) {
     open_task_list: { kind: 'scene.key', scene_key: 'task.center' },
     open_payment_requests: { kind: 'scene.key', scene_key: 'finance.payment_requests' },
     open_settlement_orders: { kind: 'scene.key', scene_key: 'finance.settlement_orders' },
-    open_risk_list: { kind: 'scene.key', scene_key: 'risk.monitor' },
+    open_risk_list: { kind: 'scene.key', scene_key: 'risk.center' },
     refresh_page: { kind: 'page.refresh' },
     refresh: { kind: 'page.refresh' },
   };
@@ -98,14 +99,36 @@ function resolveActionTarget(key: string) {
 function normalizeDatasetByBlock(block: RawBlock) {
   const blockType = asText(block.block_type);
   const data = (block.data && typeof block.data === 'object') ? block.data : {};
+  const state = asText(block.state || '');
   if (blockType === 'record_summary') {
     if (data.summary && typeof data.summary === 'object' && !Array.isArray(data.summary)) {
       return Object.entries(data.summary as Record<string, unknown>).map(([key, value]) => ({
         key,
-        label: key,
+        label: key === 'name'
+          ? '项目名称'
+          : key === 'project_code'
+            ? '项目编号'
+            : key === 'partner_name'
+              ? '建设单位'
+              : key === 'manager_name'
+                ? '项目负责人'
+                : key === 'stage_name'
+                  ? '项目状态'
+                  : key,
         value: value ?? '--',
       }));
     }
+  }
+  if (blockType === 'metric_row') {
+    const items = Array.isArray((data as Record<string, unknown>).items)
+      ? (data as Record<string, unknown>).items as Array<Record<string, unknown>>
+      : [];
+    return items.map((item) => ({
+      key: asText(item.key || ''),
+      label: asText(item.label || item.key || '指标'),
+      value: `${Number(item.value || 0)}${asText(item.unit || '')}`,
+      tone: Number(item.value || 0) > 0 ? 'info' : 'neutral',
+    }));
   }
   if (blockType === 'progress_summary') {
     const total = Number((data.task_total as number) || 0);
@@ -113,8 +136,8 @@ function normalizeDatasetByBlock(block: RawBlock) {
     const completion = Number((data.completion_percent as number) || 0);
     const doneRate = total > 0 ? Math.min(100, Math.max(0, Math.round((done * 100) / total))) : 0;
     return [
-      { key: 'completion_percent', label: 'completion_percent', value: completion },
-      { key: 'task_done_rate', label: 'task_done_rate', value: doneRate },
+      { key: 'completion_percent', label: '总体完成率', value: completion },
+      { key: 'task_done_rate', label: '任务完成率', value: doneRate },
     ];
   }
   if (blockType === 'alert_panel') {
@@ -124,11 +147,32 @@ function normalizeDatasetByBlock(block: RawBlock) {
       return {
         id: asText(row.code || row.id || ''),
         title: asText(row.title || row.code || '风险提醒'),
-        description: asText(row.value || ''),
-        tone: asText(row.level || 'warning'),
+        description: `当前数量：${asText(row.value || '0')}`,
+        tone: asText(row.level || 'warning') === 'info' ? 'warning' : asText(row.level || 'warning'),
         action_key: 'open_risk_list',
       };
     });
+  }
+  if (blockType === 'record_table') {
+    const columns = Array.isArray((data as Record<string, unknown>).columns)
+      ? ((data as Record<string, unknown>).columns as string[])
+      : [];
+    const column_labels: Record<string, string> = {
+      contract_count: '合同数量',
+      contract_amount_total: '合同总额',
+      payment_request_total: '付款申请总数',
+    };
+    const rows = Array.isArray((data as Record<string, unknown>).rows)
+      ? ((data as Record<string, unknown>).rows as Array<Record<string, unknown>>).map((row) => ({
+        contract_count: row.contract_count,
+        contract_amount_total: row.contract_amount_total ? formatAmountCN(row.contract_amount_total) : '--',
+        payment_request_total: row.payment_request_total,
+      }))
+      : [];
+    return { columns, rows, state, column_labels };
+  }
+  if (state === 'empty') {
+    return { empty_message: '当前项目暂无可展示管理数据，请先补齐任务、合同和成本基础信息。' };
   }
   return data;
 }
@@ -164,9 +208,15 @@ const orchestrationContract = computed<PageOrchestrationContract>(() => {
     return {
       key: zoneKey,
       title: asText(zone.title || ''),
-      zone_type: asText(zone.zone_type || 'primary'),
+      zone_type: zoneKey.includes('risk') ? 'critical' : asText(zone.zone_type || 'primary'),
       display_mode: asText(zone.display_mode || 'stack'),
-      priority: 100 - idx,
+      priority: (
+        zoneKey.includes('metrics') ? 100
+          : zoneKey.includes('risk') ? 95
+            : zoneKey.includes('progress') ? 90
+              : zoneKey.includes('header') ? 85
+                : 80 - idx
+      ),
       blocks: normalizedBlocks,
     };
   });
@@ -176,11 +226,17 @@ const orchestrationContract = computed<PageOrchestrationContract>(() => {
     scene_key: asText(payload.scene?.key || 'project.management'),
     page: {
       key: asText(payload.page?.key || 'project.management.dashboard'),
-      title: asText(payload.page?.title || '项目管理控制台'),
-      subtitle: `project_id=${resolveProjectIdFromQuery() || '-'}`,
+      title: '项目驾驶舱',
+      subtitle: `聚焦指标、风险与进度 · 项目ID ${resolveProjectIdFromQuery() || '-'}`,
       page_type: 'dashboard',
       layout_mode: 'dashboard',
-      global_actions: [{ key: 'refresh_page', label: '刷新', intent: 'api.data' }],
+      header: {
+        badges: [
+          { label: '管理驾驶舱', tone: 'info' },
+          { label: '7-block 合同兼容', tone: 'neutral' },
+        ],
+      },
+      global_actions: [{ key: 'refresh_page', label: '刷新数据', intent: 'api.data' }],
     },
     zones,
   };

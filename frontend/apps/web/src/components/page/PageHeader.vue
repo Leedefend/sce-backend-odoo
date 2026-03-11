@@ -5,8 +5,10 @@
       <p class="subtitle">{{ subtitle }}</p>
     </div>
     <div class="actions">
+      <span v-if="modeLabel" class="pill mode">{{ modeLabel }}</span>
+      <span v-if="recordCount >= 0" class="pill count">{{ recordCount }} 条</span>
       <span class="pill" :class="status">{{ statusLabel }}</span>
-      <button class="ghost" @click="onReload" :disabled="loading">Reload</button>
+      <button class="ghost" @click="onReload" :disabled="loading">刷新</button>
     </div>
   </header>
 </template>
@@ -19,6 +21,8 @@ defineProps<{
   statusLabel: string;
   loading: boolean;
   onReload: () => void;
+  modeLabel?: string;
+  recordCount?: number;
 }>();
 </script>
 
@@ -58,6 +62,16 @@ defineProps<{
   letter-spacing: 0.08em;
   background: #e2e8f0;
   color: #1e293b;
+}
+
+.pill.mode {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.pill.count {
+  background: #f8fafc;
+  color: #334155;
 }
 
 .pill.ok {

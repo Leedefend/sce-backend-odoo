@@ -8,8 +8,8 @@ export type DisplayFormatOptions = {
 
 const DEFAULT_OPTIONS: Required<DisplayFormatOptions> = {
   emptyText: '-',
-  booleanTrueText: 'Yes',
-  booleanFalseText: 'No',
+  booleanTrueText: '是',
+  booleanFalseText: '否',
 };
 
 function normalizeOptions(options?: DisplayFormatOptions): Required<DisplayFormatOptions> {

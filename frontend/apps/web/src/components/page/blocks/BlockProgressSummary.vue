@@ -12,6 +12,7 @@
         <div class="progress-track"><div class="progress-fill" :style="{ width: `${item.value}%` }" /></div>
       </article>
     </div>
+    <p v-if="!rows.length" class="empty-text">当前暂无可计算的进度数据，请先补齐任务计划。</p>
   </article>
 </template>
 
@@ -63,4 +64,5 @@ const rows = computed(() => {
 .progress-line { display: flex; justify-content: space-between; font-size: 12px; }
 .progress-track { margin-top: 6px; width: 100%; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
 .progress-fill { height: 100%; background: #2563eb; }
+.empty-text { margin: 6px 0 0; color: #6b7280; font-size: 13px; }
 </style>

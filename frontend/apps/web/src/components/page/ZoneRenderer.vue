@@ -74,4 +74,9 @@ function onBlockAction(payload: PageBlockActionEvent) {
 .display-stack {
   grid-template-columns: 1fr;
 }
+
+.zone-critical {
+  border-color: #fecaca;
+  background: #fff7f7;
+}
 </style>
