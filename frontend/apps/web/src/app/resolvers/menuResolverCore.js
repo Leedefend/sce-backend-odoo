@@ -4,9 +4,6 @@ export function resolveMenuActionCore(menuTree, menuId) {
     return { kind: 'broken', node: null, reason: 'menu not found' };
   }
   const ownMenuId = node.menu_id || node.id;
-  if (node.meta && node.meta.action_id) {
-    return { kind: 'leaf', meta: node.meta, node };
-  }
   const ownSceneKey = node.scene_key || node.sceneKey || node.meta?.scene_key;
   if (ownSceneKey && ownMenuId) {
     return {
@@ -18,6 +15,9 @@ export function resolveMenuActionCore(menuTree, menuId) {
         node,
       },
     };
+  }
+  if (node.meta && node.meta.action_id) {
+    return { kind: 'leaf', meta: node.meta, node };
   }
   if (node.children && node.children.length) {
     const target = findFirstResolvableTarget(node.children);
@@ -41,19 +41,19 @@ function findFirstResolvableTarget(nodes) {
     if (!menuId) {
       continue;
     }
-    if (node.meta && node.meta.action_id) {
-      return {
-        menu_id: menuId,
-        action_id: node.meta.action_id,
-        meta: node.meta,
-        node,
-      };
-    }
     const sceneKey = node.scene_key || node.sceneKey || node.meta?.scene_key;
     if (sceneKey) {
       return {
         menu_id: menuId,
         scene_key: sceneKey,
+        node,
+      };
+    }
+    if (node.meta && node.meta.action_id) {
+      return {
+        menu_id: menuId,
+        action_id: node.meta.action_id,
+        meta: node.meta,
         node,
       };
     }

@@ -3,6 +3,7 @@ import BlockTodoList from '../components/page/blocks/BlockTodoList.vue';
 import BlockAlertPanel from '../components/page/blocks/BlockAlertPanel.vue';
 import BlockEntryGrid from '../components/page/blocks/BlockEntryGrid.vue';
 import BlockRecordSummary from '../components/page/blocks/BlockRecordSummary.vue';
+import BlockRecordTable from '../components/page/blocks/BlockRecordTable.vue';
 import BlockProgressSummary from '../components/page/blocks/BlockProgressSummary.vue';
 import BlockActivityFeed from '../components/page/blocks/BlockActivityFeed.vue';
 import BlockAccordionGroup from '../components/page/blocks/BlockAccordionGroup.vue';
@@ -12,6 +13,7 @@ const BLOCK_REGISTRY: Record<string, object> = {
   metric_row: BlockMetricRow,
   progress_summary: BlockProgressSummary,
   record_summary: BlockRecordSummary,
+  record_table: BlockRecordTable,
   todo: BlockTodoList,
   todo_list: BlockTodoList,
   activity_feed: BlockActivityFeed,

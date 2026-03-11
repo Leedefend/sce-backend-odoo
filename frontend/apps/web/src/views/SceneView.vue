@@ -41,12 +41,20 @@
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
       :style="pageSectionStyle('status_forbidden')"
     />
+    <MyWorkView v-else-if="status === 'idle' && embeddedMyWorkWorkspace" />
+    <ProjectManagementDashboardView v-else-if="status === 'idle' && embeddedWorkspaceDashboard" />
+    <ContractFormPage v-else-if="status === 'idle' && embeddedRecordActionId > 0" />
+    <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import ActionView from './ActionView.vue';
+import MyWorkView from './MyWorkView.vue';
+import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
+import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
@@ -83,6 +91,10 @@ const forbiddenCopy = ref({
   message: pageText('forbidden_message', '当前角色无法进入该场景。'),
   hint: '',
 });
+const embeddedActionId = ref(0);
+const embeddedRecordActionId = ref(0);
+const embeddedMyWorkWorkspace = ref(false);
+const embeddedWorkspaceDashboard = ref(false);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -153,9 +165,28 @@ function resolveRecordId(targetRecord: unknown) {
 }
 
 function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
+  const isSceneContractNav = (() => {
+    const navMeta = (session.initMeta as Record<string, unknown> | null)?.nav_meta as Record<string, unknown> | undefined;
+    if (String(navMeta?.nav_source || '') === 'scene_contract_v1') {
+      return true;
+    }
+    const walk = (nodes: NavNode[]): boolean => {
+      for (const node of nodes || []) {
+        if (String(node.meta?.scene_source || '') === 'scene_contract') {
+          return true;
+        }
+        if (node.children?.length && walk(node.children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    return walk(session.menuTree || []);
+  })();
+
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
-    if (!session.menuTree.length || findActionMeta(session.menuTree, actionId)) {
+    if (!session.menuTree.length || findActionMeta(session.menuTree, actionId) || isSceneContractNav) {
       return { actionId, menuId: Number(target.menu_id || 0) || undefined };
     }
   }
@@ -229,6 +260,10 @@ async function resolveScene() {
   try {
     status.value = 'loading';
     clearError();
+    embeddedActionId.value = 0;
+    embeddedRecordActionId.value = 0;
+    embeddedMyWorkWorkspace.value = false;
+    embeddedWorkspaceDashboard.value = false;
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
@@ -269,8 +304,19 @@ async function resolveScene() {
     void trackSceneOpen(sceneKey).catch(() => {});
 
     const target = scene.target || {};
+    const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
     const workspaceContextQuery = resolveWorkspaceContextQuery();
+    if (sceneKey === 'my_work.workspace') {
+      embeddedMyWorkWorkspace.value = true;
+      status.value = 'idle';
+      return;
+    }
+    if (sceneKey === 'project.management' || sceneKey === 'projects.dashboard') {
+      embeddedWorkspaceDashboard.value = true;
+      status.value = 'idle';
+      return;
+    }
     if (layout.kind === 'workspace') {
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);
@@ -283,17 +329,20 @@ async function resolveScene() {
           await router.replace({ path: normalizedRoute, query: workspaceContextQuery });
           return;
         }
-        if (isScenePlaceholderRoute()) {
-          goWorkbench();
-          return;
-        }
+        // Keep evaluating action/menu/model targets for self-routed scene entries
+        // such as /s/project.management?project_id=<id>.
       }
       // Workspace scene may still provide action/menu/model targets.
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
-          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
+          query: {
+            menu_id: resolvedAction.menuId,
+            scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -312,10 +361,25 @@ async function resolveScene() {
     if (layout.kind === 'record') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
-        await router.replace({
-          path: `/a/${resolvedAction.actionId}`,
-          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
-        });
+        const nextQuery = {
+          menu_id: resolvedAction.menuId,
+          action_id: resolvedAction.actionId,
+          scene_key: sceneKey || undefined,
+          scene_label: sceneLabel || undefined,
+          ...workspaceContextQuery,
+        };
+        const currentActionId = Number(route.query.action_id || 0);
+        const currentMenuId = Number(route.query.menu_id || 0);
+        const sameEmbeddedRouteState =
+          currentActionId === resolvedAction.actionId
+          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && String(route.query.scene_key || '') === sceneKey;
+        if (!sameEmbeddedRouteState) {
+          await router.replace({ path: route.path, query: nextQuery });
+          return;
+        }
+        embeddedRecordActionId.value = resolvedAction.actionId;
+        status.value = 'idle';
         return;
       }
       if (target.model) {
@@ -345,7 +409,12 @@ async function resolveScene() {
       if (target.action_id && !session.menuTree.length) {
         await router.replace({
           path: `/a/${target.action_id}`,
-          query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
+          query: {
+            menu_id: target.menu_id || undefined,
+            scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -354,10 +423,25 @@ async function resolveScene() {
     if (layout.kind === 'list' || layout.kind === 'ledger') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
-        await router.replace({
-          path: `/a/${resolvedAction.actionId}`,
-          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
-        });
+        const nextQuery = {
+          menu_id: resolvedAction.menuId,
+          action_id: resolvedAction.actionId,
+          scene_key: sceneKey || undefined,
+          scene_label: sceneLabel || undefined,
+          ...workspaceContextQuery,
+        };
+        const currentActionId = Number(route.query.action_id || 0);
+        const currentMenuId = Number(route.query.menu_id || 0);
+        const sameEmbeddedRouteState =
+          currentActionId === resolvedAction.actionId
+          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && String(route.query.scene_key || '') === sceneKey;
+        if (!sameEmbeddedRouteState) {
+          await router.replace({ path: route.path, query: nextQuery });
+          return;
+        }
+        embeddedActionId.value = resolvedAction.actionId;
+        status.value = 'idle';
         return;
       }
       if (target.model && target.record_id) {
@@ -385,10 +469,7 @@ async function resolveScene() {
         await router.replace({ path: target.route, query: workspaceContextQuery });
         return;
       }
-      if (isScenePlaceholderRoute()) {
-        goWorkbench();
-        return;
-      }
+      // Do not early-fallback here; let explicit target/action resolution decide.
     }
 
     setError(

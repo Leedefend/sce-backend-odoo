@@ -7,6 +7,7 @@ export type WorkspaceContext = {
   ctx_source?: string;
   search?: string;
   entry_context?: string;
+  project_id?: string;
 };
 
 export type WorkspaceEntryContext = {
@@ -54,11 +55,13 @@ export function readWorkspaceContext(query: Record<string, unknown>): WorkspaceC
   const preset = text(query.preset);
   const ctxSource = text(query.ctx_source);
   const search = text(query.search);
+  const projectId = text(query.project_id);
   const entryContext = readEntryContext(query);
   const context: WorkspaceContext = {};
   if (preset) context.preset = preset;
   if (ctxSource) context.ctx_source = ctxSource;
   if (search) context.search = search;
+  if (projectId) context.project_id = projectId;
   if (entryContext) context.entry_context = JSON.stringify(entryContext);
   return context;
 }
@@ -89,11 +92,12 @@ export function stripWorkspaceContext(query: Record<string, unknown>): LocationQ
   delete next.ctx_source;
   delete next.search;
   delete next.entry_context;
+  delete next.project_id;
   return mergeWorkspaceContext({}, next);
 }
 
 export function hasWorkspaceContext(context: WorkspaceContext) {
-  return Boolean(context.preset || context.ctx_source || context.search || context.entry_context);
+  return Boolean(context.preset || context.ctx_source || context.search || context.entry_context || context.project_id);
 }
 
 export function parseWorkspaceEntryContext(raw: unknown): WorkspaceEntryContext {

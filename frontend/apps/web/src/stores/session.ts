@@ -168,7 +168,7 @@ export interface SessionState {
 }
 
 const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
-const STORAGE_KEY = `sc_frontend_session_v0_3:${DB_SCOPE}`;
+const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
 

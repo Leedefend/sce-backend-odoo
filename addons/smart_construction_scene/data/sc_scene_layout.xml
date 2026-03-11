@@ -49,11 +49,11 @@
                 'code': 'portal.lifecycle',
                 'name': '生命周期驾驶舱',
                 'version': 'v2',
-                'portal_only': True,
-                'spa_ready': False,
+                'portal_only': False,
+                'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/portal/lifecycle'
+                    'route': '/s/projects.dashboard'
                 }
             }"/>
         </record>
@@ -71,11 +71,11 @@
                 'code': 'portal.capability_matrix',
                 'name': '能力矩阵',
                 'version': 'v2',
-                'portal_only': True,
-                'spa_ready': False,
+                'portal_only': False,
+                'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/portal/capability-matrix'
+                    'route': '/s/project.management'
                 }
             }"/>
         </record>
@@ -93,17 +93,39 @@
                 'code': 'portal.dashboard',
                 'name': '工作台',
                 'version': 'v2',
-                'portal_only': True,
-                'spa_ready': False,
+                'portal_only': False,
+                'spa_ready': True,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
-                    'route': '/portal/dashboard'
+                    'route': '/'
                 }
             }"/>
         </record>
 
         <record id="sc_scene_portal_dashboard" model="sc.scene">
             <field name="active_version_id" ref="sc_scene_version_portal_dashboard_v2"/>
+        </record>
+
+        <!-- My work scene -->
+        <record id="sc_scene_version_my_work_workspace_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_my_work_workspace"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'my_work.workspace',
+                'name': '我的工作',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/s/my_work.workspace'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_my_work_workspace" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_my_work_workspace_v2"/>
         </record>
 
         <!-- Project dashboard scene -->
@@ -115,8 +137,9 @@
                 'code': 'projects.dashboard',
                 'name': '项目驾驶舱',
                 'version': 'v2',
-                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
+                    'route': '/pm/dashboard',
                     'action_xmlid': 'smart_construction_core.action_project_dashboard',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_dashboard'
                 }

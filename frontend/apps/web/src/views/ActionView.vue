@@ -6,6 +6,25 @@
         {{ action.label || action.key }}
       </button>
     </section>
+    <section
+      v-if="availableViewModes.length > 1 && pageSectionEnabled('view_switch', true) && pageSectionTagIs('view_switch', 'section')"
+      class="view-switch"
+      :style="pageSectionStyle('view_switch')"
+    >
+      <p class="contract-label">{{ pageText('label.view_switch', '视图切换') }}</p>
+      <div class="contract-chips">
+        <button
+          v-for="mode in availableViewModes"
+          :key="`view-mode-${mode}`"
+          class="contract-chip"
+          :class="{ active: viewMode === mode }"
+          :disabled="status === 'loading' || batchBusy || viewMode === mode"
+          @click="switchViewMode(mode)"
+        >
+          {{ viewModeLabel(mode) }}
+        </button>
+      </div>
+    </section>
     <section v-if="pageSectionEnabled('route_preset', true) && pageSectionTagIs('route_preset', 'section') && appliedPresetLabel" class="route-preset" :style="pageSectionStyle('route_preset')">
       <p>
         {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
@@ -638,12 +657,32 @@ type SurfaceIntent = {
   secondaryAction?: FocusNavAction;
 };
 
-const actionId = computed(() => Number(route.params.actionId));
+const actionId = computed(() => {
+  const fromParam = Number(route.params.actionId || 0);
+  if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
+  const fromQuery = Number(route.query.action_id || 0);
+  return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
+});
 const actionMeta = computed(() => session.currentAction);
+const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
+const menuId = computed(() => Number(route.query.menu_id ?? 0));
+const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
+const sceneKey = computed(() => {
+  const metaKey = route.meta?.sceneKey as string | undefined;
+  if (metaKey) return metaKey;
+  const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
+  if (queryKey) return String(queryKey);
+  const node = findMenuNode(session.menuTree, menuId.value);
+  return node ? resolveNodeSceneKey(node) : '';
+});
+const scene = computed<Scene | null>(() => {
+  if (!sceneKey.value) return null;
+  return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
+});
+const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
-const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const contractViewType = ref('');
 const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
@@ -658,11 +697,101 @@ const showMoreContractActions = ref(false);
 const showMoreContractFilters = ref(false);
 const showMoreSavedFilters = ref(false);
 const showMoreGroupBy = ref(false);
-const viewMode = computed(() => {
-  const mode = String(contractViewType.value || '')
+const preferredViewMode = ref('');
+
+function replaceCurrentRouteQuery(query: Record<string, unknown>) {
+  router.replace({ path: route.path, query }).catch(() => {});
+}
+
+function normalizeViewMode(raw: unknown): string {
+  const mode = String(raw || '').trim().toLowerCase();
+  if (!mode) return '';
+  if (mode === 'list') return 'tree';
+  return mode;
+}
+
+function parseViewModes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    raw
+      .map((item) => normalizeViewMode(item))
+      .forEach((mode) => {
+        if (!mode || seen.has(mode)) return;
+        seen.add(mode);
+        out.push(mode);
+      });
+    return out;
+  }
+  const out: string[] = [];
+  const seen = new Set<string>();
+  String(raw || '')
     .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .find(Boolean) || '';
+    .map((item) => normalizeViewMode(item))
+    .forEach((mode) => {
+      if (!mode || seen.has(mode)) return;
+      seen.add(mode);
+      out.push(mode);
+    });
+  return out;
+}
+
+function collectContractViewModes(contract: ActionContractLoose | null): string[] {
+  if (!contract) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const addMode = (raw: unknown) => {
+    const mode = normalizeViewMode(raw);
+    if (!mode || seen.has(mode)) return;
+    seen.add(mode);
+    out.push(mode);
+  };
+  const addModes = (raw: unknown) => {
+    parseViewModes(raw).forEach((mode) => addMode(mode));
+  };
+
+  addModes(contract.head?.view_type);
+  addModes(contract.view_type);
+  addModes(contract.ui_contract?.head?.view_type);
+  addModes(contract.ui_contract?.view_type);
+
+  const views = contract.views || {};
+  const nestedViews = contract.ui_contract?.views || {};
+  if (views.tree || views.list || nestedViews.tree || nestedViews.list) addMode('tree');
+  if (views.kanban || nestedViews.kanban) addMode('kanban');
+  if (views.pivot || nestedViews.pivot) addMode('pivot');
+  if (views.graph || nestedViews.graph) addMode('graph');
+  if (views.calendar || nestedViews.calendar) addMode('calendar');
+  if (views.gantt || nestedViews.gantt) addMode('gantt');
+  if (views.activity || nestedViews.activity) addMode('activity');
+  if (views.dashboard || nestedViews.dashboard) addMode('dashboard');
+  return out;
+}
+
+function resolveAvailableViewModes(meta: NavNode['meta'] | null | undefined, contract: ActionContractLoose | null, contractViewTypeRaw: unknown) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const addMode = (raw: unknown) => {
+    const mode = normalizeViewMode(raw);
+    if (!mode || mode === 'form' || seen.has(mode)) return;
+    seen.add(mode);
+    out.push(mode);
+  };
+  const addModes = (raw: unknown) => {
+    parseViewModes(raw).forEach((mode) => addMode(mode));
+  };
+  addModes(contractViewTypeRaw);
+  addModes((meta as { view_modes?: unknown } | null)?.view_modes);
+  collectContractViewModes(contract).forEach((mode) => addMode(mode));
+  return out;
+}
+
+const availableViewModes = computed(() =>
+  resolveAvailableViewModes(actionMeta.value, actionContract.value, contractViewType.value),
+);
+const viewMode = computed(() => {
+  const modes = availableViewModes.value;
+  const mode = normalizeViewMode(preferredViewMode.value) || modes[0] || '';
   if (mode === 'kanban') return 'kanban';
   if (mode === 'list' || mode === 'tree') return 'tree';
   if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
@@ -670,6 +799,25 @@ const viewMode = computed(() => {
   }
   return '';
 });
+
+function viewModeLabel(mode: string) {
+  if (mode === 'tree') return pageText('view_mode_tree', '列表');
+  if (mode === 'kanban') return pageText('view_mode_kanban', '看板');
+  if (mode === 'pivot') return pageText('view_mode_pivot', '透视');
+  if (mode === 'graph') return pageText('view_mode_graph', '图表');
+  if (mode === 'calendar') return pageText('view_mode_calendar', '日历');
+  if (mode === 'gantt') return pageText('view_mode_gantt', '甘特');
+  if (mode === 'activity') return pageText('view_mode_activity', '活动');
+  if (mode === 'dashboard') return pageText('view_mode_dashboard', '仪表板');
+  return mode;
+}
+
+function switchViewMode(mode: string) {
+  const normalized = normalizeViewMode(mode);
+  if (!normalized || normalized === viewMode.value) return;
+  preferredViewMode.value = normalized;
+  void load();
+}
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
 const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
@@ -755,6 +903,7 @@ const advancedViewHint = computed(() => {
   return hints[viewMode.value] || pageText('advanced_hint_default', '当前视图使用可读降级渲染。');
 });
 const pageTitle = computed(() => {
+  if (routeSceneLabel.value) return routeSceneLabel.value;
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
   return injectedTitle?.value || actionMeta.value?.name || pageText('page_title_fallback', '工作台');
@@ -842,19 +991,6 @@ const emptyReasonText = computed(() => {
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
-const sceneKey = computed(() => {
-  const metaKey = route.meta?.sceneKey as string | undefined;
-  if (metaKey) return metaKey;
-  const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
-  if (queryKey) return String(queryKey);
-  const node = findMenuNode(session.menuTree, menuId.value);
-  return node ? resolveNodeSceneKey(node) : '';
-});
-const scene = computed<Scene | null>(() => {
-  if (!sceneKey.value) return null;
-  return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
-});
-const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 const hudEntries = computed(() => [
   { label: 'action_id', value: actionId.value || '-' },
   { label: 'menu_id', value: menuId.value || '-' },
@@ -1165,12 +1301,21 @@ function resolveWorkbenchQuery(
   };
 }
 
-function resolveActionViewType(_meta: unknown, contract: unknown) {
+function resolveActionViewType(meta: unknown, contract: unknown) {
   const typedContract = contract as ActionContractLoose;
-  const fromHead = String(typedContract.head?.view_type || '').trim();
+  const nestedContract = (typedContract.ui_contract_raw || typedContract.ui_contract || {}) as ActionContractLoose;
+  const fromHead = String(typedContract.head?.view_type || nestedContract.head?.view_type || '').trim();
   if (fromHead) return fromHead;
-  const fromContract = String(typedContract.view_type || '').trim();
+  const fromContract = String(typedContract.view_type || nestedContract.view_type || '').trim();
   if (fromContract) return fromContract;
+  const metaViewModes = (meta as { view_modes?: unknown } | null)?.view_modes;
+  if (Array.isArray(metaViewModes) && metaViewModes.length) {
+    const normalized = metaViewModes
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .join(',');
+    if (normalized) return normalized;
+  }
   return '';
 }
 
@@ -1312,7 +1457,7 @@ function clearRoutePreset() {
   routeContextSource.value = '';
   const nextQuery = stripWorkspaceContext(route.query as Record<string, unknown>);
   void trackUsageEvent('workspace.preset.clear', { view: 'action' }).catch(() => {});
-  router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
+  replaceCurrentRouteQuery(nextQuery);
 }
 
 function syncRouteListState(extra?: Record<string, unknown>) {
@@ -1333,7 +1478,7 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     group_wik: activeGroupByField.value && groupWindowIdentityKey.value ? groupWindowIdentityKey.value : undefined,
     ...extra,
   });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
 }
 
 function parseGroupPageOffsets(raw: string) {
@@ -1364,7 +1509,7 @@ function applyContractFilter(key: string) {
   showMoreContractFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: key });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1374,7 +1519,7 @@ function applySavedFilter(key: string) {
   showMoreSavedFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: key });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1383,7 +1528,7 @@ function clearContractFilter() {
   showMoreContractFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: undefined });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1392,7 +1537,7 @@ function clearSavedFilter() {
   showMoreSavedFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: undefined });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1425,7 +1570,7 @@ function applyGroupBy(field: string) {
     group_wdg: undefined,
     group_wik: undefined,
   });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1457,7 +1602,7 @@ function clearGroupBy() {
     group_wdg: undefined,
     group_wik: undefined,
   });
-  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  replaceCurrentRouteQuery(query);
   void load();
 }
 
@@ -1508,7 +1653,7 @@ function clearGroupSummaryDrilldown() {
     group_wdg: undefined,
     group_wik: undefined,
   });
-  router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
+  replaceCurrentRouteQuery(q);
   void load();
 }
 
@@ -2216,17 +2361,30 @@ function buildGroupKey(field: unknown, value: unknown, fallback: unknown) {
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
   const typed = contract as ActionContractLoose;
+  const nested = (typed.ui_contract_raw || typed.ui_contract || {}) as ActionContractLoose;
   const direct = typed.model;
   if (typeof direct === 'string' && direct.trim()) {
     return direct.trim();
+  }
+  const nestedDirect = nested.model;
+  if (typeof nestedDirect === 'string' && nestedDirect.trim()) {
+    return nestedDirect.trim();
   }
   const headModel = typed.head?.model;
   if (typeof headModel === 'string' && headModel.trim()) {
     return headModel.trim();
   }
+  const nestedHeadModel = nested.head?.model;
+  if (typeof nestedHeadModel === 'string' && nestedHeadModel.trim()) {
+    return nestedHeadModel.trim();
+  }
   const viewModel = typed.views?.tree?.model || typed.views?.form?.model || typed.views?.kanban?.model;
   if (typeof viewModel === 'string' && viewModel.trim()) {
     return viewModel.trim();
+  }
+  const nestedViewModel = nested.views?.tree?.model || nested.views?.form?.model || nested.views?.kanban?.model;
+  if (typeof nestedViewModel === 'string' && nestedViewModel.trim()) {
+    return nestedViewModel.trim();
   }
   return '';
 }
@@ -2378,15 +2536,20 @@ async function runContractAction(action: ContractActionButton) {
   if (!action.enabled) return;
   if (action.kind === 'open') {
     if (action.actionId) {
-      await router.push({
-        name: 'action',
-        params: { actionId: action.actionId },
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: action.actionId,
-          ...resolveCarryQuery(),
-        },
-      });
+      const nextQuery = {
+        ...resolveCarryQuery(),
+        menu_id: menuId.value || undefined,
+        action_id: action.actionId,
+      };
+      if (keepSceneRoute.value) {
+        await router.push({ path: route.path, query: nextQuery });
+      } else {
+        await router.push({
+          name: 'action',
+          params: { actionId: action.actionId },
+          query: nextQuery,
+        });
+      }
       return;
     }
     if (action.url) {
@@ -2430,15 +2593,20 @@ async function runContractAction(action: ContractActionButton) {
           context: action.context,
         });
         if (response?.result?.action_id) {
-          await router.push({
-            name: 'action',
-            params: { actionId: response.result.action_id },
-            query: {
-              menu_id: menuId.value || undefined,
-              action_id: response.result.action_id,
-              ...resolveCarryQuery(),
-            },
-          });
+          const nextQuery = {
+            ...resolveCarryQuery(),
+            menu_id: menuId.value || undefined,
+            action_id: response.result.action_id,
+          };
+          if (keepSceneRoute.value) {
+            await router.push({ path: route.path, query: nextQuery });
+          } else {
+            await router.push({
+              name: 'action',
+              params: { actionId: response.result.action_id },
+              query: nextQuery,
+            });
+          }
           return;
         }
         successCount += 1;
@@ -2548,6 +2716,15 @@ async function load() {
     }
     const typedContract = contract as ActionContractLoose;
     actionContract.value = typedContract;
+    {
+      const candidates = resolveAvailableViewModes(meta || null, typedContract, contractViewType.value);
+      const routeMode = normalizeViewMode(route.query.view_mode);
+      if (routeMode && candidates.includes(routeMode)) {
+        preferredViewMode.value = routeMode;
+      } else if (!preferredViewMode.value || !candidates.includes(normalizeViewMode(preferredViewMode.value))) {
+        preferredViewMode.value = candidates[0] || '';
+      }
+    }
     const routeFilter = String(route.query.preset_filter || '').trim();
     const routeSavedFilter = String(route.query.saved_filter || '').trim();
     const routeGroupBy = String(route.query.group_by || '').trim();
@@ -2605,7 +2782,6 @@ async function load() {
       return;
     }
     if (!sortValue.value) {
-      const typedContract = contract as ActionContractLoose;
       const searchDefaults = typedContract.search?.defaults;
       const searchOrder = searchDefaults?.order;
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
@@ -2650,7 +2826,6 @@ async function load() {
       }
       if (!isWindowAction(meta)) {
         const actionType = getActionType(meta);
-        const typedContract = contract as ActionContractLoose;
         const contractType = String(typedContract.data?.type || '').toLowerCase();
         const contractUrl = String(typedContract.data?.url || '');
         const metaUrl = String((meta as ActionMetaLoose | undefined)?.url || '');
@@ -3406,6 +3581,11 @@ watch(
 .page-actions {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.view-switch {
+  display: grid;
   gap: 8px;
 }
 

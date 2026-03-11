@@ -1,0 +1,64 @@
+{
+  "version": "v1",
+  "default_surface": "construction_pm_v1",
+  "surfaces": {
+    "construction_pm_v1": {
+      "nav_allowlist": [
+        "project.management",
+        "projects.dashboard",
+        "projects.ledger",
+        "projects.intake",
+        "my_work.workspace"
+      ],
+      "deep_link_allowlist": [
+        "contract.center",
+        "cost.budget_alloc",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.project_progress",
+        "data.dictionary",
+        "finance.center",
+        "finance.operating_metrics",
+        "finance.payment_ledger",
+        "finance.payment_requests",
+        "finance.settlement_orders",
+        "finance.treasury_ledger",
+        "config.project_cost_code",
+        "risk.monitor",
+        "task.center"
+      ]
+    },
+    "construction_exec_v1": {
+      "nav_allowlist": [
+        "projects.dashboard",
+        "finance.operating_metrics",
+        "risk.monitor",
+        "contract.center"
+      ],
+      "deep_link_allowlist": [
+        "project.management",
+        "projects.ledger",
+        "projects.intake",
+        "my_work.workspace",
+        "cost.budget_alloc",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.project_progress",
+        "data.dictionary",
+        "finance.center",
+        "finance.payment_ledger",
+        "finance.payment_requests",
+        "finance.settlement_orders",
+        "finance.treasury_ledger",
+        "config.project_cost_code",
+        "task.center"
+      ]
+    }
+  }
+}

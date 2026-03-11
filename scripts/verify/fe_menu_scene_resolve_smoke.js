@@ -219,6 +219,9 @@ async function main() {
   }
 
   const nav = ((appInitResp.body || {}).data || {}).nav || [];
+  const navMeta = ((appInitResp.body || {}).data || {}).nav_meta || {};
+  const navSource = String((navMeta && navMeta.nav_source) || '');
+  const sceneFirstMode = navSource.startsWith('scene_contract');
   const all = flattenNav(nav);
   const failures = [];
   const exempt = [];
@@ -233,7 +236,10 @@ async function main() {
 
   for (const node of all) {
     const meta = node.meta || {};
-    if (!hasAction(meta)) {
+    const isLeaf = !Array.isArray(node.children) || node.children.length === 0;
+    if (sceneFirstMode) {
+      if (!isLeaf) continue;
+    } else if (!hasAction(meta)) {
       continue;
     }
     total += 1;
@@ -271,6 +277,10 @@ async function main() {
         });
       }
     }
+  }
+
+  if (sceneFirstMode) {
+    log(`mode: scene-first (${navSource})`);
   }
 
   const resolved = total - failures.length - exempt.length;

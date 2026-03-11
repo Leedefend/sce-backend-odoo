@@ -1,2 +1,4 @@
 # -*- coding: utf-8 -*-
 from . import test_action_dispatcher_server_mapping
+from . import test_scene_nav_contract_builder
+from . import test_scene_delivery_policy
