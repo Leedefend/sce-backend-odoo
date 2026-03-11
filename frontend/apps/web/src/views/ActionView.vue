@@ -250,6 +250,12 @@
         </section>
       </div>
     </section>
+    <section v-if="viewMode === 'kanban' && sceneKey === 'projects.ledger' && ledgerOverviewItems.length" class="ledger-overview-strip">
+      <article v-for="item in ledgerOverviewItems" :key="item.key" class="ledger-overview-card" :class="`tone-${item.tone}`">
+        <p class="ledger-overview-label">{{ item.label }}</p>
+        <p class="ledger-overview-value">{{ item.value }}</p>
+      </article>
+    </section>
     <KanbanPage
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
@@ -267,6 +273,8 @@
       :title-field="kanbanTitleField"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :scene-key="sceneKey"
+      :page-mode="pageMode"
       :on-reload="reload"
       :on-card-click="handleRowClick"
     />
@@ -289,6 +297,9 @@
       :search-term="searchTerm"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :scene-key="sceneKey"
+      :page-mode="pageMode"
+      :record-count="records.length"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
       :batch-details="batchDetails"
@@ -402,6 +413,8 @@ import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceCon
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { resolvePageMode } from '../app/pageMode';
+import { semanticStatus } from '../utils/semantic';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -679,6 +692,7 @@ const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
+const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
 const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 
 const model = computed(() => actionMeta.value?.model ?? '');
@@ -863,6 +877,24 @@ const subtitle = computed(
   () =>
     `${records.value.length}${pageText('subtitle_records_suffix', ' 条记录')} · ${pageText('subtitle_sort_prefix', '排序：')}${sortLabel.value}`,
 );
+const ledgerOverviewItems = computed(() => {
+  if (sceneKey.value !== 'projects.ledger') return [] as Array<{ key: string; label: string; value: string; tone: string }>;
+  const rows = records.value || [];
+  const total = rows.length;
+  let warning = 0;
+  let done = 0;
+  rows.forEach((row) => {
+    const stage = semanticStatus(row.stage_id || row.state || row.status);
+    if (stage.tone === 'danger' || stage.tone === 'warning') warning += 1;
+    if (String(stage.text).includes('完成') || String(stage.text).includes('归档')) done += 1;
+  });
+  return [
+    { key: 'total', label: '在建项目数', value: String(total), tone: 'info' },
+    { key: 'warning', label: '预警项目数', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
+    { key: 'done', label: '已完工项目数', value: String(done), tone: 'success' },
+    { key: 'metric', label: '项目群规模', value: `${total} 个项目`, tone: 'neutral' },
+  ];
+});
 const kanbanTitleField = computed(() => {
   if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
     return kanbanTitleFieldHint.value;
@@ -3804,6 +3836,36 @@ watch(
   font-size: 12px;
   color: #64748b;
 }
+
+.ledger-overview-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.ledger-overview-card {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  background: #fff;
+}
+
+.ledger-overview-label {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ledger-overview-value {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ledger-overview-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.ledger-overview-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+.ledger-overview-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.ledger-overview-card.tone-neutral { background: #f9fafb; border-color: #d1d5db; color: #374151; }
 
 @media (max-width: 760px) {
   .focus-strip {

@@ -18,10 +18,10 @@
                 'list_profile': {
                     'columns': [
                         'name',
-                        'project_code',
-                        'partner_id',
-                        'user_id',
                         'stage_id',
+                        'user_id',
+                        'dashboard_invoice_amount',
+                        'partner_id',
                         'write_date'
                     ],
                     'hidden_columns': [
@@ -33,10 +33,10 @@
                     ],
                     'column_labels': {
                         'name': '项目名称',
-                        'project_code': '项目编号',
-                        'partner_id': '客户',
-                        'user_id': '负责人',
                         'stage_id': '状态',
+                        'user_id': '负责人',
+                        'dashboard_invoice_amount': '合同额',
+                        'partner_id': '建设单位',
                         'write_date': '更新时间'
                     },
                     'row_primary': 'name',
@@ -69,10 +69,10 @@
                 'list_profile': {
                     'columns': [
                         'name',
-                        'project_code',
-                        'partner_id',
-                        'user_id',
                         'stage_id',
+                        'user_id',
+                        'dashboard_invoice_amount',
+                        'partner_id',
                         'write_date'
                     ],
                     'hidden_columns': [
@@ -84,10 +84,10 @@
                     ],
                     'column_labels': {
                         'name': '项目名称',
-                        'project_code': '项目编号',
-                        'partner_id': '客户',
                         'user_id': '负责人',
                         'stage_id': '状态',
+                        'dashboard_invoice_amount': '关键金额',
+                        'partner_id': '建设单位',
                         'write_date': '更新时间'
                     },
                     'row_primary': 'name',

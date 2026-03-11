@@ -3,7 +3,7 @@
     <div class="search">
       <input
         type="search"
-        placeholder="Search"
+        placeholder="搜索关键字"
         :value="searchTerm"
         :disabled="loading"
         @input="onSearchInput"
@@ -18,7 +18,7 @@
         :disabled="loading"
         @click="onFilter('all')"
       >
-        All
+        全部
       </button>
       <button
         type="button"
@@ -27,7 +27,7 @@
         :disabled="loading"
         @click="onFilter('active')"
       >
-        Active
+        在办
       </button>
       <button
         type="button"
@@ -36,11 +36,11 @@
         :disabled="loading"
         @click="onFilter('archived')"
       >
-        Archived
+        已归档
       </button>
     </div>
     <div class="sort">
-      <span class="label">Sort</span>
+      <span class="label">排序</span>
       <div class="sort-options">
         <button
           v-for="opt in sortOptions"
