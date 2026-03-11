@@ -48,6 +48,14 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | W2-02 | Unify `project_member` role mapping | P3 | DONE | `verify.role.project_member.unification.guard` PASS |
 | W2-03 | Add system-admin minimum-permission audit report | P3 | DONE | `verify.role.system_admin.minimum_permission_audit.guard` PASS |
 
+### W3 Tasks (Phase 3 Exit Closeout)
+
+| ID | Task | Phase | Status | Acceptance |
+|---|---|---|---|---|
+| W3-01 | ACL minimum-set guard | P3 | DONE | `verify.role.acl.minimum_set.guard` PASS |
+| W3-02 | Relation access-policy consistency audit | P3 | DONE | `verify.relation.access_policy.consistency.audit` PASS |
+| W3-03 | Close 3 runtime-focused cases | P3 | DOING | 7-block/scene reason-code/deep-link policy checks pass |
+
 ## 5. Phase Entry Criteria
 
 ### Phase 1 -> Phase 2
