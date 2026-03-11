@@ -10,7 +10,7 @@
 | Phase 1 | 导航收口 | DONE | delivery policy 主导航锁定报告 |
 | Phase 2 | 核心场景闭环 | DOING | 4 大场景可用性验收记录（workspace 基线已收口） |
 | Phase 3 | 角色权限体系 | DONE | 角色矩阵 + ACL/可见性校验 + 退出就绪报告 |
-| Phase 4 | 前端体验稳定 | TODO | 页面框架和 block 规范收敛 |
+| Phase 4 | 前端体验稳定 | DOING | 页面框架和 block 规范收敛（W1 基线完成） |
 | Phase 5 | 验证与部署 | TODO | 发布验证包 + 部署文档 |
 | Phase 6 | 试运行首发 | TODO | 试运行报告 + v1.0 发布记录 |
 
@@ -55,6 +55,14 @@
 | W3-01 | ACL 最小权限集 guard | P3 | DONE | `verify.role.acl.minimum_set.guard` PASS |
 | W3-02 | 关系访问策略一致性审计 | P3 | DONE | `verify.relation.access_policy.consistency.audit` PASS |
 | W3-03 | 三项运行时专项补齐 | P3 | DONE | `verify.project.dashboard.role_runtime.guard` + `verify.scene.permission_reasoncode_deeplink.guard` PASS |
+
+### W4-任务（Phase 4 前端稳定）
+
+| ID | 任务 | Phase | 状态 | 验收标准 |
+|---|---|---|---|---|
+| W4-01 | 前端页面/区块静态 guard 基线 | P4 | DONE | 9 个 frontend guard 全部 PASS |
+| W4-02 | 构建与类型检查基线 | P4 | DONE | `verify.frontend.build` + `verify.frontend.typecheck.strict` PASS |
+| W4-03 | lint 基线债务收口 | P4 | DOING | `verify.frontend.lint.src` errors 清零 |
 
 ## 5. 进入下一阶段条件
 

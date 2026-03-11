@@ -10,7 +10,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 1 | Navigation convergence | DONE | delivery-policy main-nav lock report |
 | Phase 2 | Core scenario closure | DOING | acceptance records for 4 key scenarios (workspace baseline closed) |
 | Phase 3 | Role/permission system | DONE | role matrix + ACL/visibility verification + exit-readiness report |
-| Phase 4 | Frontend stability | TODO | unified page framework and block conventions |
+| Phase 4 | Frontend stability | DOING | unified page framework and block conventions (W1 baseline complete) |
 | Phase 5 | Verification/deployment | TODO | release verification bundle + deployment docs |
 | Phase 6 | Pilot and launch | TODO | pilot report + v1.0 release record |
 
@@ -55,6 +55,14 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | W3-01 | ACL minimum-set guard | P3 | DONE | `verify.role.acl.minimum_set.guard` PASS |
 | W3-02 | Relation access-policy consistency audit | P3 | DONE | `verify.relation.access_policy.consistency.audit` PASS |
 | W3-03 | Close 3 runtime-focused cases | P3 | DONE | `verify.project.dashboard.role_runtime.guard` + `verify.scene.permission_reasoncode_deeplink.guard` PASS |
+
+### W4 Tasks (Phase 4 Frontend Stability)
+
+| ID | Task | Phase | Status | Acceptance |
+|---|---|---|---|---|
+| W4-01 | Frontend page/block static guard baseline | P4 | DONE | 9 frontend guards PASS |
+| W4-02 | Build and typecheck baseline | P4 | DONE | `verify.frontend.build` + `verify.frontend.typecheck.strict` PASS |
+| W4-03 | Lint baseline debt closeout | P4 | DOING | `verify.frontend.lint.src` errors reduced to zero |
 
 ## 5. Phase Entry Criteria
 

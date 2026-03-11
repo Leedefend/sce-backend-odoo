@@ -16,8 +16,8 @@ Unify page framework, block components, and interaction conventions to make V1 f
 - [ ] Empty/loading/error states are consistent
 
 ### B. Block Component Consistency
-- [ ] 7 blocks share consistent visual hierarchy and data presentation
-- [ ] Metric/table/alert components follow unified props and data contract patterns
+- [x] 7 blocks share consistent visual hierarchy and data presentation
+- [x] Metric/table/alert components follow unified props and data contract patterns
 - [ ] Missing-data fallback style and copy are consistent
 
 ### C. Interaction Consistency
@@ -32,13 +32,17 @@ Unify page framework, block components, and interaction conventions to make V1 f
 
 ### E. Stability and Observability
 - [ ] No severe frontend console errors during key operations
-- [ ] Key frontend smoke scripts pass
+- [x] Key frontend smoke scripts pass
 - [ ] Critical failures are diagnosable (sufficient logs/errors)
 
 ## 4. Suggested Verification Commands
 - `make verify.frontend.build`
 - `make verify.frontend.typecheck.strict`
 - `make verify.frontend.lint.src`
+- `make verify.frontend.page_contract.runtime_universal.guard`
+- `make verify.frontend.page_block_registry_guard`
+- `make verify.frontend.page_renderer_default_guard`
+- `make verify.frontend.page_block_renderer_smoke`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. Deliverables
@@ -49,4 +53,3 @@ Unify page framework, block components, and interaction conventions to make V1 f
 - All checklist items complete
 - Core scenarios are demo-stable in user/hud modes
 - Execution board Phase 4 updated to `DONE`
-

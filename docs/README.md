@@ -45,6 +45,7 @@
 - Phase 3 (system-admin minimum-permission audit): `docs/releases/phase_3_system_admin_minimum_permission_audit_report.en.md`
 - Phase 3 (exit readiness): `docs/releases/phase_3_exit_readiness_report.en.md`
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
+- Phase 4 (execution report): `docs/releases/phase_4_frontend_stability_execution_report.en.md`
 - Phase 5 checklist: `docs/releases/phase_5_verification_deployment_checklist.en.md`
 - Phase 6 checklist: `docs/releases/phase_6_pilot_launch_checklist.en.md`
 
