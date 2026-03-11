@@ -25,6 +25,8 @@
 - Scope freeze: `docs/releases/release_scope_v1.en.md`
 - System asset inventory: `docs/releases/system_asset_inventory.en.md`
 - Release gap analysis: `docs/releases/release_gap_analysis.en.md`
+- Execution board: `docs/releases/construction_system_v1_execution_board.en.md`
+- Phase 1 checklist: `docs/releases/phase_1_navigation_convergence_checklist.en.md`
 
 ## 快速生成/导出（现有 Make 目标）
 ```bash
