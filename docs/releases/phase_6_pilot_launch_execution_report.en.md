@@ -11,15 +11,15 @@
 
 ## 3. Current Task Status (W6)
 - `W6-01`: completed (`docs/releases/phase_6_pilot_scope_definition.en.md` is published).
-- `W6-02`: in progress (core-path pilot run and severity-based closure).
-- `W6-03`: pending (launch execution and 24h observation review).
+- `W6-02`: completed (round-1 rehearsal PASS with `P0=0`; see rehearsal record and issue ledger).
+- `W6-03`: in progress (launch execution and 24h observation review).
 
 ## 4. Phase Gate (Kickoff Baseline)
 - Phase 0~5 evidence is complete and closed.
-- All incomplete Phase 6 checklist items remain unchecked and will be closed by pilot evidence.
+- In Phase 6 checklist, A/B are closed and first two items of C are closed; D/E remain pending until launch completion.
 - Release conclusion is updated to `PASS` or `BLOCKED` only after `W6-03` is complete.
 
 ## 5. Next
-- Start core-path rehearsals and record outcomes in `docs/releases/phase_6_pilot_rehearsal_record.en.md`.
-- Maintain P0/P1/P2 closure in `docs/releases/phase_6_issue_ledger.en.md`.
-- Finalize launch window, rollback window, and ownership confirmations.
+- Publish and fill launch execution record (`docs/ops/releases/current/scems_v1_0_launch.en.md`, with release window, rollback window, and owner sign-off).
+- Complete post-release key feature spot-check and archive results.
+- Complete 24h indicator observation and v1.0 post-launch summary (`docs/releases/scems_v1_0_post_launch_review.en.md`).

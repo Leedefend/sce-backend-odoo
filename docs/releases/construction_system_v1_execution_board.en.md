@@ -82,8 +82,8 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | ID | Task | Phase | Status | Acceptance |
 |---|---|---|---|---|
 | W6-01 | Freeze pilot org and sample data scope | P6 | DONE | `phase_6_pilot_scope_definition.en.md` covers roles/samples/issue path |
-| W6-02 | Run core-path pilot and severity closure | P6 | DOING | full-chain rehearsal done and P0 blockers reduced to zero |
-| W6-03 | Execute launch and 24h observation review | P6 | TODO | launch record, spot-check, and 24h monitoring conclusion available |
+| W6-02 | Run core-path pilot and severity closure | P6 | DONE | rehearsal record archived and `P0=0` (see `phase_6_pilot_rehearsal_record.en.md`) |
+| W6-03 | Execute launch and 24h observation review | P6 | DOING | launch record, spot-check, and 24h monitoring conclusion available |
 
 ## 5. Phase Entry Criteria
 

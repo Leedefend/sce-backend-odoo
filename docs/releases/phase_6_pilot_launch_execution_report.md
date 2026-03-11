@@ -11,15 +11,15 @@
 
 ## 3. 当前任务状态（W6）
 - `W6-01`：已完成（`docs/releases/phase_6_pilot_scope_definition.md` 已发布）。
-- `W6-02`：进行中（核心路径试运行与问题分级闭环）。
-- `W6-03`：待执行（首发发布与 24h 观测复盘）。
+- `W6-02`：已完成（首轮演练 PASS，`P0=0`，详见演练记录与问题台账）。
+- `W6-03`：进行中（首发发布与 24h 观测复盘）。
 
 ## 4. 阶段门禁（启动版）
 - Phase 0~5 证据已齐备且状态已收口。
-- Phase 6 清单 A-E 尚未完成项保持未勾选，按试运行结果逐项关闭。
+- Phase 6 清单中 A/B 已关闭，C 已完成前两项，D/E 待首发后关闭。
 - 发布结论仅在 `W6-03` 完成后更新为 `PASS` 或 `BLOCKED`。
 
 ## 5. 下一步
-- 启动核心路径演练并在 `docs/releases/phase_6_pilot_rehearsal_record.md` 记录结果。
-- 按 `docs/releases/phase_6_issue_ledger.md` 维护 P0/P1/P2 问题闭环。
-- 完成首发窗口、回滚窗口和责任人确认记录。
+- 输出并回填首发发布记录（`docs/ops/releases/current/scems_v1_0_launch.md`，含发布窗口、回滚窗口与责任人签字）。
+- 完成发布后关键功能 spot-check 并记录。
+- 完成 24h 指标观测与 v1.0 发布总结（`docs/releases/scems_v1_0_post_launch_review.md`）。
