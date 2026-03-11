@@ -11,19 +11,19 @@ Unify page framework, block components, and interaction conventions to make V1 f
 ## 3. Required Items
 
 ### A. Page Framework Consistency
-- [ ] Core scenario pages follow a unified layout container and spacing rules
-- [ ] Title/breadcrumb/back behavior is consistent
-- [ ] Empty/loading/error states are consistent
+- [x] Core scenario pages follow a unified layout container and spacing rules
+- [x] Title/breadcrumb/back behavior is consistent
+- [x] Empty/loading/error states are consistent
 
 ### B. Block Component Consistency
 - [x] 7 blocks share consistent visual hierarchy and data presentation
 - [x] Metric/table/alert components follow unified props and data contract patterns
-- [ ] Missing-data fallback style and copy are consistent
+- [x] Missing-data fallback style and copy are consistent
 
 ### C. Interaction Consistency
-- [ ] Primary action button placement and naming are consistent
-- [ ] Key navigation path (`ledger -> management`) is consistent
-- [ ] Search/filter/sort feedback is consistent (no silent failures)
+- [x] Primary action button placement and naming are consistent
+- [x] Key navigation path (`ledger -> management`) is consistent
+- [x] Search/filter/sort feedback is consistent (no silent failures)
 
 ### D. Cross-Mode Consistency (user/hud)
 - [x] Key pages render in both user and hud modes
@@ -47,6 +47,14 @@ Unify page framework, block components, and interaction conventions to make V1 f
 - `make verify.page_contract.role_orchestration_variance.guard`
 - `make verify.scene.hud.trace.smoke`
 - `make verify.scene.meta.trace.smoke`
+- `make verify.frontend.contract_runtime.guard`
+- `make verify.frontend.contract_route.guard`
+- `make verify.frontend.home_layout_section_coverage.guard`
+- `make verify.frontend.home_orchestration_consumption.guard`
+- `make verify.frontend.page_contract_boundary.guard`
+- `make verify.list.surface.clean`
+- `make verify.frontend.search_groupby_savedfilters.guard`
+- `make verify.ui.product.stability`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. Deliverables

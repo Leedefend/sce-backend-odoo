@@ -11,19 +11,19 @@
 ## 3. 必做项
 
 ### A. 页面框架一致性
-- [ ] 主要场景页面采用统一布局容器与间距规范
-- [ ] 页面标题、面包屑、返回路径行为一致
-- [ ] 空状态、加载状态、错误状态表现一致
+- [x] 主要场景页面采用统一布局容器与间距规范
+- [x] 页面标题、面包屑、返回路径行为一致
+- [x] 空状态、加载状态、错误状态表现一致
 
 ### B. 区块组件一致性
 - [x] 7-block 在视觉层次与数据呈现方式上统一
 - [x] 指标卡、表格、告警组件遵循统一 props/数据契约
-- [ ] 区块缺数据时采用统一降级样式与文案
+- [x] 区块缺数据时采用统一降级样式与文案
 
 ### C. 交互规范一致性
-- [ ] 主操作按钮位置与命名规范一致
-- [ ] 关键跳转（台账 -> 控制台）交互路径一致
-- [ ] 搜索、筛选、排序反馈一致（无无响应状态）
+- [x] 主操作按钮位置与命名规范一致
+- [x] 关键跳转（台账 -> 控制台）交互路径一致
+- [x] 搜索、筛选、排序反馈一致（无无响应状态）
 
 ### D. 跨模式一致性（user/hud）
 - [x] user 与 hud 模式下关键页面可渲染
@@ -47,6 +47,14 @@
 - `make verify.page_contract.role_orchestration_variance.guard`
 - `make verify.scene.hud.trace.smoke`
 - `make verify.scene.meta.trace.smoke`
+- `make verify.frontend.contract_runtime.guard`
+- `make verify.frontend.contract_route.guard`
+- `make verify.frontend.home_layout_section_coverage.guard`
+- `make verify.frontend.home_orchestration_consumption.guard`
+- `make verify.frontend.page_contract_boundary.guard`
+- `make verify.list.surface.clean`
+- `make verify.frontend.search_groupby_savedfilters.guard`
+- `make verify.ui.product.stability`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. 交付产物

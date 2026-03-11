@@ -64,7 +64,8 @@
 | W4-02 | 构建与类型检查基线 | P4 | DONE | `verify.frontend.build` + `verify.frontend.typecheck.strict` PASS |
 | W4-03 | lint 基线债务收口 | P4 | DONE | `verify.frontend.lint.src` 0 errors（剩余 6 warnings） |
 | W4-04 | user/hud 跨模式稳定性专项 | P4 | DONE | hud 导航/编排方差/trace smoke 全 PASS |
-| W4-05 | 页面框架与交互规范收口 | P4 | DOING | A/C 类检查项完成并可演示 |
+| W4-05 | 页面框架与交互规范收口 | P4 | DONE | A/C 类校验命令链路全 PASS |
+| W4-06 | 控制台严重报错专项证据 | P4 | DOING | 前端容器 smoke 组合证据通过 |
 
 ## 5. 进入下一阶段条件
 
