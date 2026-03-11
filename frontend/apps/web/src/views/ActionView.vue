@@ -1014,6 +1014,23 @@ const listSummaryItems = computed(() => {
       { key: 'boq_qty', label: '总工程量', value: `${Math.round(quantity * 100) / 100}`, tone: 'neutral' },
     ];
   }
+  if (sceneKey.value === 'projects.list') {
+    let warning = 0;
+    let done = 0;
+    let amount = 0;
+    rows.forEach((row) => {
+      const state = semanticStatus(row.stage_id || row.state || row.status);
+      if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
+      if (state.tone === 'success') done += 1;
+      amount += Number(row.dashboard_invoice_amount || row.amount_total || 0) || 0;
+    });
+    return [
+      { key: 'project_total', label: '项目总数', value: String(rows.length), tone: 'info' },
+      { key: 'project_warning', label: '预警项目', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
+      { key: 'project_done', label: '已完工', value: String(done), tone: 'success' },
+      { key: 'project_amount', label: '合同额汇总', value: `${Math.round(amount / 10000) / 100}万`, tone: 'neutral' },
+    ];
+  }
   return [];
 });
 const kanbanTitleField = computed(() => {

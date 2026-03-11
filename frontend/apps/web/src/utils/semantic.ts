@@ -42,9 +42,21 @@ export function statusTone(value: unknown): SemanticTone {
 }
 
 export function semanticStatus(value: unknown): SemanticCell {
-  const raw = String(value ?? '').trim();
+  const normalizedValue = Array.isArray(value)
+    ? (value.length > 1 ? value[1] : value[0])
+    : value;
+  const raw = String(normalizedValue ?? '').trim();
   if (!raw) return { text: '--', tone: 'neutral' };
   const key = raw.toLowerCase();
+  if (raw.includes('风险') || raw.includes('逾期') || raw.includes('异常')) {
+    return { text: raw, tone: 'danger' };
+  }
+  if (raw.includes('预警')) {
+    return { text: raw, tone: 'warning' };
+  }
+  if (raw.includes('完成') || raw.includes('归档')) {
+    return { text: raw, tone: 'success' };
+  }
   return {
     text: STATUS_TEXT[key] || raw,
     tone: statusTone(raw),
@@ -84,6 +96,14 @@ export function semanticValueByField(field: string, value: unknown): SemanticCel
     const num = Number(value);
     if (Number.isFinite(num)) {
       return { text: `${Math.round(num)}%`, tone: num < 50 ? 'warning' : 'success' };
+    }
+  }
+  if (Array.isArray(value)) {
+    if (value.length > 1 && value[1] !== null && value[1] !== undefined) {
+      return { text: String(value[1]), tone: 'neutral' };
+    }
+    if (value.length) {
+      return { text: String(value[0]), tone: 'neutral' };
     }
   }
   if (value === null || value === undefined || value === '') {
