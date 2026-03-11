@@ -23,3 +23,4 @@ status: active
 - 发布缺口分析：`docs/releases/release_gap_analysis.md`
 - 执行看板：`docs/releases/construction_system_v1_execution_board.md`
 - Phase 1 清单：`docs/releases/phase_1_navigation_convergence_checklist.md`
+- Phase 2 清单：`docs/releases/phase_2_core_scenarios_closure_checklist.md`
