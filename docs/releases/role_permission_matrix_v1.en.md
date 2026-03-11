@@ -8,7 +8,7 @@ Define the V1 role-permission baseline across ACL, record rules, capabilities, a
 | Business Role (V1) | Current Validation Role (prod-like) | Notes |
 |---|---|---|
 | Project Manager | `pm` (`sc_fx_pm`) | covered |
-| Project Member | `material_user` / `cost_user` | temporary split mapping; should converge to project_member |
+| Project Member | `project_member` (`sc_fx_project_member`) | unified; `material_user/cost_user` kept for compatibility |
 | Contract Admin | `contract_admin` (`sc_fx_contract_admin`) | covered |
 | Finance Collaborator | `finance` (`sc_fx_finance`) | covered |
 | Management Viewer | `executive` (`sc_fx_executive`) | covered (should remain read-mostly) |
@@ -40,11 +40,10 @@ Define the V1 role-permission baseline across ACL, record rules, capabilities, a
 | `executive` | 42 | PASS / PASS | PASS |
 | `finance` | 37 | PASS / PASS | PASS |
 | `contract_admin` | 42 | PASS / PASS | PASS |
+| `project_member` | 25 | PASS / PASS | PASS |
 | `material_user` | 25 | PASS / PASS | PASS |
 | `cost_user` | 25 | PASS / PASS | PASS |
 
 ## 5. Pending Improvements
-- Add a unified project-member role (avoid semantic split across `material_user/cost_user`).
 - Add explicit read-only verification for management viewer.
 - Add release-time minimum-permission audit for system admin.
-

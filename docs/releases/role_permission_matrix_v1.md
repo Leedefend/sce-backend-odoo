@@ -8,7 +8,7 @@
 | 业务角色（V1） | 当前验证角色（prod-like） | 说明 |
 |---|---|---|
 | 项目经理 | `pm` (`sc_fx_pm`) | 已覆盖 |
-| 项目成员 | `material_user` / `cost_user` | 临时拆分覆盖，待统一成 project_member |
+| 项目成员 | `project_member` (`sc_fx_project_member`) | 已统一，兼容保留 `material_user/cost_user` |
 | 合同管理人员 | `contract_admin` (`sc_fx_contract_admin`) | 已覆盖 |
 | 财务协同人员 | `finance` (`sc_fx_finance`) | 已覆盖 |
 | 管理层查看 | `executive` (`sc_fx_executive`) | 已覆盖（应维持只读策略） |
@@ -40,11 +40,10 @@
 | `executive` | 42 | PASS / PASS | PASS |
 | `finance` | 37 | PASS / PASS | PASS |
 | `contract_admin` | 42 | PASS / PASS | PASS |
+| `project_member` | 25 | PASS / PASS | PASS |
 | `material_user` | 25 | PASS / PASS | PASS |
 | `cost_user` | 25 | PASS / PASS | PASS |
 
 ## 5. 待补齐项
-- 补一份“项目成员”统一角色（避免 `material_user/cost_user` 语义分裂）。
 - 管理层查看角色增加只读约束核验脚本。
 - 系统管理员角色补充发布态最小权限审计报告。
-

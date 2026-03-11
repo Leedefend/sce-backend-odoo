@@ -1,4 +1,4 @@
-# SCEMS v1.0 Phase 3：角色权限体系执行报告（第一轮）
+# SCEMS v1.0 Phase 3：角色权限体系执行报告（第二轮）
 
 ## 1. 执行结论
 - 状态：`DOING`
@@ -12,11 +12,12 @@
 - `make verify.role.capability_floor.prod_like`：`PASS`
 - `make verify.role.capability_floor.prod_like.schema.guard`：`PASS`
 - `make verify.role.management_viewer.readonly.guard`：`PASS`
+- `make verify.role.project_member.unification.guard`：`PASS`
 
 ## 4. 当前风险
-- “项目成员”仍由 `material_user/cost_user` 拆分承接，语义需统一。
 - 管理层只读约束已接入第一版 guard，后续需扩展到写意图运行时探测。
+- 系统管理员发布态最小权限审计尚未形成独立报告。
 
 ## 5. 下一步
-- 建立 `project_member` 统一角色映射方案。
 - 扩展管理层只读 guard 到更强的写操作探测样例。
+- 产出系统管理员最小权限审计报告并收口 Phase 3 退出条件。

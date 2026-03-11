@@ -40,7 +40,15 @@
 | 角色可见性不一致 | 中 | 同场景不同角色看到不稳定 | 引入角色矩阵验证脚本 |
 | 发布文档与实现脱节 | 中 | 文档更新滞后 | 每个 Phase 结束强制更新执行看板 |
 
-## 4. 进入下一阶段条件
+## 4. 当前执行窗口（W2）
+
+| ID | 任务 | Phase | 状态 | 验收标准 |
+|---|---|---|---|---|
+| W2-01 | 建立管理层只读 guard | P3 | DONE | `verify.role.management_viewer.readonly.guard` PASS |
+| W2-02 | 统一 project_member 角色映射 | P3 | DONE | `verify.role.project_member.unification.guard` PASS |
+| W2-03 | 系统管理员最小权限审计报告 | P3 | DOING | 形成独立报告并可复现 |
+
+## 5. 进入下一阶段条件
 
 ### Phase 1 -> Phase 2
 - `construction_pm_v1` 主导航锁定完成

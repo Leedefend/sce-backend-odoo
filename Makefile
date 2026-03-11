@@ -1741,6 +1741,9 @@ verify.role.capability_floor.prod_like.schema.guard: guard.prod.forbid verify.ro
 verify.role.management_viewer.readonly.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/management_viewer_readonly_guard.py
 
+verify.role.project_member.unification.guard: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/project_member_unification_guard.py
+
 verify.contract.assembler.semantic.smoke: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/contract_assembler_semantic_smoke.py
 
