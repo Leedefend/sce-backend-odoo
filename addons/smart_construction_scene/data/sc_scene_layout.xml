@@ -128,6 +128,30 @@
             <field name="active_version_id" ref="sc_scene_version_my_work_workspace_v2"/>
         </record>
 
+        <!-- Contracts workspace scene -->
+        <record id="sc_scene_version_contracts_workspace_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_contracts_workspace"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'contracts.workspace',
+                'name': '合同管理工作台',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/s/contracts.workspace',
+                    'action_xmlid': 'smart_construction_core.action_construction_contract_my',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_contract_center'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_contracts_workspace" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_contracts_workspace_v2"/>
+        </record>
+
         <!-- Project dashboard scene -->
         <record id="sc_scene_version_projects_dashboard_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_projects_dashboard"/>

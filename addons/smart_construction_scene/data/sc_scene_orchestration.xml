@@ -131,6 +131,16 @@
             <field name="version">v2</field>
         </record>
 
+        <!-- Contracts workspace scene -->
+        <record id="sc_scene_contracts_workspace" model="sc.scene">
+            <field name="sequence">73</field>
+            <field name="name">合同管理工作台</field>
+            <field name="code">contracts.workspace</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
         <!-- Dictionary scene -->
         <record id="sc_scene_data_dictionary" model="sc.scene">
             <field name="sequence">80</field>
