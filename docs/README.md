@@ -47,6 +47,10 @@
 - Phase 4 checklist: `docs/releases/phase_4_frontend_stability_checklist.en.md`
 - Phase 4 (execution report): `docs/releases/phase_4_frontend_stability_execution_report.en.md`
 - Phase 5 checklist: `docs/releases/phase_5_verification_deployment_checklist.en.md`
+- Phase 5 (execution report): `docs/releases/phase_5_verification_deployment_execution_report.en.md`
+- Deployment guide: `docs/deploy/deployment_guide_v1.en.md`
+- Demo script: `docs/demo/system_demo_v1.en.md`
+- User acceptance checklist: `docs/releases/user_acceptance_checklist.en.md`
 - Phase 6 checklist: `docs/releases/phase_6_pilot_launch_checklist.en.md`
 
 ## 快速生成/导出（现有 Make 目标）

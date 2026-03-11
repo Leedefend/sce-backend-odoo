@@ -11,7 +11,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 2 | Core scenario closure | DOING | acceptance records for 4 key scenarios (workspace baseline closed) |
 | Phase 3 | Role/permission system | DONE | role matrix + ACL/visibility verification + exit-readiness report |
 | Phase 4 | Frontend stability | DONE | unified page framework and block conventions (with user/hud and container smoke evidence) |
-| Phase 5 | Verification/deployment | TODO | release verification bundle + deployment docs |
+| Phase 5 | Verification/deployment | DONE | release verification bundle + deployment docs + deployment/rollback rehearsal evidence |
 | Phase 6 | Pilot and launch | TODO | pilot report + v1.0 release record |
 
 ## 2. Current Window (W1)
@@ -66,6 +66,16 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | W4-04 | user/hud cross-mode stability checks | P4 | DONE | hud navigation/orchestration variance/trace smoke all PASS |
 | W4-05 | Page framework and interaction closeout | P4 | DONE | A/C verification command chain all PASS |
 | W4-06 | Severe-console-error evidence | P4 | DONE | fe/hud/render-mode container smoke all PASS |
+
+### W5 Tasks (Phase 5 Verification & Deployment)
+
+| ID | Task | Phase | Status | Acceptance |
+|---|---|---|---|---|
+| W5-01 | Release-critical verify baseline | P5 | DONE | phase_next/runtime strict/scene governance PASS |
+| W5-02 | Core smoke and key role paths | P5 | DONE | my_work smoke + role floor + management readonly PASS |
+| W5-03 | Deployment/demo/UAT docs completion | P5 | DONE | deploy/demo/UAT docs available |
+| W5-04 | Deployment and rollback rehearsal evidence | P5 | DONE | `make up`/`make mod.install`/`make mod.upgrade`/`make scene.rollback.stable` PASS |
+| W5-05 | Release conclusion archival | P5 | DONE | Phase 5 report and checklist explicitly record a pass |
 
 ## 5. Phase Entry Criteria
 

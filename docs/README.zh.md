@@ -43,4 +43,8 @@ status: active
 - Phase 4 清单：`docs/releases/phase_4_frontend_stability_checklist.md`
 - Phase 4（执行报告）：`docs/releases/phase_4_frontend_stability_execution_report.md`
 - Phase 5 清单：`docs/releases/phase_5_verification_deployment_checklist.md`
+- Phase 5（执行报告）：`docs/releases/phase_5_verification_deployment_execution_report.md`
+- 部署指南：`docs/deploy/deployment_guide_v1.md`
+- 演示脚本：`docs/demo/system_demo_v1.md`
+- 用户验收清单：`docs/releases/user_acceptance_checklist.md`
 - Phase 6 清单：`docs/releases/phase_6_pilot_launch_checklist.md`
