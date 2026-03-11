@@ -1744,6 +1744,9 @@ verify.role.management_viewer.readonly.guard: guard.prod.forbid verify.role.capa
 verify.role.project_member.unification.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/project_member_unification_guard.py
 
+verify.role.system_admin.minimum_permission_audit.guard: guard.prod.forbid verify.role.capability_floor.prod_like verify.write_intent.permission.audit
+	@python3 scripts/verify/system_admin_minimum_permission_audit_guard.py
+
 verify.contract.assembler.semantic.smoke: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/contract_assembler_semantic_smoke.py
 
