@@ -1,5 +1,5 @@
 <template>
-  <ul class="tree">
+  <ul class="tree" :class="`depth-${level}`" :style="treeStyle">
     <li v-for="node in sorted" :key="nodeKey(node)">
       <div
         class="node"
@@ -12,6 +12,7 @@
         <button v-if="node.children?.length" class="toggle" @click="toggle(nodeKey(node))">
           {{ expanded.has(nodeKey(node)) ? '▾' : '▸' }}
         </button>
+        <span v-else class="toggle-spacer" aria-hidden="true"></span>
         <button
           class="label"
           :disabled="isBlocked(node)"
@@ -27,6 +28,7 @@
           v-show="expanded.has(nodeKey(node))"
           :nodes="node.children"
           :active-menu-id="activeMenuId"
+          :level="level + 1"
           @select="emit('select', $event)"
         />
       </transition>
@@ -40,7 +42,9 @@ import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useSessionStore } from '../stores/session';
 
-const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[] }>();
+const props = withDefaults(defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[]; level?: number }>(), {
+  level: 0,
+});
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 
 const session = useSessionStore();
@@ -53,6 +57,16 @@ const sorted = computed(() => {
     const seqB = b.meta?.sequence ?? 0;
     return seqA - seqB;
   });
+});
+
+const level = computed(() => Number(props.level || 0));
+const treeStyle = computed<Record<string, string>>(() => {
+  if (level.value <= 0) return {};
+  return {
+    marginLeft: '12px',
+    paddingLeft: '12px',
+    borderLeft: '1px dashed #dbe3ee',
+  };
 });
 
 function toggle(key: string) {
@@ -143,16 +157,16 @@ onMounted(() => {
 <style scoped>
 .tree {
   list-style: none;
-  padding-left: 12px;
+  padding-left: 10px;
   margin: 0;
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .node {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .label {
@@ -164,12 +178,13 @@ onMounted(() => {
 }
 
 .node.active .label {
-  font-weight: 600;
+  font-weight: 700;
   color: #2563eb;
+  background: #eff6ff;
 }
 
 .node.ancestor .label {
-  color: #64748b;
+  color: #475569;
 }
 
 .node.disabled .label {
@@ -182,16 +197,26 @@ onMounted(() => {
 }
 
 .toggle {
-  width: 20px;
+  width: 22px;
   border: none;
   background: transparent;
   cursor: pointer;
   color: #64748b;
+  font-size: 13px;
+}
+
+.toggle-spacer {
+  width: 22px;
+  display: inline-block;
+  flex: 0 0 22px;
 }
 
 .label {
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
   transition: background-color 0.2s;
 }
 
