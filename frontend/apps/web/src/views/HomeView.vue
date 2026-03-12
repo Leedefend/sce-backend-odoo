@@ -598,10 +598,8 @@ const homeOrchestrationContract = computed<PageOrchestrationContract>(() => {
 const useUnifiedHomeRenderer = computed(() => {
   if (asText(route.query.legacy_home) === '1') return false;
   const contract = homeOrchestrationContract.value || {};
-  const hasV1 = asText(contract.contract_version) === 'page_orchestration_v1';
-  const isDashboard = asText(contract.scene_key) === 'portal.dashboard';
   const zones = Array.isArray(contract.zones) ? contract.zones : [];
-  return hasV1 && isDashboard && zones.length > 0;
+  return zones.length > 0;
 });
 const orchestrationBlocks = computed(() => {
   const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
@@ -758,7 +756,6 @@ const capabilityGroupScoreMap = computed(() => {
 });
 const licenseLevelLabel = computed(() => String(productFacts.value?.license?.level || '').trim() || 'unknown');
 const bundleNameLabel = computed(() => String(productFacts.value?.bundle?.name || '').trim() || 'default');
-const showGroupOverview = computed(() => !isDeliveryMode.value && capabilityGroupCards.value.length > 0);
 const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
   return first ? asText(first.key) : '';
@@ -1479,15 +1476,11 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
     entry_key: item.entryKey,
   }));
   return {
-    ds_hero: {
-      title: heroTitle.value,
-      lead: heroLead.value,
-      role_label: roleLabel.value,
-      landing_label: roleLandingLabel.value,
-      updated_at: dataUpdatedAt.value,
-      status_notice: partialDataNotice.value,
-      status_detail: partialDataDetailLine.value,
-    },
+    ds_hero: [
+      { key: 'role_label', label: homeLayoutText('hero.role_label', '当前角色'), value: roleLabel.value },
+      { key: 'landing_label', label: homeLayoutText('hero.landing_label', '默认入口'), value: roleLandingLabel.value },
+      { key: 'runtime', label: homeLayoutText('hero.steady_notice', '当前运行平稳'), value: homeLayoutText('hero.runtime_ok', '状态正常') },
+    ],
     ds_metrics: coreMetrics.value,
     ds_today_todos: concreteTodos.value.map((item) => ({
       id: item.id,
@@ -1750,14 +1743,6 @@ function goToMyWork() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
-}
-
-function goToUsageAnalytics() {
-  void trackUsageEvent('workspace.nav_click', {
-    target: 'usage_analytics',
-    from: 'workspace.home',
-  }).catch(() => {});
-  router.push({ path: '/admin/usage-analytics' }).catch(() => {});
 }
 
 async function executeHeroAction(actionKey: string) {

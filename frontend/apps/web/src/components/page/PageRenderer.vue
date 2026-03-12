@@ -98,23 +98,25 @@ function onZoneAction(payload: PageBlockActionEvent) {
 <style scoped>
 .page-renderer {
   display: grid;
-  gap: 12px;
+  gap: 18px;
 }
 .page-renderer-header {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fff;
+  padding: 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 65%);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 .page-renderer-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
+  font-weight: 650;
 }
 .page-renderer-subtitle {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: #6b7280;
 }
 .page-renderer-badges {

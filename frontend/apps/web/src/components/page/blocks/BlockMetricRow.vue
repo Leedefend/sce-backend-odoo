@@ -69,23 +69,26 @@ const metrics = computed<MetricItem[]>(() => {
 <style scoped>
 .block {
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
-  padding: 10px;
+  padding: 12px;
+  height: 100%;
 }
 .block-header h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
 }
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 .metric-item {
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #e5e7eb;
-  padding: 8px;
+  padding: 10px;
+  min-height: 96px;
 }
 .metric-label {
   margin: 0;
@@ -93,12 +96,12 @@ const metrics = computed<MetricItem[]>(() => {
   color: #6b7280;
 }
 .metric-value {
-  margin: 6px 0 0;
-  font-size: 20px;
+  margin: 8px 0 0;
+  font-size: 24px;
   font-weight: 600;
 }
 .metric-meta {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 12px;
   color: #6b7280;
 }

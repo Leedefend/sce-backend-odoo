@@ -7,6 +7,8 @@
       :status-label="statusLabel"
       :loading="loading"
       :on-reload="onReload"
+      :mode-label="modeLabelText"
+      :record-count="records.length"
     />
 
     <StatusPanel v-if="loading" title="Loading cards..." variant="info" />
@@ -38,24 +40,25 @@
         v-for="(row, index) in records"
         :key="String(row.id ?? index)"
         class="card"
+        :class="`tone-${rowTone(row)}`"
         @click="handleCard(row)"
       >
         <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
         <div v-if="statusMetaFields.length" class="status-chips">
           <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
-            {{ fieldLabel(field) }}: {{ formatValue(row[field]) }}
+            {{ fieldLabel(field) }}: {{ semanticCell(field, row[field]).text }}
           </span>
         </div>
         <dl v-if="primaryMetaFields.length" class="card-meta primary">
           <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
             <dt>{{ fieldLabel(field) }}</dt>
-            <dd>{{ formatValue(row[field]) }}</dd>
+            <dd>{{ semanticCell(field, row[field]).text }}</dd>
           </div>
         </dl>
         <dl class="card-meta">
           <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
             <dt>{{ fieldLabel(field) }}</dt>
-            <dd>{{ formatValue(row[field]) }}</dd>
+            <dd>{{ semanticCell(field, row[field]).text }}</dd>
           </div>
         </dl>
       </article>
@@ -68,7 +71,8 @@ import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
-import { formatDisplayValue } from '../utils/display';
+import { pageModeLabel } from '../app/pageMode';
+import { semanticStatus, semanticValueByField } from '../utils/semantic';
 
 const props = defineProps<{
   title: string;
@@ -90,6 +94,8 @@ const props = defineProps<{
   onCardClick: (row: Record<string, unknown>) => void;
   subtitle: string;
   statusLabel: string;
+  pageMode?: string;
+  sceneKey?: string;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -126,8 +132,15 @@ const secondaryMetaFields = computed(() => {
     .slice(0, 3);
 });
 
-function formatValue(value: unknown) {
-  return formatDisplayValue(value);
+const modeLabelText = computed(() => pageModeLabel(props.pageMode || 'workspace'));
+
+function semanticCell(field: string, value: unknown) {
+  return semanticValueByField(field, value);
+}
+
+function rowTone(row: Record<string, unknown>) {
+  const state = row.state || row.stage_id || row.status;
+  return semanticStatus(state).tone;
 }
 
 function fieldLabel(name: string) {
@@ -166,6 +179,10 @@ function handleCard(row: Record<string, unknown>) {
   transform: translateY(-2px);
   box-shadow: 0 20px 34px rgba(15, 23, 42, 0.12);
 }
+
+.card.tone-danger { border: 1px solid #fecaca; background: #fff7f7; }
+.card.tone-warning { border: 1px solid #fde68a; background: #fffcf2; }
+.card.tone-success { border: 1px solid #a7f3d0; background: #f7fffb; }
 
 .card-title {
   margin: 0 0 10px;

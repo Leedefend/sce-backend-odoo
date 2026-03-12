@@ -23,6 +23,7 @@ status: active
 ## Runbook
 - 初始化一页版：`docs/ops/runbook_init_onepage.md`
 - 部署手册（zh）：`docs/ops/runbook_deploy_zh.md`
+- prod-sim 隔离验证：`docs/ops/runbook_prod_sim_isolation.md`
 - Reset & Verify：`docs/ops/reset_verify.md`
 - Razor flow（降噪初始化）：`docs/ops/db_init_razor_flow.md`
 - Odoo17 基线部署：`docs/ops/DEPLOY_ODDO17_BASELINE.md`

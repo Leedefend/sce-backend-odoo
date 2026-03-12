@@ -250,6 +250,12 @@
         </section>
       </div>
     </section>
+    <section v-if="viewMode === 'kanban' && sceneKey === 'projects.ledger' && ledgerOverviewItems.length" class="ledger-overview-strip">
+      <article v-for="item in ledgerOverviewItems" :key="item.key" class="ledger-overview-card" :class="`tone-${item.tone}`">
+        <p class="ledger-overview-label">{{ item.label }}</p>
+        <p class="ledger-overview-value">{{ item.value }}</p>
+      </article>
+    </section>
     <KanbanPage
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
@@ -267,6 +273,8 @@
       :title-field="kanbanTitleField"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :scene-key="sceneKey"
+      :page-mode="pageMode"
       :on-reload="reload"
       :on-card-click="handleRowClick"
     />
@@ -289,6 +297,10 @@
       :search-term="searchTerm"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :scene-key="sceneKey"
+      :page-mode="pageMode"
+      :record-count="records.length"
+      :summary-items="listSummaryItems"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
       :batch-details="batchDetails"
@@ -402,6 +414,8 @@ import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceCon
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { resolvePageMode } from '../app/pageMode';
+import { semanticStatus } from '../utils/semantic';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -657,6 +671,47 @@ type SurfaceIntent = {
   secondaryAction?: FocusNavAction;
 };
 
+const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
+  'task.center': {
+    columns: ['name', 'kanban_state', 'user_ids', 'date_deadline', 'write_date'],
+    column_labels: {
+      name: '任务名称',
+      kanban_state: '状态',
+      user_ids: '负责人',
+      date_deadline: '截止日期',
+      write_date: '更新时间',
+    },
+    row_primary: 'name',
+    row_secondary: 'user_ids',
+  },
+  'risk.center': {
+    columns: ['name', 'state', 'project_id', 'partner_id', 'amount', 'date_request'],
+    column_labels: {
+      name: '风险单号',
+      state: '风险状态',
+      project_id: '项目',
+      partner_id: '往来单位',
+      amount: '风险金额',
+      date_request: '触发日期',
+    },
+    row_primary: 'name',
+    row_secondary: 'project_id',
+  },
+  'cost.project_boq': {
+    columns: ['name', 'project_id', 'quantity', 'price', 'amount_total', 'write_date'],
+    column_labels: {
+      name: '清单名称',
+      project_id: '项目',
+      quantity: '工程量',
+      price: '单价',
+      amount_total: '金额',
+      write_date: '更新时间',
+    },
+    row_primary: 'name',
+    row_secondary: 'project_id',
+  },
+};
+
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
@@ -679,7 +734,42 @@ const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
-const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
+const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
+function mergeColumnsWithPreset(baseColumns: string[], presetColumns: string[]) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  presetColumns.forEach((col) => {
+    const key = String(col || '').trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(key);
+  });
+  baseColumns.forEach((col) => {
+    const key = String(col || '').trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(key);
+  });
+  return out;
+}
+
+const listProfile = computed<SceneListProfile | null>(() => {
+  const base = (scene.value?.list_profile as SceneListProfile) || null;
+  const preset = SCENE_LIST_PROFILE_PRESETS[sceneKey.value || ''];
+  if (!base && !preset) return null;
+  if (!base) return preset;
+  if (!preset) return base;
+  return {
+    ...base,
+    columns: mergeColumnsWithPreset(base.columns || [], preset.columns || []),
+    column_labels: {
+      ...(base.column_labels || {}),
+      ...(preset.column_labels || {}),
+    },
+    row_primary: preset.row_primary || base.row_primary,
+    row_secondary: preset.row_secondary || base.row_secondary,
+  };
+});
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
@@ -863,6 +953,86 @@ const subtitle = computed(
   () =>
     `${records.value.length}${pageText('subtitle_records_suffix', ' 条记录')} · ${pageText('subtitle_sort_prefix', '排序：')}${sortLabel.value}`,
 );
+const ledgerOverviewItems = computed(() => {
+  if (sceneKey.value !== 'projects.ledger') return [] as Array<{ key: string; label: string; value: string; tone: string }>;
+  const rows = records.value || [];
+  const total = rows.length;
+  let warning = 0;
+  let done = 0;
+  rows.forEach((row) => {
+    const stage = semanticStatus(row.stage_id || row.state || row.status);
+    if (stage.tone === 'danger' || stage.tone === 'warning') warning += 1;
+    if (String(stage.text).includes('完成') || String(stage.text).includes('归档')) done += 1;
+  });
+  return [
+    { key: 'total', label: '在建项目数', value: String(total), tone: 'info' },
+    { key: 'warning', label: '预警项目数', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
+    { key: 'done', label: '已完工项目数', value: String(done), tone: 'success' },
+    { key: 'metric', label: '项目群规模', value: `${total} 个项目`, tone: 'neutral' },
+  ];
+});
+const listSummaryItems = computed(() => {
+  const rows = records.value || [];
+  if (sceneKey.value === 'task.center') {
+    let done = 0;
+    let pending = 0;
+    let blocked = 0;
+    rows.forEach((row) => {
+      const state = semanticStatus(row.kanban_state || row.state || row.status);
+      if (state.tone === 'success') done += 1;
+      else if (state.tone === 'danger') blocked += 1;
+      else pending += 1;
+    });
+    return [
+      { key: 'task_total', label: '任务总数', value: String(rows.length), tone: 'info' },
+      { key: 'task_pending', label: '待处理', value: String(pending), tone: pending > 0 ? 'warning' : 'success' },
+      { key: 'task_blocked', label: '受阻/风险', value: String(blocked), tone: blocked > 0 ? 'danger' : 'success' },
+      { key: 'task_done', label: '已完成', value: String(done), tone: 'success' },
+    ];
+  }
+  if (sceneKey.value === 'risk.center') {
+    let high = 0;
+    let warning = 0;
+    rows.forEach((row) => {
+      const state = semanticStatus(row.state || row.status || row.level);
+      if (state.tone === 'danger') high += 1;
+      else if (state.tone === 'warning') warning += 1;
+    });
+    return [
+      { key: 'risk_total', label: '风险记录数', value: String(rows.length), tone: 'info' },
+      { key: 'risk_high', label: '高风险', value: String(high), tone: high > 0 ? 'danger' : 'success' },
+      { key: 'risk_warning', label: '预警', value: String(warning), tone: warning > 0 ? 'warning' : 'neutral' },
+    ];
+  }
+  if (sceneKey.value === 'cost.project_boq') {
+    let quantity = 0;
+    rows.forEach((row) => {
+      quantity += Number(row.quantity || 0) || 0;
+    });
+    return [
+      { key: 'boq_total', label: '清单行数', value: String(rows.length), tone: 'info' },
+      { key: 'boq_qty', label: '总工程量', value: `${Math.round(quantity * 100) / 100}`, tone: 'neutral' },
+    ];
+  }
+  if (sceneKey.value === 'projects.list') {
+    let warning = 0;
+    let done = 0;
+    let amount = 0;
+    rows.forEach((row) => {
+      const state = semanticStatus(row.stage_id || row.state || row.status);
+      if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
+      if (state.tone === 'success') done += 1;
+      amount += Number(row.dashboard_invoice_amount || row.amount_total || 0) || 0;
+    });
+    return [
+      { key: 'project_total', label: '项目总数', value: String(rows.length), tone: 'info' },
+      { key: 'project_warning', label: '预警项目', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
+      { key: 'project_done', label: '已完工', value: String(done), tone: 'success' },
+      { key: 'project_amount', label: '合同额汇总', value: `${Math.round(amount / 10000) / 100}万`, tone: 'neutral' },
+    ];
+  }
+  return [];
+});
 const kanbanTitleField = computed(() => {
   if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
     return kanbanTitleFieldHint.value;
@@ -1741,7 +1911,7 @@ async function handleGroupedRowsPageChange(group: {
       model: targetModel,
       fields: resolveGroupedPageFields(),
       domain: Array.isArray(group.domain) ? group.domain : [],
-      context: mergeContext(meta.value?.context, resolveEffectiveRequestContext()),
+      context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
       limit: pageLimit,
       offset: nextOffset,
@@ -1798,7 +1968,7 @@ async function hydrateGroupedRowsByOffset() {
           model: targetModel,
           fields,
           domain: Array.isArray(item.domain) ? item.domain : [],
-          context: mergeContext(meta.value?.context, resolveEffectiveRequestContext()),
+          context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
           context_raw: resolveEffectiveRequestContextRaw(),
           limit,
           offset,
@@ -3058,8 +3228,14 @@ async function load() {
     } else if (activeGroupByField.value && !groupWindowIdentityKey.value && routeGroupWindowIdentityKey) {
       syncRouteListState({ group_wik: undefined });
     }
-    records.value = result.data?.records ?? [];
-    groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
+    const resultData = result.data && typeof result.data === 'object'
+      ? (result.data as Record<string, unknown>)
+      : {};
+    records.value = Array.isArray(resultData.records) ? (resultData.records as Array<Record<string, unknown>>) : [];
+    const groupSummaryRows = Array.isArray(resultData.group_summary)
+      ? (resultData.group_summary as Array<Record<string, unknown>>)
+      : [];
+    groupSummaryItems.value = groupSummaryRows
       .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
@@ -3107,13 +3283,17 @@ async function load() {
         : effectiveGroupOffset > 0
           ? Math.max(0, effectiveGroupOffset - Math.max(1, groupSummaryItems.value.length || groupWindowCount.value || 1))
           : null;
-    groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
+    const groupedRowsRaw = Array.isArray(resultData.grouped_rows)
+      ? (resultData.grouped_rows as Array<Record<string, unknown>>)
+      : [];
+    groupedRows.value = groupedRowsRaw
       .map((row) => {
         const item = row as Record<string, unknown>;
-        const fallbackPageSize = Number((result.data as Record<string, unknown> | undefined)?.group_paging
-          && typeof (result.data as Record<string, unknown>).group_paging === 'object'
-          ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>).page_size
-          : 0) || groupSampleLimit.value || 3;
+        const fallbackPageSize = Number(
+          resultData.group_paging && typeof resultData.group_paging === 'object'
+            ? ((resultData.group_paging as Record<string, unknown>).page_size)
+            : 0,
+        ) || groupSampleLimit.value || 3;
         const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
           || pageText('group_label_unset', '未设置');
         const fallbackKey = buildGroupKey(item.field, item.value, label);
@@ -3526,9 +3706,9 @@ function handleDownloadFailedCsv() {
 
 async function handleLoadMoreFailures() {
   if (!lastBatchRequest.value || !batchHasMoreFailures.value) return;
+  const req = lastBatchRequest.value;
   batchBusy.value = true;
   try {
-    const req = lastBatchRequest.value;
     const result = await batchUpdateRecords({
       model: req.model,
       ids: req.ids,
@@ -3794,6 +3974,36 @@ watch(
   font-size: 12px;
   color: #64748b;
 }
+
+.ledger-overview-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.ledger-overview-card {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  background: #fff;
+}
+
+.ledger-overview-label {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ledger-overview-value {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ledger-overview-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.ledger-overview-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+.ledger-overview-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.ledger-overview-card.tone-neutral { background: #f9fafb; border-color: #d1d5db; color: #374151; }
 
 @media (max-width: 760px) {
   .focus-strip {

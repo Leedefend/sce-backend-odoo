@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <!-- Round 2: 工作台真实动作补数（任务 / 付款申请） -->
+
+    <!-- 新增任务：覆盖项目 001 / 002，形成可读动作池 -->
+    <record id="sc_demo_task_round2_004" model="project.task">
+      <field name="name">地下室防水节点复核</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="date_deadline">2025-04-08</field>
+    </record>
+
+    <record id="sc_demo_task_round2_005" model="project.task">
+      <field name="name">主体结构周计划校核</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="date_deadline">2025-04-12</field>
+    </record>
+
+    <record id="sc_demo_task_round2_006" model="project.task">
+      <field name="name">P2 现场临建验收</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_002"/>
+      <field name="date_deadline">2025-04-05</field>
+    </record>
+
+    <record id="sc_demo_task_round2_007" model="project.task">
+      <field name="name">P2 项目例会问题闭环</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_002"/>
+      <field name="date_deadline">2025-04-14</field>
+    </record>
+
+    <!-- 付款申请补数：保持 draft，避免越权触发审批约束 -->
+    <record id="sc_demo_pay_req_010_002" model="payment.request">
+      <field name="type">receive</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="contract_id" ref="sc_demo_contract_out_010"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="amount">3200000.0</field>
+      <field name="date_request">2025-03-18</field>
+      <field name="note">Round2 工作台演示数据：合同节点回款申请</field>
+    </record>
+
+    <record id="sc_demo_pay_req_010_003" model="payment.request">
+      <field name="type">pay</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_concrete"/>
+      <field name="amount">860000.0</field>
+      <field name="date_request">2025-03-22</field>
+      <field name="note">Round2 工作台演示数据：分包节点付款申请</field>
+    </record>
+
+    <record id="sc_demo_pay_req_010_004" model="payment.request">
+      <field name="type">receive</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_002"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="amount">1100000.0</field>
+      <field name="date_request">2025-03-25</field>
+      <field name="note">Round2 工作台演示数据：项目里程碑收款申请</field>
+    </record>
+
+  </data>
+</odoo>

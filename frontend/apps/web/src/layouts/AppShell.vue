@@ -201,6 +201,7 @@ const navVersion = computed(() => {
 });
 const suggestedActionStamp = ref(0);
 const hudMessage = ref('');
+const showExtractionStats = ref(false);
 
 const initStatus = computed(() => session.initStatus);
 const initError = computed(() => session.initError);
@@ -280,7 +281,7 @@ function normalizeDeliveryText(input: string) {
 
 function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
   const normalizedLabel = normalizeDeliveryText(roleLabelRaw);
-  if (/[^\x00-\x7F]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
+  if (/[^\u0020-\u007e]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
   const code = String(roleCodeRaw || '').trim().toLowerCase();
   if (/pm|project/.test(code)) return '项目经理';
   if (/finance/.test(code)) return '财务主管';
@@ -376,7 +377,21 @@ const latestSuggestedActionTs = computed(() => {
     return String(ts);
   }
 });
-const hudEntries = computed(() => [
+const extractionStats = computed(() => {
+  const workspace = (session.workspaceHome && typeof session.workspaceHome === 'object')
+    ? session.workspaceHome as Record<string, unknown>
+    : {};
+  const diagnostics = (workspace.diagnostics && typeof workspace.diagnostics === 'object')
+    ? workspace.diagnostics as Record<string, unknown>
+    : {};
+  const stats = (diagnostics.extraction_stats && typeof diagnostics.extraction_stats === 'object')
+    ? diagnostics.extraction_stats as Record<string, unknown>
+    : {};
+  return stats;
+});
+
+const hudEntries = computed(() => {
+  const entries = [
   { label: 'scene_key', value: routeSceneKey.value || '-' },
   { label: 'entry_source', value: currentEntrySource.value },
   { label: 'nav_entry_total', value: runtimeNavigationRegistry.value.entries.length || 0 },
@@ -401,9 +416,31 @@ const hudEntries = computed(() => [
   { label: 'sa_kind', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
   { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
   { label: 'sa_ts', value: latestSuggestedActionTs.value },
-]);
+  ];
+  if (showExtractionStats.value) {
+    entries.push(
+      { label: 'extract.business_collections', value: String(extractionStats.value.business_collections ?? '-') },
+      { label: 'extract.business_rows_total', value: String(extractionStats.value.business_rows_total ?? '-') },
+      { label: 'extract.today_business', value: String(extractionStats.value.today_actions_business ?? '-') },
+      { label: 'extract.today_fallback', value: String(extractionStats.value.today_actions_fallback ?? '-') },
+      { label: 'extract.risk_business', value: String(extractionStats.value.risk_actions_business ?? '-') },
+      { label: 'extract.risk_fallback', value: String(extractionStats.value.risk_actions_fallback ?? '-') },
+    );
+  }
+  return entries;
+});
 const defaultKindActions = ['open_record', 'copy_trace', 'refresh'];
 const hudActions = computed(() => [
+  {
+    key: 'toggle-extract-stats',
+    label: showExtractionStats.value ? 'Hide extract stats' : 'Show extract stats',
+    onClick: () => {
+      showExtractionStats.value = !showExtractionStats.value;
+      hudMessage.value = showExtractionStats.value
+        ? 'Extraction stats are visible in HUD.'
+        : 'Extraction stats are hidden.';
+    },
+  },
   { key: 'export-sa-all', label: 'Export SA all', onClick: () => exportSuggestedActionJson() },
   { key: 'export-sa-ok', label: 'Export SA ok', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
   { key: 'export-sa-fail', label: 'Export SA fail', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
@@ -463,14 +500,15 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
 }
 
 onMounted(() => {
+  showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
   if (typeof window === 'undefined') return;
-  window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as EventListener);
+  window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   handleTraceUpdate();
 });
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
-  window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as EventListener);
+  window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
 });
 
 function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {

@@ -44,7 +44,7 @@ const rows = computed(() => {
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; }
+.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; height: 100%; }
 summary { cursor: pointer; font-weight: 600; }
 .accordion-content { margin-top: 8px; display: grid; gap: 8px; }
 .accordion-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #f9fafb; }

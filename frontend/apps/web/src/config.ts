@@ -11,11 +11,12 @@ const runtimeDb = typeof window !== 'undefined'
 const enforcedDb = '';
 const envDbNormalized = envDb.toLowerCase();
 const localBlockedEnvDb = isLocalHost && envDbNormalized === 'sc_delivery_local' ? '' : envDb;
-// For local dev, fallback to sc_demo when db env is not explicitly set.
-const localDefaultDb = !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
+const allowLocalFallbackDb = appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
+// For local dev/test only, fallback to sc_demo when db env is not explicitly set.
+const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
 
 export const config = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8070',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
   appEnv,
   tenant: import.meta.env.VITE_TENANT ?? 'default',
   featureFlags: (import.meta.env.VITE_FEATURE_FLAGS ?? '')

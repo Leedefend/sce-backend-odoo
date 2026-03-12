@@ -54,6 +54,22 @@ Demo bootstrap:
 make demo.full DB=sc_demo
 ```
 
+### prod-sim 环境隔离验证
+
+- 全量验证（会 reset `sc_prod_sim`）：
+
+```bash
+make verify.prod.sim.isolation
+```
+
+- 快速回归（不 reset）：
+
+```bash
+make verify.prod.sim.isolation.quick
+```
+
+更多说明见：`docs/ops/runbook_prod_sim_isolation.md`
+
 `docs/ops/dev_bootstrap.md`
 `docs/README.md`
 `docs/README.zh.md`
