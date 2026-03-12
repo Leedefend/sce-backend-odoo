@@ -29,13 +29,43 @@
       </button>
     </div>
 
-    <ZoneRenderer
-      v-for="zone in orderedZones"
-      :key="zone.key"
-      :zone="zone"
-      :datasets="datasets"
-      @action="onZoneAction"
-    />
+    <div v-if="isWorkbenchPage" class="workbench-zone-layout">
+      <ZoneRenderer
+        v-if="todayFocusZone"
+        :key="todayFocusZone.key"
+        :zone="todayFocusZone"
+        :datasets="datasets"
+        @action="onZoneAction"
+      />
+
+      <div class="workbench-secondary-grid">
+        <ZoneRenderer
+          v-for="zone in secondaryZones"
+          :key="zone.key"
+          :zone="zone"
+          :datasets="datasets"
+          @action="onZoneAction"
+        />
+      </div>
+
+      <ZoneRenderer
+        v-for="zone in trailingZones"
+        :key="zone.key"
+        :zone="zone"
+        :datasets="datasets"
+        @action="onZoneAction"
+      />
+    </div>
+
+    <template v-else>
+      <ZoneRenderer
+        v-for="zone in orderedZones"
+        :key="zone.key"
+        :zone="zone"
+        :datasets="datasets"
+        @action="onZoneAction"
+      />
+    </template>
   </section>
 </template>
 
@@ -72,6 +102,30 @@ const orderedZones = computed<PageOrchestrationZone[]>(() => {
   return zones.sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0));
 });
 
+const pageKey = computed(() => String(props.contract.page?.key || ''));
+const isWorkbenchPage = computed(() => pageKey.value === 'portal.dashboard' || pageKey.value === 'workspace.home');
+
+const todayFocusZone = computed<PageOrchestrationZone | null>(() => (
+  orderedZones.value.find((zone) => zone.key === 'today_focus') || null
+));
+
+const secondaryZones = computed<PageOrchestrationZone[]>(() => {
+  if (!isWorkbenchPage.value) return [];
+  const wantedOrder = ['analysis', 'quick_entries'];
+  return wantedOrder
+    .map((key) => orderedZones.value.find((zone) => zone.key === key))
+    .filter((zone): zone is PageOrchestrationZone => Boolean(zone));
+});
+
+const trailingZones = computed<PageOrchestrationZone[]>(() => {
+  if (!isWorkbenchPage.value) return [];
+  return orderedZones.value.filter((zone) => (
+    zone.key !== 'today_focus'
+    && zone.key !== 'analysis'
+    && zone.key !== 'quick_entries'
+  ));
+});
+
 function emitAction(
   action: PageOrchestrationAction,
   blockKey: string,
@@ -98,26 +152,39 @@ function onZoneAction(payload: PageBlockActionEvent) {
 <style scoped>
 .page-renderer {
   display: grid;
-  gap: 18px;
+  gap: 20px;
+  max-width: 1380px;
+  margin: 0 auto;
+}
+.workbench-zone-layout {
+  display: grid;
+  gap: 16px;
+}
+.workbench-secondary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
 }
 .page-renderer-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 14px;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid #cfe2ff;
+  border-radius: 16px;
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 65%);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
 }
 .page-renderer-header h2 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 650;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 .page-renderer-subtitle {
-  margin: 6px 0 0;
-  color: #6b7280;
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 15px;
 }
 .page-renderer-badges {
   display: flex;
@@ -126,20 +193,22 @@ function onZoneAction(payload: PageBlockActionEvent) {
   flex-wrap: wrap;
 }
 .page-renderer-badge {
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid #d1d5db;
   font-size: 12px;
+  font-weight: 600;
 }
 .page-renderer-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 .page-renderer-action {
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
-  padding: 6px 10px;
+  padding: 8px 14px;
+  font-weight: 600;
   cursor: pointer;
 }
 .tone-success { background: #ecfdf5; color: #047857; }
@@ -147,4 +216,14 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .tone-danger { background: #fef2f2; color: #b91c1c; }
 .tone-info { background: #eff6ff; color: #1d4ed8; }
 .tone-neutral { background: #f9fafb; color: #374151; }
+
+@media (max-width: 1200px) {
+  .workbench-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-renderer-header h2 {
+    font-size: 24px;
+  }
+}
 </style>
