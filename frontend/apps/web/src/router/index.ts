@@ -14,6 +14,32 @@ import MyWorkView from '../views/MyWorkView.vue';
 import ProjectManagementDashboardView from '../views/ProjectManagementDashboardView.vue';
 import { ApiError } from '../api/client';
 
+const APP_TITLE = '智能施工企业管理平台';
+
+function routeTitle(routeName: string | symbol | null | undefined): string {
+  const name = typeof routeName === 'string' ? routeName : '';
+  const map: Record<string, string> = {
+    login: '登录',
+    home: '工作台',
+    'my-work': '我的工作',
+    'project-management-dashboard': '项目管理驾驶舱',
+    scene: '业务场景',
+    menu: '业务菜单',
+    action: '业务动作',
+    workbench: '工作台',
+    'scene-health': '场景健康',
+    'scene-packages': '场景发布包',
+    'usage-analytics': '使用分析',
+    'model-form': '业务表单',
+    record: '业务记录',
+  };
+  return map[name] || '系统';
+}
+
+function applyDocumentTitle(routeName: string | symbol | null | undefined) {
+  document.title = `${routeTitle(routeName)} - ${APP_TITLE}`;
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -35,6 +61,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
+  applyDocumentTitle(to.name);
   const session = useSessionStore();
   if (to.name !== 'login' && !session.token) {
     return { name: 'login', query: { redirect: to.fullPath } };
