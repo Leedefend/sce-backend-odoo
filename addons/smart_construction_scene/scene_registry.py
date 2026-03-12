@@ -319,6 +319,15 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "contracts.workspace",
+            "name": "合同管理工作台",
+            "target": {
+                "route": "/s/contracts.workspace",
+                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
+                "action_xmlid": "smart_construction_core.action_construction_contract_my",
+            },
+        },
+        {
             "code": "risk.monitor",
             "name": "风险监控",
             "target": {
@@ -326,9 +335,26 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "risk.center",
+            "name": "风险提醒工作台",
+            "target": {
+                "route": "/s/risk.center",
+                "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
+            },
+        },
+        {
             "code": "finance.center",
             "name": "财务中心",
             "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
+                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
+            },
+        },
+        {
+            "code": "finance.workspace",
+            "name": "资金管理工作台",
+            "target": {
+                "route": "/s/finance.workspace",
                 "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
                 "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
             },
@@ -403,6 +429,15 @@ def load_scene_configs(env, drift=None):
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_budget_alloc",
                 "action_xmlid": "smart_construction_core.action_project_budget_cost_alloc",
+            },
+        },
+        {
+            "code": "cost.analysis",
+            "name": "成本控制工作台",
+            "target": {
+                "route": "/s/cost.analysis",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
+                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
             },
         },
         {

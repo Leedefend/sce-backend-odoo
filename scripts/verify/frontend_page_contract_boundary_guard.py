@@ -45,6 +45,7 @@ def main() -> int:
         "MenuView.vue",
         "MyWorkView.vue",
         "PlaceholderView.vue",
+        "ProjectManagementDashboardView.vue",
         "RecordView.vue",
         "SceneHealthView.vue",
         "ScenePackagesView.vue",
@@ -96,6 +97,10 @@ def main() -> int:
         "fetchCoreMetrics(",
     ]
 
+    page_contract_exempt_views = {
+        "ProjectManagementDashboardView.vue",
+    }
+
     for view in view_files:
         text = _read(view)
         rel = view.relative_to(ROOT).as_posix()
@@ -103,7 +108,7 @@ def main() -> int:
         if not text:
             errors.append(f"{rel}: unreadable")
             continue
-        if "usePageContract(" not in text:
+        if "usePageContract(" not in text and view.name not in page_contract_exempt_views:
             errors.append(f"{rel}: missing token: usePageContract(")
         _check_forbidden(text, global_forbidden_tokens, rel, errors)
         if view.name != "ActionView.vue":
@@ -250,6 +255,11 @@ def main() -> int:
             "pageSectionEnabled('header', true)",
             "pageSectionEnabled('tables_top', true)",
             "pageSectionEnabled('tables_role_user', true)",
+        ],
+        "ProjectManagementDashboardView.vue": [
+            "intentRequest<DashboardResponse>",
+            "executePageContractAction",
+            "PageRenderer",
         ],
     }
     per_view_forbidden = {

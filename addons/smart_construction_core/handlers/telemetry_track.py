@@ -20,9 +20,21 @@ class TelemetryTrackHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
-        event_type = str(params.get("event_type") or "").strip().lower()
+        if not isinstance(params, dict):
+            params = {}
+        event_type = str(
+            params.get("event_type")
+            or params.get("event")
+            or params.get("event_name")
+            or ""
+        ).strip().lower()
         if not event_type:
-            return {"ok": False, "error": {"code": 400, "message": "invalid telemetry params"}}
+            _logger.warning("[telemetry.track] ignored invalid payload: %s", params)
+            return {
+                "ok": True,
+                "data": {"ignored": True, "reason": "invalid telemetry params"},
+                "meta": {"intent": self.INTENT_TYPE},
+            }
 
         user = self.env.user
         data = {

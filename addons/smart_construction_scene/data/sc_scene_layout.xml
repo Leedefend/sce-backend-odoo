@@ -128,6 +128,128 @@
             <field name="active_version_id" ref="sc_scene_version_my_work_workspace_v2"/>
         </record>
 
+        <!-- Contracts workspace scene -->
+        <record id="sc_scene_version_contracts_workspace_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_contracts_workspace"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'contracts.workspace',
+                'name': '合同管理工作台',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/s/contracts.workspace',
+                    'action_xmlid': 'smart_construction_core.action_construction_contract_my',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_contract_center'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_contracts_workspace" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_contracts_workspace_v2"/>
+        </record>
+
+        <!-- Cost analysis workspace scene -->
+        <record id="sc_scene_version_cost_analysis_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_cost_analysis"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'cost.analysis',
+                'name': '成本控制工作台',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/s/cost.analysis',
+                    'action_xmlid': 'smart_construction_core.action_project_cost_ledger',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_cost_ledger'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_cost_analysis" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_cost_analysis_v2"/>
+        </record>
+
+        <!-- Finance workspace scene -->
+        <record id="sc_scene_version_finance_workspace_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_finance_workspace"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'finance.workspace',
+                'name': '资金管理工作台',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/s/finance.workspace',
+                    'action_xmlid': 'smart_construction_core.action_sc_tier_review_my_payment_request',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_finance_center'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_finance_workspace" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_finance_workspace_v2"/>
+        </record>
+
+        <!-- Risk center workspace scene -->
+        <record id="sc_scene_version_risk_center_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_risk_center"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'risk.center',
+                'name': '风险提醒工作台',
+                'version': 'v2',
+                'portal_only': False,
+                'spa_ready': True,
+                'page': {
+                    'key': 'risk.center.workspace',
+                    'title': '风险工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/s/risk.center',
+                    'action_xmlid': 'smart_construction_core.action_sc_operating_drill_overpay_risk_pr'
+                },
+                'list_profile': {
+                    'columns': [
+                        'name',
+                        'state',
+                        'project_id',
+                        'partner_id',
+                        'amount',
+                        'date_request'
+                    ],
+                    'column_labels': {
+                        'name': '风险单号',
+                        'state': '风险状态',
+                        'project_id': '项目',
+                        'partner_id': '往来单位',
+                        'amount': '风险金额',
+                        'date_request': '触发日期'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'project_id'
+                },
+                'default_sort': 'write_date desc'
+            }"/>
+        </record>
+
+        <record id="sc_scene_risk_center" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_risk_center_v2"/>
+        </record>
+
         <!-- Project dashboard scene -->
         <record id="sc_scene_version_projects_dashboard_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_projects_dashboard"/>

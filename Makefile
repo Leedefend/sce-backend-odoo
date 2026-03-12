@@ -200,7 +200,7 @@ IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
 IS_PROD := 1
 endif
-ifneq (,$(findstring .env.prod,$(ENV_FILE)))
+ifneq (,$(filter .env.prod,$(notdir $(ENV_FILE))))
 IS_PROD := 1
 endif
 
@@ -347,6 +347,9 @@ check-odoo-conf:
 help:
 	@echo "Targets:"
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim"
+	@echo "  make verify.prod.sim.isolation   # prod-sim 一键隔离验证"
+	@echo "  make verify.prod.sim.isolation.quick   # prod-sim 快速隔离验证（不reset）"
 	@echo "  make db.reset DB=<name> | demo.reset DB=<name> | gate.demo"
 	@echo "  make verify.platform_baseline|verify.business_baseline|verify.baseline.all DB_NAME=<name>"
 	@echo "  make gate.platform_baseline|gate.business_baseline|gate.baseline.all DB_NAME=<name>"
@@ -389,7 +392,7 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -409,6 +412,9 @@ prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
 prod.restart.full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/down.sh
 	@$(RUN_ENV) bash scripts/dev/up.sh
+
+deploy.prod.sim.oneclick: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
+	@$(RUN_ENV) COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" bash scripts/deploy/prod_sim_oneclick.sh
 
 .PHONY: dev.rebuild
 dev.rebuild: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env gate.compose.config
@@ -1390,6 +1396,11 @@ verify.project.dashboard.contract: guard.prod.forbid
 	@python3 -m py_compile addons/smart_construction_core/handlers/project_dashboard.py addons/smart_construction_core/services/project_dashboard_service.py addons/smart_construction_core/services/project_dashboard_builders/base.py addons/smart_construction_core/services/project_dashboard_builders/project_header_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_metrics_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_progress_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_contract_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_cost_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_finance_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_risk_builder.py
 	@echo "[OK] verify.project.dashboard.contract done"
 
+.PHONY: verify.workbench.extraction_hit_rate.report
+verify.workbench.extraction_hit_rate.report: guard.prod.forbid
+	@python3 scripts/verify/workbench_extraction_hit_rate_report.py
+	@echo "[OK] verify.workbench.extraction_hit_rate.report done"
+
 .PHONY: verify.project.dashboard.snapshot
 verify.project.dashboard.snapshot: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_contract_snapshot_export.py
@@ -1738,6 +1749,24 @@ verify.role.capability_floor.prod_like: guard.prod.forbid
 verify.role.capability_floor.prod_like.schema.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/role_capability_floor_prod_like_schema_guard.py
 
+verify.role.management_viewer.readonly.guard: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/management_viewer_readonly_guard.py
+
+verify.role.project_member.unification.guard: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/project_member_unification_guard.py
+
+verify.role.system_admin.minimum_permission_audit.guard: guard.prod.forbid verify.role.capability_floor.prod_like verify.write_intent.permission.audit
+	@python3 scripts/verify/system_admin_minimum_permission_audit_guard.py
+
+verify.role.acl.minimum_set.guard: guard.prod.forbid
+	@python3 scripts/verify/role_acl_minimum_set_guard.py
+
+verify.project.dashboard.role_runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/project_dashboard_role_runtime_guard.py
+
+verify.scene.permission_reasoncode_deeplink.guard: guard.prod.forbid verify.release.capability.audit.schema.guard verify.scene.contract.shape verify.project.dashboard.snapshot
+	@python3 scripts/verify/scene_permission_reasoncode_deeplink_guard.py
+
 verify.contract.assembler.semantic.smoke: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/contract_assembler_semantic_smoke.py
 
@@ -2045,6 +2074,53 @@ verify.ui.surface.stability.ready: guard.prod.forbid
 
 verify.delivery.simulation.ready: guard.prod.forbid
 	@python3 scripts/verify/delivery_simulation_ready.py
+
+# prod-sim 全量隔离验证：适合发布前/环境漂移后（会重置并重建 sc_prod_sim）
+.PHONY: verify.prod.sim.isolation
+verify.prod.sim.isolation: guard.prod.forbid
+	@echo "[verify.prod.sim.isolation] step=up"
+	@$(MAKE) up \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation] step=demo.reset"
+	@$(MAKE) demo.reset CODEX_MODE=gate \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation] step=odoo.recreate"
+	@$(MAKE) odoo.recreate \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation] step=wait.odoo.ready"
+	@bash -lc 'for i in $$(seq 1 30); do \
+	  if curl -fsS --max-time 2 http://127.0.0.1:18069/web/login >/dev/null 2>/dev/null; then exit 0; fi; \
+	  sleep 2; \
+	done; \
+	echo "❌ odoo not ready on :18069"; exit 2'
+	@echo "[verify.prod.sim.isolation] step=delivery.simulation.ready"
+	@E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo \
+	$(MAKE) verify.delivery.simulation.ready \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim
+	@echo "[verify.prod.sim.isolation] PASS"
+
+# prod-sim 快速隔离回归：适合日常联调（不 reset，仅健康检查 + e2e 验证）
+.PHONY: verify.prod.sim.isolation.quick
+verify.prod.sim.isolation.quick: guard.prod.forbid
+	@echo "[verify.prod.sim.isolation.quick] step=up"
+	@$(MAKE) up \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml"
+	@echo "[verify.prod.sim.isolation.quick] step=wait.odoo.ready"
+	@bash -lc 'for i in $$(seq 1 30); do \
+	  if curl -fsS --max-time 2 http://127.0.0.1:18069/web/login >/dev/null 2>/dev/null; then exit 0; fi; \
+	  sleep 2; \
+	done; \
+	echo "❌ odoo not ready on :18069"; exit 2'
+	@echo "[verify.prod.sim.isolation.quick] step=delivery.simulation.ready"
+	@E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo \
+	$(MAKE) verify.delivery.simulation.ready \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim
+	@echo "[verify.prod.sim.isolation.quick] PASS"
+
 
 .PHONY: verify.product.delivery.gap
 verify.product.delivery.gap: guard.prod.forbid

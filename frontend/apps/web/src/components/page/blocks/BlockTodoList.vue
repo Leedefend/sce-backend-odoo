@@ -77,9 +77,10 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 <style scoped>
 .block {
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
-  padding: 10px;
+  padding: 12px;
+  height: 100%;
 }
 .block-header {
   display: flex;
@@ -89,7 +90,8 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .block-header h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
 }
 .block-header-actions {
   display: flex;
@@ -100,41 +102,57 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   background: #fff;
-  padding: 4px 8px;
+  padding: 6px 10px;
   cursor: pointer;
+}
+
+.todo-open-btn {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
 }
 .todo-list {
   display: grid;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 10px;
 }
+
+@media (min-width: 1200px) {
+  .todo-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .todo-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px;
+  border: 1px solid #dbeafe;
+  border-left-width: 4px;
+  border-radius: 10px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-height: 90px;
 }
 .todo-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 .todo-desc {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 12px;
   color: #6b7280;
 }
+.tone-warning { background: #fffaf0; border-left-color: #f59e0b; }
+.tone-danger { background: #fff5f5; border-left-color: #ef4444; }
+.tone-info { background: #f4f8ff; border-left-color: #3b82f6; }
+.tone-success { background: #f0fdf4; border-left-color: #16a34a; }
+.tone-neutral { background: #f8fafc; border-left-color: #94a3b8; }
 .todo-empty {
   margin: 8px 0 0;
   color: #6b7280;
   font-size: 13px;
 }
-.tone-success { background: #ecfdf5; }
-.tone-warning { background: #fffbeb; }
-.tone-danger { background: #fef2f2; }
-.tone-info { background: #eff6ff; }
-.tone-neutral { background: #f9fafb; }
 </style>

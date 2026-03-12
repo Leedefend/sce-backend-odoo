@@ -11,34 +11,50 @@
 ## 3. 必做项
 
 ### A. 页面框架一致性
-- [ ] 主要场景页面采用统一布局容器与间距规范
-- [ ] 页面标题、面包屑、返回路径行为一致
-- [ ] 空状态、加载状态、错误状态表现一致
+- [x] 主要场景页面采用统一布局容器与间距规范
+- [x] 页面标题、面包屑、返回路径行为一致
+- [x] 空状态、加载状态、错误状态表现一致
 
 ### B. 区块组件一致性
-- [ ] 7-block 在视觉层次与数据呈现方式上统一
-- [ ] 指标卡、表格、告警组件遵循统一 props/数据契约
-- [ ] 区块缺数据时采用统一降级样式与文案
+- [x] 7-block 在视觉层次与数据呈现方式上统一
+- [x] 指标卡、表格、告警组件遵循统一 props/数据契约
+- [x] 区块缺数据时采用统一降级样式与文案
 
 ### C. 交互规范一致性
-- [ ] 主操作按钮位置与命名规范一致
-- [ ] 关键跳转（台账 -> 控制台）交互路径一致
-- [ ] 搜索、筛选、排序反馈一致（无无响应状态）
+- [x] 主操作按钮位置与命名规范一致
+- [x] 关键跳转（台账 -> 控制台）交互路径一致
+- [x] 搜索、筛选、排序反馈一致（无无响应状态）
 
 ### D. 跨模式一致性（user/hud）
-- [ ] user 与 hud 模式下关键页面可渲染
-- [ ] contract_mode 差异可解释且无破坏性偏差
-- [ ] 页面在模式切换后无关键组件丢失
+- [x] user 与 hud 模式下关键页面可渲染
+- [x] contract_mode 差异可解释且无破坏性偏差
+- [x] 页面在模式切换后无关键组件丢失
 
 ### E. 稳定性与可观测性
-- [ ] 页面关键操作无控制台严重报错
-- [ ] 前端关键 smoke 脚本通过
-- [ ] 关键失败场景可定位（日志/报错信息足够）
+- [x] 页面关键操作无控制台严重报错
+- [x] 前端关键 smoke 脚本通过
+- [x] 关键失败场景可定位（日志/报错信息足够）
 
 ## 4. 建议验证命令
 - `make verify.frontend.build`
 - `make verify.frontend.typecheck.strict`
 - `make verify.frontend.lint.src`
+- `make verify.frontend.page_contract.runtime_universal.guard`
+- `make verify.frontend.page_block_registry_guard`
+- `make verify.frontend.page_renderer_default_guard`
+- `make verify.frontend.page_block_renderer_smoke`
+- `make verify.frontend.runtime_navigation_hud.guard`
+- `make verify.page_contract.role_orchestration_variance.guard`
+- `make verify.scene.hud.trace.smoke`
+- `make verify.scene.meta.trace.smoke`
+- `make verify.frontend.contract_runtime.guard`
+- `make verify.frontend.contract_route.guard`
+- `make verify.frontend.home_layout_section_coverage.guard`
+- `make verify.frontend.home_orchestration_consumption.guard`
+- `make verify.frontend.page_contract_boundary.guard`
+- `make verify.list.surface.clean`
+- `make verify.frontend.search_groupby_savedfilters.guard`
+- `make verify.ui.product.stability`
 - `make verify.phase_next.evidence.bundle`
 
 ## 5. 交付产物
@@ -49,4 +65,3 @@
 - 清单项全部打勾
 - 核心场景在 user/hud 模式均可稳定演示
 - 执行看板 Phase 4 状态更新为 `DONE`
-

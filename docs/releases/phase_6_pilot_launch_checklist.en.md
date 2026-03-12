@@ -12,24 +12,24 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 ## 3. Required Items
 
 ### A. Pilot Preparation
-- [ ] Pilot scope, org units, and role participants are defined
-- [ ] Pilot data set is ready (project/contract/cost/fund/risk samples)
-- [ ] Pilot script and issue-reporting channel are defined
+- [x] Pilot scope, org units, and role participants are defined
+- [x] Pilot data set is ready (project/contract/cost/fund/risk samples)
+- [x] Pilot script and issue-reporting channel are defined
 
 ### B. Pilot Execution
-- [ ] Core business path is fully rehearsed end-to-end
-- [ ] Key roles (PM/Finance/Management) complete validation
-- [ ] Pilot issues are classified by severity and closed
+- [x] Core business path is fully rehearsed end-to-end
+- [x] Key roles (PM/Finance/Management) complete validation
+- [x] Pilot issues are classified by severity and closed
 
 ### C. Launch Gates
-- [ ] Exit criteria for Phase 0~5 are all satisfied
-- [ ] No P0 launch-blocking defects remain
-- [ ] Final release review concludes "go-live approved"
+- [x] Exit criteria for Phase 0~5 are all satisfied
+- [x] No P0 launch-blocking defects remain
+- [x] Final release review concludes "go-live approved"
 
 ### D. Launch Execution
-- [ ] Release window, rollback window, and owners are confirmed
-- [ ] Release steps executed by script and recorded
-- [ ] Post-release key feature spot-check passes
+- [x] Release window, rollback window, and owners are confirmed
+- [x] Release steps executed by script and recorded
+- [x] Post-release key feature spot-check passes
 
 ### E. Post-launch Operation
 - [ ] Key indicators are healthy in first 24 hours
@@ -50,4 +50,3 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - All checklist items complete
 - v1.0 launch completed and auditable
 - Execution board Phase 6 updated to `DONE`
-

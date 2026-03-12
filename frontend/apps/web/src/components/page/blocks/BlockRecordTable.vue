@@ -8,7 +8,7 @@
       <table class="mini-table">
         <thead>
           <tr>
-            <th v-for="col in columns" :key="`col-${col}`">{{ col }}</th>
+            <th v-for="col in columns" :key="`col-${col}`">{{ columnLabel(col) }}</th>
           </tr>
         </thead>
         <tbody>
@@ -18,7 +18,7 @@
         </tbody>
       </table>
     </div>
-    <p v-else class="empty-text">暂无数据</p>
+    <p v-else class="empty-text">{{ emptyMessage }}</p>
   </article>
 </template>
 
@@ -51,6 +51,15 @@ const rows = computed<DataRow[]>(() => {
     .filter((item) => item && typeof item === 'object' && !Array.isArray(item))
     .map((item) => item as DataRow);
 });
+
+const emptyMessage = computed(() => String(source.value.empty_message || '暂无数据'));
+
+function columnLabel(col: string) {
+  const labels = source.value.column_labels && typeof source.value.column_labels === 'object'
+    ? source.value.column_labels as Record<string, string>
+    : {};
+  return labels[col] || col;
+}
 
 function stringify(value: unknown) {
   if (value === null || value === undefined) return '--';

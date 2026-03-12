@@ -7,6 +7,8 @@
       :status-label="statusLabel"
       :loading="loading"
       :on-reload="onReload"
+      :mode-label="pageModeLabelText"
+      :record-count="recordCountSafe"
     />
 
     <PageToolbar
@@ -19,6 +21,13 @@
       :on-sort="onSort"
       :on-filter="onFilter"
     />
+
+    <section v-if="summaryItems.length" class="summary-strip">
+      <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
+        <p class="summary-label">{{ item.label }}</p>
+        <p class="summary-value">{{ item.value }}</p>
+      </article>
+    </section>
 
     <StatusPanel v-if="loading" title="正在加载列表..." variant="info" />
     <StatusPanel
@@ -45,7 +54,7 @@
     />
 
     <section v-if="status === 'ok' && showBatchBar" class="batch-bar">
-      <span>{{ selectedCount }} selected</span>
+      <span>已选 {{ selectedCount }} 条</span>
       <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
       <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
       <template v-if="showAssign">
@@ -189,7 +198,14 @@
                 @click="handleRow(row)"
               >
                 <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
-                  {{ formatValue(row[col]) }}
+                  <span
+                    v-if="isStatusColumn(col)"
+                    class="status-badge"
+                    :class="`tone-${semanticCell(col, row[col]).tone}`"
+                  >
+                    {{ semanticCell(col, row[col]).text }}
+                  </span>
+                  <span v-else>{{ semanticCell(col, row[col]).text }}</span>
                 </td>
               </tr>
             </tbody>
@@ -224,11 +240,16 @@
             </td>
             <td v-for="col in displayedColumns" :key="col">
               <div v-if="col === rowPrimary" class="cell-primary">
-                <div class="primary">{{ formatValue(row[col]) }}</div>
-                <div v-if="rowSecondary" class="secondary">{{ formatValue(row[rowSecondary]) }}</div>
+                <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
+                <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
+              </div>
+              <div v-else-if="isStatusColumn(col)">
+                <span class="status-badge" :class="`tone-${semanticCell(col, row[col]).tone}`">
+                  {{ semanticCell(col, row[col]).text }}
+                </span>
               </div>
               <div v-else>
-                {{ formatValue(row[col]) }}
+                {{ semanticCell(col, row[col]).text }}
               </div>
             </td>
           </tr>
@@ -245,7 +266,8 @@ import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { formatDisplayValue } from '../utils/display';
+import { semanticValueByField } from '../utils/semantic';
+import { pageModeLabel } from '../app/pageMode';
 
 type BatchDetailLine = {
   text: string;
@@ -276,9 +298,13 @@ const props = defineProps<{
   filterValue?: 'all' | 'active' | 'archived';
   subtitle: string;
   statusLabel: string;
+  pageMode?: string;
+  sceneKey?: string;
+  recordCount?: number;
   listProfile?: SceneListProfile | null;
   columnLabels?: Record<string, string>;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
+  summaryItems?: Array<{ key: string; label: string; value: string; tone?: string }>;
   selectedIds?: number[];
   onToggleSelection?: (id: number, selected: boolean) => void;
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
@@ -357,6 +383,13 @@ const sortedGroupedRows = computed(() => {
   return rows;
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
+const recordCountSafe = computed(() => {
+  const raw = Number(props.recordCount);
+  if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
+  return props.records.length;
+});
+const pageModeLabelText = computed(() => pageModeLabel(props.pageMode || 'list'));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
   if (!sortedGroupedRows.value.length) return false;
@@ -366,8 +399,13 @@ const hasCollapsedGroups = computed(() => {
   if (!sortedGroupedRows.value.length) return false;
   return sortedGroupedRows.value.some((item) => collapsedSet.value.has(item.key));
 });
-function formatValue(value: unknown) {
-  return formatDisplayValue(value);
+function semanticCell(field: string, value: unknown) {
+  return semanticValueByField(field, value);
+}
+
+function isStatusColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('state') || key.includes('status') || key.includes('stage');
 }
 
 function toggleGroupCollapsed(key: string) {
@@ -706,6 +744,36 @@ function columnLabel(col: string) {
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.summary-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+
+.summary-label {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.summary-value {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.summary-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+.summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+.summary-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+
 .grouped-table {
   display: grid;
   gap: 12px;
@@ -924,6 +992,29 @@ thead th {
 tr:hover {
   background: #f1f5f9;
   cursor: pointer;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border: 1px solid #d1d5db;
+}
+
+.status-badge.tone-success { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.status-badge.tone-warning { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.status-badge.tone-danger { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.status-badge.tone-info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.status-badge.tone-neutral { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+
+th:first-child,
+td:first-child {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
 }
 
 </style>

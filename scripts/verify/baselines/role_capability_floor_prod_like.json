@@ -53,6 +53,17 @@
       "min_capabilities": 1
     },
     {
+      "role": "project_member",
+      "login": "sc_fx_project_member",
+      "name": "Fixture Project Member",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_cost_user"
+      ],
+      "min_capabilities": 1
+    },
+    {
       "role": "material_user",
       "login": "sc_fx_material_user",
       "name": "Fixture Material User",
