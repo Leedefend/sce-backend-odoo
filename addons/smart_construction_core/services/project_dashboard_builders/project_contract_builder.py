@@ -21,6 +21,13 @@ class ProjectContractBuilder(BaseProjectBlockBuilder):
         count = self._safe_count("construction.contract", domain)
         amount_field = "amount_total" if self._model_has_fields("construction.contract", ["amount_total"]) else ""
         total_amount = self._safe_read_group_sum("construction.contract", domain, amount_field) if amount_field else 0.0
+        executed_amount = self._safe_read_group_sum_any(
+            "construction.contract",
+            domain + [("state", "in", ["running", "in_progress", "done", "approved", "effective"])],
+            ["amount_total", "amount"],
+        )
+        change_amount = self._safe_read_group_sum_any("construction.contract", domain, ["amount_change", "change_amount"])
+        performance_rate = self._safe_rate(executed_amount, total_amount)
         data = {
             "columns": ["contract_count", "contract_amount_total"],
             "rows": [
@@ -29,5 +36,11 @@ class ProjectContractBuilder(BaseProjectBlockBuilder):
                     "contract_amount_total": total_amount,
                 }
             ],
+            "summary": {
+                "contract_total": total_amount,
+                "executed_amount": executed_amount,
+                "change_amount": change_amount,
+                "performance_rate": performance_rate,
+            },
         }
         return self._envelope(state="ready", visibility=visibility, data=data)

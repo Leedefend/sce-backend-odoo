@@ -4,12 +4,12 @@
       <h4>{{ block.title || '进展' }}</h4>
     </header>
     <div class="progress-list">
-      <article v-for="item in rows" :key="item.key" class="progress-item">
+      <article v-for="item in rows" :key="item.key" class="progress-item" :class="`kind-${item.kind}`">
         <div class="progress-line">
           <span>{{ item.label }}</span>
-          <strong>{{ item.value }}%</strong>
+          <strong>{{ item.value }}{{ item.unit }}</strong>
         </div>
-        <div class="progress-track"><div class="progress-fill" :style="{ width: `${item.value}%` }" /></div>
+        <div v-if="item.kind === 'rate'" class="progress-track"><div class="progress-fill" :style="{ width: `${item.value}%` }" /></div>
       </article>
     </div>
     <p v-if="!rows.length" class="empty-text">当前暂无可计算的进度数据，请先补齐任务计划。</p>
@@ -40,6 +40,8 @@ const rows = computed(() => {
         key: String(row.key || `progress-${index + 1}`),
         label: String(row.label || `进展 ${index + 1}`),
         value: clampPercent(row.value),
+        unit: String(row.unit || '%'),
+        kind: String(row.unit || '%') === '%' ? 'rate' : 'count',
       };
     });
   }
@@ -47,10 +49,10 @@ const rows = computed(() => {
   const bars = source.bars && typeof source.bars === 'object' ? source.bars as Record<string, unknown> : {};
   const kpi = source.kpi && typeof source.kpi === 'object' ? source.kpi as Record<string, unknown> : {};
   const rowsLocal = [
-    { key: 'contract', label: '合同履约率', value: clampPercent((bars as Record<string, unknown>).contract) },
-    { key: 'output', label: '产值完成率', value: clampPercent((bars as Record<string, unknown>).output) },
-    { key: 'cost_rate', label: '成本控制率', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate) },
-    { key: 'payment_rate', label: '资金支付率', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate) },
+    { key: 'contract', label: '合同履约率', value: clampPercent((bars as Record<string, unknown>).contract), unit: '%', kind: 'rate' },
+    { key: 'output', label: '产值完成率', value: clampPercent((bars as Record<string, unknown>).output), unit: '%', kind: 'rate' },
+    { key: 'cost_rate', label: '成本控制率', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate), unit: '%', kind: 'rate' },
+    { key: 'payment_rate', label: '资金支付率', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate), unit: '%', kind: 'rate' },
   ];
   return rowsLocal.filter((row) => row.value > 0);
 });
@@ -61,6 +63,7 @@ const rows = computed(() => {
 .block-header h4 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
 .progress-list { display: grid; gap: 10px; }
 .progress-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; background: #f8fbff; min-height: 66px; }
+.progress-item.kind-count { background: #fff7ed; border-color: #fed7aa; }
 .progress-line { display: flex; justify-content: space-between; font-size: 13px; }
 .progress-track { margin-top: 8px; width: 100%; height: 9px; background: #dbeafe; border-radius: 999px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #60a5fa 0%, #2563eb 100%); }

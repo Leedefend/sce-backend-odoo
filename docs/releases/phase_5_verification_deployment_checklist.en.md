@@ -15,6 +15,7 @@ Complete release-level verification and deployment readiness to ensure the syste
 - [x] Release-critical verify chain passes (scene/catalog/runtime/contract)
 - [x] Core business path smoke tests pass
 - [x] Key role paths (PM/Finance/Management) pass
+- [x] Release-grade demo seed is loaded and accepted (`demo.load.release` + `verify.demo.release.seed`)
 
 ### B. Contract and Consistency
 - [x] `system.init` and `ui.contract` are stable in both user/hud modes
@@ -37,6 +38,8 @@ Complete release-level verification and deployment readiness to ensure the syste
 - [x] Release conclusion (pass/block) is explicitly recorded
 
 ## 4. Suggested Verification Commands
+- `make demo.load.release DB_NAME=sc_demo`
+- `make verify.demo.release.seed DB_NAME=sc_demo`
 - `make verify.phase_next.evidence.bundle`
 - `make verify.runtime.surface.dashboard.strict.guard`
 - `make verify.project.form.contract.surface.guard`

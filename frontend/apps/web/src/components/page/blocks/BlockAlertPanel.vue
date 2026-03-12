@@ -20,7 +20,7 @@
         v-for="item in items"
         :key="item.id"
         class="alert-item"
-        :class="`tone-${item.tone || 'danger'}`"
+        :class="[`tone-${item.tone || 'danger'}`, { 'risk-emphasis': isRiskZone }]"
       >
         <p class="alert-title">
           <span>{{ item.title }}</span>
@@ -51,6 +51,7 @@ const emit = defineEmits<{
 }>();
 
 const actions = computed(() => (Array.isArray(props.block.actions) ? props.block.actions : []));
+const isRiskZone = computed(() => String(props.zoneKey || '').includes('risk'));
 const maxItems = computed(() => {
   const payload = (props.block.payload && typeof props.block.payload === 'object')
     ? props.block.payload as Record<string, unknown>
@@ -179,6 +180,10 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 .tone-info { background: #f4f8ff; border-left-color: #3b82f6; }
 .tone-success { background: #f0fdf4; border-left-color: #16a34a; }
 .tone-neutral { background: #f8fafc; border-left-color: #94a3b8; }
+.risk-emphasis {
+  border-left-width: 7px;
+  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.08);
+}
 .alert-empty {
   margin: 8px 0 0;
   color: #6b7280;

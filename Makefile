@@ -891,7 +891,7 @@ ops.auth.dev.rollback:
 ops.auth.dev.verify:
 	@./scripts/ops/auth_policy.sh verify -p $(AUTH_PROJECT) -d $(AUTH_DB)
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment audit.nav.role_diff
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.load.release demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment audit.nav.role_diff
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -906,6 +906,9 @@ demo.load.all: guard.prod.forbid check-compose-project check-compose-env
 
 demo.load.full: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/load_full.sh
+
+demo.load.release: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/demo/load_release.sh
 
 demo.install: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[demo.install] db=$(DB_NAME)"
@@ -2151,9 +2154,12 @@ verify.product.delivery.role_home_openability: guard.prod.forbid
 verify.product.delivery.visibility: guard.prod.forbid
 	@python3 scripts/verify/visibility_filter_verification.py
 
-.PHONY: verify.product.delivery.demo_data
+.PHONY: verify.product.delivery.demo_data verify.demo.release.seed
 verify.product.delivery.demo_data: guard.prod.forbid
 	@python3 scripts/verify/demo_data_presence_report.py
+
+verify.demo.release.seed: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/demo_release_seed.sh
 
 .PHONY: verify.product.delivery.execute_button_whitelist
 verify.product.delivery.execute_button_whitelist: guard.prod.forbid

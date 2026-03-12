@@ -15,6 +15,7 @@
 - [x] 发布关键 verify 链路通过（scene/catalog/runtime/contract）
 - [x] 核心业务路径 smoke 测试通过
 - [x] 关键角色（项目经理/财务协同/管理层）路径验证通过
+- [x] 发布态 Demo 种子已加载并通过验收（`demo.load.release` + `verify.demo.release.seed`）
 
 ### B. 契约与一致性
 - [x] `system.init` 与 `ui.contract` 在 user/hud 模式一致可用
@@ -37,6 +38,8 @@
 - [x] 发布结论（通过/阻塞）明确记录
 
 ## 4. 建议验证命令
+- `make demo.load.release DB_NAME=sc_demo`
+- `make verify.demo.release.seed DB_NAME=sc_demo`
 - `make verify.phase_next.evidence.bundle`
 - `make verify.runtime.surface.dashboard.strict.guard`
 - `make verify.project.form.contract.surface.guard`
