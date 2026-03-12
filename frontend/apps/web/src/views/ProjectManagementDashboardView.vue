@@ -244,6 +244,9 @@ function normalizeDatasetByBlock(block: RawBlock) {
         { key: 'actual_cost', label: '实际成本', value: formatAmountCN(source.actual_cost) },
         { key: 'cost_variance', label: '成本偏差', value: formatAmountCN(source.cost_variance) },
         { key: 'cost_variance_rate', label: '偏差率', value: formatMetricValue(source.cost_variance_rate, '%') },
+        { key: 'cost_completion_rate', label: '成本完成率', value: formatMetricValue(source.cost_completion_rate, '%') },
+        { key: 'budget_count', label: '预算条目', value: formatMetricValue(source.budget_count, '条') },
+        { key: 'cost_ledger_count', label: '成本台账', value: formatMetricValue(source.cost_ledger_count, '条') },
       ];
     }
   }
@@ -322,37 +325,51 @@ function normalizeDatasetByBlock(block: RawBlock) {
     if (summary && ('contract_total' in summary || 'receivable' in summary)) {
       if ('contract_total' in summary) {
         return {
-          columns: ['contract_total', 'executed_amount', 'change_amount', 'performance_rate'],
+          columns: ['contract_total', 'executed_amount', 'performance_rate', 'subcontract_total', 'change_amount'],
           column_labels: {
-            contract_total: '合同总额',
+            contract_total: '收入合同总额',
             executed_amount: '执行金额',
-            change_amount: '变更金额',
             performance_rate: '履约率',
+            subcontract_total: '支出合同总额',
+            change_amount: '变更金额',
           },
           rows: [{
             contract_total: formatAmountCN(summary.contract_total),
             executed_amount: formatAmountCN(summary.executed_amount),
-            change_amount: formatAmountCN(summary.change_amount),
             performance_rate: formatMetricValue(summary.performance_rate, '%'),
+            subcontract_total: formatAmountCN(summary.subcontract_total),
+            change_amount: formatAmountCN(summary.change_amount),
+          }, {
+            contract_total: `收入合同数：${asNumber(summary.contract_count_income)} 项`,
+            executed_amount: `支出合同数：${asNumber(summary.contract_count_expense)} 项`,
+            performance_rate: '--',
+            subcontract_total: '--',
+            change_amount: '--',
           }],
           state,
         };
       }
       return {
-        columns: ['receivable', 'received', 'payable', 'paid', 'gap'],
+        columns: ['receivable', 'received', 'receive_pending', 'payable', 'paid', 'pay_pending', 'gap', 'net_cash'],
         column_labels: {
           receivable: '应收',
           received: '已收',
+          receive_pending: '待收',
           payable: '应付',
           paid: '已付',
+          pay_pending: '待付',
           gap: '资金缺口',
+          net_cash: '净现金流',
         },
         rows: [{
           receivable: formatAmountCN(summary.receivable),
           received: formatAmountCN(summary.received),
+          receive_pending: formatAmountCN(summary.receive_pending),
           payable: formatAmountCN(summary.payable),
           paid: formatAmountCN(summary.paid),
+          pay_pending: formatAmountCN(summary.pay_pending),
           gap: formatAmountCN(summary.gap),
+          net_cash: formatAmountCN(summary.net_cash),
         }],
         state,
       };
