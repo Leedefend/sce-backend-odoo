@@ -1,7 +1,196 @@
 # -*- coding: utf-8 -*-
 import logging
+from typing import Any, Dict, List
+
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
+
+
+def _as_text(value: Any) -> str:
+    if isinstance(value, dict):
+        for key in ("zh_CN", "en_US"):
+            text = str(value.get(key) or "").strip()
+            if text:
+                return text
+        return ""
+    return str(value or "").strip()
+
+
+def _safe_search_read(env, model_name: str, domain: List[Any], fields: List[str], limit: int = 6) -> List[Dict[str, Any]]:
+    if model_name not in env:
+        return []
+    model = env[model_name]
+    try:
+        return model.search_read(domain, fields=fields, limit=limit, order="write_date desc, id desc")
+    except AccessError:
+        return []
+    except Exception as exc:
+        _logger.warning("[smart_core_extend_system_init] search_read failed model=%s error=%s", model_name, exc)
+        return []
+
+
+def _model_has_field(env, model_name: str, field_name: str) -> bool:
+    if model_name not in env:
+        return False
+    return field_name in env[model_name]._fields
+
+
+def _build_task_action_rows(env, user) -> List[Dict[str, Any]]:
+    user_domain = ["|", ("user_id", "=", user.id), ("user_ids", "in", [user.id])]
+    rows = _safe_search_read(
+        env,
+        "project.task",
+        domain=[("sc_state", "in", ["draft", "ready", "in_progress"])] + user_domain,
+        fields=["id", "name", "project_id", "sc_state", "date_deadline", "user_id", "write_date"],
+        limit=6,
+    )
+    if not rows:
+        rows = _safe_search_read(
+            env,
+            "project.task",
+            domain=[("sc_state", "in", ["draft", "ready", "in_progress"])],
+            fields=["id", "name", "project_id", "sc_state", "date_deadline", "user_id", "write_date"],
+            limit=6,
+        )
+    if not rows and _model_has_field(env, "project.task", "kanban_state"):
+        rows = _safe_search_read(
+            env,
+            "project.task",
+            domain=[("kanban_state", "in", ["normal", "blocked"])] + user_domain,
+            fields=["id", "name", "project_id", "kanban_state", "date_deadline", "user_id", "write_date"],
+            limit=6,
+        )
+    if not rows and _model_has_field(env, "project.task", "kanban_state"):
+        rows = _safe_search_read(
+            env,
+            "project.task",
+            domain=[("kanban_state", "in", ["normal", "blocked"])],
+            fields=["id", "name", "project_id", "kanban_state", "date_deadline", "user_id", "write_date"],
+            limit=6,
+        )
+    result: List[Dict[str, Any]] = []
+    for row in rows:
+        task_name = _as_text(row.get("name")) or "待办任务"
+        state = _as_text(row.get("sc_state") or row.get("kanban_state"))
+        status = "urgent" if state == "in_progress" else "normal"
+        project_name = ""
+        project_raw = row.get("project_id")
+        if isinstance(project_raw, list) and len(project_raw) > 1:
+            project_name = _as_text(project_raw[1])
+        result.append(
+            {
+                "id": f"task-{row.get('id')}",
+                "title": task_name,
+                "description": f"项目任务待处理：{project_name}" if project_name else "项目任务待处理",
+                "status": status,
+                "scene_key": "task.center",
+                "route": "/s/task.center",
+                "count": 1,
+                "source_detail": "factual_record",
+                "due_date": row.get("date_deadline"),
+            }
+        )
+    return result
+
+
+def _build_payment_action_rows(env) -> List[Dict[str, Any]]:
+    rows = _safe_search_read(
+        env,
+        "payment.request",
+        domain=[("state", "in", ["draft", "submit", "approve", "approved"])],
+        fields=["id", "name", "project_id", "state", "amount", "date_request", "write_date"],
+        limit=6,
+    )
+    result: List[Dict[str, Any]] = []
+    for row in rows:
+        req_name = _as_text(row.get("name")) or "付款申请"
+        amount = row.get("amount") or 0
+        project_name = ""
+        project_raw = row.get("project_id")
+        if isinstance(project_raw, list) and len(project_raw) > 1:
+            project_name = _as_text(project_raw[1])
+        result.append(
+            {
+                "id": f"payment-{row.get('id')}",
+                "title": f"付款申请待审批 · {req_name}",
+                "description": f"{project_name} 申请金额 {amount}" if project_name else f"申请金额 {amount}",
+                "status": "urgent",
+                "scene_key": "finance.payment_requests",
+                "route": "/s/finance.payment_requests",
+                "amount": amount,
+                "count": 1,
+                "source_detail": "factual_record",
+                "deadline": row.get("date_request"),
+            }
+        )
+    return result
+
+
+def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
+    rows = _safe_search_read(
+        env,
+        "project.risk",
+        domain=[],
+        fields=["id", "name", "health_state", "write_date"],
+        limit=6,
+    )
+    if not rows:
+        rows = _safe_search_read(
+            env,
+            "project.project",
+            domain=[("health_state", "in", ["risk", "warn"])],
+            fields=["id", "name", "health_state", "write_date"],
+            limit=6,
+        )
+    result: List[Dict[str, Any]] = []
+    for row in rows:
+        health = _as_text(row.get("health_state"))
+        status = "urgent" if health == "risk" else "normal"
+        title = _as_text(row.get("name")) or "风险事项"
+        result.append(
+            {
+                "id": f"risk-{row.get('id')}",
+                "title": f"项目风险预警 · {title}",
+                "description": "项目健康状态异常，请优先跟进。",
+                "status": status,
+                "scene_key": "risk.center",
+                "route": "/s/risk.center",
+                "count": 1,
+                "source_detail": "factual_record",
+            }
+        )
+    return result
+
+
+def _build_project_action_rows(env, user) -> List[Dict[str, Any]]:
+    rows = _safe_search_read(
+        env,
+        "project.project",
+        domain=[("active", "=", True)],
+        fields=["id", "name", "health_state", "lifecycle_state", "write_date", "user_id", "manager_id"],
+        limit=6,
+    )
+    result: List[Dict[str, Any]] = []
+    for row in rows:
+        health = _as_text(row.get("health_state"))
+        lifecycle = _as_text(row.get("lifecycle_state"))
+        title = _as_text(row.get("name")) or "项目事项"
+        if health in {"risk", "warn"} or lifecycle in {"draft", "in_progress"}:
+            status = "urgent" if health == "risk" else "normal"
+            result.append(
+                {
+                    "id": f"project-{row.get('id')}",
+                    "title": f"项目跟进 · {title}",
+                    "description": "项目状态需要关注，请进入项目管理跟进。",
+                    "status": status,
+                    "scene_key": "project.management",
+                    "route": "/s/project.management",
+                    "count": 1,
+                    "source_detail": "factual_record",
+                }
+            )
+    return result
 
 
 def smart_core_register(registry):
@@ -110,6 +299,28 @@ def smart_core_extend_system_init(data, env, user):
             module_facts["entitlements"] = Entitlement.get_payload(user)
         if Usage:
             module_facts["usage"] = Usage.get_usage_map(user.company_id)
+
+        task_rows = _build_task_action_rows(env, user)
+        payment_rows = _build_payment_action_rows(env)
+        risk_rows = _build_risk_action_rows(env)
+        project_rows = _build_project_action_rows(env, user)
+
+        if task_rows:
+            data["task_items"] = task_rows
+        if payment_rows:
+            data["payment_requests"] = payment_rows
+        if risk_rows:
+            data["risk_actions"] = risk_rows
+        if project_rows:
+            data["project_actions"] = project_rows
+
+        module_facts["workspace_business_source"] = {
+            "task_items": len(task_rows),
+            "payment_requests": len(payment_rows),
+            "risk_actions": len(risk_rows),
+            "project_actions": len(project_rows),
+        }
+
         ext_facts["smart_construction_core"] = module_facts
         data["ext_facts"] = ext_facts
     except Exception as exc:

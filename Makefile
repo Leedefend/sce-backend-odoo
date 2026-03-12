@@ -1396,6 +1396,11 @@ verify.project.dashboard.contract: guard.prod.forbid
 	@python3 -m py_compile addons/smart_construction_core/handlers/project_dashboard.py addons/smart_construction_core/services/project_dashboard_service.py addons/smart_construction_core/services/project_dashboard_builders/base.py addons/smart_construction_core/services/project_dashboard_builders/project_header_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_metrics_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_progress_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_contract_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_cost_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_finance_builder.py addons/smart_construction_core/services/project_dashboard_builders/project_risk_builder.py
 	@echo "[OK] verify.project.dashboard.contract done"
 
+.PHONY: verify.workbench.extraction_hit_rate.report
+verify.workbench.extraction_hit_rate.report: guard.prod.forbid
+	@python3 scripts/verify/workbench_extraction_hit_rate_report.py
+	@echo "[OK] verify.workbench.extraction_hit_rate.report done"
+
 .PHONY: verify.project.dashboard.snapshot
 verify.project.dashboard.snapshot: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_contract_snapshot_export.py
@@ -2870,4 +2875,3 @@ cn.help:
 	@echo "  - 确保已安装 Continue CLI: npm install -g @continuedev/cli"
 
 .PHONY: cn.p cn.p.stdin cn.tui cn.test cn.help guard.cn.prompt
-

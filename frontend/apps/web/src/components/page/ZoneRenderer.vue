@@ -1,5 +1,5 @@
 <template>
-  <section class="zone-renderer" :class="`zone-${zone.zone_type || 'supporting'}`">
+  <section class="zone-renderer" :class="[`zone-${zone.zone_type || 'supporting'}`, `zone-key-${zone.key || 'unknown'}`]">
     <header v-if="zone.title || zone.description" class="zone-renderer-header">
       <h3 v-if="zone.title">{{ zone.title }}</h3>
       <p v-if="zone.description">{{ zone.description }}</p>
@@ -50,26 +50,31 @@ function onBlockAction(payload: PageBlockActionEvent) {
 <style scoped>
 .zone-renderer {
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
-  padding: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 .zone-renderer-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
 }
 .zone-renderer-header p {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: #6b7280;
   font-size: 13px;
 }
 .zone-renderer-body {
-  margin-top: 10px;
+  margin-top: 14px;
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 .display-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.display-grid > * {
+  height: 100%;
 }
 .display-stack {
   grid-template-columns: 1fr;
@@ -78,5 +83,40 @@ function onBlockAction(payload: PageBlockActionEvent) {
 .zone-critical {
   border-color: #fecaca;
   background: #fff7f7;
+}
+
+.zone-primary {
+  border-color: #bfdbfe;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 55%);
+}
+
+.zone-secondary {
+  border-color: #dbeafe;
+  background: #ffffff;
+}
+
+.zone-supporting {
+  border-color: #e5e7eb;
+  background: #ffffff;
+}
+
+.zone-key-today_focus {
+  border-color: #93c5fd;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 68%);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.08);
+}
+
+.zone-key-today_focus .zone-renderer-header h3 {
+  font-size: 22px;
+}
+
+.zone-key-analysis {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.zone-key-quick_entries {
+  border-color: #bfdbfe;
+  background: #ffffff;
 }
 </style>

@@ -1,11 +1,13 @@
 import { intentRequest } from './intents';
 
 export async function trackTelemetryEvent(eventType: string, extra: Record<string, unknown> = {}) {
-  if (!eventType) return;
+  const normalizedType = String(eventType || '').trim();
+  if (!normalizedType) return;
+  const safeExtra = (extra && typeof extra === 'object') ? extra : {};
   try {
     await intentRequest<{ event_type?: string }>({
       intent: 'telemetry.track',
-      params: { event_type: eventType, ...extra },
+      params: { ...safeExtra, event_type: normalizedType },
       silentErrors: true,
     });
   } catch (err) {

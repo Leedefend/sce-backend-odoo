@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import datetime
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
 from odoo import fields
@@ -138,6 +139,550 @@ def _is_urgent_capability(title: str, key: str) -> bool:
     merged = f"{_to_text(title)} {_to_text(key)}".lower()
     keywords = ("risk", "approval", "payment", "settlement", "风险", "审批", "付款", "结算")
     return any(keyword in merged for keyword in keywords)
+
+
+def _as_record_list(payload: Any) -> List[Dict[str, Any]]:
+    if isinstance(payload, list):
+        return [row for row in payload if isinstance(row, dict)]
+    if isinstance(payload, dict):
+        for key in ("items", "records", "rows", "data", "actions", "tasks"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                return [row for row in value if isinstance(row, dict)]
+    return []
+
+
+def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    ignored_top_keys = {
+        "capabilities",
+        "scenes",
+        "nav",
+        "nav_legacy",
+        "nav_meta",
+        "nav_contract",
+        "default_route",
+        "intents",
+        "intents_meta",
+        "feature_flags",
+        "capability_groups",
+        "capability_surface_summary",
+        "preload",
+        "page_contracts",
+        "workspace_home",
+        "role_surface",
+        "role_surface_map",
+        "surface_mapping",
+        "surface_policies",
+        "ext_facts",
+        "user",
+    }
+    collections: Dict[str, List[Dict[str, Any]]] = {}
+    for key, value in data.items():
+        if key in ignored_top_keys:
+            continue
+        rows = _as_record_list(value)
+        if rows:
+            collections[str(key)] = rows
+    return collections
+
+
+def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[str, Any]) -> bool:
+    source_text = _to_text(source_key).lower()
+    status_text = _to_text(action.get("status") or row.get("status") or row.get("state") or row.get("severity") or row.get("level")).lower()
+    title_text = _to_text(action.get("title") or row.get("title") or row.get("name") or row.get("label")).lower()
+    desc_text = _to_text(action.get("description") or row.get("description") or row.get("summary")).lower()
+    scene_text = _to_text(action.get("scene_key") or row.get("scene_key") or row.get("scene")).lower()
+    route_text = _to_text(action.get("route") or row.get("route")).lower()
+    merged = " ".join([source_text, status_text, title_text, desc_text, scene_text, route_text])
+
+    risk_tokens = (
+        "risk",
+        "alert",
+        "warning",
+        "exception",
+        "overdue",
+        "blocked",
+        "critical",
+        "urgent",
+        "payment",
+        "cost",
+        "contract",
+        "delay",
+        "风险",
+        "预警",
+        "异常",
+        "逾期",
+        "阻塞",
+        "严重",
+        "紧急",
+        "付款",
+        "成本",
+        "合同",
+        "延期",
+    )
+    return any(token in merged for token in risk_tokens)
+
+
+def _route_scene_by_source(source_key: str) -> str:
+    text = _to_text(source_key).lower()
+    if "risk" in text or "风险" in text:
+        return "risk.center"
+    if "task" in text or "任务" in text:
+        return "task.center"
+    if "cost" in text or "boq" in text or "成本" in text:
+        return "cost.project_boq"
+    if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
+        return "finance.center"
+    if "project" in text or "项目" in text:
+        return "projects.list"
+    return "project.management"
+
+
+def _parse_deadline(value: Any) -> datetime | None:
+    text = _to_text(value)
+    if not text:
+        return None
+    normalized = text.replace("Z", "+00:00")
+    for candidate in (normalized, normalized.split(" ")[0]):
+        try:
+            return datetime.fromisoformat(candidate)
+        except Exception:
+            continue
+    return None
+
+
+def _role_ranking_profile(role_code: str) -> Dict[str, int]:
+    role = _to_text(role_code).lower()
+    if role == "finance":
+        return {
+            "severity_weight": 55,
+            "deadline_weight": 45,
+            "pending_weight": 12,
+            "source_weight": 10,
+            "impact_weight": 22,
+        }
+    if role == "owner":
+        return {
+            "severity_weight": 65,
+            "deadline_weight": 35,
+            "pending_weight": 8,
+            "source_weight": 8,
+            "impact_weight": 28,
+        }
+    return {
+        "severity_weight": 60,
+        "deadline_weight": 40,
+        "pending_weight": 15,
+        "source_weight": 12,
+        "impact_weight": 20,
+    }
+
+
+def _impact_score(row: Dict[str, Any]) -> int:
+    amount_raw = (
+        row.get("amount")
+        or row.get("amount_total")
+        or row.get("contract_amount")
+        or row.get("budget")
+        or row.get("value")
+        or 0
+    )
+    try:
+        amount = float(amount_raw)
+    except Exception:
+        amount = 0.0
+    project_count = _to_int(row.get("project_count") or row.get("affected_projects") or row.get("scope_count") or 0)
+    score = 0
+    if amount >= 100000000:
+        score += 30
+    elif amount >= 10000000:
+        score += 22
+    elif amount >= 1000000:
+        score += 14
+    elif amount > 0:
+        score += 8
+    if project_count >= 5:
+        score += 12
+    elif project_count >= 2:
+        score += 8
+    elif project_count >= 1:
+        score += 4
+    return min(40, score)
+
+
+def _urgency_score(row: Dict[str, Any], title: str, source_key: str, status_text: str, role_code: str = "", source_kind: str = "business") -> int:
+    profile = _role_ranking_profile(role_code)
+    severity_weight = _to_int(profile.get("severity_weight") or 0)
+    deadline_weight = _to_int(profile.get("deadline_weight") or 0)
+    pending_weight = _to_int(profile.get("pending_weight") or 0)
+    source_weight = _to_int(profile.get("source_weight") or 0)
+    impact_weight = _to_int(profile.get("impact_weight") or 0)
+
+    score = 0
+    merged = f"{status_text} {title} {_to_text(source_key)}".lower()
+    if any(token in merged for token in ("critical", "urgent", "overdue", "严重", "紧急", "逾期", "高")):
+        score += severity_weight
+    elif any(token in merged for token in ("warning", "high", "关注", "预警", "待处理")):
+        score += max(20, int(severity_weight * 0.58))
+    if _is_urgent_capability(title, source_key):
+        score += max(8, int(severity_weight * 0.33))
+
+    deadline = (
+        _parse_deadline(row.get("due_date"))
+        or _parse_deadline(row.get("deadline"))
+        or _parse_deadline(row.get("planned_date"))
+        or _parse_deadline(row.get("date_deadline"))
+    )
+    if deadline is not None:
+        now_dt = datetime.now(deadline.tzinfo) if deadline.tzinfo else datetime.now()
+        days = (deadline - now_dt).total_seconds() / 86400
+        if days < 0:
+            score += deadline_weight
+        elif days <= 1:
+            score += max(18, int(deadline_weight * 0.72))
+        elif days <= 3:
+            score += max(12, int(deadline_weight * 0.45))
+        elif days <= 7:
+            score += max(6, int(deadline_weight * 0.22))
+
+    score += min(pending_weight, _to_int(row.get("count") or row.get("pending_count")))
+    score += min(impact_weight, _impact_score(row))
+    if _to_text(source_kind) == "business":
+        score += source_weight
+    return score
+
+
+def _to_business_action(source_key: str, row: Dict[str, Any], index: int, role_code: str = "", source_kind: str = "business") -> Dict[str, Any]:
+    title = _to_text(row.get("title") or row.get("name") or row.get("label") or row.get("display_name"))
+    if not title:
+        title = f"待处理事项 {index + 1}"
+    description = _to_text(row.get("description") or row.get("summary") or row.get("hint") or "进入场景继续处理业务")
+    scene_key = _to_text(row.get("scene_key") or row.get("scene") or _route_scene_by_source(source_key))
+    route = _to_text(row.get("route")) or f"/s/{scene_key}"
+    status_text = _to_text(row.get("status") or row.get("state") or row.get("level") or row.get("severity")).lower()
+    urgent_keywords = ("urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高")
+    is_urgent = any(word in status_text for word in urgent_keywords) or _is_urgent_capability(title, source_key)
+    urgency_score = _urgency_score(
+        row=row,
+        title=title,
+        source_key=source_key,
+        status_text=status_text,
+        role_code=role_code,
+        source_kind=source_kind,
+    )
+    impact_score = _impact_score(row)
+    return {
+        "id": _to_text(row.get("id") or row.get("key") or f"{source_key}-{index + 1}"),
+        "title": title,
+        "description": description,
+        "status": "urgent" if is_urgent else "normal",
+        "tone": "danger" if is_urgent else "info",
+        "progress": "pending",
+        "count": _to_int(row.get("count") or row.get("pending_count") or 0),
+        "ready": True,
+        "entry_key": _to_text(row.get("entry_key") or row.get("key") or source_key),
+        "scene_key": scene_key,
+        "route": route,
+        "menu_id": _to_int(row.get("menu_id")),
+        "action_id": _to_int(row.get("action_id")),
+        "source": source_kind,
+        "source_detail": _to_text(row.get("source_detail")) or ("factual_record" if source_kind == "business" else "capability_template"),
+        "urgency_score": urgency_score,
+        "impact_score": impact_score,
+    }
+
+
+def _build_business_today_actions(data: Dict[str, Any], role_code: str = "") -> List[Dict[str, Any]]:
+    collections = _extract_business_collections(data)
+    candidates: List[Dict[str, Any]] = []
+    preferred_sources = [
+        "today_actions",
+        "tasks",
+        "project_actions",
+        "task_items",
+        "payment_requests",
+        "risk_actions",
+        "risk",
+        "project_tasks",
+    ]
+    ordered_sources: List[str] = []
+    for key in preferred_sources:
+        if key in collections:
+            ordered_sources.append(key)
+    for key in collections:
+        if key not in ordered_sources:
+            ordered_sources.append(key)
+    for source_key in ordered_sources:
+        rows = collections.get(source_key, [])
+        for idx, row in enumerate(rows[:6]):
+            candidates.append(_to_business_action(source_key, row, idx, role_code=role_code, source_kind="business"))
+    candidates.sort(key=lambda item: (-_to_int(item.get("urgency_score")), 0 if item.get("status") == "urgent" else 1))
+    dedup: List[Dict[str, Any]] = []
+    seen: set = set()
+    for item in candidates:
+        marker = (_to_text(item.get("title")), _to_text(item.get("scene_key")))
+        if marker in seen:
+            continue
+        seen.add(marker)
+        dedup.append(item)
+        if len(dedup) >= 6:
+            break
+    return dedup
+
+
+def _build_capability_today_actions(ready_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_today_actions", None)
+        if callable(fn):
+            payload = fn(ready_caps)
+            if isinstance(payload, list):
+                normalized: List[Dict[str, Any]] = []
+                for row in payload:
+                    if not isinstance(row, dict):
+                        continue
+                    candidate = dict(row)
+                    source_kind = _to_text(candidate.get("source"))
+                    if source_kind not in {"business", "capability_fallback"}:
+                        source_kind = "capability_fallback"
+                        candidate["source"] = source_kind
+                    title = _to_text(candidate.get("title") or candidate.get("name") or candidate.get("label"))
+                    source_key = _to_text(candidate.get("entry_key") or candidate.get("id") or "today_actions")
+                    status_text = _to_text(candidate.get("status") or candidate.get("state") or candidate.get("level") or candidate.get("severity"))
+                    candidate["urgency_score"] = _urgency_score(
+                        row=candidate,
+                        title=title,
+                        source_key=source_key,
+                        status_text=status_text,
+                        role_code=role_code,
+                        source_kind=source_kind,
+                    )
+                    candidate["impact_score"] = _impact_score(candidate)
+                    normalized.append(candidate)
+                return normalized
+    actions: List[Dict[str, Any]] = []
+    for cap in list(ready_caps)[:6]:
+        payload = cap.get("default_payload") if isinstance(cap.get("default_payload"), dict) else {}
+        route = _to_text(payload.get("route"))
+        scene_key = _scene_from_route(route)
+        title = _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key"))
+        actions.append(
+            {
+                "id": _to_text(cap.get("key")) or title,
+                "title": title or "进入能力",
+                "description": _to_text(cap.get("ui_hint")) or "进入能力继续处理业务",
+                "status": "urgent" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "normal",
+                "tone": "danger" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "info",
+                "progress": "pending",
+                "count": 0,
+                "ready": True,
+                "entry_key": _to_text(cap.get("key")),
+                "scene_key": scene_key,
+                "route": route,
+                "menu_id": _to_int(payload.get("menu_id")),
+                "action_id": _to_int(payload.get("action_id")),
+                "source": "capability_fallback",
+                "urgency_score": _urgency_score(
+                    row={"count": 0},
+                    title=title,
+                    source_key=_to_text(cap.get("key")),
+                    status_text="urgent" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "normal",
+                    role_code=role_code,
+                    source_kind="capability_fallback",
+                ),
+                "impact_score": 0,
+            }
+        )
+    return actions
+
+
+def _build_today_actions(data: Dict[str, Any], ready_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
+    merged: List[Dict[str, Any]] = []
+    seen: set = set()
+    ordered = _build_business_today_actions(data, role_code=role_code) + _build_capability_today_actions(ready_caps, role_code=role_code)
+    ordered.sort(key=lambda item: (-_to_int(item.get("urgency_score")), 0 if _to_text(item.get("source")) == "business" else 1))
+    for item in ordered:
+        marker = (
+            _to_text(item.get("title")),
+            _to_text(item.get("scene_key")),
+            _to_text(item.get("entry_key")),
+        )
+        if marker in seen:
+            continue
+        seen.add(marker)
+        merged.append(item)
+        if len(merged) >= 6:
+            break
+    return merged
+
+
+def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
+    collections = _extract_business_collections(data)
+    preferred = ["risk_actions", "risk", "risk_events", "alerts", "today_actions"]
+    actions: List[Dict[str, Any]] = []
+    for source_key in preferred:
+        rows = collections.get(source_key, [])
+        for idx, row in enumerate(rows[:6]):
+            action = _to_business_action(source_key, row, idx, role_code=role_code, source_kind="business")
+            if not _is_risk_semantic_action(source_key, row, action):
+                continue
+            action["scene_key"] = "risk.center"
+            action["route"] = "/s/risk.center"
+            action["source"] = "business"
+            action["status"] = "urgent"
+            action["tone"] = "danger"
+            actions.append(action)
+    if actions:
+        actions.sort(key=lambda item: -_to_int(item.get("urgency_score")))
+        return actions[:3]
+
+    provider = _load_data_provider()
+    if provider is not None:
+        signal_builder = getattr(provider, "build_today_actions", None)
+        if callable(signal_builder):
+            signal_payload = signal_builder(list(data.get("capabilities") or []))
+            signal_actions: List[Dict[str, Any]] = []
+            for idx, row in enumerate(signal_payload[:6] if isinstance(signal_payload, list) else []):
+                if not isinstance(row, dict):
+                    continue
+                action = _to_business_action("today_actions", row, idx, role_code=role_code, source_kind="business")
+                if not _is_risk_semantic_action("today_actions", row, action):
+                    continue
+                action["scene_key"] = "risk.center"
+                action["route"] = "/s/risk.center"
+                action["source"] = "business"
+                action["source_detail"] = "semantic_template"
+                action["status"] = "urgent"
+                action["tone"] = "danger"
+                signal_actions.append(action)
+            if signal_actions:
+                signal_actions.sort(key=lambda item: -_to_int(item.get("urgency_score")))
+                deduped: List[Dict[str, Any]] = []
+                seen: set = set()
+                for item in signal_actions:
+                    marker = (_to_text(item.get("title")), _to_text(item.get("entry_key")))
+                    if marker in seen:
+                        continue
+                    seen.add(marker)
+                    deduped.append(item)
+                    if len(deduped) >= 3:
+                        break
+                if deduped:
+                    return deduped
+
+    fallback: List[Dict[str, Any]] = []
+    for cap in list(locked_caps)[:3]:
+        fallback.append(
+            {
+                "id": _to_text(cap.get("key")),
+                "title": _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key")) or "受限能力",
+                "description": _to_text(cap.get("reason")) or "当前账号尚未开通该能力。",
+                "entry_key": _to_text(cap.get("key")),
+                "scene_key": "risk.center",
+                "route": "/s/risk.center",
+                "source": "capability_fallback",
+                "source_detail": "capability_template",
+                "urgency_score": _urgency_score(
+                    row={"count": 1},
+                    title=_to_text(cap.get("ui_label") or cap.get("name") or cap.get("key")) or "受限能力",
+                    source_key=_to_text(cap.get("key")),
+                    status_text="warning",
+                    role_code=role_code,
+                    source_kind="capability_fallback",
+                ),
+                "impact_score": 0,
+            }
+        )
+    return fallback
+
+
+def _build_extraction_stats(data: Dict[str, Any], today_actions: List[Dict[str, Any]], risk_actions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    collections = _extract_business_collections(data)
+    total_rows = sum(len(rows) for rows in collections.values())
+    today_business = len([row for row in today_actions if _to_text(row.get("source")) == "business"])
+    risk_business = len([row for row in risk_actions if _to_text(row.get("source")) == "business"])
+    today_factual = len([row for row in today_actions if _to_text(row.get("source")) == "business" and _to_text(row.get("source_detail")) == "factual_record"])
+    risk_factual = len([row for row in risk_actions if _to_text(row.get("source")) == "business" and _to_text(row.get("source_detail")) == "factual_record"])
+    today_total = len(today_actions)
+    risk_total = len(risk_actions)
+    today_rate = round((today_business / today_total) * 100, 2) if today_total else 0.0
+    risk_rate = round((risk_business / risk_total) * 100, 2) if risk_total else 0.0
+    today_factual_rate = round((today_factual / today_total) * 100, 2) if today_total else 0.0
+    risk_factual_rate = round((risk_factual / risk_total) * 100, 2) if risk_total else 0.0
+    source_kind = "business" if (today_business > 0 or risk_business > 0 or total_rows > 0) else "fallback"
+    fallback_reason = "" if source_kind == "business" else "no_business_rows_detected"
+    return {
+        "business_collections": len(collections),
+        "business_rows_total": total_rows,
+        "today_actions_total": today_total,
+        "today_actions_business": today_business,
+        "today_actions_factual": today_factual,
+        "today_actions_fallback": max(0, today_total - today_business),
+        "today_actions_business_rate": today_rate,
+        "today_actions_factual_rate": today_factual_rate,
+        "risk_actions_total": risk_total,
+        "risk_actions_business": risk_business,
+        "risk_actions_factual": risk_factual,
+        "risk_actions_fallback": max(0, risk_total - risk_business),
+        "risk_actions_business_rate": risk_rate,
+        "risk_actions_factual_rate": risk_factual_rate,
+        "source_kind": source_kind,
+        "fallback_reason": fallback_reason,
+        "extraction_hit_rate": round((today_rate + risk_rate) / 2, 2),
+        "factual_extraction_hit_rate": round((today_factual_rate + risk_factual_rate) / 2, 2),
+    }
+
+
+def _build_metric_sets(ready_count: int, locked_count: int, preview_count: int, scene_count: int, today_action_count: int, risk_action_count: int) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    business_metrics = [
+        {
+            "key": "biz.today_actions",
+            "label": "今日待处理事项",
+            "value": str(today_action_count),
+            "level": _metric_level(today_action_count, 3, 6),
+            "tone": _tone_from_level(_metric_level(today_action_count, 3, 6)),
+            "progress": "pending" if today_action_count > 0 else "completed",
+            "delta": "行动优先",
+            "hint": "基于任务、审批、风险等业务动作聚合。",
+        },
+        {
+            "key": "biz.risk_actions",
+            "label": "高优先风险事项",
+            "value": str(risk_action_count),
+            "level": _metric_level(risk_action_count, 1, 3),
+            "tone": _tone_from_level(_metric_level(risk_action_count, 1, 3)),
+            "progress": "blocked" if risk_action_count > 0 else "running",
+            "delta": "风险跟进",
+            "hint": "需要优先处理的风险提醒与异常事项。",
+        },
+        {
+            "key": "biz.project_scope",
+            "label": "在管业务场景数",
+            "value": str(scene_count),
+            "level": _metric_level(scene_count, 3, 12),
+            "tone": _tone_from_level(_metric_level(scene_count, 3, 12)),
+            "progress": "running",
+            "delta": "业务覆盖",
+            "hint": "当前账号可直接进入的业务场景覆盖范围。",
+        },
+        {
+            "key": "biz.execution_pressure",
+            "label": "执行压力指数",
+            "value": str(min(100, max(0, (today_action_count * 10) + (risk_action_count * 20)))),
+            "level": _metric_level((today_action_count * 10) + (risk_action_count * 20), 30, 70),
+            "tone": _tone_from_level(_metric_level((today_action_count * 10) + (risk_action_count * 20), 30, 70)),
+            "progress": "running",
+            "delta": "综合评估",
+            "hint": "根据今日行动量与高优先风险计算的运行负载指标。",
+        },
+    ]
+    platform_metrics = [
+        {"key": "platform.ready_caps", "label": "可用能力", "value": str(ready_count)},
+        {"key": "platform.locked_caps", "label": "受限能力", "value": str(locked_count)},
+        {"key": "platform.preview_caps", "label": "预览能力", "value": str(preview_count)},
+        {"key": "platform.scene_count", "label": "场景配置数", "value": str(scene_count)},
+    ]
+    return business_metrics, platform_metrics
 
 
 def _tone_from_level(level: str) -> str:
@@ -480,7 +1025,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "description": "页面主关注区，先看角色和当前态势。",
             "zone_type": "hero",
             "display_mode": "grid",
-            "priority": zone_rank.get("primary", 1) * 100,
+            "priority": 40,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
@@ -508,7 +1053,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "description": "今日待办与关键风险。",
             "zone_type": "primary",
             "display_mode": "stack",
-            "priority": zone_rank.get("primary", 1) * 90,
+            "priority": 100,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
@@ -531,7 +1076,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 {
                     "key": "risk_alert_panel",
                     "block_type": "alert_panel",
-                    "title": "关键风险",
+                    "title": "系统提醒",
                     "priority": 90,
                     "importance": "critical",
                     "tone": "danger",
@@ -545,15 +1090,32 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "actions": [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}],
                     "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 10},
                 },
+                {
+                    "key": "advice_fold",
+                    "block_type": "accordion_group",
+                    "title": "系统提醒补充",
+                    "priority": 88,
+                    "importance": "medium",
+                    "tone": "warning",
+                    "progress": "pending",
+                    "section_key": "advice",
+                    "data_source": "ds_advice",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": True,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"mode": "accordion"},
+                },
             ],
         },
         {
             "key": "analysis",
-            "title": "经营分析",
-            "description": "关键指标与执行进展。",
+            "title": "项目总体状态",
+            "description": "关键指标、执行进展与风险动态。",
             "zone_type": "secondary",
             "display_mode": "grid",
-            "priority": zone_rank.get("analysis", 2) * 80,
+            "priority": 80,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
@@ -611,17 +1173,17 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "quick_entries",
-            "title": "能力入口",
-            "description": "按能力分组快速进入业务场景。",
+            "title": "常用功能",
+            "description": "按场景与能力快速进入业务处理。",
             "zone_type": "supporting",
             "display_mode": "grid",
-            "priority": zone_rank.get("support", 3) * 70,
+            "priority": 60,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
                     "key": "entry_grid_scene",
                     "block_type": "entry_grid",
-                    "title": "场景入口",
+                    "title": "常用功能",
                     "priority": 65,
                     "importance": "medium",
                     "tone": "neutral",
@@ -638,7 +1200,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 {
                     "key": "entry_grid_capability",
                     "block_type": "entry_grid",
-                    "title": "能力分组",
+                    "title": "能力分组概览",
                     "priority": 60,
                     "importance": "medium",
                     "tone": "neutral",
@@ -652,48 +1214,14 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "actions": [],
                     "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
                 },
-                {
-                    "key": "advice_fold",
-                    "block_type": "accordion_group",
-                    "title": "系统建议",
-                    "priority": 55,
-                    "importance": "medium",
-                    "tone": "warning",
-                    "progress": "pending",
-                    "section_key": "advice",
-                    "data_source": "ds_advice",
-                    "loading_strategy": "lazy",
-                    "refreshable": True,
-                    "collapsible": True,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"mode": "accordion"},
-                },
-                {
-                    "key": "filters_fold",
-                    "block_type": "accordion_group",
-                    "title": "筛选器",
-                    "priority": 50,
-                    "importance": "low",
-                    "tone": "neutral",
-                    "progress": "completed",
-                    "section_key": "filters",
-                    "data_source": "ds_filters",
-                    "loading_strategy": "lazy",
-                    "refreshable": False,
-                    "collapsible": True,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"mode": "accordion"},
-                },
             ],
         },
         ]
 
     v1_focus_map = {
-        "pm": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "hero_record_summary"],
-        "finance": ["progress_summary_ops", "risk_alert_panel", "metric_row_core", "hero_record_summary"],
-        "owner": ["hero_record_summary", "risk_alert_panel", "todo_list_today", "entry_grid_scene"],
+        "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
+        "finance": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "metric_row_core"],
+        "owner": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
     }
     provider = _load_data_provider()
     if provider is not None:
@@ -719,7 +1247,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         "page": {
             "key": "portal.dashboard",
             "title": "工作台",
-            "subtitle": "今日运营与执行总览",
+            "subtitle": "先处理行动项，再关注风险与总体状态",
             "page_type": "workspace",
             "intent": "ui.contract",
             "scene_key": "portal.dashboard",
@@ -749,38 +1277,6 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "role_variant": role_code,
         },
     }
-
-
-def _build_today_actions(ready_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    provider = _load_data_provider()
-    if provider is not None:
-        fn = getattr(provider, "build_today_actions", None)
-        if callable(fn):
-            return fn(ready_caps)
-    actions: List[Dict[str, Any]] = []
-    for cap in list(ready_caps)[:6]:
-        payload = cap.get("default_payload") if isinstance(cap.get("default_payload"), dict) else {}
-        route = _to_text(payload.get("route"))
-        scene_key = _scene_from_route(route)
-        title = _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key"))
-        actions.append(
-            {
-                "id": _to_text(cap.get("key")) or title,
-                "title": title or "进入能力",
-                "description": _to_text(cap.get("ui_hint")) or "进入能力继续处理业务",
-                "status": "urgent" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "normal",
-                "tone": "danger" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "info",
-                "progress": "pending",
-                "count": 0,
-                "ready": True,
-                "entry_key": _to_text(cap.get("key")),
-                "scene_key": scene_key,
-                "route": route,
-                "menu_id": _to_int(payload.get("menu_id")),
-                "action_id": _to_int(payload.get("action_id")),
-            }
-        )
-    return actions
 
 
 def _build_advice_items(locked_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -833,8 +1329,6 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     preview_count = len(preview_caps)
     ready_count = len(ready_caps)
     scene_count = len([scene for scene in scenes if isinstance(scene, dict)])
-    nav_count = len(data.get("nav") or []) if isinstance(data.get("nav"), list) else 0
-
     risk_red = min(locked_count, max(0, round(locked_count * 0.5)))
     risk_amber = max(0, locked_count - risk_red + min(preview_count, 2))
     risk_green = max(0, ready_count - risk_red - risk_amber)
@@ -857,6 +1351,30 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     else:
         partial_notice = ""
     role_code = _normalize_role_code(data)
+    today_actions = _build_today_actions(data, ready_caps, role_code=role_code)
+    risk_actions = _build_risk_actions(data, locked_caps, role_code=role_code)
+    today_business_count = len([row for row in today_actions if _to_text(row.get("source")) == "business"])
+    risk_business_count = len([row for row in risk_actions if _to_text(row.get("source")) == "business"])
+    urgent_risk_count = len([row for row in risk_actions if _to_text(row.get("status")) == "urgent"])
+    risk_red = max(risk_red, urgent_risk_count)
+    risk_now = max(risk_now, len(risk_actions))
+    risk_max = max(risk_now, risk_d7, risk_d30, 1)
+    business_metrics, platform_metrics = _build_metric_sets(
+        ready_count=ready_count,
+        locked_count=locked_count,
+        preview_count=preview_count,
+        scene_count=scene_count,
+        today_action_count=today_business_count,
+        risk_action_count=risk_business_count,
+    )
+    extraction_stats = _build_extraction_stats(data=data, today_actions=today_actions, risk_actions=risk_actions)
+    has_business_signal = bool(
+        _to_int(extraction_stats.get("business_rows_total")) > 0
+        or _to_int(extraction_stats.get("today_actions_business")) > 0
+        or _to_int(extraction_stats.get("risk_actions_business")) > 0
+    )
+    primary_orchestration = _build_page_orchestration_v1(role_code)
+    legacy_orchestration = _build_page_orchestration(role_code)
 
     return {
         "schema_version": "v1",
@@ -868,13 +1386,13 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         "layout": {
             "sections": [
                 {"key": "hero", "enabled": True, "tag": "header"},
-                {"key": "metrics", "enabled": True, "tag": "section"},
                 {"key": "today_actions", "enabled": True, "tag": "section"},
                 {"key": "risk", "enabled": True, "tag": "section"},
+                {"key": "metrics", "enabled": True, "tag": "section"},
                 {"key": "ops", "enabled": True, "tag": "details", "open": False},
                 {"key": "advice", "enabled": True, "tag": "details", "open": False},
                 {"key": "group_overview", "enabled": True, "tag": "section"},
-                {"key": "filters", "enabled": True, "tag": "section"},
+                {"key": "filters", "enabled": False, "tag": "section"},
                 {"key": "scene_groups", "enabled": True, "tag": "div"},
             ],
             "texts": {
@@ -886,10 +1404,11 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "hero.view_mode_card": "卡片",
                 "hero.view_mode_list": "列表",
                 "hero.updated_at_label": "数据更新时间",
+                "hero.runtime_ok": "状态正常",
                 "hero.steady_notice": "当前运行平稳",
                 "metrics.aria_label": "核心价值区",
-                "today_actions.aria_label": "今日建议",
-                "today_actions.title": "今日待办",
+                "today_actions.aria_label": "今日行动",
+                "today_actions.title": "今日行动",
                 "today_actions.subtitle": "点击可直接进入处理界面。",
                 "today_actions.count_prefix": "待处理",
                 "today_actions.coming_soon_action": "即将开放",
@@ -906,19 +1425,19 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "risk.actions.assign": "分派",
                 "risk.actions.close": "关闭",
                 "risk.actions.approve": "发起审批",
-                "ops.title": "项目经营概览",
-                "ops.aria_label": "项目经营概览区",
-                "ops.compare.title": "合同额 vs 累计产值",
+                "ops.title": "项目总体状态",
+                "ops.aria_label": "项目总体状态区",
+                "ops.compare.title": "合同履约与产值完成",
                 "ops.compare.contract": "合同额",
                 "ops.compare.output": "累计产值",
-                "ops.kpi.cost_rate": "成本执行率",
-                "ops.kpi.payment_rate": "资金支付比例",
+                "ops.kpi.cost_rate": "成本控制率",
+                "ops.kpi.payment_rate": "资金支付率",
                 "ops.kpi.output_trend": "本月产值趋势",
                 "ops.kpi.output_note": "基于当前可见业务数据",
-                "advice.title": "系统建议关注事项",
-                "advice.aria_label": "系统建议关注事项",
-                "group_overview.title": "辅助入口",
-                "group_overview.subtitle": "按业务域查看功能分组与可用状态。",
+                "advice.title": "系统提醒",
+                "advice.aria_label": "系统提醒",
+                "group_overview.title": "能力分组概览",
+                "group_overview.subtitle": "按业务域查看能力分布与可用状态。",
                 "group_overview.capability_count_prefix": "功能数",
                 "group_overview.allow_prefix": "可用",
                 "group_overview.readonly_prefix": "只读",
@@ -935,70 +1454,20 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         },
         "hero": {
             "title": "工作台",
-            "lead": "围绕项目经营、风险与审批，优先处理今天最关键事项。",
-            "product_tags": ["管理工具", "项目管理", "经营分析", "风险管控"],
+            "lead": "优先处理今日关键事项，快速判断风险与经营状态。",
+            "product_tags": ["项目管理", "经营状态", "风险预警"],
             "updated_at": updated_at,
             "status_notice": partial_notice,
-            "status_detail": "",
+            "status_detail": "当前业务明细不足，主区已回退到系统就绪入口。" if not has_business_signal else "",
         },
-        "metrics": [
-            {
-                "key": "capability.ready",
-                "label": "可进入能力",
-                "value": str(ready_count),
-                "level": _metric_level(ready_count, 1, 8),
-                "tone": _tone_from_level(_metric_level(ready_count, 1, 8)),
-                "progress": "running",
-                "delta": "能力可用面",
-                "hint": "可直接进入并处理业务的能力数量。",
-            },
-            {
-                "key": "capability.locked",
-                "label": "受限能力",
-                "value": str(locked_count),
-                "level": _metric_level(locked_count, 1, 4),
-                "tone": _tone_from_level(_metric_level(locked_count, 1, 4)),
-                "progress": "blocked",
-                "delta": "待开通项",
-                "hint": "受权限或策略影响暂不可用的能力数量。",
-            },
-            {
-                "key": "capability.preview",
-                "label": "预览能力",
-                "value": str(preview_count),
-                "level": _metric_level(preview_count, 1, 4),
-                "tone": _tone_from_level(_metric_level(preview_count, 1, 4)),
-                "progress": "pending",
-                "delta": "待建设项",
-                "hint": "已在契约注册但尚未正式开放的能力数量。",
-            },
-            {
-                "key": "scene.count",
-                "label": "可见场景数",
-                "value": str(scene_count),
-                "level": _metric_level(scene_count, 3, 20),
-                "tone": _tone_from_level(_metric_level(scene_count, 3, 20)),
-                "progress": "running",
-                "delta": "场景覆盖",
-                "hint": "当前角色可访问的场景数量。",
-            },
-            {
-                "key": "nav.count",
-                "label": "可见导航节点",
-                "value": str(nav_count),
-                "level": _metric_level(nav_count, 3, 20),
-                "tone": _tone_from_level(_metric_level(nav_count, 3, 20)),
-                "progress": "running",
-                "delta": "导航覆盖",
-                "hint": "当前导航树可见一级节点数量。",
-            },
-        ],
-        "today_actions": _build_today_actions(ready_caps),
+        "metrics": business_metrics,
+        "platform_metrics": platform_metrics,
+        "today_actions": today_actions,
         "risk": {
             "summary": (
-                "高风险集中在受限能力，请优先处理开通项。"
+                "存在高优先风险，请先处理系统提醒事项。"
                 if risk_red >= 3
-                else "存在受限能力，建议先处理高优先级入口。"
+                else "存在需要跟进的风险，建议今日内完成处理。"
                 if risk_red >= 1
                 else "当前未出现严重风险，建议保持日常巡检节奏。"
             ),
@@ -1011,41 +1480,58 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 {"label": "当前", "value": risk_now, "percent": round((risk_now / risk_max) * 100)},
             ],
             "sources": [
+                {"label": "业务风险动作", "count": len([row for row in risk_actions if _to_text(row.get("source")) == "business"])},
+                {"label": "能力兜底动作", "count": len([row for row in risk_actions if _to_text(row.get("source")) != "business"])},
                 {"label": "权限限制", "count": permission_denied},
-                {"label": "能力前置缺失", "count": missing_scope},
-                {"label": "功能未开通", "count": feature_disabled},
             ],
-            "actions": [
-                {
-                    "id": _to_text(cap.get("key")),
-                    "title": _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key")) or "受限能力",
-                    "description": _to_text(cap.get("reason")) or "当前账号尚未开通该能力。",
-                    "entry_key": _to_text(cap.get("key")),
-                }
-                for cap in locked_caps[:3]
-            ],
+            "actions": risk_actions,
         },
         "ops": {
             "bars": {
-                "contract": 100,
-                "output": round((ready_count / max(total_caps, 1)) * 100),
+                "contract": max(0, min(100, 100 - (risk_business_count * 10))) if has_business_signal else 0,
+                "output": max(0, min(100, 100 - (today_business_count * 8))) if has_business_signal else 0,
             },
             "kpi": {
-                "cost_rate": round((ready_count / max(total_caps, 1)) * 100),
-                "payment_rate": round(((ready_count + preview_count) / max(total_caps, 1)) * 100),
+                "cost_rate": max(0, min(100, 100 - (risk_business_count * 12))) if has_business_signal else 0,
+                "payment_rate": max(0, min(100, 100 - (today_business_count * 6))) if has_business_signal else 0,
                 "cost_rate_delta": 0,
                 "payment_rate_delta": 0,
                 "output_trend_delta": 0,
             },
             "tone": "info",
             "progress": "running",
+            "data_state": "business" if has_business_signal else "fallback",
         },
         "advice": _build_advice_items(locked_caps),
-        "page_orchestration_v1": _build_page_orchestration_v1(role_code),
-        "page_orchestration": _build_page_orchestration(role_code),
+        "contract_protocol": {
+            "primary": "page_orchestration_v1",
+            "legacy": {"key": "page_orchestration", "status": "compatibility"},
+        },
+        "page_orchestration_v1": primary_orchestration,
+        "page_orchestration": legacy_orchestration,
         "role_variant": {
             "role_code": role_code,
             "mode": "heterogeneous_same_page",
             "focus": _role_focus_config(role_code).get("focus_blocks", []),
+        },
+        "diagnostics": {
+            "platform": {
+                "ready_caps": ready_count,
+                "locked_caps": locked_count,
+                "preview_caps": preview_count,
+                "permission_denied": permission_denied,
+                "missing_scope": missing_scope,
+                "feature_disabled": feature_disabled,
+            },
+            "data_origin": {
+                "today_actions": "business_first_with_capability_fallback",
+                "risk_actions": "business_first_with_capability_fallback",
+                "metrics": "business_metrics",
+            },
+            "action_ranking_policy": {
+                "factors": ["risk_severity", "due_urgency", "pending_count", "business_source_priority"],
+                "business_priority": True,
+            },
+            "extraction_stats": extraction_stats,
         },
     }
