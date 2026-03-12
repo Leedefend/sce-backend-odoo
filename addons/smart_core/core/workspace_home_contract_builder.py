@@ -499,7 +499,31 @@ def _build_capability_today_actions(ready_caps: Iterable[Dict[str, Any]], role_c
 def _build_today_actions(data: Dict[str, Any], ready_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
     business_actions = _build_business_today_actions(data, role_code=role_code)
     if len(business_actions) >= 4:
-        return business_actions[:6]
+        return business_actions[:4]
+
+    if business_actions:
+        fallback_candidates = _build_capability_today_actions(ready_caps, role_code=role_code)
+        fallback = [
+            row for row in fallback_candidates
+            if _to_text(row.get("source")) != "business"
+        ]
+        merged = list(business_actions)
+        for item in fallback:
+            marker = (
+                _to_text(item.get("title")),
+                _to_text(item.get("scene_key")),
+                _to_text(item.get("entry_key")),
+            )
+            if any((
+                _to_text(existing.get("title")),
+                _to_text(existing.get("scene_key")),
+                _to_text(existing.get("entry_key")),
+            ) == marker for existing in merged):
+                continue
+            merged.append(item)
+            if len(merged) >= 4:
+                break
+        return merged[:4]
 
     merged: List[Dict[str, Any]] = []
     seen: set = set()
@@ -515,7 +539,7 @@ def _build_today_actions(data: Dict[str, Any], ready_caps: Iterable[Dict[str, An
             continue
         seen.add(marker)
         merged.append(item)
-        if len(merged) >= 6:
+        if len(merged) >= 4:
             break
     return merged
 
@@ -607,7 +631,7 @@ def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, An
                     return deduped
 
     fallback: List[Dict[str, Any]] = []
-    for cap in list(locked_caps)[:3]:
+    for cap in list(locked_caps)[:2]:
         fallback.append(
             {
                 "id": _to_text(cap.get("key")),
@@ -629,7 +653,7 @@ def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, An
                 "impact_score": 0,
             }
         )
-    return fallback
+    return fallback[:2]
 
 
 def _build_extraction_stats(data: Dict[str, Any], today_actions: List[Dict[str, Any]], risk_actions: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -1098,9 +1122,9 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         {
             "key": "hero",
             "title": "核心关注",
-            "description": "页面主关注区，先看角色和当前态势。",
+            "description": "角色上下文与默认入口。",
             "zone_type": "hero",
-            "display_mode": "grid",
+            "display_mode": "stack",
             "priority": 40,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
@@ -1125,19 +1149,19 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "today_focus",
-            "title": "今日聚焦",
-            "description": "今日待办与关键风险。",
+            "title": "今日优先事项",
+            "description": "先处理行动项，再快速处置风险提醒。",
             "zone_type": "primary",
-            "display_mode": "stack",
+            "display_mode": "grid",
             "priority": 100,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
                     "key": "todo_list_today",
                     "block_type": "todo_list",
-                    "title": "今日待办",
-                    "priority": 95,
-                    "importance": "high",
+                    "title": "今日行动",
+                    "priority": 98,
+                    "importance": "critical",
                     "tone": "warning",
                     "progress": "pending",
                     "section_key": "today_actions",
@@ -1147,13 +1171,13 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_my_work", "label": "查看全部", "intent": "ui.contract"}],
-                    "payload": {"item_layout": "card", "max_items": 6},
+                    "payload": {"item_layout": "card", "max_items": 4},
                 },
                 {
                     "key": "risk_alert_panel",
                     "block_type": "alert_panel",
-                    "title": "系统提醒",
-                    "priority": 90,
+                    "title": "系统提醒（高优先）",
+                    "priority": 97,
                     "importance": "critical",
                     "tone": "danger",
                     "progress": "blocked",
@@ -1164,14 +1188,14 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}],
-                    "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 10},
+                    "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 3},
                 },
                 {
                     "key": "advice_fold",
                     "block_type": "accordion_group",
-                    "title": "系统提醒补充",
-                    "priority": 88,
-                    "importance": "medium",
+                    "title": "系统建议（补充）",
+                    "priority": 40,
+                    "importance": "low",
                     "tone": "warning",
                     "progress": "pending",
                     "section_key": "advice",
@@ -1250,7 +1274,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         {
             "key": "quick_entries",
             "title": "常用功能",
-            "description": "按场景与能力快速进入业务处理。",
+            "description": "按业务场景快速进入处理。",
             "zone_type": "supporting",
             "display_mode": "grid",
             "priority": 60,
@@ -1271,28 +1295,21 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_scene", "label": "进入场景", "intent": "ui.contract"}],
-                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
-                },
-                {
-                    "key": "entry_grid_capability",
-                    "block_type": "entry_grid",
-                    "title": "能力分组概览",
-                    "priority": 60,
-                    "importance": "medium",
-                    "tone": "neutral",
-                    "progress": "completed",
-                    "section_key": "group_overview",
-                    "data_source": "ds_capability_groups",
-                    "loading_strategy": "lazy",
-                    "refreshable": True,
-                    "collapsible": False,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
+                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True, "max_items": 8},
                 },
             ],
         },
         ]
+
+        for zone in zones:
+            if _to_text(zone.get("key")) != "today_focus":
+                continue
+            blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
+            zone["blocks"] = [
+                block for block in blocks
+                if _to_text((block or {}).get("key")) != "advice_fold"
+            ]
+            break
 
     v1_focus_map = {
         "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
@@ -1613,6 +1630,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "metrics": "business_metrics",
             },
             "action_ranking_policy": {
+                "version": "action_ranking_policy_v1",
                 "factors": ["risk_severity", "due_urgency", "pending_count", "business_source_priority"],
                 "business_priority": True,
             },
