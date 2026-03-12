@@ -1393,6 +1393,7 @@ verify.project.dashboard.contract: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_assembly_guard.py
 	@python3 scripts/verify/project_dashboard_block_schema_guard.py
 	@python3 scripts/verify/project_dashboard_block_payload_guard.py
+	@python3 scripts/verify/project_dashboard_metric_semantics_guard.py
 	@python3 scripts/verify/project_dashboard_intent_guard.py
 	@python3 scripts/verify/project_dashboard_runtime_chain_guard.py
 	@python3 scripts/verify/project_dashboard_project_id_order_guard.py
