@@ -10,7 +10,7 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
     block_key = "block.project.risk"
     block_type = "alert_panel"
     title = "风险提醒"
-    required_groups = ("smart_construction_core.group_sc_cap_project_read",)
+    required_groups = ()
 
     def build(self, project=None, context=None):
         visibility = self._visibility()
@@ -45,8 +45,21 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     "value": 0,
                 }
             )
+
+        risk_total = self._safe_count("project.risk", [("project_id", "=", int(project.id))])
+        risk_critical = self._safe_count("project.risk", [("project_id", "=", int(project.id)), ("risk_level", "in", ["high", "critical", "严重"])])
+        risk_open = self._safe_count("project.risk", [("project_id", "=", int(project.id)), ("status", "not in", ["closed", "done"])])
+        risk_score = min(100, (risk_critical * 25) + (risk_open * 10) + (len(alerts) * 8))
+        risk_level = "high" if risk_score >= 70 else "medium" if risk_score >= 40 else "low"
         data = {
             "alerts": alerts,
+            "summary": {
+                "risk_total": risk_total,
+                "risk_open": risk_open,
+                "risk_critical": risk_critical,
+                "risk_score": risk_score,
+                "risk_level": risk_level,
+            },
             "quick_actions": [
                 {"key": "open_risk_list", "label": "查看风险清单", "intent": "ui.contract"},
             ],

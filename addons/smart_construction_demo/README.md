@@ -35,6 +35,11 @@ make demo.load SCENARIO=s10_contract_payment DB_NAME=sc_demo
 make demo.load.all DB_NAME=sc_demo
 ```
 
+加载发布态完整 Demo 种子：
+```bash
+make demo.load.release DB_NAME=sc_demo
+```
+
 验收断言：
 ```bash
 make demo.verify DB_NAME=sc_demo
@@ -61,6 +66,8 @@ data/
 
 - **base/**：不依赖具体业务流程，多个场景可复用
 - **scenario/s00_min_path/**：官方最小闭环演示场景（10 分钟）
+
+发布态种子清单见：`data/release/release_seed_manifest_v1.md`
 
 ---
 
@@ -208,6 +215,10 @@ make demo.verify DB_NAME=sc_demo
 | S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
+
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S90`
+
+发布态默认不加载：`S40 + S50`（过程/失败演练数据）
 
 ---
 

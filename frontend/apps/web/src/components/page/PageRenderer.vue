@@ -57,6 +57,51 @@
       />
     </div>
 
+    <div v-else-if="isProjectCockpitPage" class="cockpit-zone-layout">
+      <ZoneRenderer
+        v-if="cockpitMetricsZone"
+        :key="cockpitMetricsZone.key"
+        :zone="cockpitMetricsZone"
+        :datasets="datasets"
+        @action="onZoneAction"
+      />
+
+      <div class="cockpit-focus-grid">
+        <ZoneRenderer
+          v-if="cockpitRiskZone"
+          :key="cockpitRiskZone.key"
+          :zone="cockpitRiskZone"
+          :datasets="datasets"
+          @action="onZoneAction"
+        />
+        <ZoneRenderer
+          v-if="cockpitProgressZone"
+          :key="cockpitProgressZone.key"
+          :zone="cockpitProgressZone"
+          :datasets="datasets"
+          @action="onZoneAction"
+        />
+      </div>
+
+      <div class="cockpit-support-grid">
+        <ZoneRenderer
+          v-for="zone in cockpitSupportZones"
+          :key="zone.key"
+          :zone="zone"
+          :datasets="datasets"
+          @action="onZoneAction"
+        />
+      </div>
+
+      <ZoneRenderer
+        v-for="zone in cockpitTrailingZones"
+        :key="zone.key"
+        :zone="zone"
+        :datasets="datasets"
+        @action="onZoneAction"
+      />
+    </div>
+
     <template v-else>
       <ZoneRenderer
         v-for="zone in orderedZones"
@@ -104,6 +149,12 @@ const orderedZones = computed<PageOrchestrationZone[]>(() => {
 
 const pageKey = computed(() => String(props.contract.page?.key || ''));
 const isWorkbenchPage = computed(() => pageKey.value === 'portal.dashboard' || pageKey.value === 'workspace.home');
+const isProjectCockpitPage = computed(() => pageKey.value === 'project.management.dashboard');
+
+function zoneMatches(zone: PageOrchestrationZone, name: string) {
+  const key = String(zone.key || '');
+  return key === name || key.endsWith(`.${name}`);
+}
 
 const todayFocusZone = computed<PageOrchestrationZone | null>(() => (
   orderedZones.value.find((zone) => zone.key === 'today_focus') || null
@@ -123,6 +174,38 @@ const trailingZones = computed<PageOrchestrationZone[]>(() => {
     zone.key !== 'today_focus'
     && zone.key !== 'analysis'
     && zone.key !== 'quick_entries'
+  ));
+});
+
+const cockpitMetricsZone = computed<PageOrchestrationZone | null>(() => (
+  orderedZones.value.find((zone) => zoneMatches(zone, 'metrics')) || null
+));
+
+const cockpitRiskZone = computed<PageOrchestrationZone | null>(() => (
+  orderedZones.value.find((zone) => zoneMatches(zone, 'risk')) || null
+));
+
+const cockpitProgressZone = computed<PageOrchestrationZone | null>(() => (
+  orderedZones.value.find((zone) => zoneMatches(zone, 'progress')) || null
+));
+
+const cockpitSupportZones = computed<PageOrchestrationZone[]>(() => {
+  if (!isProjectCockpitPage.value) return [];
+  const wantedOrder = ['contract', 'cost', 'finance'];
+  return wantedOrder
+    .map((name) => orderedZones.value.find((zone) => zoneMatches(zone, name)))
+    .filter((zone): zone is PageOrchestrationZone => Boolean(zone));
+});
+
+const cockpitTrailingZones = computed<PageOrchestrationZone[]>(() => {
+  if (!isProjectCockpitPage.value) return [];
+  return orderedZones.value.filter((zone) => (
+    !zoneMatches(zone, 'metrics')
+    && !zoneMatches(zone, 'risk')
+    && !zoneMatches(zone, 'progress')
+    && !zoneMatches(zone, 'contract')
+    && !zoneMatches(zone, 'cost')
+    && !zoneMatches(zone, 'finance')
   ));
 });
 
@@ -160,9 +243,23 @@ function onZoneAction(payload: PageBlockActionEvent) {
   display: grid;
   gap: 16px;
 }
+.cockpit-zone-layout {
+  display: grid;
+  gap: 16px;
+}
 .workbench-secondary-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
+}
+.cockpit-focus-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 16px;
+}
+.cockpit-support-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 .page-renderer-header {
@@ -219,6 +316,11 @@ function onZoneAction(payload: PageBlockActionEvent) {
 
 @media (max-width: 1200px) {
   .workbench-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cockpit-focus-grid,
+  .cockpit-support-grid {
     grid-template-columns: 1fr;
   }
 

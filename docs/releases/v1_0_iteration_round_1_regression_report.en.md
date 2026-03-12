@@ -9,12 +9,19 @@ Executed required commands:
 3. `make verify.project.dashboard.contract`
 4. `make verify.phase_next.evidence.bundle`
 
+Release-grade demo seed closure commands (new fixed items):
+
+5. `make demo.load.release DB_NAME=sc_demo`
+6. `make verify.demo.release.seed DB_NAME=sc_demo`
+
 ## 2. Results
 
 - `make verify.frontend.build`: PASS
 - `make verify.frontend.typecheck.strict`: PASS
 - `make verify.project.dashboard.contract`: PASS
 - `make verify.phase_next.evidence.bundle`: FAIL (environment timeout)
+- `make demo.load.release DB_NAME=sc_demo`: PASS (release seed load succeeded)
+- `make verify.demo.release.seed DB_NAME=sc_demo`: PASS (release seed acceptance passed)
 
 Failure output:
 
@@ -33,3 +40,13 @@ Re-run once with same result.
 1. Re-run `make verify.phase_next.evidence.bundle` in a stable environment.
 2. If still failing, inspect admin session bootstrap and URL timeout/network path.
 3. Keep this round in “expression validation” stage; do not release yet.
+
+## 5. Release Demo Seed Acceptance (Fixed Section)
+
+- Goal: ensure demo data is a repeatable + verifiable release baseline.
+- Load command: `make demo.load.release DB_NAME=sc_demo`
+- Verify command: `make verify.demo.release.seed DB_NAME=sc_demo`
+- Minimum pass criteria:
+  - showroom project coverage is present;
+  - `project_id=20` has non-empty contract/cost/finance data;
+  - release role users (including `svc_e2e_smoke`) are present.

@@ -1,5 +1,5 @@
 <template>
-  <article class="block block-record-summary">
+  <article class="block block-record-summary" :class="summaryClass">
     <header class="block-header">
       <h4>{{ block.title || '摘要' }}</h4>
     </header>
@@ -40,6 +40,13 @@ const rows = computed(() => {
     value: typeof value === 'object' ? JSON.stringify(value) : String(value ?? '--'),
   }));
 });
+
+const summaryClass = computed(() => {
+  const zone = String(props.zoneKey || '');
+  if (zone.includes('header')) return 'summary-zone-header';
+  if (zone.includes('cost')) return 'summary-zone-cost';
+  return 'summary-zone-default';
+});
 </script>
 
 <style scoped>
@@ -49,4 +56,34 @@ const rows = computed(() => {
 .summary-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #f9fafb; }
 .summary-label { margin: 0; font-size: 12px; color: #6b7280; }
 .summary-value { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: #111827; }
+
+.summary-zone-header {
+  border-color: #dbeafe;
+  background: #f8fbff;
+}
+.summary-zone-header .summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.summary-zone-header .summary-item {
+  background: #ffffff;
+  min-height: 78px;
+}
+.summary-zone-header .summary-value {
+  font-size: 15px;
+}
+
+.summary-zone-cost .summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.summary-zone-cost .summary-item {
+  background: #fffbeb;
+  border-color: #fde68a;
+  min-height: 82px;
+}
+
+@media (max-width: 1200px) {
+  .summary-zone-cost .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 </style>

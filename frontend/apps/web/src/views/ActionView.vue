@@ -415,7 +415,7 @@ import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { resolvePageMode } from '../app/pageMode';
-import { semanticStatus } from '../utils/semantic';
+import { formatAmountCN, semanticStatus } from '../utils/semantic';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -672,6 +672,30 @@ type SurfaceIntent = {
 };
 
 const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
+  'projects.list': {
+    columns: ['name', 'stage_id', 'user_id', 'dashboard_invoice_amount', 'write_date'],
+    column_labels: {
+      name: '项目名称',
+      stage_id: '项目状态',
+      user_id: '项目负责人',
+      dashboard_invoice_amount: '合同额',
+      write_date: '更新时间',
+    },
+    row_primary: 'name',
+    row_secondary: 'user_id',
+  },
+  'projects.ledger': {
+    columns: ['name', 'stage_id', 'user_id', 'dashboard_invoice_amount', 'write_date'],
+    column_labels: {
+      name: '项目名称',
+      stage_id: '项目状态',
+      user_id: '项目负责人',
+      dashboard_invoice_amount: '关键金额',
+      write_date: '更新时间',
+    },
+    row_primary: 'name',
+    row_secondary: 'user_id',
+  },
   'task.center': {
     columns: ['name', 'kanban_state', 'user_ids', 'date_deadline', 'write_date'],
     column_labels: {
@@ -953,22 +977,59 @@ const subtitle = computed(
   () =>
     `${records.value.length}${pageText('subtitle_records_suffix', ' 条记录')} · ${pageText('subtitle_sort_prefix', '排序：')}${sortLabel.value}`,
 );
+
+function resolveProjectStateCell(row: Record<string, unknown>) {
+  return semanticStatus(row.stage_id || row.state || row.status || row.kanban_state || row.health_state);
+}
+
+function resolveProjectAmount(row: Record<string, unknown>) {
+  const candidates = [
+    row.contract_amount,
+    row.dashboard_invoice_amount,
+    row.amount_total,
+    row.total_amount,
+    row.planned_revenue,
+    row.budget_total,
+  ];
+  for (const candidate of candidates) {
+    const amount = Number(candidate);
+    if (Number.isFinite(amount) && amount > 0) return amount;
+  }
+  return 0;
+}
+
+function isCompletedState(stateText: string, tone: string) {
+  if (tone === 'success') return true;
+  const text = String(stateText || '');
+  return ['完成', '完工', '归档', '关闭', '交付'].some((keyword) => text.includes(keyword));
+}
+
 const ledgerOverviewItems = computed(() => {
   if (sceneKey.value !== 'projects.ledger') return [] as Array<{ key: string; label: string; value: string; tone: string }>;
   const rows = records.value || [];
-  const total = rows.length;
+  let running = 0;
   let warning = 0;
   let done = 0;
+  let contractAmount = 0;
   rows.forEach((row) => {
-    const stage = semanticStatus(row.stage_id || row.state || row.status);
+    const stage = resolveProjectStateCell(row);
+    const text = String(stage.text || '');
+    if (!isCompletedState(text, stage.tone)) running += 1;
     if (stage.tone === 'danger' || stage.tone === 'warning') warning += 1;
-    if (String(stage.text).includes('完成') || String(stage.text).includes('归档')) done += 1;
+    if (isCompletedState(text, stage.tone)) done += 1;
+    contractAmount += resolveProjectAmount(row);
   });
+  const hasAmount = contractAmount > 0;
   return [
-    { key: 'total', label: '在建项目数', value: String(total), tone: 'info' },
+    { key: 'running', label: '在建项目数', value: String(running), tone: running > 0 ? 'info' : 'neutral' },
     { key: 'warning', label: '预警项目数', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
     { key: 'done', label: '已完工项目数', value: String(done), tone: 'success' },
-    { key: 'metric', label: '项目群规模', value: `${total} 个项目`, tone: 'neutral' },
+    {
+      key: 'metric',
+      label: hasAmount ? '合同额汇总' : '项目群规模',
+      value: hasAmount ? formatAmountCN(contractAmount) : `${rows.length} 个项目`,
+      tone: 'neutral',
+    },
   ];
 });
 const listSummaryItems = computed(() => {
@@ -1019,16 +1080,22 @@ const listSummaryItems = computed(() => {
     let done = 0;
     let amount = 0;
     rows.forEach((row) => {
-      const state = semanticStatus(row.stage_id || row.state || row.status);
+      const state = resolveProjectStateCell(row);
       if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
-      if (state.tone === 'success') done += 1;
-      amount += Number(row.dashboard_invoice_amount || row.amount_total || 0) || 0;
+      if (isCompletedState(String(state.text || ''), state.tone)) done += 1;
+      amount += resolveProjectAmount(row);
     });
+    const hasAmount = amount > 0;
     return [
       { key: 'project_total', label: '项目总数', value: String(rows.length), tone: 'info' },
       { key: 'project_warning', label: '预警项目', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
       { key: 'project_done', label: '已完工', value: String(done), tone: 'success' },
-      { key: 'project_amount', label: '合同额汇总', value: `${Math.round(amount / 10000) / 100}万`, tone: 'neutral' },
+      {
+        key: 'project_amount',
+        label: hasAmount ? '合同额汇总' : '项目群规模',
+        value: hasAmount ? formatAmountCN(amount) : `${rows.length} 个项目`,
+        tone: 'neutral',
+      },
     ];
   }
   return [];
