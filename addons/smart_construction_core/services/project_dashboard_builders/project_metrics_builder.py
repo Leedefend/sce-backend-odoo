@@ -28,18 +28,38 @@ class ProjectMetricsBuilder(BaseProjectBlockBuilder):
         payment_total = self._safe_count("payment.request", payment_domain)
 
         contract_amount_total = self._safe_read_group_sum_any("construction.contract", contract_domain, ["amount_total", "amount"])
-        output_value = float(getattr(project, "dashboard_revenue_actual", 0.0) or 0.0)
-        if not output_value:
-            output_value = self._safe_read_group_sum_any("account.move.line", [("project_id", "=", int(project.id))], ["credit", "balance"])
+        reported_output = 0.0
+        for field_name in ("output_value_actual", "output_value_reported", "output_value"):
+            if hasattr(project, field_name):
+                reported_output = float(getattr(project, field_name, 0.0) or 0.0)
+                if reported_output:
+                    break
         cost_spent = float(getattr(project, "cost_actual", 0.0) or 0.0)
         if not cost_spent:
             cost_spent = self._safe_read_group_sum_any("project.cost.ledger", cost_domain, ["amount", "actual_amount"])
         progress_rate = float(getattr(project, "actual_percent", 0.0) or 0.0)
+        if not progress_rate:
+            progress_rate = float(getattr(project, "progress_rate_latest", 0.0) or 0.0)
+        if not progress_rate and task_total > 0:
+            done = self._safe_count("project.task", task_domain + [("kanban_state", "=", "done")]) if self._model_has_fields("project.task", ["kanban_state"]) else 0
+            progress_rate = self._safe_rate(done, task_total)
+        contract_executed_amount = self._safe_read_group_sum_any(
+            "construction.contract",
+            contract_domain + [("state", "in", ["running", "in_progress", "done", "approved", "effective"])],
+            ["amount_total", "amount"],
+        )
+        contract_execution_rate = self._safe_rate(contract_executed_amount, contract_amount_total)
+        if not progress_rate and contract_execution_rate:
+            progress_rate = contract_execution_rate
         received_amount = self._safe_read_group_sum_any(
             "payment.request",
             payment_domain + [("type", "=", "receive"), ("state", "in", ["done", "approved", "approve"])],
             ["amount"],
         )
+        revenue_target = float(getattr(project, "budget_active_revenue_target", 0.0) or 0.0)
+        base_amount = contract_amount_total or revenue_target
+        progress_output = (base_amount * progress_rate / 100.0) if (base_amount and progress_rate) else 0.0
+        output_value = reported_output or progress_output
         risk_open_count = self._safe_count("project.risk", [("project_id", "=", int(project.id)), ("status", "!=", "closed")])
         profit_estimate = output_value - cost_spent
         payment_rate = self._safe_rate(received_amount, contract_amount_total)
