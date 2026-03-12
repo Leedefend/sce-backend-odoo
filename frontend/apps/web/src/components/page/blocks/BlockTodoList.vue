@@ -18,8 +18,13 @@
     <div v-if="items.length" class="todo-list">
       <article v-for="item in items" :key="item.id" class="todo-item" :class="`tone-${item.tone || 'info'}`">
         <div>
-          <p class="todo-title">{{ item.title }}</p>
+          <p class="todo-title">
+            <span>{{ item.title }}</span>
+            <span v-if="item.status === 'urgent'" class="todo-urgent">紧急</span>
+            <span class="todo-source" :class="`source-${item.source}`">{{ item.sourceLabel }}</span>
+          </p>
           <p class="todo-desc">{{ item.description }}</p>
+          <p v-if="item.pendingCount > 0" class="todo-meta">待处理 {{ item.pendingCount }}</p>
         </div>
         <button type="button" class="todo-open-btn" @click="emitAction(item.actionKey || 'open_scene', item.raw)">
           {{ item.buttonText }}
@@ -46,20 +51,33 @@ const emit = defineEmits<{
 }>();
 
 const actions = computed(() => (Array.isArray(props.block.actions) ? props.block.actions : []));
+const maxItems = computed(() => {
+  const payload = (props.block.payload && typeof props.block.payload === 'object')
+    ? props.block.payload as Record<string, unknown>
+    : {};
+  const value = Number(payload.max_items || 0);
+  return Number.isFinite(value) && value > 0 ? Math.trunc(value) : 0;
+});
 const items = computed(() => {
   if (!Array.isArray(props.dataset)) return [];
-  return props.dataset.map((item, index) => {
+  const normalized = props.dataset.map((item, index) => {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     return {
       id: String(row.id || `todo-${index + 1}`),
       title: String(row.title || `待办 ${index + 1}`),
       description: String(row.description || ''),
+      pendingCount: Number(row.count || row.pending_count || 0),
+      status: String(row.status || '').toLowerCase(),
+      source: String(row.source || ''),
+      sourceLabel: String(row.source || '').toLowerCase() === 'business' ? '业务' : '兜底',
       tone: String(row.tone || 'warning').toLowerCase(),
       buttonText: String(row.action_label || row.button_label || '进入处理'),
       actionKey: String(row.action_key || ''),
       raw: row,
     };
   });
+  if (maxItems.value > 0) return normalized.slice(0, maxItems.value);
+  return normalized;
 });
 
 function emitAction(actionKey: string, item: Record<string, unknown>) {
@@ -76,10 +94,10 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 
 <style scoped>
 .block {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
   background: #fff;
-  padding: 12px;
+  padding: 14px;
   height: 100%;
 }
 .block-header {
@@ -90,8 +108,8 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .block-header h4 {
   margin: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
 }
 .block-header-actions {
   display: flex;
@@ -100,10 +118,11 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 .block-action-btn,
 .todo-open-btn {
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
-  padding: 6px 10px;
+  padding: 7px 12px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .todo-open-btn {
@@ -114,36 +133,66 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .todo-list {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-@media (min-width: 1200px) {
-  .todo-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  gap: 12px;
+  margin-top: 12px;
+  grid-template-columns: 1fr;
 }
 
 .todo-item {
   border: 1px solid #dbeafe;
-  border-left-width: 4px;
-  border-radius: 10px;
-  padding: 10px;
+  border-left-width: 5px;
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 90px;
+  min-height: 100px;
 }
 .todo-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .todo-desc {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
+}
+.todo-meta {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #334155;
+  font-weight: 600;
+}
+.todo-urgent {
+  font-size: 11px;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.todo-source {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 1px 6px;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  background: #f8fafc;
+}
+.source-business {
+  border-color: #86efac;
+  color: #166534;
+  background: #f0fdf4;
+}
+.source-capability_fallback {
+  border-color: #fde68a;
+  color: #92400e;
+  background: #fffbeb;
 }
 .tone-warning { background: #fffaf0; border-left-color: #f59e0b; }
 .tone-danger { background: #fff5f5; border-left-color: #ef4444; }

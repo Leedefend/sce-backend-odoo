@@ -49,26 +49,26 @@ function onBlockAction(payload: PageBlockActionEvent) {
 
 <style scoped>
 .zone-renderer {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border: 1px solid #d9e2ec;
+  border-radius: 16px;
   background: #fff;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  padding: 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 .zone-renderer-header h3 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 21px;
+  font-weight: 700;
 }
 .zone-renderer-header p {
-  margin: 6px 0 0;
-  color: #6b7280;
-  font-size: 13px;
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 14px;
 }
 .zone-renderer-body {
-  margin-top: 14px;
+  margin-top: 16px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 .display-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -103,11 +103,22 @@ function onBlockAction(payload: PageBlockActionEvent) {
 .zone-key-today_focus {
   border-color: #93c5fd;
   background: linear-gradient(180deg, #eff6ff 0%, #ffffff 68%);
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.12);
+  padding: 22px;
 }
 
 .zone-key-today_focus .zone-renderer-header h3 {
-  font-size: 22px;
+  font-size: 26px;
+}
+
+.zone-key-today_focus .display-grid {
+  grid-template-columns: 1.3fr 1fr;
+}
+
+@media (max-width: 1200px) {
+  .zone-key-today_focus .display-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .zone-key-analysis {
@@ -118,5 +129,19 @@ function onBlockAction(payload: PageBlockActionEvent) {
 .zone-key-quick_entries {
   border-color: #bfdbfe;
   background: #ffffff;
+}
+
+.zone-key-hero {
+  background: #f8fafc;
+  border-color: #dbeafe;
+  box-shadow: none;
+}
+
+.zone-key-hero .zone-renderer-header h3 {
+  font-size: 17px;
+}
+
+.zone-key-hero .zone-renderer-header p {
+  font-size: 13px;
 }
 </style>
