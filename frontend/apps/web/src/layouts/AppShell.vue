@@ -153,6 +153,18 @@ function asText(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
+function stripRoleFromIdentity(identity: string, role: string): string {
+  const source = String(identity || '').trim();
+  const roleText = String(role || '').trim();
+  if (!source || !roleText) return source;
+  const escapedRole = roleText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const removedRole = source
+    .replace(new RegExp(`[-_·\s]*${escapedRole}$`, 'i'), '')
+    .replace(new RegExp(`^${escapedRole}[-_·\s]*`, 'i'), '')
+    .trim();
+  return removedRole;
+}
+
 function resolveSceneKeyFromNode(node: NavNode): string | undefined {
   const sceneNode = node as SceneAwareNavNode;
   return asText(sceneNode.scene_key) || asText(sceneNode.sceneKey) || asText(node.meta?.scene_key);
@@ -177,7 +189,9 @@ const sidebarSubtitle = computed(() => {
   if (!isDeliveryMode.value) return userName.value;
   const raw = String(userName.value || '').trim();
   if (!raw) return roleLabel.value;
-  return normalizeDeliveryText(raw);
+  const stripped = stripRoleFromIdentity(raw, roleLabel.value);
+  if (!stripped) return 'Demo账号';
+  return normalizeDeliveryText(stripped);
 });
 const roleLabel = computed(() => {
   const label = String(roleSurface.value?.role_label || '').trim();
@@ -660,23 +674,27 @@ async function logout() {
   --panel: #ffffff;
   min-height: 100vh;
   height: 100vh;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   background: radial-gradient(circle at top left, #f7e9dc 0%, #f6f3ef 45%, #eef1f7 100%);
   color: var(--ink);
-  font-family: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
 
 .sidebar {
-  padding: 24px 18px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(12px);
   height: 100vh;
   overflow: hidden;
+  position: sticky;
+  top: 0;
+  align-self: start;
 }
 
 .sidebar--scroll {
@@ -702,26 +720,29 @@ async function logout() {
 }
 
 .title {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
   margin: 0;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
 .search input {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 11px 12px;
+  border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   background: white;
+  font-size: 14px;
 }
 
 .role-surface {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   background: rgba(255, 255, 255, 0.85);
@@ -731,7 +752,8 @@ async function logout() {
 
 .role-label {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -750,8 +772,9 @@ async function logout() {
   border: 1px solid rgba(15, 23, 42, 0.12);
   background: white;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
   color: #334155;
 }
 
@@ -774,11 +797,12 @@ async function logout() {
 
 .ghost {
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   background: transparent;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .content {
@@ -787,6 +811,9 @@ async function logout() {
   grid-template-rows: auto 1fr;
   gap: 18px;
   min-width: 0;
+  height: 100vh;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .topbar {
@@ -795,8 +822,9 @@ async function logout() {
   align-items: center;
   background: var(--panel);
   border-radius: 16px;
-  padding: 18px 24px;
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
+  padding: 20px 24px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
 }
 
 .topbar--compact {
@@ -815,64 +843,71 @@ async function logout() {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
+  border: none;
   padding: 0 2px;
 }
 
 .topbar--minimal .breadcrumb {
   margin: 0;
-  gap: 4px;
+  gap: 6px;
 }
 
 .topbar--minimal .crumb {
-  padding: 2px 4px;
-  font-size: 11px;
+  padding: 3px 6px;
+  font-size: 13px;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .topbar--minimal .crumb.active {
   background: transparent;
-  color: #64748b;
-  font-weight: 500;
+  color: #334155;
+  font-weight: 600;
 }
 
 .eyebrow {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--muted);
 }
 
 .headline {
-  margin: 4px 0 0;
-  font-size: 24px;
+  margin: 6px 0 0;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 700;
 }
 
 .breadcrumb {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
 }
 
 .crumb {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--muted);
+  color: #64748b;
   cursor: pointer;
 }
 
 .crumb.active {
-  background: rgba(47, 58, 95, 0.12);
-  color: var(--ink);
-  font-weight: 600;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
 }
 
 .crumb:disabled {
@@ -888,12 +923,20 @@ async function logout() {
 @media (max-width: 960px) {
   .shell {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
   .sidebar {
     grid-row: 2;
     border-right: none;
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     height: auto;
+    position: static;
+  }
+  .content {
+    height: auto;
+    overflow: visible;
   }
 }
 </style>
