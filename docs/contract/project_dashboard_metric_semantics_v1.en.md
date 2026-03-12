@@ -35,6 +35,34 @@
 | `gap` | Cash Gap | `receivable - received` | Derived | aggregate formula | No |
 | `net_cash` | Net Cashflow | `received - paid` | Derived | aggregate formula | No |
 
+## 3.1 Progress Semantics Matrix (`project.progress`)
+
+| Metric Key | Display Name | Business Semantics | Source Model | Source Fields | Fallback Allowed |
+| --- | --- | --- | --- | --- | --- |
+| `task_total` | Total Tasks | Total project tasks | `project.task` | count | No |
+| `task_done` | Done Tasks | Tasks with `kanban_state=done` | `project.task` | `kanban_state` | No |
+| `task_open` | Open Tasks | `task_total - task_done` | Derived | aggregate formula | No |
+| `task_critical` | Critical Tasks | High-priority task count | `project.task` | `priority` | No |
+| `task_blocked` | Blocked Tasks | Tasks with `kanban_state=blocked` | `project.task` | `kanban_state` | No |
+| `task_overdue` | Overdue Tasks | Tasks whose deadline is before today | `project.task` | `date_deadline` | No |
+| `completion_percent` | Completion Rate | `task_done / task_total` | Derived | aggregate formula | No |
+| `milestone_total` | Total Milestones | Total project milestones | `project.milestone` | count | No |
+| `milestone_done` | Done Milestones | Milestones in done/completed status | `project.milestone` | `status` | No |
+| `milestone_delay` | Delayed Milestones | Milestones in delay/overdue/blocked status | `project.milestone` | `status` | No |
+| `milestone_progress` | Milestone Progress | `milestone_done / milestone_total` | Derived | aggregate formula | No |
+| `milestone_upcoming_days` | Days to Next Milestone | Next unfinished milestone planned date minus today | `project.milestone` | `plan_date` | Yes (returns 0 when absent) |
+| `critical_path_health` | Critical Path Health | Rule-based level by blocked/overdue thresholds | Derived | policy calculation | No |
+
+## 3.2 Risk-Progress Linkage Semantics (`project.risk`)
+
+| Metric Key | Display Name | Business Semantics | Source Model | Source Fields | Fallback Allowed |
+| --- | --- | --- | --- | --- | --- |
+| `progress_task_overdue` | Overdue Task Risk Count | Overdue task count of the project | `project.task` | `date_deadline` | No |
+| `progress_task_blocked` | Blocked Task Risk Count | Blocked task count of the project | `project.task` | `kanban_state` | No |
+| `progress_milestone_delay` | Delayed Milestone Risk Count | Delayed milestone count of the project | `project.milestone` | `status` | No |
+| `risk_score` | Risk Score | Composite score with progress linkage signals | Derived | policy calculation | No |
+| `risk_level` | Risk Level | Threshold-based level from score | Derived | policy calculation | No |
+
 ## 4. Explicit Prohibitions
 
 - Do not use `dashboard_invoice_amount` as contract amount semantics.
