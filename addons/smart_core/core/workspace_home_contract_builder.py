@@ -497,9 +497,13 @@ def _build_capability_today_actions(ready_caps: Iterable[Dict[str, Any]], role_c
 
 
 def _build_today_actions(data: Dict[str, Any], ready_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
+    business_actions = _build_business_today_actions(data, role_code=role_code)
+    if len(business_actions) >= 4:
+        return business_actions[:6]
+
     merged: List[Dict[str, Any]] = []
     seen: set = set()
-    ordered = _build_business_today_actions(data, role_code=role_code) + _build_capability_today_actions(ready_caps, role_code=role_code)
+    ordered = business_actions + _build_capability_today_actions(ready_caps, role_code=role_code)
     ordered.sort(key=lambda item: (-_to_int(item.get("urgency_score")), 0 if _to_text(item.get("source")) == "business" else 1))
     for item in ordered:
         marker = (
@@ -514,6 +518,38 @@ def _build_today_actions(data: Dict[str, Any], ready_caps: Iterable[Dict[str, An
         if len(merged) >= 6:
             break
     return merged
+
+
+def _build_business_visibility_diagnosis(data: Dict[str, Any], role_code: str) -> Dict[str, Any]:
+    collections = _extract_business_collections(data)
+    collection_counts = {str(key): len(rows) for key, rows in collections.items()}
+    total_rows = sum(collection_counts.values())
+    expected_by_role = {
+        "pm": ["project_actions", "risk_actions", "tasks", "project_tasks"],
+        "finance": ["payment_requests", "risk_actions", "project_actions"],
+        "owner": ["project_actions", "risk_actions", "payment_requests"],
+    }
+    expected = expected_by_role.get(role_code, ["project_actions", "risk_actions"])
+    missing_expected = [key for key in expected if _to_int(collection_counts.get(key)) <= 0]
+
+    likely_cause = "healthy"
+    gap_level = "healthy"
+    if total_rows <= 0:
+        likely_cause = "no_business_rows_detected"
+        gap_level = "critical"
+    elif missing_expected:
+        likely_cause = "role_scope_or_demo_assignment_gap"
+        gap_level = "limited"
+
+    return {
+        "role_code": role_code,
+        "business_rows_total": total_rows,
+        "collection_counts": collection_counts,
+        "expected_collections": expected,
+        "missing_expected": missing_expected,
+        "gap_level": gap_level,
+        "likely_cause": likely_cause,
+    }
 
 
 def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
@@ -683,6 +719,46 @@ def _build_metric_sets(ready_count: int, locked_count: int, preview_count: int, 
         {"key": "platform.scene_count", "label": "场景配置数", "value": str(scene_count)},
     ]
     return business_metrics, platform_metrics
+
+
+def _build_interaction_contract() -> Dict[str, Any]:
+    return {
+        "scope": "workspace.home",
+        "events": [
+            {
+                "event": "workspace.view",
+                "intent": "telemetry.track",
+                "stage": "home_enter",
+                "blocking": False,
+            },
+            {
+                "event": "workspace.enter_click",
+                "intent": "telemetry.track",
+                "stage": "scene_enter_click",
+                "blocking": False,
+            },
+            {
+                "event": "workspace.enter_result",
+                "intent": "telemetry.track",
+                "stage": "scene_enter_result",
+                "blocking": False,
+            },
+            {
+                "event": "workspace.risk_action_click",
+                "intent": "telemetry.track",
+                "stage": "risk_action",
+                "blocking": False,
+            },
+        ],
+        "core_intents": [
+            "system.init",
+            "ui.contract",
+            "load_view",
+            "api.data",
+            "telemetry.track",
+            "usage.track",
+        ],
+    }
 
 
 def _tone_from_level(level: str) -> str:
@@ -1368,6 +1444,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         risk_action_count=risk_business_count,
     )
     extraction_stats = _build_extraction_stats(data=data, today_actions=today_actions, risk_actions=risk_actions)
+    visibility_diagnosis = _build_business_visibility_diagnosis(data, role_code)
     has_business_signal = bool(
         _to_int(extraction_stats.get("business_rows_total")) > 0
         or _to_int(extraction_stats.get("today_actions_business")) > 0
@@ -1390,10 +1467,10 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 {"key": "risk", "enabled": True, "tag": "section"},
                 {"key": "metrics", "enabled": True, "tag": "section"},
                 {"key": "ops", "enabled": True, "tag": "details", "open": False},
-                {"key": "advice", "enabled": True, "tag": "details", "open": False},
                 {"key": "group_overview", "enabled": True, "tag": "section"},
+                {"key": "advice", "enabled": True, "tag": "details", "open": False},
                 {"key": "filters", "enabled": False, "tag": "section"},
-                {"key": "scene_groups", "enabled": True, "tag": "div"},
+                {"key": "scene_groups", "enabled": False, "tag": "div"},
             ],
             "texts": {
                 "hero.role_label": "当前角色",
@@ -1409,7 +1486,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "metrics.aria_label": "核心价值区",
                 "today_actions.aria_label": "今日行动",
                 "today_actions.title": "今日行动",
-                "today_actions.subtitle": "点击可直接进入处理界面。",
+                "today_actions.subtitle": "先处理高优先事项，再进入对应业务场景。",
                 "today_actions.count_prefix": "待处理",
                 "today_actions.coming_soon_action": "即将开放",
                 "risk.aria_label": "关键风险区",
@@ -1436,8 +1513,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "ops.kpi.output_note": "基于当前可见业务数据",
                 "advice.title": "系统提醒",
                 "advice.aria_label": "系统提醒",
-                "group_overview.title": "能力分组概览",
-                "group_overview.subtitle": "按业务域查看能力分布与可用状态。",
+                "group_overview.title": "常用功能",
+                "group_overview.subtitle": "按业务域快速进入核心功能。",
                 "group_overview.capability_count_prefix": "功能数",
                 "group_overview.allow_prefix": "可用",
                 "group_overview.readonly_prefix": "只读",
@@ -1454,11 +1531,17 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         },
         "hero": {
             "title": "工作台",
-            "lead": "优先处理今日关键事项，快速判断风险与经营状态。",
+            "lead": "先做什么、风险在哪、状态如何：围绕今日行动推进业务闭环。",
             "product_tags": ["项目管理", "经营状态", "风险预警"],
             "updated_at": updated_at,
             "status_notice": partial_notice,
-            "status_detail": "当前业务明细不足，主区已回退到系统就绪入口。" if not has_business_signal else "",
+            "status_detail": (
+                "当前业务明细不足，主区已回退到系统就绪入口。"
+                if not has_business_signal
+                else "当前角色可见业务数据偏少，建议核对项目归属与示例数据分配。"
+                if _to_text(visibility_diagnosis.get("gap_level")) == "limited"
+                else ""
+            ),
         },
         "metrics": business_metrics,
         "platform_metrics": platform_metrics,
@@ -1507,6 +1590,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "primary": "page_orchestration_v1",
             "legacy": {"key": "page_orchestration", "status": "compatibility"},
         },
+        "interaction_contract": _build_interaction_contract(),
         "page_orchestration_v1": primary_orchestration,
         "page_orchestration": legacy_orchestration,
         "role_variant": {
@@ -1533,5 +1617,6 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "business_priority": True,
             },
             "extraction_stats": extraction_stats,
+            "business_visibility": visibility_diagnosis,
         },
     }
