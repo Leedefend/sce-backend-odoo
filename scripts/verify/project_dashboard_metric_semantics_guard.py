@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 METRICS_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_metrics_builder.py"
 CONTRACT_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_contract_builder.py"
 FINANCE_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_finance_builder.py"
+PROGRESS_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_progress_builder.py"
+RISK_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_risk_builder.py"
 VIEW_FILE = ROOT / "frontend" / "apps" / "web" / "src" / "views" / "ProjectManagementDashboardView.vue"
 DOC_ZH = ROOT / "docs" / "contract" / "project_dashboard_metric_semantics_v1.md"
 DOC_EN = ROOT / "docs" / "contract" / "project_dashboard_metric_semantics_v1.en.md"
@@ -72,6 +74,30 @@ def main() -> None:
     )
 
     _contains(
+        PROGRESS_BUILDER,
+        [
+            "\"task_open\"",
+            "\"task_critical\"",
+            "\"task_blocked\"",
+            "\"milestone_upcoming_days\"",
+            "\"critical_path_health\"",
+        ],
+    )
+
+    _contains(
+        RISK_BUILDER,
+        [
+            "\"TASK_OVERDUE\"",
+            "\"TASK_BLOCKED\"",
+            "\"MILESTONE_DELAY\"",
+            "\"progress_task_overdue\"",
+            "\"progress_task_blocked\"",
+            "\"progress_milestone_delay\"",
+            "\"open_task_list\"",
+        ],
+    )
+
+    _contains(
         VIEW_FILE,
         [
             "'cost_completion_rate'",
@@ -79,6 +105,14 @@ def main() -> None:
             "'receive_pending'",
             "'pay_pending'",
             "'net_cash'",
+            "'task_open'",
+            "'task_critical'",
+            "'task_blocked'",
+            "'milestone_upcoming_days'",
+            "'critical_path_health'",
+            "progress_task_overdue",
+            "progress_task_blocked",
+            "progress_milestone_delay",
         ],
     )
 
@@ -87,4 +121,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

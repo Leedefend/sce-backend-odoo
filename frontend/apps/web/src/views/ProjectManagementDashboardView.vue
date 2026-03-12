@@ -279,29 +279,42 @@ function normalizeDatasetByBlock(block: RawBlock) {
   if (blockType === 'progress_summary') {
     const total = asNumber(data.task_total);
     const done = asNumber(data.task_done);
+    const openCount = asNumber(data.task_open);
+    const criticalTasks = asNumber(data.task_critical);
+    const blockedTasks = asNumber(data.task_blocked);
     const completion = asNumber(data.completion_percent);
     const doneRate = total > 0 ? Math.min(100, Math.max(0, Math.round((done * 100) / total))) : 0;
     const milestoneProgress = asNumber(data.milestone_progress);
     const delayedTasks = asNumber(data.task_overdue);
     const delayedMilestones = asNumber(data.milestone_delay);
+    const upcomingDays = asNumber(data.milestone_upcoming_days);
+    const criticalPathHealth = asText(data.critical_path_health || '--');
     return [
       { key: 'completion_percent', label: '总体完成率', value: completion, unit: '%' },
       { key: 'task_done_rate', label: '任务完成率', value: doneRate, unit: '%' },
       { key: 'milestone_progress', label: '里程碑完成率', value: milestoneProgress, unit: '%' },
+      { key: 'task_open', label: '未完成任务', value: openCount, unit: '项' },
+      { key: 'task_critical', label: '关键任务', value: criticalTasks, unit: '项' },
+      { key: 'task_blocked', label: '阻塞任务', value: blockedTasks, unit: '项' },
       { key: 'delayed_tasks', label: '延期任务数', value: delayedTasks, unit: '项' },
       { key: 'delayed_milestones', label: '延期里程碑数', value: delayedMilestones, unit: '项' },
+      { key: 'milestone_upcoming_days', label: '下一里程碑剩余天数', value: upcomingDays, unit: '天' },
+      { key: 'critical_path_health', label: '关键路径健康度', value: criticalPathHealth, unit: '' },
     ];
   }
   if (blockType === 'alert_panel') {
     const alerts = Array.isArray(data.alerts) ? data.alerts : [];
     const rows = alerts.map((item) => {
       const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+      const actionKey = asText(row.action_key || 'open_risk_list') || 'open_risk_list';
+      const hint = asText(row.hint || '');
       return {
         id: asText(row.code || row.id || ''),
         title: asText(row.title || row.code || '风险提醒'),
-        description: `当前数量：${asText(row.value || '0')}`,
+        description: hint ? `当前数量：${asText(row.value || '0')} · ${hint}` : `当前数量：${asText(row.value || '0')}`,
         tone: asText(row.level || 'warning') === 'info' ? 'warning' : asText(row.level || 'warning'),
-        action_key: 'open_risk_list',
+        source: asText(row.source || 'business'),
+        action_key: actionKey,
       };
     });
     const summary = data.summary && typeof data.summary === 'object' && !Array.isArray(data.summary)
@@ -311,8 +324,9 @@ function normalizeDatasetByBlock(block: RawBlock) {
       rows.unshift({
         id: 'risk-score',
         title: `风险评分：${asNumber(summary.risk_score)}`,
-        description: `等级：${asText(summary.risk_level || '--')} · 未闭环：${asNumber(summary.risk_open)} · 高风险：${asNumber(summary.risk_critical)}`,
+        description: `等级：${asText(summary.risk_level || '--')} · 未闭环：${asNumber(summary.risk_open)} · 高风险：${asNumber(summary.risk_critical)} · 任务延期：${asNumber(summary.progress_task_overdue)} · 任务阻塞：${asNumber(summary.progress_task_blocked)} · 里程碑延期：${asNumber(summary.progress_milestone_delay)}`,
         tone: asText(summary.risk_level) === 'high' ? 'danger' : asText(summary.risk_level) === 'medium' ? 'warning' : 'info',
+        source: 'business',
         action_key: 'open_risk_list',
       });
     }

@@ -32,6 +32,12 @@ function clampPercent(raw: unknown) {
   return Math.max(0, Math.min(100, Math.round(num)));
 }
 
+function normalizeCount(raw: unknown) {
+  const num = Number(raw || 0);
+  if (!Number.isFinite(num)) return 0;
+  return Math.max(0, Math.round(num));
+}
+
 const rows = computed(() => {
   if (Array.isArray(props.dataset)) {
     return props.dataset.map((item, index) => {
@@ -39,7 +45,7 @@ const rows = computed(() => {
       return {
         key: String(row.key || `progress-${index + 1}`),
         label: String(row.label || `进展 ${index + 1}`),
-        value: clampPercent(row.value),
+        value: String(row.unit || '%') === '%' ? clampPercent(row.value) : normalizeCount(row.value),
         unit: String(row.unit || '%'),
         kind: String(row.unit || '%') === '%' ? 'rate' : 'count',
       };

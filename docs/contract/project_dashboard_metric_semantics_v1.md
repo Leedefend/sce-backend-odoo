@@ -35,6 +35,34 @@
 | `gap` | 资金缺口 | `receivable - received` | 推导 | 汇总计算 | 否 |
 | `net_cash` | 净现金流 | `received - paid` | 推导 | 汇总计算 | 否 |
 
+## 3.1 进度口径矩阵（project.progress）
+
+| 指标键 | 展示名称 | 业务口径 | 来源模型 | 来源字段 | 允许降级 |
+| --- | --- | --- | --- | --- | --- |
+| `task_total` | 任务总数 | 当前项目任务总量 | `project.task` | 计数 | 否 |
+| `task_done` | 已完成任务 | `kanban_state=done` 的任务数 | `project.task` | `kanban_state` | 否 |
+| `task_open` | 未完成任务 | `task_total - task_done` | 推导 | 汇总计算 | 否 |
+| `task_critical` | 关键任务 | 高优先级任务数 | `project.task` | `priority` | 否 |
+| `task_blocked` | 阻塞任务 | `kanban_state=blocked` 的任务数 | `project.task` | `kanban_state` | 否 |
+| `task_overdue` | 延期任务 | 截止日期早于今天的任务数 | `project.task` | `date_deadline` | 否 |
+| `completion_percent` | 总体完成率 | `task_done / task_total` | 推导 | 汇总计算 | 否 |
+| `milestone_total` | 里程碑总数 | 当前项目里程碑总量 | `project.milestone` | 计数 | 否 |
+| `milestone_done` | 已完成里程碑 | 完成态里程碑数 | `project.milestone` | `status` | 否 |
+| `milestone_delay` | 延期里程碑 | 延期/阻塞态里程碑数 | `project.milestone` | `status` | 否 |
+| `milestone_progress` | 里程碑完成率 | `milestone_done / milestone_total` | 推导 | 汇总计算 | 否 |
+| `milestone_upcoming_days` | 下一里程碑剩余天数 | 最近未完成里程碑计划日期减今天 | `project.milestone` | `plan_date` | 是（无里程碑返回0） |
+| `critical_path_health` | 关键路径健康度 | 按阻塞任务与延期任务阈值分级 | 推导 | 规则计算 | 否 |
+
+## 3.2 风险-进度联动口径（project.risk）
+
+| 指标键 | 展示名称 | 业务口径 | 来源模型 | 来源字段 | 允许降级 |
+| --- | --- | --- | --- | --- | --- |
+| `progress_task_overdue` | 任务延期风险计数 | 项目逾期任务数 | `project.task` | `date_deadline` | 否 |
+| `progress_task_blocked` | 任务阻塞风险计数 | 项目阻塞任务数 | `project.task` | `kanban_state` | 否 |
+| `progress_milestone_delay` | 里程碑延期风险计数 | 项目延期里程碑数 | `project.milestone` | `status` | 否 |
+| `risk_score` | 风险评分 | 综合风险+进度联动信号评分 | 推导 | 规则计算 | 否 |
+| `risk_level` | 风险等级 | 按评分阈值分级 | 推导 | 规则计算 | 否 |
+
 ## 4. 明确禁止项
 
 - 禁止以 `dashboard_invoice_amount` 替代合同额口径。
