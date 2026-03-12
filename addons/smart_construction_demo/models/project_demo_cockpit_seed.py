@@ -19,15 +19,7 @@ class ProjectDemoCockpitSeed(models.Model):
         activity_model = self.env["mail.activity"]
         model_model = self.env["ir.model"]
 
-        manager = self.env["res.users"].search([("login", "=", "demo_pm")], limit=1)
-        project_domain = [("active", "=", True), ("name", "ilike", "展厅-")]
-        if manager:
-            project_domain.append(("user_id", "=", manager.id))
-        projects = self.search(project_domain, order="id desc", limit=6)
-
-        explicit_project = self.browse(20).exists()
-        if explicit_project and explicit_project not in projects:
-            projects |= explicit_project
+        projects = self._sc_demo_release_projects()
 
         partner_fallback = partner_model.search([("is_company", "=", True)], limit=1)
         cost_code = cost_code_model.search([], order="id asc", limit=1)
@@ -66,6 +58,52 @@ class ProjectDemoCockpitSeed(models.Model):
         return True
 
     @api.model
+    def _sc_demo_release_projects(self):
+        """Pick release-grade projects for cockpit/list demo seeding.
+
+        Priority:
+        1) Active projects assigned to known PM demo users
+        2) Active projects that look like business/showcase projects
+        3) Fallback to first active projects
+        """
+
+        users = self.env["res.users"].sudo().search(
+            [("login", "in", ["demo_role_pm", "demo_pm", "sc_fx_pm"])],
+            order="id asc",
+        )
+        user_ids = users.ids
+        project_model = self.with_context(active_test=False)
+
+        projects = project_model.browse()
+        if user_ids:
+            projects |= project_model.search(
+                [("active", "=", True), ("user_id", "in", user_ids)],
+                order="id asc",
+                limit=24,
+            )
+
+        if len(projects) < 12:
+            projects |= project_model.search(
+                [
+                    ("active", "=", True),
+                    "|",
+                    ("project_code", "!=", False),
+                    ("name", "ilike", "DEMO-"),
+                ],
+                order="id asc",
+                limit=24,
+            )
+
+        if len(projects) < 12:
+            projects |= project_model.search(
+                [("active", "=", True)],
+                order="id asc",
+                limit=24,
+            )
+
+        return projects
+
+    @api.model
     def _sc_demo_seed_contracts(self, project, partner, contract_model, contract_line_model):
         marker = "DEMO_COCKPIT_R2"
         existing = contract_model.search_count(
@@ -74,9 +112,11 @@ class ProjectDemoCockpitSeed(models.Model):
         if existing:
             return
 
+        base_out = 8_000_000.0 + (project.id % 7) * 1_100_000.0
+        base_in = base_out * 0.62
         samples = [
-            ("out", f"[{marker}] {project.name}-总包合同", 12_000_000.0),
-            ("in", f"[{marker}] {project.name}-分包合同", 7_600_000.0),
+            ("out", f"[{marker}] {project.name}-收入合同", base_out),
+            ("in", f"[{marker}] {project.name}-支出合同", base_in),
         ]
         for contract_type, subject, amount in samples:
             contract = contract_model.create(
@@ -203,4 +243,3 @@ class ProjectDemoCockpitSeed(models.Model):
                 "date_deadline": date.today() - timedelta(days=2),
             }
         )
-

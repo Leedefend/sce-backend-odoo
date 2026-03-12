@@ -206,12 +206,14 @@ def _ensure_demo_user_xmlids(env) -> None:
         "svc_e2e_smoke": "sc_demo_user_e2e_smoke",
         "sc_test_admin": "sc_demo_user_test_admin",
     }
-    Users = env["res.users"].sudo()
+    Users = env["res.users"].sudo().with_context(active_test=False)
     imd = env["ir.model.data"].sudo()
     for login, xmlid in login_to_xmlid.items():
         user = Users.search([("login", "=", login)], limit=1)
         if not user:
             continue
+        if not user.active:
+            user.write({"active": True})
         existing = imd.search(
             [("module", "=", module), ("name", "=", xmlid)],
             limit=1,

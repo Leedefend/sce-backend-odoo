@@ -673,24 +673,24 @@ type SurfaceIntent = {
 
 const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
   'projects.list': {
-    columns: ['name', 'stage_id', 'user_id', 'dashboard_invoice_amount', 'write_date'],
+    columns: ['name', 'stage_id', 'user_id', 'contract_amount', 'write_date'],
     column_labels: {
       name: '项目名称',
       stage_id: '项目状态',
       user_id: '项目负责人',
-      dashboard_invoice_amount: '合同额',
+      contract_amount: '合同额',
       write_date: '更新时间',
     },
     row_primary: 'name',
     row_secondary: 'user_id',
   },
   'projects.ledger': {
-    columns: ['name', 'stage_id', 'user_id', 'dashboard_invoice_amount', 'write_date'],
+    columns: ['name', 'stage_id', 'user_id', 'contract_amount', 'write_date'],
     column_labels: {
       name: '项目名称',
       stage_id: '项目状态',
       user_id: '项目负责人',
-      dashboard_invoice_amount: '关键金额',
+      contract_amount: '关键金额',
       write_date: '更新时间',
     },
     row_primary: 'name',
@@ -985,6 +985,7 @@ function resolveProjectStateCell(row: Record<string, unknown>) {
 function resolveProjectAmount(row: Record<string, unknown>) {
   const candidates = [
     row.contract_amount,
+    row.contract_income_total,
     row.dashboard_invoice_amount,
     row.amount_total,
     row.total_amount,
