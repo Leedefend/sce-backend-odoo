@@ -42,29 +42,126 @@ def _is_urgent_capability(title: str, key: str) -> bool:
 
 
 def build_today_actions(ready_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    actions: List[Dict[str, Any]] = []
-    for cap in list(ready_caps)[:6]:
+    entries: List[Dict[str, Any]] = []
+    for cap in list(ready_caps):
         payload = cap.get("default_payload") if isinstance(cap.get("default_payload"), dict) else {}
         route = _to_text(payload.get("route"))
         scene_key = _scene_from_route(route)
         title = _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key"))
-        actions.append(
+        entries.append(
             {
-                "id": _to_text(cap.get("key")) or title,
-                "title": title or "进入能力",
-                "description": _to_text(cap.get("ui_hint")) or "进入能力继续处理业务",
-                "status": "urgent" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "normal",
-                "tone": "danger" if _is_urgent_capability(title, _to_text(cap.get("key"))) else "info",
-                "progress": "pending",
-                "count": 0,
-                "ready": True,
                 "entry_key": _to_text(cap.get("key")),
+                "title": title,
+                "hint": _to_text(cap.get("ui_hint")) or "进入能力继续处理业务",
                 "scene_key": scene_key,
                 "route": route,
                 "menu_id": _to_int(payload.get("menu_id")),
                 "action_id": _to_int(payload.get("action_id")),
             }
         )
+
+    templates = [
+        {
+            "id": "action-risk",
+            "title": "待处理风险事项",
+            "description": "优先处理高风险项目，避免延误与损失扩大。",
+            "status": "urgent",
+            "tone": "danger",
+            "keywords": ("risk.center", "risk", "风险"),
+        },
+        {
+            "id": "action-payment",
+            "title": "待审批付款申请",
+            "description": "处理付款审批与节点确认，保障资金协同。",
+            "status": "urgent",
+            "tone": "warning",
+            "keywords": ("payment", "finance", "付款", "资金", "财务"),
+        },
+        {
+            "id": "action-task",
+            "title": "待跟进项目任务",
+            "description": "跟进关键任务进度，避免节点延期。",
+            "status": "normal",
+            "tone": "info",
+            "keywords": ("task.center", "task", "任务", "项目"),
+        },
+        {
+            "id": "action-cost",
+            "title": "待确认成本清单",
+            "description": "核对工程量与成本偏差，保持成本可控。",
+            "status": "normal",
+            "tone": "info",
+            "keywords": ("cost.project_boq", "cost", "boq", "成本", "清单"),
+        },
+    ]
+
+    used_keys = set()
+    actions: List[Dict[str, Any]] = []
+    for template in templates:
+        matched = None
+        for entry in entries:
+            entry_key = _to_text(entry.get("entry_key"))
+            if entry_key in used_keys:
+                continue
+            scope = " ".join(
+                [
+                    _to_text(entry.get("entry_key")),
+                    _to_text(entry.get("title")),
+                    _to_text(entry.get("scene_key")),
+                    _to_text(entry.get("route")),
+                ]
+            ).lower()
+            if any(keyword in scope for keyword in template["keywords"]):
+                matched = entry
+                used_keys.add(entry_key)
+                break
+        if not matched:
+            continue
+        actions.append(
+            {
+                "id": template["id"],
+                "title": template["title"],
+                "description": template["description"],
+                "status": template["status"],
+                "tone": template["tone"],
+                "progress": "pending",
+                "ready": True,
+                "entry_key": _to_text(matched.get("entry_key")),
+                "scene_key": _to_text(matched.get("scene_key")),
+                "route": _to_text(matched.get("route")),
+                "menu_id": _to_int(matched.get("menu_id")),
+                "action_id": _to_int(matched.get("action_id")),
+                "source": "business",
+                "source_detail": "semantic_template",
+            }
+        )
+
+    if len(actions) < 3:
+        for entry in entries:
+            entry_key = _to_text(entry.get("entry_key"))
+            if entry_key in used_keys:
+                continue
+            actions.append(
+                {
+                    "id": entry_key or _to_text(entry.get("title")) or "action-extra",
+                    "title": _to_text(entry.get("title")) or "待处理事项",
+                    "description": _to_text(entry.get("hint")) or "进入场景继续处理业务",
+                    "status": "urgent" if _is_urgent_capability(_to_text(entry.get("title")), entry_key) else "normal",
+                    "tone": "danger" if _is_urgent_capability(_to_text(entry.get("title")), entry_key) else "info",
+                    "progress": "pending",
+                    "ready": True,
+                    "entry_key": entry_key,
+                    "scene_key": _to_text(entry.get("scene_key")),
+                    "route": _to_text(entry.get("route")),
+                    "menu_id": _to_int(entry.get("menu_id")),
+                    "action_id": _to_int(entry.get("action_id")),
+                    "source": "capability_fallback",
+                    "source_detail": "capability_template",
+                }
+            )
+            if len(actions) >= 4:
+                break
+
     return actions
 
 
@@ -118,9 +215,9 @@ def build_role_focus_config(role_code: str) -> Dict[str, Any]:
 
 def build_v1_focus_map() -> Dict[str, List[str]]:
     return {
-        "pm": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "hero_record_summary"],
-        "finance": ["progress_summary_ops", "risk_alert_panel", "metric_row_core", "hero_record_summary"],
-        "owner": ["hero_record_summary", "risk_alert_panel", "todo_list_today", "entry_grid_scene"],
+        "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
+        "finance": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "metric_row_core"],
+        "owner": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
     }
 
 
@@ -134,14 +231,14 @@ def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     audience = audience_map.get(role, ["owner"])
     priority_model = "task_first" if role == "pm" else "metric_first" if role == "finance" else "role_first"
     mobile_priority_map = {
-        "pm": ["hero", "today_focus", "analysis"],
-        "finance": ["analysis", "hero", "today_focus"],
-        "owner": ["hero", "today_focus", "analysis"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "analysis", "quick_entries", "hero"],
+        "owner": ["today_focus", "analysis", "quick_entries", "hero"],
     }
     return {
         "audience": audience,
         "priority_model": priority_model,
-        "mobile_priority": mobile_priority_map.get(role, ["hero", "today_focus", "analysis"]),
+        "mobile_priority": mobile_priority_map.get(role, ["today_focus", "analysis", "quick_entries", "hero"]),
     }
 
 
@@ -319,11 +416,11 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
     return [
         {
             "key": "hero",
-            "title": "核心关注",
-            "description": "页面主关注区，先看角色和当前态势。",
+            "title": "核心关注（补充）",
+            "description": "补充展示角色与入口摘要。",
             "zone_type": "hero",
             "display_mode": "grid",
-            "priority": int(zone_rank.get("primary", 1)) * 100,
+            "priority": 20,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
@@ -351,13 +448,13 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
             "description": "今日待办与关键风险。",
             "zone_type": "primary",
             "display_mode": "stack",
-            "priority": int(zone_rank.get("primary", 1)) * 90,
+            "priority": 100,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
                     "key": "todo_list_today",
                     "block_type": "todo_list",
-                    "title": "今日待办",
+                    "title": "今日行动",
                     "priority": 95,
                     "importance": "high",
                     "tone": "warning",
@@ -374,7 +471,7 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                 {
                     "key": "risk_alert_panel",
                     "block_type": "alert_panel",
-                    "title": "关键风险",
+                    "title": "系统提醒",
                     "priority": 90,
                     "importance": "critical",
                     "tone": "danger",
@@ -388,15 +485,32 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                     "actions": [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}],
                     "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 10},
                 },
+                {
+                    "key": "advice_fold",
+                    "block_type": "accordion_group",
+                    "title": "系统提醒补充",
+                    "priority": 85,
+                    "importance": "medium",
+                    "tone": "warning",
+                    "progress": "pending",
+                    "section_key": "advice",
+                    "data_source": "ds_advice",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": True,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"mode": "accordion", "open_default": False},
+                },
             ],
         },
         {
             "key": "analysis",
-            "title": "经营分析",
-            "description": "关键指标与执行进展。",
+            "title": "项目总体状态",
+            "description": "关键指标、执行进展与风险动态。",
             "zone_type": "secondary",
             "display_mode": "grid",
-            "priority": int(zone_rank.get("analysis", 2)) * 80,
+            "priority": 80,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
@@ -454,17 +568,17 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
         },
         {
             "key": "quick_entries",
-            "title": "能力入口",
-            "description": "按能力分组快速进入业务场景。",
+            "title": "常用功能",
+            "description": "按场景与能力快速进入业务处理。",
             "zone_type": "supporting",
             "display_mode": "grid",
-            "priority": int(zone_rank.get("support", 3)) * 70,
+            "priority": 60,
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
                     "key": "entry_grid_scene",
                     "block_type": "entry_grid",
-                    "title": "场景入口",
+                    "title": "常用功能",
                     "priority": 65,
                     "importance": "medium",
                     "tone": "neutral",
@@ -481,7 +595,7 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                 {
                     "key": "entry_grid_capability",
                     "block_type": "entry_grid",
-                    "title": "能力分组",
+                    "title": "能力分组概览",
                     "priority": 60,
                     "importance": "medium",
                     "tone": "neutral",
@@ -494,40 +608,6 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [],
                     "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
-                },
-                {
-                    "key": "advice_fold",
-                    "block_type": "accordion_group",
-                    "title": "系统建议",
-                    "priority": 55,
-                    "importance": "medium",
-                    "tone": "warning",
-                    "progress": "pending",
-                    "section_key": "advice",
-                    "data_source": "ds_advice",
-                    "loading_strategy": "lazy",
-                    "refreshable": True,
-                    "collapsible": True,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"mode": "accordion"},
-                },
-                {
-                    "key": "filters_fold",
-                    "block_type": "accordion_group",
-                    "title": "筛选器",
-                    "priority": 50,
-                    "importance": "low",
-                    "tone": "neutral",
-                    "progress": "completed",
-                    "section_key": "filters",
-                    "data_source": "ds_filters",
-                    "loading_strategy": "lazy",
-                    "refreshable": False,
-                    "collapsible": True,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"mode": "accordion"},
                 },
             ],
         },

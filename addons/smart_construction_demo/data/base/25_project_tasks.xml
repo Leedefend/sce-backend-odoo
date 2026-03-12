@@ -5,21 +5,18 @@
     <record id="sc_demo_task_round1_001" model="project.task">
       <field name="name">施工组织方案编制</field>
       <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
-      <field name="kanban_state">normal</field>
       <field name="date_deadline">2025-03-20</field>
     </record>
 
     <record id="sc_demo_task_round1_002" model="project.task">
       <field name="name">地基验槽与签证</field>
       <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
-      <field name="kanban_state">done</field>
       <field name="date_deadline">2025-03-10</field>
     </record>
 
     <record id="sc_demo_task_round1_003" model="project.task">
       <field name="name">主体结构钢筋采购协调</field>
       <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
-      <field name="kanban_state">blocked</field>
       <field name="date_deadline">2025-03-05</field>
     </record>
 

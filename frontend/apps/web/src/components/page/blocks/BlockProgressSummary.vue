@@ -47,22 +47,22 @@ const rows = computed(() => {
   const bars = source.bars && typeof source.bars === 'object' ? source.bars as Record<string, unknown> : {};
   const kpi = source.kpi && typeof source.kpi === 'object' ? source.kpi as Record<string, unknown> : {};
   const rowsLocal = [
-    { key: 'contract', label: 'contract', value: clampPercent((bars as Record<string, unknown>).contract) },
-    { key: 'output', label: 'output', value: clampPercent((bars as Record<string, unknown>).output) },
-    { key: 'cost_rate', label: 'cost_rate', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate) },
-    { key: 'payment_rate', label: 'payment_rate', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate) },
+    { key: 'contract', label: '合同履约率', value: clampPercent((bars as Record<string, unknown>).contract) },
+    { key: 'output', label: '产值完成率', value: clampPercent((bars as Record<string, unknown>).output) },
+    { key: 'cost_rate', label: '成本控制率', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate) },
+    { key: 'payment_rate', label: '资金支付率', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate) },
   ];
   return rowsLocal.filter((row) => row.value > 0);
 });
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; }
-.block-header h4 { margin: 0 0 8px; font-size: 14px; }
-.progress-list { display: grid; gap: 8px; }
-.progress-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #f9fafb; }
-.progress-line { display: flex; justify-content: space-between; font-size: 12px; }
-.progress-track { margin-top: 6px; width: 100%; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
-.progress-fill { height: 100%; background: #2563eb; }
+.block { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; padding: 12px; height: 100%; }
+.block-header h4 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
+.progress-list { display: grid; gap: 10px; }
+.progress-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; background: #f8fbff; min-height: 66px; }
+.progress-line { display: flex; justify-content: space-between; font-size: 13px; }
+.progress-track { margin-top: 8px; width: 100%; height: 9px; background: #dbeafe; border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #60a5fa 0%, #2563eb 100%); }
 .empty-text { margin: 6px 0 0; color: #6b7280; font-size: 13px; }
 </style>

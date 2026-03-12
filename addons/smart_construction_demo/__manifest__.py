@@ -24,6 +24,7 @@
         "data/scenario/s00_min_path/30_project_revenue.xml",
         "data/scenario/s10_contract_payment/10_contracts.xml",
         "data/scenario/s10_contract_payment/20_payment_requests.xml",
+        "data/scenario/s10_contract_payment/25_workbench_actions.xml",
         "views/ux/project_demo_banner_views.xml",
     ],
     "installable": True,

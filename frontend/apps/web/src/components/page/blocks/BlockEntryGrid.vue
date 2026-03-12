@@ -76,9 +76,10 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 <style scoped>
 .block {
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
-  padding: 10px;
+  padding: 12px;
+  height: 100%;
 }
 .block-header {
   display: flex;
@@ -88,7 +89,8 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .block-header h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
 }
 .block-header-actions {
   display: flex;
@@ -102,26 +104,34 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   cursor: pointer;
 }
 .entry-grid {
-  margin-top: 8px;
+  margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
 }
 .entry-item {
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #f9fafb;
-  padding: 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f9fafb 100%);
+  padding: 12px;
   text-align: left;
   cursor: pointer;
+  min-height: 96px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.entry-item:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.14);
+  transform: translateY(-2px);
 }
 .entry-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 .entry-hint {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 12px;
   color: #6b7280;
 }
