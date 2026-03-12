@@ -20,6 +20,8 @@ class TelemetryTrackHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
+        if isinstance(params, dict) and isinstance(params.get("params"), dict):
+            params = params.get("params") or {}
         if not isinstance(params, dict):
             params = {}
         event_type = str(
@@ -43,5 +45,8 @@ class TelemetryTrackHandler(BaseIntentHandler):
             "company_id": int(user.company_id.id or 0) if user and user.company_id else 0,
             "payload": params,
         }
-        _logger.info("[telemetry.track] %s", json.dumps(data, ensure_ascii=False, sort_keys=True))
+        _logger.info(
+            "[telemetry.track] %s",
+            json.dumps(data, ensure_ascii=False, sort_keys=True, default=str),
+        )
         return {"ok": True, "data": {"event_type": event_type}, "meta": {"intent": self.INTENT_TYPE}}
