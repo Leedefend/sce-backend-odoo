@@ -23,11 +23,15 @@ def main() -> int:
         "sceneKey.value === 'task.center'",
         "sceneKey.value === 'risk.center'",
         "sceneKey.value === 'cost.project_boq'",
+        "MODEL_LIST_PROFILE_PRESETS",
+        "effectiveListModel",
+        "resolvedModel === 'project.project'",
+        "targetModel !== 'project.project'",
     ]
     required = [
         "const listSemanticKind = computed(() =>",
         "const hasLedgerOverviewStrip = computed(() =>",
-        "MODEL_LIST_PROFILE_PRESETS",
+        "const listProfile = computed<SceneListProfile | null>(() =>",
     ]
 
     for token in forbidden:
@@ -73,4 +77,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
