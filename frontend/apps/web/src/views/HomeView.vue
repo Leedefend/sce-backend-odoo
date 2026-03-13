@@ -606,7 +606,12 @@ const useUnifiedHomeRenderer = computed(() => {
   if (asText(route.query.legacy_home) === '1') return false;
   const contract = homeOrchestrationContract.value || {};
   const zones = Array.isArray(contract.zones) ? contract.zones : [];
-  return zones.length > 0;
+  const page = contract.page && typeof contract.page === 'object'
+    ? contract.page as Record<string, unknown>
+    : {};
+  const hasV1 = asText(contract.schema_version) === 'v1';
+  const isDashboard = asText(page.key) === 'workspace.home';
+  return hasV1 && isDashboard && zones.length > 0;
 });
 const orchestrationBlocks = computed(() => {
   const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)

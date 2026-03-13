@@ -1295,7 +1295,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_scene", "label": "进入场景", "intent": "ui.contract"}],
-                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True, "max_items": 8},
+                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
                 },
             ],
         },
@@ -1310,6 +1310,18 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 if _to_text((block or {}).get("key")) != "advice_fold"
             ]
             break
+    role_zone_order = {
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
+        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+    }
+    preferred_order = role_zone_order.get(role_code, role_zone_order["owner"])
+    effective_order = preferred_order
+    priority_map = {key: 100 - (idx * 10) for idx, key in enumerate(effective_order)}
+    for zone in zones:
+        zone_key = _to_text(zone.get("key"))
+        if zone_key in priority_map:
+            zone["priority"] = priority_map[zone_key]
 
     v1_focus_map = {
         "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
@@ -1467,9 +1479,6 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         or _to_int(extraction_stats.get("today_actions_business")) > 0
         or _to_int(extraction_stats.get("risk_actions_business")) > 0
     )
-    primary_orchestration = _build_page_orchestration_v1(role_code)
-    legacy_orchestration = _build_page_orchestration(role_code)
-
     return {
         "schema_version": "v1",
         "semantic_protocol": {
@@ -1608,8 +1617,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "legacy": {"key": "page_orchestration", "status": "compatibility"},
         },
         "interaction_contract": _build_interaction_contract(),
-        "page_orchestration_v1": primary_orchestration,
-        "page_orchestration": legacy_orchestration,
+        "page_orchestration_v1": _build_page_orchestration_v1(role_code),
+        "page_orchestration": _build_page_orchestration(role_code),
         "role_variant": {
             "role_code": role_code,
             "mode": "heterogeneous_same_page",

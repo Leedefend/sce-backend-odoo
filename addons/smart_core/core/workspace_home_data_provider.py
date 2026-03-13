@@ -412,8 +412,9 @@ def build_legacy_blocks(role_code: str) -> List[Dict[str, Any]]:
     ]
 
 
+
 def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int]) -> List[Dict[str, Any]]:
-    return [
+    zones: List[Dict[str, Any]] = [
         {
             "key": "hero",
             "title": "核心关注",
@@ -573,8 +574,25 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_scene", "label": "进入场景", "intent": "ui.contract"}],
-                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True, "max_items": 8},
+                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
                 },
             ],
         },
     ]
+
+    role_zone_order: Dict[str, List[str]] = {
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
+        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+    }
+    preferred_order = role_zone_order.get(_to_text(role_code), role_zone_order["owner"])
+    max_priority = 100
+    priority_step = 10
+    priority_map = {key: max_priority - (idx * priority_step) for idx, key in enumerate(preferred_order)}
+
+    for zone in zones:
+        zone_key = _to_text(zone.get("key"))
+        if zone_key in priority_map:
+            zone["priority"] = priority_map[zone_key]
+
+    return zones
