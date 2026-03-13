@@ -176,6 +176,10 @@
   - Generates native-view contract coverage report:
     - `artifacts/backend/native_view_coverage_report.json`
     - `artifacts/backend/native_view_coverage_report.md`
+- `make verify.native_view.samples.compare`
+  - Generates 8-case native-view sample compare report:
+    - `artifacts/backend/native_view_sample_compare_report.json`
+    - `artifacts/backend/native_view_sample_compare_report.md`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`

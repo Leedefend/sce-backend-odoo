@@ -2898,3 +2898,7 @@ verify.native_view.semantic_page: verify.native_view.semantic_page.shape verify.
 .PHONY: verify.native_view.coverage.report
 verify.native_view.coverage.report: guard.prod.forbid verify.native_view.semantic_page
 	@python3 scripts/verify/native_view_coverage_report.py
+
+.PHONY: verify.native_view.samples.compare
+verify.native_view.samples.compare: guard.prod.forbid verify.native_view.semantic_page
+	@python3 scripts/verify/native_view_sample_compare_report.py
