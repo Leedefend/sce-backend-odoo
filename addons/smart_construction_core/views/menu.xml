@@ -10,7 +10,16 @@
         <field name="res_model">project.project</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="smart_construction_core.view_project_create_form"/>
-        <field name="context">{'default_project_code': '新项目', 'sc_return_to_overview': 1, 'sc_overview_action_xmlid': 'smart_construction_core.action_sc_project_overview'}</field>
+        <field name="context">{'default_manager_id': uid, 'default_user_id': uid, 'default_phase_key': 'initiation', 'sc_return_to_overview': 1, 'sc_overview_action_xmlid': 'smart_construction_core.action_sc_project_overview'}</field>
+        <field name="target">current</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_project_initiation_quick" model="ir.actions.act_window">
+        <field name="name">快速创建项目</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_construction_core.view_project_create_form_quick"/>
+        <field name="context">{'default_manager_id': uid, 'default_user_id': uid, 'default_phase_key': 'initiation', 'intake_mode': 'quick'}</field>
         <field name="target">current</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
     </record>
@@ -19,6 +28,12 @@
               parent="menu_sc_project_center"
               action="action_project_initiation"
               sequence="1"
+              groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+    <menuitem id="menu_sc_project_quick_create"
+              name="快速创建项目"
+              parent="menu_sc_project_center"
+              action="smart_construction_core.action_project_initiation_quick"
+              sequence="2"
               groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
     <menuitem id="menu_sc_project_dashboard"
               name="项目驾驶舱"

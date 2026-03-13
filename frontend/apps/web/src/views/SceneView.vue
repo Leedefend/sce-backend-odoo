@@ -42,6 +42,7 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <MyWorkView v-else-if="status === 'idle' && embeddedMyWorkWorkspace" />
+    <ProjectsIntakeView v-else-if="status === 'idle' && embeddedProjectsIntake" />
     <ProjectManagementDashboardView v-else-if="status === 'idle' && embeddedWorkspaceDashboard" />
     <ContractFormPage v-else-if="status === 'idle' && embeddedRecordActionId > 0" />
     <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
@@ -53,6 +54,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActionView from './ActionView.vue';
 import MyWorkView from './MyWorkView.vue';
+import ProjectsIntakeView from './ProjectsIntakeView.vue';
 import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -94,6 +96,7 @@ const forbiddenCopy = ref({
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
 const embeddedMyWorkWorkspace = ref(false);
+const embeddedProjectsIntake = ref(false);
 const embeddedWorkspaceDashboard = ref(false);
 
 function resolveWorkspaceContextQuery() {
@@ -258,6 +261,7 @@ async function resolveScene() {
     embeddedActionId.value = 0;
     embeddedRecordActionId.value = 0;
     embeddedMyWorkWorkspace.value = false;
+    embeddedProjectsIntake.value = false;
     embeddedWorkspaceDashboard.value = false;
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey);
@@ -304,6 +308,11 @@ async function resolveScene() {
     const workspaceContextQuery = resolveWorkspaceContextQuery();
     if (sceneKey === 'my_work.workspace') {
       embeddedMyWorkWorkspace.value = true;
+      status.value = 'idle';
+      return;
+    }
+    if (sceneKey === 'projects.intake') {
+      embeddedProjectsIntake.value = true;
       status.value = 'idle';
       return;
     }

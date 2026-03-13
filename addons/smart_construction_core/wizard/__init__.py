@@ -3,3 +3,4 @@ from . import project_boq_import_wizard
 from . import quota_import_wizard
 from . import project_task_from_boq_wizard
 from . import material_plan_to_rfq
+from . import project_quick_create_wizard
