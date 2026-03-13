@@ -68,6 +68,35 @@ def _normalize_actions(actions: Dict[str, Any] | None) -> Dict[str, Any]:
     return action_groups
 
 
+def _normalize_permissions(permissions: Dict[str, Any] | None) -> Dict[str, Any]:
+    payload = dict(permissions or {})
+    return {
+        "can_read": bool(payload.get("can_read", True)),
+        "can_edit": bool(payload.get("can_edit", True)),
+        "can_create": bool(payload.get("can_create", False)),
+        "can_delete": bool(payload.get("can_delete", False)),
+        "disabled_actions": dict(payload.get("disabled_actions") or {}),
+    }
+
+
+def _normalize_extensions(extensions: Dict[str, Any] | None) -> Dict[str, Any]:
+    payload = dict(extensions or {})
+    return {
+        "injected_blocks": list(payload.get("injected_blocks") or []),
+        "injected_actions": list(payload.get("injected_actions") or []),
+        "providers": list(payload.get("providers") or []),
+    }
+
+
+def _normalize_diagnostics(diagnostics: Dict[str, Any] | None) -> Dict[str, Any]:
+    payload = dict(diagnostics or {})
+    payload.setdefault("trace_id", str(payload.get("trace_id") or ""))
+    payload.setdefault("source_versions", {})
+    payload.setdefault("build_pipeline", ["scene_resolver", "structure_mapper", "layout_orchestrator", "scene_contract_builder"])
+    payload.setdefault("warnings", [])
+    return payload
+
+
 def validate_scene_contract_shape(contract: Dict[str, Any]) -> Dict[str, Any]:
     issues = []
     if not isinstance(contract, dict):
@@ -106,10 +135,10 @@ def build_scene_contract(
         "zones_v1": zone_rows,
         "blocks": block_rows,
         "record": dict(record or {}),
-        "permissions": dict(permissions or {}),
+        "permissions": _normalize_permissions(permissions),
         "actions": _normalize_actions(actions),
-        "extensions": dict(extensions or {}),
-        "diagnostics": dict(diagnostics or {}),
+        "extensions": _normalize_extensions(extensions),
+        "diagnostics": _normalize_diagnostics(diagnostics),
     }
     verdict = validate_scene_contract_shape(contract)
     contract["diagnostics"]["scene_contract_shape"] = verdict
