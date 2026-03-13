@@ -196,6 +196,15 @@ class LoadContractHandler(BaseIntentHandler):
 
         zones = []
 
+        def _add_zone(zone_key, block):
+            for zone in zones:
+                if zone.get("key") == zone_key:
+                    blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
+                    blocks.append(block)
+                    zone["blocks"] = blocks
+                    return
+            zones.append({"key": zone_key, "blocks": [block]})
+
         # header_zone
         header_blocks = []
         header_buttons = []
@@ -212,31 +221,36 @@ class LoadContractHandler(BaseIntentHandler):
         # detail/relation/collaboration by view
         if isinstance(views.get("form"), dict):
             form_view = views.get("form") or {}
+            if form_view.get("statusbar"):
+                _add_zone("summary_zone", {"type": "status_block", "data": form_view.get("statusbar")})
+            stat_buttons = []
+            if isinstance(form_view.get("button_box"), list):
+                stat_buttons.extend(form_view.get("button_box") or [])
+            if isinstance(form_view.get("stat_buttons"), list):
+                stat_buttons.extend(form_view.get("stat_buttons") or [])
+            if stat_buttons:
+                _add_zone("summary_zone", {"type": "stat_button_block", "data": {"buttons": stat_buttons}})
             if form_view.get("layout"):
-                zones.append({"key": "detail_zone", "blocks": [{"type": "field_group_block", "data": {"layout": form_view.get("layout")}}]})
+                _add_zone("detail_zone", {"type": "field_group_block", "data": {"layout": form_view.get("layout")}})
+                # notebook/page 结构作为显式 block 暴露，便于前端稳定识别 tabs 区。
+                _add_zone("detail_zone", {"type": "notebook_block", "data": {"layout": form_view.get("layout")}})
+            if isinstance(form_view.get("field_modifiers"), dict) and form_view.get("field_modifiers"):
+                _add_zone("detail_zone", {"type": "field_group_block", "data": {"field_modifiers": form_view.get("field_modifiers")}})
             if form_view.get("subviews"):
-                zones.append({"key": "relation_zone", "blocks": [{"type": "relation_table_block", "data": {"subviews": form_view.get("subviews")}}]})
+                _add_zone("relation_zone", {"type": "relation_table_block", "data": {"subviews": form_view.get("subviews")}})
             if form_view.get("chatter") or form_view.get("attachments"):
-                zones.append({
-                    "key": "collaboration_zone",
-                    "blocks": [
-                        {"type": "chatter_block", "data": form_view.get("chatter") or {}},
-                        {"type": "attachment_block", "data": form_view.get("attachments") or {}},
-                    ],
-                })
+                _add_zone("collaboration_zone", {"type": "chatter_block", "data": form_view.get("chatter") or {}})
+                _add_zone("attachment_zone", {"type": "attachment_block", "data": form_view.get("attachments") or {}})
 
         if isinstance(views.get("tree"), dict):
             tree_view = views.get("tree") or {}
-            zones.append({
-                "key": "detail_zone",
-                "blocks": [{"type": "relation_table_block", "data": {"columns": tree_view.get("columns") or []}}],
-            })
+            _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_view.get("columns") or []}})
 
         if isinstance(views.get("kanban"), dict):
-            zones.append({"key": "detail_zone", "blocks": [{"type": "relation_card_block", "data": views.get("kanban") or {}}]})
+            _add_zone("detail_zone", {"type": "relation_card_block", "data": views.get("kanban") or {}})
 
         if search:
-            zones.append({"key": "action_zone", "blocks": [{"type": "action_bar_block", "data": {"search": search}}]})
+            _add_zone("action_zone", {"type": "action_bar_block", "data": {"search": search}})
 
         model_name = str(head.get("model") or data.get("model") or "")
         view_type = str(head.get("view_type") or "")
