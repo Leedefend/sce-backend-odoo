@@ -70,7 +70,23 @@ def _load_data_provider():
     global _DATA_PROVIDER_MODULE
     if _DATA_PROVIDER_MODULE is not None:
         return _DATA_PROVIDER_MODULE
-    provider_path = Path(__file__).with_name("workspace_home_data_provider.py")
+
+    provider_path = None
+    try:
+        locator_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "provider_locator.py"
+        spec = spec_from_file_location("smart_scene_provider_locator_workspace_home", locator_path)
+        if spec is not None and spec.loader is not None:
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+            resolver = getattr(module, "resolve_workspace_home_provider_path", None)
+            if callable(resolver):
+                provider_path = resolver(Path(__file__))
+    except Exception:
+        provider_path = None
+
+    if provider_path is None:
+        provider_path = Path(__file__).with_name("workspace_home_data_provider.py")
+
     try:
         spec = spec_from_file_location("smart_core_workspace_home_data_provider", provider_path)
         if spec is None or spec.loader is None:

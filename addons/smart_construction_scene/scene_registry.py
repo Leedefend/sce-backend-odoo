@@ -1,10 +1,84 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
 IMPORTED_SCENES_PARAM = "sc.scene.package.imported_scenes"
+
+
+_SCENE_REGISTRY_CONTENT_MODULE = None
+
+
+def _load_scene_registry_content_module():
+    global _SCENE_REGISTRY_CONTENT_MODULE
+    if _SCENE_REGISTRY_CONTENT_MODULE is not None:
+        return _SCENE_REGISTRY_CONTENT_MODULE
+
+    provider_path = None
+    try:
+        locator_path = Path(__file__).resolve().parents[1] / "smart_scene" / "core" / "provider_locator.py"
+        locator_spec = spec_from_file_location("smart_scene_provider_locator_scene_registry", locator_path)
+        if locator_spec is not None and locator_spec.loader is not None:
+            locator_module = module_from_spec(locator_spec)
+            locator_spec.loader.exec_module(locator_module)
+            resolver = getattr(locator_module, "resolve_scene_registry_content_path", None)
+            if callable(resolver):
+                provider_path = resolver(Path(__file__))
+    except Exception:
+        provider_path = None
+
+    if provider_path is None:
+        _SCENE_REGISTRY_CONTENT_MODULE = False
+        return None
+
+    try:
+        spec = spec_from_file_location("smart_construction_scene_registry_content", provider_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _SCENE_REGISTRY_CONTENT_MODULE = module
+        return module
+    except Exception:
+        _SCENE_REGISTRY_CONTENT_MODULE = False
+        return None
+
+
+def _load_scene_registry_content_entries():
+    module = _load_scene_registry_content_module()
+    if module is None:
+        return []
+    fn = getattr(module, "list_scene_entries", None)
+    if not callable(fn):
+        return []
+    try:
+        rows = fn()
+        if isinstance(rows, list):
+            valid_rows = []
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                code = str(row.get("code") or "").strip()
+                target = row.get("target") if isinstance(row.get("target"), dict) else {}
+                if not code:
+                    continue
+                if not (
+                    target.get("route")
+                    or target.get("menu_xmlid")
+                    or target.get("action_xmlid")
+                    or target.get("menu_id")
+                    or target.get("action_id")
+                    or target.get("model")
+                ):
+                    continue
+                valid_rows.append(row)
+            return valid_rows
+    except Exception:
+        return []
+    return []
 
 
 def _append_drift(drift, *, scene_key, kind, fields, severity="info", source="db->registry"):
@@ -221,6 +295,7 @@ def load_scene_configs(env, drift=None):
     imported_scenes = _load_imported_scenes(env, drift=drift)
     include_tests = _include_test_scenes(env)
     # Note: keep configs data-only; target IDs are resolved by system_init.
+    # Complete migration: platform fallback keeps only minimal internal defaults.
     fallback = [
         {
             "code": "default",
@@ -236,255 +311,13 @@ def load_scene_configs(env, drift=None):
             "tags": ["internal", "smoke"],
             "target": {"route": "/workbench?scene=scene_smoke_default"},
         },
-        {
-            "code": "projects.list",
-            "name": "项目列表",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_root",
-                "action_xmlid": "smart_construction_core.action_sc_project_list",
-            },
-        },
-        {
-            "code": "data.dictionary",
-            "name": "业务字典",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_dictionary",
-                "action_xmlid": "smart_construction_core.action_project_dictionary",
-            },
-        },
-        {
-            "code": "config.project_cost_code",
-            "name": "成本科目",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_code",
-                "action_xmlid": "smart_construction_core.action_project_cost_code",
-            },
-        },
-        {
-            "code": "projects.dashboard",
-            "name": "项目驾驶舱",
-            "target": {
-                "route": "/pm/dashboard",
-                "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
-                "action_xmlid": "smart_construction_core.action_project_dashboard",
-            },
-        },
-        {
-            "code": "projects.dashboard_showcase",
-            "name": "项目驾驶舱（演示）",
-            "is_test": True,
-            "tags": ["internal"],
-            "target": {
-                "menu_xmlid": "smart_construction_demo.menu_sc_project_dashboard_showcase",
-                "action_xmlid": "smart_construction_demo.action_project_dashboard_showcase",
-            },
-        },
-        {
-            "code": "project.management",
-            "name": "项目驾驶舱",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_management_scene",
-                "route": "/s/project.management",
-            },
-        },
-        {
-            "code": "projects.intake",
-            "name": "项目立项",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_initiation",
-                "action_xmlid": "smart_construction_core.action_project_initiation",
-            },
-        },
-        {
-            "code": "projects.ledger",
-            "name": "项目台账（试点）",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
-                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
-            },
-        },
-        {
-            "code": "task.center",
-            "name": "任务中心",
-            "target": {
-                "action_xmlid": "project.action_view_all_task",
-            },
-        },
-        {
-            "code": "contract.center",
-            "name": "合同中心",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
-                "action_xmlid": "smart_construction_core.action_construction_contract_my",
-            },
-        },
-        {
-            "code": "contracts.workspace",
-            "name": "合同管理工作台",
-            "target": {
-                "route": "/s/contracts.workspace",
-                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
-                "action_xmlid": "smart_construction_core.action_construction_contract_my",
-            },
-        },
-        {
-            "code": "risk.monitor",
-            "name": "风险监控",
-            "target": {
-                "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
-            },
-        },
-        {
-            "code": "risk.center",
-            "name": "风险提醒工作台",
-            "target": {
-                "route": "/s/risk.center",
-                "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
-            },
-        },
-        {
-            "code": "finance.center",
-            "name": "财务中心",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
-                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
-            },
-        },
-        {
-            "code": "finance.workspace",
-            "name": "资金管理工作台",
-            "target": {
-                "route": "/s/finance.workspace",
-                "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
-                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
-            },
-        },
-        {
-            "code": "finance.operating_metrics",
-            "name": "经营指标看板",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_operating_metrics_project",
-                "action_xmlid": "smart_construction_core.action_sc_operating_metrics_project",
-            },
-        },
-        {
-            "code": "finance.payment_requests",
-            "name": "付款收款申请",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_payment_request",
-                "action_xmlid": "smart_construction_core.action_payment_request",
-            },
-        },
-        {
-            "code": "finance.settlement_orders",
-            "name": "结算单",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_settlement_order",
-                "action_xmlid": "smart_construction_core.action_sc_settlement_order",
-            },
-        },
-        {
-            "code": "finance.treasury_ledger",
-            "name": "资金台账",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_treasury_ledger",
-                "action_xmlid": "smart_construction_core.action_sc_treasury_ledger",
-            },
-        },
-        {
-            "code": "finance.payment_ledger",
-            "name": "收付款台账",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_payment_ledger",
-                "action_xmlid": "smart_construction_core.action_payment_ledger",
-            },
-        },
-        {
-            "code": "cost.cost_compare",
-            "name": "成本中心",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_cost_center",
-                "action_xmlid": "smart_construction_core.action_project_cost_compare",
-            },
-        },
-        {
-            "code": "cost.project_budget",
-            "name": "预算管理",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_budget",
-                "action_xmlid": "smart_construction_core.action_project_budget",
-            },
-        },
-        {
-            "code": "cost.project_boq",
-            "name": "工程量清单",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_boq_root",
-                "action_xmlid": "smart_construction_core.action_project_boq_line",
-            },
-        },
-        {
-            "code": "cost.budget_alloc",
-            "name": "预算分配",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_budget_alloc",
-                "action_xmlid": "smart_construction_core.action_project_budget_cost_alloc",
-            },
-        },
-        {
-            "code": "cost.analysis",
-            "name": "成本控制工作台",
-            "target": {
-                "route": "/s/cost.analysis",
-                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
-                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
-            },
-        },
-        {
-            "code": "cost.project_progress",
-            "name": "进度填报",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_progress",
-                "action_xmlid": "smart_construction_core.action_project_progress_entry",
-            },
-        },
-        {
-            "code": "cost.project_cost_ledger",
-            "name": "成本台账",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
-                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
-            },
-        },
-        {
-            "code": "cost.profit_compare",
-            "name": "盈亏对比",
-            "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_profit_reports",
-                "action_xmlid": "smart_construction_core.action_project_profit_compare",
-            },
-        },
-        {
-            "code": "portal.lifecycle",
-            "name": "生命周期驾驶舱",
-            "target": {"route": "/s/projects.dashboard"},
-        },
-        {
-            "code": "portal.capability_matrix",
-            "name": "能力矩阵",
-            "target": {"route": "/s/project.management"},
-        },
-        {
-            "code": "portal.dashboard",
-            "name": "工作台",
-            "target": {"route": "/"},
-        },
-        {
-            "code": "my_work.workspace",
-            "name": "我的工作",
-            "target": {"route": "/s/my_work.workspace"},
-        },
     ]
+    for scene in _load_scene_registry_content_entries():
+        code = str(scene.get("code") or "").strip()
+        if not code:
+            continue
+        fallback = [item for item in fallback if str(item.get("code") or "").strip() != code]
+        fallback.append(scene)
     if not db_scenes:
         if not imported_scenes:
             return _filter_test_scenes(fallback, include_tests)
