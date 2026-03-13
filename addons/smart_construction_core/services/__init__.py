@@ -12,3 +12,4 @@ from . import contract_governance_overrides
 from . import my_work_aggregate_service
 from . import project_dashboard_builders
 from . import project_dashboard_service
+from . import project_creation_service

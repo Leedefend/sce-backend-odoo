@@ -1051,8 +1051,17 @@ class ProjectProject(models.Model):
     def create(self, vals_list):
         sequence = self.env['ir.sequence']
         default_stage = self._default_stage_id()
+        creation_service = None
+        try:
+            from ...services.project_creation_service import ProjectCreationService
+
+            creation_service = ProjectCreationService(self.env)
+        except Exception:
+            creation_service = None
         updated_vals = []
         for vals in vals_list:
+            if creation_service is not None:
+                vals = creation_service.normalize_create_vals(vals)
             if not vals.get('project_code'):
                 code = sequence.next_by_code('project.project.code')
                 if not code:
@@ -1067,7 +1076,13 @@ class ProjectProject(models.Model):
             elif not vals.get('stage_id') and default_stage:
                 vals['stage_id'] = default_stage
             updated_vals.append(vals)
-        return super().create(updated_vals)
+        projects = super().create(updated_vals)
+        if creation_service is not None:
+            try:
+                creation_service.post_create_bootstrap(projects)
+            except Exception:
+                pass
+        return projects
 
     def init(self):
         # 确保老项目也有默认阶段

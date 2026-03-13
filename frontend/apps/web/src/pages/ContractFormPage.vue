@@ -2,13 +2,14 @@
   <main class="page">
     <header class="header">
       <div>
-        <h1>{{ pageTitle }}</h1>
+        <h1>{{ isProjectQuickIntakeMode ? '快速创建项目' : pageTitle }}</h1>
+        <p v-if="isProjectQuickIntakeMode" class="meta">快速创建模式：仅创建项目管理对象，保存后自动进入项目驾驶舱。</p>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
       </div>
       <div class="actions">
         <button
-          v-for="action in headerActions"
+          v-for="action in headerActionsVisible"
           :key="`hdr-${action.key}`"
           :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
           :disabled="busy || !action.enabled"
@@ -20,10 +21,10 @@
         <button
           v-if="!hasPrimaryHeaderAction"
           class="primary"
-          :disabled="busy || !canSave || (Boolean(recordId) && !hasChanges)"
+          :disabled="isQuickSubmitDisabled"
           @click="saveRecord"
         >
-          {{ busy && busyKind === 'save' ? '保存中...' : '保存' }}
+          {{ submitButtonLabel }}
         </button>
         <!-- compat token: v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson" -->
         <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
@@ -88,7 +89,7 @@
         <section v-for="section in layoutSections" :key="section.key" class="form-section">
           <h3 class="form-section-title">{{ section.title }}</h3>
           <div class="form-section-grid">
-            <div v-for="node in section.fields" :key="node.key" class="field">
+            <div v-for="node in visibleSectionFields(section)" :key="node.key" class="field">
               <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
               <template v-if="node.readonly">
                 <FieldValue :value="formData[node.name]" :field="node.descriptor" />
@@ -291,6 +292,7 @@ import {
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
@@ -378,6 +380,10 @@ const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
+function resolveWorkspaceContextQuery() {
+  return readWorkspaceContext(route.query as Record<string, unknown>);
+}
+
 const status = ref<UiStatus>('loading');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
@@ -458,6 +464,17 @@ const rights = computed(() => {
 });
 
 const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create));
+const isProjectQuickIntakeMode = computed(() => {
+  if (String(model.value || '').trim() !== 'project.project') return false;
+  if (recordId.value) return false;
+  return String(route.query.intake_mode || '').trim().toLowerCase() === 'quick';
+});
+const quickRequiredReady = computed(() => {
+  if (!isProjectQuickIntakeMode.value) return true;
+  const projectName = String(formData.name || '').trim();
+  const managerId = Number(formData.manager_id || 0);
+  return Boolean(projectName) && Number.isFinite(managerId) && managerId > 0;
+});
 const hasChanges = computed(() => {
   const keys = Object.keys(formData);
   return keys.some((key) => {
@@ -481,6 +498,30 @@ const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
   return model.value ? `业务表单 · ${model.value}` : '业务表单';
+});
+
+const submitButtonLabel = computed(() => {
+  if (busy.value && busyKind.value === 'save') {
+    return isProjectQuickIntakeMode.value ? '创建中...' : '保存中...';
+  }
+  if (isProjectQuickIntakeMode.value && !recordId.value) {
+    return '创建并进入项目驾驶舱';
+  }
+  return '保存';
+});
+
+const headerActionsVisible = computed(() => {
+  if (isProjectQuickIntakeMode.value) return [];
+  return headerActions.value;
+});
+
+const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
+
+const isQuickSubmitDisabled = computed(() => {
+  if (busy.value) return true;
+  if (!canSave.value) return true;
+  if (isProjectQuickIntakeMode.value) return !quickRequiredReady.value;
+  return Boolean(recordId.value) && !hasChanges.value;
 });
 
 const contractMetaLine = computed(() => {
@@ -1436,7 +1477,6 @@ const contractActions = computed<ContractAction[]>(() => {
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
-const hasPrimaryHeaderAction = computed(() => headerActions.value.some((item) => item.semantic === 'primary_action'));
 
 type SemanticFieldGroup = {
   name: string;
@@ -1584,6 +1624,9 @@ function runtimeState(name: string) {
 }
 
 function isFieldVisible(name: string) {
+  if (isProjectQuickIntakeMode.value) {
+    return ['name', 'manager_id', 'owner_id'].includes(String(name || '').trim());
+  }
   const semantic = fieldSemanticMeta(name);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
@@ -1739,6 +1782,10 @@ const layoutSections = computed<LayoutSection[]>(() => {
   if (visible.length) return visible;
   return sections.filter((section) => section.fields.length);
 });
+
+function visibleSectionFields(section: LayoutSection) {
+  return section.fields.filter((node) => isFieldVisible(node.name));
+}
 
 const contractReadiness = computed<FormContractReadiness>(() => {
   if (!contract.value) {
@@ -2532,6 +2579,16 @@ async function saveRecord() {
     }
     const created = await createRecord({ model: model.value, vals: values });
     if (created?.id) {
+      if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
+        await router.replace({
+          path: '/s/project.management',
+          query: {
+            project_id: String(created.id),
+            ...resolveWorkspaceContextQuery(),
+          },
+        });
+        return;
+      }
       await router.replace({
         name: 'model-form',
         params: { model: model.value, id: String(created.id) },
