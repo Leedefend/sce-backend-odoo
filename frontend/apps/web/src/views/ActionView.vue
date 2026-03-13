@@ -675,71 +675,6 @@ type SurfaceIntent = {
   secondaryAction?: FocusNavAction;
 };
 
-const MODEL_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
-  'project.project': {
-    columns: ['name', 'stage_id', 'user_id', 'contract_amount', 'write_date'],
-    column_labels: {
-      name: '项目名称',
-      stage_id: '项目状态',
-      user_id: '项目负责人',
-      contract_amount: '合同额',
-      write_date: '更新时间',
-    },
-    row_primary: 'name',
-    row_secondary: 'user_id',
-  },
-  'project.project::ledger': {
-    columns: ['name', 'stage_id', 'user_id', 'contract_amount', 'write_date'],
-    column_labels: {
-      name: '项目名称',
-      stage_id: '项目状态',
-      user_id: '项目负责人',
-      contract_amount: '关键金额',
-      write_date: '更新时间',
-    },
-    row_primary: 'name',
-    row_secondary: 'user_id',
-  },
-  'project.task': {
-    columns: ['name', 'kanban_state', 'user_ids', 'date_deadline', 'write_date'],
-    column_labels: {
-      name: '任务名称',
-      kanban_state: '状态',
-      user_ids: '负责人',
-      date_deadline: '截止日期',
-      write_date: '更新时间',
-    },
-    row_primary: 'name',
-    row_secondary: 'user_ids',
-  },
-  'project.risk': {
-    columns: ['name', 'state', 'project_id', 'partner_id', 'amount', 'date_request'],
-    column_labels: {
-      name: '风险单号',
-      state: '风险状态',
-      project_id: '项目',
-      partner_id: '往来单位',
-      amount: '风险金额',
-      date_request: '触发日期',
-    },
-    row_primary: 'name',
-    row_secondary: 'project_id',
-  },
-  'cost.project_boq': {
-    columns: ['name', 'project_id', 'quantity', 'price', 'amount_total', 'write_date'],
-    column_labels: {
-      name: '清单名称',
-      project_id: '项目',
-      quantity: '工程量',
-      price: '单价',
-      amount_total: '金额',
-      write_date: '更新时间',
-    },
-    row_primary: 'name',
-    row_secondary: 'project_id',
-  },
-};
-
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
@@ -763,44 +698,10 @@ const scene = computed<Scene | null>(() => {
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
-const effectiveListModel = computed(() => String(resolvedModelRef.value || actionMeta.value?.model || actionContract.value?.head?.model || '').trim());
-const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger' && effectiveListModel.value === 'project.project');
-function mergeColumnsWithPreset(baseColumns: string[], presetColumns: string[]) {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  presetColumns.forEach((col) => {
-    const key = String(col || '').trim();
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    out.push(key);
-  });
-  baseColumns.forEach((col) => {
-    const key = String(col || '').trim();
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    out.push(key);
-  });
-  return out;
-}
+const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 
 const listProfile = computed<SceneListProfile | null>(() => {
-  const base = (scene.value?.list_profile as SceneListProfile) || null;
-  const resolvedModel = String(effectiveListModel.value || '').trim();
-  const presetKey = pageMode.value === 'ledger' ? `${resolvedModel}::ledger` : resolvedModel;
-  const preset = MODEL_LIST_PROFILE_PRESETS[presetKey] || MODEL_LIST_PROFILE_PRESETS[resolvedModel] || null;
-  if (!base && !preset) return null;
-  if (!base) return preset;
-  if (!preset) return base;
-  return {
-    ...base,
-    columns: mergeColumnsWithPreset(base.columns || [], preset.columns || []),
-    column_labels: {
-      ...(base.column_labels || {}),
-      ...(preset.column_labels || {}),
-    },
-    row_primary: preset.row_primary || base.row_primary,
-    row_secondary: preset.row_secondary || base.row_secondary,
-  };
+  return (scene.value?.list_profile as SceneListProfile) || null;
 });
 
 const model = computed(() => actionMeta.value?.model ?? '');
@@ -812,14 +713,8 @@ const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
 const canBatchDelete = computed(() => {
-  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
-  if (targetModel !== 'project.project') return false;
-  const groups = session.user?.groups_xmlids || [];
-  const isProjectManager = groups.includes('smart_construction_core.group_sc_cap_project_manager');
-  const isSuperAdmin = groups.includes('smart_construction_core.group_sc_super_admin') || groups.includes('base.group_system');
-  if (!isProjectManager && !isSuperAdmin) return false;
   const unlinkRight = actionContract.value?.permissions?.effective?.rights?.unlink;
-  return unlinkRight === true;
+  return unlinkRight === true && viewMode.value === 'list';
 });
 const activeContractFilterKey = ref('');
 const activeSavedFilterKey = ref('');
@@ -1053,15 +948,12 @@ const ledgerOverviewItems = computed(() => {
 });
 
 const listSemanticKind = computed(() => {
-  const modelKey = String(effectiveListModel.value || '').toLowerCase();
-  if (modelKey === 'project.project') return 'project';
-  if (modelKey === 'project.task') return 'task';
-  if (modelKey.includes('risk')) return 'risk';
-  if (modelKey === 'cost.project_boq') return 'boq';
   const fieldSet = new Set(columns.value.map((field) => String(field || '').toLowerCase()));
   if (fieldSet.has('quantity') && (fieldSet.has('price') || fieldSet.has('amount_total'))) return 'boq';
   if (fieldSet.has('date_deadline') && (fieldSet.has('kanban_state') || fieldSet.has('user_ids'))) return 'task';
   if (fieldSet.has('date_request') && fieldSet.has('amount') && fieldSet.has('state')) return 'risk';
+  if (fieldSet.has('stage_id') && (fieldSet.has('contract_amount') || fieldSet.has('user_id'))) return 'project';
+  if (pageMode.value === 'ledger') return 'project';
   return 'generic';
 });
 
@@ -3452,7 +3344,7 @@ async function load() {
       ? (result.data as Record<string, unknown>)
       : {};
     listTotalCount.value = readTotalFromListResult(resultData);
-    if (pageMode.value === 'list' && resolvedModel === 'project.project' && hasActiveField.value) {
+    if (pageMode.value === 'list' && hasActiveField.value) {
       try {
         const domainRaw = resolveEffectiveFilterDomainRaw();
         const term = searchTerm.value.trim();

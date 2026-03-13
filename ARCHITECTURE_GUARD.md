@@ -12,6 +12,7 @@
 ## 核心参考
 - 详细规则：`docs/architecture/ai_development_guard.md`
 - 前端页面规范：`docs/architecture/native_view_reuse_frontend_spec_v1.md`
+- 五层核心边界：`docs/architecture/five_layer_core_boundary_v1.md`
 - 执行与验证白名单：`docs/ops/codex_execution_allowlist.md`
 
 ## PR 最低要求
