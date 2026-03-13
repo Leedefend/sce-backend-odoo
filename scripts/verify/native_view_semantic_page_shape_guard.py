@@ -71,6 +71,43 @@ def validate_file(path: Path) -> list[str]:
             if btype not in ALLOWED_BLOCKS:
                 errs.append(f"{path}: zones[{i}].blocks[{j}].type='{btype}' not allowed")
 
+    actions = sp.get("actions")
+    if actions is not None:
+        if not isinstance(actions, dict):
+            errs.append(f"{path}: semantic_page.actions must be object")
+        else:
+            for action_group in ("header_actions", "record_actions", "toolbar_actions"):
+                action_items = actions.get(action_group)
+                if action_items is None:
+                    continue
+                if not isinstance(action_items, list):
+                    errs.append(f"{path}: semantic_page.actions.{action_group} must be array")
+                    continue
+                for index, action in enumerate(action_items):
+                    if not isinstance(action, dict):
+                        errs.append(f"{path}: semantic_page.actions.{action_group}[{index}] must be object")
+                        continue
+                    for key in ("key", "label", "enabled", "reason_code"):
+                        if key not in action:
+                            errs.append(f"{path}: semantic_page.actions.{action_group}[{index}] missing '{key}'")
+
+    verdicts = sp.get("permission_verdicts")
+    if verdicts is not None:
+        if not isinstance(verdicts, dict):
+            errs.append(f"{path}: semantic_page.permission_verdicts must be object")
+        else:
+            for perm_key in ("read", "create", "write", "unlink", "execute"):
+                verdict = verdicts.get(perm_key)
+                if verdict is None:
+                    errs.append(f"{path}: semantic_page.permission_verdicts missing '{perm_key}'")
+                    continue
+                if not isinstance(verdict, dict):
+                    errs.append(f"{path}: semantic_page.permission_verdicts.{perm_key} must be object")
+                    continue
+                for key in ("allowed", "reason_code"):
+                    if key not in verdict:
+                        errs.append(f"{path}: semantic_page.permission_verdicts.{perm_key} missing '{key}'")
+
     return errs
 
 
