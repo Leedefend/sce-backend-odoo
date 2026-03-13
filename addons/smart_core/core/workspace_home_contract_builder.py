@@ -43,6 +43,7 @@ STATE_TONES = _SEM.get("STATE_TONES") or ("success", "warning", "danger", "info"
 PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending", "running", "completed")
 _ACTION_TARGET_RESOLVER = None
 _DATA_PROVIDER_MODULE = None
+_SCENE_ENGINE_MODULE = None
 
 
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
@@ -97,6 +98,24 @@ def _load_data_provider():
         return module
     except Exception:
         _DATA_PROVIDER_MODULE = False
+        return None
+
+
+def _load_scene_engine_module():
+    global _SCENE_ENGINE_MODULE
+    if _SCENE_ENGINE_MODULE is not None:
+        return _SCENE_ENGINE_MODULE
+    engine_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_engine.py"
+    try:
+        spec = spec_from_file_location("smart_scene_core_scene_engine_workspace_home", engine_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _SCENE_ENGINE_MODULE = module
+        return module
+    except Exception:
+        _SCENE_ENGINE_MODULE = False
         return None
 
 
@@ -1495,6 +1514,58 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         or _to_int(extraction_stats.get("today_actions_business")) > 0
         or _to_int(extraction_stats.get("risk_actions_business")) > 0
     )
+    scene_engine_meta: Dict[str, Any] = {}
+    scene_engine = _load_scene_engine_module()
+    engine_fn = getattr(scene_engine, "build_scene_contract_from_specs", None) if scene_engine else None
+    if callable(engine_fn):
+        try:
+            orchestration_v1 = _build_page_orchestration_v1(role_code)
+            zones_payload = orchestration_v1.get("zones") if isinstance(orchestration_v1, dict) else []
+            zone_specs = []
+            built_zones = {}
+            for row in zones_payload if isinstance(zones_payload, list) else []:
+                if not isinstance(row, dict):
+                    continue
+                zone_key = _to_text(row.get("key"))
+                if not zone_key:
+                    continue
+                block_keys = []
+                for block in row.get("blocks") if isinstance(row.get("blocks"), list) else []:
+                    if not isinstance(block, dict):
+                        continue
+                    block_key = _to_text(block.get("key"))
+                    if block_key:
+                        block_keys.append(block_key)
+                zone_specs.append(
+                    {
+                        "key": zone_key,
+                        "title": _to_text(row.get("title")),
+                        "zone_type": _to_text(row.get("zone_type")),
+                        "display_mode": _to_text(row.get("display_mode")),
+                        "block_key": block_keys[0] if block_keys else "",
+                    }
+                )
+                built_zones[zone_key] = {
+                    "zone_key": zone_key,
+                    "title": _to_text(row.get("title")),
+                    "zone_type": _to_text(row.get("zone_type")),
+                    "display_mode": _to_text(row.get("display_mode")),
+                    "blocks": list(row.get("blocks") or []),
+                }
+            contract = engine_fn(
+                scene_hint={"key": "portal.dashboard", "page": "portal.dashboard"},
+                page_hint={"key": "portal.dashboard", "title": "工作台", "route": "/"},
+                zone_specs=zone_specs,
+                built_zones=built_zones,
+                record={"hero": {"title": "工作台"}},
+                diagnostics={"source": "workspace_home_contract_builder"},
+            )
+            scene_engine_meta = {
+                "enabled": True,
+                "shape_ok": bool(((contract.get("diagnostics") or {}).get("scene_contract_shape") or {}).get("ok")),
+            }
+        except Exception as exc:
+            scene_engine_meta = {"enabled": False, "error": _to_text(exc)}
     return {
         "schema_version": "v1",
         "semantic_protocol": {
@@ -1641,6 +1712,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "focus": _role_focus_config(role_code).get("focus_blocks", []),
         },
         "diagnostics": {
+            "scene_engine": scene_engine_meta,
             "platform": {
                 "ready_caps": ready_count,
                 "locked_caps": locked_count,

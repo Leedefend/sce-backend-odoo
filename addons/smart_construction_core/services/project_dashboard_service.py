@@ -11,6 +11,7 @@ from .project_dashboard_builders import BUILDERS
 
 _SCENE_CONTENT_MODULE = None
 _KERNEL_MODULE = None
+_SCENE_ENGINE_MODULE = None
 
 
 def _load_scene_content_module():
@@ -63,6 +64,24 @@ def _load_orchestration_kernel_module():
         return None
 
 
+def _load_scene_engine_module():
+    global _SCENE_ENGINE_MODULE
+    if _SCENE_ENGINE_MODULE is not None:
+        return _SCENE_ENGINE_MODULE
+    engine_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_engine.py"
+    try:
+        spec = spec_from_file_location("smart_scene_core_scene_engine", engine_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _SCENE_ENGINE_MODULE = module
+        return module
+    except Exception:
+        _SCENE_ENGINE_MODULE = False
+        return None
+
+
 class ProjectDashboardService:
     """Assemble project.dashboard contract using block builders."""
 
@@ -108,6 +127,24 @@ class ProjectDashboardService:
         zones = self._build_zones(project=project, context=ctx)
         scene = self._scene_content.get("scene") if isinstance(self._scene_content.get("scene"), dict) else {}
         page = self._scene_content.get("page") if isinstance(self._scene_content.get("page"), dict) else {}
+        diagnostics = {
+            "project_resolution": project_resolution,
+        }
+        scene_engine = _load_scene_engine_module()
+        engine_fn = getattr(scene_engine, "build_scene_contract_from_specs", None) if scene_engine else None
+        if callable(engine_fn):
+            contract = engine_fn(
+                scene_hint=scene,
+                page_hint=page,
+                zone_specs=self._scene_content.get("zone_blocks") if isinstance(self._scene_content.get("zone_blocks"), list) else [],
+                built_zones=zones,
+                record={"project": project_payload},
+                diagnostics=diagnostics,
+            )
+            contract["route_context"] = self._route_context(project)
+            contract["project"] = project_payload
+            return contract
+
         return {
             "scene": {
                 "key": str(scene.get("key") or "project.management"),
@@ -120,9 +157,7 @@ class ProjectDashboardService:
             },
             "route_context": self._route_context(project),
             "project": project_payload,
-            "diagnostics": {
-                "project_resolution": project_resolution,
-            },
+            "diagnostics": diagnostics,
             "zones": zones,
         }
 
