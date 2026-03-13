@@ -1,0 +1,37 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "kanban",
+    "layout": "auto",
+    "kanban_semantics": {
+      "title_field": "name",
+      "subtitle_field": "manager_id",
+      "stage_field": "stage_id",
+      "card_fields": ["name", "manager_id", "stage_id", "budget_total"],
+      "metric_fields": ["budget_total"]
+    },
+    "zones": [
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "relation_card_block",
+            "data": {
+              "kanban_semantics": {
+                "title_field": "name",
+                "subtitle_field": "manager_id",
+                "stage_field": "stage_id",
+                "card_fields": ["name", "manager_id", "stage_id", "budget_total"],
+                "metric_fields": ["budget_total"]
+              },
+              "card_actions": [
+                {"key": "open", "label": "查看详情", "enabled": true, "reason_code": "OK"},
+                {"key": "edit", "label": "编辑", "enabled": true, "reason_code": "OK"}
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
