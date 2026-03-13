@@ -1,0 +1,43 @@
+# Native View Contract Verification Plan v1
+
+## Verification Objectives
+- 防止“支持能力退化”
+- 防止“契约 shape 漂移”
+- 防止“前端猜测责任回流”
+
+## Verification Items
+
+### V1 Snapshot Suite
+- 样本页面 contract 快照（form/tree/kanban/search 各至少 2 个）。
+- 存放：`artifacts/contract/native_view_audit/sample_cases/`。
+
+### V2 Semantic Shape Guard
+- 校验字段：
+  - `semantic_page.layout`
+  - `semantic_page.zones[].key`
+  - `semantic_page.zones[].blocks[].type`
+  - `actions`
+  - `permissions`
+
+### V3 Button Semantics Guard
+- object/action/stat/smart button shape 必须一致。
+- 必须有可执行 verdict 与 reason_code。
+
+### V4 Relation/X2many Guard
+- relation contract 必须包含：model、view hints、action hints、permission verdict。
+
+### V5 Search/Kanban Coverage Guard
+- search filters/group_by 必须存在。
+- kanban card fields/grouping hints 必须存在。
+
+## Recommended Verify Chain
+1. `make verify.project.dashboard.contract`
+2. 新增：`make verify.native_view.contract.samples`
+3. 新增：`make verify.native_view.contract.shape`
+4. 新增：`make verify.native_view.coverage.report`
+
+## Reporting
+每次迭代输出：
+- 覆盖率变化
+- 退化项列表
+- 阻断级问题（P0）

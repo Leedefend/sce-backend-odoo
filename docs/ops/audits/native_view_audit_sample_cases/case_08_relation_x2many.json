@@ -1,0 +1,6 @@
+{
+  "case": "relation_x2many_contract",
+  "status": "partial_pass",
+  "path": "app.view.config.get_contract_api(form.subviews)",
+  "gaps": ["relation_zone_block_semantics_missing", "frontend_render_hints_not_unified"]
+}

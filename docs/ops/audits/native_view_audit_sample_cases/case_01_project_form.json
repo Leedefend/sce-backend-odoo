@@ -1,0 +1,7 @@
+{
+  "case": "project.project_form_complex",
+  "native_traits": ["header", "notebook", "x2many", "chatter", "button_box"],
+  "path": "load_contract -> app.contract.service -> app.view.config -> app.view.parser",
+  "status": "partial_pass",
+  "gaps": ["semantic_page_shape_not_unified", "permission_verdict_not_unified"]
+}
