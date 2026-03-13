@@ -57,6 +57,7 @@
       <span>已选 {{ selectedCount }} 条</span>
       <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
       <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
+      <button v-if="showDelete" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('delete')">批量删除</button>
       <template v-if="showAssign">
         <select :value="String(selectedAssigneeId || '')" :disabled="loading" @change="onAssigneeSelectChange">
           <option value="">选择负责人</option>
@@ -67,6 +68,7 @@
       <button type="button" :disabled="loading || !selectedCount" @click="callBatchExport('selected')">导出选中 CSV</button>
       <button type="button" :disabled="loading || !records.length" @click="callBatchExport('all')">导出当前页 CSV</button>
       <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
+      <span v-if="showDelete" class="batch-note">当前按归档处理，物理删除能力未开放</span>
       <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
     </section>
 
@@ -308,7 +310,8 @@ const props = defineProps<{
   selectedIds?: number[];
   onToggleSelection?: (id: number, selected: boolean) => void;
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
-  onBatchAction?: (action: 'archive' | 'activate') => void;
+  onBatchAction?: (action: 'archive' | 'activate' | 'delete') => void;
+  showDelete?: boolean;
   onBatchAssign?: (assigneeId: number) => void;
   onBatchExport?: (scope: 'selected' | 'all') => void;
   onAssigneeChange?: (assigneeId: number | null) => void;
@@ -632,9 +635,9 @@ function clearSelection() {
   props.onClearSelection?.();
 }
 
-function callBatchAction(action: 'archive' | 'activate') {
+function callBatchAction(action: 'archive' | 'activate' | 'delete') {
   if (selectedCount.value <= 0) return;
-  const label = action === 'archive' ? '归档' : '激活';
+  const label = action === 'archive' ? '归档' : action === 'activate' ? '激活' : '删除';
   if (!window.confirm(`确认批量${label} ${selectedCount.value} 条记录？`)) {
     return;
   }
@@ -917,6 +920,11 @@ function columnLabel(col: string) {
   margin-left: auto;
   font-size: 13px;
   color: #166534;
+}
+
+.batch-note {
+  font-size: 12px;
+  color: #64748b;
 }
 
 .batch-details {

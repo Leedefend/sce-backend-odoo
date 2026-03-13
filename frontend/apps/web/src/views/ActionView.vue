@@ -299,7 +299,7 @@
       :status-label="statusLabel"
       :scene-key="sceneKey"
       :page-mode="pageMode"
-      :record-count="records.length"
+      :record-count="recordCount"
       :summary-items="listSummaryItems"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
@@ -307,6 +307,7 @@
       :failed-csv-available="Boolean(failedCsvContentB64)"
       :has-more-failures="batchHasMoreFailures"
       :show-assign="hasAssigneeField"
+      :show-delete="canBatchDelete"
       :assignee-options="assigneeOptions"
       :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
@@ -383,7 +384,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
+import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw, writeRecord } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -449,6 +450,9 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
+const listTotalCount = ref<number | null>(null);
+const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
+const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
 const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
@@ -803,6 +807,16 @@ const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
+const canBatchDelete = computed(() => {
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  if (targetModel !== 'project.project') return false;
+  const groups = session.user?.groups_xmlids || [];
+  const isProjectManager = groups.includes('smart_construction_core.group_sc_cap_project_manager');
+  const isSuperAdmin = groups.includes('smart_construction_core.group_sc_super_admin') || groups.includes('base.group_system');
+  if (!isProjectManager && !isSuperAdmin) return false;
+  const unlinkRight = actionContract.value?.permissions?.effective?.rights?.unlink;
+  return unlinkRight === true;
+});
 const activeContractFilterKey = ref('');
 const activeSavedFilterKey = ref('');
 const activeGroupByField = ref('');
@@ -1077,6 +1091,8 @@ const listSummaryItems = computed(() => {
     ];
   }
   if (sceneKey.value === 'projects.list') {
+    const totals = projectScopeTotals.value;
+    const scopeMetrics = projectScopeMetrics.value;
     let warning = 0;
     let done = 0;
     let amount = 0;
@@ -1086,9 +1102,16 @@ const listSummaryItems = computed(() => {
       if (isCompletedState(String(state.text || ''), state.tone)) done += 1;
       amount += resolveProjectAmount(row);
     });
+    if (scopeMetrics) {
+      warning = scopeMetrics.warning;
+      done = scopeMetrics.done;
+      amount = scopeMetrics.amount;
+    }
     const hasAmount = amount > 0;
     return [
-      { key: 'project_total', label: '项目总数', value: String(rows.length), tone: 'info' },
+      { key: 'project_total', label: '项目总数', value: String(totals?.all ?? rows.length), tone: 'info' },
+      { key: 'project_active', label: '在办项目', value: String(totals?.active ?? rows.length), tone: 'neutral' },
+      { key: 'project_archived', label: '已归档', value: String(totals?.archived ?? 0), tone: (totals?.archived ?? 0) > 0 ? 'warning' : 'success' },
       { key: 'project_warning', label: '预警项目', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
       { key: 'project_done', label: '已完工', value: String(done), tone: 'success' },
       {
@@ -1118,6 +1141,12 @@ const statusLabel = computed(() => {
 const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
   status.value === 'idle' ? 'loading' : status.value,
 );
+const recordCount = computed(() => {
+  if (listTotalCount.value !== null && Number.isFinite(listTotalCount.value)) {
+    return Math.max(0, Math.trunc(listTotalCount.value));
+  }
+  return records.value.length;
+});
 const advancedViewTitle = computed(() => {
   const labels: Record<string, string> = {
     pivot: pageText('advanced_title_pivot', '数据透视视图'),
@@ -2313,6 +2342,103 @@ function mergeActiveFilter(base: unknown) {
   return [...domain, activeClause];
 }
 
+function readTotalFromListResult(payload: unknown): number | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const raw = Number((payload as Record<string, unknown>).total);
+  if (!Number.isFinite(raw) || raw < 0) return null;
+  return Math.trunc(raw);
+}
+
+async function fetchScopedTotal(params: {
+  model: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Record<string, unknown>;
+  contextRaw: string;
+  searchTerm: string;
+  order: string;
+}) {
+  const result = await listRecordsRaw({
+    model: params.model,
+    fields: ['id'],
+    domain: params.domain,
+    domain_raw: params.domainRaw,
+    need_total: true,
+    context: params.context,
+    context_raw: params.contextRaw,
+    limit: 1,
+    offset: 0,
+    search_term: params.searchTerm || undefined,
+    order: params.order,
+  });
+  return readTotalFromListResult(result.data);
+}
+
+async function fetchProjectScopeMetrics(params: {
+  model: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Record<string, unknown>;
+  contextRaw: string;
+  searchTerm: string;
+  order: string;
+}) {
+  const fields = [
+    'id',
+    'stage_id',
+    'state',
+    'status',
+    'contract_income_total',
+    'contract_amount',
+    'amount_total',
+    'total_amount',
+    'budget_total',
+  ];
+  const pageLimit = 200;
+  const maxPages = 25;
+  let page = 0;
+  let offset = 0;
+  let warning = 0;
+  let done = 0;
+  let amount = 0;
+  while (page < maxPages) {
+    const result = await listRecordsRaw({
+      model: params.model,
+      fields,
+      domain: params.domain,
+      domain_raw: params.domainRaw,
+      context: params.context,
+      context_raw: params.contextRaw,
+      limit: pageLimit,
+      offset,
+      search_term: params.searchTerm || undefined,
+      order: params.order,
+    });
+    const payload = result.data && typeof result.data === 'object'
+      ? (result.data as Record<string, unknown>)
+      : {};
+    const pageRows = Array.isArray(payload.records)
+      ? (payload.records as Array<Record<string, unknown>>)
+      : [];
+    if (!pageRows.length) break;
+    pageRows.forEach((row) => {
+      const state = resolveProjectStateCell(row);
+      if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
+      if (isCompletedState(String(state.text || ''), state.tone)) done += 1;
+      amount += resolveProjectAmount(row);
+    });
+    const nextOffset = Number(payload.next_offset || 0);
+    if (!Number.isFinite(nextOffset) || nextOffset <= offset) {
+      offset += pageRows.length;
+    } else {
+      offset = Math.trunc(nextOffset);
+    }
+    if (pageRows.length < pageLimit) break;
+    page += 1;
+  }
+  return { warning, done, amount };
+}
+
 function uniqueFields(fields: string[]) {
   const seen = new Set<string>();
   return fields.filter((field) => {
@@ -3136,11 +3262,19 @@ async function load() {
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
       return;
     }
+    const baseDomain = mergeSceneDomain(
+      mergeSceneDomain(meta?.domain, scene.value?.filters),
+      resolveEffectiveFilterDomain(),
+    );
+    const activeDomain = mergeActiveFilter(baseDomain);
+    const requestContext = mergeContext(meta?.context, resolveEffectiveRequestContext());
+    const requestContextRaw = resolveEffectiveRequestContextRaw();
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
-      domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
+      domain: activeDomain,
       domain_raw: resolveEffectiveFilterDomainRaw(),
+      need_total: true,
       group_by: activeGroupByField.value || undefined,
       group_offset: activeGroupByField.value ? Math.max(0, Math.trunc(groupWindowOffset.value || 0)) : 0,
       need_group_total: Boolean(activeGroupByField.value),
@@ -3148,8 +3282,8 @@ async function load() {
       group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
       group_page_size: groupSampleLimit.value,
       group_page_offsets: groupPageOffsets.value,
-      context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
-      context_raw: resolveEffectiveRequestContextRaw(),
+      context: requestContext,
+      context_raw: requestContextRaw,
       limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,
@@ -3299,6 +3433,67 @@ async function load() {
     const resultData = result.data && typeof result.data === 'object'
       ? (result.data as Record<string, unknown>)
       : {};
+    listTotalCount.value = readTotalFromListResult(resultData);
+    if (sceneKey.value === 'projects.list' && resolvedModel === 'project.project' && hasActiveField.value) {
+      try {
+        const domainRaw = resolveEffectiveFilterDomainRaw();
+        const term = searchTerm.value.trim();
+        const [allTotal, activeTotal, archivedTotal, scopeMetrics] = await Promise.all([
+          fetchScopedTotal({
+            model: resolvedModel,
+            domain: baseDomain,
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+          fetchScopedTotal({
+            model: resolvedModel,
+            domain: [...baseDomain, ['active', '=', true]],
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+          fetchScopedTotal({
+            model: resolvedModel,
+            domain: [...baseDomain, ['active', '=', false]],
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+          fetchProjectScopeMetrics({
+            model: resolvedModel,
+            domain: baseDomain,
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+        ]);
+        if (allTotal !== null && activeTotal !== null && archivedTotal !== null) {
+          projectScopeTotals.value = {
+            all: allTotal,
+            active: activeTotal,
+            archived: archivedTotal,
+          };
+        } else {
+          projectScopeTotals.value = null;
+        }
+        projectScopeMetrics.value = scopeMetrics;
+      } catch {
+        projectScopeTotals.value = null;
+        projectScopeMetrics.value = null;
+      }
+    } else {
+      projectScopeTotals.value = null;
+      projectScopeMetrics.value = null;
+    }
     records.value = Array.isArray(resultData.records) ? (resultData.records as Array<Record<string, unknown>>) : [];
     const groupSummaryRows = Array.isArray(resultData.group_summary)
       ? (resultData.group_summary as Array<Record<string, unknown>>)
@@ -3438,6 +3633,9 @@ async function load() {
     lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
     setError(err, 'failed to load list');
+    listTotalCount.value = null;
+    projectScopeTotals.value = null;
+    projectScopeMetrics.value = null;
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
     status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
@@ -3564,7 +3762,7 @@ function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string
   return [fallback.label, scope ? `${pageText('batch_error_scope_prefix', '范围=')}${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
 }
 
-async function handleBatchAction(action: 'archive' | 'activate') {
+async function handleBatchAction(action: 'archive' | 'activate' | 'delete') {
   batchMessage.value = '';
   batchDetails.value = [];
   failedCsvFileName.value = '';
@@ -3574,12 +3772,53 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   lastBatchRequest.value = null;
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel || !selectedIds.value.length) return;
-  if (!hasActiveField.value) {
+  if (action !== 'delete' && !hasActiveField.value) {
     batchMessage.value = pageText('batch_msg_model_no_active_field', '当前模型不支持 active 字段，无法批量归档/激活');
     return;
   }
   batchBusy.value = true;
   try {
+    if (targetModel === 'project.project' && (action === 'archive' || action === 'activate' || action === 'delete')) {
+      const activeFlag = action === 'activate';
+      await writeRecord({
+        model: targetModel,
+        ids: selectedIds.value,
+        vals: { active: activeFlag },
+        context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()) as Record<string, unknown>,
+      });
+      batchMessage.value = action === 'activate'
+        ? `${pageText('batch_msg_activate_done_prefix', '批量激活完成：成功 ')}${selectedIds.value.length}${pageText('batch_msg_done_middle', '，失败 ')}0`
+        : `${pageText('batch_msg_delete_archive_done_prefix', '批量删除请求已按归档处理：成功 ')}${selectedIds.value.length}${pageText('batch_msg_done_middle', '，失败 ')}0`;
+      clearSelection();
+      await load();
+      return;
+    }
+
+    if (action === 'delete') {
+      const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { delete_mode: 'archive' });
+      const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
+      const result = await batchUpdateRecords({
+        model: targetModel,
+        ids: selectedIds.value,
+        action: 'archive',
+        ifMatchMap: buildIfMatchMap(selectedIds.value),
+        idempotencyKey,
+        failedPreviewLimit: 12,
+        failedOffset: 0,
+        failedLimit: 12,
+        exportFailedCsv: true,
+        context: requestContext,
+      });
+      if (result.idempotent_replay) {
+        batchMessage.value = pageText('batch_msg_idempotent_replay', '批量操作已幂等处理（重复请求被忽略）');
+      } else {
+        batchMessage.value = `${pageText('batch_msg_delete_archive_done_prefix', '批量删除请求已按归档处理：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`;
+      }
+      applyBatchFailureArtifacts(result);
+      clearSelection();
+      await load();
+      return;
+    }
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
     const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
@@ -3618,14 +3857,18 @@ async function handleBatchAction(action: 'archive' | 'activate') {
     setError(err, 'batch operation failed');
     batchMessage.value = action === 'activate'
       ? pageText('batch_msg_activate_failed', '批量激活失败')
-      : pageText('batch_msg_archive_failed', '批量归档失败');
+      : action === 'archive'
+        ? pageText('batch_msg_archive_failed', '批量归档失败')
+        : pageText('batch_msg_delete_failed', '批量删除失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: action,
         label: action === 'activate'
           ? pageText('batch_label_activate', '批量激活')
-          : pageText('batch_label_archive', '批量归档'),
+          : action === 'archive'
+            ? pageText('batch_label_archive', '批量归档')
+            : pageText('batch_label_delete', '批量删除'),
       }),
     }];
     failedCsvFileName.value = '';
