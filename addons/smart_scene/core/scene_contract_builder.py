@@ -140,6 +140,18 @@ def build_scene_contract(
         "extensions": _normalize_extensions(extensions),
         "diagnostics": _normalize_diagnostics(diagnostics),
     }
+    contract["scene_contract_v1"] = {
+        "contract_version": "v1",
+        "scene": dict(contract["scene"]),
+        "page": dict(contract["page"]),
+        "zones": list(contract["zones_v1"]),
+        "blocks": dict(contract["blocks"]),
+        "actions": dict(contract["actions"]),
+        "permissions": dict(contract["permissions"]),
+        "record": dict(contract["record"]),
+        "extensions": dict(contract["extensions"]),
+        "diagnostics": dict(contract["diagnostics"]),
+    }
     verdict = validate_scene_contract_shape(contract)
     contract["diagnostics"]["scene_contract_shape"] = verdict
     return contract

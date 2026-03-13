@@ -861,13 +861,9 @@ function includesAnyKeyword(text: string, keywords: string[]) {
 }
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
   const key = surfaceKey.value;
-  const sceneKeyText = String(sceneKey.value || '').toLowerCase();
-  const modelText = effectiveSurfaceModel.value;
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) return 'risk';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) return 'contract';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) return 'cost';
-  if (sceneKeyText.startsWith('projects.') || sceneKeyText.startsWith('project.')) return 'project';
-  if (modelText.startsWith('project.') || modelText.startsWith('construction.')) return 'project';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) return 'project';
   return 'generic';
 });
