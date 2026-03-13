@@ -41,6 +41,7 @@
 4. `make verify.native_view.semantic_page`
 5. `make verify.native_view.coverage.report`
 6. `make verify.native_view.samples.compare`
+7. `make verify.native_view.ecosystem.readiness`
 
 ## Implemented in this branch
 - Guard script: `scripts/verify/native_view_semantic_page_shape_guard.py`

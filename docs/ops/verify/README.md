@@ -180,6 +180,10 @@
   - Generates 8-case native-view sample compare report:
     - `artifacts/backend/native_view_sample_compare_report.json`
     - `artifacts/backend/native_view_sample_compare_report.md`
+- `make verify.native_view.ecosystem.readiness`
+  - Generates ecosystem readiness report (20+ sample target tracking):
+    - `artifacts/backend/native_view_ecosystem_readiness_report.json`
+    - `artifacts/backend/native_view_ecosystem_readiness_report.md`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
