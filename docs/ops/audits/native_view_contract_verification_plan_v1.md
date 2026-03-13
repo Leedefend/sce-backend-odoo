@@ -47,6 +47,8 @@
   - `docs/contract/snapshots/native_view/semantic_page_project_form_x2many_editable_v1.json`
   - `docs/contract/snapshots/native_view/semantic_page_project_form_x2many_readonly_v1.json`
   - `docs/contract/snapshots/native_view/semantic_page_project_form_collab_v1.json`
+  - `docs/contract/snapshots/native_view/semantic_page_project_actions_v1.json`
+  - `docs/contract/snapshots/native_view/semantic_page_project_tree_kanban_actions_v1.json`
 
 ## Reporting
 每次迭代输出：

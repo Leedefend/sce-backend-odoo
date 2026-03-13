@@ -1,0 +1,53 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "tree",
+    "layout": "auto",
+    "zones": [
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "relation_table_block",
+            "data": {
+              "columns": ["name", "user_id", "state"],
+              "row_actions": [
+                {
+                  "key": "open",
+                  "label": "打开",
+                  "enabled": true,
+                  "reason_code": "OK"
+                },
+                {
+                  "key": "edit",
+                  "label": "编辑",
+                  "enabled": false,
+                  "reason_code": "PERMISSION_DENIED"
+                }
+              ]
+            }
+          },
+          {
+            "type": "relation_card_block",
+            "data": {
+              "card_actions": [
+                {
+                  "key": "open",
+                  "label": "查看详情",
+                  "enabled": true,
+                  "reason_code": "OK"
+                },
+                {
+                  "key": "edit",
+                  "label": "编辑",
+                  "enabled": false,
+                  "reason_code": "PERMISSION_DENIED"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
