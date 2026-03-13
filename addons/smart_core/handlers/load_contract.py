@@ -205,6 +205,52 @@ class LoadContractHandler(BaseIntentHandler):
                     return
             zones.append({"key": zone_key, "blocks": [block]})
 
+        def _normalize_action(raw, fallback_key="", fallback_label=""):
+            if isinstance(raw, str):
+                key = raw.strip() or fallback_key or "action"
+                return {
+                    "key": key,
+                    "label": fallback_label or key,
+                    "type": "action",
+                    "enabled": True,
+                    "reason_code": "OK",
+                }
+            if not isinstance(raw, dict):
+                return None
+
+            key = str(
+                raw.get("key")
+                or raw.get("name")
+                or raw.get("xml_id")
+                or raw.get("xmlid")
+                or raw.get("id")
+                or fallback_key
+                or "action"
+            )
+            label = str(raw.get("label") or raw.get("string") or fallback_label or key)
+            action_type = str(raw.get("action_type") or raw.get("type") or "action")
+            enabled = bool(raw.get("enabled", True))
+            reason_code = str(raw.get("reason_code") or ("OK" if enabled else "DISABLED"))
+            reason = str(raw.get("reason") or "")
+            return {
+                "key": key,
+                "label": label,
+                "type": action_type,
+                "enabled": enabled,
+                "reason_code": reason_code,
+                "reason": reason,
+            }
+
+        def _normalize_action_list(items, default_prefix="action"):
+            normalized = []
+            if not isinstance(items, list):
+                return normalized
+            for index, item in enumerate(items):
+                action = _normalize_action(item, fallback_key=f"{default_prefix}_{index + 1}")
+                if action:
+                    normalized.append(action)
+            return normalized
+
         # header_zone
         header_blocks = []
         header_buttons = []
@@ -217,6 +263,7 @@ class LoadContractHandler(BaseIntentHandler):
             header_blocks.append({"type": "title_block", "data": head})
         if header_blocks:
             zones.append({"key": "header_zone", "blocks": header_blocks})
+        normalized_header_actions = _normalize_action_list(header_buttons, default_prefix="header")
 
         # detail/relation/collaboration by view
         if isinstance(views.get("form"), dict):
@@ -284,10 +331,30 @@ class LoadContractHandler(BaseIntentHandler):
 
         if isinstance(views.get("tree"), dict):
             tree_view = views.get("tree") or {}
-            _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_view.get("columns") or []}})
+            tree_columns = tree_view.get("columns") or []
+            tree_row_actions = [
+                {"key": "open", "label": "打开", "enabled": True, "reason_code": "OK"},
+                {
+                    "key": "edit",
+                    "label": "编辑",
+                    "enabled": bool(permissions.get("write", False)),
+                    "reason_code": "OK" if permissions.get("write") else "PERMISSION_DENIED",
+                },
+            ]
+            _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_columns, "row_actions": tree_row_actions}})
 
         if isinstance(views.get("kanban"), dict):
-            _add_zone("detail_zone", {"type": "relation_card_block", "data": views.get("kanban") or {}})
+            kanban_view = views.get("kanban") or {}
+            kanban_card_actions = [
+                {"key": "open", "label": "查看详情", "enabled": True, "reason_code": "OK"},
+                {
+                    "key": "edit",
+                    "label": "编辑",
+                    "enabled": bool(permissions.get("write", False)),
+                    "reason_code": "OK" if permissions.get("write") else "PERMISSION_DENIED",
+                },
+            ]
+            _add_zone("detail_zone", {"type": "relation_card_block", "data": dict(kanban_view, card_actions=kanban_card_actions)})
 
         if search:
             _add_zone("action_zone", {"type": "action_bar_block", "data": {"search": search}})
@@ -296,11 +363,26 @@ class LoadContractHandler(BaseIntentHandler):
         view_type = str(head.get("view_type") or "")
         permissions = data.get("permissions") if isinstance(data.get("permissions"), dict) else {}
         buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        normalized_buttons = _normalize_action_list(buttons, default_prefix="button")
         toolbar_actions = []
         if isinstance(toolbar, dict):
             toolbar_actions.extend(toolbar.get("header") if isinstance(toolbar.get("header"), list) else [])
             toolbar_actions.extend(toolbar.get("sidebar") if isinstance(toolbar.get("sidebar"), list) else [])
             toolbar_actions.extend(toolbar.get("footer") if isinstance(toolbar.get("footer"), list) else [])
+        normalized_toolbar_actions = _normalize_action_list(toolbar_actions, default_prefix="toolbar")
+
+        if normalized_buttons or normalized_toolbar_actions or normalized_header_actions:
+            _add_zone(
+                "action_zone",
+                {
+                    "type": "action_bar_block",
+                    "data": {
+                        "header_actions": normalized_header_actions,
+                        "record_actions": normalized_buttons,
+                        "toolbar_actions": normalized_toolbar_actions,
+                    },
+                },
+            )
 
         data["semantic_page"] = {
             "version": "v1",
@@ -314,6 +396,9 @@ class LoadContractHandler(BaseIntentHandler):
             "actions": {
                 "buttons": buttons,
                 "toolbar": toolbar_actions,
+                "header_actions": normalized_header_actions,
+                "record_actions": normalized_buttons,
+                "toolbar_actions": normalized_toolbar_actions,
             },
             "zones": zones,
         }
