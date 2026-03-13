@@ -6,4 +6,5 @@
 
 ## Architecture Guard
 - Always follow `ARCHITECTURE_GUARD.md` and `docs/architecture/ai_development_guard.md` before making code changes.
+- For frontend page work, always follow `docs/architecture/native_view_reuse_frontend_spec_v1.md`.
 - For every implementation task, explicitly identify `Layer Target`, `Module`, and `Reason` before coding.

@@ -22,6 +22,18 @@
 
 ## 二、AI开发基本规则
 
+### 规则0：前端页面必须遵守原生视图复用规范
+
+涉及前端页面、页面契约、视图渲染相关改动时，必须同时遵守：
+- `docs/architecture/native_view_reuse_frontend_spec_v1.md`
+- `docs/architecture/native_view_reuse_frontend_spec_v1.en.md`
+
+硬约束：
+- 页面基础结构优先复用 Odoo 原生视图
+- 结构问题优先补后端语义解析，不先写前端特判
+- 前端以语义契约为唯一结构输入
+- 页面特例必须有准入理由与退出条件
+
 ### 规则1：先做架构定位
 任何改动前必须声明：
 - `Layer Target`
@@ -159,4 +171,3 @@ Constraints:
 - 动态页面能力
 - AI 能力接入能力
 - 平台化能力
-
