@@ -2902,3 +2902,7 @@ verify.native_view.coverage.report: guard.prod.forbid verify.native_view.semanti
 .PHONY: verify.native_view.samples.compare
 verify.native_view.samples.compare: guard.prod.forbid verify.native_view.semantic_page
 	@python3 scripts/verify/native_view_sample_compare_report.py
+
+.PHONY: verify.native_view.ecosystem.readiness
+verify.native_view.ecosystem.readiness: guard.prod.forbid
+	@python3 scripts/verify/native_view_ecosystem_readiness_report.py
