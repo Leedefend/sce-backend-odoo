@@ -2882,3 +2882,7 @@ cn.help:
 	@echo "  - 确保已安装 Continue CLI: npm install -g @continuedev/cli"
 
 .PHONY: cn.p cn.p.stdin cn.tui cn.test cn.help guard.cn.prompt
+
+.PHONY: verify.native_view.semantic_page.shape
+verify.native_view.semantic_page.shape: guard.prod.forbid
+	@python3 scripts/verify/native_view_semantic_page_shape_guard.py --dir docs/contract/snapshots/native_view

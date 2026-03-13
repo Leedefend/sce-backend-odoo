@@ -33,8 +33,15 @@
 ## Recommended Verify Chain
 1. `make verify.project.dashboard.contract`
 2. 新增：`make verify.native_view.contract.samples`
-3. 新增：`make verify.native_view.contract.shape`
+3. 新增：`make verify.native_view.semantic_page.shape`
 4. 新增：`make verify.native_view.coverage.report`
+
+## Implemented in this branch
+- Guard script: `scripts/verify/native_view_semantic_page_shape_guard.py`
+- Snapshot seeds:
+  - `docs/contract/snapshots/native_view/semantic_page_project_form_v1.json`
+  - `docs/contract/snapshots/native_view/semantic_page_project_tree_v1.json`
+  - `docs/contract/snapshots/native_view/semantic_page_project_kanban_v1.json`
 
 ## Reporting
 每次迭代输出：
