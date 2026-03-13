@@ -68,9 +68,21 @@ def main() -> int:
         errors.append("missing must be list")
         missing = []
 
-    for key in ("artifact_count", "present_count", "missing_count", "total_size_bytes", "artifacts_dir"):
+    for key in (
+        "artifact_count",
+        "present_count",
+        "missing_count",
+        "total_size_bytes",
+        "artifacts_dir",
+        "native_view_semantic_shape_ok",
+        "native_view_semantic_schema_ok",
+    ):
         if key not in summary:
             errors.append(f"summary missing key: {key}")
+
+    for key in ("native_view_semantic_shape_ok", "native_view_semantic_schema_ok"):
+        if key in summary and not isinstance(summary.get(key), bool):
+            errors.append(f"summary.{key} must be bool")
 
     rows_missing = []
     rows_present = 0

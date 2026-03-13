@@ -95,6 +95,8 @@ def main() -> int:
     alignment_summary = alignment.get("summary") if isinstance(alignment.get("summary"), dict) else {}
     alignment_probe_login = str(alignment_summary.get("probe_login") or "").strip()
     alignment_probe_source = str(alignment_summary.get("probe_source") or "").strip()
+    native_shape = _load_json(ROOT / "artifacts" / "backend" / "native_view_semantic_page_shape_guard.json")
+    native_schema = _load_json(ROOT / "artifacts" / "backend" / "native_view_semantic_page_schema_guard.json")
     payload = {
         "ok": len(missing) == 0,
         "summary": {
@@ -104,6 +106,8 @@ def main() -> int:
             "total_size_bytes": total_size_bytes,
             "alignment_probe_login": alignment_probe_login,
             "alignment_probe_source": alignment_probe_source,
+            "native_view_semantic_shape_ok": bool(native_shape.get("ok", False)),
+            "native_view_semantic_schema_ok": bool(native_schema.get("ok", False)),
             "artifacts_dir": str(backend_dir),
         },
         "baseline": baseline,
@@ -122,6 +126,8 @@ def main() -> int:
         f"- total_size_bytes: {payload['summary']['total_size_bytes']}",
         f"- alignment_probe_login: {payload['summary']['alignment_probe_login'] or '-'}",
         f"- alignment_probe_source: {payload['summary']['alignment_probe_source'] or '-'}",
+        f"- native_view_semantic_shape_ok: {payload['summary']['native_view_semantic_shape_ok']}",
+        f"- native_view_semantic_schema_ok: {payload['summary']['native_view_semantic_schema_ok']}",
         "",
         "## Artifacts",
         "",

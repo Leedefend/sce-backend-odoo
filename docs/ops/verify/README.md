@@ -90,6 +90,9 @@
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard_schema_guard.json`.
 - `make verify.backend.evidence.manifest`
   - Generates deterministic backend evidence manifest (`path`/`exists`/`size_bytes`/`sha256`) for release-critical artifacts.
+  - Summary includes native-view semantic guard status:
+    - `summary.native_view_semantic_shape_ok`
+    - `summary.native_view_semantic_schema_ok`
   - Baseline: `scripts/verify/baselines/backend_evidence_manifest_guard.json`.
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `backend_evidence_manifest.json`
