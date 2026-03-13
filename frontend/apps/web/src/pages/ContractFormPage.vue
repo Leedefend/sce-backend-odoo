@@ -19,7 +19,15 @@
           {{ action.label }}
         </button>
         <button
-          v-if="!hasPrimaryHeaderAction"
+          v-if="isProjectStandardIntakeMode && !recordId"
+          class="primary"
+          :disabled="isStandardCreateDisabled"
+          @click="saveRecord"
+        >
+          {{ normalCreateButtonLabel }}
+        </button>
+        <button
+          v-if="!hasPrimaryHeaderAction && !(isProjectStandardIntakeMode && !recordId)"
           class="primary"
           :disabled="isQuickSubmitDisabled"
           @click="saveRecord"
@@ -469,8 +477,27 @@ const isProjectQuickIntakeMode = computed(() => {
   if (recordId.value) return false;
   return String(route.query.intake_mode || '').trim().toLowerCase() === 'quick';
 });
+const isProjectStandardIntakeMode = computed(() => {
+  if (String(model.value || '').trim() !== 'project.project') return false;
+  if (recordId.value) return false;
+  if (isProjectQuickIntakeMode.value) return false;
+  return String(route.query.scene_key || '').trim() === 'projects.intake';
+});
+const isProjectIntakeCreateMode = computed(() => isProjectQuickIntakeMode.value || isProjectStandardIntakeMode.value);
+const intakeAutosaveKey = computed(() => {
+  if (!isProjectIntakeCreateMode.value) return '';
+  const mode = isProjectQuickIntakeMode.value ? 'quick' : 'standard';
+  const userId = Number(session.user?.id || 0) || 0;
+  return `sc:intake:autosave:project.project:${mode}:u${userId}`;
+});
 const quickRequiredReady = computed(() => {
   if (!isProjectQuickIntakeMode.value) return true;
+  const projectName = String(formData.name || '').trim();
+  const managerId = Number(formData.manager_id || 0);
+  return Boolean(projectName) && Number.isFinite(managerId) && managerId > 0;
+});
+const standardCreateReady = computed(() => {
+  if (!isProjectStandardIntakeMode.value) return true;
   const projectName = String(formData.name || '').trim();
   const managerId = Number(formData.manager_id || 0);
   return Boolean(projectName) && Number.isFinite(managerId) && managerId > 0;
@@ -509,9 +536,10 @@ const submitButtonLabel = computed(() => {
   }
   return '保存';
 });
+const normalCreateButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? '创建中...' : '创建项目'));
 
 const headerActionsVisible = computed(() => {
-  if (isProjectQuickIntakeMode.value) return [];
+  if (isProjectIntakeCreateMode.value) return [];
   return headerActions.value;
 });
 
@@ -523,6 +551,75 @@ const isQuickSubmitDisabled = computed(() => {
   if (isProjectQuickIntakeMode.value) return !quickRequiredReady.value;
   return Boolean(recordId.value) && !hasChanges.value;
 });
+const isStandardCreateDisabled = computed(() => {
+  if (busy.value) return true;
+  if (!canSave.value) return true;
+  if (isProjectStandardIntakeMode.value) return !standardCreateReady.value;
+  return false;
+});
+
+function persistIntakeAutosave() {
+  const key = intakeAutosaveKey.value;
+  if (!key || recordId.value) return;
+  try {
+    const payload = {
+      saved_at: Date.now(),
+      values: {
+        name: formData.name ?? '',
+        manager_id: formData.manager_id ?? false,
+        owner_id: formData.owner_id ?? false,
+        project_type_id: formData.project_type_id ?? false,
+        project_category_id: formData.project_category_id ?? false,
+        location: formData.location ?? '',
+        start_date: formData.start_date ?? '',
+        end_date: formData.end_date ?? '',
+      },
+    };
+    window.localStorage.setItem(key, JSON.stringify(payload));
+  } catch {
+    // ignore storage exceptions
+  }
+}
+
+function restoreIntakeAutosave() {
+  const key = intakeAutosaveKey.value;
+  if (!key || recordId.value) return;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { values?: Record<string, unknown> };
+    const values = parsed?.values;
+    if (!values || typeof values !== 'object') return;
+    const fields = [
+      'name',
+      'manager_id',
+      'owner_id',
+      'project_type_id',
+      'project_category_id',
+      'location',
+      'start_date',
+      'end_date',
+    ];
+    fields.forEach((field) => {
+      if (!(field in values)) return;
+      const nextValue = values[field];
+      if (nextValue === null || nextValue === undefined || nextValue === '') return;
+      formData[field] = nextValue as never;
+    });
+  } catch {
+    // ignore malformed storage payload
+  }
+}
+
+function clearIntakeAutosave() {
+  const key = intakeAutosaveKey.value;
+  if (!key) return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // ignore storage exceptions
+  }
+}
 
 const contractMetaLine = computed(() => {
   if (!contract.value) return '';
@@ -2371,6 +2468,7 @@ async function loadRecord() {
       }
       return acc;
     }, {});
+    restoreIntakeAutosave();
     return;
   }
   const read = await readRecord({
@@ -2523,6 +2621,18 @@ async function openFilter(filterKey: string) {
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
+  const standardCreateMode = isProjectStandardIntakeMode.value;
+  if (standardCreateMode) {
+    const draftErrors: string[] = [];
+    const projectName = String(formData.name || '').trim();
+    const managerId = Number(formData.manager_id || 0);
+    if (!projectName) draftErrors.push('请填写项目名称');
+    if (!Number.isFinite(managerId) || managerId <= 0) draftErrors.push('请填写项目经理');
+    if (draftErrors.length) {
+      validationErrors.value = draftErrors;
+      return;
+    }
+  }
   const one2manyIssues = one2manyValidation.value.issues;
   if (one2manyIssues.length) {
     showOne2manyErrors.value = true;
@@ -2535,19 +2645,21 @@ async function saveRecord() {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
     return acc;
   }, {});
-  const issues = validateContractFormData({
-    contract: contract.value,
-    fieldLabels: labels,
-    values: editableMap,
-  });
-  const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
-  if (policyIssues.length) {
-    validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
-    return;
-  }
-  if (issues.length) {
-    validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
-    return;
+  if (!standardCreateMode) {
+    const issues = validateContractFormData({
+      contract: contract.value,
+      fieldLabels: labels,
+      values: editableMap,
+    });
+    const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
+    if (policyIssues.length) {
+      validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
+      return;
+    }
+    if (issues.length) {
+      validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
+      return;
+    }
   }
   busyKind.value = 'save';
   try {
@@ -2579,6 +2691,7 @@ async function saveRecord() {
     }
     const created = await createRecord({ model: model.value, vals: values });
     if (created?.id) {
+      clearIntakeAutosave();
       if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
         await router.replace({
           path: '/s/project.management',
@@ -2647,6 +2760,23 @@ watch(
     void reload();
   },
   { immediate: true },
+);
+
+watch(
+  () => [
+    intakeAutosaveKey.value,
+    formData.name,
+    formData.manager_id,
+    formData.owner_id,
+    formData.project_type_id,
+    formData.project_category_id,
+    formData.location,
+    formData.start_date,
+    formData.end_date,
+  ],
+  () => {
+    persistIntakeAutosave();
+  },
 );
 </script>
 
