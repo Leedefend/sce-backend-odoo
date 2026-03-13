@@ -21,13 +21,13 @@
 | load_view_non_form_gap | universal | tree/kanban/search | platform | yes |
 | button_semantics_cross_path | universal | form | platform | yes |
 | relation_x2many_contract | project.project | form | project | yes |
-| project.task_form | project.task | form | task | no |
-| project.task_tree | project.task | tree | task | no |
-| project.task_kanban | project.task | kanban | task | no |
-| project.task_search | project.task | search | task | no |
-| construction.contract_form | construction.contract | form | contract | no |
-| construction.contract_tree | construction.contract | tree | contract | no |
-| construction.contract_search | construction.contract | search | contract | no |
+| project.task_form | project.task | form | task | yes |
+| project.task_tree | project.task | tree | task | yes |
+| project.task_kanban | project.task | kanban | task | yes |
+| project.task_search | project.task | search | task | yes |
+| construction.contract_form | construction.contract | form | contract | yes |
+| construction.contract_tree | construction.contract | tree | contract | yes |
+| construction.contract_search | construction.contract | search | contract | yes |
 | cost.ledger_form | cost.ledger | form | cost | no |
 | cost.ledger_tree | cost.ledger | tree | cost | no |
 | cost.ledger_search | cost.ledger | search | cost | no |
@@ -37,6 +37,5 @@
 | mail.thread_form_collab | mail.thread | form | collaboration | no |
 
 ## Current Stage Summary
-- Ready cases: 8/22
-- Next target: push ready cases to 14+ in this round.
-
+- Ready cases: 15/22
+- Next target: push ready cases to 19+ in this round.
