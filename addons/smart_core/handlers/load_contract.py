@@ -252,6 +252,71 @@ class LoadContractHandler(BaseIntentHandler):
                     normalized.append(action)
             return normalized
 
+        def _normalize_search_items(items, default_prefix):
+            normalized = []
+            if not isinstance(items, list):
+                return normalized
+            for index, item in enumerate(items):
+                if isinstance(item, str):
+                    key = item.strip() or f"{default_prefix}_{index + 1}"
+                    normalized.append({"key": key, "label": key})
+                    continue
+                if not isinstance(item, dict):
+                    continue
+                key = str(item.get("key") or item.get("name") or f"{default_prefix}_{index + 1}")
+                label = str(item.get("label") or item.get("string") or key)
+                normalized.append({
+                    "key": key,
+                    "label": label,
+                    "domain": item.get("domain") if isinstance(item.get("domain"), list) else None,
+                })
+            return normalized
+
+        def _extract_search_semantics(raw_search):
+            if not isinstance(raw_search, dict):
+                return {"filters": [], "group_by": [], "search_fields": [], "search_panel": {"enabled": False}}
+
+            filters = _normalize_search_items(raw_search.get("filters"), "filter")
+            group_by = _normalize_search_items(raw_search.get("group_by"), "group_by")
+            search_fields = _normalize_search_items(raw_search.get("fields"), "search_field")
+            search_panel_raw = raw_search.get("search_panel") if isinstance(raw_search.get("search_panel"), dict) else {}
+            search_panel = {
+                "enabled": bool(search_panel_raw.get("enabled", False)),
+                "sections": search_panel_raw.get("sections") if isinstance(search_panel_raw.get("sections"), list) else [],
+            }
+
+            return {
+                "filters": filters,
+                "group_by": group_by,
+                "search_fields": search_fields,
+                "search_panel": search_panel,
+                "quick_filters": filters[:4],
+            }
+
+        def _extract_kanban_semantics(kanban_view):
+            if not isinstance(kanban_view, dict):
+                return None
+            card_fields = kanban_view.get("fields") if isinstance(kanban_view.get("fields"), list) else []
+            profile = kanban_view.get("kanban_profile") if isinstance(kanban_view.get("kanban_profile"), dict) else {}
+            title_field = str(profile.get("title_field") or (card_fields[0] if card_fields else "name"))
+            stage_field = str(kanban_view.get("stages_field") or profile.get("stage_field") or ("stage_id" if "stage_id" in card_fields else ""))
+            subtitle_field = str(profile.get("subtitle_field") or ("manager_id" if "manager_id" in card_fields else ""))
+
+            metric_fields = []
+            for field_name in card_fields:
+                field_meta = fields.get(field_name) if isinstance(fields.get(field_name), dict) else {}
+                field_type = str(field_meta.get("type") or "")
+                if field_type in {"float", "integer", "monetary"}:
+                    metric_fields.append(field_name)
+
+            return {
+                "title_field": title_field,
+                "subtitle_field": subtitle_field,
+                "stage_field": stage_field,
+                "card_fields": card_fields,
+                "metric_fields": metric_fields,
+            }
+
         def _permission_verdict(value):
             allowed = bool(value)
             return {
@@ -364,8 +429,10 @@ class LoadContractHandler(BaseIntentHandler):
             ]
             _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_columns, "row_actions": tree_row_actions}})
 
+        kanban_semantics = None
         if isinstance(views.get("kanban"), dict):
             kanban_view = views.get("kanban") or {}
+            kanban_semantics = _extract_kanban_semantics(kanban_view)
             kanban_card_actions = [
                 {"key": "open", "label": "查看详情", "enabled": True, "reason_code": "OK"},
                 {
@@ -375,10 +442,17 @@ class LoadContractHandler(BaseIntentHandler):
                     "reason_code": "OK" if permissions.get("write") else "PERMISSION_DENIED",
                 },
             ]
-            _add_zone("detail_zone", {"type": "relation_card_block", "data": dict(kanban_view, card_actions=kanban_card_actions)})
+            _add_zone(
+                "detail_zone",
+                {
+                    "type": "relation_card_block",
+                    "data": dict(kanban_view, card_actions=kanban_card_actions, kanban_semantics=kanban_semantics or {}),
+                },
+            )
 
+        search_semantics = _extract_search_semantics(search)
         if search:
-            _add_zone("action_zone", {"type": "action_bar_block", "data": {"search": search}})
+            _add_zone("action_zone", {"type": "action_bar_block", "data": {"search": search, "search_semantics": search_semantics}})
 
         model_name = str(head.get("model") or data.get("model") or "")
         view_type = str(head.get("view_type") or "")
@@ -414,6 +488,8 @@ class LoadContractHandler(BaseIntentHandler):
             "fields": fields,
             "permissions": permissions,
             "permission_verdicts": permission_verdicts,
+            "search_semantics": search_semantics,
+            "kanban_semantics": kanban_semantics,
             "actions": {
                 "buttons": buttons,
                 "toolbar": toolbar_actions,
