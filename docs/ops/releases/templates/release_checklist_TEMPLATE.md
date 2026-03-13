@@ -12,6 +12,7 @@
 - Backend evidence bundle is up-to-date:
   - `make verify.phase_next.evidence.bundle`
   - `make verify.phase_next.evidence.bundle.strict`
+  - `make verify.native_view.semantic_page`
   - `make verify.boundary.import_guard.schema.guard`
   - `SC_BOUNDARY_IMPORT_STRICT=1 make verify.backend.architecture.full`
   - `make verify.contract.evidence.guard`
