@@ -281,7 +281,7 @@ def load_scene_configs(env, drift=None):
         },
         {
             "code": "project.management",
-            "name": "项目管理控制台",
+            "name": "项目驾驶舱",
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_management_scene",
                 "route": "/s/project.management",
