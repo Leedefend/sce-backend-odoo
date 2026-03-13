@@ -1,0 +1,52 @@
+{
+  "semantic_page": {
+    "model": "finance.payment",
+    "view_type": "tree",
+    "layout": "auto",
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "search": {
+                "filters": [
+                  {
+                    "key": "to_pay",
+                    "label": "待支付"
+                  }
+                ],
+                "group_by": [
+                  {
+                    "key": "project_id",
+                    "label": "按项目"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "relation_table_block",
+            "data": {
+              "columns": [
+                "name",
+                "project_id",
+                "partner_id",
+                "amount_total",
+                "amount_paid",
+                "due_date",
+                "state"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
