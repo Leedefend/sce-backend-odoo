@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 METRICS_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_metrics_builder.py"
+HEADER_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_header_builder.py"
 CONTRACT_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_contract_builder.py"
 FINANCE_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_finance_builder.py"
 PROGRESS_BUILDER = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders" / "project_progress_builder.py"
@@ -36,6 +37,17 @@ def _not_contains(path: Path, fragments: list[str]) -> None:
 def main() -> None:
     _must(DOC_ZH.exists(), "metric semantics zh doc missing")
     _must(DOC_EN.exists(), "metric semantics en doc missing")
+
+    _contains(
+        HEADER_BUILDER,
+        [
+            "\"open_task_overdue\"",
+            "\"open_task_blocked\"",
+            "\"open_risk_list\"",
+            "\"open_payment_requests\"",
+            "quick_actions.sort",
+        ],
+    )
 
     _contains(
         METRICS_BUILDER,
@@ -113,6 +125,8 @@ def main() -> None:
             "progress_task_overdue",
             "progress_task_blocked",
             "progress_milestone_delay",
+            "open_task_overdue",
+            "open_task_blocked",
         ],
     )
 

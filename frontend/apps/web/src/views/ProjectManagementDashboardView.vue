@@ -126,6 +126,8 @@ function resolveActionTarget(key: string) {
   const map: Record<string, Record<string, unknown>> = {
     open_project_form: { kind: 'scene.key', scene_key: 'projects.ledger' },
     open_task_list: { kind: 'scene.key', scene_key: 'task.center' },
+    open_task_overdue: { kind: 'scene.key', scene_key: 'task.center' },
+    open_task_blocked: { kind: 'scene.key', scene_key: 'task.center' },
     open_payment_requests: { kind: 'scene.key', scene_key: 'finance.payment_requests' },
     open_settlement_orders: { kind: 'scene.key', scene_key: 'finance.settlement_orders' },
     open_risk_list: { kind: 'scene.key', scene_key: 'risk.center' },

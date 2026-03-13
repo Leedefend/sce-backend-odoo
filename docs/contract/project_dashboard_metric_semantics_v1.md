@@ -63,6 +63,17 @@
 | `risk_score` | 风险评分 | 综合风险+进度联动信号评分 | 推导 | 规则计算 | 否 |
 | `risk_level` | 风险等级 | 按评分阈值分级 | 推导 | 规则计算 | 否 |
 
+## 3.3 驾驶舱动作优先级口径（header.quick_actions）
+
+- 动作必须按“待处理数量优先 + 业务优先级”排序。
+- 允许动作（v1）：
+  - `open_task_overdue`
+  - `open_task_blocked`
+  - `open_risk_list`
+  - `open_payment_requests`
+  - `open_project_form`（导航兜底）
+- 禁止在前端重排动作优先级并覆盖后端排序。
+
 ## 4. 明确禁止项
 
 - 禁止以 `dashboard_invoice_amount` 替代合同额口径。

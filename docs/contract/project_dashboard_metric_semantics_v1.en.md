@@ -63,6 +63,17 @@
 | `risk_score` | Risk Score | Composite score with progress linkage signals | Derived | policy calculation | No |
 | `risk_level` | Risk Level | Threshold-based level from score | Derived | policy calculation | No |
 
+## 3.3 Cockpit Action Priority Semantics (`header.quick_actions`)
+
+- Actions must be sorted by `pending_count` first, then business priority.
+- Allowed v1 action keys:
+  - `open_task_overdue`
+  - `open_task_blocked`
+  - `open_risk_list`
+  - `open_payment_requests`
+  - `open_project_form` (navigation fallback)
+- Frontend must not reorder action priority against backend ordering.
+
 ## 4. Explicit Prohibitions
 
 - Do not use `dashboard_invoice_amount` as contract amount semantics.
