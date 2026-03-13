@@ -12,7 +12,7 @@
 |---|---|---|
 | 登录 -> 我的工作 | PASS | `make verify.portal.my_work_smoke.container DB_NAME=sc_demo` |
 | 我的工作 -> 项目台账 | PASS | `make verify.portal.scene_package_ui_smoke.container DB_NAME=sc_demo` |
-| 项目台账 -> 项目管理控制台 | PASS | `make verify.portal.scene_package_ui_smoke.container DB_NAME=sc_demo` |
+| 项目台账 -> 项目驾驶舱 | PASS | `make verify.portal.scene_package_ui_smoke.container DB_NAME=sc_demo` |
 | 控制台 -> 合同执行 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |
 | 控制台 -> 成本控制 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |
 | 控制台 -> 资金管理 | PASS | `make verify.runtime.surface.dashboard.strict.guard` |

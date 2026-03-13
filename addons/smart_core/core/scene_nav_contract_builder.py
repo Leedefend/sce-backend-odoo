@@ -47,6 +47,11 @@ EXCLUDED_REASON_NOT_SPA_READY = "portal_only_not_spa_ready"
 EXCLUDED_REASON_DEMO_TARGET = "demo_target"
 EXCLUDED_REASON_NO_NAV_TARGET = "target_fields_empty"
 EXCLUDED_REASON_ACCESS_DENIED = "access_denied"
+EXCLUDED_REASON_DEPRECATED_ALIAS = "deprecated_alias"
+
+NAV_HIDDEN_SCENE_CODES = {
+    "projects.dashboard",
+}
 
 
 def _to_bool(value, default=False) -> bool:
@@ -104,6 +109,8 @@ def _scene_valid(scene: dict) -> tuple[bool, str | None]:
     code = str(scene.get("code") or scene.get("key") or "").strip()
     if not code:
         return False, EXCLUDED_REASON_NO_CODE
+    if code in NAV_HIDDEN_SCENE_CODES:
+        return False, EXCLUDED_REASON_DEPRECATED_ALIAS
     if "__pkg" in code:
         return False, EXCLUDED_REASON_IMPORTED_PKG
     if code.startswith("scene_smoke_"):
@@ -134,6 +141,8 @@ def _scene_structurally_valid(scene: dict) -> tuple[bool, str | None]:
     code = str(scene.get("code") or scene.get("key") or "").strip()
     if not code:
         return False, EXCLUDED_REASON_NO_CODE
+    if code in NAV_HIDDEN_SCENE_CODES:
+        return False, EXCLUDED_REASON_DEPRECATED_ALIAS
     target = scene.get("target")
     if not isinstance(target, dict):
         return False, EXCLUDED_REASON_NO_TARGET
