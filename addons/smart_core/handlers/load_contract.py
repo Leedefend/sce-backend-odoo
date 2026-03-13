@@ -237,7 +237,47 @@ class LoadContractHandler(BaseIntentHandler):
             if isinstance(form_view.get("field_modifiers"), dict) and form_view.get("field_modifiers"):
                 _add_zone("detail_zone", {"type": "field_group_block", "data": {"field_modifiers": form_view.get("field_modifiers")}})
             if form_view.get("subviews"):
-                _add_zone("relation_zone", {"type": "relation_table_block", "data": {"subviews": form_view.get("subviews")}})
+                subviews = form_view.get("subviews") if isinstance(form_view.get("subviews"), dict) else {}
+                relation_items = []
+                for field_name, sv in subviews.items():
+                    if not isinstance(sv, dict):
+                        continue
+                    field_meta = fields.get(field_name) if isinstance(fields.get(field_name), dict) else {}
+                    field_mod = form_view.get("field_modifiers", {}).get(field_name, {}) if isinstance(form_view.get("field_modifiers"), dict) else {}
+                    policies = sv.get("policies") if isinstance(sv.get("policies"), dict) else {}
+                    has_tree = isinstance(sv.get("tree"), dict)
+                    has_form = isinstance(sv.get("form"), dict)
+                    preferred_view = "tree" if has_tree else ("form" if has_form else "tree")
+                    inline_edit = bool(policies.get("inline_edit")) if "inline_edit" in policies else (has_tree and not bool(field_mod.get("readonly")))
+                    can_create = bool(policies.get("can_create")) if "can_create" in policies else (not bool(field_mod.get("readonly")))
+                    can_unlink = bool(policies.get("can_unlink")) if "can_unlink" in policies else (not bool(field_mod.get("readonly")))
+                    relation_items.append({
+                        "field": field_name,
+                        "relation_model": field_meta.get("relation") or "",
+                        "field_type": field_meta.get("type") or "",
+                        "preferred_view_type": preferred_view,
+                        "views": {
+                            "tree": sv.get("tree") if has_tree else None,
+                            "form": sv.get("form") if has_form else None,
+                        },
+                        "editable": {
+                            "inline_edit": inline_edit,
+                            "can_create": can_create,
+                            "can_unlink": can_unlink,
+                        },
+                        "row_actions": [
+                            {"key": "open", "label": "打开"},
+                            {"key": "create", "label": "新增", "enabled": can_create},
+                            {"key": "unlink", "label": "移除", "enabled": can_unlink},
+                        ],
+                    })
+                _add_zone("relation_zone", {
+                    "type": "relation_table_block",
+                    "data": {
+                        "subviews": subviews,
+                        "items": relation_items,
+                    },
+                })
             if form_view.get("chatter") or form_view.get("attachments"):
                 _add_zone("collaboration_zone", {"type": "chatter_block", "data": form_view.get("chatter") or {}})
                 _add_zone("attachment_zone", {"type": "attachment_block", "data": form_view.get("attachments") or {}})
