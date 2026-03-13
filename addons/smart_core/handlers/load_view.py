@@ -1,130 +1,69 @@
 # 📁 smart_core/handlers/load_view.py
-from odoo.exceptions import AccessError, MissingError, UserError
+# 说明：load_view 旧入口统一代理到 load_contract 主链路，
+# 以收敛契约出口并避免 legacy 解析栈继续分叉。
 
 from ..core.base_handler import BaseIntentHandler
-from ..view.universal_parser import UniversalViewSemanticParser
+from .load_contract import LoadContractHandler
 
 
 class LoadModelViewHandler(BaseIntentHandler):
     INTENT_TYPE = "load_view"
-    DESCRIPTION = "加载模型视图结构"
-    _SYSTEM_MODEL_BLOCKLIST = {
-        "ir.ui.view",
-        "ir.model",
-        "ir.model.fields",
-        "ir.model.access",
-        "ir.rule",
-        "ir.actions.actions",
-        "ir.actions.act_window",
-        "ir.ui.menu",
-        "ir.config_parameter",
-        "res.users",
-        "res.groups",
-    }
-
-    def _is_system_admin(self) -> bool:
-        try:
-            return bool(self.env.user.has_group("base.group_system"))
-        except Exception:
-            return False
-
-    def _parse_view_id(self, raw):
-        if raw in (None, "", False):
-            return None
-        return int(raw)
-
-    def _resolve_target_view_id(self, *, model_name: str, view_type: str, requested_view_id):
-        view_id = self._parse_view_id(requested_view_id)
-        view_model = self.su_env["ir.ui.view"]
-        if view_id:
-            view = view_model.browse(view_id)
-            if not view.exists():
-                raise MissingError(f"未找到视图: {view_id}")
-            if view.model and view.model != model_name:
-                raise UserError(f"视图 {view_id} 不属于模型 {model_name}")
-            if view.type and view.type != view_type:
-                raise UserError(f"视图 {view_id} 类型 {view.type} 与请求 {view_type} 不一致")
-            return int(view.id)
-
-        default_view = view_model.search([("model", "=", model_name), ("type", "=", view_type)], limit=1)
-        if not default_view:
-            raise MissingError(f"未找到模型 {model_name} 的 {view_type} 视图")
-        return int(default_view.id)
+    DESCRIPTION = "兼容入口：统一代理到 load_contract"
 
     def run(self, **_kwargs):
-        model_name = str(self.params.get("model") or "").strip()
-        view_type = str(self.params.get("view_type") or "").strip()
-        requested_view_id = self.params.get("view_id")
+        params = dict(self.params or {})
+        payload = {
+            "params": {
+                "model": params.get("model"),
+                "model_code": params.get("model_code"),
+                "menu_id": params.get("menu_id"),
+                "action_id": params.get("action_id"),
+                "view_type": params.get("view_type"),
+                "include": params.get("include") or "all",
+                "force_refresh": params.get("force_refresh"),
+                "version": params.get("version"),
+                "if_none_match": params.get("if_none_match"),
+                "lang": params.get("lang"),
+                "tz": params.get("tz"),
+                "company_id": params.get("company_id"),
+            }
+        }
+        # 兼容传入 view_id：转为 context 线索，供主链路在后续扩展使用。
+        view_id = params.get("view_id")
+        if view_id not in (None, "", False):
+            payload["params"]["context"] = {"requested_view_id": view_id}
 
-        if not model_name or not view_type:
+        proxied = LoadContractHandler(
+            env=self.env,
+            su_env=self.su_env,
+            context=self.context,
+            payload=payload,
+        ).handle(payload=payload, ctx=self.context)
+
+        status = str((proxied or {}).get("status") or "").lower()
+        code = int((proxied or {}).get("code") or (304 if status == "not_modified" else 200))
+
+        if status == "error" or code >= 400:
             return {
                 "ok": False,
-                "error": {"code": "BAD_REQUEST", "message": "缺少必要参数 model 或 view_type"},
-                "code": 400,
-            }
-        # 系统模型只允许系统管理员读取，业务角色统一走受控意图输出。
-        if model_name in self._SYSTEM_MODEL_BLOCKLIST and not self._is_system_admin():
-            return {
-                "ok": False,
-                "error": {"code": "PERMISSION_DENIED", "message": "不允许直接读取系统模型视图"},
-                "code": 403,
+                "error": {
+                    "code": code,
+                    "message": (proxied or {}).get("message") or "load_view unified proxy failed",
+                },
+                "code": code,
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "legacy_proxy": "load_contract",
+                },
             }
 
-        try:
-            model_user = self.env[model_name].with_context(self.params)
-            # 业务访问权限先由当前用户口径校验，避免无约束 sudo 泄露。
-            model_user.check_access_rights("read", raise_exception=True)
-
-            target_view_id = self._resolve_target_view_id(
-                model_name=model_name,
-                view_type=view_type,
-                requested_view_id=requested_view_id,
-            )
-
-            # 受控 sudo：仅在模型访问通过后，用超级用户读取视图定义。
-            self.su_env[model_name].with_context(self.params).get_view(
-                view_id=target_view_id,
-                view_type=view_type,
-            )
-
-            parser = UniversalViewSemanticParser(
-                self.su_env,
-                model=model_name,
-                view_type=view_type,
-                view_id=target_view_id,
-                context=self.params,
-                permission_env=self.env,
-            )
-            result = parser.parse()
-            result["view_id"] = target_view_id
-            return {"ok": True, "data": result}
-        except AccessError as e:
-            return {
-                "ok": False,
-                "error": {"code": "PERMISSION_DENIED", "message": str(e)},
-                "code": 403,
-            }
-        except (MissingError, KeyError) as e:
-            return {
-                "ok": False,
-                "error": {"code": "INTENT_NOT_FOUND", "message": str(e)},
-                "code": 404,
-            }
-        except UserError as e:
-            return {
-                "ok": False,
-                "error": {"code": "BAD_REQUEST", "message": str(e)},
-                "code": 400,
-            }
-        except ValueError as e:
-            return {
-                "ok": False,
-                "error": {"code": "BAD_REQUEST", "message": str(e)},
-                "code": 400,
-            }
-        except Exception as e:
-            return {
-                "ok": False,
-                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
-                "code": 500,
-            }
+        return {
+            "ok": True,
+            "data": (proxied or {}).get("data") or {},
+            "meta": {
+                **((proxied or {}).get("meta") or {}),
+                "intent": self.INTENT_TYPE,
+                "legacy_proxy": "load_contract",
+            },
+            "code": code,
+        }
