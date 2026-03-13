@@ -1514,6 +1514,16 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         or _to_int(extraction_stats.get("today_actions_business")) > 0
         or _to_int(extraction_stats.get("risk_actions_business")) > 0
     )
+    scene_contract_core: Dict[str, Any] = {
+        "scene": {"key": "portal.dashboard", "page": "portal.dashboard"},
+        "page": {"key": "portal.dashboard", "title": "工作台", "route": "/"},
+        "zones": {},
+        "record": {"hero": {"title": "工作台", "role_code": role_code}},
+        "permissions": {},
+        "actions": {},
+        "extensions": {},
+        "diagnostics": {},
+    }
     scene_engine_meta: Dict[str, Any] = {}
     scene_engine = _load_scene_engine_module()
     engine_fn = getattr(scene_engine, "build_scene_contract_from_specs", None) if scene_engine else None
@@ -1560,13 +1570,32 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 record={"hero": {"title": "工作台"}},
                 diagnostics={"source": "workspace_home_contract_builder"},
             )
+            if isinstance(contract, dict) and contract:
+                scene_contract_core = {
+                    "scene": dict(contract.get("scene") or scene_contract_core.get("scene") or {}),
+                    "page": dict(contract.get("page") or scene_contract_core.get("page") or {}),
+                    "zones": dict(contract.get("zones") or scene_contract_core.get("zones") or {}),
+                    "record": dict(contract.get("record") or scene_contract_core.get("record") or {}),
+                    "permissions": dict(contract.get("permissions") or {}),
+                    "actions": dict(contract.get("actions") or {}),
+                    "extensions": dict(contract.get("extensions") or {}),
+                    "diagnostics": dict(contract.get("diagnostics") or {}),
+                }
             scene_engine_meta = {
                 "enabled": True,
+                "mode": "primary_scene_contract",
                 "shape_ok": bool(((contract.get("diagnostics") or {}).get("scene_contract_shape") or {}).get("ok")),
             }
         except Exception as exc:
             scene_engine_meta = {"enabled": False, "error": _to_text(exc)}
     return {
+        "scene": scene_contract_core.get("scene") or {},
+        "page": scene_contract_core.get("page") or {},
+        "zones": scene_contract_core.get("zones") or {},
+        "record": scene_contract_core.get("record") or {},
+        "permissions": scene_contract_core.get("permissions") or {},
+        "actions": scene_contract_core.get("actions") or {},
+        "extensions": scene_contract_core.get("extensions") or {},
         "schema_version": "v1",
         "semantic_protocol": {
             "block_types": list(BLOCK_TYPES),
@@ -1712,6 +1741,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "focus": _role_focus_config(role_code).get("focus_blocks", []),
         },
         "diagnostics": {
+            "scene_contract_core": scene_contract_core.get("diagnostics") or {},
             "scene_engine": scene_engine_meta,
             "platform": {
                 "ready_caps": ready_count,
