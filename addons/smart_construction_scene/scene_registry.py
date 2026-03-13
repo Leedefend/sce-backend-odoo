@@ -10,74 +10,50 @@ IMPORTED_SCENES_PARAM = "sc.scene.package.imported_scenes"
 
 
 _SCENE_REGISTRY_CONTENT_MODULE = None
+_SCENE_REGISTRY_ENGINE_MODULE = None
+
+
+def _load_scene_registry_engine_module():
+    global _SCENE_REGISTRY_ENGINE_MODULE
+    if _SCENE_REGISTRY_ENGINE_MODULE is not None:
+        return _SCENE_REGISTRY_ENGINE_MODULE
+    engine_path = Path(__file__).resolve().parents[1] / "smart_scene" / "core" / "scene_registry_engine.py"
+    try:
+        spec = spec_from_file_location("smart_scene_scene_registry_engine", engine_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _SCENE_REGISTRY_ENGINE_MODULE = module
+        return module
+    except Exception:
+        _SCENE_REGISTRY_ENGINE_MODULE = False
+        return None
 
 
 def _load_scene_registry_content_module():
     global _SCENE_REGISTRY_CONTENT_MODULE
     if _SCENE_REGISTRY_CONTENT_MODULE is not None:
         return _SCENE_REGISTRY_CONTENT_MODULE
-
-    provider_path = None
-    try:
-        locator_path = Path(__file__).resolve().parents[1] / "smart_scene" / "core" / "provider_locator.py"
-        locator_spec = spec_from_file_location("smart_scene_provider_locator_scene_registry", locator_path)
-        if locator_spec is not None and locator_spec.loader is not None:
-            locator_module = module_from_spec(locator_spec)
-            locator_spec.loader.exec_module(locator_module)
-            resolver = getattr(locator_module, "resolve_scene_registry_content_path", None)
-            if callable(resolver):
-                provider_path = resolver(Path(__file__))
-    except Exception:
-        provider_path = None
-
-    if provider_path is None:
+    engine = _load_scene_registry_engine_module()
+    loader = getattr(engine, "load_scene_registry_content_module", None) if engine else None
+    if not callable(loader):
         _SCENE_REGISTRY_CONTENT_MODULE = False
         return None
-
-    try:
-        spec = spec_from_file_location("smart_construction_scene_registry_content", provider_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _SCENE_REGISTRY_CONTENT_MODULE = module
-        return module
-    except Exception:
-        _SCENE_REGISTRY_CONTENT_MODULE = False
-        return None
+    module = loader(Path(__file__))
+    _SCENE_REGISTRY_CONTENT_MODULE = module if module is not None else False
+    return module
 
 
 def _load_scene_registry_content_entries():
-    module = _load_scene_registry_content_module()
-    if module is None:
-        return []
-    fn = getattr(module, "list_scene_entries", None)
-    if not callable(fn):
-        return []
-    try:
-        rows = fn()
-        if isinstance(rows, list):
-            valid_rows = []
-            for row in rows:
-                if not isinstance(row, dict):
-                    continue
-                code = str(row.get("code") or "").strip()
-                target = row.get("target") if isinstance(row.get("target"), dict) else {}
-                if not code:
-                    continue
-                if not (
-                    target.get("route")
-                    or target.get("menu_xmlid")
-                    or target.get("action_xmlid")
-                    or target.get("menu_id")
-                    or target.get("action_id")
-                    or target.get("model")
-                ):
-                    continue
-                valid_rows.append(row)
-            return valid_rows
-    except Exception:
-        return []
+    engine = _load_scene_registry_engine_module()
+    loader = getattr(engine, "load_scene_registry_content_entries", None) if engine else None
+    if callable(loader):
+        try:
+            rows = loader(Path(__file__))
+            return rows if isinstance(rows, list) else []
+        except Exception:
+            return []
     return []
 
 

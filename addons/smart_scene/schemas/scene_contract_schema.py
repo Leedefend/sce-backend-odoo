@@ -5,9 +5,11 @@ from typing import Dict, Tuple
 
 
 REQUIRED_TOP_LEVEL = (
+    "contract_version",
     "scene",
     "page",
     "zones",
+    "blocks",
     "record",
     "permissions",
     "actions",
@@ -23,4 +25,3 @@ def check_top_level_shape(payload: dict) -> Tuple[bool, Dict[str, object]]:
     if missing:
         return False, {"code": "missing_top_level", "keys": missing}
     return True, {"code": "ok"}
-
