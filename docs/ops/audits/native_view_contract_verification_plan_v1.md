@@ -22,6 +22,7 @@
 ### V3 Button Semantics Guard
 - object/action/stat/smart button shape 必须一致。
 - 必须有可执行 verdict 与 reason_code。
+- 若存在 `semantic_page.action_gating`，必须包含 `record_state/policy/verdict`。
 
 ### V4 Relation/X2many Guard
 - relation contract 必须包含：model、view hints、action hints、permission verdict。

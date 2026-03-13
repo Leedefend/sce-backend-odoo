@@ -10,6 +10,11 @@
       "unlink": {"allowed": false, "reason_code": "PERMISSION_DENIED", "reason": "permission denied"},
       "execute": {"allowed": true, "reason_code": "OK", "reason": ""}
     },
+    "action_gating": {
+      "record_state": {"field": "state", "value": "closed", "source": "statusbar"},
+      "policy": {"closed_states": ["archived", "cancel", "cancelled", "closed", "done"]},
+      "verdict": {"is_closed_state": true, "reason_code": "STATE_BLOCKED"}
+    },
     "actions": {
       "header_actions": [
         {

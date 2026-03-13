@@ -9,6 +9,13 @@
 - `semantic_page.layout` (string)
 - `semantic_page.zones` (array)
 
+## Governed Optional Keys (v1)
+- `semantic_page.permission_verdicts`
+- `semantic_page.action_gating`
+- `semantic_page.actions`
+- `semantic_page.search_semantics`
+- `semantic_page.kanban_semantics`
+
 ## Allowed Zone Keys (v1)
 - `header_zone`
 - `summary_zone`
