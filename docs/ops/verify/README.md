@@ -158,12 +158,17 @@
     - prod-like role fixture evidence + schema guard
     - contract assembler semantic smoke + schema guard
     - runtime surface dashboard report + schema guard
+    - native view semantic page guard (`shape + schema`)
 - `make verify.phase_next.evidence.bundle.strict`
   - Strict aggregate target:
     - `verify.phase_next.evidence.bundle`
     - `verify.runtime.surface.dashboard.strict.guard`
     - `verify.backend.architecture.full.report.guard`
     - `verify.backend.evidence.manifest.guard`
+- `make verify.native_view.semantic_page`
+  - Aggregated native-view contract guard:
+    - `verify.native_view.semantic_page.shape`
+    - `verify.native_view.semantic_page.schema`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
