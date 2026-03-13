@@ -1,0 +1,10 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "search",
+    "layout": "auto",
+    "zones": [
+      {"key": "action_zone", "blocks": [{"type": "action_bar_block", "data": {"search": {"filters": [], "group_by": []}}}]}
+    ]
+  }
+}

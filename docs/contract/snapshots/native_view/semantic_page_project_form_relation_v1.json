@@ -1,0 +1,15 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "form",
+    "layout": "auto",
+    "zones": [
+      {"key": "detail_zone", "blocks": [
+        {"type": "field_group_block", "data": {"layout": []}},
+        {"type": "notebook_block", "data": {"layout": []}}
+      ]},
+      {"key": "relation_zone", "blocks": [{"type": "relation_table_block", "data": {"subviews": {"line_ids": {"view_type": "tree"}}}}]},
+      {"key": "attachment_zone", "blocks": [{"type": "attachment_block", "data": {"enabled": true}}]}
+    ]
+  }
+}
