@@ -47,6 +47,7 @@ def validate_file(path: Path) -> list[str]:
         if key not in sp:
             errs.append(f"{path}: semantic_page missing required key '{key}'")
 
+    view_type = str(sp.get("view_type") or "")
     zones = sp.get("zones")
     if not isinstance(zones, list):
         errs.append(f"{path}: semantic_page.zones must be array")
@@ -107,6 +108,54 @@ def validate_file(path: Path) -> list[str]:
                 for key in ("allowed", "reason_code"):
                     if key not in verdict:
                         errs.append(f"{path}: semantic_page.permission_verdicts.{perm_key} missing '{key}'")
+
+    search_semantics = sp.get("search_semantics")
+    if view_type == "search":
+        if not isinstance(search_semantics, dict):
+            errs.append(f"{path}: search view must include semantic_page.search_semantics object")
+        else:
+            for key in ("filters", "group_by", "search_fields", "search_panel", "quick_filters"):
+                if key not in search_semantics:
+                    errs.append(f"{path}: semantic_page.search_semantics missing '{key}'")
+
+            for key in ("filters", "group_by", "search_fields", "quick_filters"):
+                items = search_semantics.get(key)
+                if not isinstance(items, list):
+                    errs.append(f"{path}: semantic_page.search_semantics.{key} must be array")
+                    continue
+                if key == "quick_filters" and len(items) > 4:
+                    errs.append(f"{path}: semantic_page.search_semantics.quick_filters must be <= 4")
+                for index, item in enumerate(items):
+                    if not isinstance(item, dict):
+                        errs.append(f"{path}: semantic_page.search_semantics.{key}[{index}] must be object")
+                        continue
+                    for required in ("key", "label"):
+                        if required not in item:
+                            errs.append(f"{path}: semantic_page.search_semantics.{key}[{index}] missing '{required}'")
+
+            panel = search_semantics.get("search_panel")
+            if not isinstance(panel, dict):
+                errs.append(f"{path}: semantic_page.search_semantics.search_panel must be object")
+            else:
+                if "enabled" not in panel or not isinstance(panel.get("enabled"), bool):
+                    errs.append(f"{path}: semantic_page.search_semantics.search_panel.enabled must be bool")
+                if "sections" not in panel or not isinstance(panel.get("sections"), list):
+                    errs.append(f"{path}: semantic_page.search_semantics.search_panel.sections must be array")
+
+    kanban_semantics = sp.get("kanban_semantics")
+    if view_type == "kanban":
+        if not isinstance(kanban_semantics, dict):
+            errs.append(f"{path}: kanban view must include semantic_page.kanban_semantics object")
+        else:
+            for key in ("title_field", "card_fields", "metric_fields"):
+                if key not in kanban_semantics:
+                    errs.append(f"{path}: semantic_page.kanban_semantics missing '{key}'")
+            if not isinstance(kanban_semantics.get("title_field"), str):
+                errs.append(f"{path}: semantic_page.kanban_semantics.title_field must be string")
+            if not isinstance(kanban_semantics.get("card_fields"), list):
+                errs.append(f"{path}: semantic_page.kanban_semantics.card_fields must be array")
+            if not isinstance(kanban_semantics.get("metric_fields"), list):
+                errs.append(f"{path}: semantic_page.kanban_semantics.metric_fields must be array")
 
     return errs
 
