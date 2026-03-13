@@ -114,7 +114,7 @@ def validate_file(path: Path) -> list[str]:
         if not isinstance(search_semantics, dict):
             errs.append(f"{path}: search view must include semantic_page.search_semantics object")
         else:
-            for key in ("filters", "group_by", "search_fields", "search_panel", "quick_filters"):
+            for key in ("filters", "group_by", "search_fields", "search_panel", "favorites", "quick_filters"):
                 if key not in search_semantics:
                     errs.append(f"{path}: semantic_page.search_semantics missing '{key}'")
 
@@ -141,6 +141,24 @@ def validate_file(path: Path) -> list[str]:
                     errs.append(f"{path}: semantic_page.search_semantics.search_panel.enabled must be bool")
                 if "sections" not in panel or not isinstance(panel.get("sections"), list):
                     errs.append(f"{path}: semantic_page.search_semantics.search_panel.sections must be array")
+
+            favorites = search_semantics.get("favorites")
+            if not isinstance(favorites, dict):
+                errs.append(f"{path}: semantic_page.search_semantics.favorites must be object")
+            else:
+                if "enabled" not in favorites or not isinstance(favorites.get("enabled"), bool):
+                    errs.append(f"{path}: semantic_page.search_semantics.favorites.enabled must be bool")
+                items = favorites.get("items")
+                if not isinstance(items, list):
+                    errs.append(f"{path}: semantic_page.search_semantics.favorites.items must be array")
+                else:
+                    for index, item in enumerate(items):
+                        if not isinstance(item, dict):
+                            errs.append(f"{path}: semantic_page.search_semantics.favorites.items[{index}] must be object")
+                            continue
+                        for required in ("key", "label"):
+                            if required not in item:
+                                errs.append(f"{path}: semantic_page.search_semantics.favorites.items[{index}] missing '{required}'")
 
     kanban_semantics = sp.get("kanban_semantics")
     if view_type == "kanban":

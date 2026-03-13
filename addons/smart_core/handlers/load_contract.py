@@ -274,7 +274,13 @@ class LoadContractHandler(BaseIntentHandler):
 
         def _extract_search_semantics(raw_search):
             if not isinstance(raw_search, dict):
-                return {"filters": [], "group_by": [], "search_fields": [], "search_panel": {"enabled": False}}
+                return {
+                    "filters": [],
+                    "group_by": [],
+                    "search_fields": [],
+                    "search_panel": {"enabled": False, "sections": []},
+                    "favorites": {"enabled": False, "items": []},
+                }
 
             filters = _normalize_search_items(raw_search.get("filters"), "filter")
             group_by = _normalize_search_items(raw_search.get("group_by"), "group_by")
@@ -285,11 +291,19 @@ class LoadContractHandler(BaseIntentHandler):
                 "sections": search_panel_raw.get("sections") if isinstance(search_panel_raw.get("sections"), list) else [],
             }
 
+            favorites_raw = raw_search.get("favorites") if isinstance(raw_search.get("favorites"), dict) else {}
+            favorite_items = _normalize_search_items(favorites_raw.get("items"), "favorite")
+            favorites = {
+                "enabled": bool(favorites_raw.get("enabled", False)),
+                "items": favorite_items,
+            }
+
             return {
                 "filters": filters,
                 "group_by": group_by,
                 "search_fields": search_fields,
                 "search_panel": search_panel,
+                "favorites": favorites,
                 "quick_filters": filters[:4],
             }
 
