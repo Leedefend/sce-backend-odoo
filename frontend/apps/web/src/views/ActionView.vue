@@ -250,7 +250,7 @@
         </section>
       </div>
     </section>
-    <section v-if="viewMode === 'kanban' && sceneKey === 'projects.ledger' && ledgerOverviewItems.length" class="ledger-overview-strip">
+    <section v-if="viewMode === 'kanban' && hasLedgerOverviewStrip && ledgerOverviewItems.length" class="ledger-overview-strip">
       <article v-for="item in ledgerOverviewItems" :key="item.key" class="ledger-overview-card" :class="`tone-${item.tone}`">
         <p class="ledger-overview-label">{{ item.label }}</p>
         <p class="ledger-overview-value">{{ item.value }}</p>
@@ -675,8 +675,8 @@ type SurfaceIntent = {
   secondaryAction?: FocusNavAction;
 };
 
-const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
-  'projects.list': {
+const MODEL_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
+  'project.project': {
     columns: ['name', 'stage_id', 'user_id', 'contract_amount', 'write_date'],
     column_labels: {
       name: '项目名称',
@@ -688,7 +688,7 @@ const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
     row_primary: 'name',
     row_secondary: 'user_id',
   },
-  'projects.ledger': {
+  'project.project::ledger': {
     columns: ['name', 'stage_id', 'user_id', 'contract_amount', 'write_date'],
     column_labels: {
       name: '项目名称',
@@ -700,7 +700,7 @@ const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
     row_primary: 'name',
     row_secondary: 'user_id',
   },
-  'task.center': {
+  'project.task': {
     columns: ['name', 'kanban_state', 'user_ids', 'date_deadline', 'write_date'],
     column_labels: {
       name: '任务名称',
@@ -712,7 +712,7 @@ const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
     row_primary: 'name',
     row_secondary: 'user_ids',
   },
-  'risk.center': {
+  'project.risk': {
     columns: ['name', 'state', 'project_id', 'partner_id', 'amount', 'date_request'],
     column_labels: {
       name: '风险单号',
@@ -763,6 +763,8 @@ const scene = computed<Scene | null>(() => {
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
+const effectiveListModel = computed(() => String(resolvedModelRef.value || actionMeta.value?.model || actionContract.value?.head?.model || '').trim());
+const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger' && effectiveListModel.value === 'project.project');
 function mergeColumnsWithPreset(baseColumns: string[], presetColumns: string[]) {
   const out: string[] = [];
   const seen = new Set<string>();
@@ -783,7 +785,9 @@ function mergeColumnsWithPreset(baseColumns: string[], presetColumns: string[]) 
 
 const listProfile = computed<SceneListProfile | null>(() => {
   const base = (scene.value?.list_profile as SceneListProfile) || null;
-  const preset = SCENE_LIST_PROFILE_PRESETS[sceneKey.value || ''];
+  const resolvedModel = String(effectiveListModel.value || '').trim();
+  const presetKey = pageMode.value === 'ledger' ? `${resolvedModel}::ledger` : resolvedModel;
+  const preset = MODEL_LIST_PROFILE_PRESETS[presetKey] || MODEL_LIST_PROFILE_PRESETS[resolvedModel] || null;
   if (!base && !preset) return null;
   if (!base) return preset;
   if (!preset) return base;
@@ -1020,7 +1024,7 @@ function isCompletedState(stateText: string, tone: string) {
 }
 
 const ledgerOverviewItems = computed(() => {
-  if (sceneKey.value !== 'projects.ledger') return [] as Array<{ key: string; label: string; value: string; tone: string }>;
+  if (!hasLedgerOverviewStrip.value) return [] as Array<{ key: string; label: string; value: string; tone: string }>;
   const rows = records.value || [];
   let running = 0;
   let warning = 0;
@@ -1047,9 +1051,23 @@ const ledgerOverviewItems = computed(() => {
     },
   ];
 });
+
+const listSemanticKind = computed(() => {
+  const modelKey = String(effectiveListModel.value || '').toLowerCase();
+  if (modelKey === 'project.project') return 'project';
+  if (modelKey === 'project.task') return 'task';
+  if (modelKey.includes('risk')) return 'risk';
+  if (modelKey === 'cost.project_boq') return 'boq';
+  const fieldSet = new Set(columns.value.map((field) => String(field || '').toLowerCase()));
+  if (fieldSet.has('quantity') && (fieldSet.has('price') || fieldSet.has('amount_total'))) return 'boq';
+  if (fieldSet.has('date_deadline') && (fieldSet.has('kanban_state') || fieldSet.has('user_ids'))) return 'task';
+  if (fieldSet.has('date_request') && fieldSet.has('amount') && fieldSet.has('state')) return 'risk';
+  return 'generic';
+});
+
 const listSummaryItems = computed(() => {
   const rows = records.value || [];
-  if (sceneKey.value === 'task.center') {
+  if (listSemanticKind.value === 'task') {
     let done = 0;
     let pending = 0;
     let blocked = 0;
@@ -1066,7 +1084,7 @@ const listSummaryItems = computed(() => {
       { key: 'task_done', label: '已完成', value: String(done), tone: 'success' },
     ];
   }
-  if (sceneKey.value === 'risk.center') {
+  if (listSemanticKind.value === 'risk') {
     let high = 0;
     let warning = 0;
     rows.forEach((row) => {
@@ -1080,7 +1098,7 @@ const listSummaryItems = computed(() => {
       { key: 'risk_warning', label: '预警', value: String(warning), tone: warning > 0 ? 'warning' : 'neutral' },
     ];
   }
-  if (sceneKey.value === 'cost.project_boq') {
+  if (listSemanticKind.value === 'boq') {
     let quantity = 0;
     rows.forEach((row) => {
       quantity += Number(row.quantity || 0) || 0;
@@ -1090,7 +1108,7 @@ const listSummaryItems = computed(() => {
       { key: 'boq_qty', label: '总工程量', value: `${Math.round(quantity * 100) / 100}`, tone: 'neutral' },
     ];
   }
-  if (sceneKey.value === 'projects.list') {
+  if (listSemanticKind.value === 'project') {
     const totals = projectScopeTotals.value;
     const scopeMetrics = projectScopeMetrics.value;
     let warning = 0;
@@ -3434,7 +3452,7 @@ async function load() {
       ? (result.data as Record<string, unknown>)
       : {};
     listTotalCount.value = readTotalFromListResult(resultData);
-    if (sceneKey.value === 'projects.list' && resolvedModel === 'project.project' && hasActiveField.value) {
+    if (pageMode.value === 'list' && resolvedModel === 'project.project' && hasActiveField.value) {
       try {
         const domainRaw = resolveEffectiveFilterDomainRaw();
         const term = searchTerm.value.trim();
