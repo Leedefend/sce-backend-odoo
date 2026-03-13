@@ -1607,6 +1607,10 @@ verify.frontend.scene_record_semantics.guard: guard.prod.forbid
 verify.frontend.scene_contract_auto_render.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_scene_contract_auto_render_guard.py
 
+.PHONY: verify.frontend.actionview.scene_specialcase.guard
+verify.frontend.actionview.scene_specialcase.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_actionview_scene_specialcase_guard.py
+
 .PHONY: verify.frontend.error_context.contract.guard
 verify.frontend.error_context.contract.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_error_context_contract_guard.py
@@ -1668,6 +1672,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.page_contract.role_strategy_provider_split.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_contract_auto_render.guard \
+	verify.frontend.actionview.scene_specialcase.guard \
 	verify.frontend.scene_record_semantics.guard \
 	verify.frontend.error_context.contract.guard \
 	verify.render.semantic.ready \
