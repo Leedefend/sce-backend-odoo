@@ -240,13 +240,27 @@ class LoadContractHandler(BaseIntentHandler):
 
         model_name = str(head.get("model") or data.get("model") or "")
         view_type = str(head.get("view_type") or "")
+        permissions = data.get("permissions") if isinstance(data.get("permissions"), dict) else {}
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        toolbar_actions = []
+        if isinstance(toolbar, dict):
+            toolbar_actions.extend(toolbar.get("header") if isinstance(toolbar.get("header"), list) else [])
+            toolbar_actions.extend(toolbar.get("sidebar") if isinstance(toolbar.get("sidebar"), list) else [])
+            toolbar_actions.extend(toolbar.get("footer") if isinstance(toolbar.get("footer"), list) else [])
 
         data["semantic_page"] = {
+            "version": "v1",
+            "source": "load_contract",
             "model": model_name,
             "view_type": view_type,
             "layout": "auto",
             "header": head,
             "fields": fields,
+            "permissions": permissions,
+            "actions": {
+                "buttons": buttons,
+                "toolbar": toolbar_actions,
+            },
             "zones": zones,
         }
 
