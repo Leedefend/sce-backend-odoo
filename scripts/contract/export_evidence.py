@@ -41,6 +41,8 @@ def build_evidence(
     grouped_governance_brief_report: dict,
     grouped_governance_policy_matrix_report: dict,
     grouped_governance_trend_consistency_report: dict,
+    native_view_semantic_shape_report: dict,
+    native_view_semantic_schema_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -361,6 +363,16 @@ def build_evidence(
             "report_json": "artifacts/grouped_governance_trend_consistency_guard.json",
             "report_md": "artifacts/grouped_governance_trend_consistency_guard.md",
         },
+        "native_view_semantic_guard": {
+            "ok": bool(native_view_semantic_shape_report.get("ok", False)) and bool(native_view_semantic_schema_report.get("ok", False)),
+            "shape_ok": bool(native_view_semantic_shape_report.get("ok", False)),
+            "schema_ok": bool(native_view_semantic_schema_report.get("ok", False)),
+            "snapshot_count": int(native_view_semantic_shape_report.get("snapshot_count") or 0),
+            "shape_error_count": int(native_view_semantic_shape_report.get("error_count") or 0),
+            "schema_error_count": int(native_view_semantic_schema_report.get("error_count") or 0),
+            "shape_report": "artifacts/backend/native_view_semantic_page_shape_guard.json",
+            "schema_report": "artifacts/backend/native_view_semantic_page_schema_guard.json",
+        },
     }
     return evidence
 
@@ -387,6 +399,7 @@ def to_markdown(evidence: dict) -> str:
     ggb = evidence["grouped_governance_brief"]
     ggpm = evidence["grouped_governance_policy_matrix"]
     ggtc = evidence["grouped_governance_trend_consistency"]
+    nv = evidence["native_view_semantic_guard"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -575,6 +588,16 @@ def to_markdown(evidence: dict) -> str:
         f"- report_json: `{ggtc['report_json']}`",
         f"- report_md: `{ggtc['report_md']}`",
         "",
+        "## Native View Semantic Guard",
+        f"- ok: {nv['ok']}",
+        f"- shape_ok: {nv['shape_ok']}",
+        f"- schema_ok: {nv['schema_ok']}",
+        f"- snapshot_count: {nv['snapshot_count']}",
+        f"- shape_error_count: {nv['shape_error_count']}",
+        f"- schema_error_count: {nv['schema_error_count']}",
+        f"- shape_report: `{nv['shape_report']}`",
+        f"- schema_report: `{nv['schema_report']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -613,6 +636,8 @@ def main() -> int:
         "--grouped-governance-trend-consistency-report",
         default="artifacts/grouped_governance_trend_consistency_guard.json",
     )
+    parser.add_argument("--native-view-semantic-shape-report", default="artifacts/backend/native_view_semantic_page_shape_guard.json")
+    parser.add_argument("--native-view-semantic-schema-report", default="artifacts/backend/native_view_semantic_page_schema_guard.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -640,6 +665,8 @@ def main() -> int:
     grouped_governance_trend_consistency_report = load_json_optional(
         Path(args.grouped_governance_trend_consistency_report), {}
     )
+    native_view_semantic_shape_report = load_json_optional(Path(args.native_view_semantic_shape_report), {})
+    native_view_semantic_schema_report = load_json_optional(Path(args.native_view_semantic_schema_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -681,6 +708,10 @@ def main() -> int:
         raise SystemExit("grouped governance policy matrix report must be object")
     if not isinstance(grouped_governance_trend_consistency_report, dict):
         raise SystemExit("grouped governance trend consistency report must be object")
+    if not isinstance(native_view_semantic_shape_report, dict):
+        raise SystemExit("native view semantic shape report must be object")
+    if not isinstance(native_view_semantic_schema_report, dict):
+        raise SystemExit("native view semantic schema report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -704,6 +735,8 @@ def main() -> int:
         grouped_governance_brief_report,
         grouped_governance_policy_matrix_report,
         grouped_governance_trend_consistency_report,
+        native_view_semantic_shape_report,
+        native_view_semantic_schema_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)

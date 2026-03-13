@@ -103,28 +103,69 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--schema", default="docs/architecture/native_view_contract/semantic_page_contract_shape_v1.schema.json")
     parser.add_argument("--dir", default="docs/contract/snapshots/native_view")
+    parser.add_argument("--output", default="", help="optional json report output path")
     args = parser.parse_args()
 
     schema_file = Path(args.schema)
     root = Path(args.dir)
 
+    report = {
+        "ok": False,
+        "check": "verify.native_view.semantic_page.schema",
+        "schema": str(schema_file),
+        "snapshot_dir": str(root),
+        "snapshot_count": 0,
+        "error_count": 0,
+        "errors": [],
+    }
+
     if not schema_file.exists():
-        print(f"[verify.native_view.semantic_page.schema] FAIL: schema not found: {schema_file}")
+        message = f"schema not found: {schema_file}"
+        report["errors"] = [message]
+        report["error_count"] = 1
+        print(f"[verify.native_view.semantic_page.schema] FAIL: {message}")
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
     if not root.exists():
-        print(f"[verify.native_view.semantic_page.schema] FAIL: dir not found: {root}")
+        message = f"dir not found: {root}"
+        report["errors"] = [message]
+        report["error_count"] = 1
+        print(f"[verify.native_view.semantic_page.schema] FAIL: {message}")
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
 
     try:
         schema = json.loads(schema_file.read_text(encoding="utf-8"))
     except Exception as exc:
-        print(f"[verify.native_view.semantic_page.schema] FAIL: invalid schema json ({exc})")
+        message = f"invalid schema json ({exc})"
+        report["errors"] = [message]
+        report["error_count"] = 1
+        print(f"[verify.native_view.semantic_page.schema] FAIL: {message}")
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
 
     files = sorted(root.glob("*.json"))
     if not files:
-        print(f"[verify.native_view.semantic_page.schema] FAIL: no json files in {root}")
+        message = f"no json files in {root}"
+        report["errors"] = [message]
+        report["error_count"] = 1
+        print(f"[verify.native_view.semantic_page.schema] FAIL: {message}")
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
+
+    report["snapshot_count"] = len(files)
 
     all_errors: list[str] = []
     for file in files:
@@ -134,12 +175,22 @@ def main() -> int:
         print("[verify.native_view.semantic_page.schema] FAIL")
         for err in all_errors:
             print(f" - {err}")
+        report["errors"] = all_errors
+        report["error_count"] = len(all_errors)
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
 
     print(f"[verify.native_view.semantic_page.schema] PASS ({len(files)} files)")
+    report["ok"] = True
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

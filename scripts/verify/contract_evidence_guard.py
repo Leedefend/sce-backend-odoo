@@ -167,6 +167,10 @@ def main() -> int:
         "require_grouped_governance_trend_report_pair_consistent": True,
         "require_grouped_governance_trend_report_pair_same_parent": True,
         "require_grouped_governance_trend_report_pair_same_stem": True,
+        "require_native_view_semantic_guard_ok": True,
+        "max_native_view_semantic_shape_error_count": 0,
+        "max_native_view_semantic_schema_error_count": 0,
+        "min_native_view_semantic_snapshot_count": 1,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -200,6 +204,7 @@ def main() -> int:
         "grouped_governance_brief",
         "grouped_governance_policy_matrix",
         "grouped_governance_trend_consistency",
+        "native_view_semantic_guard",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -764,6 +769,32 @@ def main() -> int:
             if bool(policy.get("require_grouped_governance_trend_report_pair_same_stem", True)):
                 if trend_json_path.with_suffix("").name != trend_md_path.with_suffix("").name:
                     errors.append("grouped_governance_trend_consistency.report_json/report_md must share same stem")
+
+    native_view_semantic = (
+        payload.get("native_view_semantic_guard")
+        if isinstance(payload.get("native_view_semantic_guard"), dict)
+        else {}
+    )
+    if bool(policy.get("require_native_view_semantic_guard_ok", True)) and not bool(native_view_semantic.get("ok")):
+        errors.append("native_view_semantic_guard.ok must be true under baseline policy")
+    max_shape_error_count = int(policy.get("max_native_view_semantic_shape_error_count", 0) or 0)
+    if int(native_view_semantic.get("shape_error_count") or 0) > max_shape_error_count:
+        errors.append(
+            "native_view_semantic_guard.shape_error_count must be <= "
+            f"{max_shape_error_count}"
+        )
+    max_schema_error_count = int(policy.get("max_native_view_semantic_schema_error_count", 0) or 0)
+    if int(native_view_semantic.get("schema_error_count") or 0) > max_schema_error_count:
+        errors.append(
+            "native_view_semantic_guard.schema_error_count must be <= "
+            f"{max_schema_error_count}"
+        )
+    min_snapshot_count = int(policy.get("min_native_view_semantic_snapshot_count", 1) or 1)
+    if int(native_view_semantic.get("snapshot_count") or 0) < min_snapshot_count:
+        errors.append(
+            "native_view_semantic_guard.snapshot_count must be >= "
+            f"{min_snapshot_count}"
+        )
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
