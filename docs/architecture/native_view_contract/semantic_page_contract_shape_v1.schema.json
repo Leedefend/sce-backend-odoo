@@ -11,6 +11,102 @@
         "model": {"type": "string", "minLength": 1},
         "view_type": {"type": "string", "minLength": 1},
         "layout": {"type": "string", "minLength": 1},
+        "permission_verdicts": {
+          "type": "object",
+          "required": ["read", "create", "write", "unlink", "execute"],
+          "properties": {
+            "read": {"$ref": "#/$defs/verdict"},
+            "create": {"$ref": "#/$defs/verdict"},
+            "write": {"$ref": "#/$defs/verdict"},
+            "unlink": {"$ref": "#/$defs/verdict"},
+            "execute": {"$ref": "#/$defs/verdict"}
+          },
+          "additionalProperties": true
+        },
+        "action_gating": {
+          "type": "object",
+          "required": ["record_state", "policy", "verdict"],
+          "properties": {
+            "record_state": {
+              "type": "object",
+              "required": ["field", "value", "source"],
+              "properties": {
+                "field": {"type": "string"},
+                "value": {"type": "string"},
+                "source": {"type": "string"}
+              },
+              "additionalProperties": true
+            },
+            "policy": {
+              "type": "object",
+              "required": ["closed_states"],
+              "properties": {
+                "closed_states": {"type": "array", "items": {"type": "string"}}
+              },
+              "additionalProperties": true
+            },
+            "verdict": {
+              "type": "object",
+              "required": ["is_closed_state", "reason_code"],
+              "properties": {
+                "is_closed_state": {"type": "boolean"},
+                "reason_code": {"type": "string"}
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "search_semantics": {
+          "type": "object",
+          "required": ["filters", "group_by", "search_fields", "search_panel", "favorites", "quick_filters"],
+          "properties": {
+            "filters": {"type": "array", "items": {"$ref": "#/$defs/searchItem"}},
+            "group_by": {"type": "array", "items": {"$ref": "#/$defs/searchItem"}},
+            "search_fields": {"type": "array", "items": {"$ref": "#/$defs/searchItem"}},
+            "quick_filters": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/searchItem"}},
+            "search_panel": {
+              "type": "object",
+              "required": ["enabled", "sections"],
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "sections": {"type": "array", "items": {"type": "string"}}
+              },
+              "additionalProperties": true
+            },
+            "favorites": {
+              "type": "object",
+              "required": ["enabled", "items"],
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "items": {"type": "array", "items": {"$ref": "#/$defs/searchItem"}}
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "kanban_semantics": {
+          "type": "object",
+          "required": ["title_field", "card_fields", "metric_fields"],
+          "properties": {
+            "title_field": {"type": "string"},
+            "subtitle_field": {"type": "string"},
+            "stage_field": {"type": "string"},
+            "card_fields": {"type": "array", "items": {"type": "string"}},
+            "metric_fields": {"type": "array", "items": {"type": "string"}}
+          },
+          "additionalProperties": true
+        },
+        "actions": {
+          "type": "object",
+          "properties": {
+            "header_actions": {"type": "array", "items": {"$ref": "#/$defs/actionItem"}},
+            "record_actions": {"type": "array", "items": {"$ref": "#/$defs/actionItem"}},
+            "toolbar_actions": {"type": "array", "items": {"$ref": "#/$defs/actionItem"}}
+          },
+          "additionalProperties": true
+        },
         "zones": {
           "type": "array",
           "items": {
@@ -64,6 +160,39 @@
             "additionalProperties": true
           }
         }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "verdict": {
+      "type": "object",
+      "required": ["allowed", "reason_code"],
+      "properties": {
+        "allowed": {"type": "boolean"},
+        "reason_code": {"type": "string"},
+        "reason": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "searchItem": {
+      "type": "object",
+      "required": ["key", "label"],
+      "properties": {
+        "key": {"type": "string"},
+        "label": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "actionItem": {
+      "type": "object",
+      "required": ["key", "label", "enabled", "reason_code"],
+      "properties": {
+        "key": {"type": "string"},
+        "label": {"type": "string"},
+        "enabled": {"type": "boolean"},
+        "reason_code": {"type": "string"},
+        "reason": {"type": "string"}
       },
       "additionalProperties": true
     }

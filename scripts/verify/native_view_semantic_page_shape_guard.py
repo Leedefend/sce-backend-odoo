@@ -109,6 +109,30 @@ def validate_file(path: Path) -> list[str]:
                     if key not in verdict:
                         errs.append(f"{path}: semantic_page.permission_verdicts.{perm_key} missing '{key}'")
 
+    action_gating = sp.get("action_gating")
+    if action_gating is not None:
+        if not isinstance(action_gating, dict):
+            errs.append(f"{path}: semantic_page.action_gating must be object")
+        else:
+            for key in ("record_state", "policy", "verdict"):
+                if key not in action_gating:
+                    errs.append(f"{path}: semantic_page.action_gating missing '{key}'")
+            record_state = action_gating.get("record_state")
+            if isinstance(record_state, dict):
+                for key in ("field", "value", "source"):
+                    if key not in record_state:
+                        errs.append(f"{path}: semantic_page.action_gating.record_state missing '{key}'")
+            policy = action_gating.get("policy")
+            if isinstance(policy, dict):
+                if "closed_states" not in policy or not isinstance(policy.get("closed_states"), list):
+                    errs.append(f"{path}: semantic_page.action_gating.policy.closed_states must be array")
+            verdict = action_gating.get("verdict")
+            if isinstance(verdict, dict):
+                if "is_closed_state" not in verdict or not isinstance(verdict.get("is_closed_state"), bool):
+                    errs.append(f"{path}: semantic_page.action_gating.verdict.is_closed_state must be bool")
+                if "reason_code" not in verdict:
+                    errs.append(f"{path}: semantic_page.action_gating.verdict.reason_code missing")
+
     search_semantics = sp.get("search_semantics")
     if view_type == "search":
         if not isinstance(search_semantics, dict):

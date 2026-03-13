@@ -351,6 +351,65 @@ class LoadContractHandler(BaseIntentHandler):
             "reason": "" if permission_verdicts["read"]["allowed"] else "permission denied",
         }
 
+        closed_states = {"done", "closed", "cancel", "cancelled", "archived"}
+        state_field = ""
+        state_value = ""
+        state_source = "unknown"
+
+        raw_record_state = data.get("record_state") if isinstance(data.get("record_state"), dict) else {}
+        if raw_record_state:
+            state_field = str(raw_record_state.get("field") or "")
+            state_value = str(raw_record_state.get("value") or "")
+            state_source = "record_state"
+        elif head.get("state"):
+            state_field = "state"
+            state_value = str(head.get("state") or "")
+            state_source = "head"
+
+        def _action_requires_write(action_key: str) -> bool:
+            lowered = str(action_key or "").lower()
+            write_tokens = ("edit", "write", "save", "create", "unlink", "delete", "archive")
+            return any(token in lowered for token in write_tokens)
+
+        def _with_action_gate(action: dict):
+            if not isinstance(action, dict):
+                return action
+            key = str(action.get("key") or "")
+            requires_write = _action_requires_write(key)
+            permission_allowed = bool(permission_verdicts["write"]["allowed"]) if requires_write else bool(permission_verdicts["execute"]["allowed"])
+            is_closed_state = str(state_value).lower() in closed_states if state_value else False
+            state_blocked = is_closed_state and requires_write
+            current_enabled = bool(action.get("enabled", True))
+            allowed = bool(current_enabled and permission_allowed and not state_blocked)
+            reason_code = "OK"
+            reason = ""
+            if not allowed:
+                if not current_enabled:
+                    reason_code = str(action.get("reason_code") or "DISABLED")
+                    reason = str(action.get("reason") or "")
+                elif not permission_allowed:
+                    reason_code = "PERMISSION_DENIED"
+                    reason = "permission denied"
+                elif state_blocked:
+                    reason_code = "STATE_BLOCKED"
+                    reason = "record state blocks action"
+
+            return {
+                **action,
+                "enabled": allowed,
+                "reason_code": reason_code,
+                "reason": reason,
+                "gate": {
+                    "allowed": allowed,
+                    "requires_write": requires_write,
+                    "state_blocked": state_blocked,
+                    "reason_code": reason_code,
+                },
+            }
+
+        def _with_action_gate_list(items):
+            return [_with_action_gate(item) for item in items if isinstance(item, dict)]
+
         # header_zone
         header_blocks = []
         header_buttons = []
@@ -369,7 +428,12 @@ class LoadContractHandler(BaseIntentHandler):
         if isinstance(views.get("form"), dict):
             form_view = views.get("form") or {}
             if form_view.get("statusbar"):
-                _add_zone("summary_zone", {"type": "status_block", "data": form_view.get("statusbar")})
+                statusbar = form_view.get("statusbar") if isinstance(form_view.get("statusbar"), dict) else {}
+                _add_zone("summary_zone", {"type": "status_block", "data": statusbar})
+                if statusbar and not state_value:
+                    state_field = str(statusbar.get("field") or statusbar.get("name") or state_field)
+                    state_value = str(statusbar.get("value") or statusbar.get("current") or state_value)
+                    state_source = "statusbar"
             stat_buttons = []
             if isinstance(form_view.get("button_box"), list):
                 stat_buttons.extend(form_view.get("button_box") or [])
@@ -412,11 +476,11 @@ class LoadContractHandler(BaseIntentHandler):
                             "can_create": can_create,
                             "can_unlink": can_unlink,
                         },
-                        "row_actions": [
+                        "row_actions": _with_action_gate_list([
                             {"key": "open", "label": "打开", "enabled": True, "reason_code": "OK"},
                             {"key": "create", "label": "新增", "enabled": can_create, "reason_code": "OK" if can_create else "PERMISSION_DENIED"},
                             {"key": "unlink", "label": "移除", "enabled": can_unlink, "reason_code": "OK" if can_unlink else "PERMISSION_DENIED"},
-                        ],
+                        ]),
                     })
                 _add_zone("relation_zone", {
                     "type": "relation_table_block",
@@ -441,7 +505,7 @@ class LoadContractHandler(BaseIntentHandler):
                     "reason_code": "OK" if permissions.get("write") else "PERMISSION_DENIED",
                 },
             ]
-            _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_columns, "row_actions": tree_row_actions}})
+            _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_columns, "row_actions": _with_action_gate_list(tree_row_actions)}})
 
         kanban_semantics = None
         if isinstance(views.get("kanban"), dict):
@@ -460,7 +524,7 @@ class LoadContractHandler(BaseIntentHandler):
                 "detail_zone",
                 {
                     "type": "relation_card_block",
-                    "data": dict(kanban_view, card_actions=kanban_card_actions, kanban_semantics=kanban_semantics or {}),
+                    "data": dict(kanban_view, card_actions=_with_action_gate_list(kanban_card_actions), kanban_semantics=kanban_semantics or {}),
                 },
             )
 
@@ -471,13 +535,30 @@ class LoadContractHandler(BaseIntentHandler):
         model_name = str(head.get("model") or data.get("model") or "")
         view_type = str(head.get("view_type") or "")
         buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
-        normalized_buttons = _normalize_action_list(buttons, default_prefix="button")
+        normalized_buttons = _with_action_gate_list(_normalize_action_list(buttons, default_prefix="button"))
         toolbar_actions = []
         if isinstance(toolbar, dict):
             toolbar_actions.extend(toolbar.get("header") if isinstance(toolbar.get("header"), list) else [])
             toolbar_actions.extend(toolbar.get("sidebar") if isinstance(toolbar.get("sidebar"), list) else [])
             toolbar_actions.extend(toolbar.get("footer") if isinstance(toolbar.get("footer"), list) else [])
-        normalized_toolbar_actions = _normalize_action_list(toolbar_actions, default_prefix="toolbar")
+        normalized_toolbar_actions = _with_action_gate_list(_normalize_action_list(toolbar_actions, default_prefix="toolbar"))
+        normalized_header_actions = _with_action_gate_list(normalized_header_actions)
+
+        is_closed_state = str(state_value).lower() in closed_states if state_value else False
+        action_gating = {
+            "record_state": {
+                "field": state_field,
+                "value": state_value,
+                "source": state_source,
+            },
+            "policy": {
+                "closed_states": sorted(closed_states),
+            },
+            "verdict": {
+                "is_closed_state": is_closed_state,
+                "reason_code": "STATE_BLOCKED" if is_closed_state else "OK",
+            },
+        }
 
         if normalized_buttons or normalized_toolbar_actions or normalized_header_actions:
             _add_zone(
@@ -502,6 +583,7 @@ class LoadContractHandler(BaseIntentHandler):
             "fields": fields,
             "permissions": permissions,
             "permission_verdicts": permission_verdicts,
+            "action_gating": action_gating,
             "search_semantics": search_semantics,
             "kanban_semantics": kanban_semantics,
             "actions": {
