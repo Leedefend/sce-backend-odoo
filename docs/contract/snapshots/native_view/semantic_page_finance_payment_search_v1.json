@@ -1,0 +1,117 @@
+{
+  "semantic_page": {
+    "model": "finance.payment",
+    "view_type": "search",
+    "layout": "auto",
+    "search_semantics": {
+      "filters": [
+        {
+          "key": "to_pay",
+          "label": "待支付",
+          "domain": null
+        },
+        {
+          "key": "paid",
+          "label": "已支付",
+          "domain": null
+        }
+      ],
+      "group_by": [
+        {
+          "key": "project_id",
+          "label": "按项目",
+          "domain": null
+        }
+      ],
+      "search_fields": [
+        {
+          "key": "name",
+          "label": "付款单",
+          "domain": null
+        }
+      ],
+      "search_panel": {
+        "enabled": true,
+        "sections": [
+          "project_id",
+          "state"
+        ]
+      },
+      "favorites": {
+        "enabled": true,
+        "items": [
+          {
+            "key": "fav_to_pay",
+            "label": "我关注·待支付",
+            "domain": null
+          }
+        ]
+      },
+      "quick_filters": [
+        {
+          "key": "to_pay",
+          "label": "待支付",
+          "domain": null
+        }
+      ]
+    },
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "search": {
+                "filters": [
+                  {
+                    "key": "to_pay",
+                    "label": "待支付"
+                  }
+                ],
+                "group_by": [
+                  {
+                    "key": "project_id",
+                    "label": "按项目"
+                  }
+                ]
+              },
+              "search_semantics": {
+                "filters": [
+                  {
+                    "key": "to_pay",
+                    "label": "待支付",
+                    "domain": null
+                  }
+                ],
+                "group_by": [
+                  {
+                    "key": "project_id",
+                    "label": "按项目",
+                    "domain": null
+                  }
+                ],
+                "search_fields": [],
+                "search_panel": {
+                  "enabled": false,
+                  "sections": []
+                },
+                "favorites": {
+                  "enabled": false,
+                  "items": []
+                },
+                "quick_filters": [
+                  {
+                    "key": "to_pay",
+                    "label": "待支付",
+                    "domain": null
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

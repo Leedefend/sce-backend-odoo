@@ -28,14 +28,14 @@
 | construction.contract_form | construction.contract | form | contract | yes |
 | construction.contract_tree | construction.contract | tree | contract | yes |
 | construction.contract_search | construction.contract | search | contract | yes |
-| cost.ledger_form | cost.ledger | form | cost | no |
-| cost.ledger_tree | cost.ledger | tree | cost | no |
-| cost.ledger_search | cost.ledger | search | cost | no |
-| finance.payment_form | finance.payment | form | finance | no |
-| finance.payment_tree | finance.payment | tree | finance | no |
-| finance.payment_search | finance.payment | search | finance | no |
-| mail.thread_form_collab | mail.thread | form | collaboration | no |
+| cost.ledger_form | cost.ledger | form | cost | yes |
+| cost.ledger_tree | cost.ledger | tree | cost | yes |
+| cost.ledger_search | cost.ledger | search | cost | yes |
+| finance.payment_form | finance.payment | form | finance | yes |
+| finance.payment_tree | finance.payment | tree | finance | yes |
+| finance.payment_search | finance.payment | search | finance | yes |
+| mail.thread_form_collab | mail.thread | form | collaboration | yes |
 
 ## Current Stage Summary
-- Ready cases: 15/22
-- Next target: push ready cases to 19+ in this round.
+- Ready cases: 22/22
+- Next target: start frontend iteration on full native-view contract baseline.
