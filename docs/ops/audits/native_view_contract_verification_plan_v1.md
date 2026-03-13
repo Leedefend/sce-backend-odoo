@@ -39,7 +39,7 @@
 2. `make verify.native_view.semantic_page.shape`
 3. `make verify.native_view.semantic_page.schema`
 4. `make verify.native_view.semantic_page`
-5. 新增：`make verify.native_view.coverage.report`
+5. `make verify.native_view.coverage.report`
 
 ## Implemented in this branch
 - Guard script: `scripts/verify/native_view_semantic_page_shape_guard.py`

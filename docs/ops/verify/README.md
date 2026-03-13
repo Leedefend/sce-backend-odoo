@@ -172,6 +172,10 @@
   - Aggregated native-view contract guard:
     - `verify.native_view.semantic_page.shape`
     - `verify.native_view.semantic_page.schema`
+- `make verify.native_view.coverage.report`
+  - Generates native-view contract coverage report:
+    - `artifacts/backend/native_view_coverage_report.json`
+    - `artifacts/backend/native_view_coverage_report.md`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
