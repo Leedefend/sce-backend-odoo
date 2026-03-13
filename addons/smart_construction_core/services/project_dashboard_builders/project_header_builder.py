@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo import fields
+
 from .base import BaseProjectBlockBuilder
 
 
@@ -25,6 +27,64 @@ class ProjectHeaderBuilder(BaseProjectBlockBuilder):
                 data={"summary": {}, "quick_actions": []},
             )
 
+        task_domain = self._project_domain("project.task", project)
+        overdue_tasks = self._safe_count(
+            "project.task",
+            task_domain + [("date_deadline", "<", fields.Date.today())],
+        ) if self._model_has_fields("project.task", ["date_deadline"]) else 0
+        blocked_tasks = self._safe_count("project.task", task_domain + [("kanban_state", "=", "blocked")]) if self._model_has_fields("project.task", ["kanban_state"]) else 0
+        risk_open = self._safe_count("project.risk", [("project_id", "=", int(project.id)), ("status", "not in", ["closed", "done"])])
+        payment_domain = self._project_domain("payment.request", project)
+        payment_pending = self._safe_count(
+            "payment.request",
+            payment_domain + [("state", "in", ["draft", "submitted", "pending", "confirm"])],
+        )
+
+        quick_actions = [
+            {
+                "key": "open_task_overdue",
+                "label": "处理延期任务（%s）" % int(overdue_tasks),
+                "intent": "ui.contract",
+                "priority": 110,
+                "pending_count": int(overdue_tasks),
+                "source": "business",
+            },
+            {
+                "key": "open_task_blocked",
+                "label": "处理阻塞任务（%s）" % int(blocked_tasks),
+                "intent": "ui.contract",
+                "priority": 100,
+                "pending_count": int(blocked_tasks),
+                "source": "business",
+            },
+            {
+                "key": "open_risk_list",
+                "label": "处理风险事项（%s）" % int(risk_open),
+                "intent": "ui.contract",
+                "priority": 95,
+                "pending_count": int(risk_open),
+                "source": "business",
+            },
+            {
+                "key": "open_payment_requests",
+                "label": "处理资金申请（%s）" % int(payment_pending),
+                "intent": "ui.contract",
+                "priority": 80,
+                "pending_count": int(payment_pending),
+                "source": "business",
+            },
+            {
+                "key": "open_project_form",
+                "label": "查看项目详情",
+                "intent": "ui.contract",
+                "priority": 40,
+                "pending_count": 0,
+                "source": "navigation",
+            },
+        ]
+        quick_actions = [row for row in quick_actions if int(row.get("pending_count", 0)) > 0 or row.get("key") == "open_project_form"]
+        quick_actions.sort(key=lambda row: (-int(row.get("pending_count", 0)), -int(row.get("priority", 0))))
+
         data = {
             "summary": {
                 "id": int(project.id),
@@ -47,9 +107,6 @@ class ProjectHeaderBuilder(BaseProjectBlockBuilder):
                 "current_stage": str(getattr(getattr(project, "stage_id", None), "display_name", "") or ""),
                 "planned_finish_date": str(getattr(project, "date", "") or getattr(project, "date_end", "") or ""),
             },
-            "quick_actions": [
-                {"key": "open_project_form", "label": "查看项目详情", "intent": "ui.contract"},
-                {"key": "open_task_list", "label": "查看任务列表", "intent": "ui.contract"},
-            ],
+            "quick_actions": quick_actions,
         }
         return self._envelope(state="ready", visibility=visibility, data=data)
