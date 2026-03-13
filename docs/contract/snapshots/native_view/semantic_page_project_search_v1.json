@@ -14,6 +14,7 @@
         {"key": "name", "label": "项目名称", "domain": null}
       ],
       "search_panel": {"enabled": false, "sections": []},
+      "favorites": {"enabled": false, "items": []},
       "quick_filters": [
         {"key": "in_progress", "label": "进行中", "domain": null}
       ]
@@ -37,6 +38,7 @@
                   {"key": "name", "label": "项目名称", "domain": null}
                 ],
                 "search_panel": {"enabled": false, "sections": []},
+                "favorites": {"enabled": false, "items": []},
                 "quick_filters": [
                   {"key": "in_progress", "label": "进行中", "domain": null}
                 ]

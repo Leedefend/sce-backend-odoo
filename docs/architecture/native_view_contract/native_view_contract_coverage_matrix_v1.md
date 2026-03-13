@@ -14,7 +14,7 @@
 | Tree row action semantics | N/A | ✅ | N/A | N/A | Supported | High | P1 |
 | Kanban card semantic extraction | N/A | N/A | ✅ | N/A | Supported | High | P1 |
 | Search filters/group_by/search_fields | N/A | N/A | N/A | ✅ | Supported | High | P1 |
-| Searchpanel boundary | N/A | N/A | N/A | ✅ | Partial | Medium | P2 |
+| Searchpanel/Favorites boundary | N/A | N/A | N/A | ✅ | Partial | Medium | P2 |
 | Permission explanation reason codes | ✅ | ✅ | ✅ | ✅ | Supported | High | P0 |
 | Record-state action gating | ✅ | ✅ | ✅ | N/A | Partial | Medium | P0 |
 | Unified semantic page (page/zone/block) | ✅ | ✅ | ✅ | ✅ | Supported | High | P0 |

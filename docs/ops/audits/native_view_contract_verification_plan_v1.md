@@ -30,6 +30,7 @@
 - search filters/group_by 必须存在。
 - kanban card fields/grouping hints 必须存在。
 - search view 需包含 `semantic_page.search_semantics`（含 quick_filters<=4）。
+- search view 需包含 `semantic_page.search_semantics.favorites`（enabled/items 边界）。
 - kanban view 需包含 `semantic_page.kanban_semantics`（含 title/card_fields/metric_fields）。
 
 ## Recommended Verify Chain
