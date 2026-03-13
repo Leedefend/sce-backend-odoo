@@ -73,6 +73,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.backend.architecture.full`
 - `make verify.backend.architecture.full.report`
 - `make verify.phase_next.evidence.bundle`
+- `make verify.native_view.semantic_page`
 - `make verify.controller.boundary.guard`
 - `make verify.scene.catalog.runtime_alignment.guard`
 - `make verify.scene.catalog.source.guard`
