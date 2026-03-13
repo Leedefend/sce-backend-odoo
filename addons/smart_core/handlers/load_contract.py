@@ -183,6 +183,7 @@ class LoadContractHandler(BaseIntentHandler):
         toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
         fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
         head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        permissions = data.get("permissions") if isinstance(data.get("permissions"), dict) else {}
 
         if "native_view" not in data:
             data["native_view"] = {
@@ -251,6 +252,26 @@ class LoadContractHandler(BaseIntentHandler):
                     normalized.append(action)
             return normalized
 
+        def _permission_verdict(value):
+            allowed = bool(value)
+            return {
+                "allowed": allowed,
+                "reason_code": "OK" if allowed else "PERMISSION_DENIED",
+                "reason": "" if allowed else "permission denied",
+            }
+
+        permission_verdicts = {
+            "read": _permission_verdict(permissions.get("read", False)),
+            "create": _permission_verdict(permissions.get("create", False)),
+            "write": _permission_verdict(permissions.get("write", False)),
+            "unlink": _permission_verdict(permissions.get("unlink", False)),
+        }
+        permission_verdicts["execute"] = {
+            "allowed": bool(permission_verdicts["read"]["allowed"]),
+            "reason_code": "OK" if permission_verdicts["read"]["allowed"] else "PERMISSION_DENIED",
+            "reason": "" if permission_verdicts["read"]["allowed"] else "permission denied",
+        }
+
         # header_zone
         header_blocks = []
         header_buttons = []
@@ -313,9 +334,9 @@ class LoadContractHandler(BaseIntentHandler):
                             "can_unlink": can_unlink,
                         },
                         "row_actions": [
-                            {"key": "open", "label": "打开"},
-                            {"key": "create", "label": "新增", "enabled": can_create},
-                            {"key": "unlink", "label": "移除", "enabled": can_unlink},
+                            {"key": "open", "label": "打开", "enabled": True, "reason_code": "OK"},
+                            {"key": "create", "label": "新增", "enabled": can_create, "reason_code": "OK" if can_create else "PERMISSION_DENIED"},
+                            {"key": "unlink", "label": "移除", "enabled": can_unlink, "reason_code": "OK" if can_unlink else "PERMISSION_DENIED"},
                         ],
                     })
                 _add_zone("relation_zone", {
@@ -361,7 +382,6 @@ class LoadContractHandler(BaseIntentHandler):
 
         model_name = str(head.get("model") or data.get("model") or "")
         view_type = str(head.get("view_type") or "")
-        permissions = data.get("permissions") if isinstance(data.get("permissions"), dict) else {}
         buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
         normalized_buttons = _normalize_action_list(buttons, default_prefix="button")
         toolbar_actions = []
@@ -393,6 +413,7 @@ class LoadContractHandler(BaseIntentHandler):
             "header": head,
             "fields": fields,
             "permissions": permissions,
+            "permission_verdicts": permission_verdicts,
             "actions": {
                 "buttons": buttons,
                 "toolbar": toolbar_actions,
