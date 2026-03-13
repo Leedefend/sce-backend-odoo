@@ -2886,11 +2886,11 @@ cn.help:
 
 .PHONY: verify.native_view.semantic_page.shape
 verify.native_view.semantic_page.shape: guard.prod.forbid
-	@python3 scripts/verify/native_view_semantic_page_shape_guard.py --dir docs/contract/snapshots/native_view
+	@python3 scripts/verify/native_view_semantic_page_shape_guard.py --dir docs/contract/snapshots/native_view --output artifacts/backend/native_view_semantic_page_shape_guard.json
 
 .PHONY: verify.native_view.semantic_page.schema
 verify.native_view.semantic_page.schema: guard.prod.forbid
-	@python3 scripts/verify/native_view_semantic_page_schema_guard.py --schema docs/architecture/native_view_contract/semantic_page_contract_shape_v1.schema.json --dir docs/contract/snapshots/native_view
+	@python3 scripts/verify/native_view_semantic_page_schema_guard.py --schema docs/architecture/native_view_contract/semantic_page_contract_shape_v1.schema.json --dir docs/contract/snapshots/native_view --output artifacts/backend/native_view_semantic_page_schema_guard.json
 
 .PHONY: verify.native_view.semantic_page
 verify.native_view.semantic_page: verify.native_view.semantic_page.shape verify.native_view.semantic_page.schema

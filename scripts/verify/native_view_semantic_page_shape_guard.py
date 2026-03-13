@@ -205,13 +205,32 @@ def validate_file(path: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", default="docs/contract/snapshots/native_view", help="snapshot directory")
+    parser.add_argument("--output", default="", help="optional json report output path")
     args = parser.parse_args()
 
     root = Path(args.dir)
     files = sorted(root.glob("*.json"))
+    report = {
+        "ok": False,
+        "check": "verify.native_view.semantic_page.shape",
+        "snapshot_dir": str(root),
+        "snapshot_count": 0,
+        "error_count": 0,
+        "errors": [],
+    }
+
     if not files:
-        print(f"[verify.native_view.semantic_page.shape] FAIL: no json files in {root}")
+        message = f"no json files in {root}"
+        report["errors"] = [message]
+        report["error_count"] = 1
+        print(f"[verify.native_view.semantic_page.shape] FAIL: {message}")
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
+
+    report["snapshot_count"] = len(files)
 
     all_errs: list[str] = []
     for file in files:
@@ -221,9 +240,20 @@ def main() -> int:
         print("[verify.native_view.semantic_page.shape] FAIL")
         for err in all_errs:
             print(f" - {err}")
+        report["errors"] = all_errs
+        report["error_count"] = len(all_errs)
+        if args.output:
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 2
 
     print(f"[verify.native_view.semantic_page.shape] PASS ({len(files)} files)")
+    report["ok"] = True
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
