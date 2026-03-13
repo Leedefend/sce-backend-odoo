@@ -1,0 +1,11 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "kanban",
+    "layout": "auto",
+    "zones": [
+      {"key": "detail_zone", "blocks": [{"type": "relation_card_block", "data": {"stages_field": "stage_id"}}]},
+      {"key": "action_zone", "blocks": [{"type": "action_bar_block", "data": {"search": {"group_by": []}}}]}
+    ]
+  }
+}

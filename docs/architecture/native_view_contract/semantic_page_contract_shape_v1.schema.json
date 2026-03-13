@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "semantic_page_contract_shape_v1",
+  "type": "object",
+  "required": ["semantic_page"],
+  "properties": {
+    "semantic_page": {
+      "type": "object",
+      "required": ["model", "view_type", "layout", "zones"],
+      "properties": {
+        "model": {"type": "string", "minLength": 1},
+        "view_type": {"type": "string", "minLength": 1},
+        "layout": {"type": "string", "minLength": 1},
+        "zones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key", "blocks"],
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "header_zone",
+                  "summary_zone",
+                  "detail_zone",
+                  "relation_zone",
+                  "action_zone",
+                  "collaboration_zone",
+                  "insight_zone",
+                  "attachment_zone"
+                ]
+              },
+              "blocks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "title_block",
+                        "status_block",
+                        "action_bar_block",
+                        "field_group_block",
+                        "notebook_block",
+                        "relation_table_block",
+                        "relation_card_block",
+                        "stat_button_block",
+                        "chatter_block",
+                        "attachment_block",
+                        "timeline_block",
+                        "risk_alert_block",
+                        "ai_recommendation_block",
+                        "next_action_block"
+                      ]
+                    },
+                    "data": {"type": ["object", "array", "string", "number", "boolean", "null"]}
+                  },
+                  "additionalProperties": true
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
