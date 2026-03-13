@@ -1,0 +1,37 @@
+{
+  "semantic_page": {
+    "model": "project.task",
+    "view_type": "kanban",
+    "layout": "auto",
+    "kanban_semantics": {
+      "title_field": "name",
+      "subtitle_field": "user_id",
+      "stage_field": "stage_id",
+      "card_fields": ["name", "project_id", "user_id", "stage_id", "priority"],
+      "metric_fields": ["priority"]
+    },
+    "zones": [
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "relation_card_block",
+            "data": {
+              "kanban_semantics": {
+                "title_field": "name",
+                "subtitle_field": "user_id",
+                "stage_field": "stage_id",
+                "card_fields": ["name", "project_id", "user_id", "stage_id", "priority"],
+                "metric_fields": ["priority"]
+              },
+              "card_actions": [
+                {"key": "open", "label": "查看详情", "enabled": true, "reason_code": "OK"},
+                {"key": "edit", "label": "编辑", "enabled": true, "reason_code": "OK"}
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
