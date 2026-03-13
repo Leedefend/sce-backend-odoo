@@ -251,7 +251,8 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     let suggestedAction: string | undefined;
     let details: Record<string, unknown> | undefined;
     try {
-      body = await response.json();
+      const jsonProbe = response.clone();
+      body = await jsonProbe.json();
       const payload = body as {
         error?: {
           message?: string;
