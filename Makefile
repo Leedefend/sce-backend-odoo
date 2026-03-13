@@ -1848,7 +1848,7 @@ verify.capability.core.health.schema.guard: guard.prod.forbid verify.capability.
 verify.scene.contract.semantic.v2.guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_contract_semantic_v2_guard.py
 
-verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.project.form.contract.surface.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard verify.scene.capability.matrix.schema.guard verify.capability.core.health.schema.guard verify.scene.contract.semantic.v2.guard
+verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.project.form.contract.surface.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard verify.scene.capability.matrix.schema.guard verify.capability.core.health.schema.guard verify.scene.contract.semantic.v2.guard verify.native_view.semantic_page
 	@echo "[OK] verify.phase_next.evidence.bundle done"
 
 verify.phase_next.evidence.bundle.strict: guard.prod.forbid verify.phase_next.evidence.bundle verify.contract.assembler.semantic.strict verify.runtime.surface.dashboard.strict.guard verify.backend.architecture.full.report.guard
@@ -2591,6 +2591,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.frontend.search_groupby_savedfilters.guard
 	@$(MAKE) --no-print-directory verify.frontend.x2many_command_semantic.guard
 	@$(MAKE) --no-print-directory verify.frontend.view_type_render_coverage.guard
+	@$(MAKE) --no-print-directory verify.native_view.semantic_page
 	@if [ "$(CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES)" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.contract.view_type_semantic.strict.smoke; \
 	else \
