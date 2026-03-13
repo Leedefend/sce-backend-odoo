@@ -151,6 +151,10 @@ class LoadContractHandler(BaseIntentHandler):
         data   = result.get("data",{}) or {}
         meta   = result.get("meta",{}) or {}
 
+        # ---------- 6.x) 统一语义契约补充（非破坏式） ----------
+        # 保留现有 head/views/fields/search/... 结构，新增 native_view + semantic_page。
+        self._inject_semantic_contract(data)
+
         # ---------- 7) 计算聚合 ETag ----------
         etag_source = _json({
             "view_hash":    meta.get("view_hash"),
@@ -170,6 +174,81 @@ class LoadContractHandler(BaseIntentHandler):
 
         meta_out = dict(meta); meta_out["etag"] = etag
         return {"status": status, "code": 200, "data": data, "meta": meta_out}
+
+    def _inject_semantic_contract(self, data: dict):
+        if not isinstance(data, dict):
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        search = data.get("search") if isinstance(data.get("search"), dict) else {}
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+
+        if "native_view" not in data:
+            data["native_view"] = {
+                "views": views,
+                "search": search,
+                "toolbar": toolbar,
+            }
+
+        if "semantic_page" in data and isinstance(data.get("semantic_page"), dict):
+            return
+
+        zones = []
+
+        # header_zone
+        header_blocks = []
+        header_buttons = []
+        if isinstance(views.get("form"), dict):
+            form_view = views.get("form") or {}
+            header_buttons = (form_view.get("header_buttons") or []) + (form_view.get("button_box") or []) + (form_view.get("stat_buttons") or [])
+        if header_buttons:
+            header_blocks.append({"type": "action_bar_block", "data": {"buttons": header_buttons}})
+        if head:
+            header_blocks.append({"type": "title_block", "data": head})
+        if header_blocks:
+            zones.append({"key": "header_zone", "blocks": header_blocks})
+
+        # detail/relation/collaboration by view
+        if isinstance(views.get("form"), dict):
+            form_view = views.get("form") or {}
+            if form_view.get("layout"):
+                zones.append({"key": "detail_zone", "blocks": [{"type": "field_group_block", "data": {"layout": form_view.get("layout")}}]})
+            if form_view.get("subviews"):
+                zones.append({"key": "relation_zone", "blocks": [{"type": "relation_table_block", "data": {"subviews": form_view.get("subviews")}}]})
+            if form_view.get("chatter") or form_view.get("attachments"):
+                zones.append({
+                    "key": "collaboration_zone",
+                    "blocks": [
+                        {"type": "chatter_block", "data": form_view.get("chatter") or {}},
+                        {"type": "attachment_block", "data": form_view.get("attachments") or {}},
+                    ],
+                })
+
+        if isinstance(views.get("tree"), dict):
+            tree_view = views.get("tree") or {}
+            zones.append({
+                "key": "detail_zone",
+                "blocks": [{"type": "relation_table_block", "data": {"columns": tree_view.get("columns") or []}}],
+            })
+
+        if isinstance(views.get("kanban"), dict):
+            zones.append({"key": "detail_zone", "blocks": [{"type": "relation_card_block", "data": views.get("kanban") or {}}]})
+
+        if search:
+            zones.append({"key": "action_zone", "blocks": [{"type": "action_bar_block", "data": {"search": search}}]})
+
+        model_name = str(head.get("model") or data.get("model") or "")
+        view_type = str(head.get("view_type") or "")
+
+        data["semantic_page"] = {
+            "model": model_name,
+            "view_type": view_type,
+            "layout": "auto",
+            "header": head,
+            "fields": fields,
+            "zones": zones,
+        }
 
     # ---------- 辅助：从 menu_id / action_id 推导 res_model ----------
     def _resolve_model_from_context(self, menu_id=None, action_id=None) -> str | None:

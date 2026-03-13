@@ -3,6 +3,11 @@
 ## Phase A — Contract Baseline Freeze (P0)
 目标：统一契约 shape，定义唯一页面结构事实源。
 
+### Current Progress (this branch)
+1. `load_view` 已改为代理 `load_contract`，停止 legacy 分叉解析链路。
+2. `load_contract` 已开始非破坏式补充 `native_view` 与 `semantic_page` 字段。
+3. 现有前端仍可继续消费 `head/views/fields/search/...`，不受破坏。
+
 ### Actions
 1. 冻结统一 shape：`native_view + semantic_page + actions + permissions + record`。
 2. 定义 zone/block 标准枚举，建立 schema。
