@@ -160,3 +160,7 @@
   - 前端自定义视图重构 Batch2：抽离 `HomeView` section 布局判定为公共工具 `app/sectionLayout.ts`
   - `HomeView` 改为复用 `buildSectionLayoutMap/sectionEnabled/sectionTagIs/sectionOpenDefault`
   - 降低巨型视图的局部复杂度，统一 section 语义入口
+- ✅ Round33 已落地：
+  - 前端自定义视图重构 Batch3：抽离 `HomeView` orchestration block flatten + section semantic 计算到 `app/homeOrchestration.ts`
+  - `HomeView` 改为复用 `flattenHomeOrchestrationBlocks/deriveHomeSectionMaps`
+  - 统一编排语义计算入口，降低后续变更回归风险
