@@ -1517,6 +1517,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     scene_contract_core: Dict[str, Any] = {
         "scene": {"key": "portal.dashboard", "page": "portal.dashboard"},
         "page": {"key": "portal.dashboard", "title": "工作台", "route": "/"},
+        "nav_ref": {"active_scene_key": "portal.dashboard", "active_menu_key": "scene:portal.dashboard", "active_menu_id": None},
         "zones": {},
         "record": {"hero": {"title": "工作台", "role_code": role_code}},
         "permissions": {},
@@ -1574,6 +1575,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 scene_contract_core = {
                     "scene": dict(contract.get("scene") or scene_contract_core.get("scene") or {}),
                     "page": dict(contract.get("page") or scene_contract_core.get("page") or {}),
+                    "nav_ref": dict(contract.get("nav_ref") or scene_contract_core.get("nav_ref") or {}),
                     "zones": dict(contract.get("zones") or scene_contract_core.get("zones") or {}),
                     "record": dict(contract.get("record") or scene_contract_core.get("record") or {}),
                     "permissions": dict(contract.get("permissions") or {}),
@@ -1591,6 +1593,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "scene": scene_contract_core.get("scene") or {},
         "page": scene_contract_core.get("page") or {},
+        "nav_ref": scene_contract_core.get("nav_ref") or {},
         "zones": scene_contract_core.get("zones") or {},
         "record": scene_contract_core.get("record") or {},
         "permissions": scene_contract_core.get("permissions") or {},

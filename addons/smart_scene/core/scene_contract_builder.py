@@ -8,6 +8,7 @@ REQUIRED_TOP_LEVEL_KEYS = (
     "contract_version",
     "scene",
     "page",
+    "nav_ref",
     "zones",
     "blocks",
     "record",
@@ -16,6 +17,43 @@ REQUIRED_TOP_LEVEL_KEYS = (
     "extensions",
     "diagnostics",
 )
+
+
+def _synthetic_menu_id(key: str, base: int = 700_000_000, span: int = 200_000_000) -> int:
+    import zlib
+
+    raw = zlib.crc32(str(key or "").encode("utf-8")) & 0xFFFFFFFF
+    return int(base + (raw % span))
+
+
+def _normalize_nav_ref(
+    nav_ref: Dict[str, Any] | None,
+    *,
+    scene: Dict[str, Any],
+    page: Dict[str, Any],
+    diagnostics: Dict[str, Any] | None,
+) -> Dict[str, Any]:
+    payload = dict(nav_ref or {})
+    diagnostics_payload = dict(diagnostics or {})
+    scene_key = str(
+        payload.get("active_scene_key")
+        or scene.get("scene_key")
+        or scene.get("key")
+        or scene.get("code")
+        or ""
+    ).strip()
+    active_menu_id = payload.get("active_menu_id")
+    if active_menu_id is None:
+        active_menu_id = page.get("menu_id")
+    if active_menu_id is None:
+        active_menu_id = diagnostics_payload.get("active_menu_id")
+    if active_menu_id is None and scene_key:
+        active_menu_id = _synthetic_menu_id(f"scene:{scene_key}")
+    return {
+        "active_scene_key": scene_key,
+        "active_menu_id": int(active_menu_id) if isinstance(active_menu_id, int) or str(active_menu_id).isdigit() else None,
+        "active_menu_key": str(payload.get("active_menu_key") or (f"scene:{scene_key}" if scene_key else "")).strip(),
+    }
 
 
 def _normalize_zones_and_blocks(zones: Dict[str, Any]) -> tuple[list[Dict[str, Any]], Dict[str, Dict[str, Any]]]:
@@ -113,6 +151,7 @@ def build_scene_contract(
     page: Dict[str, Any],
     zones: Dict[str, Any],
     record: Dict[str, Any] | None = None,
+    nav_ref: Dict[str, Any] | None = None,
     permissions: Dict[str, Any] | None = None,
     actions: Dict[str, Any] | None = None,
     extensions: Dict[str, Any] | None = None,
@@ -131,6 +170,7 @@ def build_scene_contract(
         "contract_version": "v1",
         "scene": normalized_scene,
         "page": normalized_page,
+        "nav_ref": _normalize_nav_ref(nav_ref, scene=normalized_scene, page=normalized_page, diagnostics=diagnostics),
         "zones": dict(zones or {}),
         "zones_v1": zone_rows,
         "blocks": block_rows,
@@ -144,6 +184,7 @@ def build_scene_contract(
         "contract_version": "v1",
         "scene": dict(contract["scene"]),
         "page": dict(contract["page"]),
+        "nav_ref": dict(contract["nav_ref"]),
         "zones": list(contract["zones_v1"]),
         "blocks": dict(contract["blocks"]),
         "actions": dict(contract["actions"]),
