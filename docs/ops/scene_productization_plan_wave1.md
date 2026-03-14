@@ -56,6 +56,7 @@
 
 - `R2+` 场景已达成 `12+`（当前覆盖率看板为准）。
 - `R3` 场景已达成 `4+`（项目/成本/资金主线样板）。
+- 迭代深化：`projects.list/projects.ledger/contract.center/finance.center` 已升至 `R3`。
 
 ## 交付物
 
