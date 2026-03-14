@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 
-def _load_provider_locator(base_file: Path):
-    locator_path = base_file.resolve().parents[1] / "smart_scene" / "core" / "scene_provider_registry.py"
-    spec = spec_from_file_location("smart_scene_provider_registry_scene_registry_engine", locator_path)
+def _load_scene_provider_registry(base_file: Path):
+    registry_path = base_file.resolve().parents[1] / "smart_scene" / "core" / "scene_provider_registry.py"
+    spec = spec_from_file_location("smart_scene_provider_registry_scene_registry_engine", registry_path)
     if spec is None or spec.loader is None:
         return None
     module = module_from_spec(spec)
@@ -19,8 +19,8 @@ def _load_provider_locator(base_file: Path):
 def load_scene_registry_content_module(base_file: Path):
     provider_path = None
     try:
-        locator = _load_provider_locator(base_file)
-        resolver = getattr(locator, "resolve_scene_provider_path", None) if locator else None
+        registry_module = _load_scene_provider_registry(base_file)
+        resolver = getattr(registry_module, "resolve_scene_provider_path", None) if registry_module else None
         if callable(resolver):
             provider_path = resolver("scene.registry", base_file)
     except Exception:

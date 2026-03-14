@@ -35,6 +35,7 @@
 当前进展：
 - ✅ `provider_locator.py` 已收口为 deprecated shim（仅转发 registry，不再保留路径候选 fallback）
 - ✅ 新增 `verify.scene.provider_locator.deprecated_shim.guard` 防止回退
+- ✅ `smart_scene.core` 对外 API 已移除 path-resolver 导出，仅保留 registry 能力出口
 
 ## 4. 验收标准
 - A. registry 能返回三个核心 scene 的行业 provider

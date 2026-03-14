@@ -2356,6 +2356,7 @@ verify.system_group.business_acl.guard: guard.prod.forbid
 
 verify.platform.kernel.ready: guard.prod.forbid \
 	verify.platform.security.ready \
+	verify.scene.core_api_boundary.guard \
 	verify.scene.provider.registry.guard \
 	verify.scene.provider.registry.consumer.guard \
 	verify.scene.provider_locator.deprecated_shim.guard \
@@ -2516,6 +2517,9 @@ verify.backend.boundary_guard: guard.prod.forbid
 
 verify.scene.provider.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_provider_guard.py
+
+verify.scene.core_api_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_core_api_boundary_guard.py
 
 verify.scene.provider.registry.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_provider_registry_guard.py

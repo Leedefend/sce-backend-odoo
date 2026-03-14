@@ -9,7 +9,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCATOR = ROOT / "addons" / "smart_scene" / "core" / "provider_locator.py"
+REGISTRY = ROOT / "addons" / "smart_scene" / "core" / "scene_provider_registry.py"
 WORKSPACE_BUILDER = ROOT / "addons" / "smart_core" / "core" / "workspace_home_contract_builder.py"
 PROJECT_DASHBOARD_SERVICE = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_service.py"
 SCENE_REGISTRY = ROOT / "addons" / "smart_construction_scene" / "scene_registry.py"
@@ -45,19 +45,17 @@ def _require_keys(payload: Dict[str, Any], keys: Iterable[str], label: str, erro
 
 def main() -> int:
     errors: List[str] = []
-    if not LOCATOR.is_file():
-        return _fail([f"missing locator: {LOCATOR.relative_to(ROOT).as_posix()}"])
+    if not REGISTRY.is_file():
+        return _fail([f"missing registry: {REGISTRY.relative_to(ROOT).as_posix()}"])
 
-    locator = _load_module(LOCATOR, "smart_scene_provider_locator_guard")
-    resolve_workspace = getattr(locator, "resolve_workspace_home_provider_path", None)
-    resolve_project = getattr(locator, "resolve_project_dashboard_scene_content_path", None)
-    resolve_registry = getattr(locator, "resolve_scene_registry_content_path", None)
-    if not callable(resolve_workspace) or not callable(resolve_project) or not callable(resolve_registry):
-        return _fail(["provider locator missing required resolver functions"])
+    registry_module = _load_module(REGISTRY, "smart_scene_provider_registry_guard")
+    resolve_provider_path = getattr(registry_module, "resolve_scene_provider_path", None)
+    if not callable(resolve_provider_path):
+        return _fail(["scene provider registry missing resolve_scene_provider_path"])
 
-    workspace_provider_path = resolve_workspace(WORKSPACE_BUILDER)
-    project_provider_path = resolve_project(PROJECT_DASHBOARD_SERVICE)
-    registry_provider_path = resolve_registry(SCENE_REGISTRY)
+    workspace_provider_path = resolve_provider_path("workspace.home", WORKSPACE_BUILDER)
+    project_provider_path = resolve_provider_path("project.dashboard", PROJECT_DASHBOARD_SERVICE)
+    registry_provider_path = resolve_provider_path("scene.registry", SCENE_REGISTRY)
 
     if not isinstance(workspace_provider_path, Path) or not workspace_provider_path.is_file():
         errors.append("workspace provider path not resolved")
@@ -133,4 +131,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
