@@ -21,16 +21,20 @@ def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dic
     providers = providers_raw if isinstance(providers_raw, dict) else {}
 
     candidates = []
+    skipped_count = 0
     for provider_key, provider in providers.items():
         if not isinstance(provider_key, str) or not isinstance(provider, dict):
+            skipped_count += 1
             continue
         enabled = bool(provider.get("enabled", True))
         if not enabled:
             continue
         overrides = provider.get("role_surface_overrides")
         if not isinstance(overrides, dict):
+            skipped_count += 1
             continue
         priority = _as_int(provider.get("priority"), 0)
+        domain_key = _as_text(provider.get("domain_key") or provider.get("domain") or provider_key)
         root_xmlids = provider.get("root_xmlids") if isinstance(provider.get("root_xmlids"), list) else []
         scene_codes = provider.get("scene_codes") if isinstance(provider.get("scene_codes"), list) else []
         root_match = True
@@ -43,6 +47,7 @@ def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dic
         candidates.append(
             {
                 "provider_key": provider_key,
+                "domain_key": domain_key,
                 "priority": priority,
                 "root_match": root_match,
                 "scene_match": scene_match,
@@ -60,13 +65,42 @@ def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dic
         candidates.sort(key=lambda item: (-int(item.get("priority") or 0), str(item.get("provider_key") or "")))
         selected = candidates[0]
 
+    top_priority = None
+    if matched:
+        top_priority = int(matched[0].get("priority") or 0)
+    top_matched = [item for item in matched if int(item.get("priority") or 0) == top_priority] if matched else []
+    ambiguous_match = len(top_matched) > 1
+    issues = []
+    if ambiguous_match:
+        issues.append("provider_ambiguous_same_priority")
+    if not matched and candidates:
+        issues.append("provider_no_match_priority_fallback")
+
     if selected:
+        selected_key = str(selected.get("provider_key") or "")
+        selected_priority = selected.get("priority")
+        provider_sample = [
+            {
+                "provider_key": str(item.get("provider_key") or ""),
+                "domain_key": str(item.get("domain_key") or ""),
+                "priority": int(item.get("priority") or 0),
+                "match": bool(item.get("match")),
+            }
+            for item in (matched[:5] if matched else sorted(candidates, key=lambda item: (-int(item.get("priority") or 0), str(item.get("provider_key") or "")))[:5])
+        ]
         return selected.get("overrides") or {}, {
-            "selected_provider": selected.get("provider_key"),
-            "selected_priority": selected.get("priority"),
+            "selected_provider": selected_key,
+            "selected_priority": selected_priority,
             "match_mode": "matched" if selected.get("match") else "priority_fallback",
             "root_xmlid": root_xmlid,
             "provider_count": len(candidates),
+            "provider_skipped_count": skipped_count,
+            "ambiguous": ambiguous_match,
+            "issues": issues,
+            "matched_provider_count": len(matched),
+            "matched_top_priority_count": len(top_matched),
+            "matched_provider_keys": [str(item.get("provider_key") or "") for item in top_matched[:5]],
+            "provider_sample": provider_sample,
         }
 
     legacy = data.get("role_surface_overrides")
@@ -77,6 +111,9 @@ def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dic
             "match_mode": "legacy",
             "root_xmlid": root_xmlid,
             "provider_count": 0,
+            "provider_skipped_count": skipped_count,
+            "ambiguous": False,
+            "issues": [],
         }
 
     return {}, {
@@ -85,6 +122,9 @@ def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dic
         "match_mode": "none",
         "root_xmlid": root_xmlid,
         "provider_count": len(candidates),
+        "provider_skipped_count": skipped_count,
+        "ambiguous": False,
+        "issues": [],
     }
 
 class SystemInitSurfaceBuilder:
@@ -136,5 +176,7 @@ class SystemInitSurfaceBuilder:
             role_surface_overrides=role_surface_overrides,
         )
         data["role_surface_provider_meta"] = role_surface_provider_meta
+        if isinstance(scene_diagnostics, dict):
+            scene_diagnostics["role_surface_provider"] = role_surface_provider_meta
         data["role_surface_map"] = identity_resolver.build_role_surface_map_payload()
         return data, scene_diagnostics
