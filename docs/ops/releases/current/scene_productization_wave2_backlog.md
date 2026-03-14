@@ -40,3 +40,9 @@
 - `scripts/verify/scene_data_source_schema_guard.py`
 - `docs/ops/audit/scene_r3_runtime_dashboard.md`
 
+## Progress
+
+- ✅ Round1 已落地：
+  - `scripts/verify/scene_role_policy_consistency_guard.py`
+  - `scripts/verify/scene_data_source_schema_guard.py`
+  - `Makefile` 新增对应 `verify` 入口

@@ -281,7 +281,7 @@
                     },
                     'finance': {
                         'default_actions': ['open_expense'],
-                        'focus_zones': ['contract_overview', 'contract_risk']
+                        'focus_zones': ['toolbar', 'contract_risk']
                     }
                 },
                 'data_sources': {
