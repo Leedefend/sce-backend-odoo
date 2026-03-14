@@ -18,6 +18,10 @@ CRITICAL_SCENE_TARGET_OVERRIDES = {
     "finance.payment_requests",
 }
 
+CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
+    "my_work.workspace": "/my-work",
+}
+
 
 def _normalize_scene_channel(value: str | None) -> str | None:
     if not value:
@@ -157,6 +161,16 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         code = str(scene.get("code") or scene.get("key") or "").strip()
         if not code:
             continue
+
+        route_override = CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES.get(code)
+        if route_override:
+            current_target = scene.get("target")
+            forced_target = {"route": route_override}
+            if current_target != forced_target:
+                scene["target"] = dict(forced_target)
+                reconciled.append(code)
+            continue
+
         if code not in CRITICAL_SCENE_TARGET_OVERRIDES:
             continue
         registry_scene = registry_map.get(code) or {}

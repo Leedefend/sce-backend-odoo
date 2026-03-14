@@ -1,4 +1,6 @@
 import type { LocationQueryRaw, Router } from 'vue-router';
+import { getSceneByKey } from './resolvers/sceneRegistry';
+import { normalizeLegacyWorkbenchPath } from './routeQuery';
 
 export type ContractActionDeps = {
   actionKey: string;
@@ -17,6 +19,12 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
   const kind = String(target.kind || '');
   const scene = String(target.scene_key || '');
   const query = deps.query || {};
+
+  const resolveScenePath = (sceneKey: string): string => {
+    const sceneNode = getSceneByKey(sceneKey);
+    const rawPath = String(sceneNode?.target?.route || sceneNode?.route || `/s/${sceneKey}`).trim();
+    return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
+  };
 
   if (kind === 'page.refresh') {
     if (deps.onRefresh) await deps.onRefresh();
@@ -40,12 +48,12 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
 
   if (kind === 'scene.key') {
     if (!scene) return false;
-    await deps.router.push({ path: `/s/${scene}`, query });
+    await deps.router.push({ path: resolveScenePath(scene), query });
     return true;
   }
 
   if (intent === 'ui.contract' && scene) {
-    await deps.router.push({ path: `/s/${scene}`, query });
+    await deps.router.push({ path: resolveScenePath(scene), query });
     return true;
   }
 

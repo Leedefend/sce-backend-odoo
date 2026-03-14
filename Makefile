@@ -71,6 +71,9 @@ COMPOSE_CI       = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_B
 
 # ------------------ DB / Module ------------------
 DB_NAME      ?= sc_odoo
+USAGE_TRACK_REQUEST_TOTAL ?= 120
+USAGE_TRACK_CONCURRENCY ?= 24
+USAGE_TRACK_SCENE_KEY ?= projects.intake
 SC_GATE_STRICT ?= 1
 SC_SCENE_OBS_STRICT ?= 0
 SCENE_OBSERVABILITY_PREFLIGHT_STRICT ?= 1
@@ -662,6 +665,10 @@ verify.portal.scene_filters_semantic_smoke.container: guard.prod.forbid check-co
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_scene_filters_semantic_smoke.js"
 verify.portal.my_work_smoke.container: guard.prod.forbid check-compose-project check-compose-env verify.extension_modules.guard
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) node /mnt/scripts/verify/fe_my_work_smoke.js"
+
+.PHONY: verify.portal.usage_track_concurrency_smoke.container
+verify.portal.usage_track_concurrency_smoke.container: guard.prod.forbid check-compose-project check-compose-env verify.extension_modules.guard
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) USAGE_TRACK_REQUEST_TOTAL=$(USAGE_TRACK_REQUEST_TOTAL) USAGE_TRACK_CONCURRENCY=$(USAGE_TRACK_CONCURRENCY) USAGE_TRACK_SCENE_KEY=$(USAGE_TRACK_SCENE_KEY) node /mnt/scripts/verify/fe_usage_track_concurrency_smoke.js"
 verify.portal.scene_versioning_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_scene_versioning_smoke.js"
 verify.portal.scene_target_smoke.container: guard.prod.forbid check-compose-project check-compose-env

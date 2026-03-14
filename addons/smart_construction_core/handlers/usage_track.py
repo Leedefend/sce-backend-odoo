@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+
+
+_logger = logging.getLogger(__name__)
 
 
 class UsageTrackHandler(BaseIntentHandler):
@@ -17,7 +22,10 @@ class UsageTrackHandler(BaseIntentHandler):
     def _bump(self, usage_model, company, key):
         if usage_model is None or not company or not key:
             return
-        usage_model.sudo().bump(company, key, 1)
+        try:
+            usage_model.sudo().bump(company, key, 1)
+        except Exception as exc:
+            _logger.warning("[usage.track] bump failed company=%s key=%s error=%s", company.id, key, exc)
 
     def _day_key(self):
         return fields.Date.context_today(self.env.user).strftime("%Y-%m-%d")

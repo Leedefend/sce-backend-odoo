@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+import time
+import zlib
+
 from odoo import api, fields, models
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ScSubscriptionPlan(models.Model):
@@ -158,17 +165,58 @@ class ScUsageCounter(models.Model):
     ]
 
     @api.model
+    def _advisory_lock_key(self, key):
+        lock_key = zlib.crc32(str(key).encode("utf-8"))
+        if lock_key > 2147483647:
+            lock_key -= 4294967296
+        return lock_key
+
+    @api.model
     def bump(self, company, key, delta=1):
-        counter = self.search([("company_id", "=", company.id), ("key", "=", key)], limit=1)
-        if counter:
-            counter.write({"value": counter.value + delta, "updated_at": fields.Datetime.now()})
-        else:
-            self.create({
-                "company_id": company.id,
-                "key": key,
-                "value": delta,
-                "updated_at": fields.Datetime.now(),
-            })
+        if not company or not key:
+            return
+
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                now = fields.Datetime.now()
+                uid = self.env.uid or 1
+                with self.env.cr.savepoint():
+                    self.env.cr.execute(
+                        "SELECT pg_advisory_xact_lock(%s, %s)",
+                        (int(company.id), int(self._advisory_lock_key(key))),
+                    )
+                    self.env.cr.execute(
+                        """
+                        INSERT INTO sc_usage_counter
+                            (company_id, key, value, updated_at, create_uid, create_date, write_uid, write_date)
+                        VALUES
+                            (%s, %s, %s, %s, %s, NOW(), %s, NOW())
+                        ON CONFLICT (company_id, key)
+                        DO UPDATE SET
+                            value = sc_usage_counter.value + EXCLUDED.value,
+                            updated_at = EXCLUDED.updated_at,
+                            write_uid = EXCLUDED.write_uid,
+                            write_date = NOW()
+                        """,
+                        (company.id, key, delta, now, uid, uid),
+                    )
+                return
+            except Exception as exc:
+                pgcode = getattr(exc, "pgcode", None)
+                is_serialization_failure = pgcode == "40001" or "could not serialize access" in str(exc).lower()
+                if not is_serialization_failure:
+                    raise
+                if attempt >= max_retries:
+                    _logger.warning(
+                        "[sc.usage.counter] bump skipped after retries (company=%s, key=%s, delta=%s): %s",
+                        company.id,
+                        key,
+                        delta,
+                        exc,
+                    )
+                    return
+                time.sleep(0.01 * attempt)
 
     @api.model
     def get_usage_map(self, company):
