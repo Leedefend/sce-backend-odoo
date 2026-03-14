@@ -29,7 +29,7 @@
 | finance.settlement_orders | 结算单 | finance | `/s/finance.settlement_orders` | finance_management | R3 | smart_construction_scene | 维护结算角色动作与风险闭环策略 |
 | risk.center | 风险提醒工作台 | risk | `/s/risk.center` | risk_management | R2 | smart_construction_scene | 进入主线后补齐角色策略与数据契约 |
 | data.dictionary | 业务字典 | data | TARGET_MISSING | data_dictionary | R0 | smart_construction_scene | 补齐路由与入口后升级到R1 |
-| my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
 | portal.dashboard | 工作台 | portal | `/` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
