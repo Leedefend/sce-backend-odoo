@@ -1214,6 +1214,10 @@ verify.frontend.onchange_contract_schema.guard: guard.prod.forbid
 verify.frontend.onchange_line_patch.guard: guard.prod.forbid
 	@python3 scripts/verify/onchange_line_patch_guard.py
 
+.PHONY: verify.scene.maturity.guard
+verify.scene.maturity.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_maturity_guard.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
