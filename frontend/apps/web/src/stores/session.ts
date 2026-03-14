@@ -113,6 +113,7 @@ export interface WorkspaceHomeContract {
     contract_version?: string;
     scene?: Record<string, unknown>;
     page?: Record<string, unknown>;
+    nav_ref?: Record<string, unknown>;
     zones?: Array<Record<string, unknown>>;
     blocks?: Record<string, Record<string, unknown>>;
     actions?: Record<string, unknown>;
@@ -153,6 +154,7 @@ export interface PageContract {
     contract_version?: string;
     scene?: Record<string, unknown>;
     page?: Record<string, unknown>;
+    nav_ref?: Record<string, unknown>;
     zones?: Array<Record<string, unknown>>;
     blocks?: Record<string, Record<string, unknown>>;
     actions?: Record<string, unknown>;

@@ -153,6 +153,19 @@ function asText(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
+function asInteger(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.trunc(value);
+  }
+  const text = String(value ?? '').trim();
+  if (!text) return undefined;
+  const parsed = Number(text);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return Math.trunc(parsed);
+  }
+  return undefined;
+}
+
 function stripRoleFromIdentity(identity: string, role: string): string {
   const source = String(identity || '').trim();
   const roleText = String(role || '').trim();
@@ -547,6 +560,25 @@ function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
   return walk(menuTree.value, []) || [];
 }
 
+function findMenuIdBySceneKey(nodes: NavNode[], sceneKey?: string): number | undefined {
+  const target = String(sceneKey || '').trim();
+  if (!target) return undefined;
+  const walk = (items: NavNode[]): number | undefined => {
+    for (const node of items) {
+      const currentSceneKey = resolveSceneKeyFromNode(node);
+      if (currentSceneKey === target) {
+        return asInteger(node.menu_id) || asInteger(node.id);
+      }
+      if (node.children?.length) {
+        const matched = walk(node.children);
+        if (matched) return matched;
+      }
+    }
+    return undefined;
+  };
+  return walk(nodes);
+}
+
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
   const menuId = activeMenuId.value;
@@ -582,8 +614,34 @@ const activeMenuId = computed(() => {
   if (route.name === 'menu') {
     return Number(route.params.menuId ?? 0) || undefined;
   }
-  const fromQuery = Number(route.query.menu_id ?? 0);
-  return fromQuery || undefined;
+  const fromQuery = asInteger(route.query.menu_id);
+  if (fromQuery) return fromQuery;
+
+  const activeSceneKey = String(routeSceneKey.value || '').trim();
+  if (activeSceneKey) {
+    const contracts = session.pageContracts || {};
+    const contractEntries = Object.values(contracts) as Array<Record<string, unknown>>;
+    for (const entry of contractEntries) {
+      const sceneContract = asDict((entry as { scene_contract_v1?: unknown }).scene_contract_v1);
+      if (!sceneContract) continue;
+      const scene = asDict(sceneContract.scene);
+      const sceneKey = asText(scene?.scene_key) || asText(scene?.key) || asText(scene?.code);
+      if (sceneKey !== activeSceneKey) continue;
+      const navRef = asDict(sceneContract.nav_ref);
+      const navRefMenuId = asInteger(navRef?.active_menu_id);
+      if (navRefMenuId) return navRefMenuId;
+    }
+  }
+
+  const workspaceSceneContract = asDict((session.workspaceHome as { scene_contract_v1?: unknown } | null)?.scene_contract_v1);
+  const workspaceNavRef = asDict(workspaceSceneContract?.nav_ref);
+  const workspaceMenuId = asInteger(workspaceNavRef?.active_menu_id);
+  if (workspaceMenuId) return workspaceMenuId;
+
+  const fromScene = findMenuIdBySceneKey(menuTree.value, activeSceneKey);
+  if (fromScene) return fromScene;
+
+  return undefined;
 });
 
 function filterNodes(nodes: NavNode[], q: string): NavNode[] {
