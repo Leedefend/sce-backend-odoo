@@ -10,6 +10,13 @@ from .scene_provider_registry import (
     resolve_scene_provider,
     resolve_scene_provider_path,
 )
+from .nav_policy_registry import (
+    NavPolicyProvider,
+    NavPolicyRegistry,
+    build_nav_policy_registry,
+    build_nav_policy_coverage_report,
+    resolve_nav_group_policy,
+)
 from .scene_resolver import resolve_scene_identity
 
 __all__ = [
@@ -19,6 +26,11 @@ __all__ = [
     "resolve_scene_provider",
     "resolve_scene_provider_path",
     "list_scene_provider_entries",
+    "NavPolicyProvider",
+    "NavPolicyRegistry",
+    "build_nav_policy_registry",
+    "build_nav_policy_coverage_report",
+    "resolve_nav_group_policy",
     "resolve_scene_identity",
     "build_scene_contract",
     "build_scene_contract_from_specs",

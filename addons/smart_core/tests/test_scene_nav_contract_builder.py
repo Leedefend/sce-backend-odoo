@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.core.scene_nav_contract_builder import (
     build_scene_delivery_report,
     build_scene_nav_contract,
 )
+from odoo.addons.smart_scene.core.nav_policy_registry import build_nav_policy_coverage_report
 
 
 def _collect_scene_keys(nav_payload: dict) -> set[str]:
@@ -142,3 +145,26 @@ class TestSceneNavContractBuilder(TransactionCase):
         self.assertEqual(meta.get("excluded_scene_count"), 2)
         self.assertGreaterEqual(int(reason_counts.get("default_placeholder", 0)), 1)
         self.assertGreaterEqual(int(reason_counts.get("portal_only_not_spa_ready", 0)), 1)
+
+    def test_meta_contains_nav_policy_diagnostics(self):
+        payload = build_scene_nav_contract(
+            {
+                "scenes": [
+                    {
+                        "code": "projects.list",
+                        "name": "项目列表",
+                        "target": {"action_xmlid": "smart_construction_core.action_sc_project_list"},
+                    },
+                ]
+            }
+        )
+        meta = payload.get("meta") or {}
+        self.assertTrue(meta.get("nav_policy_provider"))
+        self.assertTrue(meta.get("nav_policy_source"))
+        self.assertTrue(meta.get("nav_policy_version"))
+        self.assertTrue(bool(meta.get("nav_policy_validation_ok")))
+
+    def test_nav_policy_coverage_report(self):
+        report = build_nav_policy_coverage_report(base_dir=Path(__file__).resolve())
+        self.assertIsInstance(report, dict)
+        self.assertIn("provider_count", report)
