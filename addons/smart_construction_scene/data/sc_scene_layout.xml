@@ -254,7 +254,37 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'my_work.workspace.main',
+                    'title': '我的工作',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'todo',
+                        'title': '待办事项',
+                        'zone_type': 'primary',
+                        'display_mode': 'list',
+                        'block_key': 'block.my_work.todo'
+                    },
+                    {
+                        'key': 'recent_actions',
+                        'title': '最近操作',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.my_work.recent_actions'
+                    },
+                    {
+                        'key': 'quick_entry',
+                        'title': '快捷入口',
+                        'zone_type': 'hero',
+                        'display_mode': 'grid',
+                        'block_key': 'block.my_work.quick_entry'
+                    }
+                ],
+                'related_scenes': ['projects.list', 'projects.ledger', 'task.center'],
                 'target': {
                     'route': '/s/my_work.workspace'
                 }

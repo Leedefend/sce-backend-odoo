@@ -1,6 +1,6 @@
 # Scene Inventory Draft Diff Report
 
-更新时间：2026-03-14 20:43:47
+更新时间：2026-03-14 20:48:23
 
 ## Summary
 
@@ -8,8 +8,8 @@
 - `draft_count`: 22
 - `added_count`: 0
 - `removed_count`: 0
-- `changed_count`: 27
-- `focus_changed_count`: 24
+- `changed_count`: 25
+- `focus_changed_count`: 22
 
 ## Added Scenes
 
@@ -34,8 +34,6 @@
 | finance.payment_requests | next_action | 维护审批角色编排与风险动作模板 | 维护角色策略与数据契约稳定性 |
 | finance.settlement_orders | next_action | 维护结算角色动作与风险闭环策略 | 维护角色策略与数据契约稳定性 |
 | finance.workspace | next_action | 维护资金角色编排与异常策略 | 维护角色策略与数据契约稳定性 |
-| my_work.workspace | maturity_level | R1 | R2 |
-| my_work.workspace | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | maturity_level | R1 | R2 |
 | portal.capability_matrix | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | project.management | next_action | 持续优化角色化指标与动作链路 | 维护角色策略与数据契约稳定性 |
@@ -64,8 +62,6 @@
 | finance.payment_requests | next_action | 维护审批角色编排与风险动作模板 | 维护角色策略与数据契约稳定性 |
 | finance.settlement_orders | next_action | 维护结算角色动作与风险闭环策略 | 维护角色策略与数据契约稳定性 |
 | finance.workspace | next_action | 维护资金角色编排与异常策略 | 维护角色策略与数据契约稳定性 |
-| my_work.workspace | maturity_level | R1 | R2 |
-| my_work.workspace | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | maturity_level | R1 | R2 |
 | portal.capability_matrix | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | project.management | route_target | `/pm/dashboard` | `/s/project.management` |

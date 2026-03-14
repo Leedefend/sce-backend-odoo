@@ -88,3 +88,7 @@
   - 第三个 `P0` 场景 `projects.dashboard` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
   - inventory 对应场景升级到 `R2`
   - 升级队列继续收敛，明确剩余 `R0/R1` 待升级集合
+- ✅ Round12 已落地：
+  - 第四个 `P0` 场景 `my_work.workspace` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
+  - inventory 对应场景升级到 `R2`
+  - 升级队列继续收敛，保留剩余场景进入下一轮
