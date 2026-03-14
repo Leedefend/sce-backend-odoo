@@ -414,6 +414,7 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { buildSectionLayoutMap, sectionEnabled, sectionOpenDefault, sectionTagIs, type SectionTag } from '../app/sectionLayout';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 
@@ -558,31 +559,8 @@ const workspaceLayoutActions = computed(() => (
     ? workspaceLayout.value.actions as Record<string, unknown>
     : {}
 ));
-type HomeSectionTag = 'header' | 'section' | 'details' | 'div';
-type HomeSectionConfig = { enabled: boolean; tag: HomeSectionTag | ''; open: boolean | null };
-
 const workspaceLayoutSections = computed(() => {
-  const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
-  const map = new Map<string, HomeSectionConfig>();
-  source.forEach((item) => {
-    if (!item || typeof item !== 'object') return;
-    const row = item as Record<string, unknown>;
-    const key = asText(row.key);
-    if (!key) return;
-    const tagRaw = asText(row.tag).toLowerCase();
-    const tag = (
-      tagRaw === 'header'
-      || tagRaw === 'section'
-      || tagRaw === 'details'
-      || tagRaw === 'div'
-    ) ? tagRaw : '';
-    map.set(key, {
-      enabled: row.enabled === true,
-      tag,
-      open: typeof row.open === 'boolean' ? row.open : null,
-    });
-  });
-  return map;
+  return buildSectionLayoutMap(workspaceLayout.value.sections);
 });
 const workspacePageOrchestration = computed(() => (
   workspaceHome.value.page_orchestration && typeof workspaceHome.value.page_orchestration === 'object'
@@ -830,21 +808,15 @@ function homeLayoutText(key: string, fallback: string) {
 }
 
 function isHomeSectionEnabled(key: string) {
-  const sectionMap = workspaceLayoutSections.value;
-  if (!sectionMap.size) return true;
-  return sectionMap.get(key)?.enabled === true;
+  return sectionEnabled(workspaceLayoutSections.value, key, true);
 }
 
-function isHomeSectionTag(key: string, expected: HomeSectionTag) {
-  const sectionMap = workspaceLayoutSections.value;
-  if (!sectionMap.size) return true;
-  return sectionMap.get(key)?.tag === expected;
+function isHomeSectionTag(key: string, expected: SectionTag) {
+  return sectionTagIs(workspaceLayoutSections.value, key, expected, true);
 }
 
 function isHomeSectionOpenDefault(key: string, fallback = false) {
-  const sectionMap = workspaceLayoutSections.value;
-  if (!sectionMap.size) return fallback;
-  return sectionMap.get(key)?.open === true;
+  return sectionOpenDefault(workspaceLayoutSections.value, key, fallback);
 }
 
 function homeSectionStyle(key: string) {

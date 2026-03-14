@@ -156,3 +156,7 @@
   - 前端自定义视图重构 Batch1：抽离 `scene_contract_v1 -> page_orchestration_v1` 公共转换器
   - `MyWorkView`、`WorkbenchView` 去重复实现，统一走 `app/sceneContractV1.ts`
   - 降低场景契约适配逻辑漂移风险，为后续批次重构打基础
+- ✅ Round32 已落地：
+  - 前端自定义视图重构 Batch2：抽离 `HomeView` section 布局判定为公共工具 `app/sectionLayout.ts`
+  - `HomeView` 改为复用 `buildSectionLayoutMap/sectionEnabled/sectionTagIs/sectionOpenDefault`
+  - 降低巨型视图的局部复杂度，统一 section 语义入口
