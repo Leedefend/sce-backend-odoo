@@ -38,33 +38,15 @@ def _resolve_addons_root(base_dir: Path) -> Path:
 
 
 def resolve_workspace_home_provider_path(base_dir: Path) -> Optional[Path]:
-    """Resolve workspace-home provider path via registry-first strategy."""
-    provider_path = _resolve_by_registry("workspace.home", base_dir)
-    if provider_path is not None:
-        return provider_path
-
-    addons_root = _resolve_addons_root(base_dir)
-    fallback = addons_root / "smart_core" / "core" / "workspace_home_data_provider.py"
-    return fallback if fallback.exists() and fallback.is_file() else None
+    """Deprecated shim: resolve workspace-home provider via scene provider registry only."""
+    return _resolve_by_registry("workspace.home", base_dir)
 
 
 def resolve_project_dashboard_scene_content_path(base_dir: Path) -> Optional[Path]:
-    """Resolve project.dashboard scene content path via registry-first strategy."""
-    provider_path = _resolve_by_registry("project.dashboard", base_dir)
-    if provider_path is not None:
-        return provider_path
-
-    addons_root = _resolve_addons_root(base_dir)
-    fallback = addons_root / "smart_construction_scene" / "profiles" / "project_dashboard_scene_content.py"
-    return fallback if fallback.exists() and fallback.is_file() else None
+    """Deprecated shim: resolve project.dashboard provider via scene provider registry only."""
+    return _resolve_by_registry("project.dashboard", base_dir)
 
 
 def resolve_scene_registry_content_path(base_dir: Path) -> Optional[Path]:
-    """Resolve industry scene-registry content provider path via registry-first strategy."""
-    provider_path = _resolve_by_registry("scene.registry", base_dir)
-    if provider_path is not None:
-        return provider_path
-
-    addons_root = _resolve_addons_root(base_dir)
-    fallback = addons_root / "smart_construction_scene" / "profiles" / "scene_registry_content.py"
-    return fallback if fallback.exists() and fallback.is_file() else None
+    """Deprecated shim: resolve scene.registry provider via scene provider registry only."""
+    return _resolve_by_registry("scene.registry", base_dir)

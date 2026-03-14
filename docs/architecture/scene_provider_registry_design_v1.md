@@ -58,5 +58,4 @@
 ## 8. 后续演进
 - P1：provider 诊断字段进入 `scene_contract_v1.diagnostics.provider_trace`
 - P1：扩展 scene provider 覆盖矩阵与重复注册冲突报告
-- P2：完全移除 `provider_locator` 的路径候选 fallback，切纯 registry
-
+- P2：`provider_locator` 已降级为 deprecated shim（仅 registry 转发）；后续可评估完全移除 shim API
