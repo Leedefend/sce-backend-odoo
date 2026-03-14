@@ -128,7 +128,37 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'portal.lifecycle.dashboard',
+                    'title': '生命周期驾驶舱',
+                    'page_type': 'dashboard',
+                    'page_mode': 'dashboard'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'lifecycle_overview',
+                        'title': '生命周期总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.lifecycle.overview'
+                    },
+                    {
+                        'key': 'stage_progress',
+                        'title': '阶段推进',
+                        'zone_type': 'primary',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.lifecycle.stage_progress'
+                    },
+                    {
+                        'key': 'blocking_items',
+                        'title': '阻塞项',
+                        'zone_type': 'supporting',
+                        'display_mode': 'list',
+                        'block_key': 'block.portal.lifecycle.blocking_items'
+                    }
+                ],
+                'related_scenes': ['project.management', 'projects.dashboard', 'risk.center'],
                 'target': {
                     'route': '/s/projects.dashboard'
                 }
