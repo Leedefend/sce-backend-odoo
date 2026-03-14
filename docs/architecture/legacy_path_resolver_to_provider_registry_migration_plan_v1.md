@@ -32,6 +32,10 @@
 - 删除 legacy provider fallback（按 scene 分批）
 - 仅保留 registry 驱动链路
 
+当前进展：
+- ✅ `provider_locator.py` 已收口为 deprecated shim（仅转发 registry，不再保留路径候选 fallback）
+- ✅ 新增 `verify.scene.provider_locator.deprecated_shim.guard` 防止回退
+
 ## 4. 验收标准
 - A. registry 能返回三个核心 scene 的行业 provider
 - B. consumer 在不改主协议前提下正常运行
