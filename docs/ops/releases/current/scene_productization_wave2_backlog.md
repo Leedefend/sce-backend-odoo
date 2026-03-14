@@ -146,3 +146,6 @@
 - ✅ Round28 已落地：
   - `Makefile` 新增 `verify.scene.r3.runtime.strict` 目标（启用 `--fail-on-warning`）
   - 新增 `gate.scene.r3.runtime.strict` 门禁目标，作为 CI 严格入口
+- ✅ Round29 已落地：
+  - `gate.full` 默认接入 `gate.scene.r3.runtime.strict`
+  - `codex.run FLOW=gate` 通过 `gate.full` 自动覆盖 R3 运行态严格门禁
