@@ -16,12 +16,16 @@
 - `provider_locator.py` 改为 registry-first + fallback
 - 增加守卫：`verify.scene.provider.registry.guard`
 
-### Phase 2（进行中）
+### Phase 2（进行中，已完成 consumer 首批切换）
 - 逐步替换各 consumer 的 `resolve_*_path` 直接依赖：
-  - workspace home builder
-  - project dashboard service
-  - scene registry engine
+  - ✅ workspace home builder
+  - ✅ project dashboard service
+  - ✅ scene registry engine
 - 统一输出 provider diagnostics（来源/版本/命中 key）
+
+本轮新增守卫：
+- `verify.scene.provider.registry.consumer.guard`
+  - 防止核心 consumer 回退到 `provider_locator.py`。
 
 ### Phase 3（计划）
 - 删除路径候选列表逻辑
@@ -44,4 +48,3 @@
 - 平台层不固化行业策略，只提供注册机制与约束。
 - 行业层不改平台 contract shape，只注册内容 provider。
 - fallback 只作为迁移保障，不作为长期机制。
-

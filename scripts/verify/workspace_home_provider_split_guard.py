@@ -7,7 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
-LOCATOR = ROOT / "addons/smart_scene/core/provider_locator.py"
+LOCATOR = ROOT / "addons/smart_scene/core/scene_provider_registry.py"
 
 
 def _read(path: Path) -> str:
@@ -43,7 +43,7 @@ def main() -> int:
 
     required_builder_tokens = [
         "def _load_data_provider():",
-        "resolve_workspace_home_provider_path",
+        "resolve_scene_provider_path",
         "Path(__file__).with_name(\"workspace_home_data_provider.py\")",
         "fn = getattr(provider, \"build_today_actions\", None)",
         "fn = getattr(provider, \"build_advice_items\", None)",
@@ -63,11 +63,11 @@ def main() -> int:
 
     try:
         locator_module = _load_module(LOCATOR, "workspace_home_provider_locator_guard")
-        resolver = getattr(locator_module, "resolve_workspace_home_provider_path", None)
+        resolver = getattr(locator_module, "resolve_scene_provider_path", None)
         if not callable(resolver):
-            errors.append("provider locator missing resolve_workspace_home_provider_path")
+            errors.append("provider registry missing resolve_scene_provider_path")
         else:
-            provider_path = resolver(BUILDER)
+            provider_path = resolver("workspace.home", BUILDER)
             if not isinstance(provider_path, Path) or not provider_path.is_file():
                 errors.append("workspace_home provider path not resolved")
             else:

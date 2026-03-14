@@ -20,14 +20,14 @@ def _load_scene_content_module():
         return _SCENE_CONTENT_MODULE
     content_path = None
     try:
-        locator_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "provider_locator.py"
-        locator_spec = spec_from_file_location("smart_scene_provider_locator_project_dashboard", locator_path)
+        registry_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_provider_registry.py"
+        locator_spec = spec_from_file_location("smart_scene_provider_registry_project_dashboard", registry_path)
         if locator_spec is not None and locator_spec.loader is not None:
             locator_module = module_from_spec(locator_spec)
             locator_spec.loader.exec_module(locator_module)
-            resolver = getattr(locator_module, "resolve_project_dashboard_scene_content_path", None)
+            resolver = getattr(locator_module, "resolve_scene_provider_path", None)
             if callable(resolver):
-                content_path = resolver(Path(__file__))
+                content_path = resolver("project.dashboard", Path(__file__))
     except Exception:
         content_path = None
     if content_path is None:
