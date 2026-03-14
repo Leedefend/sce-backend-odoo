@@ -40,10 +40,8 @@
 4. registry 按优先级降序选择可用 provider。
 
 ## 5. 运行时解析
-- 入口保持兼容：`addons/smart_scene/core/provider_locator.py`
-- 逻辑已改为：
-  - registry 优先：`resolve_scene_provider_path(scene_key, base_dir)`
-  - 路径 fallback 兜底（仅迁移期）
+- 运行时统一走 registry：`resolve_scene_provider_path(scene_key, base_dir)`
+- `provider_locator.py` 已移除，不再作为入口。
 
 ## 6. 现阶段已覆盖 scene
 - `workspace.home`
@@ -60,4 +58,4 @@
 ## 8. 后续演进
 - P1：provider 诊断字段进入 `scene_contract_v1.diagnostics.provider_trace`
 - P1：扩展 scene provider 覆盖矩阵与重复注册冲突报告
-- P2：`provider_locator` 已降级为 deprecated shim（仅 registry 转发）；后续可评估完全移除 shim API
+- P2：已完成 `provider_locator` 清理，registry 成为唯一解析入口

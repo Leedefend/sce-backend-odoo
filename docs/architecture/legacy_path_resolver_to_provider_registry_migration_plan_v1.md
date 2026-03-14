@@ -13,7 +13,7 @@
 ### Phase 1（已完成）
 - 新增平台注册核心：`scene_provider_registry.py`
 - 新增行业注册入口：`smart_construction_scene/bootstrap/register_scene_providers.py`
-- `provider_locator.py` 改为 registry-first + fallback
+- `provider_locator.py` 改为 registry-first + fallback（过渡态）
 - 增加守卫：`verify.scene.provider.registry.guard`
 
 ### Phase 2（进行中，已完成 consumer 首批切换）
@@ -27,14 +27,14 @@
 - `verify.scene.provider.registry.consumer.guard`
   - 防止核心 consumer 回退到 `provider_locator.py`。
 
-### Phase 3（计划）
+### Phase 3（已完成）
 - 删除路径候选列表逻辑
-- 删除 legacy provider fallback（按 scene 分批）
+- 删除 `provider_locator.py` shim 文件本体
 - 仅保留 registry 驱动链路
 
 当前进展：
-- ✅ `provider_locator.py` 已收口为 deprecated shim（仅转发 registry，不再保留路径候选 fallback）
-- ✅ 新增 `verify.scene.provider_locator.deprecated_shim.guard` 防止回退
+- ✅ `provider_locator.py` 文件已移除，registry 成为唯一入口
+- ✅ 新增 `verify.scene.provider_locator.removed.guard` 防止回流
 - ✅ `smart_scene.core` 对外 API 已移除 path-resolver 导出，仅保留 registry 能力出口
 
 ## 4. 验收标准

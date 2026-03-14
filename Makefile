@@ -2359,7 +2359,7 @@ verify.platform.kernel.ready: guard.prod.forbid \
 	verify.scene.core_api_boundary.guard \
 	verify.scene.provider.registry.guard \
 	verify.scene.provider.registry.consumer.guard \
-	verify.scene.provider_locator.deprecated_shim.guard \
+	verify.scene.provider_locator.removed.guard \
 	verify.scene_orchestration.provider_shape.guard \
 	verify.capability.provider.guard \
 	verify.capability.registry.smoke \
@@ -2527,8 +2527,8 @@ verify.scene.provider.registry.guard: guard.prod.forbid
 verify.scene.provider.registry.consumer.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_provider_registry_consumer_guard.py
 
-verify.scene.provider_locator.deprecated_shim.guard: guard.prod.forbid
-	@python3 scripts/verify/provider_locator_deprecated_shim_guard.py
+verify.scene.provider_locator.removed.guard: guard.prod.forbid
+	@python3 scripts/verify/provider_locator_removed_guard.py
 
 verify.scene_orchestration.provider_shape.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_orchestration_provider_shape_guard.py
