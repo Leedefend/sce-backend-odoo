@@ -18,6 +18,7 @@ def build_scene_contract_from_specs(
     zone_order: List[str] | None = None,
     record: Dict[str, Any] | None = None,
     diagnostics: Dict[str, Any] | None = None,
+    nav_ref: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint)
     mapped_specs = map_zone_specs_to_blocks(zone_specs)
@@ -30,6 +31,9 @@ def build_scene_contract_from_specs(
         page=resolved.get("page") or {},
         zones=built_zones,
         record=record or {},
+        nav_ref=nav_ref or {
+            "active_scene_key": str((resolved.get("scene") or {}).get("scene_key") or "").strip(),
+            "active_menu_id": page_hint.get("menu_id") if isinstance(page_hint, dict) else None,
+        },
         diagnostics=diagnostics_payload,
     )
-

@@ -2,38 +2,12 @@
 from __future__ import annotations
 
 import zlib
+from pathlib import Path
 from typing import Dict, List, Tuple
 
+from odoo.addons.smart_scene.core.nav_policy_registry import resolve_nav_group_policy
 
-GROUP_LABELS = {
-    "portal": "工作台",
-    "projects": "项目管理",
-    "project": "项目管理",
-    "cost": "成本管理",
-    "contract": "合同管理",
-    "finance": "资金财务",
-    "risk": "风险管理",
-    "task": "任务管理",
-    "data": "数据与字典",
-    "config": "配置中心",
-}
-
-GROUP_ORDER = {
-    "portal": 10,
-    "projects": 20,
-    "project": 20,
-    "task": 30,
-    "risk": 40,
-    "cost": 50,
-    "contract": 60,
-    "finance": 70,
-    "data": 80,
-    "config": 90,
-}
-
-GROUP_ALIASES = {
-    "project": "projects",
-}
+NAV_POLICY_KEY = "scene_nav_v1"
 
 EXCLUDED_REASON_NO_CODE = "no_code"
 EXCLUDED_REASON_IMPORTED_PKG = "imported_pkg_variant"
@@ -182,12 +156,17 @@ def build_scene_delivery_report(scenes: list[dict] | None, *, policy_applied: bo
     }
 
 
-def _group_key(scene_key: str) -> str:
+def _resolve_nav_policy() -> dict:
+    return resolve_nav_group_policy(NAV_POLICY_KEY, base_dir=Path(__file__).resolve())
+
+
+def _group_key(scene_key: str, aliases: Dict[str, str] | None = None) -> str:
     key = str(scene_key or "").strip().lower()
     if not key:
         return "others"
     raw_group = key.split(".", 1)[0]
-    return GROUP_ALIASES.get(raw_group, raw_group)
+    alias_map = aliases if isinstance(aliases, dict) else {}
+    return alias_map.get(raw_group, raw_group)
 
 
 def _to_leaf(scene: dict) -> dict:
@@ -210,17 +189,26 @@ def _to_leaf(scene: dict) -> dict:
     }
 
 
-def _build_group_nodes(leaves: List[dict]) -> List[dict]:
+def _build_group_nodes(
+    leaves: List[dict],
+    *,
+    group_labels: Dict[str, str] | None = None,
+    group_order: Dict[str, int] | None = None,
+    group_aliases: Dict[str, str] | None = None,
+) -> List[dict]:
+    labels = group_labels if isinstance(group_labels, dict) else {}
+    order_map = group_order if isinstance(group_order, dict) else {}
+    aliases = group_aliases if isinstance(group_aliases, dict) else {}
     grouped: Dict[str, List[dict]] = {}
     for leaf in leaves:
-        group = _group_key(leaf.get("scene_key") or "")
+        group = _group_key(leaf.get("scene_key") or "", aliases=aliases)
         grouped.setdefault(group, []).append(leaf)
 
     out: List[Tuple[int, str, dict]] = []
     for group, items in grouped.items():
         items_sorted = sorted(items, key=lambda x: str(x.get("label") or ""))
-        label = GROUP_LABELS.get(group, "其他场景")
-        order = GROUP_ORDER.get(group, 999)
+        label = str(labels.get(group) or "其他场景")
+        order = int(order_map.get(group) or 999)
         node = {
             "key": f"group:{group}",
             "label": label,
@@ -238,6 +226,12 @@ def _build_group_nodes(leaves: List[dict]) -> List[dict]:
 
 
 def build_scene_nav_contract(data: dict) -> dict:
+    nav_policy = _resolve_nav_policy()
+    policy_labels = nav_policy.get("group_labels") if isinstance(nav_policy.get("group_labels"), dict) else {}
+    policy_order = nav_policy.get("group_order") if isinstance(nav_policy.get("group_order"), dict) else {}
+    policy_aliases = nav_policy.get("group_aliases") if isinstance(nav_policy.get("group_aliases"), dict) else {}
+    policy_validation = nav_policy.get("validation") if isinstance(nav_policy.get("validation"), dict) else {}
+
     scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
     role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
     role_candidates = [
@@ -259,7 +253,12 @@ def build_scene_nav_contract(data: dict) -> dict:
     candidate_leaves = [_to_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
     remaining = [v for k, v in scene_map.items() if k not in set(role_candidates)]
     remaining_leaves = [_to_leaf(v) for v in remaining]
-    grouped = _build_group_nodes(remaining_leaves)
+    grouped = _build_group_nodes(
+        remaining_leaves,
+        group_labels=policy_labels,
+        group_order=policy_order,
+        group_aliases=policy_aliases,
+    )
 
     primary_children = []
     if candidate_leaves:
@@ -309,5 +308,10 @@ def build_scene_nav_contract(data: dict) -> dict:
             "candidate_count": len(candidate_leaves),
             "group_count": len(primary_children),
             "policy_applied": policy_applied,
+            "nav_policy_source": str(nav_policy.get("source") or "platform_default"),
+            "nav_policy_provider": str(nav_policy.get("provider_key") or "platform.default.scene_nav_v1"),
+            "nav_policy_version": str(nav_policy.get("policy_version") or "v1"),
+            "nav_policy_validation_ok": bool(policy_validation.get("ok", False)),
+            "nav_policy_validation_issues": list(policy_validation.get("issues") or [])[:20],
         },
     }
