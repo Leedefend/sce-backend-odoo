@@ -3,7 +3,7 @@ import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schem
 import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
 import { config } from '../config';
-import { setSceneRegistry } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, setSceneRegistry } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 
@@ -611,7 +611,9 @@ export const useSessionStore = defineStore('session', {
       }
       const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
       if (sceneKey) {
-        return `/s/${sceneKey}`;
+        const scene = getSceneByKey(sceneKey);
+        const rawPath = String(scene?.target?.route || scene?.route || `/s/${sceneKey}`).trim();
+        return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
       }
       return fallback;
     },
