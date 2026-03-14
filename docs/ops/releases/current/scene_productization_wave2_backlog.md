@@ -76,3 +76,7 @@
   - 新增 `scene_r1_r2_upgrade_queue_report`，自动产出 `R0/R1 -> R1/R2` 升级队列
   - 队列按 `priority + template + prerequisite` 编排，支持主线优先执行
   - `Makefile` 新增 `verify.scene.r1_r2.upgrade.queue.report` 入口
+- ✅ Round9 已落地：
+  - 首个 `P0` 场景 `portal.dashboard` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
+  - inventory 对应场景升级到 `R2`
+  - 升级队列自动收敛并反映剩余待升级场景

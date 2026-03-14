@@ -172,7 +172,37 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'portal.dashboard.workspace',
+                    'title': '工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'overview',
+                        'title': '运营总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.dashboard.overview'
+                    },
+                    {
+                        'key': 'focus_actions',
+                        'title': '重点动作',
+                        'zone_type': 'primary',
+                        'display_mode': 'grid',
+                        'block_key': 'block.portal.dashboard.focus_actions'
+                    },
+                    {
+                        'key': 'alerts',
+                        'title': '风险提醒',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.dashboard.alerts'
+                    }
+                ],
+                'related_scenes': ['project.management', 'projects.list', 'risk.center'],
                 'target': {
                     'route': '/'
                 }
