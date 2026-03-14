@@ -251,8 +251,21 @@ const subtitle = computed(() => (
     : pageText('subtitle_ready', 'Record details')
 ));
 const showProjectSummary = computed(() => {
-  const key = `${model.value} ${title.value}`.toLowerCase();
-  return key.includes('project') || key.includes('项目');
+  const payload = recordData.value || {};
+  const summarySignals = [
+    payload.stage_id,
+    payload.stage,
+    payload.state,
+    payload.status,
+    payload.health,
+    payload.risk_count,
+    payload.warning_count,
+    payload.output_value,
+    payload.amount_output,
+    payload.payment_ratio,
+    payload.payment_rate,
+  ];
+  return summarySignals.some((item) => item !== undefined && item !== null && String(item).trim() !== '');
 });
 const projectStatusSummary = computed(() => {
   const phase = String(recordData.value?.stage_id || recordData.value?.stage || recordData.value?.state || pageText('project_phase_unset', '未配置阶段'));

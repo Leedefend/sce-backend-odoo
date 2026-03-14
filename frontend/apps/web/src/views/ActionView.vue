@@ -384,7 +384,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw, writeRecord } from '../api/data';
+import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -582,6 +582,10 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     actions_primary_max?: number;
     filters_max?: number;
     actions_max?: number;
+    kind?: string;
+    delete_mode?: string;
+    intent_profile?: SurfaceIntentContract;
+    empty_reason?: string;
   };
   model?: string;
   data?: {
@@ -673,6 +677,15 @@ type SurfaceIntent = {
   emptyHint: string;
   primaryAction: FocusNavAction;
   secondaryAction?: FocusNavAction;
+};
+type SurfaceIntentContract = {
+  title?: string;
+  summary?: string;
+  actions?: FocusNavAction[];
+  empty_title?: string;
+  empty_hint?: string;
+  primary_action?: FocusNavAction;
+  secondary_action?: FocusNavAction;
 };
 
 const actionId = computed(() => {
@@ -848,6 +861,12 @@ function switchViewMode(mode: string) {
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
 const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
+const sceneContractV1 = computed<Record<string, unknown>>(() => {
+  const raw = pageContract.contract.value?.scene_contract_v1;
+  if (!raw || typeof raw !== 'object') return {};
+  if (String((raw as Record<string, unknown>).contract_version || '') !== 'v1') return {};
+  return raw as Record<string, unknown>;
+});
 function keywordList(key: string, fallbackCsv: string) {
   return String(pageText(key, fallbackCsv) || '')
     .split(',')
@@ -860,6 +879,14 @@ function includesAnyKeyword(text: string, keywords: string[]) {
   return keywords.some((item) => raw.includes(String(item || '').toLowerCase()));
 }
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
+  const contractKind = String(actionContract.value?.surface_policies?.kind || '').trim().toLowerCase();
+  if (contractKind === 'risk' || contractKind === 'contract' || contractKind === 'cost' || contractKind === 'project') {
+    return contractKind;
+  }
+  const extensionKind = String((sceneContractV1.value.extensions as Record<string, unknown> | undefined)?.surface_kind || '').trim().toLowerCase();
+  if (extensionKind === 'risk' || extensionKind === 'contract' || extensionKind === 'cost' || extensionKind === 'project') {
+    return extensionKind;
+  }
   const key = surfaceKey.value;
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) return 'risk';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) return 'contract';
@@ -1081,7 +1108,39 @@ const pageTitle = computed(() => {
   if (contractTitle) return contractTitle;
   return injectedTitle?.value || actionMeta.value?.name || pageText('page_title_fallback', '工作台');
 });
+const contractSurfaceIntent = computed<SurfaceIntentContract>(() => {
+  const fromSurfacePolicies = actionContract.value?.surface_policies?.intent_profile;
+  if (fromSurfacePolicies && typeof fromSurfacePolicies === 'object') {
+    return fromSurfacePolicies;
+  }
+  const extensions = sceneContractV1.value.extensions;
+  const fromExtensions = extensions && typeof extensions === 'object'
+    ? (extensions as Record<string, unknown>).surface_intent
+    : null;
+  return fromExtensions && typeof fromExtensions === 'object'
+    ? fromExtensions as SurfaceIntentContract
+    : {};
+});
 const surfaceIntent = computed<SurfaceIntent>(() => {
+  const override = contractSurfaceIntent.value;
+  if (override && Object.keys(override).length) {
+    const fallbackPrimary: FocusNavAction = {
+      label: pageText('primary_action_default', '去我的工作'),
+      to: '/my-work',
+    };
+    const primaryAction = override.primary_action && typeof override.primary_action === 'object'
+      ? override.primary_action
+      : fallbackPrimary;
+    return {
+      title: String(override.title || pageText('intent_title_default', '业务列表：先看状态，再执行动作')),
+      summary: String(override.summary || pageText('intent_summary_default', '通过快速筛选与快捷操作，优先处理最关键事项。')),
+      actions: Array.isArray(override.actions) ? override.actions : [],
+      emptyTitle: String(override.empty_title || pageText('empty_title_default', '')),
+      emptyHint: String(override.empty_hint || pageText('empty_hint_default', '')),
+      primaryAction,
+      secondaryAction: override.secondary_action,
+    };
+  }
   const key = surfaceKey.value;
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) {
     return {
@@ -1156,10 +1215,10 @@ const emptyReasonText = computed(() => {
   if (searchTerm.value.trim() || activeContractFilterKey.value) {
     return pageText('empty_reason_filter', '可能由当前筛选条件导致无数据，建议先清除筛选后重试。');
   }
-  const modelText = effectiveSurfaceModel.value;
-  if (modelText === 'construction.work.breakdown') {
-    return pageText('empty_reason_wbs', '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。');
-  }
+  const fromSurfacePolicy = String(actionContract.value?.surface_policies?.empty_reason || '').trim();
+  if (fromSurfacePolicy) return fromSurfacePolicy;
+  const fromExtensions = String((sceneContractV1.value.extensions as Record<string, unknown> | undefined)?.empty_reason || '').trim();
+  if (fromExtensions) return fromExtensions;
   return pageText('empty_reason_default', '');
 });
 const showHud = computed(() => isHudEnabled(route));
@@ -3684,23 +3743,12 @@ async function handleBatchAction(action: 'archive' | 'activate' | 'delete') {
   }
   batchBusy.value = true;
   try {
-    if (targetModel === 'project.project' && (action === 'archive' || action === 'activate' || action === 'delete')) {
-      const activeFlag = action === 'activate';
-      await writeRecord({
-        model: targetModel,
-        ids: selectedIds.value,
-        vals: { active: activeFlag },
-        context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()) as Record<string, unknown>,
-      });
-      batchMessage.value = action === 'activate'
-        ? `${pageText('batch_msg_activate_done_prefix', '批量激活完成：成功 ')}${selectedIds.value.length}${pageText('batch_msg_done_middle', '，失败 ')}0`
-        : `${pageText('batch_msg_delete_archive_done_prefix', '批量删除请求已按归档处理：成功 ')}${selectedIds.value.length}${pageText('batch_msg_done_middle', '，失败 ')}0`;
-      clearSelection();
-      await load();
-      return;
-    }
-
     if (action === 'delete') {
+      const deleteMode = String(actionContract.value?.surface_policies?.delete_mode || 'archive').trim().toLowerCase();
+      if (deleteMode !== 'archive') {
+        batchMessage.value = pageText('batch_msg_delete_mode_unavailable', '当前场景暂不支持物理删除，请使用归档操作。');
+        return;
+      }
       const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { delete_mode: 'archive' });
       const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
       const result = await batchUpdateRecords({
