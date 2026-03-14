@@ -164,3 +164,7 @@
   - 前端自定义视图重构 Batch3：抽离 `HomeView` orchestration block flatten + section semantic 计算到 `app/homeOrchestration.ts`
   - `HomeView` 改为复用 `flattenHomeOrchestrationBlocks/deriveHomeSectionMaps`
   - 统一编排语义计算入口，降低后续变更回归风险
+- ✅ Round34 已落地：
+  - 前端自定义视图重构 Batch4：抽离 `HomeView` action 解析工具到 `app/homeActionResolver.ts`
+  - `HomeView` 改为复用 `resolveHomeActionIntent/resolveHomeActionTarget/findEntryForHomeActionItem`
+  - 统一 action fallback 解析语义，降低页面内动作逻辑散落风险

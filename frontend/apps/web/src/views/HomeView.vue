@@ -416,6 +416,7 @@ import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildSectionLayoutMap, sectionEnabled, sectionOpenDefault, sectionTagIs, type SectionTag } from '../app/sectionLayout';
 import { deriveHomeSectionMaps, flattenHomeOrchestrationBlocks } from '../app/homeOrchestration';
+import { findEntryForHomeActionItem, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 
@@ -1577,36 +1578,15 @@ function actionLabel(entry: CapabilityEntry) {
 }
 
 function orchestrationActionIntent(key: string, fallback = 'ui.contract') {
-  const row = homeOrchestrationActions.value[key];
-  if (!row || typeof row !== 'object') return fallback;
-  const intent = asText((row as Record<string, unknown>).intent);
-  return intent || fallback;
+  return resolveHomeActionIntent(homeOrchestrationActions.value, key, fallback);
 }
 
 function orchestrationActionTarget(key: string) {
-  const row = homeOrchestrationActions.value[key];
-  if (!row || typeof row !== 'object') return {};
-  const target = (row as Record<string, unknown>).target;
-  return target && typeof target === 'object' ? target as Record<string, unknown> : {};
+  return resolveHomeActionTarget(homeOrchestrationActions.value, key);
 }
 
 function findEntryForActionItem(item: Record<string, unknown>) {
-  const entryId = asText(item.entry_id || item.entryId);
-  if (entryId) {
-    const byId = entries.value.find((entry) => entry.id === entryId);
-    if (byId) return byId;
-  }
-  const entryKey = asText(item.entry_key || item.entryKey || item.key);
-  if (entryKey) {
-    const byKey = entries.value.find((entry) => entry.key === entryKey && entry.state === 'READY');
-    if (byKey) return byKey;
-  }
-  const sceneKey = asText(item.scene_key || item.sceneKey);
-  if (sceneKey) {
-    const byScene = entries.value.find((entry) => entry.sceneKey === sceneKey && entry.state === 'READY');
-    if (byScene) return byScene;
-  }
-  return null;
+  return findEntryForHomeActionItem(item, entries.value);
 }
 
 async function handleHomeBlockAction(event: PageBlockActionEvent) {
