@@ -358,6 +358,25 @@
                         'intent': 'ui.contract'
                     }
                 },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_contract_center'],
+                        'focus_zones': ['income_expense', 'settlement_watch']
+                    },
+                    'finance': {
+                        'default_actions': ['open_settlement_orders'],
+                        'focus_zones': ['contract_overview', 'settlement_watch']
+                    }
+                },
+                'data_sources': {
+                    'contracts_workspace': {'source_type': 'odoo_model', 'model': 'construction.contract'},
+                    'contracts_risk': {'source_type': 'computed', 'provider': 'contracts.workspace.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_contract_center',
+                    'stage': 'wave2'
+                },
                 'related_scenes': ['contract.center', 'finance.settlement_orders', 'cost.cost_compare']
             }"/>
         </record>
