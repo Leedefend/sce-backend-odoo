@@ -110,3 +110,12 @@
   - `data.dictionary` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
   - inventory 对应场景升级到 `R2`
   - `R1-R2` 升级队列清空
+- ✅ Round18 已落地：
+  - 新增 `scene_r2_r3_upgrade_queue_report`，自动生成 `R2 -> R3` 升级队列
+  - `Makefile` 新增 `verify.scene.r2_r3.upgrade.queue.report` 入口
+- ✅ Round19 已落地：
+  - `portal.dashboard` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+- ✅ Round20 已落地：
+  - `portal.lifecycle` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`

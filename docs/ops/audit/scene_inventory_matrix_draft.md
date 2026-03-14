@@ -1,6 +1,6 @@
 # Scene Inventory Matrix（Draft from payload）
 
-更新时间：2026-03-14 20:55:12
+更新时间：2026-03-14 21:02:58
 来源：自动从 scene payload 解析生成
 
 ## Matrix
@@ -19,8 +19,8 @@
 | finance.workspace | 资金管理工作台 | finance | `/s/finance.workspace` | finance_management | R3 | smart_construction_scene | 维护角色策略与数据契约稳定性 |
 | my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| portal.dashboard | 工作台 | portal | `/` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
+| portal.dashboard | 工作台 | portal | `/` | workspace | R3 | smart_construction_scene | 维护角色策略与数据契约稳定性 |
+| portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R3 | smart_construction_scene | 维护角色策略与数据契约稳定性 |
 | project.management | 项目驾驶舱 | project | `/s/project.management` | project_management | R3 | smart_construction_scene | 维护角色策略与数据契约稳定性 |
 | projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | projects.dashboard_showcase | 项目驾驶舱（演示） | project | `/s/projects.dashboard_showcase` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |

@@ -1250,6 +1250,10 @@ verify.scene.inventory.draft.diff.report: guard.prod.forbid
 verify.scene.r1_r2.upgrade.queue.report: guard.prod.forbid
 	@python3 scripts/verify/scene_r1_r2_upgrade_queue_report.py
 
+.PHONY: verify.scene.r2_r3.upgrade.queue.report
+verify.scene.r2_r3.upgrade.queue.report: guard.prod.forbid
+	@python3 scripts/verify/scene_r2_r3_upgrade_queue_report.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
