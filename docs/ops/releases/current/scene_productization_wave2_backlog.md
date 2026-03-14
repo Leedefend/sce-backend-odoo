@@ -72,3 +72,7 @@
   - 将 8 个候选场景批量回填进正式 inventory（按 `R0/R1` 过渡分级）
   - inventory 与 payload 草案实现 `added/removed = 0` 对齐
   - role surface 一致性告警从 `3` 收敛至 `1`
+- ✅ Round8 已落地：
+  - 新增 `scene_r1_r2_upgrade_queue_report`，自动产出 `R0/R1 -> R1/R2` 升级队列
+  - 队列按 `priority + template + prerequisite` 编排，支持主线优先执行
+  - `Makefile` 新增 `verify.scene.r1_r2.upgrade.queue.report` 入口
