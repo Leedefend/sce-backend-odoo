@@ -84,6 +84,25 @@
                         'intent': 'ui.contract'
                     }
                 },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_intake', 'open_dashboard'],
+                        'focus_zones': ['list_main', 'insight']
+                    },
+                    'executive': {
+                        'default_actions': ['open_dashboard'],
+                        'focus_zones': ['toolbar', 'insight']
+                    }
+                },
+                'data_sources': {
+                    'project_list': {'source_type': 'odoo_model', 'model': 'project.project'},
+                    'project_insight': {'source_type': 'computed', 'provider': 'projects.list.insight'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_intake',
+                    'stage': 'wave2'
+                },
                 'related_scenes': [
                     'projects.intake',
                     'project.management',
@@ -181,6 +200,25 @@
                         'label': '返回项目列表',
                         'intent': 'ui.contract'
                     }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_management'],
+                        'focus_zones': ['ledger_main', 'risk_watch']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_list'],
+                        'focus_zones': ['summary', 'risk_watch']
+                    }
+                },
+                'data_sources': {
+                    'project_ledger': {'source_type': 'odoo_model', 'model': 'project.project'},
+                    'ledger_risk': {'source_type': 'computed', 'provider': 'projects.ledger.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_management',
+                    'stage': 'wave2'
                 },
                 'related_scenes': [
                     'projects.intake',
@@ -362,6 +400,25 @@
                 'action_specs': {
                     'open_payment_requests': {'label': '查看付款收款申请', 'intent': 'ui.contract'},
                     'open_settlement_orders': {'label': '查看结算单', 'intent': 'ui.contract'}
+                },
+                'role_variants': {
+                    'finance': {
+                        'default_actions': ['open_payment_requests', 'open_settlement_orders'],
+                        'focus_zones': ['approvals', 'settlement']
+                    },
+                    'executive': {
+                        'default_actions': ['open_settlement_orders'],
+                        'focus_zones': ['summary', 'settlement']
+                    }
+                },
+                'data_sources': {
+                    'approval_queue': {'source_type': 'odoo_model', 'model': 'tier.review'},
+                    'settlement_summary': {'source_type': 'computed', 'provider': 'finance.center.settlement'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_payment_requests',
+                    'stage': 'wave2'
                 },
                 'related_scenes': ['finance.payment_requests', 'finance.settlement_orders', 'finance.workspace']
             }"/>
