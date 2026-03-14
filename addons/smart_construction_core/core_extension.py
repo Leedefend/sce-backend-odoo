@@ -357,7 +357,18 @@ def smart_core_extend_system_init(data, env, user):
             "project_actions": len(project_rows),
         }
 
-        data["role_surface_overrides"] = ROLE_SURFACE_OVERRIDES
+        providers = data.get("role_surface_override_providers")
+        if not isinstance(providers, dict):
+            providers = {}
+        providers["smart_construction_core"] = {
+            "enabled": True,
+            "priority": 100,
+            "domain_key": "construction",
+            "root_xmlids": ["smart_construction_core.menu_sc_root"],
+            "scene_codes": ["portal.dashboard", "project.management", "projects.list", "projects.intake"],
+            "role_surface_overrides": ROLE_SURFACE_OVERRIDES,
+        }
+        data["role_surface_override_providers"] = providers
 
         ext_facts["smart_construction_core"] = module_facts
         data["ext_facts"] = ext_facts
