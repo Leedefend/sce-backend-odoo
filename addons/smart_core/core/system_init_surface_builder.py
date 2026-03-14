@@ -37,11 +37,17 @@ class SystemInitSurfaceBuilder:
             after_capability_count=post_governance_capability_count,
         )
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+        role_surface_overrides = data.get("role_surface_overrides") if isinstance(data.get("role_surface_overrides"), dict) else {}
         scene_keys_latest = {
             (s.get("code") or s.get("key"))
             for s in scenes_payload
             if isinstance(s, dict) and (s.get("code") or s.get("key"))
         }
-        data["role_surface"] = identity_resolver.build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
+        data["role_surface"] = identity_resolver.build_role_surface(
+            user_groups_xmlids,
+            nav_tree,
+            scene_keys_latest,
+            role_surface_overrides=role_surface_overrides,
+        )
         data["role_surface_map"] = identity_resolver.build_role_surface_map_payload()
         return data, scene_diagnostics

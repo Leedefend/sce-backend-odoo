@@ -7,6 +7,42 @@ from odoo.exceptions import AccessError
 _logger = logging.getLogger(__name__)
 
 
+ROLE_SURFACE_OVERRIDES = {
+    "owner": {
+        "landing_scene_candidates": ["projects.list", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_project_center",
+            "smart_construction_core.menu_sc_contract_center",
+        ],
+    },
+    "pm": {
+        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_project_center",
+            "smart_construction_core.menu_sc_contract_center",
+            "smart_construction_core.menu_sc_cost_center",
+        ],
+        "menu_blocklist_xmlids": ["smart_construction_core.menu_sc_project_manage"],
+    },
+    "finance": {
+        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_finance_center",
+            "smart_construction_core.menu_sc_settlement_center",
+            "smart_construction_core.menu_payment_request",
+        ],
+    },
+    "executive": {
+        "landing_scene_candidates": ["portal.dashboard", "project.management", "projects.list", "projects.ledger", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_root",
+            "smart_construction_core.menu_sc_projection_root",
+            "smart_construction_core.menu_sc_project_center",
+        ],
+    },
+}
+
+
 def _as_text(value: Any) -> str:
     if isinstance(value, dict):
         for key in ("zh_CN", "en_US"):
@@ -320,6 +356,8 @@ def smart_core_extend_system_init(data, env, user):
             "risk_actions": len(risk_rows),
             "project_actions": len(project_rows),
         }
+
+        data["role_surface_overrides"] = ROLE_SURFACE_OVERRIDES
 
         ext_facts["smart_construction_core"] = module_facts
         data["ext_facts"] = ext_facts
