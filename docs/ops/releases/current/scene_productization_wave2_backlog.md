@@ -50,3 +50,7 @@
   - `scripts/verify/scene_r3_runtime_guard.py`
   - `docs/ops/audit/scene_r3_runtime_dashboard.md`
   - `Makefile` 新增 `verify.scene.r3.runtime.guard`
+- ✅ Round3 已落地：
+  - `scene_r3_runtime_guard` 增加动作链观测列：`action_chain_status/resolution/route`
+  - 动作链汇总指标：`success/fallback/fail`
+  - 支持主动作 route 解析回退链路（direct / scene_ref / related / self_target）

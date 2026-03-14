@@ -121,26 +121,26 @@ def _resolve_inventory_route(scene_key: str, inventory: dict[str, dict[str, str]
     return _route_from_inventory(str(row.get("route_target") or ""))
 
 
-def _resolve_primary_action_route(scene_key: str, payload: dict, inventory: dict[str, dict[str, str]]) -> tuple[str, str]:
+def _resolve_primary_action_route(scene_key: str, payload: dict, inventory: dict[str, dict[str, str]]) -> tuple[str, str, str]:
     product_policy = payload.get("product_policy") if isinstance(payload.get("product_policy"), dict) else {}
     action_specs = payload.get("action_specs") if isinstance(payload.get("action_specs"), dict) else {}
     related_scenes = payload.get("related_scenes") if isinstance(payload.get("related_scenes"), list) else []
 
     primary_action = str(product_policy.get("primary_action") or "").strip()
     if not primary_action:
-        return "", f"{scene_key}: product_policy.primary_action is empty"
+        return "", f"{scene_key}: product_policy.primary_action is empty", "unresolved"
 
     action_spec = action_specs.get(primary_action)
     if not isinstance(action_spec, dict):
-        return "", f"{scene_key}: action_specs missing primary_action={primary_action}"
+        return "", f"{scene_key}: action_specs missing primary_action={primary_action}", "unresolved"
 
     intent = str(action_spec.get("intent") or "").strip()
     if intent != "ui.contract":
-        return "N/A", ""
+        return "N/A", "", "non_ui_contract"
 
     direct_route = _route_from_inventory(str(action_spec.get("route") or action_spec.get("target_route") or ""))
     if _is_route_openable(direct_route):
-        return direct_route, ""
+        return direct_route, "", "direct_action_route"
 
     for scene_field in ("scene_key", "target_scene", "scene"):
         target_scene = str(action_spec.get(scene_field) or "").strip()
@@ -148,14 +148,14 @@ def _resolve_primary_action_route(scene_key: str, payload: dict, inventory: dict
             continue
         route = _resolve_inventory_route(target_scene, inventory)
         if _is_route_openable(route):
-            return route, ""
+            return route, "", "action_scene_ref"
 
     related_keys = [str(item or "").strip() for item in related_scenes if str(item or "").strip()]
     for candidate in _guess_scene_keys_from_action(primary_action):
         if candidate in related_keys:
             route = _resolve_inventory_route(candidate, inventory)
             if _is_route_openable(route):
-                return route, ""
+                return route, "", "related_scene_match"
 
     action_tail = primary_action
     if action_tail.startswith("open_"):
@@ -167,16 +167,16 @@ def _resolve_primary_action_route(scene_key: str, payload: dict, inventory: dict
         if action_tail and (related.endswith(action_tail.replace("_", ".")) or related_parts[-1] == tail_token):
             route = _resolve_inventory_route(related, inventory)
             if _is_route_openable(route):
-                return route, ""
+                return route, "", "related_scene_fuzzy"
 
     target = payload.get("target") if isinstance(payload.get("target"), dict) else {}
     self_route = _route_from_inventory(str(target.get("route") or ""))
     if not _is_route_openable(self_route):
         self_route = _resolve_inventory_route(scene_key, inventory)
     if _is_route_openable(self_route):
-        return self_route, ""
+        return self_route, "", "self_target_fallback"
 
-    return "", f"{scene_key}: cannot resolve openable route for primary_action={primary_action}"
+    return "", f"{scene_key}: cannot resolve openable route for primary_action={primary_action}", "unresolved"
 
 
 def _extract_payload_texts(path: Path) -> list[str]:
@@ -249,7 +249,11 @@ def _zone_keys(payload: dict) -> set[str]:
     return out
 
 
-def _validate_r3_scene(scene_key: str, payload: dict, inventory: dict[str, dict[str, str]]) -> tuple[dict[str, bool], list[str]]:
+def _validate_r3_scene(
+    scene_key: str,
+    payload: dict,
+    inventory: dict[str, dict[str, str]],
+) -> tuple[dict[str, bool], list[str], dict[str, str]]:
     checks: dict[str, bool] = {
         "has_role_variants": False,
         "has_data_sources": False,
@@ -259,6 +263,11 @@ def _validate_r3_scene(scene_key: str, payload: dict, inventory: dict[str, dict[
         "role_zone_mapping_valid": False,
     }
     errors: list[str] = []
+    observability: dict[str, str] = {
+        "action_chain_route": "",
+        "action_chain_resolution": "unresolved",
+        "action_chain_status": "FAIL",
+    }
 
     role_variants = payload.get("role_variants") if isinstance(payload.get("role_variants"), dict) else {}
     data_sources = payload.get("data_sources") if isinstance(payload.get("data_sources"), dict) else {}
@@ -275,8 +284,17 @@ def _validate_r3_scene(scene_key: str, payload: dict, inventory: dict[str, dict[
     if not checks["primary_action_resolved"]:
         errors.append(f"{scene_key}: product_policy.primary_action missing or not in action_specs")
     else:
-        route, route_error = _resolve_primary_action_route(scene_key, payload, inventory)
+        route, route_error, resolution = _resolve_primary_action_route(scene_key, payload, inventory)
+        observability["action_chain_route"] = route or ""
+        observability["action_chain_resolution"] = resolution or "unresolved"
         checks["action_chain_openable"] = _is_route_openable(route) or route == "N/A"
+        if route == "N/A":
+            observability["action_chain_status"] = "SUCCESS"
+        elif checks["action_chain_openable"]:
+            if resolution in {"related_scene_fuzzy", "self_target_fallback"}:
+                observability["action_chain_status"] = "FALLBACK"
+            else:
+                observability["action_chain_status"] = "SUCCESS"
         if not checks["action_chain_openable"] and route_error:
             errors.append(route_error)
 
@@ -301,7 +319,7 @@ def _validate_r3_scene(scene_key: str, payload: dict, inventory: dict[str, dict[
         if not passed and check_name != "role_zone_mapping_valid":
             errors.append(f"{scene_key}: check failed ({check_name})")
 
-    return checks, errors
+    return checks, errors, observability
 
 
 def _write_report(path: Path, rows: list[dict], summary: dict[str, int]) -> None:
@@ -315,14 +333,17 @@ def _write_report(path: Path, rows: list[dict], summary: dict[str, int]) -> None
     lines.append(f"- `r3_scene_count`: {summary['r3_scene_count']}")
     lines.append(f"- `pass_count`: {summary['pass_count']}")
     lines.append(f"- `fail_count`: {summary['fail_count']}")
+    lines.append(f"- `action_chain_success_count`: {summary['action_chain_success_count']}")
+    lines.append(f"- `action_chain_fallback_count`: {summary['action_chain_fallback_count']}")
+    lines.append(f"- `action_chain_fail_count`: {summary['action_chain_fail_count']}")
     lines.append("")
     lines.append("## Checks")
     lines.append("")
-    lines.append("| scene_key | has_role_variants | has_data_sources | has_product_policy | primary_action_resolved | action_chain_openable | role_zone_mapping_valid | status |")
-    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
+    lines.append("| scene_key | has_role_variants | has_data_sources | has_product_policy | primary_action_resolved | action_chain_openable | action_chain_status | action_chain_resolution | action_chain_route | role_zone_mapping_valid | status |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
     for row in rows:
         lines.append(
-            "| {scene_key} | {has_role_variants} | {has_data_sources} | {has_product_policy} | {primary_action_resolved} | {action_chain_openable} | {role_zone_mapping_valid} | {status} |".format(
+            "| {scene_key} | {has_role_variants} | {has_data_sources} | {has_product_policy} | {primary_action_resolved} | {action_chain_openable} | {action_chain_status} | {action_chain_resolution} | {action_chain_route} | {role_zone_mapping_valid} | {status} |".format(
                 **row
             )
         )
@@ -366,13 +387,16 @@ def main() -> int:
                     "has_product_policy": "❌",
                     "primary_action_resolved": "❌",
                     "action_chain_openable": "❌",
+                    "action_chain_status": "FAIL",
+                    "action_chain_resolution": "payload_missing",
+                    "action_chain_route": "",
                     "role_zone_mapping_valid": "❌",
                     "status": "FAIL",
                 }
             )
             continue
 
-        checks, scene_errors = _validate_r3_scene(scene_key, payload, inventory)
+        checks, scene_errors, observability = _validate_r3_scene(scene_key, payload, inventory)
         errors.extend(scene_errors)
         all_pass = all(checks.values())
         rows.append(
@@ -383,16 +407,25 @@ def main() -> int:
                 "has_product_policy": "✅" if checks["has_product_policy"] else "❌",
                 "primary_action_resolved": "✅" if checks["primary_action_resolved"] else "❌",
                 "action_chain_openable": "✅" if checks["action_chain_openable"] else "❌",
+                "action_chain_status": observability["action_chain_status"],
+                "action_chain_resolution": observability["action_chain_resolution"],
+                "action_chain_route": observability["action_chain_route"],
                 "role_zone_mapping_valid": "✅" if checks["role_zone_mapping_valid"] else "❌",
                 "status": "PASS" if all_pass else "FAIL",
             }
         )
 
     pass_count = sum(1 for row in rows if row.get("status") == "PASS")
+    action_chain_success_count = sum(1 for row in rows if row.get("action_chain_status") == "SUCCESS")
+    action_chain_fallback_count = sum(1 for row in rows if row.get("action_chain_status") == "FALLBACK")
+    action_chain_fail_count = sum(1 for row in rows if row.get("action_chain_status") == "FAIL")
     summary = {
         "r3_scene_count": len(r3_scene_keys),
         "pass_count": pass_count,
         "fail_count": len(r3_scene_keys) - pass_count,
+        "action_chain_success_count": action_chain_success_count,
+        "action_chain_fallback_count": action_chain_fallback_count,
+        "action_chain_fail_count": action_chain_fail_count,
     }
     _write_report(root / args.output, rows, summary)
 
@@ -405,6 +438,9 @@ def main() -> int:
 
     print("[scene_r3_runtime_guard] PASS")
     print(f"- r3_scene_count: {summary['r3_scene_count']}")
+    print(f"- action_chain_success_count: {summary['action_chain_success_count']}")
+    print(f"- action_chain_fallback_count: {summary['action_chain_fallback_count']}")
+    print(f"- action_chain_fail_count: {summary['action_chain_fail_count']}")
     print(f"- output: {args.output}")
     return 0
 
