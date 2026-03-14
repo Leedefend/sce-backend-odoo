@@ -86,6 +86,25 @@
                         'intent': 'api.data'
                     }
                 },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['submit', 'save_draft'],
+                        'focus_zones': ['form_main', 'checklist']
+                    },
+                    'executive': {
+                        'default_actions': ['submit'],
+                        'focus_zones': ['hero', 'form_main']
+                    }
+                },
+                'data_sources': {
+                    'intake_form': {'source_type': 'odoo_model', 'model': 'project.project'},
+                    'intake_defaults': {'source_type': 'computed', 'provider': 'project.intake.defaults'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'submit',
+                    'stage': 'wave1'
+                },
                 'target': {
                     'route': '/s/projects.intake',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_initiation',
@@ -344,6 +363,25 @@
                         'intent': 'ui.contract'
                     }
                 },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_cost_ledger'],
+                        'focus_zones': ['cost_metrics', 'variance']
+                    },
+                    'finance': {
+                        'default_actions': ['open_profit_compare'],
+                        'focus_zones': ['overview', 'variance']
+                    }
+                },
+                'data_sources': {
+                    'cost_metrics': {'source_type': 'odoo_model', 'model': 'project.cost.ledger'},
+                    'cost_alerts': {'source_type': 'computed', 'provider': 'cost.analysis.alerts'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_cost_ledger',
+                    'stage': 'wave1'
+                },
                 'related_scenes': ['cost.project_cost_ledger', 'cost.profit_compare', 'contract.center']
             }"/>
         </record>
@@ -407,6 +445,25 @@
                         'label': '进入结算单',
                         'intent': 'ui.contract'
                     }
+                },
+                'role_variants': {
+                    'finance': {
+                        'default_actions': ['open_payment_requests', 'open_settlement_orders'],
+                        'focus_zones': ['payments', 'exceptions']
+                    },
+                    'executive': {
+                        'default_actions': ['open_settlement_orders'],
+                        'focus_zones': ['cash_overview', 'exceptions']
+                    }
+                },
+                'data_sources': {
+                    'payments': {'source_type': 'odoo_model', 'model': 'payment.request'},
+                    'exceptions': {'source_type': 'computed', 'provider': 'finance.workspace.exceptions'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_payment_requests',
+                    'stage': 'wave1'
                 },
                 'related_scenes': ['finance.center', 'finance.payment_requests', 'finance.settlement_orders']
             }"/>

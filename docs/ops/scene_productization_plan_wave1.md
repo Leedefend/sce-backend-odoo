@@ -52,6 +52,11 @@
 - Day 6：已完成（已生成覆盖率看板 `docs/ops/audit/scene_coverage_dashboard.md`）。
 - Day 7：已完成（新增 `scene_inventory_freeze_guard`，冻结“新增 scene 先入 inventory”规则）。
 
+## 阶段结果
+
+- `R2+` 场景已达成 `12+`（当前覆盖率看板为准）。
+- `R3` 场景已达成 `4+`（项目/成本/资金主线样板）。
+
 ## 交付物
 
 - `docs/ops/scene_inventory_matrix_latest.md`
