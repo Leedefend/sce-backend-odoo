@@ -27,14 +27,14 @@
 | finance.workspace | 资金管理工作台 | finance | `/s/finance.workspace` | finance_management | R3 | smart_construction_scene | 维护资金角色编排与异常策略 |
 | finance.payment_requests | 付款收款申请 | finance | `/s/finance.payment_requests` | finance_management | R3 | smart_construction_scene | 维护审批角色编排与风险动作模板 |
 | finance.settlement_orders | 结算单 | finance | `/s/finance.settlement_orders` | finance_management | R3 | smart_construction_scene | 维护结算角色动作与风险闭环策略 |
-| risk.center | 风险提醒工作台 | risk | `/s/risk.center` | risk_management | R2 | smart_construction_scene | 进入主线后补齐角色策略与数据契约 |
-| data.dictionary | 业务字典 | data | `/s/data.dictionary` | data_dictionary | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
+| risk.center | 风险提醒工作台 | risk | `/s/risk.center` | risk_management | R3 | smart_construction_scene | 维护风险角色策略与动作链路稳定性 |
+| data.dictionary | 业务字典 | data | `/s/data.dictionary` | data_dictionary | R3 | smart_construction_scene | 维护字典角色策略与数据契约稳定性 |
+| my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
+| portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
 | portal.dashboard | 工作台 | portal | `/` | workspace | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
 | portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
-| projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| projects.dashboard_showcase | 项目驾驶舱（演示） | project | `/s/projects.dashboard_showcase` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
+| projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
+| projects.dashboard_showcase | 项目驾驶舱（演示） | project | `/s/projects.dashboard_showcase` | project_management | R3 | smart_construction_scene | 维护演示驾驶舱角色策略与动作链路稳定性 |
 | scene_smoke_default | Scene Smoke Default | scene_smoke_default | `/workbench?scene=scene_smoke_default` | others | R1 | smart_construction_scene | 保持测试场景最小可用并隔离生产入口 |
 
 ## 使用规则（冻结）
