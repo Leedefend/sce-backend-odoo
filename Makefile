@@ -1238,6 +1238,19 @@ verify.scene.data_source.schema.guard: guard.prod.forbid
 verify.scene.r3.runtime.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_r3_runtime_guard.py
 
+.PHONY: verify.scene.r3.runtime.strict
+verify.scene.r3.runtime.strict: guard.prod.forbid
+	@python3 scripts/verify/scene_r3_runtime_guard.py \
+		--max-action-chain-fail-count 0 \
+		--min-pass-rate 1.0 \
+		--min-action-chain-success-rate 0.50 \
+		--max-action-chain-fallback-rate 0.50 \
+		--fail-on-warning
+
+.PHONY: gate.scene.r3.runtime.strict
+gate.scene.r3.runtime.strict: verify.scene.r3.runtime.strict
+	@echo "[gate.scene.r3.runtime.strict] PASS"
+
 .PHONY: verify.scene.role.surface.consistency.guard
 verify.scene.role.surface.consistency.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_role_surface_consistency_guard.py

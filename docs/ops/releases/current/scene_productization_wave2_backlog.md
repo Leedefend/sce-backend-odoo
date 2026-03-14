@@ -143,3 +143,6 @@
   - `scene_r3_runtime_guard` 增加运行态门槛机制：`pass_rate`、`action_chain_success_rate`、`action_chain_fallback_rate`
   - 增加失败分级：`BLOCKER`（强失败）与 `WARNING`（可持续治理）
   - 支持 `--fail-on-warning`，可在严格模式将告警提升为失败
+- ✅ Round28 已落地：
+  - `Makefile` 新增 `verify.scene.r3.runtime.strict` 目标（启用 `--fail-on-warning`）
+  - 新增 `gate.scene.r3.runtime.strict` 门禁目标，作为 CI 严格入口
