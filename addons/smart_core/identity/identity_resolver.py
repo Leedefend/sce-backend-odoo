@@ -6,41 +6,24 @@ from typing import Dict, List
 ROLE_SURFACE_MAP = {
     "owner": {
         "label": "Owner",
-        "landing_scene_candidates": ["projects.list", "projects.intake"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_project_center",
-            "smart_construction_core.menu_sc_contract_center",
-        ],
+        "landing_scene_candidates": ["portal.dashboard", "workspace.home"],
+        "menu_xmlids": [],
     },
     "pm": {
         "label": "Project Manager",
-        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_project_center",
-            "smart_construction_core.menu_sc_contract_center",
-            "smart_construction_core.menu_sc_cost_center",
-        ],
-        "menu_blocklist_xmlids": [
-            "smart_construction_core.menu_sc_project_manage",
-        ],
+        "landing_scene_candidates": ["portal.dashboard", "workspace.home"],
+        "menu_xmlids": [],
+        "menu_blocklist_xmlids": [],
     },
     "finance": {
         "label": "Finance",
-        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_finance_center",
-            "smart_construction_core.menu_sc_settlement_center",
-            "smart_construction_core.menu_payment_request",
-        ],
+        "landing_scene_candidates": ["portal.dashboard", "workspace.home"],
+        "menu_xmlids": [],
     },
     "executive": {
         "label": "Executive",
-        "landing_scene_candidates": ["projects.intake", "projects.list", "projects.ledger"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_root",
-            "smart_construction_core.menu_sc_projection_root",
-            "smart_construction_core.menu_sc_project_center",
-        ],
+        "landing_scene_candidates": ["portal.dashboard", "workspace.home"],
+        "menu_xmlids": [],
     },
 }
 
@@ -129,7 +112,27 @@ class IdentityResolver:
         for candidate in scene_candidates:
             if candidate in scene_keys:
                 return candidate
-        return "projects.list"
+        if "portal.dashboard" in scene_keys:
+            return "portal.dashboard"
+        if "workspace.home" in scene_keys:
+            return "workspace.home"
+        return "portal.dashboard"
+
+    def _merge_role_meta(self, role_code: str, role_meta: dict, role_surface_overrides: dict | None) -> dict:
+        merged = dict(role_meta or {})
+        if not isinstance(role_surface_overrides, dict):
+            return merged
+        role_override = role_surface_overrides.get(role_code)
+        if not isinstance(role_override, dict):
+            return merged
+        for field in ("landing_scene_candidates", "menu_xmlids", "menu_blocklist_xmlids"):
+            value = role_override.get(field)
+            if isinstance(value, list):
+                merged[field] = value
+        label = role_override.get("label")
+        if isinstance(label, str) and label.strip():
+            merged["label"] = label.strip()
+        return merged
 
     def _walk_nav_nodes(self, nodes):
         for node in nodes or []:
@@ -148,9 +151,16 @@ class IdentityResolver:
                 indexed[xmlid] = node
         return indexed
 
-    def build_role_surface(self, user_xmlids: set, nav_tree: list, scene_keys: set) -> dict:
+    def build_role_surface(
+        self,
+        user_xmlids: set,
+        nav_tree: list,
+        scene_keys: set,
+        role_surface_overrides: dict | None = None,
+    ) -> dict:
         role_code, role_evidence = self.resolve_role_code_with_evidence(user_xmlids)
         role_meta = ROLE_SURFACE_MAP.get(role_code) or ROLE_SURFACE_MAP["owner"]
+        role_meta = self._merge_role_meta(role_code, role_meta, role_surface_overrides)
         scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
         menu_candidates = list(role_meta.get("menu_xmlids") or [])
         menu_blocklist_xmlids = list(role_meta.get("menu_blocklist_xmlids") or [])
