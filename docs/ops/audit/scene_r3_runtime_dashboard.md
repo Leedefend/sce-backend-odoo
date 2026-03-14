@@ -1,6 +1,6 @@
 # Scene R3 Runtime Dashboard
 
-更新时间：2026-03-14 21:19:22
+更新时间：2026-03-14 21:26:04
 
 ## Summary
 
@@ -10,6 +10,22 @@
 - `action_chain_success_count`: 12
 - `action_chain_fallback_count`: 9
 - `action_chain_fail_count`: 0
+- `pass_rate`: 100.00%
+- `action_chain_success_rate`: 57.14%
+- `action_chain_fallback_rate`: 42.86%
+
+## Gate Thresholds
+
+- `max_action_chain_fail_count`: 0
+- `min_pass_rate`: 100.00%
+- `min_action_chain_success_rate`: 50.00%
+- `max_action_chain_fallback_rate`: 50.00%
+
+## Gate Result
+
+- `result`: PASS
+- `blocker_count`: 0
+- `warning_count`: 0
 
 ## Checks
 

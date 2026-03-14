@@ -139,3 +139,7 @@
   - `risk.center` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
   - inventory 对应场景升级到 `R3`
   - `R2-R3` 升级队列清空
+- ✅ Round27 已落地：
+  - `scene_r3_runtime_guard` 增加运行态门槛机制：`pass_rate`、`action_chain_success_rate`、`action_chain_fallback_rate`
+  - 增加失败分级：`BLOCKER`（强失败）与 `WARNING`（可持续治理）
+  - 支持 `--fail-on-warning`，可在严格模式将告警提升为失败
