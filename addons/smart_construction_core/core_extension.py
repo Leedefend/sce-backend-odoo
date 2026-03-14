@@ -363,6 +363,7 @@ def smart_core_extend_system_init(data, env, user):
         providers["smart_construction_core"] = {
             "enabled": True,
             "priority": 100,
+            "domain_key": "construction",
             "root_xmlids": ["smart_construction_core.menu_sc_root"],
             "scene_codes": ["portal.dashboard", "project.management", "projects.list", "projects.intake"],
             "role_surface_overrides": ROLE_SURFACE_OVERRIDES,
