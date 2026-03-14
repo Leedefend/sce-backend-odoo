@@ -8,6 +8,7 @@ REQUIRED_TOP_LEVEL = (
     "contract_version",
     "scene",
     "page",
+    "nav_ref",
     "zones",
     "blocks",
     "record",
@@ -32,6 +33,8 @@ def check_top_level_shape(payload: dict) -> Tuple[bool, Dict[str, object]]:
         return False, {"code": "permissions_not_object"}
     if not isinstance(payload.get("extensions"), dict):
         return False, {"code": "extensions_not_object"}
+    if not isinstance(payload.get("nav_ref"), dict):
+        return False, {"code": "nav_ref_not_object"}
 
     actions = payload.get("actions") if isinstance(payload.get("actions"), dict) else {}
     action_groups = ("primary_actions", "secondary_actions", "contextual_actions", "danger_actions", "recommended_actions")
@@ -48,4 +51,13 @@ def check_top_level_shape(payload: dict) -> Tuple[bool, Dict[str, object]]:
     for key in ("injected_blocks", "injected_actions", "providers"):
         if key in extensions and not isinstance(extensions.get(key), list):
             return False, {"code": "invalid_extensions_group", "group": key}
+
+    nav_ref = payload.get("nav_ref") if isinstance(payload.get("nav_ref"), dict) else {}
+    if "active_scene_key" in nav_ref and not isinstance(nav_ref.get("active_scene_key"), str):
+        return False, {"code": "invalid_nav_ref_active_scene_key"}
+    if "active_menu_key" in nav_ref and not isinstance(nav_ref.get("active_menu_key"), str):
+        return False, {"code": "invalid_nav_ref_active_menu_key"}
+    active_menu_id = nav_ref.get("active_menu_id")
+    if active_menu_id is not None and not isinstance(active_menu_id, int):
+        return False, {"code": "invalid_nav_ref_active_menu_id"}
     return True, {"code": "ok"}
