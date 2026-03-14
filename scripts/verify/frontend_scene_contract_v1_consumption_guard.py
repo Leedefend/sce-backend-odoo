@@ -8,6 +8,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
 PM_DASHBOARD_VIEW = ROOT / "frontend/apps/web/src/views/ProjectManagementDashboardView.vue"
+MY_WORK_VIEW = ROOT / "frontend/apps/web/src/views/MyWorkView.vue"
+WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 
 
 def _read(path: Path) -> str:
@@ -25,11 +27,17 @@ def main() -> int:
     errors: list[str] = []
     home_text = _read(HOME_VIEW)
     dashboard_text = _read(PM_DASHBOARD_VIEW)
+    my_work_text = _read(MY_WORK_VIEW)
+    workbench_text = _read(WORKBENCH_VIEW)
 
     if not home_text:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
     if not dashboard_text:
         errors.append(f"missing file: {PM_DASHBOARD_VIEW.relative_to(ROOT).as_posix()}")
+    if not my_work_text:
+        errors.append(f"missing file: {MY_WORK_VIEW.relative_to(ROOT).as_posix()}")
+    if not workbench_text:
+        errors.append(f"missing file: {WORKBENCH_VIEW.relative_to(ROOT).as_posix()}")
     if errors:
         return _fail(errors)
 
@@ -44,6 +52,14 @@ def main() -> int:
         "const rawContract = payload?.scene_contract_v1;",
         "function resolveDashboardZones(payload: DashboardResponse | null)",
     )
+    my_work_required = (
+        "normalizeSceneContractV1ToPageContract(pageContract.contract.value?.scene_contract_v1)",
+        "function normalizeSceneContractV1ToPageContract(raw: unknown): PageOrchestrationContract",
+    )
+    workbench_required = (
+        "normalizeSceneContractV1ToPageContract(pageContract.contract.value?.scene_contract_v1)",
+        "function normalizeSceneContractV1ToPageContract(raw: unknown): PageOrchestrationContract",
+    )
 
     for token in home_required:
         if token not in home_text:
@@ -51,6 +67,12 @@ def main() -> int:
     for token in dashboard_required:
         if token not in dashboard_text:
             errors.append(f"ProjectManagementDashboardView missing token: {token}")
+    for token in my_work_required:
+        if token not in my_work_text:
+            errors.append(f"MyWorkView missing token: {token}")
+    for token in workbench_required:
+        if token not in workbench_text:
+            errors.append(f"WorkbenchView missing token: {token}")
 
     if errors:
         return _fail(errors)
@@ -61,4 +83,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
