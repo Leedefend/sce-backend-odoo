@@ -132,8 +132,18 @@
         </record>
 
         <!-- Contracts workspace scene -->
-        <record id="sc_scene_contracts_workspace" model="sc.scene">
+        <record id="sc_scene_contract_center" model="sc.scene">
             <field name="sequence">73</field>
+            <field name="name">合同中心</field>
+            <field name="code">contract.center</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
+        <!-- Contracts workspace scene -->
+        <record id="sc_scene_contracts_workspace" model="sc.scene">
+            <field name="sequence">74</field>
             <field name="name">合同管理工作台</field>
             <field name="code">contracts.workspace</field>
             <field name="layout">grid</field>
@@ -143,7 +153,7 @@
 
         <!-- Cost analysis workspace scene -->
         <record id="sc_scene_cost_analysis" model="sc.scene">
-            <field name="sequence">74</field>
+            <field name="sequence">75</field>
             <field name="name">成本控制工作台</field>
             <field name="code">cost.analysis</field>
             <field name="layout">grid</field>
@@ -153,7 +163,7 @@
 
         <!-- Finance workspace scene -->
         <record id="sc_scene_finance_workspace" model="sc.scene">
-            <field name="sequence">75</field>
+            <field name="sequence">76</field>
             <field name="name">资金管理工作台</field>
             <field name="code">finance.workspace</field>
             <field name="layout">grid</field>
@@ -163,7 +173,7 @@
 
         <!-- Risk center workspace scene -->
         <record id="sc_scene_risk_center" model="sc.scene">
-            <field name="sequence">76</field>
+            <field name="sequence">77</field>
             <field name="name">风险提醒工作台</field>
             <field name="code">risk.center</field>
             <field name="layout">grid</field>

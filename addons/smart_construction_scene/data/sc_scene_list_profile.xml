@@ -10,12 +10,44 @@
                 'code': 'projects.list',
                 'name': '项目列表',
                 'version': 'v2',
+                'page': {
+                    'key': 'projects.list.main',
+                    'title': '项目列表',
+                    'page_type': 'list',
+                    'page_mode': 'table'
+                },
                 'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'toolbar',
+                        'title': '快捷入口',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.list.toolbar'
+                    },
+                    {
+                        'key': 'list_main',
+                        'title': '项目清单',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.projects.list.table'
+                    },
+                    {
+                        'key': 'insight',
+                        'title': '列表洞察',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.list.insight'
+                    }
+                ],
                 'target': {
+                    'route': '/s/projects.list',
                     'menu_xmlid': 'smart_construction_core.menu_sc_root',
                     'action_xmlid': 'smart_construction_core.action_sc_project_list'
                 },
                 'list_profile': {
+                    'model': 'project.project',
+                    'view_type': 'list',
                     'columns': [
                         'name',
                         'stage_id',
@@ -42,6 +74,21 @@
                     'row_primary': 'name',
                     'row_secondary': 'partner_id'
                 },
+                'action_specs': {
+                    'open_intake': {
+                        'label': '新建立项',
+                        'intent': 'ui.contract'
+                    },
+                    'open_dashboard': {
+                        'label': '进入项目驾驶舱',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'related_scenes': [
+                    'projects.intake',
+                    'project.management',
+                    'projects.ledger'
+                ],
                 'filters': [],
                 'default_sort': 'write_date desc',
                 'tiles': []
@@ -61,12 +108,44 @@
                 'code': 'projects.ledger',
                 'name': '项目台账（试点）',
                 'version': 'v2',
+                'page': {
+                    'key': 'projects.ledger.main',
+                    'title': '项目台账',
+                    'page_type': 'ledger',
+                    'page_mode': 'kanban_list'
+                },
                 'layout': {'kind': 'ledger', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'summary',
+                        'title': '台账总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.ledger.summary'
+                    },
+                    {
+                        'key': 'ledger_main',
+                        'title': '台账明细',
+                        'zone_type': 'primary',
+                        'display_mode': 'kanban',
+                        'block_key': 'block.projects.ledger.main'
+                    },
+                    {
+                        'key': 'risk_watch',
+                        'title': '风险关注',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.ledger.risk'
+                    }
+                ],
                 'target': {
+                    'route': '/s/projects.ledger',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_project',
                     'action_xmlid': 'smart_construction_core.action_sc_project_kanban_lifecycle'
                 },
                 'list_profile': {
+                    'model': 'project.project',
+                    'view_type': 'kanban',
                     'columns': [
                         'name',
                         'stage_id',
@@ -93,6 +172,21 @@
                     'row_primary': 'name',
                     'row_secondary': 'partner_id'
                 },
+                'action_specs': {
+                    'open_management': {
+                        'label': '查看项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_project_list': {
+                        'label': '返回项目列表',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'related_scenes': [
+                    'projects.intake',
+                    'projects.list',
+                    'project.management'
+                ],
                 'filters': [],
                 'default_sort': 'write_date desc',
                 'tiles': []

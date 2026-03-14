@@ -21,6 +21,25 @@
                     'route': '/s/project.management',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_management_scene'
                 },
+                'related_scenes': [
+                    'projects.intake',
+                    'projects.list',
+                    'projects.ledger'
+                ],
+                'action_specs': {
+                    'open_intake': {
+                        'label': '发起项目立项',
+                        'intent': 'ui.contract'
+                    },
+                    'open_project_list': {
+                        'label': '查看项目列表',
+                        'intent': 'ui.contract'
+                    },
+                    'open_project_ledger': {
+                        'label': '查看项目台账',
+                        'intent': 'ui.contract'
+                    }
+                },
                 'zones': [
                     {
                         'key': 'zone.header',

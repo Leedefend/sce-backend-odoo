@@ -1218,6 +1218,14 @@ verify.frontend.onchange_line_patch.guard: guard.prod.forbid
 verify.scene.maturity.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_maturity_guard.py
 
+.PHONY: verify.scene.coverage.dashboard
+verify.scene.coverage.dashboard: guard.prod.forbid
+	@python3 scripts/verify/scene_coverage_dashboard_report.py
+
+.PHONY: verify.scene.inventory.freeze.guard
+verify.scene.inventory.freeze.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_inventory_freeze_guard.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
