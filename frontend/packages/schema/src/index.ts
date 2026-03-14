@@ -234,6 +234,7 @@ export interface ApiDataListRequest {
   fields?: string[] | '*';
   domain?: unknown[] | string;
   domain_raw?: string;
+  need_total?: boolean;
   group_by?: string | string[];
   group_offset?: number;
   need_group_total?: boolean;

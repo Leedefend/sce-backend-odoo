@@ -1,0 +1,45 @@
+{
+  "semantic_page": {
+    "model": "construction.contract",
+    "view_type": "search",
+    "layout": "auto",
+    "search_semantics": {
+      "filters": [
+        {"key": "active", "label": "生效中", "domain": null},
+        {"key": "expired", "label": "已到期", "domain": null}
+      ],
+      "group_by": [
+        {"key": "partner_id", "label": "按甲方", "domain": null}
+      ],
+      "search_fields": [
+        {"key": "name", "label": "合同名称", "domain": null}
+      ],
+      "search_panel": {"enabled": true, "sections": ["state", "partner_id"]},
+      "favorites": {"enabled": true, "items": [{"key": "fav_active", "label": "我常用·生效中", "domain": null}]},
+      "quick_filters": [
+        {"key": "active", "label": "生效中", "domain": null}
+      ]
+    },
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "search": {"filters": [{"key": "active", "label": "生效中"}], "group_by": [{"key": "partner_id", "label": "按甲方"}]},
+              "search_semantics": {
+                "filters": [{"key": "active", "label": "生效中", "domain": null}],
+                "group_by": [{"key": "partner_id", "label": "按甲方", "domain": null}],
+                "search_fields": [{"key": "name", "label": "合同名称", "domain": null}],
+                "search_panel": {"enabled": true, "sections": ["state", "partner_id"]},
+                "favorites": {"enabled": true, "items": [{"key": "fav_active", "label": "我常用·生效中", "domain": null}]},
+                "quick_filters": [{"key": "active", "label": "生效中", "domain": null}]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

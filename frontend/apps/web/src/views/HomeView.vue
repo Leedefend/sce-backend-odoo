@@ -57,6 +57,90 @@
       </div>
     </header>
 
+    <section class="focus-layout">
+      <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :class="homeSectionClass('today_actions')" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
+        <header class="today-actions-header">
+          <div>
+            <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
+            <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
+          </div>
+          <button v-if="hasMoreTodos" class="today-view-all" @click="openAllTodos">查看全部</button>
+        </header>
+        <div class="today-actions-grid compact">
+          <article v-for="item in primaryTodos" :key="item.id" class="today-card" :class="[`tone-${item.tone || 'info'}`, `progress-${item.progress || 'pending'}`]">
+            <p class="today-title">
+              <span>{{ item.title }}</span>
+              <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
+                {{ item.status === 'urgent' ? homeLayoutText('today_actions.status_urgent', '紧急') : homeLayoutText('today_actions.status_normal', '普通') }}
+              </span>
+            </p>
+            <p class="today-desc">{{ item.description }}</p>
+            <p v-if="typeof item.count === 'number'" class="today-count">{{ homeLayoutText('today_actions.count_prefix', '待处理') }} {{ item.count }}</p>
+            <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
+              {{ item.ready === false ? homeLayoutText('today_actions.coming_soon_action', '即将开放') : todoActionLabel(item.title) }}
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :class="homeSectionClass('risk')" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
+        <header class="risk-header">
+          <div>
+            <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
+            <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
+          </div>
+          <button class="today-view-all" @click="openRiskCenter">进入风险中心</button>
+        </header>
+        <p class="risk-summary">{{ riskSummaryLine }}</p>
+        <div class="risk-grid">
+          <article class="risk-card risk-red" :class="{ glow: riskBuckets.red >= 3 }">
+            <p>{{ homeLayoutText('risk.bucket.red', '严重 ⚠') }}</p>
+            <strong>{{ riskBuckets.red }}</strong>
+          </article>
+          <article class="risk-card risk-amber" :class="{ glow: riskBuckets.amber >= 4 }">
+            <p>{{ homeLayoutText('risk.bucket.amber', '关注 ⏳') }}</p>
+            <strong>{{ riskBuckets.amber }}</strong>
+          </article>
+          <article class="risk-card risk-green">
+            <p>{{ homeLayoutText('risk.bucket.green', '正常 ✓') }}</p>
+            <strong>{{ riskBuckets.green }}</strong>
+          </article>
+        </div>
+        <div class="risk-actions">
+          <p class="risk-subtitle">{{ homeLayoutText('risk.actions_title', '风险待处理清单') }}</p>
+          <div class="risk-action-list compact">
+            <article v-for="item in primaryRiskActionItems" :key="item.id" class="risk-action-item">
+              <p class="risk-action-title">{{ item.title }}</p>
+              <p class="risk-action-desc">{{ item.description }}</p>
+              <div class="risk-action-buttons">
+                <button @click="openRiskAction(item, 'detail')">{{ homeLayoutText('risk.actions.detail', '看详情') }}</button>
+                <button @click="openRiskAction(item, 'assign')">{{ homeLayoutText('risk.actions.assign', '分派') }}</button>
+              </div>
+            </article>
+          </div>
+        </div>
+        <details class="risk-details" :open="false">
+          <summary>查看更多风险分析</summary>
+          <div class="risk-trend">
+            <p class="risk-subtitle">{{ homeLayoutText('risk.trend_title', '风险趋势（7/30 天）') }}</p>
+            <div class="trend-bars">
+              <div v-for="(item, idx) in riskTrend" :key="`trend-${idx}`" class="trend-item">
+                <span class="trend-label">{{ item.label }}</span>
+                <div class="trend-track"><div class="trend-fill" :style="{ width: `${item.percent}%` }"></div></div>
+                <span class="trend-value">{{ item.value }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="risk-source">
+            <p class="risk-subtitle">{{ homeLayoutText('risk.sources_title', '风险来源分布') }}</p>
+            <div class="source-tags">
+              <span v-for="item in riskSources" :key="`source-${item.label}`" class="source-tag">{{ item.label }} {{ item.count }}</span>
+            </div>
+          </div>
+        </details>
+      </section>
+    </section>
+
     <section v-if="isHomeSectionEnabled('metrics') && isHomeSectionTag('metrics', 'section')" class="value-grid" :class="homeSectionClass('metrics')" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
       <article v-for="metric in coreMetrics" :key="metric.key" class="value-card" :class="[`tone-${metric.tone || 'neutral'}`, `progress-${metric.progress || 'running'}`]">
         <p class="value-label">{{ metric.label }}</p>
@@ -67,81 +151,6 @@
         </p>
         <p class="value-judge">{{ metric.hint }}</p>
       </article>
-    </section>
-
-    <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :class="homeSectionClass('today_actions')" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
-      <header class="today-actions-header">
-        <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
-        <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
-      </header>
-      <div class="today-actions-grid">
-        <article v-for="item in concreteTodos" :key="item.id" class="today-card" :class="[`tone-${item.tone || 'info'}`, `progress-${item.progress || 'pending'}`]">
-          <p class="today-title">
-            <span>{{ item.title }}</span>
-            <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
-              {{ item.status === 'urgent' ? homeLayoutText('today_actions.status_urgent', '紧急') : homeLayoutText('today_actions.status_normal', '普通') }}
-            </span>
-          </p>
-          <p class="today-desc">{{ item.description }}</p>
-          <p v-if="typeof item.count === 'number'" class="today-count">{{ homeLayoutText('today_actions.count_prefix', '待处理') }} {{ item.count }}</p>
-          <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
-            {{ item.ready === false ? homeLayoutText('today_actions.coming_soon_action', '即将开放') : todoActionLabel(item.title) }}
-          </button>
-        </article>
-      </div>
-    </section>
-
-    <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :class="homeSectionClass('risk')" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
-      <header class="risk-header">
-        <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
-        <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
-        <p class="risk-summary">{{ riskSummaryLine }}</p>
-      </header>
-      <div class="risk-grid">
-        <article class="risk-card risk-red" :class="{ glow: riskBuckets.red >= 3 }">
-          <p>{{ homeLayoutText('risk.bucket.red', '严重 ⚠') }}</p>
-          <strong>{{ riskBuckets.red }}</strong>
-        </article>
-        <article class="risk-card risk-amber" :class="{ glow: riskBuckets.amber >= 4 }">
-          <p>{{ homeLayoutText('risk.bucket.amber', '关注 ⏳') }}</p>
-          <strong>{{ riskBuckets.amber }}</strong>
-        </article>
-        <article class="risk-card risk-green">
-          <p>{{ homeLayoutText('risk.bucket.green', '正常 ✓') }}</p>
-          <strong>{{ riskBuckets.green }}</strong>
-        </article>
-      </div>
-      <div class="risk-trend">
-        <p class="risk-subtitle">{{ homeLayoutText('risk.trend_title', '风险趋势（7/30 天）') }}</p>
-        <div class="trend-bars">
-          <div v-for="(item, idx) in riskTrend" :key="`trend-${idx}`" class="trend-item">
-            <span class="trend-label">{{ item.label }}</span>
-            <div class="trend-track"><div class="trend-fill" :style="{ width: `${item.percent}%` }"></div></div>
-            <span class="trend-value">{{ item.value }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="risk-source">
-        <p class="risk-subtitle">{{ homeLayoutText('risk.sources_title', '风险来源分布') }}</p>
-        <div class="source-tags">
-          <span v-for="item in riskSources" :key="`source-${item.label}`" class="source-tag">{{ item.label }} {{ item.count }}</span>
-        </div>
-      </div>
-      <div class="risk-actions">
-        <p class="risk-subtitle">{{ homeLayoutText('risk.actions_title', '风险待处理清单') }}</p>
-        <div class="risk-action-list">
-          <article v-for="item in riskActionItems" :key="item.id" class="risk-action-item">
-            <p class="risk-action-title">{{ item.title }}</p>
-            <p class="risk-action-desc">{{ item.description }}</p>
-            <div class="risk-action-buttons">
-              <button @click="openRiskAction(item, 'detail')">{{ homeLayoutText('risk.actions.detail', '看详情') }}</button>
-              <button @click="openRiskAction(item, 'assign')">{{ homeLayoutText('risk.actions.assign', '分派') }}</button>
-              <button @click="openRiskAction(item, 'close')">{{ homeLayoutText('risk.actions.close', '关闭') }}</button>
-              <button @click="openRiskAction(item, 'approve')">{{ homeLayoutText('risk.actions.approve', '发起审批') }}</button>
-            </div>
-          </article>
-        </div>
-      </div>
     </section>
 
     <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :class="homeSectionClass('ops')" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
@@ -199,12 +208,10 @@
         <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
       </header>
       <div class="group-overview-grid">
-        <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card">
+        <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card module" @click="openGroupCard(group.key)">
           <p class="group-title">{{ group.label }}</p>
           <p class="group-meta">{{ homeLayoutText('group_overview.capability_count_prefix', '功能数') }} {{ group.capabilityCount }}</p>
-          <p class="group-meta">
-            {{ homeLayoutText('group_overview.allow_prefix', '可用') }} {{ group.allowCount }} · {{ homeLayoutText('group_overview.readonly_prefix', '只读') }} {{ group.readonlyCount }} · {{ homeLayoutText('group_overview.deny_prefix', '禁用') }} {{ group.denyCount }}
-          </p>
+          <p class="group-meta module-action">点击进入</p>
         </article>
       </div>
     </section>
@@ -587,6 +594,11 @@ const workspacePageOrchestrationV1 = computed(() => (
     ? workspaceHome.value.page_orchestration_v1 as Record<string, unknown>
     : {}
 ));
+const workspaceSceneContractV1 = computed(() => (
+  workspaceHome.value.scene_contract_v1 && typeof workspaceHome.value.scene_contract_v1 === 'object'
+    ? workspaceHome.value.scene_contract_v1 as Record<string, unknown>
+    : {}
+));
 const workspacePageOrchestrationV1DataSources = computed(() => (
   workspacePageOrchestrationV1.value.data_sources && typeof workspacePageOrchestrationV1.value.data_sources === 'object'
     ? workspacePageOrchestrationV1.value.data_sources as Record<string, unknown>
@@ -599,7 +611,17 @@ const useUnifiedHomeRenderer = computed(() => {
   if (asText(route.query.legacy_home) === '1') return false;
   const contract = homeOrchestrationContract.value || {};
   const zones = Array.isArray(contract.zones) ? contract.zones : [];
-  return zones.length > 0;
+  const sceneZones = Array.isArray(workspaceSceneContractV1.value.zones)
+    ? workspaceSceneContractV1.value.zones
+    : [];
+  const page = contract.page && typeof contract.page === 'object'
+    ? contract.page as Record<string, unknown>
+    : {};
+  const hasV1 = asText(contract.schema_version) === 'v1';
+  const isDashboard = asText(page.key) === 'workspace.home';
+  const hasSceneContract = asText(workspaceSceneContractV1.value.contract_version) === 'v1' && sceneZones.length > 0;
+  if (hasSceneContract) return true;
+  return hasV1 && isDashboard && zones.length > 0;
 });
 const orchestrationBlocks = computed(() => {
   const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
@@ -1104,6 +1126,9 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
   });
 });
 
+const primaryTodos = computed<SuggestionItem[]>(() => concreteTodos.value.slice(0, 3));
+const hasMoreTodos = computed(() => concreteTodos.value.length > 3);
+
 const riskBuckets = computed(() => {
   const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
     ? workspaceHome.value.risk as Record<string, unknown>
@@ -1158,6 +1183,8 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
     };
   });
 });
+
+const primaryRiskActionItems = computed<RiskActionItem[]>(() => riskActionItems.value.slice(0, 2));
 
 const riskSources = computed(() => {
   const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
@@ -1274,6 +1301,36 @@ function openBundleDashboard() {
     bundle_name: bundleNameLabel.value,
   }).catch(() => {});
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
+}
+
+function openAllTodos() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'today_actions_all',
+    from: 'workspace.home',
+  }).catch(() => {});
+  router.push({ path: '/my-work', query: { ...workspaceContextQuery.value, section: 'todo' } }).catch(() => {});
+}
+
+function openRiskCenter() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'risk_center',
+    from: 'workspace.home',
+  }).catch(() => {});
+  router.push({ path: '/s/risk.center', query: workspaceContextQuery.value }).catch(() => {});
+}
+
+function openGroupCard(groupKey: string) {
+  const key = String(groupKey || '').trim();
+  if (!key) return;
+  const matched = entries.value.find((entry) => entry.groupKey === key && entry.state === 'READY');
+  if (matched) {
+    void openScene(matched);
+    return;
+  }
+  const fallback = entries.value.find((entry) => entry.groupKey === key);
+  if (fallback) {
+    void openScene(fallback);
+  }
 }
 
 function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
@@ -1457,19 +1514,28 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
       entry_id: entry.id,
     }));
   const capabilityEntries = capabilityGroupCards.value
-    .slice(0, 8)
-    .map((group) => ({
-      id: group.key,
-      key: group.key,
-      title: group.label,
-      hint: `${homeLayoutText('group_overview.capability_count_prefix', '功能数')} ${group.capabilityCount}`,
-      action_key: '',
-    }));
-  const riskAlerts = riskActionItems.value.slice(0, 10).map((item) => ({
+    .slice(0, 6)
+    .map((group) => {
+      const matched = entries.value.find((entry) => entry.groupKey === group.key && entry.state === 'READY')
+        || entries.value.find((entry) => entry.groupKey === group.key);
+      return {
+        id: group.key,
+        key: group.key,
+        title: group.label,
+        hint: matched?.sceneTitle || '点击进入业务模块',
+        action_key: 'open_scene',
+        entry_id: matched?.id || '',
+        scene_key: matched?.sceneKey || '',
+      };
+    });
+  const riskAlerts = primaryRiskActionItems.value.map((item) => ({
     id: item.id,
     title: item.title,
     description: item.description,
     tone: 'danger',
+    source: item.source || 'business',
+    action_label: homeLayoutText('risk.actions.detail', '看详情'),
+    action_key: 'open_scene',
     scene_key: item.sceneKey,
     path: item.path,
     query: item.query,
@@ -1482,11 +1548,14 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
       { key: 'runtime', label: homeLayoutText('hero.steady_notice', '当前运行平稳'), value: homeLayoutText('hero.runtime_ok', '状态正常') },
     ],
     ds_metrics: coreMetrics.value,
-    ds_today_todos: concreteTodos.value.map((item) => ({
+    ds_today_todos: primaryTodos.value.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
       tone: item.tone || 'warning',
+      status: item.status,
+      count: item.count,
+      source: item.source || 'business',
       action_label: todoActionLabel(item.title),
       entry_id: item.entryId,
       action_key: 'open_scene',
@@ -2102,6 +2171,13 @@ function highlightParts(raw: string) {
   gap: 16px;
 }
 
+.focus-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
 .value-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -2326,6 +2402,9 @@ function highlightParts(raw: string) {
 }
 
 @media (max-width: 1120px) {
+  .focus-layout {
+    grid-template-columns: 1fr;
+  }
   .hero-info-row {
     align-items: flex-start;
   }
@@ -2572,6 +2651,24 @@ function highlightParts(raw: string) {
   gap: 8px;
 }
 
+.risk-action-list.compact {
+  max-height: 260px;
+  overflow: auto;
+}
+
+.risk-details {
+  margin-top: 10px;
+  border-top: 1px dashed #fecaca;
+  padding-top: 8px;
+}
+
+.risk-details > summary {
+  cursor: pointer;
+  color: #7c2d12;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .risk-action-item {
   border: 1px solid #fecaca;
   border-radius: 10px;
@@ -2741,6 +2838,23 @@ function highlightParts(raw: string) {
   color: #0f172a;
 }
 
+.today-actions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.today-view-all {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
 .today-actions-header p {
   margin: 4px 0 0;
   font-size: 12px;
@@ -2752,6 +2866,10 @@ function highlightParts(raw: string) {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.today-actions-grid.compact {
+  grid-template-columns: 1fr;
 }
 
 .group-overview {
@@ -2787,6 +2905,16 @@ function highlightParts(raw: string) {
   padding: 10px 12px;
 }
 
+.group-card.module {
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.group-card.module:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.08);
+}
+
 .group-title {
   margin: 0;
   font-size: 13px;
@@ -2798,6 +2926,11 @@ function highlightParts(raw: string) {
   margin: 6px 0 0;
   font-size: 12px;
   color: #475569;
+}
+
+.group-meta.module-action {
+  color: #1d4ed8;
+  font-weight: 600;
 }
 
 .today-card {

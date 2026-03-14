@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <function model="project.project" name="sc_demo_seed_cockpit_round2"/>
+</odoo>

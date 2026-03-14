@@ -7,11 +7,11 @@
             <field name="source">system</field>
             <field name="payload_json" eval="{
                 'code': 'project.management',
-                'name': '项目管理控制台',
+                'name': '项目驾驶舱',
                 'version': 'v2',
                 'page': {
                     'key': 'project.management.dashboard',
-                    'title': '项目管理控制台',
+                    'title': '项目驾驶舱',
                     'subtitle': '项目经营与执行一体化场景',
                     'page_type': 'dashboard',
                     'layout_mode': 'dashboard'

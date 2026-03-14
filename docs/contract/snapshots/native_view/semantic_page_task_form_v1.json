@@ -1,0 +1,35 @@
+{
+  "semantic_page": {
+    "model": "project.task",
+    "view_type": "form",
+    "layout": "auto",
+    "permission_verdicts": {
+      "read": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "create": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "write": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "unlink": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "execute": {"allowed": true, "reason_code": "OK", "reason": ""}
+    },
+    "action_gating": {
+      "record_state": {"field": "state", "value": "in_progress", "source": "statusbar"},
+      "policy": {"closed_states": ["archived", "cancel", "cancelled", "closed", "done"]},
+      "verdict": {"is_closed_state": false, "reason_code": "OK"}
+    },
+    "zones": [
+      {
+        "key": "header_zone",
+        "blocks": [
+          {"type": "title_block", "data": {"title": "任务详情"}},
+          {"type": "action_bar_block", "data": {"buttons": [{"key": "save", "label": "保存"}]}}
+        ]
+      },
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {"type": "field_group_block", "data": {"layout": [{"type": "field", "name": "name"}, {"type": "field", "name": "user_id"}]}},
+          {"type": "notebook_block", "data": {"layout": [{"type": "page", "name": "描述"}]}}
+        ]
+      }
+    ]
+  }
+}

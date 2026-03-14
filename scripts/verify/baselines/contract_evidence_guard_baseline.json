@@ -93,5 +93,9 @@
   "require_grouped_governance_trend_report_md_title": "# Grouped Governance Trend Consistency Guard",
   "require_grouped_governance_trend_report_pair_consistent": true,
   "require_grouped_governance_trend_report_pair_same_parent": true,
-  "require_grouped_governance_trend_report_pair_same_stem": true
+  "require_grouped_governance_trend_report_pair_same_stem": true,
+  "require_native_view_semantic_guard_ok": true,
+  "max_native_view_semantic_shape_error_count": 0,
+  "max_native_view_semantic_schema_error_count": 0,
+  "min_native_view_semantic_snapshot_count": 1
 }

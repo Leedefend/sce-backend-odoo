@@ -25,6 +25,7 @@
 - [x] Phase 0~5 退出条件全部满足
 - [x] 发布阻断项（P0 缺陷）清零
 - [x] 最终发布评审结论为可发布
+- [x] 发布态 Demo 种子加载与验收通过（`make demo.load.release`、`make verify.demo.release.seed`）
 
 ### D. 首发发布
 - [x] 发布窗口、回滚窗口、责任人明确
@@ -37,6 +38,8 @@
 - [ ] v1.0 发布总结文档完成
 
 ## 4. 建议验证命令
+- `make demo.load.release DB_NAME=sc_demo`
+- `make verify.demo.release.seed DB_NAME=sc_demo`
 - `make verify.phase_next.evidence.bundle`
 - `make verify.scene.catalog.governance.guard`
 - `make verify.runtime.surface.dashboard.strict.guard`

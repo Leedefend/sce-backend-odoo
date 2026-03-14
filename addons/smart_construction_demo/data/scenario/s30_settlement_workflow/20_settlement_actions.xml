@@ -6,6 +6,7 @@
         <record id="sc_demo_settlement_line_030_001" model="sc.settlement.order.line">
             <field name="name">主体工程结算</field>
             <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_030_001"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_010"/>
             <field name="qty">1</field>
             <field name="price_unit">1000000.00</field>
             <field name="amount">1000000.00</field>

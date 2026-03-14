@@ -1,0 +1,75 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "form",
+    "layout": "auto",
+    "actions": {
+      "header_actions": [
+        {
+          "key": "action_archive",
+          "label": "归档",
+          "type": "object",
+          "enabled": true,
+          "reason_code": "OK"
+        }
+      ],
+      "record_actions": [
+        {
+          "key": "save",
+          "label": "保存",
+          "type": "action",
+          "enabled": true,
+          "reason_code": "OK"
+        }
+      ],
+      "toolbar_actions": [
+        {
+          "key": "export",
+          "label": "导出",
+          "type": "action",
+          "enabled": true,
+          "reason_code": "OK"
+        }
+      ]
+    },
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "header_actions": [
+                {
+                  "key": "action_archive",
+                  "label": "归档",
+                  "type": "object",
+                  "enabled": true,
+                  "reason_code": "OK"
+                }
+              ],
+              "record_actions": [
+                {
+                  "key": "save",
+                  "label": "保存",
+                  "type": "action",
+                  "enabled": true,
+                  "reason_code": "OK"
+                }
+              ],
+              "toolbar_actions": [
+                {
+                  "key": "export",
+                  "label": "导出",
+                  "type": "action",
+                  "enabled": true,
+                  "reason_code": "OK"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -9,12 +9,19 @@
 3. `make verify.project.dashboard.contract`
 4. `make verify.phase_next.evidence.bundle`
 
+发布态 Demo 数据闭环命令（新增固定项）：
+
+5. `make demo.load.release DB_NAME=sc_demo`
+6. `make verify.demo.release.seed DB_NAME=sc_demo`
+
 ## 2. 结果
 
 - `make verify.frontend.build`：PASS
 - `make verify.frontend.typecheck.strict`：PASS
 - `make verify.project.dashboard.contract`：PASS
 - `make verify.phase_next.evidence.bundle`：FAIL（环境超时）
+- `make demo.load.release DB_NAME=sc_demo`：PASS（发布态种子加载成功）
+- `make verify.demo.release.seed DB_NAME=sc_demo`：PASS（发布态种子验收通过）
 
 失败信息：
 
@@ -35,3 +42,13 @@
    - Admin session 初始化链路
    - URL 连通性与超时阈值
 3. 当前分支先保留“产品表达验证”状态，不立即发版。
+
+## 5. 发布态 Demo 种子验收要点（固定章节）
+
+- 目标：确保演示数据是“可重复加载 + 可自动验收”的发布态基线。
+- 加载命令：`make demo.load.release DB_NAME=sc_demo`
+- 验收命令：`make verify.demo.release.seed DB_NAME=sc_demo`
+- 最低通过标准：
+  - 展厅项目覆盖正常；
+  - `project_id=20` 合同/成本/资金不为空；
+  - 发布态角色用户（含 `svc_e2e_smoke`）齐全。

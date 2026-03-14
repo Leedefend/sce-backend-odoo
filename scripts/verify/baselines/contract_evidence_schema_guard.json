@@ -18,7 +18,8 @@
     "grouped_drift_summary",
     "grouped_governance_brief",
     "grouped_governance_policy_matrix",
-    "grouped_governance_trend_consistency"
+    "grouped_governance_trend_consistency",
+    "native_view_semantic_guard"
   ],
   "required_section_keys": {
     "intent_catalog": [
@@ -153,6 +154,16 @@
       "matrix_delta_types_ok",
       "report_json",
       "report_md"
+    ],
+    "native_view_semantic_guard": [
+      "ok",
+      "shape_ok",
+      "schema_ok",
+      "snapshot_count",
+      "shape_error_count",
+      "schema_error_count",
+      "shape_report",
+      "schema_report"
     ]
   }
 }

@@ -1,0 +1,7 @@
+{
+  "case": "project.project_search",
+  "native_traits": ["filters", "group_by", "context_domain"],
+  "path": "view_parser._parse_search_from_arch",
+  "status": "partial_pass",
+  "gaps": ["searchpanel_boundary_not_standardized", "favorite_contract_boundary_missing"]
+}

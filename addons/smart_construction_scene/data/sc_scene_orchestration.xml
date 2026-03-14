@@ -124,7 +124,7 @@
         <!-- Project management scene -->
         <record id="sc_scene_project_management" model="sc.scene">
             <field name="sequence">72</field>
-            <field name="name">项目管理控制台</field>
+            <field name="name">项目驾驶舱</field>
             <field name="code">project.management</field>
             <field name="layout">grid</field>
             <field name="state">published</field>

@@ -1,0 +1,58 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "form",
+    "layout": "auto",
+    "permission_verdicts": {
+      "read": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "create": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "write": {"allowed": false, "reason_code": "PERMISSION_DENIED", "reason": "permission denied"},
+      "unlink": {"allowed": false, "reason_code": "PERMISSION_DENIED", "reason": "permission denied"},
+      "execute": {"allowed": true, "reason_code": "OK", "reason": ""}
+    },
+    "action_gating": {
+      "record_state": {"field": "state", "value": "closed", "source": "statusbar"},
+      "policy": {"closed_states": ["archived", "cancel", "cancelled", "closed", "done"]},
+      "verdict": {"is_closed_state": true, "reason_code": "STATE_BLOCKED"}
+    },
+    "actions": {
+      "header_actions": [
+        {
+          "key": "archive",
+          "label": "归档",
+          "enabled": false,
+          "reason_code": "PERMISSION_DENIED"
+        }
+      ],
+      "record_actions": [
+        {
+          "key": "open",
+          "label": "打开",
+          "enabled": true,
+          "reason_code": "OK"
+        }
+      ],
+      "toolbar_actions": []
+    },
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "record_actions": [
+                {
+                  "key": "open",
+                  "label": "打开",
+                  "enabled": true,
+                  "reason_code": "OK"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

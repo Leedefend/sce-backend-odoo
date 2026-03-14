@@ -11,5 +11,12 @@
       <field name="date_contract">2025-02-01</field>
     </record>
 
+    <record id="sc_demo_contract_out_010_line_001" model="construction.contract.line">
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_010"/>
+      <field name="qty_contract">1.0</field>
+      <field name="price_contract">26160000.00</field>
+      <field name="note">S10_BASELINE</field>
+    </record>
+
   </data>
 </odoo>

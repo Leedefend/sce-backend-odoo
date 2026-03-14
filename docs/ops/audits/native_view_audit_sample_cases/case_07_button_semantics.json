@@ -1,0 +1,6 @@
+{
+  "case": "button_semantics_cross_path",
+  "status": "partial_pass",
+  "paths": ["execute_button", "load_contract.buttons", "form.header_buttons"],
+  "gaps": ["single_button_contract_shape_not_frozen", "executable_reason_not_always_present"]
+}

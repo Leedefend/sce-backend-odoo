@@ -12,6 +12,7 @@
 - 后端证据包已更新：
   - `make verify.phase_next.evidence.bundle`
   - `make verify.phase_next.evidence.bundle.strict`
+  - `make verify.native_view.semantic_page`
   - `make verify.boundary.import_guard.schema.guard`
   - `SC_BOUNDARY_IMPORT_STRICT=1 make verify.backend.architecture.full`
   - `make verify.contract.evidence.guard`
@@ -23,6 +24,8 @@
     - `artifacts/scene_catalog_runtime_alignment_guard.json`（`summary.probe_source` 应为 `prod_like_baseline` 或显式环境变量覆盖）
     - `/mnt/artifacts/backend/role_capability_floor_prod_like.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/...`）
+    - `/mnt/artifacts/backend/native_view_semantic_page_shape_guard.json`（不可写时回落 `artifacts/backend/...`）
+    - `/mnt/artifacts/backend/native_view_semantic_page_schema_guard.json`（不可写时回落 `artifacts/backend/...`）
   - `/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/...`）
   - `/mnt/artifacts/backend/boundary_import_guard_report.json`（不可写时回落 `artifacts/backend/...`）
   - `/mnt/artifacts/backend/backend_architecture_full_report.json`（不可写时回落 `artifacts/backend/...`）

@@ -1,0 +1,41 @@
+{
+  "semantic_page": {
+    "model": "mail.thread",
+    "view_type": "form",
+    "layout": "auto",
+    "zones": [
+      {
+        "key": "collaboration_zone",
+        "blocks": [
+          {
+            "type": "chatter_block",
+            "data": {
+              "followers": "message_follower_ids",
+              "messages": "message_ids",
+              "activities": "activity_ids"
+            }
+          },
+          {
+            "type": "timeline_block",
+            "data": {
+              "source": "message_ids",
+              "sort": "desc"
+            }
+          }
+        ]
+      },
+      {
+        "key": "attachment_zone",
+        "blocks": [
+          {
+            "type": "attachment_block",
+            "data": {
+              "enabled": true,
+              "field": "attachment_ids"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

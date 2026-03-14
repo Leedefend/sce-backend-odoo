@@ -1,0 +1,46 @@
+{
+  "semantic_page": {
+    "model": "project.task",
+    "view_type": "search",
+    "layout": "auto",
+    "search_semantics": {
+      "filters": [
+        {"key": "my_tasks", "label": "我的任务", "domain": null},
+        {"key": "overdue", "label": "已逾期", "domain": null}
+      ],
+      "group_by": [
+        {"key": "project_id", "label": "按项目", "domain": null},
+        {"key": "user_id", "label": "按负责人", "domain": null}
+      ],
+      "search_fields": [
+        {"key": "name", "label": "任务名称", "domain": null}
+      ],
+      "search_panel": {"enabled": true, "sections": ["project_id", "stage_id"]},
+      "favorites": {"enabled": true, "items": [{"key": "fav_my_tasks", "label": "我常用·我的任务", "domain": null}]},
+      "quick_filters": [
+        {"key": "my_tasks", "label": "我的任务", "domain": null}
+      ]
+    },
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "search": {"filters": [{"key": "my_tasks", "label": "我的任务"}], "group_by": [{"key": "project_id", "label": "按项目"}]},
+              "search_semantics": {
+                "filters": [{"key": "my_tasks", "label": "我的任务", "domain": null}],
+                "group_by": [{"key": "project_id", "label": "按项目", "domain": null}],
+                "search_fields": [{"key": "name", "label": "任务名称", "domain": null}],
+                "search_panel": {"enabled": true, "sections": ["project_id", "stage_id"]},
+                "favorites": {"enabled": true, "items": [{"key": "fav_my_tasks", "label": "我常用·我的任务", "domain": null}]},
+                "quick_filters": [{"key": "my_tasks", "label": "我的任务", "domain": null}]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

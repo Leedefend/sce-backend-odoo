@@ -891,7 +891,7 @@ ops.auth.dev.rollback:
 ops.auth.dev.verify:
 	@./scripts/ops/auth_policy.sh verify -p $(AUTH_PROJECT) -d $(AUTH_DB)
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment audit.nav.role_diff
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.load.release demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment audit.nav.role_diff
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -906,6 +906,9 @@ demo.load.all: guard.prod.forbid check-compose-project check-compose-env
 
 demo.load.full: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/load_full.sh
+
+demo.load.release: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/demo/load_release.sh
 
 demo.install: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[demo.install] db=$(DB_NAME)"
@@ -1390,6 +1393,7 @@ verify.project.dashboard.contract: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_assembly_guard.py
 	@python3 scripts/verify/project_dashboard_block_schema_guard.py
 	@python3 scripts/verify/project_dashboard_block_payload_guard.py
+	@python3 scripts/verify/project_dashboard_metric_semantics_guard.py
 	@python3 scripts/verify/project_dashboard_intent_guard.py
 	@python3 scripts/verify/project_dashboard_runtime_chain_guard.py
 	@python3 scripts/verify/project_dashboard_project_id_order_guard.py
@@ -1419,6 +1423,10 @@ verify.project.management.productization: guard.prod.forbid verify.project.dashb
 .PHONY: verify.frontend.project_management.scene_bridge.guard
 verify.frontend.project_management.scene_bridge.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_project_management_scene_bridge_guard.py
+
+.PHONY: verify.frontend.scene_contract_v1.consumption.guard
+verify.frontend.scene_contract_v1.consumption.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_scene_contract_v1_consumption_guard.py
 
 .PHONY: verify.project.management.acceptance
 verify.project.management.acceptance: guard.prod.forbid verify.project.management.productization verify.frontend.project_management.scene_bridge.guard
@@ -1599,6 +1607,14 @@ verify.list.surface.clean: guard.prod.forbid
 verify.frontend.scene_record_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_scene_record_semantics_guard.py
 
+.PHONY: verify.frontend.scene_contract_auto_render.guard
+verify.frontend.scene_contract_auto_render.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_scene_contract_auto_render_guard.py
+
+.PHONY: verify.frontend.actionview.scene_specialcase.guard
+verify.frontend.actionview.scene_specialcase.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_actionview_scene_specialcase_guard.py
+
 .PHONY: verify.frontend.error_context.contract.guard
 verify.frontend.error_context.contract.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_error_context_contract_guard.py
@@ -1659,6 +1675,8 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.page_contract.strategy_provider_split.guard \
 	verify.page_contract.role_strategy_provider_split.guard \
 	verify.list.surface.clean \
+	verify.frontend.scene_contract_auto_render.guard \
+	verify.frontend.actionview.scene_specialcase.guard \
 	verify.frontend.scene_record_semantics.guard \
 	verify.frontend.error_context.contract.guard \
 	verify.render.semantic.ready \
@@ -1844,7 +1862,7 @@ verify.capability.core.health.schema.guard: guard.prod.forbid verify.capability.
 verify.scene.contract.semantic.v2.guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_contract_semantic_v2_guard.py
 
-verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.project.form.contract.surface.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard verify.scene.capability.matrix.schema.guard verify.capability.core.health.schema.guard verify.scene.contract.semantic.v2.guard
+verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.project.form.contract.surface.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard verify.scene.capability.matrix.schema.guard verify.capability.core.health.schema.guard verify.scene.contract.semantic.v2.guard verify.native_view.semantic_page
 	@echo "[OK] verify.phase_next.evidence.bundle done"
 
 verify.phase_next.evidence.bundle.strict: guard.prod.forbid verify.phase_next.evidence.bundle verify.contract.assembler.semantic.strict verify.runtime.surface.dashboard.strict.guard verify.backend.architecture.full.report.guard
@@ -2151,9 +2169,12 @@ verify.product.delivery.role_home_openability: guard.prod.forbid
 verify.product.delivery.visibility: guard.prod.forbid
 	@python3 scripts/verify/visibility_filter_verification.py
 
-.PHONY: verify.product.delivery.demo_data
+.PHONY: verify.product.delivery.demo_data verify.demo.release.seed
 verify.product.delivery.demo_data: guard.prod.forbid
 	@python3 scripts/verify/demo_data_presence_report.py
+
+verify.demo.release.seed: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/demo_release_seed.sh
 
 .PHONY: verify.product.delivery.execute_button_whitelist
 verify.product.delivery.execute_button_whitelist: guard.prod.forbid
@@ -2335,6 +2356,11 @@ verify.system_group.business_acl.guard: guard.prod.forbid
 
 verify.platform.kernel.ready: guard.prod.forbid \
 	verify.platform.security.ready \
+	verify.scene.core_api_boundary.guard \
+	verify.scene.provider.registry.guard \
+	verify.scene.provider.registry.consumer.guard \
+	verify.scene.provider_locator.removed.guard \
+	verify.scene_orchestration.provider_shape.guard \
 	verify.capability.provider.guard \
 	verify.capability.registry.smoke \
 	verify.contract.envelope \
@@ -2492,6 +2518,21 @@ verify.backend.boundary_guard: guard.prod.forbid
 verify.scene.provider.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_provider_guard.py
 
+verify.scene.core_api_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_core_api_boundary_guard.py
+
+verify.scene.provider.registry.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_provider_registry_guard.py
+
+verify.scene.provider.registry.consumer.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_provider_registry_consumer_guard.py
+
+verify.scene.provider_locator.removed.guard: guard.prod.forbid
+	@python3 scripts/verify/provider_locator_removed_guard.py
+
+verify.scene_orchestration.provider_shape.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestration_provider_shape_guard.py
+
 verify.capability.provider.guard: guard.prod.forbid
 	@python3 scripts/verify/capability_provider_guard.py
 
@@ -2584,6 +2625,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.frontend.search_groupby_savedfilters.guard
 	@$(MAKE) --no-print-directory verify.frontend.x2many_command_semantic.guard
 	@$(MAKE) --no-print-directory verify.frontend.view_type_render_coverage.guard
+	@$(MAKE) --no-print-directory verify.native_view.semantic_page
 	@if [ "$(CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES)" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.contract.view_type_semantic.strict.smoke; \
 	else \
@@ -2875,3 +2917,26 @@ cn.help:
 	@echo "  - 确保已安装 Continue CLI: npm install -g @continuedev/cli"
 
 .PHONY: cn.p cn.p.stdin cn.tui cn.test cn.help guard.cn.prompt
+
+.PHONY: verify.native_view.semantic_page.shape
+verify.native_view.semantic_page.shape: guard.prod.forbid
+	@python3 scripts/verify/native_view_semantic_page_shape_guard.py --dir docs/contract/snapshots/native_view --output artifacts/backend/native_view_semantic_page_shape_guard.json
+
+.PHONY: verify.native_view.semantic_page.schema
+verify.native_view.semantic_page.schema: guard.prod.forbid
+	@python3 scripts/verify/native_view_semantic_page_schema_guard.py --schema docs/architecture/native_view_contract/semantic_page_contract_shape_v1.schema.json --dir docs/contract/snapshots/native_view --output artifacts/backend/native_view_semantic_page_schema_guard.json
+
+.PHONY: verify.native_view.semantic_page
+verify.native_view.semantic_page: verify.native_view.semantic_page.shape verify.native_view.semantic_page.schema
+
+.PHONY: verify.native_view.coverage.report
+verify.native_view.coverage.report: guard.prod.forbid verify.native_view.semantic_page
+	@python3 scripts/verify/native_view_coverage_report.py
+
+.PHONY: verify.native_view.samples.compare
+verify.native_view.samples.compare: guard.prod.forbid verify.native_view.semantic_page
+	@python3 scripts/verify/native_view_sample_compare_report.py
+
+.PHONY: verify.native_view.ecosystem.readiness
+verify.native_view.ecosystem.readiness: guard.prod.forbid
+	@python3 scripts/verify/native_view_ecosystem_readiness_report.py

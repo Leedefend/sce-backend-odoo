@@ -109,6 +109,18 @@ export interface WorkspaceHomeContract {
     render_hints?: Record<string, unknown>;
     meta?: Record<string, unknown>;
   };
+  scene_contract_v1?: {
+    contract_version?: string;
+    scene?: Record<string, unknown>;
+    page?: Record<string, unknown>;
+    zones?: Array<Record<string, unknown>>;
+    blocks?: Record<string, Record<string, unknown>>;
+    actions?: Record<string, unknown>;
+    permissions?: Record<string, unknown>;
+    record?: Record<string, unknown>;
+    extensions?: Record<string, unknown>;
+    diagnostics?: Record<string, unknown>;
+  };
   role_variant?: {
     role_code?: string;
     mode?: string;
@@ -136,6 +148,18 @@ export interface PageContract {
     action_schema?: Record<string, unknown>;
     render_hints?: Record<string, unknown>;
     meta?: Record<string, unknown>;
+  };
+  scene_contract_v1?: {
+    contract_version?: string;
+    scene?: Record<string, unknown>;
+    page?: Record<string, unknown>;
+    zones?: Array<Record<string, unknown>>;
+    blocks?: Record<string, Record<string, unknown>>;
+    actions?: Record<string, unknown>;
+    permissions?: Record<string, unknown>;
+    record?: Record<string, unknown>;
+    extensions?: Record<string, unknown>;
+    diagnostics?: Record<string, unknown>;
   };
   actions?: Record<string, unknown>;
 }

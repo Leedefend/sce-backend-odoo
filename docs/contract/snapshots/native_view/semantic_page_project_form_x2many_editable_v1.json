@@ -1,0 +1,33 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "form",
+    "layout": "auto",
+    "zones": [
+      {
+        "key": "relation_zone",
+        "blocks": [
+          {
+            "type": "relation_table_block",
+            "data": {
+              "items": [
+                {
+                  "field": "task_ids",
+                  "relation_model": "project.task",
+                  "field_type": "one2many",
+                  "preferred_view_type": "tree",
+                  "editable": {"inline_edit": true, "can_create": true, "can_unlink": true},
+                  "row_actions": [
+                    {"key": "open", "label": "打开"},
+                    {"key": "create", "label": "新增", "enabled": true},
+                    {"key": "unlink", "label": "移除", "enabled": true}
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
