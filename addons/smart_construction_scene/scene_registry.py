@@ -46,15 +46,31 @@ def _load_scene_registry_content_module():
 
 
 def _load_scene_registry_content_entries():
+    def _load_entries_directly():
+        content_path = Path(__file__).resolve().parent / "profiles" / "scene_registry_content.py"
+        if not content_path.exists():
+            return []
+        try:
+            spec = spec_from_file_location("smart_construction_scene_registry_content", content_path)
+            if spec is None or spec.loader is None:
+                return []
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+            rows = module.list_scene_entries() if hasattr(module, "list_scene_entries") else []
+            return rows if isinstance(rows, list) else []
+        except Exception:
+            return []
+
     engine = _load_scene_registry_engine_module()
     loader = getattr(engine, "load_scene_registry_content_entries", None) if engine else None
     if callable(loader):
         try:
             rows = loader(Path(__file__))
-            return rows if isinstance(rows, list) else []
+            if isinstance(rows, list) and rows:
+                return rows
         except Exception:
-            return []
-    return []
+            pass
+    return _load_entries_directly()
 
 
 def _append_drift(drift, *, scene_key, kind, fields, severity="info", source="db->registry"):

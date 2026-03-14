@@ -185,6 +185,20 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     return walk(session.menuTree || []);
   })();
 
+  const normalizedSceneKey = String(sceneKey || '').trim();
+  if (normalizedSceneKey) {
+    const hinted = session.sceneActionHints?.[normalizedSceneKey];
+    const hintedActionId = Number(hinted?.actionId || 0);
+    if (hintedActionId > 0) {
+      if (!session.menuTree.length || findActionMeta(session.menuTree, hintedActionId) || isSceneContractNav) {
+        return {
+          actionId: hintedActionId,
+          menuId: Number(hinted?.menuId || target.menu_id || 0) || undefined,
+        };
+      }
+    }
+  }
+
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
     if (!session.menuTree.length || findActionMeta(session.menuTree, actionId) || isSceneContractNav) {
@@ -225,7 +239,6 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     }
   }
 
-  const normalizedSceneKey = String(sceneKey || '').trim();
   if (normalizedSceneKey) {
     const sceneNode = findActionNodeBySceneKey(session.menuTree, normalizedSceneKey);
     if (sceneNode?.meta?.action_id) {
