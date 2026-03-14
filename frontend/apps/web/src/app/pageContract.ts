@@ -4,6 +4,9 @@ import { useSessionStore, type PageContract } from '../stores/session';
 function asText(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? value as Record<string, unknown> : {};
+}
 function asTextList(value: unknown): string[] {
   return Array.isArray(value)
     ? value.map((item) => asText(item)).filter(Boolean)
@@ -17,13 +20,23 @@ type GlobalActionConfig = { key: string; label: string; intent: string };
 export function usePageContract(pageKey: string) {
   const session = useSessionStore();
   const contract = computed<PageContract>(() => session.pageContracts?.[pageKey] || {});
+  const sceneContractV1 = computed<Record<string, unknown>>(() => {
+    const raw = contract.value?.scene_contract_v1;
+    if (!raw || typeof raw !== 'object') return {};
+    if (asText((raw as Record<string, unknown>).contract_version) !== 'v1') return {};
+    return raw as Record<string, unknown>;
+  });
   const texts = computed<Record<string, unknown>>(() => {
     const raw = contract.value?.texts;
     return raw && typeof raw === 'object' ? raw : {};
   });
   const orchestrationDataSources = computed<Record<string, unknown>>(() => {
     const raw = contract.value?.page_orchestration_v1?.data_sources;
-    return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+    if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
+    const extensionSources = asRecord(sceneContractV1.value.extensions).data_sources;
+    return extensionSources && typeof extensionSources === 'object'
+      ? extensionSources as Record<string, unknown>
+      : {};
   });
   const sections = computed<Map<string, SectionConfig>>(() => {
     const fromV1: Array<Record<string, unknown>> = [];
@@ -59,9 +72,32 @@ export function usePageContract(pageKey: string) {
         });
       });
     });
+    const fromSceneV1: Array<Record<string, unknown>> = [];
+    const sceneZones = Array.isArray(sceneContractV1.value.zones)
+      ? sceneContractV1.value.zones as Array<Record<string, unknown>>
+      : [];
+    sceneZones.forEach((zone, idx) => {
+      if (!zone || typeof zone !== 'object') return;
+      const zoneKey = asText(zone.key || zone.zone_key).trim();
+      if (!zoneKey) return;
+      const priorityRaw = Number(zone.priority);
+      const order = Number.isFinite(priorityRaw) && priorityRaw > 0
+        ? Math.max(1, 101 - Math.trunc(priorityRaw))
+        : (idx + 1);
+      fromSceneV1.push({
+        key: zoneKey,
+        enabled: true,
+        order,
+        tag: 'section',
+      });
+    });
     const raw = hasV1Zones
       ? fromV1
-      : (Array.isArray(contract.value?.sections) ? contract.value.sections : []);
+      : (
+        fromSceneV1.length
+          ? fromSceneV1
+          : (Array.isArray(contract.value?.sections) ? contract.value.sections : [])
+      );
     const map = new Map<string, SectionConfig>();
     raw.forEach((item, idx) => {
       const key = asText(item?.key);
@@ -89,11 +125,32 @@ export function usePageContract(pageKey: string) {
     const raw = contract.value?.actions;
     return raw && typeof raw === 'object' ? raw : {};
   });
+  const sceneActionSchema = computed<Record<string, Record<string, unknown>>>(() => {
+    const rawActions = asRecord(sceneContractV1.value.actions);
+    const map: Record<string, Record<string, unknown>> = {};
+    ['primary_actions', 'secondary_actions', 'contextual_actions', 'danger_actions', 'recommended_actions'].forEach((group) => {
+      const rows = rawActions[group];
+      if (!Array.isArray(rows)) return;
+      rows.forEach((item) => {
+        const row = asRecord(item);
+        const key = asText(row.key).trim();
+        if (!key || map[key]) return;
+        map[key] = {
+          ...row,
+          group,
+        };
+      });
+    });
+    return map;
+  });
   const orchestrationActions = computed<Record<string, unknown>>(() => {
     const raw = contract.value?.page_orchestration_v1?.action_schema;
     if (!raw || typeof raw !== 'object') return {};
     const actionsRow = (raw as Record<string, unknown>).actions;
-    return actionsRow && typeof actionsRow === 'object' ? actionsRow as Record<string, unknown> : {};
+    if (actionsRow && typeof actionsRow === 'object') {
+      return actionsRow as Record<string, unknown>;
+    }
+    return sceneActionSchema.value as Record<string, unknown>;
   });
   const runtimeRoleCode = computed(() => {
     const fromSurface = asText(session.roleSurface?.role_code);
@@ -107,19 +164,37 @@ export function usePageContract(pageKey: string) {
   });
   const globalActions = computed<GlobalActionConfig[]>(() => {
     const page = contract.value?.page_orchestration_v1?.page;
-    if (!page || typeof page !== 'object') return [];
-    const raw = (page as Record<string, unknown>).global_actions;
-    if (!Array.isArray(raw)) return [];
+    const raw = page && typeof page === 'object'
+      ? (page as Record<string, unknown>).global_actions
+      : null;
+    if (Array.isArray(raw)) {
+      const result: GlobalActionConfig[] = [];
+      raw.forEach((item) => {
+        if (!item || typeof item !== 'object') return;
+        const row = item as Record<string, unknown>;
+        const key = asText(row.key);
+        if (!key) return;
+        if (!actionVisible(key)) return;
+        const label = asText(row.label) || actionText(key, key);
+        const intent = asText(row.intent) || actionIntent(key, 'ui.contract');
+        result.push({ key, label, intent });
+      });
+      return result;
+    }
     const result: GlobalActionConfig[] = [];
-    raw.forEach((item) => {
-      if (!item || typeof item !== 'object') return;
-      const row = item as Record<string, unknown>;
-      const key = asText(row.key);
-      if (!key) return;
-      if (!actionVisible(key)) return;
-      const label = asText(row.label) || actionText(key, key);
-      const intent = asText(row.intent) || actionIntent(key, 'ui.contract');
-      result.push({ key, label, intent });
+    ['primary_actions', 'recommended_actions'].forEach((group) => {
+      const rows = asRecord(sceneContractV1.value.actions)[group];
+      if (!Array.isArray(rows)) return;
+      rows.forEach((item) => {
+        const row = asRecord(item);
+        const key = asText(row.key);
+        if (!key || !actionVisible(key)) return;
+        result.push({
+          key,
+          label: asText(row.label) || actionText(key, key),
+          intent: asText(row.intent) || actionIntent(key, 'ui.contract'),
+        });
+      });
     });
     return result;
   });
@@ -163,14 +238,21 @@ export function usePageContract(pageKey: string) {
 
   function actionIntent(key: string, fallback = ''): string {
     const row = orchestrationActions.value[key];
-    if (!row || typeof row !== 'object') return fallback;
+    if (!row || typeof row !== 'object') {
+      const sceneRow = sceneActionSchema.value[key];
+      if (!sceneRow) return fallback;
+      const sceneIntent = asText(sceneRow.intent);
+      return sceneIntent || fallback;
+    }
     const intent = asText((row as Record<string, unknown>).intent);
     return intent || fallback;
   }
 
   function actionTarget(key: string): Record<string, unknown> {
     const row = orchestrationActions.value[key];
-    if (!row || typeof row !== 'object') return {};
+    if (!row || typeof row !== 'object') {
+      return asRecord(sceneActionSchema.value[key]?.target);
+    }
     const target = (row as Record<string, unknown>).target;
     return target && typeof target === 'object' ? target as Record<string, unknown> : {};
   }
