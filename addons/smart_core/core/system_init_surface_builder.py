@@ -1,6 +1,92 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+
+def _as_text(value) -> str:
+    return str(value or "").strip()
+
+
+def _as_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+
+def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dict, dict]:
+    nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
+    root_xmlid = _as_text(nav_meta.get("debug_root_xmlid") or nav_meta.get("root_xmlid"))
+
+    providers_raw = data.get("role_surface_override_providers")
+    providers = providers_raw if isinstance(providers_raw, dict) else {}
+
+    candidates = []
+    for provider_key, provider in providers.items():
+        if not isinstance(provider_key, str) or not isinstance(provider, dict):
+            continue
+        enabled = bool(provider.get("enabled", True))
+        if not enabled:
+            continue
+        overrides = provider.get("role_surface_overrides")
+        if not isinstance(overrides, dict):
+            continue
+        priority = _as_int(provider.get("priority"), 0)
+        root_xmlids = provider.get("root_xmlids") if isinstance(provider.get("root_xmlids"), list) else []
+        scene_codes = provider.get("scene_codes") if isinstance(provider.get("scene_codes"), list) else []
+        root_match = True
+        if root_xmlids:
+            root_match = root_xmlid in {str(x).strip() for x in root_xmlids if str(x).strip()}
+        scene_match = True
+        if scene_codes:
+            scene_match = bool({str(x).strip() for x in scene_codes if str(x).strip()} & set(scene_keys_latest or set()))
+        match = root_match and scene_match
+        candidates.append(
+            {
+                "provider_key": provider_key,
+                "priority": priority,
+                "root_match": root_match,
+                "scene_match": scene_match,
+                "match": match,
+                "overrides": overrides,
+            }
+        )
+
+    selected = None
+    matched = [item for item in candidates if item.get("match")]
+    if matched:
+        matched.sort(key=lambda item: (-int(item.get("priority") or 0), str(item.get("provider_key") or "")))
+        selected = matched[0]
+    elif candidates:
+        candidates.sort(key=lambda item: (-int(item.get("priority") or 0), str(item.get("provider_key") or "")))
+        selected = candidates[0]
+
+    if selected:
+        return selected.get("overrides") or {}, {
+            "selected_provider": selected.get("provider_key"),
+            "selected_priority": selected.get("priority"),
+            "match_mode": "matched" if selected.get("match") else "priority_fallback",
+            "root_xmlid": root_xmlid,
+            "provider_count": len(candidates),
+        }
+
+    legacy = data.get("role_surface_overrides")
+    if isinstance(legacy, dict):
+        return legacy, {
+            "selected_provider": "legacy_inline",
+            "selected_priority": None,
+            "match_mode": "legacy",
+            "root_xmlid": root_xmlid,
+            "provider_count": 0,
+        }
+
+    return {}, {
+        "selected_provider": "none",
+        "selected_priority": None,
+        "match_mode": "none",
+        "root_xmlid": root_xmlid,
+        "provider_count": len(candidates),
+    }
+
 class SystemInitSurfaceBuilder:
     @staticmethod
     def apply(*, surface_ctx) -> tuple[dict, dict]:
@@ -37,17 +123,18 @@ class SystemInitSurfaceBuilder:
             after_capability_count=post_governance_capability_count,
         )
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        role_surface_overrides = data.get("role_surface_overrides") if isinstance(data.get("role_surface_overrides"), dict) else {}
         scene_keys_latest = {
             (s.get("code") or s.get("key"))
             for s in scenes_payload
             if isinstance(s, dict) and (s.get("code") or s.get("key"))
         }
+        role_surface_overrides, role_surface_provider_meta = _pick_role_surface_provider(data, scene_keys_latest)
         data["role_surface"] = identity_resolver.build_role_surface(
             user_groups_xmlids,
             nav_tree,
             scene_keys_latest,
             role_surface_overrides=role_surface_overrides,
         )
+        data["role_surface_provider_meta"] = role_surface_provider_meta
         data["role_surface_map"] = identity_resolver.build_role_surface_map_payload()
         return data, scene_diagnostics
