@@ -3,6 +3,7 @@
 ## Core Gates
 - `make gate.full`
   - Default strict mode includes Phase 9.8 guards.
+  - Default path now includes strict R3 runtime gate (`gate.scene.r3.runtime.strict`).
   - Use `SC_GATE_STRICT=0` to skip Phase 9.8 enforcement.
   - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
   - Default gate path includes `verify.portal.scene_observability_gate_smoke.container` (structure + preflight smoke + smoke chain).
@@ -22,6 +23,11 @@
     - legacy endpoint `/api/scenes/my` is deprecated; successor is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
   - Any docs mentioning `/api/scenes/my` must include deprecated + successor migration semantics; enforced by:
     - `make verify.scene.legacy_docs.guard`
+
+- `make verify.scene.r3.runtime.quick`
+  - One-shot daily acceptance for scene productization runtime quality.
+  - Runs strict gate (`verify.scene.r3.runtime.strict`) and prints dashboard `Summary + Gate Result`.
+  - Fast check before `gate.full`, and can be used as daily team smoke command.
 
 ## Architecture Guard Aliases
 - `make verify.boundary.guard`
