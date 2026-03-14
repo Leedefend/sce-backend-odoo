@@ -23,6 +23,16 @@ REQUIRED_COLUMNS = [
 ]
 
 
+def _safe_div(numerator: int, denominator: int) -> float:
+    if denominator <= 0:
+        return 0.0
+    return float(numerator) / float(denominator)
+
+
+def _pct(value: float) -> str:
+    return f"{value * 100:.2f}%"
+
+
 def _split_row(line: str) -> list[str]:
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
@@ -322,7 +332,45 @@ def _validate_r3_scene(
     return checks, errors, observability
 
 
-def _write_report(path: Path, rows: list[dict], summary: dict[str, int]) -> None:
+def _evaluate_gate(summary: dict[str, float], thresholds: dict[str, float]) -> tuple[list[str], list[str]]:
+    blockers: list[str] = []
+    warnings: list[str] = []
+
+    if summary["action_chain_fail_count"] > thresholds["max_action_chain_fail_count"]:
+        blockers.append(
+            "action_chain_fail_count exceeded "
+            f"({summary['action_chain_fail_count']} > {thresholds['max_action_chain_fail_count']})"
+        )
+
+    if summary["pass_rate"] < thresholds["min_pass_rate"]:
+        blockers.append(
+            "pass_rate below threshold "
+            f"({_pct(summary['pass_rate'])} < {_pct(thresholds['min_pass_rate'])})"
+        )
+
+    if summary["action_chain_success_rate"] < thresholds["min_action_chain_success_rate"]:
+        warnings.append(
+            "action_chain_success_rate below target "
+            f"({_pct(summary['action_chain_success_rate'])} < {_pct(thresholds['min_action_chain_success_rate'])})"
+        )
+
+    if summary["action_chain_fallback_rate"] > thresholds["max_action_chain_fallback_rate"]:
+        warnings.append(
+            "action_chain_fallback_rate above target "
+            f"({_pct(summary['action_chain_fallback_rate'])} > {_pct(thresholds['max_action_chain_fallback_rate'])})"
+        )
+
+    return blockers, warnings
+
+
+def _write_report(
+    path: Path,
+    rows: list[dict],
+    summary: dict[str, float],
+    thresholds: dict[str, float],
+    blockers: list[str],
+    warnings: list[str],
+) -> None:
     lines: list[str] = []
     lines.append("# Scene R3 Runtime Dashboard")
     lines.append("")
@@ -336,6 +384,31 @@ def _write_report(path: Path, rows: list[dict], summary: dict[str, int]) -> None
     lines.append(f"- `action_chain_success_count`: {summary['action_chain_success_count']}")
     lines.append(f"- `action_chain_fallback_count`: {summary['action_chain_fallback_count']}")
     lines.append(f"- `action_chain_fail_count`: {summary['action_chain_fail_count']}")
+    lines.append(f"- `pass_rate`: {_pct(summary['pass_rate'])}")
+    lines.append(f"- `action_chain_success_rate`: {_pct(summary['action_chain_success_rate'])}")
+    lines.append(f"- `action_chain_fallback_rate`: {_pct(summary['action_chain_fallback_rate'])}")
+    lines.append("")
+    lines.append("## Gate Thresholds")
+    lines.append("")
+    lines.append(f"- `max_action_chain_fail_count`: {int(thresholds['max_action_chain_fail_count'])}")
+    lines.append(f"- `min_pass_rate`: {_pct(thresholds['min_pass_rate'])}")
+    lines.append(f"- `min_action_chain_success_rate`: {_pct(thresholds['min_action_chain_success_rate'])}")
+    lines.append(f"- `max_action_chain_fallback_rate`: {_pct(thresholds['max_action_chain_fallback_rate'])}")
+    lines.append("")
+    lines.append("## Gate Result")
+    lines.append("")
+    if blockers:
+        lines.append("- `result`: FAIL (BLOCKER)")
+    elif warnings:
+        lines.append("- `result`: PASS_WITH_WARNINGS")
+    else:
+        lines.append("- `result`: PASS")
+    lines.append(f"- `blocker_count`: {len(blockers)}")
+    lines.append(f"- `warning_count`: {len(warnings)}")
+    for item in blockers:
+        lines.append(f"- `BLOCKER`: {item}")
+    for item in warnings:
+        lines.append(f"- `WARNING`: {item}")
     lines.append("")
     lines.append("## Checks")
     lines.append("")
@@ -356,6 +429,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate runtime-readiness criteria for R3 scenes.")
     parser.add_argument("--inventory", default="docs/ops/scene_inventory_matrix_latest.md")
     parser.add_argument("--output", default="docs/ops/audit/scene_r3_runtime_dashboard.md")
+    parser.add_argument("--max-action-chain-fail-count", type=int, default=0)
+    parser.add_argument("--min-pass-rate", type=float, default=1.0)
+    parser.add_argument("--min-action-chain-success-rate", type=float, default=0.50)
+    parser.add_argument("--max-action-chain-fallback-rate", type=float, default=0.50)
+    parser.add_argument("--fail-on-warning", action="store_true")
     parser.add_argument(
         "--scene-files",
         nargs="*",
@@ -419,6 +497,9 @@ def main() -> int:
     action_chain_success_count = sum(1 for row in rows if row.get("action_chain_status") == "SUCCESS")
     action_chain_fallback_count = sum(1 for row in rows if row.get("action_chain_status") == "FALLBACK")
     action_chain_fail_count = sum(1 for row in rows if row.get("action_chain_status") == "FAIL")
+    pass_rate = _safe_div(pass_count, len(r3_scene_keys))
+    action_chain_success_rate = _safe_div(action_chain_success_count, len(r3_scene_keys))
+    action_chain_fallback_rate = _safe_div(action_chain_fallback_count, len(r3_scene_keys))
     summary = {
         "r3_scene_count": len(r3_scene_keys),
         "pass_count": pass_count,
@@ -426,13 +507,30 @@ def main() -> int:
         "action_chain_success_count": action_chain_success_count,
         "action_chain_fallback_count": action_chain_fallback_count,
         "action_chain_fail_count": action_chain_fail_count,
+        "pass_rate": pass_rate,
+        "action_chain_success_rate": action_chain_success_rate,
+        "action_chain_fallback_rate": action_chain_fallback_rate,
     }
-    _write_report(root / args.output, rows, summary)
 
-    if errors:
+    thresholds = {
+        "max_action_chain_fail_count": float(max(args.max_action_chain_fail_count, 0)),
+        "min_pass_rate": max(0.0, min(args.min_pass_rate, 1.0)),
+        "min_action_chain_success_rate": max(0.0, min(args.min_action_chain_success_rate, 1.0)),
+        "max_action_chain_fallback_rate": max(0.0, min(args.max_action_chain_fallback_rate, 1.0)),
+    }
+    blockers, warnings = _evaluate_gate(summary, thresholds)
+
+    _write_report(root / args.output, rows, summary, thresholds, blockers, warnings)
+
+    if errors or blockers or (args.fail_on_warning and warnings):
         print("[scene_r3_runtime_guard] FAIL")
         for item in sorted(set(errors)):
             print(f"- {item}")
+        for item in blockers:
+            print(f"- BLOCKER: {item}")
+        if args.fail_on_warning:
+            for item in warnings:
+                print(f"- WARNING_AS_ERROR: {item}")
         print(f"- output: {args.output}")
         return 1
 
@@ -441,6 +539,12 @@ def main() -> int:
     print(f"- action_chain_success_count: {summary['action_chain_success_count']}")
     print(f"- action_chain_fallback_count: {summary['action_chain_fallback_count']}")
     print(f"- action_chain_fail_count: {summary['action_chain_fail_count']}")
+    print(f"- pass_rate: {_pct(summary['pass_rate'])}")
+    print(f"- action_chain_success_rate: {_pct(summary['action_chain_success_rate'])}")
+    print(f"- action_chain_fallback_rate: {_pct(summary['action_chain_fallback_rate'])}")
+    print(f"- warning_count: {len(warnings)}")
+    for item in warnings:
+        print(f"- WARNING: {item}")
     print(f"- output: {args.output}")
     return 0
 
