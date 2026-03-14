@@ -1226,6 +1226,14 @@ verify.scene.coverage.dashboard: guard.prod.forbid
 verify.scene.inventory.freeze.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_inventory_freeze_guard.py
 
+.PHONY: verify.scene.role.policy.consistency.guard
+verify.scene.role.policy.consistency.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_role_policy_consistency_guard.py
+
+.PHONY: verify.scene.data_source.schema.guard
+verify.scene.data_source.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_data_source_schema_guard.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
