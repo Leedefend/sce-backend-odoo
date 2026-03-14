@@ -1,0 +1,7 @@
+{
+  "case": "project.project_kanban",
+  "native_traits": ["grouping", "quick_create", "card_fields"],
+  "path": "load_contract + app.view.parser.kanban",
+  "status": "partial_pass",
+  "gaps": ["card_semantic_extraction_partial"]
+}

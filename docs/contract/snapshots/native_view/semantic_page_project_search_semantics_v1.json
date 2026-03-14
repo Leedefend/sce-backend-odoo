@@ -1,0 +1,56 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "search",
+    "layout": "auto",
+    "search_semantics": {
+      "filters": [
+        {"key": "in_progress", "label": "进行中", "domain": null},
+        {"key": "archived", "label": "已归档", "domain": null}
+      ],
+      "group_by": [
+        {"key": "manager_id", "label": "按项目经理", "domain": null}
+      ],
+      "search_fields": [
+        {"key": "name", "label": "项目名称", "domain": null}
+      ],
+      "search_panel": {
+        "enabled": true,
+        "sections": ["stage_id", "manager_id"]
+      },
+      "favorites": {
+        "enabled": true,
+        "items": [
+          {"key": "fav_in_progress", "label": "我常用·进行中", "domain": null}
+        ]
+      },
+      "quick_filters": [
+        {"key": "in_progress", "label": "进行中", "domain": null}
+      ]
+    },
+    "zones": [
+      {
+        "key": "action_zone",
+        "blocks": [
+          {
+            "type": "action_bar_block",
+            "data": {
+              "search": {
+                "filters": [{"key": "in_progress", "label": "进行中"}],
+                "group_by": [{"key": "manager_id", "label": "按项目经理"}]
+              },
+              "search_semantics": {
+                "filters": [{"key": "in_progress", "label": "进行中", "domain": null}],
+                "group_by": [{"key": "manager_id", "label": "按项目经理", "domain": null}],
+                "search_fields": [],
+                "search_panel": {"enabled": false, "sections": []},
+                "favorites": {"enabled": false, "items": []},
+                "quick_filters": [{"key": "in_progress", "label": "进行中", "domain": null}]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -87,21 +87,21 @@ const metrics = computed<MetricItem[]>(() => {
 .metric-item {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  padding: 10px;
-  min-height: 96px;
+  padding: 12px;
+  min-height: 110px;
 }
 .metric-label {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
 }
 .metric-value {
   margin: 8px 0 0;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
 }
 .metric-meta {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 12px;
   color: #6b7280;
 }

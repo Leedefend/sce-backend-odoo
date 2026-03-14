@@ -19,14 +19,14 @@ class BaseProjectBlockBuilder:
 
     def _model_has_fields(self, model_name, fields):
         model = self._model(model_name)
-        if not model:
+        if model is None:
             return False
         model_fields = getattr(model, "_fields", {})
         return all(name in model_fields for name in (fields or []))
 
     def _safe_count(self, model_name, domain=None):
         model = self._model(model_name)
-        if not model:
+        if model is None:
             return 0
         try:
             return int(model.search_count(domain or []))
@@ -37,7 +37,7 @@ class BaseProjectBlockBuilder:
         if not self._model_has_fields(model_name, [sum_field]):
             return 0.0
         model = self._model(model_name)
-        if not model:
+        if model is None:
             return 0.0
         try:
             rows = model.read_group(domain or [], [sum_field], [])
@@ -47,6 +47,26 @@ class BaseProjectBlockBuilder:
             return 0.0
         try:
             return float(rows[0].get(sum_field) or 0.0)
+        except Exception:
+            return 0.0
+
+    def _safe_read_group_sum_any(self, model_name, domain, candidate_fields):
+        fields = [name for name in (candidate_fields or []) if isinstance(name, str) and name]
+        for sum_field in fields:
+            if not self._model_has_fields(model_name, [sum_field]):
+                continue
+            value = self._safe_read_group_sum(model_name, domain, sum_field)
+            if value:
+                return value
+        return 0.0
+
+    @staticmethod
+    def _safe_rate(numerator, denominator):
+        try:
+            den = float(denominator or 0.0)
+            if den <= 0:
+                return 0.0
+            return round((float(numerator or 0.0) / den) * 100.0, 2)
         except Exception:
             return 0.0
 

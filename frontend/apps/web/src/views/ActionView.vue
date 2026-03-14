@@ -250,7 +250,7 @@
         </section>
       </div>
     </section>
-    <section v-if="viewMode === 'kanban' && sceneKey === 'projects.ledger' && ledgerOverviewItems.length" class="ledger-overview-strip">
+    <section v-if="viewMode === 'kanban' && hasLedgerOverviewStrip && ledgerOverviewItems.length" class="ledger-overview-strip">
       <article v-for="item in ledgerOverviewItems" :key="item.key" class="ledger-overview-card" :class="`tone-${item.tone}`">
         <p class="ledger-overview-label">{{ item.label }}</p>
         <p class="ledger-overview-value">{{ item.value }}</p>
@@ -299,7 +299,7 @@
       :status-label="statusLabel"
       :scene-key="sceneKey"
       :page-mode="pageMode"
-      :record-count="records.length"
+      :record-count="recordCount"
       :summary-items="listSummaryItems"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
@@ -307,6 +307,7 @@
       :failed-csv-available="Boolean(failedCsvContentB64)"
       :has-more-failures="batchHasMoreFailures"
       :show-assign="hasAssigneeField"
+      :show-delete="canBatchDelete"
       :assignee-options="assigneeOptions"
       :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
@@ -415,7 +416,7 @@ import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { resolvePageMode } from '../app/pageMode';
-import { semanticStatus } from '../utils/semantic';
+import { formatAmountCN, semanticStatus } from '../utils/semantic';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -449,6 +450,9 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
+const listTotalCount = ref<number | null>(null);
+const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
+const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
 const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
@@ -578,6 +582,10 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     actions_primary_max?: number;
     filters_max?: number;
     actions_max?: number;
+    kind?: string;
+    delete_mode?: string;
+    intent_profile?: SurfaceIntentContract;
+    empty_reason?: string;
   };
   model?: string;
   data?: {
@@ -670,46 +678,14 @@ type SurfaceIntent = {
   primaryAction: FocusNavAction;
   secondaryAction?: FocusNavAction;
 };
-
-const SCENE_LIST_PROFILE_PRESETS: Record<string, SceneListProfile> = {
-  'task.center': {
-    columns: ['name', 'kanban_state', 'user_ids', 'date_deadline', 'write_date'],
-    column_labels: {
-      name: '任务名称',
-      kanban_state: '状态',
-      user_ids: '负责人',
-      date_deadline: '截止日期',
-      write_date: '更新时间',
-    },
-    row_primary: 'name',
-    row_secondary: 'user_ids',
-  },
-  'risk.center': {
-    columns: ['name', 'state', 'project_id', 'partner_id', 'amount', 'date_request'],
-    column_labels: {
-      name: '风险单号',
-      state: '风险状态',
-      project_id: '项目',
-      partner_id: '往来单位',
-      amount: '风险金额',
-      date_request: '触发日期',
-    },
-    row_primary: 'name',
-    row_secondary: 'project_id',
-  },
-  'cost.project_boq': {
-    columns: ['name', 'project_id', 'quantity', 'price', 'amount_total', 'write_date'],
-    column_labels: {
-      name: '清单名称',
-      project_id: '项目',
-      quantity: '工程量',
-      price: '单价',
-      amount_total: '金额',
-      write_date: '更新时间',
-    },
-    row_primary: 'name',
-    row_secondary: 'project_id',
-  },
+type SurfaceIntentContract = {
+  title?: string;
+  summary?: string;
+  actions?: FocusNavAction[];
+  empty_title?: string;
+  empty_hint?: string;
+  primary_action?: FocusNavAction;
+  secondary_action?: FocusNavAction;
 };
 
 const actionId = computed(() => {
@@ -735,40 +711,10 @@ const scene = computed<Scene | null>(() => {
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
-function mergeColumnsWithPreset(baseColumns: string[], presetColumns: string[]) {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  presetColumns.forEach((col) => {
-    const key = String(col || '').trim();
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    out.push(key);
-  });
-  baseColumns.forEach((col) => {
-    const key = String(col || '').trim();
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    out.push(key);
-  });
-  return out;
-}
+const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 
 const listProfile = computed<SceneListProfile | null>(() => {
-  const base = (scene.value?.list_profile as SceneListProfile) || null;
-  const preset = SCENE_LIST_PROFILE_PRESETS[sceneKey.value || ''];
-  if (!base && !preset) return null;
-  if (!base) return preset;
-  if (!preset) return base;
-  return {
-    ...base,
-    columns: mergeColumnsWithPreset(base.columns || [], preset.columns || []),
-    column_labels: {
-      ...(base.column_labels || {}),
-      ...(preset.column_labels || {}),
-    },
-    row_primary: preset.row_primary || base.row_primary,
-    row_secondary: preset.row_secondary || base.row_secondary,
-  };
+  return (scene.value?.list_profile as SceneListProfile) || null;
 });
 
 const model = computed(() => actionMeta.value?.model ?? '');
@@ -779,6 +725,10 @@ const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
+const canBatchDelete = computed(() => {
+  const unlinkRight = actionContract.value?.permissions?.effective?.rights?.unlink;
+  return unlinkRight === true && viewMode.value === 'list';
+});
 const activeContractFilterKey = ref('');
 const activeSavedFilterKey = ref('');
 const activeGroupByField = ref('');
@@ -911,6 +861,12 @@ function switchViewMode(mode: string) {
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
 const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
+const sceneContractV1 = computed<Record<string, unknown>>(() => {
+  const raw = pageContract.contract.value?.scene_contract_v1;
+  if (!raw || typeof raw !== 'object') return {};
+  if (String((raw as Record<string, unknown>).contract_version || '') !== 'v1') return {};
+  return raw as Record<string, unknown>;
+});
 function keywordList(key: string, fallbackCsv: string) {
   return String(pageText(key, fallbackCsv) || '')
     .split(',')
@@ -923,14 +879,18 @@ function includesAnyKeyword(text: string, keywords: string[]) {
   return keywords.some((item) => raw.includes(String(item || '').toLowerCase()));
 }
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
+  const contractKind = String(actionContract.value?.surface_policies?.kind || '').trim().toLowerCase();
+  if (contractKind === 'risk' || contractKind === 'contract' || contractKind === 'cost' || contractKind === 'project') {
+    return contractKind;
+  }
+  const extensionKind = String((sceneContractV1.value.extensions as Record<string, unknown> | undefined)?.surface_kind || '').trim().toLowerCase();
+  if (extensionKind === 'risk' || extensionKind === 'contract' || extensionKind === 'cost' || extensionKind === 'project') {
+    return extensionKind;
+  }
   const key = surfaceKey.value;
-  const sceneKeyText = String(sceneKey.value || '').toLowerCase();
-  const modelText = effectiveSurfaceModel.value;
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) return 'risk';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) return 'contract';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) return 'cost';
-  if (sceneKeyText.startsWith('projects.') || sceneKeyText.startsWith('project.')) return 'project';
-  if (modelText.startsWith('project.') || modelText.startsWith('construction.')) return 'project';
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) return 'project';
   return 'generic';
 });
@@ -953,27 +913,76 @@ const subtitle = computed(
   () =>
     `${records.value.length}${pageText('subtitle_records_suffix', ' 条记录')} · ${pageText('subtitle_sort_prefix', '排序：')}${sortLabel.value}`,
 );
+
+function resolveProjectStateCell(row: Record<string, unknown>) {
+  return semanticStatus(row.stage_id || row.state || row.status || row.kanban_state || row.health_state);
+}
+
+function resolveProjectAmount(row: Record<string, unknown>) {
+  const candidates = [
+    row.contract_amount,
+    row.contract_income_total,
+    row.dashboard_invoice_amount,
+    row.amount_total,
+    row.total_amount,
+    row.planned_revenue,
+    row.budget_total,
+  ];
+  for (const candidate of candidates) {
+    const amount = Number(candidate);
+    if (Number.isFinite(amount) && amount > 0) return amount;
+  }
+  return 0;
+}
+
+function isCompletedState(stateText: string, tone: string) {
+  if (tone === 'success') return true;
+  const text = String(stateText || '');
+  return ['完成', '完工', '归档', '关闭', '交付'].some((keyword) => text.includes(keyword));
+}
+
 const ledgerOverviewItems = computed(() => {
-  if (sceneKey.value !== 'projects.ledger') return [] as Array<{ key: string; label: string; value: string; tone: string }>;
+  if (!hasLedgerOverviewStrip.value) return [] as Array<{ key: string; label: string; value: string; tone: string }>;
   const rows = records.value || [];
-  const total = rows.length;
+  let running = 0;
   let warning = 0;
   let done = 0;
+  let contractAmount = 0;
   rows.forEach((row) => {
-    const stage = semanticStatus(row.stage_id || row.state || row.status);
+    const stage = resolveProjectStateCell(row);
+    const text = String(stage.text || '');
+    if (!isCompletedState(text, stage.tone)) running += 1;
     if (stage.tone === 'danger' || stage.tone === 'warning') warning += 1;
-    if (String(stage.text).includes('完成') || String(stage.text).includes('归档')) done += 1;
+    if (isCompletedState(text, stage.tone)) done += 1;
+    contractAmount += resolveProjectAmount(row);
   });
+  const hasAmount = contractAmount > 0;
   return [
-    { key: 'total', label: '在建项目数', value: String(total), tone: 'info' },
+    { key: 'running', label: '在建项目数', value: String(running), tone: running > 0 ? 'info' : 'neutral' },
     { key: 'warning', label: '预警项目数', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
     { key: 'done', label: '已完工项目数', value: String(done), tone: 'success' },
-    { key: 'metric', label: '项目群规模', value: `${total} 个项目`, tone: 'neutral' },
+    {
+      key: 'metric',
+      label: hasAmount ? '合同额汇总' : '项目群规模',
+      value: hasAmount ? formatAmountCN(contractAmount) : `${rows.length} 个项目`,
+      tone: 'neutral',
+    },
   ];
 });
+
+const listSemanticKind = computed(() => {
+  const fieldSet = new Set(columns.value.map((field) => String(field || '').toLowerCase()));
+  if (fieldSet.has('quantity') && (fieldSet.has('price') || fieldSet.has('amount_total'))) return 'boq';
+  if (fieldSet.has('date_deadline') && (fieldSet.has('kanban_state') || fieldSet.has('user_ids'))) return 'task';
+  if (fieldSet.has('date_request') && fieldSet.has('amount') && fieldSet.has('state')) return 'risk';
+  if (fieldSet.has('stage_id') && (fieldSet.has('contract_amount') || fieldSet.has('user_id'))) return 'project';
+  if (pageMode.value === 'ledger') return 'project';
+  return 'generic';
+});
+
 const listSummaryItems = computed(() => {
   const rows = records.value || [];
-  if (sceneKey.value === 'task.center') {
+  if (listSemanticKind.value === 'task') {
     let done = 0;
     let pending = 0;
     let blocked = 0;
@@ -990,7 +999,7 @@ const listSummaryItems = computed(() => {
       { key: 'task_done', label: '已完成', value: String(done), tone: 'success' },
     ];
   }
-  if (sceneKey.value === 'risk.center') {
+  if (listSemanticKind.value === 'risk') {
     let high = 0;
     let warning = 0;
     rows.forEach((row) => {
@@ -1004,7 +1013,7 @@ const listSummaryItems = computed(() => {
       { key: 'risk_warning', label: '预警', value: String(warning), tone: warning > 0 ? 'warning' : 'neutral' },
     ];
   }
-  if (sceneKey.value === 'cost.project_boq') {
+  if (listSemanticKind.value === 'boq') {
     let quantity = 0;
     rows.forEach((row) => {
       quantity += Number(row.quantity || 0) || 0;
@@ -1014,21 +1023,36 @@ const listSummaryItems = computed(() => {
       { key: 'boq_qty', label: '总工程量', value: `${Math.round(quantity * 100) / 100}`, tone: 'neutral' },
     ];
   }
-  if (sceneKey.value === 'projects.list') {
+  if (listSemanticKind.value === 'project') {
+    const totals = projectScopeTotals.value;
+    const scopeMetrics = projectScopeMetrics.value;
     let warning = 0;
     let done = 0;
     let amount = 0;
     rows.forEach((row) => {
-      const state = semanticStatus(row.stage_id || row.state || row.status);
+      const state = resolveProjectStateCell(row);
       if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
-      if (state.tone === 'success') done += 1;
-      amount += Number(row.dashboard_invoice_amount || row.amount_total || 0) || 0;
+      if (isCompletedState(String(state.text || ''), state.tone)) done += 1;
+      amount += resolveProjectAmount(row);
     });
+    if (scopeMetrics) {
+      warning = scopeMetrics.warning;
+      done = scopeMetrics.done;
+      amount = scopeMetrics.amount;
+    }
+    const hasAmount = amount > 0;
     return [
-      { key: 'project_total', label: '项目总数', value: String(rows.length), tone: 'info' },
+      { key: 'project_total', label: '项目总数', value: String(totals?.all ?? rows.length), tone: 'info' },
+      { key: 'project_active', label: '在办项目', value: String(totals?.active ?? rows.length), tone: 'neutral' },
+      { key: 'project_archived', label: '已归档', value: String(totals?.archived ?? 0), tone: (totals?.archived ?? 0) > 0 ? 'warning' : 'success' },
       { key: 'project_warning', label: '预警项目', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
       { key: 'project_done', label: '已完工', value: String(done), tone: 'success' },
-      { key: 'project_amount', label: '合同额汇总', value: `${Math.round(amount / 10000) / 100}万`, tone: 'neutral' },
+      {
+        key: 'project_amount',
+        label: hasAmount ? '合同额汇总' : '项目群规模',
+        value: hasAmount ? formatAmountCN(amount) : `${rows.length} 个项目`,
+        tone: 'neutral',
+      },
     ];
   }
   return [];
@@ -1050,6 +1074,12 @@ const statusLabel = computed(() => {
 const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
   status.value === 'idle' ? 'loading' : status.value,
 );
+const recordCount = computed(() => {
+  if (listTotalCount.value !== null && Number.isFinite(listTotalCount.value)) {
+    return Math.max(0, Math.trunc(listTotalCount.value));
+  }
+  return records.value.length;
+});
 const advancedViewTitle = computed(() => {
   const labels: Record<string, string> = {
     pivot: pageText('advanced_title_pivot', '数据透视视图'),
@@ -1078,7 +1108,39 @@ const pageTitle = computed(() => {
   if (contractTitle) return contractTitle;
   return injectedTitle?.value || actionMeta.value?.name || pageText('page_title_fallback', '工作台');
 });
+const contractSurfaceIntent = computed<SurfaceIntentContract>(() => {
+  const fromSurfacePolicies = actionContract.value?.surface_policies?.intent_profile;
+  if (fromSurfacePolicies && typeof fromSurfacePolicies === 'object') {
+    return fromSurfacePolicies;
+  }
+  const extensions = sceneContractV1.value.extensions;
+  const fromExtensions = extensions && typeof extensions === 'object'
+    ? (extensions as Record<string, unknown>).surface_intent
+    : null;
+  return fromExtensions && typeof fromExtensions === 'object'
+    ? fromExtensions as SurfaceIntentContract
+    : {};
+});
 const surfaceIntent = computed<SurfaceIntent>(() => {
+  const override = contractSurfaceIntent.value;
+  if (override && Object.keys(override).length) {
+    const fallbackPrimary: FocusNavAction = {
+      label: pageText('primary_action_default', '去我的工作'),
+      to: '/my-work',
+    };
+    const primaryAction = override.primary_action && typeof override.primary_action === 'object'
+      ? override.primary_action
+      : fallbackPrimary;
+    return {
+      title: String(override.title || pageText('intent_title_default', '业务列表：先看状态，再执行动作')),
+      summary: String(override.summary || pageText('intent_summary_default', '通过快速筛选与快捷操作，优先处理最关键事项。')),
+      actions: Array.isArray(override.actions) ? override.actions : [],
+      emptyTitle: String(override.empty_title || pageText('empty_title_default', '')),
+      emptyHint: String(override.empty_hint || pageText('empty_hint_default', '')),
+      primaryAction,
+      secondaryAction: override.secondary_action,
+    };
+  }
   const key = surfaceKey.value;
   if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) {
     return {
@@ -1153,10 +1215,10 @@ const emptyReasonText = computed(() => {
   if (searchTerm.value.trim() || activeContractFilterKey.value) {
     return pageText('empty_reason_filter', '可能由当前筛选条件导致无数据，建议先清除筛选后重试。');
   }
-  const modelText = effectiveSurfaceModel.value;
-  if (modelText === 'construction.work.breakdown') {
-    return pageText('empty_reason_wbs', '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。');
-  }
+  const fromSurfacePolicy = String(actionContract.value?.surface_policies?.empty_reason || '').trim();
+  if (fromSurfacePolicy) return fromSurfacePolicy;
+  const fromExtensions = String((sceneContractV1.value.extensions as Record<string, unknown> | undefined)?.empty_reason || '').trim();
+  if (fromExtensions) return fromExtensions;
   return pageText('empty_reason_default', '');
 });
 const showHud = computed(() => isHudEnabled(route));
@@ -2245,6 +2307,103 @@ function mergeActiveFilter(base: unknown) {
   return [...domain, activeClause];
 }
 
+function readTotalFromListResult(payload: unknown): number | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const raw = Number((payload as Record<string, unknown>).total);
+  if (!Number.isFinite(raw) || raw < 0) return null;
+  return Math.trunc(raw);
+}
+
+async function fetchScopedTotal(params: {
+  model: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Record<string, unknown>;
+  contextRaw: string;
+  searchTerm: string;
+  order: string;
+}) {
+  const result = await listRecordsRaw({
+    model: params.model,
+    fields: ['id'],
+    domain: params.domain,
+    domain_raw: params.domainRaw,
+    need_total: true,
+    context: params.context,
+    context_raw: params.contextRaw,
+    limit: 1,
+    offset: 0,
+    search_term: params.searchTerm || undefined,
+    order: params.order,
+  });
+  return readTotalFromListResult(result.data);
+}
+
+async function fetchProjectScopeMetrics(params: {
+  model: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Record<string, unknown>;
+  contextRaw: string;
+  searchTerm: string;
+  order: string;
+}) {
+  const fields = [
+    'id',
+    'stage_id',
+    'state',
+    'status',
+    'contract_income_total',
+    'contract_amount',
+    'amount_total',
+    'total_amount',
+    'budget_total',
+  ];
+  const pageLimit = 200;
+  const maxPages = 25;
+  let page = 0;
+  let offset = 0;
+  let warning = 0;
+  let done = 0;
+  let amount = 0;
+  while (page < maxPages) {
+    const result = await listRecordsRaw({
+      model: params.model,
+      fields,
+      domain: params.domain,
+      domain_raw: params.domainRaw,
+      context: params.context,
+      context_raw: params.contextRaw,
+      limit: pageLimit,
+      offset,
+      search_term: params.searchTerm || undefined,
+      order: params.order,
+    });
+    const payload = result.data && typeof result.data === 'object'
+      ? (result.data as Record<string, unknown>)
+      : {};
+    const pageRows = Array.isArray(payload.records)
+      ? (payload.records as Array<Record<string, unknown>>)
+      : [];
+    if (!pageRows.length) break;
+    pageRows.forEach((row) => {
+      const state = resolveProjectStateCell(row);
+      if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
+      if (isCompletedState(String(state.text || ''), state.tone)) done += 1;
+      amount += resolveProjectAmount(row);
+    });
+    const nextOffset = Number(payload.next_offset || 0);
+    if (!Number.isFinite(nextOffset) || nextOffset <= offset) {
+      offset += pageRows.length;
+    } else {
+      offset = Math.trunc(nextOffset);
+    }
+    if (pageRows.length < pageLimit) break;
+    page += 1;
+  }
+  return { warning, done, amount };
+}
+
 function uniqueFields(fields: string[]) {
   const seen = new Set<string>();
   return fields.filter((field) => {
@@ -3068,11 +3227,19 @@ async function load() {
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
       return;
     }
+    const baseDomain = mergeSceneDomain(
+      mergeSceneDomain(meta?.domain, scene.value?.filters),
+      resolveEffectiveFilterDomain(),
+    );
+    const activeDomain = mergeActiveFilter(baseDomain);
+    const requestContext = mergeContext(meta?.context, resolveEffectiveRequestContext());
+    const requestContextRaw = resolveEffectiveRequestContextRaw();
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
-      domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
+      domain: activeDomain,
       domain_raw: resolveEffectiveFilterDomainRaw(),
+      need_total: true,
       group_by: activeGroupByField.value || undefined,
       group_offset: activeGroupByField.value ? Math.max(0, Math.trunc(groupWindowOffset.value || 0)) : 0,
       need_group_total: Boolean(activeGroupByField.value),
@@ -3080,8 +3247,8 @@ async function load() {
       group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
       group_page_size: groupSampleLimit.value,
       group_page_offsets: groupPageOffsets.value,
-      context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
-      context_raw: resolveEffectiveRequestContextRaw(),
+      context: requestContext,
+      context_raw: requestContextRaw,
       limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,
@@ -3231,6 +3398,67 @@ async function load() {
     const resultData = result.data && typeof result.data === 'object'
       ? (result.data as Record<string, unknown>)
       : {};
+    listTotalCount.value = readTotalFromListResult(resultData);
+    if (pageMode.value === 'list' && hasActiveField.value) {
+      try {
+        const domainRaw = resolveEffectiveFilterDomainRaw();
+        const term = searchTerm.value.trim();
+        const [allTotal, activeTotal, archivedTotal, scopeMetrics] = await Promise.all([
+          fetchScopedTotal({
+            model: resolvedModel,
+            domain: baseDomain,
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+          fetchScopedTotal({
+            model: resolvedModel,
+            domain: [...baseDomain, ['active', '=', true]],
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+          fetchScopedTotal({
+            model: resolvedModel,
+            domain: [...baseDomain, ['active', '=', false]],
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+          fetchProjectScopeMetrics({
+            model: resolvedModel,
+            domain: baseDomain,
+            domainRaw,
+            context: requestContext,
+            contextRaw: requestContextRaw,
+            searchTerm: term,
+            order: sortLabel.value,
+          }),
+        ]);
+        if (allTotal !== null && activeTotal !== null && archivedTotal !== null) {
+          projectScopeTotals.value = {
+            all: allTotal,
+            active: activeTotal,
+            archived: archivedTotal,
+          };
+        } else {
+          projectScopeTotals.value = null;
+        }
+        projectScopeMetrics.value = scopeMetrics;
+      } catch {
+        projectScopeTotals.value = null;
+        projectScopeMetrics.value = null;
+      }
+    } else {
+      projectScopeTotals.value = null;
+      projectScopeMetrics.value = null;
+    }
     records.value = Array.isArray(resultData.records) ? (resultData.records as Array<Record<string, unknown>>) : [];
     const groupSummaryRows = Array.isArray(resultData.group_summary)
       ? (resultData.group_summary as Array<Record<string, unknown>>)
@@ -3370,6 +3598,9 @@ async function load() {
     lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
     setError(err, 'failed to load list');
+    listTotalCount.value = null;
+    projectScopeTotals.value = null;
+    projectScopeMetrics.value = null;
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
     status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
@@ -3496,7 +3727,7 @@ function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string
   return [fallback.label, scope ? `${pageText('batch_error_scope_prefix', '范围=')}${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
 }
 
-async function handleBatchAction(action: 'archive' | 'activate') {
+async function handleBatchAction(action: 'archive' | 'activate' | 'delete') {
   batchMessage.value = '';
   batchDetails.value = [];
   failedCsvFileName.value = '';
@@ -3506,12 +3737,42 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   lastBatchRequest.value = null;
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel || !selectedIds.value.length) return;
-  if (!hasActiveField.value) {
+  if (action !== 'delete' && !hasActiveField.value) {
     batchMessage.value = pageText('batch_msg_model_no_active_field', '当前模型不支持 active 字段，无法批量归档/激活');
     return;
   }
   batchBusy.value = true;
   try {
+    if (action === 'delete') {
+      const deleteMode = String(actionContract.value?.surface_policies?.delete_mode || 'archive').trim().toLowerCase();
+      if (deleteMode !== 'archive') {
+        batchMessage.value = pageText('batch_msg_delete_mode_unavailable', '当前场景暂不支持物理删除，请使用归档操作。');
+        return;
+      }
+      const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { delete_mode: 'archive' });
+      const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
+      const result = await batchUpdateRecords({
+        model: targetModel,
+        ids: selectedIds.value,
+        action: 'archive',
+        ifMatchMap: buildIfMatchMap(selectedIds.value),
+        idempotencyKey,
+        failedPreviewLimit: 12,
+        failedOffset: 0,
+        failedLimit: 12,
+        exportFailedCsv: true,
+        context: requestContext,
+      });
+      if (result.idempotent_replay) {
+        batchMessage.value = pageText('batch_msg_idempotent_replay', '批量操作已幂等处理（重复请求被忽略）');
+      } else {
+        batchMessage.value = `${pageText('batch_msg_delete_archive_done_prefix', '批量删除请求已按归档处理：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`;
+      }
+      applyBatchFailureArtifacts(result);
+      clearSelection();
+      await load();
+      return;
+    }
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
     const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
@@ -3550,14 +3811,18 @@ async function handleBatchAction(action: 'archive' | 'activate') {
     setError(err, 'batch operation failed');
     batchMessage.value = action === 'activate'
       ? pageText('batch_msg_activate_failed', '批量激活失败')
-      : pageText('batch_msg_archive_failed', '批量归档失败');
+      : action === 'archive'
+        ? pageText('batch_msg_archive_failed', '批量归档失败')
+        : pageText('batch_msg_delete_failed', '批量删除失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: action,
         label: action === 'activate'
           ? pageText('batch_label_activate', '批量激活')
-          : pageText('batch_label_archive', '批量归档'),
+          : action === 'archive'
+            ? pageText('batch_label_archive', '批量归档')
+            : pageText('batch_label_delete', '批量删除'),
       }),
     }];
     failedCsvFileName.value = '';

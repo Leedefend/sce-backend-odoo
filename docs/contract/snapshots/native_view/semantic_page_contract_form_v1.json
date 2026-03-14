@@ -1,0 +1,35 @@
+{
+  "semantic_page": {
+    "model": "construction.contract",
+    "view_type": "form",
+    "layout": "auto",
+    "permission_verdicts": {
+      "read": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "create": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "write": {"allowed": true, "reason_code": "OK", "reason": ""},
+      "unlink": {"allowed": false, "reason_code": "PERMISSION_DENIED", "reason": "permission denied"},
+      "execute": {"allowed": true, "reason_code": "OK", "reason": ""}
+    },
+    "action_gating": {
+      "record_state": {"field": "state", "value": "active", "source": "statusbar"},
+      "policy": {"closed_states": ["archived", "cancel", "cancelled", "closed", "done"]},
+      "verdict": {"is_closed_state": false, "reason_code": "OK"}
+    },
+    "zones": [
+      {
+        "key": "header_zone",
+        "blocks": [
+          {"type": "title_block", "data": {"title": "合同详情"}},
+          {"type": "action_bar_block", "data": {"buttons": [{"key": "submit", "label": "提交审批"}]}}
+        ]
+      },
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {"type": "field_group_block", "data": {"layout": [{"type": "field", "name": "name"}, {"type": "field", "name": "partner_id"}]}},
+          {"type": "notebook_block", "data": {"layout": [{"type": "page", "name": "条款"}]}}
+        ]
+      }
+    ]
+  }
+}

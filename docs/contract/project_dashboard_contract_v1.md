@@ -28,7 +28,7 @@
     },
     "page": {
       "key": "project.management.dashboard",
-      "title": "项目管理控制台",
+      "title": "项目驾驶舱",
       "route": "/s/project.management"
     },
     "route_context": {

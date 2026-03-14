@@ -90,6 +90,9 @@
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard_schema_guard.json`.
 - `make verify.backend.evidence.manifest`
   - Generates deterministic backend evidence manifest (`path`/`exists`/`size_bytes`/`sha256`) for release-critical artifacts.
+  - Summary includes native-view semantic guard status:
+    - `summary.native_view_semantic_shape_ok`
+    - `summary.native_view_semantic_schema_ok`
   - Baseline: `scripts/verify/baselines/backend_evidence_manifest_guard.json`.
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `backend_evidence_manifest.json`
@@ -158,12 +161,29 @@
     - prod-like role fixture evidence + schema guard
     - contract assembler semantic smoke + schema guard
     - runtime surface dashboard report + schema guard
+    - native view semantic page guard (`shape + schema`)
 - `make verify.phase_next.evidence.bundle.strict`
   - Strict aggregate target:
     - `verify.phase_next.evidence.bundle`
     - `verify.runtime.surface.dashboard.strict.guard`
     - `verify.backend.architecture.full.report.guard`
     - `verify.backend.evidence.manifest.guard`
+- `make verify.native_view.semantic_page`
+  - Aggregated native-view contract guard:
+    - `verify.native_view.semantic_page.shape`
+    - `verify.native_view.semantic_page.schema`
+- `make verify.native_view.coverage.report`
+  - Generates native-view contract coverage report:
+    - `artifacts/backend/native_view_coverage_report.json`
+    - `artifacts/backend/native_view_coverage_report.md`
+- `make verify.native_view.samples.compare`
+  - Generates 8-case native-view sample compare report:
+    - `artifacts/backend/native_view_sample_compare_report.json`
+    - `artifacts/backend/native_view_sample_compare_report.md`
+- `make verify.native_view.ecosystem.readiness`
+  - Generates ecosystem readiness report (20+ sample target tracking):
+    - `artifacts/backend/native_view_ecosystem_readiness_report.json`
+    - `artifacts/backend/native_view_ecosystem_readiness_report.md`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
@@ -182,6 +202,9 @@
   - Schema/determinism guard for baseline report summary + delta fields and sorted check ordering.
 - `make verify.contract.evidence.guard`
   - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, backend architecture full summary, and backend evidence manifest summary.
+  - Evidence now includes `native_view_semantic_guard` summary from:
+    - `artifacts/backend/native_view_semantic_page_shape_guard.json`
+    - `artifacts/backend/native_view_semantic_page_schema_guard.json`
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Business baseline floors in policy:
     - `min_business_required_intent_count`

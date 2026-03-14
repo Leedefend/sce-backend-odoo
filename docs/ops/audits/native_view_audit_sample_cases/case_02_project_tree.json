@@ -1,0 +1,7 @@
+{
+  "case": "project.project_tree",
+  "native_traits": ["columns", "order", "search_binding"],
+  "path": "load_contract/page_assembler",
+  "status": "pass_with_gaps",
+  "gaps": ["row_action_reason_contract_partial"]
+}

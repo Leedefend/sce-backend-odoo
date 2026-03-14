@@ -10,6 +10,8 @@
     "artifacts/backend/boundary_import_guard_report.json",
     "artifacts/backend/backend_architecture_full_report.json",
     "artifacts/backend/backend_architecture_full_report_guard.json",
+    "artifacts/backend/native_view_semantic_page_shape_guard.json",
+    "artifacts/backend/native_view_semantic_page_schema_guard.json",
     "artifacts/business_capability_baseline_report.json",
     "artifacts/contract/phase11_1_contract_evidence.json",
     "artifacts/contract_governance_coverage.json",

@@ -36,21 +36,58 @@
         <field name="arch" type="xml">
             <form string="项目立项">
                 <sheet>
-                    <group>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(smart_construction_core.action_project_quick_create_wizard)d"
+                                type="action"
+                                string="快速创建项目"
+                                class="oe_stat_button"/>
+                    </div>
+                    <div class="alert alert-info" invisible="context.get('intake_mode') != 'quick'">
+                        快速创建模式：仅需填写项目名称与项目经理即可创建项目，其他信息可在项目驾驶舱后续补充。
+                    </div>
+                    <group string="项目创建（必填）" col="2">
                         <group>
-                            <field name="name" placeholder="请输入项目名称"/>
+                            <field name="name" placeholder="请输入项目名称" required="1"/>
+                            <field name="manager_id" required="1"/>
                             <field name="owner_id"/>
-                            <field name="location"/>
-                        </group>
-                        <group>
-                            <field name="project_type_id"/>
-                            <field name="user_id"/>
-                            <field name="manager_id"/>
                         </group>
                     </group>
-                    <div class="text-muted mt-2">
-                        请补齐关键信息后保存，保存后进入项目概览页继续操作。
+                    <group string="项目标识（可选）" col="2" invisible="context.get('intake_mode') == 'quick'">
+                        <group>
+                            <field name="project_code" readonly="1"/>
+                            <field name="project_type_id"/>
+                            <field name="project_category_id"/>
+                        </group>
+                        <group>
+                            <field name="location"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+                    <div class="text-muted mt-2" invisible="context.get('intake_mode') == 'quick'">
+                        建议先完成最小立项（项目名称 + 项目经理），其余信息可在项目驾驶舱持续补充。
                     </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_project_create_form_quick" model="ir.ui.view">
+        <field name="name">project.project.form.sc.create.quick</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <form string="快速创建项目">
+                <sheet>
+                    <div class="alert alert-info">
+                        快速创建模式：仅填写最小必填信息，创建后进入项目驾驶舱继续补充。
+                    </div>
+                    <group string="最小立项信息" col="2">
+                        <group>
+                            <field name="name" placeholder="请输入项目名称" required="1"/>
+                            <field name="manager_id" required="1"/>
+                            <field name="owner_id"/>
+                        </group>
+                    </group>
                 </sheet>
             </form>
         </field>

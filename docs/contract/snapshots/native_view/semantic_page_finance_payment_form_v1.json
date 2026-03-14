@@ -1,0 +1,46 @@
+{
+  "semantic_page": {
+    "model": "finance.payment",
+    "view_type": "form",
+    "layout": "auto",
+    "zones": [
+      {
+        "key": "header_zone",
+        "blocks": [
+          {
+            "type": "title_block",
+            "data": {
+              "title_field": "name",
+              "state_field": "state"
+            }
+          },
+          {
+            "type": "status_block",
+            "data": {
+              "state": "draft"
+            }
+          }
+        ]
+      },
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "field_group_block",
+            "data": {
+              "fields": [
+                "name",
+                "project_id",
+                "partner_id",
+                "amount_total",
+                "amount_paid",
+                "due_date",
+                "state"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

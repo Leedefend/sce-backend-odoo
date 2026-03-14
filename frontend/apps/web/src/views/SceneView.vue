@@ -41,8 +41,6 @@
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
       :style="pageSectionStyle('status_forbidden')"
     />
-    <MyWorkView v-else-if="status === 'idle' && embeddedMyWorkWorkspace" />
-    <ProjectManagementDashboardView v-else-if="status === 'idle' && embeddedWorkspaceDashboard" />
     <ContractFormPage v-else-if="status === 'idle' && embeddedRecordActionId > 0" />
     <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
@@ -52,8 +50,6 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActionView from './ActionView.vue';
-import MyWorkView from './MyWorkView.vue';
-import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
@@ -93,8 +89,6 @@ const forbiddenCopy = ref({
 });
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
-const embeddedMyWorkWorkspace = ref(false);
-const embeddedWorkspaceDashboard = ref(false);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -257,8 +251,6 @@ async function resolveScene() {
     clearError();
     embeddedActionId.value = 0;
     embeddedRecordActionId.value = 0;
-    embeddedMyWorkWorkspace.value = false;
-    embeddedWorkspaceDashboard.value = false;
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
@@ -302,16 +294,6 @@ async function resolveScene() {
     const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
     const workspaceContextQuery = resolveWorkspaceContextQuery();
-    if (sceneKey === 'my_work.workspace') {
-      embeddedMyWorkWorkspace.value = true;
-      status.value = 'idle';
-      return;
-    }
-    if (sceneKey === 'project.management' || sceneKey === 'projects.dashboard') {
-      embeddedWorkspaceDashboard.value = true;
-      status.value = 'idle';
-      return;
-    }
     if (layout.kind === 'workspace') {
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);

@@ -25,6 +25,7 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - [x] Exit criteria for Phase 0~5 are all satisfied
 - [x] No P0 launch-blocking defects remain
 - [x] Final release review concludes "go-live approved"
+- [x] Release demo seed load and acceptance pass (`make demo.load.release`, `make verify.demo.release.seed`)
 
 ### D. Launch Execution
 - [x] Release window, rollback window, and owners are confirmed
@@ -37,6 +38,8 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - [ ] v1.0 post-launch summary is completed
 
 ## 4. Suggested Verification Commands
+- `make demo.load.release DB_NAME=sc_demo`
+- `make verify.demo.release.seed DB_NAME=sc_demo`
 - `make verify.phase_next.evidence.bundle`
 - `make verify.scene.catalog.governance.guard`
 - `make verify.runtime.surface.dashboard.strict.guard`

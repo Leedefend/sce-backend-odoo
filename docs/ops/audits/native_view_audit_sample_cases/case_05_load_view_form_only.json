@@ -1,0 +1,6 @@
+{
+  "case": "load_view_form_only",
+  "path": "load_view -> UniversalViewSemanticParser -> ViewDispatcher",
+  "status": "pass",
+  "evidence": "ViewDispatcher parser_map currently includes form only"
+}

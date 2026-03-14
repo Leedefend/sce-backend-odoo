@@ -499,7 +499,65 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionOpenDefault = pageContract.sectionOpenDefault;
 const pageSectionTagIs = pageContract.sectionTagIs;
 const pageSectionStyle = pageContract.sectionStyle;
+
+function normalizeSceneContractV1ToPageContract(raw: unknown): PageOrchestrationContract {
+  if (!raw || typeof raw !== 'object') return {} as PageOrchestrationContract;
+  const source = raw as Record<string, unknown>;
+  if (String(source.contract_version || '') !== 'v1') return {} as PageOrchestrationContract;
+  const zones = Array.isArray(source.zones) ? source.zones as Array<Record<string, unknown>> : [];
+  const blocks = source.blocks && typeof source.blocks === 'object'
+    ? source.blocks as Record<string, Record<string, unknown>>
+    : {};
+  if (!zones.length || !Object.keys(blocks).length) return {} as PageOrchestrationContract;
+
+  const normalizedZones = zones.map((zone, zoneIndex) => {
+    const blockKeys = Array.isArray(zone.block_keys) ? zone.block_keys : [];
+    const normalizedBlocks = blockKeys
+      .map((key, blockIndex) => {
+        const blockKey = String(key || '').trim();
+        const block = blocks[blockKey] || {};
+        return {
+          key: blockKey || `block_${zoneIndex + 1}_${blockIndex + 1}`,
+          block_type: String(block.block_type || block.type || 'record_summary'),
+          title: String(block.title || blockKey || ''),
+          priority: Number(block.priority || (100 - blockIndex)),
+          data_source: String(block.data_source || `ds_${blockKey || `${zoneIndex + 1}_${blockIndex + 1}`}`),
+          section_key: String(block.section_key || ''),
+          source_path: String(block.source_path || ''),
+          zone: String(block.zone || zone.zone_type || ''),
+          visible: block.visible !== false,
+          focus: block.focus === true,
+        };
+      })
+      .filter((row) => String(row.key || '').trim());
+    return {
+      key: String(zone.key || `zone_${zoneIndex + 1}`),
+      title: String(zone.title || ''),
+      zone_type: String(zone.zone_type || 'secondary'),
+      display_mode: String(zone.display_mode || 'stack'),
+      priority: Number(zone.priority || 0),
+      blocks: normalizedBlocks,
+    };
+  });
+
+  return {
+    contract_version: 'page_orchestration_v1',
+    scene_key: String((source.scene as Record<string, unknown> | undefined)?.scene_key || ''),
+    page: {
+      key: String((source.page as Record<string, unknown> | undefined)?.key || ''),
+      title: String((source.page as Record<string, unknown> | undefined)?.title || ''),
+      page_type: 'workspace',
+      layout_mode: 'workspace',
+    },
+    zones: normalizedZones,
+  } as PageOrchestrationContract;
+}
+
 const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {
+  const sceneContractV1 = normalizeSceneContractV1ToPageContract(pageContract.contract.value?.scene_contract_v1);
+  if (Array.isArray(sceneContractV1.zones) && sceneContractV1.zones.length > 0) {
+    return sceneContractV1;
+  }
   const contract = pageContract.contract.value?.page_orchestration_v1;
   return (contract && typeof contract === 'object' ? contract : {}) as PageOrchestrationContract;
 });

@@ -1,0 +1,11 @@
+{
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "tree",
+    "layout": "auto",
+    "zones": [
+      {"key": "detail_zone", "blocks": [{"type": "relation_table_block", "data": {"columns": ["name", "stage_id"]}}]},
+      {"key": "action_zone", "blocks": [{"type": "action_bar_block", "data": {"search": {"filters": []}}}]}
+    ]
+  }
+}

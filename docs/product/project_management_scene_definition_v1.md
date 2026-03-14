@@ -3,7 +3,7 @@
 ## 1. Scene Identity
 - Scene key: `project.management`
 - Page key: `project.management.dashboard`
-- Product label: 项目管理控制台
+- Product label: 项目驾驶舱
 
 ## 2. User and Goal
 - Core users:

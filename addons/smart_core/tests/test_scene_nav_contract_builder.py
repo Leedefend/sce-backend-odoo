@@ -72,6 +72,11 @@ class TestSceneNavContractBuilder(TransactionCase):
                         "target": {"route": "/portal/dashboard"},
                     },
                     {
+                        "code": "projects.dashboard",
+                        "name": "项目驾驶舱",
+                        "target": {"route": "/s/projects.dashboard"},
+                    },
+                    {
                         "code": "projects.dashboard_showcase",
                         "name": "项目驾驶舱（演示）",
                         "target": {"action_xmlid": "smart_construction_demo.action_project_dashboard_showcase"},
@@ -82,6 +87,7 @@ class TestSceneNavContractBuilder(TransactionCase):
         scene_keys = _collect_scene_keys(payload)
         self.assertIn("projects.list", scene_keys)
         self.assertNotIn("portal.dashboard", scene_keys)
+        self.assertNotIn("projects.dashboard", scene_keys)
         self.assertNotIn("projects.dashboard_showcase", scene_keys)
 
     def test_merges_project_group_alias(self):
@@ -95,7 +101,7 @@ class TestSceneNavContractBuilder(TransactionCase):
                     },
                     {
                         "code": "project.management",
-                        "name": "项目管理控制台",
+                        "name": "项目驾驶舱",
                         "target": {"route": "/s/project.management"},
                     },
                 ]

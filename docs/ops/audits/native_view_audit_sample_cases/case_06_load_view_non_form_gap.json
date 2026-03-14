@@ -1,0 +1,6 @@
+{
+  "case": "load_view_non_form_gap",
+  "path": "load_view -> ViewDispatcher",
+  "status": "fail",
+  "gaps": ["tree_not_supported", "kanban_not_supported", "search_not_supported"]
+}

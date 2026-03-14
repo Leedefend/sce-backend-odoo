@@ -54,6 +54,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s50_repairable_paths/30_assert_state.xml",
         ],
     },
+    "s60_project_cockpit": {
+        "sequence": 60,
+        "files": [
+            "data/scenario/s60_project_cockpit/10_cockpit_business_facts.xml",
+        ],
+    },
     "s90_users_roles": {
         "sequence": 90,
         "files": [
@@ -61,6 +67,16 @@ SCENARIOS: Dict[str, List[str]] = {
         ],
     },
 }
+
+
+RELEASE_SCENARIOS: List[str] = [
+    "s00_min_path",
+    "s10_contract_payment",
+    "s20_settlement_clearing",
+    "s30_settlement_workflow",
+    "s60_project_cockpit",
+    "s90_users_roles",
+]
 
 
 def _normalize_registry() -> Dict[str, Dict[str, List[str] | int]]:
@@ -165,6 +181,20 @@ def load_all(env, mode: str = "update") -> None:
         load_scenario(env, scenario, mode=mode)
 
 
+def load_release_seed(env, mode: str = "update") -> None:
+    """
+    Load release-grade demo seed set.
+
+    Excludes process-only failure drills (s40/s50), keeps business-complete
+    walkthrough path for product demo and acceptance.
+    """
+    known = set(SCENARIOS.keys())
+    for scenario in RELEASE_SCENARIOS:
+        if scenario not in known:
+            raise ValueError(f"release scenario '{scenario}' not registered")
+        load_scenario(env, scenario, mode=mode)
+
+
 def _ensure_demo_user_xmlids(env) -> None:
     module = "smart_construction_demo"
     login_to_xmlid = {
@@ -173,14 +203,17 @@ def _ensure_demo_user_xmlids(env) -> None:
         "demo_cost": "sc_demo_user_cost",
         "demo_audit": "sc_demo_user_audit",
         "demo_readonly": "sc_demo_user_readonly",
+        "svc_e2e_smoke": "sc_demo_user_e2e_smoke",
         "sc_test_admin": "sc_demo_user_test_admin",
     }
-    Users = env["res.users"].sudo()
+    Users = env["res.users"].sudo().with_context(active_test=False)
     imd = env["ir.model.data"].sudo()
     for login, xmlid in login_to_xmlid.items():
         user = Users.search([("login", "=", login)], limit=1)
         if not user:
             continue
+        if not user.active:
+            user.write({"active": True})
         existing = imd.search(
             [("module", "=", module), ("name", "=", xmlid)],
             limit=1,

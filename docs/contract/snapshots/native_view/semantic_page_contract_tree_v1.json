@@ -1,0 +1,24 @@
+{
+  "semantic_page": {
+    "model": "construction.contract",
+    "view_type": "tree",
+    "layout": "auto",
+    "zones": [
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "relation_table_block",
+            "data": {
+              "columns": ["name", "partner_id", "amount_total", "state"],
+              "row_actions": [
+                {"key": "open", "label": "打开", "enabled": true, "reason_code": "OK"},
+                {"key": "edit", "label": "编辑", "enabled": true, "reason_code": "OK"}
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

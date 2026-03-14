@@ -65,6 +65,7 @@
         'actions/project_actions.xml',
         'views/core/project_list_views.xml',
         'views/core/project_search_views.xml',
+        'views/core/project_quick_create_wizard_views.xml',
         'views/core/project_views.xml',
         'views/core/task_boq_views.xml',
         'views/support/task_sc_state_views.xml',

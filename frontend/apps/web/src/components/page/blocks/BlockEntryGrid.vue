@@ -47,9 +47,17 @@ const emit = defineEmits<{
 }>();
 
 const actions = computed(() => (Array.isArray(props.block.actions) ? props.block.actions : []));
+const maxItems = computed(() => {
+  const payload = props.block.payload && typeof props.block.payload === 'object'
+    ? props.block.payload as Record<string, unknown>
+    : {};
+  const value = Number(payload.max_items || 0);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+});
 const items = computed(() => {
   if (!Array.isArray(props.dataset)) return [];
-  return props.dataset.map((item, index) => {
+  const rows = maxItems.value > 0 ? props.dataset.slice(0, maxItems.value) : props.dataset;
+  return rows.map((item, index) => {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     return {
       id: String(row.id || row.key || `entry-${index + 1}`),
@@ -75,10 +83,10 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 
 <style scoped>
 .block {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
   background: #fff;
-  padding: 12px;
+  padding: 14px;
   height: 100%;
 }
 .block-header {
@@ -89,8 +97,8 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .block-header h4 {
   margin: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
 }
 .block-header-actions {
   display: flex;
@@ -98,25 +106,26 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .block-action-btn {
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
-  padding: 4px 8px;
+  padding: 6px 10px;
   cursor: pointer;
+  font-weight: 600;
 }
 .entry-grid {
-  margin-top: 10px;
+  margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
 }
 .entry-item {
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 12px;
   background: linear-gradient(180deg, #f8fbff 0%, #f9fafb 100%);
-  padding: 12px;
+  padding: 14px;
   text-align: left;
   cursor: pointer;
-  min-height: 96px;
+  min-height: 104px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
@@ -127,12 +136,12 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 }
 .entry-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
 }
 .entry-hint {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
 }
 .entry-empty {
