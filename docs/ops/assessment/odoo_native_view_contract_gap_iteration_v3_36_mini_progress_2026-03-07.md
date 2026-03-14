@@ -29,3 +29,10 @@
 ## 结论
 
 评估报告定义的 P1 差距在当前分支已补齐；本轮完成了最后一处治理一致性缺口修复。
+
+## 已知问题跟踪（新增）
+
+- `usage.track` 并发序列化冲突问题记录：
+  - 中文：`docs/ops/assessment/usage_track_serialization_issue_iteration_2026-03-14.md`
+  - 英文：`docs/ops/assessment/usage_track_serialization_issue_iteration_2026-03-14.en.md`
+- 当前状态：已完成止血，前端不再因该问题出现 `intent` 500；后续将按记录中的 backlog 继续做异步化与观测增强。
