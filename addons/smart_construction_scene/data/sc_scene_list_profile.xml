@@ -244,12 +244,26 @@
                 'code': 'finance.payment_requests',
                 'name': '付款申请审批',
                 'version': 'v2',
+                'page': {
+                    'key': 'finance.payment_requests.main',
+                    'title': '付款收款申请',
+                    'page_type': 'list',
+                    'page_mode': 'table'
+                },
                 'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {'key': 'summary', 'title': '申请总览', 'zone_type': 'hero', 'display_mode': 'stack', 'block_key': 'block.finance.payment.summary'},
+                    {'key': 'payments_main', 'title': '申请清单', 'zone_type': 'primary', 'display_mode': 'table', 'block_key': 'block.finance.payment.main'},
+                    {'key': 'risk', 'title': '风险提醒', 'zone_type': 'supporting', 'display_mode': 'stack', 'block_key': 'block.finance.payment.risk'}
+                ],
                 'target': {
+                    'route': '/s/finance.payment_requests',
                     'menu_xmlid': 'smart_construction_core.menu_payment_request',
                     'action_xmlid': 'smart_construction_core.action_payment_request_my'
                 },
                 'list_profile': {
+                    'model': 'payment.request',
+                    'view_type': 'list',
                     'columns': [
                         'name',
                         'state',
@@ -269,6 +283,30 @@
                     'row_primary': 'name',
                     'row_secondary': 'partner_id'
                 },
+                'action_specs': {
+                    'open_finance_center': {'label': '进入财务中心', 'intent': 'ui.contract'},
+                    'open_settlement_orders': {'label': '查看结算单', 'intent': 'ui.contract'}
+                },
+                'role_variants': {
+                    'finance': {
+                        'default_actions': ['open_finance_center', 'open_settlement_orders'],
+                        'focus_zones': ['payments_main', 'risk']
+                    },
+                    'executive': {
+                        'default_actions': ['open_settlement_orders'],
+                        'focus_zones': ['summary', 'risk']
+                    }
+                },
+                'data_sources': {
+                    'payment_requests': {'source_type': 'odoo_model', 'model': 'payment.request'},
+                    'payment_risk': {'source_type': 'computed', 'provider': 'finance.payment_requests.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_finance_center',
+                    'stage': 'wave2'
+                },
+                'related_scenes': ['finance.center', 'finance.workspace', 'finance.settlement_orders'],
                 'default_sort': 'id desc',
                 'filters': [],
                 'tiles': []
@@ -316,6 +354,25 @@
                     'open_cost_analysis': {'label': '进入成本分析', 'intent': 'ui.contract'},
                     'open_cost_ledger': {'label': '查看成本台账', 'intent': 'ui.contract'}
                 },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_cost_analysis', 'open_cost_ledger'],
+                        'focus_zones': ['compare_main', 'alerts']
+                    },
+                    'finance': {
+                        'default_actions': ['open_cost_ledger'],
+                        'focus_zones': ['summary', 'alerts']
+                    }
+                },
+                'data_sources': {
+                    'cost_compare': {'source_type': 'odoo_model', 'model': 'project.cost.compare'},
+                    'cost_compare_alerts': {'source_type': 'computed', 'provider': 'cost.cost_compare.alerts'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_cost_analysis',
+                    'stage': 'wave2'
+                },
                 'related_scenes': ['cost.analysis', 'cost.project_cost_ledger', 'contract.center'],
                 'default_sort': 'write_date desc'
             }"/>
@@ -361,6 +418,25 @@
                 'action_specs': {
                     'open_cost_compare': {'label': '进入成本中心', 'intent': 'ui.contract'},
                     'open_profit_compare': {'label': '查看盈亏对比', 'intent': 'ui.contract'}
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_cost_compare'],
+                        'focus_zones': ['ledger_rows', 'variance']
+                    },
+                    'finance': {
+                        'default_actions': ['open_profit_compare'],
+                        'focus_zones': ['overview', 'variance']
+                    }
+                },
+                'data_sources': {
+                    'cost_ledger': {'source_type': 'odoo_model', 'model': 'project.cost.ledger'},
+                    'cost_ledger_variance': {'source_type': 'computed', 'provider': 'cost.project_cost_ledger.variance'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_cost_compare',
+                    'stage': 'wave2'
                 },
                 'related_scenes': ['cost.cost_compare', 'cost.analysis', 'cost.profit_compare'],
                 'default_sort': 'write_date desc'
@@ -464,6 +540,25 @@
                 'action_specs': {
                     'open_finance_center': {'label': '返回财务中心', 'intent': 'ui.contract'},
                     'open_treasury_ledger': {'label': '查看资金台账', 'intent': 'ui.contract'}
+                },
+                'role_variants': {
+                    'finance': {
+                        'default_actions': ['open_finance_center', 'open_treasury_ledger'],
+                        'focus_zones': ['orders', 'risk']
+                    },
+                    'executive': {
+                        'default_actions': ['open_treasury_ledger'],
+                        'focus_zones': ['summary', 'risk']
+                    }
+                },
+                'data_sources': {
+                    'settlement_orders': {'source_type': 'odoo_model', 'model': 'sc.settlement.order'},
+                    'settlement_risk': {'source_type': 'computed', 'provider': 'finance.settlement_orders.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_finance_center',
+                    'stage': 'wave2'
                 },
                 'related_scenes': ['finance.center', 'finance.treasury_ledger', 'contract.center'],
                 'default_sort': 'write_date desc'
