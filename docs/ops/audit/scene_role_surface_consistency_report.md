@@ -1,11 +1,11 @@
 # Scene Role Surface Consistency Report
 
-更新时间：2026-03-14 20:55:12
+更新时间：2026-03-14 21:02:58
 
 ## Summary
 
 - `role_count`: 4
-- `r3_scene_count`: 13
+- `r3_scene_count`: 15
 - `errors`: 0
 - `warnings`: 1
 
@@ -13,10 +13,10 @@
 
 | role_code | candidates | candidate_missing | menu_overlap | r3_scene_hits | status |
 | --- | ---: | ---: | ---: | ---: | --- |
-| executive | 5 | 0 | 0 | 8 | PASS |
+| executive | 5 | 0 | 0 | 10 | PASS |
 | finance | 3 | 0 | 0 | 9 | PASS |
 | owner | 2 | 0 | 0 | 0 | PASS |
-| pm | 4 | 0 | 0 | 9 | PASS |
+| pm | 4 | 0 | 0 | 11 | PASS |
 
 ## R3 Scene Role Variants
 
@@ -31,6 +31,8 @@
 | finance.payment_requests | 2 |  | PASS |
 | finance.settlement_orders | 2 |  | PASS |
 | finance.workspace | 2 |  | PASS |
+| portal.dashboard | 2 |  | PASS |
+| portal.lifecycle | 2 |  | PASS |
 | project.management | 2 |  | PASS |
 | projects.intake | 2 |  | PASS |
 | projects.ledger | 2 |  | PASS |

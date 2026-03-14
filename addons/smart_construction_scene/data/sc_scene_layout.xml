@@ -159,6 +159,41 @@
                     }
                 ],
                 'related_scenes': ['project.management', 'projects.dashboard', 'risk.center'],
+                'action_specs': {
+                    'open_projects_dashboard': {
+                        'label': '查看项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_risk_center': {
+                        'label': '查看风险提醒',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_projects_dashboard', 'open_risk_center'],
+                        'focus_zones': ['stage_progress', 'blocking_items']
+                    },
+                    'executive': {
+                        'default_actions': ['open_projects_dashboard'],
+                        'focus_zones': ['lifecycle_overview', 'stage_progress']
+                    }
+                },
+                'data_sources': {
+                    'lifecycle_progress': {
+                        'source_type': 'computed',
+                        'provider': 'portal.lifecycle.progress'
+                    },
+                    'lifecycle_blockers': {
+                        'source_type': 'computed',
+                        'provider': 'portal.lifecycle.blockers'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_projects_dashboard',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/s/projects.dashboard'
                 }
@@ -263,6 +298,41 @@
                     }
                 ],
                 'related_scenes': ['project.management', 'projects.list', 'risk.center'],
+                'action_specs': {
+                    'open_project_management': {
+                        'label': '进入项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_projects_list': {
+                        'label': '查看项目列表',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_project_management', 'open_projects_list'],
+                        'focus_zones': ['focus_actions', 'alerts']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_management'],
+                        'focus_zones': ['overview', 'focus_actions']
+                    }
+                },
+                'data_sources': {
+                    'portal_dashboard_summary': {
+                        'source_type': 'computed',
+                        'provider': 'portal.dashboard.summary'
+                    },
+                    'portal_dashboard_alerts': {
+                        'source_type': 'computed',
+                        'provider': 'portal.dashboard.alerts'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_project_management',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/'
                 }

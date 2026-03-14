@@ -31,8 +31,8 @@
 | data.dictionary | 业务字典 | data | `/s/data.dictionary` | data_dictionary | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| portal.dashboard | 工作台 | portal | `/` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
+| portal.dashboard | 工作台 | portal | `/` | workspace | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
+| portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R3 | smart_construction_scene | 维护角色策略与动作链路稳定性 |
 | projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | projects.dashboard_showcase | 项目驾驶舱（演示） | project | `/s/projects.dashboard_showcase` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | scene_smoke_default | Scene Smoke Default | scene_smoke_default | `/workbench?scene=scene_smoke_default` | others | R1 | smart_construction_scene | 保持测试场景最小可用并隔离生产入口 |
