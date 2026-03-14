@@ -27,6 +27,7 @@
 | finance.workspace | 资金管理工作台 | finance | `/s/finance.workspace` | finance_management | R3 | smart_construction_scene | 维护资金角色编排与异常策略 |
 | finance.payment_requests | 付款收款申请 | finance | `/s/finance.payment_requests` | finance_management | R3 | smart_construction_scene | 维护审批角色编排与风险动作模板 |
 | finance.settlement_orders | 结算单 | finance | `/s/finance.settlement_orders` | finance_management | R3 | smart_construction_scene | 维护结算角色动作与风险闭环策略 |
+| risk.center | 风险提醒工作台 | risk | `/s/risk.center` | risk_management | R2 | smart_construction_scene | 进入主线后补齐角色策略与数据契约 |
 
 ## 使用规则（冻结）
 
