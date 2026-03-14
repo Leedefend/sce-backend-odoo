@@ -33,7 +33,7 @@
 | portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
 | portal.dashboard | 工作台 | portal | `/` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
-| projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R2 | smart_construction_scene | 补齐角色策略与数据契约升级到R3 |
 | projects.dashboard_showcase | 项目驾驶舱（演示） | project | TARGET_MISSING | project_management | R0 | smart_construction_scene | 补齐路由与入口后升级到R1 |
 | scene_smoke_default | Scene Smoke Default | scene_smoke_default | `/workbench?scene=scene_smoke_default` | others | R1 | smart_construction_scene | 保持测试场景最小可用并隔离生产入口 |
 

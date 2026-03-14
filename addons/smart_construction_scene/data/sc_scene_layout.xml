@@ -670,7 +670,37 @@
                 'code': 'projects.dashboard',
                 'name': '项目驾驶舱',
                 'version': 'v2',
+                'page': {
+                    'key': 'projects.dashboard.main',
+                    'title': '项目驾驶舱',
+                    'page_type': 'dashboard',
+                    'page_mode': 'dashboard'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'dashboard_summary',
+                        'title': '项目概览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.dashboard.summary'
+                    },
+                    {
+                        'key': 'dashboard_progress',
+                        'title': '执行进展',
+                        'zone_type': 'primary',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.dashboard.progress'
+                    },
+                    {
+                        'key': 'dashboard_risk',
+                        'title': '风险关注',
+                        'zone_type': 'supporting',
+                        'display_mode': 'list',
+                        'block_key': 'block.projects.dashboard.risk'
+                    }
+                ],
+                'related_scenes': ['project.management', 'projects.list', 'risk.center'],
                 'target': {
                     'route': '/pm/dashboard',
                     'action_xmlid': 'smart_construction_core.action_project_dashboard',
