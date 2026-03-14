@@ -119,3 +119,23 @@
 - ✅ Round20 已落地：
   - `portal.lifecycle` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
   - inventory 对应场景升级到 `R3`
+- ✅ Round21 已落地：
+  - `my_work.workspace` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+- ✅ Round22 已落地：
+  - `portal.capability_matrix` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+- ✅ Round23 已落地：
+  - `projects.dashboard` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+  - `R2-R3` 队列进入收敛阶段
+- ✅ Round24 已落地：
+  - `projects.dashboard_showcase` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+- ✅ Round25 已落地：
+  - `data.dictionary` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+- ✅ Round26 已落地：
+  - `risk.center` 完成 `R2 -> R3` 升级（补齐 `action_specs/role_variants/data_sources/product_policy`）
+  - inventory 对应场景升级到 `R3`
+  - `R2-R3` 升级队列清空
