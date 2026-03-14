@@ -60,3 +60,7 @@
   - 新增 `scene_role_surface_consistency_guard`，校验 `role_surface_overrides` 与 R3 `role_variants` 一致性
   - 新增冲突检测：角色合法性、allow/blocklist 冲突、R3 场景未知角色
   - 输出 `scene_role_surface_consistency_report` 供后续收敛告警项
+- ✅ Round5 已落地：
+  - `risk.center` 纳入 inventory（`R2`），移除 freeze guard legacy exemption
+  - `scene_inventory_freeze_guard_exemptions` 从 `1` 收敛至 `0`
+  - 完成 Legacy Exemption Burn-down 阶段目标
