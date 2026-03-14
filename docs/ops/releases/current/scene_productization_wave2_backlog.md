@@ -68,3 +68,7 @@
   - 新增 `scene_inventory_draft_diff_report`：自动从 scene payload 生成 inventory 草案
   - 输出草案对比报告（含 `scene_key/maturity_level/owner_module/next_action` 重点差异）
   - `Makefile` 新增 `verify.scene.inventory.draft.diff.report` 入口
+- ✅ Round7 已落地：
+  - 将 8 个候选场景批量回填进正式 inventory（按 `R0/R1` 过渡分级）
+  - inventory 与 payload 草案实现 `added/removed = 0` 对齐
+  - role surface 一致性告警从 `3` 收敛至 `1`

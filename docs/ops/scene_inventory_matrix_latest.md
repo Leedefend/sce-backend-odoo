@@ -28,6 +28,14 @@
 | finance.payment_requests | 付款收款申请 | finance | `/s/finance.payment_requests` | finance_management | R3 | smart_construction_scene | 维护审批角色编排与风险动作模板 |
 | finance.settlement_orders | 结算单 | finance | `/s/finance.settlement_orders` | finance_management | R3 | smart_construction_scene | 维护结算角色动作与风险闭环策略 |
 | risk.center | 风险提醒工作台 | risk | `/s/risk.center` | risk_management | R2 | smart_construction_scene | 进入主线后补齐角色策略与数据契约 |
+| data.dictionary | 业务字典 | data | TARGET_MISSING | data_dictionary | R0 | smart_construction_scene | 补齐路由与入口后升级到R1 |
+| my_work.workspace | 我的工作 | my_work | `/s/my_work.workspace` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| portal.capability_matrix | 能力矩阵 | portal | `/s/project.management` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| portal.dashboard | 工作台 | portal | `/` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| portal.lifecycle | 生命周期驾驶舱 | portal | `/s/projects.dashboard` | workspace | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| projects.dashboard | 项目驾驶舱 | project | `/pm/dashboard` | project_management | R1 | smart_construction_scene | 补齐产品编排后升级到R2 |
+| projects.dashboard_showcase | 项目驾驶舱（演示） | project | TARGET_MISSING | project_management | R0 | smart_construction_scene | 补齐路由与入口后升级到R1 |
+| scene_smoke_default | Scene Smoke Default | scene_smoke_default | `/workbench?scene=scene_smoke_default` | others | R1 | smart_construction_scene | 保持测试场景最小可用并隔离生产入口 |
 
 ## 使用规则（冻结）
 
