@@ -1234,6 +1234,10 @@ verify.scene.role.policy.consistency.guard: guard.prod.forbid
 verify.scene.data_source.schema.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_data_source_schema_guard.py
 
+.PHONY: verify.scene.r3.runtime.guard
+verify.scene.r3.runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_r3_runtime_guard.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
