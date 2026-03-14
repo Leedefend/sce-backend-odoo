@@ -594,6 +594,11 @@ const workspacePageOrchestrationV1 = computed(() => (
     ? workspaceHome.value.page_orchestration_v1 as Record<string, unknown>
     : {}
 ));
+const workspaceSceneContractV1 = computed(() => (
+  workspaceHome.value.scene_contract_v1 && typeof workspaceHome.value.scene_contract_v1 === 'object'
+    ? workspaceHome.value.scene_contract_v1 as Record<string, unknown>
+    : {}
+));
 const workspacePageOrchestrationV1DataSources = computed(() => (
   workspacePageOrchestrationV1.value.data_sources && typeof workspacePageOrchestrationV1.value.data_sources === 'object'
     ? workspacePageOrchestrationV1.value.data_sources as Record<string, unknown>
@@ -606,11 +611,16 @@ const useUnifiedHomeRenderer = computed(() => {
   if (asText(route.query.legacy_home) === '1') return false;
   const contract = homeOrchestrationContract.value || {};
   const zones = Array.isArray(contract.zones) ? contract.zones : [];
+  const sceneZones = Array.isArray(workspaceSceneContractV1.value.zones)
+    ? workspaceSceneContractV1.value.zones
+    : [];
   const page = contract.page && typeof contract.page === 'object'
     ? contract.page as Record<string, unknown>
     : {};
   const hasV1 = asText(contract.schema_version) === 'v1';
   const isDashboard = asText(page.key) === 'workspace.home';
+  const hasSceneContract = asText(workspaceSceneContractV1.value.contract_version) === 'v1' && sceneZones.length > 0;
+  if (hasSceneContract) return true;
   return hasV1 && isDashboard && zones.length > 0;
 });
 const orchestrationBlocks = computed(() => {

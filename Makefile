@@ -1424,6 +1424,10 @@ verify.project.management.productization: guard.prod.forbid verify.project.dashb
 verify.frontend.project_management.scene_bridge.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_project_management_scene_bridge_guard.py
 
+.PHONY: verify.frontend.scene_contract_v1.consumption.guard
+verify.frontend.scene_contract_v1.consumption.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_scene_contract_v1_consumption_guard.py
+
 .PHONY: verify.project.management.acceptance
 verify.project.management.acceptance: guard.prod.forbid verify.project.management.productization verify.frontend.project_management.scene_bridge.guard
 	@python3 scripts/verify/project_management_productization_acceptance_export.py

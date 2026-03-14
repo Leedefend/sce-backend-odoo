@@ -48,9 +48,19 @@ type RawZone = {
 type DashboardResponse = {
   scene?: { key?: string; page?: string };
   page?: { key?: string; title?: string; route?: string };
+  scene_contract_v1?: Record<string, unknown>;
   route_context?: Record<string, unknown>;
   project?: Record<string, unknown>;
   zones?: Record<string, RawZone>;
+};
+
+type SceneContractV1Zone = {
+  key?: string;
+  title?: string;
+  zone_type?: string;
+  display_mode?: string;
+  block_keys?: string[];
+  priority?: number;
 };
 
 const route = useRoute();
@@ -420,13 +430,44 @@ function normalizeDatasetByBlock(block: RawBlock) {
   return data;
 }
 
+function asSceneContractV1(payload: DashboardResponse | null): Record<string, unknown> {
+  const rawContract = payload?.scene_contract_v1;
+  return rawContract && typeof rawContract === 'object' ? rawContract as Record<string, unknown> : {};
+}
+
+function resolveDashboardZones(payload: DashboardResponse | null) {
+  const sceneContract = asSceneContractV1(payload);
+  const zonesV1 = Array.isArray(sceneContract.zones) ? sceneContract.zones as SceneContractV1Zone[] : [];
+  const blocksV1 = sceneContract.blocks && typeof sceneContract.blocks === 'object'
+    ? sceneContract.blocks as Record<string, RawBlock>
+    : {};
+  if (zonesV1.length > 0 && Object.keys(blocksV1).length > 0) {
+    return zonesV1.map((zone, index) => {
+      const zoneKey = asText(zone.key || `zone_${index + 1}`);
+      const blockKeys = Array.isArray(zone.block_keys) ? zone.block_keys : [];
+      const blocks = blockKeys
+        .map((blockKey) => blocksV1[asText(blockKey)])
+        .filter((block): block is RawBlock => Boolean(block && typeof block === 'object'));
+      return {
+        zone_key: zoneKey,
+        title: asText(zone.title || ''),
+        zone_type: asText(zone.zone_type || ''),
+        display_mode: asText(zone.display_mode || ''),
+        blocks,
+      } as RawZone;
+    });
+  }
+  const zonesRaw = payload?.zones && typeof payload.zones === 'object'
+    ? Object.values(payload.zones)
+    : [];
+  return zonesRaw as RawZone[];
+}
+
 const orchestrationContract = computed<PageOrchestrationContract>(() => {
   const payload = raw.value || {};
   const projectName = asText((payload.project && typeof payload.project === 'object') ? (payload.project as Record<string, unknown>).name : '');
   const projectHint = projectName ? ` · ${projectName}` : '';
-  const zonesRaw = payload.zones && typeof payload.zones === 'object'
-    ? Object.values(payload.zones)
-    : [];
+  const zonesRaw = resolveDashboardZones(payload);
   const zones: PageOrchestrationZone[] = zonesRaw.map((zone, idx) => {
     const zoneKey = asText(zone.zone_key || `zone_${idx + 1}`);
     const zoneName = normalizeZoneName(zoneKey);
@@ -486,9 +527,7 @@ const orchestrationContract = computed<PageOrchestrationContract>(() => {
 
 const orchestrationDatasets = computed<Record<string, unknown>>(() => {
   const payload = raw.value || {};
-  const zonesRaw = payload.zones && typeof payload.zones === 'object'
-    ? Object.values(payload.zones)
-    : [];
+  const zonesRaw = resolveDashboardZones(payload);
   const datasets: Record<string, unknown> = {};
   zonesRaw.forEach((zone) => {
     const blocks = Array.isArray(zone.blocks) ? zone.blocks : [];
