@@ -71,6 +71,114 @@ def _load_inventory(path: Path) -> dict[str, dict[str, str]]:
     return out
 
 
+def _route_from_inventory(route_target: str) -> str:
+    text = str(route_target or "").strip()
+    if text.startswith("`") and text.endswith("`") and len(text) >= 2:
+        text = text[1:-1].strip()
+    return text
+
+
+def _is_route_openable(route: str) -> bool:
+    text = str(route or "").strip()
+    if not text:
+        return False
+    if "TARGET_MISSING" in text:
+        return False
+    return text.startswith("/")
+
+
+def _guess_scene_keys_from_action(action_key: str) -> list[str]:
+    key = str(action_key or "").strip()
+    if key.startswith("open_"):
+        key = key[len("open_") :]
+    elif key.startswith("go_"):
+        key = key[len("go_") :]
+    key = key.strip("_")
+    if not key:
+        return []
+
+    segments = [part for part in key.split("_") if part]
+    dotted = ".".join(segments)
+    candidates: list[str] = []
+    if dotted:
+        candidates.append(dotted)
+
+    if segments and segments[0] == "project" and len(segments) > 1:
+        candidates.append("projects." + ".".join(segments[1:]))
+        candidates.append("project." + ".".join(segments[1:]))
+
+    dedup: list[str] = []
+    seen: set[str] = set()
+    for item in candidates:
+        if item and item not in seen:
+            dedup.append(item)
+            seen.add(item)
+    return dedup
+
+
+def _resolve_inventory_route(scene_key: str, inventory: dict[str, dict[str, str]]) -> str:
+    row = inventory.get(scene_key) or {}
+    return _route_from_inventory(str(row.get("route_target") or ""))
+
+
+def _resolve_primary_action_route(scene_key: str, payload: dict, inventory: dict[str, dict[str, str]]) -> tuple[str, str]:
+    product_policy = payload.get("product_policy") if isinstance(payload.get("product_policy"), dict) else {}
+    action_specs = payload.get("action_specs") if isinstance(payload.get("action_specs"), dict) else {}
+    related_scenes = payload.get("related_scenes") if isinstance(payload.get("related_scenes"), list) else []
+
+    primary_action = str(product_policy.get("primary_action") or "").strip()
+    if not primary_action:
+        return "", f"{scene_key}: product_policy.primary_action is empty"
+
+    action_spec = action_specs.get(primary_action)
+    if not isinstance(action_spec, dict):
+        return "", f"{scene_key}: action_specs missing primary_action={primary_action}"
+
+    intent = str(action_spec.get("intent") or "").strip()
+    if intent != "ui.contract":
+        return "N/A", ""
+
+    direct_route = _route_from_inventory(str(action_spec.get("route") or action_spec.get("target_route") or ""))
+    if _is_route_openable(direct_route):
+        return direct_route, ""
+
+    for scene_field in ("scene_key", "target_scene", "scene"):
+        target_scene = str(action_spec.get(scene_field) or "").strip()
+        if not target_scene:
+            continue
+        route = _resolve_inventory_route(target_scene, inventory)
+        if _is_route_openable(route):
+            return route, ""
+
+    related_keys = [str(item or "").strip() for item in related_scenes if str(item or "").strip()]
+    for candidate in _guess_scene_keys_from_action(primary_action):
+        if candidate in related_keys:
+            route = _resolve_inventory_route(candidate, inventory)
+            if _is_route_openable(route):
+                return route, ""
+
+    action_tail = primary_action
+    if action_tail.startswith("open_"):
+        action_tail = action_tail[len("open_") :]
+    action_tail = action_tail.strip("_")
+    tail_token = action_tail.split("_")[-1] if action_tail else ""
+    for related in related_keys:
+        related_parts = related.split(".")
+        if action_tail and (related.endswith(action_tail.replace("_", ".")) or related_parts[-1] == tail_token):
+            route = _resolve_inventory_route(related, inventory)
+            if _is_route_openable(route):
+                return route, ""
+
+    target = payload.get("target") if isinstance(payload.get("target"), dict) else {}
+    self_route = _route_from_inventory(str(target.get("route") or ""))
+    if not _is_route_openable(self_route):
+        self_route = _resolve_inventory_route(scene_key, inventory)
+    if _is_route_openable(self_route):
+        return self_route, ""
+
+    return "", f"{scene_key}: cannot resolve openable route for primary_action={primary_action}"
+
+
 def _extract_payload_texts(path: Path) -> list[str]:
     lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
     blocks: list[str] = []
@@ -141,12 +249,13 @@ def _zone_keys(payload: dict) -> set[str]:
     return out
 
 
-def _validate_r3_scene(scene_key: str, payload: dict) -> tuple[dict[str, bool], list[str]]:
+def _validate_r3_scene(scene_key: str, payload: dict, inventory: dict[str, dict[str, str]]) -> tuple[dict[str, bool], list[str]]:
     checks: dict[str, bool] = {
         "has_role_variants": False,
         "has_data_sources": False,
         "has_product_policy": False,
         "primary_action_resolved": False,
+        "action_chain_openable": False,
         "role_zone_mapping_valid": False,
     }
     errors: list[str] = []
@@ -165,6 +274,11 @@ def _validate_r3_scene(scene_key: str, payload: dict) -> tuple[dict[str, bool], 
     checks["primary_action_resolved"] = bool(primary_action and primary_action in action_specs)
     if not checks["primary_action_resolved"]:
         errors.append(f"{scene_key}: product_policy.primary_action missing or not in action_specs")
+    else:
+        route, route_error = _resolve_primary_action_route(scene_key, payload, inventory)
+        checks["action_chain_openable"] = _is_route_openable(route) or route == "N/A"
+        if not checks["action_chain_openable"] and route_error:
+            errors.append(route_error)
 
     role_zone_ok = True
     for role_code, config in role_variants.items():
@@ -204,11 +318,11 @@ def _write_report(path: Path, rows: list[dict], summary: dict[str, int]) -> None
     lines.append("")
     lines.append("## Checks")
     lines.append("")
-    lines.append("| scene_key | has_role_variants | has_data_sources | has_product_policy | primary_action_resolved | role_zone_mapping_valid | status |")
-    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    lines.append("| scene_key | has_role_variants | has_data_sources | has_product_policy | primary_action_resolved | action_chain_openable | role_zone_mapping_valid | status |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for row in rows:
         lines.append(
-            "| {scene_key} | {has_role_variants} | {has_data_sources} | {has_product_policy} | {primary_action_resolved} | {role_zone_mapping_valid} | {status} |".format(
+            "| {scene_key} | {has_role_variants} | {has_data_sources} | {has_product_policy} | {primary_action_resolved} | {action_chain_openable} | {role_zone_mapping_valid} | {status} |".format(
                 **row
             )
         )
@@ -251,13 +365,14 @@ def main() -> int:
                     "has_data_sources": "❌",
                     "has_product_policy": "❌",
                     "primary_action_resolved": "❌",
+                    "action_chain_openable": "❌",
                     "role_zone_mapping_valid": "❌",
                     "status": "FAIL",
                 }
             )
             continue
 
-        checks, scene_errors = _validate_r3_scene(scene_key, payload)
+        checks, scene_errors = _validate_r3_scene(scene_key, payload, inventory)
         errors.extend(scene_errors)
         all_pass = all(checks.values())
         rows.append(
@@ -267,6 +382,7 @@ def main() -> int:
                 "has_data_sources": "✅" if checks["has_data_sources"] else "❌",
                 "has_product_policy": "✅" if checks["has_product_policy"] else "❌",
                 "primary_action_resolved": "✅" if checks["primary_action_resolved"] else "❌",
+                "action_chain_openable": "✅" if checks["action_chain_openable"] else "❌",
                 "role_zone_mapping_valid": "✅" if checks["role_zone_mapping_valid"] else "❌",
                 "status": "PASS" if all_pass else "FAIL",
             }
@@ -295,4 +411,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
