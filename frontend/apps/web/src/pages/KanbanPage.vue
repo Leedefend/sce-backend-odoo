@@ -151,6 +151,29 @@ function fieldLabel(name: string) {
 function handleCard(row: Record<string, unknown>) {
   props.onCardClick(row);
 }
+
+function formatValue(value: unknown) {
+  if (Array.isArray(value)) {
+    if (value.length > 1 && value[1] !== null && value[1] !== undefined) {
+      return String(value[1]);
+    }
+    if (value.length > 0 && value[0] !== null && value[0] !== undefined) {
+      return String(value[0]);
+    }
+    return '';
+  }
+  if (value && typeof value === 'object') {
+    const maybeName = (value as Record<string, unknown>).name;
+    if (maybeName !== null && maybeName !== undefined && String(maybeName).trim()) {
+      return String(maybeName);
+    }
+    return '';
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value);
+}
 </script>
 
 <style scoped>
