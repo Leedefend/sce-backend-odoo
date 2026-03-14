@@ -54,6 +54,8 @@
 - 新增守卫：`scripts/verify/scene_provider_registry_guard.py`
 - Make target：`make verify.scene.provider.registry.guard`
 - 纳入平台核验链：`verify.platform.kernel.ready`
+- 核心 API 边界守卫：`verify.scene.core_api_boundary.guard`
+  - `smart_scene.core.__init__` 不再导出 path-resolver API，仅导出 registry 能力。
 
 ## 8. 后续演进
 - P1：provider 诊断字段进入 `scene_contract_v1.diagnostics.provider_trace`
