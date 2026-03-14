@@ -64,3 +64,7 @@
   - `risk.center` 纳入 inventory（`R2`），移除 freeze guard legacy exemption
   - `scene_inventory_freeze_guard_exemptions` 从 `1` 收敛至 `0`
   - 完成 Legacy Exemption Burn-down 阶段目标
+- ✅ Round6 已落地：
+  - 新增 `scene_inventory_draft_diff_report`：自动从 scene payload 生成 inventory 草案
+  - 输出草案对比报告（含 `scene_key/maturity_level/owner_module/next_action` 重点差异）
+  - `Makefile` 新增 `verify.scene.inventory.draft.diff.report` 入口
