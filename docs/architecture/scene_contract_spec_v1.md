@@ -25,6 +25,7 @@
   "contract_version": "v1",
   "scene": {},
   "page": {},
+  "nav_ref": {},
   "zones": [],
   "blocks": {},
   "actions": {},
@@ -67,7 +68,18 @@
   - `subtitle_fields: string[]`（可选）
   - `page_status: string`（可选，示例：`ready`/`empty`/`readonly`）
 
-### 4.4 `zones`
+### 4.4 `nav_ref`
+
+- 类型：`object`
+- 必填：是（可为空对象）
+- 作用：页面契约与壳层导航联动的轻量引用，不承载完整导航树。
+- 字段：
+  - `active_scene_key: string`（可选）
+  - `active_menu_id: number | null`（可选）
+  - `active_menu_key: string`（可选）
+- 约束：禁止在 `nav_ref` 内输出完整导航树。
+
+### 4.5 `zones`
 
 - 类型：`array`
 - 必填：是
@@ -78,7 +90,7 @@
   - `visible: boolean`（可选，默认 `true`）
   - `block_keys: string[]`（必填，对应 `blocks` 中的 key）
 
-### 4.5 `blocks`
+### 4.6 `blocks`
 
 - 类型：`object`
 - 必填：是
@@ -94,7 +106,7 @@
   - `payload: object`（可选）
   - `actions: string[]`（可选，引用 `actions`）
 
-### 4.6 `actions`
+### 4.7 `actions`
 
 - 类型：`object`
 - 必填：是
@@ -114,7 +126,7 @@
 - `reason: string`（可选，禁用原因）
 - `params: object`（可选）
 
-### 4.7 `permissions`
+### 4.8 `permissions`
 
 - 类型：`object`
 - 必填：是
@@ -126,7 +138,7 @@
   - `disabled_actions: object`（可选，`action_key -> reason`）
   - `record_state_summary: object`（可选）
 
-### 4.8 `record`
+### 4.9 `record`
 
 - 类型：`object`
 - 必填：是
@@ -136,7 +148,7 @@
   - `summary: object`（可选）
   - `relations: object`（可选）
 
-### 4.9 `extensions`
+### 4.10 `extensions`
 
 - 类型：`object`
 - 必填：是（可为空对象）
@@ -145,7 +157,7 @@
   - `injected_actions: string[]`
   - `providers: string[]`
 
-### 4.10 `diagnostics`
+### 4.11 `diagnostics`
 
 - 类型：`object`
 - 必填：是（可为空对象）
@@ -274,4 +286,3 @@
 ## 10. 一句话结论
 
 `Scene Contract v1` 是前端唯一可消费页面协议；后端编排层必须输出稳定结构，前端不得再基于模型特判重组页面语义。
-
