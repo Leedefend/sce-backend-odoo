@@ -7,6 +7,7 @@ import ActionView from '../views/ActionView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
+import MyWorkView from '../views/MyWorkView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
 import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
@@ -43,7 +44,7 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: LoginView },
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
-    { path: '/my-work', name: 'my-work', redirect: '/s/my_work.workspace', meta: { layout: 'shell' } },
+    { path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },

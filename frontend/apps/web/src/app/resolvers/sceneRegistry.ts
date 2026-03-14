@@ -66,6 +66,16 @@ export const DEFAULT_SCENE_LAYOUT: SceneLayout = {
 let sceneRegistry: Scene[] = [];
 let errors: Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }> = [];
 
+const SCENE_ROUTE_OVERRIDES: Record<string, string> = {
+  'my_work.workspace': '/my-work',
+};
+
+function resolveSceneRoute(code: string, route: string): string {
+  const override = SCENE_ROUTE_OVERRIDES[code];
+  if (override) return override;
+  return route;
+}
+
 function normalizeSceneLayout(layout?: Partial<SceneLayout> | null): SceneLayout {
   if (!layout || typeof layout !== 'object') {
     return { ...DEFAULT_SCENE_LAYOUT };
@@ -98,7 +108,7 @@ function coerceSceneSource(source: Scene[]) {
         default_sort?: string;
       };
       if (raw?.code) {
-        const route = raw.route || `/s/${raw.code}`;
+        const route = resolveSceneRoute(raw.code, raw.route || `/s/${raw.code}`);
         const target =
           raw.target && typeof raw.target === 'object' && (
             raw.target.action_id ||
@@ -106,8 +116,11 @@ function coerceSceneSource(source: Scene[]) {
             raw.target.model ||
             raw.target.route
           )
-            ? raw.target
-            : { route: `/s/${raw.code}` };
+            ? {
+                ...raw.target,
+                route: resolveSceneRoute(raw.code, String(raw.target.route || route)),
+              }
+            : { route };
         return {
           key: raw.code,
           label: raw.name || raw.code,
