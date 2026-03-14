@@ -37,8 +37,10 @@
 
 - `scripts/verify/scene_r3_runtime_guard.py`
 - `scripts/verify/scene_role_policy_consistency_guard.py`
+- `scripts/verify/scene_role_surface_consistency_guard.py`
 - `scripts/verify/scene_data_source_schema_guard.py`
 - `docs/ops/audit/scene_r3_runtime_dashboard.md`
+- `docs/ops/audit/scene_role_surface_consistency_report.md`
 
 ## Progress
 
@@ -54,3 +56,7 @@
   - `scene_r3_runtime_guard` 增加动作链观测列：`action_chain_status/resolution/route`
   - 动作链汇总指标：`success/fallback/fail`
   - 支持主动作 route 解析回退链路（direct / scene_ref / related / self_target）
+- ✅ Round4 已落地：
+  - 新增 `scene_role_surface_consistency_guard`，校验 `role_surface_overrides` 与 R3 `role_variants` 一致性
+  - 新增冲突检测：角色合法性、allow/blocklist 冲突、R3 场景未知角色
+  - 输出 `scene_role_surface_consistency_report` 供后续收敛告警项
