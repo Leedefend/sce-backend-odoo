@@ -46,6 +46,11 @@ export interface CapabilityRuntimeMeta {
   group_label: string;
 }
 
+export interface SceneActionHint {
+  actionId: number;
+  menuId?: number;
+}
+
 export interface ProductFacts {
   license: {
     level: string;
@@ -178,6 +183,7 @@ export interface SessionState {
   roleSurface: RoleSurface | null;
   roleSurfaceMap: RoleSurfaceMap;
   capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
+  sceneActionHints: Record<string, SceneActionHint>;
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
   workspaceHome: WorkspaceHomeContract | null;
@@ -211,6 +217,7 @@ export const useSessionStore = defineStore('session', {
     roleSurface: null,
     roleSurfaceMap: {},
     capabilityCatalog: {},
+    sceneActionHints: {},
     capabilityGroups: [],
     productFacts: {
       license: null,
@@ -250,6 +257,7 @@ export const useSessionStore = defineStore('session', {
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
+          this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           this.workspaceHome = parsed.workspaceHome ?? null;
@@ -289,6 +297,7 @@ export const useSessionStore = defineStore('session', {
       this.roleSurface = null;
       this.roleSurfaceMap = {};
       this.capabilityCatalog = {};
+      this.sceneActionHints = {};
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
       this.workspaceHome = null;
@@ -343,6 +352,7 @@ export const useSessionStore = defineStore('session', {
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
         capabilityCatalog: this.capabilityCatalog,
+        sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
         workspaceHome: this.workspaceHome,
@@ -494,6 +504,39 @@ export const useSessionStore = defineStore('session', {
           group_key: String(item.group_key || ''),
           group_label: String(item.group_label || ''),
         };
+        return acc;
+      }, {});
+      this.sceneActionHints = rawCapabilities.reduce<Record<string, SceneActionHint>>((acc, item) => {
+        if (!item || typeof item === 'string') {
+          return acc;
+        }
+        const capability = item as Record<string, unknown>;
+        const rawPayload = capability.default_payload;
+        const payload = (rawPayload && typeof rawPayload === 'object')
+          ? (rawPayload as Record<string, unknown>)
+          : {};
+        const actionId = Number(payload.action_id || 0);
+        const menuId = Number(payload.menu_id || 0) || undefined;
+        if (actionId <= 0) {
+          return acc;
+        }
+        const payloadSceneKey = String(payload.scene_key || '').trim();
+        const payloadRoute = String(payload.route || '').trim();
+        let sceneKey = payloadSceneKey;
+        if (!sceneKey && payloadRoute) {
+          try {
+            const routeUrl = new URL(payloadRoute, 'http://localhost');
+            sceneKey = String(routeUrl.searchParams.get('scene') || '').trim();
+          } catch {
+            sceneKey = '';
+          }
+        }
+        if (!sceneKey) {
+          return acc;
+        }
+        if (!acc[sceneKey]) {
+          acc[sceneKey] = { actionId, menuId };
+        }
         return acc;
       }, {});
       this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
