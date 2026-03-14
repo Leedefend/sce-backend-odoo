@@ -975,6 +975,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
+	@$(MAKE) --no-print-directory gate.scene.r3.runtime.strict
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
 	  $(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.menu.scene_resolve.summary; \
