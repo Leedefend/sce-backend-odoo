@@ -126,6 +126,7 @@ import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, 
 import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { resolvePageOrchestrationContractFromSceneV1 } from '../app/sceneContractV1';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import type { Scene } from '../app/resolvers/sceneRegistry';
@@ -206,66 +207,12 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
 
-function normalizeSceneContractV1ToPageContract(raw: unknown): PageOrchestrationContract {
-  if (!raw || typeof raw !== 'object') return {} as PageOrchestrationContract;
-  const source = raw as Record<string, unknown>;
-  if (asText(source.contract_version) !== 'v1') return {} as PageOrchestrationContract;
-  const zones = Array.isArray(source.zones) ? source.zones as Array<Record<string, unknown>> : [];
-  const blocks = source.blocks && typeof source.blocks === 'object'
-    ? source.blocks as Record<string, Record<string, unknown>>
-    : {};
-  if (!zones.length || !Object.keys(blocks).length) return {} as PageOrchestrationContract;
-
-  const normalizedZones = zones.map((zone, zoneIndex) => {
-    const blockKeys = Array.isArray(zone.block_keys) ? zone.block_keys : [];
-    const normalizedBlocks = blockKeys
-      .map((key, blockIndex) => {
-        const blockKey = asText(key);
-        const block = (blockKey ? blocks[blockKey] : {}) || {};
-        return {
-          key: blockKey || `block_${zoneIndex + 1}_${blockIndex + 1}`,
-          block_type: asText(block.block_type || block.type || 'record_summary'),
-          title: asText(block.title || blockKey),
-          priority: Number(block.priority || (100 - blockIndex)),
-          data_source: asText(block.data_source || `ds_${blockKey || `${zoneIndex + 1}_${blockIndex + 1}`}`),
-          section_key: asText(block.section_key),
-          source_path: asText(block.source_path),
-          zone: asText(block.zone || zone.zone_type),
-          visible: block.visible !== false,
-          focus: block.focus === true,
-        };
-      })
-      .filter((row) => asText(row.key));
-    return {
-      key: asText(zone.key || `zone_${zoneIndex + 1}`),
-      title: asText(zone.title),
-      zone_type: asText(zone.zone_type || 'secondary'),
-      display_mode: asText(zone.display_mode || 'stack'),
-      priority: Number(zone.priority || 0),
-      blocks: normalizedBlocks,
-    };
-  });
-
-  return {
-    contract_version: 'page_orchestration_v1',
-    scene_key: asText((source.scene as Record<string, unknown> | undefined)?.scene_key),
-    page: {
-      key: asText((source.page as Record<string, unknown> | undefined)?.key),
-      title: asText((source.page as Record<string, unknown> | undefined)?.title),
-      page_type: 'workspace',
-      layout_mode: 'workspace',
-    },
-    zones: normalizedZones,
-  } as PageOrchestrationContract;
-}
-
 const workbenchOrchestrationContract = computed<PageOrchestrationContract>(() => {
-  const sceneContractV1 = normalizeSceneContractV1ToPageContract(pageContract.contract.value?.scene_contract_v1);
-  if (Array.isArray(sceneContractV1.zones) && sceneContractV1.zones.length > 0) {
-    return sceneContractV1;
-  }
-  const contract = pageContract.contract.value?.page_orchestration_v1;
-  return (contract && typeof contract === 'object' ? contract : {}) as PageOrchestrationContract;
+  return resolvePageOrchestrationContractFromSceneV1(
+    pageContract.contract.value?.scene_contract_v1,
+    pageContract.contract.value?.page_orchestration_v1,
+    { pageType: 'workspace', layoutMode: 'workspace' },
+  );
 });
 const useUnifiedWorkbenchRenderer = computed(() => {
   if (asText(route.query.legacy_workbench) === '1') return false;
