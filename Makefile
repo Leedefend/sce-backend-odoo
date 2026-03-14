@@ -1252,6 +1252,12 @@ verify.scene.r3.runtime.strict: guard.prod.forbid
 gate.scene.r3.runtime.strict: verify.scene.r3.runtime.strict
 	@echo "[gate.scene.r3.runtime.strict] PASS"
 
+.PHONY: verify.scene.r3.runtime.quick
+verify.scene.r3.runtime.quick: guard.prod.forbid gate.scene.r3.runtime.strict
+	@echo "[verify.scene.r3.runtime.quick] summary"
+	@sed -n '/^## Summary/,/^## Gate Thresholds/p' docs/ops/audit/scene_r3_runtime_dashboard.md | sed '$$d'
+	@sed -n '/^## Gate Result/,/^## Checks/p' docs/ops/audit/scene_r3_runtime_dashboard.md | sed '$$d'
+
 .PHONY: verify.scene.role.surface.consistency.guard
 verify.scene.role.surface.consistency.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_role_surface_consistency_guard.py

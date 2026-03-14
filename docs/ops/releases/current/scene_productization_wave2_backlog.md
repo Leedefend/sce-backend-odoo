@@ -149,3 +149,6 @@
 - ✅ Round29 已落地：
   - `gate.full` 默认接入 `gate.scene.r3.runtime.strict`
   - `codex.run FLOW=gate` 通过 `gate.full` 自动覆盖 R3 运行态严格门禁
+- ✅ Round30 已落地：
+  - 新增 `verify.scene.r3.runtime.quick` 一键目标（严格校验 + 报表摘要输出）
+  - 用于快速确认本轮门禁效果，无需手动翻全量日志
