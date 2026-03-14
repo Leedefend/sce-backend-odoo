@@ -2356,6 +2356,7 @@ verify.system_group.business_acl.guard: guard.prod.forbid
 
 verify.platform.kernel.ready: guard.prod.forbid \
 	verify.platform.security.ready \
+	verify.scene.provider.registry.guard \
 	verify.scene_orchestration.provider_shape.guard \
 	verify.capability.provider.guard \
 	verify.capability.registry.smoke \
@@ -2513,6 +2514,9 @@ verify.backend.boundary_guard: guard.prod.forbid
 
 verify.scene.provider.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_provider_guard.py
+
+verify.scene.provider.registry.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_provider_registry_guard.py
 
 verify.scene_orchestration.provider_shape.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_orchestration_provider_shape_guard.py
