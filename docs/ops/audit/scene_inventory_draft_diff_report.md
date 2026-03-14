@@ -1,6 +1,6 @@
 # Scene Inventory Draft Diff Report
 
-更新时间：2026-03-14 20:21:22
+更新时间：2026-03-14 20:34:58
 
 ## Summary
 
@@ -8,8 +8,8 @@
 - `draft_count`: 22
 - `added_count`: 0
 - `removed_count`: 0
-- `changed_count`: 33
-- `focus_changed_count`: 30
+- `changed_count`: 31
+- `focus_changed_count`: 28
 
 ## Added Scenes
 
@@ -38,8 +38,6 @@
 | my_work.workspace | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | maturity_level | R1 | R2 |
 | portal.capability_matrix | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
-| portal.dashboard | maturity_level | R1 | R2 |
-| portal.dashboard | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | portal.lifecycle | maturity_level | R1 | R2 |
 | portal.lifecycle | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | project.management | next_action | 持续优化角色化指标与动作链路 | 维护角色策略与数据契约稳定性 |
@@ -74,8 +72,6 @@
 | my_work.workspace | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | portal.capability_matrix | maturity_level | R1 | R2 |
 | portal.capability_matrix | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
-| portal.dashboard | maturity_level | R1 | R2 |
-| portal.dashboard | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | portal.lifecycle | maturity_level | R1 | R2 |
 | portal.lifecycle | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | project.management | route_target | `/pm/dashboard` | `/s/project.management` |
