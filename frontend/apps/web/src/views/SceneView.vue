@@ -94,6 +94,18 @@ function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
+function sanitizeWorkspaceContextForLayout(
+  layoutKind: 'workspace' | 'record' | 'list' | 'ledger' | 'kanban' | 'dashboard',
+  raw: Record<string, unknown>,
+) {
+  if (layoutKind !== 'list' && layoutKind !== 'ledger') {
+    return raw;
+  }
+  const next = { ...raw };
+  delete next.project_id;
+  return next;
+}
+
 function isPortalPath(url: string) {
   return url.startsWith('/portal/');
 }
@@ -293,7 +305,10 @@ async function resolveScene() {
     const target = scene.target || {};
     const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
-    const workspaceContextQuery = resolveWorkspaceContextQuery();
+    const workspaceContextQuery = sanitizeWorkspaceContextForLayout(
+      layout.kind,
+      resolveWorkspaceContextQuery() as Record<string, unknown>,
+    );
     if (layout.kind === 'workspace') {
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);

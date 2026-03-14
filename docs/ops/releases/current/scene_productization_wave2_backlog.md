@@ -168,3 +168,6 @@
   - 前端自定义视图重构 Batch4：抽离 `HomeView` action 解析工具到 `app/homeActionResolver.ts`
   - `HomeView` 改为复用 `resolveHomeActionIntent/resolveHomeActionTarget/findEntryForHomeActionItem`
   - 统一 action fallback 解析语义，降低页面内动作逻辑散落风险
+- ✅ Round35 已落地：
+  - 修复 `projects.list` 进入后偶发空列表：`SceneView` 在 `list/ledger` 场景自动剥离透传 `project_id`
+  - 避免从上下文页面（如项目驾驶舱）继承的 `project_id` 意外影响列表数据域
