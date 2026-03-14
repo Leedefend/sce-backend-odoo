@@ -21,6 +21,44 @@
                     'route': '/s/project.management',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_management_scene'
                 },
+                'related_scenes': [
+                    'projects.intake',
+                    'projects.list',
+                    'projects.ledger'
+                ],
+                'action_specs': {
+                    'open_intake': {
+                        'label': '发起项目立项',
+                        'intent': 'ui.contract'
+                    },
+                    'open_project_list': {
+                        'label': '查看项目列表',
+                        'intent': 'ui.contract'
+                    },
+                    'open_project_ledger': {
+                        'label': '查看项目台账',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_project_ledger', 'open_project_list'],
+                        'focus_zones': ['zone.metrics', 'zone.progress']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_list', 'open_intake'],
+                        'focus_zones': ['zone.header', 'zone.finance', 'zone.risk']
+                    }
+                },
+                'data_sources': {
+                    'dashboard_metrics': {'source_type': 'computed', 'provider': 'project.dashboard.metrics'},
+                    'risk_alerts': {'source_type': 'computed', 'provider': 'project.dashboard.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_project_ledger',
+                    'stage': 'wave1'
+                },
                 'zones': [
                     {
                         'key': 'zone.header',

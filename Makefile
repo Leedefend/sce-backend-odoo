@@ -975,6 +975,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
+	@$(MAKE) --no-print-directory gate.scene.r3.runtime.strict
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
 	  $(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.menu.scene_resolve.summary; \
@@ -1213,6 +1214,65 @@ verify.frontend.onchange_contract_schema.guard: guard.prod.forbid
 
 verify.frontend.onchange_line_patch.guard: guard.prod.forbid
 	@python3 scripts/verify/onchange_line_patch_guard.py
+
+.PHONY: verify.scene.maturity.guard
+verify.scene.maturity.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_maturity_guard.py
+
+.PHONY: verify.scene.coverage.dashboard
+verify.scene.coverage.dashboard: guard.prod.forbid
+	@python3 scripts/verify/scene_coverage_dashboard_report.py
+
+.PHONY: verify.scene.inventory.freeze.guard
+verify.scene.inventory.freeze.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_inventory_freeze_guard.py
+
+.PHONY: verify.scene.role.policy.consistency.guard
+verify.scene.role.policy.consistency.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_role_policy_consistency_guard.py
+
+.PHONY: verify.scene.data_source.schema.guard
+verify.scene.data_source.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_data_source_schema_guard.py
+
+.PHONY: verify.scene.r3.runtime.guard
+verify.scene.r3.runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_r3_runtime_guard.py
+
+.PHONY: verify.scene.r3.runtime.strict
+verify.scene.r3.runtime.strict: guard.prod.forbid
+	@python3 scripts/verify/scene_r3_runtime_guard.py \
+		--max-action-chain-fail-count 0 \
+		--min-pass-rate 1.0 \
+		--min-action-chain-success-rate 0.50 \
+		--max-action-chain-fallback-rate 0.50 \
+		--fail-on-warning
+
+.PHONY: gate.scene.r3.runtime.strict
+gate.scene.r3.runtime.strict: verify.scene.r3.runtime.strict
+	@echo "[gate.scene.r3.runtime.strict] PASS"
+
+.PHONY: verify.scene.r3.runtime.quick
+verify.scene.r3.runtime.quick: guard.prod.forbid gate.scene.r3.runtime.strict
+	@echo "[verify.scene.r3.runtime.quick] summary"
+	@sed -n '/^## Summary/,/^## Gate Thresholds/p' docs/ops/audit/scene_r3_runtime_dashboard.md | sed '$$d'
+	@sed -n '/^## Gate Result/,/^## Checks/p' docs/ops/audit/scene_r3_runtime_dashboard.md | sed '$$d'
+
+.PHONY: verify.scene.role.surface.consistency.guard
+verify.scene.role.surface.consistency.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_role_surface_consistency_guard.py
+
+.PHONY: verify.scene.inventory.draft.diff.report
+verify.scene.inventory.draft.diff.report: guard.prod.forbid
+	@python3 scripts/verify/scene_inventory_draft_diff_report.py
+
+.PHONY: verify.scene.r1_r2.upgrade.queue.report
+verify.scene.r1_r2.upgrade.queue.report: guard.prod.forbid
+	@python3 scripts/verify/scene_r1_r2_upgrade_queue_report.py
+
+.PHONY: verify.scene.r2_r3.upgrade.queue.report
+verify.scene.r2_r3.upgrade.queue.report: guard.prod.forbid
+	@python3 scripts/verify/scene_r2_r3_upgrade_queue_report.py
 
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
