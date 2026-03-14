@@ -127,6 +127,8 @@ def _build_queue(rows: list[dict[str, str]]) -> list[dict[str, str]]:
         if maturity not in {"R0", "R1"}:
             continue
         scene_key = _safe_text(row.get("scene_key"))
+        if scene_key == "scene_smoke_default":
+            continue
         domain = _safe_text(row.get("domain"))
         nav_group = _safe_text(row.get("nav_group"))
         route_target = _safe_text(row.get("route_target"))
@@ -213,4 +215,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

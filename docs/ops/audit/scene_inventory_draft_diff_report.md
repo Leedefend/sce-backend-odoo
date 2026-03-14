@@ -1,6 +1,6 @@
 # Scene Inventory Draft Diff Report
 
-更新时间：2026-03-14 20:48:23
+更新时间：2026-03-14 20:55:12
 
 ## Summary
 
@@ -8,8 +8,8 @@
 - `draft_count`: 22
 - `added_count`: 0
 - `removed_count`: 0
-- `changed_count`: 25
-- `focus_changed_count`: 22
+- `changed_count`: 19
+- `focus_changed_count`: 16
 
 ## Added Scenes
 
@@ -28,17 +28,11 @@
 | cost.analysis | next_action | 维护角色化指标策略与模板复用 | 维护角色策略与数据契约稳定性 |
 | cost.cost_compare | next_action | 维护成本对比角色动作与异常策略 | 维护角色策略与数据契约稳定性 |
 | cost.project_cost_ledger | next_action | 维护台账角色动作与偏差闭环策略 | 维护角色策略与数据契约稳定性 |
-| data.dictionary | maturity_level | R0 | R2 |
-| data.dictionary | next_action | 补齐路由与入口后升级到R1 | 补齐角色策略与数据契约升级到R3 |
 | finance.center | next_action | 维护审批角色编排与结算联动策略 | 维护角色策略与数据契约稳定性 |
 | finance.payment_requests | next_action | 维护审批角色编排与风险动作模板 | 维护角色策略与数据契约稳定性 |
 | finance.settlement_orders | next_action | 维护结算角色动作与风险闭环策略 | 维护角色策略与数据契约稳定性 |
 | finance.workspace | next_action | 维护资金角色编排与异常策略 | 维护角色策略与数据契约稳定性 |
-| portal.capability_matrix | maturity_level | R1 | R2 |
-| portal.capability_matrix | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | project.management | next_action | 持续优化角色化指标与动作链路 | 维护角色策略与数据契约稳定性 |
-| projects.dashboard_showcase | maturity_level | R0 | R2 |
-| projects.dashboard_showcase | next_action | 补齐路由与入口后升级到R1 | 补齐角色策略与数据契约升级到R3 |
 | projects.intake | next_action | 维护角色策略与动作模板稳定性 | 维护角色策略与数据契约稳定性 |
 | projects.ledger | next_action | 维护台账角色策略与风险联动稳定性 | 维护角色策略与数据契约稳定性 |
 | projects.list | next_action | 维护列表角色策略与入口编排稳定性 | 维护角色策略与数据契约稳定性 |
@@ -55,19 +49,13 @@
 | cost.analysis | next_action | 维护角色化指标策略与模板复用 | 维护角色策略与数据契约稳定性 |
 | cost.cost_compare | next_action | 维护成本对比角色动作与异常策略 | 维护角色策略与数据契约稳定性 |
 | cost.project_cost_ledger | next_action | 维护台账角色动作与偏差闭环策略 | 维护角色策略与数据契约稳定性 |
-| data.dictionary | maturity_level | R0 | R2 |
-| data.dictionary | next_action | 补齐路由与入口后升级到R1 | 补齐角色策略与数据契约升级到R3 |
 | finance.center | next_action | 维护审批角色编排与结算联动策略 | 维护角色策略与数据契约稳定性 |
 | finance.payment_requests | name | 付款收款申请 | 付款申请审批 |
 | finance.payment_requests | next_action | 维护审批角色编排与风险动作模板 | 维护角色策略与数据契约稳定性 |
 | finance.settlement_orders | next_action | 维护结算角色动作与风险闭环策略 | 维护角色策略与数据契约稳定性 |
 | finance.workspace | next_action | 维护资金角色编排与异常策略 | 维护角色策略与数据契约稳定性 |
-| portal.capability_matrix | maturity_level | R1 | R2 |
-| portal.capability_matrix | next_action | 补齐产品编排后升级到R2 | 补齐角色策略与数据契约升级到R3 |
 | project.management | route_target | `/pm/dashboard` | `/s/project.management` |
 | project.management | next_action | 持续优化角色化指标与动作链路 | 维护角色策略与数据契约稳定性 |
-| projects.dashboard_showcase | maturity_level | R0 | R2 |
-| projects.dashboard_showcase | next_action | 补齐路由与入口后升级到R1 | 补齐角色策略与数据契约升级到R3 |
 | projects.intake | next_action | 维护角色策略与动作模板稳定性 | 维护角色策略与数据契约稳定性 |
 | projects.ledger | name | 项目台账 | 项目台账（试点） |
 | projects.ledger | next_action | 维护台账角色策略与风险联动稳定性 | 维护角色策略与数据契约稳定性 |
