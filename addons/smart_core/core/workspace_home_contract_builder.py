@@ -74,14 +74,14 @@ def _load_data_provider():
 
     provider_path = None
     try:
-        locator_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "provider_locator.py"
-        spec = spec_from_file_location("smart_scene_provider_locator_workspace_home", locator_path)
+        registry_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_provider_registry.py"
+        spec = spec_from_file_location("smart_scene_provider_registry_workspace_home", registry_path)
         if spec is not None and spec.loader is not None:
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
-            resolver = getattr(module, "resolve_workspace_home_provider_path", None)
+            resolver = getattr(module, "resolve_scene_provider_path", None)
             if callable(resolver):
-                provider_path = resolver(Path(__file__))
+                provider_path = resolver("workspace.home", Path(__file__))
     except Exception:
         provider_path = None
 
