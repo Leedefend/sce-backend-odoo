@@ -1242,6 +1242,10 @@ verify.scene.r3.runtime.guard: guard.prod.forbid
 verify.scene.role.surface.consistency.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_role_surface_consistency_guard.py
 
+.PHONY: verify.scene.inventory.draft.diff.report
+verify.scene.inventory.draft.diff.report: guard.prod.forbid
+	@python3 scripts/verify/scene_inventory_draft_diff_report.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
