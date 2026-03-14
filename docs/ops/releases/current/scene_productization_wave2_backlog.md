@@ -80,3 +80,7 @@
   - 首个 `P0` 场景 `portal.dashboard` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
   - inventory 对应场景升级到 `R2`
   - 升级队列自动收敛并反映剩余待升级场景
+- ✅ Round10 已落地：
+  - 第二个 `P0` 场景 `portal.lifecycle` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
+  - inventory 对应场景升级到 `R2`
+  - 升级队列继续收敛，保留未升级场景用于下一轮
