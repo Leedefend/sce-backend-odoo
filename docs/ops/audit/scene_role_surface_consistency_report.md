@@ -1,22 +1,22 @@
 # Scene Role Surface Consistency Report
 
-更新时间：2026-03-14 20:05:12
+更新时间：2026-03-14 20:21:22
 
 ## Summary
 
 - `role_count`: 4
 - `r3_scene_count`: 13
 - `errors`: 0
-- `warnings`: 3
+- `warnings`: 1
 
 ## Role Overrides
 
 | role_code | candidates | candidate_missing | menu_overlap | r3_scene_hits | status |
 | --- | ---: | ---: | ---: | ---: | --- |
-| executive | 5 | 1 | 0 | 8 | PASS |
+| executive | 5 | 0 | 0 | 8 | PASS |
 | finance | 3 | 0 | 0 | 9 | PASS |
 | owner | 2 | 0 | 0 | 0 | PASS |
-| pm | 4 | 1 | 0 | 9 | PASS |
+| pm | 4 | 0 | 0 | 9 | PASS |
 
 ## R3 Scene Role Variants
 
@@ -38,7 +38,5 @@
 
 ## Warnings
 
-- role_surface_overrides.executive: landing_scene_candidate outside inventory (portal.dashboard)
 - role_surface_overrides.owner: no R3 scene role_variants coverage
-- role_surface_overrides.pm: landing_scene_candidate outside inventory (portal.dashboard)
 
