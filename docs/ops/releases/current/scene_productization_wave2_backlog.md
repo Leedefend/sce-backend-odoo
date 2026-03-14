@@ -92,3 +92,21 @@
   - 第四个 `P0` 场景 `my_work.workspace` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
   - inventory 对应场景升级到 `R2`
   - 升级队列继续收敛，保留剩余场景进入下一轮
+- ✅ Round13 已落地：
+  - 第五个 `P0` 场景 `portal.capability_matrix` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
+  - inventory 对应场景升级到 `R2`
+  - 升级队列继续收敛
+- ✅ Round14 已落地：
+  - `data.dictionary` 与 `projects.dashboard_showcase` 补齐 `target.route`，并从 `R0 -> R1`
+  - inventory 与 payload 路由事实对齐，消除 `TARGET_MISSING`
+  - 升级队列仅保留可产品化业务候选
+- ✅ Round15 已落地：
+  - 升级队列脚本剔除 `scene_smoke_default`（测试场景不进入业务产品化队列）
+  - 队列语义与执行规则保持一致
+- ✅ Round16 已落地：
+  - `projects.dashboard_showcase` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
+  - inventory 对应场景升级到 `R2`
+- ✅ Round17 已落地：
+  - `data.dictionary` 完成 `R1 -> R2` 模板化升级（补齐 `page/zone_blocks/related_scenes`）
+  - inventory 对应场景升级到 `R2`
+  - `R1-R2` 升级队列清空
