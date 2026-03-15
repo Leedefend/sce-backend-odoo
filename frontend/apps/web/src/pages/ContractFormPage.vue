@@ -1802,7 +1802,7 @@ function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string
     if (!isFieldVisible(field)) continue;
     const value = formData[field];
     if (isMissingRequiredValue(value)) {
-      out.push(`SCENE_VALIDATION_REQUIRED: ${fieldLabels[field] || field} 为必填项`);
+      out.push(`${ErrorCodes.SCENE_VALIDATION_REQUIRED}: ${fieldLabels[field] || field} 为必填项`);
     }
   }
   return Array.from(new Set(out)).slice(0, 5);
