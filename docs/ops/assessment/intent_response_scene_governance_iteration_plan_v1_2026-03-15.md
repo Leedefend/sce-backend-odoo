@@ -45,6 +45,7 @@
 | T20 | 落地 Scene Orchestrator schema/binding/interface guards 并接入 runtime gate | Governance/Verify | ✅ DONE | `scripts/verify/scene_orchestrator_*_guard.py`（4个）+ `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T21 | 增加前端“禁止直连 Base Contract”防回归 guard | Governance/Verify | ✅ DONE | `scripts/verify/frontend_no_base_contract_direct_consume_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T22 | 固化 Orchestrator merge priority 门禁（spec + trace） | Governance/Verify | ✅ DONE | `scripts/verify/scene_orchestrator_merge_priority_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
+| T23 | 增加资产队列观测指标并接入 scene_governance_v1 | Platform + Governance/Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_event_queue.py`、`addons/smart_core/core/scene_governance_payload_builder.py`、`addons/smart_core/handlers/system_init.py`、`scripts/verify/scene_governance_payload_guard.py` |
 
 ## 本轮已执行验证
 
@@ -72,6 +73,8 @@
 - `make verify.scene.runtime_boundary.gate`（T21 复验）：通过
 - `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T22）：通过
 - `make verify.scene.runtime_boundary.gate`（T22 复验）：通过
+- `python3 scripts/verify/scene_governance_payload_guard.py`（T23）：通过
+- `make verify.scene.runtime_boundary.gate`（T23 复验）：通过
 
 ## 增量更新记录
 
@@ -91,9 +94,10 @@
 - 2026-03-15：已落地前端防回归守卫 `verify.frontend.no_base_contract_direct_consume.guard`，防止前端绕过 Scene-ready 直接消费 Base Contract。
 - 2026-03-15：已落地 `verify.scene.orchestrator.merge_priority.guard`，固化 platform/base/profile/policy/provider/permission 优先级规范与编译轨迹可见性。
 - 2026-03-15：已将 merge priority guard 升级为“静态规范 + 最小运行样例”双模校验，确保优先级顺序在运行样例中也可验证。
+- 2026-03-15：已将资产队列观测指标注入 `scene_governance_v1.asset_queue`（队列长度、最近更新、消费批次），并纳入治理 payload guard。
 
 ## 下一步（按顺序）
 
 1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
-2. 增加事件队列观测指标（队列长度、消费延迟、失败重试）并接入场景治理面板。
-3. 将 merge priority guard 升级为“静态规范 + 最小运行样例”双模校验，补充冲突裁决示例基线。
+2. 增加事件队列观测指标（消费延迟、失败重试）并接入场景治理面板告警阈值。
+3. 为 `asset_queue` 增加趋势快照与基线漂移 guard（增长速度/堆积上限）。
