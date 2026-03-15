@@ -82,6 +82,7 @@ def _validate_builder_contract(errors: list[str]) -> None:
         "delivery_policy",
         "nav_policy",
         "role_surface_provider",
+        "asset_queue",
         "diagnostics",
         "gates",
         "reasons",
@@ -112,6 +113,10 @@ def _validate_builder_contract(errors: list[str]) -> None:
         errors,
     )
     _assert(reasons.get("resolve_error_codes") == ["E1", "E2"], "reasons.resolve_error_codes mismatch", errors)
+
+    asset_queue = payload.get("asset_queue") if isinstance(payload.get("asset_queue"), dict) else {}
+    for key in ("queue_size", "added_count", "popped_count", "remaining_count"):
+        _assert(isinstance(asset_queue.get(key), int), f"asset_queue.{key} must be int", errors)
 
 
 def main() -> int:
