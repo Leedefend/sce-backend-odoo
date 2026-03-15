@@ -154,6 +154,60 @@ function buildSceneRegistry(source: Scene[]) {
   return sceneRegistry;
 }
 
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+  const row = entry as Record<string, unknown>;
+  const sceneRow = (row.scene && typeof row.scene === 'object') ? row.scene as Record<string, unknown> : {};
+  const pageRow = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
+  const metaRow = (row.meta && typeof row.meta === 'object') ? row.meta as Record<string, unknown> : {};
+  const targetRow = (metaRow.target && typeof metaRow.target === 'object') ? metaRow.target as Record<string, unknown> : {};
+  const permissionRow = (row.permission_surface && typeof row.permission_surface === 'object')
+    ? row.permission_surface as Record<string, unknown>
+    : {};
+
+  const sceneKey = asText(sceneRow.key || pageRow.scene_key);
+  if (!sceneKey) {
+    return null;
+  }
+  const defaultRoute = `/s/${sceneKey}`;
+  const route = resolveSceneRoute(sceneKey, asText(pageRow.route) || asText(targetRow.route) || defaultRoute);
+  const actionId = Number(targetRow.action_id || 0);
+  const menuId = Number(targetRow.menu_id || 0);
+  const requiredCapabilities = Array.isArray(permissionRow.required_capabilities)
+    ? permissionRow.required_capabilities.map((item) => asText(item)).filter(Boolean)
+    : [];
+
+  const target: SceneTarget = {
+    route,
+    action_id: actionId > 0 ? actionId : undefined,
+    menu_id: menuId > 0 ? menuId : undefined,
+    model: asText(targetRow.model) || undefined,
+    view_mode: asText(targetRow.view_mode) || undefined,
+  };
+
+  return {
+    key: sceneKey,
+    label: asText(sceneRow.title) || sceneKey,
+    route,
+    target,
+    capabilities: requiredCapabilities,
+    layout: normalizeSceneLayout(),
+  };
+}
+
+function scenesFromSceneReadyContract(contract?: { scenes?: unknown[] } | null): Scene[] {
+  const rows = Array.isArray(contract?.scenes) ? contract?.scenes : [];
+  return rows
+    .map((entry) => toSceneFromSceneReadyEntry(entry))
+    .filter((entry): entry is Scene => Boolean(entry));
+}
+
 buildSceneRegistry([]);
 
 export function getSceneRegistryDiagnostics() {
@@ -162,6 +216,11 @@ export function getSceneRegistryDiagnostics() {
 
 export function setSceneRegistry(scenes?: Scene[] | null) {
   const source = Array.isArray(scenes) ? scenes : [];
+  return buildSceneRegistry(source);
+}
+
+export function setSceneRegistryFromSceneReadyContract(contract?: { scenes?: unknown[] } | null) {
+  const source = scenesFromSceneReadyContract(contract);
   return buildSceneRegistry(source);
 }
 

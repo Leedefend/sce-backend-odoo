@@ -3,7 +3,7 @@ import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schem
 import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
 import { config } from '../config';
-import { getSceneByKey, setSceneRegistry } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 
@@ -171,6 +171,32 @@ export interface PageContract {
   actions?: Record<string, unknown>;
 }
 
+export interface SceneReadyContract {
+  contract_version?: string;
+  schema_version?: string;
+  scene_version?: string;
+  source_schema_version?: string;
+  scene_channel?: string;
+  active_scene_key?: string;
+  scenes?: Array<Record<string, unknown>>;
+  meta?: Record<string, unknown>;
+}
+
+export interface SceneGovernancePayload {
+  contract_version?: string;
+  scene_channel?: string;
+  scene_contract_ref?: string;
+  runtime_source?: string;
+  governance?: Record<string, unknown>;
+  auto_degrade?: Record<string, unknown>;
+  delivery_policy?: Record<string, unknown>;
+  nav_policy?: Record<string, unknown>;
+  role_surface_provider?: Record<string, unknown>;
+  diagnostics?: Record<string, unknown>;
+  gates?: Record<string, unknown>;
+  reasons?: Record<string, unknown>;
+}
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -188,6 +214,8 @@ export interface SessionState {
   productFacts: ProductFacts;
   workspaceHome: WorkspaceHomeContract | null;
   pageContracts: Record<string, PageContract>;
+  sceneReadyContractV1: SceneReadyContract | null;
+  sceneGovernanceV1: SceneGovernancePayload | null;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -225,6 +253,8 @@ export const useSessionStore = defineStore('session', {
     },
     workspaceHome: null,
     pageContracts: {},
+    sceneReadyContractV1: null,
+    sceneGovernanceV1: null,
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -262,7 +292,11 @@ export const useSessionStore = defineStore('session', {
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           this.workspaceHome = parsed.workspaceHome ?? null;
           this.pageContracts = parsed.pageContracts ?? {};
-          if (this.scenes.length) {
+          this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
+          this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
+          if (this.sceneReadyContractV1?.scenes?.length) {
+            setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
+          } else if (this.scenes.length) {
             setSceneRegistry(this.scenes);
           }
           this.lastTraceId = parsed.lastTraceId ?? '';
@@ -302,6 +336,8 @@ export const useSessionStore = defineStore('session', {
       this.productFacts = { license: null, bundle: null };
       this.workspaceHome = null;
       this.pageContracts = {};
+      this.sceneReadyContractV1 = null;
+      this.sceneGovernanceV1 = null;
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -357,6 +393,8 @@ export const useSessionStore = defineStore('session', {
         productFacts: this.productFacts,
         workspaceHome: this.workspaceHome,
         pageContracts: this.pageContracts,
+        sceneReadyContractV1: this.sceneReadyContractV1,
+        sceneGovernanceV1: this.sceneGovernanceV1,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -605,7 +643,13 @@ export const useSessionStore = defineStore('session', {
       };
       this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
       this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});
-      setSceneRegistry(this.scenes);
+      this.sceneReadyContractV1 = ((result as AppInitResponse & { scene_ready_contract_v1?: SceneReadyContract }).scene_ready_contract_v1 ?? null);
+      this.sceneGovernanceV1 = ((result as AppInitResponse & { scene_governance_v1?: SceneGovernancePayload }).scene_governance_v1 ?? null);
+      if (this.sceneReadyContractV1?.scenes?.length) {
+        setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
+      } else {
+        setSceneRegistry(this.scenes);
+      }
       this.initMeta = {
         ...(result.meta ?? {}),
         nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,
