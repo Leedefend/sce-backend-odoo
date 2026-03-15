@@ -40,6 +40,8 @@
 | T15 | 明确并落地“原生契约资产层”边界语义（非主事实源） | Architecture + Platform | ✅ DONE | `docs/architecture/ui_base_contract_asset_layer_design_v1.md`、`addons/smart_core/models/ui_base_contract_asset.py`（字段补齐+active 生命周期约束）、`addons/smart_core/core/ui_base_contract_asset_repository.py`（scope hash/source type/code version） |
 | T16 | 建立后端资产生产链路（producer + cron 预热入口） | Platform | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_producer.py`、`addons/smart_core/models/ui_base_contract_asset.py`（`refresh_assets_for_scene_keys/cron_refresh_ui_base_contract_assets`）、`addons/smart_core/data/ui_base_contract_asset_cron.xml` |
 | T17 | 建立事件触发生产入口（队列去抖 + cron 批处理消费） | Platform | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_event_queue.py`、`addons/smart_core/models/ui_base_contract_asset_event_trigger.py`、`addons/smart_core/models/ui_base_contract_asset.py`（`pop_scene_keys` 消费） |
+| T18 | 明确“原生契约消费边界 + 行业编排落位”正式规范 | Architecture | ✅ DONE | `docs/architecture/native_contract_driven_scene_orchestrator_boundary_and_industry_composition_v1.md` |
+| T19 | 定义 Scene Orchestrator IO 契约与行业编排接口规范 | Architecture | ✅ DONE | `docs/architecture/scene_orchestrator_io_contract_and_industry_interface_spec_v1.md` |
 
 ## 本轮已执行验证
 
@@ -71,8 +73,11 @@
 - 2026-03-15：已按设计文档补齐资产语义字段（`contract_kind/source_type/scope_hash/generated_at/code_version`），并新增“同作用域仅一个 active”生命周期约束。
 - 2026-03-15：已落地资产生产链路：新增 `ui_base_contract_asset_producer`，支持按 scene/action 生成并写入资产；新增 `ir.cron` 预热入口（默认 `active=False`，受控启用）。
 - 2026-03-15：已落地事件触发链路：`ir.actions.act_window / ir.ui.view / res.groups` 变更自动入队；cron 按队列批处理消费并触发 `event_queue` 资产刷新。
+- 2026-03-15：已落地《原生契约驱动的场景编排层消费边界与行业编排落地设计 v1》，明确编排层“按子契约选吃能力”与行业 `Profile + Policy + Provider` 三件套接入边界。
+- 2026-03-15：已落地《Scene Orchestrator 输入/输出契约与行业编排接口规范 v1》，明确 input/output schema、provider 接口、执行顺序与 merge 优先级。
 
 ## 下一步（按顺序）
 
 1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
 2. 增加事件队列观测指标（队列长度、消费延迟、失败重试）并接入场景治理面板。
+3. 基于 T19 实施 `verify.scene.orchestrator.*` 系列 schema/binding guards，并纳入 `verify.scene.runtime_boundary.gate`。
