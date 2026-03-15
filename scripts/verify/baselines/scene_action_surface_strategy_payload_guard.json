@@ -1,0 +1,108 @@
+{
+  "required_top_keys": [
+    "default",
+    "by_role",
+    "by_company",
+    "by_company_role"
+  ],
+  "required_strategy_keys": [
+    "force_primary_keys",
+    "force_secondary_keys",
+    "force_contextual_keys",
+    "hide_keys"
+  ],
+  "sample_input_strategy": {
+    "default": {
+      "force_primary_keys": [
+        "open_projects",
+        "open_projects",
+        ""
+      ],
+      "hide_keys": [
+        "legacy_action",
+        "legacy_action"
+      ],
+      "unknown_rule": [
+        "should_drop"
+      ]
+    },
+    "by_role": {
+      "project_manager": {
+        "force_secondary_keys": [
+          "approve_budget",
+          "approve_budget"
+        ],
+        "force_contextual_keys": [
+          "open_detail"
+        ],
+        "unknown_rule": [
+          "drop_me"
+        ]
+      },
+      "": {
+        "force_primary_keys": [
+          "invalid_scope"
+        ]
+      },
+      "viewer": "invalid_rule"
+    },
+    "by_company": {
+      "2": {
+        "hide_keys": [
+          "delete_project"
+        ],
+        "extra_rule": [
+          "drop"
+        ]
+      },
+      "bad": "invalid"
+    },
+    "by_company_role": {
+      "2:project_manager": {
+        "force_primary_keys": [
+          "launch_workspace"
+        ],
+        "unknown_rule": [
+          "drop"
+        ]
+      }
+    },
+    "unexpected_top": {
+      "foo": "bar"
+    }
+  },
+  "expected_normalized_strategy": {
+    "default": {
+      "force_primary_keys": [
+        "open_projects"
+      ],
+      "hide_keys": [
+        "legacy_action"
+      ]
+    },
+    "by_role": {
+      "project_manager": {
+        "force_secondary_keys": [
+          "approve_budget"
+        ],
+        "force_contextual_keys": [
+          "open_detail"
+        ]
+      }
+    },
+    "by_company": {
+      "2": {
+        "hide_keys": [
+          "delete_project"
+        ]
+      }
+    },
+    "by_company_role": {
+      "2:project_manager": {
+        "force_primary_keys": [
+          "launch_workspace"
+        ]
+      }
+    }
+  }
+}

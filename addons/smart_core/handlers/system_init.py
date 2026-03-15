@@ -141,11 +141,50 @@ def _load_scene_validation_recovery_strategy(env, params: dict, data: dict) -> d
 def _normalize_scene_action_surface_strategy(payload) -> dict:
     if not isinstance(payload, dict):
         return {}
+
+    def _normalize_key_list(value):
+        if not isinstance(value, list):
+            return []
+        out = []
+        seen = set()
+        for item in value:
+            key = str(item or "").strip()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(key)
+        return out
+
+    def _normalize_rule(rule_payload):
+        if not isinstance(rule_payload, dict):
+            return {}
+        normalized = {}
+        for rule_key in ("force_primary_keys", "force_secondary_keys", "force_contextual_keys", "hide_keys"):
+            key_list = _normalize_key_list(rule_payload.get(rule_key))
+            if key_list:
+                normalized[rule_key] = key_list
+        return normalized
+
     out = {}
     for key in ("default", "by_role", "by_company", "by_company_role"):
         value = payload.get(key)
-        if isinstance(value, dict):
-            out[key] = value
+        if key == "default":
+            normalized_default = _normalize_rule(value)
+            if normalized_default:
+                out[key] = normalized_default
+            continue
+        if not isinstance(value, dict):
+            continue
+        normalized_bucket = {}
+        for scope, scope_rule in value.items():
+            scope_key = str(scope or "").strip()
+            if not scope_key:
+                continue
+            normalized_rule = _normalize_rule(scope_rule)
+            if normalized_rule:
+                normalized_bucket[scope_key] = normalized_rule
+        if normalized_bucket:
+            out[key] = normalized_bucket
     return out
 
 
