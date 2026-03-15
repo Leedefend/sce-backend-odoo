@@ -49,6 +49,27 @@ def _validate_builder_contract(errors: list[str]) -> None:
         data={
             "scene_channel": "stable",
             "scene_contract_ref": "stable/LATEST.json",
+            "scene_ready_contract_v1": {
+                "meta": {
+                    "scene_type_consumption_metrics": {
+                        "list": {
+                            "scene_count": 2,
+                            "base_fact_consumption_rate": {
+                                "search": 1.0,
+                                "workflow": 0.5,
+                                "validator": 0.0,
+                                "actions": 1.0,
+                            },
+                            "surface_nonempty_rate": {
+                                "search": 1.0,
+                                "workflow": 0.5,
+                                "validation": 0.0,
+                                "action_surface": 1.0,
+                            },
+                        }
+                    }
+                }
+            },
         },
         scene_diagnostics={
             "loaded_from": "contract",
@@ -83,6 +104,7 @@ def _validate_builder_contract(errors: list[str]) -> None:
         "nav_policy",
         "role_surface_provider",
         "asset_queue",
+        "scene_ready_consumption",
         "diagnostics",
         "gates",
         "reasons",
@@ -105,6 +127,7 @@ def _validate_builder_contract(errors: list[str]) -> None:
     _assert(diagnostics.get("resolve_error_count") == 3, "diagnostics.resolve_error_count mismatch", errors)
     _assert(diagnostics.get("drift_count") == 1, "diagnostics.drift_count mismatch", errors)
     _assert(diagnostics.get("resolve_error_codes") == ["E1", "E2"], "diagnostics.resolve_error_codes mismatch", errors)
+    _assert(diagnostics.get("scene_ready_consumption_enabled") is True, "diagnostics.scene_ready_consumption_enabled mismatch", errors)
 
     reasons = payload.get("reasons") if isinstance(payload.get("reasons"), dict) else {}
     _assert(
@@ -117,6 +140,13 @@ def _validate_builder_contract(errors: list[str]) -> None:
     asset_queue = payload.get("asset_queue") if isinstance(payload.get("asset_queue"), dict) else {}
     for key in ("queue_size", "added_count", "popped_count", "remaining_count"):
         _assert(isinstance(asset_queue.get(key), int), f"asset_queue.{key} must be int", errors)
+
+    consumption = payload.get("scene_ready_consumption") if isinstance(payload.get("scene_ready_consumption"), dict) else {}
+    _assert(consumption.get("enabled") is True, "scene_ready_consumption.enabled mismatch", errors)
+    _assert(int(consumption.get("scene_type_count") or 0) >= 1, "scene_ready_consumption.scene_type_count mismatch", errors)
+    aggregate = consumption.get("aggregate") if isinstance(consumption.get("aggregate"), dict) else {}
+    base_rate = aggregate.get("base_fact_consumption_rate") if isinstance(aggregate.get("base_fact_consumption_rate"), dict) else {}
+    _assert(float(base_rate.get("search") or 0.0) > 0.0, "scene_ready_consumption aggregate base search rate mismatch", errors)
 
 
 def main() -> int:

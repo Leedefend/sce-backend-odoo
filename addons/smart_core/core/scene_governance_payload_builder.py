@@ -34,6 +34,79 @@ def _error_codes(resolve_errors: list) -> list[str]:
     return unique
 
 
+def _scene_type_consumption_summary(data: Dict[str, Any]) -> Dict[str, Any]:
+    ready = _as_dict(data.get("scene_ready_contract_v1"))
+    ready_meta = _as_dict(ready.get("meta"))
+    metrics = _as_dict(ready_meta.get("scene_type_consumption_metrics"))
+    if not metrics:
+        return {
+            "enabled": False,
+            "scene_type_count": 0,
+            "scene_count": 0,
+            "scene_types": {},
+            "aggregate": {
+                "base_fact_consumption_rate": {},
+                "surface_nonempty_rate": {},
+            },
+        }
+
+    aggregate_base = {"search": 0.0, "workflow": 0.0, "validator": 0.0, "actions": 0.0}
+    aggregate_surface = {"search": 0.0, "workflow": 0.0, "validation": 0.0, "action_surface": 0.0}
+    scene_count = 0
+    scene_types: Dict[str, Any] = {}
+    for scene_type, row in metrics.items():
+        payload = _as_dict(row)
+        count = int(payload.get("scene_count") or 0)
+        scene_count += max(count, 0)
+        base_rate = _as_dict(payload.get("base_fact_consumption_rate"))
+        surface_rate = _as_dict(payload.get("surface_nonempty_rate"))
+        scene_types[_as_text(scene_type)] = {
+            "scene_count": count,
+            "base_fact_consumption_rate": {
+                "search": float(base_rate.get("search") or 0.0),
+                "workflow": float(base_rate.get("workflow") or 0.0),
+                "validator": float(base_rate.get("validator") or 0.0),
+                "actions": float(base_rate.get("actions") or 0.0),
+            },
+            "surface_nonempty_rate": {
+                "search": float(surface_rate.get("search") or 0.0),
+                "workflow": float(surface_rate.get("workflow") or 0.0),
+                "validation": float(surface_rate.get("validation") or 0.0),
+                "action_surface": float(surface_rate.get("action_surface") or 0.0),
+            },
+        }
+        aggregate_base["search"] += float(base_rate.get("search") or 0.0) * float(max(count, 0))
+        aggregate_base["workflow"] += float(base_rate.get("workflow") or 0.0) * float(max(count, 0))
+        aggregate_base["validator"] += float(base_rate.get("validator") or 0.0) * float(max(count, 0))
+        aggregate_base["actions"] += float(base_rate.get("actions") or 0.0) * float(max(count, 0))
+        aggregate_surface["search"] += float(surface_rate.get("search") or 0.0) * float(max(count, 0))
+        aggregate_surface["workflow"] += float(surface_rate.get("workflow") or 0.0) * float(max(count, 0))
+        aggregate_surface["validation"] += float(surface_rate.get("validation") or 0.0) * float(max(count, 0))
+        aggregate_surface["action_surface"] += float(surface_rate.get("action_surface") or 0.0) * float(max(count, 0))
+
+    denom = float(scene_count) if scene_count > 0 else 1.0
+    return {
+        "enabled": True,
+        "scene_type_count": len(scene_types),
+        "scene_count": scene_count,
+        "scene_types": scene_types,
+        "aggregate": {
+            "base_fact_consumption_rate": {
+                "search": aggregate_base["search"] / denom,
+                "workflow": aggregate_base["workflow"] / denom,
+                "validator": aggregate_base["validator"] / denom,
+                "actions": aggregate_base["actions"] / denom,
+            },
+            "surface_nonempty_rate": {
+                "search": aggregate_surface["search"] / denom,
+                "workflow": aggregate_surface["workflow"] / denom,
+                "validation": aggregate_surface["validation"] / denom,
+                "action_surface": aggregate_surface["action_surface"] / denom,
+            },
+        },
+    }
+
+
 def build_scene_governance_payload_v1(
     *,
     data: Dict[str, Any],
@@ -61,6 +134,7 @@ def build_scene_governance_payload_v1(
         for code in _as_list(auto_degrade.get("reason_codes"))
         if _as_text(code)
     ]
+    consumption_summary = _scene_type_consumption_summary(data)
 
     return {
         "contract_version": "v1",
@@ -88,11 +162,13 @@ def build_scene_governance_payload_v1(
             "popped_count": int(queue_metrics.get("popped_count") or 0),
             "remaining_count": int(queue_metrics.get("remaining_count") or 0),
         },
+        "scene_ready_consumption": consumption_summary,
         "diagnostics": {
             "normalize_warning_count": len(normalize_warnings),
             "resolve_error_count": len(resolve_errors),
             "drift_count": len(drift),
             "resolve_error_codes": resolve_error_codes,
+            "scene_ready_consumption_enabled": bool(consumption_summary.get("enabled", False)),
         },
         "gates": {
             "orchestrator_applied": bool(_as_text(data.get("scene_contract_ref"))),
