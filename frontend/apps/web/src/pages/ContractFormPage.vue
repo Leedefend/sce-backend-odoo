@@ -92,7 +92,7 @@
           :error-code="sceneValidationPanel.code"
           :reason-code="sceneValidationPanel.code"
           :hint="sceneValidationPanel.hint"
-          suggested-action="copy_reason"
+          :suggested-action="sceneValidationPanel.suggestedAction"
           variant="error"
         />
         <p v-if="nonSceneValidationErrors.length" class="validation-error">
@@ -1745,10 +1745,16 @@ const sceneValidationPanel = computed(() => {
   const normalized = rows
     .map((item) => item.slice(sceneValidationErrorPrefix.length).trim())
     .filter(Boolean);
+  const sceneKey = String(route.query.scene_key || route.params.sceneKey || '').trim();
+  const modelName = String(model.value || '').trim();
+  const suggestedAction = recordId.value && modelName
+    ? `open_record:${modelName}:${recordId.value}`
+    : (sceneKey ? `open_scene:${sceneKey}` : 'copy_reason');
   return {
     code: ErrorCodes.SCENE_VALIDATION_REQUIRED,
     message: normalized.join('；') || '场景约束校验未通过，请补齐必填字段。',
     hint: '请补齐必填字段后重试。',
+    suggestedAction,
   };
 });
 const nonSceneValidationErrors = computed(() => (
