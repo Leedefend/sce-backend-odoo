@@ -40,6 +40,8 @@ from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSu
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
+from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
@@ -300,6 +302,13 @@ class SystemInitHandler(BaseIntentHandler):
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
         nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
+        data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
+            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            role_surface=role_surface if isinstance(role_surface, dict) else {},
+            scene_version=data.get("scene_version"),
+            schema_version=data.get("schema_version"),
+            scene_channel=scene_channel,
+        )
         scene_nav_contract = build_scene_nav_contract(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
             data["nav_legacy"] = data.get("nav") or []
@@ -308,9 +317,17 @@ class SystemInitHandler(BaseIntentHandler):
             data["default_route"] = scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
             if isinstance(data.get("nav_meta"), dict):
                 data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
+                data["nav_meta"]["scene_ready_contract_v1"] = True
                 contract_meta = scene_nav_contract.get("meta")
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
+
+        data["scene_governance_v1"] = build_scene_governance_payload_v1(
+            data=data,
+            scene_diagnostics=scene_diagnostics,
+            delivery_meta=delivery_result.get("meta") if isinstance(delivery_result, dict) else {},
+            nav_contract_meta=scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
+        )
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 
