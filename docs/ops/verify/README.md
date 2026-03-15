@@ -81,6 +81,9 @@
   - Verifies `system.init` can output `scene_action_surface_strategy` (`params -> ext_facts -> icp`) and inject strategy/role/company runtime into scene compile path.
 - `make verify.scene.action_surface_strategy.schema.guard`
   - Enforces schema baseline from `scripts/verify/baselines/scene_action_surface_strategy_schema_guard.json` and strategy key whitelist (`force_primary/secondary/contextual/hide`).
+- `make verify.scene.action_surface_strategy.payload.guard`
+  - Verifies `system.init` payload baseline for `scene_action_surface_strategy` using live sample normalization against `scripts/verify/baselines/scene_action_surface_strategy_payload_guard.json`.
+  - Enforces top-level key whitelist (`default/by_role/by_company/by_company_role`) and strategy key whitelist (`force_primary_keys/force_secondary_keys/force_contextual_keys/hide_keys`).
 - `make verify.scene.action_surface_strategy.priority.guard`
   - Verifies deterministic conflict precedence for action strategy layers (`default -> by_company -> by_role -> by_company_role`) using baseline sample.
 - `make verify.scene.ready.scene_type_consumption_metrics.guard`
