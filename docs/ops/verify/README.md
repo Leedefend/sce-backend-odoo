@@ -91,6 +91,10 @@
 - `make verify.scene.ready.consumption_trend.guard`
   - Verifies trend baseline for `scene_governance_v1.scene_ready_consumption` aggregate rates and scene count/type floor.
   - Baseline file: `scripts/verify/baselines/scene_ready_consumption_trend_guard.json`; state file: `artifacts/backend/scene_ready_consumption_trend_state.json`.
+- `make verify.scene.governance_history_report.guard`
+  - Aggregates `scene_asset_queue_trend_state` + `scene_ready_consumption_trend_state` into governance history report.
+  - Emits `artifacts/backend/scene_governance_history_report.json` and `artifacts/backend/scene_governance_history_report.md`.
+  - Enforces cross-trend policy alignment and capture-time skew threshold via `scripts/verify/baselines/scene_governance_history_report_guard.json`.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
