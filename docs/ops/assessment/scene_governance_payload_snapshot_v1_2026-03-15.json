@@ -1,0 +1,90 @@
+{
+  "snapshot_version": "v1",
+  "snapshot_date": "2026-03-15",
+  "intent": "app.init",
+  "payload_key": "scene_governance_v1",
+  "example": {
+    "contract_version": "v1",
+    "scene_channel": "stable",
+    "scene_contract_ref": "stable/LATEST.json",
+    "runtime_source": "contract",
+    "governance": {
+      "contract_mode": "user",
+      "before": {
+        "scene_count": 137,
+        "capability_count": 48
+      },
+      "after": {
+        "scene_count": 127,
+        "capability_count": 43
+      },
+      "filtered": {
+        "scene_count": 10,
+        "capability_count": 5
+      }
+    },
+    "auto_degrade": {
+      "triggered": false,
+      "reason_codes": [],
+      "action_taken": "none"
+    },
+    "delivery_policy": {
+      "enabled": true,
+      "surface": "default",
+      "runtime_env": "dev",
+      "excluded_count": 3
+    },
+    "nav_policy": {
+      "validation_ok": true,
+      "source": "platform_default",
+      "provider": "platform.default.scene_nav_v1",
+      "version": "v1",
+      "issues": []
+    },
+    "role_surface_provider": {
+      "selected_provider": "none",
+      "selected_priority": null,
+      "match_mode": "none",
+      "provider_count": 0,
+      "provider_skipped_count": 0,
+      "ambiguous": false,
+      "issues": []
+    },
+    "diagnostics": {
+      "normalize_warning_count": 0,
+      "resolve_error_count": 0,
+      "drift_count": 0,
+      "resolve_error_codes": []
+    },
+    "gates": {
+      "orchestrator_applied": true,
+      "governance_applied": true,
+      "delivery_policy_applied": true,
+      "nav_policy_validation_ok": true,
+      "auto_degrade_triggered": false
+    },
+    "reasons": {
+      "auto_degrade_reason_codes": [],
+      "resolve_error_codes": []
+    }
+  },
+  "required_root_keys": [
+    "contract_version",
+    "scene_channel",
+    "scene_contract_ref",
+    "runtime_source",
+    "governance",
+    "auto_degrade",
+    "delivery_policy",
+    "nav_policy",
+    "role_surface_provider",
+    "diagnostics",
+    "gates",
+    "reasons"
+  ],
+  "notes": [
+    "This snapshot is a schema example baseline for evolution review.",
+    "Numeric counters are illustrative and may vary by runtime data.",
+    "Operational guard source of truth remains scripts/verify/scene_governance_payload_guard.py."
+  ]
+}
