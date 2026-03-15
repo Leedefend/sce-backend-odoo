@@ -44,6 +44,7 @@
 | T19 | 定义 Scene Orchestrator IO 契约与行业编排接口规范 | Architecture | ✅ DONE | `docs/architecture/scene_orchestrator_io_contract_and_industry_interface_spec_v1.md` |
 | T20 | 落地 Scene Orchestrator schema/binding/interface guards 并接入 runtime gate | Governance/Verify | ✅ DONE | `scripts/verify/scene_orchestrator_*_guard.py`（4个）+ `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T21 | 增加前端“禁止直连 Base Contract”防回归 guard | Governance/Verify | ✅ DONE | `scripts/verify/frontend_no_base_contract_direct_consume_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
+| T22 | 固化 Orchestrator merge priority 门禁（spec + trace） | Governance/Verify | ✅ DONE | `scripts/verify/scene_orchestrator_merge_priority_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 
 ## 本轮已执行验证
 
@@ -69,6 +70,8 @@
 - `make verify.scene.runtime_boundary.gate`（T20）：通过
 - `python3 scripts/verify/frontend_no_base_contract_direct_consume_guard.py`（T21）：通过
 - `make verify.scene.runtime_boundary.gate`（T21 复验）：通过
+- `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T22）：通过
+- `make verify.scene.runtime_boundary.gate`（T22 复验）：通过
 
 ## 增量更新记录
 
@@ -86,9 +89,10 @@
 - 2026-03-15：已落地《Scene Orchestrator 输入/输出契约与行业编排接口规范 v1》，明确 input/output schema、provider 接口、执行顺序与 merge 优先级。
 - 2026-03-15：已落地 `verify.scene.orchestrator.*` 四个守卫并纳入 `verify.scene.runtime_boundary.gate`，形成“文档规范 -> 可执行门禁”闭环。
 - 2026-03-15：已落地前端防回归守卫 `verify.frontend.no_base_contract_direct_consume.guard`，防止前端绕过 Scene-ready 直接消费 Base Contract。
+- 2026-03-15：已落地 `verify.scene.orchestrator.merge_priority.guard`，固化 platform/base/profile/policy/provider/permission 优先级规范与编译轨迹可见性。
 
 ## 下一步（按顺序）
 
 1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
 2. 增加事件队列观测指标（队列长度、消费延迟、失败重试）并接入场景治理面板。
-3. 增加 `verify.scene.orchestrator.merge_priority.guard`，固化 platform/profile/policy/provider/permission 的冲突裁决顺序。
+3. 将 merge priority guard 升级为“静态规范 + 最小运行样例”双模校验，补充冲突裁决示例基线。
