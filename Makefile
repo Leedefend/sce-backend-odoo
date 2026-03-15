@@ -1975,12 +1975,16 @@ verify.contract.envelope.guard: guard.prod.forbid
 verify.contract.envelope: guard.prod.forbid verify.contract.envelope.guard verify.contract.mode.smoke verify.contract.api.mode.smoke verify.scene_capability.contract.guard
 	@echo "[OK] verify.contract.envelope done"
 
-verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard
+verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard
 	@echo "[OK] verify.scene.runtime_boundary.gate done"
 
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_input_boundary_guard.py
+
+.PHONY: verify.scene.governance_payload.guard
+verify.scene.governance_payload.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_governance_payload_guard.py
 
 verify.scene.contract_path.gate: guard.prod.forbid verify.scene.runtime_boundary.gate verify.scene.legacy.bundle
 	@echo "[OK] verify.scene.contract_path.gate done"
