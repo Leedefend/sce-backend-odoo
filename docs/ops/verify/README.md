@@ -35,6 +35,7 @@
 - `make verify.scene.governance_payload.guard`
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
   - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).
+  - Includes `scene_ready_consumption` summary shape derived from `scene_ready_contract_v1.meta.scene_type_consumption_metrics`.
 - `make verify.scene.asset_queue_trend.guard`
   - Verifies asset queue trend baseline (`queue_size` upper bound + per-run growth cap) against `scripts/verify/baselines/scene_asset_queue_trend_guard.json`.
   - Persists latest trend snapshot to `artifacts/backend/scene_asset_queue_trend_state.json` for next-run delta checks.
