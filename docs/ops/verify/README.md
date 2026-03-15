@@ -82,6 +82,9 @@
   - Verifies deterministic conflict precedence for action strategy layers (`default -> by_company -> by_role -> by_company_role`) using baseline sample.
 - `make verify.scene.ready.scene_type_consumption_metrics.guard`
   - Verifies `scene_ready_contract_v1.meta.scene_type_consumption_metrics` is emitted with per-`scene_type` consumption/nonempty rates.
+- `make verify.scene.ready.consumption_trend.guard`
+  - Verifies trend baseline for `scene_governance_v1.scene_ready_consumption` aggregate rates and scene count/type floor.
+  - Baseline file: `scripts/verify/baselines/scene_ready_consumption_trend_guard.json`; state file: `artifacts/backend/scene_ready_consumption_trend_state.json`.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`

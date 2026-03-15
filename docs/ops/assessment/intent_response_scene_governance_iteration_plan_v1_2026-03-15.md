@@ -77,6 +77,7 @@
 | T52 | scene_ready 子契约消费率指标（分 scene_type） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_ready_contract_builder.py`（`meta.scene_type_consumption_metrics`）、`scripts/verify/scene_ready_scene_type_consumption_metrics_guard.py` |
 | T53 | scene_governance 摘要接入 scene_ready 消费率指标 | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_governance_payload_builder.py`（`scene_ready_consumption` 摘要 + diagnostics 标记）、`scripts/verify/scene_governance_payload_guard.py` |
 | T54 | 前端治理面板接入 scene_ready_consumption 可视化 | Frontend + Verify | ✅ DONE | `frontend/apps/web/src/layouts/AppShell.vue`（HUD 展示 `governance.scene_ready_consumption`）、`frontend/apps/web/src/views/SceneHealthView.vue`（runtime section 展示 consumption 摘要）、`scripts/verify/frontend_scene_governance_consumption_guard.py` |
+| T55 | scene_ready_consumption 趋势基线守卫 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_ready_consumption_trend_guard.json`、`scripts/verify/scene_ready_consumption_trend_guard.py`（聚合消费率下降阈值 + scene/type floor）、`Makefile`（纳入 runtime gate） |
 
 ## 本轮已执行验证
 
@@ -194,6 +195,8 @@
 - `pnpm -C frontend/apps/web exec tsc --noEmit`（T54）：通过
 - `python3 scripts/verify/frontend_scene_governance_consumption_guard.py`（T54）：通过
 - `make verify.scene.runtime_boundary.gate`（T54 复验）：通过
+- `python3 scripts/verify/scene_ready_consumption_trend_guard.py`（T55）：通过
+- `make verify.scene.runtime_boundary.gate`（T55 复验）：通过
 
 ## 增量更新记录
 
@@ -245,9 +248,10 @@
 - 2026-03-15：已为 `scene_ready_contract_v1` 增补按 `scene_type` 聚合的子契约消费率指标（base_fact_consumption_rate + surface_nonempty_rate），用于核心能力提升量化。
 - 2026-03-15：已将 `scene_ready_contract_v1` 的消费率指标摘要注入 `scene_governance_v1.scene_ready_consumption`，并在 `diagnostics.scene_ready_consumption_enabled` 暴露开关，便于运行时治理看板直接消费。
 - 2026-03-15：已将 `scene_ready_consumption` 接入前端治理可视化：`AppShell HUD` 与 `SceneHealth` 均展示 scene_type 摘要，形成后端指标 -> 治理面板可见闭环。
+- 2026-03-15：已新增 `scene_ready_consumption` 趋势基线守卫，按聚合消费率下降阈值与 scene/type 最小覆盖进行持续门禁，防止能力回退。
 
 ## 下一步（按顺序）
 
 1. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
 2. 推进 action surface runtime 策略的后端下发 schema（含 key 白名单）纳入 `system.init` payload baseline 守卫。
-3. 为 `scene_ready_consumption` 增加趋势基线守卫（与 asset queue trend 同风格），追踪 scene_type 消费率回退风险。
+3. 将 `scene_ready_consumption` 趋势快照接入 `scene_governance` 历史报告（与 queue trend 并列），用于版本对比回归分析。
