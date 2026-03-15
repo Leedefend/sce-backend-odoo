@@ -41,6 +41,7 @@ from odoo.addons.smart_core.core.workspace_home_contract_builder import build_wo
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
+from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
 from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
 from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
 from odoo.addons.smart_core.core.scene_delivery_policy import (
@@ -359,6 +360,7 @@ class SystemInitHandler(BaseIntentHandler):
             scene_diagnostics=scene_diagnostics,
             delivery_meta=delivery_result.get("meta") if isinstance(delivery_result, dict) else {},
             nav_contract_meta=scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
+            asset_queue_metrics=get_queue_metrics(env),
         )
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
