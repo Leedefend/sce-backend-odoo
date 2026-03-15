@@ -32,6 +32,8 @@
 ## Architecture Guard Aliases
 - `make verify.boundary.guard`
   - Aggregates scene runtime boundary + legacy contract path checks.
+- `make verify.scene.governance_payload.guard`
+  - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
