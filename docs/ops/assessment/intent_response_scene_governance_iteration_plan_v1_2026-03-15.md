@@ -61,6 +61,7 @@
 | T36 | `SCENE_VALIDATION_REQUIRED` 推荐动作升级为可执行跳转 | Frontend | ✅ DONE | `frontend/apps/web/src/pages/ContractFormPage.vue`（优先 `open_record:<model>:<id>`，其次 `open_scene:<scene_key>`） |
 | T37 | `SCENE_VALIDATION_REQUIRED` 推荐动作场景化策略（模型+角色） | Frontend | ✅ DONE | `frontend/apps/web/src/pages/ContractFormPage.vue`（按 `model/role_code/action_id/scene_key` 策略分流 `open_record/open_action/open_scene`） |
 | T38 | `SCENE_VALIDATION_REQUIRED` 场景化策略外置配置化 | Frontend | ✅ DONE | `frontend/apps/web/src/app/sceneValidationRecoveryStrategy.ts`（可配置策略模块） + `frontend/apps/web/src/pages/ContractFormPage.vue`（改为策略调用） |
+| T39 | `sceneValidationRecoveryStrategy` 增加运行时覆盖入口 + 守卫 | Frontend + Verify | ✅ DONE | `frontend/apps/web/src/app/sceneValidationRecoveryStrategy.ts`（`applySceneValidationRecoveryStrategyRuntime`）、`frontend/apps/web/src/stores/session.ts`（app.init 运行时接线）、`scripts/verify/scene_validation_recovery_strategy_guard.py`、`Makefile` |
 
 ## 本轮已执行验证
 
@@ -143,6 +144,9 @@
 - `make verify.scene.runtime_boundary.gate`（T37 复验）：通过
 - `pnpm -C frontend/apps/web exec tsc --noEmit`（T38）：通过
 - `make verify.scene.runtime_boundary.gate`（T38 复验）：通过
+- `pnpm -C frontend/apps/web exec tsc --noEmit`（T39）：通过
+- `python3 scripts/verify/scene_validation_recovery_strategy_guard.py`（T39）：通过
+- `make verify.scene.runtime_boundary.gate`（T39 复验）：通过
 
 ## 增量更新记录
 
@@ -178,9 +182,10 @@
 - 2026-03-15：已将 `SCENE_VALIDATION_REQUIRED` 推荐动作升级为可执行跳转：编辑态优先跳转 `open_record`，创建/场景态跳转 `open_scene`，降低用户修复路径摩擦。
 - 2026-03-15：已落地 `SCENE_VALIDATION_REQUIRED` 推荐动作场景化策略：按 `model + role_code + action_id + scene_key` 选择 `open_record/open_action/open_scene`，优先给出最短修复路径。
 - 2026-03-15：已将 `SCENE_VALIDATION_REQUIRED` 恢复动作策略外置为 `sceneValidationRecoveryStrategy` 模块，支持后续行业模块按模型/角色覆写策略而无需修改页面代码。
+- 2026-03-15：已为 `sceneValidationRecoveryStrategy` 增加运行时覆盖入口：支持 `default/by_role/by_company/by_company_role` 分层覆写，并在 `session.app.init` 按角色与公司注入；新增守卫 `verify.scene.validation_recovery_strategy.guard` 固化接线。
 
 ## 下一步（按顺序）
 
 1. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
 2. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
-3. 为 `sceneValidationRecoveryStrategy` 增加运行时覆盖入口（按租户/角色热更新策略）并补守卫。
+3. 为 `sceneValidationRecoveryStrategy` 增加后端契约化下发规范（payload schema + baseline guard）。
