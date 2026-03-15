@@ -85,6 +85,7 @@
 | T60 | 样例编译 vs 真实快照差异报告门禁 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_sample_registry_diff_guard.json`、`scripts/verify/scene_sample_registry_diff_guard.py`（输出 `scene_sample_registry_diff_report`，校验 required scene 缺失/意外场景/绑定差异）、`Makefile`（纳入 runtime gate） |
 | T61 | action surface strategy 冲突 live matrix 守卫 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_action_surface_strategy_live_matrix_guard.json`、`scripts/verify/scene_action_surface_strategy_live_matrix_guard.py`（多案例覆盖 default/by_company/by_role/by_company_role 冲突优先级与 hide 行为）、`Makefile`（纳入 runtime gate） |
 | T62 | scene_governance 历史报告版本化归档与 diff 摘要 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_governance_history_archive_guard.json`、`scripts/verify/scene_governance_history_archive_guard.py`（按 `commit+timestamp` 归档历史样本、写入 `history/*.jsonl`、输出 diff 摘要）、`Makefile`（纳入 runtime gate） |
+| T63 | 样例-真实差异报告趋势门禁 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`、`scripts/verify/scene_sample_registry_diff_trend_guard.py`（连续两次 diff 变化率门禁）、`Makefile`（纳入 runtime gate） |
 
 ## 本轮已执行验证
 
@@ -218,6 +219,8 @@
 - `make verify.scene.runtime_boundary.gate`（T61 复验）：通过
 - `python3 scripts/verify/scene_governance_history_archive_guard.py`（T62）：通过
 - `make verify.scene.runtime_boundary.gate`（T62 复验）：通过
+- `python3 scripts/verify/scene_sample_registry_diff_trend_guard.py`（T63）：通过
+- `make verify.scene.runtime_boundary.gate`（T63 复验）：通过
 
 ## 增量更新记录
 
@@ -277,9 +280,10 @@
 - 2026-03-15：已新增“样例编译 vs 真实快照”差异报告守卫：将 `scene_orchestrator_key_scene_compile` 样例基线与 `scene_registry_asset_snapshot_state` 做差异对照，输出结构化 diff 报告并纳入 runtime gate。
 - 2026-03-15：已新增 action surface strategy 冲突 live matrix 守卫，覆盖 `default/by_company/by_role/by_company_role` 多案例叠加冲突与 hide 结果，避免单案例优先级验证盲区。
 - 2026-03-15：已新增 `scene_governance_history_report` 版本化归档守卫：按 `commit+timestamp` 落盘历史样本，并输出与上一次样本的差异摘要，支撑版本间回归对比。
+- 2026-03-15：已新增 `scene_sample_registry_diff_report` 趋势门禁：对 `missing/unexpected/unbound` 三类差异项做连续两次增长阈值控制，防止样例与真实快照偏差失控。
 
 ## 下一步（按顺序）
 
-1. 将 `scene_sample_registry_diff_report` 增加趋势对比维度（连续两次 diff 变化率）并门禁化。
-2. 为 `scene_action_surface_strategy_live_matrix_guard` 增补真实 `system.init` 输出驱动样例（可达环境开启 strict live 开关）。
-3. 为 `scene_governance_history_archive_guard` 增加分支维度索引（branch+commit 快速检索）。
+1. 为 `scene_action_surface_strategy_live_matrix_guard` 增补真实 `system.init` 输出驱动样例（可达环境开启 strict live 开关）。
+2. 为 `scene_governance_history_archive_guard` 增加分支维度索引（branch+commit 快速检索）。
+3. 为 `scene_sample_registry_diff_trend_guard` 增加按角色分桶阈值策略（role-aware trend policy）。

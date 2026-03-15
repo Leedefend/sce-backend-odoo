@@ -111,6 +111,9 @@
   - Builds a diff report between sample compile baseline (`scene_orchestrator_key_scene_compile_guard`) and real registry snapshot state.
   - Emits `artifacts/backend/scene_sample_registry_diff_report.json` and `artifacts/backend/scene_sample_registry_diff_report.md`.
   - Baseline: `scripts/verify/baselines/scene_sample_registry_diff_guard.json`; use `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1` for strict scene-count mode.
+- `make verify.scene.sample_registry_diff_trend.guard`
+  - Enforces trend growth thresholds on consecutive diff reports (`missing_required_scene_count/unexpected_scene_count/unbound_matched_scene_count`).
+  - Baseline: `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`; state file: `artifacts/backend/scene_sample_registry_diff_trend_state.json`.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
