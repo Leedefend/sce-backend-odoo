@@ -78,6 +78,7 @@
 | T53 | scene_governance 摘要接入 scene_ready 消费率指标 | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_governance_payload_builder.py`（`scene_ready_consumption` 摘要 + diagnostics 标记）、`scripts/verify/scene_governance_payload_guard.py` |
 | T54 | 前端治理面板接入 scene_ready_consumption 可视化 | Frontend + Verify | ✅ DONE | `frontend/apps/web/src/layouts/AppShell.vue`（HUD 展示 `governance.scene_ready_consumption`）、`frontend/apps/web/src/views/SceneHealthView.vue`（runtime section 展示 consumption 摘要）、`scripts/verify/frontend_scene_governance_consumption_guard.py` |
 | T55 | scene_ready_consumption 趋势基线守卫 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_ready_consumption_trend_guard.json`、`scripts/verify/scene_ready_consumption_trend_guard.py`（聚合消费率下降阈值 + scene/type floor）、`Makefile`（纳入 runtime gate） |
+| T56 | 关键场景编译样例回归守卫（原生契约输入闭环） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_orchestrator_key_scene_compile_guard.json`、`scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（`projects.list/projects.intake/workspace.home` 样例编译断言 scene_type/绑定/surface/pipeline）、`Makefile`（纳入 runtime gate） |
 
 ## 本轮已执行验证
 
@@ -197,6 +198,8 @@
 - `make verify.scene.runtime_boundary.gate`（T54 复验）：通过
 - `python3 scripts/verify/scene_ready_consumption_trend_guard.py`（T55）：通过
 - `make verify.scene.runtime_boundary.gate`（T55 复验）：通过
+- `python3 scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（T56）：通过
+- `make verify.scene.runtime_boundary.gate`（T56 复验）：通过
 
 ## 增量更新记录
 
@@ -249,9 +252,10 @@
 - 2026-03-15：已将 `scene_ready_contract_v1` 的消费率指标摘要注入 `scene_governance_v1.scene_ready_consumption`，并在 `diagnostics.scene_ready_consumption_enabled` 暴露开关，便于运行时治理看板直接消费。
 - 2026-03-15：已将 `scene_ready_consumption` 接入前端治理可视化：`AppShell HUD` 与 `SceneHealth` 均展示 scene_type 摘要，形成后端指标 -> 治理面板可见闭环。
 - 2026-03-15：已新增 `scene_ready_consumption` 趋势基线守卫，按聚合消费率下降阈值与 scene/type 最小覆盖进行持续门禁，防止能力回退。
+- 2026-03-15：已新增关键场景编译样例回归守卫，固定 `projects.list/projects.intake/workspace.home` 的“原生契约输入 -> scene-ready 输出”闭环断言（scene_type、base 绑定、search/workflow/validation/action surfaces、compile pipeline）。
 
 ## 下一步（按顺序）
 
-1. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
-2. 推进 action surface runtime 策略的后端下发 schema（含 key 白名单）纳入 `system.init` payload baseline 守卫。
-3. 将 `scene_ready_consumption` 趋势快照接入 `scene_governance` 历史报告（与 queue trend 并列），用于版本对比回归分析。
+1. 推进 action surface runtime 策略的后端下发 schema（含 key 白名单）纳入 `system.init` payload baseline 守卫。
+2. 将 `scene_ready_consumption` 趋势快照接入 `scene_governance` 历史报告（与 queue trend 并列），用于版本对比回归分析。
+3. 增补关键场景真实 registry 数据快照回归（在样例守卫基础上覆盖运行时场景资产输入）。
