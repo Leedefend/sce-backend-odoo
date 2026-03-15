@@ -40,6 +40,9 @@
   - Persists latest trend snapshot to `artifacts/backend/scene_asset_queue_trend_state.json` for next-run delta checks.
 - `make verify.scene.base_contract_asset_coverage.guard`
   - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).
+  - Enforces threshold policy by `runtime_env` + `role_code` using baseline `scripts/verify/baselines/scene_base_contract_asset_coverage_guard.json`.
+  - Persists latest live metrics to `artifacts/backend/scene_base_contract_asset_coverage_state.json` for offline fallback checks.
+  - Use `SC_BASE_CONTRACT_ASSET_COVERAGE_REQUIRE_LIVE=1` to force live-fetch in strict mode.
 - `make verify.scene.orchestrator.input.schema.guard`
   - Verifies orchestrator input-side schema symbols and required base-fact consume points.
 - `make verify.scene.orchestrator.output.schema.guard`
