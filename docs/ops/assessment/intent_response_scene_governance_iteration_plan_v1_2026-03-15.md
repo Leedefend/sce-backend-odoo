@@ -51,6 +51,7 @@
 | T26 | P2 冲突裁决引擎代码化（独立 resolver + 冲突样例） | Scene + Platform + Governance/Verify | ✅ DONE | `addons/smart_core/core/scene_merge_resolver.py`、`addons/smart_core/core/scene_dsl_compiler.py`（阶段委托 resolver）、`scripts/verify/scene_orchestrator_merge_priority_guard.py`（冲突样例断言） |
 | T27 | 资产覆盖率门禁升级为“结构 + 阈值（环境/角色分层）” | Governance/Verify | ✅ DONE | `scripts/verify/scene_base_contract_asset_coverage_guard.py`、`scripts/verify/baselines/scene_base_contract_asset_coverage_guard.json`、`docs/ops/verify/README.md` |
 | T28 | 编排器补齐原生子契约消费（views/fields/actions/validator） | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（base facts 消费扩展、base action 回填、validation surface 注入） |
+| T29 | 补齐 blocks 对 form/kanban 的结构化展开（去 list-only） | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_infer_block_type`、`_normalize_field_names`、`block_expand(..., ctx)`） |
 
 ## 本轮已执行验证
 
@@ -99,6 +100,12 @@
 - `python3 scripts/verify/scene_orchestrator_base_fact_binding_guard.py`（T28）：通过
 - `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T28）：通过
 - `make verify.scene.runtime_boundary.gate`（T28 复验）：通过
+- `python3 -m py_compile addons/smart_core/core/scene_dsl_compiler.py`（T29）：通过
+- `python3 scripts/verify/scene_orchestrator_input_schema_guard.py`（T29）：通过
+- `python3 scripts/verify/scene_orchestrator_output_schema_guard.py`（T29）：通过
+- `python3 scripts/verify/scene_orchestrator_base_fact_binding_guard.py`（T29）：通过
+- `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T29）：通过
+- `make verify.scene.runtime_boundary.gate`（T29 复验）：通过
 
 ## 增量更新记录
 
@@ -124,9 +131,10 @@
 - 2026-03-15：已完成 P2 冲突裁决引擎代码化：新增独立 `scene_merge_resolver` 承接 profile/policy/provider/permission 合并逻辑，并在 merge-priority guard 中新增冲突样例（provider 覆盖 policy/base；permission 最终裁决清空 actions）。
 - 2026-03-15：已完成资产覆盖率门禁升级：`scene_base_contract_asset_coverage_guard` 新增 env/role 分层阈值策略、live/state 双来源评估与严格模式开关（`SC_BASE_CONTRACT_ASSET_COVERAGE_REQUIRE_LIVE=1`）。
 - 2026-03-15：已补齐编排器对原生子契约的实质消费：`generate_surfaces` 扩展消费 `views/fields/search/permissions/workflow/validator/actions`，`action_compile` 支持 base action 候选回填，避免仅靠 DSL 静态 actions。
+- 2026-03-15：已补齐 `blocks` 的 `form/kanban` 结构化展开能力：编译器根据 block type/source 自动识别 `form/kanban/list`，并在 form block 输出字段约束摘要，在 kanban block 输出模板可用性标记。
 
 ## 下一步（按顺序）
 
-1. 补齐 `blocks` 对 `views.form/views.kanban` 的结构化展开，减少 list-only 假设。
-2. 将 base `validator` 从 `meta.validation_surface` 升级为显式 `validation_surface` 输出并对接前端表单约束消费。
-3. 为 base action 映射补齐 intent 对照规则（从 action key/name 到标准 intent）并增加冲突样例。
+1. 将 base `validator` 从 `meta.validation_surface` 升级为显式 `validation_surface` 输出并对接前端表单约束消费。
+2. 为 base action 映射补齐 intent 对照规则（从 action key/name 到标准 intent）并增加冲突样例。
+3. 给 form/kanban block expansion 增加运行样例 guard（确保输出字段不退化回 list-only 形态）。
