@@ -13,6 +13,10 @@ class CompileContext:
     scene_key: str
     ui_base_contract: Dict[str, Any]
     provider_registry: Dict[str, Any]
+    profile: Dict[str, Any]
+    policies: Dict[str, Any]
+    providers: List[Dict[str, Any]]
+    runtime: Dict[str, Any]
 
 
 def _text(value: Any) -> str:
@@ -34,6 +38,25 @@ def _resolve_path(payload: Dict[str, Any], path: str) -> Any:
             return None
         node = node.get(part)
     return node
+
+
+def _normalize_providers(raw: Any) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    for row in _as_list(raw):
+        if isinstance(row, str):
+            key = _text(row)
+            if key:
+                out.append({"key": key})
+            continue
+        payload = _as_dict(row)
+        if not payload:
+            continue
+        key = _text(payload.get("key") or payload.get("provider"))
+        item = dict(payload)
+        if key:
+            item["key"] = key
+        out.append(item)
+    return out
 
 
 def parse_scene_dsl(scene_payload: Dict[str, Any], scene_key: str) -> Dict[str, Any]:
@@ -205,6 +228,157 @@ def context_bind(ast: Dict[str, Any], ctx: CompileContext) -> Dict[str, Any]:
     return bound
 
 
+def profile_apply(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[str, Any]:
+    out = dict(bound_ast)
+    profile = _as_dict(ctx.profile)
+    if not profile:
+        return out
+    scene = _as_dict(out.get("scene"))
+    page = _as_dict(out.get("page"))
+
+    title = _text(profile.get("title"))
+    if title:
+        scene["title"] = title
+
+    layout = _as_dict(profile.get("layout"))
+    if layout:
+        scene["layout"] = dict(layout)
+
+    zones_profile = _as_list(profile.get("zones"))
+    if zones_profile:
+        zones: List[Dict[str, Any]] = []
+        for row in zones_profile:
+            if isinstance(row, str):
+                zones.append({"name": _text(row), "blocks": []})
+            elif isinstance(row, dict):
+                zones.append(
+                    {
+                        "name": _text(row.get("name") or row.get("zone") or row.get("key")),
+                        "blocks": _as_list(row.get("blocks")),
+                    }
+                )
+        if zones:
+            page["zones"] = zones
+
+    out["scene"] = scene
+    out["page"] = page
+    meta = _as_dict(out.get("meta"))
+    meta["profile"] = {
+        "applied": True,
+        "scene_type": _text(profile.get("scene_type")),
+    }
+    out["meta"] = meta
+    return out
+
+
+def policy_apply(compiled_ast: Dict[str, Any], ctx: CompileContext) -> Dict[str, Any]:
+    out = dict(compiled_ast)
+    policies = _as_dict(ctx.policies)
+    if not policies:
+        return out
+    action_policy = _as_dict(policies.get("action_policy"))
+    search_policy = _as_dict(policies.get("search_policy"))
+    workflow_policy = _as_dict(policies.get("workflow_policy"))
+    navigation_policy = _as_dict(policies.get("navigation_policy"))
+
+    role_code = _text(_as_dict(ctx.runtime).get("role_code"))
+    hidden_by_role = _as_dict(action_policy.get("hidden_by_role"))
+    hidden_keys = {_text(item) for item in _as_list(hidden_by_role.get(role_code)) if _text(item)}
+    if hidden_keys:
+        actions = [row for row in _as_list(out.get("actions")) if _text(_as_dict(row).get("key")) not in hidden_keys]
+        out["actions"] = actions
+
+    search_surface = _as_dict(out.get("search_surface"))
+    if _as_list(search_policy.get("default_filters")):
+        search_surface["filters"] = _as_list(search_policy.get("default_filters"))
+    if _as_list(search_policy.get("default_group_by")):
+        search_surface["group_by"] = _as_list(search_policy.get("default_group_by"))
+    out["search_surface"] = search_surface
+
+    workflow_surface = _as_dict(out.get("workflow_surface"))
+    if _as_list(workflow_policy.get("highlight_states")):
+        workflow_surface["highlight_states"] = _as_list(workflow_policy.get("highlight_states"))
+    out["workflow_surface"] = workflow_surface
+
+    meta = _as_dict(out.get("meta"))
+    meta["policy"] = {
+        "applied": True,
+        "hidden_action_count": len(hidden_keys),
+        "navigation_priority": int(navigation_policy.get("priority") or 0),
+    }
+    out["meta"] = meta
+    return out
+
+
+def _resolve_provider_payload(provider: Dict[str, Any], ctx: CompileContext, compiled_ast: Dict[str, Any]) -> Dict[str, Any]:
+    key = _text(provider.get("key"))
+    inline_payload = _as_dict(provider.get("payload"))
+    if inline_payload:
+        return inline_payload
+    if not key:
+        return {}
+    entry = ctx.provider_registry.get(key)
+    if callable(entry):
+        try:
+            payload = entry(scene_key=ctx.scene_key, runtime=_as_dict(ctx.runtime), context={"ast": compiled_ast})
+        except Exception:
+            return {}
+        return _as_dict(payload)
+    return _as_dict(entry)
+
+
+def provider_merge(compiled_ast: Dict[str, Any], ctx: CompileContext) -> Dict[str, Any]:
+    out = dict(compiled_ast)
+    provider_hits: List[str] = []
+    for provider in _as_list(ctx.providers):
+        payload = _as_dict(provider)
+        if not payload:
+            continue
+        key = _text(payload.get("key")) or "inline"
+        resolved = _resolve_provider_payload(payload, ctx, out)
+        if not resolved:
+            continue
+        if _as_list(resolved.get("blocks")):
+            out["blocks"] = _as_list(out.get("blocks")) + _as_list(resolved.get("blocks"))
+        if _as_list(resolved.get("actions")):
+            out["actions"] = _as_list(out.get("actions")) + _as_list(resolved.get("actions"))
+        search_surface = _as_dict(out.get("search_surface"))
+        search_surface.update(_as_dict(resolved.get("search_surface")))
+        out["search_surface"] = search_surface
+        workflow_surface = _as_dict(out.get("workflow_surface"))
+        workflow_surface.update(_as_dict(resolved.get("workflow_surface")))
+        out["workflow_surface"] = workflow_surface
+        permission_surface = _as_dict(out.get("permission_surface"))
+        permission_surface.update(_as_dict(resolved.get("permission_surface")))
+        out["permission_surface"] = permission_surface
+        provider_hits.append(key)
+
+    if provider_hits:
+        meta = _as_dict(out.get("meta"))
+        meta["provider"] = {
+            "applied": True,
+            "provider_hits": provider_hits,
+        }
+        out["meta"] = meta
+    return out
+
+
+def permission_workflow_gate(compiled_ast: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(compiled_ast)
+    permission_surface = _as_dict(out.get("permission_surface"))
+    actions = _as_list(out.get("actions"))
+    allowed = bool(permission_surface.get("allowed", True))
+    if not allowed and actions:
+        out["actions"] = []
+    meta = _as_dict(out.get("meta"))
+    meta["permission_gate"] = {
+        "allowed": allowed,
+        "actions_pruned": len(actions) if (not allowed and actions) else 0,
+    }
+    out["meta"] = meta
+    return out
+
+
 def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[str, Any]:
     out = dict(bound_ast)
     search_surface = _as_dict(out.get("search_surface"))
@@ -278,6 +452,10 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         scene_key=scene_key,
         ui_base_contract=_as_dict(ui_base_contract),
         provider_registry=_as_dict(provider_registry),
+        profile=_as_dict(scene_payload.get("profile")),
+        policies=_as_dict(scene_payload.get("policies") or scene_payload.get("policy")),
+        providers=_normalize_providers(scene_payload.get("providers")),
+        runtime=_as_dict(scene_payload.get("runtime")),
     )
     ast = parse_scene_dsl(scene_payload, scene_key=scene_key)
     grammar_ok, grammar_issues = grammar_validate(ast)
@@ -286,7 +464,11 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
     compiled = ast
     if grammar_ok and semantic_ok:
         compiled = context_bind(compiled, ctx)
+        compiled = profile_apply(compiled, ctx)
+        compiled = policy_apply(compiled, ctx)
+        compiled = provider_merge(compiled, ctx)
         compiled = generate_surfaces(compiled, ctx)
+        compiled = permission_workflow_gate(compiled)
         compiled = block_expand(compiled)
         compiled = action_compile(compiled)
 

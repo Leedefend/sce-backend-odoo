@@ -73,11 +73,12 @@ def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
 
 def _scene_ready_entry(item: Dict[str, Any]) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
+    provider_registry = item.get("provider_registry") if isinstance(item.get("provider_registry"), dict) else {}
     compiled = scene_compile(
         item,
         scene_key=scene_key,
         ui_base_contract=item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {},
-        provider_registry={},
+        provider_registry=provider_registry,
     )
     page = dict(compiled.get("page") or {})
     zones = page.get("zones") if isinstance(page.get("zones"), list) else []
