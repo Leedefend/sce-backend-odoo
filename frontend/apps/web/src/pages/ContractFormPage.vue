@@ -1747,9 +1747,18 @@ const sceneValidationPanel = computed(() => {
     .filter(Boolean);
   const sceneKey = String(route.query.scene_key || route.params.sceneKey || '').trim();
   const modelName = String(model.value || '').trim();
-  const suggestedAction = recordId.value && modelName
-    ? `open_record:${modelName}:${recordId.value}`
-    : (sceneKey ? `open_scene:${sceneKey}` : 'copy_reason');
+  const roleCode = String(runtimeRoleCode.value || '').trim().toLowerCase();
+  const modelPreferredForRecord = new Set(['project.project', 'project.task', 'purchase.order', 'account.move']);
+  let suggestedAction = 'copy_reason';
+  if (recordId.value && modelName && modelPreferredForRecord.has(modelName)) {
+    suggestedAction = `open_record:${modelName}:${recordId.value}`;
+  } else if (actionId.value > 0 && ['operator', 'staff', 'clerk'].some((token) => roleCode.includes(token))) {
+    suggestedAction = `open_action:${actionId.value}`;
+  } else if (sceneKey) {
+    suggestedAction = `open_scene:${sceneKey}`;
+  } else if (actionId.value > 0) {
+    suggestedAction = `open_action:${actionId.value}`;
+  }
   return {
     code: ErrorCodes.SCENE_VALIDATION_REQUIRED,
     message: normalized.join('；') || '场景约束校验未通过，请补齐必填字段。',
