@@ -67,6 +67,8 @@
   - Verifies backend UI base contract canonicalizer is wired into producer/repository and keeps required sub-contract facts (`views/fields/search/permissions/workflow/validator/actions`).
 - `make verify.scene.orchestrator.scene_type_surface.guard`
   - Verifies Scene Orchestrator consumes base facts by scene type (`form/list/kanban/workspace`) and shapes `search/workflow/validation` surfaces accordingly.
+- `make verify.scene.orchestrator.action_surface.guard`
+  - Verifies Scene Orchestrator emits scene-typed action surface buckets (`primary/secondary/contextual`) with stable counts.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
