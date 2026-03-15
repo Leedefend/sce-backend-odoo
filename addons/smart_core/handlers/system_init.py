@@ -137,6 +137,38 @@ def _load_scene_validation_recovery_strategy(env, params: dict, data: dict) -> d
         return {}
     return _normalize_scene_validation_recovery_strategy(loaded)
 
+
+def _normalize_scene_action_surface_strategy(payload) -> dict:
+    if not isinstance(payload, dict):
+        return {}
+    out = {}
+    for key in ("default", "by_role", "by_company", "by_company_role"):
+        value = payload.get(key)
+        if isinstance(value, dict):
+            out[key] = value
+    return out
+
+
+def _load_scene_action_surface_strategy(env, params: dict, data: dict) -> dict:
+    inline = _normalize_scene_action_surface_strategy(params.get("scene_action_surface_strategy"))
+    if inline:
+        return inline
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    ext_payload = _normalize_scene_action_surface_strategy(ext_facts.get("scene_action_surface_strategy"))
+    if ext_payload:
+        return ext_payload
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.scene_action_surface_strategy_json")
+    except Exception:
+        raw = ""
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(raw)
+    except Exception:
+        return {}
+    return _normalize_scene_action_surface_strategy(loaded)
+
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
     return provider_resolve_scene_channel(env, user, params, get_header=collector.get_request_header)
@@ -284,6 +316,7 @@ class SystemInitHandler(BaseIntentHandler):
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
         _merge_extension_facts(data)
         data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
+        data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
 
         runtime_ctx = SystemInitRuntimeContext(
             env=env,
@@ -375,6 +408,11 @@ class SystemInitHandler(BaseIntentHandler):
             scene_version=data.get("scene_version"),
             schema_version=data.get("schema_version"),
             scene_channel=scene_channel,
+            action_surface_strategy=data.get("scene_action_surface_strategy") if isinstance(data.get("scene_action_surface_strategy"), dict) else {},
+            runtime_context={
+                "role_code": role_code,
+                "company_id": env.company.id if env.company else None,
+            },
         )
         scene_nav_contract = build_scene_nav_contract(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
