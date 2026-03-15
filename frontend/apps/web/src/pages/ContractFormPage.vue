@@ -314,6 +314,7 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
+import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -1747,18 +1748,13 @@ const sceneValidationPanel = computed(() => {
     .filter(Boolean);
   const sceneKey = String(route.query.scene_key || route.params.sceneKey || '').trim();
   const modelName = String(model.value || '').trim();
-  const roleCode = String(runtimeRoleCode.value || '').trim().toLowerCase();
-  const modelPreferredForRecord = new Set(['project.project', 'project.task', 'purchase.order', 'account.move']);
-  let suggestedAction = 'copy_reason';
-  if (recordId.value && modelName && modelPreferredForRecord.has(modelName)) {
-    suggestedAction = `open_record:${modelName}:${recordId.value}`;
-  } else if (actionId.value > 0 && ['operator', 'staff', 'clerk'].some((token) => roleCode.includes(token))) {
-    suggestedAction = `open_action:${actionId.value}`;
-  } else if (sceneKey) {
-    suggestedAction = `open_scene:${sceneKey}`;
-  } else if (actionId.value > 0) {
-    suggestedAction = `open_action:${actionId.value}`;
-  }
+  const suggestedAction = resolveSceneValidationSuggestedAction({
+    modelName,
+    recordId: recordId.value,
+    actionId: actionId.value,
+    sceneKey,
+    roleCode: runtimeRoleCode.value,
+  });
   return {
     code: ErrorCodes.SCENE_VALIDATION_REQUIRED,
     message: normalized.join('；') || '场景约束校验未通过，请补齐必填字段。',
