@@ -91,6 +91,7 @@ def _scene_ready_entry(item: Dict[str, Any]) -> Dict[str, Any]:
         page["route"] = f"/s/{scene_key}"
     compiled["page"] = page
     compiled.setdefault("workflow_surface", {})
+    compiled.setdefault("validation_surface", {})
     return compiled
 
 

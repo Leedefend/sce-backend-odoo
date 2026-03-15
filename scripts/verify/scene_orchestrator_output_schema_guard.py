@@ -36,6 +36,7 @@ def main() -> int:
         '"search_surface": _as_dict(compiled.get("search_surface"))',
         '"workflow_surface": _as_dict(compiled.get("workflow_surface"))',
         '"permission_surface": _as_dict(compiled.get("permission_surface"))',
+        '"validation_surface": _as_dict(compiled.get("validation_surface"))',
         '"meta": _as_dict(compiled.get("meta"))',
     ):
         _assert(key in compiler_text, f"scene_compile output missing key mapping: {key}", errors)
@@ -59,4 +60,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
