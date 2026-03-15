@@ -6,6 +6,7 @@ import { config } from '../config';
 import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 
 export interface RoleSurface {
   role_code: string;
@@ -231,6 +232,19 @@ const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
 const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
+
+function resolveUserCompanyId(user: unknown): number | null {
+  if (!user || typeof user !== 'object') return null;
+  const row = user as Record<string, unknown>;
+  const direct = Number(row.company_id || 0);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const company = row.company;
+  if (company && typeof company === 'object') {
+    const nested = Number((company as Record<string, unknown>).id || 0);
+    if (Number.isFinite(nested) && nested > 0) return nested;
+  }
+  return null;
+}
 
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
@@ -590,6 +604,22 @@ export const useSessionStore = defineStore('session', {
         scene_candidates: Array.isArray(roleSurfaceRaw.scene_candidates) ? roleSurfaceRaw.scene_candidates.map((item) => String(item || '')).filter(Boolean) : [],
         menu_xmlids: Array.isArray(roleSurfaceRaw.menu_xmlids) ? roleSurfaceRaw.menu_xmlids.map((item) => String(item || '')).filter(Boolean) : [],
       };
+      setSceneValidationRecoveryStrategy();
+      const validationStrategyRaw = (result as AppInitResponse & { scene_validation_recovery_strategy?: unknown }).scene_validation_recovery_strategy;
+      const extFactsRaw = (result as AppInitResponse & { ext_facts?: Record<string, unknown> }).ext_facts ?? {};
+      const extValidationStrategyRaw = extFactsRaw.scene_validation_recovery_strategy;
+      const validationStrategy = (validationStrategyRaw && typeof validationStrategyRaw === 'object' && !Array.isArray(validationStrategyRaw))
+        ? validationStrategyRaw
+        : ((extValidationStrategyRaw && typeof extValidationStrategyRaw === 'object' && !Array.isArray(extValidationStrategyRaw))
+          ? extValidationStrategyRaw
+          : undefined);
+      applySceneValidationRecoveryStrategyRuntime(
+        validationStrategy as Record<string, unknown> | undefined,
+        {
+          roleCode: this.roleSurface.role_code,
+          companyId: resolveUserCompanyId(this.user),
+        },
+      );
       this.roleSurfaceMap = ((result as AppInitResponse & { role_surface_map?: RoleSurfaceMap }).role_surface_map ?? {});
       const rawCapabilityGroups = (result as AppInitResponse & { capability_groups?: unknown[] }).capability_groups ?? [];
       this.capabilityGroups = rawCapabilityGroups
