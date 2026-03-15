@@ -121,6 +121,40 @@ def _extract_base_action_candidates(ui_base_contract: Dict[str, Any]) -> List[Di
     return dedup
 
 
+def _normalize_field_names(raw_fields: List[Any]) -> List[str]:
+    names: List[str] = []
+    for item in raw_fields:
+        if isinstance(item, str):
+            key = _text(item)
+        elif isinstance(item, dict):
+            payload = _as_dict(item)
+            key = _text(payload.get("name") or payload.get("field") or payload.get("key"))
+        else:
+            key = ""
+        if key:
+            names.append(key)
+    dedup: List[str] = []
+    seen: set[str] = set()
+    for key in names:
+        if key in seen:
+            continue
+        seen.add(key)
+        dedup.append(key)
+    return dedup
+
+
+def _infer_block_type(payload: Dict[str, Any]) -> str:
+    block_type = _text(payload.get("type") or payload.get("block_type"))
+    source = _text(payload.get("source"))
+    if block_type in {"form_block", "form"} or source.endswith(".form"):
+        return "form"
+    if block_type in {"kanban_block", "kanban"} or source.endswith(".kanban"):
+        return "kanban"
+    if block_type in {"list_block", "tree_block", "list", "tree"} or source.endswith(".tree"):
+        return "list"
+    return block_type or "list"
+
+
 def parse_scene_dsl(scene_payload: Dict[str, Any], scene_key: str) -> Dict[str, Any]:
     target = _as_dict(scene_payload.get("target"))
     zones_raw = _as_list(scene_payload.get("zones"))
@@ -376,24 +410,47 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
     return out
 
 
-def block_expand(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
+def block_expand(bound_ast: Dict[str, Any], ctx: CompileContext | None = None) -> Dict[str, Any]:
     out = dict(bound_ast)
     expanded_blocks: List[Dict[str, Any]] = []
+    base_fields = _as_dict(_as_dict(ctx.ui_base_contract).get("fields")) if ctx else {}
     for row in _as_list(bound_ast.get("blocks")):
         payload = _as_dict(row)
-        block_type = _text(payload.get("type"))
+        block_type = _infer_block_type(payload)
+        model = _text(payload.get("model"))
+        if not model and ctx:
+            model = _text(ctx.ui_base_contract.get("model"))
         expanded = {
-            "block_type": "list" if block_type == "list_block" else block_type,
+            "block_type": block_type,
             "zone": _text(payload.get("zone") or "main") or "main",
-            "model": _text(payload.get("model")),
+            "model": model,
             "provider": _text(payload.get("provider")) or None,
-            "fields": _as_list(payload.get("fields")),
+            "fields": _normalize_field_names(_as_list(payload.get("fields"))),
         }
         bound_source = payload.get("bound_source")
         if isinstance(bound_source, dict):
-            src_fields = _as_list(bound_source.get("fields"))
+            src_fields = _normalize_field_names(_as_list(bound_source.get("fields")))
             if src_fields and not expanded["fields"]:
                 expanded["fields"] = src_fields
+
+        if block_type == "form":
+            expanded["form"] = {
+                "field_count": len(expanded["fields"]),
+                "fields": [
+                    {
+                        "name": key,
+                        "type": _text(_as_dict(base_fields.get(key)).get("type")),
+                        "readonly": bool(_as_dict(base_fields.get(key)).get("readonly", False)),
+                        "required": bool(_as_dict(base_fields.get(key)).get("required", False)),
+                    }
+                    for key in expanded["fields"]
+                ],
+            }
+        elif block_type == "kanban":
+            expanded["kanban"] = {
+                "field_count": len(expanded["fields"]),
+                "has_template": bool(_as_dict(bound_source).get("template") or _as_dict(bound_source).get("arch")),
+            }
         expanded_blocks.append(expanded)
     out["blocks"] = expanded_blocks
     return out
@@ -460,7 +517,7 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         compiled = provider_merge(compiled, ctx)
         compiled = generate_surfaces(compiled, ctx)
         compiled = permission_workflow_gate(compiled)
-        compiled = block_expand(compiled)
+        compiled = block_expand(compiled, ctx)
         compiled = action_compile(compiled)
 
     meta = _as_dict(compiled.get("meta"))
