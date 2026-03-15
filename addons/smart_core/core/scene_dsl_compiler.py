@@ -155,6 +155,39 @@ def _infer_block_type(payload: Dict[str, Any]) -> str:
     return block_type or "list"
 
 
+def _infer_intent_from_action(payload: Dict[str, Any]) -> str:
+    explicit = _text(payload.get("intent"))
+    if explicit:
+        return explicit
+
+    key = _text(payload.get("key") or payload.get("name") or payload.get("id")).lower()
+    label = _text(payload.get("label") or payload.get("string")).lower()
+    action_type = _text(payload.get("type") or payload.get("action_type")).lower()
+    token = f"{key} {label} {action_type}".strip()
+
+    if any(flag in token for flag in ("create", "new", "add", "新增", "创建")):
+        return "record.create"
+    if any(flag in token for flag in ("edit", "update", "write", "编辑", "更新")):
+        return "record.update"
+    if any(flag in token for flag in ("delete", "remove", "unlink", "删除", "移除")):
+        return "record.delete"
+    if any(flag in token for flag in ("export", "导出")):
+        return "record.export"
+    if any(flag in token for flag in ("import", "导入")):
+        return "record.import"
+    if any(flag in token for flag in ("approve", "confirm", "批准", "确认")):
+        return "workflow.approve"
+    if any(flag in token for flag in ("submit", "提交")):
+        return "workflow.submit"
+    if any(flag in token for flag in ("reject", "驳回")):
+        return "workflow.reject"
+    if any(flag in token for flag in ("cancel", "作废", "取消")):
+        return "workflow.cancel"
+    if any(flag in token for flag in ("search", "filter", "查询", "筛选")):
+        return "record.search"
+    return "ui.contract"
+
+
 def parse_scene_dsl(scene_payload: Dict[str, Any], scene_key: str) -> Dict[str, Any]:
     target = _as_dict(scene_payload.get("target"))
     zones_raw = _as_list(scene_payload.get("zones"))
@@ -459,16 +492,23 @@ def block_expand(bound_ast: Dict[str, Any], ctx: CompileContext | None = None) -
 def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
     out = dict(bound_ast)
     actions_out: List[Dict[str, Any]] = []
+    explicit_intent_count = 0
+    mapped_intent_count = 0
     for row in _as_list(bound_ast.get("actions")):
         payload = _as_dict(row)
         key = _text(payload.get("key"))
         if not key:
             continue
+        intent = _infer_intent_from_action(payload)
+        if _text(payload.get("intent")):
+            explicit_intent_count += 1
+        else:
+            mapped_intent_count += 1
         actions_out.append(
             {
                 "key": key,
                 "label": _text(payload.get("label") or key),
-                "intent": _text(payload.get("intent") or "ui.contract"),
+                "intent": intent,
                 "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
                 "target": _as_dict(payload.get("target")),
             }
@@ -480,17 +520,29 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
             key = _text(payload.get("key") or payload.get("name") or payload.get("id"))
             if not key:
                 continue
+            intent = _infer_intent_from_action(payload)
+            if _text(payload.get("intent")):
+                explicit_intent_count += 1
+            else:
+                mapped_intent_count += 1
             actions_out.append(
                 {
                     "key": key,
                     "label": _text(payload.get("label") or payload.get("string") or key),
-                    "intent": _text(payload.get("intent") or "ui.contract"),
+                    "intent": intent,
                     "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
                     "target": _as_dict(payload.get("target")),
                 }
             )
 
     out["actions"] = actions_out
+    meta = _as_dict(out.get("meta"))
+    meta["action_intent_resolution"] = {
+        "explicit_intent_count": explicit_intent_count,
+        "mapped_intent_count": mapped_intent_count,
+        "action_count": len(actions_out),
+    }
+    out["meta"] = meta
     return out
 
 

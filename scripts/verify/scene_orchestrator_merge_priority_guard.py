@@ -67,6 +67,32 @@ def _runtime_sample_assert(errors: list[str]) -> None:
         errors,
     )
 
+    intent_mapping_payload = {
+        "code": "projects.list",
+        "name": "项目列表",
+        "target": {"route": "/s/projects.list", "action_id": 100},
+        "actions": [{"key": "create_project", "label": "新建项目"}],
+    }
+    intent_mapping_compiled = scene_compile(
+        intent_mapping_payload,
+        scene_key="projects.list",
+        ui_base_contract=base_contract,
+        provider_registry={},
+    )
+    mapped_actions = intent_mapping_compiled.get("actions") if isinstance(intent_mapping_compiled.get("actions"), list) else []
+    mapped_create = next(
+        (
+            row for row in mapped_actions
+            if isinstance(row, dict) and str(row.get("key") or "").strip() == "create_project"
+        ),
+        {},
+    )
+    _assert(
+        str(mapped_create.get("intent") or "") == "record.create",
+        "intent mapping sample expected create_project -> record.create",
+        errors,
+    )
+
     conflict_payload = {
         "code": "projects.list",
         "name": "项目列表",
