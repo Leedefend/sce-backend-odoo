@@ -81,6 +81,7 @@
 | T56 | 关键场景编译样例回归守卫（原生契约输入闭环） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_orchestrator_key_scene_compile_guard.json`、`scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（`projects.list/projects.intake/workspace.home` 样例编译断言 scene_type/绑定/surface/pipeline）、`Makefile`（纳入 runtime gate） |
 | T57 | action surface strategy 下发 payload baseline 守卫 | Platform + Scene + Verify | ✅ DONE | `addons/smart_core/handlers/system_init.py`（策略输出归一化新增 key 白名单与去重）、`scripts/verify/baselines/scene_action_surface_strategy_payload_guard.json`、`scripts/verify/scene_action_surface_strategy_payload_guard.py`（`system.init` live sample baseline 校验）、`Makefile`（纳入 runtime gate） |
 | T58 | scene_governance 历史趋势报告门禁（queue + consumption） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_governance_history_report_guard.json`、`scripts/verify/scene_governance_history_report_guard.py`（聚合 queue/consumption 趋势状态，输出 JSON+MD 报告并校验策略对齐）、`Makefile`（纳入 runtime gate） |
+| T59 | 关键场景真实 registry/资产输入快照回归守卫 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_registry_asset_snapshot_guard.json`、`scripts/verify/scene_registry_asset_snapshot_guard.py`（`system.init` live/fallback 快照，校验 key scene 覆盖与 base_contract 绑定）、`Makefile`（纳入 runtime gate） |
 
 ## 本轮已执行验证
 
@@ -206,6 +207,8 @@
 - `make verify.scene.runtime_boundary.gate`（T57 复验）：通过
 - `python3 scripts/verify/scene_governance_history_report_guard.py`（T58）：通过
 - `make verify.scene.runtime_boundary.gate`（T58 复验）：通过
+- `python3 scripts/verify/scene_registry_asset_snapshot_guard.py`（T59）：通过
+- `make verify.scene.runtime_boundary.gate`（T59 复验）：通过
 
 ## 增量更新记录
 
@@ -261,9 +264,10 @@
 - 2026-03-15：已新增关键场景编译样例回归守卫，固定 `projects.list/projects.intake/workspace.home` 的“原生契约输入 -> scene-ready 输出”闭环断言（scene_type、base 绑定、search/workflow/validation/action surfaces、compile pipeline）。
 - 2026-03-15：已将 `scene_action_surface_strategy` 下发契约升级为“后端归一化 + payload baseline 门禁”：`system.init` 仅输出白名单 top keys 与 strategy keys，并以 live sample 对照基线防止策略形态漂移。
 - 2026-03-15：已新增 `scene_governance` 历史趋势报告门禁：将 `scene_asset_queue_trend_state` 与 `scene_ready_consumption_trend_state` 聚合为统一历史报告，纳入 runtime gate 做跨趋势策略对齐校验。
+- 2026-03-15：已新增关键场景真实快照回归守卫：从 `system.init -> scene_ready_contract_v1` 抽取 `scene_registry_asset_snapshot`，校验关键 scene 覆盖与 `base_contract_bound_scene_count`，并固化 state 便于后续版本对比。
 
 ## 下一步（按顺序）
 
-1. 增补关键场景真实 registry 数据快照回归（在样例守卫基础上覆盖运行时场景资产输入）。
-2. 为 action surface strategy 增加公司/角色冲突 live matrix 样例（覆盖 `default/by_company/by_role/by_company_role` 组合）。
-3. 将 `scene_governance_history_report` 接入版本化归档（按分支/提交写入 artifacts 目录并生成 diff 摘要）。
+1. 为 action surface strategy 增加公司/角色冲突 live matrix 样例（覆盖 `default/by_company/by_role/by_company_role` 组合）。
+2. 将 `scene_governance_history_report` 接入版本化归档（按分支/提交写入 artifacts 目录并生成 diff 摘要）。
+3. 将 `scene_registry_asset_snapshot_state` 与关键场景编译样例守卫联动，产出“样例 vs 真实快照”差异报告。
