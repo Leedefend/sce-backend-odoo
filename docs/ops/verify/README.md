@@ -99,6 +99,10 @@
   - Verifies real runtime scene snapshot (`system.init -> scene_ready_contract_v1`) for key scene coverage and base-contract binding.
   - Persists live/fallback snapshot to `artifacts/backend/scene_registry_asset_snapshot_state.json` using baseline `scripts/verify/baselines/scene_registry_asset_snapshot_guard.json`.
   - Use `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1` to force live fetch mode.
+- `make verify.scene.sample_registry_diff.guard`
+  - Builds a diff report between sample compile baseline (`scene_orchestrator_key_scene_compile_guard`) and real registry snapshot state.
+  - Emits `artifacts/backend/scene_sample_registry_diff_report.json` and `artifacts/backend/scene_sample_registry_diff_report.md`.
+  - Baseline: `scripts/verify/baselines/scene_sample_registry_diff_guard.json`; use `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1` for strict scene-count mode.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
