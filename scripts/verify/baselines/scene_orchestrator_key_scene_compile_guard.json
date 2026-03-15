@@ -1,0 +1,48 @@
+{
+  "required_scene_keys": [
+    "projects.list",
+    "projects.intake",
+    "workspace.home"
+  ],
+  "required_scene_types": [
+    "list",
+    "form",
+    "workspace"
+  ],
+  "required_compile_pipeline": [
+    "dsl_parser",
+    "grammar_validator",
+    "semantic_validator",
+    "context_binder",
+    "surface_generator",
+    "block_expansion",
+    "action_compiler",
+    "scene_compiler"
+  ],
+  "per_scene_expectations": {
+    "projects.list": {
+      "scene_type": "list",
+      "min_bound_block_count": 1,
+      "min_action_total": 1,
+      "require_search_surface": true,
+      "require_workflow_surface": true,
+      "require_validation_surface": false
+    },
+    "projects.intake": {
+      "scene_type": "form",
+      "min_bound_block_count": 1,
+      "min_action_total": 1,
+      "require_search_surface": true,
+      "require_workflow_surface": true,
+      "require_validation_surface": true
+    },
+    "workspace.home": {
+      "scene_type": "workspace",
+      "min_bound_block_count": 1,
+      "min_action_total": 1,
+      "require_search_surface": true,
+      "require_workflow_surface": true,
+      "require_validation_surface": false
+    }
+  }
+}
