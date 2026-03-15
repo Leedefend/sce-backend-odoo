@@ -66,6 +66,7 @@
 | T41 | recovery strategy payload 路径稳定性 smoke guard | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/scene_validation_recovery_strategy_payload_path_guard.py`（后端 `params->ext_facts->icp` 与前端 `top-level->ext_facts` 路径优先级校验）、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
 | T42 | recovery strategy 端到端链路 smoke guard | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（后端输出→session 注入→页面 suggestedAction 链路顺序校验）、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
 | T43 | recovery strategy 行为样例基线守卫 | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/baselines/scene_validation_recovery_strategy_behavior_smoke_guard.json`、`scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（按角色/公司覆盖 `open_record/open_action/open_scene` 行为校验） |
+| T44 | 平台原生契约子契约规范化内核（资产化生产链） | Platform + Scene + Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_canonicalizer.py`（`views/fields/search/permissions/workflow/validator/actions` 规范化）、`addons/smart_core/core/ui_base_contract_asset_producer.py`、`addons/smart_core/core/ui_base_contract_asset_repository.py`、`scripts/verify/scene_ui_base_contract_canonicalizer_guard.py` |
 
 ## 本轮已执行验证
 
@@ -160,6 +161,8 @@
 - `make verify.scene.runtime_boundary.gate`（T42 复验）：通过
 - `python3 scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（T43 行为样例复验）：通过
 - `make verify.scene.runtime_boundary.gate`（T43 复验）：通过
+- `python3 scripts/verify/scene_ui_base_contract_canonicalizer_guard.py`（T44）：通过
+- `make verify.scene.runtime_boundary.gate`（T44 复验）：通过
 
 ## 增量更新记录
 
@@ -200,9 +203,10 @@
 - 2026-03-15：已新增 payload 路径稳定性守卫 `verify.scene.validation_recovery_strategy.payload_path.guard`，固定后端优先级 `params -> ext_facts -> icp` 与前端优先级 `top-level payload -> ext_facts fallback`，并纳入 `verify.scene.runtime_boundary.gate`。
 - 2026-03-15：已新增端到端链路守卫 `verify.scene.validation_recovery_strategy.e2e_smoke.guard`，校验 `system.init -> session runtime apply -> ContractFormPage suggestedAction` 链路接线与顺序稳定性。
 - 2026-03-15：已为 `verify.scene.validation_recovery_strategy.e2e_smoke.guard` 增加行为样例基线 `scene_validation_recovery_strategy_behavior_smoke_guard.json`，按角色/公司覆盖 `open_record/open_action/open_scene` 三类输出。
+- 2026-03-15：已落地平台原生契约规范化内核 `ui_base_contract_canonicalizer`，并接入资产生产与仓储读写路径，确保 Scene 编排输入稳定具备 `views/fields/search/permissions/workflow/validator/actions` 七类子契约。
 
 ## 下一步（按顺序）
 
-1. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
-2. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
-3. 为 `scene_validation_recovery_strategy` 增加“回退路径”行为样例（`copy_reason` 与 action fallback）并纳入基线，补齐异常场景覆盖。
+1. 推进 Scene 编排层对规范化 `actions/search/workflow/validator` 的深消费（按场景类型差异化装配），减少 seed 静态透传。
+2. 将 `scene_ready_contract_v1` 增补“子契约消费率”运行时指标（分 scene_type 输出），作为能力提升度量。
+3. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
