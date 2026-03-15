@@ -64,7 +64,7 @@ import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { NavNode } from '@sc/schema';
-import type { SceneTarget } from '../app/resolvers/sceneRegistry';
+import type { Scene, SceneTarget } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
@@ -270,6 +270,43 @@ function isSameRouteTarget(targetRoute: string, query: Record<string, unknown>) 
   return targetQuery.toString() === currentQuery.toString();
 }
 
+function fallbackSceneFromSceneReady(sceneKey: string): Scene | null {
+  const key = String(sceneKey || '').trim();
+  if (!key) {
+    return null;
+  }
+  const contract = session.sceneReadyContractV1;
+  const rows = Array.isArray(contract?.scenes) ? contract.scenes : [];
+  for (const item of rows) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    const scene = (row.scene && typeof row.scene === 'object') ? row.scene as Record<string, unknown> : {};
+    const page = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
+    const meta = (row.meta && typeof row.meta === 'object') ? row.meta as Record<string, unknown> : {};
+    const target = (meta.target && typeof meta.target === 'object') ? meta.target as Record<string, unknown> : {};
+    const rowKey = String(scene.key || page.scene_key || '').trim();
+    if (rowKey !== key) continue;
+    const routePath = String(page.route || target.route || `/s/${key}`).trim() || `/s/${key}`;
+    const actionId = Number(target.action_id || 0);
+    const menuId = Number(target.menu_id || 0);
+    return {
+      key,
+      label: String(scene.title || key),
+      route: routePath,
+      target: {
+        route: routePath,
+        action_id: actionId > 0 ? actionId : undefined,
+        menu_id: menuId > 0 ? menuId : undefined,
+      },
+      layout: resolveSceneLayout(null),
+      capabilities: [],
+      breadcrumbs: [],
+      tiles: [],
+    };
+  }
+  return null;
+}
+
 async function resolveScene() {
   try {
     status.value = 'loading';
@@ -277,7 +314,7 @@ async function resolveScene() {
     embeddedActionId.value = 0;
     embeddedRecordActionId.value = 0;
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
-    const scene = getSceneByKey(sceneKey);
+    const scene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey);
     if (!scene) {
       setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
