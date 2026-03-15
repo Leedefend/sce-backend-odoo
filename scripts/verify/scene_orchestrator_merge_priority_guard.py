@@ -67,6 +67,57 @@ def _runtime_sample_assert(errors: list[str]) -> None:
         errors,
     )
 
+    conflict_payload = {
+        "code": "projects.list",
+        "name": "项目列表",
+        "target": {"route": "/s/projects.list", "action_id": 100},
+        "actions": [{"key": "open_scene", "intent": "ui.contract"}],
+        "policies": {
+            "search_policy": {
+                "default_filters": ["policy_only"],
+            }
+        },
+        "providers": [{"key": "conflict_provider"}],
+        "runtime": {"role_code": "project_manager"},
+    }
+    conflict_base_contract = {
+        "views": {"tree": {"fields": ["name", "stage_id"]}},
+        "search": {"fields": ["name"], "filters": ["base_only"]},
+        "permissions": {"allowed": True},
+    }
+    conflict_provider_registry = {
+        "conflict_provider": {
+            "search_surface": {"filters": ["provider_only"]},
+            "permission_surface": {"allowed": False},
+            "actions": [{"key": "provider_action", "intent": "ui.contract"}],
+        }
+    }
+    conflict_compiled = scene_compile(
+        conflict_payload,
+        scene_key="projects.list",
+        ui_base_contract=conflict_base_contract,
+        provider_registry=conflict_provider_registry,
+    )
+    conflict_meta = conflict_compiled.get("meta") if isinstance(conflict_compiled.get("meta"), dict) else {}
+    resolver_meta = conflict_meta.get("merge_resolver") if isinstance(conflict_meta.get("merge_resolver"), dict) else {}
+    conflicts = resolver_meta.get("conflicts") if isinstance(resolver_meta.get("conflicts"), list) else []
+
+    _assert(
+        conflict_compiled.get("search_surface", {}).get("filters") == ["provider_only"],
+        "conflict sample expected provider to override policy/base filters",
+        errors,
+    )
+    _assert(
+        conflict_compiled.get("actions") == [],
+        "conflict sample expected permission gate to prune actions",
+        errors,
+    )
+    _assert(
+        len(conflicts) >= 1,
+        "conflict sample expected merge_resolver conflicts",
+        errors,
+    )
+
 
 def main() -> int:
     errors: list[str] = []
