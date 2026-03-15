@@ -31,6 +31,15 @@
 | T6 | 场景治理可视化（SceneHealth/调试面板） | Frontend | ✅ DONE | `frontend/apps/web/src/views/SceneHealthView.vue`：新增 governance runtime 区块展示 `scene_governance_v1.gates/reasons` |
 | T7 | 新增治理 guard（验证 `scene_governance_v1` 结构与关键 gates） | Governance/Verify | ✅ DONE | `scripts/verify/scene_governance_payload_guard.py` |
 | T8 | 将 guard 接入 Makefile 验证入口 | Governance/Verify | ✅ DONE | `Makefile`：`verify.scene.governance_payload.guard`，并纳入 `verify.scene.runtime_boundary.gate` 依赖 |
+| T9 | 建立 Scene DSL 编译流水线骨架（Parser/Validator/Binder/Compiler） | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py` |
+| T10 | 将 `scene_ready_contract_v1` 切换为编译流水线产物（保留回退） | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_ready_contract_builder.py`（主路径改为 `scene_compile(...)`） |
+| T11 | 增加“原生契约绑定覆盖率”指标（scene 维度） | Governance/Verify | ✅ DONE | `scene_ready_contract_v1.meta.base_contract_bound_scene_count` + `compile_issue_scene_count` |
+| T12 | 建立原生契约后端资产模型与仓储（替代前端单次触发定位） | Platform | ✅ DONE | `addons/smart_core/models/ui_base_contract_asset.py`、`addons/smart_core/core/ui_base_contract_asset_repository.py`、`addons/smart_core/security/ir.model.access.csv` |
+| T13 | `system.init` 接入原生契约资产绑定并注入 scene 编译输入 | Platform + Scene | ✅ DONE | `addons/smart_core/handlers/system_init.py`：`bind_scene_assets(...)` + `nav_meta.ui_base_contract_*` |
+| T14 | 增加“原生契约资产覆盖率” guard 并接入运行时边界门禁 | Governance/Verify | ✅ DONE | `scripts/verify/scene_base_contract_asset_coverage_guard.py`、`Makefile`：`verify.scene.base_contract_asset_coverage.guard` 纳入 `verify.scene.runtime_boundary.gate` |
+| T15 | 明确并落地“原生契约资产层”边界语义（非主事实源） | Architecture + Platform | ✅ DONE | `docs/architecture/ui_base_contract_asset_layer_design_v1.md`、`addons/smart_core/models/ui_base_contract_asset.py`（字段补齐+active 生命周期约束）、`addons/smart_core/core/ui_base_contract_asset_repository.py`（scope hash/source type/code version） |
+| T16 | 建立后端资产生产链路（producer + cron 预热入口） | Platform | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_producer.py`、`addons/smart_core/models/ui_base_contract_asset.py`（`refresh_assets_for_scene_keys/cron_refresh_ui_base_contract_assets`）、`addons/smart_core/data/ui_base_contract_asset_cron.xml` |
+| T17 | 建立事件触发生产入口（队列去抖 + cron 批处理消费） | Platform | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_event_queue.py`、`addons/smart_core/models/ui_base_contract_asset_event_trigger.py`、`addons/smart_core/models/ui_base_contract_asset.py`（`pop_scene_keys` 消费） |
 
 ## 本轮已执行验证
 
@@ -40,12 +49,30 @@
 - `python3 scripts/verify/scene_governance_payload_guard.py`：通过
 - `make verify.scene.governance_payload.guard`：通过
 - `pnpm -C frontend/apps/web exec tsc --noEmit --pretty false`（AppShell HUD 治理信息扩展后复验）：通过
+- `python3 -m py_compile addons/smart_core/core/scene_dsl_compiler.py addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/handlers/system_init.py`（T9/T10/T11）：通过
+- `python3 -m py_compile addons/smart_core/models/ui_base_contract_asset.py addons/smart_core/core/ui_base_contract_asset_repository.py addons/smart_core/handlers/system_init.py addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/core/scene_dsl_compiler.py`（T12/T13）：通过
+- `python3 scripts/verify/scene_base_contract_asset_coverage_guard.py`（T14）：通过
+- `make verify.scene.base_contract_asset_coverage.guard`（T14）：通过
+- `python3 -m py_compile addons/smart_core/models/ui_base_contract_asset.py addons/smart_core/core/ui_base_contract_asset_repository.py scripts/verify/scene_base_contract_asset_coverage_guard.py`（T15）：通过
+- `python3 -m py_compile addons/smart_core/core/ui_base_contract_asset_producer.py addons/smart_core/models/ui_base_contract_asset.py addons/smart_core/core/ui_base_contract_asset_repository.py scripts/verify/scene_base_contract_asset_coverage_guard.py`（T16）：通过
+- `python3 scripts/verify/scene_base_contract_asset_coverage_guard.py`（T16 复验）：通过
+- `python3 -m py_compile addons/smart_core/core/ui_base_contract_asset_event_queue.py addons/smart_core/models/ui_base_contract_asset_event_trigger.py addons/smart_core/models/ui_base_contract_asset.py scripts/verify/scene_base_contract_asset_coverage_guard.py`（T17）：通过
+- `python3 scripts/verify/scene_base_contract_asset_coverage_guard.py`（T17 复验）：通过
 
 ## 增量更新记录
 
 - 2026-03-15：`AppShell` HUD 已加入 `scene_governance_v1` 可视化字段（`scene_channel/runtime_source/gates/reasons`），便于调试与运维核查。
 - 2026-03-15：已新增治理 payload 示例快照基线：`docs/ops/assessment/scene_governance_payload_snapshot_v1_2026-03-15.json`。
+- 2026-03-15：确认架构缺口——`scene_ready` 当前主要来源于 scene catalog，而非 UI Base Contract 编译主链；已立项 T9/T10/T11 修复。
+- 2026-03-15：已落地 Scene DSL 编译流水线骨架，并将 `scene_ready_contract_v1` 主路径切到编译器；新增绑定覆盖率指标用于度量“原生契约输入”真实使用率。
+- 2026-03-15：已将原生契约升级为后端资产模型 `sc.ui.base.contract.asset`，并在 `system.init` 中按 `scene_key + role + company` 绑定注入到 `ui_base_contract`，不再依赖前端 `ui.contract` 单次触发链路。
+- 2026-03-15：已新增 `scene_base_contract_asset_coverage_guard`，并纳入 `verify.scene.runtime_boundary.gate`，形成“资产绑定覆盖率”门禁。
+- 2026-03-15：已形成《UI Base Contract Asset Layer 设计说明 v1》，明确资产层定位为治理能力（snapshot/replay/cache/audit），不替代运行时实时生成主链。
+- 2026-03-15：已按设计文档补齐资产语义字段（`contract_kind/source_type/scope_hash/generated_at/code_version`），并新增“同作用域仅一个 active”生命周期约束。
+- 2026-03-15：已落地资产生产链路：新增 `ui_base_contract_asset_producer`，支持按 scene/action 生成并写入资产；新增 `ir.cron` 预热入口（默认 `active=False`，受控启用）。
+- 2026-03-15：已落地事件触发链路：`ir.actions.act_window / ir.ui.view / res.groups` 变更自动入队；cron 按队列批处理消费并触发 `event_queue` 资产刷新。
 
 ## 下一步（按顺序）
 
-1. 结合后续版本演进，按需更新治理 payload 快照版本号与字段说明（可选）。
+1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
+2. 增加事件队列观测指标（队列长度、消费延迟、失败重试）并接入场景治理面板。
