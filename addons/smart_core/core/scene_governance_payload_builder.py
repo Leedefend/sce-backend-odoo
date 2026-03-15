@@ -40,6 +40,7 @@ def build_scene_governance_payload_v1(
     scene_diagnostics: Dict[str, Any] | None,
     delivery_meta: Dict[str, Any] | None,
     nav_contract_meta: Dict[str, Any] | None,
+    asset_queue_metrics: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     diagnostics = _as_dict(scene_diagnostics)
     governance = _as_dict(diagnostics.get("governance"))
@@ -50,6 +51,7 @@ def build_scene_governance_payload_v1(
     normalize_warnings = _as_list(diagnostics.get("normalize_warnings"))
     resolve_errors = _as_list(diagnostics.get("resolve_errors"))
     drift = _as_list(diagnostics.get("drift"))
+    queue_metrics = _as_dict(asset_queue_metrics)
 
     nav_policy_validation_ok = bool(nav_policy.get("nav_policy_validation_ok", False))
     delivery_policy_applied = bool(delivery_policy.get("enabled", False))
@@ -76,6 +78,16 @@ def build_scene_governance_payload_v1(
             "issues": _as_list(nav_policy.get("nav_policy_validation_issues")),
         },
         "role_surface_provider": role_surface_provider,
+        "asset_queue": {
+            "queue_size": int(queue_metrics.get("queue_size") or 0),
+            "updated_at": _as_text(queue_metrics.get("updated_at")),
+            "reason": _as_text(queue_metrics.get("reason")),
+            "added_count": int(queue_metrics.get("added_count") or 0),
+            "last_operation": _as_text(queue_metrics.get("last_operation")),
+            "consumed_at": _as_text(queue_metrics.get("consumed_at")),
+            "popped_count": int(queue_metrics.get("popped_count") or 0),
+            "remaining_count": int(queue_metrics.get("remaining_count") or 0),
+        },
         "diagnostics": {
             "normalize_warning_count": len(normalize_warnings),
             "resolve_error_count": len(resolve_errors),
