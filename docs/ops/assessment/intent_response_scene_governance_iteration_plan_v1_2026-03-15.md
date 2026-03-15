@@ -58,6 +58,7 @@
 | T33 | validation_surface 升级到表单提交前预检 | Frontend + Scene | ✅ DONE | `frontend/apps/web/src/pages/ContractFormPage.vue`（读取 scene-ready `validation_surface.required_fields`，提交前执行 `SCENE_VALIDATION_REQUIRED` 预检） |
 | T34 | `SCENE_VALIDATION_REQUIRED` 对齐统一错误码常量 | Frontend | ✅ DONE | `frontend/apps/web/src/app/error_codes.ts`、`frontend/apps/web/src/pages/ContractFormPage.vue`（预检提示改为引用 `ErrorCodes.SCENE_VALIDATION_REQUIRED`） |
 | T35 | `SCENE_VALIDATION_REQUIRED` 接入统一错误面板 | Frontend | ✅ DONE | `frontend/apps/web/src/pages/ContractFormPage.vue`（Scene 预检错误改为 `StatusPanel` 展示，含机读 code/reason + suggested action） |
+| T36 | `SCENE_VALIDATION_REQUIRED` 推荐动作升级为可执行跳转 | Frontend | ✅ DONE | `frontend/apps/web/src/pages/ContractFormPage.vue`（优先 `open_record:<model>:<id>`，其次 `open_scene:<scene_key>`） |
 
 ## 本轮已执行验证
 
@@ -134,6 +135,8 @@
 - `make verify.scene.runtime_boundary.gate`（T34 复验）：通过
 - `pnpm -C frontend/apps/web exec tsc --noEmit`（T35）：通过
 - `make verify.scene.runtime_boundary.gate`（T35 复验）：通过
+- `pnpm -C frontend/apps/web exec tsc --noEmit`（T36）：通过
+- `make verify.scene.runtime_boundary.gate`（T36 复验）：通过
 
 ## 增量更新记录
 
@@ -166,9 +169,10 @@
 - 2026-03-15：已将 `validation_surface` 接入 `ContractFormPage` 提交流程：按 scene-ready `required_fields` 做提交前预检，失败时返回 `SCENE_VALIDATION_REQUIRED` 提示，减少后端拒绝后重试成本。
 - 2026-03-15：已将 `SCENE_VALIDATION_REQUIRED` 纳入 `ErrorCodes` 常量并完成预检消费对齐，避免前端硬编码错误码漂移。
 - 2026-03-15：已将 `SCENE_VALIDATION_REQUIRED` 预检失败接入统一 `StatusPanel`：展示机读 `error_code/reason_code`，并提供 `suggested-action=copy_reason` 便于快速上报定位。
+- 2026-03-15：已将 `SCENE_VALIDATION_REQUIRED` 推荐动作升级为可执行跳转：编辑态优先跳转 `open_record`，创建/场景态跳转 `open_scene`，降低用户修复路径摩擦。
 
 ## 下一步（按顺序）
 
 1. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
 2. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
-3. 为 `SCENE_VALIDATION_REQUIRED` 增加可执行推荐动作（如 `open_record/open_scene`）并接入错误面板动作路由。
+3. 为 `SCENE_VALIDATION_REQUIRED` 增加场景化推荐动作策略（按模型/角色分流 open_record/open_scene/open_action）。
