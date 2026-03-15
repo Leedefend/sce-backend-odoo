@@ -9,6 +9,7 @@ from odoo import api
 
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
+from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonicalize_ui_base_contract
 from odoo.addons.smart_core.core.ui_base_contract_asset_repository import upsert_asset
 
 
@@ -72,7 +73,7 @@ def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
         }
     )
     data = finalized.get("data") if isinstance(finalized, dict) else {}
-    return _as_dict(data)
+    return canonicalize_ui_base_contract(_as_dict(data))
 
 
 def refresh_ui_base_contract_assets(

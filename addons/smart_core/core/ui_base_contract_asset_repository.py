@@ -5,6 +5,8 @@ import json
 import hashlib
 from typing import Any
 
+from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonicalize_ui_base_contract
+
 
 ASSET_MODEL = "sc.ui.base.contract.asset"
 CONTRACT_KIND_UI_BASE = "ui_base"
@@ -15,7 +17,7 @@ def _text(value: Any) -> str:
 
 
 def _normalize_payload(payload: dict | None) -> dict:
-    return payload if isinstance(payload, dict) else {}
+    return canonicalize_ui_base_contract(payload if isinstance(payload, dict) else {})
 
 
 def _parse_payload(raw: str | None) -> dict:
@@ -25,7 +27,7 @@ def _parse_payload(raw: str | None) -> dict:
         parsed = json.loads(raw)
     except Exception:
         return {}
-    return parsed if isinstance(parsed, dict) else {}
+    return canonicalize_ui_base_contract(parsed if isinstance(parsed, dict) else {})
 
 
 def _scope_domain(*, scene_key: str, role_code: str | None, company_id: int | None, status: str = "active") -> list:
