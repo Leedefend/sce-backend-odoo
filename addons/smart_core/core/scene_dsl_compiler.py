@@ -143,6 +143,91 @@ def _normalize_field_names(raw_fields: List[Any]) -> List[str]:
     return dedup
 
 
+def _infer_scene_type(bound_ast: Dict[str, Any], ctx: CompileContext) -> str:
+    scene = _as_dict(bound_ast.get("scene"))
+    layout = _as_dict(scene.get("layout"))
+    scene_key = _text(scene.get("key") or ctx.scene_key).lower()
+    layout_kind = _text(layout.get("kind") or layout.get("mode") or layout.get("type")).lower()
+    if layout_kind in {"list", "form", "kanban", "workspace"}:
+        return layout_kind
+    block_types = {
+        _infer_block_type(_as_dict(row))
+        for row in _as_list(bound_ast.get("blocks"))
+    }
+    if "form" in block_types:
+        return "form"
+    if "kanban" in block_types:
+        return "kanban"
+    if scene_key.startswith("workspace.") or "workspace" in scene_key:
+        return "workspace"
+    return "list"
+
+
+def _collect_block_field_scope(bound_ast: Dict[str, Any]) -> List[str]:
+    names: List[str] = []
+    for row in _as_list(bound_ast.get("blocks")):
+        payload = _as_dict(row)
+        names.extend(_normalize_field_names(_as_list(payload.get("fields"))))
+        bound_source = _as_dict(payload.get("bound_source"))
+        names.extend(_normalize_field_names(_as_list(bound_source.get("fields"))))
+    return _normalize_field_names(names)
+
+
+def _collect_explicit_form_field_scope(bound_ast: Dict[str, Any]) -> List[str]:
+    names: List[str] = []
+    for row in _as_list(bound_ast.get("blocks")):
+        payload = _as_dict(row)
+        if _infer_block_type(payload) != "form":
+            continue
+        names.extend(_normalize_field_names(_as_list(payload.get("fields"))))
+    return _normalize_field_names(names)
+
+
+def _shape_search_surface(scene_type: str, base: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(base)
+    if scene_type == "form":
+        out["group_by"] = []
+    elif scene_type == "workspace":
+        out["fields"] = []
+        out["group_by"] = []
+        out["filters"] = _as_list(out.get("filters"))[:8]
+    return out
+
+
+def _shape_workflow_surface(scene_type: str, base: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(base)
+    if scene_type == "workspace":
+        out["transitions"] = []
+    return out
+
+
+def _shape_validation_surface(scene_type: str, base: Dict[str, Any], field_scope: List[str]) -> Dict[str, Any]:
+    out = dict(base)
+    required_fields = _normalize_field_names(_as_list(out.get("required_fields")))
+    if scene_type == "form" and field_scope:
+        scoped_set = set(field_scope)
+        scoped = [name for name in required_fields if name in scoped_set]
+        out["required_fields"] = scoped or required_fields
+    elif scene_type != "form":
+        out["required_fields"] = []
+    return out
+
+
+def _shape_base_actions(scene_type: str, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if scene_type == "workspace":
+        preferred = []
+        fallback = []
+        for row in candidates:
+            payload = _as_dict(row)
+            placement = _text(payload.get("placement")).lower()
+            if placement in {"toolbar", "header", "primary"}:
+                preferred.append(payload)
+            else:
+                fallback.append(payload)
+        return preferred or fallback
+    return candidates
+
+
 def _infer_block_type(payload: Dict[str, Any]) -> str:
     block_type = _text(payload.get("type") or payload.get("block_type"))
     source = _text(payload.get("source"))
@@ -400,7 +485,11 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
     search_surface = _as_dict(out.get("search_surface"))
     permission_surface = _as_dict(out.get("permission_surface"))
     workflow_surface = _as_dict(out.get("workflow_surface"))
+    validation_surface = _as_dict(out.get("validation_surface"))
     meta = _as_dict(out.get("meta"))
+    scene_type = _infer_scene_type(bound_ast, ctx)
+    field_scope = _collect_block_field_scope(bound_ast)
+    explicit_form_field_scope = _collect_explicit_form_field_scope(bound_ast)
 
     if ctx.ui_base_contract:
         base_views = _as_dict(ctx.ui_base_contract.get("views"))
@@ -422,8 +511,10 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
         if not workflow_surface and base_workflow:
             workflow_surface = dict(base_workflow)
 
-        if base_validator and not _as_dict(out.get("validation_surface")):
-            out["validation_surface"] = dict(base_validator)
+        if base_validator and not validation_surface:
+            validation_surface = dict(base_validator)
+
+        base_action_candidates = _shape_base_actions(scene_type, base_action_candidates)
         meta["base_facts"] = {
             "views": bool(base_views),
             "fields": bool(base_fields),
@@ -436,9 +527,24 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
         if base_action_candidates:
             out["base_action_candidates"] = base_action_candidates
 
+    search_surface = _shape_search_surface(scene_type, search_surface)
+    workflow_surface = _shape_workflow_surface(scene_type, workflow_surface)
+    validation_scope = explicit_form_field_scope if explicit_form_field_scope else field_scope
+    validation_surface = _shape_validation_surface(scene_type, validation_surface, validation_scope)
+    meta["surface_profile"] = {
+        "scene_type": scene_type,
+        "field_scope_count": len(field_scope),
+        "search_filter_count": len(_as_list(search_surface.get("filters"))),
+        "search_group_by_count": len(_as_list(search_surface.get("group_by"))),
+        "workflow_transition_count": len(_as_list(workflow_surface.get("transitions"))),
+        "validation_required_count": len(_as_list(validation_surface.get("required_fields"))),
+        "base_action_candidate_count": len(_as_list(out.get("base_action_candidates"))),
+    }
+
     out["search_surface"] = search_surface
     out["permission_surface"] = permission_surface
     out["workflow_surface"] = workflow_surface
+    out["validation_surface"] = validation_surface
     out["meta"] = meta
     return out
 
