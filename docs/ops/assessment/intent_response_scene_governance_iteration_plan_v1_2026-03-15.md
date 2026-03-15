@@ -90,6 +90,7 @@
 - 2026-03-15：已落地 `verify.scene.orchestrator.*` 四个守卫并纳入 `verify.scene.runtime_boundary.gate`，形成“文档规范 -> 可执行门禁”闭环。
 - 2026-03-15：已落地前端防回归守卫 `verify.frontend.no_base_contract_direct_consume.guard`，防止前端绕过 Scene-ready 直接消费 Base Contract。
 - 2026-03-15：已落地 `verify.scene.orchestrator.merge_priority.guard`，固化 platform/base/profile/policy/provider/permission 优先级规范与编译轨迹可见性。
+- 2026-03-15：已将 merge priority guard 升级为“静态规范 + 最小运行样例”双模校验，确保优先级顺序在运行样例中也可验证。
 
 ## 下一步（按顺序）
 
