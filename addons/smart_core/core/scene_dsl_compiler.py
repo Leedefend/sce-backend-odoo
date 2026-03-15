@@ -87,6 +87,40 @@ def _normalize_providers(raw: Any) -> List[Dict[str, Any]]:
     return out
 
 
+def _extract_base_action_candidates(ui_base_contract: Dict[str, Any]) -> List[Dict[str, Any]]:
+    candidates: List[Dict[str, Any]] = []
+    actions_root = ui_base_contract.get("actions")
+    if isinstance(actions_root, list):
+        candidates.extend([_as_dict(row) for row in actions_root if isinstance(row, dict)])
+    elif isinstance(actions_root, dict):
+        for key in ("toolbar", "buttons", "items"):
+            for row in _as_list(actions_root.get(key)):
+                if isinstance(row, dict):
+                    candidates.append(row)
+
+    for key in ("toolbar", "buttons"):
+        root = ui_base_contract.get(key)
+        if isinstance(root, list):
+            for row in root:
+                if isinstance(row, dict):
+                    candidates.append(row)
+        elif isinstance(root, dict):
+            for nested in ("items", "actions", "buttons"):
+                for row in _as_list(root.get(nested)):
+                    if isinstance(row, dict):
+                        candidates.append(row)
+
+    dedup: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in candidates:
+        key = _text(row.get("key") or row.get("name") or row.get("id"))
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        dedup.append(row)
+    return dedup
+
+
 def parse_scene_dsl(scene_payload: Dict[str, Any], scene_key: str) -> Dict[str, Any]:
     target = _as_dict(scene_payload.get("target"))
     zones_raw = _as_list(scene_payload.get("zones"))
@@ -299,21 +333,46 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
     search_surface = _as_dict(out.get("search_surface"))
     permission_surface = _as_dict(out.get("permission_surface"))
     workflow_surface = _as_dict(out.get("workflow_surface"))
+    meta = _as_dict(out.get("meta"))
 
     if ctx.ui_base_contract:
+        base_views = _as_dict(ctx.ui_base_contract.get("views"))
+        base_fields = _as_dict(ctx.ui_base_contract.get("fields"))
         base_search = _as_dict(ctx.ui_base_contract.get("search"))
         base_permissions = _as_dict(ctx.ui_base_contract.get("permissions"))
         base_workflow = _as_dict(ctx.ui_base_contract.get("workflow"))
+        base_validator = _as_dict(ctx.ui_base_contract.get("validator") or ctx.ui_base_contract.get("validation"))
+        base_action_candidates = _extract_base_action_candidates(ctx.ui_base_contract)
+
         if not search_surface.get("fields") and base_search:
             search_surface["fields"] = _as_list(base_search.get("fields"))
+        if not search_surface.get("filters") and base_search:
+            search_surface["filters"] = _as_list(base_search.get("filters"))
+        if not search_surface.get("group_by") and base_search:
+            search_surface["group_by"] = _as_list(base_search.get("group_by"))
         if not permission_surface and base_permissions:
             permission_surface = dict(base_permissions)
         if not workflow_surface and base_workflow:
             workflow_surface = dict(base_workflow)
 
+        if base_validator and not _as_dict(meta.get("validation_surface")):
+            meta["validation_surface"] = dict(base_validator)
+        meta["base_facts"] = {
+            "views": bool(base_views),
+            "fields": bool(base_fields),
+            "search": bool(base_search),
+            "permissions": bool(base_permissions),
+            "workflow": bool(base_workflow),
+            "validator": bool(base_validator),
+            "actions": bool(base_action_candidates),
+        }
+        if base_action_candidates:
+            out["base_action_candidates"] = base_action_candidates
+
     out["search_surface"] = search_surface
     out["permission_surface"] = permission_surface
     out["workflow_surface"] = workflow_surface
+    out["meta"] = meta
     return out
 
 
@@ -357,6 +416,23 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
                 "target": _as_dict(payload.get("target")),
             }
         )
+
+    if not actions_out:
+        for row in _as_list(bound_ast.get("base_action_candidates")):
+            payload = _as_dict(row)
+            key = _text(payload.get("key") or payload.get("name") or payload.get("id"))
+            if not key:
+                continue
+            actions_out.append(
+                {
+                    "key": key,
+                    "label": _text(payload.get("label") or payload.get("string") or key),
+                    "intent": _text(payload.get("intent") or "ui.contract"),
+                    "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
+                    "target": _as_dict(payload.get("target")),
+                }
+            )
+
     out["actions"] = actions_out
     return out
 
