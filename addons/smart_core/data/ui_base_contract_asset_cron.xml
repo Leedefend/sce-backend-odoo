@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+  <record id="ir_cron_sc_ui_base_contract_asset_refresh" model="ir.cron">
+    <field name="name">SC UI Base Contract Asset Refresh</field>
+    <field name="model_id" ref="model_sc_ui_base_contract_asset"/>
+    <field name="state">code</field>
+    <field name="code">model.cron_refresh_ui_base_contract_assets(limit=50)</field>
+    <field name="user_id" ref="base.user_root"/>
+    <field name="interval_number">30</field>
+    <field name="interval_type">minutes</field>
+    <field name="numbercall">-1</field>
+    <field name="active">False</field>
+  </record>
+</odoo>
+

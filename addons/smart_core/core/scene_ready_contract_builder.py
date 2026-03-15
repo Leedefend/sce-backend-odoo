@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List
+from odoo.addons.smart_core.core.scene_dsl_compiler import scene_compile
 
 
 def _text(value: Any) -> str:
@@ -71,30 +72,25 @@ def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _scene_ready_entry(item: Dict[str, Any]) -> Dict[str, Any]:
-    normalized_scene = _normalize_scene(item)
-    scene_key = _text(normalized_scene.get("key"))
-    scene_route = _text(((item.get("target") or {}) if isinstance(item.get("target"), dict) else {}).get("route"))
-    if not scene_route and scene_key:
-        scene_route = f"/s/{scene_key}"
-    return {
-        "scene": normalized_scene,
-        "page": {
-            "scene_key": scene_key,
-            "route": scene_route,
-            "zones": [
-                {"name": "header", "blocks": ["scene.header"]},
-                {"name": "main", "blocks": ["scene.main"]},
-            ],
-        },
-        "actions": _normalize_actions(item),
-        "search_surface": _normalize_search_surface(item),
-        "workflow_surface": {},
-        "permission_surface": _normalize_permission_surface(item),
-        "meta": {
-            "target": dict(item.get("target") or {}),
-            "tiles": list(item.get("tiles") or []),
-        },
-    }
+    scene_key = _text(item.get("code") or item.get("key"))
+    compiled = scene_compile(
+        item,
+        scene_key=scene_key,
+        ui_base_contract=item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {},
+        provider_registry={},
+    )
+    page = dict(compiled.get("page") or {})
+    zones = page.get("zones") if isinstance(page.get("zones"), list) else []
+    if not zones:
+        page["zones"] = [
+            {"name": "header", "blocks": ["scene.header"]},
+            {"name": "main", "blocks": ["scene.main"]},
+        ]
+    if not _text(page.get("route")) and scene_key:
+        page["route"] = f"/s/{scene_key}"
+    compiled["page"] = page
+    compiled.setdefault("workflow_surface", {})
+    return compiled
 
 
 def build_scene_ready_contract_v1(
@@ -121,6 +117,16 @@ def build_scene_ready_contract_v1(
     if not landing_scene_key and entries:
         landing_scene_key = _text((entries[0].get("scene") or {}).get("key"))
 
+    base_bound_scene_count = 0
+    compile_issue_scene_count = 0
+    for entry in entries:
+        meta = entry.get("meta") if isinstance(entry.get("meta"), dict) else {}
+        verdict = meta.get("compile_verdict") if isinstance(meta.get("compile_verdict"), dict) else {}
+        if bool(verdict.get("base_contract_bound")):
+            base_bound_scene_count += 1
+        if not bool(verdict.get("ok", False)):
+            compile_issue_scene_count += 1
+
     return {
         "contract_version": "v1",
         "schema_version": "scene_ready_contract_v1",
@@ -133,5 +139,7 @@ def build_scene_ready_contract_v1(
             "generated_by": "smart_core.scene_ready_contract_builder",
             "scene_count": len(entries),
             "mode": "dual_track",
+            "base_contract_bound_scene_count": base_bound_scene_count,
+            "compile_issue_scene_count": compile_issue_scene_count,
         },
     }

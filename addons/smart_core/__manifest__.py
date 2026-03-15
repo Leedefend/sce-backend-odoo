@@ -22,7 +22,8 @@
         # group_smart_core_admin must be loaded before groups.xml implied_ids refs.
         "security/smart_core_security.xml",
         "security/groups.xml",
-        "security/ir.model.access.csv"
+        "security/ir.model.access.csv",
+        "data/ui_base_contract_asset_cron.xml",
         # 可选：默认参数/开关
         # "data/smart_core_params.xml",
     ],
