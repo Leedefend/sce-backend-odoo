@@ -65,6 +65,8 @@
   - Enforces behavior baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_behavior_smoke_guard.json` (`open_record/open_action/open_scene`).
 - `make verify.scene.ui_base_contract_canonicalizer.guard`
   - Verifies backend UI base contract canonicalizer is wired into producer/repository and keeps required sub-contract facts (`views/fields/search/permissions/workflow/validator/actions`).
+- `make verify.scene.orchestrator.scene_type_surface.guard`
+  - Verifies Scene Orchestrator consumes base facts by scene type (`form/list/kanban/workspace`) and shapes `search/workflow/validation` surfaces accordingly.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`

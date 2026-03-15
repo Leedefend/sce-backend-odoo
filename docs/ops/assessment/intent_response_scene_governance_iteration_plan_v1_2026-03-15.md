@@ -67,6 +67,7 @@
 | T42 | recovery strategy 端到端链路 smoke guard | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（后端输出→session 注入→页面 suggestedAction 链路顺序校验）、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
 | T43 | recovery strategy 行为样例基线守卫 | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/baselines/scene_validation_recovery_strategy_behavior_smoke_guard.json`、`scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（按角色/公司覆盖 `open_record/open_action/open_scene` 行为校验） |
 | T44 | 平台原生契约子契约规范化内核（资产化生产链） | Platform + Scene + Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_canonicalizer.py`（`views/fields/search/permissions/workflow/validator/actions` 规范化）、`addons/smart_core/core/ui_base_contract_asset_producer.py`、`addons/smart_core/core/ui_base_contract_asset_repository.py`、`scripts/verify/scene_ui_base_contract_canonicalizer_guard.py` |
+| T45 | 场景编排按 scene_type 深消费子契约 surface | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_infer_scene_type` + `search/workflow/validation` scene_type shaping + `surface_profile`）、`scripts/verify/scene_orchestrator_scene_type_surface_guard.py` |
 
 ## 本轮已执行验证
 
@@ -163,6 +164,8 @@
 - `make verify.scene.runtime_boundary.gate`（T43 复验）：通过
 - `python3 scripts/verify/scene_ui_base_contract_canonicalizer_guard.py`（T44）：通过
 - `make verify.scene.runtime_boundary.gate`（T44 复验）：通过
+- `python3 scripts/verify/scene_orchestrator_scene_type_surface_guard.py`（T45）：通过
+- `make verify.scene.runtime_boundary.gate`（T45 复验）：通过
 
 ## 增量更新记录
 
@@ -204,9 +207,10 @@
 - 2026-03-15：已新增端到端链路守卫 `verify.scene.validation_recovery_strategy.e2e_smoke.guard`，校验 `system.init -> session runtime apply -> ContractFormPage suggestedAction` 链路接线与顺序稳定性。
 - 2026-03-15：已为 `verify.scene.validation_recovery_strategy.e2e_smoke.guard` 增加行为样例基线 `scene_validation_recovery_strategy_behavior_smoke_guard.json`，按角色/公司覆盖 `open_record/open_action/open_scene` 三类输出。
 - 2026-03-15：已落地平台原生契约规范化内核 `ui_base_contract_canonicalizer`，并接入资产生产与仓储读写路径，确保 Scene 编排输入稳定具备 `views/fields/search/permissions/workflow/validator/actions` 七类子契约。
+- 2026-03-15：已落地 Scene 编排层按 `scene_type` 深消费：`form/workspace` 场景分别对 `search/workflow/validation` surface 做差异化 shaping，并产出 `meta.surface_profile` 用于运行时可观测。
 
 ## 下一步（按顺序）
 
-1. 推进 Scene 编排层对规范化 `actions/search/workflow/validator` 的深消费（按场景类型差异化装配），减少 seed 静态透传。
-2. 将 `scene_ready_contract_v1` 增补“子契约消费率”运行时指标（分 scene_type 输出），作为能力提升度量。
-3. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
+1. 将 `scene_ready_contract_v1` 增补“子契约消费率”运行时指标（分 `scene_type` 输出），作为能力提升度量。
+2. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
+3. 推进 action surface 的 scene_type 差异化输出（主动作/次动作/上下文动作）并加冲突守卫。
