@@ -1,0 +1,19 @@
+{
+  "required_top_keys": [
+    "default",
+    "by_role",
+    "by_company",
+    "by_company_role"
+  ],
+  "required_strategy_keys": [
+    "force_primary_keys",
+    "force_secondary_keys",
+    "force_contextual_keys",
+    "hide_keys"
+  ],
+  "source_priority": [
+    "params",
+    "ext_facts",
+    "icp"
+  ]
+}
