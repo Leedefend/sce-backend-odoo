@@ -193,6 +193,7 @@ export interface SceneGovernancePayload {
   delivery_policy?: Record<string, unknown>;
   nav_policy?: Record<string, unknown>;
   role_surface_provider?: Record<string, unknown>;
+  scene_ready_consumption?: Record<string, unknown>;
   diagnostics?: Record<string, unknown>;
   gates?: Record<string, unknown>;
   reasons?: Record<string, unknown>;
