@@ -49,6 +49,7 @@
 | T24 | 增加资产队列趋势基线 guard（上限+增长速率） | Governance/Verify | ✅ DONE | `scripts/verify/scene_asset_queue_trend_guard.py`、`scripts/verify/baselines/scene_asset_queue_trend_guard.json`、`Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T25 | P1 编排内核硬化：接入 profile/policy/provider 执行阶段 | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`profile_apply/policy_apply/provider_merge/permission_workflow_gate`）、`addons/smart_core/core/scene_ready_contract_builder.py`（透传 `provider_registry`） |
 | T26 | P2 冲突裁决引擎代码化（独立 resolver + 冲突样例） | Scene + Platform + Governance/Verify | ✅ DONE | `addons/smart_core/core/scene_merge_resolver.py`、`addons/smart_core/core/scene_dsl_compiler.py`（阶段委托 resolver）、`scripts/verify/scene_orchestrator_merge_priority_guard.py`（冲突样例断言） |
+| T27 | 资产覆盖率门禁升级为“结构 + 阈值（环境/角色分层）” | Governance/Verify | ✅ DONE | `scripts/verify/scene_base_contract_asset_coverage_guard.py`、`scripts/verify/baselines/scene_base_contract_asset_coverage_guard.json`、`docs/ops/verify/README.md` |
 
 ## 本轮已执行验证
 
@@ -89,6 +90,8 @@
 - `python3 -m py_compile addons/smart_core/core/scene_merge_resolver.py addons/smart_core/core/scene_dsl_compiler.py scripts/verify/scene_orchestrator_merge_priority_guard.py`（T26）：通过
 - `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T26）：通过
 - `make verify.scene.runtime_boundary.gate`（T26 复验）：通过
+- `python3 scripts/verify/scene_base_contract_asset_coverage_guard.py`（T27）：通过
+- `make verify.scene.runtime_boundary.gate`（T27 复验）：通过
 
 ## 增量更新记录
 
@@ -112,9 +115,10 @@
 - 2026-03-15：已新增资产队列趋势基线门禁 `verify.scene.asset_queue_trend.guard`，按基线限制队列堆积上限与单次增长速度。
 - 2026-03-15：已完成 P1 最小内核落地：`profile_apply/policy_apply/provider_merge/permission_workflow_gate` 进入 `scene_compile` 主链，编排阶段不再只是轨迹占位。
 - 2026-03-15：已完成 P2 冲突裁决引擎代码化：新增独立 `scene_merge_resolver` 承接 profile/policy/provider/permission 合并逻辑，并在 merge-priority guard 中新增冲突样例（provider 覆盖 policy/base；permission 最终裁决清空 actions）。
+- 2026-03-15：已完成资产覆盖率门禁升级：`scene_base_contract_asset_coverage_guard` 新增 env/role 分层阈值策略、live/state 双来源评估与严格模式开关（`SC_BASE_CONTRACT_ASSET_COVERAGE_REQUIRE_LIVE=1`）。
 
 ## 下一步（按顺序）
 
-1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
-2. 增加事件队列观测指标（消费延迟、失败重试）并接入场景治理面板告警阈值。
-3. 将 merge_resolver 冲突规则扩展到字段级（按 surface/field/type 分类）并输出治理告警分级。
+1. 增加事件队列观测指标（消费延迟、失败重试）并接入场景治理面板告警阈值。
+2. 将 merge_resolver 冲突规则扩展到字段级（按 surface/field/type 分类）并输出治理告警分级。
+3. 追加覆盖率阈值基线治理流程（按环境/角色发布节奏定期收敛阈值）。
