@@ -55,6 +55,8 @@
   - Verifies orchestrator merge-priority spec is present (platform/base/profile/policy/provider/permission), compiler exposes stage verdict trace fields, and a minimal runtime compile sample keeps stage ordering intact.
 - `make verify.frontend.no_base_contract_direct_consume.guard`
   - Verifies frontend source does not directly consume `ui_base_contract/base_contract` tokens and keeps scene rendering on `Scene-ready Contract` path.
+- `make verify.scene.validation_recovery_strategy.guard`
+  - Verifies scene validation recovery strategy is externalized and runtime-wired (`strategy module + session init hook + ContractFormPage consumer`).
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
