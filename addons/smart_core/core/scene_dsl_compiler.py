@@ -273,6 +273,62 @@ def _infer_intent_from_action(payload: Dict[str, Any]) -> str:
     return "ui.contract"
 
 
+def _infer_action_tier(scene_type: str, payload: Dict[str, Any]) -> str:
+    placement = _text(payload.get("placement")).lower()
+    key = _text(payload.get("key") or payload.get("name")).lower()
+    intent = _text(payload.get("intent")).lower()
+
+    if placement in {"context", "row", "inline", "menu"}:
+        return "contextual"
+    if placement in {"primary", "header", "toolbar"}:
+        return "primary"
+    if scene_type == "workspace":
+        if any(token in key for token in ("open", "create", "launch")):
+            return "primary"
+        return "secondary"
+    if scene_type == "form":
+        if any(token in key for token in ("save", "submit", "approve", "confirm")):
+            return "primary"
+        if any(token in intent for token in ("submit", "approve", "confirm", "update")):
+            return "primary"
+    if scene_type in {"list", "kanban"}:
+        if any(token in key for token in ("create", "new", "import", "export", "search")):
+            return "primary"
+    return "secondary"
+
+
+def _build_action_surface(scene_type: str, actions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    primary: List[Dict[str, Any]] = []
+    secondary: List[Dict[str, Any]] = []
+    contextual: List[Dict[str, Any]] = []
+    for row in actions:
+        payload = _as_dict(row)
+        tier = _text(payload.get("tier")) or _infer_action_tier(scene_type, payload)
+        if tier == "primary":
+            primary.append(payload)
+        elif tier == "contextual":
+            contextual.append(payload)
+        else:
+            secondary.append(payload)
+
+    if scene_type == "workspace" and len(primary) > 3:
+        secondary = primary[3:] + secondary
+        primary = primary[:3]
+
+    return {
+        "scene_type": scene_type,
+        "primary": primary,
+        "secondary": secondary,
+        "contextual": contextual,
+        "counts": {
+            "primary": len(primary),
+            "secondary": len(secondary),
+            "contextual": len(contextual),
+            "total": len(actions),
+        },
+    }
+
+
 def parse_scene_dsl(scene_payload: Dict[str, Any], scene_key: str) -> Dict[str, Any]:
     target = _as_dict(scene_payload.get("target"))
     zones_raw = _as_list(scene_payload.get("zones"))
@@ -597,6 +653,7 @@ def block_expand(bound_ast: Dict[str, Any], ctx: CompileContext | None = None) -
 
 def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
     out = dict(bound_ast)
+    scene_type = _text(_as_dict(_as_dict(out.get("meta")).get("surface_profile")).get("scene_type")) or "list"
     actions_out: List[Dict[str, Any]] = []
     explicit_intent_count = 0
     mapped_intent_count = 0
@@ -616,6 +673,7 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
                 "label": _text(payload.get("label") or key),
                 "intent": intent,
                 "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
+                "tier": _infer_action_tier(scene_type, payload),
                 "target": _as_dict(payload.get("target")),
             }
         )
@@ -637,17 +695,20 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
                     "label": _text(payload.get("label") or payload.get("string") or key),
                     "intent": intent,
                     "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
+                    "tier": _infer_action_tier(scene_type, payload),
                     "target": _as_dict(payload.get("target")),
                 }
             )
 
     out["actions"] = actions_out
+    out["action_surface"] = _build_action_surface(scene_type, actions_out)
     meta = _as_dict(out.get("meta"))
     meta["action_intent_resolution"] = {
         "explicit_intent_count": explicit_intent_count,
         "mapped_intent_count": mapped_intent_count,
         "action_count": len(actions_out),
     }
+    meta["action_surface_counts"] = _as_dict(_as_dict(out.get("action_surface")).get("counts"))
     out["meta"] = meta
     return out
 
@@ -707,6 +768,7 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         "page": _as_dict(compiled.get("page")),
         "blocks": _as_list(compiled.get("blocks")),
         "actions": _as_list(compiled.get("actions")),
+        "action_surface": _as_dict(compiled.get("action_surface")),
         "search_surface": _as_dict(compiled.get("search_surface")),
         "workflow_surface": _as_dict(compiled.get("workflow_surface")),
         "permission_surface": _as_dict(compiled.get("permission_surface")),
