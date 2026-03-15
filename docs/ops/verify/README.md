@@ -95,6 +95,10 @@
   - Aggregates `scene_asset_queue_trend_state` + `scene_ready_consumption_trend_state` into governance history report.
   - Emits `artifacts/backend/scene_governance_history_report.json` and `artifacts/backend/scene_governance_history_report.md`.
   - Enforces cross-trend policy alignment and capture-time skew threshold via `scripts/verify/baselines/scene_governance_history_report_guard.json`.
+- `make verify.scene.registry_asset_snapshot.guard`
+  - Verifies real runtime scene snapshot (`system.init -> scene_ready_contract_v1`) for key scene coverage and base-contract binding.
+  - Persists live/fallback snapshot to `artifacts/backend/scene_registry_asset_snapshot_state.json` using baseline `scripts/verify/baselines/scene_registry_asset_snapshot_guard.json`.
+  - Use `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1` to force live fetch mode.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
