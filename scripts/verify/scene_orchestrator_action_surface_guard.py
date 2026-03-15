@@ -43,6 +43,7 @@ def main() -> int:
     for token in (
         "_infer_action_tier",
         "_build_action_surface",
+        "action_permission_workflow_gate",
         '"action_surface": _as_dict(compiled.get("action_surface"))',
         "action_surface_counts",
     ):
@@ -58,14 +59,22 @@ def main() -> int:
                     {"key": "export_projects", "label": "导出", "placement": "toolbar"},
                 ]
             },
-            "permissions": {"allowed": True},
+            "permissions": {
+                "allowed": True,
+                "effective": {"rights": {"create": True, "write": False, "unlink": False}},
+            },
+            "workflow": {"transitions": ["draft->submit"]},
         }
         payload = {
             "code": "projects.list",
             "layout": {"kind": "list"},
+            "runtime": {"current_state": "draft"},
             "actions": [
                 {"key": "create_project", "label": "新建项目"},
                 {"key": "open_detail", "label": "详情", "placement": "row"},
+                {"key": "save_project", "label": "保存", "intent": "record.update", "placement": "toolbar"},
+                {"key": "submit_project", "label": "提交", "intent": "workflow.submit", "placement": "toolbar"},
+                {"key": "approve_project", "label": "审批", "intent": "workflow.approve", "placement": "toolbar"},
             ],
         }
         compiled = scene_compile(payload, scene_key="projects.list", ui_base_contract=base_contract, provider_registry={})
@@ -77,6 +86,15 @@ def main() -> int:
         _assert(len(primary) >= 1, "action surface primary bucket should not be empty", errors)
         _assert(len(contextual) >= 1, "action surface contextual bucket should not be empty", errors)
         _assert(int(counts.get("total") or 0) == len(compiled.get("actions") or []), "action surface total count mismatch", errors)
+        action_keys = {
+            str((row or {}).get("key") or "")
+            for row in (compiled.get("actions") if isinstance(compiled.get("actions"), list) else [])
+            if isinstance(row, dict)
+        }
+        _assert("create_project" in action_keys, "create action should survive permission gate", errors)
+        _assert("save_project" not in action_keys, "update action should be filtered by write permission", errors)
+        _assert("submit_project" in action_keys, "submit action should survive workflow transition gate", errors)
+        _assert("approve_project" not in action_keys, "approve action should be filtered by workflow transition gate", errors)
     except Exception as exc:
         errors.append(f"runtime sample failed: {exc}")
 
@@ -92,4 +110,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -329,6 +329,72 @@ def _build_action_surface(scene_type: str, actions: List[Dict[str, Any]]) -> Dic
     }
 
 
+def _resolve_effective_rights(permission_surface: Dict[str, Any]) -> Dict[str, bool]:
+    effective = _as_dict(permission_surface.get("effective"))
+    rights = _as_dict(effective.get("rights"))
+    create = bool(rights.get("create", permission_surface.get("create", True)))
+    write = bool(rights.get("write", permission_surface.get("write", True)))
+    unlink = bool(rights.get("unlink", rights.get("delete", permission_surface.get("delete", True))))
+    return {"create": create, "write": write, "unlink": unlink}
+
+
+def _workflow_action_allowed(action: Dict[str, Any], workflow_surface: Dict[str, Any], runtime: Dict[str, Any]) -> bool:
+    intent = _text(action.get("intent")).lower()
+    key = _text(action.get("key")).lower()
+    if not intent.startswith("workflow.") and not any(token in key for token in ("approve", "submit", "reject", "cancel")):
+        return True
+    transitions = [
+        _text(item).lower() for item in _as_list(workflow_surface.get("transitions")) if _text(item)
+    ]
+    if not transitions:
+        return True
+    target = intent.split(".")[-1] if intent.startswith("workflow.") else key
+    state = _text(_as_dict(runtime).get("current_state")).lower()
+    if state and f"{state}->{target}" in transitions:
+        return True
+    return any(target in row for row in transitions)
+
+
+def action_permission_workflow_gate(compiled_ast: Dict[str, Any], ctx: CompileContext) -> Dict[str, Any]:
+    out = dict(compiled_ast)
+    actions = [_as_dict(row) for row in _as_list(out.get("actions")) if isinstance(row, dict)]
+    permission_surface = _as_dict(out.get("permission_surface"))
+    workflow_surface = _as_dict(out.get("workflow_surface"))
+    allowed = bool(permission_surface.get("allowed", True))
+    rights = _resolve_effective_rights(permission_surface)
+
+    if not allowed:
+        filtered: List[Dict[str, Any]] = []
+    else:
+        filtered = []
+        for row in actions:
+            intent = _text(row.get("intent")).lower()
+            if intent == "record.create" and not rights["create"]:
+                continue
+            if intent in {"record.update", "record.edit"} and not rights["write"]:
+                continue
+            if intent in {"record.delete", "record.unlink"} and not rights["unlink"]:
+                continue
+            if not _workflow_action_allowed(row, workflow_surface, _as_dict(ctx.runtime)):
+                continue
+            filtered.append(row)
+
+    out["actions"] = filtered
+    scene_type = _text(_as_dict(_as_dict(out.get("meta")).get("surface_profile")).get("scene_type")) or "list"
+    out["action_surface"] = _build_action_surface(scene_type, filtered)
+    meta = _as_dict(out.get("meta"))
+    meta["action_runtime_gate"] = {
+        "allowed": allowed,
+        "before": len(actions),
+        "after": len(filtered),
+        "filtered_count": max(len(actions) - len(filtered), 0),
+        "rights": rights,
+    }
+    meta["action_surface_counts"] = _as_dict(_as_dict(out.get("action_surface")).get("counts"))
+    out["meta"] = meta
+    return out
+
+
 def parse_scene_dsl(scene_payload: Dict[str, Any], scene_key: str) -> Dict[str, Any]:
     target = _as_dict(scene_payload.get("target"))
     zones_raw = _as_list(scene_payload.get("zones"))
@@ -738,6 +804,7 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         compiled = permission_workflow_gate(compiled)
         compiled = block_expand(compiled, ctx)
         compiled = action_compile(compiled)
+        compiled = action_permission_workflow_gate(compiled, ctx)
 
     meta = _as_dict(compiled.get("meta"))
     meta["compile_pipeline"] = [
@@ -752,6 +819,7 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         "permission_workflow_gate",
         "block_expansion",
         "action_compiler",
+        "action_permission_workflow_gate",
         "scene_compiler",
     ]
     meta["compile_verdict"] = {
