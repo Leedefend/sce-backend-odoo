@@ -57,6 +57,7 @@
   - Verifies frontend source does not directly consume `ui_base_contract/base_contract` tokens and keeps scene rendering on `Scene-ready Contract` path.
 - `make verify.scene.validation_recovery_strategy.guard`
   - Verifies scene validation recovery strategy is externalized and runtime-wired (`strategy module + session init hook + ContractFormPage consumer`).
+  - Enforces schema baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_schema_guard.json`.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
