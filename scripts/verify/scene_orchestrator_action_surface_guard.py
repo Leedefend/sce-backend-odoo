@@ -44,6 +44,8 @@ def main() -> int:
         "_infer_action_tier",
         "_build_action_surface",
         "action_permission_workflow_gate",
+        "_resolve_action_surface_strategy",
+        "_apply_action_surface_strategy",
         '"action_surface": _as_dict(compiled.get("action_surface"))',
         "action_surface_counts",
     ):
@@ -95,6 +97,45 @@ def main() -> int:
         _assert("save_project" not in action_keys, "update action should be filtered by write permission", errors)
         _assert("submit_project" in action_keys, "submit action should survive workflow transition gate", errors)
         _assert("approve_project" not in action_keys, "approve action should be filtered by workflow transition gate", errors)
+
+        strategy_payload = {
+            "code": "projects.list",
+            "layout": {"kind": "list"},
+            "runtime": {
+                "role_code": "manager",
+                "company_id": 2,
+                "current_state": "draft",
+                "action_surface_strategy": {
+                    "default": {"force_secondary_keys": ["create_project"]},
+                    "by_role": {"manager": {"force_primary_keys": ["open_detail"]}},
+                    "by_company": {"2": {"hide_keys": ["submit_project"]}},
+                    "by_company_role": {"2:manager": {"force_contextual_keys": ["create_project"]}},
+                },
+            },
+            "actions": [
+                {"key": "create_project", "label": "新建项目"},
+                {"key": "open_detail", "label": "详情", "placement": "row"},
+                {"key": "submit_project", "label": "提交", "intent": "workflow.submit", "placement": "toolbar"},
+            ],
+        }
+        strategy_compiled = scene_compile(
+            strategy_payload,
+            scene_key="projects.list",
+            ui_base_contract=base_contract,
+            provider_registry={},
+        )
+        strategy_surface = strategy_compiled.get("action_surface") if isinstance(strategy_compiled.get("action_surface"), dict) else {}
+        strategy_primary = strategy_surface.get("primary") if isinstance(strategy_surface.get("primary"), list) else []
+        strategy_contextual = strategy_surface.get("contextual") if isinstance(strategy_surface.get("contextual"), list) else []
+        strategy_actions = strategy_compiled.get("actions") if isinstance(strategy_compiled.get("actions"), list) else []
+        strategy_keys = {
+            str((row or {}).get("key") or "")
+            for row in strategy_actions
+            if isinstance(row, dict)
+        }
+        _assert("submit_project" not in strategy_keys, "strategy hide_keys should remove submit_project", errors)
+        _assert(any(str((row or {}).get("key") or "") == "open_detail" for row in strategy_primary), "role override should force open_detail to primary", errors)
+        _assert(any(str((row or {}).get("key") or "") == "create_project" for row in strategy_contextual), "company-role override should force create_project to contextual", errors)
     except Exception as exc:
         errors.append(f"runtime sample failed: {exc}")
 

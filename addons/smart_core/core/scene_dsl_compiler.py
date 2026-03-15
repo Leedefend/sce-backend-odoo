@@ -329,6 +329,82 @@ def _build_action_surface(scene_type: str, actions: List[Dict[str, Any]]) -> Dic
     }
 
 
+def _normalize_action_key_list(payload: Dict[str, Any], keys: tuple[str, ...]) -> List[str]:
+    rows: List[str] = []
+    for key in keys:
+        rows.extend([_text(item) for item in _as_list(payload.get(key)) if _text(item)])
+    dedup: List[str] = []
+    seen: set[str] = set()
+    for item in rows:
+        if item in seen:
+            continue
+        seen.add(item)
+        dedup.append(item)
+    return dedup
+
+
+def _merge_action_surface_strategy(base: Dict[str, Any], ext: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(base)
+    if not ext:
+        return out
+    out["force_primary_keys"] = _normalize_action_key_list(ext, ("force_primary_keys", "primary_keys")) or _as_list(base.get("force_primary_keys"))
+    out["force_secondary_keys"] = _normalize_action_key_list(ext, ("force_secondary_keys", "secondary_keys")) or _as_list(base.get("force_secondary_keys"))
+    out["force_contextual_keys"] = _normalize_action_key_list(ext, ("force_contextual_keys", "contextual_keys")) or _as_list(base.get("force_contextual_keys"))
+    out["hide_keys"] = _normalize_action_key_list(ext, ("hide_keys", "hidden_keys", "force_hide_keys")) or _as_list(base.get("hide_keys"))
+    return out
+
+
+def _resolve_action_surface_strategy(runtime: Dict[str, Any]) -> Dict[str, Any]:
+    payload = _as_dict(runtime.get("action_surface_strategy"))
+    role_code = _text(runtime.get("role_code") or runtime.get("roleCode")).lower()
+    company_id = int(runtime.get("company_id") or runtime.get("companyId") or 0)
+    company_key = str(company_id) if company_id > 0 else ""
+
+    base = _merge_action_surface_strategy(
+        {
+            "force_primary_keys": [],
+            "force_secondary_keys": [],
+            "force_contextual_keys": [],
+            "hide_keys": [],
+        },
+        _as_dict(payload.get("default")),
+    )
+    resolved = dict(base)
+    by_company = _as_dict(payload.get("by_company"))
+    by_role = _as_dict(payload.get("by_role"))
+    by_company_role = _as_dict(payload.get("by_company_role"))
+    if company_key and company_key in by_company:
+        resolved = _merge_action_surface_strategy(resolved, _as_dict(by_company.get(company_key)))
+    if role_code and role_code in by_role:
+        resolved = _merge_action_surface_strategy(resolved, _as_dict(by_role.get(role_code)))
+    if company_key and role_code:
+        scoped_key = f"{company_key}:{role_code}"
+        if scoped_key in by_company_role:
+            resolved = _merge_action_surface_strategy(resolved, _as_dict(by_company_role.get(scoped_key)))
+    return resolved
+
+
+def _apply_action_surface_strategy(actions: List[Dict[str, Any]], strategy: Dict[str, Any]) -> List[Dict[str, Any]]:
+    hide_keys = set(_normalize_action_key_list(strategy, ("hide_keys",)))
+    primary_keys = set(_normalize_action_key_list(strategy, ("force_primary_keys",)))
+    secondary_keys = set(_normalize_action_key_list(strategy, ("force_secondary_keys",)))
+    contextual_keys = set(_normalize_action_key_list(strategy, ("force_contextual_keys",)))
+    out: List[Dict[str, Any]] = []
+    for row in actions:
+        payload = dict(_as_dict(row))
+        key = _text(payload.get("key"))
+        if key and key in hide_keys:
+            continue
+        if key and key in contextual_keys:
+            payload["tier"] = "contextual"
+        elif key and key in primary_keys:
+            payload["tier"] = "primary"
+        elif key and key in secondary_keys:
+            payload["tier"] = "secondary"
+        out.append(payload)
+    return out
+
+
 def _resolve_effective_rights(permission_surface: Dict[str, Any]) -> Dict[str, bool]:
     effective = _as_dict(permission_surface.get("effective"))
     rights = _as_dict(effective.get("rights"))
@@ -379,6 +455,8 @@ def action_permission_workflow_gate(compiled_ast: Dict[str, Any], ctx: CompileCo
                 continue
             filtered.append(row)
 
+    strategy = _resolve_action_surface_strategy(_as_dict(ctx.runtime))
+    filtered = _apply_action_surface_strategy(filtered, strategy)
     out["actions"] = filtered
     scene_type = _text(_as_dict(_as_dict(out.get("meta")).get("surface_profile")).get("scene_type")) or "list"
     out["action_surface"] = _build_action_surface(scene_type, filtered)
@@ -389,6 +467,13 @@ def action_permission_workflow_gate(compiled_ast: Dict[str, Any], ctx: CompileCo
         "after": len(filtered),
         "filtered_count": max(len(actions) - len(filtered), 0),
         "rights": rights,
+        "strategy_applied": bool(
+            _as_list(strategy.get("force_primary_keys"))
+            or _as_list(strategy.get("force_secondary_keys"))
+            or _as_list(strategy.get("force_contextual_keys"))
+            or _as_list(strategy.get("hide_keys"))
+        ),
+        "strategy": strategy,
     }
     meta["action_surface_counts"] = _as_dict(_as_dict(out.get("action_surface")).get("counts"))
     out["meta"] = meta
