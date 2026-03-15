@@ -55,6 +55,7 @@
 | T30 | 将 validation_surface 升级为显式输出并前端消费 | Scene + Frontend + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`、`addons/smart_core/core/scene_ready_contract_builder.py`、`frontend/apps/web/src/app/resolvers/sceneRegistry.ts`、`frontend/apps/web/src/views/SceneView.vue`、`scripts/verify/scene_orchestrator_output_schema_guard.py` |
 | T31 | 补齐 base action -> 标准 intent 映射规则并加样例 | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_infer_intent_from_action` + resolution meta）、`scripts/verify/scene_orchestrator_merge_priority_guard.py`（`create_project -> record.create` 样例） |
 | T32 | 增加 form/kanban block expansion 运行样例 guard | Scene + Verify | ✅ DONE | `scripts/verify/scene_orchestrator_merge_priority_guard.py`（新增 `projects.record` 运行样例：form/kanban 结构断言） |
+| T33 | validation_surface 升级到表单提交前预检 | Frontend + Scene | ✅ DONE | `frontend/apps/web/src/pages/ContractFormPage.vue`（读取 scene-ready `validation_surface.required_fields`，提交前执行 `SCENE_VALIDATION_REQUIRED` 预检） |
 
 ## 本轮已执行验证
 
@@ -125,6 +126,8 @@
 - `python3 -m py_compile scripts/verify/scene_orchestrator_merge_priority_guard.py`（T32）：通过
 - `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T32）：通过
 - `make verify.scene.runtime_boundary.gate`（T32 复验）：通过
+- `pnpm -C frontend/apps/web exec tsc --noEmit`（T33）：通过
+- `make verify.scene.runtime_boundary.gate`（T33 复验）：通过
 
 ## 增量更新记录
 
@@ -154,9 +157,10 @@
 - 2026-03-15：已将 `validation_surface` 从 meta 内嵌升级为 Scene-ready 顶层显式字段，并在前端 scene 路由层接入消费（存在 `required_fields` 时显示约束提示）。
 - 2026-03-15：已补齐 base action 到标准 intent 的映射规则（create/update/delete/approve/submit/reject/cancel/export/import/search），并记录 `meta.action_intent_resolution` 统计；merge-priority guard 新增 `create_project -> record.create` 运行样例断言。
 - 2026-03-15：已为 `form/kanban` 展开能力新增运行样例 guard，确保编译输出包含 `form` 结构化字段摘要与 `kanban.has_template` 标记，防止回退到 list-only 形态。
+- 2026-03-15：已将 `validation_surface` 接入 `ContractFormPage` 提交流程：按 scene-ready `required_fields` 做提交前预检，失败时返回 `SCENE_VALIDATION_REQUIRED` 提示，减少后端拒绝后重试成本。
 
 ## 下一步（按顺序）
 
-1. 将 validation_surface 从“提示消费”升级到“表单提交前约束预检”并沉淀失败码映射。
-2. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
-3. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
+1. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
+2. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
+3. 将 `SCENE_VALIDATION_REQUIRED` 与统一错误码体系对齐，沉淀标准 failure code 映射。
