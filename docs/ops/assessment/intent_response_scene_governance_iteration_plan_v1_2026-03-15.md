@@ -74,6 +74,7 @@
 | T49 | action surface 策略统一下发接入 system.init | Platform + Scene + Verify | ✅ DONE | `addons/smart_core/handlers/system_init.py`（`scene_action_surface_strategy` 统一加载输出）、`addons/smart_core/core/scene_ready_contract_builder.py`（策略+role/company runtime 注入 scene 编译）、`scripts/verify/scene_action_surface_strategy_wiring_guard.py` |
 | T50 | action surface 策略 schema 基线与白名单守卫 | Platform + Scene + Verify | ✅ DONE | `scripts/verify/baselines/scene_action_surface_strategy_schema_guard.json`、`scripts/verify/scene_action_surface_strategy_schema_guard.py`、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
 | T51 | action surface 策略冲突优先级守卫 | Platform + Scene + Verify | ✅ DONE | `scripts/verify/baselines/scene_action_surface_strategy_priority_guard.json`、`scripts/verify/scene_action_surface_strategy_priority_guard.py`（同 key 冲突优先级样例断言）、`Makefile`（纳入 runtime gate） |
+| T52 | scene_ready 子契约消费率指标（分 scene_type） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_ready_contract_builder.py`（`meta.scene_type_consumption_metrics`）、`scripts/verify/scene_ready_scene_type_consumption_metrics_guard.py` |
 
 ## 本轮已执行验证
 
@@ -184,6 +185,8 @@
 - `make verify.scene.runtime_boundary.gate`（T50 复验）：通过
 - `python3 scripts/verify/scene_action_surface_strategy_priority_guard.py`（T51）：通过
 - `make verify.scene.runtime_boundary.gate`（T51 复验）：通过
+- `python3 scripts/verify/scene_ready_scene_type_consumption_metrics_guard.py`（T52）：通过
+- `make verify.scene.runtime_boundary.gate`（T52 复验）：通过
 
 ## 增量更新记录
 
@@ -232,9 +235,10 @@
 - 2026-03-15：已将 action surface runtime 策略上收至 `system.init` 统一下发链路：`params -> ext_facts -> ir.config_parameter`，并在 scene_ready 构建阶段注入 `runtime.role_code/company_id/action_surface_strategy`。
 - 2026-03-15：已为 action surface 策略补齐 schema baseline 与白名单守卫，固定顶层结构与策略 key，防止策略形态漂移引发运行时不可预期行为。
 - 2026-03-15：已新增 action surface 策略冲突优先级守卫，固定 `default -> by_company -> by_role -> by_company_role` 叠加顺序，确保同 key 冲突时输出可预测。
+- 2026-03-15：已为 `scene_ready_contract_v1` 增补按 `scene_type` 聚合的子契约消费率指标（base_fact_consumption_rate + surface_nonempty_rate），用于核心能力提升量化。
 
 ## 下一步（按顺序）
 
-1. 将 `scene_ready_contract_v1` 增补“子契约消费率”运行时指标（分 `scene_type` 输出），作为能力提升度量。
-2. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
-3. 推进 action surface runtime 策略的后端下发 schema（含 key 白名单）纳入 `system.init` payload baseline 守卫。
+1. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
+2. 推进 action surface runtime 策略的后端下发 schema（含 key 白名单）纳入 `system.init` payload baseline 守卫。
+3. 将 `scene_type_consumption_metrics` 接入治理 payload 摘要（scene_governance_v1），支持运行时可视化追踪。
