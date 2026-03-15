@@ -389,8 +389,8 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
         if not workflow_surface and base_workflow:
             workflow_surface = dict(base_workflow)
 
-        if base_validator and not _as_dict(meta.get("validation_surface")):
-            meta["validation_surface"] = dict(base_validator)
+        if base_validator and not _as_dict(out.get("validation_surface")):
+            out["validation_surface"] = dict(base_validator)
         meta["base_facts"] = {
             "views": bool(base_views),
             "fields": bool(base_fields),
@@ -552,5 +552,6 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         "search_surface": _as_dict(compiled.get("search_surface")),
         "workflow_surface": _as_dict(compiled.get("workflow_surface")),
         "permission_surface": _as_dict(compiled.get("permission_surface")),
+        "validation_surface": _as_dict(compiled.get("validation_surface")),
         "meta": _as_dict(compiled.get("meta")),
     }

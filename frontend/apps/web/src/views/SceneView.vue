@@ -41,7 +41,13 @@
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
       :style="pageSectionStyle('status_forbidden')"
     />
-    <ContractFormPage v-else-if="status === 'idle' && embeddedRecordActionId > 0" />
+    <StatusPanel
+      v-if="status === 'idle' && validationHint"
+      :title="pageText('validation_surface_title', '表单约束提示')"
+      :message="validationHint"
+      variant="info"
+    />
+    <ContractFormPage v-if="status === 'idle' && embeddedRecordActionId > 0" />
     <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
 </template>
@@ -87,6 +93,7 @@ const forbiddenCopy = ref({
   message: pageText('forbidden_message', '当前角色无法进入该场景。'),
   hint: '',
 });
+const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
 
@@ -284,6 +291,9 @@ function fallbackSceneFromSceneReady(sceneKey: string): Scene | null {
     const page = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
     const meta = (row.meta && typeof row.meta === 'object') ? row.meta as Record<string, unknown> : {};
     const target = (meta.target && typeof meta.target === 'object') ? meta.target as Record<string, unknown> : {};
+    const validationSurface = (row.validation_surface && typeof row.validation_surface === 'object')
+      ? row.validation_surface as Record<string, unknown>
+      : {};
     const rowKey = String(scene.key || page.scene_key || '').trim();
     if (rowKey !== key) continue;
     const routePath = String(page.route || target.route || `/s/${key}`).trim() || `/s/${key}`;
@@ -298,6 +308,7 @@ function fallbackSceneFromSceneReady(sceneKey: string): Scene | null {
         action_id: actionId > 0 ? actionId : undefined,
         menu_id: menuId > 0 ? menuId : undefined,
       },
+      validation_surface: validationSurface,
       layout: resolveSceneLayout(null),
       capabilities: [],
       breadcrumbs: [],
@@ -313,6 +324,7 @@ async function resolveScene() {
     clearError();
     embeddedActionId.value = 0;
     embeddedRecordActionId.value = 0;
+    validationHint.value = '';
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey);
     if (!scene) {
@@ -320,6 +332,16 @@ async function resolveScene() {
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
       status.value = 'error';
       return;
+    }
+
+    const validationSurface = (scene.validation_surface && typeof scene.validation_surface === 'object')
+      ? scene.validation_surface as Record<string, unknown>
+      : {};
+    const requiredFields = Array.isArray(validationSurface.required_fields)
+      ? validationSurface.required_fields.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
+    if (requiredFields.length) {
+      validationHint.value = `必填字段：${requiredFields.slice(0, 5).join('、')}${requiredFields.length > 5 ? ' 等' : ''}`;
     }
 
     const policy = evaluateCapabilityPolicy({ required: scene.capabilities || [], available: session.capabilities });

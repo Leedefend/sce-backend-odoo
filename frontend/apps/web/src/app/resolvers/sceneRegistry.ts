@@ -48,6 +48,7 @@ export interface Scene {
   icon?: string;
   route: string;
   target: SceneTarget;
+  validation_surface?: Record<string, unknown>;
   capabilities?: string[];
   breadcrumbs?: Array<{ label: string; to?: string }>;
   tiles?: SceneTile[];
@@ -170,6 +171,11 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
   const permissionRow = (row.permission_surface && typeof row.permission_surface === 'object')
     ? row.permission_surface as Record<string, unknown>
     : {};
+  const validationRow = (row.validation_surface && typeof row.validation_surface === 'object')
+    ? row.validation_surface as Record<string, unknown>
+    : ((metaRow.validation_surface && typeof metaRow.validation_surface === 'object')
+      ? metaRow.validation_surface as Record<string, unknown>
+      : {});
 
   const sceneKey = asText(sceneRow.key || pageRow.scene_key);
   if (!sceneKey) {
@@ -196,6 +202,7 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
     label: asText(sceneRow.title) || sceneKey,
     route,
     target,
+    validation_surface: validationRow,
     capabilities: requiredCapabilities,
     layout: normalizeSceneLayout(),
   };
