@@ -5,7 +5,6 @@ from typing import Any
 
 from odoo import api, models
 
-from odoo.addons.smart_core.core.scene_provider import load_scenes_from_db_or_fallback
 from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import enqueue_scene_keys
 
 
@@ -14,8 +13,15 @@ def _text(value: Any) -> str:
 
 
 def _scene_keys_by_signals(env, *, action_ids: list[int] | None = None, model_names: list[str] | None = None) -> list[str]:
-    scenes_payload = load_scenes_from_db_or_fallback(env) or {}
-    scenes = scenes_payload.get("scenes") if isinstance(scenes_payload.get("scenes"), list) else []
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
+    except Exception:
+        return []
+    try:
+        payload = load_scene_configs(env) or []
+    except Exception:
+        return []
+    scenes = payload if isinstance(payload, list) else []
     action_set = {int(item) for item in (action_ids or []) if int(item or 0) > 0}
     model_set = {_text(item) for item in (model_names or []) if _text(item)}
     out: list[str] = []
@@ -143,4 +149,3 @@ class ResGroupsAssetTrigger(models.Model):
         result = super().unlink()
         _enqueue_from_signal(self.env, reason="event:res.groups.unlink")
         return result
-

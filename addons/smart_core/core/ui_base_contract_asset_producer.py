@@ -9,7 +9,6 @@ from odoo import api
 
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
-from odoo.addons.smart_core.core.scene_provider import load_scenes_from_db_or_fallback
 from odoo.addons.smart_core.core.ui_base_contract_asset_repository import upsert_asset
 
 
@@ -37,6 +36,20 @@ def _scene_action_id(scene: dict) -> int:
         return int(target.get("action_id") or 0)
     except Exception:
         return 0
+
+
+def _load_scene_rows(env) -> tuple[list[dict], str]:
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs, has_db_scenes
+    except Exception:
+        return [], "fallback"
+    try:
+        payload = load_scene_configs(env) or []
+        rows = payload if isinstance(payload, list) else []
+        source = "db" if has_db_scenes(env) else "fallback"
+        return rows, source
+    except Exception:
+        return [], "fallback"
 
 
 def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
@@ -73,8 +86,7 @@ def refresh_ui_base_contract_assets(
     code_version: str | None = None,
 ) -> dict:
     requested_keys = {_text(item) for item in (scene_keys or []) if _text(item)}
-    source = load_scenes_from_db_or_fallback(env) or {}
-    rows = source.get("scenes") if isinstance(source.get("scenes"), list) else []
+    rows, scene_source = _load_scene_rows(env)
     produced = 0
     skipped = 0
     failed = 0
@@ -119,5 +131,5 @@ def refresh_ui_base_contract_assets(
         "produced_count": produced,
         "skipped_count": skipped,
         "failed_count": failed,
-        "scene_source": _text(source.get("loaded_from")),
+        "scene_source": _text(scene_source),
     }
