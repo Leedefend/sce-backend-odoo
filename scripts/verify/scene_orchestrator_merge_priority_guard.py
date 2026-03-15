@@ -144,6 +144,62 @@ def _runtime_sample_assert(errors: list[str]) -> None:
         errors,
     )
 
+    view_expand_payload = {
+        "code": "projects.record",
+        "name": "项目表单",
+        "target": {"route": "/s/projects.record", "action_id": 101},
+        "blocks": [
+            {"type": "form_block", "source": "ui_base_contract.views.form", "zone": "main"},
+            {"type": "kanban_block", "source": "ui_base_contract.views.kanban", "zone": "sidebar"},
+        ],
+    }
+    view_expand_base_contract = {
+        "model": "project.project",
+        "views": {
+            "form": {"fields": ["name", "manager_id", "stage_id"]},
+            "kanban": {"fields": ["name", "stage_id"], "template": "<t/>"},
+        },
+        "fields": {
+            "name": {"type": "char", "required": True},
+            "manager_id": {"type": "many2one"},
+            "stage_id": {"type": "many2one", "readonly": True},
+        },
+        "permissions": {"allowed": True},
+    }
+    view_expand_compiled = scene_compile(
+        view_expand_payload,
+        scene_key="projects.record",
+        ui_base_contract=view_expand_base_contract,
+        provider_registry={},
+    )
+    expanded_blocks = view_expand_compiled.get("blocks") if isinstance(view_expand_compiled.get("blocks"), list) else []
+    form_block = next(
+        (
+            row for row in expanded_blocks
+            if isinstance(row, dict) and str(row.get("block_type") or "") == "form"
+        ),
+        {},
+    )
+    kanban_block = next(
+        (
+            row for row in expanded_blocks
+            if isinstance(row, dict) and str(row.get("block_type") or "") == "kanban"
+        ),
+        {},
+    )
+    _assert(bool(form_block), "view expansion sample missing form block", errors)
+    _assert(bool(kanban_block), "view expansion sample missing kanban block", errors)
+    _assert(
+        isinstance(form_block.get("form"), dict) and int((form_block.get("form") or {}).get("field_count") or 0) >= 1,
+        "view expansion sample expected form block structured payload",
+        errors,
+    )
+    _assert(
+        isinstance(kanban_block.get("kanban"), dict) and bool((kanban_block.get("kanban") or {}).get("has_template")),
+        "view expansion sample expected kanban block template marker",
+        errors,
+    )
+
 
 def main() -> int:
     errors: list[str] = []
