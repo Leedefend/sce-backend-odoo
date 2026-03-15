@@ -1,0 +1,16 @@
+{
+  "required_top_keys": [
+    "default",
+    "by_role",
+    "by_company",
+    "by_company_role"
+  ],
+  "required_strategy_keys": [
+    "preferredRecordModels",
+    "actionPreferredRoleTokens"
+  ],
+  "required_session_tokens": [
+    "scene_validation_recovery_strategy",
+    "applySceneValidationRecoveryStrategyRuntime"
+  ]
+}
