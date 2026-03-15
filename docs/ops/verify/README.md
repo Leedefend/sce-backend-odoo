@@ -58,6 +58,8 @@
 - `make verify.scene.validation_recovery_strategy.guard`
   - Verifies scene validation recovery strategy is externalized and runtime-wired (`strategy module + session init hook + ContractFormPage consumer`).
   - Enforces schema baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_schema_guard.json`.
+- `make verify.scene.validation_recovery_strategy.payload_path.guard`
+  - Verifies source-priority path for strategy payload is stable (`params -> ext_facts -> icp` in backend, `top-level -> ext_facts fallback` in frontend session).
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`

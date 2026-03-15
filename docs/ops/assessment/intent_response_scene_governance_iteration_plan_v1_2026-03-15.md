@@ -63,6 +63,7 @@
 | T38 | `SCENE_VALIDATION_REQUIRED` 场景化策略外置配置化 | Frontend | ✅ DONE | `frontend/apps/web/src/app/sceneValidationRecoveryStrategy.ts`（可配置策略模块） + `frontend/apps/web/src/pages/ContractFormPage.vue`（改为策略调用） |
 | T39 | `sceneValidationRecoveryStrategy` 增加运行时覆盖入口 + 守卫 | Frontend + Verify | ✅ DONE | `frontend/apps/web/src/app/sceneValidationRecoveryStrategy.ts`（`applySceneValidationRecoveryStrategyRuntime`）、`frontend/apps/web/src/stores/session.ts`（app.init 运行时接线）、`scripts/verify/scene_validation_recovery_strategy_guard.py`、`Makefile` |
 | T40 | `scene_validation_recovery_strategy` 后端下发 schema 固化 | Platform + Frontend + Verify | ✅ DONE | `addons/smart_core/handlers/system_init.py`（显式输出策略 payload + 参数/扩展/ICP 读取）、`scripts/verify/baselines/scene_validation_recovery_strategy_schema_guard.json`、`scripts/verify/scene_validation_recovery_strategy_guard.py`（schema + wiring 校验） |
+| T41 | recovery strategy payload 路径稳定性 smoke guard | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/scene_validation_recovery_strategy_payload_path_guard.py`（后端 `params->ext_facts->icp` 与前端 `top-level->ext_facts` 路径优先级校验）、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
 
 ## 本轮已执行验证
 
@@ -189,6 +190,7 @@
 - 2026-03-15：已将 `SCENE_VALIDATION_REQUIRED` 恢复动作策略外置为 `sceneValidationRecoveryStrategy` 模块，支持后续行业模块按模型/角色覆写策略而无需修改页面代码。
 - 2026-03-15：已为 `sceneValidationRecoveryStrategy` 增加运行时覆盖入口：支持 `default/by_role/by_company/by_company_role` 分层覆写，并在 `session.app.init` 按角色与公司注入；新增守卫 `verify.scene.validation_recovery_strategy.guard` 固化接线。
 - 2026-03-15：已固化后端下发契约：`system.init` 显式输出 `scene_validation_recovery_strategy`（支持 params/ext_facts/ICP 读取），并以 baseline 守卫约束 schema 顶层与接线完整性。
+- 2026-03-15：已新增 payload 路径稳定性守卫 `verify.scene.validation_recovery_strategy.payload_path.guard`，固定后端优先级 `params -> ext_facts -> icp` 与前端优先级 `top-level payload -> ext_facts fallback`，并纳入 `verify.scene.runtime_boundary.gate`。
 
 ## 下一步（按顺序）
 
