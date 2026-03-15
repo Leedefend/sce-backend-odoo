@@ -71,6 +71,7 @@
 | T46 | 场景编排 action surface 分层输出（primary/secondary/contextual） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_infer_action_tier/_build_action_surface` + `action_surface` 输出 + `meta.action_surface_counts`）、`scripts/verify/scene_orchestrator_action_surface_guard.py` |
 | T47 | action surface 权限/工作流联动裁决 | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`action_permission_workflow_gate`：按 rights + transitions 过滤动作并重建 surface）、`scripts/verify/scene_orchestrator_action_surface_guard.py`（可执行动作样例断言） |
 | T48 | action surface role/company 运行时覆写策略 | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_resolve_action_surface_strategy/_apply_action_surface_strategy`，支持 `default/by_role/by_company/by_company_role`）、`scripts/verify/scene_orchestrator_action_surface_guard.py`（覆写分层与 hide 样例断言） |
+| T49 | action surface 策略统一下发接入 system.init | Platform + Scene + Verify | ✅ DONE | `addons/smart_core/handlers/system_init.py`（`scene_action_surface_strategy` 统一加载输出）、`addons/smart_core/core/scene_ready_contract_builder.py`（策略+role/company runtime 注入 scene 编译）、`scripts/verify/scene_action_surface_strategy_wiring_guard.py` |
 
 ## 本轮已执行验证
 
@@ -175,6 +176,8 @@
 - `make verify.scene.runtime_boundary.gate`（T47 复验）：通过
 - `python3 scripts/verify/scene_orchestrator_action_surface_guard.py`（T48 覆写策略复验）：通过
 - `make verify.scene.runtime_boundary.gate`（T48 复验）：通过
+- `python3 scripts/verify/scene_action_surface_strategy_wiring_guard.py`（T49）：通过
+- `make verify.scene.runtime_boundary.gate`（T49 复验）：通过
 
 ## 增量更新记录
 
@@ -220,9 +223,10 @@
 - 2026-03-15：已落地 Scene 编排 `action_surface` 分层输出（`primary/secondary/contextual`），并按 `scene_type + placement + intent` 规则归类，输出 `meta.action_surface_counts` 便于运行时观测。
 - 2026-03-15：已落地 `action_permission_workflow_gate`，将 `permission.effective.rights` 与 `workflow.transitions` 纳入动作可执行裁决，避免不可执行动作进入最终 `action_surface`。
 - 2026-03-15：已落地 action surface 运行时覆写策略：支持 `default/by_role/by_company/by_company_role` 分层策略，按 key 进行 `force_primary/force_secondary/force_contextual/hide` 动态重排。
+- 2026-03-15：已将 action surface runtime 策略上收至 `system.init` 统一下发链路：`params -> ext_facts -> ir.config_parameter`，并在 scene_ready 构建阶段注入 `runtime.role_code/company_id/action_surface_strategy`。
 
 ## 下一步（按顺序）
 
 1. 将 `scene_ready_contract_v1` 增补“子契约消费率”运行时指标（分 `scene_type` 输出），作为能力提升度量。
 2. 增加关键场景（`projects.list/projects.intake/workspace.home`）的编译样例回归，验证“原生契约输入 -> scene-ready 输出”闭环稳定性。
-3. 推进 action surface runtime 策略从 `scene.runtime` 提升到 `system.init` 统一下发（与 recovery strategy 同链路治理）。
+3. 为 action surface runtime 策略增加 schema baseline（含 key 白名单）并补冲突守卫。
