@@ -1681,6 +1681,31 @@ const policyRequiredFields = computed(() => {
   });
   return out;
 });
+const sceneValidationSurface = computed<Record<string, unknown>>(() => {
+  const sceneKey = String(route.query.scene_key || '').trim();
+  if (!sceneKey) return {};
+  const rows = Array.isArray(session.sceneReadyContractV1?.scenes) ? session.sceneReadyContractV1?.scenes : [];
+  for (const item of rows) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    const scene = (row.scene && typeof row.scene === 'object') ? row.scene as Record<string, unknown> : {};
+    const page = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
+    const rowKey = String(scene.key || page.scene_key || '').trim();
+    if (rowKey !== sceneKey) continue;
+    const surface = row.validation_surface;
+    if (surface && typeof surface === 'object' && !Array.isArray(surface)) {
+      return surface as Record<string, unknown>;
+    }
+    return {};
+  }
+  return {};
+});
+const sceneValidationRequiredFields = computed<string[]>(() => {
+  const fields = Array.isArray(sceneValidationSurface.value.required_fields)
+    ? sceneValidationSurface.value.required_fields
+    : [];
+  return fields.map((item) => String(item || '').trim()).filter(Boolean);
+});
 const validationRequiredFields = computed(() => {
   const out = new Set<string>();
   const rules = Array.isArray(contract.value?.validation_rules) ? contract.value.validation_rules : [];
@@ -1694,6 +1719,9 @@ const validationRequiredFields = computed(() => {
       ? item.when_profiles.map((p) => String(p || '').trim().toLowerCase())
       : [];
     if (profiles.length && !profiles.includes(renderProfile.value)) return;
+    out.add(field);
+  });
+  sceneValidationRequiredFields.value.forEach((field) => {
     out.add(field);
   });
   return out;
@@ -1756,6 +1784,28 @@ function shouldShowRequiredMark(node: LayoutNode) {
     return policyRequired.has(node.name) || validationRequired.has(node.name);
   }
   return coreFieldNames.value.includes(node.name);
+}
+
+function isMissingRequiredValue(value: unknown) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (typeof value === 'number') return !Number.isFinite(value) || value <= 0;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'boolean') return false;
+  if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length === 0;
+  return false;
+}
+
+function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string>): string[] {
+  const out: string[] = [];
+  for (const field of sceneValidationRequiredFields.value) {
+    if (!isFieldVisible(field)) continue;
+    const value = formData[field];
+    if (isMissingRequiredValue(value)) {
+      out.push(`SCENE_VALIDATION_REQUIRED: ${fieldLabels[field] || field} 为必填项`);
+    }
+  }
+  return Array.from(new Set(out)).slice(0, 5);
 }
 
 const layoutNodes = computed<LayoutNode[]>(() => {
@@ -2645,6 +2695,11 @@ async function saveRecord() {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
     return acc;
   }, {});
+  const scenePrecheckIssues = collectSceneValidationPrecheckErrors(labels);
+  if (scenePrecheckIssues.length) {
+    validationErrors.value = scenePrecheckIssues;
+    return;
+  }
   if (!standardCreateMode) {
     const issues = validateContractFormData({
       contract: contract.value,
