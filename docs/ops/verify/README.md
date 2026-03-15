@@ -34,6 +34,7 @@
   - Aggregates scene runtime boundary + legacy contract path checks.
 - `make verify.scene.governance_payload.guard`
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
+  - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).
 - `make verify.scene.base_contract_asset_coverage.guard`
   - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).
 - `make verify.scene.orchestrator.input.schema.guard`
