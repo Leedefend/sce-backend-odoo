@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,6 +15,57 @@ COMPILER = ROOT / "addons" / "smart_core" / "core" / "scene_dsl_compiler.py"
 def _assert(condition: bool, message: str, errors: list[str]) -> None:
     if not condition:
         errors.append(message)
+
+
+def _load_scene_compile():
+    spec = importlib.util.spec_from_file_location("scene_dsl_compiler_guard", COMPILER)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"spec unavailable: {COMPILER}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    fn = getattr(module, "scene_compile", None)
+    if not callable(fn):
+        raise RuntimeError("scene_compile not found")
+    return fn
+
+
+def _runtime_sample_assert(errors: list[str]) -> None:
+    scene_compile = _load_scene_compile()
+    payload = {
+        "code": "projects.list",
+        "name": "项目列表",
+        "target": {"route": "/s/projects.list", "action_id": 100},
+        "actions": [{"key": "open_scene", "intent": "ui.contract"}],
+    }
+    base_contract = {
+        "views": {"tree": {"fields": ["name", "stage_id"]}},
+        "search": {"fields": ["name"], "filters": ["my_projects"]},
+        "permissions": {"allowed": True},
+        "workflow": {"state_field": "state", "states": ["draft", "done"]},
+    }
+    compiled = scene_compile(payload, scene_key="projects.list", ui_base_contract=base_contract, provider_registry={})
+    meta = compiled.get("meta") if isinstance(compiled.get("meta"), dict) else {}
+    pipeline = meta.get("compile_pipeline") if isinstance(meta.get("compile_pipeline"), list) else []
+    verdict = meta.get("compile_verdict") if isinstance(meta.get("compile_verdict"), dict) else {}
+
+    required_pipeline = [
+        "profile_apply",
+        "policy_apply",
+        "provider_merge",
+        "permission_workflow_gate",
+    ]
+    for stage in required_pipeline:
+        _assert(stage in pipeline, f"runtime sample missing pipeline stage: {stage}", errors)
+    stage_order = [pipeline.index(stage) for stage in required_pipeline if stage in pipeline]
+    _assert(stage_order == sorted(stage_order), "runtime sample merge-priority stage order mismatch", errors)
+
+    _assert(verdict.get("ok") is True, "runtime sample compile_verdict.ok must be true", errors)
+    _assert(
+        isinstance(compiled.get("permission_surface"), dict),
+        "runtime sample missing permission_surface output",
+        errors,
+    )
 
 
 def main() -> int:
@@ -53,6 +106,11 @@ def main() -> int:
     _assert("compile_verdict" in compiler_text, "compiler missing compile_verdict", errors)
     _assert("semantic_validate" in compiler_text, "compiler missing semantic validation stage", errors)
 
+    try:
+        _runtime_sample_assert(errors)
+    except Exception as exc:
+        errors.append(f"runtime sample failed: {exc}")
+
     if errors:
         print("[scene_orchestrator_merge_priority_guard] FAIL")
         for item in errors:
@@ -65,4 +123,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
