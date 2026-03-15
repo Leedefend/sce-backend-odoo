@@ -42,6 +42,7 @@ from odoo.addons.smart_core.core.page_contracts_builder import build_page_contra
 from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
 from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
+from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
@@ -302,6 +303,20 @@ class SystemInitHandler(BaseIntentHandler):
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
         nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
+        role_code = ""
+        if isinstance(role_surface, dict):
+            role_code = str(role_surface.get("role_code") or "").strip()
+        bind_result = bind_scene_assets(
+            env,
+            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            role_code=role_code or None,
+            company_id=env.company.id if env.company else None,
+        )
+        nav_contract_input["scenes"] = bind_result.get("scenes") or nav_contract_input.get("scenes") or []
+        if isinstance(data.get("nav_meta"), dict):
+            data["nav_meta"]["ui_base_contract_asset_scene_count"] = int(bind_result.get("asset_scene_count") or 0)
+            data["nav_meta"]["ui_base_contract_bound_scene_count"] = int(bind_result.get("bound_scene_count") or 0)
+            data["nav_meta"]["ui_base_contract_missing_scene_count"] = int(bind_result.get("missing_scene_count") or 0)
         data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
             scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
             role_surface=role_surface if isinstance(role_surface, dict) else {},

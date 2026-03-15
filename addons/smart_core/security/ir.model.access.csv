@@ -1,1 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sc_ui_base_contract_asset_admin,access.sc.ui.base.contract.asset.admin,model_sc_ui_base_contract_asset,smart_core.group_smart_core_admin,1,1,1,1
