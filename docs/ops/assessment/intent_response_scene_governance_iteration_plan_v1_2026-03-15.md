@@ -46,6 +46,7 @@
 | T21 | 增加前端“禁止直连 Base Contract”防回归 guard | Governance/Verify | ✅ DONE | `scripts/verify/frontend_no_base_contract_direct_consume_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T22 | 固化 Orchestrator merge priority 门禁（spec + trace） | Governance/Verify | ✅ DONE | `scripts/verify/scene_orchestrator_merge_priority_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T23 | 增加资产队列观测指标并接入 scene_governance_v1 | Platform + Governance/Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_event_queue.py`、`addons/smart_core/core/scene_governance_payload_builder.py`、`addons/smart_core/handlers/system_init.py`、`scripts/verify/scene_governance_payload_guard.py` |
+| T24 | 增加资产队列趋势基线 guard（上限+增长速率） | Governance/Verify | ✅ DONE | `scripts/verify/scene_asset_queue_trend_guard.py`、`scripts/verify/baselines/scene_asset_queue_trend_guard.json`、`Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 
 ## 本轮已执行验证
 
@@ -75,6 +76,8 @@
 - `make verify.scene.runtime_boundary.gate`（T22 复验）：通过
 - `python3 scripts/verify/scene_governance_payload_guard.py`（T23）：通过
 - `make verify.scene.runtime_boundary.gate`（T23 复验）：通过
+- `python3 scripts/verify/scene_asset_queue_trend_guard.py`（T24）：通过
+- `make verify.scene.runtime_boundary.gate`（T24 复验）：通过
 
 ## 增量更新记录
 
@@ -95,9 +98,10 @@
 - 2026-03-15：已落地 `verify.scene.orchestrator.merge_priority.guard`，固化 platform/base/profile/policy/provider/permission 优先级规范与编译轨迹可见性。
 - 2026-03-15：已将 merge priority guard 升级为“静态规范 + 最小运行样例”双模校验，确保优先级顺序在运行样例中也可验证。
 - 2026-03-15：已将资产队列观测指标注入 `scene_governance_v1.asset_queue`（队列长度、最近更新、消费批次），并纳入治理 payload guard。
+- 2026-03-15：已新增资产队列趋势基线门禁 `verify.scene.asset_queue_trend.guard`，按基线限制队列堆积上限与单次增长速度。
 
 ## 下一步（按顺序）
 
 1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
 2. 增加事件队列观测指标（消费延迟、失败重试）并接入场景治理面板告警阈值。
-3. 为 `asset_queue` 增加趋势快照与基线漂移 guard（增长速度/堆积上限）。
+3. 将 `asset_queue` 趋势 guard 从“单次增长”升级到“窗口期增长斜率 + 连续超限告警”。
