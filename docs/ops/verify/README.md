@@ -44,6 +44,8 @@
   - Verifies base contract asset binding chain from `system.init -> repository -> compiler -> scene_ready meta`.
 - `make verify.scene.orchestrator.industry_interface.guard`
   - Verifies architecture specs for industry composition (`Profile + Policy + Provider`) and orchestrator IO interface sections.
+- `make verify.frontend.no_base_contract_direct_consume.guard`
+  - Verifies frontend source does not directly consume `ui_base_contract/base_contract` tokens and keeps scene rendering on `Scene-ready Contract` path.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
