@@ -71,6 +71,8 @@
   - Verifies Scene Orchestrator emits scene-typed action surface buckets (`primary/secondary/contextual`) with stable counts.
   - Verifies permission/workflow runtime gate can filter non-executable actions before surface output.
   - Verifies runtime strategy override (`default/by_role/by_company/by_company_role`) can re-bucket/hide actions deterministically.
+- `make verify.scene.action_surface_strategy.wiring.guard`
+  - Verifies `system.init` can output `scene_action_surface_strategy` (`params -> ext_facts -> icp`) and inject strategy/role/company runtime into scene compile path.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
