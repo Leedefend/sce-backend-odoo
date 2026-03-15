@@ -85,6 +85,23 @@ def _merge_extension_facts(data: dict) -> None:
         for key in ("entitlements", "usage"):
             if key in core_facts and key not in data:
                 data[key] = core_facts.get(key)
+        workspace_collections = core_facts.get("workspace_collections")
+        if isinstance(workspace_collections, dict):
+            for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
+                rows = workspace_collections.get(key)
+                if key not in data and isinstance(rows, list):
+                    data[key] = rows
+        provider_payload = core_facts.get("role_surface_override_provider")
+        if isinstance(provider_payload, dict):
+            provider_key = str(provider_payload.get("key") or "").strip()
+            if provider_key:
+                providers = data.get("role_surface_override_providers")
+                if not isinstance(providers, dict):
+                    providers = {}
+                merged = dict(provider_payload)
+                merged.pop("key", None)
+                providers[provider_key] = merged
+                data["role_surface_override_providers"] = providers
 
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()

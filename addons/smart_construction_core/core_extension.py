@@ -341,14 +341,12 @@ def smart_core_extend_system_init(data, env, user):
         risk_rows = _build_risk_action_rows(env)
         project_rows = _build_project_action_rows(env, user)
 
-        if task_rows:
-            data["task_items"] = task_rows
-        if payment_rows:
-            data["payment_requests"] = payment_rows
-        if risk_rows:
-            data["risk_actions"] = risk_rows
-        if project_rows:
-            data["project_actions"] = project_rows
+        module_facts["workspace_collections"] = {
+            "task_items": task_rows,
+            "payment_requests": payment_rows,
+            "risk_actions": risk_rows,
+            "project_actions": project_rows,
+        }
 
         module_facts["workspace_business_source"] = {
             "task_items": len(task_rows),
@@ -357,10 +355,8 @@ def smart_core_extend_system_init(data, env, user):
             "project_actions": len(project_rows),
         }
 
-        providers = data.get("role_surface_override_providers")
-        if not isinstance(providers, dict):
-            providers = {}
-        providers["smart_construction_core"] = {
+        module_facts["role_surface_override_provider"] = {
+            "key": "smart_construction_core",
             "enabled": True,
             "priority": 100,
             "domain_key": "construction",
@@ -368,7 +364,6 @@ def smart_core_extend_system_init(data, env, user):
             "scene_codes": ["portal.dashboard", "project.management", "projects.list", "projects.intake"],
             "role_surface_overrides": ROLE_SURFACE_OVERRIDES,
         }
-        data["role_surface_override_providers"] = providers
 
         ext_facts["smart_construction_core"] = module_facts
         data["ext_facts"] = ext_facts
