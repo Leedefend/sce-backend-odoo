@@ -63,6 +63,8 @@
 - `make verify.scene.validation_recovery_strategy.e2e_smoke.guard`
   - Verifies end-to-end wiring stays intact (`system.init output -> session runtime apply -> ContractFormPage suggested action`).
   - Enforces behavior baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_behavior_smoke_guard.json` (`open_record/open_action/open_scene`).
+- `make verify.scene.ui_base_contract_canonicalizer.guard`
+  - Verifies backend UI base contract canonicalizer is wired into producer/repository and keeps required sub-contract facts (`views/fields/search/permissions/workflow/validator/actions`).
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
