@@ -33,6 +33,7 @@ def main() -> int:
         '"page": _as_dict(compiled.get("page"))',
         '"blocks": _as_list(compiled.get("blocks"))',
         '"actions": _as_list(compiled.get("actions"))',
+        '"action_surface": _as_dict(compiled.get("action_surface"))',
         '"search_surface": _as_dict(compiled.get("search_surface"))',
         '"workflow_surface": _as_dict(compiled.get("workflow_surface"))',
         '"permission_surface": _as_dict(compiled.get("permission_surface"))',
