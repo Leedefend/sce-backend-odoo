@@ -95,6 +95,7 @@
         <p><strong>governance.runtime_source:</strong> {{ governanceSnapshot.runtime_source || '-' }}</p>
         <p><strong>governance.gates:</strong> {{ governanceGatesLabel }}</p>
         <p><strong>governance.reasons:</strong> {{ governanceReasonsLabel }}</p>
+        <p><strong>governance.scene_ready_consumption:</strong> {{ governanceConsumptionLabel }}</p>
       </article>
 
       <section v-if="pageSectionEnabled('governance', true) && pageSectionTagIs('governance', 'section')" class="governance" :style="pageSectionStyle('governance')">
@@ -234,6 +235,27 @@ const governanceReasonsLabel = computed(() => {
   const autoText = autoCodes.length ? autoCodes.join(',') : '-';
   const resolveText = resolveCodes.length ? resolveCodes.join(',') : '-';
   return `auto_degrade=[${autoText}] resolve_errors=[${resolveText}]`;
+});
+
+const governanceConsumptionLabel = computed(() => {
+  const consumption = governanceSnapshot.value?.scene_ready_consumption;
+  if (!consumption || typeof consumption !== 'object') return '-';
+  const row = consumption as Record<string, unknown>;
+  const enabled = Boolean(row.enabled);
+  const sceneTypes = Number(row.scene_type_count || 0);
+  const scenes = Number(row.scene_count || 0);
+  const aggregate = (row.aggregate && typeof row.aggregate === 'object')
+    ? (row.aggregate as Record<string, unknown>)
+    : {};
+  const baseRate = (aggregate.base_fact_consumption_rate && typeof aggregate.base_fact_consumption_rate === 'object')
+    ? (aggregate.base_fact_consumption_rate as Record<string, unknown>)
+    : {};
+  const surfaceRate = (aggregate.surface_nonempty_rate && typeof aggregate.surface_nonempty_rate === 'object')
+    ? (aggregate.surface_nonempty_rate as Record<string, unknown>)
+    : {};
+  const baseSearch = Number(baseRate.search || 0).toFixed(2);
+  const surfaceAction = Number(surfaceRate.action_surface || 0).toFixed(2);
+  return `enabled=${enabled} scene_types=${sceneTypes} scenes=${scenes} base.search=${baseSearch} surface.action=${surfaceAction}`;
 });
 
 function validateHealthContract(raw: unknown): SceneHealthContract {

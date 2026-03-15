@@ -449,6 +449,20 @@ const sceneGovernanceReasonsSummary = computed(() => {
   return `auto=[${autoCodes.join(',') || '-'}] resolve=[${resolveCodes.join(',') || '-'}]`;
 });
 
+const sceneGovernanceConsumptionSummary = computed(() => {
+  const consumption = asDict(sceneGovernanceSnapshot.value?.scene_ready_consumption);
+  if (!consumption) return '-';
+  const enabled = Boolean(consumption.enabled);
+  const sceneTypes = Number(consumption.scene_type_count || 0);
+  const scenes = Number(consumption.scene_count || 0);
+  const aggregate = asDict(consumption.aggregate);
+  const baseRate = asDict(aggregate?.base_fact_consumption_rate);
+  const surfaceRate = asDict(aggregate?.surface_nonempty_rate);
+  const searchBase = Number(baseRate?.search || 0).toFixed(2);
+  const actionSurface = Number(surfaceRate?.action_surface || 0).toFixed(2);
+  return `enabled=${enabled} types=${sceneTypes} scenes=${scenes} base.search=${searchBase} surface.action=${actionSurface}`;
+});
+
 const hudEntries = computed(() => {
   const entries = [
   { label: 'scene_key', value: routeSceneKey.value || '-' },
@@ -482,6 +496,7 @@ const hudEntries = computed(() => {
       { label: 'governance.runtime_source', value: String(sceneGovernanceSnapshot.value.runtime_source || '-') },
       { label: 'governance.gates', value: sceneGovernanceGatesSummary.value },
       { label: 'governance.reasons', value: sceneGovernanceReasonsSummary.value },
+      { label: 'governance.scene_ready_consumption', value: sceneGovernanceConsumptionSummary.value },
     );
   }
   if (showExtractionStats.value) {
