@@ -71,6 +71,87 @@ def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
+    buckets: Dict[str, Dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        meta = entry.get("meta") if isinstance(entry.get("meta"), dict) else {}
+        base_facts = meta.get("base_facts") if isinstance(meta.get("base_facts"), dict) else {}
+        surface_profile = meta.get("surface_profile") if isinstance(meta.get("surface_profile"), dict) else {}
+        scene_type = _text(surface_profile.get("scene_type") or "list")
+        row = buckets.get(scene_type)
+        if not isinstance(row, dict):
+            row = {
+                "scene_count": 0,
+                "base_fact_hits": {
+                    "search": 0,
+                    "workflow": 0,
+                    "validator": 0,
+                    "actions": 0,
+                },
+                "surface_nonempty_hits": {
+                    "search": 0,
+                    "workflow": 0,
+                    "validation": 0,
+                    "action_surface": 0,
+                },
+            }
+            buckets[scene_type] = row
+        row["scene_count"] = int(row.get("scene_count") or 0) + 1
+
+        fact_hits = row.get("base_fact_hits") if isinstance(row.get("base_fact_hits"), dict) else {}
+        for key in ("search", "workflow", "validator", "actions"):
+            if bool(base_facts.get(key)):
+                fact_hits[key] = int(fact_hits.get(key) or 0) + 1
+        row["base_fact_hits"] = fact_hits
+
+        surface_hits = row.get("surface_nonempty_hits") if isinstance(row.get("surface_nonempty_hits"), dict) else {}
+        search_surface = entry.get("search_surface") if isinstance(entry.get("search_surface"), dict) else {}
+        workflow_surface = entry.get("workflow_surface") if isinstance(entry.get("workflow_surface"), dict) else {}
+        validation_surface = entry.get("validation_surface") if isinstance(entry.get("validation_surface"), dict) else {}
+        action_surface = entry.get("action_surface") if isinstance(entry.get("action_surface"), dict) else {}
+
+        if bool(search_surface.get("filters") or search_surface.get("fields") or search_surface.get("group_by")):
+            surface_hits["search"] = int(surface_hits.get("search") or 0) + 1
+        if bool(workflow_surface.get("states") or workflow_surface.get("transitions") or workflow_surface.get("state_field")):
+            surface_hits["workflow"] = int(surface_hits.get("workflow") or 0) + 1
+        if bool(validation_surface.get("required_fields") or validation_surface.get("field_rules")):
+            surface_hits["validation"] = int(surface_hits.get("validation") or 0) + 1
+        action_counts = action_surface.get("counts") if isinstance(action_surface.get("counts"), dict) else {}
+        if int(action_counts.get("total") or 0) > 0:
+            surface_hits["action_surface"] = int(surface_hits.get("action_surface") or 0) + 1
+        row["surface_nonempty_hits"] = surface_hits
+
+    metrics: Dict[str, Any] = {}
+    for scene_type, row in buckets.items():
+        scene_count = int(row.get("scene_count") or 0)
+        fact_hits = row.get("base_fact_hits") if isinstance(row.get("base_fact_hits"), dict) else {}
+        surface_hits = row.get("surface_nonempty_hits") if isinstance(row.get("surface_nonempty_hits"), dict) else {}
+
+        def _ratio(hit: int) -> float:
+            return float(hit) / float(scene_count) if scene_count > 0 else 0.0
+
+        metrics[scene_type] = {
+            "scene_count": scene_count,
+            "base_fact_hits": fact_hits,
+            "base_fact_consumption_rate": {
+                "search": _ratio(int(fact_hits.get("search") or 0)),
+                "workflow": _ratio(int(fact_hits.get("workflow") or 0)),
+                "validator": _ratio(int(fact_hits.get("validator") or 0)),
+                "actions": _ratio(int(fact_hits.get("actions") or 0)),
+            },
+            "surface_nonempty_hits": surface_hits,
+            "surface_nonempty_rate": {
+                "search": _ratio(int(surface_hits.get("search") or 0)),
+                "workflow": _ratio(int(surface_hits.get("workflow") or 0)),
+                "validation": _ratio(int(surface_hits.get("validation") or 0)),
+                "action_surface": _ratio(int(surface_hits.get("action_surface") or 0)),
+            },
+        }
+    return metrics
+
+
 def _scene_ready_entry(
     item: Dict[str, Any],
     *,
@@ -173,5 +254,6 @@ def build_scene_ready_contract_v1(
             "mode": "dual_track",
             "base_contract_bound_scene_count": base_bound_scene_count,
             "compile_issue_scene_count": compile_issue_scene_count,
+            "scene_type_consumption_metrics": _scene_type_consumption_metrics(entries),
         },
     }
