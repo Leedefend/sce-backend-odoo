@@ -54,6 +54,7 @@
 | T29 | 补齐 blocks 对 form/kanban 的结构化展开（去 list-only） | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_infer_block_type`、`_normalize_field_names`、`block_expand(..., ctx)`） |
 | T30 | 将 validation_surface 升级为显式输出并前端消费 | Scene + Frontend + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`、`addons/smart_core/core/scene_ready_contract_builder.py`、`frontend/apps/web/src/app/resolvers/sceneRegistry.ts`、`frontend/apps/web/src/views/SceneView.vue`、`scripts/verify/scene_orchestrator_output_schema_guard.py` |
 | T31 | 补齐 base action -> 标准 intent 映射规则并加样例 | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`_infer_intent_from_action` + resolution meta）、`scripts/verify/scene_orchestrator_merge_priority_guard.py`（`create_project -> record.create` 样例） |
+| T32 | 增加 form/kanban block expansion 运行样例 guard | Scene + Verify | ✅ DONE | `scripts/verify/scene_orchestrator_merge_priority_guard.py`（新增 `projects.record` 运行样例：form/kanban 结构断言） |
 
 ## 本轮已执行验证
 
@@ -121,6 +122,9 @@
 - `python3 scripts/verify/scene_orchestrator_base_fact_binding_guard.py`（T31）：通过
 - `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T31）：通过
 - `make verify.scene.runtime_boundary.gate`（T31 复验）：通过
+- `python3 -m py_compile scripts/verify/scene_orchestrator_merge_priority_guard.py`（T32）：通过
+- `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T32）：通过
+- `make verify.scene.runtime_boundary.gate`（T32 复验）：通过
 
 ## 增量更新记录
 
@@ -149,9 +153,10 @@
 - 2026-03-15：已补齐 `blocks` 的 `form/kanban` 结构化展开能力：编译器根据 block type/source 自动识别 `form/kanban/list`，并在 form block 输出字段约束摘要，在 kanban block 输出模板可用性标记。
 - 2026-03-15：已将 `validation_surface` 从 meta 内嵌升级为 Scene-ready 顶层显式字段，并在前端 scene 路由层接入消费（存在 `required_fields` 时显示约束提示）。
 - 2026-03-15：已补齐 base action 到标准 intent 的映射规则（create/update/delete/approve/submit/reject/cancel/export/import/search），并记录 `meta.action_intent_resolution` 统计；merge-priority guard 新增 `create_project -> record.create` 运行样例断言。
+- 2026-03-15：已为 `form/kanban` 展开能力新增运行样例 guard，确保编译输出包含 `form` 结构化字段摘要与 `kanban.has_template` 标记，防止回退到 list-only 形态。
 
 ## 下一步（按顺序）
 
-1. 给 form/kanban block expansion 增加运行样例 guard（确保输出字段不退化回 list-only 形态）。
-2. 将 validation_surface 从“提示消费”升级到“表单提交前约束预检”并沉淀失败码映射。
-3. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
+1. 将 validation_surface 从“提示消费”升级到“表单提交前约束预检”并沉淀失败码映射。
+2. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
+3. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
