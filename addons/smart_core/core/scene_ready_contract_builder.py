@@ -71,11 +71,32 @@ def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _scene_ready_entry(item: Dict[str, Any]) -> Dict[str, Any]:
+def _scene_ready_entry(
+    item: Dict[str, Any],
+    *,
+    runtime_context: Dict[str, Any] | None = None,
+    action_surface_strategy: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
+    scene_payload = dict(item)
+    runtime_payload = scene_payload.get("runtime") if isinstance(scene_payload.get("runtime"), dict) else {}
+    runtime_merged = dict(runtime_payload)
+    runtime_ctx = runtime_context if isinstance(runtime_context, dict) else {}
+    role_code = _text(runtime_ctx.get("role_code"))
+    if role_code:
+        runtime_merged["role_code"] = role_code
+    company_id = int(runtime_ctx.get("company_id") or 0)
+    if company_id > 0:
+        runtime_merged["company_id"] = company_id
+    strategy_payload = action_surface_strategy if isinstance(action_surface_strategy, dict) else {}
+    if strategy_payload:
+        runtime_merged["action_surface_strategy"] = strategy_payload
+    if runtime_merged:
+        scene_payload["runtime"] = runtime_merged
+
     provider_registry = item.get("provider_registry") if isinstance(item.get("provider_registry"), dict) else {}
     compiled = scene_compile(
-        item,
+        scene_payload,
         scene_key=scene_key,
         ui_base_contract=item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {},
         provider_registry=provider_registry,
@@ -102,6 +123,8 @@ def build_scene_ready_contract_v1(
     scene_version: str | None = None,
     schema_version: str | None = None,
     scene_channel: str | None = None,
+    action_surface_strategy: Dict[str, Any] | None = None,
+    runtime_context: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     scene_rows = []
     for item in scenes or []:
@@ -113,7 +136,14 @@ def build_scene_ready_contract_v1(
         scene_rows.append(item)
     scene_rows.sort(key=lambda row: _text(row.get("code") or row.get("key")))
 
-    entries = [_scene_ready_entry(row) for row in scene_rows]
+    entries = [
+        _scene_ready_entry(
+            row,
+            runtime_context=runtime_context,
+            action_surface_strategy=action_surface_strategy,
+        )
+        for row in scene_rows
+    ]
     role_payload = role_surface if isinstance(role_surface, dict) else {}
     landing_scene_key = _text(role_payload.get("landing_scene_key"))
     if not landing_scene_key and entries:
