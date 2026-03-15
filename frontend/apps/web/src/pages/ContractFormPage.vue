@@ -85,8 +85,18 @@
       </section>
 
       <section class="form-grid">
-        <p v-if="validationErrors.length" class="validation-error">
-          {{ validationErrors.join('；') }}
+        <StatusPanel
+          v-if="sceneValidationPanel"
+          title="表单校验失败"
+          :message="sceneValidationPanel.message"
+          :error-code="sceneValidationPanel.code"
+          :reason-code="sceneValidationPanel.code"
+          :hint="sceneValidationPanel.hint"
+          suggested-action="copy_reason"
+          variant="error"
+        />
+        <p v-if="nonSceneValidationErrors.length" class="validation-error">
+          {{ nonSceneValidationErrors.join('；') }}
         </p>
         <p v-if="onchangeWarnings.length" class="validation-warn">
           {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
@@ -1726,6 +1736,24 @@ const validationRequiredFields = computed(() => {
   });
   return out;
 });
+const sceneValidationErrorPrefix = `${ErrorCodes.SCENE_VALIDATION_REQUIRED}:`;
+const sceneValidationPanel = computed(() => {
+  const rows = validationErrors.value
+    .map((item) => String(item || '').trim())
+    .filter((item) => item.startsWith(sceneValidationErrorPrefix));
+  if (!rows.length) return null;
+  const normalized = rows
+    .map((item) => item.slice(sceneValidationErrorPrefix.length).trim())
+    .filter(Boolean);
+  return {
+    code: ErrorCodes.SCENE_VALIDATION_REQUIRED,
+    message: normalized.join('；') || '场景约束校验未通过，请补齐必填字段。',
+    hint: '请补齐必填字段后重试。',
+  };
+});
+const nonSceneValidationErrors = computed(() => (
+  validationErrors.value.filter((item) => !String(item || '').trim().startsWith(sceneValidationErrorPrefix))
+));
 const contractVisibleFields = computed<string[]>(() => {
   const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
