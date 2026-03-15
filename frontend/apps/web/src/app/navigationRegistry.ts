@@ -30,11 +30,9 @@ function isProductSceneKey(sceneKey: string): boolean {
 }
 
 function resolveSceneTitle(scene: Scene): string {
-  const title = asText((scene as Record<string, unknown>).label);
+  const title = asText(scene.label);
   if (title) return title;
-  const fallback = asText((scene as Record<string, unknown>).title);
-  if (fallback) return fallback;
-  return asText((scene as Record<string, unknown>).key);
+  return asText(scene.key);
 }
 
 export function buildRuntimeNavigationRegistry(params: {
@@ -47,7 +45,7 @@ export function buildRuntimeNavigationRegistry(params: {
   const capabilityKeys = new Set<string>();
 
   for (const scene of params.scenes || []) {
-    const sceneKey = asText((scene as Record<string, unknown>).key);
+    const sceneKey = asText(scene.key);
     if (!sceneKey || !isProductSceneKey(sceneKey) || sceneKeys.has(sceneKey)) continue;
     sceneKeys.add(sceneKey);
     sceneEntries.push({
