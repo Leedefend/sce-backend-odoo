@@ -47,6 +47,7 @@
 | T22 | 固化 Orchestrator merge priority 门禁（spec + trace） | Governance/Verify | ✅ DONE | `scripts/verify/scene_orchestrator_merge_priority_guard.py` + `Makefile` 接入 `verify.scene.runtime_boundary.gate` |
 | T23 | 增加资产队列观测指标并接入 scene_governance_v1 | Platform + Governance/Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_event_queue.py`、`addons/smart_core/core/scene_governance_payload_builder.py`、`addons/smart_core/handlers/system_init.py`、`scripts/verify/scene_governance_payload_guard.py` |
 | T24 | 增加资产队列趋势基线 guard（上限+增长速率） | Governance/Verify | ✅ DONE | `scripts/verify/scene_asset_queue_trend_guard.py`、`scripts/verify/baselines/scene_asset_queue_trend_guard.json`、`Makefile` 接入 `verify.scene.runtime_boundary.gate` |
+| T25 | P1 编排内核硬化：接入 profile/policy/provider 执行阶段 | Scene + Platform | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（`profile_apply/policy_apply/provider_merge/permission_workflow_gate`）、`addons/smart_core/core/scene_ready_contract_builder.py`（透传 `provider_registry`） |
 
 ## 本轮已执行验证
 
@@ -78,6 +79,12 @@
 - `make verify.scene.runtime_boundary.gate`（T23 复验）：通过
 - `python3 scripts/verify/scene_asset_queue_trend_guard.py`（T24）：通过
 - `make verify.scene.runtime_boundary.gate`（T24 复验）：通过
+- `python3 -m py_compile addons/smart_core/core/scene_dsl_compiler.py addons/smart_core/core/scene_ready_contract_builder.py`（T25）：通过
+- `python3 scripts/verify/scene_orchestrator_input_schema_guard.py`（T25）：通过
+- `python3 scripts/verify/scene_orchestrator_output_schema_guard.py`（T25）：通过
+- `python3 scripts/verify/scene_orchestrator_base_fact_binding_guard.py`（T25）：通过
+- `python3 scripts/verify/scene_orchestrator_merge_priority_guard.py`（T25）：通过
+- `make verify.scene.runtime_boundary.gate`（T25 复验）：通过
 
 ## 增量更新记录
 
@@ -99,9 +106,10 @@
 - 2026-03-15：已将 merge priority guard 升级为“静态规范 + 最小运行样例”双模校验，确保优先级顺序在运行样例中也可验证。
 - 2026-03-15：已将资产队列观测指标注入 `scene_governance_v1.asset_queue`（队列长度、最近更新、消费批次），并纳入治理 payload guard。
 - 2026-03-15：已新增资产队列趋势基线门禁 `verify.scene.asset_queue_trend.guard`，按基线限制队列堆积上限与单次增长速度。
+- 2026-03-15：已完成 P1 最小内核落地：`profile_apply/policy_apply/provider_merge/permission_workflow_gate` 进入 `scene_compile` 主链，编排阶段不再只是轨迹占位。
 
 ## 下一步（按顺序）
 
 1. 追加资产覆盖率阈值策略（按环境/角色分层），升级 guard 为“结构 + 阈值”双门禁。
 2. 增加事件队列观测指标（消费延迟、失败重试）并接入场景治理面板告警阈值。
-3. 将 `asset_queue` 趋势 guard 从“单次增长”升级到“窗口期增长斜率 + 连续超限告警”。
+3. P2 冲突裁决引擎代码化：将 platform/base/profile/policy/provider/permission 的 merge 规则抽离为独立 resolver 并增加冲突样例测试。
