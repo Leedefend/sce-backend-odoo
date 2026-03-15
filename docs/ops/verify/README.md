@@ -45,7 +45,7 @@
 - `make verify.scene.orchestrator.industry_interface.guard`
   - Verifies architecture specs for industry composition (`Profile + Policy + Provider`) and orchestrator IO interface sections.
 - `make verify.scene.orchestrator.merge_priority.guard`
-  - Verifies orchestrator merge-priority spec is present (platform/base/profile/policy/provider/permission) and compiler exposes stage verdict trace fields.
+  - Verifies orchestrator merge-priority spec is present (platform/base/profile/policy/provider/permission), compiler exposes stage verdict trace fields, and a minimal runtime compile sample keeps stage ordering intact.
 - `make verify.frontend.no_base_contract_direct_consume.guard`
   - Verifies frontend source does not directly consume `ui_base_contract/base_contract` tokens and keeps scene rendering on `Scene-ready Contract` path.
 - `make verify.contract.snapshot`
