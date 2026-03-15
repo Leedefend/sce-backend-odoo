@@ -36,6 +36,14 @@
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
 - `make verify.scene.base_contract_asset_coverage.guard`
   - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).
+- `make verify.scene.orchestrator.input.schema.guard`
+  - Verifies orchestrator input-side schema symbols and required base-fact consume points.
+- `make verify.scene.orchestrator.output.schema.guard`
+  - Verifies orchestrator output-side schema keys and `system.init` scene-ready wiring.
+- `make verify.scene.orchestrator.base_fact_binding.guard`
+  - Verifies base contract asset binding chain from `system.init -> repository -> compiler -> scene_ready meta`.
+- `make verify.scene.orchestrator.industry_interface.guard`
+  - Verifies architecture specs for industry composition (`Profile + Policy + Provider`) and orchestrator IO interface sections.
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
