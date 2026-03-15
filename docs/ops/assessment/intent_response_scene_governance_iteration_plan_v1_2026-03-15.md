@@ -64,6 +64,7 @@
 | T39 | `sceneValidationRecoveryStrategy` 增加运行时覆盖入口 + 守卫 | Frontend + Verify | ✅ DONE | `frontend/apps/web/src/app/sceneValidationRecoveryStrategy.ts`（`applySceneValidationRecoveryStrategyRuntime`）、`frontend/apps/web/src/stores/session.ts`（app.init 运行时接线）、`scripts/verify/scene_validation_recovery_strategy_guard.py`、`Makefile` |
 | T40 | `scene_validation_recovery_strategy` 后端下发 schema 固化 | Platform + Frontend + Verify | ✅ DONE | `addons/smart_core/handlers/system_init.py`（显式输出策略 payload + 参数/扩展/ICP 读取）、`scripts/verify/baselines/scene_validation_recovery_strategy_schema_guard.json`、`scripts/verify/scene_validation_recovery_strategy_guard.py`（schema + wiring 校验） |
 | T41 | recovery strategy payload 路径稳定性 smoke guard | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/scene_validation_recovery_strategy_payload_path_guard.py`（后端 `params->ext_facts->icp` 与前端 `top-level->ext_facts` 路径优先级校验）、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
+| T42 | recovery strategy 端到端链路 smoke guard | Platform + Frontend + Verify | ✅ DONE | `scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（后端输出→session 注入→页面 suggestedAction 链路顺序校验）、`Makefile`（纳入 `verify.scene.runtime_boundary.gate`） |
 
 ## 本轮已执行验证
 
@@ -153,6 +154,9 @@
 - `python3 scripts/verify/scene_validation_recovery_strategy_guard.py`（T40）：通过
 - `pnpm -C frontend/apps/web exec tsc --noEmit`（T40）：通过
 - `make verify.scene.runtime_boundary.gate`（T40 复验）：通过
+- `python3 scripts/verify/scene_validation_recovery_strategy_payload_path_guard.py`（T41）：通过
+- `python3 scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py`（T42）：通过
+- `make verify.scene.runtime_boundary.gate`（T42 复验）：通过
 
 ## 增量更新记录
 
@@ -191,9 +195,10 @@
 - 2026-03-15：已为 `sceneValidationRecoveryStrategy` 增加运行时覆盖入口：支持 `default/by_role/by_company/by_company_role` 分层覆写，并在 `session.app.init` 按角色与公司注入；新增守卫 `verify.scene.validation_recovery_strategy.guard` 固化接线。
 - 2026-03-15：已固化后端下发契约：`system.init` 显式输出 `scene_validation_recovery_strategy`（支持 params/ext_facts/ICP 读取），并以 baseline 守卫约束 schema 顶层与接线完整性。
 - 2026-03-15：已新增 payload 路径稳定性守卫 `verify.scene.validation_recovery_strategy.payload_path.guard`，固定后端优先级 `params -> ext_facts -> icp` 与前端优先级 `top-level payload -> ext_facts fallback`，并纳入 `verify.scene.runtime_boundary.gate`。
+- 2026-03-15：已新增端到端链路守卫 `verify.scene.validation_recovery_strategy.e2e_smoke.guard`，校验 `system.init -> session runtime apply -> ContractFormPage suggestedAction` 链路接线与顺序稳定性。
 
 ## 下一步（按顺序）
 
 1. 将 action intent 映射规则外置为可配置策略（按行业模块扩展），并增加策略冲突守卫。
 2. 将 form/kanban 样例 guard 扩展为多场景矩阵（list/form/kanban/workspace 各 1 条），覆盖跨场景回归。
-3. 为 `scene_validation_recovery_strategy` 增加端到端运行样例（后端下发 → session 注入 → 页面建议动作变化）并补 smoke 守卫。
+3. 将 `scene_validation_recovery_strategy` 端到端 smoke guard 升级为“行为样例基线”（按角色/公司覆盖 `open_record/open_action/open_scene` 三类输出）。

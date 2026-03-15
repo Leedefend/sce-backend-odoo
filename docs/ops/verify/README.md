@@ -60,6 +60,8 @@
   - Enforces schema baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_schema_guard.json`.
 - `make verify.scene.validation_recovery_strategy.payload_path.guard`
   - Verifies source-priority path for strategy payload is stable (`params -> ext_facts -> icp` in backend, `top-level -> ext_facts fallback` in frontend session).
+- `make verify.scene.validation_recovery_strategy.e2e_smoke.guard`
+  - Verifies end-to-end wiring stays intact (`system.init output -> session runtime apply -> ContractFormPage suggested action`).
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
