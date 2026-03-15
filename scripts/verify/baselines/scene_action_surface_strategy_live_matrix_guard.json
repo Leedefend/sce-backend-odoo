@@ -1,0 +1,129 @@
+{
+  "cases": [
+    {
+      "name": "role_over_company_and_default",
+      "runtime_context": {
+        "role_code": "pm",
+        "company_id": 2
+      },
+      "strategy": {
+        "default": {
+          "force_secondary_keys": [
+            "open"
+          ]
+        },
+        "by_company": {
+          "2": {
+            "force_contextual_keys": [
+              "open"
+            ]
+          }
+        },
+        "by_role": {
+          "pm": {
+            "force_primary_keys": [
+              "open"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "key": "open",
+          "tier": "secondary"
+        }
+      ],
+      "expected_tiers": {
+        "open": "contextual"
+      }
+    },
+    {
+      "name": "company_role_over_all",
+      "runtime_context": {
+        "role_code": "pm",
+        "company_id": 2
+      },
+      "strategy": {
+        "default": {
+          "force_secondary_keys": [
+            "approve"
+          ]
+        },
+        "by_company": {
+          "2": {
+            "force_primary_keys": [
+              "approve"
+            ]
+          }
+        },
+        "by_role": {
+          "pm": {
+            "force_contextual_keys": [
+              "approve"
+            ]
+          }
+        },
+        "by_company_role": {
+          "2:pm": {
+            "force_secondary_keys": [
+              "approve"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "key": "approve",
+          "tier": "primary"
+        }
+      ],
+      "expected_tiers": {
+        "approve": "contextual"
+      }
+    },
+    {
+      "name": "hide_precedence_at_company_role",
+      "runtime_context": {
+        "role_code": "pm",
+        "company_id": 2
+      },
+      "strategy": {
+        "default": {
+          "hide_keys": [
+            "archive"
+          ]
+        },
+        "by_company": {
+          "2": {
+            "force_primary_keys": [
+              "archive"
+            ]
+          }
+        },
+        "by_role": {
+          "pm": {
+            "force_secondary_keys": [
+              "archive"
+            ]
+          }
+        },
+        "by_company_role": {
+          "2:pm": {
+            "hide_keys": [
+              "archive"
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "key": "archive",
+          "tier": "primary"
+        }
+      ],
+      "expected_absent": [
+        "archive"
+      ]
+    }
+  ]
+}
