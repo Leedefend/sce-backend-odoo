@@ -1975,7 +1975,7 @@ verify.contract.envelope.guard: guard.prod.forbid
 verify.contract.envelope: guard.prod.forbid verify.contract.envelope.guard verify.contract.mode.smoke verify.contract.api.mode.smoke verify.scene_capability.contract.guard
 	@echo "[OK] verify.contract.envelope done"
 
-verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.frontend.no_base_contract_direct_consume.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard verify.scene.base_contract_asset_coverage.guard verify.scene.orchestrator.input.schema.guard verify.scene.orchestrator.output.schema.guard verify.scene.orchestrator.base_fact_binding.guard verify.scene.orchestrator.industry_interface.guard verify.scene.orchestrator.merge_priority.guard
+verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.frontend.no_base_contract_direct_consume.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard verify.scene.asset_queue_trend.guard verify.scene.base_contract_asset_coverage.guard verify.scene.orchestrator.input.schema.guard verify.scene.orchestrator.output.schema.guard verify.scene.orchestrator.base_fact_binding.guard verify.scene.orchestrator.industry_interface.guard verify.scene.orchestrator.merge_priority.guard
 	@echo "[OK] verify.scene.runtime_boundary.gate done"
 
 .PHONY: verify.scene.input_boundary.guard
@@ -1985,6 +1985,10 @@ verify.scene.input_boundary.guard: guard.prod.forbid
 .PHONY: verify.scene.governance_payload.guard
 verify.scene.governance_payload.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_governance_payload_guard.py
+
+.PHONY: verify.scene.asset_queue_trend.guard
+verify.scene.asset_queue_trend.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_asset_queue_trend_guard.py
 
 .PHONY: verify.scene.orchestrator.input.schema.guard
 verify.scene.orchestrator.input.schema.guard: guard.prod.forbid
