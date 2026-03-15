@@ -1,5 +1,6 @@
 # smart_core/handlers/system_init.py
 # -*- coding: utf-8 -*-
+import json
 import logging
 import time
 from typing import List
@@ -103,6 +104,38 @@ def _merge_extension_facts(data: dict) -> None:
                 merged.pop("key", None)
                 providers[provider_key] = merged
                 data["role_surface_override_providers"] = providers
+
+
+def _normalize_scene_validation_recovery_strategy(payload) -> dict:
+    if not isinstance(payload, dict):
+        return {}
+    out = {}
+    for key in ("default", "by_role", "by_company", "by_company_role"):
+        value = payload.get(key)
+        if isinstance(value, dict):
+            out[key] = value
+    return out
+
+
+def _load_scene_validation_recovery_strategy(env, params: dict, data: dict) -> dict:
+    inline = _normalize_scene_validation_recovery_strategy(params.get("scene_validation_recovery_strategy"))
+    if inline:
+        return inline
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    ext_payload = _normalize_scene_validation_recovery_strategy(ext_facts.get("scene_validation_recovery_strategy"))
+    if ext_payload:
+        return ext_payload
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.scene_validation_recovery_strategy_json")
+    except Exception:
+        raw = ""
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(raw)
+    except Exception:
+        return {}
+    return _normalize_scene_validation_recovery_strategy(loaded)
 
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
@@ -250,6 +283,7 @@ class SystemInitHandler(BaseIntentHandler):
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
         _merge_extension_facts(data)
+        data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
 
         runtime_ctx = SystemInitRuntimeContext(
             env=env,
