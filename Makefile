@@ -2083,6 +2083,26 @@ verify.scene.registry_asset_snapshot.guard: guard.prod.forbid
 verify.scene.base_contract_source_mix.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_base_contract_source_mix_guard.py
 
+.PHONY: verify.scene.registry_asset_snapshot.executive
+verify.scene.registry_asset_snapshot.executive: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.executive.json \
+	E2E_LOGIN=$${ROLE_EXECUTIVE_LOGIN:-demo_role_executive} \
+	E2E_PASSWORD=$${ROLE_EXECUTIVE_PASSWORD:-demo} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.pm
+verify.scene.registry_asset_snapshot.pm: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.pm.json \
+	E2E_LOGIN=$${ROLE_PM_LOGIN:-demo_role_pm} \
+	E2E_PASSWORD=$${ROLE_PM_PASSWORD:-demo} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.base_contract_source_mix.role_matrix.guard
+verify.scene.base_contract_source_mix.role_matrix.guard: guard.prod.forbid verify.scene.registry_asset_snapshot.executive verify.scene.registry_asset_snapshot.pm
+	@python3 scripts/verify/scene_base_contract_source_mix_role_matrix_guard.py
+
 .PHONY: verify.scene.sample_registry_diff.guard
 verify.scene.sample_registry_diff.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_sample_registry_diff_guard.py

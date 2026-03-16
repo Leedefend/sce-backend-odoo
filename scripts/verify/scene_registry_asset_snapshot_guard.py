@@ -46,6 +46,9 @@ def _load_json(path: Path) -> dict:
 
 
 def _resolve_state_path(baseline: dict) -> Path:
+    env_override = _text(os.getenv("SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE"))
+    if env_override:
+        return ROOT / env_override
     raw = _text(baseline.get("state_file"))
     if not raw:
         return ROOT / "artifacts" / "backend" / "scene_registry_asset_snapshot_state.json"
