@@ -2900,7 +2900,8 @@ ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 
 ci.scene.delivery.readiness: guard.prod.forbid
-	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix || \
+	  (python3 scripts/verify/scene_delivery_failure_brief.py; exit 1)
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
