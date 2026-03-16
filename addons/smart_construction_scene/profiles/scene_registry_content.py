@@ -229,6 +229,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {
                 "route": "/s/cost.control",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
+                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
             },
         },
         {
@@ -289,6 +290,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {
                 "route": "/s/projects.detail",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
             },
         },
         {
@@ -297,6 +299,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {
                 "route": "/s/projects.execution",
                 "menu_xmlid": "smart_construction_core.menu_sc_root",
+                "action_xmlid": "smart_construction_core.action_sc_project_list",
             },
         },
         {

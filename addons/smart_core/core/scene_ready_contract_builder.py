@@ -9,6 +9,13 @@ def _text(value: Any) -> str:
     return str(value or "").strip()
 
 
+def _to_int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except Exception:
+        return 0
+
+
 def _normalize_scene(item: Dict[str, Any]) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
     scene_title = _text(item.get("name") or scene_key)
@@ -195,6 +202,17 @@ def _scene_ready_entry(
     compiled.setdefault("workflow_surface", {})
     compiled.setdefault("validation_surface", {})
     meta_payload = compiled.get("meta") if isinstance(compiled.get("meta"), dict) else {}
+    target_payload = item.get("target") if isinstance(item.get("target"), dict) else {}
+    page_route = _text(page.get("route"))
+    target_route = _text(target_payload.get("route"))
+    meta_target = {
+        "route": target_route or page_route,
+        "action_id": _to_int(target_payload.get("action_id")) or None,
+        "menu_id": _to_int(target_payload.get("menu_id")) or None,
+        "model": _text(target_payload.get("model")) or None,
+        "view_mode": _text(target_payload.get("view_mode")) or None,
+    }
+    meta_payload["target"] = {k: v for k, v in meta_target.items() if v not in (None, "")}
     source_ref_payload = item.get("ui_base_contract_ref") if isinstance(item.get("ui_base_contract_ref"), dict) else {}
     asset_version = _text(source_ref_payload.get("asset_version"))
     source_kind = "none"
