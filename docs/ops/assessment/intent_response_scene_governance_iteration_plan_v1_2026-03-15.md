@@ -352,6 +352,10 @@
 - 2026-03-16：已完成 T82 场景覆盖扩容：场景注册表新增 5 个产品目录场景，运行时 `scene_count` 从 33 提升到 38（`base_contract_bound_scene_count=38`）。
 - 2026-03-16：已完成 T83 覆盖扩容与阈值升级：运行时 `scene_count` 提升到 50，并同步把 readiness/consumption/source-mix 的最小场景数门槛升级到 50。
 - 2026-03-16：已完成 T84 覆盖口径校准：在 readiness 报告中显式区分 `catalog_non_pkg_scene_count=25` 与 `catalog_pkg_variant_scene_count=112`，避免把 `__pkg` 变体误判为必须交付面。
+- 2026-03-16：已完成 T85 原生契约前端出口收敛：`system.init` 在返回前统一剥离 `ui_base_contract/ui_base_contract_ref`，确保原生契约仅作为后端编排输入资产，不再作为意图接口直出载荷。
+- 2026-03-16：已完成 T86 原生契约意图收敛：`ui.contract` 对前端请求默认禁用 `model/view/action_open/menu` 原生 op（仅保留内部 `source_mode` 白名单），并移除 `/api/ui/contract` 的 `raw` 原始契约回传。
+- 2026-03-16：已完成 T87 导航入口收敛：`ui.contract` 对前端请求同步禁用 `nav` op，前端导航统一由 `system.init -> nav_contract(scene_contract_v1)` 交付，避免并行导航事实源。
+- 2026-03-16：已完成 T88 旧路由下线：`/api/ui/contract` 统一返回 `410 GONE`，提示迁移到 `/api/v1/intent` 的 `system.init` 场景契约链路；后端内部仍可通过 handler + `source_mode` 白名单使用原生能力。
 
 ## 下一步（按顺序）
 
