@@ -87,6 +87,7 @@
 | T62 | scene_governance 历史报告版本化归档与 diff 摘要 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_governance_history_archive_guard.json`、`scripts/verify/scene_governance_history_archive_guard.py`（按 `commit+timestamp` 归档历史样本、写入 `history/*.jsonl`、输出 diff 摘要）、`Makefile`（纳入 runtime gate） |
 | T63 | 样例-真实差异报告趋势门禁 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`、`scripts/verify/scene_sample_registry_diff_trend_guard.py`（连续两次 diff 变化率门禁）、`Makefile`（纳入 runtime gate） |
 | T64 | 历史归档增加 branch+commit 索引 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_governance_history_archive_guard.json`、`scripts/verify/scene_governance_history_archive_guard.py`（输出 `scene_governance_index.json/.md`，支持按 branch 快速检索最新归档）、`Makefile`（纳入 runtime gate） |
+| T65 | action strategy live matrix 增加 system.init 输出驱动样例 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_action_surface_strategy_live_matrix_guard.json`（`live_case`）、`scripts/verify/scene_action_surface_strategy_live_matrix_guard.py`（live fetch `system.init.scene_action_surface_strategy` 并复用矩阵断言，支持 strict live 开关） |
 
 ## 本轮已执行验证
 
@@ -224,6 +225,8 @@
 - `make verify.scene.runtime_boundary.gate`（T63 复验）：通过
 - `python3 scripts/verify/scene_governance_history_archive_guard.py`（T64 branch+commit 索引复验）：通过
 - `make verify.scene.runtime_boundary.gate`（T64 复验）：通过
+- `python3 scripts/verify/scene_action_surface_strategy_live_matrix_guard.py`（T65 live_case 复验）：通过
+- `make verify.scene.runtime_boundary.gate`（T65 复验）：通过
 
 ## 增量更新记录
 
@@ -285,9 +288,10 @@
 - 2026-03-15：已新增 `scene_governance_history_report` 版本化归档守卫：按 `commit+timestamp` 落盘历史样本，并输出与上一次样本的差异摘要，支撑版本间回归对比。
 - 2026-03-15：已新增 `scene_sample_registry_diff_report` 趋势门禁：对 `missing/unexpected/unbound` 三类差异项做连续两次增长阈值控制，防止样例与真实快照偏差失控。
 - 2026-03-15：已为 `scene_governance_history_archive_guard` 增加 `branch+commit` 索引产物（`scene_governance_index.json/.md`），支持按分支快速检索最新归档样本。
+- 2026-03-15：已为 `scene_action_surface_strategy_live_matrix_guard` 增加 `system.init` 输出驱动样例：可在可达环境直接验证后端下发策略进入矩阵冲突裁决；默认网络受限时降级 warn，`SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1` 可切换 strict 模式。
 
 ## 下一步（按顺序）
 
-1. 为 `scene_action_surface_strategy_live_matrix_guard` 增补真实 `system.init` 输出驱动样例（可达环境开启 strict live 开关）。
-2. 为 `scene_sample_registry_diff_trend_guard` 增加按角色分桶阈值策略（role-aware trend policy）。
-3. 为 `scene_governance_history_archive_guard` 增加跨分支对比摘要（当前分支 vs main 最新样本）。
+1. 为 `scene_sample_registry_diff_trend_guard` 增加按角色分桶阈值策略（role-aware trend policy）。
+2. 为 `scene_governance_history_archive_guard` 增加跨分支对比摘要（当前分支 vs main 最新样本）。
+3. 为 `scene_action_surface_strategy_live_matrix_guard` 增加多 role/company live case 组合覆盖（pm/executive + multi company）。
