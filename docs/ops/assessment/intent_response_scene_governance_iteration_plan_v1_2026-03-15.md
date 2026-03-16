@@ -89,6 +89,7 @@
 | T64 | 历史归档增加 branch+commit 索引 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_governance_history_archive_guard.json`、`scripts/verify/scene_governance_history_archive_guard.py`（输出 `scene_governance_index.json/.md`，支持按 branch 快速检索最新归档）、`Makefile`（纳入 runtime gate） |
 | T65 | action strategy live matrix 增加 system.init 输出驱动样例 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_action_surface_strategy_live_matrix_guard.json`（`live_case`）、`scripts/verify/scene_action_surface_strategy_live_matrix_guard.py`（live fetch `system.init.scene_action_surface_strategy` 并复用矩阵断言，支持 strict live 开关） |
 | T66 | diff 趋势门禁增加 role-aware 阈值策略 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`（`default + role.*` 阈值）、`scripts/verify/scene_sample_registry_diff_trend_guard.py`（按 `snapshot_state.role_code` 选择阈值策略） |
+| T67 | 产品化交付就绪门禁与一键验收链路 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`、`scripts/verify/scene_product_delivery_readiness_guard.py`（聚合快照/差异/治理报告阈值校验并输出 readiness 报告）、`Makefile`（`verify.scene.product_delivery.readiness.guard` + `verify.scene.delivery.readiness`） |
 
 ## 本轮已执行验证
 
@@ -230,6 +231,9 @@
 - `make verify.scene.runtime_boundary.gate`（T65 复验）：通过
 - `python3 scripts/verify/scene_sample_registry_diff_trend_guard.py`（T66 role-aware 复验）：通过
 - `make verify.scene.runtime_boundary.gate`（T66 复验）：通过
+- `python3 scripts/verify/scene_product_delivery_readiness_guard.py`（T67）：失败（命中真实缺口：`scene_count=0`、`base_contract_bound_scene_count=0`、`missing_required_scene_count=3`、`scene_type_count=0`、`consumption_enabled=false`）
+- `make verify.scene.product_delivery.readiness.guard`（T67 复验）：失败（同上，输出 readiness 报告）
+- `make verify.scene.delivery.readiness`（T67 一键严格验收）：失败（在 strict 模式下被 `verify.scene.ready.consumption_trend.guard` 拦截：`scene_ready_consumption.enabled must be true`）
 
 ## 增量更新记录
 
@@ -293,9 +297,10 @@
 - 2026-03-15：已为 `scene_governance_history_archive_guard` 增加 `branch+commit` 索引产物（`scene_governance_index.json/.md`），支持按分支快速检索最新归档样本。
 - 2026-03-15：已为 `scene_action_surface_strategy_live_matrix_guard` 增加 `system.init` 输出驱动样例：可在可达环境直接验证后端下发策略进入矩阵冲突裁决；默认网络受限时降级 warn，`SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1` 可切换 strict 模式。
 - 2026-03-15：已为 `scene_sample_registry_diff_trend_guard` 增加 role-aware 阈值策略：支持 `default + role.<role_code>` 分桶配置，按 `snapshot_state.role_code` 动态应用差异增长门限。
+- 2026-03-16：已新增“产品化交付就绪门禁”与一键命令：`verify.scene.product_delivery.readiness.guard` 聚合 `scene_registry_asset_snapshot + sample_registry_diff + governance_history` 产物做最终阈值判断；`verify.scene.delivery.readiness` 启用 strict live 标志执行 runtime gate + readiness guard，直接返回可交付结论。
 
 ## 下一步（按顺序）
 
-1. 为 `scene_governance_history_archive_guard` 增加跨分支对比摘要（当前分支 vs main 最新样本）。
-2. 为 `scene_action_surface_strategy_live_matrix_guard` 增加多 role/company live case 组合覆盖（pm/executive + multi company）。
-3. 为 `scene_sample_registry_diff_trend_guard` 增加按 runtime_env 分层阈值策略（env-aware trend policy）。
+1. 打通 `scene_ready_consumption.enabled`：确保 `system.init -> scene_governance_v1` 在目标角色/公司下进入 enabled 状态。
+2. 补齐关键场景产出：确保真实快照达到 `scene_count>=3` 且覆盖 `projects.intake/projects.list/workspace.home`。
+3. 提升原生契约绑定率：确保 `base_contract_bound_scene_count>=1`，并清零 `missing_required_scene_count` 后复跑 `make verify.scene.delivery.readiness`。

@@ -32,6 +32,12 @@
 ## Architecture Guard Aliases
 - `make verify.boundary.guard`
   - Aggregates scene runtime boundary + legacy contract path checks.
+- `make verify.scene.delivery.readiness`
+  - One-click strict acceptance for product delivery closure: first runs strict live `verify.scene.runtime_boundary.gate`, then executes final readiness threshold guard.
+  - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+- `make verify.scene.product_delivery.readiness.guard`
+  - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
+  - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
 - `make verify.scene.governance_payload.guard`
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
   - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).
