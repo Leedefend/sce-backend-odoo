@@ -33,6 +33,23 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _policy_for_role(baseline: dict, role_code: str) -> dict:
+    role_map = _as_dict(baseline.get("role_policies"))
+    role_key = f"role.{_text(role_code)}"
+    role_policy = _as_dict(role_map.get(role_key))
+    merged = dict(baseline)
+    for key in (
+        "min_scene_count",
+        "min_asset_ratio",
+        "max_runtime_fallback_ratio",
+        "max_runtime_minimal_ratio",
+        "max_none_ratio",
+    ):
+        if key in role_policy:
+            merged[key] = role_policy.get(key)
+    return merged
+
+
 def _load_json(path: Path) -> dict:
     if not path.is_file():
         return {}
@@ -61,6 +78,8 @@ def main() -> int:
     state = _load_json(state_path)
 
     scene_count = _safe_int(state.get("scene_count"), 0)
+    role_code = _text(state.get("role_code")) or "unknown"
+    policy = _policy_for_role(baseline, role_code)
     kind_counts = _as_dict(state.get("source_kind_counts"))
     kind_ratios = _as_dict(state.get("source_kind_ratios"))
 
@@ -91,11 +110,11 @@ def main() -> int:
     runtime_minimal_ratio = _safe_float(kind_ratios.get("runtime_minimal"), 0.0)
     none_ratio = _safe_float(kind_ratios.get("none"), 0.0)
 
-    min_scene_count = _safe_int(baseline.get("min_scene_count"), 1)
-    min_asset_ratio = _safe_float(baseline.get("min_asset_ratio"), 0.0)
-    max_runtime_fallback_ratio = _safe_float(baseline.get("max_runtime_fallback_ratio"), 1.0)
-    max_runtime_minimal_ratio = _safe_float(baseline.get("max_runtime_minimal_ratio"), 1.0)
-    max_none_ratio = _safe_float(baseline.get("max_none_ratio"), 1.0)
+    min_scene_count = _safe_int(policy.get("min_scene_count"), 1)
+    min_asset_ratio = _safe_float(policy.get("min_asset_ratio"), 0.0)
+    max_runtime_fallback_ratio = _safe_float(policy.get("max_runtime_fallback_ratio"), 1.0)
+    max_runtime_minimal_ratio = _safe_float(policy.get("max_runtime_minimal_ratio"), 1.0)
+    max_none_ratio = _safe_float(policy.get("max_none_ratio"), 1.0)
 
     errors: list[str] = []
     if scene_count < min_scene_count:
@@ -127,6 +146,7 @@ def main() -> int:
             "none_ratio": none_ratio,
         },
         "thresholds": {
+            "role_code": role_code,
             "min_scene_count": min_scene_count,
             "min_asset_ratio": min_asset_ratio,
             "max_runtime_fallback_ratio": max_runtime_fallback_ratio,
@@ -175,4 +195,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
