@@ -1,6 +1,5 @@
 {
-  "max_queue_size": 500,
-  "max_growth_per_run": 200,
+  "max_queue_size": 300,
+  "max_growth_per_run": 100,
   "state_file": "artifacts/backend/scene_asset_queue_trend_state.json"
 }
-
