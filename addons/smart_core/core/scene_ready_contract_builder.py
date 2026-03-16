@@ -194,6 +194,25 @@ def _scene_ready_entry(
     compiled["page"] = page
     compiled.setdefault("workflow_surface", {})
     compiled.setdefault("validation_surface", {})
+    meta_payload = compiled.get("meta") if isinstance(compiled.get("meta"), dict) else {}
+    source_ref_payload = item.get("ui_base_contract_ref") if isinstance(item.get("ui_base_contract_ref"), dict) else {}
+    asset_version = _text(source_ref_payload.get("asset_version"))
+    source_kind = "none"
+    if asset_version.startswith("runtime-minimal"):
+        source_kind = "runtime_minimal"
+    elif asset_version.startswith("runtime-fallback"):
+        source_kind = "runtime_fallback"
+    elif source_ref_payload.get("asset_id"):
+        source_kind = "asset"
+    elif isinstance(item.get("ui_base_contract"), dict) and item.get("ui_base_contract"):
+        source_kind = "inline"
+    meta_payload["ui_base_contract_source"] = {
+        "kind": source_kind,
+        "asset_id": source_ref_payload.get("asset_id"),
+        "asset_version": asset_version,
+        "source_ref": _text(source_ref_payload.get("source_ref")),
+    }
+    compiled["meta"] = meta_payload
     return compiled
 
 
