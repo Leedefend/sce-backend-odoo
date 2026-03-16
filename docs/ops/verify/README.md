@@ -89,6 +89,7 @@
 - `make verify.scene.action_surface_strategy.live_matrix.guard`
   - Verifies multi-case conflict matrix for action strategy overlays across `default/by_company/by_role/by_company_role` combinations.
   - Baseline file: `scripts/verify/baselines/scene_action_surface_strategy_live_matrix_guard.json`.
+  - Includes optional `system.init` output-driven live case; use `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1` to enforce live fetch.
 - `make verify.scene.ready.scene_type_consumption_metrics.guard`
   - Verifies `scene_ready_contract_v1.meta.scene_type_consumption_metrics` is emitted with per-`scene_type` consumption/nonempty rates.
 - `make verify.scene.ready.consumption_trend.guard`
