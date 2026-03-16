@@ -1,7 +1,21 @@
 {
   "report_source": "artifacts/backend/scene_sample_registry_diff_report.json",
   "state_file": "artifacts/backend/scene_sample_registry_diff_trend_state.json",
-  "max_missing_required_scene_count_growth": 3,
-  "max_unexpected_scene_count_growth": 20,
-  "max_unbound_matched_scene_count_growth": 2
+  "default": {
+    "max_missing_required_scene_count_growth": 3,
+    "max_unexpected_scene_count_growth": 20,
+    "max_unbound_matched_scene_count_growth": 2
+  },
+  "role": {
+    "executive": {
+      "max_missing_required_scene_count_growth": 5,
+      "max_unexpected_scene_count_growth": 30,
+      "max_unbound_matched_scene_count_growth": 3
+    },
+    "project_manager": {
+      "max_missing_required_scene_count_growth": 2,
+      "max_unexpected_scene_count_growth": 15,
+      "max_unbound_matched_scene_count_growth": 2
+    }
+  }
 }

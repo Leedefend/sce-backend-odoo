@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,43 @@ def _load_json(path: Path) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
+def _resolve_role_code(report: dict) -> str:
+    sources = report.get("sources") if isinstance(report.get("sources"), dict) else {}
+    snapshot_state_rel = _text(sources.get("snapshot_state"))
+    snapshot_payload = _load_json(ROOT / snapshot_state_rel) if snapshot_state_rel else {}
+    role_code = _text(snapshot_payload.get("role_code"))
+    if role_code:
+        return role_code
+    return _text(os.getenv("SC_ROLE_CODE") or os.getenv("ROLE_CODE") or "unknown")
+
+
+def _merge_policy(base: dict, ext: dict) -> dict:
+    out = dict(base)
+    for key, value in ext.items():
+        out[key] = value
+    return out
+
+
+def _resolve_policy(baseline: dict, role_code: str) -> dict:
+    default_policy = baseline.get("default") if isinstance(baseline.get("default"), dict) else {}
+    role_map = baseline.get("role") if isinstance(baseline.get("role"), dict) else {}
+
+    legacy_policy = {
+        "max_missing_required_scene_count_growth": _safe_int(baseline.get("max_missing_required_scene_count_growth"), 3),
+        "max_unexpected_scene_count_growth": _safe_int(baseline.get("max_unexpected_scene_count_growth"), 20),
+        "max_unbound_matched_scene_count_growth": _safe_int(baseline.get("max_unbound_matched_scene_count_growth"), 2),
+    }
+
+    policy = _merge_policy(legacy_policy, default_policy)
+    role_policy = role_map.get(role_code) if isinstance(role_map.get(role_code), dict) else {}
+    policy = _merge_policy(policy, role_policy)
+    return {
+        "max_missing_required_scene_count_growth": _safe_int(policy.get("max_missing_required_scene_count_growth"), 3),
+        "max_unexpected_scene_count_growth": _safe_int(policy.get("max_unexpected_scene_count_growth"), 20),
+        "max_unbound_matched_scene_count_growth": _safe_int(policy.get("max_unbound_matched_scene_count_growth"), 2),
+    }
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_PATH)
     if not baseline:
@@ -49,10 +87,14 @@ def main() -> int:
         return 1
 
     summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    role_code = _resolve_role_code(report)
+    policy = _resolve_policy(baseline, role_code)
     current = {
+        "role_code": role_code,
         "missing_required_scene_count": _safe_int(summary.get("missing_required_scene_count"), 0),
         "unexpected_scene_count": _safe_int(summary.get("unexpected_scene_count"), 0),
         "unbound_matched_scene_count": _safe_int(summary.get("unbound_matched_scene_count"), 0),
+        "policy": policy,
         "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
     }
 
@@ -66,9 +108,9 @@ def main() -> int:
         current["unexpected_scene_count_growth"] = unexpected_growth
         current["unbound_matched_scene_count_growth"] = unbound_growth
 
-        max_missing_growth = _safe_int(baseline.get("max_missing_required_scene_count_growth"), 3)
-        max_unexpected_growth = _safe_int(baseline.get("max_unexpected_scene_count_growth"), 20)
-        max_unbound_growth = _safe_int(baseline.get("max_unbound_matched_scene_count_growth"), 2)
+        max_missing_growth = _safe_int(policy.get("max_missing_required_scene_count_growth"), 3)
+        max_unexpected_growth = _safe_int(policy.get("max_unexpected_scene_count_growth"), 20)
+        max_unbound_growth = _safe_int(policy.get("max_unbound_matched_scene_count_growth"), 2)
 
         if missing_growth > max_missing_growth:
             errors.append(
@@ -98,4 +140,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
