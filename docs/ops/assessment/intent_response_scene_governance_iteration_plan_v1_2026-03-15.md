@@ -92,6 +92,7 @@
 | T67 | 产品化交付就绪门禁与一键验收链路 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`、`scripts/verify/scene_product_delivery_readiness_guard.py`（聚合快照/差异/治理报告阈值校验并输出 readiness 报告）、`Makefile`（`verify.scene.product_delivery.readiness.guard` + `verify.scene.delivery.readiness`） |
 | T68 | 严格验收链路缺口补齐（交付面/资产绑定/场景别名） | Scene + Platform + Verify | ✅ DONE | `docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json`（纳入 `workspace.home/projects.list/projects.intake` 交付面）、`addons/smart_construction_scene/profiles/scene_registry_content.py`（补 `workspace.home` 场景别名）、`addons/smart_core/core/ui_base_contract_asset_repository.py`（资产表缺失容错 + 运行时回填 + 最小契约兜底）、`addons/smart_core/core/scene_dsl_compiler.py`（`base_contract_bound` 判定强化） |
 | T69 | 真实资产绑定优先（减少 runtime-minimal 依赖） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_producer.py`（支持 `target.action_xmlid -> action_id` 解析产资产）、`addons/smart_core/core/ui_base_contract_asset_repository.py`（先资产探测与自动刷新，再回退运行时兜底）；`artifacts/backend/scene_base_contract_asset_coverage_state.json` 显示 `asset_scene_count=26` |
+| T70 | 原生契约来源占比门禁（asset-first 质量约束） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_ready_contract_builder.py`（输出 `meta.ui_base_contract_source`）、`scripts/verify/scene_registry_asset_snapshot_guard.py`（快照产物增加 `source_kind_counts/ratios`）、`scripts/verify/scene_base_contract_source_mix_guard.py` + baseline、`Makefile`（纳入 runtime gate） |
 
 ## 本轮已执行验证
 
@@ -239,6 +240,7 @@
 - `CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_core make mod.upgrade MODULE=smart_core DB=sc_demo`（T68）：通过（落库 `sc_ui_base_contract_asset`）
 - `make verify.scene.delivery.readiness`（T68 复验）：通过
 - `make verify.scene.delivery.readiness`（T69 复验）：通过（真实资产产出后仍保持严格验收通过）
+- `make verify.scene.delivery.readiness`（T70 复验）：通过（新增 source-mix 门禁后仍通过）
 
 ## 增量更新记录
 
@@ -305,6 +307,7 @@
 - 2026-03-16：已新增“产品化交付就绪门禁”与一键命令：`verify.scene.product_delivery.readiness.guard` 聚合 `scene_registry_asset_snapshot + sample_registry_diff + governance_history` 产物做最终阈值判断；`verify.scene.delivery.readiness` 启用 strict live 标志执行 runtime gate + readiness guard，直接返回可交付结论。
 - 2026-03-16：已完成严格验收链路缺口补齐：补齐 `workspace.home` 场景别名、扩展交付面关键场景 allowlist、资产仓储对“资产表未落库”容错并提供运行时原生契约/最小契约回填，且升级 `smart_core` 完成资产表落库；`make verify.scene.delivery.readiness` 已通过。
 - 2026-03-16：已将资产生产链升级为“真实资产优先”：producer 支持 `action_xmlid` 解析，repository 改为“先探测缺失并自动刷新资产，再做运行时回退”，当前 live 指标 `asset_scene_count=26`（见 `scene_base_contract_asset_coverage_state.json`）。
+- 2026-03-16：已新增 source-mix 门禁：按 `asset/runtime_fallback/runtime_minimal/none` 占比约束原生契约来源质量，防止 `runtime-minimal` 回退比例反弹；并纳入 `verify.scene.runtime_boundary.gate`。
 
 ## 下一步（按顺序）
 
