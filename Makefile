@@ -363,6 +363,7 @@ help:
 	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
+	@echo "  make verify.scene.delivery.readiness"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
 	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
 	@echo "  make verify.scene.contract_path.gate"
@@ -1977,6 +1978,22 @@ verify.contract.envelope: guard.prod.forbid verify.contract.envelope.guard verif
 
 verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.frontend.no_base_contract_direct_consume.guard verify.frontend.scene_governance_consumption.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard verify.scene.asset_queue_trend.guard verify.scene.ready.consumption_trend.guard verify.scene.governance_history_report.guard verify.scene.governance_history_archive.guard verify.scene.registry_asset_snapshot.guard verify.scene.sample_registry_diff.guard verify.scene.sample_registry_diff_trend.guard verify.scene.base_contract_asset_coverage.guard verify.scene.orchestrator.input.schema.guard verify.scene.orchestrator.output.schema.guard verify.scene.orchestrator.base_fact_binding.guard verify.scene.orchestrator.industry_interface.guard verify.scene.orchestrator.merge_priority.guard verify.scene.orchestrator.scene_type_surface.guard verify.scene.orchestrator.action_surface.guard verify.scene.orchestrator.key_scene_compile.guard verify.scene.action_surface_strategy.wiring.guard verify.scene.action_surface_strategy.schema.guard verify.scene.action_surface_strategy.payload.guard verify.scene.action_surface_strategy.priority.guard verify.scene.action_surface_strategy.live_matrix.guard verify.scene.ready.scene_type_consumption_metrics.guard verify.scene.validation_recovery_strategy.guard verify.scene.validation_recovery_strategy.payload_path.guard verify.scene.validation_recovery_strategy.e2e_smoke.guard verify.scene.ui_base_contract_canonicalizer.guard
 	@echo "[OK] verify.scene.runtime_boundary.gate done"
+
+.PHONY: verify.scene.product_delivery.readiness.guard
+verify.scene.product_delivery.readiness.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_product_delivery_readiness_guard.py
+
+.PHONY: verify.scene.delivery.readiness
+verify.scene.delivery.readiness: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1 \
+	SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1 \
+	SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1 \
+	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1 \
+	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1 \
+	$(MAKE) --no-print-directory verify.scene.runtime_boundary.gate
+	@$(MAKE) --no-print-directory verify.scene.product_delivery.readiness.guard
+	@echo "[OK] verify.scene.delivery.readiness done"
 
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid

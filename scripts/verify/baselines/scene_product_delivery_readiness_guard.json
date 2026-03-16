@@ -1,0 +1,9 @@
+{
+  "min_scene_count": 3,
+  "min_base_contract_bound_scene_count": 1,
+  "max_compile_issue_scene_count": 0,
+  "max_missing_required_scene_count": 0,
+  "max_unbound_matched_scene_count": 0,
+  "require_consumption_enabled": true,
+  "min_scene_type_count": 1
+}
