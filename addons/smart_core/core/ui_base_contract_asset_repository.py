@@ -357,7 +357,11 @@ def bind_scene_assets(
     fallback_bind_limit = 10
     fallback_bound = 0
 
-    def _bind_with_assets(asset_map: dict[str, dict]) -> tuple[list[dict], int, int, list[str]]:
+    def _bind_with_assets(
+        asset_map: dict[str, dict],
+        *,
+        allow_runtime_fallback: bool,
+    ) -> tuple[list[dict], int, int, list[str]]:
         nonlocal fallback_bound
         bound = 0
         missing = 0
@@ -378,38 +382,45 @@ def bind_scene_assets(
                 }
                 bound += 1
             elif scene_key:
-                payload = {}
-                action_id = _resolve_scene_action_id(env, entry)
-                if fallback_bound < fallback_bind_limit:
-                    payload = _build_runtime_contract_fallback(env, action_id=action_id)
-                if isinstance(payload, dict) and payload:
-                    entry["ui_base_contract"] = payload
-                    entry["ui_base_contract_ref"] = {
-                        "asset_id": None,
-                        "asset_version": "runtime-fallback",
-                        "asset_hash": "",
-                        "source_ref": f"action:{action_id}",
-                    }
-                    bound += 1
-                    fallback_bound += 1
-                else:
-                    minimal = _minimal_ui_base_contract(scene_key)
-                    if minimal:
-                        entry["ui_base_contract"] = minimal
+                if allow_runtime_fallback:
+                    payload = {}
+                    action_id = _resolve_scene_action_id(env, entry)
+                    if fallback_bound < fallback_bind_limit:
+                        payload = _build_runtime_contract_fallback(env, action_id=action_id)
+                    if isinstance(payload, dict) and payload:
+                        entry["ui_base_contract"] = payload
                         entry["ui_base_contract_ref"] = {
                             "asset_id": None,
-                            "asset_version": "runtime-minimal",
+                            "asset_version": "runtime-fallback",
                             "asset_hash": "",
-                            "source_ref": f"scene:{scene_key}",
+                            "source_ref": f"action:{action_id}",
                         }
                         bound += 1
+                        fallback_bound += 1
                     else:
-                        missing += 1
-                        missing_keys.append(scene_key)
+                        minimal = _minimal_ui_base_contract(scene_key)
+                        if minimal:
+                            entry["ui_base_contract"] = minimal
+                            entry["ui_base_contract_ref"] = {
+                                "asset_id": None,
+                                "asset_version": "runtime-minimal",
+                                "asset_hash": "",
+                                "source_ref": f"scene:{scene_key}",
+                            }
+                            bound += 1
+                        else:
+                            missing += 1
+                            missing_keys.append(scene_key)
+                else:
+                    missing += 1
+                    missing_keys.append(scene_key)
             bound_rows.append(entry)
         return bound_rows, bound, missing, missing_keys
 
-    enriched, bound_count, missing_count, missing_keys = _bind_with_assets(assets)
+    enriched, bound_count, missing_count, missing_keys = _bind_with_assets(
+        assets,
+        allow_runtime_fallback=False,
+    )
 
     if missing_count > 0 and _should_auto_refresh_missing_assets(env):
         _auto_refresh_missing_assets(
@@ -424,8 +435,16 @@ def bind_scene_assets(
             role_code=role_code,
             company_id=company_id,
         )
-        enriched, bound_count, missing_count, _ = _bind_with_assets(refreshed_assets)
+        enriched, bound_count, missing_count, _ = _bind_with_assets(
+            refreshed_assets,
+            allow_runtime_fallback=True,
+        )
         assets = refreshed_assets
+    else:
+        enriched, bound_count, missing_count, _ = _bind_with_assets(
+            assets,
+            allow_runtime_fallback=True,
+        )
 
     return {
         "scenes": enriched,
