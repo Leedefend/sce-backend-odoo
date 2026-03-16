@@ -363,8 +363,8 @@ help:
 	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
+	@echo "  make verify.scene.delivery.readiness.role_matrix   # 推荐：日常默认一键验收（pm/executive 证据 + 严格链路）"
 	@echo "  make verify.scene.delivery.readiness"
-	@echo "  make verify.scene.delivery.readiness.role_matrix"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
 	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
 	@echo "  make verify.scene.contract_path.gate"
@@ -380,7 +380,7 @@ help:
 	@echo "  make policy.apply.role_matrix DB=<name> | smoke.role_matrix DB=<name>"
 	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.load.full | demo.verify"
 	@echo "  make test | test.safe"
-	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
+	@echo "  make ci.scene.delivery.readiness | ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs"
 	@echo "  make diag.compose | verify.ops"
 	@echo
@@ -2889,7 +2889,7 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 # ======================================================
 # ==================== CI ==============================
 # ======================================================
-.PHONY: ci.preflight.contract ci.gate ci.smoke ci.full ci.repro \
+.PHONY: ci.preflight.contract ci.scene.delivery.readiness ci.gate ci.smoke ci.full ci.repro \
 	test-install-gate test-upgrade-gate \
 	ci.clean ci.ps ci.logs gate.boundary
 
@@ -2898,6 +2898,9 @@ ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.preflight
 	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
+
+ci.scene.delivery.readiness: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
