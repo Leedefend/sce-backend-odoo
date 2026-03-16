@@ -364,6 +364,7 @@ help:
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
 	@echo "  make verify.scene.delivery.readiness"
+	@echo "  make verify.scene.delivery.readiness.role_matrix"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
 	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
 	@echo "  make verify.scene.contract_path.gate"
@@ -1994,6 +1995,12 @@ verify.scene.delivery.readiness: guard.prod.forbid
 	$(MAKE) --no-print-directory verify.scene.runtime_boundary.gate
 	@$(MAKE) --no-print-directory verify.scene.product_delivery.readiness.guard
 	@echo "[OK] verify.scene.delivery.readiness done"
+
+.PHONY: verify.scene.delivery.readiness.role_matrix
+verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.role_matrix.guard
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness
+	@echo "[OK] verify.scene.delivery.readiness.role_matrix done"
 
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
