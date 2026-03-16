@@ -23,7 +23,7 @@
     "projects.list": {
       "scene_type": "list",
       "min_bound_block_count": 1,
-      "min_action_total": 1,
+      "min_action_total": 2,
       "require_search_surface": true,
       "require_workflow_surface": true,
       "require_validation_surface": false
@@ -31,7 +31,7 @@
     "projects.intake": {
       "scene_type": "form",
       "min_bound_block_count": 1,
-      "min_action_total": 1,
+      "min_action_total": 2,
       "require_search_surface": true,
       "require_workflow_surface": true,
       "require_validation_surface": true
@@ -39,7 +39,7 @@
     "workspace.home": {
       "scene_type": "workspace",
       "min_bound_block_count": 1,
-      "min_action_total": 1,
+      "min_action_total": 2,
       "require_search_surface": true,
       "require_workflow_surface": true,
       "require_validation_surface": false

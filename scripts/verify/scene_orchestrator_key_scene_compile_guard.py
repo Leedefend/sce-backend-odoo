@@ -59,7 +59,10 @@ def _scene_samples() -> List[Dict[str, Any]]:
                 "layout": {"kind": "list"},
                 "zones": ["header", "toolbar", "main"],
                 "blocks": [{"type": "list_block", "source": "ui_base_contract.views.tree"}],
-                "actions": [{"key": "create_project", "label": "创建项目", "placement": "toolbar"}],
+                "actions": [
+                    {"key": "create_project", "label": "创建项目", "placement": "toolbar"},
+                    {"key": "export_projects", "label": "导出项目", "placement": "toolbar"},
+                ],
             },
             "ui_base_contract": {
                 "views": {
@@ -85,7 +88,12 @@ def _scene_samples() -> List[Dict[str, Any]]:
                     "transitions": [{"key": "start_project", "intent": "workflow.submit"}],
                 },
                 "validator": {"required_fields": ["name"]},
-                "actions": {"toolbar": [{"key": "create_project", "label": "创建项目", "placement": "toolbar"}]},
+                "actions": {
+                    "toolbar": [
+                        {"key": "create_project", "label": "创建项目", "placement": "toolbar"},
+                        {"key": "batch_submit", "label": "批量提交", "placement": "toolbar", "intent": "workflow.submit"},
+                    ]
+                },
             },
         },
         {
@@ -96,7 +104,10 @@ def _scene_samples() -> List[Dict[str, Any]]:
                 "layout": {"kind": "form"},
                 "zones": ["header", "main"],
                 "blocks": [{"type": "form_block", "source": "ui_base_contract.views.form"}],
-                "actions": [{"key": "submit_intake", "label": "提交立项", "placement": "header", "intent": "workflow.submit"}],
+                "actions": [
+                    {"key": "submit_intake", "label": "提交立项", "placement": "header", "intent": "workflow.submit"},
+                    {"key": "save_draft", "label": "保存草稿", "placement": "header", "intent": "record.update"},
+                ],
             },
             "ui_base_contract": {
                 "views": {"form": {"fields": ["name", "owner_id", "budget"]}},
@@ -113,7 +124,12 @@ def _scene_samples() -> List[Dict[str, Any]]:
                     "transitions": [{"key": "submit_intake", "intent": "workflow.submit"}],
                 },
                 "validator": {"required_fields": ["name", "budget"]},
-                "actions": {"toolbar": [{"key": "submit_intake", "label": "提交", "placement": "header"}]},
+                "actions": {
+                    "toolbar": [
+                        {"key": "submit_intake", "label": "提交", "placement": "header"},
+                        {"key": "approve_intake", "label": "审批", "placement": "header", "intent": "workflow.approve"},
+                    ]
+                },
             },
         },
         {
@@ -124,7 +140,10 @@ def _scene_samples() -> List[Dict[str, Any]]:
                 "layout": {"kind": "workspace"},
                 "zones": ["header", "main"],
                 "blocks": [{"type": "kanban_block", "source": "ui_base_contract.views.kanban"}],
-                "actions": [{"key": "open_projects", "label": "项目总览", "placement": "toolbar", "intent": "project.list"}],
+                "actions": [
+                    {"key": "open_projects", "label": "项目总览", "placement": "toolbar", "intent": "project.list"},
+                    {"key": "open_risks", "label": "风险总览", "placement": "toolbar", "intent": "risk.list"},
+                ],
             },
             "ui_base_contract": {
                 "views": {"kanban": {"fields": ["name", "stage_id"]}},
@@ -140,7 +159,12 @@ def _scene_samples() -> List[Dict[str, Any]]:
                     "transitions": [{"key": "noop", "intent": "ui.contract"}],
                 },
                 "validator": {"required_fields": []},
-                "actions": {"toolbar": [{"key": "open_projects", "label": "项目总览", "placement": "toolbar"}]},
+                "actions": {
+                    "toolbar": [
+                        {"key": "open_projects", "label": "项目总览", "placement": "toolbar"},
+                        {"key": "open_tasks", "label": "任务中心", "placement": "toolbar", "intent": "task.list"},
+                    ]
+                },
             },
         },
     ]
@@ -267,4 +291,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

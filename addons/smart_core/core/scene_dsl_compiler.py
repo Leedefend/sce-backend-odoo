@@ -419,9 +419,26 @@ def _workflow_action_allowed(action: Dict[str, Any], workflow_surface: Dict[str,
     key = _text(action.get("key")).lower()
     if not intent.startswith("workflow.") and not any(token in key for token in ("approve", "submit", "reject", "cancel")):
         return True
-    transitions = [
-        _text(item).lower() for item in _as_list(workflow_surface.get("transitions")) if _text(item)
-    ]
+    transitions: List[str] = []
+    for row in _as_list(workflow_surface.get("transitions")):
+        if isinstance(row, dict):
+            payload = _as_dict(row)
+            transition_key = _text(payload.get("key") or payload.get("name") or payload.get("id")).lower()
+            transition_intent = _text(payload.get("intent")).lower()
+            from_state = _text(payload.get("from") or payload.get("from_state") or payload.get("source")).lower()
+            to_state = _text(payload.get("to") or payload.get("to_state") or payload.get("target")).lower()
+            if transition_key:
+                transitions.append(transition_key)
+            if transition_intent:
+                transitions.append(transition_intent)
+                if transition_intent.startswith("workflow."):
+                    transitions.append(transition_intent.split(".")[-1])
+            if from_state and to_state:
+                transitions.append(f"{from_state}->{to_state}")
+            continue
+        token = _text(row).lower()
+        if token:
+            transitions.append(token)
     if not transitions:
         return True
     target = intent.split(".")[-1] if intent.startswith("workflow.") else key
@@ -806,6 +823,7 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
     out = dict(bound_ast)
     scene_type = _text(_as_dict(_as_dict(out.get("meta")).get("surface_profile")).get("scene_type")) or "list"
     actions_out: List[Dict[str, Any]] = []
+    seen_action_keys: set[str] = set()
     explicit_intent_count = 0
     mapped_intent_count = 0
     for row in _as_list(bound_ast.get("actions")):
@@ -828,28 +846,29 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
                 "target": _as_dict(payload.get("target")),
             }
         )
+        seen_action_keys.add(key)
 
-    if not actions_out:
-        for row in _as_list(bound_ast.get("base_action_candidates")):
-            payload = _as_dict(row)
-            key = _text(payload.get("key") or payload.get("name") or payload.get("id"))
-            if not key:
-                continue
-            intent = _infer_intent_from_action(payload)
-            if _text(payload.get("intent")):
-                explicit_intent_count += 1
-            else:
-                mapped_intent_count += 1
-            actions_out.append(
-                {
-                    "key": key,
-                    "label": _text(payload.get("label") or payload.get("string") or key),
-                    "intent": intent,
-                    "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
-                    "tier": _infer_action_tier(scene_type, payload),
-                    "target": _as_dict(payload.get("target")),
-                }
-            )
+    for row in _as_list(bound_ast.get("base_action_candidates")):
+        payload = _as_dict(row)
+        key = _text(payload.get("key") or payload.get("name") or payload.get("id"))
+        if not key or key in seen_action_keys:
+            continue
+        intent = _infer_intent_from_action(payload)
+        if _text(payload.get("intent")):
+            explicit_intent_count += 1
+        else:
+            mapped_intent_count += 1
+        actions_out.append(
+            {
+                "key": key,
+                "label": _text(payload.get("label") or payload.get("string") or key),
+                "intent": intent,
+                "placement": _text(payload.get("placement") or "toolbar") or "toolbar",
+                "tier": _infer_action_tier(scene_type, payload),
+                "target": _as_dict(payload.get("target")),
+            }
+        )
+        seen_action_keys.add(key)
 
     out["actions"] = actions_out
     out["action_surface"] = _build_action_surface(scene_type, actions_out)
