@@ -9,18 +9,18 @@
   },
   "role_thresholds": {
     "default": {
-      "min_scene_count": 3,
-      "min_asset_ratio": 0.7,
-      "max_runtime_minimal_ratio": 0.2,
+      "min_scene_count": 20,
+      "min_asset_ratio": 0.8,
+      "max_runtime_minimal_ratio": 0.1,
       "max_none_ratio": 0.0
     },
     "executive": {
-      "min_asset_ratio": 0.75,
-      "max_runtime_minimal_ratio": 0.15
+      "min_asset_ratio": 0.85,
+      "max_runtime_minimal_ratio": 0.08
     },
     "pm": {
-      "min_asset_ratio": 0.7,
-      "max_runtime_minimal_ratio": 0.2
+      "min_asset_ratio": 0.8,
+      "max_runtime_minimal_ratio": 0.1
     }
   },
   "report_json": "artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json",
