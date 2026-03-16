@@ -53,6 +53,7 @@
 - `make verify.scene.base_contract_source_mix.guard`
   - Verifies source-mix quality for scene base contracts (`asset/runtime_fallback/runtime_minimal/none`) from snapshot state.
   - Enforces thresholds via baseline `scripts/verify/baselines/scene_base_contract_source_mix_guard.json`.
+  - Supports role-aware policies (`default + role.<role_code>`) using snapshot `role_code` (e.g. `role.executive`, `role.pm`).
   - Artifacts:
     - `artifacts/backend/scene_base_contract_source_mix_report.json`
     - `artifacts/backend/scene_base_contract_source_mix_report.md`
