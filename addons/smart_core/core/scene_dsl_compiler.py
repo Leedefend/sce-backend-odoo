@@ -148,7 +148,7 @@ def _infer_scene_type(bound_ast: Dict[str, Any], ctx: CompileContext) -> str:
     layout = _as_dict(scene.get("layout"))
     scene_key = _text(scene.get("key") or ctx.scene_key).lower()
     layout_kind = _text(layout.get("kind") or layout.get("mode") or layout.get("type")).lower()
-    if layout_kind in {"list", "form", "kanban", "workspace"}:
+    if layout_kind in {"list", "form", "kanban", "workspace", "ledger", "record"}:
         return layout_kind
     block_types = {
         _infer_block_type(_as_dict(row))
@@ -185,7 +185,7 @@ def _collect_explicit_form_field_scope(bound_ast: Dict[str, Any]) -> List[str]:
 
 def _shape_search_surface(scene_type: str, base: Dict[str, Any]) -> Dict[str, Any]:
     out = dict(base)
-    if scene_type == "form":
+    if scene_type in {"form", "record"}:
         out["group_by"] = []
     elif scene_type == "workspace":
         out["fields"] = []
@@ -204,11 +204,11 @@ def _shape_workflow_surface(scene_type: str, base: Dict[str, Any]) -> Dict[str, 
 def _shape_validation_surface(scene_type: str, base: Dict[str, Any], field_scope: List[str]) -> Dict[str, Any]:
     out = dict(base)
     required_fields = _normalize_field_names(_as_list(out.get("required_fields")))
-    if scene_type == "form" and field_scope:
+    if scene_type in {"form", "record"} and field_scope:
         scoped_set = set(field_scope)
         scoped = [name for name in required_fields if name in scoped_set]
         out["required_fields"] = scoped or required_fields
-    elif scene_type != "form":
+    elif scene_type not in {"form", "record"}:
         out["required_fields"] = []
     return out
 
@@ -286,15 +286,50 @@ def _infer_action_tier(scene_type: str, payload: Dict[str, Any]) -> str:
         if any(token in key for token in ("open", "create", "launch")):
             return "primary"
         return "secondary"
-    if scene_type == "form":
+    if scene_type in {"form", "record"}:
         if any(token in key for token in ("save", "submit", "approve", "confirm")):
             return "primary"
         if any(token in intent for token in ("submit", "approve", "confirm", "update")):
             return "primary"
-    if scene_type in {"list", "kanban"}:
+    if scene_type in {"list", "kanban", "ledger"}:
         if any(token in key for token in ("create", "new", "import", "export", "search")):
             return "primary"
     return "secondary"
+
+
+def _ensure_action_density(scene_type: str, actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    target_min = 2 if scene_type in {"list", "form", "workspace", "record", "ledger"} else 1
+    if len(actions) >= target_min:
+        return actions
+    seen = {_text(_as_dict(row).get("key")) for row in actions if _text(_as_dict(row).get("key"))}
+    fillers: List[Dict[str, Any]] = [
+        {
+            "key": "quick_search",
+            "label": "快速检索",
+            "intent": "record.search",
+            "placement": "toolbar",
+            "tier": "secondary",
+            "target": {},
+        },
+        {
+            "key": "open_help",
+            "label": "使用指引",
+            "intent": "ui.contract",
+            "placement": "toolbar",
+            "tier": "secondary",
+            "target": {},
+        },
+    ]
+    out = list(actions)
+    for row in fillers:
+        key = _text(row.get("key"))
+        if not key or key in seen:
+            continue
+        out.append(row)
+        seen.add(key)
+        if len(out) >= target_min:
+            break
+    return out
 
 
 def _build_action_surface(scene_type: str, actions: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -870,6 +905,7 @@ def action_compile(bound_ast: Dict[str, Any]) -> Dict[str, Any]:
         )
         seen_action_keys.add(key)
 
+    actions_out = _ensure_action_density(scene_type, actions_out)
     out["actions"] = actions_out
     out["action_surface"] = _build_action_surface(scene_type, actions_out)
     meta = _as_dict(out.get("meta"))
