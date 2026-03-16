@@ -101,6 +101,7 @@
 - `make verify.scene.governance_history_archive.guard`
   - Archives `scene_governance_history_report` by commit hash + timestamp under `artifacts/backend/history/scene_governance/`.
   - Persists rolling history samples in `artifacts/backend/history/scene_governance_history_samples.jsonl`.
+  - Maintains branch+commit index at `artifacts/backend/history/scene_governance_index.json` and `.md`.
   - Emits diff summary to `artifacts/backend/scene_governance_history_diff_summary.json` and `.md`.
   - Baseline: `scripts/verify/baselines/scene_governance_history_archive_guard.json`.
 - `make verify.scene.registry_asset_snapshot.guard`
