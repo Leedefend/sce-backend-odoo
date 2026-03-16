@@ -106,6 +106,7 @@
 | T81 | 运行时场景语义丰富化（scene_type=4 + action密度提升） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（支持 `ledger/record` 场景语义映射；`_ensure_action_density` 最小动作密度补齐；`workflow transitions(dict)` 令牌识别）；`make verify.scene.delivery.readiness.role_matrix` 后 `scene_type_count=4` |
 | T82 | 场景覆盖扩容（核心产品目录增补 5 个场景） | Scene + Platform + Verify | ✅ DONE | `addons/smart_construction_scene/profiles/scene_registry_content.py`（新增 `contracts.monitor/cost.control/payments.approval/projects.detail/projects.execution`），`make verify.scene.delivery.readiness.role_matrix` 后 `scene_count=38` |
 | T83 | 场景覆盖继续扩容到 50+（并提升覆盖阈值） | Scene + Platform + Verify | ✅ DONE | `addons/smart_construction_scene/profiles/scene_registry_content.py`（新增 12 个产品化扩展场景：`portfolio.* / contracts.execution / cost.forecast / payments.* / quality.center / safety.center / resource.center / delivery.command / operation.overview`）、`scripts/verify/baselines/scene_product_delivery_readiness_guard.json`（`min_scene_count=50`）、`scripts/verify/baselines/scene_ready_consumption_trend_guard.json`（`min_scene_count=50`）、`scripts/verify/baselines/scene_base_contract_source_mix_role_matrix_guard.json`（`default.min_scene_count=50`）、`scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`（`unexpected` 增长阈值调到 15） |
+| T84 | 覆盖率口径校准（目录总量 vs 有效非pkg覆盖） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/scene_product_delivery_readiness_guard.py`（新增 `catalog_non_pkg_scene_count/catalog_pkg_variant_scene_count/non_pkg_coverage_ratio` 观测与阈值校验）、`scripts/verify/baselines/scene_product_delivery_readiness_guard.json`（新增 `min_non_pkg_coverage_ratio=1.0`） |
 
 ## 本轮已执行验证
 
@@ -269,6 +270,7 @@
 - `make restart && make verify.scene.delivery.readiness.role_matrix`（T81）：通过（重启加载编排器后，`scene_type_count=4`）
 - `make restart && make verify.scene.delivery.readiness.role_matrix`（T82）：通过（场景覆盖扩容后，`scene_count=38`）
 - `make restart && make verify.scene.delivery.readiness.role_matrix`（T83）：通过（场景覆盖扩容后，`scene_count=50`）
+- `make verify.scene.delivery.readiness.role_matrix`（T84）：通过（覆盖口径新增 `non_pkg_coverage_ratio=2.0`，阈值 `>=1.0`）
 
 ## 增量更新记录
 
@@ -349,6 +351,7 @@
 - 2026-03-16：已完成 T81 运行时语义丰富化：scene 编排支持 `ledger/record` 类型识别，运行时 `scene_type_count` 从 2 提升到 4；并通过动作密度补齐使场景 `action_total` 不再普遍为 1。
 - 2026-03-16：已完成 T82 场景覆盖扩容：场景注册表新增 5 个产品目录场景，运行时 `scene_count` 从 33 提升到 38（`base_contract_bound_scene_count=38`）。
 - 2026-03-16：已完成 T83 覆盖扩容与阈值升级：运行时 `scene_count` 提升到 50，并同步把 readiness/consumption/source-mix 的最小场景数门槛升级到 50。
+- 2026-03-16：已完成 T84 覆盖口径校准：在 readiness 报告中显式区分 `catalog_non_pkg_scene_count=25` 与 `catalog_pkg_variant_scene_count=112`，避免把 `__pkg` 变体误判为必须交付面。
 
 ## 下一步（按顺序）
 
