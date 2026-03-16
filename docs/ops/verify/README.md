@@ -116,6 +116,7 @@
 - `make verify.scene.sample_registry_diff_trend.guard`
   - Enforces trend growth thresholds on consecutive diff reports (`missing_required_scene_count/unexpected_scene_count/unbound_matched_scene_count`).
   - Baseline: `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`; state file: `artifacts/backend/scene_sample_registry_diff_trend_state.json`.
+  - Supports role-aware policy (`default` + `role.<role_code>` threshold override).
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
