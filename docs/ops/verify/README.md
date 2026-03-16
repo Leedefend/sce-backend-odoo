@@ -50,6 +50,12 @@
   - Enforces threshold policy by `runtime_env` + `role_code` using baseline `scripts/verify/baselines/scene_base_contract_asset_coverage_guard.json`.
   - Persists latest live metrics to `artifacts/backend/scene_base_contract_asset_coverage_state.json` for offline fallback checks.
   - Use `SC_BASE_CONTRACT_ASSET_COVERAGE_REQUIRE_LIVE=1` to force live-fetch in strict mode.
+- `make verify.scene.base_contract_source_mix.guard`
+  - Verifies source-mix quality for scene base contracts (`asset/runtime_fallback/runtime_minimal/none`) from snapshot state.
+  - Enforces thresholds via baseline `scripts/verify/baselines/scene_base_contract_source_mix_guard.json`.
+  - Artifacts:
+    - `artifacts/backend/scene_base_contract_source_mix_report.json`
+    - `artifacts/backend/scene_base_contract_source_mix_report.md`
 - `make verify.scene.orchestrator.input.schema.guard`
   - Verifies orchestrator input-side schema symbols and required base-fact consume points.
 - `make verify.scene.orchestrator.output.schema.guard`
