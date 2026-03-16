@@ -100,6 +100,7 @@
 | T75 | 新增 CI 轻量别名并将 role-matrix 设为默认提示入口 | Scene + Platform + Verify | ✅ DONE | `Makefile`（新增 `ci.scene.delivery.readiness`，并在 `help` 将 `verify.scene.delivery.readiness.role_matrix` 提升为推荐默认命令） |
 | T76 | CI 失败摘要提炼输出（快速定位） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/scene_delivery_failure_brief.py`（聚合关键报告失败摘要）、`Makefile`（`ci.scene.delivery.readiness` 失败自动打印摘要） |
 | T77 | 核心交付包门槛升级（覆盖率/类型/消费率） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`（`min_scene_count=20`、`min_base_contract_bound_scene_count=20`、`min_scene_type_count=2`）、`scripts/verify/baselines/scene_ready_consumption_trend_guard.json`（`min_scene_count=20`、`min_scene_type_count=2`、`min_aggregate_*_rate=0.8`）、`scripts/verify/baselines/scene_base_contract_source_mix_role_matrix_guard.json`（`min_scene_count=20` 且提高双角色 asset-first 阈值） |
+| T78 | action/search 语义密度升级（关键样例门槛 + 编排器合并） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（显式 actions 与 `base_action_candidates` 合并去重、workflow transitions 支持 dict token 识别）、`scripts/verify/baselines/scene_orchestrator_key_scene_compile_guard.json`（关键样例 `min_action_total` 提升到 2）、`scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（三类样例动作语义加密） |
 
 ## 本轮已执行验证
 
@@ -256,6 +257,8 @@
 - `make ci.scene.delivery.readiness`（T75）：通过
 - `make ci.scene.delivery.readiness`（T76 复验）：通过（失败分支已接入 `scene_delivery_failure_brief.py`）
 - `make verify.scene.delivery.readiness.role_matrix`（T77）：通过（升级核心交付包门槛后仍保持通过）
+- `python3 scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（T78）：通过（关键样例动作密度门槛提升后通过）
+- `make verify.scene.delivery.readiness.role_matrix`（T78 复验）：通过
 
 ## 增量更新记录
 
@@ -330,6 +333,7 @@
 - 2026-03-16：已新增 CI 轻量别名 `ci.scene.delivery.readiness`，并在 `help` 中将 role-matrix 入口提升为推荐默认命令，统一团队日常执行口径。
 - 2026-03-16：已新增 CI 失败摘要提炼：`ci.scene.delivery.readiness` 失败时自动输出关键报告错误摘要，缩短排障路径。
 - 2026-03-16：已完成 T77 门槛升级：readiness / source-mix / consumption 三条基线同步收紧到“核心交付包”口径（20+ 场景、2+ scene_type、0.8+ 消费率）。
+- 2026-03-16：已完成 T78 语义密度升级：编排器支持“显式动作 + 原生动作候选”合并去重，workflow transitions(dict) 可用于运行时动作放行判定；关键样例 `min_action_total` 统一提升到 2。
 
 ## 下一步（按顺序）
 
