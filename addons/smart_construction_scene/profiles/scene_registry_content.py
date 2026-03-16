@@ -300,6 +300,66 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "portfolio.center",
+            "name": "项目组合中心",
+            "target": {"route": "/s/portfolio.center"},
+        },
+        {
+            "code": "portfolio.monitor",
+            "name": "项目组合监控",
+            "target": {"route": "/s/portfolio.monitor"},
+        },
+        {
+            "code": "contracts.execution",
+            "name": "合同执行跟踪",
+            "target": {"route": "/s/contracts.execution"},
+        },
+        {
+            "code": "cost.forecast",
+            "name": "成本预测",
+            "target": {"route": "/s/cost.forecast"},
+        },
+        {
+            "code": "cost.warning.center",
+            "name": "成本预警中心",
+            "target": {"route": "/s/cost.warning.center"},
+        },
+        {
+            "code": "payments.collection.center",
+            "name": "收款管理中心",
+            "target": {"route": "/s/payments.collection.center"},
+        },
+        {
+            "code": "payments.risk.control",
+            "name": "付款风险控制",
+            "target": {"route": "/s/payments.risk.control"},
+        },
+        {
+            "code": "quality.center",
+            "name": "质量管理中心",
+            "target": {"route": "/s/quality.center"},
+        },
+        {
+            "code": "safety.center",
+            "name": "安全管理中心",
+            "target": {"route": "/s/safety.center"},
+        },
+        {
+            "code": "resource.center",
+            "name": "资源调配中心",
+            "target": {"route": "/s/resource.center"},
+        },
+        {
+            "code": "delivery.command",
+            "name": "交付指挥台",
+            "target": {"route": "/s/delivery.command"},
+        },
+        {
+            "code": "operation.overview",
+            "name": "经营总览",
+            "target": {"route": "/s/operation.overview"},
+        },
+        {
             "code": "workspace.home",
             "name": "工作台首页",
             "target": {"route": "/my-work"},
