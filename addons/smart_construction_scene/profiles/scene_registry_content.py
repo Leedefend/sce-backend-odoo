@@ -103,6 +103,14 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "contracts.monitor",
+            "name": "合同履约监控",
+            "target": {
+                "route": "/s/contracts.monitor",
+                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
+            },
+        },
+        {
             "code": "risk.monitor",
             "name": "风险监控",
             "target": {
@@ -216,6 +224,14 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "cost.control",
+            "name": "成本控制驾驶舱",
+            "target": {
+                "route": "/s/cost.control",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
+            },
+        },
+        {
             "code": "cost.project_progress",
             "name": "进度填报",
             "target": {
@@ -255,9 +271,33 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {"route": "/"},
         },
         {
+            "code": "payments.approval",
+            "name": "收付款审批中心",
+            "target": {
+                "route": "/s/payments.approval",
+                "menu_xmlid": "smart_construction_core.menu_payment_request",
+            },
+        },
+        {
             "code": "my_work.workspace",
             "name": "我的工作",
             "target": {"route": "/my-work"},
+        },
+        {
+            "code": "projects.detail",
+            "name": "项目详情",
+            "target": {
+                "route": "/s/projects.detail",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+            },
+        },
+        {
+            "code": "projects.execution",
+            "name": "项目执行中心",
+            "target": {
+                "route": "/s/projects.execution",
+                "menu_xmlid": "smart_construction_core.menu_sc_root",
+            },
         },
         {
             "code": "workspace.home",
