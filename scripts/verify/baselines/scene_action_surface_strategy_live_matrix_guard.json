@@ -125,5 +125,42 @@
         "archive"
       ]
     }
-  ]
+  ],
+  "live_case": {
+    "name": "system_init_output_driven_case",
+    "strategy_inject": {
+      "default": {
+        "force_secondary_keys": [
+          "open"
+        ]
+      },
+      "by_role": {
+        "pm": {
+          "force_primary_keys": [
+            "open"
+          ]
+        }
+      },
+      "by_company": {
+        "2": {
+          "force_contextual_keys": [
+            "open"
+          ]
+        }
+      }
+    },
+    "runtime_context": {
+      "role_code": "pm",
+      "company_id": 2
+    },
+    "actions": [
+      {
+        "key": "open",
+        "tier": "secondary"
+      }
+    ],
+    "expected_tiers": {
+      "open": "contextual"
+    }
+  }
 }
