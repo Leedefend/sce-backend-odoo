@@ -2,7 +2,10 @@
   "report_source": "artifacts/backend/scene_governance_history_report.json",
   "history_jsonl": "artifacts/backend/history/scene_governance_history_samples.jsonl",
   "archive_dir": "artifacts/backend/history/scene_governance",
+  "index_json": "artifacts/backend/history/scene_governance_index.json",
+  "index_md": "artifacts/backend/history/scene_governance_index.md",
   "diff_summary_json": "artifacts/backend/scene_governance_history_diff_summary.json",
   "diff_summary_md": "artifacts/backend/scene_governance_history_diff_summary.md",
-  "max_history_entries": 200
+  "max_history_entries": 200,
+  "max_index_entries": 400
 }
