@@ -90,6 +90,7 @@
 | T65 | action strategy live matrix 增加 system.init 输出驱动样例 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_action_surface_strategy_live_matrix_guard.json`（`live_case`）、`scripts/verify/scene_action_surface_strategy_live_matrix_guard.py`（live fetch `system.init.scene_action_surface_strategy` 并复用矩阵断言，支持 strict live 开关） |
 | T66 | diff 趋势门禁增加 role-aware 阈值策略 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`（`default + role.*` 阈值）、`scripts/verify/scene_sample_registry_diff_trend_guard.py`（按 `snapshot_state.role_code` 选择阈值策略） |
 | T67 | 产品化交付就绪门禁与一键验收链路 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`、`scripts/verify/scene_product_delivery_readiness_guard.py`（聚合快照/差异/治理报告阈值校验并输出 readiness 报告）、`Makefile`（`verify.scene.product_delivery.readiness.guard` + `verify.scene.delivery.readiness`） |
+| T68 | 严格验收链路缺口补齐（交付面/资产绑定/场景别名） | Scene + Platform + Verify | ✅ DONE | `docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json`（纳入 `workspace.home/projects.list/projects.intake` 交付面）、`addons/smart_construction_scene/profiles/scene_registry_content.py`（补 `workspace.home` 场景别名）、`addons/smart_core/core/ui_base_contract_asset_repository.py`（资产表缺失容错 + 运行时回填 + 最小契约兜底）、`addons/smart_core/core/scene_dsl_compiler.py`（`base_contract_bound` 判定强化） |
 
 ## 本轮已执行验证
 
@@ -234,6 +235,8 @@
 - `python3 scripts/verify/scene_product_delivery_readiness_guard.py`（T67）：失败（命中真实缺口：`scene_count=0`、`base_contract_bound_scene_count=0`、`missing_required_scene_count=3`、`scene_type_count=0`、`consumption_enabled=false`）
 - `make verify.scene.product_delivery.readiness.guard`（T67 复验）：失败（同上，输出 readiness 报告）
 - `make verify.scene.delivery.readiness`（T67 一键严格验收）：失败（在 strict 模式下被 `verify.scene.ready.consumption_trend.guard` 拦截：`scene_ready_consumption.enabled must be true`）
+- `CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_core make mod.upgrade MODULE=smart_core DB=sc_demo`（T68）：通过（落库 `sc_ui_base_contract_asset`）
+- `make verify.scene.delivery.readiness`（T68 复验）：通过
 
 ## 增量更新记录
 
@@ -298,9 +301,10 @@
 - 2026-03-15：已为 `scene_action_surface_strategy_live_matrix_guard` 增加 `system.init` 输出驱动样例：可在可达环境直接验证后端下发策略进入矩阵冲突裁决；默认网络受限时降级 warn，`SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1` 可切换 strict 模式。
 - 2026-03-15：已为 `scene_sample_registry_diff_trend_guard` 增加 role-aware 阈值策略：支持 `default + role.<role_code>` 分桶配置，按 `snapshot_state.role_code` 动态应用差异增长门限。
 - 2026-03-16：已新增“产品化交付就绪门禁”与一键命令：`verify.scene.product_delivery.readiness.guard` 聚合 `scene_registry_asset_snapshot + sample_registry_diff + governance_history` 产物做最终阈值判断；`verify.scene.delivery.readiness` 启用 strict live 标志执行 runtime gate + readiness guard，直接返回可交付结论。
+- 2026-03-16：已完成严格验收链路缺口补齐：补齐 `workspace.home` 场景别名、扩展交付面关键场景 allowlist、资产仓储对“资产表未落库”容错并提供运行时原生契约/最小契约回填，且升级 `smart_core` 完成资产表落库；`make verify.scene.delivery.readiness` 已通过。
 
 ## 下一步（按顺序）
 
-1. 打通 `scene_ready_consumption.enabled`：确保 `system.init -> scene_governance_v1` 在目标角色/公司下进入 enabled 状态。
-2. 补齐关键场景产出：确保真实快照达到 `scene_count>=3` 且覆盖 `projects.intake/projects.list/workspace.home`。
-3. 提升原生契约绑定率：确保 `base_contract_bound_scene_count>=1`，并清零 `missing_required_scene_count` 后复跑 `make verify.scene.delivery.readiness`。
+1. 在 `sc.ui.base.contract.asset` 实体资产率达标后，逐步下调 `runtime-minimal` 兜底占比并收敛到真实资产绑定。
+2. 将 `workspace.home` 场景切换到正式 provider profile（替换别名兜底），并保持 `verify.scene.delivery.readiness` 持续通过。
+3. 补充多角色（`pm/executive`）与多公司场景下的一键严格验收证据，固化回归基线。
