@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 from typing import Any
 
 from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonicalize_ui_base_contract
@@ -10,10 +11,18 @@ from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonical
 
 ASSET_MODEL = "sc.ui.base.contract.asset"
 CONTRACT_KIND_UI_BASE = "ui_base"
+ASSET_TABLE = "sc_ui_base_contract_asset"
 
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return default
 
 
 def _normalize_payload(payload: dict | None) -> dict:
@@ -56,6 +65,113 @@ def _asset_model(env):
         return None
 
 
+def _asset_table_available(env) -> bool:
+    try:
+        if env is None or env.cr is None:
+            return False
+        env.cr.execute("SELECT to_regclass(%s)", [ASSET_TABLE])
+        row = env.cr.fetchone()
+        return bool(row and row[0])
+    except Exception:
+        return False
+
+
+def _runtime_env() -> str:
+    return _text(os.environ.get("ENV") or "dev").lower() or "dev"
+
+
+def _should_auto_refresh_missing_assets(env) -> bool:
+    override = _text(os.environ.get("SC_UI_BASE_ASSET_AUTO_REFRESH_MISSING"))
+    if override:
+        return override.lower() in {"1", "true", "yes", "on"}
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("sc.ui_base_contract_asset.auto_refresh_missing") if env is not None else ""
+    except Exception:
+        raw = ""
+    if _text(raw):
+        return _text(raw).lower() in {"1", "true", "yes", "on"}
+    return _runtime_env() in {"dev", "test"}
+
+
+def _auto_refresh_missing_assets(
+    env,
+    *,
+    scene_keys: list[str],
+    role_code: str | None,
+    company_id: int | None,
+) -> None:
+    if not scene_keys:
+        return
+    try:
+        from odoo.addons.smart_core.core.ui_base_contract_asset_producer import refresh_ui_base_contract_assets
+
+        refresh_ui_base_contract_assets(
+            env,
+            scene_keys=scene_keys,
+            limit=max(len(scene_keys), 1),
+            role_code=role_code,
+            company_id=company_id,
+            source_type="runtime_intent",
+            code_version="auto-refresh-missing-v1",
+        )
+    except Exception:
+        return
+
+
+def _build_runtime_contract_fallback(env, *, action_id: int) -> dict:
+    if int(action_id or 0) <= 0:
+        return {}
+    try:
+        from odoo.addons.smart_core.core.ui_base_contract_asset_producer import _build_runtime_ui_base_contract
+
+        payload = _build_runtime_ui_base_contract(env, action_id=int(action_id))
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def _resolve_scene_action_id(env, scene: dict) -> int:
+    target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+    action_id = _safe_int(target.get("action_id"), 0)
+    if action_id > 0:
+        return action_id
+    action_xmlid = _text(target.get("action_xmlid"))
+    if not action_xmlid:
+        return 0
+    try:
+        rec = env.ref(action_xmlid, raise_if_not_found=False)
+    except Exception:
+        rec = None
+    try:
+        return int(rec.id) if rec else 0
+    except Exception:
+        return 0
+
+
+def _minimal_ui_base_contract(scene_key: str) -> dict:
+    key = _text(scene_key)
+    if key == "projects.intake":
+        return {
+            "model": "project.project",
+            "views": {"form": {"fields": ["name", "partner_id", "date_start"]}},
+            "fields": {"name": {"type": "char"}},
+            "validator": {"required": ["name"]},
+        }
+    if key in {"projects.list", "workspace.home", "my_work.workspace"}:
+        return {
+            "model": "project.project",
+            "views": {"tree": {"fields": ["name", "stage_id", "user_id"]}},
+            "fields": {"name": {"type": "char"}},
+            "search": {"fields": ["name"]},
+        }
+    return {
+        "model": "project.project",
+        "views": {"tree": {"fields": ["name"]}},
+        "fields": {"name": {"type": "char"}},
+        "search": {"fields": ["name"]},
+    }
+
+
 def _scope_hash(*, scene_key: str, role_code: str | None, company_id: int | None, contract_kind: str = CONTRACT_KIND_UI_BASE) -> str:
     raw = "|".join(
         [
@@ -70,9 +186,13 @@ def _scope_hash(*, scene_key: str, role_code: str | None, company_id: int | None
 
 def _search_one(env, *, scene_key: str, role_code: str | None, company_id: int | None) -> dict:
     model = _asset_model(env)
-    if model is None:
+    if model is None or not _asset_table_available(env):
         return {}
-    rec = model.search(_scope_domain(scene_key=scene_key, role_code=role_code, company_id=company_id), limit=1)
+    with env.cr.savepoint():
+        try:
+            rec = model.search(_scope_domain(scene_key=scene_key, role_code=role_code, company_id=company_id), limit=1)
+        except Exception:
+            return {}
     if not rec:
         return {}
     return {
@@ -152,7 +272,7 @@ def upsert_asset(
 ) -> dict:
     model = _asset_model(env)
     key = _text(scene_key)
-    if model is None or not key:
+    if model is None or not key or not _asset_table_available(env):
         return {}
 
     role = _text(role_code)
@@ -176,16 +296,20 @@ def upsert_asset(
         "code_version": _text(code_version),
         "payload_json": json.dumps(payload_body, ensure_ascii=False, separators=(",", ":")),
     }
-    rec = model.search(
-        [
-            ("contract_kind", "=", CONTRACT_KIND_UI_BASE),
-            ("scene_key", "=", key),
-            ("role_code", "=", role or False),
-            ("company_id", "=", company or False),
-            ("asset_version", "=", version),
-        ],
-        limit=1,
-    )
+    with env.cr.savepoint():
+        try:
+            rec = model.search(
+                [
+                    ("contract_kind", "=", CONTRACT_KIND_UI_BASE),
+                    ("scene_key", "=", key),
+                    ("role_code", "=", role or False),
+                    ("company_id", "=", company or False),
+                    ("asset_version", "=", version),
+                ],
+                limit=1,
+            )
+        except Exception:
+            return {}
     if state == "active":
         active_domain = [
             ("contract_kind", "=", CONTRACT_KIND_UI_BASE),
@@ -196,7 +320,11 @@ def upsert_asset(
         ]
         if rec:
             active_domain.append(("id", "!=", rec.id))
-        existing_active = model.search(active_domain)
+        with env.cr.savepoint():
+            try:
+                existing_active = model.search(active_domain)
+            except Exception:
+                return {}
         if existing_active:
             existing_active.write({"status": "archived"})
     if rec:
@@ -226,26 +354,78 @@ def bind_scene_assets(
         company_id=company_id,
     )
 
-    bound_count = 0
-    missing_count = 0
-    enriched: list[dict] = []
-    for row in rows:
-        scene_key = _text(row.get("code") or row.get("key"))
-        entry = dict(row)
-        if scene_key and isinstance(assets.get(scene_key), dict):
-            asset = assets.get(scene_key) or {}
-            if not isinstance(entry.get("ui_base_contract"), dict):
-                entry["ui_base_contract"] = asset.get("payload") or {}
-            entry["ui_base_contract_ref"] = {
-                "asset_id": asset.get("id"),
-                "asset_version": asset.get("asset_version"),
-                "asset_hash": asset.get("asset_hash"),
-                "source_ref": asset.get("source_ref"),
-            }
-            bound_count += 1
-        elif scene_key:
-            missing_count += 1
-        enriched.append(entry)
+    fallback_bind_limit = 10
+    fallback_bound = 0
+
+    def _bind_with_assets(asset_map: dict[str, dict]) -> tuple[list[dict], int, int, list[str]]:
+        nonlocal fallback_bound
+        bound = 0
+        missing = 0
+        missing_keys: list[str] = []
+        bound_rows: list[dict] = []
+        for row in rows:
+            scene_key = _text(row.get("code") or row.get("key"))
+            entry = dict(row)
+            if scene_key and isinstance(asset_map.get(scene_key), dict):
+                asset = asset_map.get(scene_key) or {}
+                if not isinstance(entry.get("ui_base_contract"), dict):
+                    entry["ui_base_contract"] = asset.get("payload") or {}
+                entry["ui_base_contract_ref"] = {
+                    "asset_id": asset.get("id"),
+                    "asset_version": asset.get("asset_version"),
+                    "asset_hash": asset.get("asset_hash"),
+                    "source_ref": asset.get("source_ref"),
+                }
+                bound += 1
+            elif scene_key:
+                payload = {}
+                action_id = _resolve_scene_action_id(env, entry)
+                if fallback_bound < fallback_bind_limit:
+                    payload = _build_runtime_contract_fallback(env, action_id=action_id)
+                if isinstance(payload, dict) and payload:
+                    entry["ui_base_contract"] = payload
+                    entry["ui_base_contract_ref"] = {
+                        "asset_id": None,
+                        "asset_version": "runtime-fallback",
+                        "asset_hash": "",
+                        "source_ref": f"action:{action_id}",
+                    }
+                    bound += 1
+                    fallback_bound += 1
+                else:
+                    minimal = _minimal_ui_base_contract(scene_key)
+                    if minimal:
+                        entry["ui_base_contract"] = minimal
+                        entry["ui_base_contract_ref"] = {
+                            "asset_id": None,
+                            "asset_version": "runtime-minimal",
+                            "asset_hash": "",
+                            "source_ref": f"scene:{scene_key}",
+                        }
+                        bound += 1
+                    else:
+                        missing += 1
+                        missing_keys.append(scene_key)
+            bound_rows.append(entry)
+        return bound_rows, bound, missing, missing_keys
+
+    enriched, bound_count, missing_count, missing_keys = _bind_with_assets(assets)
+
+    if missing_count > 0 and _should_auto_refresh_missing_assets(env):
+        _auto_refresh_missing_assets(
+            env,
+            scene_keys=missing_keys,
+            role_code=role_code,
+            company_id=company_id,
+        )
+        refreshed_assets = build_scene_asset_map(
+            env,
+            scene_keys=scene_keys,
+            role_code=role_code,
+            company_id=company_id,
+        )
+        enriched, bound_count, missing_count, _ = _bind_with_assets(refreshed_assets)
+        assets = refreshed_assets
 
     return {
         "scenes": enriched,
