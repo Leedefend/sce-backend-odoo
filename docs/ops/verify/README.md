@@ -35,6 +35,9 @@
 - `make verify.scene.delivery.readiness`
   - One-click strict acceptance for product delivery closure: first runs strict live `verify.scene.runtime_boundary.gate`, then executes final readiness threshold guard.
   - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+- `make verify.scene.delivery.readiness.role_matrix`
+  - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
+  - Use as the default daily command when `pm/executive` role evidence is required.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
