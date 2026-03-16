@@ -208,6 +208,20 @@ def _load_scene_action_surface_strategy(env, params: dict, data: dict) -> dict:
         return {}
     return _normalize_scene_action_surface_strategy(loaded)
 
+
+def _strip_ui_base_contract_for_frontend(payload):
+    if isinstance(payload, list):
+        return [_strip_ui_base_contract_for_frontend(item) for item in payload]
+    if not isinstance(payload, dict):
+        return payload
+
+    cleaned = {}
+    for key, value in payload.items():
+        if key in {"ui_base_contract", "ui_base_contract_ref"}:
+            continue
+        cleaned[key] = _strip_ui_base_contract_for_frontend(value)
+    return cleaned
+
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
     return provider_resolve_scene_channel(env, user, params, get_header=collector.get_request_header)
@@ -473,6 +487,7 @@ class SystemInitHandler(BaseIntentHandler):
             nav_contract_meta=scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
             asset_queue_metrics=get_queue_metrics(env),
         )
+        data = _strip_ui_base_contract_for_frontend(data)
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 
