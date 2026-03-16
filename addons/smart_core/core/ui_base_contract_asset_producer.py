@@ -89,6 +89,22 @@ def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
     return canonicalize_ui_base_contract(_as_dict(data))
 
 
+def _build_scene_minimal_ui_base_contract(scene_key: str, scene: dict) -> dict:
+    target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+    model = _text(target.get("model")) or "project.project"
+    payload = {
+        "model": model,
+        "views": {"tree": {"fields": ["name"]}},
+        "fields": {"name": {"type": "char"}},
+        "search": {"fields": ["name"]},
+    }
+    key = _text(scene_key)
+    if key == "projects.intake":
+        payload["views"] = {"form": {"fields": ["name", "partner_id", "date_start"]}}
+        payload["validator"] = {"required": ["name"]}
+    return canonicalize_ui_base_contract(payload)
+
+
 def refresh_ui_base_contract_assets(
     env,
     *,
@@ -118,11 +134,14 @@ def refresh_ui_base_contract_assets(
             skipped += 1
             continue
         action_id = _scene_action_id(env, scene)
-        if action_id <= 0:
-            skipped += 1
-            continue
         try:
-            payload = _build_runtime_ui_base_contract(env, action_id=action_id)
+            source_ref = ""
+            if action_id > 0:
+                payload = _build_runtime_ui_base_contract(env, action_id=action_id)
+                source_ref = f"action:{action_id}"
+            else:
+                payload = _build_scene_minimal_ui_base_contract(scene_key, scene)
+                source_ref = f"scene:{scene_key}:minimal"
             digest = _asset_hash(payload)
             upsert_asset(
                 env,
@@ -132,7 +151,7 @@ def refresh_ui_base_contract_assets(
                 company_id=company_id,
                 asset_version=_asset_version(digest),
                 asset_hash=digest,
-                source_ref=f"action:{action_id}",
+                source_ref=source_ref,
                 source_type=source_type,
                 code_version=_text(code_version),
                 status="active",
