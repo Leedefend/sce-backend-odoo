@@ -98,6 +98,7 @@
 | T73 | 双角色 source-mix 实样本矩阵门禁（pm/executive） | Scene + Platform + Verify | ✅ DONE | `Makefile`（新增 `verify.scene.registry_asset_snapshot.executive/pm` 与 `verify.scene.base_contract_source_mix.role_matrix.guard`）、`scripts/verify/scene_registry_asset_snapshot_guard.py`（支持 `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE`）、`scripts/verify/scene_base_contract_source_mix_role_matrix_guard.py` + baseline（双角色阈值校验与报告） |
 | T74 | 双角色一键严格验收入口（role-matrix one-click） | Scene + Platform + Verify | ✅ DONE | `Makefile`（新增 `verify.scene.delivery.readiness.role_matrix` 聚合命令）、`docs/ops/verify/README.md`（入口说明）；`make verify.scene.delivery.readiness.role_matrix` 通过 |
 | T75 | 新增 CI 轻量别名并将 role-matrix 设为默认提示入口 | Scene + Platform + Verify | ✅ DONE | `Makefile`（新增 `ci.scene.delivery.readiness`，并在 `help` 将 `verify.scene.delivery.readiness.role_matrix` 提升为推荐默认命令） |
+| T76 | CI 失败摘要提炼输出（快速定位） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/scene_delivery_failure_brief.py`（聚合关键报告失败摘要）、`Makefile`（`ci.scene.delivery.readiness` 失败自动打印摘要） |
 
 ## 本轮已执行验证
 
@@ -252,6 +253,7 @@
 - `make verify.scene.delivery.readiness`（T73 复验）：通过
 - `make verify.scene.delivery.readiness.role_matrix`（T74）：通过
 - `make ci.scene.delivery.readiness`（T75）：通过
+- `make ci.scene.delivery.readiness`（T76 复验）：通过（失败分支已接入 `scene_delivery_failure_brief.py`）
 
 ## 增量更新记录
 
@@ -324,6 +326,7 @@
 - 2026-03-16：已新增双角色实样本矩阵门禁：按 `executive/pm` 分别抓取 strict live snapshot，并输出 role matrix 报告，形成“单角色通过 + 双角色证据”闭环。
 - 2026-03-16：已新增 `verify.scene.delivery.readiness.role_matrix` 一键入口，将双角色矩阵证据与单角色严格验收串联为日常默认命令。
 - 2026-03-16：已新增 CI 轻量别名 `ci.scene.delivery.readiness`，并在 `help` 中将 role-matrix 入口提升为推荐默认命令，统一团队日常执行口径。
+- 2026-03-16：已新增 CI 失败摘要提炼：`ci.scene.delivery.readiness` 失败时自动输出关键报告错误摘要，缩短排障路径。
 
 ## 下一步（按顺序）
 

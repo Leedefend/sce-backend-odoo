@@ -38,6 +38,9 @@
 - `make verify.scene.delivery.readiness.role_matrix`
   - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
   - Use as the default daily command when `pm/executive` role evidence is required.
+- `make ci.scene.delivery.readiness`
+  - Lightweight CI alias for `verify.scene.delivery.readiness.role_matrix`.
+  - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
