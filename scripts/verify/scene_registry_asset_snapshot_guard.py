@@ -84,6 +84,14 @@ def _fetch_live_snapshot() -> dict:
 
     scene_keys: list[str] = []
     per_scene: dict[str, dict[str, Any]] = {}
+    source_kind_counts: dict[str, int] = {
+        "asset": 0,
+        "runtime_fallback": 0,
+        "runtime_minimal": 0,
+        "inline": 0,
+        "none": 0,
+        "other": 0,
+    }
     for row in scenes:
         payload = _as_dict(row)
         scene_info = _as_dict(payload.get("scene"))
@@ -93,24 +101,39 @@ def _fetch_live_snapshot() -> dict:
         scene_keys.append(scene_key)
         meta = _as_dict(payload.get("meta"))
         verdict = _as_dict(meta.get("compile_verdict"))
+        source_meta = _as_dict(meta.get("ui_base_contract_source"))
+        source_kind = _text(source_meta.get("kind")) or "none"
+        if source_kind not in source_kind_counts:
+            source_kind = "other"
+        source_kind_counts[source_kind] = _safe_int(source_kind_counts.get(source_kind), 0) + 1
         action_surface = _as_dict(payload.get("action_surface"))
         action_counts = _as_dict(action_surface.get("counts"))
         per_scene[scene_key] = {
             "base_contract_bound": bool(verdict.get("base_contract_bound")),
             "compile_ok": bool(verdict.get("ok")),
+            "source_kind": source_kind,
             "action_total": _safe_int(action_counts.get("total"), 0),
             "has_search_surface": bool(_as_dict(payload.get("search_surface"))),
             "has_workflow_surface": bool(_as_dict(payload.get("workflow_surface"))),
             "has_validation_surface": bool(_as_dict(payload.get("validation_surface"))),
         }
 
+    total_scene_count = _safe_int(scene_meta.get("scene_count"), len(scene_keys))
+    denom = float(total_scene_count) if total_scene_count > 0 else 1.0
+    source_kind_ratios = {
+        key: float(_safe_int(value, 0)) / denom
+        for key, value in source_kind_counts.items()
+    }
+
     return {
         "runtime_env": _text(_as_dict(_as_dict(data.get("scene_governance_v1")).get("delivery_policy")).get("runtime_env")) or _text(os.getenv("ENV") or "dev"),
         "role_code": _text(nav_meta.get("role_surface_code")) or "unknown",
-        "scene_count": _safe_int(scene_meta.get("scene_count"), len(scene_keys)),
+        "scene_count": total_scene_count,
         "base_contract_bound_scene_count": _safe_int(scene_meta.get("base_contract_bound_scene_count"), 0),
         "compile_issue_scene_count": _safe_int(scene_meta.get("compile_issue_scene_count"), 0),
         "scene_keys": sorted(set(scene_keys)),
+        "source_kind_counts": source_kind_counts,
+        "source_kind_ratios": source_kind_ratios,
         "per_scene": per_scene,
     }
 
