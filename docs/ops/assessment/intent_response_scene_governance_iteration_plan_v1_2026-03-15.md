@@ -95,6 +95,7 @@
 | T70 | 原生契约来源占比门禁（asset-first 质量约束） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_ready_contract_builder.py`（输出 `meta.ui_base_contract_source`）、`scripts/verify/scene_registry_asset_snapshot_guard.py`（快照产物增加 `source_kind_counts/ratios`）、`scripts/verify/scene_base_contract_source_mix_guard.py` + baseline、`Makefile`（纳入 runtime gate） |
 | T71 | 无 action 场景资产化（清零 runtime-minimal 占比） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/ui_base_contract_asset_producer.py`（无 `action_id` 场景生成最小资产并落库为 asset）、`scripts/verify/baselines/scene_base_contract_source_mix_guard.json`（收紧 `max_runtime_minimal_ratio=0.18`）；`scene_base_contract_source_mix_report.json` 显示 `runtime_minimal_ratio=0.0` |
 | T72 | source-mix 门禁升级为 role-aware 并提高资产占比阈值 | Scene + Platform + Verify | ✅ DONE | `scripts/verify/scene_base_contract_source_mix_guard.py`（支持 `default + role.<role_code>` 策略覆盖）、`scripts/verify/baselines/scene_base_contract_source_mix_guard.json`（`min_asset_ratio=0.7`，`role.executive/role.pm` 阈值）；严格验收持续通过 |
+| T73 | 双角色 source-mix 实样本矩阵门禁（pm/executive） | Scene + Platform + Verify | ✅ DONE | `Makefile`（新增 `verify.scene.registry_asset_snapshot.executive/pm` 与 `verify.scene.base_contract_source_mix.role_matrix.guard`）、`scripts/verify/scene_registry_asset_snapshot_guard.py`（支持 `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE`）、`scripts/verify/scene_base_contract_source_mix_role_matrix_guard.py` + baseline（双角色阈值校验与报告） |
 
 ## 本轮已执行验证
 
@@ -245,6 +246,8 @@
 - `make verify.scene.delivery.readiness`（T70 复验）：通过（新增 source-mix 门禁后仍通过）
 - `make verify.scene.delivery.readiness`（T71 复验）：通过（`asset_ratio=1.0`、`runtime_minimal_ratio=0.0`）
 - `make verify.scene.delivery.readiness`（T72 复验）：通过（role-aware source-mix + 更高 `min_asset_ratio` 阈值后仍通过）
+- `make verify.scene.base_contract_source_mix.role_matrix.guard`（T73）：通过（`executive + pm` 双角色实样本）
+- `make verify.scene.delivery.readiness`（T73 复验）：通过
 
 ## 增量更新记录
 
@@ -314,6 +317,7 @@
 - 2026-03-16：已新增 source-mix 门禁：按 `asset/runtime_fallback/runtime_minimal/none` 占比约束原生契约来源质量，防止 `runtime-minimal` 回退比例反弹；并纳入 `verify.scene.runtime_boundary.gate`。
 - 2026-03-16：已将“无 action 场景”纳入资产生产（最小资产也落库），source-mix 指标达到 `asset_ratio=1.0`、`runtime_minimal_ratio=0.0`，严格验收保持通过。
 - 2026-03-16：source-mix 门禁已升级为 role-aware 策略（`default + role.<role_code>`），并将全局资产占比下限提升至 `0.7`；后续可直接扩展 `pm/executive` 双角色独立阈值治理。
+- 2026-03-16：已新增双角色实样本矩阵门禁：按 `executive/pm` 分别抓取 strict live snapshot，并输出 role matrix 报告，形成“单角色通过 + 双角色证据”闭环。
 
 ## 下一步（按顺序）
 

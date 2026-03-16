@@ -57,6 +57,15 @@
   - Artifacts:
     - `artifacts/backend/scene_base_contract_source_mix_report.json`
     - `artifacts/backend/scene_base_contract_source_mix_report.md`
+- `make verify.scene.base_contract_source_mix.role_matrix.guard`
+  - Captures strict live snapshot states for `executive` and `pm`, then enforces dual-role source-mix thresholds.
+  - Snapshot outputs:
+    - `artifacts/backend/scene_registry_asset_snapshot_state.executive.json`
+    - `artifacts/backend/scene_registry_asset_snapshot_state.pm.json`
+  - Role matrix baseline: `scripts/verify/baselines/scene_base_contract_source_mix_role_matrix_guard.json`.
+  - Role matrix artifacts:
+    - `artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json`
+    - `artifacts/backend/scene_base_contract_source_mix_role_matrix_report.md`
 - `make verify.scene.orchestrator.input.schema.guard`
   - Verifies orchestrator input-side schema symbols and required base-fact consume points.
 - `make verify.scene.orchestrator.output.schema.guard`
