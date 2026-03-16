@@ -31,10 +31,23 @@ def _asset_version(payload_hash: str) -> str:
     return f"h-{digest[:12]}" if digest else "v1"
 
 
-def _scene_action_id(scene: dict) -> int:
+def _scene_action_id(env, scene: dict) -> int:
     target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
     try:
-        return int(target.get("action_id") or 0)
+        action_id = int(target.get("action_id") or 0)
+    except Exception:
+        action_id = 0
+    if action_id > 0:
+        return action_id
+    action_xmlid = _text(target.get("action_xmlid"))
+    if not action_xmlid:
+        return 0
+    try:
+        rec = env.ref(action_xmlid, raise_if_not_found=False)
+    except Exception:
+        rec = None
+    try:
+        return int(rec.id) if rec else 0
     except Exception:
         return 0
 
@@ -104,7 +117,7 @@ def refresh_ui_base_contract_assets(
         if requested_keys and scene_key not in requested_keys:
             skipped += 1
             continue
-        action_id = _scene_action_id(scene)
+        action_id = _scene_action_id(env, scene)
         if action_id <= 0:
             skipped += 1
             continue
