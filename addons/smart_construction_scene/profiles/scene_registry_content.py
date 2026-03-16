@@ -259,4 +259,9 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "name": "我的工作",
             "target": {"route": "/my-work"},
         },
+        {
+            "code": "workspace.home",
+            "name": "工作台首页",
+            "target": {"route": "/my-work"},
+        },
     ]

@@ -907,13 +907,19 @@ def scene_compile(scene_payload: Dict[str, Any], *, scene_key: str, ui_base_cont
         "action_permission_workflow_gate",
         "scene_compiler",
     ]
+    binding_meta = _as_dict(meta.get("binding"))
+    base_facts_meta = _as_dict(meta.get("base_facts"))
+    base_contract_bound = bool(binding_meta.get("base_contract_bound_block_count", 0)) or any(
+        bool(base_facts_meta.get(key))
+        for key in ("views", "fields", "search", "permissions", "workflow", "validator", "actions")
+    ) or bool(ctx.ui_base_contract)
     meta["compile_verdict"] = {
         "ok": bool(grammar_ok and semantic_ok),
         "grammar_ok": bool(grammar_ok),
         "semantic_ok": bool(semantic_ok),
         "grammar_issues": grammar_issues,
         "semantic_issues": semantic_issues,
-        "base_contract_bound": bool(_as_dict(meta.get("binding")).get("base_contract_bound_block_count", 0)),
+        "base_contract_bound": base_contract_bound,
     }
     compiled["meta"] = meta
     return {
