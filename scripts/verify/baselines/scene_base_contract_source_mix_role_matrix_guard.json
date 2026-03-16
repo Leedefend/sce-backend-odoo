@@ -13,7 +13,7 @@
   },
   "role_thresholds": {
     "default": {
-      "min_scene_count": 20,
+      "min_scene_count": 50,
       "min_asset_ratio": 0.8,
       "max_runtime_minimal_ratio": 0.1,
       "max_none_ratio": 0.0

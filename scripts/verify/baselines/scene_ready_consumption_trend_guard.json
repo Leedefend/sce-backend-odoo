@@ -1,5 +1,5 @@
 {
-  "min_scene_count": 20,
+  "min_scene_count": 50,
   "min_scene_type_count": 2,
   "min_aggregate_base_search_rate": 0.8,
   "min_aggregate_action_surface_rate": 0.8,
