@@ -533,6 +533,10 @@ async function resolveScene() {
         await router.replace({ path: target.route, query: workspaceContextQuery });
         return;
       }
+      // Safety fallback: keep scene shell active when route is already resolved
+      // but action/model target is intentionally absent.
+      status.value = 'idle';
+      return;
       // Do not early-fallback here; let explicit target/action resolution decide.
     }
 
