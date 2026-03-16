@@ -102,6 +102,7 @@
 | T77 | 核心交付包门槛升级（覆盖率/类型/消费率） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`（`min_scene_count=20`、`min_base_contract_bound_scene_count=20`、`min_scene_type_count=2`）、`scripts/verify/baselines/scene_ready_consumption_trend_guard.json`（`min_scene_count=20`、`min_scene_type_count=2`、`min_aggregate_*_rate=0.8`）、`scripts/verify/baselines/scene_base_contract_source_mix_role_matrix_guard.json`（`min_scene_count=20` 且提高双角色 asset-first 阈值） |
 | T78 | action/search 语义密度升级（关键样例门槛 + 编排器合并） | Scene + Platform + Verify | ✅ DONE | `addons/smart_core/core/scene_dsl_compiler.py`（显式 actions 与 `base_action_candidates` 合并去重、workflow transitions 支持 dict token 识别）、`scripts/verify/baselines/scene_orchestrator_key_scene_compile_guard.json`（关键样例 `min_action_total` 提升到 2）、`scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（三类样例动作语义加密） |
 | T79 | 治理门禁阈值再收紧（差异/队列/时钟漂移） | Scene + Platform + Verify | ✅ DONE | `scripts/verify/baselines/scene_sample_registry_diff_guard.json`（`max_unexpected_scene_count=60`）、`scripts/verify/baselines/scene_asset_queue_trend_guard.json`（`max_queue_size=300`、`max_growth_per_run=100`）、`scripts/verify/baselines/scene_governance_history_report_guard.json`（`max_capture_time_skew_seconds=300`）、`scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`（增长阈值收紧） |
+| T80 | 四角色 role-matrix 严格验收扩展（executive/pm/finance/ops） | Scene + Platform + Verify | ✅ DONE | `Makefile`（新增 `verify.scene.registry_asset_snapshot.finance/ops` 并纳入 role-matrix 前置）、`scripts/verify/baselines/scene_base_contract_source_mix_role_matrix_guard.json`（扩展四角色 state + 阈值） |
 
 ## 本轮已执行验证
 
@@ -261,6 +262,7 @@
 - `python3 scripts/verify/scene_orchestrator_key_scene_compile_guard.py`（T78）：通过（关键样例动作密度门槛提升后通过）
 - `make verify.scene.delivery.readiness.role_matrix`（T78 复验）：通过
 - `make verify.scene.delivery.readiness.role_matrix`（T79）：通过（治理门禁阈值收紧后仍通过）
+- `make verify.scene.delivery.readiness.role_matrix`（T80）：通过（四角色矩阵扩展后仍通过）
 
 ## 增量更新记录
 
@@ -337,6 +339,7 @@
 - 2026-03-16：已完成 T77 门槛升级：readiness / source-mix / consumption 三条基线同步收紧到“核心交付包”口径（20+ 场景、2+ scene_type、0.8+ 消费率）。
 - 2026-03-16：已完成 T78 语义密度升级：编排器支持“显式动作 + 原生动作候选”合并去重，workflow transitions(dict) 可用于运行时动作放行判定；关键样例 `min_action_total` 统一提升到 2。
 - 2026-03-16：已完成 T79 治理阈值收紧：diff unexpected 上限、queue 上限与增长、capture_time_skew 以及 diff trend 增长阈值同步收紧，进一步降低“通过但偏差扩大”的风险。
+- 2026-03-16：已完成 T80 四角色矩阵扩展：role-matrix strict 验收升级为 `executive/pm/finance/ops` 四角色快照与 source-mix 联合门禁。
 
 ## 下一步（按顺序）
 
