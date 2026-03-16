@@ -2106,8 +2106,24 @@ verify.scene.registry_asset_snapshot.pm: guard.prod.forbid
 	E2E_PASSWORD=$${ROLE_PM_PASSWORD:-demo} \
 	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
 
+.PHONY: verify.scene.registry_asset_snapshot.finance
+verify.scene.registry_asset_snapshot.finance: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.finance.json \
+	E2E_LOGIN=$${ROLE_FINANCE_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	E2E_PASSWORD=$${ROLE_FINANCE_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.ops
+verify.scene.registry_asset_snapshot.ops: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.ops.json \
+	E2E_LOGIN=$${ROLE_OPS_LOGIN:-$${ROLE_EXECUTIVE_LOGIN:-demo_role_executive}} \
+	E2E_PASSWORD=$${ROLE_OPS_PASSWORD:-$${ROLE_EXECUTIVE_PASSWORD:-demo}} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
 .PHONY: verify.scene.base_contract_source_mix.role_matrix.guard
-verify.scene.base_contract_source_mix.role_matrix.guard: guard.prod.forbid verify.scene.registry_asset_snapshot.executive verify.scene.registry_asset_snapshot.pm
+verify.scene.base_contract_source_mix.role_matrix.guard: guard.prod.forbid verify.scene.registry_asset_snapshot.executive verify.scene.registry_asset_snapshot.pm verify.scene.registry_asset_snapshot.finance verify.scene.registry_asset_snapshot.ops
 	@python3 scripts/verify/scene_base_contract_source_mix_role_matrix_guard.py
 
 .PHONY: verify.scene.sample_registry_diff.guard

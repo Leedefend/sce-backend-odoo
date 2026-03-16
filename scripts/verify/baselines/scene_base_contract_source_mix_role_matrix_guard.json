@@ -1,11 +1,15 @@
 {
   "roles": [
     "executive",
-    "pm"
+    "pm",
+    "finance",
+    "ops"
   ],
   "state_files": {
     "executive": "artifacts/backend/scene_registry_asset_snapshot_state.executive.json",
-    "pm": "artifacts/backend/scene_registry_asset_snapshot_state.pm.json"
+    "pm": "artifacts/backend/scene_registry_asset_snapshot_state.pm.json",
+    "finance": "artifacts/backend/scene_registry_asset_snapshot_state.finance.json",
+    "ops": "artifacts/backend/scene_registry_asset_snapshot_state.ops.json"
   },
   "role_thresholds": {
     "default": {
@@ -19,6 +23,14 @@
       "max_runtime_minimal_ratio": 0.08
     },
     "pm": {
+      "min_asset_ratio": 0.8,
+      "max_runtime_minimal_ratio": 0.1
+    },
+    "finance": {
+      "min_asset_ratio": 0.8,
+      "max_runtime_minimal_ratio": 0.1
+    },
+    "ops": {
       "min_asset_ratio": 0.8,
       "max_runtime_minimal_ratio": 0.1
     }
