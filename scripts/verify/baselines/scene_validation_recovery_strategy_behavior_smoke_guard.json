@@ -1,0 +1,101 @@
+{
+  "runtime_payload": {
+    "default": {
+      "preferredRecordModels": [
+        "project.project",
+        "project.task",
+        "purchase.order",
+        "account.move"
+      ],
+      "actionPreferredRoleTokens": [
+        "operator",
+        "staff",
+        "clerk"
+      ]
+    },
+    "by_role": {
+      "manager": {
+        "actionPreferredRoleTokens": [
+          "manager"
+        ]
+      }
+    },
+    "by_company": {
+      "2": {
+        "preferredRecordModels": [
+          "custom.asset"
+        ]
+      }
+    },
+    "by_company_role": {
+      "2:manager": {
+        "preferredRecordModels": [
+          "custom.asset",
+          "project.project"
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "open_record_default_model",
+      "runtime_context": {
+        "roleCode": "supervisor",
+        "companyId": 1
+      },
+      "resolve_context": {
+        "modelName": "project.project",
+        "recordId": 42,
+        "actionId": 88,
+        "sceneKey": "projects.list",
+        "roleCode": "supervisor"
+      },
+      "expected": "open_record:project.project:42"
+    },
+    {
+      "name": "open_action_by_role_override",
+      "runtime_context": {
+        "roleCode": "manager",
+        "companyId": 1
+      },
+      "resolve_context": {
+        "modelName": "x.asset",
+        "recordId": 0,
+        "actionId": 99,
+        "sceneKey": "projects.list",
+        "roleCode": "manager"
+      },
+      "expected": "open_action:99"
+    },
+    {
+      "name": "open_scene_fallback",
+      "runtime_context": {
+        "roleCode": "manager",
+        "companyId": 1
+      },
+      "resolve_context": {
+        "modelName": "x.asset",
+        "recordId": 0,
+        "actionId": 0,
+        "sceneKey": "workspace.home",
+        "roleCode": "manager"
+      },
+      "expected": "open_scene:workspace.home"
+    },
+    {
+      "name": "company_role_override_to_record",
+      "runtime_context": {
+        "roleCode": "manager",
+        "companyId": 2
+      },
+      "resolve_context": {
+        "modelName": "custom.asset",
+        "recordId": 7,
+        "actionId": 12,
+        "sceneKey": "assets.board",
+        "roleCode": "manager"
+      },
+      "expected": "open_record:custom.asset:7"
+    }
+  ]
+}

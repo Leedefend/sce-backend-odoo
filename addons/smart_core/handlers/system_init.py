@@ -1,5 +1,6 @@
 # smart_core/handlers/system_init.py
 # -*- coding: utf-8 -*-
+import json
 import logging
 import time
 from typing import List
@@ -40,6 +41,10 @@ from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSu
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
+from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
+from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
+from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
@@ -82,6 +87,140 @@ def _merge_extension_facts(data: dict) -> None:
         for key in ("entitlements", "usage"):
             if key in core_facts and key not in data:
                 data[key] = core_facts.get(key)
+        workspace_collections = core_facts.get("workspace_collections")
+        if isinstance(workspace_collections, dict):
+            for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
+                rows = workspace_collections.get(key)
+                if key not in data and isinstance(rows, list):
+                    data[key] = rows
+        provider_payload = core_facts.get("role_surface_override_provider")
+        if isinstance(provider_payload, dict):
+            provider_key = str(provider_payload.get("key") or "").strip()
+            if provider_key:
+                providers = data.get("role_surface_override_providers")
+                if not isinstance(providers, dict):
+                    providers = {}
+                merged = dict(provider_payload)
+                merged.pop("key", None)
+                providers[provider_key] = merged
+                data["role_surface_override_providers"] = providers
+
+
+def _normalize_scene_validation_recovery_strategy(payload) -> dict:
+    if not isinstance(payload, dict):
+        return {}
+    out = {}
+    for key in ("default", "by_role", "by_company", "by_company_role"):
+        value = payload.get(key)
+        if isinstance(value, dict):
+            out[key] = value
+    return out
+
+
+def _load_scene_validation_recovery_strategy(env, params: dict, data: dict) -> dict:
+    inline = _normalize_scene_validation_recovery_strategy(params.get("scene_validation_recovery_strategy"))
+    if inline:
+        return inline
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    ext_payload = _normalize_scene_validation_recovery_strategy(ext_facts.get("scene_validation_recovery_strategy"))
+    if ext_payload:
+        return ext_payload
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.scene_validation_recovery_strategy_json")
+    except Exception:
+        raw = ""
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(raw)
+    except Exception:
+        return {}
+    return _normalize_scene_validation_recovery_strategy(loaded)
+
+
+def _normalize_scene_action_surface_strategy(payload) -> dict:
+    if not isinstance(payload, dict):
+        return {}
+
+    def _normalize_key_list(value):
+        if not isinstance(value, list):
+            return []
+        out = []
+        seen = set()
+        for item in value:
+            key = str(item or "").strip()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(key)
+        return out
+
+    def _normalize_rule(rule_payload):
+        if not isinstance(rule_payload, dict):
+            return {}
+        normalized = {}
+        for rule_key in ("force_primary_keys", "force_secondary_keys", "force_contextual_keys", "hide_keys"):
+            key_list = _normalize_key_list(rule_payload.get(rule_key))
+            if key_list:
+                normalized[rule_key] = key_list
+        return normalized
+
+    out = {}
+    for key in ("default", "by_role", "by_company", "by_company_role"):
+        value = payload.get(key)
+        if key == "default":
+            normalized_default = _normalize_rule(value)
+            if normalized_default:
+                out[key] = normalized_default
+            continue
+        if not isinstance(value, dict):
+            continue
+        normalized_bucket = {}
+        for scope, scope_rule in value.items():
+            scope_key = str(scope or "").strip()
+            if not scope_key:
+                continue
+            normalized_rule = _normalize_rule(scope_rule)
+            if normalized_rule:
+                normalized_bucket[scope_key] = normalized_rule
+        if normalized_bucket:
+            out[key] = normalized_bucket
+    return out
+
+
+def _load_scene_action_surface_strategy(env, params: dict, data: dict) -> dict:
+    inline = _normalize_scene_action_surface_strategy(params.get("scene_action_surface_strategy"))
+    if inline:
+        return inline
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    ext_payload = _normalize_scene_action_surface_strategy(ext_facts.get("scene_action_surface_strategy"))
+    if ext_payload:
+        return ext_payload
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.scene_action_surface_strategy_json")
+    except Exception:
+        raw = ""
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(raw)
+    except Exception:
+        return {}
+    return _normalize_scene_action_surface_strategy(loaded)
+
+
+def _strip_ui_base_contract_for_frontend(payload):
+    if isinstance(payload, list):
+        return [_strip_ui_base_contract_for_frontend(item) for item in payload]
+    if not isinstance(payload, dict):
+        return payload
+
+    cleaned = {}
+    for key, value in payload.items():
+        if key in {"ui_base_contract", "ui_base_contract_ref"}:
+            continue
+        cleaned[key] = _strip_ui_base_contract_for_frontend(value)
+    return cleaned
 
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
@@ -229,6 +368,8 @@ class SystemInitHandler(BaseIntentHandler):
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
         _merge_extension_facts(data)
+        data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
+        data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
 
         runtime_ctx = SystemInitRuntimeContext(
             env=env,
@@ -300,6 +441,32 @@ class SystemInitHandler(BaseIntentHandler):
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
         nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
+        role_code = ""
+        if isinstance(role_surface, dict):
+            role_code = str(role_surface.get("role_code") or "").strip()
+        bind_result = bind_scene_assets(
+            env,
+            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            role_code=role_code or None,
+            company_id=env.company.id if env.company else None,
+        )
+        nav_contract_input["scenes"] = bind_result.get("scenes") or nav_contract_input.get("scenes") or []
+        if isinstance(data.get("nav_meta"), dict):
+            data["nav_meta"]["ui_base_contract_asset_scene_count"] = int(bind_result.get("asset_scene_count") or 0)
+            data["nav_meta"]["ui_base_contract_bound_scene_count"] = int(bind_result.get("bound_scene_count") or 0)
+            data["nav_meta"]["ui_base_contract_missing_scene_count"] = int(bind_result.get("missing_scene_count") or 0)
+        data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
+            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            role_surface=role_surface if isinstance(role_surface, dict) else {},
+            scene_version=data.get("scene_version"),
+            schema_version=data.get("schema_version"),
+            scene_channel=scene_channel,
+            action_surface_strategy=data.get("scene_action_surface_strategy") if isinstance(data.get("scene_action_surface_strategy"), dict) else {},
+            runtime_context={
+                "role_code": role_code,
+                "company_id": env.company.id if env.company else None,
+            },
+        )
         scene_nav_contract = build_scene_nav_contract(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
             data["nav_legacy"] = data.get("nav") or []
@@ -308,9 +475,19 @@ class SystemInitHandler(BaseIntentHandler):
             data["default_route"] = scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
             if isinstance(data.get("nav_meta"), dict):
                 data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
+                data["nav_meta"]["scene_ready_contract_v1"] = True
                 contract_meta = scene_nav_contract.get("meta")
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
+
+        data["scene_governance_v1"] = build_scene_governance_payload_v1(
+            data=data,
+            scene_diagnostics=scene_diagnostics,
+            delivery_meta=delivery_result.get("meta") if isinstance(delivery_result, dict) else {},
+            nav_contract_meta=scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
+            asset_queue_metrics=get_queue_metrics(env),
+        )
+        data = _strip_ui_base_contract_for_frontend(data)
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 

@@ -1,0 +1,75 @@
+{
+  "priority_order": [
+    "default",
+    "by_company",
+    "by_role",
+    "by_company_role"
+  ],
+  "runtime_context": {
+    "role_code": "manager",
+    "company_id": 2
+  },
+  "strategy": {
+    "default": {
+      "force_primary_keys": [
+        "same_key"
+      ],
+      "force_secondary_keys": [
+        "same_secondary"
+      ],
+      "hide_keys": [
+        "hide_me"
+      ]
+    },
+    "by_company": {
+      "2": {
+        "force_secondary_keys": [
+          "same_key"
+        ],
+        "force_primary_keys": [
+          "same_secondary"
+        ],
+        "hide_keys": [
+          "company_hide"
+        ]
+      }
+    },
+    "by_role": {
+      "manager": {
+        "force_contextual_keys": [
+          "same_key"
+        ],
+        "force_secondary_keys": [
+          "same_secondary"
+        ],
+        "hide_keys": [
+          "role_hide"
+        ]
+      }
+    },
+    "by_company_role": {
+      "2:manager": {
+        "force_primary_keys": [
+          "same_key"
+        ],
+        "force_contextual_keys": [
+          "same_secondary"
+        ],
+        "hide_keys": [
+          "hide_me",
+          "company_hide",
+          "role_hide"
+        ]
+      }
+    }
+  },
+  "expected": {
+    "same_key": "primary",
+    "same_secondary": "contextual",
+    "hide_absent": [
+      "hide_me",
+      "company_hide",
+      "role_hide"
+    ]
+  }
+}

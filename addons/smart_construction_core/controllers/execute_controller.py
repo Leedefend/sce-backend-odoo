@@ -44,7 +44,12 @@ def _merge_payload(params):
 
 
 def _is_method_allowed(model, method):
-    payload = {"op": "model", "model": model, "view_type": "form"}
+    payload = {
+        "op": "model",
+        "model": model,
+        "view_type": "form",
+        "source_mode": "execute_guard",
+    }
     handler = UiContractHandler(request.env, request=request, payload=payload)
     res = handler.handle(payload=payload)
     if not isinstance(res, dict) or res.get("ok") is False:

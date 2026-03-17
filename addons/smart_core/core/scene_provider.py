@@ -3,14 +3,17 @@ from __future__ import annotations
 
 import json
 import os
+from urllib.parse import parse_qs, urlparse
 from typing import Callable
 
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
 CRITICAL_SCENE_TARGET_OVERRIDES = {
     "projects.list",
+    "projects.detail",
     "projects.intake",
     "projects.ledger",
+    "projects.execution",
     "projects.dashboard",
     "project.management",
     "my_work.workspace",
@@ -124,6 +127,106 @@ def load_scene_contract(env, scene_channel: str, use_pinned: bool, *, logger=Non
 
 
 def merge_missing_scenes_from_registry(env, scenes, warnings):
+    def _capability_target_map() -> dict[str, dict]:
+        out: dict[str, dict] = {}
+        try:
+            caps = env["sc.capability"].sudo().search([("active", "=", True)], order="sequence,id")
+        except Exception:
+            return out
+        for cap in caps:
+            payload = cap.default_payload or {}
+            if not isinstance(payload, dict):
+                continue
+            action_id = int(payload.get("action_id") or 0)
+            menu_id = int(payload.get("menu_id") or 0)
+            if not action_id:
+                continue
+            scene_key = str(payload.get("scene_key") or "").strip()
+            if not scene_key:
+                route = str(payload.get("route") or "").strip()
+                if route:
+                    try:
+                        parsed = urlparse(route)
+                        query = parse_qs(parsed.query or "")
+                        scene_key = str((query.get("scene") or [""])[0] or "").strip()
+                    except Exception:
+                        scene_key = ""
+            if not scene_key or scene_key in out:
+                continue
+            target = {"action_id": action_id}
+            if menu_id:
+                target["menu_id"] = menu_id
+            out[scene_key] = target
+        return out
+
+    def _ref_id(xmlid: str, model_name: str) -> int:
+        ref = str(xmlid or "").strip()
+        if not ref:
+            return 0
+        try:
+            rec = env.ref(ref, raise_if_not_found=False)
+        except Exception:
+            rec = None
+        if not rec:
+            return 0
+        if model_name and getattr(rec, "_name", "") != model_name:
+            return 0
+        try:
+            return int(rec.id or 0)
+        except Exception:
+            return 0
+
+    def _hydrate_target(target_payload: dict) -> dict:
+        target = dict(target_payload) if isinstance(target_payload, dict) else {}
+        if not target:
+            return target
+
+        action_id = int(target.get("action_id") or 0)
+        menu_id = int(target.get("menu_id") or 0)
+
+        if action_id <= 0:
+            action_id = _ref_id(str(target.get("action_xmlid") or ""), "ir.actions.act_window")
+            if action_id > 0:
+                target["action_id"] = action_id
+
+        if menu_id <= 0:
+            menu_id = _ref_id(str(target.get("menu_xmlid") or ""), "ir.ui.menu")
+            if menu_id > 0:
+                target["menu_id"] = menu_id
+
+        if action_id <= 0 and menu_id > 0:
+            try:
+                menu = env["ir.ui.menu"].sudo().browse(menu_id)
+            except Exception:
+                menu = None
+            if menu and menu.exists() and menu.action and getattr(menu.action, "_name", "") == "ir.actions.act_window":
+                try:
+                    inferred_action_id = int(menu.action.id or 0)
+                except Exception:
+                    inferred_action_id = 0
+                if inferred_action_id > 0:
+                    target["action_id"] = inferred_action_id
+
+        return target
+
+    def _ensure_minimal_route_target(scene_payload: dict, scene_code: str) -> None:
+        if not isinstance(scene_payload, dict):
+            return
+        code = str(scene_code or scene_payload.get("code") or scene_payload.get("key") or "").strip()
+        if not code:
+            return
+        target = scene_payload.get("target") if isinstance(scene_payload.get("target"), dict) else {}
+        hydrated = _hydrate_target(target)
+        has_runtime_target = bool(
+            int(hydrated.get("action_id") or 0)
+            or int(hydrated.get("menu_id") or 0)
+            or str(hydrated.get("model") or "").strip()
+            or str(hydrated.get("route") or "").strip()
+        )
+        if not has_runtime_target:
+            hydrated["route"] = f"/s/{code}"
+        scene_payload["target"] = hydrated
+
     try:
         from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
     except Exception:
@@ -153,6 +256,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         if not code or "__pkg" in code:
             continue
         registry_map.setdefault(code, scene)
+    capability_map = _capability_target_map()
 
     reconciled = []
     for scene in current:
@@ -171,17 +275,33 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
                 reconciled.append(code)
             continue
 
+        if isinstance(scene.get("target"), dict):
+            scene["target"] = _hydrate_target(scene.get("target"))
+        _ensure_minimal_route_target(scene, code)
+
         if code not in CRITICAL_SCENE_TARGET_OVERRIDES:
             continue
         registry_scene = registry_map.get(code) or {}
         registry_target = registry_scene.get("target")
-        if not isinstance(registry_target, dict) or not registry_target:
+        if isinstance(registry_target, dict) and registry_target:
+            current_target = scene.get("target")
+            if current_target != registry_target:
+                scene["target"] = dict(registry_target)
+                reconciled.append(code)
+
+        capability_target = capability_map.get(code)
+        if not isinstance(capability_target, dict) or not capability_target:
             continue
         current_target = scene.get("target")
-        if current_target == registry_target:
+        if not isinstance(current_target, dict):
+            scene["target"] = dict(capability_target)
+            reconciled.append(code)
             continue
-        scene["target"] = dict(registry_target)
-        reconciled.append(code)
+        current_action_id = int(current_target.get("action_id") or 0)
+        capability_action_id = int(capability_target.get("action_id") or 0)
+        if capability_action_id and current_action_id != capability_action_id:
+            scene["target"] = dict(capability_target)
+            reconciled.append(code)
 
     appended = []
     for scene in registry_scenes:
@@ -193,10 +313,20 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         item = dict(scene)
         target = item.get("target")
         if isinstance(target, dict):
-            item["target"] = dict(target)
+            item["target"] = _hydrate_target(target)
+        _ensure_minimal_route_target(item, code)
         current.append(item)
         existing.add(code)
         appended.append(code)
+
+    for scene in current:
+        if not isinstance(scene, dict):
+            continue
+        target = scene.get("target")
+        if isinstance(target, dict):
+            scene["target"] = _hydrate_target(target)
+        code = str(scene.get("code") or scene.get("key") or "").strip()
+        _ensure_minimal_route_target(scene, code)
     if appended and isinstance(warnings, list):
         warnings.append({
             "code": "SCENE_FALLBACK_MERGED",

@@ -2,3 +2,4 @@
 from . import test_action_dispatcher_server_mapping
 from . import test_scene_nav_contract_builder
 from . import test_scene_delivery_policy
+from . import test_scene_runtime_contract_chain

@@ -411,6 +411,7 @@ import {
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
+import { findSceneReadyEntry, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
@@ -716,6 +717,11 @@ const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 const listProfile = computed<SceneListProfile | null>(() => {
   return (scene.value?.list_profile as SceneListProfile) || null;
 });
+const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
+  if (!sceneKey.value) return null;
+  return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
+});
+const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
@@ -1268,7 +1274,9 @@ function isNumericToken(value: unknown): boolean {
   return text.length > 0 && /^\d+$/.test(text);
 }
 const contractFilterChips = computed<ContractFilterChip[]>(() => {
-  const rows = actionContract.value?.search?.filters;
+  const rows = sceneReadyListSurface.value.filters?.length
+    ? sceneReadyListSurface.value.filters
+    : actionContract.value?.search?.filters;
   if (!Array.isArray(rows)) return [];
   return rows
     .map((row) => {
@@ -1325,7 +1333,9 @@ const savedFilterOverflowChips = computed<ContractSavedFilterChip[]>(() =>
   contractSavedFilterChips.value.slice(filterPrimaryBudget.value),
 );
 const contractGroupByChips = computed<ContractGroupByChip[]>(() => {
-  const rows = actionContract.value?.search?.group_by;
+  const rows = sceneReadyListSurface.value.groupBy?.length
+    ? sceneReadyListSurface.value.groupBy
+    : actionContract.value?.search?.group_by;
   if (!Array.isArray(rows)) return [];
   return rows
     .map((row) => {
@@ -1403,15 +1413,20 @@ function toContractActionButton(
 }
 const contractActionButtons = computed<ContractActionButton[]>(() => {
   const contract = actionContract.value;
-  if (!contract) return [];
   const merged: Array<Record<string, unknown>> = [];
-  const contractButtons = Array.isArray(contract.buttons) ? (contract.buttons as Array<Record<string, unknown>>) : [];
-  if (contractButtons.length) {
-    merged.push(...contractButtons);
+  const sceneActions = sceneReadyListSurface.value.actions;
+  if (sceneActions.length) {
+    merged.push(...sceneActions);
   } else {
-    if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
-    if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
-    if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
+    if (!contract) return [];
+    const contractButtons = Array.isArray(contract.buttons) ? (contract.buttons as Array<Record<string, unknown>>) : [];
+    if (contractButtons.length) {
+      merged.push(...contractButtons);
+    } else {
+      if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
+      if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
+      if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
+    }
   }
   const dedup = new Set<string>();
   return merged
@@ -2503,7 +2518,10 @@ function handleBatchDetailAction(actionRaw: string) {
   runSuggestedAction(actionRaw, { onRetry: reload });
 }
 
-function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
+function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>, sceneColumns: string[] = []) {
+  if (Array.isArray(sceneColumns) && sceneColumns.length) {
+    return sceneColumns;
+  }
   const typed = contract as ActionContractLoose;
   const directViews = typed.views || typed.ui_contract?.views;
   if (directViews) {
@@ -3115,7 +3133,7 @@ async function load() {
       const searchOrder = searchDefaults?.order;
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
       const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
-      const order = scene.value?.default_sort || searchOrder || viewOrder || metaOrder;
+      const order = sceneReadyListSurface.value.defaultSort || scene.value?.default_sort || searchOrder || viewOrder || metaOrder;
       if (surfaceKind.value !== 'generic') {
         sortValue.value = resolveDefaultSort(typedContract);
       } else if (typeof order === 'string' && order.trim()) {
@@ -3185,7 +3203,10 @@ async function load() {
       });
       return;
     }
-    const contractColumns = convergeColumnsForSurface(extractColumnsFromContract(contract), typedContract.fields || {});
+    const contractColumns = convergeColumnsForSurface(
+      extractColumnsFromContract(contract, sceneReadyListSurface.value.columns),
+      typedContract.fields || {},
+    );
     const kanbanContractFields = extractKanbanFields(contract);
     const kanbanProfile = extractKanbanProfile(contract);
     const advancedContractFields = extractAdvancedViewFields(contract, viewMode.value);

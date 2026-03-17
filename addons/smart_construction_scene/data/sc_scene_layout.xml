@@ -29,9 +29,86 @@
                 'code': 'projects.intake',
                 'name': '项目立项',
                 'version': 'v2',
+                'page': {
+                    'key': 'projects.intake.form',
+                    'title': '项目立项',
+                    'page_type': 'record',
+                    'page_mode': 'form'
+                },
                 'layout': {'kind': 'record', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'hero',
+                        'title': '立项概览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.intake.hero'
+                    },
+                    {
+                        'key': 'form_main',
+                        'title': '立项信息',
+                        'zone_type': 'primary',
+                        'display_mode': 'form',
+                        'block_key': 'block.projects.intake.form'
+                    },
+                    {
+                        'key': 'checklist',
+                        'title': '提交前检查',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.intake.checklist'
+                    }
+                ],
+                'form_profile': {
+                    'model': 'project.project',
+                    'view_type': 'form',
+                    'mode': 'create_first',
+                    'primary_fields': [
+                        'name',
+                        'partner_id',
+                        'manager_id',
+                        'date_start',
+                        'date_end'
+                    ],
+                    'required_fields': [
+                        'name',
+                        'manager_id'
+                    ],
+                    'submit_action': 'project.initiation.enter'
+                },
+                'action_specs': {
+                    'submit': {
+                        'label': '提交立项',
+                        'intent': 'ui.contract'
+                    },
+                    'save_draft': {
+                        'label': '保存草稿',
+                        'intent': 'api.data'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['submit', 'save_draft'],
+                        'focus_zones': ['form_main', 'checklist']
+                    },
+                    'executive': {
+                        'default_actions': ['submit'],
+                        'focus_zones': ['hero', 'form_main']
+                    }
+                },
+                'data_sources': {
+                    'intake_form': {'source_type': 'odoo_model', 'model': 'project.project'},
+                    'intake_defaults': {'source_type': 'computed', 'provider': 'project.intake.defaults'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'submit',
+                    'stage': 'wave1'
+                },
                 'target': {
-                    'menu_xmlid': 'smart_construction_core.menu_sc_project_initiation'
+                    'route': '/s/projects.intake',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_initiation',
+                    'action_xmlid': 'smart_construction_core.action_project_initiation'
                 }
             }"/>
         </record>
@@ -51,7 +128,72 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'portal.lifecycle.dashboard',
+                    'title': '生命周期驾驶舱',
+                    'page_type': 'dashboard',
+                    'page_mode': 'dashboard'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'lifecycle_overview',
+                        'title': '生命周期总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.lifecycle.overview'
+                    },
+                    {
+                        'key': 'stage_progress',
+                        'title': '阶段推进',
+                        'zone_type': 'primary',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.lifecycle.stage_progress'
+                    },
+                    {
+                        'key': 'blocking_items',
+                        'title': '阻塞项',
+                        'zone_type': 'supporting',
+                        'display_mode': 'list',
+                        'block_key': 'block.portal.lifecycle.blocking_items'
+                    }
+                ],
+                'related_scenes': ['project.management', 'projects.dashboard', 'risk.center'],
+                'action_specs': {
+                    'open_projects_dashboard': {
+                        'label': '查看项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_risk_center': {
+                        'label': '查看风险提醒',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_projects_dashboard', 'open_risk_center'],
+                        'focus_zones': ['stage_progress', 'blocking_items']
+                    },
+                    'executive': {
+                        'default_actions': ['open_projects_dashboard'],
+                        'focus_zones': ['lifecycle_overview', 'stage_progress']
+                    }
+                },
+                'data_sources': {
+                    'lifecycle_progress': {
+                        'source_type': 'computed',
+                        'provider': 'portal.lifecycle.progress'
+                    },
+                    'lifecycle_blockers': {
+                        'source_type': 'computed',
+                        'provider': 'portal.lifecycle.blockers'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_projects_dashboard',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/s/projects.dashboard'
                 }
@@ -73,7 +215,72 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'portal.capability_matrix.main',
+                    'title': '能力矩阵',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'capability_overview',
+                        'title': '能力覆盖总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.capability_matrix.overview'
+                    },
+                    {
+                        'key': 'role_matrix',
+                        'title': '角色能力矩阵',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.portal.capability_matrix.role_matrix'
+                    },
+                    {
+                        'key': 'governance_warnings',
+                        'title': '治理提醒',
+                        'zone_type': 'supporting',
+                        'display_mode': 'list',
+                        'block_key': 'block.portal.capability_matrix.warnings'
+                    }
+                ],
+                'related_scenes': ['project.management', 'portal.dashboard', 'portal.lifecycle'],
+                'action_specs': {
+                    'open_project_management': {
+                        'label': '进入项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_portal_dashboard': {
+                        'label': '查看工作台',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_project_management', 'open_portal_dashboard'],
+                        'focus_zones': ['role_matrix', 'governance_warnings']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_management'],
+                        'focus_zones': ['capability_overview', 'role_matrix']
+                    }
+                },
+                'data_sources': {
+                    'capability_matrix_summary': {
+                        'source_type': 'computed',
+                        'provider': 'portal.capability_matrix.summary'
+                    },
+                    'capability_matrix_warnings': {
+                        'source_type': 'computed',
+                        'provider': 'portal.capability_matrix.warnings'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_project_management',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/s/project.management'
                 }
@@ -95,7 +302,72 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'portal.dashboard.workspace',
+                    'title': '工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'overview',
+                        'title': '运营总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.dashboard.overview'
+                    },
+                    {
+                        'key': 'focus_actions',
+                        'title': '重点动作',
+                        'zone_type': 'primary',
+                        'display_mode': 'grid',
+                        'block_key': 'block.portal.dashboard.focus_actions'
+                    },
+                    {
+                        'key': 'alerts',
+                        'title': '风险提醒',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.portal.dashboard.alerts'
+                    }
+                ],
+                'related_scenes': ['project.management', 'projects.list', 'risk.center'],
+                'action_specs': {
+                    'open_project_management': {
+                        'label': '进入项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_projects_list': {
+                        'label': '查看项目列表',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_project_management', 'open_projects_list'],
+                        'focus_zones': ['focus_actions', 'alerts']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_management'],
+                        'focus_zones': ['overview', 'focus_actions']
+                    }
+                },
+                'data_sources': {
+                    'portal_dashboard_summary': {
+                        'source_type': 'computed',
+                        'provider': 'portal.dashboard.summary'
+                    },
+                    'portal_dashboard_alerts': {
+                        'source_type': 'computed',
+                        'provider': 'portal.dashboard.alerts'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_project_management',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/'
                 }
@@ -117,7 +389,72 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'my_work.workspace.main',
+                    'title': '我的工作',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'todo',
+                        'title': '待办事项',
+                        'zone_type': 'primary',
+                        'display_mode': 'list',
+                        'block_key': 'block.my_work.todo'
+                    },
+                    {
+                        'key': 'recent_actions',
+                        'title': '最近操作',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.my_work.recent_actions'
+                    },
+                    {
+                        'key': 'quick_entry',
+                        'title': '快捷入口',
+                        'zone_type': 'hero',
+                        'display_mode': 'grid',
+                        'block_key': 'block.my_work.quick_entry'
+                    }
+                ],
+                'related_scenes': ['projects.list', 'projects.ledger', 'task.center'],
+                'action_specs': {
+                    'open_projects_list': {
+                        'label': '查看项目列表',
+                        'intent': 'ui.contract'
+                    },
+                    'open_task_center': {
+                        'label': '进入任务中心',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_task_center', 'open_projects_list'],
+                        'focus_zones': ['todo', 'recent_actions']
+                    },
+                    'executive': {
+                        'default_actions': ['open_projects_list'],
+                        'focus_zones': ['quick_entry', 'todo']
+                    }
+                },
+                'data_sources': {
+                    'my_work_todo': {
+                        'source_type': 'computed',
+                        'provider': 'my_work.workspace.todo'
+                    },
+                    'my_work_recent_actions': {
+                        'source_type': 'computed',
+                        'provider': 'my_work.workspace.recent_actions'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_task_center',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/s/my_work.workspace'
                 }
@@ -126,6 +463,103 @@
 
         <record id="sc_scene_my_work_workspace" model="sc.scene">
             <field name="active_version_id" ref="sc_scene_version_my_work_workspace_v2"/>
+        </record>
+
+        <!-- Contract center scene -->
+        <record id="sc_scene_version_contract_center_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_contract_center"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'contract.center',
+                'name': '合同中心',
+                'version': 'v2',
+                'page': {
+                    'key': 'contract.center.main',
+                    'title': '合同中心',
+                    'page_type': 'list',
+                    'page_mode': 'table'
+                },
+                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'toolbar',
+                        'title': '合同快捷入口',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.contract.center.toolbar'
+                    },
+                    {
+                        'key': 'contract_list',
+                        'title': '合同清单',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.contract.center.list'
+                    },
+                    {
+                        'key': 'contract_risk',
+                        'title': '履约风险',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.contract.center.risk'
+                    }
+                ],
+                'target': {
+                    'route': '/s/contract.center',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_contract_center',
+                    'action_xmlid': 'smart_construction_core.action_construction_contract_my'
+                },
+                'list_profile': {
+                    'model': 'construction.contract',
+                    'view_type': 'list',
+                    'columns': ['name', 'contract_type', 'state', 'project_id', 'amount_total', 'sign_date'],
+                    'column_labels': {
+                        'name': '合同名称',
+                        'contract_type': '合同类型',
+                        'state': '状态',
+                        'project_id': '项目',
+                        'amount_total': '合同金额',
+                        'sign_date': '签订日期'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'project_id'
+                },
+                'action_specs': {
+                    'open_income': {
+                        'label': '查看收入合同',
+                        'intent': 'ui.contract'
+                    },
+                    'open_expense': {
+                        'label': '查看支出合同',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_income', 'open_expense'],
+                        'focus_zones': ['contract_list', 'contract_risk']
+                    },
+                    'finance': {
+                        'default_actions': ['open_expense'],
+                        'focus_zones': ['toolbar', 'contract_risk']
+                    }
+                },
+                'data_sources': {
+                    'contract_list': {'source_type': 'odoo_model', 'model': 'construction.contract'},
+                    'contract_risk': {'source_type': 'computed', 'provider': 'contract.center.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_income',
+                    'stage': 'wave2'
+                },
+                'related_scenes': ['contracts.workspace', 'cost.cost_compare', 'finance.settlement_orders'],
+                'default_sort': 'write_date desc'
+            }"/>
+        </record>
+
+        <record id="sc_scene_contract_center" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_contract_center_v2"/>
         </record>
 
         <!-- Contracts workspace scene -->
@@ -139,12 +573,71 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'contracts.workspace.main',
+                    'title': '合同管理工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'contract_overview',
+                        'title': '合同概览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.contracts.workspace.overview'
+                    },
+                    {
+                        'key': 'income_expense',
+                        'title': '收支合同执行',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.contracts.workspace.main'
+                    },
+                    {
+                        'key': 'settlement_watch',
+                        'title': '结算与风险',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.contracts.workspace.risk'
+                    }
+                ],
                 'target': {
                     'route': '/s/contracts.workspace',
                     'action_xmlid': 'smart_construction_core.action_construction_contract_my',
                     'menu_xmlid': 'smart_construction_core.menu_sc_contract_center'
-                }
+                },
+                'action_specs': {
+                    'open_contract_center': {
+                        'label': '进入合同中心',
+                        'intent': 'ui.contract'
+                    },
+                    'open_settlement_orders': {
+                        'label': '查看结算单',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_contract_center'],
+                        'focus_zones': ['income_expense', 'settlement_watch']
+                    },
+                    'finance': {
+                        'default_actions': ['open_settlement_orders'],
+                        'focus_zones': ['contract_overview', 'settlement_watch']
+                    }
+                },
+                'data_sources': {
+                    'contracts_workspace': {'source_type': 'odoo_model', 'model': 'construction.contract'},
+                    'contracts_risk': {'source_type': 'computed', 'provider': 'contracts.workspace.risk'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_contract_center',
+                    'stage': 'wave2'
+                },
+                'related_scenes': ['contract.center', 'finance.settlement_orders', 'cost.cost_compare']
             }"/>
         </record>
 
@@ -163,12 +656,71 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'cost.analysis.workspace',
+                    'title': '成本控制工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'overview',
+                        'title': '成本总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.cost.analysis.overview'
+                    },
+                    {
+                        'key': 'cost_metrics',
+                        'title': '指标看板',
+                        'zone_type': 'primary',
+                        'display_mode': 'grid',
+                        'block_key': 'block.cost.analysis.metrics'
+                    },
+                    {
+                        'key': 'variance',
+                        'title': '偏差与预警',
+                        'zone_type': 'secondary',
+                        'display_mode': 'stack',
+                        'block_key': 'block.cost.analysis.variance'
+                    }
+                ],
                 'target': {
                     'route': '/s/cost.analysis',
                     'action_xmlid': 'smart_construction_core.action_project_cost_ledger',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_cost_ledger'
-                }
+                },
+                'action_specs': {
+                    'open_cost_ledger': {
+                        'label': '查看成本台账',
+                        'intent': 'ui.contract'
+                    },
+                    'open_profit_compare': {
+                        'label': '查看盈亏对比',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_cost_ledger'],
+                        'focus_zones': ['cost_metrics', 'variance']
+                    },
+                    'finance': {
+                        'default_actions': ['open_profit_compare'],
+                        'focus_zones': ['overview', 'variance']
+                    }
+                },
+                'data_sources': {
+                    'cost_metrics': {'source_type': 'odoo_model', 'model': 'project.cost.ledger'},
+                    'cost_alerts': {'source_type': 'computed', 'provider': 'cost.analysis.alerts'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_cost_ledger',
+                    'stage': 'wave1'
+                },
+                'related_scenes': ['cost.project_cost_ledger', 'cost.profit_compare', 'contract.center']
             }"/>
         </record>
 
@@ -187,12 +739,71 @@
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
+                'page': {
+                    'key': 'finance.workspace.main',
+                    'title': '资金管理工作台',
+                    'page_type': 'workspace',
+                    'page_mode': 'workspace'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'cash_overview',
+                        'title': '资金概览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.finance.workspace.overview'
+                    },
+                    {
+                        'key': 'payments',
+                        'title': '收付款执行',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.finance.workspace.payments'
+                    },
+                    {
+                        'key': 'exceptions',
+                        'title': '风险与异常',
+                        'zone_type': 'supporting',
+                        'display_mode': 'stack',
+                        'block_key': 'block.finance.workspace.exceptions'
+                    }
+                ],
                 'target': {
                     'route': '/s/finance.workspace',
                     'action_xmlid': 'smart_construction_core.action_sc_tier_review_my_payment_request',
                     'menu_xmlid': 'smart_construction_core.menu_sc_finance_center'
-                }
+                },
+                'action_specs': {
+                    'open_payment_requests': {
+                        'label': '进入付款收款申请',
+                        'intent': 'ui.contract'
+                    },
+                    'open_settlement_orders': {
+                        'label': '进入结算单',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'finance': {
+                        'default_actions': ['open_payment_requests', 'open_settlement_orders'],
+                        'focus_zones': ['payments', 'exceptions']
+                    },
+                    'executive': {
+                        'default_actions': ['open_settlement_orders'],
+                        'focus_zones': ['cash_overview', 'exceptions']
+                    }
+                },
+                'data_sources': {
+                    'payments': {'source_type': 'odoo_model', 'model': 'payment.request'},
+                    'exceptions': {'source_type': 'computed', 'provider': 'finance.workspace.exceptions'}
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_payment_requests',
+                    'stage': 'wave1'
+                },
+                'related_scenes': ['finance.center', 'finance.payment_requests', 'finance.settlement_orders']
             }"/>
         </record>
 
@@ -218,6 +829,29 @@
                     'page_mode': 'workspace'
                 },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'risk_overview',
+                        'title': '风险总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.risk.center.overview'
+                    },
+                    {
+                        'key': 'risk_list',
+                        'title': '风险清单',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.risk.center.list'
+                    },
+                    {
+                        'key': 'risk_blockers',
+                        'title': '高风险阻塞',
+                        'zone_type': 'supporting',
+                        'display_mode': 'list',
+                        'block_key': 'block.risk.center.blockers'
+                    }
+                ],
                 'target': {
                     'route': '/s/risk.center',
                     'action_xmlid': 'smart_construction_core.action_sc_operating_drill_overpay_risk_pr'
@@ -242,6 +876,42 @@
                     'row_primary': 'name',
                     'row_secondary': 'project_id'
                 },
+                'action_specs': {
+                    'open_projects_dashboard': {
+                        'label': '查看项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_finance_center': {
+                        'label': '进入财务中心',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_projects_dashboard'],
+                        'focus_zones': ['risk_list', 'risk_blockers']
+                    },
+                    'finance': {
+                        'default_actions': ['open_finance_center'],
+                        'focus_zones': ['risk_overview', 'risk_blockers']
+                    }
+                },
+                'data_sources': {
+                    'risk_center_list': {
+                        'source_type': 'odoo_model',
+                        'model': 'payment.request'
+                    },
+                    'risk_center_blockers': {
+                        'source_type': 'computed',
+                        'provider': 'risk.center.blockers'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_projects_dashboard',
+                    'stage': 'wave3'
+                },
+                'related_scenes': ['projects.dashboard', 'finance.center', 'finance.payment_requests'],
                 'default_sort': 'write_date desc'
             }"/>
         </record>
@@ -259,7 +929,72 @@
                 'code': 'projects.dashboard',
                 'name': '项目驾驶舱',
                 'version': 'v2',
+                'page': {
+                    'key': 'projects.dashboard.main',
+                    'title': '项目驾驶舱',
+                    'page_type': 'dashboard',
+                    'page_mode': 'dashboard'
+                },
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'dashboard_summary',
+                        'title': '项目概览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.dashboard.summary'
+                    },
+                    {
+                        'key': 'dashboard_progress',
+                        'title': '执行进展',
+                        'zone_type': 'primary',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.dashboard.progress'
+                    },
+                    {
+                        'key': 'dashboard_risk',
+                        'title': '风险关注',
+                        'zone_type': 'supporting',
+                        'display_mode': 'list',
+                        'block_key': 'block.projects.dashboard.risk'
+                    }
+                ],
+                'related_scenes': ['project.management', 'projects.list', 'risk.center'],
+                'action_specs': {
+                    'open_project_management': {
+                        'label': '进入项目管理',
+                        'intent': 'ui.contract'
+                    },
+                    'open_risk_center': {
+                        'label': '查看风险提醒',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_project_management', 'open_risk_center'],
+                        'focus_zones': ['dashboard_progress', 'dashboard_risk']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_management'],
+                        'focus_zones': ['dashboard_summary', 'dashboard_progress']
+                    }
+                },
+                'data_sources': {
+                    'projects_dashboard_summary': {
+                        'source_type': 'computed',
+                        'provider': 'projects.dashboard.summary'
+                    },
+                    'projects_dashboard_risk': {
+                        'source_type': 'computed',
+                        'provider': 'projects.dashboard.risk'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_project_management',
+                    'stage': 'wave3'
+                },
                 'target': {
                     'route': '/pm/dashboard',
                     'action_xmlid': 'smart_construction_core.action_project_dashboard',
@@ -281,8 +1016,67 @@
                 'code': 'projects.dashboard_showcase',
                 'name': '项目驾驶舱（演示）',
                 'version': 'v2',
+                'page': {
+                    'key': 'projects.dashboard_showcase.main',
+                    'title': '项目驾驶舱（演示）',
+                    'page_type': 'dashboard',
+                    'page_mode': 'dashboard'
+                },
                 'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'showcase_overview',
+                        'title': '演示总览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.dashboard_showcase.overview'
+                    },
+                    {
+                        'key': 'showcase_metrics',
+                        'title': '演示指标',
+                        'zone_type': 'primary',
+                        'display_mode': 'grid',
+                        'block_key': 'block.projects.dashboard_showcase.metrics'
+                    }
+                ],
+                'related_scenes': ['projects.dashboard', 'project.management'],
+                'action_specs': {
+                    'open_projects_dashboard': {
+                        'label': '查看项目驾驶舱',
+                        'intent': 'ui.contract'
+                    },
+                    'open_project_management': {
+                        'label': '进入项目管理',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_projects_dashboard'],
+                        'focus_zones': ['showcase_metrics', 'showcase_overview']
+                    },
+                    'executive': {
+                        'default_actions': ['open_project_management'],
+                        'focus_zones': ['showcase_overview', 'showcase_metrics']
+                    }
+                },
+                'data_sources': {
+                    'showcase_metrics': {
+                        'source_type': 'computed',
+                        'provider': 'projects.dashboard_showcase.metrics'
+                    },
+                    'showcase_overview': {
+                        'source_type': 'computed',
+                        'provider': 'projects.dashboard_showcase.overview'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_projects_dashboard',
+                    'stage': 'wave3'
+                },
                 'target': {
+                    'route': '/s/projects.dashboard_showcase',
                     'action_xmlid': 'smart_construction_demo.action_project_dashboard_showcase',
                     'menu_xmlid': 'smart_construction_demo.menu_sc_project_dashboard_showcase'
                 }
@@ -302,8 +1096,67 @@
                 'code': 'data.dictionary',
                 'name': '业务字典',
                 'version': 'v2',
+                'page': {
+                    'key': 'data.dictionary.main',
+                    'title': '业务字典',
+                    'page_type': 'list',
+                    'page_mode': 'table'
+                },
                 'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'dictionary_toolbar',
+                        'title': '字典入口',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.data.dictionary.toolbar'
+                    },
+                    {
+                        'key': 'dictionary_table',
+                        'title': '字典清单',
+                        'zone_type': 'primary',
+                        'display_mode': 'table',
+                        'block_key': 'block.data.dictionary.table'
+                    }
+                ],
+                'related_scenes': ['config.project_cost_code', 'projects.list'],
+                'action_specs': {
+                    'open_projects_list': {
+                        'label': '查看项目列表',
+                        'intent': 'ui.contract'
+                    },
+                    'open_config_cost_code': {
+                        'label': '进入成本科目',
+                        'intent': 'ui.contract'
+                    }
+                },
+                'role_variants': {
+                    'pm': {
+                        'default_actions': ['open_projects_list'],
+                        'focus_zones': ['dictionary_table', 'dictionary_toolbar']
+                    },
+                    'executive': {
+                        'default_actions': ['open_config_cost_code'],
+                        'focus_zones': ['dictionary_toolbar', 'dictionary_table']
+                    }
+                },
+                'data_sources': {
+                    'dictionary_entries': {
+                        'source_type': 'odoo_model',
+                        'model': 'project.dictionary'
+                    },
+                    'dictionary_summary': {
+                        'source_type': 'computed',
+                        'provider': 'data.dictionary.summary'
+                    }
+                },
+                'product_policy': {
+                    'role_based': True,
+                    'primary_action': 'open_projects_list',
+                    'stage': 'wave3'
+                },
                 'target': {
+                    'route': '/s/data.dictionary',
                     'action_xmlid': 'smart_construction_core.action_project_dictionary',
                     'menu_xmlid': 'smart_construction_core.menu_sc_dictionary'
                 }

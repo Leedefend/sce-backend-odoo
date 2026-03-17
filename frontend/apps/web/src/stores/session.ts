@@ -3,9 +3,10 @@ import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schem
 import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
 import { config } from '../config';
-import { getSceneByKey, setSceneRegistry } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 
 export interface RoleSurface {
   role_code: string;
@@ -44,6 +45,11 @@ export interface CapabilityRuntimeMeta {
   reason_code: string;
   group_key: string;
   group_label: string;
+}
+
+export interface SceneActionHint {
+  actionId: number;
+  menuId?: number;
 }
 
 export interface ProductFacts {
@@ -166,6 +172,33 @@ export interface PageContract {
   actions?: Record<string, unknown>;
 }
 
+export interface SceneReadyContract {
+  contract_version?: string;
+  schema_version?: string;
+  scene_version?: string;
+  source_schema_version?: string;
+  scene_channel?: string;
+  active_scene_key?: string;
+  scenes?: Array<Record<string, unknown>>;
+  meta?: Record<string, unknown>;
+}
+
+export interface SceneGovernancePayload {
+  contract_version?: string;
+  scene_channel?: string;
+  scene_contract_ref?: string;
+  runtime_source?: string;
+  governance?: Record<string, unknown>;
+  auto_degrade?: Record<string, unknown>;
+  delivery_policy?: Record<string, unknown>;
+  nav_policy?: Record<string, unknown>;
+  role_surface_provider?: Record<string, unknown>;
+  scene_ready_consumption?: Record<string, unknown>;
+  diagnostics?: Record<string, unknown>;
+  gates?: Record<string, unknown>;
+  reasons?: Record<string, unknown>;
+}
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -178,10 +211,13 @@ export interface SessionState {
   roleSurface: RoleSurface | null;
   roleSurfaceMap: RoleSurfaceMap;
   capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
+  sceneActionHints: Record<string, SceneActionHint>;
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
   workspaceHome: WorkspaceHomeContract | null;
   pageContracts: Record<string, PageContract>;
+  sceneReadyContractV1: SceneReadyContract | null;
+  sceneGovernanceV1: SceneGovernancePayload | null;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -198,6 +234,19 @@ const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
 
+function resolveUserCompanyId(user: unknown): number | null {
+  if (!user || typeof user !== 'object') return null;
+  const row = user as Record<string, unknown>;
+  const direct = Number(row.company_id || 0);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const company = row.company;
+  if (company && typeof company === 'object') {
+    const nested = Number((company as Record<string, unknown>).id || 0);
+    if (Number.isFinite(nested) && nested > 0) return nested;
+  }
+  return null;
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -211,6 +260,7 @@ export const useSessionStore = defineStore('session', {
     roleSurface: null,
     roleSurfaceMap: {},
     capabilityCatalog: {},
+    sceneActionHints: {},
     capabilityGroups: [],
     productFacts: {
       license: null,
@@ -218,6 +268,8 @@ export const useSessionStore = defineStore('session', {
     },
     workspaceHome: null,
     pageContracts: {},
+    sceneReadyContractV1: null,
+    sceneGovernanceV1: null,
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -250,11 +302,16 @@ export const useSessionStore = defineStore('session', {
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
+          this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           this.workspaceHome = parsed.workspaceHome ?? null;
           this.pageContracts = parsed.pageContracts ?? {};
-          if (this.scenes.length) {
+          this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
+          this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
+          if (this.sceneReadyContractV1?.scenes?.length) {
+            setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
+          } else if (this.scenes.length) {
             setSceneRegistry(this.scenes);
           }
           this.lastTraceId = parsed.lastTraceId ?? '';
@@ -289,10 +346,13 @@ export const useSessionStore = defineStore('session', {
       this.roleSurface = null;
       this.roleSurfaceMap = {};
       this.capabilityCatalog = {};
+      this.sceneActionHints = {};
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
       this.workspaceHome = null;
       this.pageContracts = {};
+      this.sceneReadyContractV1 = null;
+      this.sceneGovernanceV1 = null;
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -343,10 +403,13 @@ export const useSessionStore = defineStore('session', {
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
         capabilityCatalog: this.capabilityCatalog,
+        sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
         workspaceHome: this.workspaceHome,
         pageContracts: this.pageContracts,
+        sceneReadyContractV1: this.sceneReadyContractV1,
+        sceneGovernanceV1: this.sceneGovernanceV1,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -496,6 +559,39 @@ export const useSessionStore = defineStore('session', {
         };
         return acc;
       }, {});
+      this.sceneActionHints = rawCapabilities.reduce<Record<string, SceneActionHint>>((acc, item) => {
+        if (!item || typeof item === 'string') {
+          return acc;
+        }
+        const capability = item as Record<string, unknown>;
+        const rawPayload = capability.default_payload;
+        const payload = (rawPayload && typeof rawPayload === 'object')
+          ? (rawPayload as Record<string, unknown>)
+          : {};
+        const actionId = Number(payload.action_id || 0);
+        const menuId = Number(payload.menu_id || 0) || undefined;
+        if (actionId <= 0) {
+          return acc;
+        }
+        const payloadSceneKey = String(payload.scene_key || '').trim();
+        const payloadRoute = String(payload.route || '').trim();
+        let sceneKey = payloadSceneKey;
+        if (!sceneKey && payloadRoute) {
+          try {
+            const routeUrl = new URL(payloadRoute, 'http://localhost');
+            sceneKey = String(routeUrl.searchParams.get('scene') || '').trim();
+          } catch {
+            sceneKey = '';
+          }
+        }
+        if (!sceneKey) {
+          return acc;
+        }
+        if (!acc[sceneKey]) {
+          acc[sceneKey] = { actionId, menuId };
+        }
+        return acc;
+      }, {});
       this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
       this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
       const roleSurfaceRaw = (result as AppInitResponse & { role_surface?: Partial<RoleSurface> }).role_surface ?? {};
@@ -509,6 +605,22 @@ export const useSessionStore = defineStore('session', {
         scene_candidates: Array.isArray(roleSurfaceRaw.scene_candidates) ? roleSurfaceRaw.scene_candidates.map((item) => String(item || '')).filter(Boolean) : [],
         menu_xmlids: Array.isArray(roleSurfaceRaw.menu_xmlids) ? roleSurfaceRaw.menu_xmlids.map((item) => String(item || '')).filter(Boolean) : [],
       };
+      setSceneValidationRecoveryStrategy();
+      const validationStrategyRaw = (result as AppInitResponse & { scene_validation_recovery_strategy?: unknown }).scene_validation_recovery_strategy;
+      const extFactsRaw = (result as AppInitResponse & { ext_facts?: Record<string, unknown> }).ext_facts ?? {};
+      const extValidationStrategyRaw = extFactsRaw.scene_validation_recovery_strategy;
+      const validationStrategy = (validationStrategyRaw && typeof validationStrategyRaw === 'object' && !Array.isArray(validationStrategyRaw))
+        ? validationStrategyRaw
+        : ((extValidationStrategyRaw && typeof extValidationStrategyRaw === 'object' && !Array.isArray(extValidationStrategyRaw))
+          ? extValidationStrategyRaw
+          : undefined);
+      applySceneValidationRecoveryStrategyRuntime(
+        validationStrategy as Record<string, unknown> | undefined,
+        {
+          roleCode: this.roleSurface.role_code,
+          companyId: resolveUserCompanyId(this.user),
+        },
+      );
       this.roleSurfaceMap = ((result as AppInitResponse & { role_surface_map?: RoleSurfaceMap }).role_surface_map ?? {});
       const rawCapabilityGroups = (result as AppInitResponse & { capability_groups?: unknown[] }).capability_groups ?? [];
       this.capabilityGroups = rawCapabilityGroups
@@ -562,7 +674,13 @@ export const useSessionStore = defineStore('session', {
       };
       this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
       this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});
-      setSceneRegistry(this.scenes);
+      this.sceneReadyContractV1 = ((result as AppInitResponse & { scene_ready_contract_v1?: SceneReadyContract }).scene_ready_contract_v1 ?? null);
+      this.sceneGovernanceV1 = ((result as AppInitResponse & { scene_governance_v1?: SceneGovernancePayload }).scene_governance_v1 ?? null);
+      if (this.sceneReadyContractV1?.scenes?.length) {
+        setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
+      } else {
+        setSceneRegistry(this.scenes);
+      }
       this.initMeta = {
         ...(result.meta ?? {}),
         nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,

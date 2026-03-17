@@ -363,6 +363,8 @@ help:
 	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
+	@echo "  make verify.scene.delivery.readiness.role_matrix   # 推荐：日常默认一键验收（pm/executive 证据 + 严格链路）"
+	@echo "  make verify.scene.delivery.readiness"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
 	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
 	@echo "  make verify.scene.contract_path.gate"
@@ -378,7 +380,7 @@ help:
 	@echo "  make policy.apply.role_matrix DB=<name> | smoke.role_matrix DB=<name>"
 	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.load.full | demo.verify"
 	@echo "  make test | test.safe"
-	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
+	@echo "  make ci.scene.delivery.readiness | ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs"
 	@echo "  make diag.compose | verify.ops"
 	@echo
@@ -975,6 +977,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
+	@$(MAKE) --no-print-directory gate.scene.r3.runtime.strict
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
 	  $(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.menu.scene_resolve.summary; \
@@ -1213,6 +1216,65 @@ verify.frontend.onchange_contract_schema.guard: guard.prod.forbid
 
 verify.frontend.onchange_line_patch.guard: guard.prod.forbid
 	@python3 scripts/verify/onchange_line_patch_guard.py
+
+.PHONY: verify.scene.maturity.guard
+verify.scene.maturity.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_maturity_guard.py
+
+.PHONY: verify.scene.coverage.dashboard
+verify.scene.coverage.dashboard: guard.prod.forbid
+	@python3 scripts/verify/scene_coverage_dashboard_report.py
+
+.PHONY: verify.scene.inventory.freeze.guard
+verify.scene.inventory.freeze.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_inventory_freeze_guard.py
+
+.PHONY: verify.scene.role.policy.consistency.guard
+verify.scene.role.policy.consistency.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_role_policy_consistency_guard.py
+
+.PHONY: verify.scene.data_source.schema.guard
+verify.scene.data_source.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_data_source_schema_guard.py
+
+.PHONY: verify.scene.r3.runtime.guard
+verify.scene.r3.runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_r3_runtime_guard.py
+
+.PHONY: verify.scene.r3.runtime.strict
+verify.scene.r3.runtime.strict: guard.prod.forbid
+	@python3 scripts/verify/scene_r3_runtime_guard.py \
+		--max-action-chain-fail-count 0 \
+		--min-pass-rate 1.0 \
+		--min-action-chain-success-rate 0.50 \
+		--max-action-chain-fallback-rate 0.50 \
+		--fail-on-warning
+
+.PHONY: gate.scene.r3.runtime.strict
+gate.scene.r3.runtime.strict: verify.scene.r3.runtime.strict
+	@echo "[gate.scene.r3.runtime.strict] PASS"
+
+.PHONY: verify.scene.r3.runtime.quick
+verify.scene.r3.runtime.quick: guard.prod.forbid gate.scene.r3.runtime.strict
+	@echo "[verify.scene.r3.runtime.quick] summary"
+	@sed -n '/^## Summary/,/^## Gate Thresholds/p' docs/ops/audit/scene_r3_runtime_dashboard.md | sed '$$d'
+	@sed -n '/^## Gate Result/,/^## Checks/p' docs/ops/audit/scene_r3_runtime_dashboard.md | sed '$$d'
+
+.PHONY: verify.scene.role.surface.consistency.guard
+verify.scene.role.surface.consistency.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_role_surface_consistency_guard.py
+
+.PHONY: verify.scene.inventory.draft.diff.report
+verify.scene.inventory.draft.diff.report: guard.prod.forbid
+	@python3 scripts/verify/scene_inventory_draft_diff_report.py
+
+.PHONY: verify.scene.r1_r2.upgrade.queue.report
+verify.scene.r1_r2.upgrade.queue.report: guard.prod.forbid
+	@python3 scripts/verify/scene_r1_r2_upgrade_queue_report.py
+
+.PHONY: verify.scene.r2_r3.upgrade.queue.report
+verify.scene.r2_r3.upgrade.queue.report: guard.prod.forbid
+	@python3 scripts/verify/scene_r2_r3_upgrade_queue_report.py
 
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
@@ -1915,12 +1977,190 @@ verify.contract.envelope.guard: guard.prod.forbid
 verify.contract.envelope: guard.prod.forbid verify.contract.envelope.guard verify.contract.mode.smoke verify.contract.api.mode.smoke verify.scene_capability.contract.guard
 	@echo "[OK] verify.contract.envelope done"
 
-verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard
+verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.frontend.no_base_contract_direct_consume.guard verify.frontend.scene_governance_consumption.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard verify.scene.asset_queue_trend.guard verify.scene.ready.consumption_trend.guard verify.scene.governance_history_report.guard verify.scene.governance_history_archive.guard verify.scene.registry_asset_snapshot.guard verify.scene.base_contract_source_mix.guard verify.scene.sample_registry_diff.guard verify.scene.sample_registry_diff_trend.guard verify.scene.base_contract_asset_coverage.guard verify.scene.orchestrator.input.schema.guard verify.scene.orchestrator.output.schema.guard verify.scene.orchestrator.base_fact_binding.guard verify.scene.orchestrator.industry_interface.guard verify.scene.orchestrator.merge_priority.guard verify.scene.orchestrator.scene_type_surface.guard verify.scene.orchestrator.action_surface.guard verify.scene.orchestrator.key_scene_compile.guard verify.scene.action_surface_strategy.wiring.guard verify.scene.action_surface_strategy.schema.guard verify.scene.action_surface_strategy.payload.guard verify.scene.action_surface_strategy.priority.guard verify.scene.action_surface_strategy.live_matrix.guard verify.scene.ready.scene_type_consumption_metrics.guard verify.scene.validation_recovery_strategy.guard verify.scene.validation_recovery_strategy.payload_path.guard verify.scene.validation_recovery_strategy.e2e_smoke.guard verify.scene.ui_base_contract_canonicalizer.guard
 	@echo "[OK] verify.scene.runtime_boundary.gate done"
+
+.PHONY: verify.scene.product_delivery.readiness.guard
+verify.scene.product_delivery.readiness.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_product_delivery_readiness_guard.py
+
+.PHONY: verify.scene.delivery.readiness
+verify.scene.delivery.readiness: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1 \
+	SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1 \
+	SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1 \
+	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1 \
+	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1 \
+	$(MAKE) --no-print-directory verify.scene.runtime_boundary.gate
+	@$(MAKE) --no-print-directory verify.scene.product_delivery.readiness.guard
+	@echo "[OK] verify.scene.delivery.readiness done"
+
+.PHONY: verify.scene.delivery.readiness.role_matrix
+verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.role_matrix.guard
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness
+	@echo "[OK] verify.scene.delivery.readiness.role_matrix done"
 
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_input_boundary_guard.py
+
+.PHONY: verify.scene.governance_payload.guard
+verify.scene.governance_payload.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_governance_payload_guard.py
+
+.PHONY: verify.scene.asset_queue_trend.guard
+verify.scene.asset_queue_trend.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_asset_queue_trend_guard.py
+
+.PHONY: verify.scene.orchestrator.input.schema.guard
+verify.scene.orchestrator.input.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_input_schema_guard.py
+
+.PHONY: verify.scene.orchestrator.output.schema.guard
+verify.scene.orchestrator.output.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_output_schema_guard.py
+
+.PHONY: verify.scene.orchestrator.base_fact_binding.guard
+verify.scene.orchestrator.base_fact_binding.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_base_fact_binding_guard.py
+
+.PHONY: verify.scene.orchestrator.industry_interface.guard
+verify.scene.orchestrator.industry_interface.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_industry_interface_guard.py
+
+.PHONY: verify.scene.orchestrator.merge_priority.guard
+verify.scene.orchestrator.merge_priority.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_merge_priority_guard.py
+
+.PHONY: verify.scene.orchestrator.scene_type_surface.guard
+verify.scene.orchestrator.scene_type_surface.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_scene_type_surface_guard.py
+
+.PHONY: verify.scene.orchestrator.action_surface.guard
+verify.scene.orchestrator.action_surface.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_action_surface_guard.py
+
+.PHONY: verify.scene.orchestrator.key_scene_compile.guard
+verify.scene.orchestrator.key_scene_compile.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_orchestrator_key_scene_compile_guard.py
+
+.PHONY: verify.scene.action_surface_strategy.wiring.guard
+verify.scene.action_surface_strategy.wiring.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_action_surface_strategy_wiring_guard.py
+
+.PHONY: verify.scene.action_surface_strategy.schema.guard
+verify.scene.action_surface_strategy.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_action_surface_strategy_schema_guard.py
+
+.PHONY: verify.scene.action_surface_strategy.payload.guard
+verify.scene.action_surface_strategy.payload.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_action_surface_strategy_payload_guard.py
+
+.PHONY: verify.scene.action_surface_strategy.priority.guard
+verify.scene.action_surface_strategy.priority.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_action_surface_strategy_priority_guard.py
+
+.PHONY: verify.scene.action_surface_strategy.live_matrix.guard
+verify.scene.action_surface_strategy.live_matrix.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_action_surface_strategy_live_matrix_guard.py
+
+.PHONY: verify.scene.ready.scene_type_consumption_metrics.guard
+verify.scene.ready.scene_type_consumption_metrics.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_ready_scene_type_consumption_metrics_guard.py
+
+.PHONY: verify.scene.ready.consumption_trend.guard
+verify.scene.ready.consumption_trend.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_ready_consumption_trend_guard.py
+
+.PHONY: verify.scene.governance_history_report.guard
+verify.scene.governance_history_report.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_governance_history_report_guard.py
+
+.PHONY: verify.scene.governance_history_archive.guard
+verify.scene.governance_history_archive.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_governance_history_archive_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.guard
+verify.scene.registry_asset_snapshot.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.base_contract_source_mix.guard
+verify.scene.base_contract_source_mix.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_base_contract_source_mix_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.executive
+verify.scene.registry_asset_snapshot.executive: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.executive.json \
+	E2E_LOGIN=$${ROLE_EXECUTIVE_LOGIN:-demo_role_executive} \
+	E2E_PASSWORD=$${ROLE_EXECUTIVE_PASSWORD:-demo} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.pm
+verify.scene.registry_asset_snapshot.pm: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.pm.json \
+	E2E_LOGIN=$${ROLE_PM_LOGIN:-demo_role_pm} \
+	E2E_PASSWORD=$${ROLE_PM_PASSWORD:-demo} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.finance
+verify.scene.registry_asset_snapshot.finance: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.finance.json \
+	E2E_LOGIN=$${ROLE_FINANCE_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	E2E_PASSWORD=$${ROLE_FINANCE_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.ops
+verify.scene.registry_asset_snapshot.ops: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.ops.json \
+	E2E_LOGIN=$${ROLE_OPS_LOGIN:-$${ROLE_EXECUTIVE_LOGIN:-demo_role_executive}} \
+	E2E_PASSWORD=$${ROLE_OPS_PASSWORD:-$${ROLE_EXECUTIVE_PASSWORD:-demo}} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.base_contract_source_mix.role_matrix.guard
+verify.scene.base_contract_source_mix.role_matrix.guard: guard.prod.forbid verify.scene.registry_asset_snapshot.executive verify.scene.registry_asset_snapshot.pm verify.scene.registry_asset_snapshot.finance verify.scene.registry_asset_snapshot.ops
+	@python3 scripts/verify/scene_base_contract_source_mix_role_matrix_guard.py
+
+.PHONY: verify.scene.sample_registry_diff.guard
+verify.scene.sample_registry_diff.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_sample_registry_diff_guard.py
+
+.PHONY: verify.scene.sample_registry_diff_trend.guard
+verify.scene.sample_registry_diff_trend.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_sample_registry_diff_trend_guard.py
+
+.PHONY: verify.scene.validation_recovery_strategy.guard
+verify.scene.validation_recovery_strategy.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_validation_recovery_strategy_guard.py
+
+.PHONY: verify.scene.validation_recovery_strategy.payload_path.guard
+verify.scene.validation_recovery_strategy.payload_path.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_validation_recovery_strategy_payload_path_guard.py
+
+.PHONY: verify.scene.validation_recovery_strategy.e2e_smoke.guard
+verify.scene.validation_recovery_strategy.e2e_smoke.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_validation_recovery_strategy_e2e_smoke_guard.py
+
+.PHONY: verify.scene.ui_base_contract_canonicalizer.guard
+verify.scene.ui_base_contract_canonicalizer.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_ui_base_contract_canonicalizer_guard.py
+
+.PHONY: verify.frontend.no_base_contract_direct_consume.guard
+verify.frontend.no_base_contract_direct_consume.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_no_base_contract_direct_consume_guard.py
+
+.PHONY: verify.frontend.scene_governance_consumption.guard
+verify.frontend.scene_governance_consumption.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_scene_governance_consumption_guard.py
+
+.PHONY: verify.scene.base_contract_asset_coverage.guard
+verify.scene.base_contract_asset_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_base_contract_asset_coverage_guard.py
 
 verify.scene.contract_path.gate: guard.prod.forbid verify.scene.runtime_boundary.gate verify.scene.legacy.bundle
 	@echo "[OK] verify.scene.contract_path.gate done"
@@ -2665,7 +2905,7 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 # ======================================================
 # ==================== CI ==============================
 # ======================================================
-.PHONY: ci.preflight.contract ci.gate ci.smoke ci.full ci.repro \
+.PHONY: ci.preflight.contract ci.scene.delivery.readiness ci.gate ci.smoke ci.full ci.repro \
 	test-install-gate test-upgrade-gate \
 	ci.clean ci.ps ci.logs gate.boundary
 
@@ -2674,6 +2914,10 @@ ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.preflight
 	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
+
+ci.scene.delivery.readiness: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix || \
+	  (python3 scripts/verify/scene_delivery_failure_brief.py; exit 1)
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
