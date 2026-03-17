@@ -19,6 +19,14 @@ def _to_int(value: Any) -> int:
         return 0
 
 
+def _as_dict(value: Any) -> Dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _as_list(value: Any) -> List[Any]:
+    return list(value) if isinstance(value, list) else []
+
+
 def _resolve_scene_provider_payload(scene_key: str, runtime_context: Dict[str, Any] | None = None) -> Dict[str, Any]:
     runtime_payload = runtime_context if isinstance(runtime_context, dict) else {}
     try:
@@ -319,57 +327,106 @@ def _default_action_surface(scene_key: str, actions: List[Dict[str, Any]]) -> Di
     }
 
 
-def _apply_pilot_strict_contract(scene_key: str, compiled: Dict[str, Any]) -> Dict[str, Any]:
-    pilot_keys = {"workspace.home", "finance.payment_requests", "risk.center", "project.management"}
-    if scene_key not in pilot_keys:
-        return compiled
-
-    scene_payload = compiled.get("scene") if isinstance(compiled.get("scene"), dict) else {}
-    page_payload = compiled.get("page") if isinstance(compiled.get("page"), dict) else {}
-    actions_payload = compiled.get("actions") if isinstance(compiled.get("actions"), list) else []
-
-    compiled["scene_tier"] = "core"
-    runtime_policy = compiled.get("runtime_policy") if isinstance(compiled.get("runtime_policy"), dict) else {}
-    runtime_policy.setdefault("strict_contract_mode", True)
-    runtime_policy.setdefault("scene_tier", "core")
-    compiled["runtime_policy"] = runtime_policy
-
-    scene_payload["tier"] = "core"
-    scene_payload["runtime_policy"] = {
-        "strict_contract_mode": bool(runtime_policy.get("strict_contract_mode")),
-        "scene_tier": _text(runtime_policy.get("scene_tier") or "core") or "core",
+def _action_surface_with_counts(action_surface: Dict[str, Any], actions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    payload = dict(action_surface or {})
+    counts = payload.get("counts") if isinstance(payload.get("counts"), dict) else {}
+    total = len([row for row in actions if isinstance(row, dict)])
+    payload["counts"] = {
+        "total": _to_int(counts.get("total") or total),
+        "primary": _to_int(counts.get("primary") or len(_as_list(payload.get("primary_actions")))),
+        "groups": _to_int(counts.get("groups") or len(_as_list(payload.get("groups")))),
     }
+    return payload
+
+
+def _declared_runtime_policy(item: Dict[str, Any], compiled: Dict[str, Any]) -> Dict[str, Any]:
+    item_runtime = _as_dict(item.get("runtime_policy"))
+    item_runtime_alt = _as_dict(_as_dict(item.get("runtime")).get("runtime_policy"))
+    compiled_runtime = _as_dict(compiled.get("runtime_policy"))
+    scene_runtime = _as_dict(_as_dict(compiled.get("scene")).get("runtime_policy"))
+    merged: Dict[str, Any] = {}
+    merged.update(item_runtime)
+    merged.update(item_runtime_alt)
+    merged.update(compiled_runtime)
+    merged.update(scene_runtime)
+    return merged
+
+
+def _declared_scene_tier(item: Dict[str, Any], compiled: Dict[str, Any], runtime_policy: Dict[str, Any]) -> str:
+    return (
+        _text(runtime_policy.get("scene_tier"))
+        or _text(item.get("scene_tier") or item.get("tier"))
+        or _text(_as_dict(compiled.get("scene")).get("tier"))
+        or _text(_as_dict(_as_dict(compiled.get("meta")).get("runtime_policy")).get("scene_tier"))
+    )
+
+
+def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled: Dict[str, Any]) -> Dict[str, Any]:
+    pilot_keys = {"workspace.home", "finance.payment_requests", "risk.center", "project.management"}
+    scene_payload = _as_dict(compiled.get("scene"))
+    page_payload = _as_dict(compiled.get("page"))
+    actions_payload = _as_list(compiled.get("actions"))
+
+    runtime_policy = _declared_runtime_policy(item, compiled)
+    scene_tier = _declared_scene_tier(item, compiled, runtime_policy)
+
+    if not scene_tier and scene_key in pilot_keys:
+        scene_tier = "core"
+    if "strict_contract_mode" not in runtime_policy and scene_key in pilot_keys:
+        runtime_policy["strict_contract_mode"] = True
+    if scene_tier and "scene_tier" not in runtime_policy:
+        runtime_policy["scene_tier"] = scene_tier
+
+    if scene_tier:
+        compiled["scene_tier"] = scene_tier
+        scene_payload["tier"] = scene_tier
+    if runtime_policy:
+        compiled["runtime_policy"] = runtime_policy
+        scene_payload["runtime_policy"] = {
+            "strict_contract_mode": bool(runtime_policy.get("strict_contract_mode"))
+            if isinstance(runtime_policy.get("strict_contract_mode"), bool)
+            else runtime_policy.get("strict_contract_mode"),
+            "scene_tier": _text(runtime_policy.get("scene_tier") or scene_tier),
+        }
     compiled["scene"] = scene_payload
 
-    if not isinstance(compiled.get("surface"), dict) or not compiled.get("surface"):
+    strict_mode = bool(runtime_policy.get("strict_contract_mode"))
+    should_materialize = strict_mode or scene_key in pilot_keys
+
+    if should_materialize and (not isinstance(compiled.get("surface"), dict) or not compiled.get("surface")):
         compiled["surface"] = _pilot_scene_surface_spec(scene_key)
 
-    if not isinstance(compiled.get("view_modes"), list) or not compiled.get("view_modes"):
+    if should_materialize and (not isinstance(compiled.get("view_modes"), list) or not compiled.get("view_modes")):
         compiled["view_modes"] = _default_view_modes(scene_key, page_payload, scene_payload)
 
-    if not isinstance(compiled.get("sections"), dict) or not compiled.get("sections"):
+    if should_materialize and (not isinstance(compiled.get("sections"), dict) or not compiled.get("sections")):
         compiled["sections"] = {
             "quick_actions": {"enabled": True, "tag": "section"},
             "group_summary": {"enabled": True, "tag": "section"},
         }
 
-    if not isinstance(compiled.get("projection"), dict) or not compiled.get("projection"):
+    if should_materialize and (not isinstance(compiled.get("projection"), dict) or not compiled.get("projection")):
         compiled["projection"] = _default_projection(scene_key)
 
-    action_surface = compiled.get("action_surface") if isinstance(compiled.get("action_surface"), dict) else {}
-    if not isinstance(action_surface.get("groups"), list) or not action_surface.get("groups"):
+    action_surface = _as_dict(compiled.get("action_surface"))
+    if should_materialize and (not isinstance(action_surface.get("groups"), list) or not action_surface.get("groups")):
         seed = _default_action_surface(scene_key, actions_payload)
         action_surface.setdefault("primary_actions", seed.get("primary_actions"))
         action_surface.setdefault("selection_mode", seed.get("selection_mode"))
         action_surface["groups"] = seed.get("groups")
-    compiled["action_surface"] = action_surface
+    compiled["action_surface"] = _action_surface_with_counts(action_surface, [row for row in actions_payload if isinstance(row, dict)])
 
-    meta_payload = compiled.get("meta") if isinstance(compiled.get("meta"), dict) else {}
-    meta_runtime_policy = meta_payload.get("runtime_policy") if isinstance(meta_payload.get("runtime_policy"), dict) else {}
-    meta_runtime_policy.setdefault("strict_contract_mode", True)
-    meta_runtime_policy.setdefault("scene_tier", "core")
-    meta_payload["runtime_policy"] = meta_runtime_policy
-    meta_payload.setdefault("scene_tier", "core")
+    meta_payload = _as_dict(compiled.get("meta"))
+    meta_runtime_policy = _as_dict(meta_payload.get("runtime_policy"))
+    if runtime_policy:
+        meta_runtime_policy.update({
+            "strict_contract_mode": runtime_policy.get("strict_contract_mode"),
+            "scene_tier": _text(runtime_policy.get("scene_tier") or scene_tier),
+        })
+    if meta_runtime_policy:
+        meta_payload["runtime_policy"] = meta_runtime_policy
+    if scene_tier:
+        meta_payload["scene_tier"] = scene_tier
     compiled["meta"] = meta_payload
 
     return compiled
@@ -666,7 +723,7 @@ def _scene_ready_entry(
     if orchestrator_input:
         meta_payload["ui_base_orchestrator_input"] = orchestrator_input
     compiled["meta"] = meta_payload
-    compiled = _apply_pilot_strict_contract(scene_key, compiled)
+    compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
     return compiled
 
 
