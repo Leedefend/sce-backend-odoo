@@ -2002,8 +2002,10 @@ verify.scene.delivery.readiness: guard.prod.forbid
 	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1 \
 	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1 \
 	$(MAKE) --no-print-directory verify.scene.runtime_boundary.gate
+	@$(MAKE) --no-print-directory verify.scene.ready.strict_gap.full_audit
 	@$(MAKE) --no-print-directory verify.scene.product_delivery.readiness.guard
 	@echo "[INFO] strict guard report: docs/ops/audits/scene_ready_strict_contract_guard_report.md"
+	@echo "[INFO] strict full audit report: docs/ops/audits/scene_ready_strict_gap_full_audit.md"
 	@echo "[OK] verify.scene.delivery.readiness done"
 
 .PHONY: verify.scene.delivery.readiness.role_matrix
