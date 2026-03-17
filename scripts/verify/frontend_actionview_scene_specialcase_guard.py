@@ -27,11 +27,17 @@ def main() -> int:
         "effectiveListModel",
         "resolvedModel === 'project.project'",
         "targetModel !== 'project.project'",
+        "includesAnyKeyword(",
+        "keywordList(",
+        "surface_kind_keywords_",
+        "group_keywords_",
+        "columns_risk_bucket_",
     ]
     required = [
-        "const listSemanticKind = computed(() =>",
         "const hasLedgerOverviewStrip = computed(() =>",
         "const listProfile = computed<SceneListProfile | null>(() =>",
+        "const strictContractMode = computed(() => isCoreSceneStrictMode(sceneKey.value, sceneReadyEntry.value));",
+        "const strictContractGuard = computed<Record<string, unknown>>(() =>",
     ]
 
     for token in forbidden:

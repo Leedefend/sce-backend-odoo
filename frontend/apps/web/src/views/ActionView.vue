@@ -426,7 +426,7 @@ import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { resolvePageMode } from '../app/pageMode';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
-import { formatAmountCN, semanticStatus } from '../utils/semantic';
+import { semanticStatus } from '../utils/semantic';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -967,25 +967,12 @@ function switchViewMode(mode: string) {
   void load();
 }
 const sortLabel = computed(() => sortValue.value || 'id asc');
-const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
-const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
 const sceneContractV1 = computed<Record<string, unknown>>(() => {
   const raw = pageContract.contract.value?.scene_contract_v1;
   if (!raw || typeof raw !== 'object') return {};
   if (String((raw as Record<string, unknown>).contract_version || '') !== 'v1') return {};
   return raw as Record<string, unknown>;
 });
-function keywordList(key: string, fallbackCsv: string) {
-  return String(pageText(key, fallbackCsv) || '')
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-}
-function includesAnyKeyword(text: string, keywords: string[]) {
-  const raw = String(text || '').toLowerCase();
-  if (!raw) return false;
-  return keywords.some((item) => raw.includes(String(item || '').toLowerCase()));
-}
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
   const strictKind = String(strictSurfaceContract.value.kind || '').trim().toLowerCase();
   if (strictContractMode.value) {
@@ -1002,11 +989,6 @@ const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic
   if (extensionKind === 'risk' || extensionKind === 'contract' || extensionKind === 'cost' || extensionKind === 'project') {
     return extensionKind;
   }
-  const key = surfaceKey.value;
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) return 'risk';
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) return 'contract';
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) return 'cost';
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) return 'project';
   return 'generic';
 });
 const sortOptions = computed(() => {
@@ -1057,142 +1039,27 @@ function isCompletedState(stateText: string, tone: string) {
 }
 
 const ledgerOverviewItems = computed(() => {
-  if (strictContractMode.value) {
-    const rows = Array.isArray(strictProjectionContract.value.overview_strip)
-      ? (strictProjectionContract.value.overview_strip as Array<Record<string, unknown>>)
-      : [];
-    return rows.map((row, index) => ({
-      key: String(row.key || `overview_${index + 1}`),
-      label: String(row.label || row.key || ''),
-      value: String(row.value ?? ''),
-      tone: String(row.tone || 'neutral'),
-    })).filter((item) => item.label);
-  }
-  if (!hasLedgerOverviewStrip.value) return [] as Array<{ key: string; label: string; value: string; tone: string }>;
-  const rows = records.value || [];
-  let running = 0;
-  let warning = 0;
-  let done = 0;
-  let contractAmount = 0;
-  rows.forEach((row) => {
-    const stage = resolveProjectStateCell(row);
-    const text = String(stage.text || '');
-    if (!isCompletedState(text, stage.tone)) running += 1;
-    if (stage.tone === 'danger' || stage.tone === 'warning') warning += 1;
-    if (isCompletedState(text, stage.tone)) done += 1;
-    contractAmount += resolveProjectAmount(row);
-  });
-  const hasAmount = contractAmount > 0;
-  return [
-    { key: 'running', label: '在建项目数', value: String(running), tone: running > 0 ? 'info' : 'neutral' },
-    { key: 'warning', label: '预警项目数', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
-    { key: 'done', label: '已完工项目数', value: String(done), tone: 'success' },
-    {
-      key: 'metric',
-      label: hasAmount ? '合同额汇总' : '项目群规模',
-      value: hasAmount ? formatAmountCN(contractAmount) : `${rows.length} 个项目`,
-      tone: 'neutral',
-    },
-  ];
-});
-
-const listSemanticKind = computed(() => {
-  const fieldSet = new Set(columns.value.map((field) => String(field || '').toLowerCase()));
-  if (fieldSet.has('quantity') && (fieldSet.has('price') || fieldSet.has('amount_total'))) return 'boq';
-  if (fieldSet.has('date_deadline') && (fieldSet.has('kanban_state') || fieldSet.has('user_ids'))) return 'task';
-  if (fieldSet.has('date_request') && fieldSet.has('amount') && fieldSet.has('state')) return 'risk';
-  if (fieldSet.has('stage_id') && (fieldSet.has('contract_amount') || fieldSet.has('user_id'))) return 'project';
-  if (pageMode.value === 'ledger') return 'project';
-  return 'generic';
+  const rows = Array.isArray(strictProjectionContract.value.overview_strip)
+    ? (strictProjectionContract.value.overview_strip as Array<Record<string, unknown>>)
+    : [];
+  return rows.map((row, index) => ({
+    key: String(row.key || `overview_${index + 1}`),
+    label: String(row.label || row.key || ''),
+    value: String(row.value ?? ''),
+    tone: String(row.tone || 'neutral'),
+  })).filter((item) => item.label);
 });
 
 const listSummaryItems = computed(() => {
-  if (strictContractMode.value) {
-    const rows = Array.isArray(strictProjectionContract.value.summary_items)
-      ? (strictProjectionContract.value.summary_items as Array<Record<string, unknown>>)
-      : [];
-    return rows.map((row, index) => ({
-      key: String(row.key || `summary_${index + 1}`),
-      label: String(row.label || row.key || ''),
-      value: String(row.value ?? ''),
-      tone: String(row.tone || 'neutral'),
-    })).filter((item) => item.label);
-  }
-  const rows = records.value || [];
-  if (listSemanticKind.value === 'task') {
-    let done = 0;
-    let pending = 0;
-    let blocked = 0;
-    rows.forEach((row) => {
-      const state = semanticStatus(row.kanban_state || row.state || row.status);
-      if (state.tone === 'success') done += 1;
-      else if (state.tone === 'danger') blocked += 1;
-      else pending += 1;
-    });
-    return [
-      { key: 'task_total', label: '任务总数', value: String(rows.length), tone: 'info' },
-      { key: 'task_pending', label: '待处理', value: String(pending), tone: pending > 0 ? 'warning' : 'success' },
-      { key: 'task_blocked', label: '受阻/风险', value: String(blocked), tone: blocked > 0 ? 'danger' : 'success' },
-      { key: 'task_done', label: '已完成', value: String(done), tone: 'success' },
-    ];
-  }
-  if (listSemanticKind.value === 'risk') {
-    let high = 0;
-    let warning = 0;
-    rows.forEach((row) => {
-      const state = semanticStatus(row.state || row.status || row.level);
-      if (state.tone === 'danger') high += 1;
-      else if (state.tone === 'warning') warning += 1;
-    });
-    return [
-      { key: 'risk_total', label: '风险记录数', value: String(rows.length), tone: 'info' },
-      { key: 'risk_high', label: '高风险', value: String(high), tone: high > 0 ? 'danger' : 'success' },
-      { key: 'risk_warning', label: '预警', value: String(warning), tone: warning > 0 ? 'warning' : 'neutral' },
-    ];
-  }
-  if (listSemanticKind.value === 'boq') {
-    let quantity = 0;
-    rows.forEach((row) => {
-      quantity += Number(row.quantity || 0) || 0;
-    });
-    return [
-      { key: 'boq_total', label: '清单行数', value: String(rows.length), tone: 'info' },
-      { key: 'boq_qty', label: '总工程量', value: `${Math.round(quantity * 100) / 100}`, tone: 'neutral' },
-    ];
-  }
-  if (listSemanticKind.value === 'project') {
-    const totals = projectScopeTotals.value;
-    const scopeMetrics = projectScopeMetrics.value;
-    let warning = 0;
-    let done = 0;
-    let amount = 0;
-    rows.forEach((row) => {
-      const state = resolveProjectStateCell(row);
-      if (state.tone === 'danger' || state.tone === 'warning') warning += 1;
-      if (isCompletedState(String(state.text || ''), state.tone)) done += 1;
-      amount += resolveProjectAmount(row);
-    });
-    if (scopeMetrics) {
-      warning = scopeMetrics.warning;
-      done = scopeMetrics.done;
-      amount = scopeMetrics.amount;
-    }
-    const hasAmount = amount > 0;
-    return [
-      { key: 'project_total', label: '项目总数', value: String(totals?.all ?? rows.length), tone: 'info' },
-      { key: 'project_active', label: '在办项目', value: String(totals?.active ?? rows.length), tone: 'neutral' },
-      { key: 'project_archived', label: '已归档', value: String(totals?.archived ?? 0), tone: (totals?.archived ?? 0) > 0 ? 'warning' : 'success' },
-      { key: 'project_warning', label: '预警项目', value: String(warning), tone: warning > 0 ? 'danger' : 'success' },
-      { key: 'project_done', label: '已完工', value: String(done), tone: 'success' },
-      {
-        key: 'project_amount',
-        label: hasAmount ? '合同额汇总' : '项目群规模',
-        value: hasAmount ? formatAmountCN(amount) : `${rows.length} 个项目`,
-        tone: 'neutral',
-      },
-    ];
-  }
-  return [];
+  const rows = Array.isArray(strictProjectionContract.value.summary_items)
+    ? (strictProjectionContract.value.summary_items as Array<Record<string, unknown>>)
+    : [];
+  return rows.map((row, index) => ({
+    key: String(row.key || `summary_${index + 1}`),
+    label: String(row.label || row.key || ''),
+    value: String(row.value ?? ''),
+    tone: String(row.tone || 'neutral'),
+  })).filter((item) => item.label);
 });
 const kanbanTitleField = computed(() => {
   if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
@@ -1267,122 +1134,37 @@ const contractSurfaceIntent = computed<SurfaceIntentContract>(() => {
     : {};
 });
 const surfaceIntent = computed<SurfaceIntent>(() => {
-  if (strictContractMode.value) {
-    const intent = strictSurfaceContract.value.intent && typeof strictSurfaceContract.value.intent === 'object'
+  const intentSource = strictContractMode.value
+    ? ((strictSurfaceContract.value.intent && typeof strictSurfaceContract.value.intent === 'object')
       ? (strictSurfaceContract.value.intent as Record<string, unknown>)
-      : {};
-    const primaryAction = intent.primary_action && typeof intent.primary_action === 'object'
-      ? (intent.primary_action as Record<string, unknown>)
-      : {};
-    const secondaryAction = intent.secondary_action && typeof intent.secondary_action === 'object'
-      ? (intent.secondary_action as Record<string, unknown>)
-      : {};
-    const actions = Array.isArray(intent.actions) ? intent.actions as FocusNavAction[] : [];
-    return {
-      title: String(intent.title || '').trim() || pageText('surface_intent_contract_missing_title', '场景引导缺失'),
-      summary: String(intent.summary || '').trim() || pageText('surface_intent_contract_missing_summary', '当前核心场景缺少 surface.intent，请补齐后端契约。'),
-      actions,
-      emptyTitle: String(intent.empty_title || '').trim() || pageText('surface_empty_contract_missing_title', '暂无可展示内容'),
-      emptyHint: String(intent.empty_hint || '').trim() || pageText('surface_empty_contract_missing_hint', '请补齐 scene surface contract。'),
-      primaryAction: {
-        label: String(primaryAction.label || '').trim() || pageText('surface_primary_contract_missing', '返回工作台'),
-        to: String(primaryAction.target || '/workbench'),
-      },
-      secondaryAction: Object.keys(secondaryAction).length
-        ? {
-            label: String(secondaryAction.label || '').trim() || pageText('surface_secondary_contract_missing', '进入场景'),
-            to: String(secondaryAction.target || `/s/${sceneKey.value || ''}`),
-          }
-        : undefined,
-    };
-  }
-  const override = contractSurfaceIntent.value;
-  if (override && Object.keys(override).length) {
-    const fallbackPrimary: FocusNavAction = {
-      label: pageText('primary_action_default', '去我的工作'),
-      to: '/my-work',
-    };
-    const primaryAction = override.primary_action && typeof override.primary_action === 'object'
-      ? override.primary_action
-      : fallbackPrimary;
-    return {
-      title: String(override.title || pageText('intent_title_default', '业务列表：先看状态，再执行动作')),
-      summary: String(override.summary || pageText('intent_summary_default', '通过快速筛选与快捷操作，优先处理最关键事项。')),
-      actions: Array.isArray(override.actions) ? override.actions : [],
-      emptyTitle: String(override.empty_title || pageText('empty_title_default', '')),
-      emptyHint: String(override.empty_hint || pageText('empty_hint_default', '')),
-      primaryAction,
-      secondaryAction: override.secondary_action,
-    };
-  }
-  const key = surfaceKey.value;
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) {
-    return {
-      title: pageText('intent_title_risk', '风险驾驶舱：先处理严重与逾期风险'),
-      summary: pageText('intent_summary_risk', '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。'),
-      actions: [
-        { label: pageText('intent_action_risk_todo', '待我处理风险'), to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
-        { label: pageText('intent_action_risk_scene', '打开风险场景'), to: '/s/projects.dashboard' },
-      ],
-      emptyTitle: pageText('empty_title_risk', '当前暂无风险记录'),
-      emptyHint: pageText('empty_hint_risk', '建议转到“我的工作”处理风险待办，或进入风险驾驶舱继续巡检。'),
-      primaryAction: { label: pageText('primary_action_risk', '处理风险待办'), to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
-      secondaryAction: { label: pageText('secondary_action_risk', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
-    };
-  }
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) {
-    return {
-      title: pageText('intent_title_contract', '合同执行：优先识别付款与变更风险'),
-      summary: pageText('intent_summary_contract', '先看执行率与付款状态，再进入异常合同处理。'),
-      actions: [
-        { label: pageText('intent_action_contract_todo', '处理合同待办'), to: '/my-work', query: { section: 'todo', search: '合同' } },
-        { label: pageText('intent_action_contract_dashboard', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
-      ],
-      emptyTitle: pageText('empty_title_contract', '当前暂无合同记录'),
-      emptyHint: pageText('empty_hint_contract', '可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。'),
-      primaryAction: { label: pageText('primary_action_contract', '处理合同待办'), to: '/my-work', query: { section: 'todo', search: '合同' } },
-      secondaryAction: { label: pageText('secondary_action_contract', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
-    };
-  }
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) {
-    return {
-      title: pageText('intent_title_cost', '成本执行：先回答是否超支'),
-      summary: pageText('intent_summary_cost', '优先关注超支金额与超支项，再下钻到具体偏差来源。'),
-      actions: [
-        { label: pageText('intent_action_cost_todo', '处理成本待办'), to: '/my-work', query: { section: 'todo', search: '成本' } },
-        { label: pageText('intent_action_cost_dashboard', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
-      ],
-      emptyTitle: pageText('empty_title_cost', '当前暂无成本记录'),
-      emptyHint: pageText('empty_hint_cost', '可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。'),
-      primaryAction: { label: pageText('primary_action_cost', '处理超支待办'), to: '/my-work', query: { section: 'todo', search: '成本' } },
-      secondaryAction: { label: pageText('secondary_action_cost', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
-    };
-  }
-  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) {
-    return {
-      title: pageText('intent_title_project', '项目视角：先判断是否可控'),
-      summary: pageText('intent_summary_project', '优先查看风险、审批与经营指标，再决定下一步动作。'),
-      actions: [
-        { label: pageText('intent_action_project_todo', '查看项目待办'), to: '/my-work', query: { section: 'todo', search: '项目' } },
-        { label: pageText('intent_action_project_dashboard', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
-      ],
-      emptyTitle: pageText('empty_title_project', '当前暂无项目记录'),
-      emptyHint: pageText('empty_hint_project', '建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。'),
-      primaryAction: { label: pageText('primary_action_project', '查看项目待办'), to: '/my-work', query: { section: 'todo', search: '项目' } },
-      secondaryAction: { label: pageText('secondary_action_project', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
-    };
-  }
+      : {})
+    : ((contractSurfaceIntent.value && typeof contractSurfaceIntent.value === 'object')
+      ? (contractSurfaceIntent.value as Record<string, unknown>)
+      : {});
+  const primaryAction = intentSource.primary_action && typeof intentSource.primary_action === 'object'
+    ? (intentSource.primary_action as Record<string, unknown>)
+    : {};
+  const secondaryAction = intentSource.secondary_action && typeof intentSource.secondary_action === 'object'
+    ? (intentSource.secondary_action as Record<string, unknown>)
+    : {};
+  const actions = Array.isArray(intentSource.actions) ? intentSource.actions as FocusNavAction[] : [];
+
   return {
-    title: pageText('intent_title_default', '业务列表：先看状态，再执行动作'),
-    summary: pageText('intent_summary_default', '通过快速筛选与快捷操作，优先处理最关键事项。'),
-    actions: [
-      { label: pageText('intent_action_default_home', '工作台'), to: '/' },
-      { label: pageText('intent_action_default_my_work', '我的工作'), to: '/my-work' },
-    ],
-    emptyTitle: pageText('empty_title_default', ''),
-    emptyHint: pageText('empty_hint_default', ''),
-    primaryAction: { label: pageText('primary_action_default', '去我的工作'), to: '/my-work' },
-    secondaryAction: { label: pageText('secondary_action_default', '去风险驾驶舱'), to: '/s/projects.dashboard' },
+    title: String(intentSource.title || '').trim() || pageText('intent_title_default', '业务列表'),
+    summary: String(intentSource.summary || '').trim() || pageText('intent_summary_default', '请通过契约动作继续处理。'),
+    actions,
+    emptyTitle: String(intentSource.empty_title || '').trim() || pageText('empty_title_default', '暂无可展示内容'),
+    emptyHint: String(intentSource.empty_hint || '').trim() || pageText('empty_hint_default', ''),
+    primaryAction: {
+      label: String(primaryAction.label || '').trim() || pageText('primary_action_default', '去我的工作'),
+      to: String(primaryAction.target || '/my-work'),
+    },
+    secondaryAction: Object.keys(secondaryAction).length
+      ? {
+          label: String(secondaryAction.label || '').trim() || pageText('secondary_action_default', '进入场景'),
+          to: String(secondaryAction.target || `/s/${sceneKey.value || ''}`),
+        }
+      : undefined,
   };
 });
 const emptyReasonText = computed(() => {
@@ -1671,17 +1453,7 @@ const contractActionGroups = computed<Array<{ key: string; label: string; action
     }
   }
   if (!grouped.length) {
-    const basicKeywords = keywordList('group_keywords_basic', '创建,保存,submit,create,save');
-    const workflowKeywords = keywordList('group_keywords_workflow', '阶段,审批,workflow,transition');
-    const drilldownKeywords = keywordList('group_keywords_drilldown', '查看,列表,看板,open,view');
-    const basic = all.filter((item) => includesAnyKeyword(item.label, basicKeywords));
-    const workflow = all.filter((item) => includesAnyKeyword(item.label, workflowKeywords));
-    const drilldown = all.filter((item) => includesAnyKeyword(item.label, drilldownKeywords));
-    const other = all.filter((item) => !basic.includes(item) && !workflow.includes(item) && !drilldown.includes(item));
-    if (basic.length) grouped.push({ key: 'basic', label: pageText('group_label_basic', '基础操作'), actions: basic });
-    if (workflow.length) grouped.push({ key: 'workflow', label: pageText('group_label_workflow', '流程推进'), actions: workflow });
-    if (drilldown.length) grouped.push({ key: 'drilldown', label: pageText('group_label_drilldown', '业务查看'), actions: drilldown });
-    if (other.length) grouped.push({ key: 'other', label: pageText('group_label_other', '更多操作'), actions: other });
+    grouped.push({ key: 'flat', label: pageText('group_label_flat', '操作'), actions: all });
   }
   return grouped;
 });
@@ -2370,14 +2142,6 @@ function resolveDefaultSort(contract: ActionContractLoose) {
   const fieldNames = new Set(Object.keys(contract.fields || {}));
   const supports = (name: string) => fieldNames.has(name);
   const segments: string[] = [];
-  if (surfaceKind.value === 'risk') {
-    if (supports('priority')) segments.push('priority desc');
-    if (supports('deadline')) segments.push('deadline asc');
-    if (supports('user_id')) segments.push('user_id asc');
-  } else if (surfaceKind.value === 'cost') {
-    if (supports('priority')) segments.push('priority desc');
-    if (supports('deadline')) segments.push('deadline asc');
-  }
   if (supports('write_date')) segments.push('write_date desc');
   segments.push('id desc');
   return segments.join(',');
@@ -2756,67 +2520,8 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, unknown>) {
   const normalized = rawColumns.filter(Boolean);
   if (!normalized.length) return normalized;
-  if (strictContractMode.value) return normalized;
-  if (surfaceKind.value === 'generic') return normalized;
-
-  const rows = normalized.map((name) => {
-    const descriptor = (fields?.[name] || {}) as { string?: string };
-    const merged = `${name} ${String(descriptor.string || '')}`.toLowerCase();
-    return { name, merged };
-  });
-  const pick = (keywords: string[]) =>
-    rows.filter((row) => keywords.some((kw) => row.merged.includes(kw))).map((row) => row.name);
-
-  const buckets: string[][] = [];
-  if (surfaceKind.value === 'risk') {
-    buckets.push(
-      pick(keywordList('columns_risk_bucket_identity', 'title,name,风险,事项')),
-      pick(keywordList('columns_risk_bucket_priority', 'priority,severity,优先级,严重')),
-      pick(keywordList('columns_risk_bucket_deadline', 'deadline,date_deadline,截止,逾期')),
-      pick(keywordList('columns_risk_bucket_owner', 'user_id,owner,assignee,负责人,分派')),
-      pick(keywordList('columns_risk_bucket_state', 'state,stage,status,状态')),
-      pick(keywordList('columns_risk_bucket_reason', 'reason,原因')),
-    );
-  } else if (surfaceKind.value === 'contract') {
-    buckets.push(
-      pick(keywordList('columns_contract_bucket_amount', 'amount_total,contract_amount,金额,合同额')),
-      pick(keywordList('columns_contract_bucket_execution', 'execute,execution,progress,执行率')),
-      pick(keywordList('columns_contract_bucket_payment', 'paid,payment,付款,支付')),
-      pick(keywordList('columns_contract_bucket_risk', 'risk,风险,alert')),
-      pick(keywordList('columns_contract_bucket_change', 'change,变更,write_date,最近')),
-      pick(keywordList('columns_contract_bucket_identity', 'title,name,合同')),
-    );
-  } else if (surfaceKind.value === 'cost') {
-    buckets.push(
-      pick(keywordList('columns_cost_bucket_execution', 'cost,执行率,rate')),
-      pick(keywordList('columns_cost_bucket_overrun', 'over,overrun,超支,偏差')),
-      pick(keywordList('columns_cost_bucket_count', 'count,项数')),
-      pick(keywordList('columns_cost_bucket_deadline', 'deadline,截止')),
-      pick(keywordList('columns_cost_bucket_priority', 'priority,优先级')),
-      pick(keywordList('columns_cost_bucket_identity', 'title,name,项目')),
-    );
-  } else if (surfaceKind.value === 'project') {
-    buckets.push(
-      pick(keywordList('columns_project_bucket_identity', 'title,name,项目')),
-      pick(keywordList('columns_project_bucket_state', 'state,stage,status,状态,阶段')),
-      pick(keywordList('columns_project_bucket_risk', 'risk,风险')),
-      pick(keywordList('columns_project_bucket_payment', 'payment,付款')),
-      pick(keywordList('columns_project_bucket_output', 'output,产值')),
-      pick(keywordList('columns_project_bucket_cost', 'cost,成本')),
-    );
-  }
-
-  const selected: string[] = [];
-  for (const bucket of buckets) {
-    for (const name of bucket) {
-      if (!selected.includes(name)) selected.push(name);
-    }
-  }
-  for (const name of normalized) {
-    if (selected.length >= 6) break;
-    if (!selected.includes(name)) selected.push(name);
-  }
-  return selected.length ? selected : normalized;
+  void fields;
+  return normalized;
 }
 
 function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -3424,12 +3129,10 @@ async function load() {
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
       const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
       const order = sceneReadyListSurface.value.defaultSort || scene.value?.default_sort || searchOrder || viewOrder || metaOrder;
-      if (surfaceKind.value !== 'generic') {
-        sortValue.value = resolveDefaultSort(typedContract);
-      } else if (typeof order === 'string' && order.trim()) {
+      if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
-        sortValue.value = 'id asc';
+        sortValue.value = resolveDefaultSort(typedContract) || 'id desc';
       }
     }
     {
