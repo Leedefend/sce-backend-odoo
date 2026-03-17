@@ -55,6 +55,13 @@ export interface Scene {
   list_profile?: SceneListProfile;
   filters?: unknown[];
   default_sort?: string;
+  scene_ready?: {
+    search_surface?: Record<string, unknown>;
+    permission_surface?: Record<string, unknown>;
+    action_surface?: Record<string, unknown>;
+    workflow_surface?: Record<string, unknown>;
+    actions?: Array<Record<string, unknown>>;
+  };
   layout?: SceneLayout;
 }
 
@@ -176,6 +183,21 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
     : ((metaRow.validation_surface && typeof metaRow.validation_surface === 'object')
       ? metaRow.validation_surface as Record<string, unknown>
       : {});
+  const searchRow = (row.search_surface && typeof row.search_surface === 'object')
+    ? row.search_surface as Record<string, unknown>
+    : {};
+  const actionsRow = Array.isArray(row.actions)
+    ? row.actions as Array<Record<string, unknown>>
+    : [];
+  const actionSurfaceRow = (row.action_surface && typeof row.action_surface === 'object')
+    ? row.action_surface as Record<string, unknown>
+    : {};
+  const workflowRow = (row.workflow_surface && typeof row.workflow_surface === 'object')
+    ? row.workflow_surface as Record<string, unknown>
+    : {};
+  const blockRows = Array.isArray(row.blocks)
+    ? row.blocks as Array<Record<string, unknown>>
+    : [];
 
   const sceneKey = asText(sceneRow.key || pageRow.scene_key);
   if (!sceneKey) {
@@ -188,6 +210,23 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
   const requiredCapabilities = Array.isArray(permissionRow.required_capabilities)
     ? permissionRow.required_capabilities.map((item) => asText(item)).filter(Boolean)
     : [];
+  const listColumns = blockRows
+    .map((item) => {
+      const fields = Array.isArray(item.fields) ? item.fields : [];
+      return fields
+        .map((field) => {
+          if (typeof field === 'string') return asText(field);
+          if (field && typeof field === 'object') {
+            const payload = field as Record<string, unknown>;
+            return asText(payload.name || payload.field || payload.key);
+          }
+          return '';
+        })
+        .filter(Boolean);
+    })
+    .find((cols) => cols.length > 0) || [];
+  const searchFilters = Array.isArray(searchRow.filters) ? searchRow.filters : [];
+  const defaultSort = asText(searchRow.default_sort);
 
   const target: SceneTarget = {
     route,
@@ -204,6 +243,18 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
     target,
     validation_surface: validationRow,
     capabilities: requiredCapabilities,
+    list_profile: {
+      columns: listColumns,
+    },
+    filters: searchFilters,
+    default_sort: defaultSort,
+    scene_ready: {
+      search_surface: searchRow,
+      permission_surface: permissionRow,
+      action_surface: actionSurfaceRow,
+      workflow_surface: workflowRow,
+      actions: actionsRow,
+    },
     layout: normalizeSceneLayout(),
   };
 }
