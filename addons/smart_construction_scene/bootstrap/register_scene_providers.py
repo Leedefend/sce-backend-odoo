@@ -36,3 +36,19 @@ def register_scene_content_providers(registry, addons_root: Path) -> None:
         priority=300,
         source="industry_registration",
     )
+    registry.register_spec(
+        scene_key="projects.list",
+        provider_key="construction.projects_list_provider.v1",
+        module_name=scene_module,
+        provider_path=addons_root / scene_module / "providers" / "projects_list_provider.py",
+        priority=300,
+        source="industry_registration",
+    )
+    registry.register_spec(
+        scene_key="projects.intake",
+        provider_key="construction.project_intake_provider.v1",
+        module_name=scene_module,
+        provider_path=addons_root / scene_module / "providers" / "project_intake_provider.py",
+        priority=300,
+        source="industry_registration",
+    )

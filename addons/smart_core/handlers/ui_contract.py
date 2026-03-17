@@ -32,6 +32,14 @@ _VIEW_MAP = {  # Odoo -> 前端别名
 }
 _VIEW_INV = {v:k for k,v in _VIEW_MAP.items()}  # 前端别名 -> Odoo
 
+FRONTEND_BLOCKED_NATIVE_OPS = {"nav", "model", "view", "action_open", "menu"}
+INTERNAL_NATIVE_SOURCE_MODES = {
+    "backend_internal",
+    "asset_precompile",
+    "execute_guard",
+    "system_internal",
+}
+
 def _json(o): return json.dumps(o, ensure_ascii=False, default=str, separators=(",", ":"))
 
 def _normalize_meta(meta):
@@ -130,6 +138,9 @@ class UiContractHandler(BaseIntentHandler):
             else:
                 return self._err(400, "缺少 op/subject 或无法从参数推断（需要 menu_id / action_id / model）")
 
+        if self._should_block_frontend_native_op(op=op, source_mode=source_mode):
+            return self._err(410, "native ui.contract op is disabled for frontend delivery; use scene-ready contract")
+
         # 上下文透传
         ctx = (self.env.context or {}).copy()
         lang = self._get_param(p, "lang"); tz = self._get_param(p, "tz")
@@ -195,6 +206,13 @@ class UiContractHandler(BaseIntentHandler):
                          "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
                          "contract_mode": contract_mode, "contract_surface": contract_surface})
         return {"ok": True, "data": data or {}, "meta": meta_out}
+
+    def _should_block_frontend_native_op(self, *, op: str, source_mode: str) -> bool:
+        if op not in FRONTEND_BLOCKED_NATIVE_OPS:
+            return False
+        if source_mode in INTERNAL_NATIVE_SOURCE_MODES:
+            return False
+        return self.request is not None
 
     def _inject_render_hints(self, data: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(data, dict):

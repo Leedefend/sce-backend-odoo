@@ -417,6 +417,52 @@ const extractionStats = computed(() => {
   return stats;
 });
 
+const sceneGovernanceSnapshot = computed(() => {
+  const value = session.sceneGovernanceV1;
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  return value as Record<string, unknown>;
+});
+
+const sceneGovernanceGatesSummary = computed(() => {
+  const gates = asDict(sceneGovernanceSnapshot.value?.gates);
+  if (!gates) return '-';
+  return [
+    `orchestrator=${Boolean(gates.orchestrator_applied)}`,
+    `governance=${Boolean(gates.governance_applied)}`,
+    `delivery=${Boolean(gates.delivery_policy_applied)}`,
+    `nav_policy_ok=${Boolean(gates.nav_policy_validation_ok)}`,
+    `auto_degrade=${Boolean(gates.auto_degrade_triggered)}`,
+  ].join(' | ');
+});
+
+const sceneGovernanceReasonsSummary = computed(() => {
+  const reasons = asDict(sceneGovernanceSnapshot.value?.reasons);
+  if (!reasons) return '-';
+  const autoCodes = Array.isArray(reasons.auto_degrade_reason_codes)
+    ? reasons.auto_degrade_reason_codes.map((item) => String(item || '')).filter(Boolean)
+    : [];
+  const resolveCodes = Array.isArray(reasons.resolve_error_codes)
+    ? reasons.resolve_error_codes.map((item) => String(item || '')).filter(Boolean)
+    : [];
+  return `auto=[${autoCodes.join(',') || '-'}] resolve=[${resolveCodes.join(',') || '-'}]`;
+});
+
+const sceneGovernanceConsumptionSummary = computed(() => {
+  const consumption = asDict(sceneGovernanceSnapshot.value?.scene_ready_consumption);
+  if (!consumption) return '-';
+  const enabled = Boolean(consumption.enabled);
+  const sceneTypes = Number(consumption.scene_type_count || 0);
+  const scenes = Number(consumption.scene_count || 0);
+  const aggregate = asDict(consumption.aggregate);
+  const baseRate = asDict(aggregate?.base_fact_consumption_rate);
+  const surfaceRate = asDict(aggregate?.surface_nonempty_rate);
+  const searchBase = Number(baseRate?.search || 0).toFixed(2);
+  const actionSurface = Number(surfaceRate?.action_surface || 0).toFixed(2);
+  return `enabled=${enabled} types=${sceneTypes} scenes=${scenes} base.search=${searchBase} surface.action=${actionSurface}`;
+});
+
 const hudEntries = computed(() => {
   const entries = [
   { label: 'scene_key', value: routeSceneKey.value || '-' },
@@ -444,6 +490,15 @@ const hudEntries = computed(() => {
   { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
   { label: 'sa_ts', value: latestSuggestedActionTs.value },
   ];
+  if (sceneGovernanceSnapshot.value) {
+    entries.push(
+      { label: 'governance.scene_channel', value: String(sceneGovernanceSnapshot.value.scene_channel || '-') },
+      { label: 'governance.runtime_source', value: String(sceneGovernanceSnapshot.value.runtime_source || '-') },
+      { label: 'governance.gates', value: sceneGovernanceGatesSummary.value },
+      { label: 'governance.reasons', value: sceneGovernanceReasonsSummary.value },
+      { label: 'governance.scene_ready_consumption', value: sceneGovernanceConsumptionSummary.value },
+    );
+  }
   if (showExtractionStats.value) {
     entries.push(
       { label: 'extract.business_collections', value: String(extractionStats.value.business_collections ?? '-') },

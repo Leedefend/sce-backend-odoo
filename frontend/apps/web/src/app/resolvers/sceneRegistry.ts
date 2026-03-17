@@ -48,12 +48,20 @@ export interface Scene {
   icon?: string;
   route: string;
   target: SceneTarget;
+  validation_surface?: Record<string, unknown>;
   capabilities?: string[];
   breadcrumbs?: Array<{ label: string; to?: string }>;
   tiles?: SceneTile[];
   list_profile?: SceneListProfile;
   filters?: unknown[];
   default_sort?: string;
+  scene_ready?: {
+    search_surface?: Record<string, unknown>;
+    permission_surface?: Record<string, unknown>;
+    action_surface?: Record<string, unknown>;
+    workflow_surface?: Record<string, unknown>;
+    actions?: Array<Record<string, unknown>>;
+  };
   layout?: SceneLayout;
 }
 
@@ -154,6 +162,110 @@ function buildSceneRegistry(source: Scene[]) {
   return sceneRegistry;
 }
 
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+  const row = entry as Record<string, unknown>;
+  const sceneRow = (row.scene && typeof row.scene === 'object') ? row.scene as Record<string, unknown> : {};
+  const pageRow = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
+  const metaRow = (row.meta && typeof row.meta === 'object') ? row.meta as Record<string, unknown> : {};
+  const targetRow = (metaRow.target && typeof metaRow.target === 'object') ? metaRow.target as Record<string, unknown> : {};
+  const permissionRow = (row.permission_surface && typeof row.permission_surface === 'object')
+    ? row.permission_surface as Record<string, unknown>
+    : {};
+  const validationRow = (row.validation_surface && typeof row.validation_surface === 'object')
+    ? row.validation_surface as Record<string, unknown>
+    : ((metaRow.validation_surface && typeof metaRow.validation_surface === 'object')
+      ? metaRow.validation_surface as Record<string, unknown>
+      : {});
+  const searchRow = (row.search_surface && typeof row.search_surface === 'object')
+    ? row.search_surface as Record<string, unknown>
+    : {};
+  const actionsRow = Array.isArray(row.actions)
+    ? row.actions as Array<Record<string, unknown>>
+    : [];
+  const actionSurfaceRow = (row.action_surface && typeof row.action_surface === 'object')
+    ? row.action_surface as Record<string, unknown>
+    : {};
+  const workflowRow = (row.workflow_surface && typeof row.workflow_surface === 'object')
+    ? row.workflow_surface as Record<string, unknown>
+    : {};
+  const blockRows = Array.isArray(row.blocks)
+    ? row.blocks as Array<Record<string, unknown>>
+    : [];
+
+  const sceneKey = asText(sceneRow.key || pageRow.scene_key);
+  if (!sceneKey) {
+    return null;
+  }
+  const defaultRoute = `/s/${sceneKey}`;
+  const route = resolveSceneRoute(sceneKey, asText(pageRow.route) || asText(targetRow.route) || defaultRoute);
+  const actionId = Number(targetRow.action_id || 0);
+  const menuId = Number(targetRow.menu_id || 0);
+  const requiredCapabilities = Array.isArray(permissionRow.required_capabilities)
+    ? permissionRow.required_capabilities.map((item) => asText(item)).filter(Boolean)
+    : [];
+  const listColumns = blockRows
+    .map((item) => {
+      const fields = Array.isArray(item.fields) ? item.fields : [];
+      return fields
+        .map((field) => {
+          if (typeof field === 'string') return asText(field);
+          if (field && typeof field === 'object') {
+            const payload = field as Record<string, unknown>;
+            return asText(payload.name || payload.field || payload.key);
+          }
+          return '';
+        })
+        .filter(Boolean);
+    })
+    .find((cols) => cols.length > 0) || [];
+  const searchFilters = Array.isArray(searchRow.filters) ? searchRow.filters : [];
+  const defaultSort = asText(searchRow.default_sort);
+
+  const target: SceneTarget = {
+    route,
+    action_id: actionId > 0 ? actionId : undefined,
+    menu_id: menuId > 0 ? menuId : undefined,
+    model: asText(targetRow.model) || undefined,
+    view_mode: asText(targetRow.view_mode) || undefined,
+  };
+
+  return {
+    key: sceneKey,
+    label: asText(sceneRow.title) || sceneKey,
+    route,
+    target,
+    validation_surface: validationRow,
+    capabilities: requiredCapabilities,
+    list_profile: {
+      columns: listColumns,
+    },
+    filters: searchFilters,
+    default_sort: defaultSort,
+    scene_ready: {
+      search_surface: searchRow,
+      permission_surface: permissionRow,
+      action_surface: actionSurfaceRow,
+      workflow_surface: workflowRow,
+      actions: actionsRow,
+    },
+    layout: normalizeSceneLayout(),
+  };
+}
+
+function scenesFromSceneReadyContract(contract?: { scenes?: unknown[] } | null): Scene[] {
+  const rows = Array.isArray(contract?.scenes) ? contract?.scenes : [];
+  return rows
+    .map((entry) => toSceneFromSceneReadyEntry(entry))
+    .filter((entry): entry is Scene => Boolean(entry));
+}
+
 buildSceneRegistry([]);
 
 export function getSceneRegistryDiagnostics() {
@@ -162,6 +274,11 @@ export function getSceneRegistryDiagnostics() {
 
 export function setSceneRegistry(scenes?: Scene[] | null) {
   const source = Array.isArray(scenes) ? scenes : [];
+  return buildSceneRegistry(source);
+}
+
+export function setSceneRegistryFromSceneReadyContract(contract?: { scenes?: unknown[] } | null) {
+  const source = scenesFromSceneReadyContract(contract);
   return buildSceneRegistry(source);
 }
 

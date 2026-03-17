@@ -3,6 +3,7 @@
 ## Core Gates
 - `make gate.full`
   - Default strict mode includes Phase 9.8 guards.
+  - Default path now includes strict R3 runtime gate (`gate.scene.r3.runtime.strict`).
   - Use `SC_GATE_STRICT=0` to skip Phase 9.8 enforcement.
   - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
   - Default gate path includes `verify.portal.scene_observability_gate_smoke.container` (structure + preflight smoke + smoke chain).
@@ -23,9 +24,127 @@
   - Any docs mentioning `/api/scenes/my` must include deprecated + successor migration semantics; enforced by:
     - `make verify.scene.legacy_docs.guard`
 
+- `make verify.scene.r3.runtime.quick`
+  - One-shot daily acceptance for scene productization runtime quality.
+  - Runs strict gate (`verify.scene.r3.runtime.strict`) and prints dashboard `Summary + Gate Result`.
+  - Fast check before `gate.full`, and can be used as daily team smoke command.
+
 ## Architecture Guard Aliases
 - `make verify.boundary.guard`
   - Aggregates scene runtime boundary + legacy contract path checks.
+- `make verify.scene.delivery.readiness`
+  - One-click strict acceptance for product delivery closure: first runs strict live `verify.scene.runtime_boundary.gate`, then executes final readiness threshold guard.
+  - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+- `make verify.scene.delivery.readiness.role_matrix`
+  - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
+  - Use as the default daily command when `pm/executive` role evidence is required.
+- `make ci.scene.delivery.readiness`
+  - Lightweight CI alias for `verify.scene.delivery.readiness.role_matrix`.
+  - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
+- `make verify.scene.product_delivery.readiness.guard`
+  - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
+  - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
+- `make verify.scene.governance_payload.guard`
+  - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
+  - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).
+  - Includes `scene_ready_consumption` summary shape derived from `scene_ready_contract_v1.meta.scene_type_consumption_metrics`.
+- `make verify.scene.asset_queue_trend.guard`
+  - Verifies asset queue trend baseline (`queue_size` upper bound + per-run growth cap) against `scripts/verify/baselines/scene_asset_queue_trend_guard.json`.
+  - Persists latest trend snapshot to `artifacts/backend/scene_asset_queue_trend_state.json` for next-run delta checks.
+- `make verify.scene.base_contract_asset_coverage.guard`
+  - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).
+  - Enforces threshold policy by `runtime_env` + `role_code` using baseline `scripts/verify/baselines/scene_base_contract_asset_coverage_guard.json`.
+  - Persists latest live metrics to `artifacts/backend/scene_base_contract_asset_coverage_state.json` for offline fallback checks.
+  - Use `SC_BASE_CONTRACT_ASSET_COVERAGE_REQUIRE_LIVE=1` to force live-fetch in strict mode.
+- `make verify.scene.base_contract_source_mix.guard`
+  - Verifies source-mix quality for scene base contracts (`asset/runtime_fallback/runtime_minimal/none`) from snapshot state.
+  - Enforces thresholds via baseline `scripts/verify/baselines/scene_base_contract_source_mix_guard.json`.
+  - Supports role-aware policies (`default + role.<role_code>`) using snapshot `role_code` (e.g. `role.executive`, `role.pm`).
+  - Artifacts:
+    - `artifacts/backend/scene_base_contract_source_mix_report.json`
+    - `artifacts/backend/scene_base_contract_source_mix_report.md`
+- `make verify.scene.base_contract_source_mix.role_matrix.guard`
+  - Captures strict live snapshot states for `executive` and `pm`, then enforces dual-role source-mix thresholds.
+  - Snapshot outputs:
+    - `artifacts/backend/scene_registry_asset_snapshot_state.executive.json`
+    - `artifacts/backend/scene_registry_asset_snapshot_state.pm.json`
+  - Role matrix baseline: `scripts/verify/baselines/scene_base_contract_source_mix_role_matrix_guard.json`.
+  - Role matrix artifacts:
+    - `artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json`
+    - `artifacts/backend/scene_base_contract_source_mix_role_matrix_report.md`
+- `make verify.scene.orchestrator.input.schema.guard`
+  - Verifies orchestrator input-side schema symbols and required base-fact consume points.
+- `make verify.scene.orchestrator.output.schema.guard`
+  - Verifies orchestrator output-side schema keys and `system.init` scene-ready wiring.
+- `make verify.scene.orchestrator.base_fact_binding.guard`
+  - Verifies base contract asset binding chain from `system.init -> repository -> compiler -> scene_ready meta`.
+- `make verify.scene.orchestrator.industry_interface.guard`
+  - Verifies architecture specs for industry composition (`Profile + Policy + Provider`) and orchestrator IO interface sections.
+- `make verify.scene.orchestrator.merge_priority.guard`
+  - Verifies orchestrator merge-priority spec is present (platform/base/profile/policy/provider/permission), compiler exposes stage verdict trace fields, and a minimal runtime compile sample keeps stage ordering intact.
+- `make verify.scene.orchestrator.key_scene_compile.guard`
+  - Verifies key sample scenes (`projects.list/projects.intake/workspace.home`) keep stable compile closure from native/base contract inputs to Scene-ready surfaces.
+  - Enforces per-scene expectations (`scene_type`, `bound_block_count`, `action_surface`, `search/workflow/validation` surfaces) via baseline `scripts/verify/baselines/scene_orchestrator_key_scene_compile_guard.json`.
+- `make verify.frontend.no_base_contract_direct_consume.guard`
+  - Verifies frontend source does not directly consume `ui_base_contract/base_contract` tokens and keeps scene rendering on `Scene-ready Contract` path.
+- `make verify.frontend.scene_governance_consumption.guard`
+  - Verifies frontend governance surfaces (`AppShell HUD` / `SceneHealth`) render `scene_ready_consumption` summary from `scene_governance_v1`.
+- `make verify.scene.validation_recovery_strategy.guard`
+  - Verifies scene validation recovery strategy is externalized and runtime-wired (`strategy module + session init hook + ContractFormPage consumer`).
+  - Enforces schema baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_schema_guard.json`.
+- `make verify.scene.validation_recovery_strategy.payload_path.guard`
+  - Verifies source-priority path for strategy payload is stable (`params -> ext_facts -> icp` in backend, `top-level -> ext_facts fallback` in frontend session).
+- `make verify.scene.validation_recovery_strategy.e2e_smoke.guard`
+  - Verifies end-to-end wiring stays intact (`system.init output -> session runtime apply -> ContractFormPage suggested action`).
+  - Enforces behavior baseline from `scripts/verify/baselines/scene_validation_recovery_strategy_behavior_smoke_guard.json` (`open_record/open_action/open_scene`).
+- `make verify.scene.ui_base_contract_canonicalizer.guard`
+  - Verifies backend UI base contract canonicalizer is wired into producer/repository and keeps required sub-contract facts (`views/fields/search/permissions/workflow/validator/actions`).
+- `make verify.scene.orchestrator.scene_type_surface.guard`
+  - Verifies Scene Orchestrator consumes base facts by scene type (`form/list/kanban/workspace`) and shapes `search/workflow/validation` surfaces accordingly.
+- `make verify.scene.orchestrator.action_surface.guard`
+  - Verifies Scene Orchestrator emits scene-typed action surface buckets (`primary/secondary/contextual`) with stable counts.
+  - Verifies permission/workflow runtime gate can filter non-executable actions before surface output.
+  - Verifies runtime strategy override (`default/by_role/by_company/by_company_role`) can re-bucket/hide actions deterministically.
+- `make verify.scene.action_surface_strategy.wiring.guard`
+  - Verifies `system.init` can output `scene_action_surface_strategy` (`params -> ext_facts -> icp`) and inject strategy/role/company runtime into scene compile path.
+- `make verify.scene.action_surface_strategy.schema.guard`
+  - Enforces schema baseline from `scripts/verify/baselines/scene_action_surface_strategy_schema_guard.json` and strategy key whitelist (`force_primary/secondary/contextual/hide`).
+- `make verify.scene.action_surface_strategy.payload.guard`
+  - Verifies `system.init` payload baseline for `scene_action_surface_strategy` using live sample normalization against `scripts/verify/baselines/scene_action_surface_strategy_payload_guard.json`.
+  - Enforces top-level key whitelist (`default/by_role/by_company/by_company_role`) and strategy key whitelist (`force_primary_keys/force_secondary_keys/force_contextual_keys/hide_keys`).
+- `make verify.scene.action_surface_strategy.priority.guard`
+  - Verifies deterministic conflict precedence for action strategy layers (`default -> by_company -> by_role -> by_company_role`) using baseline sample.
+- `make verify.scene.action_surface_strategy.live_matrix.guard`
+  - Verifies multi-case conflict matrix for action strategy overlays across `default/by_company/by_role/by_company_role` combinations.
+  - Baseline file: `scripts/verify/baselines/scene_action_surface_strategy_live_matrix_guard.json`.
+  - Includes optional `system.init` output-driven live case; use `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1` to enforce live fetch.
+- `make verify.scene.ready.scene_type_consumption_metrics.guard`
+  - Verifies `scene_ready_contract_v1.meta.scene_type_consumption_metrics` is emitted with per-`scene_type` consumption/nonempty rates.
+- `make verify.scene.ready.consumption_trend.guard`
+  - Verifies trend baseline for `scene_governance_v1.scene_ready_consumption` aggregate rates and scene count/type floor.
+  - Baseline file: `scripts/verify/baselines/scene_ready_consumption_trend_guard.json`; state file: `artifacts/backend/scene_ready_consumption_trend_state.json`.
+- `make verify.scene.governance_history_report.guard`
+  - Aggregates `scene_asset_queue_trend_state` + `scene_ready_consumption_trend_state` into governance history report.
+  - Emits `artifacts/backend/scene_governance_history_report.json` and `artifacts/backend/scene_governance_history_report.md`.
+  - Enforces cross-trend policy alignment and capture-time skew threshold via `scripts/verify/baselines/scene_governance_history_report_guard.json`.
+- `make verify.scene.governance_history_archive.guard`
+  - Archives `scene_governance_history_report` by commit hash + timestamp under `artifacts/backend/history/scene_governance/`.
+  - Persists rolling history samples in `artifacts/backend/history/scene_governance_history_samples.jsonl`.
+  - Maintains branch+commit index at `artifacts/backend/history/scene_governance_index.json` and `.md`.
+  - Emits diff summary to `artifacts/backend/scene_governance_history_diff_summary.json` and `.md`.
+  - Baseline: `scripts/verify/baselines/scene_governance_history_archive_guard.json`.
+- `make verify.scene.registry_asset_snapshot.guard`
+  - Verifies real runtime scene snapshot (`system.init -> scene_ready_contract_v1`) for key scene coverage and base-contract binding.
+  - Persists live/fallback snapshot to `artifacts/backend/scene_registry_asset_snapshot_state.json` using baseline `scripts/verify/baselines/scene_registry_asset_snapshot_guard.json`.
+  - Use `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1` to force live fetch mode.
+- `make verify.scene.sample_registry_diff.guard`
+  - Builds a diff report between sample compile baseline (`scene_orchestrator_key_scene_compile_guard`) and real registry snapshot state.
+  - Emits `artifacts/backend/scene_sample_registry_diff_report.json` and `artifacts/backend/scene_sample_registry_diff_report.md`.
+  - Baseline: `scripts/verify/baselines/scene_sample_registry_diff_guard.json`; use `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1` for strict scene-count mode.
+- `make verify.scene.sample_registry_diff_trend.guard`
+  - Enforces trend growth thresholds on consecutive diff reports (`missing_required_scene_count/unexpected_scene_count/unbound_matched_scene_count`).
+  - Baseline: `scripts/verify/baselines/scene_sample_registry_diff_trend_guard.json`; state file: `artifacts/backend/scene_sample_registry_diff_trend_state.json`.
+  - Supports role-aware policy (`default` + `role.<role_code>` threshold override).
 - `make verify.contract.snapshot`
   - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`

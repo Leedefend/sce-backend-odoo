@@ -1,0 +1,10 @@
+scene_key: project.management
+scene_type: workspace
+page:
+  route: /s/project.management
+  zones:
+    - name: header
+      blocks: [scene.header]
+    - name: main
+      blocks: [scene.workspace]
+

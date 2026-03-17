@@ -1,0 +1,11 @@
+{
+  "required_scene_keys": [
+    "projects.list",
+    "projects.intake",
+    "workspace.home"
+  ],
+  "min_scene_count": 1,
+  "min_base_contract_bound_scene_count": 1,
+  "min_matched_required_scene_count": 1,
+  "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.json"
+}

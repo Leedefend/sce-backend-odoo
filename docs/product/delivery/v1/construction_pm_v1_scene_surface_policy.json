@@ -4,7 +4,10 @@
   "surfaces": {
     "construction_pm_v1": {
       "nav_allowlist": [
+        "workspace.home",
         "my_work.workspace",
+        "projects.list",
+        "projects.intake",
         "projects.ledger",
         "project.management",
         "contracts.workspace",
@@ -35,6 +38,9 @@
     },
     "construction_exec_v1": {
       "nav_allowlist": [
+        "workspace.home",
+        "projects.list",
+        "projects.intake",
         "projects.dashboard",
         "finance.operating_metrics",
         "risk.monitor",

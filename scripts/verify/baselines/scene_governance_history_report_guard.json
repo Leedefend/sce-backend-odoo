@@ -1,0 +1,7 @@
+{
+  "report_json": "artifacts/backend/scene_governance_history_report.json",
+  "report_md": "artifacts/backend/scene_governance_history_report.md",
+  "max_capture_time_skew_seconds": 300,
+  "require_queue_policy_alignment": true,
+  "require_consumption_policy_alignment": true
+}

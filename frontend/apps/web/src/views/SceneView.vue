@@ -41,7 +41,13 @@
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
       :style="pageSectionStyle('status_forbidden')"
     />
-    <ContractFormPage v-else-if="status === 'idle' && embeddedRecordActionId > 0" />
+    <StatusPanel
+      v-if="status === 'idle' && validationHint"
+      :title="pageText('validation_surface_title', '表单约束提示')"
+      :message="validationHint"
+      variant="info"
+    />
+    <ContractFormPage v-if="status === 'idle' && embeddedRecordActionId > 0" />
     <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
 </template>
@@ -64,7 +70,7 @@ import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { NavNode } from '@sc/schema';
-import type { SceneTarget } from '../app/resolvers/sceneRegistry';
+import type { Scene, SceneTarget } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
@@ -87,11 +93,24 @@ const forbiddenCopy = ref({
   message: pageText('forbidden_message', '当前角色无法进入该场景。'),
   hint: '',
 });
+const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+}
+
+function sanitizeWorkspaceContextForLayout(
+  layoutKind: 'workspace' | 'record' | 'list' | 'ledger' | 'kanban' | 'dashboard',
+  raw: Record<string, unknown>,
+) {
+  if (layoutKind !== 'list' && layoutKind !== 'ledger') {
+    return raw;
+  }
+  const next = { ...raw };
+  delete next.project_id;
+  return next;
 }
 
 function isPortalPath(url: string) {
@@ -173,6 +192,20 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     return walk(session.menuTree || []);
   })();
 
+  const normalizedSceneKey = String(sceneKey || '').trim();
+  if (normalizedSceneKey) {
+    const hinted = session.sceneActionHints?.[normalizedSceneKey];
+    const hintedActionId = Number(hinted?.actionId || 0);
+    if (hintedActionId > 0) {
+      if (!session.menuTree.length || findActionMeta(session.menuTree, hintedActionId) || isSceneContractNav) {
+        return {
+          actionId: hintedActionId,
+          menuId: Number(hinted?.menuId || target.menu_id || 0) || undefined,
+        };
+      }
+    }
+  }
+
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
     if (!session.menuTree.length || findActionMeta(session.menuTree, actionId) || isSceneContractNav) {
@@ -213,7 +246,6 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     }
   }
 
-  const normalizedSceneKey = String(sceneKey || '').trim();
   if (normalizedSceneKey) {
     const sceneNode = findActionNodeBySceneKey(session.menuTree, normalizedSceneKey);
     if (sceneNode?.meta?.action_id) {
@@ -245,19 +277,71 @@ function isSameRouteTarget(targetRoute: string, query: Record<string, unknown>) 
   return targetQuery.toString() === currentQuery.toString();
 }
 
+function fallbackSceneFromSceneReady(sceneKey: string): Scene | null {
+  const key = String(sceneKey || '').trim();
+  if (!key) {
+    return null;
+  }
+  const contract = session.sceneReadyContractV1;
+  const rows = Array.isArray(contract?.scenes) ? contract.scenes : [];
+  for (const item of rows) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    const scene = (row.scene && typeof row.scene === 'object') ? row.scene as Record<string, unknown> : {};
+    const page = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
+    const meta = (row.meta && typeof row.meta === 'object') ? row.meta as Record<string, unknown> : {};
+    const target = (meta.target && typeof meta.target === 'object') ? meta.target as Record<string, unknown> : {};
+    const validationSurface = (row.validation_surface && typeof row.validation_surface === 'object')
+      ? row.validation_surface as Record<string, unknown>
+      : {};
+    const rowKey = String(scene.key || page.scene_key || '').trim();
+    if (rowKey !== key) continue;
+    const routePath = String(page.route || target.route || `/s/${key}`).trim() || `/s/${key}`;
+    const actionId = Number(target.action_id || 0);
+    const menuId = Number(target.menu_id || 0);
+    return {
+      key,
+      label: String(scene.title || key),
+      route: routePath,
+      target: {
+        route: routePath,
+        action_id: actionId > 0 ? actionId : undefined,
+        menu_id: menuId > 0 ? menuId : undefined,
+      },
+      validation_surface: validationSurface,
+      layout: resolveSceneLayout(null),
+      capabilities: [],
+      breadcrumbs: [],
+      tiles: [],
+    };
+  }
+  return null;
+}
+
 async function resolveScene() {
   try {
     status.value = 'loading';
     clearError();
     embeddedActionId.value = 0;
     embeddedRecordActionId.value = 0;
+    validationHint.value = '';
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
-    const scene = getSceneByKey(sceneKey);
+    const scene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey);
     if (!scene) {
       setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
       status.value = 'error';
       return;
+    }
+
+    const validationSurface = (scene.validation_surface && typeof scene.validation_surface === 'object')
+      ? scene.validation_surface as Record<string, unknown>
+      : {};
+    const requiredFields = Array.isArray(validationSurface.required_fields)
+      ? validationSurface.required_fields.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
+    if (requiredFields.length) {
+      validationHint.value = `必填字段：${requiredFields.slice(0, 5).join('、')}${requiredFields.length > 5 ? ' 等' : ''}`;
     }
 
     const policy = evaluateCapabilityPolicy({ required: scene.capabilities || [], available: session.capabilities });
@@ -293,7 +377,10 @@ async function resolveScene() {
     const target = scene.target || {};
     const sceneLabel = String(scene.label || sceneKey || '').trim();
     const layout = resolveSceneLayout(scene);
-    const workspaceContextQuery = resolveWorkspaceContextQuery();
+    const workspaceContextQuery = sanitizeWorkspaceContextForLayout(
+      layout.kind,
+      resolveWorkspaceContextQuery() as Record<string, unknown>,
+    );
     if (layout.kind === 'workspace') {
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);
@@ -446,6 +533,10 @@ async function resolveScene() {
         await router.replace({ path: target.route, query: workspaceContextQuery });
         return;
       }
+      // Safety fallback: keep scene shell active when route is already resolved
+      // but action/model target is intentionally absent.
+      status.value = 'idle';
+      return;
       // Do not early-fallback here; let explicit target/action resolution decide.
     }
 

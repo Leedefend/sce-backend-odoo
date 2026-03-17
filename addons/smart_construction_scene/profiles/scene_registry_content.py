@@ -103,6 +103,14 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "contracts.monitor",
+            "name": "合同履约监控",
+            "target": {
+                "route": "/s/contracts.monitor",
+                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
+            },
+        },
+        {
             "code": "risk.monitor",
             "name": "风险监控",
             "target": {
@@ -216,6 +224,15 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "cost.control",
+            "name": "成本控制驾驶舱",
+            "target": {
+                "route": "/s/cost.control",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
+                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
+            },
+        },
+        {
             "code": "cost.project_progress",
             "name": "进度填报",
             "target": {
@@ -255,8 +272,99 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {"route": "/"},
         },
         {
+            "code": "payments.approval",
+            "name": "收付款审批中心",
+            "target": {
+                "route": "/s/payments.approval",
+                "menu_xmlid": "smart_construction_core.menu_payment_request",
+            },
+        },
+        {
             "code": "my_work.workspace",
             "name": "我的工作",
+            "target": {"route": "/my-work"},
+        },
+        {
+            "code": "projects.detail",
+            "name": "项目详情",
+            "target": {
+                "route": "/s/projects.detail",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+            },
+        },
+        {
+            "code": "projects.execution",
+            "name": "项目执行中心",
+            "target": {
+                "route": "/s/projects.execution",
+                "menu_xmlid": "smart_construction_core.menu_sc_root",
+                "action_xmlid": "smart_construction_core.action_sc_project_list",
+            },
+        },
+        {
+            "code": "portfolio.center",
+            "name": "项目组合中心",
+            "target": {"route": "/s/portfolio.center"},
+        },
+        {
+            "code": "portfolio.monitor",
+            "name": "项目组合监控",
+            "target": {"route": "/s/portfolio.monitor"},
+        },
+        {
+            "code": "contracts.execution",
+            "name": "合同执行跟踪",
+            "target": {"route": "/s/contracts.execution"},
+        },
+        {
+            "code": "cost.forecast",
+            "name": "成本预测",
+            "target": {"route": "/s/cost.forecast"},
+        },
+        {
+            "code": "cost.warning.center",
+            "name": "成本预警中心",
+            "target": {"route": "/s/cost.warning.center"},
+        },
+        {
+            "code": "payments.collection.center",
+            "name": "收款管理中心",
+            "target": {"route": "/s/payments.collection.center"},
+        },
+        {
+            "code": "payments.risk.control",
+            "name": "付款风险控制",
+            "target": {"route": "/s/payments.risk.control"},
+        },
+        {
+            "code": "quality.center",
+            "name": "质量管理中心",
+            "target": {"route": "/s/quality.center"},
+        },
+        {
+            "code": "safety.center",
+            "name": "安全管理中心",
+            "target": {"route": "/s/safety.center"},
+        },
+        {
+            "code": "resource.center",
+            "name": "资源调配中心",
+            "target": {"route": "/s/resource.center"},
+        },
+        {
+            "code": "delivery.command",
+            "name": "交付指挥台",
+            "target": {"route": "/s/delivery.command"},
+        },
+        {
+            "code": "operation.overview",
+            "name": "经营总览",
+            "target": {"route": "/s/operation.overview"},
+        },
+        {
+            "code": "workspace.home",
+            "name": "工作台首页",
             "target": {"route": "/my-work"},
         },
     ]

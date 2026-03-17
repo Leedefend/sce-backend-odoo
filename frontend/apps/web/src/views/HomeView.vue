@@ -414,6 +414,9 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { buildSectionLayoutMap, sectionEnabled, sectionOpenDefault, sectionTagIs, type SectionTag } from '../app/sectionLayout';
+import { deriveHomeSectionMaps, flattenHomeOrchestrationBlocks } from '../app/homeOrchestration';
+import { findEntryForHomeActionItem, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 
@@ -558,31 +561,8 @@ const workspaceLayoutActions = computed(() => (
     ? workspaceLayout.value.actions as Record<string, unknown>
     : {}
 ));
-type HomeSectionTag = 'header' | 'section' | 'details' | 'div';
-type HomeSectionConfig = { enabled: boolean; tag: HomeSectionTag | ''; open: boolean | null };
-
 const workspaceLayoutSections = computed(() => {
-  const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
-  const map = new Map<string, HomeSectionConfig>();
-  source.forEach((item) => {
-    if (!item || typeof item !== 'object') return;
-    const row = item as Record<string, unknown>;
-    const key = asText(row.key);
-    if (!key) return;
-    const tagRaw = asText(row.tag).toLowerCase();
-    const tag = (
-      tagRaw === 'header'
-      || tagRaw === 'section'
-      || tagRaw === 'details'
-      || tagRaw === 'div'
-    ) ? tagRaw : '';
-    map.set(key, {
-      enabled: row.enabled === true,
-      tag,
-      open: typeof row.open === 'boolean' ? row.open : null,
-    });
-  });
-  return map;
+  return buildSectionLayoutMap(workspaceLayout.value.sections);
 });
 const workspacePageOrchestration = computed(() => (
   workspaceHome.value.page_orchestration && typeof workspaceHome.value.page_orchestration === 'object'
@@ -624,42 +604,11 @@ const useUnifiedHomeRenderer = computed(() => {
   return hasV1 && isDashboard && zones.length > 0;
 });
 const orchestrationBlocks = computed(() => {
-  const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
-    ? workspacePageOrchestrationV1.value.zones
-    : [];
-  const hasV1Zones = zones.length > 0;
-  const dataSources = workspacePageOrchestrationV1DataSources.value;
-  const flattenedV1: Record<string, unknown>[] = [];
-  zones.forEach((zone) => {
-    if (!zone || typeof zone !== 'object') return;
-    const zoneRow = zone as Record<string, unknown>;
-    const zoneType = asText(zoneRow.zone_type);
-    const blocks = Array.isArray(zoneRow.blocks) ? zoneRow.blocks : [];
-    blocks.forEach((item) => {
-      if (!item || typeof item !== 'object') return;
-      const blockRow = item as Record<string, unknown>;
-      const sectionKey = asText(blockRow.section_key);
-      const dataSourceKey = asText(blockRow.data_source);
-      if (!sectionKey || !dataSourceKey) return;
-      const dataSource = dataSources[dataSourceKey];
-      if (!dataSource || typeof dataSource !== 'object') return;
-      const sourceType = asText((dataSource as Record<string, unknown>).source_type);
-      if (!sourceType) return;
-      flattenedV1.push({
-        ...blockRow,
-        zone: asText(blockRow.zone) || zoneType || 'support',
-      });
-    });
-  });
-  if (hasV1Zones) {
-    return flattenedV1;
-  }
-  const legacy = Array.isArray(workspacePageOrchestration.value.blocks)
-    ? workspacePageOrchestration.value.blocks
-    : [];
-  return legacy
-    .map((item) => (item && typeof item === 'object' ? item as Record<string, unknown> : null))
-    .filter((item): item is Record<string, unknown> => Boolean(item));
+  return flattenHomeOrchestrationBlocks(
+    workspacePageOrchestrationV1.value,
+    workspacePageOrchestration.value,
+    workspacePageOrchestrationV1DataSources.value,
+  );
 });
 const roleVariantCode = computed(() => {
   const roleVariant = workspaceHome.value.role_variant;
@@ -673,37 +622,11 @@ const roleVariantCode = computed(() => {
   }
   return '';
 });
-const orchestrationSectionOrderMap = computed(() => {
-  const map = new Map<string, number>();
-  orchestrationBlocks.value.forEach((block, idx) => {
-    const visible = typeof block.visible === 'boolean' ? block.visible : true;
-    if (!visible) return;
-    const sourcePath = asText(block.source_path);
-    const sectionKey = asText(block.section_key) || (sourcePath ? sourcePath.split('.')[0] || '' : '');
-    if (!sectionKey || map.has(sectionKey)) return;
-    const orderRaw = Number(block.order);
-    const order = Number.isFinite(orderRaw) && orderRaw > 0 ? Math.trunc(orderRaw) : idx + 1;
-    map.set(sectionKey, order);
-  });
-  return map;
+const orchestrationSectionDerived = computed(() => {
+  return deriveHomeSectionMaps(orchestrationBlocks.value, normalizeTone, normalizeProgress);
 });
-const orchestrationSectionSemanticMap = computed(() => {
-  const map = new Map<string, { zone: string; focus: boolean; tone: SemanticTone; progress: SemanticProgress }>();
-  orchestrationBlocks.value.forEach((block) => {
-    const visible = typeof block.visible === 'boolean' ? block.visible : true;
-    if (!visible) return;
-    const sourcePath = asText(block.source_path);
-    const sectionKey = asText(block.section_key) || (sourcePath ? sourcePath.split('.')[0] || '' : '');
-    if (!sectionKey || map.has(sectionKey)) return;
-    map.set(sectionKey, {
-      zone: asText(block.zone) || 'support',
-      focus: block.focus === true,
-      tone: normalizeTone(block.tone, 'neutral'),
-      progress: normalizeProgress(block.progress, 'running'),
-    });
-  });
-  return map;
-});
+const orchestrationSectionOrderMap = computed(() => orchestrationSectionDerived.value.orderMap);
+const orchestrationSectionSemanticMap = computed(() => orchestrationSectionDerived.value.semanticMap);
 const homeSectionOrderMap = computed(() => {
   const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
   const map = new Map<string, number>();
@@ -830,21 +753,15 @@ function homeLayoutText(key: string, fallback: string) {
 }
 
 function isHomeSectionEnabled(key: string) {
-  const sectionMap = workspaceLayoutSections.value;
-  if (!sectionMap.size) return true;
-  return sectionMap.get(key)?.enabled === true;
+  return sectionEnabled(workspaceLayoutSections.value, key, true);
 }
 
-function isHomeSectionTag(key: string, expected: HomeSectionTag) {
-  const sectionMap = workspaceLayoutSections.value;
-  if (!sectionMap.size) return true;
-  return sectionMap.get(key)?.tag === expected;
+function isHomeSectionTag(key: string, expected: SectionTag) {
+  return sectionTagIs(workspaceLayoutSections.value, key, expected, true);
 }
 
 function isHomeSectionOpenDefault(key: string, fallback = false) {
-  const sectionMap = workspaceLayoutSections.value;
-  if (!sectionMap.size) return fallback;
-  return sectionMap.get(key)?.open === true;
+  return sectionOpenDefault(workspaceLayoutSections.value, key, fallback);
 }
 
 function homeSectionStyle(key: string) {
@@ -1661,36 +1578,15 @@ function actionLabel(entry: CapabilityEntry) {
 }
 
 function orchestrationActionIntent(key: string, fallback = 'ui.contract') {
-  const row = homeOrchestrationActions.value[key];
-  if (!row || typeof row !== 'object') return fallback;
-  const intent = asText((row as Record<string, unknown>).intent);
-  return intent || fallback;
+  return resolveHomeActionIntent(homeOrchestrationActions.value, key, fallback);
 }
 
 function orchestrationActionTarget(key: string) {
-  const row = homeOrchestrationActions.value[key];
-  if (!row || typeof row !== 'object') return {};
-  const target = (row as Record<string, unknown>).target;
-  return target && typeof target === 'object' ? target as Record<string, unknown> : {};
+  return resolveHomeActionTarget(homeOrchestrationActions.value, key);
 }
 
 function findEntryForActionItem(item: Record<string, unknown>) {
-  const entryId = asText(item.entry_id || item.entryId);
-  if (entryId) {
-    const byId = entries.value.find((entry) => entry.id === entryId);
-    if (byId) return byId;
-  }
-  const entryKey = asText(item.entry_key || item.entryKey || item.key);
-  if (entryKey) {
-    const byKey = entries.value.find((entry) => entry.key === entryKey && entry.state === 'READY');
-    if (byKey) return byKey;
-  }
-  const sceneKey = asText(item.scene_key || item.sceneKey);
-  if (sceneKey) {
-    const byScene = entries.value.find((entry) => entry.sceneKey === sceneKey && entry.state === 'READY');
-    if (byScene) return byScene;
-  }
-  return null;
+  return findEntryForHomeActionItem(item, entries.value);
 }
 
 async function handleHomeBlockAction(event: PageBlockActionEvent) {

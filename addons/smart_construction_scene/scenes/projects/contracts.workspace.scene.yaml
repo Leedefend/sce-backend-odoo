@@ -1,0 +1,10 @@
+scene_key: contracts.workspace
+scene_type: workspace
+page:
+  route: /s/contracts.workspace
+  zones:
+    - name: header
+      blocks: [scene.header]
+    - name: main
+      blocks: [scene.workspace]
+

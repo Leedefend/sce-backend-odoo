@@ -86,6 +86,18 @@
         <p v-if="governanceTraceId"><strong>governance_trace:</strong> {{ governanceTraceId }}</p>
       </article>
 
+      <article
+        v-if="pageSectionEnabled('governance_runtime', true) && pageSectionTagIs('governance_runtime', 'section') && governanceSnapshot"
+        class="meta"
+        :style="pageSectionStyle('governance_runtime')"
+      >
+        <p><strong>governance.scene_channel:</strong> {{ governanceSnapshot.scene_channel || '-' }}</p>
+        <p><strong>governance.runtime_source:</strong> {{ governanceSnapshot.runtime_source || '-' }}</p>
+        <p><strong>governance.gates:</strong> {{ governanceGatesLabel }}</p>
+        <p><strong>governance.reasons:</strong> {{ governanceReasonsLabel }}</p>
+        <p><strong>governance.scene_ready_consumption:</strong> {{ governanceConsumptionLabel }}</p>
+      </article>
+
       <section v-if="pageSectionEnabled('governance', true) && pageSectionTagIs('governance', 'section')" class="governance" :style="pageSectionStyle('governance')">
         <h3>Governance Actions</h3>
         <div class="governance-grid">
@@ -154,6 +166,7 @@ import {
   governanceSetChannel,
 } from '../api/scene';
 import type { SceneChannel, SceneHealthContract } from '../contracts/scene';
+import { useSessionStore } from '../stores/session';
 
 const loading = ref(false);
 const governanceBusy = ref(false);
@@ -167,6 +180,7 @@ const targetChannel = ref<SceneChannel>('stable');
 const governanceReason = ref('');
 const governanceTraceId = ref('');
 const router = useRouter();
+const session = useSessionStore();
 const pageContract = usePageContract('scene_health');
 const pageText = pageContract.text;
 const pageActionText = pageContract.actionText;
@@ -188,6 +202,60 @@ const autoDegradeLabel = computed(() => {
   if (!value) return 'triggered=false';
   const reasons = Array.isArray(value.reason_codes) && value.reason_codes.length ? value.reason_codes.join(',') : '-';
   return `triggered=${Boolean(value.triggered)} action=${value.action_taken || '-'} reasons=${reasons}`;
+});
+
+const governanceSnapshot = computed(() => {
+  const value = session.sceneGovernanceV1;
+  return value && typeof value === 'object' ? value : null;
+});
+
+const governanceGatesLabel = computed(() => {
+  const gates = governanceSnapshot.value?.gates;
+  if (!gates || typeof gates !== 'object') return '-';
+  const row = gates as Record<string, unknown>;
+  return [
+    `orchestrator=${Boolean(row.orchestrator_applied)}`,
+    `governance=${Boolean(row.governance_applied)}`,
+    `delivery=${Boolean(row.delivery_policy_applied)}`,
+    `nav_policy_ok=${Boolean(row.nav_policy_validation_ok)}`,
+    `auto_degrade=${Boolean(row.auto_degrade_triggered)}`,
+  ].join(' | ');
+});
+
+const governanceReasonsLabel = computed(() => {
+  const reasons = governanceSnapshot.value?.reasons;
+  if (!reasons || typeof reasons !== 'object') return '-';
+  const row = reasons as Record<string, unknown>;
+  const autoCodes = Array.isArray(row.auto_degrade_reason_codes)
+    ? row.auto_degrade_reason_codes.map((item) => String(item || '')).filter(Boolean)
+    : [];
+  const resolveCodes = Array.isArray(row.resolve_error_codes)
+    ? row.resolve_error_codes.map((item) => String(item || '')).filter(Boolean)
+    : [];
+  const autoText = autoCodes.length ? autoCodes.join(',') : '-';
+  const resolveText = resolveCodes.length ? resolveCodes.join(',') : '-';
+  return `auto_degrade=[${autoText}] resolve_errors=[${resolveText}]`;
+});
+
+const governanceConsumptionLabel = computed(() => {
+  const consumption = governanceSnapshot.value?.scene_ready_consumption;
+  if (!consumption || typeof consumption !== 'object') return '-';
+  const row = consumption as Record<string, unknown>;
+  const enabled = Boolean(row.enabled);
+  const sceneTypes = Number(row.scene_type_count || 0);
+  const scenes = Number(row.scene_count || 0);
+  const aggregate = (row.aggregate && typeof row.aggregate === 'object')
+    ? (row.aggregate as Record<string, unknown>)
+    : {};
+  const baseRate = (aggregate.base_fact_consumption_rate && typeof aggregate.base_fact_consumption_rate === 'object')
+    ? (aggregate.base_fact_consumption_rate as Record<string, unknown>)
+    : {};
+  const surfaceRate = (aggregate.surface_nonempty_rate && typeof aggregate.surface_nonempty_rate === 'object')
+    ? (aggregate.surface_nonempty_rate as Record<string, unknown>)
+    : {};
+  const baseSearch = Number(baseRate.search || 0).toFixed(2);
+  const surfaceAction = Number(surfaceRate.action_surface || 0).toFixed(2);
+  return `enabled=${enabled} scene_types=${sceneTypes} scenes=${scenes} base.search=${baseSearch} surface.action=${surfaceAction}`;
 });
 
 function validateHealthContract(raw: unknown): SceneHealthContract {

@@ -190,9 +190,21 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
         route_is_missing_fallback = isinstance(route, str) and "TARGET_MISSING" in route
         action_xmlid = target.get("action_xmlid") or target.get("actionXmlid")
         menu_xmlid = target.get("menu_xmlid") or target.get("menuXmlid")
-        if action_xmlid and not target.get("action_id"):
+        if action_xmlid:
             action_id = _resolve_xmlid(env, action_xmlid)
             if action_id:
+                current_action_id = int(target.get("action_id") or 0)
+                if current_action_id and current_action_id != action_id:
+                    _append_resolve_error(
+                        resolve_errors,
+                        scene_key=scene_key,
+                        kind="target",
+                        code="TARGET_ID_XMLID_MISMATCH",
+                        ref=action_xmlid,
+                        field="action_id",
+                        message="action_id mismatches action_xmlid; xmlid resolution applied",
+                        severity="warn",
+                    )
                 target["action_id"] = action_id
             else:
                 _append_resolve_error(
@@ -204,9 +216,21 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
                     field="action_xmlid",
                     message="action_xmlid not found",
                 )
-        if menu_xmlid and not target.get("menu_id"):
+        if menu_xmlid:
             menu_id = _resolve_xmlid(env, menu_xmlid)
             if menu_id:
+                current_menu_id = int(target.get("menu_id") or 0)
+                if current_menu_id and current_menu_id != menu_id:
+                    _append_resolve_error(
+                        resolve_errors,
+                        scene_key=scene_key,
+                        kind="target",
+                        code="TARGET_ID_XMLID_MISMATCH",
+                        ref=menu_xmlid,
+                        field="menu_id",
+                        message="menu_id mismatches menu_xmlid; xmlid resolution applied",
+                        severity="warn",
+                    )
                 target["menu_id"] = menu_id
             else:
                 _append_resolve_error(
