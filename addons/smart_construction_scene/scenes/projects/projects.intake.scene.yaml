@@ -1,0 +1,28 @@
+scene_key: projects.intake
+scene_type: form
+page:
+  route: /s/projects.intake
+  zones:
+    - name: header
+      blocks: [scene.header, scene.guidance]
+    - name: main
+      blocks: [scene.form]
+    - name: sidebar
+      blocks: [scene.workflow]
+blocks:
+  - type: form_block
+    zone: main
+    source: ui_base_contract.views.form
+  - type: guidance_block
+    zone: header
+    provider: construction.project_intake_provider
+actions:
+  primary: [submit_intake]
+  secondary: [save_draft, cancel]
+workflow_surface:
+  source: ui_base_contract.workflow
+permission_surface:
+  source: ui_base_contract.permissions
+validation_surface:
+  source: ui_base_contract.validator
+
