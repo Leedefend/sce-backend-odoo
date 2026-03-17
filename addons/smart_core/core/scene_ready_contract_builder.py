@@ -489,7 +489,7 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
     compiled["scene"] = scene_payload
 
     strict_mode = bool(runtime_policy.get("strict_contract_mode"))
-    should_materialize = strict_mode or is_pilot_scene
+    should_materialize = True
     source_missing = _strict_contract_missing_paths(compiled) if strict_mode else []
     defaults_applied: List[str] = []
 

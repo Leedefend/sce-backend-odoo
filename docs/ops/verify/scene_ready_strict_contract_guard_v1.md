@@ -32,6 +32,10 @@ make verify.scene.ready.strict_gap.full_audit
 - `artifacts/backend/scene_ready_strict_gap_full_audit.json`
 - `docs/ops/audits/scene_ready_strict_gap_full_audit.md`
 
+其中 `strict_gap_full_audit` 为**全场景严格检查**：
+- 对 `scene_ready_contract_v1.scenes[*]` 逐一检查 surface/view_modes/sections/action_surface/projection 最小契约完整性；
+- 同时保留 core strict 场景（4 个）的 `contract_guard` 断言。
+
 ## 失败解释
 
 失败意味着 strict 模式的后端契约自证链不完整，
