@@ -1,11 +1,3 @@
-const PILOT_SCENES = new Set([
-  'workspace.home',
-  'workspace_home',
-  'finance.payment_requests',
-  'risk.center',
-  'project.management',
-]);
-
 function asDict(value: unknown): Record<string, unknown> {
   return (value && typeof value === 'object' && !Array.isArray(value))
     ? (value as Record<string, unknown>)
@@ -14,13 +6,6 @@ function asDict(value: unknown): Record<string, unknown> {
 
 function asText(value: unknown): string {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
-}
-
-function normalizeSceneKey(sceneKey: unknown): string {
-  const key = asText(sceneKey);
-  if (!key) return '';
-  if (key.startsWith('/s/')) return key.replace('/s/', '');
-  return key;
 }
 
 function resolveRuntimePolicy(sceneReadyEntry: unknown): Record<string, unknown> {
@@ -49,15 +34,10 @@ export function isCoreSceneStrictMode(sceneKey: unknown, sceneReadyEntry?: unkno
   }
 
   const tier = resolveSceneTier(sceneReadyEntry, runtimePolicy);
-  if (tier === 'core') return true;
-
-  const key = normalizeSceneKey(sceneKey);
-  if (!key) return false;
-
-  const hasBackendTierSignal = Boolean(tier);
-  if (hasBackendTierSignal) {
-    return false;
+  if (tier) {
+    return tier === 'core';
   }
 
-  return PILOT_SCENES.has(key);
+  void sceneKey;
+  return false;
 }
