@@ -36,6 +36,43 @@ def _scene_key_matches(scene_key: str, candidate: str) -> bool:
     return key in {cand, cand.replace('.', '_'), cand.replace('_', '.')}
 
 
+def _missing_contract_paths(row: dict) -> list[str]:
+    missing: list[str] = []
+    surface = _as_dict(row.get("surface"))
+    intent = _as_dict(surface.get("intent"))
+    view_modes = _as_list(row.get("view_modes"))
+    sections = _as_dict(row.get("sections"))
+    action_surface = _as_dict(row.get("action_surface"))
+    projection = _as_dict(row.get("projection"))
+    group_summary = _as_dict(projection.get("group_summary"))
+
+    if not str(surface.get("kind") or "").strip():
+        missing.append("surface.kind")
+    if not str(intent.get("title") or "").strip():
+        missing.append("surface.intent.title")
+    if not str(intent.get("summary") or "").strip():
+        missing.append("surface.intent.summary")
+    if not view_modes:
+        missing.append("view_modes")
+    if not isinstance(sections.get("quick_actions"), dict):
+        missing.append("sections.quick_actions")
+    if not isinstance(sections.get("group_summary"), dict):
+        missing.append("sections.group_summary")
+    if not isinstance(action_surface.get("primary_actions"), list):
+        missing.append("action_surface.primary_actions")
+    if not isinstance(action_surface.get("groups"), list):
+        missing.append("action_surface.groups")
+    if not str(action_surface.get("selection_mode") or "").strip():
+        missing.append("action_surface.selection_mode")
+    if not isinstance(projection.get("summary_items"), list):
+        missing.append("projection.summary_items")
+    if not isinstance(projection.get("overview_strip"), list):
+        missing.append("projection.overview_strip")
+    if not isinstance(group_summary.get("items"), list):
+        missing.append("projection.group_summary.items")
+    return missing
+
+
 def _fetch_scene_ready_contract() -> dict:
     base_url = get_base_url()
     intent_url = f"{base_url}/api/v1/intent"
@@ -72,8 +109,10 @@ def main() -> int:
         return 2
 
     scenes = _as_list(contract.get("scenes"))
+    all_rows = []
+    unresolved_all_rows = []
     strict_rows = []
-    unresolved_rows = []
+    unresolved_strict_rows = []
     source_gap_rows = []
 
     for row in scenes:
@@ -83,6 +122,15 @@ def main() -> int:
         meta = _as_dict(row.get("meta"))
         scene = _as_dict(row.get("scene"))
         scene_key = str(scene.get("key") or row.get("scene_key") or "").strip()
+        missing_paths = _missing_contract_paths(row)
+        all_report = {
+            "scene_key": scene_key,
+            "missing": missing_paths,
+        }
+        all_rows.append(all_report)
+        if missing_paths:
+            unresolved_all_rows.append(all_report)
+
         strict_mode = bool(runtime_policy.get("strict_contract_mode"))
         if not strict_mode:
             strict_mode = bool(_as_dict(meta.get("runtime_policy")).get("strict_contract_mode"))
@@ -106,7 +154,7 @@ def main() -> int:
         }
         strict_rows.append(row_report)
         if missing or not contract_ready:
-            unresolved_rows.append(row_report)
+            unresolved_strict_rows.append(row_report)
         if source_missing:
             source_gap_rows.append(row_report)
 
@@ -126,23 +174,28 @@ def main() -> int:
     errors: list[str] = []
     if len(scenes) == 0:
         errors.append("scene_ready_contract_v1.scenes is empty")
+    if unresolved_all_rows:
+        errors.append(f"unresolved full-scene contract gaps: {len(unresolved_all_rows)}")
     if len(strict_rows) == 0:
         errors.append("strict_scene_count is 0")
     if missing_required_strict:
         errors.append(f"required strict scenes missing: {','.join(missing_required_strict)}")
-    if unresolved_rows:
-        errors.append(f"unresolved strict scenes: {len(unresolved_rows)}")
+    if unresolved_strict_rows:
+        errors.append(f"unresolved strict scenes: {len(unresolved_strict_rows)}")
 
     result = {
         "ok": len(errors) == 0,
         "scene_count": len(scenes),
+        "full_unresolved_count": len(unresolved_all_rows),
         "strict_scene_count": len(strict_rows),
-        "strict_unresolved_count": len(unresolved_rows),
+        "strict_unresolved_count": len(unresolved_strict_rows),
         "strict_source_gap_count": len(source_gap_rows),
         "missing_required_strict": missing_required_strict,
         "errors": errors,
+        "all_rows": all_rows,
+        "unresolved_all_rows": unresolved_all_rows,
         "strict_rows": strict_rows,
-        "strict_unresolved_rows": unresolved_rows,
+        "strict_unresolved_rows": unresolved_strict_rows,
         "strict_source_gap_rows": source_gap_rows,
     }
     _write(REPORT_JSON, json.dumps(result, ensure_ascii=False, indent=2) + "\n")
@@ -152,6 +205,7 @@ def main() -> int:
         "",
         f"- status: {'PASS' if result['ok'] else 'FAIL'}",
         f"- scene_count: {result['scene_count']}",
+        f"- full_unresolved_count: {result['full_unresolved_count']}",
         f"- strict_scene_count: {result['strict_scene_count']}",
         f"- strict_unresolved_count: {result['strict_unresolved_count']}",
         f"- strict_source_gap_count: {result['strict_source_gap_count']}",
@@ -165,9 +219,15 @@ def main() -> int:
             lines.append(
                 f"- `{row['scene_key']}` source_missing={','.join(row['source_missing']) or '-'} defaults_applied={','.join(row['defaults_applied']) or '-'}"
             )
-    if unresolved_rows:
+    if unresolved_all_rows:
+        lines.extend(["", "## Full Scene Unresolved"])
+        for row in unresolved_all_rows:
+            lines.append(
+                f"- `{row['scene_key']}` missing={','.join(row['missing']) or '-'}"
+            )
+    if unresolved_strict_rows:
         lines.extend(["", "## Unresolved"])
-        for row in unresolved_rows:
+        for row in unresolved_strict_rows:
             lines.append(
                 f"- `{row['scene_key']}` missing={','.join(row['missing']) or '-'} contract_ready={row['contract_ready']}"
             )
@@ -184,9 +244,10 @@ def main() -> int:
     print("[PASS] scene_ready_strict_gap_full_audit")
     print(
         "summary:",
+        f"full_unresolved_count={len(unresolved_all_rows)}",
         f"strict_scene_count={len(strict_rows)}",
         f"source_gap_count={len(source_gap_rows)}",
-        f"unresolved_count={len(unresolved_rows)}",
+        f"strict_unresolved_count={len(unresolved_strict_rows)}",
     )
     print(f"report: {REPORT_JSON.relative_to(ROOT).as_posix()}")
     print(f"report_md: {REPORT_MD.relative_to(ROOT).as_posix()}")
