@@ -316,6 +316,8 @@ import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
+import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -337,6 +339,19 @@ type ContractAction = {
   hint: string;
   semantic: string;
   visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
+  mutation?: {
+    type: string;
+    model: string;
+    operation: string;
+    payload_schema?: Record<string, unknown>;
+  };
+  refreshPolicy?: {
+    on_success: string[];
+    on_failure?: string[];
+    mode?: string;
+    scope?: string;
+    debounce_ms?: number;
+  };
 };
 
 type LayoutNode = {
@@ -1526,6 +1541,7 @@ function detectMethodName(key: string, payloadMethod: string) {
 
 const contractActions = computed<ContractAction[]>(() => {
   const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
+    const protocol = normalizeSceneActionProtocol(row);
     const key = String(row.key || '').trim();
     if (!key) return null;
     const target = parseMaybeJsonRecord(row.target);
@@ -1556,6 +1572,8 @@ const contractActions = computed<ContractAction[]>(() => {
       hint: '',
       semantic,
       visibleProfiles: ['create', 'edit', 'readonly'],
+      mutation: protocol?.mutation,
+      refreshPolicy: protocol?.refresh_policy,
     };
   };
 
@@ -2669,7 +2687,7 @@ async function runAction(action: ContractAction) {
   if (!action.enabled) return;
   const actionKey = String(action.key || '').trim().toLowerCase();
   if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
-    await saveRecord();
+    await saveRecord(action.refreshPolicy);
     return;
   }
   if (actionKey === 'cancel') {
@@ -2718,7 +2736,7 @@ async function runAction(action: ContractAction) {
       });
       const result = response?.result;
       const refresh = result?.type;
-      if (refresh === 'refresh') {
+      if (refresh === 'refresh' && !action.refreshPolicy) {
         await reload();
         return;
       }
@@ -2729,6 +2747,13 @@ async function runAction(action: ContractAction) {
           params: { actionId: String(nextActionId) },
           query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
         });
+        if (action.refreshPolicy) {
+          await applyProjectionRefreshPolicy(action.refreshPolicy);
+        }
+        return;
+      }
+      if (action.refreshPolicy) {
+        await applyProjectionRefreshPolicy(action.refreshPolicy);
       }
     } catch (err) {
       errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
@@ -2737,6 +2762,27 @@ async function runAction(action: ContractAction) {
       busyKind.value = null;
     }
   }
+}
+
+async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPolicy']) {
+  if (!policy || !Array.isArray(policy.on_success) || !policy.on_success.length) {
+    return;
+  }
+  await executeProjectionRefresh({
+    policy,
+    refreshScene: async () => {
+      await reload();
+    },
+    refreshWorkbench: async () => {
+      await session.loadAppInit();
+    },
+    refreshRoleSurface: async () => {
+      await session.loadAppInit();
+    },
+    recordTrace: ({ intent, writeMode, latencyMs }) => {
+      session.recordIntentTrace({ intent, writeMode, latencyMs });
+    },
+  });
 }
 
 async function openFilter(filterKey: string) {
@@ -2755,7 +2801,7 @@ async function openFilter(filterKey: string) {
   });
 }
 
-async function saveRecord() {
+async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
   const standardCreateMode = isProjectStandardIntakeMode.value;
@@ -2828,7 +2874,7 @@ async function saveRecord() {
     }
     if (recordId.value) {
       await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
-      await reload();
+      await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
     const created = await createRecord({ model: model.value, vals: values });
@@ -2838,6 +2884,7 @@ async function saveRecord() {
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
       const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
       if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
+        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
         const routePath = resolvedNextRoute || '/s/project.management';
         await router.replace({
           path: routePath,
@@ -2849,6 +2896,7 @@ async function saveRecord() {
         return;
       }
       if (isProjectStandardIntakeMode.value && resolvedNextRoute) {
+        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
         await router.replace({
           path: resolvedNextRoute,
           query: {
