@@ -318,6 +318,7 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import { executeSceneMutation } from '../app/sceneMutationRuntime';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -2720,6 +2721,30 @@ async function runAction(action: ContractAction) {
     errorMessage.value = 'contract open action missing action_id';
     status.value = 'error';
     return;
+  }
+  if (action.mutation) {
+    busyKind.value = 'action';
+    try {
+      const result = await executeSceneMutation({
+        mutation: action.mutation,
+        actionKey: action.key,
+        recordId: recordId.value,
+        model: action.targetModel || model.value,
+        context: action.context,
+      });
+      if (showHud.value) {
+        // eslint-disable-next-line no-console
+        console.info(`[scene-mutation] intent=${result.intent} trace=${result.traceId} action=${action.key}`);
+      }
+      await applyProjectionRefreshPolicy(action.refreshPolicy);
+      return;
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : 'scene mutation execute failed';
+      status.value = 'error';
+      return;
+    } finally {
+      busyKind.value = null;
+    }
   }
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
     busyKind.value = 'action';
