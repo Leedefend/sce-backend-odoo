@@ -254,3 +254,41 @@ class TestSceneRuntimeContractChain(TransactionCase):
             self.assertTrue(bool((surface.get("intent") or {}).get("title")))
             self.assertTrue(isinstance(row.get("projection"), dict))
             self.assertTrue(isinstance(row.get("action_surface"), dict))
+
+    def test_scene_ready_respects_declared_runtime_policy_and_tier(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "finance.payment_requests",
+                    "name": "付款申请审批",
+                    "layout": {"kind": "list"},
+                    "runtime_policy": {"strict_contract_mode": False, "scene_tier": "standard"},
+                    "target": {"route": "/s/finance.payment_requests", "model": "finance.payment.request"},
+                    "ui_base_contract": _sample_ui_base_contract(model="finance.payment.request"),
+                }
+            ],
+            role_surface={"landing_scene_key": "finance.payment_requests"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        self.assertEqual(row.get("scene_tier"), "standard")
+        runtime_policy = row.get("runtime_policy") or {}
+        self.assertFalse(bool(runtime_policy.get("strict_contract_mode")))
+        self.assertEqual(runtime_policy.get("scene_tier"), "standard")
+
+    def test_non_pilot_scene_without_declared_policy_stays_non_strict(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "layout": {"kind": "list"},
+                    "target": {"route": "/s/projects.list", "model": "project.project"},
+                    "ui_base_contract": _sample_ui_base_contract(model="project.project"),
+                }
+            ],
+            role_surface={"landing_scene_key": "projects.list"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        runtime_policy = row.get("runtime_policy") or {}
+        self.assertFalse(bool(runtime_policy.get("strict_contract_mode")))
+        self.assertIn(row.get("scene_tier"), (None, ""))
