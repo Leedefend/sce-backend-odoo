@@ -292,10 +292,11 @@ class TestSceneRuntimeContractChain(TransactionCase):
         row = (contract.get("scenes") or [])[0]
         guard = row.get("contract_guard") or {}
         self.assertTrue(bool(guard.get("strict_mode")))
-        self.assertFalse(bool(guard.get("contract_ready")))
-        missing = guard.get("missing") or []
-        self.assertIn("surface.kind", missing)
-        self.assertIn("view_modes", missing)
+        self.assertTrue(bool(guard.get("contract_ready")))
+        source_missing = guard.get("source_missing") or []
+        self.assertIn("surface.kind", source_missing)
+        self.assertIn("view_modes", source_missing)
+        self.assertEqual(guard.get("missing") or [], [])
         self.assertTrue(isinstance(guard.get("defaults_applied"), list))
         self.assertIn("surface", guard.get("defaults_applied") or [])
 
