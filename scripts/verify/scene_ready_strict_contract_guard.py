@@ -89,16 +89,27 @@ def main() -> int:
 
     if errors:
         print("[FAIL] scene_ready_strict_contract_guard")
+        print(
+            "summary:",
+            f"missing_builder_tokens={len(missing_builder)}",
+            f"missing_test_tokens={len(missing_tests)}",
+        )
         for item in errors:
             print(f" - {item}")
         print(f"report: {REPORT_JSON.relative_to(ROOT).as_posix()}")
+        print(f"report_md: {REPORT_MD.relative_to(ROOT).as_posix()}")
         return 2
 
     print("[PASS] scene_ready_strict_contract_guard")
+    print(
+        "summary:",
+        f"missing_builder_tokens={len(missing_builder)}",
+        f"missing_test_tokens={len(missing_tests)}",
+    )
     print(f"report: {REPORT_JSON.relative_to(ROOT).as_posix()}")
+    print(f"report_md: {REPORT_MD.relative_to(ROOT).as_posix()}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
