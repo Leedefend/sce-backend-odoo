@@ -728,7 +728,7 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
 });
 const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
-const strictContractMode = computed(() => isCoreSceneStrictMode(sceneKey.value));
+const strictContractMode = computed(() => isCoreSceneStrictMode(sceneKey.value, sceneReadyEntry.value));
 const strictSurfaceContract = computed<Record<string, unknown>>(() => {
   const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
     ? (sceneReadyEntry.value as Record<string, unknown>)

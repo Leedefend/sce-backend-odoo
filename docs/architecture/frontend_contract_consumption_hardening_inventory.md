@@ -5,41 +5,50 @@
 - Goal: classify existing heuristics, map them to backend contract ownership, and define removal priority.
 
 ## Heuristic Inventory
-| Heuristic | File/Function | Type | Backend Target Layer | Removal Priority |
-|---|---|---|---|---|
-| `surfaceKind` keyword inference | `frontend/apps/web/src/views/ActionView.vue` / `surfaceKind` | page semantics | `scene ready.surface.kind` | P0 |
-| `surfaceIntent` default business copy | `frontend/apps/web/src/views/ActionView.vue` / `surfaceIntent` | page semantics | `scene ready.surface.intent` | P0 |
-| `viewModeLabel` enum mapping fallback | `frontend/apps/web/src/views/ActionView.vue` / `viewModeLabel` | UI fallback + page semantics | `scene ready.view_modes[].label` | P0 |
-| `contractActionGroups` keyword grouping | `frontend/apps/web/src/views/ActionView.vue` / `contractActionGroups` | page semantics | `action_surface.groups` | P0 |
-| `resolveDefaultSort` branch by inferred kind | `frontend/apps/web/src/views/ActionView.vue` / `resolveDefaultSort` | business projection | `list_profile.default_sort` | P1 |
-| `convergeColumnsForSurface` keyword bucket selection | `frontend/apps/web/src/views/ActionView.vue` / `convergeColumnsForSurface` | business projection | `list_profile.columns + column_roles` | P1 |
-| `listSemanticKind` field-set inference | `frontend/apps/web/src/views/ActionView.vue` / `listSemanticKind` | business projection | `projection.kind` | P0 |
-| `listSummaryItems` frontend aggregation | `frontend/apps/web/src/views/ActionView.vue` / `listSummaryItems` | business projection | `projection.summary_items` | P0 |
-| `ledgerOverviewItems` frontend aggregation | `frontend/apps/web/src/views/ActionView.vue` / `ledgerOverviewItems` | business projection | `projection.overview_strip` | P0 |
-| `advancedViewTitle` switch-case copy | `frontend/apps/web/src/views/ActionView.vue` / `advancedViewTitle` | page semantics | `advanced_view.title` | P2 |
-| `advancedViewHint` switch-case copy | `frontend/apps/web/src/views/ActionView.vue` / `advancedViewHint` | page semantics | `advanced_view.hint` | P2 |
-| `semanticStatus` tone/text inference | `frontend/apps/web/src/utils/semantic.ts` / `semanticStatus` | business projection | `rows[].cells[*].semantic` | P1 |
+| Heuristic | File/Function | Type | Backend Target Layer | Runtime Source Priority | Removal Priority |
+|---|---|---|---|---|---|
+| `surfaceKind` keyword inference | `frontend/apps/web/src/views/ActionView.vue` / `surfaceKind` | page semantics | `scene_ready.surface.kind` | `scene_ready.surface.kind -> scene_contract.extensions.surface_kind -> no guess` | P0 |
+| `surfaceIntent` default business copy | `frontend/apps/web/src/views/ActionView.vue` / `surfaceIntent` | page semantics | `scene_ready.surface.intent` | `scene_ready.surface.intent -> page_orchestration.surface_intent -> UI empty fallback` | P0 |
+| `viewModeLabel` enum mapping fallback | `frontend/apps/web/src/views/ActionView.vue` / `viewModeLabel` | UI fallback + page semantics | `scene_ready.view_modes[].label` | `scene_ready.view_modes -> page_contract.view_modes -> raw mode key` | P1 |
+| `contractActionGroups` keyword grouping | `frontend/apps/web/src/views/ActionView.vue` / `contractActionGroups` | page semantics | `scene_ready.action_surface.groups` | `scene_ready.action_surface.groups -> flat ordered actions` | P0 |
+| `resolveDefaultSort` branch by inferred kind | `frontend/apps/web/src/views/ActionView.vue` / `resolveDefaultSort` | business projection | `scene_ready.list_profile.default_sort` | `scene_ready.list_profile.default_sort -> action_contract.search.default_order -> id desc` | P1 |
+| `convergeColumnsForSurface` keyword bucket selection | `frontend/apps/web/src/views/ActionView.vue` / `convergeColumnsForSurface` | business projection | `scene_ready.list_profile.columns + column_roles` | `scene_ready.list_profile.columns -> action_contract.columns -> ui fallback columns` | P1 |
+| `listSemanticKind` field-set inference | `frontend/apps/web/src/views/ActionView.vue` / `listSemanticKind` | business projection | `scene_ready.projection.kind` | `scene_ready.projection.kind -> no business guess` | P0 |
+| `listSummaryItems` frontend aggregation | `frontend/apps/web/src/views/ActionView.vue` / `listSummaryItems` | business projection | `scene_ready.projection.summary_items` | `scene_ready.projection.summary_items -> empty` | P0 |
+| `ledgerOverviewItems` frontend aggregation | `frontend/apps/web/src/views/ActionView.vue` / `ledgerOverviewItems` | business projection | `scene_ready.projection.overview_strip` | `scene_ready.projection.overview_strip -> empty` | P0 |
+| `advancedViewTitle` switch-case copy | `frontend/apps/web/src/views/ActionView.vue` / `advancedViewTitle` | page semantics | `scene_ready.advanced_view.title` | `scene_ready.advanced_view.title -> neutral fallback` | P2 |
+| `advancedViewHint` switch-case copy | `frontend/apps/web/src/views/ActionView.vue` / `advancedViewHint` | page semantics | `scene_ready.advanced_view.hint` | `scene_ready.advanced_view.hint -> neutral fallback` | P2 |
+| `semanticStatus` business inference | `frontend/apps/web/src/utils/semantic.ts` / `semanticStatus` business branch | business projection | `rows[].cells[*].semantic` | `cell.semantic -> neutral fallback` | P1 |
+| `semanticStatus` minimal UI fallback | `frontend/apps/web/src/utils/semantic.ts` / fallback branch | UI fallback | keep minimal | `neutral badge/text only` | Keep |
 
 ## Classification Rule
 - `UI fallback`: allowed to keep (loading/empty/error/minor label default).
 - `page semantics`: must move to scene/page contract.
 - `business projection`: must move to backend projection contract.
 
-## Core Scene Strict Mode Baseline
-Core scenes for strict mode:
+## Strict Contract Migration Pilot Scope
+Current migration pilot scenes (temporary rollout scope, not source of truth):
 - `workspace.home` / `workspace_home`
 - `finance.payment_requests`
 - `risk.center`
 - `project.management`
 
-Strict mode runtime policy:
+Source of truth must come from backend `scene_tier` / `runtime_policy`.
+
+## Strict Mode Runtime Policy
 1. No keyword-based scene kind inference.
 2. No frontend action grouping inference.
 3. No frontend business summary aggregation.
 4. Missing contract should produce explicit `contract missing` style fallback, not silent business guess.
 
+## Removal Completion Rule
+A heuristic is considered removed only when:
+1. core scenes do not execute the heuristic branch anymore;
+2. strict contract mode consumes backend contract as sole semantic source;
+3. fallback behavior is UI-only and neutral;
+4. verification coverage exists for regression detection.
+
 ## Deletion Order
 1. P0: `surfaceKind`, `surfaceIntent`, `contractActionGroups` heuristic grouping, `listSemanticKind/listSummaryItems/ledgerOverviewItems`.
-2. P1: `resolveDefaultSort`, `convergeColumnsForSurface`, `semanticStatus` business semantics.
+2. P1: `resolveDefaultSort`, `convergeColumnsForSurface`, `viewModeLabel`, `semanticStatus` business semantics.
 3. P2: `advancedViewTitle/advancedViewHint`.
-
