@@ -273,7 +273,9 @@ def build_scene_nav_contract(data: dict) -> dict:
                 "group_key": "role_primary",
             },
         })
-    primary_children.extend(grouped)
+    include_remaining = bool(data.get("include_remaining_nav_scenes"))
+    if include_remaining or not candidate_leaves:
+        primary_children.extend(grouped)
 
     root = {
         "key": "root:scene_contract",
@@ -307,6 +309,8 @@ def build_scene_nav_contract(data: dict) -> dict:
             "excluded_scenes_sample": (delivery_report.get("excluded_scenes") or [])[:20],
             "candidate_count": len(candidate_leaves),
             "group_count": len(primary_children),
+            "remaining_group_count": len(grouped),
+            "remaining_hidden": bool(candidate_leaves) and not include_remaining,
             "policy_applied": policy_applied,
             "nav_policy_source": str(nav_policy.get("source") or "platform_default"),
             "nav_policy_provider": str(nav_policy.get("provider_key") or "platform.default.scene_nav_v1"),
