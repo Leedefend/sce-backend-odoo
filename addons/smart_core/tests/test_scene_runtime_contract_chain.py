@@ -160,3 +160,43 @@ class TestSceneRuntimeContractChain(TransactionCase):
         search_surface = row.get("search_surface") or {}
         self.assertEqual(search_surface.get("fields"), [])
         self.assertEqual(search_surface.get("group_by"), [])
+
+    def test_scene_ready_finance_actions_include_mutation_and_refresh_policy(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "finance.payment_requests",
+                    "name": "付款申请审批",
+                    "layout": {"kind": "list"},
+                    "target": {"route": "/s/finance.payment_requests", "model": "finance.payment.request"},
+                    "ui_base_contract": _sample_ui_base_contract(model="finance.payment.request"),
+                }
+            ],
+            role_surface={"landing_scene_key": "finance.payment_requests"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        actions = row.get("actions") or []
+        self.assertGreaterEqual(len(actions), 3)
+        first_target = (actions[0] or {}).get("target") or {}
+        self.assertEqual(((first_target.get("mutation") or {}).get("model") or ""), "finance.payment.request")
+        self.assertTrue(((first_target.get("refresh_policy") or {}).get("on_success") or []))
+
+    def test_scene_ready_risk_actions_include_mutation_and_refresh_policy(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "risk.center",
+                    "name": "风险中心",
+                    "layout": {"kind": "workspace"},
+                    "target": {"route": "/s/risk.center", "model": "project.risk.action"},
+                    "ui_base_contract": _sample_ui_base_contract(model="project.risk.action"),
+                }
+            ],
+            role_surface={"landing_scene_key": "risk.center"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        actions = row.get("actions") or []
+        self.assertGreaterEqual(len(actions), 3)
+        first_target = (actions[0] or {}).get("target") or {}
+        self.assertEqual(((first_target.get("mutation") or {}).get("model") or ""), "project.risk.action")
+        self.assertTrue(((first_target.get("refresh_policy") or {}).get("on_success") or []))
