@@ -1706,6 +1706,7 @@ verify.render.policy.ready: guard.prod.forbid verify.contract.governance.determi
 
 .PHONY: verify.frontend.product.ready
 verify.frontend.product.ready: guard.prod.forbid \
+	verify.scene.ready.strict_contract.guard \
 	verify.frontend.contract_runtime.guard \
 	verify.frontend.contract_route.guard \
 	verify.frontend.contract_normalized_fields.guard \
@@ -1997,6 +1998,7 @@ verify.scene.delivery.readiness: guard.prod.forbid
 	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1 \
 	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1 \
 	$(MAKE) --no-print-directory verify.scene.runtime_boundary.gate
+	@$(MAKE) --no-print-directory verify.scene.ready.strict_contract.guard
 	@$(MAKE) --no-print-directory verify.scene.product_delivery.readiness.guard
 	@echo "[OK] verify.scene.delivery.readiness done"
 
