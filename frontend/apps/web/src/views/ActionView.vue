@@ -420,6 +420,7 @@ import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { resolvePageMode } from '../app/pageMode';
+import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import { formatAmountCN, semanticStatus } from '../utils/semantic';
 import type { NavNode } from '@sc/schema';
 
@@ -727,6 +728,49 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
 });
 const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
+const strictContractMode = computed(() => isCoreSceneStrictMode(sceneKey.value));
+const strictSurfaceContract = computed<Record<string, unknown>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const raw = entry.surface;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+});
+const strictProjectionContract = computed<Record<string, unknown>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const raw = entry.projection;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+});
+const strictAdvancedViewContract = computed<Record<string, unknown>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const raw = entry.advanced_view;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+});
+const strictViewModeLabelMap = computed<Record<string, string>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const rows = Array.isArray(entry.view_modes) ? (entry.view_modes as Array<Record<string, unknown>>) : [];
+  return rows.reduce<Record<string, string>>((acc, row) => {
+    const key = String(row.key || '').trim().toLowerCase();
+    const label = String(row.label || '').trim();
+    if (key && label) acc[key] = label;
+    return acc;
+  }, {});
+});
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
@@ -852,6 +896,9 @@ const viewMode = computed(() => {
 });
 
 function viewModeLabel(mode: string) {
+  const normalized = normalizeViewMode(mode);
+  const strictLabel = strictViewModeLabelMap.value[normalized];
+  if (strictContractMode.value && strictLabel) return strictLabel;
   if (mode === 'tree') return pageText('view_mode_tree', '列表');
   if (mode === 'kanban') return pageText('view_mode_kanban', '看板');
   if (mode === 'pivot') return pageText('view_mode_pivot', '透视');
@@ -890,6 +937,13 @@ function includesAnyKeyword(text: string, keywords: string[]) {
   return keywords.some((item) => raw.includes(String(item || '').toLowerCase()));
 }
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
+  const strictKind = String(strictSurfaceContract.value.kind || '').trim().toLowerCase();
+  if (strictContractMode.value) {
+    if (strictKind === 'risk' || strictKind === 'contract' || strictKind === 'cost' || strictKind === 'project') {
+      return strictKind;
+    }
+    return 'generic';
+  }
   const contractKind = String(actionContract.value?.surface_policies?.kind || '').trim().toLowerCase();
   if (contractKind === 'risk' || contractKind === 'contract' || contractKind === 'cost' || contractKind === 'project') {
     return contractKind;
@@ -953,6 +1007,17 @@ function isCompletedState(stateText: string, tone: string) {
 }
 
 const ledgerOverviewItems = computed(() => {
+  if (strictContractMode.value) {
+    const rows = Array.isArray(strictProjectionContract.value.overview_strip)
+      ? (strictProjectionContract.value.overview_strip as Array<Record<string, unknown>>)
+      : [];
+    return rows.map((row, index) => ({
+      key: String(row.key || `overview_${index + 1}`),
+      label: String(row.label || row.key || ''),
+      value: String(row.value ?? ''),
+      tone: String(row.tone || 'neutral'),
+    })).filter((item) => item.label);
+  }
   if (!hasLedgerOverviewStrip.value) return [] as Array<{ key: string; label: string; value: string; tone: string }>;
   const rows = records.value || [];
   let running = 0;
@@ -992,6 +1057,17 @@ const listSemanticKind = computed(() => {
 });
 
 const listSummaryItems = computed(() => {
+  if (strictContractMode.value) {
+    const rows = Array.isArray(strictProjectionContract.value.summary_items)
+      ? (strictProjectionContract.value.summary_items as Array<Record<string, unknown>>)
+      : [];
+    return rows.map((row, index) => ({
+      key: String(row.key || `summary_${index + 1}`),
+      label: String(row.label || row.key || ''),
+      value: String(row.value ?? ''),
+      tone: String(row.tone || 'neutral'),
+    })).filter((item) => item.label);
+  }
   const rows = records.value || [];
   if (listSemanticKind.value === 'task') {
     let done = 0;
@@ -1092,6 +1168,10 @@ const recordCount = computed(() => {
   return records.value.length;
 });
 const advancedViewTitle = computed(() => {
+  if (strictContractMode.value) {
+    const title = String(strictAdvancedViewContract.value.title || '').trim();
+    return title || pageText('advanced_view_title_contract_missing', '高级视图（契约缺失）');
+  }
   const labels: Record<string, string> = {
     pivot: pageText('advanced_title_pivot', '数据透视视图'),
     graph: pageText('advanced_title_graph', '图表视图'),
@@ -1103,6 +1183,10 @@ const advancedViewTitle = computed(() => {
   return labels[viewMode.value] || pageText('advanced_title_default', '高级视图');
 });
 const advancedViewHint = computed(() => {
+  if (strictContractMode.value) {
+    const hint = String(strictAdvancedViewContract.value.hint || '').trim();
+    return hint || pageText('advanced_view_hint_contract_missing', '当前场景未提供 advanced_view 提示，请补齐契约。');
+  }
   const hints: Record<string, string> = {
     pivot: pageText('advanced_hint_pivot', '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。'),
     graph: pageText('advanced_hint_graph', '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。'),
@@ -1133,6 +1217,35 @@ const contractSurfaceIntent = computed<SurfaceIntentContract>(() => {
     : {};
 });
 const surfaceIntent = computed<SurfaceIntent>(() => {
+  if (strictContractMode.value) {
+    const intent = strictSurfaceContract.value.intent && typeof strictSurfaceContract.value.intent === 'object'
+      ? (strictSurfaceContract.value.intent as Record<string, unknown>)
+      : {};
+    const primaryAction = intent.primary_action && typeof intent.primary_action === 'object'
+      ? (intent.primary_action as Record<string, unknown>)
+      : {};
+    const secondaryAction = intent.secondary_action && typeof intent.secondary_action === 'object'
+      ? (intent.secondary_action as Record<string, unknown>)
+      : {};
+    const actions = Array.isArray(intent.actions) ? intent.actions as FocusNavAction[] : [];
+    return {
+      title: String(intent.title || '').trim() || pageText('surface_intent_contract_missing_title', '场景引导缺失'),
+      summary: String(intent.summary || '').trim() || pageText('surface_intent_contract_missing_summary', '当前核心场景缺少 surface.intent，请补齐后端契约。'),
+      actions,
+      emptyTitle: String(intent.empty_title || '').trim() || pageText('surface_empty_contract_missing_title', '暂无可展示内容'),
+      emptyHint: String(intent.empty_hint || '').trim() || pageText('surface_empty_contract_missing_hint', '请补齐 scene surface contract。'),
+      primaryAction: {
+        label: String(primaryAction.label || '').trim() || pageText('surface_primary_contract_missing', '返回工作台'),
+        to: String(primaryAction.target || '/workbench'),
+      },
+      secondaryAction: Object.keys(secondaryAction).length
+        ? {
+            label: String(secondaryAction.label || '').trim() || pageText('surface_secondary_contract_missing', '进入场景'),
+            to: String(secondaryAction.target || `/s/${sceneKey.value || ''}`),
+          }
+        : undefined,
+    };
+  }
   const override = contractSurfaceIntent.value;
   if (override && Object.keys(override).length) {
     const fallbackPrimary: FocusNavAction = {
@@ -1466,6 +1579,27 @@ const contractActionGroups = computed<Array<{ key: string; label: string; action
   const all = contractActionButtons.value;
   if (!all.length) return [];
   const map = new Map(all.map((item) => [item.key, item]));
+  if (strictContractMode.value) {
+    const actionSurface = sceneReadyListSurface.value.actionSurface || {};
+    const groupsRaw = Array.isArray((actionSurface as Record<string, unknown>).groups)
+      ? ((actionSurface as Record<string, unknown>).groups as Array<Record<string, unknown>>)
+      : [];
+    const grouped: Array<{ key: string; label: string; actions: ContractActionButton[] }> = [];
+    for (const row of groupsRaw) {
+      const groupKey = String(row.key || '').trim();
+      if (!groupKey) continue;
+      const actionKeys = Array.isArray(row.actions) ? row.actions : [];
+      const actions = actionKeys
+        .map((item) => {
+          const actionKey = typeof item === 'string' ? item : String((item as Record<string, unknown>)?.key || '');
+          return map.get(actionKey);
+        })
+        .filter((item): item is ContractActionButton => Boolean(item));
+      if (actions.length) grouped.push({ key: groupKey, label: String(row.label || groupKey), actions });
+    }
+    if (grouped.length) return grouped;
+    return [{ key: 'flat', label: pageText('group_label_flat', '操作'), actions: all }];
+  }
   const groupsRaw = Array.isArray(contract?.action_groups) ? (contract?.action_groups as ContractActionGroupRaw[]) : [];
   const grouped: Array<{ key: string; label: string; actions: ContractActionButton[] }> = [];
   const used = new Set<string>();
@@ -2571,7 +2705,9 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 
 function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, unknown>) {
   const normalized = rawColumns.filter(Boolean);
-  if (!normalized.length || surfaceKind.value === 'generic') return normalized;
+  if (!normalized.length) return normalized;
+  if (strictContractMode.value) return normalized;
+  if (surfaceKind.value === 'generic') return normalized;
 
   const rows = normalized.map((name) => {
     const descriptor = (fields?.[name] || {}) as { string?: string };
