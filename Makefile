@@ -1544,6 +1544,10 @@ verify.frontend.home_layout_section_coverage.guard: guard.prod.forbid
 verify.frontend.home_orchestration_consumption.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_orchestration_consumption_guard.py
 
+.PHONY: verify.scene.ready.strict_contract.guard
+verify.scene.ready.strict_contract.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_ready_strict_contract_guard.py
+
 .PHONY: verify.workspace_home.sections_schema.guard
 verify.workspace_home.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_sections_schema_guard.py
