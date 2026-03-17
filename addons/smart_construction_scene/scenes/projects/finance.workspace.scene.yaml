@@ -1,0 +1,10 @@
+scene_key: finance.workspace
+scene_type: workspace
+page:
+  route: /s/finance.workspace
+  zones:
+    - name: header
+      blocks: [scene.header]
+    - name: main
+      blocks: [scene.workspace]
+

@@ -1,0 +1,26 @@
+scene_key: projects.list
+scene_type: list
+page:
+  route: /s/projects.list
+  zones:
+    - name: header
+      blocks: [scene.header]
+    - name: search
+      blocks: [scene.search]
+    - name: main
+      blocks: [scene.list]
+blocks:
+  - type: list_block
+    zone: main
+    source: ui_base_contract.views.tree
+  - type: insight_block
+    zone: header
+    provider: construction.projects_list_provider
+actions:
+  primary: [create_project]
+  secondary: [export_list]
+search_surface:
+  source: ui_base_contract.search
+permission_surface:
+  source: ui_base_contract.permissions
+
