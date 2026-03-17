@@ -315,6 +315,7 @@ import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolic
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
+import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -1524,15 +1525,63 @@ function detectMethodName(key: string, payloadMethod: string) {
 }
 
 const contractActions = computed<ContractAction[]>(() => {
+  const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
+    const key = String(row.key || '').trim();
+    if (!key) return null;
+    const target = parseMaybeJsonRecord(row.target);
+    const intent = String(row.intent || '').trim().toLowerCase();
+    const tier = String(row.tier || '').trim().toLowerCase();
+    const placement = String(row.placement || 'header').trim().toLowerCase();
+    const actionId = toActionId(target.action_id) ?? toActionId(target.ref);
+    const hasOpenTarget = Boolean(actionId || String(target.url || '').trim() || String(target.route || '').trim());
+    const kind = hasOpenTarget || intent === 'ui.contract' ? 'open' : 'object';
+    const semantic = tier === 'primary'
+      ? 'primary_action'
+      : tier === 'secondary'
+        ? 'secondary_action'
+        : '';
+    return {
+      key,
+      label: String(row.label || key),
+      kind,
+      level: placement,
+      actionId,
+      methodName: detectMethodName(key, String(target.method || '').trim()),
+      targetModel: String(target.model || model.value || '').trim(),
+      context: parseMaybeJsonRecord(target.context_raw),
+      domainRaw: String(target.domain_raw || '').trim(),
+      target: String(target.target || '').trim(),
+      url: String(target.url || target.route || '').trim(),
+      enabled: true,
+      hint: '',
+      semantic,
+      visibleProfiles: ['create', 'edit', 'readonly'],
+    };
+  };
+
+  const sceneReadyActions = Array.isArray(sceneReadyFormSurface.value.actions)
+    ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
+    : [];
   const merged: Array<Record<string, unknown>> = [];
-  if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
+  if (sceneReadyActions.length) {
+    merged.push(...sceneReadyActions);
+  } else {
+    if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
+  }
 
   const dedup = new Set<string>();
   const out: ContractAction[] = [];
   for (const row of merged) {
+    if (sceneReadyActions.length) {
+      const mapped = mapSceneReadyAction(row);
+      if (!mapped || dedup.has(mapped.key)) continue;
+      dedup.add(mapped.key);
+      out.push(mapped);
+      continue;
+    }
     const key = String(row.key || '').trim();
     if (!key || dedup.has(key)) continue;
     dedup.add(key);
@@ -1692,30 +1741,15 @@ const policyRequiredFields = computed(() => {
   });
   return out;
 });
-const sceneValidationSurface = computed<Record<string, unknown>>(() => {
-  const sceneKey = String(route.query.scene_key || '').trim();
-  if (!sceneKey) return {};
-  const rows = Array.isArray(session.sceneReadyContractV1?.scenes) ? session.sceneReadyContractV1?.scenes : [];
-  for (const item of rows) {
-    if (!item || typeof item !== 'object') continue;
-    const row = item as Record<string, unknown>;
-    const scene = (row.scene && typeof row.scene === 'object') ? row.scene as Record<string, unknown> : {};
-    const page = (row.page && typeof row.page === 'object') ? row.page as Record<string, unknown> : {};
-    const rowKey = String(scene.key || page.scene_key || '').trim();
-    if (rowKey !== sceneKey) continue;
-    const surface = row.validation_surface;
-    if (surface && typeof surface === 'object' && !Array.isArray(surface)) {
-      return surface as Record<string, unknown>;
-    }
-    return {};
-  }
-  return {};
-});
 const sceneValidationRequiredFields = computed<string[]>(() => {
-  const fields = Array.isArray(sceneValidationSurface.value.required_fields)
-    ? sceneValidationSurface.value.required_fields
-    : [];
-  return fields.map((item) => String(item || '').trim()).filter(Boolean);
+  const sceneKey = String(route.query.scene_key || '').trim();
+  const entry = sceneKey ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey) : null;
+  return resolveFormSceneReady(entry).requiredFields;
+});
+const sceneReadyFormSurface = computed(() => {
+  const sceneKey = String(route.query.scene_key || '').trim();
+  const entry = sceneKey ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey) : null;
+  return resolveFormSceneReady(entry);
 });
 const validationRequiredFields = computed(() => {
   const out = new Set<string>();
@@ -2633,6 +2667,20 @@ async function reload() {
 
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
+  const actionKey = String(action.key || '').trim().toLowerCase();
+  if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
+    await saveRecord();
+    return;
+  }
+  if (actionKey === 'cancel') {
+    await router.push({
+      name: 'workbench',
+      query: pickContractNavQuery(route.query as Record<string, unknown>, {
+        scene: undefined,
+      }),
+    });
+    return;
+  }
   if (action.kind === 'open') {
     if (action.actionId) {
       await router.push({
@@ -2786,9 +2834,23 @@ async function saveRecord() {
     const created = await createRecord({ model: model.value, vals: values });
     if (created?.id) {
       clearIntakeAutosave();
+      const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
+      const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
+      const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
       if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
+        const routePath = resolvedNextRoute || '/s/project.management';
         await router.replace({
-          path: '/s/project.management',
+          path: routePath,
+          query: {
+            project_id: String(created.id),
+            ...resolveWorkspaceContextQuery(),
+          },
+        });
+        return;
+      }
+      if (isProjectStandardIntakeMode.value && resolvedNextRoute) {
+        await router.replace({
+          path: resolvedNextRoute,
           query: {
             project_id: String(created.id),
             ...resolveWorkspaceContextQuery(),
