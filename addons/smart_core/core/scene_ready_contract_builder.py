@@ -361,6 +361,43 @@ def _declared_scene_tier(item: Dict[str, Any], compiled: Dict[str, Any], runtime
     )
 
 
+def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
+    missing: List[str] = []
+    surface = _as_dict(compiled.get("surface"))
+    intent = _as_dict(surface.get("intent"))
+    view_modes = _as_list(compiled.get("view_modes"))
+    sections = _as_dict(compiled.get("sections"))
+    action_surface = _as_dict(compiled.get("action_surface"))
+    projection = _as_dict(compiled.get("projection"))
+    group_summary = _as_dict(projection.get("group_summary"))
+
+    if not _text(surface.get("kind")):
+        missing.append("surface.kind")
+    if not _text(intent.get("title")):
+        missing.append("surface.intent.title")
+    if not _text(intent.get("summary")):
+        missing.append("surface.intent.summary")
+    if not view_modes:
+        missing.append("view_modes")
+    if not isinstance(sections.get("quick_actions"), dict):
+        missing.append("sections.quick_actions")
+    if not isinstance(sections.get("group_summary"), dict):
+        missing.append("sections.group_summary")
+    if not _as_list(action_surface.get("primary_actions")):
+        missing.append("action_surface.primary_actions")
+    if not _as_list(action_surface.get("groups")):
+        missing.append("action_surface.groups")
+    if not _text(action_surface.get("selection_mode")):
+        missing.append("action_surface.selection_mode")
+    if not isinstance(projection.get("summary_items"), list):
+        missing.append("projection.summary_items")
+    if not isinstance(projection.get("overview_strip"), list):
+        missing.append("projection.overview_strip")
+    if not isinstance(group_summary.get("items"), list):
+        missing.append("projection.group_summary.items")
+    return missing
+
+
 def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled: Dict[str, Any]) -> Dict[str, Any]:
     pilot_keys = {"workspace.home", "finance.payment_requests", "risk.center", "project.management"}
     scene_payload = _as_dict(compiled.get("scene"))
@@ -392,21 +429,27 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
 
     strict_mode = bool(runtime_policy.get("strict_contract_mode"))
     should_materialize = strict_mode or scene_key in pilot_keys
+    missing_before = _strict_contract_missing_paths(compiled) if strict_mode else []
+    defaults_applied: List[str] = []
 
     if should_materialize and (not isinstance(compiled.get("surface"), dict) or not compiled.get("surface")):
         compiled["surface"] = _pilot_scene_surface_spec(scene_key)
+        defaults_applied.append("surface")
 
     if should_materialize and (not isinstance(compiled.get("view_modes"), list) or not compiled.get("view_modes")):
         compiled["view_modes"] = _default_view_modes(scene_key, page_payload, scene_payload)
+        defaults_applied.append("view_modes")
 
     if should_materialize and (not isinstance(compiled.get("sections"), dict) or not compiled.get("sections")):
         compiled["sections"] = {
             "quick_actions": {"enabled": True, "tag": "section"},
             "group_summary": {"enabled": True, "tag": "section"},
         }
+        defaults_applied.append("sections")
 
     if should_materialize and (not isinstance(compiled.get("projection"), dict) or not compiled.get("projection")):
         compiled["projection"] = _default_projection(scene_key)
+        defaults_applied.append("projection")
 
     action_surface = _as_dict(compiled.get("action_surface"))
     if should_materialize and (not isinstance(action_surface.get("groups"), list) or not action_surface.get("groups")):
@@ -414,6 +457,7 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
         action_surface.setdefault("primary_actions", seed.get("primary_actions"))
         action_surface.setdefault("selection_mode", seed.get("selection_mode"))
         action_surface["groups"] = seed.get("groups")
+        defaults_applied.append("action_surface.groups")
     compiled["action_surface"] = _action_surface_with_counts(action_surface, [row for row in actions_payload if isinstance(row, dict)])
 
     meta_payload = _as_dict(compiled.get("meta"))
@@ -427,6 +471,15 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
         meta_payload["runtime_policy"] = meta_runtime_policy
     if scene_tier:
         meta_payload["scene_tier"] = scene_tier
+    if strict_mode:
+        contract_guard = {
+            "strict_mode": True,
+            "missing": missing_before,
+            "defaults_applied": defaults_applied,
+            "contract_ready": len(missing_before) == 0,
+        }
+        compiled["contract_guard"] = contract_guard
+        meta_payload["contract_guard"] = contract_guard
     compiled["meta"] = meta_payload
 
     return compiled
