@@ -357,6 +357,7 @@
 - 2026-03-16：已完成 T87 导航入口收敛：`ui.contract` 对前端请求同步禁用 `nav` op，前端导航统一由 `system.init -> nav_contract(scene_contract_v1)` 交付，避免并行导航事实源。
 - 2026-03-16：已完成 T88 旧路由下线：`/api/ui/contract` 统一返回 `410 GONE`，提示迁移到 `/api/v1/intent` 的 `system.init` 场景契约链路；后端内部仍可通过 handler + `source_mode` 白名单使用原生能力。
 - 2026-03-16：已完成 T89 同类 `scene target unsupported` 清零兜底：后端在场景合并阶段统一补全 `target.action_id/menu_id`（由 `action_xmlid/menu_xmlid/menu.action` 解析），前端对“已在目标 route 且无 action/model”场景启用 idle 安全回退，避免误报错误页。
+- 2026-03-16：已完成 T90 侧边栏导航收敛：`scene_nav_contract` 默认仅展示 `role_surface.scene_candidates`（无候选时才回退展示 remaining 分组），防止交付面扩容后“其他场景”污染主导航；`meta.remaining_hidden` 暴露收敛状态。
 
 ## 下一步（按顺序）
 
