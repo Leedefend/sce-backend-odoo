@@ -22,12 +22,15 @@
 
 ```bash
 make verify.scene.ready.strict_contract.guard
+make verify.scene.ready.strict_gap.full_audit
 ```
 
 ## 报告产物
 
 - `artifacts/backend/scene_ready_strict_contract_guard_report.json`
 - `docs/ops/audits/scene_ready_strict_contract_guard_report.md`
+- `artifacts/backend/scene_ready_strict_gap_full_audit.json`
+- `docs/ops/audits/scene_ready_strict_gap_full_audit.md`
 
 ## 失败解释
 

@@ -27,6 +27,21 @@ def _as_list(value: Any) -> List[Any]:
     return list(value) if isinstance(value, list) else []
 
 
+def _scene_key_matches(scene_key: str, *candidates: str) -> bool:
+    normalized = _text(scene_key).lower()
+    if not normalized:
+        return False
+    pool = set()
+    for candidate in candidates:
+        value = _text(candidate).lower()
+        if not value:
+            continue
+        pool.add(value)
+        pool.add(value.replace(".", "_"))
+        pool.add(value.replace("_", "."))
+    return normalized in pool
+
+
 def _resolve_scene_provider_payload(scene_key: str, runtime_context: Dict[str, Any] | None = None) -> Dict[str, Any]:
     runtime_payload = runtime_context if isinstance(runtime_context, dict) else {}
     try:
@@ -206,7 +221,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
 
 
 def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
-    if scene_key == "workspace.home":
+    if _scene_key_matches(scene_key, "workspace.home"):
         return {
             "kind": "workspace",
             "intent": {
@@ -218,7 +233,7 @@ def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
                 "secondary_action": {"label": "进入风险中心", "target": "/s/risk.center"},
             },
         }
-    if scene_key == "finance.payment_requests":
+    if _scene_key_matches(scene_key, "finance.payment_requests"):
         return {
             "kind": "finance",
             "intent": {
@@ -230,7 +245,7 @@ def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
                 "secondary_action": {"label": "返回工作台", "target": "/my-work"},
             },
         }
-    if scene_key == "risk.center":
+    if _scene_key_matches(scene_key, "risk.center"):
         return {
             "kind": "risk",
             "intent": {
@@ -242,7 +257,7 @@ def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
                 "secondary_action": {"label": "查看项目驾驶舱", "target": "/s/project.management"},
             },
         }
-    if scene_key == "project.management":
+    if _scene_key_matches(scene_key, "project.management"):
         return {
             "kind": "project",
             "intent": {
@@ -270,9 +285,9 @@ def _default_view_modes(scene_key: str, page: Dict[str, Any], scene: Dict[str, A
     mode_candidates: List[str] = []
     layout_kind = _text((scene.get("layout") if isinstance(scene.get("layout"), dict) else {}).get("kind"))
     page_mode = _text(page.get("mode"))
-    if layout_kind in {"list", "table"} or scene_key in {"finance.payment_requests", "risk.center"}:
+    if layout_kind in {"list", "table"} or _scene_key_matches(scene_key, "finance.payment_requests", "risk.center"):
         mode_candidates = ["tree", "kanban"]
-    elif layout_kind in {"workspace", "dashboard"} or scene_key in {"workspace.home", "project.management"}:
+    elif layout_kind in {"workspace", "dashboard"} or _scene_key_matches(scene_key, "workspace.home", "project.management"):
         mode_candidates = ["kanban", "tree"]
     elif page_mode:
         mode_candidates = [page_mode]
@@ -295,14 +310,17 @@ def _default_view_modes(scene_key: str, page: Dict[str, Any], scene: Dict[str, A
 
 
 def _default_projection(scene_key: str) -> Dict[str, Any]:
-    kind_map = {
-        "workspace.home": "workspace_home",
-        "finance.payment_requests": "finance_payment_requests",
-        "risk.center": "risk_center",
-        "project.management": "project_management",
-    }
+    kind = "generic"
+    if _scene_key_matches(scene_key, "workspace.home"):
+        kind = "workspace_home"
+    elif _scene_key_matches(scene_key, "finance.payment_requests"):
+        kind = "finance_payment_requests"
+    elif _scene_key_matches(scene_key, "risk.center"):
+        kind = "risk_center"
+    elif _scene_key_matches(scene_key, "project.management"):
+        kind = "project_management"
     return {
-        "kind": kind_map.get(scene_key, "generic"),
+        "kind": kind,
         "summary_items": [],
         "overview_strip": [],
         "group_summary": {"items": []},
@@ -315,7 +333,11 @@ def _default_action_surface(scene_key: str, actions: List[Dict[str, Any]]) -> Di
     for key in keys:
         if key not in unique_keys:
             unique_keys.append(key)
-    selection_mode = "multi" if scene_key in {"finance.payment_requests", "risk.center"} else "single"
+    if not unique_keys and _scene_key_matches(scene_key, "workspace.home"):
+        unique_keys = ["open_my_work", "open_risk_center"]
+    elif not unique_keys and _scene_key_matches(scene_key, "project.management"):
+        unique_keys = ["open_projects_list", "open_projects_intake"]
+    selection_mode = "multi" if _scene_key_matches(scene_key, "finance.payment_requests", "risk.center") else "single"
     return {
         "primary_actions": unique_keys[:3],
         "groups": [{
@@ -325,6 +347,39 @@ def _default_action_surface(scene_key: str, actions: List[Dict[str, Any]]) -> Di
         }] if unique_keys else [],
         "selection_mode": selection_mode,
     }
+
+
+def _seed_pilot_scene_contract(scene_key: str, scene_payload: Dict[str, Any]) -> Dict[str, Any]:
+    if not _scene_key_matches(scene_key, "workspace.home", "finance.payment_requests", "risk.center", "project.management"):
+        return scene_payload
+    payload = dict(scene_payload)
+    layout = _as_dict(payload.get("layout"))
+    pseudo_scene = {"layout": layout}
+    if not _as_dict(payload.get("surface")):
+        payload["surface"] = _pilot_scene_surface_spec(scene_key)
+    if not _as_list(payload.get("view_modes")):
+        payload["view_modes"] = _default_view_modes(scene_key, {}, pseudo_scene)
+    if not _as_dict(payload.get("sections")):
+        payload["sections"] = {
+            "quick_actions": {"enabled": True, "tag": "section"},
+            "group_summary": {"enabled": True, "tag": "section"},
+        }
+    if not _as_dict(payload.get("projection")):
+        payload["projection"] = _default_projection(scene_key)
+    action_surface = _as_dict(payload.get("action_surface"))
+    if not _as_list(action_surface.get("groups")):
+        seed = _default_action_surface(scene_key, _as_list(payload.get("actions")))
+        action_surface.setdefault("primary_actions", seed.get("primary_actions"))
+        action_surface.setdefault("selection_mode", seed.get("selection_mode"))
+        action_surface["groups"] = seed.get("groups")
+    if action_surface:
+        payload["action_surface"] = action_surface
+    runtime_policy = _as_dict(payload.get("runtime_policy"))
+    runtime_policy.setdefault("strict_contract_mode", True)
+    runtime_policy.setdefault("scene_tier", "core")
+    payload["runtime_policy"] = runtime_policy
+    payload.setdefault("scene_tier", "core")
+    return payload
 
 
 def _action_surface_with_counts(action_surface: Dict[str, Any], actions: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -399,7 +454,13 @@ def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
 
 
 def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled: Dict[str, Any]) -> Dict[str, Any]:
-    pilot_keys = {"workspace.home", "finance.payment_requests", "risk.center", "project.management"}
+    is_pilot_scene = _scene_key_matches(
+        scene_key,
+        "workspace.home",
+        "finance.payment_requests",
+        "risk.center",
+        "project.management",
+    )
     scene_payload = _as_dict(compiled.get("scene"))
     page_payload = _as_dict(compiled.get("page"))
     actions_payload = _as_list(compiled.get("actions"))
@@ -407,9 +468,9 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
     runtime_policy = _declared_runtime_policy(item, compiled)
     scene_tier = _declared_scene_tier(item, compiled, runtime_policy)
 
-    if not scene_tier and scene_key in pilot_keys:
+    if not scene_tier and is_pilot_scene:
         scene_tier = "core"
-    if "strict_contract_mode" not in runtime_policy and scene_key in pilot_keys:
+    if "strict_contract_mode" not in runtime_policy and is_pilot_scene:
         runtime_policy["strict_contract_mode"] = True
     if scene_tier and "scene_tier" not in runtime_policy:
         runtime_policy["scene_tier"] = scene_tier
@@ -428,8 +489,8 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
     compiled["scene"] = scene_payload
 
     strict_mode = bool(runtime_policy.get("strict_contract_mode"))
-    should_materialize = strict_mode or scene_key in pilot_keys
-    missing_before = _strict_contract_missing_paths(compiled) if strict_mode else []
+    should_materialize = strict_mode or is_pilot_scene
+    source_missing = _strict_contract_missing_paths(compiled) if strict_mode else []
     defaults_applied: List[str] = []
 
     if should_materialize and (not isinstance(compiled.get("surface"), dict) or not compiled.get("surface")):
@@ -472,11 +533,13 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
     if scene_tier:
         meta_payload["scene_tier"] = scene_tier
     if strict_mode:
+        missing_after = _strict_contract_missing_paths(compiled)
         contract_guard = {
             "strict_mode": True,
-            "missing": missing_before,
+            "source_missing": source_missing,
+            "missing": missing_after,
             "defaults_applied": defaults_applied,
-            "contract_ready": len(missing_before) == 0,
+            "contract_ready": len(missing_after) == 0,
         }
         compiled["contract_guard"] = contract_guard
         meta_payload["contract_guard"] = contract_guard
@@ -494,7 +557,7 @@ def _scene_ready_entry(
     scene_key = _text(item.get("code") or item.get("key"))
     scene_payload = dict(item)
 
-    if scene_key == "finance.payment_requests" and not isinstance(scene_payload.get("actions"), list):
+    if _scene_key_matches(scene_key, "finance.payment_requests") and not isinstance(scene_payload.get("actions"), list):
         scene_payload["actions"] = [
             {
                 "key": "approve_payment_request",
@@ -558,7 +621,7 @@ def _scene_ready_entry(
             },
         ]
 
-    if scene_key == "risk.center" and not isinstance(scene_payload.get("actions"), list):
+    if _scene_key_matches(scene_key, "risk.center") and not isinstance(scene_payload.get("actions"), list):
         scene_payload["actions"] = [
             {
                 "key": "claim_risk_action",
@@ -622,6 +685,8 @@ def _scene_ready_entry(
             },
         ]
 
+    scene_payload = _seed_pilot_scene_contract(scene_key, scene_payload)
+
     base_contract_raw = item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {}
     base_contract_adapted = adapt_ui_base_contract(base_contract_raw, scene_key=scene_key)
     ui_base_contract = (
@@ -670,6 +735,24 @@ def _scene_ready_entry(
         ui_base_contract=ui_base_contract,
         provider_registry=provider_registry,
     )
+    for field in ("surface", "view_modes", "sections", "projection", "action_surface", "runtime_policy", "scene_tier"):
+        if field in compiled and compiled.get(field) not in (None, {}, []):
+            continue
+        source_value = scene_payload.get(field)
+        if source_value in (None, {}, []):
+            continue
+        compiled[field] = source_value
+    compiled_action_surface = _as_dict(compiled.get("action_surface"))
+    seeded_action_surface = _as_dict(scene_payload.get("action_surface"))
+    if seeded_action_surface:
+        if not _as_list(compiled_action_surface.get("primary_actions")) and _as_list(seeded_action_surface.get("primary_actions")):
+            compiled_action_surface["primary_actions"] = _as_list(seeded_action_surface.get("primary_actions"))
+        if not _as_list(compiled_action_surface.get("groups")) and _as_list(seeded_action_surface.get("groups")):
+            compiled_action_surface["groups"] = _as_list(seeded_action_surface.get("groups"))
+        if not _text(compiled_action_surface.get("selection_mode")) and _text(seeded_action_surface.get("selection_mode")):
+            compiled_action_surface["selection_mode"] = _text(seeded_action_surface.get("selection_mode"))
+    if compiled_action_surface:
+        compiled["action_surface"] = compiled_action_surface
     page = dict(compiled.get("page") or {})
     zones = page.get("zones") if isinstance(page.get("zones"), list) else []
     if not zones:
@@ -753,7 +836,7 @@ def _scene_ready_entry(
         next_scene_key = next_scene_key or provider_next_key
         next_scene_route = next_scene_route or provider_next_route
 
-    if not next_scene_key and scene_key == "projects.intake":
+    if not next_scene_key and _scene_key_matches(scene_key, "projects.intake"):
         next_scene_key = "project.management"
     if not next_scene_route and next_scene_key:
         next_scene_route = f"/s/{next_scene_key}"

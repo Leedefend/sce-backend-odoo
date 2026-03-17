@@ -40,9 +40,10 @@ def main() -> int:
         "def _strict_contract_missing_paths",
         'compiled["contract_guard"] = contract_guard',
         'meta_payload["contract_guard"] = contract_guard',
-        '"missing": missing_before',
+        '"source_missing": source_missing',
+        '"missing": missing_after',
         '"defaults_applied": defaults_applied',
-        '"contract_ready": len(missing_before) == 0',
+        '"contract_ready": len(missing_after) == 0',
         'meta_payload["runtime_policy"] = meta_runtime_policy',
     ]
     required_test_tokens = [

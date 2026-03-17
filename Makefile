@@ -1548,6 +1548,10 @@ verify.frontend.home_orchestration_consumption.guard: guard.prod.forbid
 verify.scene.ready.strict_contract.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_ready_strict_contract_guard.py
 
+.PHONY: verify.scene.ready.strict_gap.full_audit
+verify.scene.ready.strict_gap.full_audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_ready_strict_gap_full_audit.py
+
 .PHONY: verify.workspace_home.sections_schema.guard
 verify.workspace_home.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_sections_schema_guard.py
