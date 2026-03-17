@@ -205,6 +205,135 @@ def _scene_ready_entry(
 ) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
     scene_payload = dict(item)
+
+    if scene_key == "finance.payment_requests" and not isinstance(scene_payload.get("actions"), list):
+        scene_payload["actions"] = [
+            {
+                "key": "approve_payment_request",
+                "label": "批准",
+                "intent": "record.update",
+                "placement": "toolbar",
+                "target": {
+                    "mutation": {
+                        "type": "transition",
+                        "model": "finance.payment.request",
+                        "operation": "approve",
+                        "payload_schema": {
+                            "required": ["record_id"],
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection", "workbench_projection"],
+                        "scope": "local",
+                    },
+                },
+            },
+            {
+                "key": "reject_payment_request",
+                "label": "驳回",
+                "intent": "record.update",
+                "placement": "toolbar",
+                "target": {
+                    "mutation": {
+                        "type": "transition",
+                        "model": "finance.payment.request",
+                        "operation": "reject",
+                        "payload_schema": {
+                            "required": ["record_id", "reason"],
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection", "workbench_projection"],
+                        "scope": "local",
+                    },
+                },
+            },
+            {
+                "key": "assign_payment_request",
+                "label": "指派",
+                "intent": "record.update",
+                "placement": "toolbar",
+                "target": {
+                    "mutation": {
+                        "type": "assign",
+                        "model": "finance.payment.request",
+                        "operation": "assign",
+                        "payload_schema": {
+                            "required": ["record_id", "assignee_id"],
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection", "workbench_projection"],
+                        "scope": "local",
+                    },
+                },
+            },
+        ]
+
+    if scene_key == "risk.center" and not isinstance(scene_payload.get("actions"), list):
+        scene_payload["actions"] = [
+            {
+                "key": "claim_risk_action",
+                "label": "认领",
+                "intent": "record.update",
+                "placement": "toolbar",
+                "target": {
+                    "mutation": {
+                        "type": "transition",
+                        "model": "project.risk.action",
+                        "operation": "claim",
+                        "payload_schema": {
+                            "required": ["risk_action_id"],
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection", "workbench_projection"],
+                        "scope": "local",
+                    },
+                },
+            },
+            {
+                "key": "escalate_risk_action",
+                "label": "升级",
+                "intent": "record.update",
+                "placement": "toolbar",
+                "target": {
+                    "mutation": {
+                        "type": "transition",
+                        "model": "project.risk.action",
+                        "operation": "escalate",
+                        "payload_schema": {
+                            "required": ["risk_action_id", "note"],
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection", "workbench_projection"],
+                        "scope": "local",
+                    },
+                },
+            },
+            {
+                "key": "close_risk_action",
+                "label": "关闭",
+                "intent": "record.update",
+                "placement": "toolbar",
+                "target": {
+                    "mutation": {
+                        "type": "transition",
+                        "model": "project.risk.action",
+                        "operation": "close",
+                        "payload_schema": {
+                            "required": ["risk_action_id"],
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection", "workbench_projection"],
+                        "scope": "local",
+                    },
+                },
+            },
+        ]
+
     base_contract_raw = item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {}
     base_contract_adapted = adapt_ui_base_contract(base_contract_raw, scene_key=scene_key)
     ui_base_contract = (

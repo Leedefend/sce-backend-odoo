@@ -164,6 +164,38 @@ def _build_payment_action_rows(env) -> List[Dict[str, Any]]:
 
 
 def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
+    actionable_rows = _safe_search_read(
+        env,
+        "project.risk.action",
+        domain=[("state", "in", ["open", "claimed", "escalated"])],
+        fields=["id", "name", "state", "risk_level", "project_id", "write_date"],
+        limit=6,
+    )
+    if actionable_rows:
+        result: List[Dict[str, Any]] = []
+        for row in actionable_rows:
+            state = _as_text(row.get("state")).lower()
+            status = "urgent" if state in {"open", "escalated"} else "normal"
+            title = _as_text(row.get("name")) or "风险事项"
+            project_name = ""
+            project_raw = row.get("project_id")
+            if isinstance(project_raw, list) and len(project_raw) > 1:
+                project_name = _as_text(project_raw[1])
+            result.append(
+                {
+                    "id": f"risk-action-{row.get('id')}",
+                    "title": f"风险处置 · {title}",
+                    "description": f"{project_name} 风险状态：{state}" if project_name else f"风险状态：{state}",
+                    "status": status,
+                    "scene_key": "risk.center",
+                    "route": "/s/risk.center",
+                    "count": 1,
+                    "risk_action_id": int(row.get("id") or 0),
+                    "source_detail": "mutation_record",
+                }
+            )
+        return result
+
     rows = _safe_search_read(
         env,
         "project.risk",
@@ -193,6 +225,8 @@ def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
                 "scene_key": "risk.center",
                 "route": "/s/risk.center",
                 "count": 1,
+                "project_id": int(row.get("id") or 0),
+                "name": title,
                 "source_detail": "factual_record",
             }
         )
@@ -277,6 +311,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_dashboard import (
             ProjectDashboardHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.risk_action_execute import (
+            RiskActionExecuteHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
@@ -298,6 +335,7 @@ def smart_core_register(registry):
     registry["payment.request.available_actions"] = PaymentRequestAvailableActionsHandler
     registry["payment.request.execute"] = PaymentRequestExecuteHandler
     registry["project.dashboard"] = ProjectDashboardHandler
+    registry["risk.action.execute"] = RiskActionExecuteHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
@@ -315,6 +353,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.available_actions")
     _logger.info("[smart_core_register] registered payment.request.execute")
     _logger.info("[smart_core_register] registered project.dashboard")
+    _logger.info("[smart_core_register] registered risk.action.execute")
 
 
 def smart_core_extend_system_init(data, env, user):

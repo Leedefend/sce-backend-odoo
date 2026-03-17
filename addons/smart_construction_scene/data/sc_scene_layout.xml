@@ -861,17 +861,17 @@
                         'name',
                         'state',
                         'project_id',
-                        'partner_id',
-                        'amount',
-                        'date_request'
+                        'owner_id',
+                        'risk_level',
+                        'write_date'
                     ],
                     'column_labels': {
-                        'name': '风险单号',
-                        'state': '风险状态',
+                        'name': '风险事项',
+                        'state': '处置状态',
                         'project_id': '项目',
-                        'partner_id': '往来单位',
-                        'amount': '风险金额',
-                        'date_request': '触发日期'
+                        'owner_id': '负责人',
+                        'risk_level': '风险等级',
+                        'write_date': '更新时间'
                     },
                     'row_primary': 'name',
                     'row_secondary': 'project_id'
@@ -899,7 +899,7 @@
                 'data_sources': {
                     'risk_center_list': {
                         'source_type': 'odoo_model',
-                        'model': 'payment.request'
+                        'model': 'project.risk.action'
                     },
                     'risk_center_blockers': {
                         'source_type': 'computed',
