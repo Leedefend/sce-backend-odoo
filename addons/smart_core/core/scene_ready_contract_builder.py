@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 from typing import Any, Dict, List
 from odoo.addons.smart_core.core.scene_dsl_compiler import scene_compile
+from odoo.addons.smart_core.core.ui_base_contract_adapter import adapt_ui_base_contract
 
 
 def _text(value: Any) -> str:
@@ -14,6 +17,41 @@ def _to_int(value: Any) -> int:
         return int(value or 0)
     except Exception:
         return 0
+
+
+def _resolve_scene_provider_payload(scene_key: str, runtime_context: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    runtime_payload = runtime_context if isinstance(runtime_context, dict) else {}
+    try:
+        from odoo.addons.smart_scene.core.scene_provider_registry import resolve_scene_provider_path
+    except Exception:
+        return {}
+
+    provider_path = resolve_scene_provider_path(scene_key, Path(__file__).resolve())
+    if not provider_path or not provider_path.exists() or not provider_path.is_file():
+        return {}
+
+    spec = spec_from_file_location(
+        f"scene_ready_provider_{scene_key.replace('.', '_')}",
+        provider_path,
+    )
+    if spec is None or spec.loader is None:
+        return {}
+    module = module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        return {}
+
+    builder = getattr(module, "build", None)
+    if not callable(builder):
+        builder = getattr(module, "get_scene_content", None)
+    if not callable(builder):
+        return {}
+    try:
+        payload = builder(scene_key=scene_key, runtime=runtime_payload, context={})
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def _normalize_scene(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -167,6 +205,13 @@ def _scene_ready_entry(
 ) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
     scene_payload = dict(item)
+    base_contract_raw = item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {}
+    base_contract_adapted = adapt_ui_base_contract(base_contract_raw, scene_key=scene_key)
+    ui_base_contract = (
+        base_contract_adapted.get("normalized_contract")
+        if isinstance(base_contract_adapted.get("normalized_contract"), dict)
+        else {}
+    )
     runtime_payload = scene_payload.get("runtime") if isinstance(scene_payload.get("runtime"), dict) else {}
     runtime_merged = dict(runtime_payload)
     runtime_ctx = runtime_context if isinstance(runtime_context, dict) else {}
@@ -179,14 +224,33 @@ def _scene_ready_entry(
     strategy_payload = action_surface_strategy if isinstance(action_surface_strategy, dict) else {}
     if strategy_payload:
         runtime_merged["action_surface_strategy"] = strategy_payload
+
+    scene_provider_payload = _resolve_scene_provider_payload(scene_key, runtime_ctx)
+    provider_next_scene = _text(scene_provider_payload.get("next_scene") or scene_provider_payload.get("next_scene_key"))
+    provider_next_scene_route = _text(scene_provider_payload.get("next_scene_route"))
+    if provider_next_scene and not _text(runtime_merged.get("next_scene") or runtime_merged.get("next_scene_key")):
+        runtime_merged["next_scene"] = provider_next_scene
+    if provider_next_scene_route and not _text(runtime_merged.get("next_scene_route")):
+        runtime_merged["next_scene_route"] = provider_next_scene_route
+
     if runtime_merged:
         scene_payload["runtime"] = runtime_merged
+
+    if scene_provider_payload:
+        providers_inline = scene_payload.get("providers") if isinstance(scene_payload.get("providers"), list) else []
+        providers_inline.append(
+            {
+                "key": f"runtime.scene_provider.{scene_key}",
+                "payload": scene_provider_payload,
+            }
+        )
+        scene_payload["providers"] = providers_inline
 
     provider_registry = item.get("provider_registry") if isinstance(item.get("provider_registry"), dict) else {}
     compiled = scene_compile(
         scene_payload,
         scene_key=scene_key,
-        ui_base_contract=item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {},
+        ui_base_contract=ui_base_contract,
         provider_registry=provider_registry,
     )
     page = dict(compiled.get("page") or {})
@@ -230,6 +294,70 @@ def _scene_ready_entry(
         "asset_version": asset_version,
         "source_ref": _text(source_ref_payload.get("source_ref")),
     }
+
+    def _resolve_next_scene_from_providers() -> tuple[str, str]:
+        providers = item.get("providers") if isinstance(item.get("providers"), list) else []
+        for provider in providers:
+            payload = provider if isinstance(provider, dict) else {}
+            inline = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+            next_key = _text(inline.get("next_scene") or inline.get("next_scene_key"))
+            next_route = _text(inline.get("next_scene_route"))
+            if next_key or next_route:
+                return next_key, next_route
+            provider_key = _text(payload.get("key") or payload.get("provider"))
+            if not provider_key:
+                continue
+            registry_payload = provider_registry.get(provider_key) if isinstance(provider_registry, dict) else {}
+            if callable(registry_payload):
+                try:
+                    registry_payload = registry_payload(scene_key=scene_key, runtime=runtime_merged, context={})
+                except Exception:
+                    registry_payload = {}
+            registry_entry = registry_payload if isinstance(registry_payload, dict) else {}
+            next_key = _text(registry_entry.get("next_scene") or registry_entry.get("next_scene_key"))
+            next_route = _text(registry_entry.get("next_scene_route"))
+            if next_key or next_route:
+                return next_key, next_route
+        return "", ""
+
+    next_scene_key = _text(item.get("next_scene") or item.get("next_scene_key"))
+    next_scene_route = _text(item.get("next_scene_route"))
+    if not next_scene_key and isinstance(item.get("runtime"), dict):
+        next_scene_key = _text(item.get("runtime", {}).get("next_scene") or item.get("runtime", {}).get("next_scene_key"))
+    if not next_scene_route and isinstance(item.get("runtime"), dict):
+        next_scene_route = _text(item.get("runtime", {}).get("next_scene_route"))
+    if not next_scene_key and isinstance(item.get("policies"), dict):
+        nav_policy = item.get("policies", {}).get("navigation_policy") if isinstance(item.get("policies", {}).get("navigation_policy"), dict) else {}
+        next_scene_key = _text(nav_policy.get("next_scene") or nav_policy.get("next_scene_key"))
+        next_scene_route = next_scene_route or _text(nav_policy.get("next_scene_route"))
+
+    if not next_scene_key and not next_scene_route:
+        provider_next_key, provider_next_route = _resolve_next_scene_from_providers()
+        next_scene_key = next_scene_key or provider_next_key
+        next_scene_route = next_scene_route or provider_next_route
+
+    if not next_scene_key and scene_key == "projects.intake":
+        next_scene_key = "project.management"
+    if not next_scene_route and next_scene_key:
+        next_scene_route = f"/s/{next_scene_key}"
+
+    if next_scene_key:
+        compiled["next_scene"] = next_scene_key
+    if next_scene_route:
+        compiled["next_scene_route"] = next_scene_route
+    if next_scene_key or next_scene_route:
+        meta_payload["next_scene"] = {
+            "key": next_scene_key,
+            "route": next_scene_route,
+        }
+
+    orchestrator_input = (
+        base_contract_adapted.get("orchestrator_input")
+        if isinstance(base_contract_adapted.get("orchestrator_input"), dict)
+        else {}
+    )
+    if orchestrator_input:
+        meta_payload["ui_base_orchestrator_input"] = orchestrator_input
     compiled["meta"] = meta_payload
     return compiled
 
