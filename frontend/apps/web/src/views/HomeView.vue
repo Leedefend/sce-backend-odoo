@@ -414,6 +414,7 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { buildSectionLayoutMap, sectionEnabled, sectionOpenDefault, sectionTagIs, type SectionTag } from '../app/sectionLayout';
 import { deriveHomeSectionMaps, flattenHomeOrchestrationBlocks } from '../app/homeOrchestration';
 import { findEntryForHomeActionItem, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
@@ -488,6 +489,9 @@ type RiskActionItem = {
   path?: string;
   query?: Record<string, string>;
   entryKey?: string;
+  riskActionId?: number;
+  projectId?: number;
+  riskLevel?: string;
 };
 type FilterChip = { key: string; label: string };
 
@@ -1082,6 +1086,16 @@ const riskSummaryLine = computed(() => {
   return asText(risk.summary) || pageText('risk_summary_fallback', '当前未出现严重风险，建议保持日常巡检节奏。');
 });
 
+function parseRiskActionId(raw: unknown): number {
+  const direct = Number(raw || 0);
+  if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
+  const text = asText(raw);
+  const matched = /^risk-action-(\d+)$/i.exec(text);
+  if (!matched) return 0;
+  const parsed = Number(matched[1] || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
+}
+
 const riskActionItems = computed<RiskActionItem[]>(() => {
   const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
     ? workspaceHome.value.risk as Record<string, unknown>
@@ -1089,6 +1103,7 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
   const source = Array.isArray(risk.actions) ? risk.actions : [];
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    const riskActionId = parseRiskActionId(row.risk_action_id || row.id);
     return {
       id: asText(row.id) || `risk-${idx + 1}`,
       title: asText(row.title) || `${pageText('risk_action_title_fallback_prefix', '风险事项 ')}${idx + 1}`,
@@ -1097,6 +1112,9 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
       sceneKey: asText(row.scene_key),
       path: asText(row.path),
       query: normalizeContextQuery(row.query),
+      riskActionId: riskActionId > 0 ? riskActionId : undefined,
+      projectId: Number(row.project_id || 0) > 0 ? Number(row.project_id || 0) : undefined,
+      riskLevel: asText(row.risk_level) || undefined,
     };
   });
 });
@@ -1250,8 +1268,35 @@ function openGroupCard(groupKey: string) {
   }
 }
 
-function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
+async function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
   void trackUsageEvent('workspace.risk_action_click', { item_id: item.id, action }).catch(() => {});
+
+  const mutationAction = action === 'assign' ? 'claim' : action === 'close' ? 'close' : '';
+  if (mutationAction && item.riskActionId) {
+    try {
+      await executeSceneMutation({
+        mutation: {
+          type: 'transition',
+          model: 'project.risk.action',
+          operation: mutationAction,
+          payload_schema: { required: ['risk_action_id'] },
+        },
+        actionKey: `workspace_risk_${mutationAction}`,
+        recordId: item.riskActionId,
+        context: {
+          risk_action_id: item.riskActionId,
+          project_id: item.projectId,
+          name: item.title,
+          risk_level: item.riskLevel,
+        },
+      });
+      await session.loadAppInit();
+      return;
+    } catch {
+      // fallback to navigation
+    }
+  }
+
   if (item.entryKey) {
     const byKey = entries.value.find((candidate) => candidate.key === item.entryKey && candidate.state === 'READY');
     if (byKey) {
@@ -1268,6 +1313,7 @@ function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'clo
   }
   router.push({ path: item.path || '/my-work', query: item.query || { section: 'todo' } }).catch(() => {});
 }
+
 
 function matchesSearch(entry: CapabilityEntry, query: string) {
   if (!query) return true;
