@@ -43,6 +43,11 @@
         </button>
       </div>
     </section>
+    <section v-if="strictContractMissingSummary" class="contract-missing-alert">
+      <p class="contract-missing-title">{{ pageText('strict_contract_missing_title', '契约缺口提示') }}</p>
+      <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
+      <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
+    </section>
     <section v-if="pageSectionEnabled('quick_filters', true) && pageSectionTagIs('quick_filters', 'section') && (contractPrimaryFilterChips.length || contractOverflowFilterChips.length)" class="contract-block" :style="pageSectionStyle('quick_filters')">
       <p class="contract-label">{{ pageText('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
@@ -748,6 +753,51 @@ const strictProjectionContract = computed<Record<string, unknown>>(() => {
     return raw as Record<string, unknown>;
   }
   return {};
+});
+const strictContractGuard = computed<Record<string, unknown>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const direct = entry.contract_guard;
+  if (direct && typeof direct === 'object' && !Array.isArray(direct)) {
+    return direct as Record<string, unknown>;
+  }
+  const meta = (entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta))
+    ? (entry.meta as Record<string, unknown>)
+    : {};
+  const nested = meta.contract_guard;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    return nested as Record<string, unknown>;
+  }
+  return {};
+});
+const strictContractMissingPaths = computed<string[]>(() => {
+  if (!strictContractMode.value) return [];
+  const raw = strictContractGuard.value.missing;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => String(item || '').trim())
+    .filter((item, idx, rows) => !!item && rows.indexOf(item) === idx);
+});
+const strictContractDefaultsApplied = computed<string[]>(() => {
+  if (!strictContractMode.value) return [];
+  const raw = strictContractGuard.value.defaults_applied;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => String(item || '').trim())
+    .filter((item, idx, rows) => !!item && rows.indexOf(item) === idx);
+});
+const strictContractMissingSummary = computed(() => {
+  if (!strictContractMode.value) return '';
+  const missing = strictContractMissingPaths.value;
+  if (!missing.length) return '';
+  return `${pageText('strict_contract_missing_summary_prefix', '严格模式检测到后端契约缺口：')}${missing.join(', ')}`;
+});
+const strictContractDefaultsSummary = computed(() => {
+  if (!strictContractMode.value) return '';
+  const defaults = strictContractDefaultsApplied.value;
+  if (!defaults.length) return '';
+  return `${pageText('strict_contract_missing_defaults_prefix', '当前由后端兜底补齐：')}${defaults.join(', ')}`;
 });
 const strictAdvancedViewContract = computed<Record<string, unknown>>(() => {
   const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
@@ -4354,6 +4404,27 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.contract-missing-alert {
+  border: 1px solid #f8d7da;
+  border-radius: 10px;
+  background: #fff5f5;
+  padding: 10px 12px;
+}
+
+.contract-missing-title {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contract-missing-summary,
+.contract-missing-defaults {
+  margin: 4px 0 0;
+  color: #7a271a;
+  font-size: 12px;
 }
 
 .empty-next {
