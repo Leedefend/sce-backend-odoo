@@ -41,6 +41,13 @@ Source of truth must come from backend `scene_tier` / `runtime_policy`.
 3. No frontend business summary aggregation.
 4. Missing contract should produce explicit `contract missing` style fallback, not silent business guess.
 
+## Source-of-Truth Guardrail
+- 禁止前端硬编码核心场景集合（例如 `CORE_SCENES`）作为 strict mode 真相来源。
+- strict mode 必须由后端契约下发并由前端被动消费：
+  - `runtime_policy.strict_contract_mode`（最高优先）
+  - `scene_tier=core`（次级）
+- 若后端未下发上述字段，前端默认 `strict=false`，并通过验证脚本暴露缺口，而不是前端自定义名单补位。
+
 ## Removal Completion Rule
 A heuristic is considered removed only when:
 1. core scenes do not execute the heuristic branch anymore;
