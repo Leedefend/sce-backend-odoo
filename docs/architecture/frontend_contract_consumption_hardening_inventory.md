@@ -26,6 +26,11 @@
 - `page semantics`: must move to scene/page contract.
 - `business projection`: must move to backend projection contract.
 
+## Runtime Consumption Convention
+- `scene_ready` is the preferred runtime artifact for frontend consumption.
+- `scene_contract` is a secondary source only when `scene_ready` is not yet fully materialized.
+- Frontend must not merge multiple semantic sources by heuristic; it may only follow the declared priority order.
+
 ## Strict Contract Migration Pilot Scope
 Current migration pilot scenes (temporary rollout scope, not source of truth):
 - `workspace.home` / `workspace_home`
@@ -40,12 +45,14 @@ Source of truth must come from backend `scene_tier` / `runtime_policy`.
 2. No frontend action grouping inference.
 3. No frontend business summary aggregation.
 4. Missing contract should produce explicit `contract missing` style fallback, not silent business guess.
+5. Contract-missing fallback may preserve shell usability, but must not fabricate business labels, grouping, summaries, or semantic statuses.
 
 ## Source-of-Truth Guardrail
 - 禁止前端硬编码核心场景集合（例如 `CORE_SCENES`）作为 strict mode 真相来源。
 - strict mode 必须由后端契约下发并由前端被动消费：
-  - `runtime_policy.strict_contract_mode`（最高优先）
-  - `scene_tier=core`（次级）
+  - `runtime_policy.strict_contract_mode=true` (highest priority)
+  - `scene_tier=core` (secondary)
+- 当 `runtime_policy.strict_contract_mode` 缺失时，前端可由 `scene_tier=core` 推导 strictness。
 - 若后端未下发上述字段，前端默认 `strict=false`，并通过验证脚本暴露缺口，而不是前端自定义名单补位。
 
 ## Removal Completion Rule
