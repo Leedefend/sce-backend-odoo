@@ -51,6 +51,11 @@
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
+      <section v-if="strictContractMissingSummary" class="block contract-missing-block">
+        <h3>契约缺口提示</h3>
+        <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
+        <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
+      </section>
 
       <section v-if="workflowTransitions.length" class="block">
         <h3>流程操作</h3>
@@ -319,6 +324,7 @@ import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sce
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
+import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -1760,15 +1766,46 @@ const policyRequiredFields = computed(() => {
   });
   return out;
 });
+const sceneReadySceneKey = computed(() => String(route.query.scene_key || route.params.sceneKey || '').trim());
+const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
+  const key = sceneReadySceneKey.value;
+  return key ? findSceneReadyEntry(session.sceneReadyContractV1, key) : null;
+});
+const strictContractMode = computed(() => isCoreSceneStrictMode(sceneReadySceneKey.value, sceneReadyEntry.value));
+const strictContractGuard = computed<Record<string, unknown>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const direct = entry.contract_guard;
+  if (direct && typeof direct === 'object' && !Array.isArray(direct)) return direct as Record<string, unknown>;
+  const meta = (entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta))
+    ? (entry.meta as Record<string, unknown>)
+    : {};
+  const nested = meta.contract_guard;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) return nested as Record<string, unknown>;
+  return {};
+});
+const strictContractMissingSummary = computed(() => {
+  if (!strictContractMode.value) return '';
+  const raw = strictContractGuard.value.missing;
+  if (!Array.isArray(raw) || !raw.length) return '';
+  const missing = raw.map((item) => String(item || '').trim()).filter(Boolean);
+  if (!missing.length) return '';
+  return `严格模式检测到后端契约缺口：${missing.join(', ')}`;
+});
+const strictContractDefaultsSummary = computed(() => {
+  if (!strictContractMode.value) return '';
+  const raw = strictContractGuard.value.defaults_applied;
+  if (!Array.isArray(raw) || !raw.length) return '';
+  const defaults = raw.map((item) => String(item || '').trim()).filter(Boolean);
+  if (!defaults.length) return '';
+  return `当前由后端兜底补齐：${defaults.join(', ')}`;
+});
 const sceneValidationRequiredFields = computed<string[]>(() => {
-  const sceneKey = String(route.query.scene_key || '').trim();
-  const entry = sceneKey ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey) : null;
-  return resolveFormSceneReady(entry).requiredFields;
+  return resolveFormSceneReady(sceneReadyEntry.value).requiredFields;
 });
 const sceneReadyFormSurface = computed(() => {
-  const sceneKey = String(route.query.scene_key || '').trim();
-  const entry = sceneKey ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey) : null;
-  return resolveFormSceneReady(entry);
+  return resolveFormSceneReady(sceneReadyEntry.value);
 });
 const validationRequiredFields = computed(() => {
   const out = new Set<string>();
@@ -3055,6 +3092,18 @@ watch(
 .block.warn {
   border-color: #fdba74;
   background: #fff7ed;
+}
+
+.contract-missing-block {
+  border-color: #fca5a5;
+  background: #fff5f5;
+}
+
+.contract-missing-summary,
+.contract-missing-defaults {
+  margin: 4px 0 0;
+  color: #7a271a;
+  font-size: 12px;
 }
 
 .block h3 {
