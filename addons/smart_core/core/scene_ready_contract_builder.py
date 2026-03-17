@@ -197,6 +197,184 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
     return metrics
 
 
+def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
+    if scene_key == "workspace.home":
+        return {
+            "kind": "workspace",
+            "intent": {
+                "title": "工作台：先处理高优先级行动",
+                "summary": "优先处理今日待办与风险动作，完成后自动刷新投影。",
+                "empty_title": "当前暂无待处理事项",
+                "empty_hint": "建议切换筛选条件或进入场景导航继续巡检。",
+                "primary_action": {"label": "查看我的工作", "target": "/my-work"},
+                "secondary_action": {"label": "进入风险中心", "target": "/s/risk.center"},
+            },
+        }
+    if scene_key == "finance.payment_requests":
+        return {
+            "kind": "finance",
+            "intent": {
+                "title": "付款审批：优先处理审批与分派动作",
+                "summary": "在审批链闭环后自动刷新列表与工作台投影。",
+                "empty_title": "当前暂无付款申请",
+                "empty_hint": "可进入财务工作台查看其他待处理事项。",
+                "primary_action": {"label": "进入财务工作台", "target": "/s/finance.workspace"},
+                "secondary_action": {"label": "返回工作台", "target": "/my-work"},
+            },
+        }
+    if scene_key == "risk.center":
+        return {
+            "kind": "risk",
+            "intent": {
+                "title": "风险中心：先处理严重与逾期风险",
+                "summary": "优先执行认领、升级、关闭动作并回写状态。",
+                "empty_title": "当前暂无风险动作",
+                "empty_hint": "建议前往工作台继续巡检并拉取最新风险数据。",
+                "primary_action": {"label": "返回工作台", "target": "/my-work"},
+                "secondary_action": {"label": "查看项目驾驶舱", "target": "/s/project.management"},
+            },
+        }
+    if scene_key == "project.management":
+        return {
+            "kind": "project",
+            "intent": {
+                "title": "项目驾驶舱：先看风险，再执行动作",
+                "summary": "聚焦关键指标与风险区块，进入具体场景完成处置闭环。",
+                "empty_title": "当前暂无项目数据",
+                "empty_hint": "建议前往项目列表或立项场景继续操作。",
+                "primary_action": {"label": "查看项目列表", "target": "/s/projects.list"},
+                "secondary_action": {"label": "发起项目立项", "target": "/s/projects.intake"},
+            },
+        }
+    return {
+        "kind": "generic",
+        "intent": {
+            "title": "场景视图",
+            "summary": "当前场景已启用严格契约消费模式。",
+            "empty_title": "暂无可展示数据",
+            "empty_hint": "请检查场景契约或稍后重试。",
+            "primary_action": {"label": "返回工作台", "target": "/my-work"},
+        },
+    }
+
+
+def _default_view_modes(scene_key: str, page: Dict[str, Any], scene: Dict[str, Any]) -> List[Dict[str, Any]]:
+    mode_candidates: List[str] = []
+    layout_kind = _text((scene.get("layout") if isinstance(scene.get("layout"), dict) else {}).get("kind"))
+    page_mode = _text(page.get("mode"))
+    if layout_kind in {"list", "table"} or scene_key in {"finance.payment_requests", "risk.center"}:
+        mode_candidates = ["tree", "kanban"]
+    elif layout_kind in {"workspace", "dashboard"} or scene_key in {"workspace.home", "project.management"}:
+        mode_candidates = ["kanban", "tree"]
+    elif page_mode:
+        mode_candidates = [page_mode]
+    else:
+        mode_candidates = ["tree"]
+    out: List[Dict[str, Any]] = []
+    for mode in mode_candidates:
+        label = {
+            "tree": "列表",
+            "kanban": "看板",
+            "pivot": "透视",
+            "graph": "图表",
+            "calendar": "日历",
+            "gantt": "甘特",
+            "activity": "活动",
+            "dashboard": "仪表板",
+        }.get(mode, mode)
+        out.append({"key": mode, "label": label, "enabled": True})
+    return out
+
+
+def _default_projection(scene_key: str) -> Dict[str, Any]:
+    kind_map = {
+        "workspace.home": "workspace_home",
+        "finance.payment_requests": "finance_payment_requests",
+        "risk.center": "risk_center",
+        "project.management": "project_management",
+    }
+    return {
+        "kind": kind_map.get(scene_key, "generic"),
+        "summary_items": [],
+        "overview_strip": [],
+        "group_summary": {"items": []},
+    }
+
+
+def _default_action_surface(scene_key: str, actions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    keys = [_text(item.get("key")) for item in actions if isinstance(item, dict) and _text(item.get("key"))]
+    unique_keys: List[str] = []
+    for key in keys:
+        if key not in unique_keys:
+            unique_keys.append(key)
+    selection_mode = "multi" if scene_key in {"finance.payment_requests", "risk.center"} else "single"
+    return {
+        "primary_actions": unique_keys[:3],
+        "groups": [{
+            "key": "workflow",
+            "label": "流程推进",
+            "actions": unique_keys,
+        }] if unique_keys else [],
+        "selection_mode": selection_mode,
+    }
+
+
+def _apply_pilot_strict_contract(scene_key: str, compiled: Dict[str, Any]) -> Dict[str, Any]:
+    pilot_keys = {"workspace.home", "finance.payment_requests", "risk.center", "project.management"}
+    if scene_key not in pilot_keys:
+        return compiled
+
+    scene_payload = compiled.get("scene") if isinstance(compiled.get("scene"), dict) else {}
+    page_payload = compiled.get("page") if isinstance(compiled.get("page"), dict) else {}
+    actions_payload = compiled.get("actions") if isinstance(compiled.get("actions"), list) else []
+
+    compiled["scene_tier"] = "core"
+    runtime_policy = compiled.get("runtime_policy") if isinstance(compiled.get("runtime_policy"), dict) else {}
+    runtime_policy.setdefault("strict_contract_mode", True)
+    runtime_policy.setdefault("scene_tier", "core")
+    compiled["runtime_policy"] = runtime_policy
+
+    scene_payload["tier"] = "core"
+    scene_payload["runtime_policy"] = {
+        "strict_contract_mode": bool(runtime_policy.get("strict_contract_mode")),
+        "scene_tier": _text(runtime_policy.get("scene_tier") or "core") or "core",
+    }
+    compiled["scene"] = scene_payload
+
+    if not isinstance(compiled.get("surface"), dict) or not compiled.get("surface"):
+        compiled["surface"] = _pilot_scene_surface_spec(scene_key)
+
+    if not isinstance(compiled.get("view_modes"), list) or not compiled.get("view_modes"):
+        compiled["view_modes"] = _default_view_modes(scene_key, page_payload, scene_payload)
+
+    if not isinstance(compiled.get("sections"), dict) or not compiled.get("sections"):
+        compiled["sections"] = {
+            "quick_actions": {"enabled": True, "tag": "section"},
+            "group_summary": {"enabled": True, "tag": "section"},
+        }
+
+    if not isinstance(compiled.get("projection"), dict) or not compiled.get("projection"):
+        compiled["projection"] = _default_projection(scene_key)
+
+    action_surface = compiled.get("action_surface") if isinstance(compiled.get("action_surface"), dict) else {}
+    if not isinstance(action_surface.get("groups"), list) or not action_surface.get("groups"):
+        seed = _default_action_surface(scene_key, actions_payload)
+        action_surface.setdefault("primary_actions", seed.get("primary_actions"))
+        action_surface.setdefault("selection_mode", seed.get("selection_mode"))
+        action_surface["groups"] = seed.get("groups")
+    compiled["action_surface"] = action_surface
+
+    meta_payload = compiled.get("meta") if isinstance(compiled.get("meta"), dict) else {}
+    meta_runtime_policy = meta_payload.get("runtime_policy") if isinstance(meta_payload.get("runtime_policy"), dict) else {}
+    meta_runtime_policy.setdefault("strict_contract_mode", True)
+    meta_runtime_policy.setdefault("scene_tier", "core")
+    meta_payload["runtime_policy"] = meta_runtime_policy
+    meta_payload.setdefault("scene_tier", "core")
+    compiled["meta"] = meta_payload
+
+    return compiled
+
+
 def _scene_ready_entry(
     item: Dict[str, Any],
     *,
@@ -488,6 +666,7 @@ def _scene_ready_entry(
     if orchestrator_input:
         meta_payload["ui_base_orchestrator_input"] = orchestrator_input
     compiled["meta"] = meta_payload
+    compiled = _apply_pilot_strict_contract(scene_key, compiled)
     return compiled
 
 

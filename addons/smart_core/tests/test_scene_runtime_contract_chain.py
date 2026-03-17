@@ -200,3 +200,57 @@ class TestSceneRuntimeContractChain(TransactionCase):
         first_target = (actions[0] or {}).get("target") or {}
         self.assertEqual(((first_target.get("mutation") or {}).get("model") or ""), "project.risk.action")
         self.assertTrue(((first_target.get("refresh_policy") or {}).get("on_success") or []))
+
+    def test_pilot_core_scenes_materialize_strict_contract_fields(self):
+        scenes = [
+            {
+                "code": "workspace.home",
+                "name": "工作台",
+                "layout": {"kind": "workspace"},
+                "target": {"route": "/my-work"},
+                "ui_base_contract": _sample_ui_base_contract(model="project.risk.action"),
+            },
+            {
+                "code": "finance.payment_requests",
+                "name": "付款申请审批",
+                "layout": {"kind": "list"},
+                "target": {"route": "/s/finance.payment_requests", "model": "finance.payment.request"},
+                "ui_base_contract": _sample_ui_base_contract(model="finance.payment.request"),
+            },
+            {
+                "code": "risk.center",
+                "name": "风险中心",
+                "layout": {"kind": "workspace"},
+                "target": {"route": "/s/risk.center", "model": "project.risk.action"},
+                "ui_base_contract": _sample_ui_base_contract(model="project.risk.action"),
+            },
+            {
+                "code": "project.management",
+                "name": "项目驾驶舱",
+                "layout": {"kind": "workspace"},
+                "target": {"route": "/s/project.management", "model": "project.project"},
+                "ui_base_contract": _sample_ui_base_contract(model="project.project"),
+            },
+        ]
+
+        contract = build_scene_ready_contract_v1(
+            scenes=scenes,
+            role_surface={"landing_scene_key": "workspace.home"},
+        )
+        rows = contract.get("scenes") or []
+        self.assertEqual(len(rows), 4)
+        rows_by_key = {
+            ((row.get("scene") or {}).get("key") or ""): row
+            for row in rows
+            if isinstance(row, dict)
+        }
+        for key in ("workspace.home", "finance.payment_requests", "risk.center", "project.management"):
+            row = rows_by_key.get(key) or {}
+            self.assertEqual(row.get("scene_tier"), "core")
+            runtime_policy = row.get("runtime_policy") or {}
+            self.assertTrue(bool(runtime_policy.get("strict_contract_mode")))
+            surface = row.get("surface") or {}
+            self.assertTrue(bool(surface.get("kind")))
+            self.assertTrue(bool((surface.get("intent") or {}).get("title")))
+            self.assertTrue(isinstance(row.get("projection"), dict))
+            self.assertTrue(isinstance(row.get("action_surface"), dict))
