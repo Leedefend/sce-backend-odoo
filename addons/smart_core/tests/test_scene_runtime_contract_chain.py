@@ -275,6 +275,30 @@ class TestSceneRuntimeContractChain(TransactionCase):
         self.assertFalse(bool(runtime_policy.get("strict_contract_mode")))
         self.assertEqual(runtime_policy.get("scene_tier"), "standard")
 
+    def test_strict_scene_emits_contract_guard_for_missing_semantic_contract(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "layout": {"kind": "list"},
+                    "runtime_policy": {"strict_contract_mode": True, "scene_tier": "core"},
+                    "target": {"route": "/s/projects.list", "model": "project.project"},
+                    "ui_base_contract": _sample_ui_base_contract(model="project.project"),
+                }
+            ],
+            role_surface={"landing_scene_key": "projects.list"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        guard = row.get("contract_guard") or {}
+        self.assertTrue(bool(guard.get("strict_mode")))
+        self.assertFalse(bool(guard.get("contract_ready")))
+        missing = guard.get("missing") or []
+        self.assertIn("surface.kind", missing)
+        self.assertIn("view_modes", missing)
+        self.assertTrue(isinstance(guard.get("defaults_applied"), list))
+        self.assertIn("surface", guard.get("defaults_applied") or [])
+
     def test_non_pilot_scene_without_declared_policy_stays_non_strict(self):
         contract = build_scene_ready_contract_v1(
             scenes=[
@@ -292,3 +316,4 @@ class TestSceneRuntimeContractChain(TransactionCase):
         runtime_policy = row.get("runtime_policy") or {}
         self.assertFalse(bool(runtime_policy.get("strict_contract_mode")))
         self.assertIn(row.get("scene_tier"), (None, ""))
+        self.assertIn(row.get("contract_guard"), (None, {}))
