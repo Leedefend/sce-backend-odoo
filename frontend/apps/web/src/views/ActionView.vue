@@ -412,6 +412,9 @@ import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } f
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { findSceneReadyEntry, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
+import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
@@ -657,6 +660,8 @@ type ContractActionButton = {
   domainRaw: string;
   enabled: boolean;
   hint: string;
+  mutation?: MutationContract;
+  refreshPolicy?: ProjectionRefreshPolicy;
 };
 type ContractActionGroupRaw = {
   key?: string;
@@ -1374,8 +1379,23 @@ function toContractActionButton(
   if (!rawLabel || isNumericToken(key) || isNumericToken(rawLabel)) return null;
   if (hasNoiseMarker(key, rawLabel, row.name, row.xml_id)) return null;
   dedup.add(key);
-  const payload = parseContractContextRaw(row.payload);
-  const kind = normalizeActionKind(row.kind);
+
+  const protocol = normalizeSceneActionProtocol(row);
+  const targetPayload = parseContractContextRaw(row.target);
+  const legacyPayload = parseContractContextRaw(row.payload);
+  const payload = Object.keys(targetPayload).length ? targetPayload : legacyPayload;
+
+  const explicitKind = normalizeActionKind(row.kind);
+  const hasOpenTarget = Boolean(
+    toPositiveInt(payload.action_id)
+    || toPositiveInt(payload.ref)
+    || String(payload.url || payload.route || '').trim(),
+  );
+  const kind = protocol?.mutation
+    ? 'mutation'
+    : hasOpenTarget
+      ? 'open'
+      : explicitKind;
   const actionId = toPositiveInt(payload.action_id) ?? toPositiveInt(payload.ref);
   const methodName = detectObjectMethodFromActionKey(key, String(payload.method || '').trim());
   const selectionRaw = String(row.selection || 'none').toLowerCase();
@@ -1401,14 +1421,16 @@ function toContractActionButton(
     kind,
     actionId,
     methodName,
-    model: String(row.target_model || row.model || resolvedModelRef.value || model.value || '').trim(),
+    model: String(row.target_model || row.model || protocol?.mutation?.model || resolvedModelRef.value || model.value || '').trim(),
     target: String(payload.target || '').trim(),
-    url: String(payload.url || '').trim(),
+    url: String(payload.url || payload.route || '').trim(),
     selection,
     context: parseContractContextRaw(payload.context_raw),
     domainRaw: String(payload.domain_raw || '').trim(),
     enabled,
     hint,
+    mutation: protocol?.mutation,
+    refreshPolicy: protocol?.refresh_policy,
   };
 }
 const contractActionButtons = computed<ContractActionButton[]>(() => {
@@ -2879,6 +2901,50 @@ function resolveActionContextRecordId() {
   return null;
 }
 
+function mutationRequiresRecordContext(action: ContractActionButton) {
+  const required = Array.isArray(action.mutation?.payload_schema?.required)
+    ? action.mutation?.payload_schema?.required
+    : [];
+  const requiredKeys = required.map((item) => String(item || '').trim().toLowerCase());
+  return requiredKeys.includes('record_id')
+    || requiredKeys.includes('id')
+    || requiredKeys.includes('risk_action_id');
+}
+
+function buildMutationContext(action: ContractActionButton, recordId: number) {
+  const context = { ...(action.context || {}) } as Record<string, unknown>;
+  const modelName = String(action.mutation?.model || action.model || '').trim().toLowerCase();
+  if (modelName === 'project.risk.action' && !context.risk_action_id) {
+    context.risk_action_id = recordId;
+  }
+  if ((modelName === 'finance.payment.request' || modelName === 'payment.request') && !context.id) {
+    context.id = recordId;
+  }
+  return context;
+}
+
+async function applyActionRefreshPolicy(policy?: ProjectionRefreshPolicy) {
+  if (!policy || !Array.isArray(policy.on_success) || !policy.on_success.length) {
+    await load();
+    return;
+  }
+  await executeProjectionRefresh({
+    policy,
+    refreshScene: async () => {
+      await load();
+    },
+    refreshWorkbench: async () => {
+      await session.loadAppInit();
+    },
+    refreshRoleSurface: async () => {
+      await session.loadAppInit();
+    },
+    recordTrace: ({ intent, writeMode, latencyMs }) => {
+      session.recordIntentTrace({ intent, writeMode, latencyMs });
+    },
+  });
+}
+
 async function runContractAction(action: ContractActionButton) {
   if (!action.enabled) return;
   if (action.kind === 'open') {
@@ -2905,6 +2971,44 @@ async function runContractAction(action: ContractActionButton) {
       return;
     }
     batchMessage.value = pageText('batch_msg_contract_action_missing_action_id', '契约动作缺少 action_id，无法打开目标页面');
+    return;
+  }
+
+  if (action.mutation) {
+    const ids = resolveSelectedIdsForAction(action.selection);
+    const contextRecordId = resolveActionContextRecordId();
+    const execIds = ids.length ? ids : contextRecordId ? [contextRecordId] : [];
+    if (!execIds.length && mutationRequiresRecordContext(action)) {
+      batchMessage.value = pageText('batch_msg_action_requires_record_context', '当前动作需要记录上下文，暂不支持无记录执行');
+      return;
+    }
+
+    batchBusy.value = true;
+    try {
+      let successCount = 0;
+      let failureCount = 0;
+      const runIds = execIds.length ? execIds : [0];
+      for (const id of runIds) {
+        try {
+          await executeSceneMutation({
+            mutation: action.mutation,
+            actionKey: action.key,
+            recordId: id > 0 ? id : null,
+            model: action.model,
+            context: buildMutationContext(action, id),
+          });
+          successCount += 1;
+        } catch {
+          failureCount += 1;
+        }
+      }
+      batchMessage.value = `${pageText('batch_msg_contract_action_done_prefix', '契约动作执行完成：成功 ')}${successCount}${pageText('batch_msg_contract_action_done_middle', '，失败 ')}${failureCount}`;
+      if (successCount > 0) {
+        await applyActionRefreshPolicy(action.refreshPolicy);
+      }
+    } finally {
+      batchBusy.value = false;
+    }
     return;
   }
 
