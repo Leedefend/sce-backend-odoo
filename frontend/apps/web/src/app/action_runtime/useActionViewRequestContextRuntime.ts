@@ -14,7 +14,7 @@ import {
   resolveFilterDomainRaw,
   resolveGroupByContext as resolveGroupByContextRuntime,
   resolveGroupByContextRaw as resolveGroupByContextRawRuntime,
-} from '../../runtime/actionViewRequestRuntime';
+} from '../runtime/actionViewRequestRuntime';
 
 type Dict = Record<string, unknown>;
 

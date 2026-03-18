@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
-import { normalizeGroupPageOffset, serializeGroupPageOffsets } from '../../runtime/actionViewGroupWindowRuntime';
-import { buildGroupedRowsListRequest, resolveGroupedPageFields } from '../../runtime/actionViewGroupedRowsRuntime';
+import { normalizeGroupPageOffset, serializeGroupPageOffsets } from '../runtime/actionViewGroupWindowRuntime';
+import { buildGroupedRowsListRequest, resolveGroupedPageFields } from '../runtime/actionViewGroupedRowsRuntime';
 import {
   applyGroupedRowsPageChangeFailure,
   applyGroupedRowsHydrateResults,
@@ -17,14 +17,14 @@ import {
   resolveGroupedRowsHydrateCandidates,
   resolveGroupedRowsPageChangeTarget,
   setGroupedRowsLoadingByKeys,
-} from '../../runtime/actionViewGroupedRowsInteractionRuntime';
-import { hasGroupedRouteOffsetChanged, normalizeGroupedRouteCollections } from '../../runtime/actionViewGroupedRouteNormalizeRuntime';
+} from '../runtime/actionViewGroupedRowsInteractionRuntime';
+import { hasGroupedRouteOffsetChanged, normalizeGroupedRouteCollections } from '../runtime/actionViewGroupedRouteNormalizeRuntime';
 import {
   resolveGroupedRouteInactiveResetPlan,
   resolveGroupedRouteLocalState,
   resolveGroupedRouteSyncPlan,
-} from '../../runtime/actionViewGroupedRouteStateRuntime';
-import { resolveActionViewRouteSnapshot } from '../../runtime/actionViewRouteRuntime';
+} from '../runtime/actionViewGroupedRouteStateRuntime';
+import { resolveActionViewRouteSnapshot } from '../runtime/actionViewRouteRuntime';
 
 type Dict = Record<string, unknown>;
 
