@@ -3,7 +3,7 @@ import { useSessionStore } from '../stores/session';
 import LoginView from '../views/LoginView.vue';
 import HomeView from '../views/HomeView.vue';
 import MenuView from '../views/MenuView.vue';
-import ActionView from '../views/ActionView.vue';
+import ActionView from '../views/ActionViewShell.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
