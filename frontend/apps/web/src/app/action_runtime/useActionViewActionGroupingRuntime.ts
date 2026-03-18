@@ -10,6 +10,12 @@ type ActionGroup = {
   actions: ContractActionButton[];
 };
 
+type ActionPresentation = {
+  groups: ActionGroup[];
+  primaryActions: ContractActionButton[];
+  overflowActionGroups: ActionGroup[];
+};
+
 type ContractActionGroupRaw = {
   key?: string;
   label?: string;
@@ -115,11 +121,43 @@ export function useActionViewActionGroupingRuntime() {
     return out;
   }
 
+  function resolveContractActionPresentation(options: {
+    strictContractMode: boolean;
+    actionSurface: Dict;
+    contractActionGroupsRaw: ContractActionGroupRaw[];
+    allButtons: ContractActionButton[];
+    actionPrimaryBudget: number;
+    pageText: (key: string, fallback: string) => string;
+  }): ActionPresentation {
+    const groups = resolveContractActionGroups({
+      strictContractMode: options.strictContractMode,
+      actionSurface: options.actionSurface,
+      contractActionGroupsRaw: options.contractActionGroupsRaw,
+      allButtons: options.allButtons,
+      pageText: options.pageText,
+    });
+    const primaryActions = resolveContractPrimaryActions({
+      groups,
+      allButtons: options.allButtons,
+      actionPrimaryBudget: options.actionPrimaryBudget,
+    });
+    const overflowActionGroups = resolveContractOverflowActionGroups({
+      groups,
+      primaryActions,
+    });
+
+    return {
+      groups,
+      primaryActions,
+      overflowActionGroups,
+    };
+  }
+
   return {
     resolveContractActionGroups,
     resolveContractPrimaryActions,
     resolveContractOverflowActions,
     resolveContractOverflowActionGroups,
+    resolveContractActionPresentation,
   };
 }
-
