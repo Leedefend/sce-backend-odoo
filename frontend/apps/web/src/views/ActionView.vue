@@ -1080,7 +1080,7 @@ const {
   viewMode,
   normalizeActionViewMode,
   resolveActionViewModeLabel,
-  load,
+  load: () => loadPage(),
 });
 const sceneContractV1 = computed<Record<string, unknown>>(() => {
   const raw = pageContract.contract.value?.scene_contract_v1;
@@ -1403,7 +1403,7 @@ const {
     router.replace(routeState.target).catch(() => {});
   },
   trackUsageEvent,
-  load,
+  load: () => loadPage(),
   resolveActionViewRouteSnapshot,
   resolveRoutePresetSearchTerm,
   resolveRoutePresetAppliedLabel,
@@ -1506,7 +1506,7 @@ const {
   batchMessage,
   pageText,
   syncRouteListState,
-  load,
+  load: () => loadPage(),
   resolveReloadTriggerPlan,
   resolveFocusActionPushState,
   resolveWorkspaceContextQuery,
@@ -1618,7 +1618,7 @@ const { runContractAction } = useActionViewActionRuntime({
   batchBusy,
   batchMessage,
   pageText,
-  load,
+  load: () => loadPage(),
   sessionLoadAppInit: () => session.loadAppInit(),
   recordIntentTrace: (payload) => session.recordIntentTrace(payload),
   resolveActionContextRecordId: () => {
