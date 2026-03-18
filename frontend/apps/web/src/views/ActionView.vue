@@ -350,10 +350,10 @@
         <p class="contract-label">{{ t('label.contract_summary', '契约摘要') }}</p>
         <p>view_type={{ contractViewType || '-' }} · mode={{ vm.page.viewMode || '-' }} · records={{ records.length }}</p>
       </div>
-      <div v-if="records.length" class="advanced-list">
-        <article v-for="(row, idx) in records.slice(0, 20)" :key="`adv-${idx}-${String(row.id || idx)}`" class="advanced-item">
-          <p class="advanced-item-title">{{ advancedRowTitle(row) }}</p>
-          <p class="advanced-item-meta">{{ advancedRowMeta(row) }}</p>
+      <div v-if="vm.content.advanced?.rows.length" class="advanced-list">
+        <article v-for="row in vm.content.advanced?.rows || []" :key="row.key" class="advanced-item">
+          <p class="advanced-item-title">{{ row.title }}</p>
+          <p class="advanced-item-meta">{{ row.meta }}</p>
         </article>
       </div>
       <section v-else class="empty-next">
@@ -1263,6 +1263,36 @@ const {
   resolveContractActionPresentation,
   pageText,
 });
+
+const {
+  contractColumnLabels,
+  extractColumnsFromContract,
+  convergeColumnsForSurface,
+  extractKanbanFields,
+  extractKanbanProfile,
+  extractAdvancedViewFields,
+  advancedRowTitle,
+  advancedRowMeta,
+  buildGroupKey,
+  resolveModelFromContract,
+} = useActionViewContractShapeRuntime({
+  pageText,
+  actionContract,
+  advancedFields,
+  activeGroupByField,
+});
+
+const advancedRows = computed(() => {
+  return records.value.slice(0, 20).map((row, idx) => {
+    const rowId = String((row as Record<string, unknown>).id || idx).trim() || String(idx);
+    return {
+      key: `adv-${idx}-${rowId}`,
+      title: advancedRowTitle(row),
+      meta: advancedRowMeta(row),
+    };
+  });
+});
+
 const { vm } = useActionPageModel({
   page: {
     title: pageTitle,
@@ -1309,6 +1339,7 @@ const { vm } = useActionPageModel({
     kanbanOverviewItems: ledgerOverviewItems,
     advancedTitle: advancedViewTitle,
     advancedHint: advancedViewHint,
+    advancedRows,
   },
   empty: {
     reasonText: emptyReasonText,
@@ -1317,23 +1348,6 @@ const { vm } = useActionPageModel({
     visible: showHud,
     entries: hudEntries,
   },
-});
-const {
-  contractColumnLabels,
-  extractColumnsFromContract,
-  convergeColumnsForSurface,
-  extractKanbanFields,
-  extractKanbanProfile,
-  extractAdvancedViewFields,
-  advancedRowTitle,
-  advancedRowMeta,
-  buildGroupKey,
-  resolveModelFromContract,
-} = useActionViewContractShapeRuntime({
-  pageText,
-  actionContract,
-  advancedFields,
-  activeGroupByField,
 });
 
 const {
