@@ -485,7 +485,9 @@ import {
 } from '../app/runtime/actionViewGroupWindowRuntime';
 import {
   mergeSceneDomain,
+  readTotalFromListResult,
   resolveRequestedFields,
+  uniqueFields,
 } from '../app/runtime/actionViewRequestRuntime';
 import { resolvePreferredActionViewMode, resolveRouteSelectionState } from '../app/runtime/actionViewContractLoadRuntime';
 import {
@@ -751,6 +753,12 @@ const {
 } = useActionViewSceneIdentityRuntime();
 const pageContract = usePageContract('action');
 const pageText = pageContract.text;
+
+let loadPageInvoker: () => Promise<void> = async () => {};
+function requestLoadPage(): Promise<void> {
+  return loadPageInvoker();
+}
+
 const { t } = useActionViewTextRuntime({ pageText });
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
@@ -1080,7 +1088,7 @@ const {
   viewMode,
   normalizeActionViewMode,
   resolveActionViewModeLabel,
-  load: () => loadPage(),
+  load: requestLoadPage,
 });
 const sceneContractV1 = computed<Record<string, unknown>>(() => {
   const raw = pageContract.contract.value?.scene_contract_v1;
@@ -1174,6 +1182,26 @@ const {
   route,
   isHudEnabled,
 });
+
+function resolveContractActionCountForHud() {
+  const sceneActions = sceneReadyListSurface.value.actions;
+  if (sceneActions.length) return sceneActions.length;
+
+  const contract = actionContract.value;
+  if (!contract) return 0;
+
+  const buttons = Array.isArray(contract.buttons) ? contract.buttons : [];
+  if (buttons.length) return buttons.length;
+
+  const toolbar = typeof contract.toolbar === 'object' && contract.toolbar
+    ? (contract.toolbar as Record<string, unknown>)
+    : {};
+  const header = Array.isArray(toolbar.header) ? toolbar.header.length : 0;
+  const sidebar = Array.isArray(toolbar.sidebar) ? toolbar.sidebar.length : 0;
+  const footer = Array.isArray(toolbar.footer) ? toolbar.footer.length : 0;
+  return header + sidebar + footer;
+}
+
 const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
   staticInput: () => ({
     actionId: actionId.value,
@@ -1194,7 +1222,7 @@ const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
     routeGroupWid: String(route.query.group_wid || '').trim(),
     routeGroupWdg: String(route.query.group_wdg || '').trim(),
     routeGroupWik: String(route.query.group_wik || '').trim(),
-    contractActionCount: contractActionCount.value,
+    contractActionCount: resolveContractActionCountForHud(),
     contractLimit: contractLimit.value,
     contractReadAllowed: contractReadAllowed.value,
     contractWarningCount: contractWarningCount.value,
@@ -1403,7 +1431,7 @@ const {
     router.replace(routeState.target).catch(() => {});
   },
   trackUsageEvent,
-  load: () => loadPage(),
+  load: requestLoadPage,
   resolveActionViewRouteSnapshot,
   resolveRoutePresetSearchTerm,
   resolveRoutePresetAppliedLabel,
@@ -1447,7 +1475,9 @@ const {
   syncRouteStateAndReload,
   syncRouteListState,
   applyRoutePatchAndReload,
-  applyGroupSharedState,
+  applyGroupSharedState: (state) => {
+    groupRuntimeCapsule.applySharedState(state);
+  },
 });
 
 const {
@@ -1506,7 +1536,7 @@ const {
   batchMessage,
   pageText,
   syncRouteListState,
-  load: () => loadPage(),
+  load: requestLoadPage,
   resolveReloadTriggerPlan,
   resolveFocusActionPushState,
   resolveWorkspaceContextQuery,
@@ -1618,13 +1648,13 @@ const { runContractAction } = useActionViewActionRuntime({
   batchBusy,
   batchMessage,
   pageText,
-  load: () => loadPage(),
+  load: requestLoadPage,
   sessionLoadAppInit: () => session.loadAppInit(),
   recordIntentTrace: (payload) => session.recordIntentTrace(payload),
   resolveActionContextRecordId: () => {
-    const fromRoute = parseNumericId(route.query.res_id);
+    const fromRoute = toPositiveInt(route.query.res_id);
     if (fromRoute) return fromRoute;
-    const fromContract = parseNumericId(actionContract.value?.head?.res_id);
+    const fromContract = toPositiveInt(actionContract.value?.head?.res_id);
     if (fromContract) return fromContract;
     return null;
   },
@@ -2091,6 +2121,7 @@ const {
 } = useActionViewLoadFacadeRuntime({
   executeLoad,
 });
+loadPageInvoker = loadPage;
 
 const {
   handleSearch,
@@ -2102,7 +2133,7 @@ const {
   filterValue,
   groupWindowOffset,
   syncRouteListState,
-  load: loadPage,
+  load: requestLoadPage,
   clearSelection,
 });
 
@@ -2143,7 +2174,7 @@ const {
   lastBatchRequest,
   pageText,
   setError,
-  load: loadPage,
+  load: requestLoadPage,
   clearSelection,
   resolveTargetModel: () => resolveBatchAssignTargetModel({
     resolvedModelRaw: resolvedModelRef.value,
@@ -2169,14 +2200,46 @@ const {
   resolveBatchActionResultMessage,
   resolveBatchStandardExecutionSeed,
   resolveBatchActionLastRequestState,
-  resolveBatchActionSuccessMessage,
+  resolveBatchActionSuccessMessage: resolveBatchActionResultMessage,
   resolveBatchFailureCatchState,
-  resolveBatchActionFailureFallback,
+  resolveBatchActionFailureFallback: (input) => resolveBatchActionErrorFallback({
+    targetModel: String(input.targetModel || ''),
+    action: (input.action as 'archive' | 'activate' | 'delete') || 'archive',
+    resolveActionLabel: (action) => resolveBatchActionErrorLabel({ action, text: pageText }),
+  }),
   resolveBatchAssignGuardDecision,
   resolveBatchAssignGuardMessage,
-  resolveBatchAssignSeedState,
-  resolveBatchAssignResultMessage: resolveBatchAssignSuccessMessage,
-  resolveBatchAssignSuccessMessage,
+  resolveBatchAssignSeedState: (input) => ({
+    ...resolveBatchAssignExecutionSeed({
+      selectedIds: input.selectedIds,
+      assigneeId: input.selectedAssigneeId,
+      buildIfMatchMap: input.buildIfMatchMap,
+      buildIdempotencyKey: input.buildIdempotencyKey,
+    }),
+    assigneeId: input.selectedAssigneeId,
+  }),
+  resolveBatchAssignResultMessage: (input) => resolveBatchActionFailureMessage({
+    action: 'assign',
+    assigneeName: resolveBatchAssignAssigneeLabel({
+      assigneeId: Number(selectedAssigneeId.value || 0),
+      assigneeOptions: assigneeOptions.value,
+    }),
+    idempotentReplay: Boolean(input.idempotentReplay),
+    succeeded: Number(input.succeeded || 0),
+    failed: Number(input.failed || 0),
+    text: pageText,
+  }),
+  resolveBatchAssignSuccessMessage: (input) => resolveBatchActionFailureMessage({
+    action: 'assign',
+    assigneeName: resolveBatchAssignAssigneeLabel({
+      assigneeId: Number(selectedAssigneeId.value || 0),
+      assigneeOptions: assigneeOptions.value,
+    }),
+    idempotentReplay: Boolean(input.idempotentReplay),
+    succeeded: Number(input.succeeded || 0),
+    failed: Number(input.failed || 0),
+    text: pageText,
+  }),
   resolveBatchAssignFailureMessage,
   resolveBatchAssignErrorFallback,
   resolveBatchErrorHintResolver,
@@ -2213,14 +2276,14 @@ const {
 
 onMounted(async () => {
   applyRoutePreset();
-  await loadPage();
+  await requestLoadPage();
 });
 
 watch(
   () => route.fullPath,
   () => {
     if (applyRoutePreset()) {
-      void loadPage();
+      void requestLoadPage();
     }
   },
 );
