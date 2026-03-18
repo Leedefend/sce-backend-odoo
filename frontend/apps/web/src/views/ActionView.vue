@@ -477,6 +477,7 @@ import { useActionViewLoadSuccessPhaseInputRuntime } from '../app/action_runtime
 import { useActionViewLoadSuccessRuntime } from '../app/action_runtime/useActionViewLoadSuccessRuntime';
 import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseRuntime';
 import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
+import { useActionViewActionPresentationRuntime } from '../app/action_runtime/useActionViewActionPresentationRuntime';
 import {
   normalizeGroupPageOffset,
   parseGroupPageOffsets,
@@ -1247,56 +1248,20 @@ const {
   toPositiveInt,
   detectObjectMethodFromActionKey,
 });
-const contractActionButtons = computed<ContractActionButton[]>(() => {
-  const contract = actionContract.value;
-  const merged: Array<Record<string, unknown>> = [];
-  const sceneActions = sceneReadyListSurface.value.actions;
-  if (sceneActions.length) {
-    merged.push(...sceneActions);
-  } else {
-    if (!contract) return [];
-    const contractButtons = Array.isArray(contract.buttons) ? (contract.buttons as Array<Record<string, unknown>>) : [];
-    if (contractButtons.length) {
-      merged.push(...contractButtons);
-    } else {
-      if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
-      if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
-      if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
-    }
-  }
-  const dedup = new Set<string>();
-  return merged
-    .map((row) => toContractActionButton(row, dedup))
-    .filter((item): item is ContractActionButton => Boolean(item))
-    .slice(0, 8);
-});
-
 const {
   resolveContractActionPresentation,
 } = useActionViewActionGroupingRuntime();
-
-const actionPrimaryBudget = computed(() => {
-  const raw = Number(actionContract.value?.surface_policies?.actions_primary_max ?? 4);
-  if (!Number.isFinite(raw) || raw < 0) return 4;
-  return Math.floor(raw);
-});
-const contractActionPresentation = computed(() => {
-  return resolveContractActionPresentation({
-    strictContractMode: strictContractMode.value,
-    actionSurface: (sceneReadyListSurface.value.actionSurface || {}) as Record<string, unknown>,
-    contractActionGroupsRaw: Array.isArray(actionContract.value?.action_groups)
-      ? (actionContract.value?.action_groups as ContractActionGroupRaw[])
-      : [],
-    allButtons: contractActionButtons.value,
-    actionPrimaryBudget: actionPrimaryBudget.value,
-    pageText,
-  });
-});
-const contractPrimaryActions = computed<ContractActionButton[]>(() => {
-  return contractActionPresentation.value.primaryActions as ContractActionButton[];
-});
-const contractOverflowActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
-  return contractActionPresentation.value.overflowActionGroups as Array<{ key: string; label: string; actions: ContractActionButton[] }>;
+const {
+  contractActionButtons,
+  contractPrimaryActions,
+  contractOverflowActionGroups,
+} = useActionViewActionPresentationRuntime({
+  actionContract,
+  sceneReadyListSurface,
+  strictContractMode,
+  toContractActionButton: (row, dedup) => toContractActionButton(row, dedup) as ContractActionButton | null,
+  resolveContractActionPresentation,
+  pageText,
 });
 const { vm } = useActionPageModel({
   page: {
