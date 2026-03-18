@@ -51,6 +51,11 @@
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
+      <section v-if="strictContractMissingSummary" class="block contract-missing-block">
+        <h3>契约缺口提示</h3>
+        <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
+        <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
+      </section>
 
       <section v-if="workflowTransitions.length" class="block">
         <h3>流程操作</h3>
@@ -316,6 +321,10 @@ import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
+import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import { executeSceneMutation } from '../app/sceneMutationRuntime';
+import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -337,6 +346,19 @@ type ContractAction = {
   hint: string;
   semantic: string;
   visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
+  mutation?: {
+    type: string;
+    model: string;
+    operation: string;
+    payload_schema?: Record<string, unknown>;
+  };
+  refreshPolicy?: {
+    on_success: string[];
+    on_failure?: string[];
+    mode?: string;
+    scope?: string;
+    debounce_ms?: number;
+  };
 };
 
 type LayoutNode = {
@@ -1526,6 +1548,7 @@ function detectMethodName(key: string, payloadMethod: string) {
 
 const contractActions = computed<ContractAction[]>(() => {
   const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
+    const protocol = normalizeSceneActionProtocol(row);
     const key = String(row.key || '').trim();
     if (!key) return null;
     const target = parseMaybeJsonRecord(row.target);
@@ -1556,6 +1579,8 @@ const contractActions = computed<ContractAction[]>(() => {
       hint: '',
       semantic,
       visibleProfiles: ['create', 'edit', 'readonly'],
+      mutation: protocol?.mutation,
+      refreshPolicy: protocol?.refresh_policy,
     };
   };
 
@@ -1741,15 +1766,46 @@ const policyRequiredFields = computed(() => {
   });
   return out;
 });
+const sceneReadySceneKey = computed(() => String(route.query.scene_key || route.params.sceneKey || '').trim());
+const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
+  const key = sceneReadySceneKey.value;
+  return key ? findSceneReadyEntry(session.sceneReadyContractV1, key) : null;
+});
+const strictContractMode = computed(() => isCoreSceneStrictMode(sceneReadySceneKey.value, sceneReadyEntry.value));
+const strictContractGuard = computed<Record<string, unknown>>(() => {
+  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? (sceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const direct = entry.contract_guard;
+  if (direct && typeof direct === 'object' && !Array.isArray(direct)) return direct as Record<string, unknown>;
+  const meta = (entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta))
+    ? (entry.meta as Record<string, unknown>)
+    : {};
+  const nested = meta.contract_guard;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) return nested as Record<string, unknown>;
+  return {};
+});
+const strictContractMissingSummary = computed(() => {
+  if (!strictContractMode.value) return '';
+  const raw = strictContractGuard.value.missing;
+  if (!Array.isArray(raw) || !raw.length) return '';
+  const missing = raw.map((item) => String(item || '').trim()).filter(Boolean);
+  if (!missing.length) return '';
+  return `严格模式检测到后端契约缺口：${missing.join(', ')}`;
+});
+const strictContractDefaultsSummary = computed(() => {
+  if (!strictContractMode.value) return '';
+  const raw = strictContractGuard.value.defaults_applied;
+  if (!Array.isArray(raw) || !raw.length) return '';
+  const defaults = raw.map((item) => String(item || '').trim()).filter(Boolean);
+  if (!defaults.length) return '';
+  return `当前由后端兜底补齐：${defaults.join(', ')}`;
+});
 const sceneValidationRequiredFields = computed<string[]>(() => {
-  const sceneKey = String(route.query.scene_key || '').trim();
-  const entry = sceneKey ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey) : null;
-  return resolveFormSceneReady(entry).requiredFields;
+  return resolveFormSceneReady(sceneReadyEntry.value).requiredFields;
 });
 const sceneReadyFormSurface = computed(() => {
-  const sceneKey = String(route.query.scene_key || '').trim();
-  const entry = sceneKey ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey) : null;
-  return resolveFormSceneReady(entry);
+  return resolveFormSceneReady(sceneReadyEntry.value);
 });
 const validationRequiredFields = computed(() => {
   const out = new Set<string>();
@@ -2669,7 +2725,7 @@ async function runAction(action: ContractAction) {
   if (!action.enabled) return;
   const actionKey = String(action.key || '').trim().toLowerCase();
   if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
-    await saveRecord();
+    await saveRecord(action.refreshPolicy);
     return;
   }
   if (actionKey === 'cancel') {
@@ -2703,6 +2759,30 @@ async function runAction(action: ContractAction) {
     status.value = 'error';
     return;
   }
+  if (action.mutation) {
+    busyKind.value = 'action';
+    try {
+      const result = await executeSceneMutation({
+        mutation: action.mutation,
+        actionKey: action.key,
+        recordId: recordId.value,
+        model: action.targetModel || model.value,
+        context: action.context,
+      });
+      if (showHud.value) {
+        // eslint-disable-next-line no-console
+        console.info(`[scene-mutation] intent=${result.intent} trace=${result.traceId} action=${action.key}`);
+      }
+      await applyProjectionRefreshPolicy(action.refreshPolicy);
+      return;
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : 'scene mutation execute failed';
+      status.value = 'error';
+      return;
+    } finally {
+      busyKind.value = null;
+    }
+  }
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
     busyKind.value = 'action';
     try {
@@ -2718,7 +2798,7 @@ async function runAction(action: ContractAction) {
       });
       const result = response?.result;
       const refresh = result?.type;
-      if (refresh === 'refresh') {
+      if (refresh === 'refresh' && !action.refreshPolicy) {
         await reload();
         return;
       }
@@ -2729,6 +2809,13 @@ async function runAction(action: ContractAction) {
           params: { actionId: String(nextActionId) },
           query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
         });
+        if (action.refreshPolicy) {
+          await applyProjectionRefreshPolicy(action.refreshPolicy);
+        }
+        return;
+      }
+      if (action.refreshPolicy) {
+        await applyProjectionRefreshPolicy(action.refreshPolicy);
       }
     } catch (err) {
       errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
@@ -2737,6 +2824,27 @@ async function runAction(action: ContractAction) {
       busyKind.value = null;
     }
   }
+}
+
+async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPolicy']) {
+  if (!policy || !Array.isArray(policy.on_success) || !policy.on_success.length) {
+    return;
+  }
+  await executeProjectionRefresh({
+    policy,
+    refreshScene: async () => {
+      await reload();
+    },
+    refreshWorkbench: async () => {
+      await session.loadAppInit();
+    },
+    refreshRoleSurface: async () => {
+      await session.loadAppInit();
+    },
+    recordTrace: ({ intent, writeMode, latencyMs }) => {
+      session.recordIntentTrace({ intent, writeMode, latencyMs });
+    },
+  });
 }
 
 async function openFilter(filterKey: string) {
@@ -2755,7 +2863,7 @@ async function openFilter(filterKey: string) {
   });
 }
 
-async function saveRecord() {
+async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
   const standardCreateMode = isProjectStandardIntakeMode.value;
@@ -2828,7 +2936,7 @@ async function saveRecord() {
     }
     if (recordId.value) {
       await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
-      await reload();
+      await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
     const created = await createRecord({ model: model.value, vals: values });
@@ -2838,6 +2946,7 @@ async function saveRecord() {
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
       const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
       if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
+        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
         const routePath = resolvedNextRoute || '/s/project.management';
         await router.replace({
           path: routePath,
@@ -2849,6 +2958,7 @@ async function saveRecord() {
         return;
       }
       if (isProjectStandardIntakeMode.value && resolvedNextRoute) {
+        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
         await router.replace({
           path: resolvedNextRoute,
           query: {
@@ -2982,6 +3092,18 @@ watch(
 .block.warn {
   border-color: #fdba74;
   background: #fff7ed;
+}
+
+.contract-missing-block {
+  border-color: #fca5a5;
+  background: #fff5f5;
+}
+
+.contract-missing-summary,
+.contract-missing-defaults {
+  margin: 4px 0 0;
+  color: #7a271a;
+  font-size: 12px;
 }
 
 .block h3 {

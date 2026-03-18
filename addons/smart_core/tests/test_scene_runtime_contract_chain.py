@@ -160,3 +160,161 @@ class TestSceneRuntimeContractChain(TransactionCase):
         search_surface = row.get("search_surface") or {}
         self.assertEqual(search_surface.get("fields"), [])
         self.assertEqual(search_surface.get("group_by"), [])
+
+    def test_scene_ready_finance_actions_include_mutation_and_refresh_policy(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "finance.payment_requests",
+                    "name": "付款申请审批",
+                    "layout": {"kind": "list"},
+                    "target": {"route": "/s/finance.payment_requests", "model": "finance.payment.request"},
+                    "ui_base_contract": _sample_ui_base_contract(model="finance.payment.request"),
+                }
+            ],
+            role_surface={"landing_scene_key": "finance.payment_requests"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        actions = row.get("actions") or []
+        self.assertGreaterEqual(len(actions), 3)
+        first_target = (actions[0] or {}).get("target") or {}
+        self.assertEqual(((first_target.get("mutation") or {}).get("model") or ""), "finance.payment.request")
+        self.assertTrue(((first_target.get("refresh_policy") or {}).get("on_success") or []))
+
+    def test_scene_ready_risk_actions_include_mutation_and_refresh_policy(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "risk.center",
+                    "name": "风险中心",
+                    "layout": {"kind": "workspace"},
+                    "target": {"route": "/s/risk.center", "model": "project.risk.action"},
+                    "ui_base_contract": _sample_ui_base_contract(model="project.risk.action"),
+                }
+            ],
+            role_surface={"landing_scene_key": "risk.center"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        actions = row.get("actions") or []
+        self.assertGreaterEqual(len(actions), 3)
+        first_target = (actions[0] or {}).get("target") or {}
+        self.assertEqual(((first_target.get("mutation") or {}).get("model") or ""), "project.risk.action")
+        self.assertTrue(((first_target.get("refresh_policy") or {}).get("on_success") or []))
+
+    def test_pilot_core_scenes_materialize_strict_contract_fields(self):
+        scenes = [
+            {
+                "code": "workspace.home",
+                "name": "工作台",
+                "layout": {"kind": "workspace"},
+                "target": {"route": "/my-work"},
+                "ui_base_contract": _sample_ui_base_contract(model="project.risk.action"),
+            },
+            {
+                "code": "finance.payment_requests",
+                "name": "付款申请审批",
+                "layout": {"kind": "list"},
+                "target": {"route": "/s/finance.payment_requests", "model": "finance.payment.request"},
+                "ui_base_contract": _sample_ui_base_contract(model="finance.payment.request"),
+            },
+            {
+                "code": "risk.center",
+                "name": "风险中心",
+                "layout": {"kind": "workspace"},
+                "target": {"route": "/s/risk.center", "model": "project.risk.action"},
+                "ui_base_contract": _sample_ui_base_contract(model="project.risk.action"),
+            },
+            {
+                "code": "project.management",
+                "name": "项目驾驶舱",
+                "layout": {"kind": "workspace"},
+                "target": {"route": "/s/project.management", "model": "project.project"},
+                "ui_base_contract": _sample_ui_base_contract(model="project.project"),
+            },
+        ]
+
+        contract = build_scene_ready_contract_v1(
+            scenes=scenes,
+            role_surface={"landing_scene_key": "workspace.home"},
+        )
+        rows = contract.get("scenes") or []
+        self.assertEqual(len(rows), 4)
+        rows_by_key = {
+            ((row.get("scene") or {}).get("key") or ""): row
+            for row in rows
+            if isinstance(row, dict)
+        }
+        for key in ("workspace.home", "finance.payment_requests", "risk.center", "project.management"):
+            row = rows_by_key.get(key) or {}
+            self.assertEqual(row.get("scene_tier"), "core")
+            runtime_policy = row.get("runtime_policy") or {}
+            self.assertTrue(bool(runtime_policy.get("strict_contract_mode")))
+            surface = row.get("surface") or {}
+            self.assertTrue(bool(surface.get("kind")))
+            self.assertTrue(bool((surface.get("intent") or {}).get("title")))
+            self.assertTrue(isinstance(row.get("projection"), dict))
+            self.assertTrue(isinstance(row.get("action_surface"), dict))
+
+    def test_scene_ready_respects_declared_runtime_policy_and_tier(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "finance.payment_requests",
+                    "name": "付款申请审批",
+                    "layout": {"kind": "list"},
+                    "runtime_policy": {"strict_contract_mode": False, "scene_tier": "standard"},
+                    "target": {"route": "/s/finance.payment_requests", "model": "finance.payment.request"},
+                    "ui_base_contract": _sample_ui_base_contract(model="finance.payment.request"),
+                }
+            ],
+            role_surface={"landing_scene_key": "finance.payment_requests"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        self.assertEqual(row.get("scene_tier"), "standard")
+        runtime_policy = row.get("runtime_policy") or {}
+        self.assertFalse(bool(runtime_policy.get("strict_contract_mode")))
+        self.assertEqual(runtime_policy.get("scene_tier"), "standard")
+
+    def test_strict_scene_emits_contract_guard_for_missing_semantic_contract(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "layout": {"kind": "list"},
+                    "runtime_policy": {"strict_contract_mode": True, "scene_tier": "core"},
+                    "target": {"route": "/s/projects.list", "model": "project.project"},
+                    "ui_base_contract": _sample_ui_base_contract(model="project.project"),
+                }
+            ],
+            role_surface={"landing_scene_key": "projects.list"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        guard = row.get("contract_guard") or {}
+        self.assertTrue(bool(guard.get("strict_mode")))
+        self.assertTrue(bool(guard.get("contract_ready")))
+        source_missing = guard.get("source_missing") or []
+        self.assertIn("surface.kind", source_missing)
+        self.assertIn("view_modes", source_missing)
+        self.assertEqual(guard.get("missing") or [], [])
+        self.assertTrue(isinstance(guard.get("defaults_applied"), list))
+        self.assertIn("surface", guard.get("defaults_applied") or [])
+
+    def test_non_pilot_scene_without_declared_policy_stays_non_strict(self):
+        contract = build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "layout": {"kind": "list"},
+                    "target": {"route": "/s/projects.list", "model": "project.project"},
+                    "ui_base_contract": _sample_ui_base_contract(model="project.project"),
+                }
+            ],
+            role_surface={"landing_scene_key": "projects.list"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        runtime_policy = row.get("runtime_policy") or {}
+        self.assertFalse(bool(runtime_policy.get("strict_contract_mode")))
+        self.assertIn(row.get("scene_tier"), (None, ""))
+        self.assertIn(row.get("contract_guard"), (None, {}))

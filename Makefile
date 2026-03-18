@@ -1544,6 +1544,14 @@ verify.frontend.home_layout_section_coverage.guard: guard.prod.forbid
 verify.frontend.home_orchestration_consumption.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_orchestration_consumption_guard.py
 
+.PHONY: verify.scene.ready.strict_contract.guard
+verify.scene.ready.strict_contract.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_ready_strict_contract_guard.py
+
+.PHONY: verify.scene.ready.strict_gap.full_audit
+verify.scene.ready.strict_gap.full_audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_ready_strict_gap_full_audit.py
+
 .PHONY: verify.workspace_home.sections_schema.guard
 verify.workspace_home.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_sections_schema_guard.py
@@ -1702,6 +1710,7 @@ verify.render.policy.ready: guard.prod.forbid verify.contract.governance.determi
 
 .PHONY: verify.frontend.product.ready
 verify.frontend.product.ready: guard.prod.forbid \
+	verify.scene.ready.strict_contract.guard \
 	verify.frontend.contract_runtime.guard \
 	verify.frontend.contract_route.guard \
 	verify.frontend.contract_normalized_fields.guard \
@@ -1977,7 +1986,7 @@ verify.contract.envelope.guard: guard.prod.forbid
 verify.contract.envelope: guard.prod.forbid verify.contract.envelope.guard verify.contract.mode.smoke verify.contract.api.mode.smoke verify.scene_capability.contract.guard
 	@echo "[OK] verify.contract.envelope done"
 
-verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.frontend.no_base_contract_direct_consume.guard verify.frontend.scene_governance_consumption.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard verify.scene.asset_queue_trend.guard verify.scene.ready.consumption_trend.guard verify.scene.governance_history_report.guard verify.scene.governance_history_archive.guard verify.scene.registry_asset_snapshot.guard verify.scene.base_contract_source_mix.guard verify.scene.sample_registry_diff.guard verify.scene.sample_registry_diff_trend.guard verify.scene.base_contract_asset_coverage.guard verify.scene.orchestrator.input.schema.guard verify.scene.orchestrator.output.schema.guard verify.scene.orchestrator.base_fact_binding.guard verify.scene.orchestrator.industry_interface.guard verify.scene.orchestrator.merge_priority.guard verify.scene.orchestrator.scene_type_surface.guard verify.scene.orchestrator.action_surface.guard verify.scene.orchestrator.key_scene_compile.guard verify.scene.action_surface_strategy.wiring.guard verify.scene.action_surface_strategy.schema.guard verify.scene.action_surface_strategy.payload.guard verify.scene.action_surface_strategy.priority.guard verify.scene.action_surface_strategy.live_matrix.guard verify.scene.ready.scene_type_consumption_metrics.guard verify.scene.validation_recovery_strategy.guard verify.scene.validation_recovery_strategy.payload_path.guard verify.scene.validation_recovery_strategy.e2e_smoke.guard verify.scene.ui_base_contract_canonicalizer.guard
+verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.frontend.no_base_contract_direct_consume.guard verify.frontend.scene_governance_consumption.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard verify.scene.governance_payload.guard verify.scene.asset_queue_trend.guard verify.scene.ready.consumption_trend.guard verify.scene.governance_history_report.guard verify.scene.governance_history_archive.guard verify.scene.registry_asset_snapshot.guard verify.scene.base_contract_source_mix.guard verify.scene.sample_registry_diff.guard verify.scene.sample_registry_diff_trend.guard verify.scene.base_contract_asset_coverage.guard verify.scene.orchestrator.input.schema.guard verify.scene.orchestrator.output.schema.guard verify.scene.orchestrator.base_fact_binding.guard verify.scene.orchestrator.industry_interface.guard verify.scene.orchestrator.merge_priority.guard verify.scene.orchestrator.scene_type_surface.guard verify.scene.orchestrator.action_surface.guard verify.scene.orchestrator.key_scene_compile.guard verify.scene.action_surface_strategy.wiring.guard verify.scene.action_surface_strategy.schema.guard verify.scene.action_surface_strategy.payload.guard verify.scene.action_surface_strategy.priority.guard verify.scene.action_surface_strategy.live_matrix.guard verify.scene.ready.scene_type_consumption_metrics.guard verify.scene.validation_recovery_strategy.guard verify.scene.validation_recovery_strategy.payload_path.guard verify.scene.validation_recovery_strategy.e2e_smoke.guard verify.scene.ui_base_contract_canonicalizer.guard verify.scene.ready.strict_contract.guard
 	@echo "[OK] verify.scene.runtime_boundary.gate done"
 
 .PHONY: verify.scene.product_delivery.readiness.guard
@@ -1993,7 +2002,10 @@ verify.scene.delivery.readiness: guard.prod.forbid
 	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1 \
 	SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1 \
 	$(MAKE) --no-print-directory verify.scene.runtime_boundary.gate
+	@$(MAKE) --no-print-directory verify.scene.ready.strict_gap.full_audit
 	@$(MAKE) --no-print-directory verify.scene.product_delivery.readiness.guard
+	@echo "[INFO] strict guard report: docs/ops/audits/scene_ready_strict_contract_guard_report.md"
+	@echo "[INFO] strict full audit report: docs/ops/audits/scene_ready_strict_gap_full_audit.md"
 	@echo "[OK] verify.scene.delivery.readiness done"
 
 .PHONY: verify.scene.delivery.readiness.role_matrix

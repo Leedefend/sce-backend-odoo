@@ -1,0 +1,62 @@
+import type {
+  ActionButtonVM,
+  ActionGroupVM,
+  ChipVM,
+  ProjectionMetricVM,
+} from './actionPageVm';
+
+type Dict = Record<string, unknown>;
+
+function asDict(value: unknown): Dict {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return value as Dict;
+}
+
+export function toChipVM(value: unknown): ChipVM | null {
+  const row = asDict(value);
+  const key = String(row.key || '').trim();
+  const label = String(row.label || row.key || '').trim();
+  if (!key || !label) return null;
+  return { key, label };
+}
+
+export function toActionButtonVM(value: unknown): ActionButtonVM | null {
+  const row = asDict(value);
+  const key = String(row.key || '').trim();
+  const label = String(row.label || row.key || '').trim();
+  if (!key || !label) return null;
+  const enabledRaw = row.enabled;
+  return {
+    key,
+    label,
+    enabled: typeof enabledRaw === 'boolean' ? enabledRaw : true,
+    hint: String(row.hint || '').trim() || undefined,
+  };
+}
+
+export function toActionGroupVM(value: unknown): ActionGroupVM | null {
+  const row = asDict(value);
+  const key = String(row.key || '').trim();
+  const label = String(row.label || row.key || '').trim();
+  const actionsRaw = Array.isArray(row.actions) ? row.actions : [];
+  const actions = actionsRaw
+    .map((item) => toActionButtonVM(item))
+    .filter((item): item is ActionButtonVM => Boolean(item));
+  if (!key || !label || !actions.length) return null;
+  return { key, label, actions };
+}
+
+export function toProjectionMetricVM(value: unknown): ProjectionMetricVM | null {
+  const row = asDict(value);
+  const key = String(row.key || '').trim();
+  const label = String(row.label || row.key || '').trim();
+  if (!key || !label) return null;
+  const valueText = String(row.value ?? '').trim();
+  return {
+    key,
+    label,
+    value: valueText,
+    tone: String(row.tone || 'neutral').trim() || 'neutral',
+  };
+}
+
