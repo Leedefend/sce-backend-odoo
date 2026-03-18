@@ -476,6 +476,7 @@ import { useActionViewLoadSuccessDynamicInputRuntime } from '../app/action_runti
 import { useActionViewLoadSuccessPhaseInputRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseInputRuntime';
 import { useActionViewLoadSuccessRuntime } from '../app/action_runtime/useActionViewLoadSuccessRuntime';
 import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseRuntime';
+import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
 import {
   normalizeGroupPageOffset,
   parseGroupPageOffsets,
@@ -2129,12 +2130,11 @@ const {
   executeLoadMainBound,
 });
 
-async function load() {
-  const loadMainPhaseResult = await executeLoad();
-  if (loadMainPhaseResult.stopped) {
-    return;
-  }
-}
+const {
+  loadPage,
+} = useActionViewLoadFacadeRuntime({
+  executeLoad,
+});
 
 const {
   handleSearch,
@@ -2146,7 +2146,7 @@ const {
   filterValue,
   groupWindowOffset,
   syncRouteListState,
-  load,
+  load: loadPage,
   clearSelection,
 });
 
@@ -2187,7 +2187,7 @@ const {
   lastBatchRequest,
   pageText,
   setError,
-  load,
+  load: loadPage,
   clearSelection,
   resolveTargetModel: () => resolveBatchAssignTargetModel({
     resolvedModelRaw: resolvedModelRef.value,
@@ -2257,14 +2257,14 @@ const {
 
 onMounted(async () => {
   applyRoutePreset();
-  await load();
+  await loadPage();
 });
 
 watch(
   () => route.fullPath,
   () => {
     if (applyRoutePreset()) {
-      void load();
+      void loadPage();
     }
   },
 );
