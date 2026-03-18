@@ -1272,10 +1272,7 @@ const contractActionButtons = computed<ContractActionButton[]>(() => {
 });
 
 const {
-  resolveContractActionGroups,
-  resolveContractPrimaryActions,
-  resolveContractOverflowActions,
-  resolveContractOverflowActionGroups,
+  resolveContractActionPresentation,
 } = useActionViewActionGroupingRuntime();
 
 const actionPrimaryBudget = computed(() => {
@@ -1283,35 +1280,23 @@ const actionPrimaryBudget = computed(() => {
   if (!Number.isFinite(raw) || raw < 0) return 4;
   return Math.floor(raw);
 });
-const contractActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
-  return resolveContractActionGroups({
+const contractActionPresentation = computed(() => {
+  return resolveContractActionPresentation({
     strictContractMode: strictContractMode.value,
     actionSurface: (sceneReadyListSurface.value.actionSurface || {}) as Record<string, unknown>,
     contractActionGroupsRaw: Array.isArray(actionContract.value?.action_groups)
       ? (actionContract.value?.action_groups as ContractActionGroupRaw[])
       : [],
     allButtons: contractActionButtons.value,
+    actionPrimaryBudget: actionPrimaryBudget.value,
     pageText,
-  }) as Array<{ key: string; label: string; actions: ContractActionButton[] }>;
+  });
 });
 const contractPrimaryActions = computed<ContractActionButton[]>(() => {
-  return resolveContractPrimaryActions({
-    groups: contractActionGroups.value as Array<{ key: string; label: string; actions: ContractActionButton[] }>,
-    allButtons: contractActionButtons.value,
-    actionPrimaryBudget: actionPrimaryBudget.value,
-  }) as ContractActionButton[];
-});
-const contractOverflowActions = computed<ContractActionButton[]>(() => {
-  return resolveContractOverflowActions({
-    allButtons: contractActionButtons.value,
-    primaryActions: contractPrimaryActions.value,
-  }) as ContractActionButton[];
+  return contractActionPresentation.value.primaryActions as ContractActionButton[];
 });
 const contractOverflowActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
-  return resolveContractOverflowActionGroups({
-    groups: contractActionGroups.value as Array<{ key: string; label: string; actions: ContractActionButton[] }>,
-    primaryActions: contractPrimaryActions.value,
-  }) as Array<{ key: string; label: string; actions: ContractActionButton[] }>;
+  return contractActionPresentation.value.overflowActionGroups as Array<{ key: string; label: string; actions: ContractActionButton[] }>;
 });
 const { vm } = useActionPageModel({
   page: {

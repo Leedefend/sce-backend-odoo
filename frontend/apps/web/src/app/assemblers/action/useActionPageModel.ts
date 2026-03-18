@@ -130,7 +130,9 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
       showFocus: true,
       showStrictAlert: Boolean(strictSummary),
       showGroupSummary: asList(unref(options.groupSummary.items)).length > 0,
-      showQuickActions: asList(unref(options.actions.primary)).length > 0,
+      showQuickActions:
+        asList(unref(options.actions.primary)).length > 0
+        || asList(unref(options.actions.overflowGroups)).length > 0,
       showHud: Boolean(unref(options.hud.visible)),
     });
 
