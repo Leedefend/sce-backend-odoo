@@ -1194,7 +1194,7 @@ const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
     routeGroupWid: String(route.query.group_wid || '').trim(),
     routeGroupWdg: String(route.query.group_wdg || '').trim(),
     routeGroupWik: String(route.query.group_wik || '').trim(),
-    contractActionCount: contractActionButtons.value.length,
+    contractActionCount: contractActionCount.value,
     contractLimit: contractLimit.value,
     contractReadAllowed: contractReadAllowed.value,
     contractWarningCount: contractWarningCount.value,
@@ -1252,7 +1252,7 @@ const {
   resolveContractActionPresentation,
 } = useActionViewActionGroupingRuntime();
 const {
-  contractActionButtons,
+  contractActionCount,
   contractPrimaryActions,
   contractOverflowActionGroups,
 } = useActionViewActionPresentationRuntime({
