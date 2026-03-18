@@ -57,6 +57,12 @@
       </div>
     </header>
 
+    <section v-if="homeStrictContractMissingSummary" class="contract-missing-alert">
+      <p class="contract-missing-title">契约缺口提示</p>
+      <p class="contract-missing-summary">{{ homeStrictContractMissingSummary }}</p>
+      <p v-if="homeStrictContractDefaultsSummary" class="contract-missing-defaults">{{ homeStrictContractDefaultsSummary }}</p>
+    </section>
+
     <section class="focus-layout">
       <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :class="homeSectionClass('today_actions')" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
         <header class="today-actions-header">
@@ -414,9 +420,12 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { buildSectionLayoutMap, sectionEnabled, sectionOpenDefault, sectionTagIs, type SectionTag } from '../app/sectionLayout';
 import { deriveHomeSectionMaps, flattenHomeOrchestrationBlocks } from '../app/homeOrchestration';
 import { findEntryForHomeActionItem, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
+import { findSceneReadyEntry } from '../app/resolvers/sceneReadyResolver';
+import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 
@@ -488,6 +497,9 @@ type RiskActionItem = {
   path?: string;
   query?: Record<string, string>;
   entryKey?: string;
+  riskActionId?: number;
+  projectId?: number;
+  riskLevel?: string;
 };
 type FilterChip = { key: string; label: string };
 
@@ -556,6 +568,50 @@ const workspaceLayoutTexts = computed(() => (
     ? workspaceLayout.value.texts as Record<string, unknown>
     : {}
 ));
+const homeSceneKey = computed(() => {
+  const fromQuery = asText(route.query.scene_key);
+  if (fromQuery) return fromQuery;
+  const page = workspacePageOrchestrationV1.value.page;
+  if (page && typeof page === 'object') {
+    const fromPage = asText((page as Record<string, unknown>).key);
+    if (fromPage) return fromPage;
+  }
+  return 'workspace.home';
+});
+const homeSceneReadyEntry = computed<Record<string, unknown> | null>(() => {
+  const key = homeSceneKey.value;
+  return key ? findSceneReadyEntry(session.sceneReadyContractV1, key) : null;
+});
+const homeStrictContractMode = computed(() => isCoreSceneStrictMode(homeSceneKey.value, homeSceneReadyEntry.value));
+const homeStrictContractGuard = computed<Record<string, unknown>>(() => {
+  const entry = (homeSceneReadyEntry.value && typeof homeSceneReadyEntry.value === 'object')
+    ? (homeSceneReadyEntry.value as Record<string, unknown>)
+    : {};
+  const direct = entry.contract_guard;
+  if (direct && typeof direct === 'object' && !Array.isArray(direct)) return direct as Record<string, unknown>;
+  const meta = (entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta))
+    ? (entry.meta as Record<string, unknown>)
+    : {};
+  const nested = meta.contract_guard;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) return nested as Record<string, unknown>;
+  return {};
+});
+const homeStrictContractMissingSummary = computed(() => {
+  if (!homeStrictContractMode.value) return '';
+  const raw = homeStrictContractGuard.value.missing;
+  if (!Array.isArray(raw) || !raw.length) return '';
+  const missing = raw.map((item) => asText(item)).filter(Boolean);
+  if (!missing.length) return '';
+  return `严格模式检测到后端契约缺口：${missing.join(', ')}`;
+});
+const homeStrictContractDefaultsSummary = computed(() => {
+  if (!homeStrictContractMode.value) return '';
+  const raw = homeStrictContractGuard.value.defaults_applied;
+  if (!Array.isArray(raw) || !raw.length) return '';
+  const defaults = raw.map((item) => asText(item)).filter(Boolean);
+  if (!defaults.length) return '';
+  return `当前由后端兜底补齐：${defaults.join(', ')}`;
+});
 const workspaceLayoutActions = computed(() => (
   workspaceLayout.value.actions && typeof workspaceLayout.value.actions === 'object'
     ? workspaceLayout.value.actions as Record<string, unknown>
@@ -1082,6 +1138,16 @@ const riskSummaryLine = computed(() => {
   return asText(risk.summary) || pageText('risk_summary_fallback', '当前未出现严重风险，建议保持日常巡检节奏。');
 });
 
+function parseRiskActionId(raw: unknown): number {
+  const direct = Number(raw || 0);
+  if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
+  const text = asText(raw);
+  const matched = /^risk-action-(\d+)$/i.exec(text);
+  if (!matched) return 0;
+  const parsed = Number(matched[1] || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
+}
+
 const riskActionItems = computed<RiskActionItem[]>(() => {
   const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
     ? workspaceHome.value.risk as Record<string, unknown>
@@ -1089,6 +1155,7 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
   const source = Array.isArray(risk.actions) ? risk.actions : [];
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    const riskActionId = parseRiskActionId(row.risk_action_id || row.id);
     return {
       id: asText(row.id) || `risk-${idx + 1}`,
       title: asText(row.title) || `${pageText('risk_action_title_fallback_prefix', '风险事项 ')}${idx + 1}`,
@@ -1097,6 +1164,9 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
       sceneKey: asText(row.scene_key),
       path: asText(row.path),
       query: normalizeContextQuery(row.query),
+      riskActionId: riskActionId > 0 ? riskActionId : undefined,
+      projectId: Number(row.project_id || 0) > 0 ? Number(row.project_id || 0) : undefined,
+      riskLevel: asText(row.risk_level) || undefined,
     };
   });
 });
@@ -1250,8 +1320,35 @@ function openGroupCard(groupKey: string) {
   }
 }
 
-function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
+async function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
   void trackUsageEvent('workspace.risk_action_click', { item_id: item.id, action }).catch(() => {});
+
+  const mutationAction = action === 'assign' ? 'claim' : action === 'close' ? 'close' : '';
+  if (mutationAction && item.riskActionId) {
+    try {
+      await executeSceneMutation({
+        mutation: {
+          type: 'transition',
+          model: 'project.risk.action',
+          operation: mutationAction,
+          payload_schema: { required: ['risk_action_id'] },
+        },
+        actionKey: `workspace_risk_${mutationAction}`,
+        recordId: item.riskActionId,
+        context: {
+          risk_action_id: item.riskActionId,
+          project_id: item.projectId,
+          name: item.title,
+          risk_level: item.riskLevel,
+        },
+      });
+      await session.loadAppInit();
+      return;
+    } catch {
+      // fallback to navigation
+    }
+  }
+
   if (item.entryKey) {
     const byKey = entries.value.find((candidate) => candidate.key === item.entryKey && candidate.state === 'READY');
     if (byKey) {
@@ -1268,6 +1365,7 @@ function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'clo
   }
   router.push({ path: item.path || '/my-work', query: item.query || { section: 'todo' } }).catch(() => {});
 }
+
 
 function matchesSearch(entry: CapabilityEntry, query: string) {
   if (!query) return true;
@@ -2150,6 +2248,27 @@ function highlightParts(raw: string) {
   background:
     radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.05), rgba(255, 255, 255, 0) 60%),
     linear-gradient(135deg, rgba(21, 128, 61, 0.04), rgba(2, 132, 199, 0.06));
+}
+
+.contract-missing-alert {
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  background: #fff5f5;
+  padding: 10px 12px;
+}
+
+.contract-missing-title {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contract-missing-summary,
+.contract-missing-defaults {
+  margin: 4px 0 0;
+  color: #7a271a;
+  font-size: 12px;
 }
 
 .hero-main {

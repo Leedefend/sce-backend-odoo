@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import ActionView from './ActionView.vue';
+import ActionView from './ActionViewShell.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
