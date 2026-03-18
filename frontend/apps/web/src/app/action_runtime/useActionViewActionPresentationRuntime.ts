@@ -89,8 +89,10 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
     return contractActionPresentation.value.overflowActionGroups;
   });
 
+  const contractActionCount = computed(() => contractActionButtons.value.length);
+
   return {
-    contractActionButtons,
+    contractActionCount,
     contractPrimaryActions,
     contractOverflowActionGroups,
   };
