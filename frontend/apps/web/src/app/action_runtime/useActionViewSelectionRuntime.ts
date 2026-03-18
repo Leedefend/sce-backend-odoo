@@ -5,8 +5,8 @@ import {
   resolveIfMatchMapState,
   resolveToggleSelectionAllState,
   resolveToggleSelectionState,
-} from '../../runtime/actionViewSelectionStateRuntime';
-import { resolveBatchIdempotencyKey, resolveBatchIdempotencyPayload } from '../../runtime/actionViewBatchRequestSeedRuntime';
+} from '../runtime/actionViewSelectionStateRuntime';
+import { resolveBatchIdempotencyKey, resolveBatchIdempotencyPayload } from '../runtime/actionViewBatchRequestSeedRuntime';
 
 type UseActionViewSelectionRuntimeOptions = {
   selectedIds: Ref<number[]>;

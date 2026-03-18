@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import { uniqueFields } from '../../runtime/actionViewRequestRuntime';
+import { uniqueFields } from '../runtime/actionViewRequestRuntime';
 
 type Dict = Record<string, unknown>;
 

@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
-import { ApiError } from '../../../api/client';
-import { listRecords } from '../../../api/data';
+import { ApiError } from '../../api/client';
+import { listRecords } from '../../api/data';
 
 type UseActionViewAssigneeRuntimeOptions = {
   hasAssigneeField: Ref<boolean>;
