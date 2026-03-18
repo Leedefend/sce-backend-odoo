@@ -343,8 +343,8 @@
     />
     <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: true, tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
       <header class="advanced-view-head">
-        <h3>{{ vm.content.advanced?.title || advancedViewTitle }}</h3>
-        <p>{{ vm.content.advanced?.hint || advancedViewHint }}</p>
+        <h3>{{ vm.content.advanced?.title }}</h3>
+        <p>{{ vm.content.advanced?.hint }}</p>
       </header>
       <div class="advanced-contract">
         <p class="contract-label">{{ t('label.contract_summary', '契约摘要') }}</p>
@@ -358,7 +358,7 @@
       </div>
       <section v-else class="empty-next">
         <p class="empty-next-title">{{ vm.empty?.title || vm.focus.title }}</p>
-        <p class="empty-next-hint">{{ vm.content.advanced?.hint || advancedViewHint }}</p>
+        <p class="empty-next-hint">{{ vm.content.advanced?.hint }}</p>
       </section>
     </section>
     <section v-if="isSectionVisible('empty_next', { defaultEnabled: true, tag: 'section', vmVisible: Boolean(vm.empty) })" class="empty-next" :style="getSectionStyle('empty_next')">
