@@ -1318,16 +1318,8 @@ const { vm } = useActionPageModel({
     entries: hudEntries,
   },
 });
-const contractColumnLabels = computed<Record<string, string>>(() => {
-  const rows = actionContract.value?.fields || {};
-  return Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
-    const label = String(descriptor?.string || '').trim();
-    if (label) acc[name] = label;
-    return acc;
-  }, {});
-});
-
 const {
+  contractColumnLabels,
   extractColumnsFromContract,
   convergeColumnsForSurface,
   extractKanbanFields,
@@ -1339,7 +1331,7 @@ const {
   resolveModelFromContract,
 } = useActionViewContractShapeRuntime({
   pageText,
-  contractColumnLabels,
+  actionContract,
   advancedFields,
   activeGroupByField,
 });
