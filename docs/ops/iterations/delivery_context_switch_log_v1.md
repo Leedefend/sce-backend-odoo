@@ -76,5 +76,5 @@ Each entry must include:
 - module: `CI strict readiness alias`
 - reason: `避免CI默认口径弱化，统一到 role+company 严格验收`
 - completed_step: `ci.scene.delivery.readiness 指向 role_company_matrix，并同步 README/help 描述`
-- active_commit: `pending`
+- active_commit: `2de0f27`
 - next_step: `Run make ci.scene.delivery.readiness to verify alias path`
