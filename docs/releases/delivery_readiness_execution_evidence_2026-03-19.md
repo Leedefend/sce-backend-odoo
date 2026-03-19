@@ -67,3 +67,17 @@ make verify.portal.role_surface_smoke.container
 1. 继续补“角色旅程级 smoke 证据”（按模块映射）
 2. 将本文件与 `delivery_readiness_scoreboard_v1.md` 联动，形成“状态 + 证据”双入口
 3. 在 PR 描述中附上上述关键产物路径作为验收凭证
+
+---
+
+## 7. 支付审批 smoke 字段兼容说明
+
+为避免消费方误读，本轮对 `payment_request_approval_smoke` 的统计字段做了命名收口：
+
+- 新字段：`live_no_executable_actions`
+  - 含义：当前 actor 在 live 模式下无可执行动作（基于 `allowed && actor_matches_required_role`）
+- 兼容字段：`live_no_allowed_actions`
+  - 保留期：过渡 1~2 个迭代周期
+  - 产物中会同时输出 `deprecated_fields=["live_no_allowed_actions"]`
+
+建议所有下游脚本和报表优先切换到 `live_no_executable_actions`。
