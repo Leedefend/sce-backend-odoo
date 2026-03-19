@@ -141,3 +141,12 @@ Each entry must include:
 - completed_step: `新增 ops.scene.company_secondary.access（dry-run/apply）并文档化前置权限`
 - active_commit: `bd5f397`
 - next_step: `Run helper in docker-enabled environment, then rerun strict preflight to reach reachable_count=2`
+
+### 2026-03-19T20:55:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `Ops Runtime Enablement`
+- module: `company2 seed helper`
+- reason: `把公司2与用户归属前置也脚本化，避免修复器依赖已有公司实体`
+- completed_step: `新增 ops.scene.company_secondary.seed（支持创建公司/用户并修复归属）`
+- active_commit: `pending`
+- next_step: `Run seed helper with APPLY=1 in docker-enabled env, then strict preflight + role_company_matrix`
