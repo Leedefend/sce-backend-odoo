@@ -1,0 +1,48 @@
+{
+  "min_scene_count": 50,
+  "state_files": {
+    "pm": "artifacts/backend/scene_registry_asset_snapshot_state.pm.json",
+    "finance": "artifacts/backend/scene_registry_asset_snapshot_state.finance.json",
+    "purchase": "artifacts/backend/scene_registry_asset_snapshot_state.pm.json",
+    "executive": "artifacts/backend/scene_registry_asset_snapshot_state.executive.json"
+  },
+  "journeys": {
+    "pm": {
+      "role_code": "pm",
+      "required_scenes": [
+        "projects.intake",
+        "projects.list",
+        "projects.ledger",
+        "projects.dashboard"
+      ]
+    },
+    "finance": {
+      "role_code": "finance",
+      "required_scenes": [
+        "finance.payment_requests",
+        "finance.center",
+        "finance.payment_ledger",
+        "finance.treasury_ledger",
+        "finance.settlement_orders"
+      ]
+    },
+    "purchase": {
+      "role_code": "purchase",
+      "required_scenes": [
+        "cost.project_boq",
+        "projects.ledger",
+        "cost.project_cost_ledger"
+      ]
+    },
+    "executive": {
+      "role_code": "executive",
+      "required_scenes": [
+        "portal.dashboard",
+        "finance.operating_metrics",
+        "portal.capability_matrix"
+      ]
+    }
+  },
+  "report_json": "artifacts/backend/delivery_journey_role_matrix_report.json",
+  "report_md": "artifacts/backend/delivery_journey_role_matrix_report.md"
+}

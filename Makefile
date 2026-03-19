@@ -2035,6 +2035,10 @@ verify.scene.delivery.readiness.role_company_matrix: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.company_matrix.guard
 	@echo "[OK] verify.scene.delivery.readiness.role_company_matrix done"
 
+.PHONY: verify.delivery.journey.role_matrix.guard
+verify.delivery.journey.role_matrix.guard: guard.prod.forbid
+	@python3 scripts/verify/delivery_journey_role_matrix_guard.py
+
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_input_boundary_guard.py
