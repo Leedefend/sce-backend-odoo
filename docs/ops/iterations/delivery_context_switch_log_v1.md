@@ -33,3 +33,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_scoreboard_v1 初版落库并与 playbook 建立入口关联`
 - active_commit: `pending`
 - next_step: `Start P0.3 system-bound journey scripts normalization (PM/Finance/Purchase/Executive)`
+
+### 2026-03-19T15:35:00Z
+- blocker_key: `gap.system_bound_journey_evidence_missing`
+- layer_target: `Product/Ops Governance`
+- module: `journey role matrix guard`
+- reason: `将4角色旅程验收从文档描述升级为可执行system-bound守卫`
+- completed_step: `新增 delivery_journey_role_matrix_guard + baseline + Make 入口 + README/scoreboard 引用`
+- active_commit: `pending`
+- next_step: `Run verify.delivery.journey.role_matrix.guard and then re-run strict readiness chain`

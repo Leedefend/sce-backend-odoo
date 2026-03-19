@@ -56,6 +56,12 @@
 - `make verify.scene.no_action_scene.guard`
   - Enforces no-action regression policy from `scripts/verify/baselines/scene_no_action_scene_guard.json`.
   - Requires `scene_registry_asset_snapshot_state` to satisfy `min_action_total` for all sampled scenes and `max_no_action_scene_count=0`.
+- `make verify.delivery.journey.role_matrix.guard`
+  - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
+  - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
+  - Artifacts:
+    - `artifacts/backend/delivery_journey_role_matrix_report.json`
+    - `artifacts/backend/delivery_journey_role_matrix_report.md`
   - Persists latest trend snapshot to `artifacts/backend/scene_asset_queue_trend_state.json` for next-run delta checks.
 - `make verify.scene.base_contract_asset_coverage.guard`
   - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).

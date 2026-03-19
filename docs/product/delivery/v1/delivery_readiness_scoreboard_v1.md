@@ -53,5 +53,5 @@
 pnpm -C frontend gate
 make verify.scene.no_action_scene.guard
 make verify.scene.delivery.readiness.role_company_matrix
+make verify.delivery.journey.role_matrix.guard
 ```
-
