@@ -4,7 +4,7 @@
 
 - generated_at_utc: 2026-03-19T15:22:03Z
 - branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `2ffdf72`
+- commit_ref: `0baaa28`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -12,6 +12,7 @@
 
 | Evidence | Status | Source |
 |---|---|---|
+| Frontend gate (`lint + typecheck:strict + build`) | PASS | `pnpm -C frontend gate` |
 | Scene delivery readiness (strict) | PASS | `artifacts/backend/scene_product_delivery_readiness_report.json` |
 | Role matrix source-mix (`executive/pm/finance/ops`) | PASS | `artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json` |
 | Company matrix source-mix (`primary/secondary`) | PASS | `artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json` |
