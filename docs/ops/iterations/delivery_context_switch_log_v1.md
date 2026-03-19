@@ -51,3 +51,12 @@ Each entry must include:
 - completed_step: `pnpm -C frontend gate pass，并同步到gap backlog与scoreboard`
 - active_commit: `d07449d`
 - next_step: `Start P0.4 Scene Contract v1 strict schema closure plan with provider-shape blockerization`
+
+### 2026-03-19T15:55:00Z
+- blocker_key: `gap.scene_contract_v1_strict_schema`
+- layer_target: `Scene Runtime Governance`
+- module: `provider shape blockerization`
+- reason: `把 provider shape guard 从可选检查提升为严格链路 release blocker`
+- completed_step: `新增 verify.scene.provider_shape.guard 并接入 verify.scene.runtime_boundary.gate`
+- active_commit: `pending`
+- next_step: `Run make verify.scene.provider_shape.guard and make verify.scene.delivery.readiness.role_company_matrix`
