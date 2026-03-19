@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-19T15:22:03Z
+- generated_at_utc: 2026-03-19T23:06:58Z
 - branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `0baaa28`
+- commit_ref: `bca9935`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -51,7 +51,7 @@
 1. Frontend gate historical blocker has been rechecked green in current workspace, but needs continuous seal-mode enforcement per release run.
 2. Scene contract field-level strict schema, provider-shape, scene-engine migration matrix, fallback burn-down, and multi-company strict target are all wired and passing in current run.
 3. Journey-level evidence has been script-bound for 4 key roles via `delivery_journey_role_matrix_guard` and wired into strict readiness chain.
-4. Company matrix currently observes one effective company id (`observed_company_ids=[1]`); true multi-company evidence still pending.
+4. Company matrix strict chain is green in current run; keep cross-company trend evidence as continuous non-blocking monitor.
 
 ## Repro Command Set (Default)
 
