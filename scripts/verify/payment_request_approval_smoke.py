@@ -549,6 +549,13 @@ def main() -> int:
             for item in actions
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
+        executable_actions = [
+            str(item.get("key") or "")
+            for item in actions
+            if isinstance(item, dict)
+            and bool(item.get("allowed"))
+            and bool(item.get("actor_matches_required_role"))
+        ]
         blocked_reason_summary = {}
         for item in actions:
             if not isinstance(item, dict) or bool(item.get("allowed")):
@@ -557,13 +564,15 @@ def main() -> int:
             blocked_reason_summary[reason_key] = int(blocked_reason_summary.get(reason_key, 0)) + 1
         summary["blocked_reason_summary"] = blocked_reason_summary
         summary["allowed_actions"] = allowed_actions
-        if picked and not allowed_actions:
+        summary["executable_actions"] = executable_actions
+        if picked and not executable_actions:
             summary["live_no_allowed_actions"] = True
     else:
         allowed_actions = []
+        executable_actions = []
 
     def run_or_skip_direct(action_name: str, intent: str, params: dict, *, artifact: str):
-        if picked and action_name not in set(allowed_actions):
+        if picked and action_name not in set(executable_actions):
             summary["steps"].append(
                 {"step": intent, "ok": True, "skipped": True, "reason_code": "SKIPPED_NOT_ALLOWED"}
             )
@@ -588,34 +597,45 @@ def main() -> int:
     )
 
     exec_action = "submit"
-    allowed_set = set(allowed_actions)
+    allowed_set = set(executable_actions)
     if primary_action_key and primary_action_key in allowed_set:
         exec_action = primary_action_key
-    elif picked and exec_action not in allowed_set and allowed_actions:
-        exec_action = allowed_actions[0]
-    execute_submit_resp = request_intent(
-        "payment.request.execute",
-        {
-            "id": payment_request_id,
-            "action": exec_action,
-            "request_id": f"smoke_exec_{exec_action}_{payment_request_id}_{ts}",
-            "reason": "smoke reject reason" if exec_action == "reject" else "",
-        },
-        token=token,
-    )
-    write_artifacts(out_dir, f"payment_request_execute_{exec_action}.log", execute_submit_resp)
-    ensure_envelope(execute_submit_resp, "payment.request.execute")
-    ensure_reason(execute_submit_resp, "payment.request.execute")
-    execute_submit_reason = (
-        (execute_submit_resp.get("data") or {}).get("reason_code")
-        if execute_submit_resp.get("ok")
-        else ((execute_submit_resp.get("error") or {}).get("reason_code") or (execute_submit_resp.get("error") or {}).get("code"))
-    )
-    summary["steps"].append({
-        "step": f"payment.request.execute.{exec_action}",
-        "ok": bool(execute_submit_resp.get("ok")),
-        "reason_code": execute_submit_reason,
-    })
+    elif picked and exec_action not in allowed_set and executable_actions:
+        exec_action = executable_actions[0]
+    if picked and exec_action not in allowed_set:
+        execute_submit_reason = "SKIPPED_NOT_ALLOWED"
+        summary["steps"].append(
+            {
+                "step": f"payment.request.execute.{exec_action}",
+                "ok": True,
+                "skipped": True,
+                "reason_code": execute_submit_reason,
+            }
+        )
+    else:
+        execute_submit_resp = request_intent(
+            "payment.request.execute",
+            {
+                "id": payment_request_id,
+                "action": exec_action,
+                "request_id": f"smoke_exec_{exec_action}_{payment_request_id}_{ts}",
+                "reason": "smoke reject reason" if exec_action == "reject" else "",
+            },
+            token=token,
+        )
+        write_artifacts(out_dir, f"payment_request_execute_{exec_action}.log", execute_submit_resp)
+        ensure_envelope(execute_submit_resp, "payment.request.execute")
+        ensure_reason(execute_submit_resp, "payment.request.execute")
+        execute_submit_reason = (
+            (execute_submit_resp.get("data") or {}).get("reason_code")
+            if execute_submit_resp.get("ok")
+            else ((execute_submit_resp.get("error") or {}).get("reason_code") or (execute_submit_resp.get("error") or {}).get("code"))
+        )
+        summary["steps"].append({
+            "step": f"payment.request.execute.{exec_action}",
+            "ok": bool(execute_submit_resp.get("ok")),
+            "reason_code": execute_submit_reason,
+        })
 
     followup_execute_reason = "SKIPPED_NOT_ALLOWED"
     followup_skip_reason = "no_post_actions"
@@ -632,6 +652,13 @@ def main() -> int:
             for item in post_actions
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
+        executable_actions_after = [
+            str(item.get("key") or "")
+            for item in post_actions
+            if isinstance(item, dict)
+            and bool(item.get("allowed"))
+            and bool(item.get("actor_matches_required_role"))
+        ]
         action_by_key_after = {
             str(item.get("key") or ""): item
             for item in post_actions
@@ -639,7 +666,8 @@ def main() -> int:
         }
         assert_action_role_hints(action_by_key_after, actor_label="finance_after_execute")
         summary["allowed_actions_after_execute"] = allowed_actions
-        followup_action = next((name for name in FOLLOWUP_ACTION_ORDER if name in set(allowed_actions)), "")
+        summary["executable_actions_after_execute"] = executable_actions_after
+        followup_action = next((name for name in FOLLOWUP_ACTION_ORDER if name in set(executable_actions_after)), "")
         if followup_action:
             followup_selected_action = followup_action
             followup_skip_reason = ""
