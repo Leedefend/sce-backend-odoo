@@ -8,10 +8,11 @@
 
 ---
 
-## 2. Command Executed
+## 2. Commands Executed
 
 ```bash
 make verify.scene.delivery.readiness.role_matrix
+make verify.portal.role_surface_smoke.container
 ```
 
 ---
@@ -23,6 +24,16 @@ make verify.scene.delivery.readiness.role_matrix
   - all role-matrix snapshot guards passed
   - scene runtime boundary gate passed
   - scene delivery readiness passed
+  - role-surface smoke passed (owner/pm/finance/executive)
+
+### 3.1 Role Surface Smoke Summary
+
+| login | role | landing_scene | landing_path | nav_count |
+|---|---|---|---|---|
+| `demo_role_owner` | owner | `projects.list` | `/s/projects.list` | 1 |
+| `demo_role_pm` | pm | `portal.dashboard` | `/s/portal.dashboard` | 1 |
+| `demo_role_finance` | finance | `finance.payment_requests` | `/s/finance.payment_requests` | 1 |
+| `demo_role_executive` | executive | `portal.dashboard` | `/s/portal.dashboard` | 1 |
 
 ---
 
@@ -46,7 +57,7 @@ The following files were produced or updated and can be used for auditability:
 This run directly supports the sprint by:
 
 1. moving delivery-readiness from document-only assessment to system-bound evidence
-2. providing a stable base for the 9-module acceptance matrix (runtime boundary + role matrix are green)
+2. providing a stable base for the 9-module acceptance matrix (runtime boundary + role matrix + role smoke are green)
 3. enabling the next role-journey smoke stage (PM / Finance / Procurement / Executive)
 
 ---
@@ -56,4 +67,3 @@ This run directly supports the sprint by:
 1. continue with role-journey smoke evidence per module mapping
 2. link this file with `delivery_readiness_scoreboard_v1.en.md` for dual entry (status + evidence)
 3. include the key output paths above in PR acceptance notes
-
