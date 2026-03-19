@@ -248,6 +248,24 @@ def _contract_type(token: str, contract_id: int) -> str:
     return str((rows[0] or {}).get("type") or "").strip()
 
 
+def _project_has_3way_settlement_debt(token: str, project_id: int) -> bool:
+    if int(project_id or 0) <= 0:
+        return True
+    rows = list_records(
+        token,
+        "sc.settlement.order",
+        ["id"],
+        domain=[
+            ["project_id", "=", int(project_id)],
+            ["settlement_type", "=", "out"],
+            ["state", "in", ["approve", "done"]],
+            ["purchase_order_ids", "=", False],
+        ],
+        limit=1,
+    )
+    return bool(rows)
+
+
 def _create_with_vals(token: str, out_dir: Path, vals: dict) -> int:
     create_resp = request_intent(
         "api.data",
@@ -306,6 +324,8 @@ def create_payment_request(token: str, out_dir: Path) -> dict | None:
         if settlement_id <= 0 or contract_id <= 0 or project_id <= 0 or partner_id <= 0:
             continue
         contract_type = _contract_type(token, contract_id)
+        if _project_has_3way_settlement_debt(token, project_id):
+            continue
         if settlement_type == "out":
             req_type = "pay"
         elif settlement_type == "in":
@@ -355,15 +375,17 @@ def create_payment_request(token: str, out_dir: Path) -> dict | None:
         domain=[["state", "!=", "cancel"]],
         limit=20,
     )
-    contract_out = None
-    contract_in = None
+    contract = {}
     for row in contracts:
-        row_type = str((row or {}).get("type") or "")
-        if row_type == "out" and contract_out is None:
-            contract_out = row
-        if row_type == "in" and contract_in is None:
-            contract_in = row
-    contract = contract_out or contract_in or (contracts[0] if contracts else {})
+        project_id = as_id((row or {}).get("project_id"))
+        if project_id <= 0:
+            continue
+        if _project_has_3way_settlement_debt(token, project_id):
+            continue
+        contract = row
+        break
+    if not contract and contracts:
+        contract = contracts[0]
     contract_id = as_id((contract or {}).get("id"))
     contract_type = str((contract or {}).get("type") or "")
     project_id = as_id((contract or {}).get("project_id")) or first_id(token, "project.project", ["id", "name"])
