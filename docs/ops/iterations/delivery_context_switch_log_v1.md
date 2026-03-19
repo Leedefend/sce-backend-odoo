@@ -31,7 +31,7 @@ Each entry must include:
 - module: `delivery evidence scoreboard`
 - reason: `将9模块与4角色旅程证据收敛为一页式发布看板`
 - completed_step: `delivery_readiness_scoreboard_v1 初版落库并与 playbook 建立入口关联`
-- active_commit: `pending`
+- active_commit: `b33d0ef`
 - next_step: `Start P0.3 system-bound journey scripts normalization (PM/Finance/Purchase/Executive)`
 
 ### 2026-03-19T15:35:00Z
@@ -202,5 +202,14 @@ Each entry must include:
 - module: `journey guard chain wiring`
 - reason: `避免 strict readiness 只校验场景覆盖不校验关键旅程`
 - completed_step: `verify.delivery.journey.role_matrix.guard 接入 verify.scene.delivery.readiness.role_company_matrix，并同步失败摘要与scoreboard`
-- active_commit: `pending`
+- active_commit: `2d0bee6`
 - next_step: `Continue remaining blocker hardening`
+
+### 2026-03-20T04:45:00Z
+- blocker_key: `gap.backlog_empty_false_green`
+- layer_target: `Product/Ops Governance`
+- module: `delivery governance truth guard`
+- reason: `把“空backlog/假全绿/上下文漂移”升级为可执行守卫并接入 delivery.ready`
+- completed_step: `新增 verify.product.delivery.governance_truth，校验backlog/scoreboard/context-log并接入 verify.product.delivery.ready`
+- active_commit: `bca9935`
+- next_step: `Refresh scoreboard snapshot metadata and continue P0 blocker closure`

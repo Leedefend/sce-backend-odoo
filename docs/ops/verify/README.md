@@ -55,6 +55,14 @@
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
+- `make verify.product.delivery.governance_truth`
+  - Verifies delivery governance truthfulness closure for seal-mode execution.
+  - Checks `docs/product/capability_gap_backlog_v1.md` has actionable rows, mandatory hard-gap keys, and non-empty evidence.
+  - Checks `docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md` has valid snapshot metadata, 9-module table rows, and 4-journey rows.
+  - Checks `docs/ops/iterations/delivery_context_switch_log_v1.md` has no `active_commit: pending` drift points.
+  - Writes reports:
+    - `artifacts/backend/product_delivery_governance_truth_guard_report.json`
+    - `docs/ops/audit/product_delivery_governance_truth_guard_report.md`
 - `make verify.scene.governance_payload.guard`
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
   - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).
