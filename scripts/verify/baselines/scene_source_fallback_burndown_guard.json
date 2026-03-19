@@ -1,0 +1,11 @@
+{
+  "source_mix_report_file": "artifacts/backend/scene_base_contract_source_mix_report.json",
+  "state_file": "artifacts/backend/scene_source_fallback_burndown_state.json",
+  "report_json": "artifacts/backend/scene_source_fallback_burndown_report.json",
+  "report_md": "artifacts/backend/scene_source_fallback_burndown_report.md",
+  "max_runtime_fallback_ratio": 0.0,
+  "max_runtime_minimal_ratio": 0.1,
+  "max_fallback_scene_growth_per_run": 0,
+  "max_minimal_scene_growth_per_run": 1,
+  "enforce_non_increasing": true
+}
