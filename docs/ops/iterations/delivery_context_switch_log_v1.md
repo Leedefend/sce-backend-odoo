@@ -94,5 +94,5 @@ Each entry must include:
 - module: `fallback burn-down + multi-company evidence guards`
 - reason: `把剩余风险从描述项升级为持续可审计守卫与状态趋势`
 - completed_step: `新增 source_fallback_burndown 与 multi_company_evidence 守卫并接入严格链路`
-- active_commit: `pending`
+- active_commit: `cf03625`
 - next_step: `Run role+company strict readiness and confirm warning/error posture`
