@@ -64,8 +64,8 @@
               :key="`${item.label}-${index}`"
               class="crumb"
               :class="{ active: index === breadcrumb.length - 1 }"
-              @click="item.to && router.push(item.to)"
               :disabled="!item.to"
+              @click="item.to && router.push(item.to)"
             >
               {{ item.label }}
             </button>

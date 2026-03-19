@@ -1,7 +1,7 @@
 <template>
   <component
-    v-if="blockComponent"
     :is="blockComponent"
+    v-if="blockComponent"
     :block="block"
     :zone-key="zoneKey"
     :dataset="dataset"

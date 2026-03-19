@@ -8,7 +8,7 @@
       <span v-if="modeLabel" class="pill mode">{{ modeLabel }}</span>
       <span v-if="recordCount >= 0" class="pill count">{{ recordCount }} 条</span>
       <span class="pill" :class="status">{{ statusLabel }}</span>
-      <button class="ghost" @click="onReload" :disabled="loading">刷新</button>
+      <button class="ghost" :disabled="loading" @click="onReload">刷新</button>
     </div>
   </header>
 </template>
