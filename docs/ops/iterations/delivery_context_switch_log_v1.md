@@ -40,5 +40,5 @@ Each entry must include:
 - module: `journey role matrix guard`
 - reason: `将4角色旅程验收从文档描述升级为可执行system-bound守卫`
 - completed_step: `新增 delivery_journey_role_matrix_guard + baseline + Make 入口 + README/scoreboard 引用`
-- active_commit: `pending`
+- active_commit: `618a1e6`
 - next_step: `Run verify.delivery.journey.role_matrix.guard and then re-run strict readiness chain`
