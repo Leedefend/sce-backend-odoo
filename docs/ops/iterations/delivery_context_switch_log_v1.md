@@ -24,3 +24,12 @@ Each entry must include:
 - completed_step: `master plan + collaboration protocol + backlog结构化 + context log 初始化`
 - active_commit: `e69e451`
 - next_step: `Start P0.1 frontend blocker sweep with ActionView/AppShell lint strict fixes`
+
+### 2026-03-19T15:25:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Product/Ops Governance`
+- module: `delivery evidence scoreboard`
+- reason: `将9模块与4角色旅程证据收敛为一页式发布看板`
+- completed_step: `delivery_readiness_scoreboard_v1 初版落库并与 playbook 建立入口关联`
+- active_commit: `pending`
+- next_step: `Start P0.3 system-bound journey scripts normalization (PM/Finance/Purchase/Executive)`
