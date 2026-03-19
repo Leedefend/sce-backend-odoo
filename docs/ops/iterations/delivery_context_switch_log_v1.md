@@ -60,3 +60,12 @@ Each entry must include:
 - completed_step: `新增 verify.scene.provider_shape.guard 并接入 verify.scene.runtime_boundary.gate`
 - active_commit: `b2b6723`
 - next_step: `Run make verify.scene.provider_shape.guard and make verify.scene.delivery.readiness.role_company_matrix`
+
+### 2026-03-19T16:05:00Z
+- blocker_key: `gap.scene_contract_v1_strict_schema`
+- layer_target: `Scene Runtime Governance`
+- module: `scene contract v1 field schema guard`
+- reason: `将字段级强校验从文档目标升级为可执行 release blocker`
+- completed_step: `新增 verify.scene.contract_v1.field_schema.guard 并接入 verify.scene.runtime_boundary.gate`
+- active_commit: `pending`
+- next_step: `Run field-schema guard and full strict readiness role+company chain`
