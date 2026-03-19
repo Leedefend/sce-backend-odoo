@@ -63,6 +63,13 @@
   - Enforces live `scene_ready_contract_v1` field-level schema requirements using `system.init` payload.
   - Baseline: `scripts/verify/baselines/scene_contract_v1_field_schema_guard.json`.
   - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.engine_migration.matrix.guard`
+  - Verifies 9-module entry scenes are on `scene_engine` asset mainline using module map + runtime snapshot state.
+  - Baseline: `scripts/verify/baselines/scene_engine_migration_matrix_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_engine_migration_matrix_report.json`
+    - `artifacts/backend/scene_engine_migration_matrix_report.md`
+  - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.

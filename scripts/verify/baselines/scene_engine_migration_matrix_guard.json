@@ -1,0 +1,15 @@
+{
+  "module_map_file": "artifacts/product/module_scene_capability_map.json",
+  "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.json",
+  "report_json": "artifacts/backend/scene_engine_migration_matrix_report.json",
+  "report_md": "artifacts/backend/scene_engine_migration_matrix_report.md",
+  "require_in_scope_only": true,
+  "min_action_total": 2,
+  "max_non_asset_entry_scene_count": 0,
+  "allowed_missing_scene_state": [
+    "projects.dashboard_showcase"
+  ],
+  "allowed_non_asset_entry_scenes": [
+    "projects.dashboard_showcase"
+  ]
+}

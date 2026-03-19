@@ -16,6 +16,7 @@
 | Scene delivery readiness (strict) | PASS | `artifacts/backend/scene_product_delivery_readiness_report.json` |
 | Role matrix source-mix (`executive/pm/finance/ops`) | PASS | `artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json` |
 | Company matrix source-mix (`primary/secondary`) | PASS | `artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json` |
+| Scene engine migration matrix (9 modules) | PASS | `artifacts/backend/scene_engine_migration_matrix_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
 
 ## 9-Module Readiness Board
@@ -44,7 +45,7 @@
 ## Release Blocking Gaps (Current)
 
 1. Frontend gate historical blocker has been rechecked green in current workspace, but needs continuous seal-mode enforcement per release run.
-2. Scene contract field-level strict schema and provider-shape closure still tracked as blocker in backlog.
+2. Scene contract field-level strict schema, provider-shape, and scene-engine migration matrix are wired as blockers; remaining risk is multi-company + fallback burn-down.
 3. Journey-level evidence is not yet fully script-bound for all 4 key roles.
 4. Company matrix currently observes one effective company id (`observed_company_ids=[1]`); true multi-company evidence still pending.
 
