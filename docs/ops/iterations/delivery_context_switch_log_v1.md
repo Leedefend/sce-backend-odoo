@@ -58,5 +58,5 @@ Each entry must include:
 - module: `provider shape blockerization`
 - reason: `把 provider shape guard 从可选检查提升为严格链路 release blocker`
 - completed_step: `新增 verify.scene.provider_shape.guard 并接入 verify.scene.runtime_boundary.gate`
-- active_commit: `pending`
+- active_commit: `b2b6723`
 - next_step: `Run make verify.scene.provider_shape.guard and make verify.scene.delivery.readiness.role_company_matrix`
