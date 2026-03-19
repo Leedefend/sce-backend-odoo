@@ -105,3 +105,12 @@ Each entry must include:
 - completed_step: `新增 scene_company_snapshot_collect 并接入 role_company_matrix 链路`
 - active_commit: `c6a4ae2`
 - next_step: `Stabilize role-matrix live snapshot timeout path and continue strict readiness iteration`
+
+### 2026-03-19T17:55:00Z
+- blocker_key: `gap.system_bound_journey_evidence_missing`
+- layer_target: `Scene Runtime Governance`
+- module: `registry snapshot timeout resilience`
+- reason: `role_matrix 链路存在 live timeout 抖动，需要提高守卫稳定性而不破坏严格语义`
+- completed_step: `scene_registry_asset_snapshot_guard 增加重试与显式开关兜底，role/company快照目标接入`
+- active_commit: `pending`
+- next_step: `Continue multi-company strict target closure (collect real company id=2 evidence)`
