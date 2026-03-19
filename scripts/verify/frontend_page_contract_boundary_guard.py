@@ -40,10 +40,12 @@ def main() -> int:
     view_files = sorted(VIEWS_DIR.glob("*.vue"))
     expected_views = {
         "ActionView.vue",
+        "ActionViewShell.vue",
         "HomeView.vue",
         "LoginView.vue",
         "MenuView.vue",
         "MyWorkView.vue",
+        "ProjectsIntakeView.vue",
         "PlaceholderView.vue",
         "ProjectManagementDashboardView.vue",
         "RecordView.vue",
@@ -99,6 +101,8 @@ def main() -> int:
 
     page_contract_exempt_views = {
         "ProjectManagementDashboardView.vue",
+        "ActionViewShell.vue",
+        "ProjectsIntakeView.vue",
     }
 
     for view in view_files:
@@ -179,24 +183,14 @@ def main() -> int:
             "pageSectionEnabled('status_forbidden', true)",
         ],
         "ActionView.vue": [
-            "resolveAction(session.menuTree",
-            "listRecords({",
             "pageSectionEnabled(",
-            "pageSectionStyle(",
-            "pageSectionTagIs(",
+            "const pageSectionStyle = pageContract.sectionStyle;",
+            "const pageSectionTagIs = pageContract.sectionTagIs;",
             "pageSectionEnabled('quick_filters', true)",
             "pageSectionEnabled('quick_actions', true)",
-            "keywordList('surface_kind_keywords_risk'",
-            "keywordList('surface_kind_keywords_contract'",
-            "keywordList('surface_kind_keywords_cost'",
-            "keywordList('surface_kind_keywords_project'",
-            "keywordList('group_keywords_basic'",
-            "keywordList('group_keywords_workflow'",
-            "keywordList('group_keywords_drilldown'",
-            "keywordList('columns_risk_bucket_identity'",
-            "keywordList('columns_contract_bucket_amount'",
-            "keywordList('columns_cost_bucket_execution'",
-            "keywordList('columns_project_bucket_identity'",
+            "useActionViewLoadFacadeRuntime({",
+            "useActionViewSectionRuntime({",
+            "useActionViewSurfaceIntentRuntime({",
         ],
         "RecordView.vue": [
             "contract-driven record view",
@@ -351,7 +345,7 @@ def main() -> int:
                 '"key": "hero", "enabled": True, "tag": "header"',
                 '"key": "ops", "enabled": True, "tag": "details", "open": False',
                 '"key": "advice", "enabled": True, "tag": "details", "open": False',
-                '"key": "scene_groups", "enabled": True, "tag": "div"',
+                '"key": "scene_groups", "enabled": False, "tag": "div"',
             ],
             "workspace_home_contract_builder.py",
             errors,

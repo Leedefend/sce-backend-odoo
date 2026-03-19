@@ -7,6 +7,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
+ACTION_SURFACE_CONTRACT = ROOT / "frontend/apps/web/src/app/contracts/actionViewSurfaceContract.ts"
+ACTION_PAGE_DISPLAY_RUNTIME = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewPageDisplayStateRuntime.ts"
 SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
 
 
@@ -41,13 +43,33 @@ def main() -> int:
             ACTION_VIEW,
             [
                 "const pageText = pageContract.text;",
-                "pageText('empty_title_default'",
-                "pageText('empty_hint_default'",
-                "pageText('empty_reason_default'",
+                "const { t } = useActionViewTextRuntime({ pageText });",
+                "useActionViewPageDisplayStateRuntime({",
+                "emptyReasonText",
             ],
             [
                 "当前视图暂无数据",
                 "建议切换到我的工作或风险驾驶舱继续处理。",
+                "可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。",
+            ],
+        ),
+        (
+            ACTION_SURFACE_CONTRACT,
+            [
+                "options.pageText('empty_title_default'",
+                "options.pageText('empty_hint_default'",
+            ],
+            [
+                "当前视图暂无数据",
+                "建议切换到我的工作或风险驾驶舱继续处理。",
+            ],
+        ),
+        (
+            ACTION_PAGE_DISPLAY_RUNTIME,
+            [
+                "options.t('empty_reason_default'",
+            ],
+            [
                 "可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。",
             ],
         ),

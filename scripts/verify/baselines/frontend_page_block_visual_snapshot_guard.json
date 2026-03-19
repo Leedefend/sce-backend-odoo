@@ -12,20 +12,22 @@
     "metric_row",
     "progress_summary",
     "record_summary",
+    "record_table",
     "todo",
     "todo_list"
   ],
   "block_files": {
-    "frontend/apps/web/src/components/page/blocks/BlockAccordionGroup.vue": "8de14d3805f54b9669ada6bf7d97b860abcb33ad8d9a03664036d31c988a401c",
+    "frontend/apps/web/src/components/page/blocks/BlockAccordionGroup.vue": "35db2fee6a3c82f3bdeea364a8d493a8c86b93b3b565aa66cd3badc54062552c",
     "frontend/apps/web/src/components/page/blocks/BlockActivityFeed.vue": "c5331ad224dea7cb3d05072e9bf3f00ddbdd7d8e864968eb81816487caca6653",
-    "frontend/apps/web/src/components/page/blocks/BlockAlertPanel.vue": "de0de489cec4e4d136ceb41da351069842d5ccf78db7915bb1be3a06b5486a2b",
-    "frontend/apps/web/src/components/page/blocks/BlockEntryGrid.vue": "cfc7c829ba39e991f60eeb5fa0b952490ff955426cba55d34a32d7a5a6d155f0",
-    "frontend/apps/web/src/components/page/blocks/BlockMetricRow.vue": "2ddcbb533f482c77e9b08d5498e69555280cd100a0cfc0e29572a0a27a703019",
-    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "f5623d4f493ce2ddbfbccb20e3e72898c8969ea3d9c398bb21f63823cd79f4eb",
-    "frontend/apps/web/src/components/page/blocks/BlockRecordSummary.vue": "7ff2034d59be6f926a2de327ecb5d4cab5a6d44ce0b49064141884e8a59c363e",
-    "frontend/apps/web/src/components/page/blocks/BlockTodoList.vue": "f7ee6e1112516964e57d94758fbb3d2440e3d22a2f3083acc3cf03431bddc303"
+    "frontend/apps/web/src/components/page/blocks/BlockAlertPanel.vue": "b2a1135b248c94022499c7d15cfbab352824598abc47fc030e1b31f80dfabd1f",
+    "frontend/apps/web/src/components/page/blocks/BlockEntryGrid.vue": "9d71aeafa01582251e8c3b522d009de5238f8554fa42aeef85ecef9f7443406a",
+    "frontend/apps/web/src/components/page/blocks/BlockMetricRow.vue": "ea8d9e7cac5e70cf597f1d30d1f11b0cc566b4e4134a1666488770ab64cbef8d",
+    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "3b668cde4544da7c94b7ba67b47096e1c028bd68fd0d7b6ca28677c67cbf8f65",
+    "frontend/apps/web/src/components/page/blocks/BlockRecordSummary.vue": "42abe374d85517b02a000b749e5499aac0bf68e197a32884f4422125db592373",
+    "frontend/apps/web/src/components/page/blocks/BlockRecordTable.vue": "4c956b1270d8556f91ed43f8c2b8a2102d6da0ae1b2efef2145eff05528e59d3",
+    "frontend/apps/web/src/components/page/blocks/BlockTodoList.vue": "4a8d9bbb00aa4a4999c68f1a49577624306168f16a2b4937ef4c24058460fb22"
   },
   "registry_file": {
-    "frontend/apps/web/src/app/pageBlockRegistry.ts": "0bd343686fd35e978c21f658efca1042ee67736b6997aac3c7a7881f21a6c3e1"
+    "frontend/apps/web/src/app/pageBlockRegistry.ts": "2f5633be12b180ee5e5b5d57f6a5a382458db9be591c353e26276f4bd42ff49a"
   }
 }

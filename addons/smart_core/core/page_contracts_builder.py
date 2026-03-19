@@ -990,6 +990,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                 ],
                 "texts": {
                     "loading_title": "正在加载场景...",
+                    "validation_surface_title": "场景校验",
                     "error_fallback": "场景加载失败",
                     "forbidden_title": "能力未开通",
                     "forbidden_message": "当前角色无法进入该场景。",
