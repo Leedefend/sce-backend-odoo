@@ -556,7 +556,11 @@ verify.portal.bridge.e2e: guard.prod.forbid check-compose-project check-compose-
 
 .PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container
 verify.portal.payment_request_approval.prepare.container: guard.prod.forbid check-compose-project check-compose-env
-	@CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=$(DB_NAME) $(MAKE) --no-print-directory mod.upgrade
+	@if [ "$(PAYMENT_APPROVAL_NEED_UPGRADE)" = "1" ]; then \
+	  CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=$(DB_NAME) $(MAKE) --no-print-directory mod.upgrade; \
+	else \
+	  echo "[verify.portal.payment_request_approval.prepare.container] skip mod.upgrade (PAYMENT_APPROVAL_NEED_UPGRADE=$(PAYMENT_APPROVAL_NEED_UPGRADE))"; \
+	fi
 	@$(MAKE) --no-print-directory restart
 	@sleep 5
 	@AUTO_FIX_EXTENSION_MODULES=1 $(MAKE) --no-print-directory policy.ensure.extension_modules DB_NAME=$(DB_NAME)
