@@ -39,7 +39,7 @@
   - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
   - Use as the default daily command when `pm/executive` role evidence is required.
 - `make verify.scene.delivery.readiness.role_company_matrix`
-  - One-click strict acceptance with role+company evidence: runs `verify.scene.delivery.readiness.role_matrix` then `verify.scene.base_contract_source_mix.company_matrix.guard`.
+  - One-click strict acceptance with role+company evidence: runs `verify.scene.delivery.readiness.role_matrix`, then `verify.delivery.journey.role_matrix.guard`, then company-matrix chain.
   - Use as the default command for customer-trial readiness evidence (role surface + company surface).
 - `make ci.scene.delivery.readiness`
   - Lightweight CI alias for `verify.scene.delivery.readiness.role_company_matrix`.

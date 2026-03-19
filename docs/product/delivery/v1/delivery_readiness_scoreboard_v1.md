@@ -41,16 +41,16 @@
 
 | Journey | Doc | Latest System-Bound Status | Gap |
 |---|---|---|---|
-| PM | `docs/product/delivery/v1/user_journey_pm.md` | Partially Covered (scene strict gate pass) | 缺独立旅程脚本与最近一次 trace 快照 |
-| Finance | `docs/product/delivery/v1/user_journey_finance.md` | Partially Covered (scene strict gate + payment smoke chain) | 缺统一 scoreboard 链接 |
-| Purchase | `docs/product/delivery/v1/user_journey_purchase.md` | Partially Covered (scene strict gate pass) | 缺采购动作 system-bound smoke |
-| Executive | `docs/product/delivery/v1/user_journey_exec.md` | Partially Covered (scene strict gate pass) | 缺只读角色稳定性快照 |
+| PM | `docs/product/delivery/v1/user_journey_pm.md` | Covered (system-bound role matrix pass) | 继续补充动作级细分 smoke（非阻断） |
+| Finance | `docs/product/delivery/v1/user_journey_finance.md` | Covered (system-bound role matrix pass) | 继续补充审批动作链明细（非阻断） |
+| Purchase | `docs/product/delivery/v1/user_journey_purchase.md` | Covered (system-bound role matrix pass) | purchase 当前映射到 pm 快照，后续可升级独立角色样本 |
+| Executive | `docs/product/delivery/v1/user_journey_exec.md` | Covered (system-bound role matrix pass) | 继续补只读角色长周期稳定性趋势 |
 
 ## Release Blocking Gaps (Current)
 
 1. Frontend gate historical blocker has been rechecked green in current workspace, but needs continuous seal-mode enforcement per release run.
 2. Scene contract field-level strict schema, provider-shape, scene-engine migration matrix, fallback burn-down, and multi-company strict target are all wired and passing in current run.
-3. Journey-level evidence is not yet fully script-bound for all 4 key roles.
+3. Journey-level evidence has been script-bound for 4 key roles via `delivery_journey_role_matrix_guard` and wired into strict readiness chain.
 4. Company matrix currently observes one effective company id (`observed_company_ids=[1]`); true multi-company evidence still pending.
 
 ## Repro Command Set (Default)
