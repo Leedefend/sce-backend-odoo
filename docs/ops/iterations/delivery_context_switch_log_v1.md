@@ -78,3 +78,12 @@ Each entry must include:
 - completed_step: `ci.scene.delivery.readiness 指向 role_company_matrix，并同步 README/help 描述`
 - active_commit: `2de0f27`
 - next_step: `Run make ci.scene.delivery.readiness to verify alias path`
+
+### 2026-03-19T16:40:00Z
+- blocker_key: `gap.scene_engine_partial_migration`
+- layer_target: `Scene Runtime Governance`
+- module: `scene_engine migration matrix guard`
+- reason: `把9模块入口场景主链迁移完成度从文档描述升级为可执行 blocker`
+- completed_step: `新增 scene_engine_migration_matrix_guard + baseline + Make 入口，并接入 verify.scene.runtime_boundary.gate`
+- active_commit: `7dfde99`
+- next_step: `Continue fallback burn-down and multi-company readiness evidence hardening`
