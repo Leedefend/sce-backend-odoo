@@ -159,3 +159,12 @@ Each entry must include:
 - completed_step: `primary 默认改为 admin/company1，secondary 保持 demo_role_pm/company2；strict preflight + strict role_company_matrix 均通过`
 - active_commit: `7ed5c1b`
 - next_step: `Lock this as baseline and continue next sprint blockers`
+
+### 2026-03-19T21:40:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `CI Delivery Readiness`
+- module: `failure brief multi-company highlight`
+- reason: `CI失败时需要快速判断是否是多公司证据回退，减少排障往返`
+- completed_step: `scene_delivery_failure_brief 增加 multi_company_highlight 输出并覆盖 snapshot/preflight/evidence 报告`
+- active_commit: `pending`
+- next_step: `Keep iterating on remaining delivery blockers`
