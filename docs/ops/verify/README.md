@@ -48,6 +48,8 @@
     - `BLOCKER_FAILURES / PRECHECK_FAILURES` grouped output
     - dedicated `multi_company_highlight` section (snapshot/preflight/evidence signals)
     - `multi_company_next_actions` recommended command sequence for fast recovery.
+  - Also emits machine-readable summary:
+    - `artifacts/backend/scene_delivery_failure_brief.json`
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
