@@ -222,3 +222,12 @@ Each entry must include:
 - completed_step: `更新 scoreboard snapshot、README target 说明、context log 历史 pending 修复并落审计报告`
 - active_commit: `ef980f2`
 - next_step: `Return to P0 frontend/scene blockers and keep governance truth guard in every ready run`
+
+### 2026-03-20T05:00:00Z
+- blocker_key: `gap.scene_contract_v1_strict_schema`
+- layer_target: `Scene Runtime Governance`
+- module: `strict readiness live-fallback stability`
+- reason: `受限环境下 strict 链路多点 live fetch 会中断迭代，需要显式降级开关与状态回放`
+- completed_step: `contract_v1 field schema 与 strict_gap_full_audit 增加 state fallback；verify.scene.delivery.readiness 改为 strict flags 默认1可覆盖，并补齐 fallback 变量透传`
+- active_commit: `fd1a600`
+- next_step: `Commit feat/docs changes and continue P0 closure with regular role_company_matrix evidence runs`

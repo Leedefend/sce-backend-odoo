@@ -34,7 +34,10 @@
   - Aggregates scene runtime boundary + legacy contract path checks.
 - `make verify.scene.delivery.readiness`
   - One-click strict acceptance for product delivery closure: first runs strict live `verify.scene.runtime_boundary.gate`, then executes final readiness threshold guard.
-  - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+  - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+  - Also enables `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1` for explicit degraded fallback in restricted/no-network environments.
+  - Also enables `SC_SCENE_READY_STRICT_GAP_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1` so strict-gap full-audit can consume last known state when live fetch is blocked.
+  - All strict flags are now defaulted via `:-1` and can be explicitly overridden per run (example: `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0 make verify.scene.delivery.readiness`).
 - `make verify.scene.delivery.readiness.role_matrix`
   - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
   - Use as the default daily command when `pm/executive` role evidence is required.
@@ -55,6 +58,17 @@
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
+- `make verify.scene.contract_v1.field_schema.guard`
+  - Verifies `scene_ready_contract_v1` field-level schema closure (`top-level keys`, `scene row keys`, `meta keys`, `target openness`).
+  - Live fetch remains default; optional fallback is controlled by:
+    - `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`
+    - `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_STATE_FILE` (default `artifacts/backend/scene_contract_v1_field_schema_state.json`)
+    - `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_SNAPSHOT_STATE_FILE` (default `artifacts/backend/scene_registry_asset_snapshot_state.json`)
+- `make verify.scene.ready.strict_gap.full_audit`
+  - Audits strict-gap closure from `scene_ready_contract_v1` (`full/strict unresolved`, `source gaps`, required strict scene keys).
+  - Live fetch remains default; optional state fallback is controlled by:
+    - `SC_SCENE_READY_STRICT_GAP_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`
+    - `SC_SCENE_READY_STRICT_GAP_FULL_AUDIT_STATE_FILE` (default `artifacts/backend/scene_contract_v1_field_schema_state.json`)
 - `make verify.product.delivery.governance_truth`
   - Verifies delivery governance truthfulness closure for seal-mode execution.
   - Checks `docs/product/capability_gap_backlog_v1.md` has actionable rows, mandatory hard-gap keys, and non-empty evidence.
