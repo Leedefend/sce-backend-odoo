@@ -1,9 +1,10 @@
 type Dict = Record<string, unknown>;
+type StatusInput = { error: string; recordsLength: number };
 
 type LoadRequestResult = {
   blocked: boolean;
   message: string;
-  statusInput: string;
+  statusInput: StatusInput;
   result?: Dict;
   contractColumns?: string[];
   requestedFields?: string[];
@@ -20,7 +21,7 @@ type ExecuteLoadRequestPhaseOptions = {
   applyLoadRequestBlockedState: (input: {
     blocked: boolean;
     message: string;
-    statusInput: string;
+    statusInput: StatusInput;
   }) => boolean;
 };
 
@@ -43,7 +44,7 @@ export function useActionViewLoadRequestPhaseRuntime() {
     if (options.applyLoadRequestBlockedState({
       blocked: loadRequestResult.blocked,
       message: String(loadRequestResult.message || ''),
-      statusInput: String(loadRequestResult.statusInput || ''),
+      statusInput: loadRequestResult.statusInput || { error: '', recordsLength: 0 },
     })) {
       return { blocked: true };
     }

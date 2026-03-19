@@ -1,4 +1,5 @@
 type Dict = Record<string, unknown>;
+type StatusInput = { error: string; recordsLength: number };
 
 type ExecuteLoadDataRequestOptions = {
   contract: unknown;
@@ -46,7 +47,7 @@ type ExecuteLoadDataRequestOptions = {
   loadAssigneeOptions: () => Promise<void>;
   resolveLoadRequestedFieldsApplyState: (input: Dict) => { requestedFields: string[] };
   resolveLoadMissingTreeColumnsErrorState: (input: Dict) => Dict;
-  resolveLoadMissingColumnsApplyState: (input: Dict) => { shouldBlock: boolean; message: string; statusInput: string };
+  resolveLoadMissingColumnsApplyState: (input: Dict) => { shouldBlock: boolean; message: string; statusInput: StatusInput };
   resolveLoadDomainStateApply: (input: Dict) => { baseDomain: unknown[]; activeDomain: unknown[] };
   resolveLoadContextStateApply: (input: Dict) => { requestContext: Dict; requestContextRaw: string };
   resolveLoadRequestPayloadState: (input: Dict) => Dict;
@@ -67,7 +68,7 @@ type ExecuteLoadDataRequestResult =
   | {
       blocked: true;
       message: string;
-      statusInput: string;
+      statusInput: StatusInput;
     }
   | {
       blocked: false;
@@ -199,4 +200,3 @@ export function useActionViewLoadRequestRuntime() {
     executeLoadDataRequest,
   };
 }
-

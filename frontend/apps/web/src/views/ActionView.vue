@@ -853,7 +853,10 @@ const lastLatencyMs = ref<number | null>(null);
 const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
 const lastTrackedPreset = ref('');
-const { error, clearError, setError } = useStatus();
+const statusApi = useStatus?.();
+const error = statusApi?.error ?? ref<any>(null);
+const clearError = statusApi?.clearError ?? (() => {});
+const setError = statusApi?.setError ?? (() => {});
 type ContractColumnSchema = { name?: string };
 type ContractViewBlock = {
   columns?: string[];
@@ -1509,6 +1512,39 @@ const {
 });
 
 const {
+  resolveContractFilterDomain,
+  resolveContractFilterDomainRaw,
+  resolveContractFilterContext,
+  resolveContractFilterContextRaw,
+  resolveSavedFilterDomain,
+  resolveSavedFilterDomainRaw,
+  resolveSavedFilterContext,
+  resolveSavedFilterContextRaw,
+  resolveEffectiveFilterDomain,
+  resolveEffectiveFilterDomainRaw,
+  resolveEffectiveFilterContext,
+  resolveEffectiveFilterContextRaw,
+  resolveGroupByContext,
+  resolveGroupByContextRaw,
+  resolveEffectiveRequestContext,
+  resolveEffectiveRequestContextRaw,
+  mergeContext,
+  mergeActiveFilterDomain,
+} = useActionViewRequestContextRuntime({
+  routeContextRaw: () => String(route.query.context_raw || '').trim(),
+  menuId,
+  hasActiveField,
+  filterValue,
+  contractFilterChips,
+  activeContractFilterKey,
+  contractSavedFilterChips,
+  activeSavedFilterKey,
+  activeGroupSummaryDomain,
+  contractGroupByChips,
+  activeGroupByField,
+});
+
+const {
   handleGroupedRowsPageChange,
   hydrateGroupedRowsByOffset,
   normalizeGroupedRouteState,
@@ -1553,39 +1589,6 @@ const {
   router,
   pageActionIntent,
   pageActionTarget,
-});
-
-const {
-  resolveContractFilterDomain,
-  resolveContractFilterDomainRaw,
-  resolveContractFilterContext,
-  resolveContractFilterContextRaw,
-  resolveSavedFilterDomain,
-  resolveSavedFilterDomainRaw,
-  resolveSavedFilterContext,
-  resolveSavedFilterContextRaw,
-  resolveEffectiveFilterDomain,
-  resolveEffectiveFilterDomainRaw,
-  resolveEffectiveFilterContext,
-  resolveEffectiveFilterContextRaw,
-  resolveGroupByContext,
-  resolveGroupByContextRaw,
-  resolveEffectiveRequestContext,
-  resolveEffectiveRequestContextRaw,
-  mergeContext,
-  mergeActiveFilterDomain,
-} = useActionViewRequestContextRuntime({
-  routeContextRaw: () => String(route.query.context_raw || '').trim(),
-  menuId,
-  hasActiveField,
-  filterValue,
-  contractFilterChips,
-  activeContractFilterKey,
-  contractSavedFilterChips,
-  activeSavedFilterKey,
-  activeGroupSummaryDomain,
-  contractGroupByChips,
-  activeGroupByField,
 });
 
 const {
