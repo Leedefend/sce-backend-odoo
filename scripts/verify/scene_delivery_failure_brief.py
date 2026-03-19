@@ -8,6 +8,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_JSON_PATH = ROOT / "artifacts" / "backend" / "scene_delivery_failure_brief.json"
 REPORT_CANDIDATES = [
     "artifacts/backend/scene_product_delivery_readiness_report.json",
     "artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json",
@@ -119,6 +120,23 @@ def main() -> int:
 
     print("[scene_delivery_failure_brief]")
     print(f"checked_reports={checked}")
+    output = {
+        "checked_reports": checked,
+        "multi_company_highlight": bool(multi_company_signals),
+        "multi_company_signals": multi_company_signals,
+        "multi_company_warnings": multi_company_warnings,
+        "failed_reports": [],
+        "blocker_failures": [],
+        "precheck_failures": [],
+        "status": "",
+        "multi_company_next_actions": [
+            "make ops.scene.company_secondary.seed APPLY=1 CREATE_COMPANY_IF_MISSING=1 CREATE_USER_IF_MISSING=1",
+            "make verify.scene.company_snapshot.collect",
+            "SC_COMPANY_ACCESS_PREFLIGHT_STRICT=1 make verify.scene.company_access.preflight.guard",
+            "SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make verify.scene.delivery.readiness.role_company_matrix",
+        ],
+        "generated_by": "scripts/verify/scene_delivery_failure_brief.py",
+    }
     if multi_company_signals:
         print("multi_company_highlight=1")
         for row in multi_company_signals:
@@ -137,11 +155,19 @@ def main() -> int:
     if not failed:
         print("failed_reports=0")
         print("status=NO_FAILURE_REPORT_DETECTED")
+        output["status"] = "NO_FAILURE_REPORT_DETECTED"
+        OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT_JSON_PATH.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"output_json={OUTPUT_JSON_PATH.relative_to(ROOT).as_posix()}")
         return 0
 
     print(f"failed_reports={len(failed)}")
     print(f"blocker_failures={len(blocker_failed)}")
     print(f"precheck_failures={len(precheck_failed)}")
+    output["failed_reports"] = failed
+    output["blocker_failures"] = blocker_failed
+    output["precheck_failures"] = precheck_failed
+    output["status"] = "FAILURE_REPORT_DETECTED"
     if blocker_failed:
         print("[BLOCKER_FAILURES]")
     for row in blocker_failed:
@@ -160,6 +186,9 @@ def main() -> int:
         summary = _as_dict(row.get("summary"))
         if summary:
             print(f"  summary={json.dumps(summary, ensure_ascii=False)}")
+    OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_JSON_PATH.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"output_json={OUTPUT_JSON_PATH.relative_to(ROOT).as_posix()}")
     return 0
 
 
