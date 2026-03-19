@@ -2032,6 +2032,7 @@ verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
 .PHONY: verify.scene.delivery.readiness.role_company_matrix
 verify.scene.delivery.readiness.role_company_matrix: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix
+	@$(MAKE) --no-print-directory verify.delivery.journey.role_matrix.guard
 	@$(MAKE) --no-print-directory verify.scene.company_snapshot.collect
 	@$(MAKE) --no-print-directory verify.scene.company_access.preflight.guard
 	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.company_matrix.guard

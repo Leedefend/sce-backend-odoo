@@ -15,6 +15,7 @@ REPORT_CANDIDATES = [
     "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json",
     "artifacts/backend/scene_base_contract_source_mix_report.json",
     "artifacts/backend/scene_company_snapshot_collect_report.json",
+    "artifacts/backend/delivery_journey_role_matrix_report.json",
     "artifacts/backend/scene_company_access_preflight_report.json",
     "artifacts/backend/scene_multi_company_evidence_report.json",
     "artifacts/backend/scene_sample_registry_diff_report.json",
@@ -30,6 +31,7 @@ MULTI_COMPANY_REPORTS = {
 
 PRECHECK_REPORTS = {
     "artifacts/backend/scene_company_snapshot_collect_report.json",
+    "artifacts/backend/delivery_journey_role_matrix_report.json",
     "artifacts/backend/scene_company_access_preflight_report.json",
     "artifacts/backend/scene_multi_company_evidence_report.json",
 }
