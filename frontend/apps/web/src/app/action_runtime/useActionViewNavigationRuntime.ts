@@ -1,8 +1,8 @@
 import type { Ref } from 'vue';
-import { pickContractNavQuery } from '../../navigationContext';
-import { readWorkspaceContext } from '../../workspaceContext';
-import { buildActionViewRowClickTarget } from '../../runtime/actionViewInteractionRuntime';
-import { resolveRowClickPushState } from '../../runtime/actionViewNavigationApplyRuntime';
+import { pickContractNavQuery } from '../navigationContext';
+import { readWorkspaceContext } from '../workspaceContext';
+import { buildActionViewRowClickTarget } from '../runtime/actionViewInteractionRuntime';
+import { resolveRowClickPushState } from '../runtime/actionViewNavigationApplyRuntime';
 
 type Dict = Record<string, unknown>;
 

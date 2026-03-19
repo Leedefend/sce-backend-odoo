@@ -22,10 +22,6 @@ function splitViewModes(raw: unknown): string[] {
 function resolveNestedContract(contract: unknown): Record<string, unknown> {
   if (!contract || typeof contract !== 'object' || Array.isArray(contract)) return {};
   const row = contract as Record<string, unknown>;
-  const nestedRaw = row.ui_contract_raw;
-  if (nestedRaw && typeof nestedRaw === 'object' && !Array.isArray(nestedRaw)) {
-    return nestedRaw as Record<string, unknown>;
-  }
   const nested = row.ui_contract;
   if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
     return nested as Record<string, unknown>;

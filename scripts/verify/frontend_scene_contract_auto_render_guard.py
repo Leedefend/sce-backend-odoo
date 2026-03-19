@@ -29,7 +29,7 @@ def main() -> int:
 
     scene_required_tokens = [
         "const pageContract = usePageContract('scene');",
-        "<ContractFormPage v-else-if=\"status === 'idle' && embeddedRecordActionId > 0\" />",
+        "<ContractFormPage v-if=\"status === 'idle' && embeddedRecordActionId > 0\" />",
         "<ActionView v-else-if=\"status === 'idle' && embeddedActionId > 0\" />",
         "const embeddedActionId = ref(0);",
         "const embeddedRecordActionId = ref(0);",
@@ -48,7 +48,7 @@ def main() -> int:
 
     router_required_tokens = [
         "{ path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } }",
-        "{ path: '/my-work', name: 'my-work', redirect: '/s/my_work.workspace', meta: { layout: 'shell' } }",
+        "{ path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } }",
         "{ path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } }",
     ]
 
@@ -105,4 +105,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

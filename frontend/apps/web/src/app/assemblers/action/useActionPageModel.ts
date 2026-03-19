@@ -1,6 +1,7 @@
 import { computed, unref, type MaybeRef } from 'vue';
 import {
   toActionButtonVM,
+  toAdvancedRowVM,
   toActionGroupVM,
   toChipVM,
   toProjectionMetricVM,
@@ -70,6 +71,7 @@ type UseActionPageModelOptions = {
     kanbanOverviewItems: MaybeRef<unknown[]>;
     advancedTitle: MaybeRef<string>;
     advancedHint: MaybeRef<string>;
+    advancedRows: MaybeRef<unknown[]>;
   };
   empty: {
     reasonText: MaybeRef<string>;
@@ -130,7 +132,9 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
       showFocus: true,
       showStrictAlert: Boolean(strictSummary),
       showGroupSummary: asList(unref(options.groupSummary.items)).length > 0,
-      showQuickActions: asList(unref(options.actions.primary)).length > 0,
+      showQuickActions:
+        asList(unref(options.actions.primary)).length > 0
+        || asList(unref(options.actions.overflowGroups)).length > 0,
       showHud: Boolean(unref(options.hud.visible)),
     });
 
@@ -149,6 +153,9 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
     const kanbanOverviewItems = asList(unref(options.content.kanbanOverviewItems))
       .map((item) => toProjectionMetricVM(item))
       .filter((item): item is NonNullable<ReturnType<typeof toProjectionMetricVM>> => Boolean(item));
+    const advancedRows = asList(unref(options.content.advancedRows))
+      .map((item) => toAdvancedRowVM(item))
+      .filter((item): item is NonNullable<ReturnType<typeof toAdvancedRowVM>> => Boolean(item));
 
     const routePresetLabel = asText(unref(options.routePreset.label));
     const routePresetSource = asText(unref(options.routePreset.source));
@@ -225,6 +232,7 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
           ? {
               title: asText(unref(options.content.advancedTitle)),
               hint: asText(unref(options.content.advancedHint)),
+              rows: advancedRows,
             }
           : undefined,
       },
