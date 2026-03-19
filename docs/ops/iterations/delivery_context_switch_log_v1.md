@@ -157,5 +157,5 @@ Each entry must include:
 - module: `company profile login split`
 - reason: `primary/secondary 若共用同一登录会导致样本偏移，需按公司分离采样身份`
 - completed_step: `primary 默认改为 admin/company1，secondary 保持 demo_role_pm/company2；strict preflight + strict role_company_matrix 均通过`
-- active_commit: `pending`
+- active_commit: `7ed5c1b`
 - next_step: `Lock this as baseline and continue next sprint blockers`
