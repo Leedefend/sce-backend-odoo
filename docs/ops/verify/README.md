@@ -56,6 +56,9 @@
 - `make verify.scene.no_action_scene.guard`
   - Enforces no-action regression policy from `scripts/verify/baselines/scene_no_action_scene_guard.json`.
   - Requires `scene_registry_asset_snapshot_state` to satisfy `min_action_total` for all sampled scenes and `max_no_action_scene_count=0`.
+- `make verify.scene.provider_shape.guard`
+  - Runs provider shape guard as standalone blocker (`scene_orchestration_provider_shape_guard`).
+  - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
