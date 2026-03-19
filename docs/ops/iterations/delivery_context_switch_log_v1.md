@@ -213,3 +213,12 @@ Each entry must include:
 - completed_step: `新增 verify.product.delivery.governance_truth，校验backlog/scoreboard/context-log并接入 verify.product.delivery.ready`
 - active_commit: `bca9935`
 - next_step: `Refresh scoreboard snapshot metadata and continue P0 blocker closure`
+
+### 2026-03-20T04:55:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Product/Ops Governance`
+- module: `scoreboard + context evidence stabilization`
+- reason: `把治理守卫执行结果固化到看板和迭代日志，降低下次上下文切换成本`
+- completed_step: `更新 scoreboard snapshot、README target 说明、context log 历史 pending 修复并落审计报告`
+- active_commit: `ef980f2`
+- next_step: `Return to P0 frontend/scene blockers and keep governance truth guard in every ready run`
