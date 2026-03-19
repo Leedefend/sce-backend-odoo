@@ -50,6 +50,8 @@
     - `multi_company_next_actions` recommended command sequence for fast recovery.
   - Also emits machine-readable summary:
     - `artifacts/backend/scene_delivery_failure_brief.json`
+  - Failure path also prints compact key-field summary via:
+    - `scripts/verify/scene_delivery_failure_brief_summary.py`
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
