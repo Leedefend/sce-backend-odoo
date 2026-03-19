@@ -87,3 +87,12 @@ Each entry must include:
 - completed_step: `新增 scene_engine_migration_matrix_guard + baseline + Make 入口，并接入 verify.scene.runtime_boundary.gate`
 - active_commit: `7dfde99`
 - next_step: `Continue fallback burn-down and multi-company readiness evidence hardening`
+
+### 2026-03-19T17:05:00Z
+- blocker_key: `gap.scene_engine_partial_migration`
+- layer_target: `Scene Runtime Governance`
+- module: `fallback burn-down + multi-company evidence guards`
+- reason: `把剩余风险从描述项升级为持续可审计守卫与状态趋势`
+- completed_step: `新增 source_fallback_burndown 与 multi_company_evidence 守卫并接入严格链路`
+- active_commit: `pending`
+- next_step: `Run role+company strict readiness and confirm warning/error posture`

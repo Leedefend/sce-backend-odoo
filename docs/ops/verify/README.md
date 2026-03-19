@@ -70,6 +70,25 @@
     - `artifacts/backend/scene_engine_migration_matrix_report.json`
     - `artifacts/backend/scene_engine_migration_matrix_report.md`
   - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.source_fallback_burndown.guard`
+  - Verifies `runtime_fallback/runtime_minimal` burn-down trend from `scene_base_contract_source_mix_report`.
+  - Baseline: `scripts/verify/baselines/scene_source_fallback_burndown_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_source_fallback_burndown_report.json`
+    - `artifacts/backend/scene_source_fallback_burndown_report.md`
+  - State:
+    - `artifacts/backend/scene_source_fallback_burndown_state.json`
+  - Wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.multi_company.evidence.guard`
+  - Verifies multi-company evidence accumulation from company-matrix report and persists historical observed company ids.
+  - Baseline: `scripts/verify/baselines/scene_multi_company_evidence_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_multi_company_evidence_report.json`
+    - `artifacts/backend/scene_multi_company_evidence_report.md`
+  - State:
+    - `artifacts/backend/scene_multi_company_evidence_state.json`
+  - Strict mode: `SC_MULTI_COMPANY_EVIDENCE_STRICT=1` enforces target company count as blocker.
+  - Wired into `verify.scene.delivery.readiness.role_company_matrix` chain.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
