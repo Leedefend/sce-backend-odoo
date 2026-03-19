@@ -1,8 +1,8 @@
 {
   "min_scene_count": 50,
-  "min_scene_type_count": 2,
-  "min_aggregate_base_search_rate": 0.8,
-  "min_aggregate_action_surface_rate": 0.8,
+  "min_scene_type_count": 4,
+  "min_aggregate_base_search_rate": 0.9,
+  "min_aggregate_action_surface_rate": 0.9,
   "max_base_search_rate_drop_per_run": 0.35,
   "max_action_surface_rate_drop_per_run": 0.35,
   "state_file": "artifacts/backend/scene_ready_consumption_trend_state.json"
