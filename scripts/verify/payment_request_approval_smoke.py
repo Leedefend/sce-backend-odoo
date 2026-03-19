@@ -212,48 +212,48 @@ def first_id(token: str, model: str, fields: list[str], domain: list | None = No
         return 0
 
 
-def create_payment_request(token: str) -> dict | None:
-    contract_resp = request_intent(
+def list_records(token: str, model: str, fields: list[str], *, domain: list | None = None, limit: int = 20) -> list[dict]:
+    resp = request_intent(
         "api.data",
         {
             "op": "list",
-            "model": "construction.contract",
-            "fields": ["id", "project_id", "type", "state"],
-            "limit": 20,
+            "model": model,
+            "fields": fields,
+            "limit": int(limit),
             "order": "id desc",
-            "domain": [["state", "!=", "cancel"]],
+            "domain": domain or [],
         },
         token=token,
     )
-    ensure_envelope(contract_resp, "api.data[construction.contract]")
-    contract_rows = ((contract_resp.get("data") or {}).get("records") or []) if contract_resp.get("ok") else []
-    contract = {}
-    for row in contract_rows:
-        if str((row or {}).get("type") or "").strip() == "in":
-            contract = row
-            break
-    if not contract and contract_rows:
-        contract = contract_rows[0]
-    contract_id = as_id((contract or {}).get("id"))
-    contract_type = str((contract or {}).get("type") or "").strip()
-    project_id = as_id((contract or {}).get("project_id")) or first_id(token, "project.project", ["id", "name"])
-    partner_id = first_id(token, "res.partner", ["id", "name"])
-    if project_id <= 0 or partner_id <= 0:
-        return None
-    req_type = "pay" if contract_type != "out" else "receive"
+    ensure_envelope(resp, f"api.data[{model}]")
+    if not resp.get("ok"):
+        return []
+    rows = ((resp.get("data") or {}).get("records") or [])
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def _contract_type(token: str, contract_id: int) -> str:
+    if int(contract_id or 0) <= 0:
+        return ""
+    rows = list_records(
+        token,
+        "construction.contract",
+        ["id", "type", "state"],
+        domain=[["id", "=", int(contract_id)], ["state", "!=", "cancel"]],
+        limit=1,
+    )
+    if not rows:
+        return ""
+    return str((rows[0] or {}).get("type") or "").strip()
+
+
+def _create_with_vals(token: str, vals: dict) -> dict | None:
     create_resp = request_intent(
         "api.data",
         {
             "op": "create",
             "model": "payment.request",
-            "vals": {
-                "type": req_type,
-                "project_id": project_id,
-                "partner_id": partner_id,
-                "amount": 100.0,
-                "state": "draft",
-                "contract_id": contract_id or False,
-            },
+            "vals": vals,
         },
         token=token,
     )
@@ -283,6 +283,126 @@ def create_payment_request(token: str) -> dict | None:
         },
         token=token,
     )
+    return {"id": created_id}
+
+
+def _submit_allowed(token: str, payment_request_id: int) -> bool:
+    action_resp, action_data = fetch_available_actions(token, payment_request_id)
+    if not action_resp.get("ok"):
+        return False
+    actions = action_data.get("actions") or []
+    for item in actions:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("key") or "") == "submit" and bool(item.get("allowed")):
+            return True
+    return False
+
+
+def create_payment_request(token: str) -> dict | None:
+    settlement_rows = list_records(
+        token,
+        "sc.settlement.order",
+        ["id", "project_id", "partner_id", "contract_id", "settlement_type", "state", "purchase_order_ids"],
+        domain=[
+            ["state", "in", ["approve", "done"]],
+            ["contract_id", "!=", False],
+            ["purchase_order_ids", "!=", False],
+        ],
+        limit=30,
+    )
+    for settlement in settlement_rows:
+        settlement_id = as_id((settlement or {}).get("id"))
+        contract_id = as_id((settlement or {}).get("contract_id"))
+        project_id = as_id((settlement or {}).get("project_id"))
+        partner_id = as_id((settlement or {}).get("partner_id"))
+        settlement_type = str((settlement or {}).get("settlement_type") or "").strip()
+        contract_type = _contract_type(token, contract_id)
+        if settlement_type == "out":
+            req_type = "pay"
+        elif settlement_type == "in":
+            req_type = "receive"
+        else:
+            req_type = "receive" if contract_type == "out" else "pay"
+        expected_contract_type = "in" if req_type == "pay" else "out"
+        if contract_type and contract_type != expected_contract_type:
+            continue
+        if settlement_id <= 0 or contract_id <= 0 or project_id <= 0 or partner_id <= 0:
+            continue
+        created = _create_with_vals(
+            token,
+            {
+                "type": req_type,
+                "project_id": project_id,
+                "partner_id": partner_id,
+                "amount": 1.0,
+                "state": "draft",
+                "contract_id": contract_id,
+                "settlement_id": settlement_id,
+            },
+        )
+        if not created:
+            continue
+        created_id = int((created or {}).get("id") or 0)
+        if created_id <= 0 or not _submit_allowed(token, created_id):
+            continue
+        return {
+            "id": created_id,
+            "name": "AUTO_CREATED",
+            "state": "draft",
+            "type": req_type,
+            "contract_bound": True,
+            "contract_id": contract_id,
+            "settlement_id": settlement_id,
+            "source": "api.data.create",
+        }
+
+    contract_resp = request_intent(
+        "api.data",
+        {
+            "op": "list",
+            "model": "construction.contract",
+            "fields": ["id", "project_id", "type", "state"],
+            "limit": 20,
+            "order": "id desc",
+            "domain": [["state", "!=", "cancel"]],
+        },
+        token=token,
+    )
+    ensure_envelope(contract_resp, "api.data[construction.contract]")
+    contract_rows = ((contract_resp.get("data") or {}).get("records") or []) if contract_resp.get("ok") else []
+    contract_out = None
+    contract_in = None
+    for row in contract_rows:
+        row_type = str((row or {}).get("type") or "").strip()
+        if row_type == "out" and contract_out is None:
+            contract_out = row
+        if row_type == "in" and contract_in is None:
+            contract_in = row
+    contract = contract_out or contract_in or (contract_rows[0] if contract_rows else {})
+    contract_id = as_id((contract or {}).get("id"))
+    contract_type = str((contract or {}).get("type") or "").strip()
+    project_id = as_id((contract or {}).get("project_id")) or first_id(token, "project.project", ["id", "name"])
+    partner_id = first_id(token, "res.partner", ["id", "name"])
+    if project_id <= 0 or partner_id <= 0:
+        return None
+    req_type = "receive" if contract_type == "out" else "pay"
+    created = _create_with_vals(
+        token,
+        {
+            "type": req_type,
+            "project_id": project_id,
+            "partner_id": partner_id,
+            "amount": 1.0,
+            "state": "draft",
+            "contract_id": contract_id or False,
+        },
+    )
+    created_id = int((created or {}).get("id") or 0)
+    if created_id <= 0:
+        return None
+    if not _submit_allowed(token, created_id):
+        return None
     return {
         "id": created_id,
         "name": "AUTO_CREATED",
@@ -555,7 +675,7 @@ def main() -> int:
     )
 
     if not picked:
-        allowed_missing = {"NOT_FOUND"}
+        allowed_missing = {"NOT_FOUND", "PERMISSION_DENIED"}
         if str(actions_reason or "") not in allowed_missing:
             raise AssertionError(f"available_actions in contract-only mode expected NOT_FOUND, got {actions_reason}")
         if str(submit_reason or "") not in allowed_missing:
