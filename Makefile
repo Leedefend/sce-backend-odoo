@@ -2083,10 +2083,10 @@ ops.scene.company_secondary.seed: guard.prod.forbid check-compose-project check-
 	ADMIN_LOGIN=$${ADMIN_LOGIN:-admin} \
 	ADMIN_PASSWD=$${ADMIN_PASSWD:-admin} \
 	TARGET_LOGIN=$${TARGET_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
-	TARGET_USER_NAME=$${TARGET_USER_NAME:-Demo PM Company2} \
+	TARGET_USER_NAME='$${TARGET_USER_NAME:-Demo PM Company2}' \
 	TARGET_USER_PASSWORD=$${TARGET_USER_PASSWORD:-demo} \
 	TARGET_COMPANY_ID=$${TARGET_COMPANY_ID:-2} \
-	TARGET_COMPANY_NAME=$${TARGET_COMPANY_NAME:-Demo Secondary Company} \
+	TARGET_COMPANY_NAME='$${TARGET_COMPANY_NAME:-Demo Secondary Company}' \
 	CREATE_COMPANY_IF_MISSING=$${CREATE_COMPANY_IF_MISSING:-1} \
 	CREATE_USER_IF_MISSING=$${CREATE_USER_IF_MISSING:-0} \
 	SET_PRIMARY_COMPANY=$${SET_PRIMARY_COMPANY:-0} \
@@ -2237,8 +2237,8 @@ verify.scene.registry_asset_snapshot.company_primary: guard.prod.forbid
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json \
-	E2E_LOGIN=$${COMPANY_PRIMARY_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
-	E2E_PASSWORD=$${COMPANY_PRIMARY_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
+	E2E_LOGIN=$${COMPANY_PRIMARY_LOGIN:-admin} \
+	E2E_PASSWORD=$${COMPANY_PRIMARY_PASSWORD:-$${ADMIN_PASSWD:-admin}} \
 	E2E_COMPANY_ID=$${COMPANY_PRIMARY_ID:-1} \
 	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
 
@@ -2249,8 +2249,8 @@ verify.scene.registry_asset_snapshot.company_secondary: guard.prod.forbid
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json \
-	E2E_LOGIN=$${COMPANY_SECONDARY_LOGIN:-admin} \
-	E2E_PASSWORD=$${COMPANY_SECONDARY_PASSWORD:-$${ADMIN_PASSWD:-admin}} \
+	E2E_LOGIN=$${COMPANY_SECONDARY_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	E2E_PASSWORD=$${COMPANY_SECONDARY_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
 	E2E_COMPANY_ID=$${COMPANY_SECONDARY_ID:-2} \
 	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
 
