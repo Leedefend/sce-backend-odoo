@@ -84,3 +84,30 @@ Existing fields remain unchanged:
 
 - Sidebar menu scene coverage evidence (required for release review):
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
+
+## Compatibility Field Sunset Plan
+
+For `payment_request_approval_smoke.py` summary payload, use this transition policy:
+
+- Preferred key: `live_no_executable_actions`
+- Compatibility key: `live_no_allowed_actions` (deprecated)
+- Deprecation marker: `deprecated_fields=["live_no_allowed_actions"]`
+
+Execution window (starting this sprint):
+
+1. **Iteration N (current)**
+   - Output both keys.
+   - All downstream parsers must switch to new-first fallback-old logic:
+   - `bool(summary.get("live_no_executable_actions", summary.get("live_no_allowed_actions", False)))`
+2. **Iteration N+1**
+   - Keep both keys.
+   - Confirm no consumer still depends on old-only key.
+3. **Iteration N+2**
+   - Remove `live_no_allowed_actions` from output.
+   - Remove `deprecated_fields` entry for this key.
+
+Removal gate (all must pass):
+
+- Approval smoke pipeline (`verify.portal.payment_request_approval_smoke.container`) stays green.
+- Handoff smoke pipeline (`verify.portal.payment_request_approval_handoff_smoke.container`) stays green.
+- Verify docs/readme and release evidence no longer reference old-only semantics.
