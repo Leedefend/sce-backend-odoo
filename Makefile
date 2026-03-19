@@ -2075,6 +2075,25 @@ ops.scene.company_secondary.access: guard.prod.forbid check-compose-project chec
 	python3 /mnt/scripts/ops/ensure_company_secondary_access.py \
 	"
 
+.PHONY: ops.scene.company_secondary.seed
+ops.scene.company_secondary.seed: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc " \
+	E2E_BASE_URL=http://localhost:8069 \
+	DB_NAME=$(DB_NAME) \
+	ADMIN_LOGIN=$${ADMIN_LOGIN:-admin} \
+	ADMIN_PASSWD=$${ADMIN_PASSWD:-admin} \
+	TARGET_LOGIN=$${TARGET_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	TARGET_USER_NAME=$${TARGET_USER_NAME:-Demo PM Company2} \
+	TARGET_USER_PASSWORD=$${TARGET_USER_PASSWORD:-demo} \
+	TARGET_COMPANY_ID=$${TARGET_COMPANY_ID:-2} \
+	TARGET_COMPANY_NAME=$${TARGET_COMPANY_NAME:-Demo Secondary Company} \
+	CREATE_COMPANY_IF_MISSING=$${CREATE_COMPANY_IF_MISSING:-1} \
+	CREATE_USER_IF_MISSING=$${CREATE_USER_IF_MISSING:-0} \
+	SET_PRIMARY_COMPANY=$${SET_PRIMARY_COMPANY:-0} \
+	APPLY=$${APPLY:-0} \
+	python3 /mnt/scripts/ops/seed_company_secondary_access.py \
+	"
+
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_input_boundary_guard.py
