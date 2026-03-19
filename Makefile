@@ -554,7 +554,7 @@ audit.scene.config: guard.prod.forbid check-compose-project check-compose-env
 verify.portal.bridge.e2e: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/portal_bridge_e2e_smoke.js"
 
-.PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container
+.PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container verify.portal.payment_request_approval_field_consumer_audit
 verify.portal.payment_request_approval.prepare.container: guard.prod.forbid check-compose-project check-compose-env
 	@if [ "$(PAYMENT_APPROVAL_NEED_UPGRADE)" = "1" ]; then \
 	  CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=$(DB_NAME) $(MAKE) --no-print-directory mod.upgrade; \
@@ -584,6 +584,10 @@ verify.portal.payment_request_approval_all_smoke.container: guard.prod.forbid ch
 	@$(MAKE) --no-print-directory verify.portal.payment_request_approval.prepare.container DB_NAME=$(DB_NAME)
 	@PAYMENT_APPROVAL_SKIP_PREPARE=1 $(MAKE) --no-print-directory verify.portal.payment_request_approval_smoke.container DB_NAME=$(DB_NAME)
 	@PAYMENT_APPROVAL_SKIP_PREPARE=1 $(MAKE) --no-print-directory verify.portal.payment_request_approval_handoff_smoke.container DB_NAME=$(DB_NAME)
+
+.PHONY: verify.portal.payment_request_approval_field_consumer_audit
+verify.portal.payment_request_approval_field_consumer_audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/payment_request_approval_field_consumer_audit.py
 verify.portal.v0_5.host: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) ARTIFACTS_DIR=$(ARTIFACTS_DIR) \
 		node scripts/verify/fe_mvp_list_smoke.js

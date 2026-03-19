@@ -452,6 +452,11 @@
 - One-command sequential aggregate (single upgrade/restart + both smokes):
   - `make verify.portal.payment_request_approval_all_smoke.container`
   - Use this target in CI/local when running both approval smokes to avoid concurrent `mod.upgrade` conflicts on the same DB.
+- Deprecated-field consumer audit (N+1 migration prep):
+  - `make verify.portal.payment_request_approval_field_consumer_audit`
+  - Reports:
+    - `artifacts/backend/payment_request_approval_field_consumer_audit.json`
+    - `artifacts/backend/payment_request_approval_field_consumer_audit.md`
 - Payment form delivery UX notes (frontend):
   - Blocked actions can run `suggested_action` directly from form hint area.
   - Action feedback shows trace/request evidence and supports one-click copy.
