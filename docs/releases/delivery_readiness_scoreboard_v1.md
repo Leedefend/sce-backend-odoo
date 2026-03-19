@@ -23,6 +23,15 @@
 - `pnpm -C frontend typecheck:strict`：通过
 - `pnpm -C frontend build`：通过
 
+### 2.2 审批 smoke N+2 迁移状态
+
+- `live_no_allowed_actions`：已退场（N+2）
+- `live_no_executable_actions`：唯一保留口径
+- 审批聚合链（严格审计）：
+  - `PAYMENT_APPROVAL_NEED_UPGRADE=0 PAYMENT_APPROVAL_FIELD_AUDIT_STRICT=1 make verify.portal.payment_request_approval_all_smoke.container` 通过
+- 字段消费巡检：
+  - `make verify.portal.payment_request_approval_field_consumer_audit` 通过（`unexpected_deprecated_refs=0`）
+
 ---
 
 ## 3. 九模块就绪矩阵（交付口径）
@@ -75,4 +84,3 @@
 
 1. 建立可追溯的“最近一次通过环境”记录（DB/seed/bundle/commit）
 2. 把证据板接入发布检查清单
-
