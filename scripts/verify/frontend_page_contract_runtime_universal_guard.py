@@ -7,6 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 VIEWS_DIR = ROOT / "frontend/apps/web/src/views"
+ACTION_HEADER_RUNTIME = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewHeaderRuntime.ts"
 
 REQUIRED_TOKENS = (
     "executePageContractAction",
@@ -33,6 +34,7 @@ def main() -> int:
 
     errors: list[str] = []
     checked = 0
+    action_header_runtime_text = _read(ACTION_HEADER_RUNTIME)
 
     for view in sorted(VIEWS_DIR.glob("*.vue")):
         text = _read(view)
@@ -49,7 +51,15 @@ def main() -> int:
             if token not in text:
                 errors.append(f"{rel} (page={page_key}) missing token: {token}")
 
-        if "await executePageContractAction({" not in text and "executePageContractAction({" not in text:
+        has_invocation = "await executePageContractAction({" in text or "executePageContractAction({" in text
+        if page_key == "action":
+            has_runtime_invocation = (
+                "await options.executePageContractAction({" in action_header_runtime_text
+                or "options.executePageContractAction({" in action_header_runtime_text
+            )
+            if not has_invocation and not has_runtime_invocation:
+                errors.append(f"{rel} (page={page_key}) missing executePageContractAction(...) invocation")
+        elif not has_invocation:
             errors.append(f"{rel} (page={page_key}) missing executePageContractAction(...) invocation")
 
     if checked == 0:

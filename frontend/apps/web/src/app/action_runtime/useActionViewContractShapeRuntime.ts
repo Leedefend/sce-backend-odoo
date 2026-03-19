@@ -169,7 +169,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function resolveModelFromContract(contract: unknown) {
     const typed = (contract || {}) as Dict;
-    const nested = ((typed.ui_contract_raw || typed.ui_contract || {}) as Dict);
+    const nested = ((typed.ui_contract || {}) as Dict);
     const direct = typed.model;
     if (typeof direct === 'string' && direct.trim()) {
       return direct.trim();

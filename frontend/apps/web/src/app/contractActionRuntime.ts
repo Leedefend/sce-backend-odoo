@@ -12,11 +12,7 @@ function pickNestedContract(contract: ActionContract | null): ActionContract | n
   if (!contract || typeof contract !== 'object') return null;
   const raw = contract as ActionContract & {
     ui_contract?: ActionContract;
-    ui_contract_raw?: ActionContract;
   };
-  if (raw.ui_contract_raw && typeof raw.ui_contract_raw === 'object') {
-    return raw.ui_contract_raw;
-  }
   if (raw.ui_contract && typeof raw.ui_contract === 'object') {
     return raw.ui_contract;
   }

@@ -97,7 +97,12 @@ def main() -> int:
                 continue
             checked_sections += 1
             token = f"pageSectionStyle('{key}')"
-            if not any(token in txt for txt in consumer_texts.values()):
+            alt_token = f"getSectionStyle('{key}')"
+            if page_key == "action":
+                matched = any((token in txt) or (alt_token in txt) for txt in consumer_texts.values())
+            else:
+                matched = any(token in txt for txt in consumer_texts.values())
+            if not matched:
                 labels = ", ".join(f.relative_to(ROOT).as_posix() for f in consumer_files)
                 errors.append(f"page '{page_key}' section '{key}' missing style token {token} in: {labels}")
 

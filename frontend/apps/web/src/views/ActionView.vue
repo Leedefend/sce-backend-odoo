@@ -25,14 +25,14 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('route_preset', { defaultEnabled: true, tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
+    <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
         <span v-if="vm.filters.routePreset?.source">（{{ t('route_preset_source_prefix', '来源：') }}{{ vm.filters.routePreset?.source }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ t('route_preset_clear', '清除推荐') }}</button>
     </section>
-    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
+    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: pageSectionEnabled('focus_strip', true), tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
       <div>
         <p class="focus-intent">{{ vm.focus.title }}</p>
         <p class="focus-summary">{{ vm.focus.summary }}</p>
@@ -48,7 +48,7 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
-    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -95,7 +95,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -142,7 +142,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('group_view', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
+    <section v-if="isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
       <p class="contract-label">{{ t('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -190,7 +190,7 @@
       </div>
     </section>
     <GroupSummaryBar
-      v-if="isSectionVisible('group_summary', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
+      v-if="isSectionVisible('group_summary', { defaultEnabled: pageSectionEnabled('group_summary', true), tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
       :style="getSectionStyle('group_summary')"
       :items="vm.groupSummary?.items || []"
       :group-by-label="activeGroupByLabel"
@@ -207,7 +207,7 @@
       :on-prev-window="handleGroupWindowPrev"
       :on-next-window="handleGroupWindowNext"
     />
-    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
+    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: pageSectionEnabled('quick_actions', true), tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
       <p class="contract-label">{{ t('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
@@ -341,7 +341,7 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
-    <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: true, tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
+    <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: pageSectionEnabled('advanced_view', true), tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
       <header class="advanced-view-head">
         <h3>{{ vm.content.advanced?.title }}</h3>
         <p>{{ vm.content.advanced?.hint }}</p>
@@ -361,7 +361,7 @@
         <p class="empty-next-hint">{{ vm.content.advanced?.hint }}</p>
       </section>
     </section>
-    <section v-if="isSectionVisible('empty_next', { defaultEnabled: true, tag: 'section', vmVisible: Boolean(vm.empty) })" class="empty-next" :style="getSectionStyle('empty_next')">
+    <section v-if="isSectionVisible('empty_next', { defaultEnabled: pageSectionEnabled('empty_next', true), tag: 'section', vmVisible: Boolean(vm.empty) })" class="empty-next" :style="getSectionStyle('empty_next')">
       <p class="empty-next-title">{{ vm.empty.title }}</p>
       <p class="empty-next-hint">{{ vm.empty.hint }}</p>
       <p class="empty-next-reason">{{ vm.empty.reason }}</p>
@@ -378,7 +378,7 @@
     </section>
 
     <DevContextPanel
-      :visible="isSectionVisible('dev_context', { defaultEnabled: true, tag: 'div', vmVisible: vm.sections.hud && Boolean(vm.hud?.visible) })"
+      :visible="isSectionVisible('dev_context', { defaultEnabled: pageSectionEnabled('dev_context', true), tag: 'div', vmVisible: vm.sections.hud && Boolean(vm.hud?.visible) })"
       :style="getSectionStyle('dev_context')"
       :title="vm.hud?.title || 'View Context'"
       :entries="vm.hud?.entries || []"
@@ -753,10 +753,18 @@ const {
 } = useActionViewSceneIdentityRuntime();
 const pageContract = usePageContract('action');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 
 let loadPageInvoker: () => Promise<void> = async () => {};
 function requestLoadPage(): Promise<void> {
   return loadPageInvoker();
+}
+
+let clearSelectionInvoker: () => void = () => {};
+function clearSelection(): void {
+  clearSelectionInvoker();
 }
 
 const { t } = useActionViewTextRuntime({ pageText });
@@ -767,9 +775,9 @@ const {
   isSectionVisible,
   getSectionStyle,
 } = useActionViewSectionRuntime({
-  pageSectionEnabled: pageContract.sectionEnabled,
-  pageSectionTagIs: pageContract.sectionTagIs,
-  pageSectionStyle: pageContract.sectionStyle,
+  pageSectionEnabled,
+  pageSectionTagIs,
+  pageSectionStyle,
 });
 const routeQueryMap = computed<Record<string, unknown>>(() => normalizeActionViewRouteQuery(route.query));
 
@@ -2138,7 +2146,7 @@ const {
 });
 
 const {
-  clearSelection,
+  clearSelection: selectionRuntimeClearSelection,
   handleAssigneeChange,
   handleToggleSelection,
   handleToggleSelectionAll,
@@ -2150,6 +2158,7 @@ const {
   records,
   resolveTargetModel: () => resolvedModelRef.value || model.value || '',
 });
+clearSelectionInvoker = selectionRuntimeClearSelection;
 
 
 
