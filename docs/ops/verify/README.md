@@ -46,6 +46,11 @@
   - Use as the default command for customer-trial readiness evidence (role surface + company surface).
 - `make ci.scene.delivery.readiness`
   - Lightweight CI alias for `verify.scene.delivery.readiness.role_company_matrix`.
+  - Supports profile switch via `CI_SCENE_DELIVERY_PROFILE`:
+    - `strict` (default): keep strict live requirements.
+    - `restricted`: keeps strict chain but disables three live-only blockers (`SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=0`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=0`).
+  - Example:
+    - `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
   - Failure brief now includes:
     - `BLOCKER_FAILURES / PRECHECK_FAILURES` grouped output
