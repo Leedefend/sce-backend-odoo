@@ -2032,6 +2032,7 @@ verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
 .PHONY: verify.scene.delivery.readiness.role_company_matrix
 verify.scene.delivery.readiness.role_company_matrix: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix
+	@$(MAKE) --no-print-directory verify.scene.company_snapshot.collect
 	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.company_matrix.guard
 	@$(MAKE) --no-print-directory verify.scene.multi_company.evidence.guard
 	@echo "[OK] verify.scene.delivery.readiness.role_company_matrix done"
@@ -2051,6 +2052,10 @@ verify.scene.source_fallback_burndown.guard: guard.prod.forbid
 .PHONY: verify.scene.multi_company.evidence.guard
 verify.scene.multi_company.evidence.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_multi_company_evidence_guard.py
+
+.PHONY: verify.scene.company_snapshot.collect
+verify.scene.company_snapshot.collect: guard.prod.forbid
+	@python3 scripts/verify/scene_company_snapshot_collect.py
 
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid

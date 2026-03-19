@@ -1,0 +1,21 @@
+{
+  "profiles": [
+    {
+      "key": "primary",
+      "company_id": 1,
+      "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json"
+    },
+    {
+      "key": "secondary",
+      "company_id": 2,
+      "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json"
+    }
+  ],
+  "min_profiles_success": 2,
+  "min_distinct_company_ids": 2,
+  "require_distinct_company_ids": false,
+  "require_live": true,
+  "allow_state_fallback_on_guard_failure": true,
+  "report_json": "artifacts/backend/scene_company_snapshot_collect_report.json",
+  "report_md": "artifacts/backend/scene_company_snapshot_collect_report.md"
+}
