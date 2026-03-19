@@ -99,6 +99,7 @@
     - `artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json`
     - `artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json`
   - Wired into `verify.scene.delivery.readiness.role_company_matrix` before company matrix guard.
+  - `company_secondary` runtime snapshot target defaults to `E2E_LOGIN=admin` and `E2E_COMPANY_ID=2` (override via `COMPANY_SECONDARY_LOGIN/COMPANY_SECONDARY_PASSWORD/COMPANY_SECONDARY_ID`).
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.

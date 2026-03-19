@@ -114,3 +114,12 @@ Each entry must include:
 - completed_step: `scene_registry_asset_snapshot_guard 增加重试与显式开关兜底，role/company快照目标接入`
 - active_commit: `96e3f61`
 - next_step: `Continue multi-company strict target closure (collect real company id=2 evidence)`
+
+### 2026-03-19T19:40:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `Scene Runtime Governance`
+- module: `company secondary default targeting`
+- reason: `避免 company_secondary 采样被空 company_id 覆盖，确保默认请求 company_id=2`
+- completed_step: `Makefile company_secondary 默认切到 admin + company_id=2，并保留role/company链路稳定通过`
+- active_commit: `pending`
+- next_step: `Prepare company-2 entitlement seed/user setup so requested=2 can resolve effective=2`
