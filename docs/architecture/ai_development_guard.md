@@ -27,6 +27,8 @@
 涉及前端页面、页面契约、视图渲染相关改动时，必须同时遵守：
 - `docs/architecture/native_view_reuse_frontend_spec_v1.md`
 - `docs/architecture/native_view_reuse_frontend_spec_v1.en.md`
+- `docs/architecture/nav_group_terms_v1.md`
+- `docs/architecture/nav_group_terms_v1.en.md`
 
 硬约束：
 - 页面基础结构优先复用 Odoo 原生视图

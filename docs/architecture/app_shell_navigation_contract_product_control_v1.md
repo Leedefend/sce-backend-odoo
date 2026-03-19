@@ -10,6 +10,10 @@
 - 行业导航策略（分组/命名/排序/角色入口）
 - 前端侧边栏渲染
 
+术语与命名标准：
+- 导航分组词表（中文）：`docs/architecture/nav_group_terms_v1.md`
+- Navigation group glossary (EN): `docs/architecture/nav_group_terms_v1.en.md`
+
 ---
 
 ## 2. 核心结论

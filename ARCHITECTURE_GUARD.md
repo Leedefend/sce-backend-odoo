@@ -15,6 +15,10 @@
 - 五层核心边界：`docs/architecture/five_layer_core_boundary_v1.md`
 - 场景编排层设计：`docs/architecture/scene_orchestration_layer_design_v1.md`
 - 场景契约规范：`docs/architecture/scene_contract_spec_v1.md`
+- 导航分组标准词表（中）：`docs/architecture/nav_group_terms_v1.md`
+- Navigation Group Terms (EN): `docs/architecture/nav_group_terms_v1.en.md`
+- 文档双语一致性检查清单（中）：`docs/architecture/doc_bilingual_consistency_checklist_v1.md`
+- Documentation Bilingual Consistency Checklist (EN): `docs/architecture/doc_bilingual_consistency_checklist_v1.en.md`
 - 执行与验证白名单：`docs/ops/codex_execution_allowlist.md`
 
 ## PR 最低要求
