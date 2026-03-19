@@ -15,6 +15,17 @@ def _text(value: Any) -> str:
     return str(value or "").strip()
 
 
+def _normalize_scene_key(value: Any) -> str:
+    key = _text(value).lower()
+    if not key:
+        return ""
+    if "__pkg" in key:
+        base = key.split("__pkg", 1)[0].strip()
+        if base:
+            return base
+    return key
+
+
 def _load_queue(config) -> list[str]:
     raw = _text(config.get_param(QUEUE_KEY) or "")
     if not raw:
@@ -26,10 +37,13 @@ def _load_queue(config) -> list[str]:
     if not isinstance(payload, list):
         return []
     out: list[str] = []
+    seen = set()
     for item in payload:
-        key = _text(item)
-        if key:
-            out.append(key)
+        key = _normalize_scene_key(item)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(key)
     return out
 
 
@@ -60,7 +74,7 @@ def enqueue_scene_keys(
     existing = set(current)
     added = 0
     for item in scene_keys or []:
-        key = _text(item)
+        key = _normalize_scene_key(item)
         if not key or key in existing:
             continue
         current.append(key)
@@ -121,5 +135,5 @@ def get_queue_metrics(env) -> dict:
         "last_operation": _text(meta.get("last_operation")),
         "consumed_at": _text(meta.get("consumed_at")),
         "popped_count": int(meta.get("popped_count") or 0),
-        "remaining_count": int(meta.get("remaining_count") or len(queue)),
+        "remaining_count": len(queue),
     }

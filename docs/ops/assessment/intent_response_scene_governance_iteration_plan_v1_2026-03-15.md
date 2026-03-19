@@ -360,6 +360,7 @@
 - 2026-03-16：已完成 T90 侧边栏导航收敛：`scene_nav_contract` 默认仅展示 `role_surface.scene_candidates`（无候选时才回退展示 remaining 分组），防止交付面扩容后“其他场景”污染主导航；`meta.remaining_hidden` 暴露收敛状态。
 - 2026-03-19：已补齐“多角色 + 多公司”一键严格验收证据：新增 `verify.scene.delivery.readiness.role_company_matrix` 聚合入口、`verify.scene.base_contract_source_mix.company_matrix.guard` 公司矩阵守卫、`company_primary/company_secondary` 双公司快照采集目标，并在 `scene_registry_asset_snapshot_guard` 增加 `company_id/allowed_company_ids` 实样本输出。
 - 2026-03-19：已完成 asset-first 门槛收紧（T91）：`scene_base_contract_source_mix_guard` 升级到 `min_scene_count=50/min_asset_ratio>=0.85/max_runtime_minimal<=0.05`，`scene_product_delivery_readiness_guard` 与 `scene_ready_consumption_trend_guard` 的 `min_scene_type_count` 升级到 `4`，并将消费率门槛提升到 `0.9`。
+- 2026-03-19：已新增 no-action 防回退守卫（T92）：新增 `verify.scene.no_action_scene.guard`（基于 `scene_registry_asset_snapshot_state` 强制 `min_action_total>=2` 且 `max_no_action_scene_count=0`），并纳入 `verify.scene.runtime_boundary.gate`。
 
 ## 下一步（按顺序）
 
