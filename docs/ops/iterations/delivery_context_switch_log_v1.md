@@ -132,3 +132,12 @@ Each entry must include:
 - completed_step: `新增 company_access_preflight 守卫并接入 role_company_matrix 链路`
 - active_commit: `1be2998`
 - next_step: `Provision company-2 entitlement/user and rerun preflight in strict mode`
+
+### 2026-03-19T20:30:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `Ops Runtime Enablement`
+- module: `company2 access repair helper`
+- reason: `提供可执行修复器，避免手工ORM操作导致交付现场不可复现`
+- completed_step: `新增 ops.scene.company_secondary.access（dry-run/apply）并文档化前置权限`
+- active_commit: `pending`
+- next_step: `Run helper in docker-enabled environment, then rerun strict preflight to reach reachable_count=2`

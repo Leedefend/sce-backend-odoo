@@ -108,6 +108,16 @@
     - `artifacts/backend/scene_company_access_preflight_report.md`
   - Strict mode: `SC_COMPANY_ACCESS_PREFLIGHT_STRICT=1` upgrades target shortfall to blocker.
   - Wired into `verify.scene.delivery.readiness.role_company_matrix` after company snapshot collection.
+
+## Ops Helpers
+- `make ops.scene.company_secondary.access`
+  - Repairs target user multi-company access for `company_id=2` (default target user: `ROLE_PM_LOGIN` / `demo_role_pm`).
+  - Runs in dry-run by default (`APPLY=0`) and prints before/after payload.
+  - Runs inside compose `odoo` container; requires docker socket permissions in current environment.
+  - Apply changes with:
+    - `make ops.scene.company_secondary.access APPLY=1`
+  - Override credentials/target:
+    - `ADMIN_LOGIN`, `ADMIN_PASSWD`, `TARGET_LOGIN`, `TARGET_COMPANY_ID`, `DB_NAME`, `E2E_BASE_URL`.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
