@@ -38,6 +38,9 @@
 - `make verify.scene.delivery.readiness.role_matrix`
   - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
   - Use as the default daily command when `pm/executive` role evidence is required.
+- `make verify.scene.delivery.readiness.role_company_matrix`
+  - One-click strict acceptance with role+company evidence: runs `verify.scene.delivery.readiness.role_matrix` then `verify.scene.base_contract_source_mix.company_matrix.guard`.
+  - Use as the default command for customer-trial readiness evidence (role surface + company surface).
 - `make ci.scene.delivery.readiness`
   - Lightweight CI alias for `verify.scene.delivery.readiness.role_matrix`.
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
@@ -50,6 +53,9 @@
   - Includes `scene_ready_consumption` summary shape derived from `scene_ready_contract_v1.meta.scene_type_consumption_metrics`.
 - `make verify.scene.asset_queue_trend.guard`
   - Verifies asset queue trend baseline (`queue_size` upper bound + per-run growth cap) against `scripts/verify/baselines/scene_asset_queue_trend_guard.json`.
+- `make verify.scene.no_action_scene.guard`
+  - Enforces no-action regression policy from `scripts/verify/baselines/scene_no_action_scene_guard.json`.
+  - Requires `scene_registry_asset_snapshot_state` to satisfy `min_action_total` for all sampled scenes and `max_no_action_scene_count=0`.
   - Persists latest trend snapshot to `artifacts/backend/scene_asset_queue_trend_state.json` for next-run delta checks.
 - `make verify.scene.base_contract_asset_coverage.guard`
   - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).
