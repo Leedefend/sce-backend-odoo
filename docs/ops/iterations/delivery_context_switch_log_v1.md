@@ -69,3 +69,12 @@ Each entry must include:
 - completed_step: `新增 verify.scene.contract_v1.field_schema.guard 并接入 verify.scene.runtime_boundary.gate`
 - active_commit: `424afc6`
 - next_step: `Run field-schema guard and full strict readiness role+company chain`
+
+### 2026-03-19T16:20:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `CI strict readiness alias`
+- reason: `避免CI默认口径弱化，统一到 role+company 严格验收`
+- completed_step: `ci.scene.delivery.readiness 指向 role_company_matrix，并同步 README/help 描述`
+- active_commit: `pending`
+- next_step: `Run make ci.scene.delivery.readiness to verify alias path`
