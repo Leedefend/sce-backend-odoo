@@ -14,10 +14,14 @@ class ThreeWayLinkIntegrityRule(BaseRule):
         env = self.env
         Payment = env["payment.request"].sudo()
         Settlement = env["sc.settlement.order"].sudo()
+        scope = self.scope or {}
+        scoped_model = str(scope.get("res_model") or "")
+        scoped_res_ids = scope.get("res_ids") or []
         issues = []
         checked = 0
         pr_states_need_settle = ("approve", "approved", "done")
         settle_states_need_po = ("approve", "done")
+        targeted_payment_scope = scoped_model == "payment.request" and bool(scoped_res_ids)
 
         def _suggest_settlements(rec):
             """给出同项目+同供应商的候选结算单（最近3条批准态优先）。"""
@@ -70,21 +74,21 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                     }
             )
 
-        for settle in Settlement.search(self._scope_domain("sc.settlement.order")):
-            checked += 1
-            # 仅对支出结算单执行三单匹配校验
-            if settle.settlement_type != "out" or settle.state not in settle_states_need_po:
-                continue
-            if settle.purchase_order_ids:
-                continue
-            issues.append(
-                {
-                    "model": "sc.settlement.order",
-                    "res_id": settle.id,
-                    "message": _("结算单未关联采购订单"),
-                    "refs": {"name": settle.name},
-                }
-            )
+        if not targeted_payment_scope:
+            for settle in Settlement.search(self._scope_domain("sc.settlement.order")):
+                checked += 1
+                if settle.settlement_type != "out" or settle.state not in settle_states_need_po:
+                    continue
+                if settle.purchase_order_ids:
+                    continue
+                issues.append(
+                    {
+                        "model": "sc.settlement.order",
+                        "res_id": settle.id,
+                        "message": _("结算单未关联采购订单"),
+                        "refs": {"name": settle.name},
+                    }
+                )
 
         return {
             "rule": self.code,
