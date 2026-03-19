@@ -1,5 +1,5 @@
-import { resolveDefaultSortFromContract } from '../../runtime/actionViewRequestRuntime';
-import { semanticStatus } from '../../../utils/semantic';
+import { resolveDefaultSortFromContract } from '../runtime/actionViewRequestRuntime';
+import { semanticStatus } from '../../utils/semantic';
 
 export function useActionViewProjectMetricRuntime() {
   function resolveProjectStateCell(row: Record<string, unknown>) {

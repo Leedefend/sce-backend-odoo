@@ -1,4 +1,4 @@
-import { readTotalFromListResult } from '../../runtime/actionViewRequestRuntime';
+import { readTotalFromListResult } from '../runtime/actionViewRequestRuntime';
 
 type Dict = Record<string, unknown>;
 

@@ -25,14 +25,14 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('route_preset', { defaultEnabled: true, tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
+    <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
         <span v-if="vm.filters.routePreset?.source">（{{ t('route_preset_source_prefix', '来源：') }}{{ vm.filters.routePreset?.source }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ t('route_preset_clear', '清除推荐') }}</button>
     </section>
-    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
+    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: pageSectionEnabled('focus_strip', true), tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
       <div>
         <p class="focus-intent">{{ vm.focus.title }}</p>
         <p class="focus-summary">{{ vm.focus.summary }}</p>
@@ -48,7 +48,7 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
-    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -95,7 +95,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -142,7 +142,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('group_view', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
+    <section v-if="isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
       <p class="contract-label">{{ t('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -190,7 +190,7 @@
       </div>
     </section>
     <GroupSummaryBar
-      v-if="isSectionVisible('group_summary', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
+      v-if="isSectionVisible('group_summary', { defaultEnabled: pageSectionEnabled('group_summary', true), tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
       :style="getSectionStyle('group_summary')"
       :items="vm.groupSummary?.items || []"
       :group-by-label="activeGroupByLabel"
@@ -207,7 +207,7 @@
       :on-prev-window="handleGroupWindowPrev"
       :on-next-window="handleGroupWindowNext"
     />
-    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: true, tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
+    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: pageSectionEnabled('quick_actions', true), tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
       <p class="contract-label">{{ t('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
@@ -341,27 +341,27 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
-    <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: true, tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
+    <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: pageSectionEnabled('advanced_view', true), tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
       <header class="advanced-view-head">
-        <h3>{{ vm.content.advanced?.title || advancedViewTitle }}</h3>
-        <p>{{ vm.content.advanced?.hint || advancedViewHint }}</p>
+        <h3>{{ vm.content.advanced?.title }}</h3>
+        <p>{{ vm.content.advanced?.hint }}</p>
       </header>
       <div class="advanced-contract">
         <p class="contract-label">{{ t('label.contract_summary', '契约摘要') }}</p>
         <p>view_type={{ contractViewType || '-' }} · mode={{ vm.page.viewMode || '-' }} · records={{ records.length }}</p>
       </div>
-      <div v-if="records.length" class="advanced-list">
-        <article v-for="(row, idx) in records.slice(0, 20)" :key="`adv-${idx}-${String(row.id || idx)}`" class="advanced-item">
-          <p class="advanced-item-title">{{ advancedRowTitle(row) }}</p>
-          <p class="advanced-item-meta">{{ advancedRowMeta(row) }}</p>
+      <div v-if="vm.content.advanced?.rows.length" class="advanced-list">
+        <article v-for="row in vm.content.advanced?.rows || []" :key="row.key" class="advanced-item">
+          <p class="advanced-item-title">{{ row.title }}</p>
+          <p class="advanced-item-meta">{{ row.meta }}</p>
         </article>
       </div>
       <section v-else class="empty-next">
         <p class="empty-next-title">{{ vm.empty?.title || vm.focus.title }}</p>
-        <p class="empty-next-hint">{{ vm.content.advanced?.hint || advancedViewHint }}</p>
+        <p class="empty-next-hint">{{ vm.content.advanced?.hint }}</p>
       </section>
     </section>
-    <section v-if="isSectionVisible('empty_next', { defaultEnabled: true, tag: 'section', vmVisible: Boolean(vm.empty) })" class="empty-next" :style="getSectionStyle('empty_next')">
+    <section v-if="isSectionVisible('empty_next', { defaultEnabled: pageSectionEnabled('empty_next', true), tag: 'section', vmVisible: Boolean(vm.empty) })" class="empty-next" :style="getSectionStyle('empty_next')">
       <p class="empty-next-title">{{ vm.empty.title }}</p>
       <p class="empty-next-hint">{{ vm.empty.hint }}</p>
       <p class="empty-next-reason">{{ vm.empty.reason }}</p>
@@ -378,7 +378,7 @@
     </section>
 
     <DevContextPanel
-      :visible="isSectionVisible('dev_context', { defaultEnabled: true, tag: 'div', vmVisible: vm.sections.hud && Boolean(vm.hud?.visible) })"
+      :visible="isSectionVisible('dev_context', { defaultEnabled: pageSectionEnabled('dev_context', true), tag: 'div', vmVisible: vm.sections.hud && Boolean(vm.hud?.visible) })"
       :style="getSectionStyle('dev_context')"
       :title="vm.hud?.title || 'View Context'"
       :entries="vm.hud?.entries || []"
@@ -418,64 +418,66 @@ import { findSceneReadyEntry, resolveListSceneReady } from '../app/resolvers/sce
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
-import { useActionViewActionRuntime } from '../app/assemblers/action/useActionViewActionRuntime';
-import { useActionViewBatchRuntime } from '../app/assemblers/action/useActionViewBatchRuntime';
-import { useActionViewSelectionRuntime } from '../app/assemblers/action/useActionViewSelectionRuntime';
-import { useActionViewTriggerRuntime } from '../app/assemblers/action/useActionViewTriggerRuntime';
-import { useActionViewGroupedRowsRuntime } from '../app/assemblers/action/useActionViewGroupedRowsRuntime';
-import { useActionViewRoutePresetRuntime } from '../app/assemblers/action/useActionViewRoutePresetRuntime';
-import { useActionViewFilterGroupRuntime } from '../app/assemblers/action/useActionViewFilterGroupRuntime';
-import { useActionViewHeaderRuntime } from '../app/assemblers/action/useActionViewHeaderRuntime';
-import { useActionViewNavigationRuntime } from '../app/assemblers/action/useActionViewNavigationRuntime';
-import { useActionViewRequestContextRuntime } from '../app/assemblers/action/useActionViewRequestContextRuntime';
-import { useActionViewScopedMetricsRuntime } from '../app/assemblers/action/useActionViewScopedMetricsRuntime';
-import { useActionViewContractShapeRuntime } from '../app/assemblers/action/useActionViewContractShapeRuntime';
-import { useActionViewActionMetaRuntime } from '../app/assemblers/action/useActionViewActionMetaRuntime';
-import { useActionViewSceneIdentityRuntime } from '../app/assemblers/action/useActionViewSceneIdentityRuntime';
-import { useActionViewBatchArtifactGlueRuntime } from '../app/assemblers/action/useActionViewBatchArtifactGlueRuntime';
-import { useActionViewAssigneeRuntime } from '../app/assemblers/action/useActionViewAssigneeRuntime';
-import { useActionViewModeRuntime } from '../app/assemblers/action/useActionViewModeRuntime';
-import { useActionViewProjectMetricRuntime } from '../app/assemblers/action/useActionViewProjectMetricRuntime';
-import { useActionViewContractActionButtonRuntime } from '../app/assemblers/action/useActionViewContractActionButtonRuntime';
-import { useActionViewActionGroupingRuntime } from '../app/assemblers/action/useActionViewActionGroupingRuntime';
-import { useActionViewDisplayComputedRuntime } from '../app/assemblers/action/useActionViewDisplayComputedRuntime';
-import { useActionViewFilterComputedRuntime } from '../app/assemblers/action/useActionViewFilterComputedRuntime';
-import { useActionViewLoadLifecycleRuntime } from '../app/assemblers/action/useActionViewLoadLifecycleRuntime';
-import { useActionViewLoadBeginInputRuntime } from '../app/assemblers/action/useActionViewLoadBeginInputRuntime';
-import { useActionViewLoadBeginPhaseRuntime } from '../app/assemblers/action/useActionViewLoadBeginPhaseRuntime';
-import { useActionViewLoadPreflightRuntime } from '../app/assemblers/action/useActionViewLoadPreflightRuntime';
-import { useActionViewLoadPreflightApplyRuntime } from '../app/assemblers/action/useActionViewLoadPreflightApplyRuntime';
-import { useActionViewLoadPreflightApplyBoundRuntime } from '../app/assemblers/action/useActionViewLoadPreflightApplyBoundRuntime';
-import { useActionViewLoadPreflightInputRuntime } from '../app/assemblers/action/useActionViewLoadPreflightInputRuntime';
-import { useActionViewLoadPreflightPhaseRuntime } from '../app/assemblers/action/useActionViewLoadPreflightPhaseRuntime';
-import { useActionViewLoadRequestRuntime } from '../app/assemblers/action/useActionViewLoadRequestRuntime';
-import { useActionViewLoadRequestGuardRuntime } from '../app/assemblers/action/useActionViewLoadRequestGuardRuntime';
-import { useActionViewLoadRequestBlockedApplyRuntime } from '../app/assemblers/action/useActionViewLoadRequestBlockedApplyRuntime';
-import { useActionViewLoadRequestDynamicInputRuntime } from '../app/assemblers/action/useActionViewLoadRequestDynamicInputRuntime';
-import { useActionViewLoadRequestInputRuntime } from '../app/assemblers/action/useActionViewLoadRequestInputRuntime';
-import { useActionViewLoadMainPhaseRuntime } from '../app/assemblers/action/useActionViewLoadMainPhaseRuntime';
-import { useActionViewLoadMainPhaseInputRuntime } from '../app/assemblers/action/useActionViewLoadMainPhaseInputRuntime';
-import { useActionViewLoadMainBoundRuntime } from '../app/assemblers/action/useActionViewLoadMainBoundRuntime';
-import { useActionViewLoadBoundRuntime } from '../app/assemblers/action/useActionViewLoadBoundRuntime';
-import { useActionViewSectionRuntime } from '../app/assemblers/action/useActionViewSectionRuntime';
-import { useActionViewTemplateStateRuntime } from '../app/assemblers/action/useActionViewTemplateStateRuntime';
-import { useActionViewTemplateInteractionRuntime } from '../app/assemblers/action/useActionViewTemplateInteractionRuntime';
-import { useActionViewTextRuntime } from '../app/assemblers/action/useActionViewTextRuntime';
-import { useActionViewTemplateUiStateRuntime } from '../app/assemblers/action/useActionViewTemplateUiStateRuntime';
-import { useActionViewFilterUiStateRuntime } from '../app/assemblers/action/useActionViewFilterUiStateRuntime';
-import { useActionViewPageDisplayStateRuntime } from '../app/assemblers/action/useActionViewPageDisplayStateRuntime';
-import { useActionViewHudEntriesRuntime } from '../app/assemblers/action/useActionViewHudEntriesRuntime';
-import { useActionViewHudEntriesInputRuntime } from '../app/assemblers/action/useActionViewHudEntriesInputRuntime';
-import { useActionViewSurfaceIntentRuntime } from '../app/assemblers/action/useActionViewSurfaceIntentRuntime';
-import { useActionViewAdvancedDisplayRuntime } from '../app/assemblers/action/useActionViewAdvancedDisplayRuntime';
-import { useActionViewContentDisplayRuntime } from '../app/assemblers/action/useActionViewContentDisplayRuntime';
-import { useActionViewSurfaceDisplayRuntime } from '../app/assemblers/action/useActionViewSurfaceDisplayRuntime';
-import { useActionViewLoadRequestPhaseRuntime } from '../app/assemblers/action/useActionViewLoadRequestPhaseRuntime';
-import { useActionViewLoadCatchPhaseRuntime } from '../app/assemblers/action/useActionViewLoadCatchPhaseRuntime';
-import { useActionViewLoadSuccessDynamicInputRuntime } from '../app/assemblers/action/useActionViewLoadSuccessDynamicInputRuntime';
-import { useActionViewLoadSuccessPhaseInputRuntime } from '../app/assemblers/action/useActionViewLoadSuccessPhaseInputRuntime';
-import { useActionViewLoadSuccessRuntime } from '../app/assemblers/action/useActionViewLoadSuccessRuntime';
-import { useActionViewLoadSuccessPhaseRuntime } from '../app/assemblers/action/useActionViewLoadSuccessPhaseRuntime';
+import { useActionViewActionRuntime } from '../app/action_runtime/useActionViewActionRuntime';
+import { useActionViewBatchRuntime } from '../app/action_runtime/useActionViewBatchRuntime';
+import { useActionViewSelectionRuntime } from '../app/action_runtime/useActionViewSelectionRuntime';
+import { useActionViewTriggerRuntime } from '../app/action_runtime/useActionViewTriggerRuntime';
+import { useActionViewGroupedRowsRuntime } from '../app/action_runtime/useActionViewGroupedRowsRuntime';
+import { useActionViewRoutePresetRuntime } from '../app/action_runtime/useActionViewRoutePresetRuntime';
+import { useActionViewFilterGroupRuntime } from '../app/action_runtime/useActionViewFilterGroupRuntime';
+import { useActionViewHeaderRuntime } from '../app/action_runtime/useActionViewHeaderRuntime';
+import { useActionViewNavigationRuntime } from '../app/action_runtime/useActionViewNavigationRuntime';
+import { useActionViewRequestContextRuntime } from '../app/action_runtime/useActionViewRequestContextRuntime';
+import { useActionViewScopedMetricsRuntime } from '../app/action_runtime/useActionViewScopedMetricsRuntime';
+import { useActionViewContractShapeRuntime } from '../app/action_runtime/useActionViewContractShapeRuntime';
+import { useActionViewActionMetaRuntime } from '../app/action_runtime/useActionViewActionMetaRuntime';
+import { useActionViewSceneIdentityRuntime } from '../app/action_runtime/useActionViewSceneIdentityRuntime';
+import { useActionViewBatchArtifactGlueRuntime } from '../app/action_runtime/useActionViewBatchArtifactGlueRuntime';
+import { useActionViewAssigneeRuntime } from '../app/action_runtime/useActionViewAssigneeRuntime';
+import { useActionViewModeRuntime } from '../app/action_runtime/useActionViewModeRuntime';
+import { useActionViewProjectMetricRuntime } from '../app/action_runtime/useActionViewProjectMetricRuntime';
+import { useActionViewContractActionButtonRuntime } from '../app/action_runtime/useActionViewContractActionButtonRuntime';
+import { useActionViewActionGroupingRuntime } from '../app/action_runtime/useActionViewActionGroupingRuntime';
+import { useActionViewDisplayComputedRuntime } from '../app/action_runtime/useActionViewDisplayComputedRuntime';
+import { useActionViewFilterComputedRuntime } from '../app/action_runtime/useActionViewFilterComputedRuntime';
+import { useActionViewLoadLifecycleRuntime } from '../app/action_runtime/useActionViewLoadLifecycleRuntime';
+import { useActionViewLoadBeginInputRuntime } from '../app/action_runtime/useActionViewLoadBeginInputRuntime';
+import { useActionViewLoadBeginPhaseRuntime } from '../app/action_runtime/useActionViewLoadBeginPhaseRuntime';
+import { useActionViewLoadPreflightRuntime } from '../app/action_runtime/useActionViewLoadPreflightRuntime';
+import { useActionViewLoadPreflightApplyRuntime } from '../app/action_runtime/useActionViewLoadPreflightApplyRuntime';
+import { useActionViewLoadPreflightApplyBoundRuntime } from '../app/action_runtime/useActionViewLoadPreflightApplyBoundRuntime';
+import { useActionViewLoadPreflightInputRuntime } from '../app/action_runtime/useActionViewLoadPreflightInputRuntime';
+import { useActionViewLoadPreflightPhaseRuntime } from '../app/action_runtime/useActionViewLoadPreflightPhaseRuntime';
+import { useActionViewLoadRequestRuntime } from '../app/action_runtime/useActionViewLoadRequestRuntime';
+import { useActionViewLoadRequestGuardRuntime } from '../app/action_runtime/useActionViewLoadRequestGuardRuntime';
+import { useActionViewLoadRequestBlockedApplyRuntime } from '../app/action_runtime/useActionViewLoadRequestBlockedApplyRuntime';
+import { useActionViewLoadRequestDynamicInputRuntime } from '../app/action_runtime/useActionViewLoadRequestDynamicInputRuntime';
+import { useActionViewLoadRequestInputRuntime } from '../app/action_runtime/useActionViewLoadRequestInputRuntime';
+import { useActionViewLoadMainPhaseRuntime } from '../app/action_runtime/useActionViewLoadMainPhaseRuntime';
+import { useActionViewLoadMainPhaseInputRuntime } from '../app/action_runtime/useActionViewLoadMainPhaseInputRuntime';
+import { useActionViewLoadMainBoundRuntime } from '../app/action_runtime/useActionViewLoadMainBoundRuntime';
+import { useActionViewLoadBoundRuntime } from '../app/action_runtime/useActionViewLoadBoundRuntime';
+import { useActionViewSectionRuntime } from '../app/action_runtime/useActionViewSectionRuntime';
+import { useActionViewTemplateStateRuntime } from '../app/action_runtime/useActionViewTemplateStateRuntime';
+import { useActionViewTemplateInteractionRuntime } from '../app/action_runtime/useActionViewTemplateInteractionRuntime';
+import { useActionViewTextRuntime } from '../app/action_runtime/useActionViewTextRuntime';
+import { useActionViewTemplateUiStateRuntime } from '../app/action_runtime/useActionViewTemplateUiStateRuntime';
+import { useActionViewFilterUiStateRuntime } from '../app/action_runtime/useActionViewFilterUiStateRuntime';
+import { useActionViewPageDisplayStateRuntime } from '../app/action_runtime/useActionViewPageDisplayStateRuntime';
+import { useActionViewHudEntriesRuntime } from '../app/action_runtime/useActionViewHudEntriesRuntime';
+import { useActionViewHudEntriesInputRuntime } from '../app/action_runtime/useActionViewHudEntriesInputRuntime';
+import { useActionViewSurfaceIntentRuntime } from '../app/action_runtime/useActionViewSurfaceIntentRuntime';
+import { useActionViewAdvancedDisplayRuntime } from '../app/action_runtime/useActionViewAdvancedDisplayRuntime';
+import { useActionViewContentDisplayRuntime } from '../app/action_runtime/useActionViewContentDisplayRuntime';
+import { useActionViewSurfaceDisplayRuntime } from '../app/action_runtime/useActionViewSurfaceDisplayRuntime';
+import { useActionViewLoadRequestPhaseRuntime } from '../app/action_runtime/useActionViewLoadRequestPhaseRuntime';
+import { useActionViewLoadCatchPhaseRuntime } from '../app/action_runtime/useActionViewLoadCatchPhaseRuntime';
+import { useActionViewLoadSuccessDynamicInputRuntime } from '../app/action_runtime/useActionViewLoadSuccessDynamicInputRuntime';
+import { useActionViewLoadSuccessPhaseInputRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseInputRuntime';
+import { useActionViewLoadSuccessRuntime } from '../app/action_runtime/useActionViewLoadSuccessRuntime';
+import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseRuntime';
+import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
+import { useActionViewActionPresentationRuntime } from '../app/action_runtime/useActionViewActionPresentationRuntime';
 import {
   normalizeGroupPageOffset,
   parseGroupPageOffsets,
@@ -483,7 +485,9 @@ import {
 } from '../app/runtime/actionViewGroupWindowRuntime';
 import {
   mergeSceneDomain,
+  readTotalFromListResult,
   resolveRequestedFields,
+  uniqueFields,
 } from '../app/runtime/actionViewRequestRuntime';
 import { resolvePreferredActionViewMode, resolveRouteSelectionState } from '../app/runtime/actionViewContractLoadRuntime';
 import {
@@ -749,6 +753,20 @@ const {
 } = useActionViewSceneIdentityRuntime();
 const pageContract = usePageContract('action');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
+
+let loadPageInvoker: () => Promise<void> = async () => {};
+function requestLoadPage(): Promise<void> {
+  return loadPageInvoker();
+}
+
+let clearSelectionInvoker: () => void = () => {};
+function clearSelection(): void {
+  clearSelectionInvoker();
+}
+
 const { t } = useActionViewTextRuntime({ pageText });
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
@@ -757,9 +775,9 @@ const {
   isSectionVisible,
   getSectionStyle,
 } = useActionViewSectionRuntime({
-  pageSectionEnabled: pageContract.sectionEnabled,
-  pageSectionTagIs: pageContract.sectionTagIs,
-  pageSectionStyle: pageContract.sectionStyle,
+  pageSectionEnabled,
+  pageSectionTagIs,
+  pageSectionStyle,
 });
 const routeQueryMap = computed<Record<string, unknown>>(() => normalizeActionViewRouteQuery(route.query));
 
@@ -1078,7 +1096,7 @@ const {
   viewMode,
   normalizeActionViewMode,
   resolveActionViewModeLabel,
-  load,
+  load: requestLoadPage,
 });
 const sceneContractV1 = computed<Record<string, unknown>>(() => {
   const raw = pageContract.contract.value?.scene_contract_v1;
@@ -1172,6 +1190,26 @@ const {
   route,
   isHudEnabled,
 });
+
+function resolveContractActionCountForHud() {
+  const sceneActions = sceneReadyListSurface.value.actions;
+  if (sceneActions.length) return sceneActions.length;
+
+  const contract = actionContract.value;
+  if (!contract) return 0;
+
+  const buttons = Array.isArray(contract.buttons) ? contract.buttons : [];
+  if (buttons.length) return buttons.length;
+
+  const toolbar = typeof contract.toolbar === 'object' && contract.toolbar
+    ? (contract.toolbar as Record<string, unknown>)
+    : {};
+  const header = Array.isArray(toolbar.header) ? toolbar.header.length : 0;
+  const sidebar = Array.isArray(toolbar.sidebar) ? toolbar.sidebar.length : 0;
+  const footer = Array.isArray(toolbar.footer) ? toolbar.footer.length : 0;
+  return header + sidebar + footer;
+}
+
 const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
   staticInput: () => ({
     actionId: actionId.value,
@@ -1192,7 +1230,7 @@ const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
     routeGroupWid: String(route.query.group_wid || '').trim(),
     routeGroupWdg: String(route.query.group_wdg || '').trim(),
     routeGroupWik: String(route.query.group_wik || '').trim(),
-    contractActionCount: contractActionButtons.value.length,
+    contractActionCount: resolveContractActionCountForHud(),
     contractLimit: contractLimit.value,
     contractReadAllowed: contractReadAllowed.value,
     contractWarningCount: contractWarningCount.value,
@@ -1246,72 +1284,51 @@ const {
   toPositiveInt,
   detectObjectMethodFromActionKey,
 });
-const contractActionButtons = computed<ContractActionButton[]>(() => {
-  const contract = actionContract.value;
-  const merged: Array<Record<string, unknown>> = [];
-  const sceneActions = sceneReadyListSurface.value.actions;
-  if (sceneActions.length) {
-    merged.push(...sceneActions);
-  } else {
-    if (!contract) return [];
-    const contractButtons = Array.isArray(contract.buttons) ? (contract.buttons as Array<Record<string, unknown>>) : [];
-    if (contractButtons.length) {
-      merged.push(...contractButtons);
-    } else {
-      if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
-      if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
-      if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
-    }
-  }
-  const dedup = new Set<string>();
-  return merged
-    .map((row) => toContractActionButton(row, dedup))
-    .filter((item): item is ContractActionButton => Boolean(item))
-    .slice(0, 8);
+const {
+  resolveContractActionPresentation,
+} = useActionViewActionGroupingRuntime();
+const {
+  contractActionCount,
+  contractPrimaryActions,
+  contractOverflowActionGroups,
+} = useActionViewActionPresentationRuntime({
+  actionContract,
+  sceneReadyListSurface,
+  strictContractMode,
+  toContractActionButton: (row, dedup) => toContractActionButton(row, dedup) as ContractActionButton | null,
+  resolveContractActionPresentation,
+  pageText,
 });
 
 const {
-  resolveContractActionGroups,
-  resolveContractPrimaryActions,
-  resolveContractOverflowActions,
-  resolveContractOverflowActionGroups,
-} = useActionViewActionGroupingRuntime();
+  contractColumnLabels,
+  extractColumnsFromContract,
+  convergeColumnsForSurface,
+  extractKanbanFields,
+  extractKanbanProfile,
+  extractAdvancedViewFields,
+  advancedRowTitle,
+  advancedRowMeta,
+  buildGroupKey,
+  resolveModelFromContract,
+} = useActionViewContractShapeRuntime({
+  pageText,
+  actionContract,
+  advancedFields,
+  activeGroupByField,
+});
 
-const actionPrimaryBudget = computed(() => {
-  const raw = Number(actionContract.value?.surface_policies?.actions_primary_max ?? 4);
-  if (!Number.isFinite(raw) || raw < 0) return 4;
-  return Math.floor(raw);
+const advancedRows = computed(() => {
+  return records.value.slice(0, 20).map((row, idx) => {
+    const rowId = String((row as Record<string, unknown>).id || idx).trim() || String(idx);
+    return {
+      key: `adv-${idx}-${rowId}`,
+      title: advancedRowTitle(row),
+      meta: advancedRowMeta(row),
+    };
+  });
 });
-const contractActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
-  return resolveContractActionGroups({
-    strictContractMode: strictContractMode.value,
-    actionSurface: (sceneReadyListSurface.value.actionSurface || {}) as Record<string, unknown>,
-    contractActionGroupsRaw: Array.isArray(actionContract.value?.action_groups)
-      ? (actionContract.value?.action_groups as ContractActionGroupRaw[])
-      : [],
-    allButtons: contractActionButtons.value,
-    pageText,
-  }) as Array<{ key: string; label: string; actions: ContractActionButton[] }>;
-});
-const contractPrimaryActions = computed<ContractActionButton[]>(() => {
-  return resolveContractPrimaryActions({
-    groups: contractActionGroups.value as Array<{ key: string; label: string; actions: ContractActionButton[] }>,
-    allButtons: contractActionButtons.value,
-    actionPrimaryBudget: actionPrimaryBudget.value,
-  }) as ContractActionButton[];
-});
-const contractOverflowActions = computed<ContractActionButton[]>(() => {
-  return resolveContractOverflowActions({
-    allButtons: contractActionButtons.value,
-    primaryActions: contractPrimaryActions.value,
-  }) as ContractActionButton[];
-});
-const contractOverflowActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
-  return resolveContractOverflowActionGroups({
-    groups: contractActionGroups.value as Array<{ key: string; label: string; actions: ContractActionButton[] }>,
-    primaryActions: contractPrimaryActions.value,
-  }) as Array<{ key: string; label: string; actions: ContractActionButton[] }>;
-});
+
 const { vm } = useActionPageModel({
   page: {
     title: pageTitle,
@@ -1358,6 +1375,7 @@ const { vm } = useActionPageModel({
     kanbanOverviewItems: ledgerOverviewItems,
     advancedTitle: advancedViewTitle,
     advancedHint: advancedViewHint,
+    advancedRows,
   },
   empty: {
     reasonText: emptyReasonText,
@@ -1366,31 +1384,6 @@ const { vm } = useActionPageModel({
     visible: showHud,
     entries: hudEntries,
   },
-});
-const contractColumnLabels = computed<Record<string, string>>(() => {
-  const rows = actionContract.value?.fields || {};
-  return Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
-    const label = String(descriptor?.string || '').trim();
-    if (label) acc[name] = label;
-    return acc;
-  }, {});
-});
-
-const {
-  extractColumnsFromContract,
-  convergeColumnsForSurface,
-  extractKanbanFields,
-  extractKanbanProfile,
-  extractAdvancedViewFields,
-  advancedRowTitle,
-  advancedRowMeta,
-  buildGroupKey,
-  resolveModelFromContract,
-} = useActionViewContractShapeRuntime({
-  pageText,
-  contractColumnLabels,
-  advancedFields,
-  activeGroupByField,
 });
 
 const {
@@ -1446,7 +1439,7 @@ const {
     router.replace(routeState.target).catch(() => {});
   },
   trackUsageEvent,
-  load,
+  load: requestLoadPage,
   resolveActionViewRouteSnapshot,
   resolveRoutePresetSearchTerm,
   resolveRoutePresetAppliedLabel,
@@ -1490,7 +1483,9 @@ const {
   syncRouteStateAndReload,
   syncRouteListState,
   applyRoutePatchAndReload,
-  applyGroupSharedState,
+  applyGroupSharedState: (state) => {
+    groupRuntimeCapsule.applySharedState(state);
+  },
 });
 
 const {
@@ -1549,7 +1544,7 @@ const {
   batchMessage,
   pageText,
   syncRouteListState,
-  load,
+  load: requestLoadPage,
   resolveReloadTriggerPlan,
   resolveFocusActionPushState,
   resolveWorkspaceContextQuery,
@@ -1661,13 +1656,13 @@ const { runContractAction } = useActionViewActionRuntime({
   batchBusy,
   batchMessage,
   pageText,
-  load,
+  load: requestLoadPage,
   sessionLoadAppInit: () => session.loadAppInit(),
   recordIntentTrace: (payload) => session.recordIntentTrace(payload),
   resolveActionContextRecordId: () => {
-    const fromRoute = parseNumericId(route.query.res_id);
+    const fromRoute = toPositiveInt(route.query.res_id);
     if (fromRoute) return fromRoute;
-    const fromContract = parseNumericId(actionContract.value?.head?.res_id);
+    const fromContract = toPositiveInt(actionContract.value?.head?.res_id);
     if (fromContract) return fromContract;
     return null;
   },
@@ -2129,12 +2124,12 @@ const {
   executeLoadMainBound,
 });
 
-async function load() {
-  const loadMainPhaseResult = await executeLoad();
-  if (loadMainPhaseResult.stopped) {
-    return;
-  }
-}
+const {
+  loadPage,
+} = useActionViewLoadFacadeRuntime({
+  executeLoad,
+});
+loadPageInvoker = loadPage;
 
 const {
   handleSearch,
@@ -2146,12 +2141,12 @@ const {
   filterValue,
   groupWindowOffset,
   syncRouteListState,
-  load,
+  load: requestLoadPage,
   clearSelection,
 });
 
 const {
-  clearSelection,
+  clearSelection: selectionRuntimeClearSelection,
   handleAssigneeChange,
   handleToggleSelection,
   handleToggleSelectionAll,
@@ -2163,6 +2158,7 @@ const {
   records,
   resolveTargetModel: () => resolvedModelRef.value || model.value || '',
 });
+clearSelectionInvoker = selectionRuntimeClearSelection;
 
 
 
@@ -2187,7 +2183,7 @@ const {
   lastBatchRequest,
   pageText,
   setError,
-  load,
+  load: requestLoadPage,
   clearSelection,
   resolveTargetModel: () => resolveBatchAssignTargetModel({
     resolvedModelRaw: resolvedModelRef.value,
@@ -2213,14 +2209,46 @@ const {
   resolveBatchActionResultMessage,
   resolveBatchStandardExecutionSeed,
   resolveBatchActionLastRequestState,
-  resolveBatchActionSuccessMessage,
+  resolveBatchActionSuccessMessage: resolveBatchActionResultMessage,
   resolveBatchFailureCatchState,
-  resolveBatchActionFailureFallback,
+  resolveBatchActionFailureFallback: (input) => resolveBatchActionErrorFallback({
+    targetModel: String(input.targetModel || ''),
+    action: (input.action as 'archive' | 'activate' | 'delete') || 'archive',
+    resolveActionLabel: (action) => resolveBatchActionErrorLabel({ action, text: pageText }),
+  }),
   resolveBatchAssignGuardDecision,
   resolveBatchAssignGuardMessage,
-  resolveBatchAssignSeedState,
-  resolveBatchAssignResultMessage: resolveBatchAssignSuccessMessage,
-  resolveBatchAssignSuccessMessage,
+  resolveBatchAssignSeedState: (input) => ({
+    ...resolveBatchAssignExecutionSeed({
+      selectedIds: input.selectedIds,
+      assigneeId: input.selectedAssigneeId,
+      buildIfMatchMap: input.buildIfMatchMap,
+      buildIdempotencyKey: input.buildIdempotencyKey,
+    }),
+    assigneeId: input.selectedAssigneeId,
+  }),
+  resolveBatchAssignResultMessage: (input) => resolveBatchActionFailureMessage({
+    action: 'assign',
+    assigneeName: resolveBatchAssignAssigneeLabel({
+      assigneeId: Number(selectedAssigneeId.value || 0),
+      assigneeOptions: assigneeOptions.value,
+    }),
+    idempotentReplay: Boolean(input.idempotentReplay),
+    succeeded: Number(input.succeeded || 0),
+    failed: Number(input.failed || 0),
+    text: pageText,
+  }),
+  resolveBatchAssignSuccessMessage: (input) => resolveBatchActionFailureMessage({
+    action: 'assign',
+    assigneeName: resolveBatchAssignAssigneeLabel({
+      assigneeId: Number(selectedAssigneeId.value || 0),
+      assigneeOptions: assigneeOptions.value,
+    }),
+    idempotentReplay: Boolean(input.idempotentReplay),
+    succeeded: Number(input.succeeded || 0),
+    failed: Number(input.failed || 0),
+    text: pageText,
+  }),
   resolveBatchAssignFailureMessage,
   resolveBatchAssignErrorFallback,
   resolveBatchErrorHintResolver,
@@ -2257,14 +2285,14 @@ const {
 
 onMounted(async () => {
   applyRoutePreset();
-  await load();
+  await requestLoadPage();
 });
 
 watch(
   () => route.fullPath,
   () => {
     if (applyRoutePreset()) {
-      void load();
+      void requestLoadPage();
     }
   },
 );

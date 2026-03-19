@@ -4,7 +4,7 @@ import {
   resolveSearchTriggerPlan,
   resolveSortTriggerPlan,
   resolveTriggerGroupWindowOffset,
-} from '../../runtime/actionViewLoadTriggerRuntime';
+} from '../runtime/actionViewLoadTriggerRuntime';
 
 type FilterValue = 'all' | 'active' | 'archived';
 

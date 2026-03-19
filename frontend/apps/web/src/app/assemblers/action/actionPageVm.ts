@@ -53,6 +53,11 @@ export type KanbanContentVM = {
 export type AdvancedContentVM = {
   title: string;
   hint: string;
+  rows: Array<{
+    key: string;
+    title: string;
+    meta: string;
+  }>;
 };
 
 export type ActionPageVM = {

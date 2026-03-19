@@ -1,11 +1,11 @@
-import type { Ref } from 'vue';
-import { uniqueFields } from '../../runtime/actionViewRequestRuntime';
+import { computed, type Ref } from 'vue';
+import { uniqueFields } from '../runtime/actionViewRequestRuntime';
 
 type Dict = Record<string, unknown>;
 
 type UseActionViewContractShapeRuntimeOptions = {
   pageText: (key: string, fallback: string) => string;
-  contractColumnLabels: Ref<Record<string, string>>;
+  actionContract: Ref<Record<string, unknown> | null>;
   advancedFields: Ref<string[]>;
   activeGroupByField: Ref<string>;
 };
@@ -18,6 +18,16 @@ type KanbanProfile = {
 };
 
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
+  const contractColumnLabels = computed<Record<string, string>>(() => {
+    const rows = options.actionContract.value?.fields || {};
+    return Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
+      const descriptorRow = (descriptor || {}) as Dict;
+      const label = String(descriptorRow.string || '').trim();
+      if (label) acc[name] = label;
+      return acc;
+    }, {});
+  });
+
   function extractColumnsFromContract(contract: unknown, sceneColumns: string[] = []) {
     if (Array.isArray(sceneColumns) && sceneColumns.length) {
       return sceneColumns;
@@ -159,7 +169,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function resolveModelFromContract(contract: unknown) {
     const typed = (contract || {}) as Dict;
-    const nested = ((typed.ui_contract_raw || typed.ui_contract || {}) as Dict);
+    const nested = ((typed.ui_contract || {}) as Dict);
     const direct = typed.model;
     if (typeof direct === 'string' && direct.trim()) {
       return direct.trim();
@@ -194,6 +204,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   return {
+    contractColumnLabels,
     extractColumnsFromContract,
     convergeColumnsForSurface,
     extractKanbanFields,
@@ -206,4 +217,3 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     resolveModelFromContract,
   };
 }
-

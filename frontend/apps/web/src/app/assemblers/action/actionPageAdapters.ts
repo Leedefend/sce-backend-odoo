@@ -60,3 +60,15 @@ export function toProjectionMetricVM(value: unknown): ProjectionMetricVM | null 
   };
 }
 
+export function toAdvancedRowVM(value: unknown): { key: string; title: string; meta: string } | null {
+  const row = asDict(value);
+  const key = String(row.key || '').trim();
+  const title = String(row.title || '').trim();
+  const meta = String(row.meta || '').trim();
+  if (!key || !title) return null;
+  return {
+    key,
+    title,
+    meta,
+  };
+}

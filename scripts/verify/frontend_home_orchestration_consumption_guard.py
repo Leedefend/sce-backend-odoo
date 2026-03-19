@@ -6,6 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+HOME_ORCHESTRATION = ROOT / "frontend/apps/web/src/app/homeOrchestration.ts"
 SESSION_STORE = ROOT / "frontend/apps/web/src/stores/session.ts"
 HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
 
@@ -29,6 +30,7 @@ def _expect(text: str, scope: str, tokens: list[str], errors: list[str]) -> None
 
 def main() -> int:
     home_text = _read(HOME_VIEW)
+    home_orchestration_text = _read(HOME_ORCHESTRATION)
     session_text = _read(SESSION_STORE)
     builder_text = _read(HOME_BUILDER)
     errors: list[str] = []
@@ -37,6 +39,8 @@ def main() -> int:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
     if not session_text:
         errors.append(f"missing file: {SESSION_STORE.relative_to(ROOT).as_posix()}")
+    if not home_orchestration_text:
+        errors.append(f"missing file: {HOME_ORCHESTRATION.relative_to(ROOT).as_posix()}")
     if not builder_text:
         errors.append(f"missing file: {HOME_BUILDER.relative_to(ROOT).as_posix()}")
     if errors:
@@ -61,15 +65,10 @@ def main() -> int:
             "const workspacePageOrchestrationV1 = computed(() => (",
             "const workspacePageOrchestrationV1DataSources = computed(() => (",
             "const orchestrationBlocks = computed(() => {",
-            "workspacePageOrchestrationV1.value.zones",
-            "const hasV1Zones = zones.length > 0;",
-            "const dataSources = workspacePageOrchestrationV1DataSources.value;",
-            "const dataSourceKey = asText(blockRow.data_source);",
-            "const dataSource = dataSources[dataSourceKey];",
-            "const sourceType = asText((dataSource as Record<string, unknown>).source_type);",
-            "if (hasV1Zones) {",
-            "const orchestrationSectionOrderMap = computed(() => {",
-            "const orchestrationSectionSemanticMap = computed(() => {",
+            "flattenHomeOrchestrationBlocks(",
+            "workspacePageOrchestrationV1DataSources.value",
+            "const orchestrationSectionOrderMap = computed(() => orchestrationSectionDerived.value.orderMap);",
+            "const orchestrationSectionSemanticMap = computed(() => orchestrationSectionDerived.value.semanticMap);",
             "const roleVariantCode = computed(() => {",
             "const orchestrationPage = workspacePageOrchestrationV1.value.page;",
             "function homeSectionClass(key: string) {",
@@ -81,6 +80,20 @@ def main() -> int:
             "HUD: orchestration_blocks={{ orchestrationBlocks.length }} · role_variant={{ roleVariantCode || '-' }}",
             "normalizeTone(row.tone)",
             "normalizeProgress(row.progress)",
+        ],
+        errors,
+    )
+    _expect(
+        home_orchestration_text,
+        "homeOrchestration.ts",
+        [
+            "export function flattenHomeOrchestrationBlocks(",
+            "const zones = Array.isArray(pageOrchestrationV1.zones)",
+            "const hasV1Zones = zones.length > 0;",
+            "const dataSourceKey = toText(blockRow.data_source);",
+            "const dataSource = dataSources[dataSourceKey];",
+            "const sourceType = toText((dataSource as Record<string, unknown>).source_type);",
+            "if (hasV1Zones) return flattenedV1;",
         ],
         errors,
     )
