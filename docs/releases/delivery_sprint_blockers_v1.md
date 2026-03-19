@@ -11,6 +11,7 @@
 | B2 | Scene Contract / Provider shape 未完全封口 | 契约与 provider 边界仍存在“最小可跑”路径 | 交付包关键 scene 全部通过 contract/provider guard | BE |
 | B3 | Capability gap backlog 失真 | 报告“全绿”但 gap backlog 缺少有效条目 | 建立真实 gap 分级（Blocker/Pilot Risk/Post-GA）并纳入发布门禁 | PM+Tech Lead |
 | B4 | 交付证据不可一页审计 | 缺少“9模块×4角色旅程”可追溯证据板 | 输出一页 readiness scoreboard（commit/db/seed/结果） | Delivery |
+| B5 | 财务跨角色审批交接阻塞 | `verify.portal.payment_request_approval_all_smoke.container` 失败，`executive` 在提交后无可执行 follow-up 动作 | `payment_request_approval_all_smoke` 全链路通过（submit→handoff→approve/reject） | Finance+BE |
 
 ## P1（紧随其后）
 - 关键角色旅程脚本化（PM/财务/采购/老板）。
@@ -19,4 +20,3 @@
 ## 冲刺边界
 - 冻结新增 capability；仅处理 Blocker 和交付闭环。
 - 变更优先级：稳定性 > 新功能。
-

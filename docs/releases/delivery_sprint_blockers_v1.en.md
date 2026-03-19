@@ -11,6 +11,7 @@
 | B2 | Scene Contract / Provider shape not fully sealed | Contract/provider boundaries still have “minimum-runnable” paths | Delivery-package key scenes pass contract/provider guards | BE |
 | B3 | Capability gap backlog is distorted | “All green” signals while gap backlog lacks real entries | Build real gap tiers (Blocker/Pilot Risk/Post-GA) and enforce in release gates | PM+Tech Lead |
 | B4 | Delivery evidence is not one-page auditable | No unified evidence board for “9 modules × 4 role journeys” | Publish one-page readiness scoreboard (commit/db/seed/results) | Delivery |
+| B5 | Finance cross-role approval handoff is blocked | `verify.portal.payment_request_approval_all_smoke.container` fails; `executive` has no allowed follow-up action after submit | `payment_request_approval_all_smoke` passes end-to-end (submit→handoff→approve/reject) | Finance+BE |
 
 ## P1 (Immediately After)
 - Script critical role journeys (PM/Finance/Procurement/Executive).
@@ -19,4 +20,3 @@
 ## Sprint Boundary
 - Freeze new capability additions; focus only on blockers and delivery closure.
 - Priority: stability > new features.
-
