@@ -12,6 +12,7 @@
 
 ```bash
 make verify.scene.delivery.readiness.role_matrix
+make verify.portal.role_surface_smoke.container
 ```
 
 ---
@@ -23,6 +24,16 @@ make verify.scene.delivery.readiness.role_matrix
   - role matrix 相关 snapshot guard 全部通过
   - scene runtime boundary gate 通过
   - scene delivery readiness 通过
+  - 角色入口 smoke 通过（owner/pm/finance/executive）
+
+### 3.1 角色入口 smoke 摘要
+
+| login | role | landing_scene | landing_path | nav_count |
+|---|---|---|---|---|
+| `demo_role_owner` | owner | `projects.list` | `/s/projects.list` | 1 |
+| `demo_role_pm` | pm | `portal.dashboard` | `/s/portal.dashboard` | 1 |
+| `demo_role_finance` | finance | `finance.payment_requests` | `/s/finance.payment_requests` | 1 |
+| `demo_role_executive` | executive | `portal.dashboard` | `/s/portal.dashboard` | 1 |
 
 ---
 
@@ -46,7 +57,7 @@ make verify.scene.delivery.readiness.role_matrix
 本次执行直接支撑以下交付目标：
 
 1. 把“交付 readiness”从文档判断提升到 system-bound 证据
-2. 为 9 模块验收矩阵提供统一底座（runtime boundary + role matrix 已绿）
+2. 为 9 模块验收矩阵提供统一底座（runtime boundary + role matrix + role smoke 已绿）
 3. 为下一步角色旅程 smoke（PM/财务/采购/老板）提供可复用验证入口
 
 ---
@@ -56,4 +67,3 @@ make verify.scene.delivery.readiness.role_matrix
 1. 继续补“角色旅程级 smoke 证据”（按模块映射）
 2. 将本文件与 `delivery_readiness_scoreboard_v1.md` 联动，形成“状态 + 证据”双入口
 3. 在 PR 描述中附上上述关键产物路径作为验收凭证
-
