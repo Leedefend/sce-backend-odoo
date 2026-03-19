@@ -3,11 +3,15 @@
     {
       "key": "primary",
       "company_id": 1,
+      "login": "admin",
+      "password": "admin",
       "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json"
     },
     {
       "key": "secondary",
       "company_id": 2,
+      "login": "demo_role_pm",
+      "password": "demo",
       "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json"
     }
   ],

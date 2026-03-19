@@ -61,7 +61,14 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _run_snapshot(profile_key: str, company_id: int, state_file: str, require_live: bool) -> tuple[int, str]:
+def _run_snapshot(
+    profile_key: str,
+    company_id: int,
+    state_file: str,
+    require_live: bool,
+    login: str,
+    password: str,
+) -> tuple[int, str]:
     env = os.environ.copy()
     env["SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE"] = state_file
     env["SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE"] = "1" if require_live else "0"
@@ -69,6 +76,10 @@ def _run_snapshot(profile_key: str, company_id: int, state_file: str, require_li
         env["E2E_COMPANY_ID"] = str(company_id)
     else:
         env.pop("E2E_COMPANY_ID", None)
+    if login:
+        env["E2E_LOGIN"] = login
+    if password:
+        env["E2E_PASSWORD"] = password
 
     process = subprocess.run(
         [sys.executable, SNAPSHOT_GUARD_PATH.as_posix()],
@@ -124,11 +135,13 @@ def main() -> int:
             continue
         company_id = _safe_int(profile.get("company_id"), 0)
         state_file = _text(profile.get("state_file"))
+        login = _text(profile.get("login"))
+        password = _text(profile.get("password"))
         if not state_file:
             errors.append(f"{profile_key}: state_file is required")
             continue
 
-        code, output = _run_snapshot(profile_key, company_id, state_file, require_live)
+        code, output = _run_snapshot(profile_key, company_id, state_file, require_live, login, password)
         state_payload = _load_json(ROOT / state_file)
         effective_company_id = _safe_int(state_payload.get("company_id"), 0)
         if effective_company_id > 0:
@@ -150,6 +163,7 @@ def main() -> int:
                 "key": profile_key,
                 "requested_company_id": company_id,
                 "effective_company_id": effective_company_id,
+                "login": login,
                 "state_file": state_file,
                 "ok": ok,
                 "guard_exit_code": code,
