@@ -2062,6 +2062,19 @@ verify.scene.company_snapshot.collect: guard.prod.forbid
 verify.scene.company_access.preflight.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_company_access_preflight_guard.py
 
+.PHONY: ops.scene.company_secondary.access
+ops.scene.company_secondary.access: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc " \
+	E2E_BASE_URL=http://localhost:8069 \
+	DB_NAME=$(DB_NAME) \
+	ADMIN_LOGIN=$${ADMIN_LOGIN:-admin} \
+	ADMIN_PASSWD=$${ADMIN_PASSWD:-admin} \
+	TARGET_LOGIN=$${TARGET_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	TARGET_COMPANY_ID=$${TARGET_COMPANY_ID:-2} \
+	APPLY=$${APPLY:-0} \
+	python3 /mnt/scripts/ops/ensure_company_secondary_access.py \
+	"
+
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_input_boundary_guard.py
