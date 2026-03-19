@@ -139,5 +139,5 @@ Each entry must include:
 - module: `company2 access repair helper`
 - reason: `提供可执行修复器，避免手工ORM操作导致交付现场不可复现`
 - completed_step: `新增 ops.scene.company_secondary.access（dry-run/apply）并文档化前置权限`
-- active_commit: `pending`
+- active_commit: `bd5f397`
 - next_step: `Run helper in docker-enabled environment, then rerun strict preflight to reach reachable_count=2`
