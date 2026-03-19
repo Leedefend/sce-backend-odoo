@@ -166,5 +166,14 @@ Each entry must include:
 - module: `failure brief multi-company highlight`
 - reason: `CI失败时需要快速判断是否是多公司证据回退，减少排障往返`
 - completed_step: `scene_delivery_failure_brief 增加 multi_company_highlight 输出并覆盖 snapshot/preflight/evidence 报告`
+- active_commit: `14b343c`
+- next_step: `Enhance failure brief with BLOCKER/PRECHECK grouping and recovery actions`
+
+### 2026-03-19T21:55:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `CI Delivery Readiness`
+- module: `failure brief grouping`
+- reason: `CI失败摘要需直接给出失败分层与恢复命令，减少人肉判断`
+- completed_step: `scene_delivery_failure_brief 增加 BLOCKER/PRECHECK 分组和 multi_company_next_actions`
 - active_commit: `pending`
 - next_step: `Keep iterating on remaining delivery blockers`
