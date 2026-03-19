@@ -193,5 +193,14 @@ Each entry must include:
 - module: `failure brief summary printer`
 - reason: `CI控制台需要更短更稳定的关键字段摘要，便于快速决策`
 - completed_step: `新增 scene_delivery_failure_brief_summary 并接入 ci.scene.delivery.readiness 失败分支`
+- active_commit: `8496b6a`
+- next_step: `Close journey evidence blocker by wiring role-matrix journey guard into strict chain`
+
+### 2026-03-19T22:40:00Z
+- blocker_key: `gap.system_bound_journey_evidence_missing`
+- layer_target: `Delivery Readiness Governance`
+- module: `journey guard chain wiring`
+- reason: `避免 strict readiness 只校验场景覆盖不校验关键旅程`
+- completed_step: `verify.delivery.journey.role_matrix.guard 接入 verify.scene.delivery.readiness.role_company_matrix，并同步失败摘要与scoreboard`
 - active_commit: `pending`
 - next_step: `Continue remaining blocker hardening`
