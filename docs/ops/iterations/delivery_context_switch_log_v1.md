@@ -121,5 +121,5 @@ Each entry must include:
 - module: `company secondary default targeting`
 - reason: `避免 company_secondary 采样被空 company_id 覆盖，确保默认请求 company_id=2`
 - completed_step: `Makefile company_secondary 默认切到 admin + company_id=2，并保留role/company链路稳定通过`
-- active_commit: `pending`
+- active_commit: `d297a38`
 - next_step: `Prepare company-2 entitlement seed/user setup so requested=2 can resolve effective=2`
