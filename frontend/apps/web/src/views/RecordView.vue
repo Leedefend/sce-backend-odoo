@@ -33,9 +33,9 @@
         <span class="pill" :class="statusTone">{{ statusLabel }}</span>
         <button class="ghost" @click="goBack">{{ pageText('action_back', 'Back') }}</button>
         <button v-if="status === 'ok' && canEdit" @click="startEdit">{{ pageText('action_edit', 'Edit') }}</button>
-        <button v-if="status === 'editing'" @click="save" :disabled="isSaveDisabled">{{ pageText('action_save', 'Save') }}</button>
+        <button v-if="status === 'editing'" :disabled="isSaveDisabled" @click="save">{{ pageText('action_save', 'Save') }}</button>
         <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">{{ pageText('action_cancel', 'Cancel') }}</button>
-        <button class="ghost" @click="reload" :disabled="status === 'loading' || status === 'saving'">{{ pageText('action_reload', 'Reload') }}</button>
+        <button class="ghost" :disabled="status === 'loading' || status === 'saving'" @click="reload">{{ pageText('action_reload', 'Reload') }}</button>
       </div>
     </header>
 

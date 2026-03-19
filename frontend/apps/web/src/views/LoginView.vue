@@ -23,7 +23,7 @@
       </section>
 
       <section class="auth-panel">
-        <section class="page-actions" v-if="headerActions.length">
+        <section v-if="headerActions.length" class="page-actions">
           <button
             v-for="action in headerActions"
             :key="`login-header-${action.key}`"

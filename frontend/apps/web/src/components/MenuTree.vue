@@ -43,6 +43,8 @@ import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPo
 import { useSessionStore } from '../stores/session';
 
 const props = withDefaults(defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[]; level?: number }>(), {
+  activeMenuId: undefined,
+  capabilities: () => [],
   level: 0,
 });
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();

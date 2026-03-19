@@ -3,7 +3,7 @@
     <AppShell v-if="route.meta?.layout === 'shell'">
       <component :is="Component" />
     </AppShell>
-    <component v-else :is="Component" />
+    <component :is="Component" v-else />
   </RouterView>
 </template>
 
