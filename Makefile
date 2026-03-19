@@ -2152,6 +2152,9 @@ verify.scene.no_action_scene.guard: guard.prod.forbid
 .PHONY: verify.scene.registry_asset_snapshot.executive
 verify.scene.registry_asset_snapshot.executive: guard.prod.forbid
 	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES:-3} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.executive.json \
 	E2E_LOGIN=$${ROLE_EXECUTIVE_LOGIN:-demo_role_executive} \
 	E2E_PASSWORD=$${ROLE_EXECUTIVE_PASSWORD:-demo} \
@@ -2160,6 +2163,9 @@ verify.scene.registry_asset_snapshot.executive: guard.prod.forbid
 .PHONY: verify.scene.registry_asset_snapshot.pm
 verify.scene.registry_asset_snapshot.pm: guard.prod.forbid
 	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES:-3} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.pm.json \
 	E2E_LOGIN=$${ROLE_PM_LOGIN:-demo_role_pm} \
 	E2E_PASSWORD=$${ROLE_PM_PASSWORD:-demo} \
@@ -2168,6 +2174,9 @@ verify.scene.registry_asset_snapshot.pm: guard.prod.forbid
 .PHONY: verify.scene.registry_asset_snapshot.finance
 verify.scene.registry_asset_snapshot.finance: guard.prod.forbid
 	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES:-3} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.finance.json \
 	E2E_LOGIN=$${ROLE_FINANCE_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
 	E2E_PASSWORD=$${ROLE_FINANCE_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
@@ -2176,6 +2185,9 @@ verify.scene.registry_asset_snapshot.finance: guard.prod.forbid
 .PHONY: verify.scene.registry_asset_snapshot.ops
 verify.scene.registry_asset_snapshot.ops: guard.prod.forbid
 	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES:-3} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.ops.json \
 	E2E_LOGIN=$${ROLE_OPS_LOGIN:-$${ROLE_EXECUTIVE_LOGIN:-demo_role_executive}} \
 	E2E_PASSWORD=$${ROLE_OPS_PASSWORD:-$${ROLE_EXECUTIVE_PASSWORD:-demo}} \
@@ -2184,6 +2196,9 @@ verify.scene.registry_asset_snapshot.ops: guard.prod.forbid
 .PHONY: verify.scene.registry_asset_snapshot.company_primary
 verify.scene.registry_asset_snapshot.company_primary: guard.prod.forbid
 	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES:-3} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json \
 	E2E_LOGIN=$${COMPANY_PRIMARY_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
 	E2E_PASSWORD=$${COMPANY_PRIMARY_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
@@ -2193,6 +2208,9 @@ verify.scene.registry_asset_snapshot.company_primary: guard.prod.forbid
 .PHONY: verify.scene.registry_asset_snapshot.company_secondary
 verify.scene.registry_asset_snapshot.company_secondary: guard.prod.forbid
 	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES:-3} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json \
 	E2E_LOGIN=$${COMPANY_SECONDARY_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
 	E2E_PASSWORD=$${COMPANY_SECONDARY_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \

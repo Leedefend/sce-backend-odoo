@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -183,18 +184,34 @@ def main() -> int:
     warnings: list[str] = []
     live_error = ""
     snapshot: dict = {}
-    try:
-        snapshot = _fetch_live_snapshot()
-    except Exception as exc:
-        live_error = str(exc)
+    fetch_retries = max(_safe_int(os.getenv("SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES"), 2), 1)
+    fetch_backoff = max(_safe_int(os.getenv("SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC"), 1), 0)
+    for attempt in range(1, fetch_retries + 1):
+        try:
+            snapshot = _fetch_live_snapshot()
+            break
+        except Exception as exc:
+            live_error = str(exc)
+            if attempt < fetch_retries and fetch_backoff > 0:
+                time.sleep(fetch_backoff * attempt)
 
     strict_live = _text(os.getenv("SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE")).lower() in {"1", "true", "yes"}
+    allow_state_fallback_on_live_fail = (
+        _text(os.getenv("SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL")).lower()
+        in {"1", "true", "yes"}
+    )
     if not snapshot:
         previous = _load_json(state_path)
         if previous and not strict_live:
             snapshot = dict(previous)
             snapshot["live_fetch_skipped"] = True
             snapshot["live_fetch_error"] = live_error
+        elif previous and strict_live and allow_state_fallback_on_live_fail:
+            snapshot = dict(previous)
+            snapshot["live_fetch_skipped"] = True
+            snapshot["live_fetch_error"] = live_error
+            snapshot["strict_live_fallback_used"] = True
+            warnings.append("strict live fetch failed; fallback state used by explicit allow switch")
         elif strict_live:
             print("[scene_registry_asset_snapshot_guard] FAIL")
             print(f" - unable to fetch live snapshot: {live_error or 'unknown error'}")
