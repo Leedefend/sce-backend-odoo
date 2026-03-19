@@ -89,6 +89,16 @@
     - `artifacts/backend/scene_multi_company_evidence_state.json`
   - Strict mode: `SC_MULTI_COMPANY_EVIDENCE_STRICT=1` enforces target company count as blocker.
   - Wired into `verify.scene.delivery.readiness.role_company_matrix` chain.
+- `make verify.scene.company_snapshot.collect`
+  - Collects company-specific scene snapshot states by invoking `scene_registry_asset_snapshot_guard` per profile.
+  - Baseline: `scripts/verify/baselines/scene_company_snapshot_collect.json`.
+  - Reports:
+    - `artifacts/backend/scene_company_snapshot_collect_report.json`
+    - `artifacts/backend/scene_company_snapshot_collect_report.md`
+  - Default profiles write to:
+    - `artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json`
+    - `artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json`
+  - Wired into `verify.scene.delivery.readiness.role_company_matrix` before company matrix guard.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
