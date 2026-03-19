@@ -44,7 +44,10 @@
 - `make ci.scene.delivery.readiness`
   - Lightweight CI alias for `verify.scene.delivery.readiness.role_company_matrix`.
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
-  - Failure brief now includes dedicated `multi_company_highlight` section (snapshot/preflight/evidence signals) to speed up multi-company issue triage.
+  - Failure brief now includes:
+    - `BLOCKER_FAILURES / PRECHECK_FAILURES` grouped output
+    - dedicated `multi_company_highlight` section (snapshot/preflight/evidence signals)
+    - `multi_company_next_actions` recommended command sequence for fast recovery.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
