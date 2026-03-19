@@ -98,8 +98,9 @@
   - Default profiles write to:
     - `artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json`
     - `artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json`
+  - Profile-level `login/password` is supported in baseline for deterministic company target sampling (current baseline: `primary=admin`, `secondary=demo_role_pm`).
   - Wired into `verify.scene.delivery.readiness.role_company_matrix` before company matrix guard.
-  - `company_secondary` runtime snapshot target defaults to `E2E_LOGIN=admin` and `E2E_COMPANY_ID=2` (override via `COMPANY_SECONDARY_LOGIN/COMPANY_SECONDARY_PASSWORD/COMPANY_SECONDARY_ID`).
+  - `company_secondary` runtime snapshot target defaults to `E2E_LOGIN=ROLE_PM_LOGIN` and `E2E_COMPANY_ID=2` (override via `COMPANY_SECONDARY_LOGIN/COMPANY_SECONDARY_PASSWORD/COMPANY_SECONDARY_ID`).
 - `make verify.scene.company_access.preflight.guard`
   - Verifies company target reachability using collected snapshot states (`requested/effective/allowed_company_ids`).
   - Baseline: `scripts/verify/baselines/scene_company_access_preflight_guard.json`.
