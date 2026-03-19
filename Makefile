@@ -363,7 +363,7 @@ help:
 	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
-	@echo "  make verify.scene.delivery.readiness.role_matrix   # 推荐：日常默认一键验收（pm/executive 证据 + 严格链路）"
+	@echo "  make verify.scene.delivery.readiness.role_matrix   # 角色矩阵严格验收（pm/executive/finance/ops）"
 	@echo "  make verify.scene.delivery.readiness.role_company_matrix   # 角色+公司双矩阵严格验收"
 	@echo "  make verify.scene.delivery.readiness"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
@@ -2987,7 +2987,7 @@ ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 
 ci.scene.delivery.readiness: guard.prod.forbid
-	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix || \
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix || \
 	  (python3 scripts/verify/scene_delivery_failure_brief.py; exit 1)
 
 # 只跑守门：权限/绕过（最快定位安全回归）

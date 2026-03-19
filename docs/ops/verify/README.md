@@ -42,7 +42,7 @@
   - One-click strict acceptance with role+company evidence: runs `verify.scene.delivery.readiness.role_matrix` then `verify.scene.base_contract_source_mix.company_matrix.guard`.
   - Use as the default command for customer-trial readiness evidence (role surface + company surface).
 - `make ci.scene.delivery.readiness`
-  - Lightweight CI alias for `verify.scene.delivery.readiness.role_matrix`.
+  - Lightweight CI alias for `verify.scene.delivery.readiness.role_company_matrix`.
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
