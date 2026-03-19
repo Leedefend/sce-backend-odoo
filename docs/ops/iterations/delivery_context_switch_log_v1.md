@@ -22,6 +22,5 @@ Each entry must include:
 - module: `delivery planning & collaboration docs`
 - reason: `落库总体目标与协作协议，减少上下文切换不稳定`
 - completed_step: `master plan + collaboration protocol + backlog结构化 + context log 初始化`
-- active_commit: `pending`
+- active_commit: `e69e451`
 - next_step: `Start P0.1 frontend blocker sweep with ActionView/AppShell lint strict fixes`
-
