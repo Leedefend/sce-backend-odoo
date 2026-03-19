@@ -59,6 +59,10 @@
 - `make verify.scene.provider_shape.guard`
   - Runs provider shape guard as standalone blocker (`scene_orchestration_provider_shape_guard`).
   - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.contract_v1.field_schema.guard`
+  - Enforces live `scene_ready_contract_v1` field-level schema requirements using `system.init` payload.
+  - Baseline: `scripts/verify/baselines/scene_contract_v1_field_schema_guard.json`.
+  - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
