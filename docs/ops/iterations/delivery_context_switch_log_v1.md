@@ -123,3 +123,12 @@ Each entry must include:
 - completed_step: `Makefile company_secondary 默认切到 admin + company_id=2，并保留role/company链路稳定通过`
 - active_commit: `d297a38`
 - next_step: `Prepare company-2 entitlement seed/user setup so requested=2 can resolve effective=2`
+
+### 2026-03-19T20:05:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `Scene Runtime Governance`
+- module: `company access preflight guard`
+- reason: `把“requested=2但effective=1”的根因从隐式现象升级为可执行预检信号`
+- completed_step: `新增 company_access_preflight 守卫并接入 role_company_matrix 链路`
+- active_commit: `pending`
+- next_step: `Provision company-2 entitlement/user and rerun preflight in strict mode`
