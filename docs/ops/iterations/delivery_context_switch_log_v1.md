@@ -148,5 +148,5 @@ Each entry must include:
 - module: `company2 seed helper`
 - reason: `把公司2与用户归属前置也脚本化，避免修复器依赖已有公司实体`
 - completed_step: `新增 ops.scene.company_secondary.seed（支持创建公司/用户并修复归属）`
-- active_commit: `pending`
+- active_commit: `c7c70e6`
 - next_step: `Run seed helper with APPLY=1 in docker-enabled env, then strict preflight + role_company_matrix`
