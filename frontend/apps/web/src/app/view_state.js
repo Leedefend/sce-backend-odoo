@@ -1,4 +1,4 @@
-export function deriveListStatus({ error, recordsLength }) {
+export function deriveListStatus({ error = '', recordsLength = 0 } = {}) {
   if (error) {
     return 'error';
   }
@@ -8,7 +8,7 @@ export function deriveListStatus({ error, recordsLength }) {
   return 'ok';
 }
 
-export function deriveRecordStatus({ error, fieldsLength }) {
+export function deriveRecordStatus({ error = '', fieldsLength = 0 } = {}) {
   if (error) {
     return 'error';
   }

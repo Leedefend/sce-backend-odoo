@@ -1,4 +1,5 @@
 type Dict = Record<string, unknown>;
+type StatusInput = { error: string; recordsLength: number };
 
 type PreflightResult = {
   stopped: boolean;
@@ -35,12 +36,12 @@ type ExecuteLoadMainPhaseOptions = {
   executeLoadRequestPhase: (input: {
     executeLoadDataRequest: (payload: Dict) => Promise<RequestResult>;
     input: Dict;
-    applyLoadRequestBlockedState: (input: { blocked: boolean; message: string; statusInput: string }) => boolean;
+    applyLoadRequestBlockedState: (input: { blocked: boolean; message: string; statusInput: StatusInput }) => boolean;
   }) => Promise<RequestResult>;
   executeLoadDataRequest: (payload: Dict) => Promise<RequestResult>;
   buildLoadRequestInput: (input: Dict) => Dict;
   buildLoadRequestDynamicInput: (input: Dict) => Dict;
-  applyLoadRequestBlocked: (input: { blocked: boolean; message: string; statusInput: string }) => boolean;
+  applyLoadRequestBlocked: (input: { blocked: boolean; message: string; statusInput: StatusInput }) => boolean;
   executeLoadSuccessPhase: (input: { input: Dict }) => Promise<void>;
   executeLoadCatchPhase: (input: { input: Dict }) => void;
   buildLoadSuccessDynamicInput: (input: Dict) => Dict;
