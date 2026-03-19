@@ -175,5 +175,14 @@ Each entry must include:
 - module: `failure brief grouping`
 - reason: `CI失败摘要需直接给出失败分层与恢复命令，减少人肉判断`
 - completed_step: `scene_delivery_failure_brief 增加 BLOCKER/PRECHECK 分组和 multi_company_next_actions`
+- active_commit: `8a8c69d`
+- next_step: `Add machine-readable failure brief artifact for CI consumers`
+
+### 2026-03-19T22:10:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `CI Delivery Readiness`
+- module: `failure brief json artifact`
+- reason: `让CI平台可直接消费失败摘要，减少文本解析成本`
+- completed_step: `scene_delivery_failure_brief 增加 artifacts/backend/scene_delivery_failure_brief.json 输出`
 - active_commit: `pending`
 - next_step: `Keep iterating on remaining delivery blockers`
