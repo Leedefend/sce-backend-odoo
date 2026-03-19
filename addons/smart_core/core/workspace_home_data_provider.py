@@ -17,8 +17,6 @@ def _load_industry_provider():
     if _PROVIDER is not None:
         return _PROVIDER
     provider_path = Path(__file__).resolve().parents[2] / "smart_construction_scene" / "profiles" / "workspace_home_scene_content.py"
-    if not provider_path.exists():
-        provider_path = Path(__file__).resolve().parents[2] / "smart_construction_scene" / "services" / "workspace_home_scene_content.py"
     try:
         spec = spec_from_file_location("smart_construction_workspace_home_scene_content", provider_path)
         if spec is None or spec.loader is None:
