@@ -3061,7 +3061,9 @@ ci.preflight.contract: guard.prod.forbid
 
 ci.scene.delivery.readiness: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix || \
-	  (python3 scripts/verify/scene_delivery_failure_brief.py; exit 1)
+	  (python3 scripts/verify/scene_delivery_failure_brief.py; \
+	   python3 scripts/verify/scene_delivery_failure_brief_summary.py; \
+	   exit 1)
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
