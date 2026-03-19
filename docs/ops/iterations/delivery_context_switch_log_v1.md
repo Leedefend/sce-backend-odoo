@@ -231,3 +231,12 @@ Each entry must include:
 - completed_step: `contract_v1 field schema 与 strict_gap_full_audit 增加 state fallback；verify.scene.delivery.readiness 改为 strict flags 默认1可覆盖，并补齐 fallback 变量透传`
 - active_commit: `fd1a600`
 - next_step: `Commit feat/docs changes and continue P0 closure with regular role_company_matrix evidence runs`
+
+### 2026-03-20T05:55:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `ci restricted profile for strict readiness`
+- reason: `把受限环境执行方式从临时命令升级为 CI 档位，避免反复手工覆盖`
+- completed_step: `ci.scene.delivery.readiness 增加 CI_SCENE_DELIVERY_PROFILE=restricted 档位并同步 README/scoreboard`
+- active_commit: `2143132`
+- next_step: `Run restricted profile CI target and commit categorized changes`
