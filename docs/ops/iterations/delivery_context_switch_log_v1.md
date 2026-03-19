@@ -184,5 +184,14 @@ Each entry must include:
 - module: `failure brief json artifact`
 - reason: `让CI平台可直接消费失败摘要，减少文本解析成本`
 - completed_step: `scene_delivery_failure_brief 增加 artifacts/backend/scene_delivery_failure_brief.json 输出`
+- active_commit: `b27bd03`
+- next_step: `Add compact console summary printer in ci failure path`
+
+### 2026-03-19T22:25:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `CI Delivery Readiness`
+- module: `failure brief summary printer`
+- reason: `CI控制台需要更短更稳定的关键字段摘要，便于快速决策`
+- completed_step: `新增 scene_delivery_failure_brief_summary 并接入 ci.scene.delivery.readiness 失败分支`
 - active_commit: `pending`
-- next_step: `Keep iterating on remaining delivery blockers`
+- next_step: `Continue remaining blocker hardening`
