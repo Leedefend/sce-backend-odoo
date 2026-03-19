@@ -199,9 +199,12 @@ def _build_group_nodes(
     labels = group_labels if isinstance(group_labels, dict) else {}
     order_map = group_order if isinstance(group_order, dict) else {}
     aliases = group_aliases if isinstance(group_aliases, dict) else {}
+    configured_groups = set(labels.keys()) | set(order_map.keys()) | {"others"}
     grouped: Dict[str, List[dict]] = {}
     for leaf in leaves:
         group = _group_key(leaf.get("scene_key") or "", aliases=aliases)
+        if group not in configured_groups:
+            group = "others"
         grouped.setdefault(group, []).append(leaf)
 
     out: List[Tuple[int, str, dict]] = []

@@ -1,11 +1,13 @@
 import type { Ref } from 'vue';
 
+type StatusInput = { error: string; recordsLength: number };
+
 type ApplyLoadRequestBlockedStateOptions = {
   blocked: boolean;
   message: string;
-  statusInput: string;
+  statusInput: StatusInput;
   setError: (error: Error, fallbackMessage?: string) => void;
-  deriveListStatus: (input: string) => 'loading' | 'ok' | 'empty' | 'error';
+  deriveListStatus: (input: StatusInput) => 'loading' | 'ok' | 'empty' | 'error';
   statusRef: Ref<'loading' | 'ok' | 'empty' | 'error'>;
 };
 
@@ -31,4 +33,3 @@ export function useActionViewLoadRequestGuardRuntime() {
     applyLoadRequestBlockedState,
   };
 }
-
