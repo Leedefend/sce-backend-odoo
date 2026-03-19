@@ -429,10 +429,10 @@
   - Live path selection is action-surface aware:
     - probes `payment.request.available_actions` and prefers records with executable actions
     - reports `primary_action_key`, `allowed_actions`, and `blocked_reason_summary`
-    - reports `executable_actions` and `live_no_executable_actions` (preferred)
-    - compatibility key `live_no_allowed_actions` remains for 1~2 iterations and is listed in `deprecated_fields`
-    - downstream parser template (new-first fallback-old):
-      - `bool(summary.get("live_no_executable_actions", summary.get("live_no_allowed_actions", False)))`
+    - reports `executable_actions` and `live_no_executable_actions`
+    - legacy key `live_no_allowed_actions` has been removed in N+2
+    - downstream parser should read only:
+      - `bool(summary.get("live_no_executable_actions", False))`
   - Default credential source for this smoke is finance-role-first:
     - `ROLE_FINANCE_LOGIN` / `ROLE_FINANCE_PASSWORD` (defaults: `demo_role_finance` / `demo`)
     - falls back to `E2E_LOGIN` / `E2E_PASSWORD` only when role vars are unset.

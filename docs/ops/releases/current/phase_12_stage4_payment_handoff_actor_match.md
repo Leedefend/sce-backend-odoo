@@ -90,21 +90,23 @@ Existing fields remain unchanged:
 For `payment_request_approval_smoke.py` summary payload, use this transition policy:
 
 - Preferred key: `live_no_executable_actions`
-- Compatibility key: `live_no_allowed_actions` (deprecated)
-- Deprecation marker: `deprecated_fields=["live_no_allowed_actions"]`
+- Compatibility key: `live_no_allowed_actions` (removed in N+2)
 
 Execution window (starting this sprint):
 
 1. **Iteration N (current)**
    - Output both keys.
-   - All downstream parsers must switch to new-first fallback-old logic:
-   - `bool(summary.get("live_no_executable_actions", summary.get("live_no_allowed_actions", False)))`
+   - All downstream parsers switched to new-first fallback-old logic.
 2. **Iteration N+1**
    - Keep both keys.
    - Confirm no consumer still depends on old-only key.
 3. **Iteration N+2**
    - Remove `live_no_allowed_actions` from output.
-   - Remove `deprecated_fields` entry for this key.
+   - ✅ Completed in this branch.
+
+Current parser contract (post N+2):
+
+- `bool(summary.get("live_no_executable_actions", False))`
 
 Removal gate (all must pass):
 

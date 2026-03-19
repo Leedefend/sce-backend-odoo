@@ -52,7 +52,6 @@ SCAN_ROOT_DIRS = (
 )
 
 ALLOWED_OLD_KEY_FILES = {
-    "scripts/verify/payment_request_approval_smoke.py",
     "scripts/verify/payment_request_approval_field_consumer_audit.py",
     "docs/releases/delivery_readiness_execution_evidence_2026-03-19.md",
     "docs/releases/delivery_readiness_execution_evidence_2026-03-19.en.md",
