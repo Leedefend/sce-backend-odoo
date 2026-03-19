@@ -102,6 +102,23 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 return False, REASON_MISSING_PARAMS
             if record.contract_id and str(record.contract_id.state or "") == "cancel":
                 return False, REASON_BUSINESS_RULE_FAILED
+            try:
+                record._check_project_lifecycle(record.project_id, "submit")
+                record._check_settlement_state(record.settlement_id)
+                record._enforce_funding_gate({"state": "submit"})
+                record._check_settlement_remaining_amount()
+                record._check_not_overpay_settlement()
+                scope = {
+                    "res_model": record._name,
+                    "res_ids": [int(record.id)],
+                    "project_id": record.project_id.id if record.project_id else False,
+                    "company_id": record.company_id.id if record.company_id else False,
+                }
+                record.env["sc.data.validator"].validate_or_raise(scope=scope)
+                record._check_settlement_consistency()
+                record._check_settlement_compliance_or_raise(strict=False)
+            except Exception:
+                return False, REASON_BUSINESS_RULE_FAILED
             return True, REASON_OK
         if key == "approve":
             if str(record.validation_status or "") != "validated":

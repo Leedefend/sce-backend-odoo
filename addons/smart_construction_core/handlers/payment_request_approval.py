@@ -28,7 +28,8 @@ from odoo.exceptions import AccessError, UserError
 
 class _BasePaymentApprovalHandler(BaseIntentHandler):
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
+    REQUIRED_GROUPS = ["base.group_user"]
+    ACCESS_GROUPS = ["smart_core.group_sc_finance_approver"]
     ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     AUDIT_EVENT_CODE = ""
@@ -41,7 +42,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
             raise AccessError("PERMISSION_DENIED: missing required group")
         if user.has_group("base.group_system"):
             return
-        required = [str(x).strip() for x in (getattr(self, "REQUIRED_GROUPS", []) or []) if str(x).strip()]
+        required = [str(x).strip() for x in (getattr(self, "ACCESS_GROUPS", []) or []) if str(x).strip()]
         for xmlid in required:
             try:
                 if user.has_group(xmlid):
@@ -366,7 +367,11 @@ class PaymentRequestSubmitHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_SUBMIT_INTENT"
     ACTION_METHOD = "action_submit"
     ACTION_NAME = "submit"
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_finance_user", "smart_core.group_sc_finance_approver"]
+    ACCESS_GROUPS = [
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_core.group_sc_finance_approver",
+        "smart_construction_custom.group_sc_role_finance",
+    ]
 
 
 class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
@@ -376,6 +381,10 @@ class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_APPROVE_INTENT"
     ACTION_METHOD = "action_approve"
     ACTION_NAME = "approve"
+    ACCESS_GROUPS = [
+        "smart_core.group_sc_finance_approver",
+        "smart_construction_custom.group_sc_role_executive",
+    ]
 
 
 class PaymentRequestRejectHandler(_BasePaymentApprovalHandler):
@@ -385,6 +394,10 @@ class PaymentRequestRejectHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_REJECT_INTENT"
     ACTION_METHOD = "action_on_tier_rejected"
     ACTION_NAME = "reject"
+    ACCESS_GROUPS = [
+        "smart_core.group_sc_finance_approver",
+        "smart_construction_custom.group_sc_role_executive",
+    ]
 
     def _validate_action_params(self, params: dict) -> str:
         if not self._extract_reason(params):
@@ -402,4 +415,8 @@ class PaymentRequestDoneHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_DONE_INTENT"
     ACTION_METHOD = "action_done"
     ACTION_NAME = "done"
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_finance_manager", "smart_core.group_sc_finance_approver"]
+    ACCESS_GROUPS = [
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_core.group_sc_finance_approver",
+        "smart_construction_custom.group_sc_role_finance",
+    ]
