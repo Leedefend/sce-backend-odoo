@@ -2572,8 +2572,12 @@ verify.product.delivery.menu: guard.prod.forbid
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py
 
+.PHONY: verify.product.delivery.governance_truth
+verify.product.delivery.governance_truth: guard.prod.forbid
+	@python3 scripts/verify/product_delivery_governance_truth_guard.py
+
 .PHONY: verify.product.delivery.ready
-verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness
+verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
 
 .PHONY: export.product.delivery.package
