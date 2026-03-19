@@ -17,7 +17,7 @@ export function useActionViewTemplateStateRuntime(options: UseActionViewTemplate
   }
 
   function isContractActionDisabled(input: { enabled?: boolean }): boolean {
-    return !Boolean(input.enabled) || isUiBusy.value;
+    return !input.enabled || isUiBusy.value;
   }
 
   return {
@@ -27,4 +27,3 @@ export function useActionViewTemplateStateRuntime(options: UseActionViewTemplate
     isContractActionDisabled,
   };
 }
-

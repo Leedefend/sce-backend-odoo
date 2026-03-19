@@ -18,17 +18,31 @@ import {
 
 type Dict = Record<string, unknown>;
 
+type FilterChip = {
+  key: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Dict;
+  contextRaw: string;
+};
+
+type GroupByChip = {
+  field: string;
+  context: Dict;
+  contextRaw: string;
+};
+
 type UseActionViewRequestContextRuntimeOptions = {
   routeContextRaw: () => string;
   menuId: Ref<number | null>;
   hasActiveField: Ref<boolean>;
   filterValue: Ref<'all' | 'active' | 'archived'>;
-  contractFilterChips: Ref<any[]>;
+  contractFilterChips: Ref<FilterChip[]>;
   activeContractFilterKey: Ref<string>;
-  contractSavedFilterChips: Ref<any[]>;
+  contractSavedFilterChips: Ref<FilterChip[]>;
   activeSavedFilterKey: Ref<string>;
   activeGroupSummaryDomain: Ref<unknown[]>;
-  contractGroupByChips: Ref<any[]>;
+  contractGroupByChips: Ref<GroupByChip[]>;
   activeGroupByField: Ref<string>;
 };
 

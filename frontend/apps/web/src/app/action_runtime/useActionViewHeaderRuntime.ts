@@ -1,7 +1,5 @@
 import type { Ref } from 'vue';
 
-type Dict = Record<string, unknown>;
-
 type UseActionViewHeaderRuntimeOptions = {
   batchMessage: Ref<string>;
   pageText: (key: string, fallback: string) => string;
@@ -75,4 +73,3 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
     executeHeaderAction,
   };
 }
-
