@@ -27,6 +27,12 @@ MULTI_COMPANY_REPORTS = {
     "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json",
 }
 
+PRECHECK_REPORTS = {
+    "artifacts/backend/scene_company_snapshot_collect_report.json",
+    "artifacts/backend/scene_company_access_preflight_report.json",
+    "artifacts/backend/scene_multi_company_evidence_report.json",
+}
+
 
 def _as_dict(value: Any) -> dict:
     return value if isinstance(value, dict) else {}
@@ -85,7 +91,10 @@ def _collect_multi_company_signals(rel: str, payload: dict) -> list[str]:
 
 def main() -> int:
     failed: list[dict[str, Any]] = []
+    blocker_failed: list[dict[str, Any]] = []
+    precheck_failed: list[dict[str, Any]] = []
     multi_company_signals: list[dict[str, Any]] = []
+    multi_company_warnings: list[str] = []
     checked = 0
     for rel in REPORT_CANDIDATES:
         path = ROOT / rel
@@ -96,15 +105,17 @@ def main() -> int:
         signals = _collect_multi_company_signals(rel, payload)
         if signals:
             multi_company_signals.append({"path": rel, "signals": signals})
+            for item in signals:
+                if item.startswith("warning=") or item.startswith("error="):
+                    multi_company_warnings.append(f"{rel}: {item}")
         if ok:
             continue
-        failed.append(
-            {
-                "path": rel,
-                "errors": errors,
-                "summary": _as_dict(payload.get("summary")),
-            }
-        )
+        row = {"path": rel, "errors": errors, "summary": _as_dict(payload.get("summary"))}
+        failed.append(row)
+        if rel in PRECHECK_REPORTS:
+            precheck_failed.append(row)
+        else:
+            blocker_failed.append(row)
 
     print("[scene_delivery_failure_brief]")
     print(f"checked_reports={checked}")
@@ -114,13 +125,35 @@ def main() -> int:
             print(f"- multi_company_report={row['path']}")
             for item in row.get("signals") or []:
                 print(f"  signal={item}")
+    if multi_company_warnings:
+        print(f"multi_company_warnings={len(multi_company_warnings)}")
+        for item in multi_company_warnings:
+            print(f"- multi_company_warning={item}")
+        print("multi_company_next_actions=")
+        print("- make ops.scene.company_secondary.seed APPLY=1 CREATE_COMPANY_IF_MISSING=1 CREATE_USER_IF_MISSING=1")
+        print("- make verify.scene.company_snapshot.collect")
+        print("- SC_COMPANY_ACCESS_PREFLIGHT_STRICT=1 make verify.scene.company_access.preflight.guard")
+        print("- SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make verify.scene.delivery.readiness.role_company_matrix")
     if not failed:
         print("failed_reports=0")
         print("status=NO_FAILURE_REPORT_DETECTED")
         return 0
 
     print(f"failed_reports={len(failed)}")
-    for row in failed:
+    print(f"blocker_failures={len(blocker_failed)}")
+    print(f"precheck_failures={len(precheck_failed)}")
+    if blocker_failed:
+        print("[BLOCKER_FAILURES]")
+    for row in blocker_failed:
+        print(f"- report={row['path']}")
+        for item in row.get("errors") or []:
+            print(f"  error={item}")
+        summary = _as_dict(row.get("summary"))
+        if summary:
+            print(f"  summary={json.dumps(summary, ensure_ascii=False)}")
+    if precheck_failed:
+        print("[PRECHECK_FAILURES]")
+    for row in precheck_failed:
         print(f"- report={row['path']}")
         for item in row.get("errors") or []:
             print(f"  error={item}")
