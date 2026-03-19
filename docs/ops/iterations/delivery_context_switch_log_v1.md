@@ -67,5 +67,5 @@ Each entry must include:
 - module: `scene contract v1 field schema guard`
 - reason: `将字段级强校验从文档目标升级为可执行 release blocker`
 - completed_step: `新增 verify.scene.contract_v1.field_schema.guard 并接入 verify.scene.runtime_boundary.gate`
-- active_commit: `pending`
+- active_commit: `424afc6`
 - next_step: `Run field-schema guard and full strict readiness role+company chain`
