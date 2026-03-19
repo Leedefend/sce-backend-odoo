@@ -96,3 +96,12 @@ Each entry must include:
 - completed_step: `新增 source_fallback_burndown 与 multi_company_evidence 守卫并接入严格链路`
 - active_commit: `cf03625`
 - next_step: `Run role+company strict readiness and confirm warning/error posture`
+
+### 2026-03-19T17:30:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `Scene Runtime Governance`
+- module: `company snapshot collect`
+- reason: `把多公司样本采集标准化，减少人工切换公司导致的证据不稳定`
+- completed_step: `新增 scene_company_snapshot_collect 并接入 role_company_matrix 链路`
+- active_commit: `pending`
+- next_step: `Run company snapshot collect + role_company_matrix and inspect strict-mode readiness`

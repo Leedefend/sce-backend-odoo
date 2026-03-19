@@ -18,6 +18,7 @@
 | Company matrix source-mix (`primary/secondary`) | PASS | `artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json` |
 | Scene engine migration matrix (9 modules) | PASS | `artifacts/backend/scene_engine_migration_matrix_report.json` |
 | Source fallback burn-down | PASS | `artifacts/backend/scene_source_fallback_burndown_report.json` |
+| Company snapshot collection | PASS / PASS_WITH_WARNINGS | `artifacts/backend/scene_company_snapshot_collect_report.json` |
 | Multi-company evidence accumulation | PASS (with warning if target<2) | `artifacts/backend/scene_multi_company_evidence_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
 
