@@ -1,4 +1,5 @@
 type Dict = Record<string, unknown>;
+type StatusInput = { error: string; recordsLength: number };
 
 type ApplyLoadSuccessOptions = {
   result: Dict;
@@ -24,7 +25,7 @@ type ApplyLoadSuccessOptions = {
   syncRouteListState: (patch: Dict) => void;
   normalizeGroupedRouteState: () => void;
   hydrateGroupedRowsByOffset: () => void | Promise<void>;
-  deriveListStatus: (statusInput: string) => 'idle' | 'loading' | 'ok' | 'empty' | 'error';
+  deriveListStatus: (statusInput: StatusInput) => 'idle' | 'loading' | 'ok' | 'empty' | 'error';
   readTotalFromListResult: (resultDataRaw: unknown) => number | null;
   buildGroupKey: (groupByField: string, groupValue: unknown) => string;
   normalizeGroupPageOffset: (value: unknown) => number;
@@ -80,12 +81,12 @@ type ApplyLoadSuccessOptions = {
     activeGroupSummaryKey: string;
     selectedIds: number[];
     columns: string[];
-    statusInput: string;
+    statusInput: StatusInput;
   };
   resolveLoadFinalizeSummaryKeyState: (input: Dict) => string;
   resolveLoadFinalizeSelectedIdsState: (input: Dict) => number[];
   resolveLoadFinalizeColumnsState: (input: Dict) => string[];
-  resolveLoadFinalizeStatusState: (input: Dict) => string;
+  resolveLoadFinalizeStatusState: (input: Dict) => StatusInput;
   resolveLoadTraceApplyState: (input: Dict) => {
     traceId: string;
     lastTraceId: string;
@@ -241,7 +242,6 @@ export function useActionViewLoadSuccessRuntime() {
       resolveLoadFinalizeSelectedIdsStateFn: options.resolveLoadFinalizeSelectedIdsState,
       resolveLoadFinalizeColumnsStateFn: options.resolveLoadFinalizeColumnsState,
       resolveLoadFinalizeStatusStateFn: options.resolveLoadFinalizeStatusState,
-      deriveListStatusFn: options.deriveListStatus,
     });
     options.activeGroupSummaryKeyRef.value = finalizeState.activeGroupSummaryKey;
     options.selectedIdsRef.value = finalizeState.selectedIds;
