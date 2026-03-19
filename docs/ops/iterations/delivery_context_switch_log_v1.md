@@ -103,5 +103,5 @@ Each entry must include:
 - module: `company snapshot collect`
 - reason: `把多公司样本采集标准化，减少人工切换公司导致的证据不稳定`
 - completed_step: `新增 scene_company_snapshot_collect 并接入 role_company_matrix 链路`
-- active_commit: `pending`
-- next_step: `Run company snapshot collect + role_company_matrix and inspect strict-mode readiness`
+- active_commit: `c6a4ae2`
+- next_step: `Stabilize role-matrix live snapshot timeout path and continue strict readiness iteration`
