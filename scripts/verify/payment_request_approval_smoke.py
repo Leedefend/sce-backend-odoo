@@ -567,6 +567,8 @@ def main() -> int:
         summary["executable_actions"] = executable_actions
         if picked and not executable_actions:
             summary["live_no_executable_actions"] = True
+            summary["live_no_allowed_actions"] = True
+            summary["deprecated_fields"] = ["live_no_allowed_actions"]
     else:
         allowed_actions = []
         executable_actions = []
