@@ -1,6 +1,13 @@
 # Capability Gap Backlog v1
 
-- generated_on: 2026-03-09
+- generated_on: 2026-03-19
 
-| priority | type | item_key | description |
+| priority | type | item_key | description | owner | target_gate | status | evidence |
 |---|---|---|---|
+| Blocker | Frontend Quality | gap.frontend.action_view_lint_strict | Frontend delivery mainline not green: clear `no-explicit-any` / `no-unused-vars` / `no-extra-boolean-cast` in `ActionView.vue`, `useActionViewBatchRuntime.ts`, `useActionViewGroupedRowsRuntime.ts`, `useActionViewRequestContextRuntime.ts`, `AppShell.vue`; enforce `pnpm -C frontend gate` as pre-delivery blocker. | FE | `pnpm -C frontend gate` | Open | `frontend lint/typecheck/build` all pass on latest commit |
+| Blocker | Scene Contract | gap.scene_contract_v1_strict_schema | Scene Contract v1 field-level strict validation not fully closed; provider shape guard must be release blocker; high-frequency scenes in 9-module package must be uniformly on `scene_engine` mainline. | BE/Scene | `make verify.scene.delivery.readiness.role_company_matrix` | Open | strict schema report + provider shape guard pass + scene_engine migration matrix |
+| Blocker | Governance Truthfulness | gap.backlog_empty_false_green | Product maturity reports are green but gap backlog was empty; establish real gap ledger with `Blocker/Pilot Risk/Post-GA` and keep it updated each sprint. | Product/Ops | `make verify.product.delivery.ready` (supplement) | In Progress | backlog update history + unresolved blocker list |
+| Blocker | Delivery Evidence | gap.delivery_readiness_scoreboard | Delivery process exists but lacks one-page auditable scoreboard for 9 modules and 4 key journeys (PM/Finance/Purchase/Executive) with db/seed/bundle/commit traceability. | Product/Ops/QA | `make verify.scene.delivery.readiness.role_company_matrix` + scoreboard checks | In Progress | readiness scoreboard with latest run links |
+| Pilot Risk | Runtime Consistency | gap.scene_engine_partial_migration | `workspace.home` has switched to profile mainline, but remaining high-frequency scenes still need migration completeness proof and fallback burn-down evidence. | BE/Scene | `verify.scene.no_action_scene.guard` + source-mix guards | In Progress | scene migration ledger + fallback count trend |
+| Pilot Risk | Journey Evidence | gap.system_bound_journey_evidence_missing | Key role journeys lack consistent system-bound scripts and latest pass snapshots in one place. | QA/Ops | `make verify.scene.delivery.readiness.role_company_matrix` + journey smoke bundle | Open | journey smoke matrix with timestamps |
+| Post-GA | View Richness | gap.widget_richness_x2many_chatter | Widget richness, x2many/chatter/kanban semantic closure can continue post-GA once blocker stack is closed. | FE/BE | dedicated post-GA gate | Planned | staged enhancement report |
