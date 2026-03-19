@@ -67,3 +67,17 @@ This run directly supports the sprint by:
 1. continue with role-journey smoke evidence per module mapping
 2. link this file with `delivery_readiness_scoreboard_v1.en.md` for dual entry (status + evidence)
 3. include the key output paths above in PR acceptance notes
+
+---
+
+## 7. Payment Approval Smoke Field Compatibility
+
+To prevent downstream misinterpretation, this sprint aligns the summary field naming in `payment_request_approval_smoke`:
+
+- New field: `live_no_executable_actions`
+  - Meaning: no executable action for the current actor in live mode (`allowed && actor_matches_required_role`)
+- Compatibility field: `live_no_allowed_actions`
+  - Retention window: 1~2 iteration cycles
+  - Output now includes `deprecated_fields=["live_no_allowed_actions"]`
+
+All downstream scripts/reports should migrate to `live_no_executable_actions` as the primary key.
