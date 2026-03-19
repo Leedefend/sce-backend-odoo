@@ -150,3 +150,12 @@ Each entry must include:
 - completed_step: `新增 ops.scene.company_secondary.seed（支持创建公司/用户并修复归属）`
 - active_commit: `c7c70e6`
 - next_step: `Run seed helper with APPLY=1 in docker-enabled env, then strict preflight + role_company_matrix`
+
+### 2026-03-19T21:20:00Z
+- blocker_key: `gap.multi_company_strict_target_pending`
+- layer_target: `Scene Runtime Governance`
+- module: `company profile login split`
+- reason: `primary/secondary 若共用同一登录会导致样本偏移，需按公司分离采样身份`
+- completed_step: `primary 默认改为 admin/company1，secondary 保持 demo_role_pm/company2；strict preflight + strict role_company_matrix 均通过`
+- active_commit: `pending`
+- next_step: `Lock this as baseline and continue next sprint blockers`

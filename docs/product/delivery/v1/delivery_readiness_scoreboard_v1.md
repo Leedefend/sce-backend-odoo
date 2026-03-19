@@ -18,9 +18,9 @@
 | Company matrix source-mix (`primary/secondary`) | PASS | `artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json` |
 | Scene engine migration matrix (9 modules) | PASS | `artifacts/backend/scene_engine_migration_matrix_report.json` |
 | Source fallback burn-down | PASS | `artifacts/backend/scene_source_fallback_burndown_report.json` |
-| Company snapshot collection | PASS / PASS_WITH_WARNINGS | `artifacts/backend/scene_company_snapshot_collect_report.json` |
-| Company access preflight | PASS / PASS_WITH_WARNINGS | `artifacts/backend/scene_company_access_preflight_report.json` |
-| Multi-company evidence accumulation | PASS (with warning if target<2) | `artifacts/backend/scene_multi_company_evidence_report.json` (`requested company=2 currently resolves to effective company=1`) |
+| Company snapshot collection | PASS | `artifacts/backend/scene_company_snapshot_collect_report.json` |
+| Company access preflight | PASS (strict) | `artifacts/backend/scene_company_access_preflight_report.json` |
+| Multi-company evidence accumulation | PASS (strict) | `artifacts/backend/scene_multi_company_evidence_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
 
 ## 9-Module Readiness Board
@@ -49,7 +49,7 @@
 ## Release Blocking Gaps (Current)
 
 1. Frontend gate historical blocker has been rechecked green in current workspace, but needs continuous seal-mode enforcement per release run.
-2. Scene contract field-level strict schema, provider-shape, scene-engine migration matrix, and fallback burn-down are wired as blockers; remaining risk is multi-company strict target closure.
+2. Scene contract field-level strict schema, provider-shape, scene-engine migration matrix, fallback burn-down, and multi-company strict target are all wired and passing in current run.
 3. Journey-level evidence is not yet fully script-bound for all 4 key roles.
 4. Company matrix currently observes one effective company id (`observed_company_ids=[1]`); true multi-company evidence still pending.
 
