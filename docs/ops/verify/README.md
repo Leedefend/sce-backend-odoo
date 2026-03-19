@@ -421,12 +421,18 @@
 ## Stage 3 Approval MVP
 - Cross-stack payment request approval smoke:
   - `make verify.portal.payment_request_approval_smoke.container`
+  - Prepare step supports restart-only mode (skip module upgrade):
+    - `PAYMENT_APPROVAL_NEED_UPGRADE=0 make verify.portal.payment_request_approval_smoke.container`
   - Shared prepare step can be skipped when already prepared:
     - `PAYMENT_APPROVAL_SKIP_PREPARE=1 make verify.portal.payment_request_approval_smoke.container`
   - Covers login -> `api.data` payment request discovery -> `payment.request.submit` -> `payment.request.approve`.
   - Live path selection is action-surface aware:
     - probes `payment.request.available_actions` and prefers records with executable actions
     - reports `primary_action_key`, `allowed_actions`, and `blocked_reason_summary`
+    - reports `executable_actions` and `live_no_executable_actions` (preferred)
+    - compatibility key `live_no_allowed_actions` remains for 1~2 iterations and is listed in `deprecated_fields`
+    - downstream parser template (new-first fallback-old):
+      - `bool(summary.get("live_no_executable_actions", summary.get("live_no_allowed_actions", False)))`
   - Default credential source for this smoke is finance-role-first:
     - `ROLE_FINANCE_LOGIN` / `ROLE_FINANCE_PASSWORD` (defaults: `demo_role_finance` / `demo`)
     - falls back to `E2E_LOGIN` / `E2E_PASSWORD` only when role vars are unset.
