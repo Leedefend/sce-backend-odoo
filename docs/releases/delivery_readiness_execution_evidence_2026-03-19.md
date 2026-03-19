@@ -72,12 +72,11 @@ make verify.portal.role_surface_smoke.container
 
 ## 7. 支付审批 smoke 字段兼容说明
 
-为避免消费方误读，本轮对 `payment_request_approval_smoke` 的统计字段做了命名收口：
+为避免消费方误读，本轮对 `payment_request_approval_smoke` 的统计字段做了命名收口（N+2 已完成退场）：
 
 - 新字段：`live_no_executable_actions`
   - 含义：当前 actor 在 live 模式下无可执行动作（基于 `allowed && actor_matches_required_role`）
-- 兼容字段：`live_no_allowed_actions`
-  - 保留期：过渡 1~2 个迭代周期
-  - 产物中会同时输出 `deprecated_fields=["live_no_allowed_actions"]`
+
+`live_no_allowed_actions` 已在 N+2 移除，不再输出。
 
 建议所有下游脚本和报表优先切换到 `live_no_executable_actions`。

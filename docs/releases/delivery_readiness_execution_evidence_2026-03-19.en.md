@@ -72,12 +72,11 @@ This run directly supports the sprint by:
 
 ## 7. Payment Approval Smoke Field Compatibility
 
-To prevent downstream misinterpretation, this sprint aligns the summary field naming in `payment_request_approval_smoke`:
+To prevent downstream misinterpretation, this sprint aligns the summary field naming in `payment_request_approval_smoke` (N+2 sunset completed):
 
 - New field: `live_no_executable_actions`
   - Meaning: no executable action for the current actor in live mode (`allowed && actor_matches_required_role`)
-- Compatibility field: `live_no_allowed_actions`
-  - Retention window: 1~2 iteration cycles
-  - Output now includes `deprecated_fields=["live_no_allowed_actions"]`
+
+`live_no_allowed_actions` has been removed in N+2 and is no longer emitted.
 
 All downstream scripts/reports should migrate to `live_no_executable_actions` as the primary key.
