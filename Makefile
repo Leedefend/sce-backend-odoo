@@ -3070,7 +3070,16 @@ ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 
 ci.scene.delivery.readiness: guard.prod.forbid
-	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix || \
+	@CI_SCENE_DELIVERY_PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-strict}; \
+	 echo "[ci.scene.delivery.readiness] profile=$$CI_SCENE_DELIVERY_PROFILE"; \
+	 if [ "$$CI_SCENE_DELIVERY_PROFILE" = "restricted" ]; then \
+	   SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0 \
+	   SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=0 \
+	   SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=0 \
+	   $(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix; \
+	 else \
+	   $(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix; \
+	 fi || \
 	  (python3 scripts/verify/scene_delivery_failure_brief.py; \
 	   python3 scripts/verify/scene_delivery_failure_brief_summary.py; \
 	   exit 1)
