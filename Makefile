@@ -584,6 +584,12 @@ verify.portal.payment_request_approval_all_smoke.container: guard.prod.forbid ch
 	@$(MAKE) --no-print-directory verify.portal.payment_request_approval.prepare.container DB_NAME=$(DB_NAME)
 	@PAYMENT_APPROVAL_SKIP_PREPARE=1 $(MAKE) --no-print-directory verify.portal.payment_request_approval_smoke.container DB_NAME=$(DB_NAME)
 	@PAYMENT_APPROVAL_SKIP_PREPARE=1 $(MAKE) --no-print-directory verify.portal.payment_request_approval_handoff_smoke.container DB_NAME=$(DB_NAME)
+	@if [ "$(PAYMENT_APPROVAL_FIELD_AUDIT_STRICT)" = "1" ]; then \
+	  $(MAKE) --no-print-directory verify.portal.payment_request_approval_field_consumer_audit; \
+	else \
+	  $(MAKE) --no-print-directory verify.portal.payment_request_approval_field_consumer_audit || \
+	    echo "[warn] payment approval field consumer audit failed (set PAYMENT_APPROVAL_FIELD_AUDIT_STRICT=1 to block)"; \
+	fi
 
 .PHONY: verify.portal.payment_request_approval_field_consumer_audit
 verify.portal.payment_request_approval_field_consumer_audit: guard.prod.forbid check-compose-project check-compose-env

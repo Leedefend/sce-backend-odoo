@@ -452,6 +452,10 @@
 - One-command sequential aggregate (single upgrade/restart + both smokes):
   - `make verify.portal.payment_request_approval_all_smoke.container`
   - Use this target in CI/local when running both approval smokes to avoid concurrent `mod.upgrade` conflicts on the same DB.
+  - Includes deprecated-field consumer audit at tail.
+    - Default: non-blocking (warn only if audit fails).
+    - Strict block mode:
+      - `PAYMENT_APPROVAL_FIELD_AUDIT_STRICT=1 make verify.portal.payment_request_approval_all_smoke.container`
 - Deprecated-field consumer audit (N+1 migration prep):
   - `make verify.portal.payment_request_approval_field_consumer_audit`
   - Reports:
