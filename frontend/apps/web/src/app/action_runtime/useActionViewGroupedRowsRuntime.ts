@@ -1,6 +1,8 @@
 import type { Ref } from 'vue';
+import type { SceneListProfile } from '../resolvers/sceneRegistry';
 import { normalizeGroupPageOffset, serializeGroupPageOffsets } from '../runtime/actionViewGroupWindowRuntime';
 import { buildGroupedRowsListRequest, resolveGroupedPageFields } from '../runtime/actionViewGroupedRowsRuntime';
+import type { GroupSummaryItem, GroupedRow } from '../runtime/actionViewGroupRuntimeState';
 import {
   applyGroupedRowsPageChangeFailure,
   applyGroupedRowsHydrateResults,
@@ -33,23 +35,23 @@ type UseActionViewGroupedRowsRuntimeOptions = {
   groupWindowOffset: Ref<number>;
   collapsedGroupKeys: Ref<string[]>;
   groupPageOffsets: Ref<Record<string, number>>;
-  groupedRows: Ref<any[]>;
-  groupSummaryItems: Ref<any[]>;
+  groupedRows: Ref<GroupedRow[]>;
+  groupSummaryItems: Ref<GroupSummaryItem[]>;
   activeGroupSummaryKey: Ref<string>;
   activeGroupSummaryDomain: Ref<unknown[]>;
   groupSampleLimit: Ref<number>;
   columns: Ref<string[]>;
-  listProfile: Ref<any>;
+  listProfile: Ref<SceneListProfile | null>;
   sortLabel: Ref<string>;
-  routeQueryMap: Ref<any>;
+  routeQueryMap: Ref<Record<string, unknown>>;
   resolvedModelRef: Ref<string>;
-  modelRef: Ref<any>;
+  modelRef: Ref<string>;
   actionMetaContext: () => Dict | undefined;
   resolveEffectiveRequestContext: () => Dict;
   resolveEffectiveRequestContextRaw: () => string;
   mergeContext: (base: Dict | string | undefined, extra?: Dict) => Dict;
   syncRouteListState: (extra?: Record<string, unknown>) => void;
-  listRecordsRaw: (payload: Dict) => Promise<any>;
+  listRecordsRaw: (payload: Dict) => Promise<{ data?: unknown }>;
 };
 
 export function useActionViewGroupedRowsRuntime(options: UseActionViewGroupedRowsRuntimeOptions) {
@@ -193,7 +195,7 @@ export function useActionViewGroupedRowsRuntime(options: UseActionViewGroupedRow
     }
     const routeSnapshot = resolveActionViewRouteSnapshot(options.routeQueryMap.value);
     const routeGroupValue = routeSnapshot.groupValue;
-    const normalizeInput: any = {
+    const normalizeInput = {
       groupedRows: options.groupedRows.value,
       groupSummaryItems: options.groupSummaryItems.value,
       collapsedGroupKeys: options.collapsedGroupKeys.value,

@@ -389,7 +389,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
+import { batchUpdateRecords, exportRecordsCsv, listRecordsRaw } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -481,7 +481,6 @@ import { useActionViewActionPresentationRuntime } from '../app/action_runtime/us
 import {
   normalizeGroupPageOffset,
   parseGroupPageOffsets,
-  serializeGroupPageOffsets,
 } from '../app/runtime/actionViewGroupWindowRuntime';
 import {
   mergeSceneDomain,
@@ -562,10 +561,8 @@ import {
   resolveBatchActionErrorLabel,
   buildBatchUpdateRequest,
   resolveBatchActionFailureMessage,
-  resolveBatchActionGuard,
   resolveBatchActionResultMessage,
   resolveBatchAssignGuardMessage,
-  resolveBatchAssignGuard,
 } from '../app/runtime/actionViewBatchRuntime';
 import {
   resolveBatchActionDeleteMode,
@@ -588,7 +585,6 @@ import {
 } from '../app/runtime/actionViewBatchErrorDetailFlowRuntime';
 import {
   resolveBatchActionLastRequestState,
-  resolveBatchAssignLastRequestState,
 } from '../app/runtime/actionViewBatchRequestSeedRuntime';
 import {
   resolveAssigneeLoadFailureState,
@@ -724,13 +720,11 @@ import {
   resolveActionViewAvailableModes,
   resolveActionViewModeLabel,
   resolveActionViewSurfaceIntent,
-  type SurfaceIntent,
   type SurfaceIntentContract,
 } from '../app/contracts/actionViewSurfaceContract';
 import {
   mapProjectionMetricItems,
   resolveActionViewSurfaceKind,
-  type ActionViewSurfaceKind,
 } from '../app/contracts/actionViewProjectionContract';
 import {
   hasActionViewNoiseMarker,
@@ -741,7 +735,6 @@ import {
   resolveActionViewAdvancedTitle,
 } from '../app/contracts/actionViewAdvancedContract';
 import { useActionPageModel } from '../app/assemblers/action/useActionPageModel';
-import type { NavNode } from '@sc/schema';
 
 const route = useRoute();
 const router = useRouter();
@@ -854,7 +847,8 @@ const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
 const lastTrackedPreset = ref('');
 const statusApi = useStatus?.();
-const error = statusApi?.error ?? ref<any>(null);
+type StatusErrorLike = { code?: unknown; message?: string };
+const error = statusApi?.error ?? ref<StatusErrorLike | null>(null);
 const clearError = statusApi?.clearError ?? (() => {});
 const setError = statusApi?.setError ?? (() => {});
 type ContractColumnSchema = { name?: string };
@@ -932,34 +926,6 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     };
   };
 };
-type ActionMetaLoose = {
-  order?: string;
-  url?: string;
-};
-type ContractFilterChip = {
-  key: string;
-  label: string;
-  domain: unknown[];
-  domainRaw: string;
-  context: Record<string, unknown>;
-  contextRaw: string;
-};
-type ContractSavedFilterChip = {
-  key: string;
-  label: string;
-  domain: unknown[];
-  domainRaw: string;
-  context: Record<string, unknown>;
-  contextRaw: string;
-  isDefault: boolean;
-};
-type ContractGroupByChip = {
-  field: string;
-  label: string;
-  isDefault: boolean;
-  context: Record<string, unknown>;
-  contextRaw: string;
-};
 type ContractActionSelection = 'none' | 'single' | 'multi';
 type ContractActionButton = {
   key: string;
@@ -1022,9 +988,6 @@ const {
   strictContractMode,
   strictSurfaceContract,
   strictProjectionContract,
-  strictContractGuard,
-  strictContractMissingPaths,
-  strictContractDefaultsApplied,
   strictContractMissingSummary,
   strictContractDefaultsSummary,
   strictAdvancedViewContract,
@@ -1162,7 +1125,6 @@ const {
   resolveActionViewAdvancedHint,
 });
 const {
-  contractSurfaceIntent,
   surfaceIntent,
 } = useActionViewSurfaceIntentRuntime({
   actionContract,
@@ -1253,7 +1215,6 @@ const { buildHudEntries } = useActionViewHudEntriesRuntime({
 const hudEntries = computed(() => buildHudEntries());
 const {
   contractFilterChips,
-  filterPrimaryBudget,
   contractPrimaryFilterChips,
   contractOverflowFilterChips,
   contractSavedFilterChips,
@@ -1291,7 +1252,6 @@ const {
   resolveContractActionPresentation,
 } = useActionViewActionGroupingRuntime();
 const {
-  contractActionCount,
   contractPrimaryActions,
   contractOverflowActionGroups,
 } = useActionViewActionPresentationRuntime({
@@ -1512,20 +1472,8 @@ const {
 });
 
 const {
-  resolveContractFilterDomain,
-  resolveContractFilterDomainRaw,
-  resolveContractFilterContext,
-  resolveContractFilterContextRaw,
-  resolveSavedFilterDomain,
-  resolveSavedFilterDomainRaw,
-  resolveSavedFilterContext,
-  resolveSavedFilterContextRaw,
   resolveEffectiveFilterDomain,
   resolveEffectiveFilterDomainRaw,
-  resolveEffectiveFilterContext,
-  resolveEffectiveFilterContextRaw,
-  resolveGroupByContext,
-  resolveGroupByContextRaw,
   resolveEffectiveRequestContext,
   resolveEffectiveRequestContextRaw,
   mergeContext,

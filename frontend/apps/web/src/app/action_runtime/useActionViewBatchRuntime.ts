@@ -12,12 +12,28 @@ type BatchRequestLike = {
   context?: Record<string, unknown>;
 };
 
+type BatchErrorLine = { text: string; actionRaw?: string; actionLabel?: string };
+
+type BatchCatchState = {
+  batchMessage: string;
+  batchDetails: BatchErrorLine[];
+  failedCsvFileName: string;
+  failedCsvContentB64: string;
+  batchFailedOffset: number;
+  batchHasMoreFailures: boolean;
+  lastBatchRequest: BatchRequestLike | null;
+};
+
+type BatchResetState = BatchCatchState & {
+  batchFailedLimit: number;
+};
+
 type UseActionViewBatchRuntimeOptions = {
   selectedIds: Ref<number[]>;
   selectedAssigneeId: Ref<number | null>;
   batchBusy: Ref<boolean>;
   batchMessage: Ref<string>;
-  batchDetails: Ref<Array<{ text: string; actionRaw?: string; actionLabel?: string }>>;
+  batchDetails: Ref<BatchErrorLine[]>;
   failedCsvFileName: Ref<string>;
   failedCsvContentB64: Ref<string>;
   batchFailedOffset: Ref<number>;
@@ -38,15 +54,15 @@ type UseActionViewBatchRuntimeOptions = {
   buildIfMatchMap: (ids: number[]) => Record<number, string>;
   buildIdempotencyKey: (action: string, ids: number[], extra?: Record<string, unknown>) => string;
 
-  batchUpdateRecords: (payload: Record<string, unknown>) => Promise<any>;
-  exportRecordsCsv: (payload: Record<string, unknown>) => Promise<any>;
+  batchUpdateRecords: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  exportRecordsCsv: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
   downloadCsvBase64: (filename: string, mimeType: string, contentB64: string) => void;
 
   buildBatchUpdateRequest: (payload: Record<string, unknown>) => Record<string, unknown>;
-  buildBatchErrorLine: (payload: Record<string, unknown>) => { text: string; actionRaw?: string; actionLabel?: string };
-  applyBatchFailureArtifacts: (result: any, plan?: Record<string, unknown>) => void;
+  buildBatchErrorLine: (payload: Record<string, unknown>) => BatchErrorLine;
+  applyBatchFailureArtifacts: (result: Record<string, unknown>, plan?: Record<string, unknown>) => void;
 
-  resolveBatchOperationResetState: (input: { batchFailedLimit: number }) => any;
+  resolveBatchOperationResetState: (input: { batchFailedLimit: number }) => BatchResetState;
   resolveBatchActionTargetModel: (input: { resolvedModelRaw: string; routeModelRaw: string }) => string;
   resolveBatchActionDeleteMode: (input: { contractDeleteModeRaw: unknown }) => string;
   resolveBatchActionGuardDecision: (input: Record<string, unknown>) => { ok: boolean; reason?: string };
@@ -65,7 +81,7 @@ type UseActionViewBatchRuntimeOptions = {
   }) => { ifMatchMap: Record<number, string>; idempotencyKey: string };
   resolveBatchActionLastRequestState: (input: Record<string, unknown>) => BatchRequestLike;
   resolveBatchActionSuccessMessage: (input: Record<string, unknown>) => string;
-  resolveBatchFailureCatchState: (input: Record<string, unknown>) => any;
+  resolveBatchFailureCatchState: (input: Record<string, unknown>) => BatchCatchState;
   resolveBatchActionFailureFallback: (input: Record<string, unknown>) => Record<string, unknown>;
   resolveBatchAssignGuardDecision: (input: Record<string, unknown>) => { ok: boolean; reason?: string };
   resolveBatchAssignGuardMessage: (input: { reason?: string; text: (key: string, fallback: string) => string }) => string;
@@ -82,7 +98,7 @@ type UseActionViewBatchRuntimeOptions = {
   resolveBatchErrorHintResolver: (input: Record<string, unknown>) => (line: Record<string, unknown>) => string;
   resolveSuggestedAction: (suggestedAction: unknown, reasonCode: unknown, retryable: unknown) => string;
 
-  resolveBatchExportResetState: (input: { batchFailedLimit: number }) => any;
+  resolveBatchExportResetState: (input: { batchFailedLimit: number }) => BatchResetState;
   resolveBatchExportTargetModel: (input: { resolvedModelRaw: string; routeModelRaw: string }) => string;
   resolveBatchExportGuardDecision: (input: Record<string, unknown>) => { ok: boolean; reason?: string };
   resolveExportGuardMessage: (input: { reason?: string; text: (key: string, fallback: string) => string }) => string;
@@ -99,13 +115,13 @@ type UseActionViewBatchRuntimeOptions = {
   resolveExportNoContentMessage: (text: (key: string, fallback: string) => string) => string;
   resolveExportDoneMessage: (input: Record<string, unknown>) => string;
   resolveExportFailedMessage: (text: (key: string, fallback: string) => string) => string;
-  resolveBatchExportCatchState: (input: Record<string, unknown>) => any;
+  resolveBatchExportCatchState: (input: Record<string, unknown>) => BatchCatchState;
   resolveBatchExportErrorFallback: (input: Record<string, unknown>) => Record<string, unknown>;
 
   resolveLoadMoreFailuresGuardPlan: (input: Record<string, unknown>) => { ok: boolean; request: BatchRequestLike };
   resolveLoadMoreFailuresRequestPayload: (input: Record<string, unknown>) => Record<string, unknown>;
   resolveLoadMoreFailuresApplyPlan: () => Record<string, unknown>;
-  resolveLoadMoreFailuresCatchState: (input: Record<string, unknown>) => any;
+  resolveLoadMoreFailuresCatchState: (input: Record<string, unknown>) => BatchCatchState;
   resolveLoadMoreFailuresErrorFallback: (input: Record<string, unknown>) => Record<string, unknown>;
 
   hasActiveField: () => boolean;
@@ -420,4 +436,3 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
     handleLoadMoreFailures,
   };
 }
-

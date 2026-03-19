@@ -172,8 +172,8 @@ function stripRoleFromIdentity(identity: string, role: string): string {
   if (!source || !roleText) return source;
   const escapedRole = roleText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const removedRole = source
-    .replace(new RegExp(`[-_·\s]*${escapedRole}$`, 'i'), '')
-    .replace(new RegExp(`^${escapedRole}[-_·\s]*`, 'i'), '')
+    .replace(new RegExp(`[-_· ]*${escapedRole}$`, 'i'), '')
+    .replace(new RegExp(`^${escapedRole}[-_· ]*`, 'i'), '')
     .trim();
   return removedRole;
 }

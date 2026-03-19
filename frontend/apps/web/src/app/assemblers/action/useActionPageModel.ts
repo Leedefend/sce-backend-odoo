@@ -13,8 +13,6 @@ import type {
   FocusActionVM,
 } from './actionPageVm';
 
-type Dict = Record<string, unknown>;
-
 type SurfaceIntentInput = {
   title: string;
   summary: string;
