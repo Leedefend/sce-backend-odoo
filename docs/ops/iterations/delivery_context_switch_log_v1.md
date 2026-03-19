@@ -49,5 +49,5 @@ Each entry must include:
 - module: `frontend gate evidence`
 - reason: `确认前端主链从历史红灯切换到当前可交付绿灯`
 - completed_step: `pnpm -C frontend gate pass，并同步到gap backlog与scoreboard`
-- active_commit: `pending`
+- active_commit: `d07449d`
 - next_step: `Start P0.4 Scene Contract v1 strict schema closure plan with provider-shape blockerization`
