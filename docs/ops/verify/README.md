@@ -118,6 +118,15 @@
     - `make ops.scene.company_secondary.access APPLY=1`
   - Override credentials/target:
     - `ADMIN_LOGIN`, `ADMIN_PASSWD`, `TARGET_LOGIN`, `TARGET_COMPANY_ID`, `DB_NAME`, `E2E_BASE_URL`.
+- `make ops.scene.company_secondary.seed`
+  - Seeds/repairs company-2 accessibility prerequisites (company record + target user company assignment).
+  - Runs in dry-run by default (`APPLY=0`).
+  - Typical apply flow:
+    - `make ops.scene.company_secondary.seed APPLY=1 CREATE_COMPANY_IF_MISSING=1 CREATE_USER_IF_MISSING=1`
+    - `SC_COMPANY_ACCESS_PREFLIGHT_STRICT=1 make verify.scene.company_access.preflight.guard`
+  - Optional knobs:
+    - `TARGET_COMPANY_ID`, `TARGET_COMPANY_NAME`, `TARGET_LOGIN`, `TARGET_USER_NAME`, `TARGET_USER_PASSWORD`,
+      `SET_PRIMARY_COMPANY`, `CREATE_COMPANY_IF_MISSING`, `CREATE_USER_IF_MISSING`.
 - `make verify.delivery.journey.role_matrix.guard`
   - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
   - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
