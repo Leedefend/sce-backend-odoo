@@ -19,7 +19,7 @@
 | Scene engine migration matrix (9 modules) | PASS | `artifacts/backend/scene_engine_migration_matrix_report.json` |
 | Source fallback burn-down | PASS | `artifacts/backend/scene_source_fallback_burndown_report.json` |
 | Company snapshot collection | PASS / PASS_WITH_WARNINGS | `artifacts/backend/scene_company_snapshot_collect_report.json` |
-| Multi-company evidence accumulation | PASS (with warning if target<2) | `artifacts/backend/scene_multi_company_evidence_report.json` |
+| Multi-company evidence accumulation | PASS (with warning if target<2) | `artifacts/backend/scene_multi_company_evidence_report.json` (`requested company=2 currently resolves to effective company=1`) |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
 
 ## 9-Module Readiness Board
