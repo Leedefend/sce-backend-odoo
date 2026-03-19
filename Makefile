@@ -364,6 +364,7 @@ help:
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
 	@echo "  make verify.scene.delivery.readiness.role_matrix   # 推荐：日常默认一键验收（pm/executive 证据 + 严格链路）"
+	@echo "  make verify.scene.delivery.readiness.role_company_matrix   # 角色+公司双矩阵严格验收"
 	@echo "  make verify.scene.delivery.readiness"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
 	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
@@ -2028,6 +2029,12 @@ verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.delivery.readiness
 	@echo "[OK] verify.scene.delivery.readiness.role_matrix done"
 
+.PHONY: verify.scene.delivery.readiness.role_company_matrix
+verify.scene.delivery.readiness.role_company_matrix: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix
+	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.company_matrix.guard
+	@echo "[OK] verify.scene.delivery.readiness.role_company_matrix done"
+
 .PHONY: verify.scene.input_boundary.guard
 verify.scene.input_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_input_boundary_guard.py
@@ -2148,9 +2155,31 @@ verify.scene.registry_asset_snapshot.ops: guard.prod.forbid
 	E2E_PASSWORD=$${ROLE_OPS_PASSWORD:-$${ROLE_EXECUTIVE_PASSWORD:-demo}} \
 	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
 
+.PHONY: verify.scene.registry_asset_snapshot.company_primary
+verify.scene.registry_asset_snapshot.company_primary: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json \
+	E2E_LOGIN=$${COMPANY_PRIMARY_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	E2E_PASSWORD=$${COMPANY_PRIMARY_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
+	E2E_COMPANY_ID=$${COMPANY_PRIMARY_ID:-} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
+.PHONY: verify.scene.registry_asset_snapshot.company_secondary
+verify.scene.registry_asset_snapshot.company_secondary: guard.prod.forbid
+	@SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1 \
+	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json \
+	E2E_LOGIN=$${COMPANY_SECONDARY_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	E2E_PASSWORD=$${COMPANY_SECONDARY_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
+	E2E_COMPANY_ID=$${COMPANY_SECONDARY_ID:-} \
+	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
+
 .PHONY: verify.scene.base_contract_source_mix.role_matrix.guard
 verify.scene.base_contract_source_mix.role_matrix.guard: guard.prod.forbid verify.scene.registry_asset_snapshot.executive verify.scene.registry_asset_snapshot.pm verify.scene.registry_asset_snapshot.finance verify.scene.registry_asset_snapshot.ops
 	@python3 scripts/verify/scene_base_contract_source_mix_role_matrix_guard.py
+
+.PHONY: verify.scene.base_contract_source_mix.company_matrix.guard
+verify.scene.base_contract_source_mix.company_matrix.guard: guard.prod.forbid verify.scene.registry_asset_snapshot.company_primary verify.scene.registry_asset_snapshot.company_secondary
+	@python3 scripts/verify/scene_base_contract_source_mix_company_matrix_guard.py
 
 .PHONY: verify.scene.sample_registry_diff.guard
 verify.scene.sample_registry_diff.guard: guard.prod.forbid
