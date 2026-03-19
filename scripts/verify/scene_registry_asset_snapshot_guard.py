@@ -61,16 +61,32 @@ def _fetch_live_snapshot() -> dict:
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
     login = os.getenv("E2E_LOGIN") or "admin"
     password = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
+    login_company_id = _safe_int(os.getenv("E2E_COMPANY_ID"), 0)
+
+    login_params = {"db": db_name, "login": login, "password": password}
+    if login_company_id > 0:
+        login_params["company_id"] = login_company_id
 
     status, login_resp = http_post_json(
         intent_url,
-        {"intent": "login", "params": {"db": db_name, "login": login, "password": password}},
+        {"intent": "login", "params": login_params},
         headers={"X-Anonymous-Intent": "1"},
     )
     require_ok(status, login_resp, "login")
     token = _text(_as_dict(login_resp.get("data")).get("token"))
     if not token:
         raise RuntimeError("login response missing token")
+
+    login_data = _as_dict(login_resp.get("data"))
+    login_user = _as_dict(login_data.get("user"))
+    effective_company_id = _safe_int(login_data.get("company_id"), 0) or _safe_int(login_user.get("company_id"), 0)
+    allowed_company_ids = [
+        _safe_int(item, 0) for item in _as_list(login_data.get("allowed_company_ids")) if _safe_int(item, 0) > 0
+    ]
+    if not allowed_company_ids:
+        user_company_id = _safe_int(login_user.get("company_id"), 0)
+        if user_company_id > 0:
+            allowed_company_ids = [user_company_id]
 
     status, init_resp = http_post_json(
         intent_url,
@@ -131,6 +147,9 @@ def _fetch_live_snapshot() -> dict:
     return {
         "runtime_env": _text(_as_dict(_as_dict(data.get("scene_governance_v1")).get("delivery_policy")).get("runtime_env")) or _text(os.getenv("ENV") or "dev"),
         "role_code": _text(nav_meta.get("role_surface_code")) or "unknown",
+        "company_id": effective_company_id,
+        "allowed_company_ids": allowed_company_ids,
+        "login_company_id_requested": login_company_id if login_company_id > 0 else None,
         "scene_count": total_scene_count,
         "base_contract_bound_scene_count": _safe_int(scene_meta.get("base_contract_bound_scene_count"), 0),
         "compile_issue_scene_count": _safe_int(scene_meta.get("compile_issue_scene_count"), 0),

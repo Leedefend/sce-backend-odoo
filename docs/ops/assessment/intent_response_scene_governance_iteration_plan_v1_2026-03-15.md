@@ -358,9 +358,10 @@
 - 2026-03-16：已完成 T88 旧路由下线：`/api/ui/contract` 统一返回 `410 GONE`，提示迁移到 `/api/v1/intent` 的 `system.init` 场景契约链路；后端内部仍可通过 handler + `source_mode` 白名单使用原生能力。
 - 2026-03-16：已完成 T89 同类 `scene target unsupported` 清零兜底：后端在场景合并阶段统一补全 `target.action_id/menu_id`（由 `action_xmlid/menu_xmlid/menu.action` 解析），前端对“已在目标 route 且无 action/model”场景启用 idle 安全回退，避免误报错误页。
 - 2026-03-16：已完成 T90 侧边栏导航收敛：`scene_nav_contract` 默认仅展示 `role_surface.scene_candidates`（无候选时才回退展示 remaining 分组），防止交付面扩容后“其他场景”污染主导航；`meta.remaining_hidden` 暴露收敛状态。
+- 2026-03-19：已补齐“多角色 + 多公司”一键严格验收证据：新增 `verify.scene.delivery.readiness.role_company_matrix` 聚合入口、`verify.scene.base_contract_source_mix.company_matrix.guard` 公司矩阵守卫、`company_primary/company_secondary` 双公司快照采集目标，并在 `scene_registry_asset_snapshot_guard` 增加 `company_id/allowed_company_ids` 实样本输出。
 
 ## 下一步（按顺序）
 
 1. 继续提升 `asset_scene_count`（目标覆盖剩余无 action 场景），逐步压缩 `runtime-minimal` 触发面。
 2. 将 `workspace.home` 场景切换到正式 provider profile（替换别名兜底），并保持 `verify.scene.delivery.readiness` 持续通过。
-3. 补充多角色（`pm/executive`）与多公司场景下的一键严格验收证据，固化回归基线。
+3. （已完成）补充多角色（`pm/executive`）与多公司场景下的一键严格验收证据，固化回归基线。
