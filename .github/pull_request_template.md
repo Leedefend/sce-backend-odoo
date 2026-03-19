@@ -10,6 +10,15 @@
 - [ ] 代码重构 / 优化：
 - [ ] 文档更新：
 
+## 📦 交付冲刺状态（可选粘贴）
+
+> 用于交付冲刺 PR 的快速状态同步，可按需保留/删减。
+
+- `N+2` 兼容退场：`live_no_allowed_actions` 已移除，统一使用 `live_no_executable_actions`
+- 审批聚合链：`verify.portal.payment_request_approval_all_smoke.container` 通过
+- 字段消费巡检：`verify.portal.payment_request_approval_field_consumer_audit` 通过（`unexpected_deprecated_refs=0`）
+- 执行模式：`PAYMENT_APPROVAL_NEED_UPGRADE=0`（重启生效，不强制升级）
+
 ## 🧪 测试步骤 (How to Test)
 
 1. 升级模块：

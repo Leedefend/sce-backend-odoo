@@ -23,6 +23,15 @@ This scoreboard provides a single delivery-facing view for delivery managers, im
 - `pnpm -C frontend typecheck:strict`: pass
 - `pnpm -C frontend build`: pass
 
+### 2.2 Payment Approval Smoke N+2 Migration Status
+
+- `live_no_allowed_actions`: sunset completed (N+2)
+- `live_no_executable_actions`: single source of truth
+- Approval aggregate chain (strict audit mode):
+  - `PAYMENT_APPROVAL_NEED_UPGRADE=0 PAYMENT_APPROVAL_FIELD_AUDIT_STRICT=1 make verify.portal.payment_request_approval_all_smoke.container` passed
+- Field consumer audit:
+  - `make verify.portal.payment_request_approval_field_consumer_audit` passed (`unexpected_deprecated_refs=0`)
+
 ---
 
 ## 3. Nine-Module Readiness Matrix (Delivery View)
@@ -75,4 +84,3 @@ Status definition:
 
 1. Record latest passing environment tuple (DB/seed/bundle/commit)
 2. Wire this scoreboard into the release checklist
-
