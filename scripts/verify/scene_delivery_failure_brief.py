@@ -11,10 +11,21 @@ ROOT = Path(__file__).resolve().parents[2]
 REPORT_CANDIDATES = [
     "artifacts/backend/scene_product_delivery_readiness_report.json",
     "artifacts/backend/scene_base_contract_source_mix_role_matrix_report.json",
+    "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json",
     "artifacts/backend/scene_base_contract_source_mix_report.json",
+    "artifacts/backend/scene_company_snapshot_collect_report.json",
+    "artifacts/backend/scene_company_access_preflight_report.json",
+    "artifacts/backend/scene_multi_company_evidence_report.json",
     "artifacts/backend/scene_sample_registry_diff_report.json",
     "artifacts/backend/scene_governance_history_report.json",
 ]
+
+MULTI_COMPANY_REPORTS = {
+    "artifacts/backend/scene_company_snapshot_collect_report.json",
+    "artifacts/backend/scene_company_access_preflight_report.json",
+    "artifacts/backend/scene_multi_company_evidence_report.json",
+    "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json",
+}
 
 
 def _as_dict(value: Any) -> dict:
@@ -47,8 +58,34 @@ def _report_status(path: Path) -> tuple[bool, list[str], dict]:
     return ok, errors, payload
 
 
+def _collect_multi_company_signals(rel: str, payload: dict) -> list[str]:
+    signals: list[str] = []
+    if rel not in MULTI_COMPANY_REPORTS:
+        return signals
+    warnings = [str(item) for item in _as_list(payload.get("warnings")) if str(item)]
+    errors = [str(item) for item in _as_list(payload.get("errors")) if str(item)]
+    summary = _as_dict(payload.get("summary"))
+    if rel.endswith("scene_company_snapshot_collect_report.json"):
+        observed = _as_list(summary.get("observed_company_ids"))
+        signals.append(f"snapshot.observed_company_ids={observed}")
+    if rel.endswith("scene_company_access_preflight_report.json"):
+        reachable = summary.get("reachable_count")
+        signals.append(f"preflight.reachable_count={reachable}")
+    if rel.endswith("scene_multi_company_evidence_report.json"):
+        observed = _as_dict(summary).get("current_observed_company_ids")
+        historical = _as_dict(summary).get("historical_observed_company_ids")
+        signals.append(f"evidence.current_observed_company_ids={observed}")
+        signals.append(f"evidence.historical_observed_company_ids={historical}")
+    for item in warnings:
+        signals.append(f"warning={item}")
+    for item in errors:
+        signals.append(f"error={item}")
+    return signals
+
+
 def main() -> int:
     failed: list[dict[str, Any]] = []
+    multi_company_signals: list[dict[str, Any]] = []
     checked = 0
     for rel in REPORT_CANDIDATES:
         path = ROOT / rel
@@ -56,6 +93,9 @@ def main() -> int:
             continue
         checked += 1
         ok, errors, payload = _report_status(path)
+        signals = _collect_multi_company_signals(rel, payload)
+        if signals:
+            multi_company_signals.append({"path": rel, "signals": signals})
         if ok:
             continue
         failed.append(
@@ -68,6 +108,12 @@ def main() -> int:
 
     print("[scene_delivery_failure_brief]")
     print(f"checked_reports={checked}")
+    if multi_company_signals:
+        print("multi_company_highlight=1")
+        for row in multi_company_signals:
+            print(f"- multi_company_report={row['path']}")
+            for item in row.get("signals") or []:
+                print(f"  signal={item}")
     if not failed:
         print("failed_reports=0")
         print("status=NO_FAILURE_REPORT_DETECTED")
@@ -86,4 +132,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
