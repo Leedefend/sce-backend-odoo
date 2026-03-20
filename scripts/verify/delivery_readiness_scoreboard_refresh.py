@@ -17,6 +17,7 @@ SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.j
 SUMMARY_MD_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.md"
 MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_mainline_run_summary.json"
 ACTION_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_action_closure_report.json"
+MODULE9_SMOKE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_module9_smoke_report.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -184,6 +185,7 @@ def _to_summary_markdown(payload: dict) -> str:
                 f"| frontend_gate | {steps.get('frontend_gate', '')} |",
                 f"| scene_delivery_readiness | {steps.get('scene_delivery_readiness', '')} |",
                 f"| action_closure_smoke | {steps.get('action_closure_smoke', '')} |",
+                f"| module9_smoke | {steps.get('module9_smoke', '')} |",
                 f"| governance_truth | {steps.get('governance_truth', '')} |",
             ]
         )
@@ -359,6 +361,11 @@ def main() -> int:
     action_closure_ok = bool(action_closure_payload.get("ok")) if action_closure_present else False
     action_closure_label = _bool_status_label(action_closure_ok) if action_closure_present else "UNKNOWN"
 
+    module9_smoke_payload = _load_json(MODULE9_SMOKE_REPORT_PATH)
+    module9_smoke_present = bool(module9_smoke_payload)
+    module9_smoke_ok = bool(module9_smoke_payload.get("ok")) if module9_smoke_present else False
+    module9_smoke_label = _bool_status_label(module9_smoke_ok) if module9_smoke_present else "UNKNOWN"
+
     lines = _upsert_evidence_row(
         lines,
         "CI strict profile readiness",
@@ -382,6 +389,12 @@ def main() -> int:
         "Product delivery action closure smoke",
         action_closure_label,
         str(ACTION_CLOSURE_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Product delivery module-9 smoke",
+        module9_smoke_label,
+        str(MODULE9_SMOKE_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _normalize_evidence_table(lines)
     lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)
