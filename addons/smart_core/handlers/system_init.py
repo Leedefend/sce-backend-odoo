@@ -238,6 +238,24 @@ def _parse_with_tokens(value) -> set[str]:
                 tokens.add(token)
     return tokens
 
+
+def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> tuple[list[str], dict]:
+    minimal_order = [
+        "system.init",
+        "ui.contract",
+        "meta.intent_catalog",
+        "app.nav",
+        "app.open",
+        "auth.logout",
+    ]
+    minimal = [name for name in minimal_order if name in (intents or [])]
+    minimal_meta = {
+        name: intents_meta.get(name)
+        for name in minimal
+        if isinstance(intents_meta, dict) and isinstance(intents_meta.get(name), dict)
+    }
+    return minimal, minimal_meta
+
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
     return provider_resolve_scene_channel(env, user, params, get_header=collector.get_request_header)
@@ -329,8 +347,9 @@ class SystemInitHandler(BaseIntentHandler):
             or None
         )
 
-        # -------- 2.5) 可用意图（动态生成，严格基于注册+权限）--------
-        intents, intents_meta = IntentSurfaceBuilder().collect(env, user)
+        # -------- 2.5) 可用意图（最小启动集合 + 独立目录引用）--------
+        intents_all, intents_meta_all = IntentSurfaceBuilder().collect(env, user)
+        intents, intents_meta = _build_minimal_intent_surface(intents_all, intents_meta_all)
 
         # -------- 3/4) 首页契约 + 可选预取（仅 etag，不回传整包契约）--------
         preload_builder = SystemInitPreloadBuilder()
@@ -508,6 +527,11 @@ class SystemInitHandler(BaseIntentHandler):
             "intent": "ui.contract",
             "scene_key": landing_scene_key,
             "loaded": bool(include_workspace_home),
+        }
+        data["intent_catalog_ref"] = {
+            "intent": "meta.intent_catalog",
+            "loaded": False,
+            "count": len(intents_all or []),
         }
 
         data["scene_governance_v1"] = build_scene_governance_payload_v1(
