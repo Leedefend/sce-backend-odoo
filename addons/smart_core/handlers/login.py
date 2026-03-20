@@ -4,7 +4,6 @@ import time
 from typing import Dict, Any
 
 from odoo import SUPERUSER_ID, api
-from odoo.http import request
 from odoo.modules.registry import Registry
 from ..core.base_handler import BaseIntentHandler
 from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds, get_user_from_token
@@ -32,14 +31,6 @@ def _resolve_contract_mode(params: Dict[str, Any]) -> str:
         return "debug"
     # New contract is the default surface.
     return "default"
-
-
-def _safe_env():
-    """优先用 BaseIntentHandler 注入的 env；兜底用 request.env。"""
-    env = getattr(request, "env", None)
-    if env is None:
-        raise RuntimeError("无法获取 Odoo 环境（env 为空）")
-    return env
 
 
 def _user_groups_xmlids(user) -> list[str]:
@@ -180,6 +171,7 @@ class LoginHandler(BaseIntentHandler):
                 "mode": "full",
             },
             "contract": {
+                "response_mode": contract_mode,
                 "mode": contract_mode,
             },
         }
@@ -234,7 +226,8 @@ def _list_available_intents() -> list[Dict[str, str]]:
     """从全局注册表导出意图清单；失败时返回空列表不阻断登录。"""
     out = []
     try:
-        for name, handler_cls in (HANDLER_REGISTRY or {}).items():
+        for name in sorted((HANDLER_REGISTRY or {}).keys()):
+            handler_cls = (HANDLER_REGISTRY or {})[name]
             desc = getattr(handler_cls, "DESCRIPTION", None) or getattr(handler_cls, "__doc__", "") or ""
             out.append({"name": name, "description": desc})
     except Exception:

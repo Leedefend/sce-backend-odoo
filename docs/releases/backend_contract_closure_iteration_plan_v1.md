@@ -64,7 +64,11 @@
   - `login` payload 体积下降。
   - 前端登录后仅调用 `system.init`。
   - 默认响应中无 `groups`、无 `system.intents`。
-  - 默认返回结构断言：必须包含且仅包含主干结构 `session/user/entitlement/bootstrap/meta`（兼容字段仅在 `compat/debug` 模式出现）。
+  - 默认返回结构断言：必须包含且仅包含主干结构 `session/user/entitlement/bootstrap/contract`（兼容字段仅在 `compat/debug` 模式出现）。
+
+### P0-1.1 语义说明（login entitlement role）
+- `login.entitlement.role_code` 是登录阶段粗粒度角色摘要（如 `internal_user`/`external_user`），用于认证后的轻量引导。
+- 该字段不等价于 `system.init.role_surface.role_code` 的业务角色分面（如 `executive`/`owner`/`pm` 等），前端不得混用两者语义。
 
 ### P0-2 system.init 角色上下文统一
 - 目标：消除 `executive/owner` 混用与上下文漂移。
