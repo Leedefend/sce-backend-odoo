@@ -357,3 +357,12 @@ Each entry must include:
 - completed_step: `将 payment_requests 搜索闭环判定改为 filters/fields/group_by 任一非空即可；action_closure_smoke 与 mainline 均已 PASS`
 - active_commit: `57e4e88`
 - next_step: `Continue mainline delivery iteration and close next P0 blocker`
+
+### 2026-03-20T09:45:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/Delivery Mainline`
+- module: `module-9 smoke + entry scene mapping refresh`
+- reason: `把9模块覆盖从静态表格升级为可执行烟测，并修正过期 entry scene key`
+- completed_step: `新增 verify.product.delivery.module9.smoke，修复 project_execution_collab entry 从 projects.dashboard_showcase 到 projects.execution，mainline 新增 module9_smoke 且 PASS`
+- active_commit: `8a209ce`
+- next_step: `Continue mainline iteration on remaining P0 blockers`
