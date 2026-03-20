@@ -171,6 +171,40 @@ def _normalize_evidence_table(lines: list[str]) -> list[str]:
     return lines[:start] + normalized + lines[end:]
 
 
+def _upsert_release_gap_profile_posture(lines: list[str], strict_label: str, restricted_label: str) -> list[str]:
+    section_header = "## Release Blocking Gaps (Current)"
+    start = -1
+    end = -1
+    for index, line in enumerate(lines):
+        if line.strip() == section_header:
+            start = index
+            break
+    if start < 0:
+        return lines
+    for index in range(start + 1, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+    if end < 0:
+        end = len(lines)
+
+    posture_line = (
+        f"5. CI profile posture: strict={strict_label}, restricted={restricted_label}; "
+        "release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs."
+    )
+
+    for index in range(start + 1, end):
+        if lines[index].startswith("5. CI profile posture:"):
+            lines[index] = posture_line
+            return lines
+
+    insert_at = end
+    if insert_at > start + 1 and lines[insert_at - 1].strip() == "":
+        insert_at -= 1
+    lines.insert(insert_at, posture_line)
+    return lines
+
+
 def _status_label(state: dict) -> str:
     value = str(state.get("status") or "UNKNOWN").upper()
     if value not in {"PASS", "FAIL", "UNKNOWN"}:
@@ -215,19 +249,23 @@ def main() -> int:
 
     lines = SCOREBOARD_PATH.read_text(encoding="utf-8").splitlines()
     lines = _replace_snapshot(lines)
+    strict_label = _status_label(state["profiles"]["strict"])
+    restricted_label = _status_label(state["profiles"]["restricted"])
+
     lines = _upsert_evidence_row(
         lines,
         "CI strict profile readiness",
-        _status_label(state["profiles"]["strict"]),
+        strict_label,
         PROFILE_COMMANDS["strict"],
     )
     lines = _upsert_evidence_row(
         lines,
         "CI restricted profile readiness",
-        _status_label(state["profiles"]["restricted"]),
+        restricted_label,
         PROFILE_COMMANDS["restricted"],
     )
     lines = _normalize_evidence_table(lines)
+    lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)
     SCOREBOARD_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(SCOREBOARD_PATH)
