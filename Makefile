@@ -2581,6 +2581,10 @@ verify.product.delivery.freshness: guard.prod.forbid
 verify.product.delivery.governance_truth: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_governance_truth_guard.py
 
+.PHONY: verify.product.delivery.action_closure.smoke
+verify.product.delivery.action_closure.smoke: guard.prod.forbid
+	@python3 scripts/verify/product_delivery_action_closure_smoke.py
+
 .PHONY: verify.product.delivery.ready
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
@@ -2588,7 +2592,7 @@ verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap ver
 .PHONY: verify.product.delivery.mainline
 verify.product.delivery.mainline: guard.prod.forbid
 	@PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-restricted}; \
-	FRONTEND_STATUS=PASS; SCENE_STATUS=PASS; GOVERNANCE_STATUS=PASS; \
+	FRONTEND_STATUS=PASS; SCENE_STATUS=PASS; ACTION_STATUS=PASS; GOVERNANCE_STATUS=PASS; \
 	echo "[verify.product.delivery.mainline] step=frontend_gate"; \
 	if ! pnpm -C frontend gate; then FRONTEND_STATUS=FAIL; fi; \
 	echo "[verify.product.delivery.mainline] step=scene_delivery_readiness profile=$$PROFILE"; \
@@ -2599,16 +2603,23 @@ verify.product.delivery.mainline: guard.prod.forbid
 	else \
 	  SCENE_STATUS=SKIP; \
 	fi; \
+	echo "[verify.product.delivery.mainline] step=action_closure_smoke"; \
+	if [ "$$SCENE_STATUS" = "PASS" ]; then \
+	  if ! $(MAKE) --no-print-directory verify.product.delivery.action_closure.smoke; then ACTION_STATUS=FAIL; fi; \
+	else \
+	  ACTION_STATUS=SKIP; \
+	fi; \
 	echo "[verify.product.delivery.mainline] step=governance_truth"; \
 	if ! $(MAKE) --no-print-directory verify.product.delivery.governance_truth; then GOVERNANCE_STATUS=FAIL; fi; \
-		$(MAKE) --no-print-directory refresh.delivery.readiness.scoreboard >/dev/null; \
-		python3 -c "import json, pathlib; p=pathlib.Path('artifacts/backend/delivery_readiness_ci_summary.json'); d=json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}; o=d.get('overall') if isinstance(d.get('overall'), dict) else {}; print(f\"[verify.product.delivery.mainline] overall_ok={o.get('ok')} policy={o.get('policy')}\")"; \
 	python3 scripts/verify/delivery_mainline_run_summary.py \
 	  --profile $$PROFILE \
 	  --frontend $$FRONTEND_STATUS \
 	  --scene $$SCENE_STATUS \
+	  --action-closure $$ACTION_STATUS \
 	  --governance $$GOVERNANCE_STATUS; \
-	if [ "$$FRONTEND_STATUS" = "PASS" ] && [ "$$SCENE_STATUS" = "PASS" ] && [ "$$GOVERNANCE_STATUS" = "PASS" ]; then \
+		$(MAKE) --no-print-directory refresh.delivery.readiness.scoreboard >/dev/null; \
+		python3 -c "import json, pathlib; p=pathlib.Path('artifacts/backend/delivery_readiness_ci_summary.json'); d=json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}; o=d.get('overall') if isinstance(d.get('overall'), dict) else {}; print(f\"[verify.product.delivery.mainline] overall_ok={o.get('ok')} policy={o.get('policy')}\")"; \
+	if [ "$$FRONTEND_STATUS" = "PASS" ] && [ "$$SCENE_STATUS" = "PASS" ] && [ "$$ACTION_STATUS" = "PASS" ] && [ "$$GOVERNANCE_STATUS" = "PASS" ]; then \
 	  echo "[OK] verify.product.delivery.mainline done"; \
 	else \
 	  echo "[FAIL] verify.product.delivery.mainline"; \
