@@ -36,14 +36,16 @@ def main() -> int:
     parser.add_argument("--frontend", required=True)
     parser.add_argument("--scene", required=True)
     parser.add_argument("--action-closure", required=True)
+    parser.add_argument("--module9", required=True)
     parser.add_argument("--governance", required=True)
     args = parser.parse_args()
 
     frontend = _norm_status(args.frontend)
     scene = _norm_status(args.scene)
     action_closure = _norm_status(args.action_closure)
+    module9 = _norm_status(args.module9)
     governance = _norm_status(args.governance)
-    ok = frontend == "PASS" and scene == "PASS" and action_closure == "PASS" and governance == "PASS"
+    ok = frontend == "PASS" and scene == "PASS" and action_closure == "PASS" and module9 == "PASS" and governance == "PASS"
 
     payload = {
         "generated_at_utc": _utc_now(),
@@ -55,6 +57,7 @@ def main() -> int:
             "frontend_gate": frontend,
             "scene_delivery_readiness": scene,
             "action_closure_smoke": action_closure,
+            "module9_smoke": module9,
             "governance_truth": governance,
         },
     }
@@ -76,6 +79,7 @@ def main() -> int:
         f"| frontend_gate | {frontend} |",
         f"| scene_delivery_readiness | {scene} |",
         f"| action_closure_smoke | {action_closure} |",
+        f"| module9_smoke | {module9} |",
         f"| governance_truth | {governance} |",
     ]
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
