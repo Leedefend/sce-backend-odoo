@@ -64,6 +64,8 @@
     - `scripts/verify/scene_delivery_failure_brief_summary.py`
 - `make refresh.delivery.readiness.scoreboard`
   - Refreshes scoreboard snapshot metadata (`generated_at_utc/branch/commit_ref`) and keeps CI strict/restricted evidence rows in sync with stored profile state.
+  - Quick entry (human-readable):
+    - `artifacts/backend/delivery_readiness_ci_summary.md`
   - Emits machine-readable CI summary for pipeline dashboards:
     - `artifacts/backend/delivery_readiness_ci_summary.json`
 - `make verify.scene.product_delivery.readiness.guard`
