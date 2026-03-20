@@ -1,0 +1,29 @@
+{
+  "meta_intent_catalog": {
+    "payload_keys": [
+      "intent_catalog",
+      "intents",
+      "intents_meta"
+    ]
+  },
+  "scene_governance_v1": {
+    "payload_keys": [
+      "asset_queue",
+      "auto_degrade",
+      "contract_version",
+      "delivery_policy",
+      "diagnostics",
+      "gates",
+      "governance",
+      "nav_policy",
+      "reasons",
+      "role_surface_provider",
+      "runtime_source",
+      "scene_channel",
+      "scene_contract_ref",
+      "scene_metrics",
+      "scene_ready_consumption",
+      "surface_mapping"
+    ]
+  }
+}
