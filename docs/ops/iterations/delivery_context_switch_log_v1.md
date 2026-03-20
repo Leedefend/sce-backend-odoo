@@ -366,3 +366,12 @@ Each entry must include:
 - completed_step: `新增 verify.product.delivery.module9.smoke，修复 project_execution_collab entry 从 projects.dashboard_showcase 到 projects.execution，mainline 新增 module9_smoke 且 PASS`
 - active_commit: `8a209ce`
 - next_step: `Continue mainline iteration on remaining P0 blockers`
+
+### 2026-03-20T10:00:00Z
+- blocker_key: `gap.scene_contract_v1_strict_schema`
+- layer_target: `Ops/Delivery Mainline`
+- module: `strict profile recheck`
+- reason: `同步 strict 档位真实状态，避免看板仅反映 restricted 结果`
+- completed_step: `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness 失败于 scene_ready_consumption_trend_guard live fetch (Operation not permitted)`
+- active_commit: `417cfed`
+- next_step: `Keep mainline on restricted for local/no-network runner; rerun strict in live-enabled runner and refresh scoreboard`
