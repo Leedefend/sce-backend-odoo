@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCOREBOARD_PATH = ROOT / "docs" / "product" / "delivery" / "v1" / "delivery_readiness_scoreboard_v1.md"
 STATE_PATH = ROOT / "artifacts" / "backend" / "delivery_ci_profile_status.json"
 SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.json"
+SUMMARY_MD_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.md"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -64,6 +65,40 @@ def _to_summary_payload(state: dict) -> dict:
             "restricted": _profile("restricted"),
         },
     }
+
+
+def _to_summary_markdown(payload: dict) -> str:
+    scoreboard = payload.get("scoreboard") if isinstance(payload.get("scoreboard"), dict) else {}
+    profiles = payload.get("profiles") if isinstance(payload.get("profiles"), dict) else {}
+    strict = profiles.get("strict") if isinstance(profiles.get("strict"), dict) else {}
+    restricted = profiles.get("restricted") if isinstance(profiles.get("restricted"), dict) else {}
+
+    lines = [
+        "# Delivery Readiness CI Summary",
+        "",
+        f"- generated_at_utc: {payload.get('generated_at_utc', '')}",
+        f"- branch: {scoreboard.get('branch', '')}",
+        f"- commit_ref: {scoreboard.get('commit_ref', '')}",
+        f"- scoreboard: {scoreboard.get('path', '')}",
+        "",
+        "## Profiles",
+        "",
+        "| profile | status | ok | last_run_at_utc | command |",
+        "|---|---|---|---|---|",
+        "| strict | {status} | {ok} | {last} | `{cmd}` |".format(
+            status=strict.get("status", ""),
+            ok=str(strict.get("ok", "")),
+            last=str(strict.get("last_run_at_utc", "")),
+            cmd=str(strict.get("command", "")),
+        ),
+        "| restricted | {status} | {ok} | {last} | `{cmd}` |".format(
+            status=restricted.get("status", ""),
+            ok=str(restricted.get("ok", "")),
+            last=str(restricted.get("last_run_at_utc", "")),
+            cmd=str(restricted.get("command", "")),
+        ),
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def _git(cmd: list[str]) -> str:
@@ -170,7 +205,10 @@ def main() -> int:
         state["profiles"][args.profile]["command"] = PROFILE_COMMANDS[args.profile]
 
     _dump_json(STATE_PATH, state)
-    _dump_json(SUMMARY_PATH, _to_summary_payload(state))
+    summary_payload = _to_summary_payload(state)
+    _dump_json(SUMMARY_PATH, summary_payload)
+    SUMMARY_MD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SUMMARY_MD_PATH.write_text(_to_summary_markdown(summary_payload), encoding="utf-8")
 
     if not SCOREBOARD_PATH.is_file():
         raise SystemExit(f"missing scoreboard: {SCOREBOARD_PATH}")
@@ -195,6 +233,7 @@ def main() -> int:
     print(SCOREBOARD_PATH)
     print(STATE_PATH)
     print(SUMMARY_PATH)
+    print(SUMMARY_MD_PATH)
     print("[delivery_readiness_scoreboard_refresh] PASS")
     return 0
 
