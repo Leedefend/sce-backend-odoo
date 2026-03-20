@@ -154,6 +154,11 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("init_contract_v1", data.get("data", {}))
         self.assertIn("workspace_home_ref", data.get("data", {}))
         self.assertNotIn("workspace_home", data.get("data", {}))
+        default_route = data.get("data", {}).get("default_route") or {}
+        if isinstance(default_route, dict):
+            self.assertIn("reason", default_route)
+            self.assertIn("route", default_route)
+            self.assertIn("scene_key", default_route)
         init_contract = data.get("data", {}).get("init_contract_v1") or {}
         self.assertIn("session", init_contract)
         self.assertIn("nav", init_contract)

@@ -708,7 +708,18 @@ class NavDispatcher:
             n = q.pop(0)
             children = n.get("children") or []
             if not children and n.get("menu_id"):
-                return {"menu_id": n["menu_id"]}
+                scene_key = ""
+                if isinstance(n.get("meta"), dict):
+                    scene_key = str((n.get("meta") or {}).get("scene_key") or "").strip()
+                if not scene_key:
+                    scene_key = str(n.get("scene_key") or "").strip()
+                route = f"/workbench?scene={scene_key}" if scene_key else "/workbench"
+                return {
+                    "menu_id": n["menu_id"],
+                    "scene_key": scene_key or None,
+                    "route": route,
+                    "reason": "menu_fallback",
+                }
             q = children + q
         return "/workbench"
 

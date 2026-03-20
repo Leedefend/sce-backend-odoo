@@ -160,7 +160,12 @@ export interface AppInitResponse {
     company_id?: number | null;
   };
   nav: NavNode[];
-  default_route?: { menu_id?: number } | string;
+  default_route?: {
+    menu_id?: number;
+    scene_key?: string | null;
+    route?: string;
+    reason?: string;
+  } | string;
   workspace_home?: Record<string, unknown>;
   workspace_home_ref?: {
     intent?: string;
