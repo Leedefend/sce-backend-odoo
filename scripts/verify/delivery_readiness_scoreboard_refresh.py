@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCOREBOARD_PATH = ROOT / "docs" / "product" / "delivery" / "v1" / "delivery_readiness_scoreboard_v1.md"
 STATE_PATH = ROOT / "artifacts" / "backend" / "delivery_ci_profile_status.json"
+SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -36,6 +37,33 @@ def _load_json(path: Path) -> dict:
 def _dump_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _to_summary_payload(state: dict) -> dict:
+    profiles = state.get("profiles") if isinstance(state.get("profiles"), dict) else {}
+
+    def _profile(name: str) -> dict:
+        row = profiles.get(name) if isinstance(profiles.get(name), dict) else {}
+        status = str(row.get("status") or "UNKNOWN").upper()
+        return {
+            "status": status,
+            "ok": status == "PASS",
+            "last_run_at_utc": str(row.get("last_run_at_utc") or "").strip(),
+            "command": str(row.get("command") or PROFILE_COMMANDS[name]).strip(),
+        }
+
+    return {
+        "generated_at_utc": _utc_now(),
+        "scoreboard": {
+            "path": str(SCOREBOARD_PATH.relative_to(ROOT)),
+            "branch": _git(["git", "branch", "--show-current"]) or "unknown",
+            "commit_ref": _git(["git", "rev-parse", "--short", "HEAD"]) or "unknown",
+        },
+        "profiles": {
+            "strict": _profile("strict"),
+            "restricted": _profile("restricted"),
+        },
+    }
 
 
 def _git(cmd: list[str]) -> str:
@@ -142,6 +170,7 @@ def main() -> int:
         state["profiles"][args.profile]["command"] = PROFILE_COMMANDS[args.profile]
 
     _dump_json(STATE_PATH, state)
+    _dump_json(SUMMARY_PATH, _to_summary_payload(state))
 
     if not SCOREBOARD_PATH.is_file():
         raise SystemExit(f"missing scoreboard: {SCOREBOARD_PATH}")
@@ -165,6 +194,7 @@ def main() -> int:
 
     print(SCOREBOARD_PATH)
     print(STATE_PATH)
+    print(SUMMARY_PATH)
     print("[delivery_readiness_scoreboard_refresh] PASS")
     return 0
 
