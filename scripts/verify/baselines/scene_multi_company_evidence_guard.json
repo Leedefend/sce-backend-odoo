@@ -1,0 +1,8 @@
+{
+  "company_matrix_report_file": "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json",
+  "state_file": "artifacts/backend/scene_multi_company_evidence_state.json",
+  "report_json": "artifacts/backend/scene_multi_company_evidence_report.json",
+  "report_md": "artifacts/backend/scene_multi_company_evidence_report.md",
+  "min_companies_block": 1,
+  "min_companies_target": 2
+}

@@ -1,0 +1,19 @@
+{
+  "companies": [
+    "primary",
+    "secondary"
+  ],
+  "state_files": {
+    "primary": "artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json",
+    "secondary": "artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json"
+  },
+  "thresholds": {
+    "min_scene_count": 50,
+    "min_asset_ratio": 0.8,
+    "max_runtime_minimal_ratio": 0.1,
+    "max_none_ratio": 0.0,
+    "min_companies_observed": 1
+  },
+  "report_json": "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.json",
+  "report_md": "artifacts/backend/scene_base_contract_source_mix_company_matrix_report.md"
+}

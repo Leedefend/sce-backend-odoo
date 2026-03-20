@@ -8,7 +8,7 @@
       "portal.dashboard",
       "portal.lifecycle",
       "projects.dashboard",
-      "projects.dashboard_showcase",
+      "projects.execution",
       "projects.intake",
       "projects.ledger",
       "projects.list",
@@ -50,7 +50,7 @@
       "module_name": "项目执行与任务协同",
       "target_roles": ["pm"],
       "core_value": "跟踪项目执行进度、风险与周报，推动日常协同。",
-      "entry_scenes": ["projects.dashboard", "projects.dashboard_showcase"],
+      "entry_scenes": ["projects.dashboard", "projects.execution"],
       "menu_hints": ["projects.dashboard"],
       "models": ["project.task", "project.project"],
       "capabilities": [

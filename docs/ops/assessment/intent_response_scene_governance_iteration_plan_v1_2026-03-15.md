@@ -358,9 +358,13 @@
 - 2026-03-16：已完成 T88 旧路由下线：`/api/ui/contract` 统一返回 `410 GONE`，提示迁移到 `/api/v1/intent` 的 `system.init` 场景契约链路；后端内部仍可通过 handler + `source_mode` 白名单使用原生能力。
 - 2026-03-16：已完成 T89 同类 `scene target unsupported` 清零兜底：后端在场景合并阶段统一补全 `target.action_id/menu_id`（由 `action_xmlid/menu_xmlid/menu.action` 解析），前端对“已在目标 route 且无 action/model”场景启用 idle 安全回退，避免误报错误页。
 - 2026-03-16：已完成 T90 侧边栏导航收敛：`scene_nav_contract` 默认仅展示 `role_surface.scene_candidates`（无候选时才回退展示 remaining 分组），防止交付面扩容后“其他场景”污染主导航；`meta.remaining_hidden` 暴露收敛状态。
+- 2026-03-19：已补齐“多角色 + 多公司”一键严格验收证据：新增 `verify.scene.delivery.readiness.role_company_matrix` 聚合入口、`verify.scene.base_contract_source_mix.company_matrix.guard` 公司矩阵守卫、`company_primary/company_secondary` 双公司快照采集目标，并在 `scene_registry_asset_snapshot_guard` 增加 `company_id/allowed_company_ids` 实样本输出。
+- 2026-03-19：已完成 asset-first 门槛收紧（T91）：`scene_base_contract_source_mix_guard` 升级到 `min_scene_count=50/min_asset_ratio>=0.85/max_runtime_minimal<=0.05`，`scene_product_delivery_readiness_guard` 与 `scene_ready_consumption_trend_guard` 的 `min_scene_type_count` 升级到 `4`，并将消费率门槛提升到 `0.9`。
+- 2026-03-19：已新增 no-action 防回退守卫（T92）：新增 `verify.scene.no_action_scene.guard`（基于 `scene_registry_asset_snapshot_state` 强制 `min_action_total>=2` 且 `max_no_action_scene_count=0`），并纳入 `verify.scene.runtime_boundary.gate`。
+- 2026-03-19：已完成资产队列压实自愈（T93）：`ui_base_contract_asset_event_queue` 在 `enqueue/pop/get_queue_metrics` 入口统一做队列规范化（去重、`__pkg` 归一）并在指标读取时自动落盘压实，避免历史变体键导致 `queue_size/remaining_count` 长期高位。
 
 ## 下一步（按顺序）
 
 1. 继续提升 `asset_scene_count`（目标覆盖剩余无 action 场景），逐步压缩 `runtime-minimal` 触发面。
 2. 将 `workspace.home` 场景切换到正式 provider profile（替换别名兜底），并保持 `verify.scene.delivery.readiness` 持续通过。
-3. 补充多角色（`pm/executive`）与多公司场景下的一键严格验收证据，固化回归基线。
+3. （已完成）补充多角色（`pm/executive`）与多公司场景下的一键严格验收证据，固化回归基线。

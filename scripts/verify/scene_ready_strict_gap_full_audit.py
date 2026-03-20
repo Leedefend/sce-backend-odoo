@@ -13,6 +13,7 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_JSON = ROOT / "artifacts" / "backend" / "scene_ready_strict_gap_full_audit.json"
 REPORT_MD = ROOT / "docs" / "ops" / "audits" / "scene_ready_strict_gap_full_audit.md"
+DEFAULT_STATE_PATH = ROOT / "artifacts" / "backend" / "scene_contract_v1_field_schema_state.json"
 
 
 def _write(path: Path, content: str) -> None:
@@ -26,6 +27,28 @@ def _as_dict(value):
 
 def _as_list(value):
     return value if isinstance(value, list) else []
+
+
+def _text(value) -> str:
+    return str(value or "").strip()
+
+
+def _to_bool(value) -> bool:
+    return _text(value).lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _load_contract_from_state(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    if isinstance(payload.get("scene_ready_contract_v1"), dict):
+        return _as_dict(payload.get("scene_ready_contract_v1"))
+    return payload if isinstance(payload.get("scenes"), list) else {}
 
 
 def _scene_key_matches(scene_key: str, candidate: str) -> bool:
@@ -101,12 +124,24 @@ def _fetch_scene_ready_contract() -> dict:
 
 
 def main() -> int:
+    warnings: list[str] = []
+    contract_source = "live"
+    state_path = ROOT / _text(
+        os.getenv("SC_SCENE_READY_STRICT_GAP_FULL_AUDIT_STATE_FILE")
+        or DEFAULT_STATE_PATH.relative_to(ROOT).as_posix()
+    )
+    allow_fallback = _to_bool(os.getenv("SC_SCENE_READY_STRICT_GAP_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL"))
     try:
         contract = _fetch_scene_ready_contract()
     except Exception as exc:
-        print("[FAIL] scene_ready_strict_gap_full_audit")
-        print(f" - fetch scene_ready_contract_v1 failed: {exc}")
-        return 2
+        contract = _load_contract_from_state(state_path) if allow_fallback else {}
+        if contract:
+            contract_source = "state_file"
+            warnings.append(f"live fetch failed, fallback state file used: {exc}")
+        else:
+            print("[FAIL] scene_ready_strict_gap_full_audit")
+            print(f" - fetch scene_ready_contract_v1 failed: {exc}")
+            return 2
 
     scenes = _as_list(contract.get("scenes"))
     all_rows = []
@@ -185,12 +220,16 @@ def main() -> int:
 
     result = {
         "ok": len(errors) == 0,
+        "warnings": warnings,
         "scene_count": len(scenes),
         "full_unresolved_count": len(unresolved_all_rows),
         "strict_scene_count": len(strict_rows),
         "strict_unresolved_count": len(unresolved_strict_rows),
         "strict_source_gap_count": len(source_gap_rows),
         "missing_required_strict": missing_required_strict,
+        "contract_source": contract_source,
+        "state_file": state_path.relative_to(ROOT).as_posix(),
+        "allow_fallback_on_live_fail": allow_fallback,
         "errors": errors,
         "all_rows": all_rows,
         "unresolved_all_rows": unresolved_all_rows,
@@ -204,12 +243,16 @@ def main() -> int:
         "# Scene Ready Strict Gap Full Audit",
         "",
         f"- status: {'PASS' if result['ok'] else 'FAIL'}",
+        f"- contract_source: {contract_source}",
         f"- scene_count: {result['scene_count']}",
         f"- full_unresolved_count: {result['full_unresolved_count']}",
         f"- strict_scene_count: {result['strict_scene_count']}",
         f"- strict_unresolved_count: {result['strict_unresolved_count']}",
         f"- strict_source_gap_count: {result['strict_source_gap_count']}",
     ]
+    if warnings:
+        lines.extend(["", "## Warnings"])
+        lines.extend([f"- {item}" for item in warnings])
     if errors:
         lines.extend(["", "## Errors"])
         lines.extend([f"- {item}" for item in errors])

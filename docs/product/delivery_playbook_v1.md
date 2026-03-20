@@ -28,3 +28,10 @@ Run one reproducible delivery simulation from installation to role-based usage.
 - Role surface matches bundle + tier policy.
 - No smart_core source mutation.
 - Core flow passes without 5xx.
+
+## Evidence Board
+
+- Delivery manager one-page evidence board:
+  - `docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md`
+- Default strict evidence command:
+  - `make verify.scene.delivery.readiness.role_company_matrix`

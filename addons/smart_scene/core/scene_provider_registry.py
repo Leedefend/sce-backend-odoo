@@ -87,22 +87,6 @@ def _load_module(path: Path, module_name: str):
 
 
 def _register_fallback_providers(registry: SceneProviderRegistry, addons_root: Path) -> None:
-    workspace_candidates = [
-        addons_root / "smart_construction_scene" / "profiles" / "workspace_home_scene_content.py",
-        addons_root / "smart_construction_scene" / "services" / "workspace_home_scene_content.py",
-    ]
-    for index, path in enumerate(workspace_candidates):
-        registry.register(
-            SceneContentProvider(
-                scene_key="workspace.home",
-                provider_key=f"construction.workspace_home.fallback.{index + 1}",
-                module_name="smart_construction_scene",
-                provider_path=path,
-                priority=200 - index,
-                source="fallback_candidates",
-            )
-        )
-
     project_dashboard_candidates = [
         addons_root / "smart_construction_scene" / "profiles" / "project_dashboard_scene_content.py",
         addons_root / "smart_construction_scene" / "services" / "project_dashboard_scene_content.py",
@@ -134,18 +118,6 @@ def _register_fallback_providers(registry: SceneProviderRegistry, addons_root: P
                 source="fallback_candidates",
             )
         )
-
-    registry.register(
-        SceneContentProvider(
-            scene_key="workspace.home",
-            provider_key="legacy.workspace_home",
-            module_name="smart_core",
-            provider_path=addons_root / "smart_core" / "core" / "workspace_home_data_provider.py",
-            priority=50,
-            source="legacy_fallback",
-        )
-    )
-
 
 def _registration_module_candidates(addons_root: Path) -> Iterable[tuple[str, Path]]:
     candidates = [

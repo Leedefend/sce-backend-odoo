@@ -15,22 +15,49 @@ def _text(value: Any) -> str:
     return str(value or "").strip()
 
 
-def _load_queue(config) -> list[str]:
-    raw = _text(config.get_param(QUEUE_KEY) or "")
-    if not raw:
-        return []
-    try:
-        payload = json.loads(raw)
-    except Exception:
-        return []
+def _normalize_scene_key(value: Any) -> str:
+    key = _text(value).lower()
+    if not key:
+        return ""
+    if "__pkg" in key:
+        base = key.split("__pkg", 1)[0].strip()
+        if base:
+            return base
+    return key
+
+
+def _normalize_queue_payload(payload: Any) -> list[str]:
     if not isinstance(payload, list):
         return []
     out: list[str] = []
+    seen = set()
     for item in payload:
-        key = _text(item)
-        if key:
-            out.append(key)
+        key = _normalize_scene_key(item)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(key)
     return out
+
+
+def _load_queue_with_changed(config) -> tuple[list[str], bool]:
+    raw = _text(config.get_param(QUEUE_KEY) or "")
+    if not raw:
+        return [], False
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return [], True
+    if not isinstance(payload, list):
+        return [], True
+    normalized = _normalize_queue_payload(payload)
+    changed = normalized != payload
+    return normalized, changed
+
+
+def _load_queue(config) -> list[str]:
+    queue, _ = _load_queue_with_changed(config)
+    return queue
 
 
 def _save_queue(config, queue: list[str]) -> None:
@@ -56,11 +83,13 @@ def enqueue_scene_keys(
     max_queue_size: int = DEFAULT_MAX_QUEUE_SIZE,
 ) -> dict:
     config = env["ir.config_parameter"].sudo()
-    current = _load_queue(config)
+    current, changed = _load_queue_with_changed(config)
+    if changed:
+        _save_queue(config, current)
     existing = set(current)
     added = 0
     for item in scene_keys or []:
-        key = _text(item)
+        key = _normalize_scene_key(item)
         if not key or key in existing:
             continue
         current.append(key)
@@ -86,7 +115,9 @@ def enqueue_scene_keys(
 
 def pop_scene_keys(env, *, limit: int = 50) -> dict:
     config = env["ir.config_parameter"].sudo()
-    current = _load_queue(config)
+    current, changed = _load_queue_with_changed(config)
+    if changed:
+        _save_queue(config, current)
     batch_size = max(int(limit or 0), 1)
     selected = current[:batch_size]
     remain = current[batch_size:]
@@ -111,8 +142,20 @@ def pop_scene_keys(env, *, limit: int = 50) -> dict:
 
 def get_queue_metrics(env) -> dict:
     config = env["ir.config_parameter"].sudo()
-    queue = _load_queue(config)
+    queue, changed = _load_queue_with_changed(config)
+    if changed:
+        _save_queue(config, queue)
     meta = _load_queue_meta(config)
+    if changed:
+        meta.update(
+            {
+                "last_operation": "compact",
+                "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "remaining_count": len(queue),
+                "size": len(queue),
+            }
+        )
+        config.set_param(QUEUE_META_KEY, json.dumps(meta, ensure_ascii=False, separators=(",", ":")))
     return {
         "queue_size": len(queue),
         "updated_at": _text(meta.get("updated_at")),
@@ -121,5 +164,5 @@ def get_queue_metrics(env) -> dict:
         "last_operation": _text(meta.get("last_operation")),
         "consumed_at": _text(meta.get("consumed_at")),
         "popped_count": int(meta.get("popped_count") or 0),
-        "remaining_count": int(meta.get("remaining_count") or len(queue)),
+        "remaining_count": len(queue),
     }

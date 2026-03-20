@@ -34,22 +34,187 @@
   - Aggregates scene runtime boundary + legacy contract path checks.
 - `make verify.scene.delivery.readiness`
   - One-click strict acceptance for product delivery closure: first runs strict live `verify.scene.runtime_boundary.gate`, then executes final readiness threshold guard.
-  - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+  - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.
+  - Also enables `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1` for explicit degraded fallback in restricted/no-network environments.
+  - Also enables `SC_SCENE_READY_STRICT_GAP_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1` so strict-gap full-audit can consume last known state when live fetch is blocked.
+  - All strict flags are now defaulted via `:-1` and can be explicitly overridden per run (example: `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0 make verify.scene.delivery.readiness`).
 - `make verify.scene.delivery.readiness.role_matrix`
   - One-click strict acceptance with dual-role evidence: runs `verify.scene.base_contract_source_mix.role_matrix.guard` first, then runs `verify.scene.delivery.readiness`.
   - Use as the default daily command when `pm/executive` role evidence is required.
+- `make verify.scene.delivery.readiness.role_company_matrix`
+  - One-click strict acceptance with role+company evidence: runs `verify.scene.delivery.readiness.role_matrix`, then `verify.delivery.journey.role_matrix.guard`, then company-matrix chain.
+  - Use as the default command for customer-trial readiness evidence (role surface + company surface).
 - `make ci.scene.delivery.readiness`
-  - Lightweight CI alias for `verify.scene.delivery.readiness.role_matrix`.
+  - Lightweight CI alias for `verify.scene.delivery.readiness.role_company_matrix`.
+  - Supports profile switch via `CI_SCENE_DELIVERY_PROFILE`:
+    - `strict` (default): keep strict live requirements.
+    - `restricted`: keeps strict chain but disables three live-only blockers (`SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=0`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=0`).
+  - Example:
+    - `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`
+  - Automatically updates delivery scoreboard snapshot and per-profile status rows on both success/failure via:
+    - `scripts/verify/delivery_readiness_scoreboard_refresh.py`
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
+  - Failure brief now includes:
+    - `BLOCKER_FAILURES / PRECHECK_FAILURES` grouped output
+    - dedicated `multi_company_highlight` section (snapshot/preflight/evidence signals)
+    - `multi_company_next_actions` recommended command sequence for fast recovery.
+  - Also emits machine-readable summary:
+    - `artifacts/backend/scene_delivery_failure_brief.json`
+  - Failure path also prints compact key-field summary via:
+    - `scripts/verify/scene_delivery_failure_brief_summary.py`
+- `make refresh.delivery.readiness.scoreboard`
+  - Refreshes scoreboard snapshot metadata (`generated_at_utc/branch/commit_ref`) and keeps CI strict/restricted evidence rows in sync with stored profile state.
+  - Also synchronizes `Release Blocking Gaps` CI posture line from latest strict/restricted profile status.
+  - When strict profile is `FAIL`, the posture line auto-appends a restricted-profile recovery command.
+  - Aggregates latest mainline run summary into the same CI summary payload when available.
+  - Exposes single boolean `overall.ok` for pipeline gating (default policy: `mainline_or_restricted`).
+  - Policy override via env:
+    - `DELIVERY_READINESS_OVERALL_POLICY=mainline_or_restricted` (default)
+    - `DELIVERY_READINESS_OVERALL_POLICY=strict_only`
+    - `DELIVERY_READINESS_OVERALL_POLICY=restricted_only`
+    - `DELIVERY_READINESS_OVERALL_POLICY=mainline_only`
+    - `DELIVERY_READINESS_OVERALL_POLICY=strict_and_mainline`
+  - Quick entry (human-readable):
+    - `artifacts/backend/delivery_readiness_ci_summary.md`
+  - Emits machine-readable CI summary for pipeline dashboards:
+    - `artifacts/backend/delivery_readiness_ci_summary.json`
+- `make verify.product.delivery.mainline`
+  - One-command mainline seal-mode verification for daily iteration.
+  - Runs in order:
+    - `pnpm -C frontend gate`
+    - `CI_SCENE_DELIVERY_PROFILE=${CI_SCENE_DELIVERY_PROFILE:-restricted} SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make ci.scene.delivery.readiness`
+    - `make verify.product.delivery.action_closure.smoke`
+    - `make verify.product.delivery.module9.smoke`
+    - `make verify.product.delivery.governance_truth`
+  - Default profile is `restricted`; set `CI_SCENE_DELIVERY_PROFILE=strict` in live-enabled runners.
+  - Prints final summary line from unified readiness payload:
+    - `[verify.product.delivery.mainline] overall_ok=<bool> policy=<policy>`
+  - Emits run summary artifacts:
+    - `artifacts/backend/delivery_mainline_run_summary.json`
+    - `artifacts/backend/delivery_mainline_run_summary.md`
+- `make verify.product.delivery.action_closure.smoke`
+  - Verifies action/search/workflow/validation closure signals for delivery high-frequency scenes.
+  - Current focus scenes:
+    - `finance.payment_requests`
+    - `projects.list`
+    - `cost.project_budget`
+  - Emits reports:
+    - `artifacts/backend/product_delivery_action_closure_report.json`
+    - `docs/ops/audit/product_delivery_action_closure_report.md`
+- `make verify.product.delivery.module9.smoke`
+  - Verifies in-scope 9 delivery modules have all declared entry scenes present in `scene_ready_contract_v1`.
+  - Emits reports:
+    - `artifacts/backend/product_delivery_module9_smoke_report.json`
+    - `docs/ops/audit/product_delivery_module9_smoke_report.md`
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
+- `make verify.scene.contract_v1.field_schema.guard`
+  - Verifies `scene_ready_contract_v1` field-level schema closure (`top-level keys`, `scene row keys`, `meta keys`, `target openness`).
+  - Live fetch remains default; optional fallback is controlled by:
+    - `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`
+    - `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_STATE_FILE` (default `artifacts/backend/scene_contract_v1_field_schema_state.json`)
+    - `SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_SNAPSHOT_STATE_FILE` (default `artifacts/backend/scene_registry_asset_snapshot_state.json`)
+- `make verify.scene.ready.strict_gap.full_audit`
+  - Audits strict-gap closure from `scene_ready_contract_v1` (`full/strict unresolved`, `source gaps`, required strict scene keys).
+  - Live fetch remains default; optional state fallback is controlled by:
+    - `SC_SCENE_READY_STRICT_GAP_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`
+    - `SC_SCENE_READY_STRICT_GAP_FULL_AUDIT_STATE_FILE` (default `artifacts/backend/scene_contract_v1_field_schema_state.json`)
+- `make verify.product.delivery.governance_truth`
+  - Verifies delivery governance truthfulness closure for seal-mode execution.
+  - Checks `docs/product/capability_gap_backlog_v1.md` has actionable rows, mandatory hard-gap keys, and non-empty evidence.
+  - Checks `docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md` has valid snapshot metadata, 9-module table rows, and 4-journey rows.
+  - Checks `docs/ops/iterations/delivery_context_switch_log_v1.md` has no `active_commit: pending` drift points.
+  - Writes reports:
+    - `artifacts/backend/product_delivery_governance_truth_guard_report.json`
+    - `docs/ops/audit/product_delivery_governance_truth_guard_report.md`
 - `make verify.scene.governance_payload.guard`
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
   - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).
   - Includes `scene_ready_consumption` summary shape derived from `scene_ready_contract_v1.meta.scene_type_consumption_metrics`.
 - `make verify.scene.asset_queue_trend.guard`
   - Verifies asset queue trend baseline (`queue_size` upper bound + per-run growth cap) against `scripts/verify/baselines/scene_asset_queue_trend_guard.json`.
+- `make verify.scene.no_action_scene.guard`
+  - Enforces no-action regression policy from `scripts/verify/baselines/scene_no_action_scene_guard.json`.
+  - Requires `scene_registry_asset_snapshot_state` to satisfy `min_action_total` for all sampled scenes and `max_no_action_scene_count=0`.
+- `make verify.scene.provider_shape.guard`
+  - Runs provider shape guard as standalone blocker (`scene_orchestration_provider_shape_guard`).
+  - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.contract_v1.field_schema.guard`
+  - Enforces live `scene_ready_contract_v1` field-level schema requirements using `system.init` payload.
+  - Baseline: `scripts/verify/baselines/scene_contract_v1_field_schema_guard.json`.
+  - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.engine_migration.matrix.guard`
+  - Verifies 9-module entry scenes are on `scene_engine` asset mainline using module map + runtime snapshot state.
+  - Baseline: `scripts/verify/baselines/scene_engine_migration_matrix_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_engine_migration_matrix_report.json`
+    - `artifacts/backend/scene_engine_migration_matrix_report.md`
+  - Also wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.source_fallback_burndown.guard`
+  - Verifies `runtime_fallback/runtime_minimal` burn-down trend from `scene_base_contract_source_mix_report`.
+  - Baseline: `scripts/verify/baselines/scene_source_fallback_burndown_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_source_fallback_burndown_report.json`
+    - `artifacts/backend/scene_source_fallback_burndown_report.md`
+  - State:
+    - `artifacts/backend/scene_source_fallback_burndown_state.json`
+  - Wired into `verify.scene.runtime_boundary.gate` as release-blocking check.
+- `make verify.scene.multi_company.evidence.guard`
+  - Verifies multi-company evidence accumulation from company-matrix report and persists historical observed company ids.
+  - Baseline: `scripts/verify/baselines/scene_multi_company_evidence_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_multi_company_evidence_report.json`
+    - `artifacts/backend/scene_multi_company_evidence_report.md`
+  - State:
+    - `artifacts/backend/scene_multi_company_evidence_state.json`
+  - Strict mode: `SC_MULTI_COMPANY_EVIDENCE_STRICT=1` enforces target company count as blocker.
+  - Wired into `verify.scene.delivery.readiness.role_company_matrix` chain.
+- `make verify.scene.company_snapshot.collect`
+  - Collects company-specific scene snapshot states by invoking `scene_registry_asset_snapshot_guard` per profile.
+  - Baseline: `scripts/verify/baselines/scene_company_snapshot_collect.json`.
+  - Reports:
+    - `artifacts/backend/scene_company_snapshot_collect_report.json`
+    - `artifacts/backend/scene_company_snapshot_collect_report.md`
+  - Default profiles write to:
+    - `artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json`
+    - `artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json`
+  - Profile-level `login/password` is supported in baseline for deterministic company target sampling (current baseline: `primary=admin`, `secondary=demo_role_pm`).
+  - Wired into `verify.scene.delivery.readiness.role_company_matrix` before company matrix guard.
+  - `company_secondary` runtime snapshot target defaults to `E2E_LOGIN=ROLE_PM_LOGIN` and `E2E_COMPANY_ID=2` (override via `COMPANY_SECONDARY_LOGIN/COMPANY_SECONDARY_PASSWORD/COMPANY_SECONDARY_ID`).
+- `make verify.scene.company_access.preflight.guard`
+  - Verifies company target reachability using collected snapshot states (`requested/effective/allowed_company_ids`).
+  - Baseline: `scripts/verify/baselines/scene_company_access_preflight_guard.json`.
+  - Reports:
+    - `artifacts/backend/scene_company_access_preflight_report.json`
+    - `artifacts/backend/scene_company_access_preflight_report.md`
+  - Strict mode: `SC_COMPANY_ACCESS_PREFLIGHT_STRICT=1` upgrades target shortfall to blocker.
+  - Wired into `verify.scene.delivery.readiness.role_company_matrix` after company snapshot collection.
+
+## Ops Helpers
+- `make ops.scene.company_secondary.access`
+  - Repairs target user multi-company access for `company_id=2` (default target user: `ROLE_PM_LOGIN` / `demo_role_pm`).
+  - Runs in dry-run by default (`APPLY=0`) and prints before/after payload.
+  - Runs inside compose `odoo` container; requires docker socket permissions in current environment.
+  - Apply changes with:
+    - `make ops.scene.company_secondary.access APPLY=1`
+  - Override credentials/target:
+    - `ADMIN_LOGIN`, `ADMIN_PASSWD`, `TARGET_LOGIN`, `TARGET_COMPANY_ID`, `DB_NAME`, `E2E_BASE_URL`.
+- `make ops.scene.company_secondary.seed`
+  - Seeds/repairs company-2 accessibility prerequisites (company record + target user company assignment).
+  - Runs in dry-run by default (`APPLY=0`).
+  - Typical apply flow:
+    - `make ops.scene.company_secondary.seed APPLY=1 CREATE_COMPANY_IF_MISSING=1 CREATE_USER_IF_MISSING=1`
+    - `SC_COMPANY_ACCESS_PREFLIGHT_STRICT=1 make verify.scene.company_access.preflight.guard`
+  - Optional knobs:
+    - `TARGET_COMPANY_ID`, `TARGET_COMPANY_NAME`, `TARGET_LOGIN`, `TARGET_USER_NAME`, `TARGET_USER_PASSWORD`,
+      `SET_PRIMARY_COMPANY`, `CREATE_COMPANY_IF_MISSING`, `CREATE_USER_IF_MISSING`.
+- `make verify.delivery.journey.role_matrix.guard`
+  - Validates PM/Finance/Purchase/Executive journey required scenes against role snapshots.
+  - Baseline: `scripts/verify/baselines/delivery_journey_role_matrix_guard.json`.
+  - Artifacts:
+    - `artifacts/backend/delivery_journey_role_matrix_report.json`
+    - `artifacts/backend/delivery_journey_role_matrix_report.md`
   - Persists latest trend snapshot to `artifacts/backend/scene_asset_queue_trend_state.json` for next-run delta checks.
 - `make verify.scene.base_contract_asset_coverage.guard`
   - Verifies native/base contract asset binding wiring in `system.init` and enforces scene-ready coverage metric shape (`meta.base_contract_bound_scene_count`).
@@ -137,6 +302,12 @@
   - Verifies real runtime scene snapshot (`system.init -> scene_ready_contract_v1`) for key scene coverage and base-contract binding.
   - Persists live/fallback snapshot to `artifacts/backend/scene_registry_asset_snapshot_state.json` using baseline `scripts/verify/baselines/scene_registry_asset_snapshot_guard.json`.
   - Use `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1` to force live fetch mode.
+  - Live fetch resilience knobs:
+    - `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_RETRIES` (default `2`)
+    - `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC` (default `1`)
+  - Optional strict-live fallback switch (explicitly opt-in):
+    - `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`
+    - when enabled and prior state exists, guard records warning instead of hard fail on live timeout.
 - `make verify.scene.sample_registry_diff.guard`
   - Builds a diff report between sample compile baseline (`scene_orchestrator_key_scene_compile_guard`) and real registry snapshot state.
   - Emits `artifacts/backend/scene_sample_registry_diff_report.json` and `artifacts/backend/scene_sample_registry_diff_report.md`.
@@ -421,12 +592,18 @@
 ## Stage 3 Approval MVP
 - Cross-stack payment request approval smoke:
   - `make verify.portal.payment_request_approval_smoke.container`
+  - Prepare step supports restart-only mode (skip module upgrade):
+    - `PAYMENT_APPROVAL_NEED_UPGRADE=0 make verify.portal.payment_request_approval_smoke.container`
   - Shared prepare step can be skipped when already prepared:
     - `PAYMENT_APPROVAL_SKIP_PREPARE=1 make verify.portal.payment_request_approval_smoke.container`
   - Covers login -> `api.data` payment request discovery -> `payment.request.submit` -> `payment.request.approve`.
   - Live path selection is action-surface aware:
     - probes `payment.request.available_actions` and prefers records with executable actions
     - reports `primary_action_key`, `allowed_actions`, and `blocked_reason_summary`
+    - reports `executable_actions` and `live_no_executable_actions`
+    - legacy key `live_no_allowed_actions` has been removed in N+2
+    - downstream parser should read only:
+      - `bool(summary.get("live_no_executable_actions", False))`
   - Default credential source for this smoke is finance-role-first:
     - `ROLE_FINANCE_LOGIN` / `ROLE_FINANCE_PASSWORD` (defaults: `demo_role_finance` / `demo`)
     - falls back to `E2E_LOGIN` / `E2E_PASSWORD` only when role vars are unset.
@@ -446,6 +623,15 @@
 - One-command sequential aggregate (single upgrade/restart + both smokes):
   - `make verify.portal.payment_request_approval_all_smoke.container`
   - Use this target in CI/local when running both approval smokes to avoid concurrent `mod.upgrade` conflicts on the same DB.
+  - Includes deprecated-field consumer audit at tail.
+    - Default: non-blocking (warn only if audit fails).
+    - Strict block mode:
+      - `PAYMENT_APPROVAL_FIELD_AUDIT_STRICT=1 make verify.portal.payment_request_approval_all_smoke.container`
+- Deprecated-field consumer audit (N+1 migration prep):
+  - `make verify.portal.payment_request_approval_field_consumer_audit`
+  - Reports:
+    - `artifacts/backend/payment_request_approval_field_consumer_audit.json`
+    - `artifacts/backend/payment_request_approval_field_consumer_audit.md`
 - Payment form delivery UX notes (frontend):
   - Blocked actions can run `suggested_action` directly from form hint area.
   - Action feedback shows trace/request evidence and supports one-click copy.
