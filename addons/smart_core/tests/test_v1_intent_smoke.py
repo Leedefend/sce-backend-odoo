@@ -164,6 +164,12 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("nav", init_contract)
         self.assertIn("surface", init_contract)
         self.assertIn("bootstrap_refs", init_contract)
+        scene_governance = data.get("data", {}).get("scene_governance_v1") or {}
+        self.assertIn("surface_mapping", scene_governance)
+        mapping = scene_governance.get("surface_mapping") or {}
+        self.assertIn("before", mapping)
+        self.assertIn("after", mapping)
+        self.assertIn("removed", mapping)
         row = data.get("data", {}) or {}
         role_surface = row.get("role_surface") or {}
         role_surface_code = str(role_surface.get("role_code") or "").strip().lower()

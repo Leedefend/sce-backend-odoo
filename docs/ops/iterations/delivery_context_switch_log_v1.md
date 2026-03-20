@@ -501,3 +501,12 @@ Each entry must include:
 - completed_step: `intent_surface_builder 增加 canonical/alias 收敛与 intent_catalog 列表；meta.intent_catalog 输出 intent_catalog；smoke 断言 app.init->system.init alias 关系；schema 补齐 status/canonical 类型`
 - active_commit: `pending`
 - next_step: `Commit Batch-J changes and continue P2-2 governance-delta evidence closure`
+
+### 2026-03-20T16:55:00Z
+- blocker_key: `batch_k.surface_mapping_evidence`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-2 governance delta evidence`
+- reason: `把治理差异从抽象计数升级为可审计 surface_mapping（before/after/removed）`
+- completed_step: `scene_governance_payload_builder 增加 governance surface_mapping 汇总并纳入 scene_governance_v1；补 removed.scene_codes_sample；smoke 增加 surface_mapping 结构断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-K changes and continue P2-3 scene metrics unification`
