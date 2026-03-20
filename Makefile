@@ -2593,10 +2593,15 @@ verify.product.delivery.module9.smoke: guard.prod.forbid
 verify.backend.contract.closure.guard: guard.prod.forbid
 	@python3 scripts/verify/backend_contract_closure_guard.py
 	@python3 scripts/verify/backend_contract_closure_snapshot_guard.py
+	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
 
 .PHONY: verify.backend.contract.closure.snapshot.guard
 verify.backend.contract.closure.snapshot.guard: guard.prod.forbid
 	@python3 scripts/verify/backend_contract_closure_snapshot_guard.py
+
+.PHONY: verify.intent.canonical_alias.snapshot.guard
+verify.intent.canonical_alias.snapshot.guard: guard.prod.forbid
+	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
 
 .PHONY: verify.product.delivery.ready
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
