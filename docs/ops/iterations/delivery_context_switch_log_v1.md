@@ -555,3 +555,12 @@ Each entry must include:
 - completed_step: `新增 backend_contract_closure_snapshot_guard.py 并生成 baseline；verify.backend.contract.closure.guard 串联 snapshot guard；新增独立 make 目标 verify.backend.contract.closure.snapshot.guard`
 - active_commit: `pending`
 - next_step: `Run closure guard stack and commit Batch-P`
+
+### 2026-03-20T19:35:00Z
+- blocker_key: `batch_q.intent_alias_snapshot_guard`
+- layer_target: `Ops/Verification Guard`
+- module: `intent canonical alias drift guard`
+- reason: `将 alias/canonical 治理输出固化为可审计快照，避免 catalog 漂移影响收口稳定性`
+- completed_step: `新增 intent_canonical_alias_snapshot_guard.py；生成 baseline intent_canonical_alias_snapshot.json；verify.backend.contract.closure.guard 串联 alias snapshot guard；新增独立 make 目标 verify.intent.canonical_alias.snapshot.guard`
+- active_commit: `pending`
+- next_step: `Run closure guard stack and commit Batch-Q`
