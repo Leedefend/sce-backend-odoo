@@ -147,6 +147,8 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("capabilities", data.get("data", {}))
         self.assertIn("capability_groups", data.get("data", {}))
         self.assertIn("init_contract_v1", data.get("data", {}))
+        self.assertIn("workspace_home_ref", data.get("data", {}))
+        self.assertNotIn("workspace_home", data.get("data", {}))
         init_contract = data.get("data", {}).get("init_contract_v1") or {}
         self.assertIn("session", init_contract)
         self.assertIn("nav", init_contract)
@@ -169,6 +171,29 @@ class TestV1IntentSmoke(HttpCase):
             context_role_code = str(context.get("role_code") or "").strip().lower()
             if context_role_code:
                 self.assertEqual(context_role_code, role_surface_code)
+
+    def test_system_init_with_workspace_home(self):
+        login_payload = {
+            "intent": "login",
+            "params": {"login": self.test_login, "password": self.test_password},
+        }
+        login_data = self._post_intent(
+            login_payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        login_row = login_data.get("data", {}) or {}
+        token = (login_row.get("session") or {}).get("token") or login_row.get("token")
+        self.assertTrue(token, login_data)
+
+        payload = {"intent": "system.init", "params": {"with": ["workspace_home"]}}
+        data = self._post_intent(payload, headers={"Authorization": f"Bearer {token}"})
+        self.assertTrue(data.get("ok"), data)
+        row = data.get("data", {}) or {}
+        self.assertIn("workspace_home", row)
+        self.assertIn("workspace_home_ref", row)
+        ref = row.get("workspace_home_ref") or {}
+        self.assertTrue(bool(ref.get("loaded")))
 
         self.assertIsInstance(data.get("data", {}).get("capability_groups"), list)
         capabilities = data.get("data", {}).get("capabilities") or []
