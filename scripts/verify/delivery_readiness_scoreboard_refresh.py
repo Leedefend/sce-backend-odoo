@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,14 @@ MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_mainline_run_
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
     "restricted": "CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness",
+}
+
+OVERALL_OK_POLICIES = {
+    "mainline_or_restricted",
+    "strict_only",
+    "restricted_only",
+    "mainline_only",
+    "strict_and_mainline",
 }
 
 
@@ -70,7 +79,7 @@ def _to_summary_payload(state: dict) -> dict:
             }
         )
 
-    return {
+    payload = {
         "generated_at_utc": _utc_now(),
         "scoreboard": {
             "path": str(SCOREBOARD_PATH.relative_to(ROOT)),
@@ -83,6 +92,41 @@ def _to_summary_payload(state: dict) -> dict:
             "restricted": _profile("restricted"),
         },
     }
+    payload["overall"] = _compute_overall(payload)
+    return payload
+
+
+def _compute_overall(payload: dict) -> dict:
+    profiles = payload.get("profiles") if isinstance(payload.get("profiles"), dict) else {}
+    strict_ok = bool((profiles.get("strict") or {}).get("ok"))
+    restricted_ok = bool((profiles.get("restricted") or {}).get("ok"))
+    mainline = payload.get("mainline") if isinstance(payload.get("mainline"), dict) else {}
+    mainline_ok = bool(mainline.get("ok")) if bool(mainline.get("present")) else False
+
+    policy = str(os.getenv("DELIVERY_READINESS_OVERALL_POLICY") or "mainline_or_restricted").strip()
+    if policy not in OVERALL_OK_POLICIES:
+        policy = "mainline_or_restricted"
+
+    if policy == "strict_only":
+        ok = strict_ok
+    elif policy == "restricted_only":
+        ok = restricted_ok
+    elif policy == "mainline_only":
+        ok = mainline_ok
+    elif policy == "strict_and_mainline":
+        ok = strict_ok and mainline_ok
+    else:
+        ok = mainline_ok or restricted_ok
+
+    return {
+        "ok": ok,
+        "policy": policy,
+        "signals": {
+            "strict_ok": strict_ok,
+            "restricted_ok": restricted_ok,
+            "mainline_ok": mainline_ok,
+        },
+    }
 
 
 def _to_summary_markdown(payload: dict) -> str:
@@ -91,6 +135,7 @@ def _to_summary_markdown(payload: dict) -> str:
     strict = profiles.get("strict") if isinstance(profiles.get("strict"), dict) else {}
     restricted = profiles.get("restricted") if isinstance(profiles.get("restricted"), dict) else {}
     mainline = payload.get("mainline") if isinstance(payload.get("mainline"), dict) else {}
+    overall = payload.get("overall") if isinstance(payload.get("overall"), dict) else {}
 
     lines = [
         "# Delivery Readiness CI Summary",
@@ -100,6 +145,8 @@ def _to_summary_markdown(payload: dict) -> str:
         f"- commit_ref: {scoreboard.get('commit_ref', '')}",
         f"- scoreboard: {scoreboard.get('path', '')}",
         f"- mainline_summary: {mainline.get('path', '')}",
+        f"- overall_ok: {overall.get('ok', '')}",
+        f"- overall_policy: {overall.get('policy', '')}",
         "",
         "## Profiles",
         "",
