@@ -375,3 +375,12 @@ Each entry must include:
 - completed_step: `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness 失败于 scene_ready_consumption_trend_guard live fetch (Operation not permitted)`
 - active_commit: `417cfed`
 - next_step: `Keep mainline on restricted for local/no-network runner; rerun strict in live-enabled runner and refresh scoreboard`
+
+### 2026-03-20T10:15:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Product/Ops Governance`
+- module: `backlog status closure + scoreboard wording cleanup`
+- reason: `将已闭环硬缺口从 In Progress 收口为 Done，并消除 scorebard 重复/过期场景文案`
+- completed_step: `frontend/governance_truth/delivery_evidence 状态收口；项目执行模块入口统一为 projects.execution；release blocking 文案保留 strict live fetch 现实阻断`
+- active_commit: `bd593b6`
+- next_step: `Continue strict-live runner verification and keep mainline evidence green`
