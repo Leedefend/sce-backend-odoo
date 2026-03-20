@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-20T00:24:39Z
+- generated_at_utc: 2026-03-20T00:27:04Z
 - branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `148316e`
+- commit_ref: `65be5fb`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -53,7 +53,7 @@
 2. Scene contract field-level strict schema, provider-shape, scene-engine migration matrix, fallback burn-down, and multi-company strict target are all wired and passing in current run.
 3. Journey-level evidence has been script-bound for 4 key roles via `delivery_journey_role_matrix_guard` and wired into strict readiness chain.
 4. Company matrix strict chain is green in current run; keep cross-company trend evidence as continuous non-blocking monitor.
-5. CI profile posture: strict=FAIL (2026-03-20T00:06:43Z), restricted=PASS (2026-03-20T00:08:31Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
+5. CI profile posture: strict=FAIL (2026-03-20T00:06:43Z), restricted=PASS (2026-03-20T00:08:31Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs. Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`.
 
 ## Repro Command Set (Default)
 
