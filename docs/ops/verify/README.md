@@ -54,8 +54,6 @@
   - Automatically updates delivery scoreboard snapshot and per-profile status rows on both success/failure via:
     - `scripts/verify/delivery_readiness_scoreboard_refresh.py`
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
-- `make refresh.delivery.readiness.scoreboard`
-  - Refreshes scoreboard snapshot metadata (`generated_at_utc/branch/commit_ref`) and keeps CI strict/restricted evidence rows in sync with stored profile state.
   - Failure brief now includes:
     - `BLOCKER_FAILURES / PRECHECK_FAILURES` grouped output
     - dedicated `multi_company_highlight` section (snapshot/preflight/evidence signals)
@@ -64,6 +62,8 @@
     - `artifacts/backend/scene_delivery_failure_brief.json`
   - Failure path also prints compact key-field summary via:
     - `scripts/verify/scene_delivery_failure_brief_summary.py`
+- `make refresh.delivery.readiness.scoreboard`
+  - Refreshes scoreboard snapshot metadata (`generated_at_utc/branch/commit_ref`) and keeps CI strict/restricted evidence rows in sync with stored profile state.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
