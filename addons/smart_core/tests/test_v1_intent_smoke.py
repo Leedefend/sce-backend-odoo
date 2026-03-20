@@ -170,6 +170,11 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("before", mapping)
         self.assertIn("after", mapping)
         self.assertIn("removed", mapping)
+        scene_metrics = scene_governance.get("scene_metrics") or {}
+        self.assertIn("scene_registry_count", scene_metrics)
+        self.assertIn("scene_deliverable_count", scene_metrics)
+        self.assertIn("scene_navigable_count", scene_metrics)
+        self.assertIn("scene_excluded_count", scene_metrics)
         row = data.get("data", {}) or {}
         role_surface = row.get("role_surface") or {}
         role_surface_code = str(role_surface.get("role_code") or "").strip().lower()
