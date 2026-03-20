@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-20T01:04:37Z
+- generated_at_utc: 2026-03-20T01:15:59Z
 - branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `333e6f5`
+- commit_ref: `b174ad8`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -22,7 +22,7 @@
 | Company access preflight | PASS (strict) | `artifacts/backend/scene_company_access_preflight_report.json` |
 | Multi-company evidence accumulation | PASS (strict) | `artifacts/backend/scene_multi_company_evidence_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
-| CI restricted profile readiness | PASS (2026-03-20T00:53:29Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
+| CI restricted profile readiness | PASS (2026-03-20T01:14:31Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
 | CI strict profile readiness | FAIL (2026-03-20T00:06:43Z) | `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness` |
 | Mainline one-command summary | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 ## 9-Module Readiness Board
@@ -54,7 +54,7 @@
 2. Scene contract field-level strict schema, provider-shape, scene-engine migration matrix, fallback burn-down, and multi-company strict target are all wired and passing in current run.
 3. Journey-level evidence has been script-bound for 4 key roles via `delivery_journey_role_matrix_guard` and wired into strict readiness chain.
 4. Company matrix strict chain is green in current run; keep cross-company trend evidence as continuous non-blocking monitor.
-5. CI profile posture: strict=FAIL (2026-03-20T00:06:43Z), restricted=PASS (2026-03-20T00:53:29Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs. Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`.
+5. CI profile posture: strict=FAIL (2026-03-20T00:06:43Z), restricted=PASS (2026-03-20T01:14:31Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs. Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`.
 
 ## Repro Command Set (Default)
 

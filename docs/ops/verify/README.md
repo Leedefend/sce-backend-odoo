@@ -85,6 +85,8 @@
     - `CI_SCENE_DELIVERY_PROFILE=${CI_SCENE_DELIVERY_PROFILE:-restricted} SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make ci.scene.delivery.readiness`
     - `make verify.product.delivery.governance_truth`
   - Default profile is `restricted`; set `CI_SCENE_DELIVERY_PROFILE=strict` in live-enabled runners.
+  - Prints final summary line from unified readiness payload:
+    - `[verify.product.delivery.mainline] overall_ok=<bool> policy=<policy>`
   - Emits run summary artifacts:
     - `artifacts/backend/delivery_mainline_run_summary.json`
     - `artifacts/backend/delivery_mainline_run_summary.md`
