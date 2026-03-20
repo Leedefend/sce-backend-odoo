@@ -51,6 +51,30 @@ class TestV1IntentSmoke(HttpCase):
         self.assertTrue(data.get("ok"), data)
         self.assertTrue(data.get("data", {}).get("token"), data)
 
+    def test_anon_login_intent_default_contract_mode(self):
+        payload = {
+            "intent": "login",
+            "params": {
+                "login": self.test_login,
+                "password": self.test_password,
+                "contract_mode": "default",
+            },
+        }
+        data = self._post_intent(
+            payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        self.assertTrue(data.get("ok"), data)
+        row = data.get("data", {}) or {}
+        session = row.get("session") or {}
+        self.assertTrue(session.get("token"), data)
+        self.assertIn("bootstrap", row)
+        self.assertIn("entitlement", row)
+        self.assertNotIn("token", row)
+        self.assertNotIn("system", row)
+        self.assertNotIn("groups", (row.get("user") or {}))
+
     def test_anon_login_intent_without_db_query_param(self):
         payload = {
             "intent": "login",

@@ -13,6 +13,27 @@ from ..core.handler_registry import HANDLER_REGISTRY  # 全局注册表
 _logger = logging.getLogger(__name__)
 
 
+def _to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        text = value.strip().lower()
+        return text in {"1", "true", "yes", "y", "on", "debug"}
+    return False
+
+
+def _resolve_contract_mode(params: Dict[str, Any]) -> str:
+    raw = str(params.get("contract_mode") or "").strip().lower()
+    if raw in {"default", "compat", "debug"}:
+        return raw
+    if _to_bool(params.get("debug")):
+        return "debug"
+    # Compatibility window: callers not yet migrated keep legacy fields by default.
+    return "compat"
+
+
 def _safe_env():
     """优先用 BaseIntentHandler 注入的 env；兜底用 request.env。"""
     env = getattr(request, "env", None)
@@ -82,6 +103,7 @@ class LoginHandler(BaseIntentHandler):
         # 可选：db/公司/语言/时区（按需扩展）
         db = params.get("db") or params.get("database")
         want_company_id = params.get("company_id")
+        contract_mode = _resolve_contract_mode(params)
 
         if not login or not password:
             return self.err(400, "缺少登录信息")
@@ -122,28 +144,48 @@ class LoginHandler(BaseIntentHandler):
             except Exception:
                 pass
 
+        user_data = {
+            "id": profile["id"],
+            "name": profile["name"],
+            "login": profile["login"],
+            "lang": profile["lang"],
+            "tz": profile["tz"],
+            "company_id": profile["company_id"],
+            "allowed_company_ids": profile["allowed_company_ids"],
+        }
+
         data = {
-            "token": token,
-            "token_type": token_type,
-            "expires_at": expires_at,
-            "user": {
-                "id": profile["id"],
-                "name": profile["name"],
-                "login": profile["login"],
-                "groups": profile["groups"],
-                "lang": profile["lang"],
-                "tz": profile["tz"],
-                "company_id": profile["company_id"],
-                "allowed_company_ids": profile["allowed_company_ids"],
+            "session": {
+                "token": token,
+                "token_type": token_type,
+                "expires_at": expires_at,
             },
-            # 与前端契约保持：预留 system/intents 占位
-            "system": {
+            "user": user_data,
+            "entitlement": {
+                "contract_mode": "user",
+            },
+            "bootstrap": {
+                "next_intent": "system.init",
+                "mode": "full",
+            },
+            "meta": {
+                "contract_mode": contract_mode,
+            },
+        }
+
+        if contract_mode in {"compat", "debug"}:
+            data["token"] = token
+            data["token_type"] = token_type
+            data["expires_at"] = expires_at
+
+        if contract_mode == "debug":
+            user_data["groups"] = profile["groups"]
+            data["system"] = {
                 "menus": [],
                 "models": [],
                 "views": [],
                 "intents": _list_available_intents(),
-            },
-        }
+            }
         return data, {}
 
 
