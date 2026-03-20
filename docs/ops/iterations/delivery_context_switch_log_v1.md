@@ -591,3 +591,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_scoreboard_refresh 支持 contract_closure 段；summary markdown 新增 Contract Closure 小节与检查表`
 - active_commit: `pending`
 - next_step: `Run scoreboard refresh and commit Batch-T`
+
+### 2026-03-20T21:10:00Z
+- blocker_key: `iteration_closure.backend_contract_closure`
+- layer_target: `Release/Iteration Closure`
+- module: `iteration closure pack`
+- reason: `按主线要求进行本轮收口，形成可审阅的收口报告与最终验证证据`
+- completed_step: `执行 verify.backend.contract.closure.mainline + refresh.delivery.readiness.scoreboard + frontend strict typecheck 全部通过；新增 backend_contract_closure_iteration_closure_v1.md`
+- active_commit: `pending`
+- next_step: `Commit closure report and handoff for PR/merge`

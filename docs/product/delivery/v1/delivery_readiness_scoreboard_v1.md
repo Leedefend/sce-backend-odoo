@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-20T07:01:59Z
+- generated_at_utc: 2026-03-20T07:04:53Z
 - branch: `codex/backend-contract-closure-batch-a`
-- commit_ref: `6055356`
+- commit_ref: `6f3bb3a`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
