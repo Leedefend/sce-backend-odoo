@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-20T00:08:31Z
+- generated_at_utc: 2026-03-20T00:12:18Z
 - branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `70d5cce`
+- commit_ref: `d9e9cf7`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -23,7 +23,6 @@
 | Multi-company evidence accumulation | PASS (strict) | `artifacts/backend/scene_multi_company_evidence_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
 | CI restricted profile readiness | PASS (2026-03-20T00:08:31Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
-
 | CI strict profile readiness | FAIL (2026-03-20T00:06:43Z) | `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness` |
 ## 9-Module Readiness Board
 
