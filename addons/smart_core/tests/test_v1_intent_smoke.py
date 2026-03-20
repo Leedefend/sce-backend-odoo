@@ -215,6 +215,13 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("workspace_home_ref", row)
         ref = row.get("workspace_home_ref") or {}
         self.assertTrue(bool(ref.get("loaded")))
+        workspace_home = row.get("workspace_home") if isinstance(row.get("workspace_home"), dict) else {}
+        blocks = workspace_home.get("blocks") if isinstance(workspace_home.get("blocks"), list) else []
+        self.assertTrue(bool(blocks))
+        first_block = blocks[0] if blocks else {}
+        self.assertIn("type", first_block)
+        self.assertIn("data", first_block)
+        self.assertIn("actions", first_block)
 
         self.assertIsInstance(data.get("data", {}).get("capability_groups"), list)
         capabilities = data.get("data", {}).get("capabilities") or []

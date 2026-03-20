@@ -1741,6 +1741,68 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "progress": "running",
             "data_state": "business" if has_business_signal else "fallback",
         },
+        "blocks": [
+            {
+                "type": "hero",
+                "key": "workspace.hero",
+                "data": {
+                    "hero": {
+                        "title": "工作台",
+                        "updated_at": updated_at,
+                        "status_notice": partial_notice,
+                    },
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "portal.dashboard"}},
+                ],
+            },
+            {
+                "type": "metric",
+                "key": "workspace.metrics",
+                "data": {
+                    "metrics": business_metrics,
+                    "platform_metrics": platform_metrics,
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "operation.overview"}},
+                ],
+            },
+            {
+                "type": "risk",
+                "key": "workspace.risk",
+                "data": {
+                    "summary": (
+                        "存在高优先风险，请先处理系统提醒事项。"
+                        if risk_red >= 3
+                        else "存在需要跟进的风险，建议今日内完成处理。"
+                        if risk_red >= 1
+                        else "当前未出现严重风险，建议保持日常巡检节奏。"
+                    ),
+                    "buckets": {"red": risk_red, "amber": risk_amber, "green": risk_green},
+                    "actions": risk_actions,
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "risk.center"}},
+                ],
+            },
+            {
+                "type": "ops",
+                "key": "workspace.ops",
+                "data": {
+                    "bars": {
+                        "contract": max(0, min(100, 100 - (risk_business_count * 10))) if has_business_signal else 0,
+                        "output": max(0, min(100, 100 - (today_business_count * 8))) if has_business_signal else 0,
+                    },
+                    "kpi": {
+                        "cost_rate": max(0, min(100, 100 - (risk_business_count * 12))) if has_business_signal else 0,
+                        "payment_rate": max(0, min(100, 100 - (today_business_count * 6))) if has_business_signal else 0,
+                    },
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "projects.execution"}},
+                ],
+            },
+        ],
         "advice": _build_advice_items(locked_caps),
         "contract_protocol": {
             "primary": "page_orchestration_v1",

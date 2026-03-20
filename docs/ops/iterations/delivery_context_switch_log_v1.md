@@ -519,3 +519,12 @@ Each entry must include:
 - completed_step: `scene_governance_payload_builder 新增 scene_metrics（scene_registry_count/scene_deliverable_count/scene_navigable_count/scene_excluded_count）；smoke 增加四字段断言`
 - active_commit: `pending`
 - next_step: `Commit Batch-L changes and continue P2-4 homepage blockization planning`
+
+### 2026-03-20T17:50:00Z
+- blocker_key: `batch_m.workspace_home_blockization`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-4 workspace_home blocks`
+- reason: `将首页结构推进为 block-first 契约，减少页面特例字段耦合`
+- completed_step: `workspace_home 新增 blocks（hero/metric/risk/ops）统一 type/key/data/actions 结构；保留旧字段兼容；smoke 增加 workspace_home.blocks 基础结构断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-M changes and prepare integrated status summary`
