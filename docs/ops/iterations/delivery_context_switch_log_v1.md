@@ -240,3 +240,12 @@ Each entry must include:
 - completed_step: `ci.scene.delivery.readiness 增加 CI_SCENE_DELIVERY_PROFILE=restricted 档位并同步 README/scoreboard`
 - active_commit: `2143132`
 - next_step: `Run restricted profile CI target and commit categorized changes`
+
+### 2026-03-20T06:10:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `scoreboard auto-refresh binding`
+- reason: `将 strict/restricted 执行结果自动回填 scoreboard，减少手工更新时间和状态漂移`
+- completed_step: `新增 delivery_readiness_scoreboard_refresh 脚本并绑定到 ci.scene.delivery.readiness 成功/失败分支；restricted pass 与 strict fail 均已自动写入`
+- active_commit: `edf4be6`
+- next_step: `Commit feat/docs changes and continue runtime blocker burn-down`

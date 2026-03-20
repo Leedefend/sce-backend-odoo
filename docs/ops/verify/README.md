@@ -51,7 +51,11 @@
     - `restricted`: keeps strict chain but disables three live-only blockers (`SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=0`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=0`).
   - Example:
     - `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`
+  - Automatically updates delivery scoreboard snapshot and per-profile status rows on both success/failure via:
+    - `scripts/verify/delivery_readiness_scoreboard_refresh.py`
   - On failure, automatically prints concise failure brief from key reports via `scripts/verify/scene_delivery_failure_brief.py`.
+- `make refresh.delivery.readiness.scoreboard`
+  - Refreshes scoreboard snapshot metadata (`generated_at_utc/branch/commit_ref`) and keeps CI strict/restricted evidence rows in sync with stored profile state.
   - Failure brief now includes:
     - `BLOCKER_FAILURES / PRECHECK_FAILURES` grouped output
     - dedicated `multi_company_highlight` section (snapshot/preflight/evidence signals)
