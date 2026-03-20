@@ -16,6 +16,7 @@ STATE_PATH = ROOT / "artifacts" / "backend" / "delivery_ci_profile_status.json"
 SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.json"
 SUMMARY_MD_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.md"
 MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_mainline_run_summary.json"
+CONTRACT_CLOSURE_MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "backend_contract_closure_mainline_summary.json"
 ACTION_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_action_closure_report.json"
 MODULE9_SMOKE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_module9_smoke_report.json"
 
@@ -66,6 +67,7 @@ def _to_summary_payload(state: dict) -> dict:
         }
 
     mainline_summary = _load_json(MAINLINE_SUMMARY_PATH)
+    contract_closure_summary = _load_json(CONTRACT_CLOSURE_MAINLINE_SUMMARY_PATH)
     mainline = {
         "present": bool(mainline_summary),
         "path": str(MAINLINE_SUMMARY_PATH.relative_to(ROOT)),
@@ -81,6 +83,23 @@ def _to_summary_payload(state: dict) -> dict:
             }
         )
 
+    contract_closure = {
+        "present": bool(contract_closure_summary),
+        "path": str(CONTRACT_CLOSURE_MAINLINE_SUMMARY_PATH.relative_to(ROOT)),
+    }
+    if contract_closure_summary:
+        checks = contract_closure_summary.get("checks") if isinstance(contract_closure_summary.get("checks"), dict) else {}
+        overall = contract_closure_summary.get("overall") if isinstance(contract_closure_summary.get("overall"), dict) else {}
+        contract_closure.update(
+            {
+                "ok": bool(contract_closure_summary.get("ok")),
+                "generated_at": str(contract_closure_summary.get("generated_at") or "").strip(),
+                "policy": str(overall.get("policy") or "").strip(),
+                "status": str(overall.get("status") or "").strip(),
+                "checks": checks,
+            }
+        )
+
     payload = {
         "generated_at_utc": _utc_now(),
         "scoreboard": {
@@ -89,6 +108,7 @@ def _to_summary_payload(state: dict) -> dict:
             "commit_ref": _git(["git", "rev-parse", "--short", "HEAD"]) or "unknown",
         },
         "mainline": mainline,
+        "contract_closure": contract_closure,
         "profiles": {
             "strict": _profile("strict"),
             "restricted": _profile("restricted"),
@@ -137,6 +157,7 @@ def _to_summary_markdown(payload: dict) -> str:
     strict = profiles.get("strict") if isinstance(profiles.get("strict"), dict) else {}
     restricted = profiles.get("restricted") if isinstance(profiles.get("restricted"), dict) else {}
     mainline = payload.get("mainline") if isinstance(payload.get("mainline"), dict) else {}
+    contract_closure = payload.get("contract_closure") if isinstance(payload.get("contract_closure"), dict) else {}
     overall = payload.get("overall") if isinstance(payload.get("overall"), dict) else {}
 
     lines = [
@@ -147,6 +168,7 @@ def _to_summary_markdown(payload: dict) -> str:
         f"- commit_ref: {scoreboard.get('commit_ref', '')}",
         f"- scoreboard: {scoreboard.get('path', '')}",
         f"- mainline_summary: {mainline.get('path', '')}",
+        f"- contract_closure_summary: {contract_closure.get('path', '')}",
         f"- overall_ok: {overall.get('ok', '')}",
         f"- overall_policy: {overall.get('policy', '')}",
         "",
@@ -191,6 +213,28 @@ def _to_summary_markdown(payload: dict) -> str:
         )
     else:
         lines.extend(["", "## Mainline", "", "- unavailable"]) 
+
+    if contract_closure.get("present"):
+        checks = contract_closure.get("checks") if isinstance(contract_closure.get("checks"), dict) else {}
+        lines.extend(
+            [
+                "",
+                "## Contract Closure",
+                "",
+                f"- ok: {contract_closure.get('ok')}",
+                f"- status: {contract_closure.get('status', '')}",
+                f"- policy: {contract_closure.get('policy', '')}",
+                f"- generated_at: {contract_closure.get('generated_at', '')}",
+                "",
+                "| check | status |",
+                "|---|---|",
+                f"| closure_structure_guard | {checks.get('closure_structure_guard', '')} |",
+                f"| closure_snapshot_guard | {checks.get('closure_snapshot_guard', '')} |",
+                f"| intent_alias_snapshot_guard | {checks.get('intent_alias_snapshot_guard', '')} |",
+            ]
+        )
+    else:
+        lines.extend(["", "## Contract Closure", "", "- unavailable"])
     return "\n".join(lines) + "\n"
 
 

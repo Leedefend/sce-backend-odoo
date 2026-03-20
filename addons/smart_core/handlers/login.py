@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from odoo import SUPERUSER_ID, api
-from odoo.http import request
 from odoo.modules.registry import Registry
 from ..core.base_handler import BaseIntentHandler
 from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds, get_user_from_token
@@ -13,12 +12,35 @@ from ..core.handler_registry import HANDLER_REGISTRY  # 全局注册表
 _logger = logging.getLogger(__name__)
 
 
-def _safe_env():
-    """优先用 BaseIntentHandler 注入的 env；兜底用 request.env。"""
-    env = getattr(request, "env", None)
-    if env is None:
-        raise RuntimeError("无法获取 Odoo 环境（env 为空）")
-    return env
+def _to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        text = value.strip().lower()
+        return text in {"1", "true", "yes", "y", "on", "debug"}
+    return False
+
+
+def _resolve_contract_mode(params: Dict[str, Any]) -> str:
+    raw = str(params.get("contract_mode") or "").strip().lower()
+    if raw in {"default", "compat", "debug"}:
+        return raw
+    if _to_bool(params.get("debug")):
+        return "debug"
+    # New contract is the default surface.
+    return "default"
+
+
+def _resolve_compat_enabled(env, params: Dict[str, Any]) -> bool:
+    if "compat_enabled" in params:
+        return _to_bool(params.get("compat_enabled"))
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.login.compat_enabled", "1")
+    except Exception:
+        raw = "1"
+    return _to_bool(raw)
 
 
 def _user_groups_xmlids(user) -> list[str]:
@@ -63,6 +85,11 @@ def _load_user_profile(db_name: str, user_id: int) -> Dict[str, Any]:
         }
 
 
+def _is_internal_user(profile: Dict[str, Any]) -> bool:
+    groups = set(profile.get("groups") or [])
+    return "base.group_user" in groups
+
+
 class LoginHandler(BaseIntentHandler):
     """
     用户登录处理器
@@ -82,6 +109,11 @@ class LoginHandler(BaseIntentHandler):
         # 可选：db/公司/语言/时区（按需扩展）
         db = params.get("db") or params.get("database")
         want_company_id = params.get("company_id")
+        contract_mode = _resolve_contract_mode(params)
+        compat_requested = contract_mode == "compat"
+        compat_enabled = _resolve_compat_enabled(self.env, params)
+        if compat_requested and not compat_enabled:
+            contract_mode = "default"
 
         if not login or not password:
             return self.err(400, "缺少登录信息")
@@ -122,28 +154,65 @@ class LoginHandler(BaseIntentHandler):
             except Exception:
                 pass
 
+        user_data = {
+            "id": profile["id"],
+            "name": profile["name"],
+            "login": profile["login"],
+            "lang": profile["lang"],
+            "tz": profile["tz"],
+            "company_id": profile["company_id"],
+            "allowed_company_ids": profile["allowed_company_ids"],
+        }
+
+        can_switch_company = len(profile.get("allowed_company_ids") or []) > 1
+        is_internal_user = _is_internal_user(profile)
+        role_code = "internal_user" if is_internal_user else "external_user"
+
         data = {
-            "token": token,
-            "token_type": token_type,
-            "expires_at": expires_at,
-            "user": {
-                "id": profile["id"],
-                "name": profile["name"],
-                "login": profile["login"],
-                "groups": profile["groups"],
-                "lang": profile["lang"],
-                "tz": profile["tz"],
-                "company_id": profile["company_id"],
-                "allowed_company_ids": profile["allowed_company_ids"],
+            "session": {
+                "token": token,
+                "token_type": token_type,
+                "expires_at": expires_at,
             },
-            # 与前端契约保持：预留 system/intents 占位
-            "system": {
-                "menus": [],
-                "models": [],
-                "views": [],
-                "intents": _list_available_intents(),
+            "user": user_data,
+            "entitlement": {
+                "role_code": role_code,
+                "is_internal_user": is_internal_user,
+                "can_switch_company": can_switch_company,
+            },
+            "bootstrap": {
+                "next_intent": "system.init",
+                "mode": "full",
+                "allowed_exception_intents": ["session.bootstrap", "scene.health"],
+            },
+            "contract": {
+                "contract_version": "1.0.0",
+                "schema_version": "1.0.0",
+                "response_mode": contract_mode,
+                "mode": contract_mode,
+                "compat_requested": compat_requested,
+                "compat_enabled": compat_enabled,
+                "compat_deprecated": True,
+                "compat_sunset_phase": "next_iteration",
             },
         }
+
+        if compat_requested and not compat_enabled:
+            data["contract"]["deprecation_notice"] = "compat_mode_disabled_fallback_to_default"
+        elif compat_requested:
+            data["contract"]["deprecation_notice"] = "compat_mode_deprecated_use_default"
+
+        # Compatibility surface: legacy top-level token fields only.
+        if contract_mode in {"compat", "debug"}:
+            data["token"] = token
+            data["token_type"] = token_type
+            data["expires_at"] = expires_at
+
+        if contract_mode == "debug":
+            data["debug"] = {
+                "groups": profile["groups"],
+                "intents": _list_available_intents(),
+            }
         return data, {}
 
 
@@ -183,7 +252,8 @@ def _list_available_intents() -> list[Dict[str, str]]:
     """从全局注册表导出意图清单；失败时返回空列表不阻断登录。"""
     out = []
     try:
-        for name, handler_cls in (HANDLER_REGISTRY or {}).items():
+        for name in sorted((HANDLER_REGISTRY or {}).keys()):
+            handler_cls = (HANDLER_REGISTRY or {})[name]
             desc = getattr(handler_cls, "DESCRIPTION", None) or getattr(handler_cls, "__doc__", "") or ""
             out.append({"name": name, "description": desc})
     except Exception:

@@ -20,6 +20,37 @@ export interface IntentRawResult<T> {
   hasEnvelope: boolean;
 }
 
+const STARTUP_CHAIN_ALLOWED_INTENTS = new Set([
+  'login',
+  'auth.login',
+  'auth.logout',
+  'system.init',
+  'app.init',
+  'session.bootstrap',
+  'sys.intents',
+  'scene.health',
+]);
+
+function canBypassStartupChain(payload: IntentPayload): boolean {
+  const meta = payload.meta;
+  if (!meta || typeof meta !== 'object') return false;
+  return Boolean((meta as Record<string, unknown>).startup_chain_bypass === true);
+}
+
+function enforceStartupChainOrThrow(session: ReturnType<typeof useSessionStore>, payload: IntentPayload): void {
+  const intent = String(payload.intent || '').trim();
+  if (!intent) return;
+  if (!session.token) return;
+  if (session.initStatus === 'ready') return;
+  if (STARTUP_CHAIN_ALLOWED_INTENTS.has(intent)) return;
+  if (canBypassStartupChain(payload)) return;
+  throw new ApiError('startup chain required: run system.init before other intents', 409, undefined, {
+    reasonCode: 'STARTUP_CHAIN_REQUIRED',
+    hint: 'Allowed before init: login/auth.login/auth.logout/session.bootstrap/system.init/scene.health',
+    kind: 'contract',
+  });
+}
+
 function buildHeaders(intent: string, traceId: string) {
   const headers: Record<string, string> = {
     'X-Trace-Id': traceId,
@@ -68,6 +99,7 @@ export async function intentRequest<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
   const startedAt = Date.now();
+  enforceStartupChainOrThrow(session, payload);
   try {
     const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
       method: 'POST',
@@ -111,6 +143,7 @@ export async function intentRequestRaw<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
   const startedAt = Date.now();
+  enforceStartupChainOrThrow(session, payload);
   const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
     method: 'POST',
     headers: buildHeaders(payload.intent, traceId),

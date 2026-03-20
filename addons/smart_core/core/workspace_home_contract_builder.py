@@ -831,9 +831,16 @@ def _tone_from_level(level: str) -> str:
     return "neutral"
 
 
-def _normalize_role_code(data: Dict[str, Any]) -> str:
+def _resolve_role_source_code(data: Dict[str, Any]) -> str:
     role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
     role_code = _to_text(role_surface.get("role_code")).lower()
+    if role_code:
+        return role_code
+    return "owner"
+
+
+def _normalize_role_code(data: Dict[str, Any]) -> str:
+    role_code = _resolve_role_source_code(data)
     if role_code in {"pm", "finance", "owner"}:
         return role_code
     return "owner"
@@ -966,7 +973,8 @@ def _v1_action_schema(role_code: str) -> Dict[str, Any]:
     return {"actions": actions}
 
 
-def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
+def _build_page_orchestration(role_code: str, role_source_code: str | None = None) -> Dict[str, Any]:
+    source_role_code = _to_text(role_source_code).lower() or role_code
     role_cfg = _role_focus_config(role_code)
     zone_order = role_cfg.get("zone_order") if isinstance(role_cfg.get("zone_order"), list) else []
     zone_rank = {str(key): idx + 1 for idx, key in enumerate(zone_order)}
@@ -1119,7 +1127,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         "page": {
             "key": "workspace.home",
             "intent": "owner.dashboard.open",
-            "role_code": role_code,
+            "role_code": source_role_code,
             "render_mode": "governed",
         },
         "zones": zones,
@@ -1132,7 +1140,8 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
     }
 
 
-def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
+def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = None) -> Dict[str, Any]:
+    source_role_code = _to_text(role_source_code).lower() or role_code
     role_cfg = _role_focus_config(role_code)
     zone_order = role_cfg.get("zone_order") if isinstance(role_cfg.get("zone_order"), list) else []
     zone_rank = {str(key): idx + 1 for idx, key in enumerate(zone_order)}
@@ -1399,7 +1408,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "header": {"badges": [{"label": "运行正常", "tone": "success"}]},
             "global_actions": [{"key": "refresh", "label": "刷新", "intent": "api.data"}],
             "filters": [],
-            "context": {"role_code": role_code},
+            "context": {"role_code": source_role_code},
         },
         "zones": zones,
         "data_sources": _v1_data_sources(),
@@ -1415,6 +1424,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "generated_by": "smart_core.workspace_home_contract_builder",
             "schema_version": "1.0.0",
             "role_variant": role_code,
+            "role_source_code": source_role_code,
         },
     }
 
@@ -1490,6 +1500,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         partial_notice = "部分能力暂不可用"
     else:
         partial_notice = ""
+    role_source_code = _resolve_role_source_code(data)
     role_code = _normalize_role_code(data)
     today_actions = _build_today_actions(data, ready_caps, role_code=role_code)
     risk_actions = _build_risk_actions(data, locked_caps, role_code=role_code)
@@ -1519,7 +1530,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         "page": {"key": "portal.dashboard", "title": "工作台", "route": "/"},
         "nav_ref": {"active_scene_key": "portal.dashboard", "active_menu_key": "scene:portal.dashboard", "active_menu_id": None},
         "zones": {},
-        "record": {"hero": {"title": "工作台", "role_code": role_code}},
+        "record": {"hero": {"title": "工作台", "role_code": role_source_code}},
         "permissions": {},
         "actions": {},
         "extensions": {},
@@ -1530,7 +1541,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     engine_fn = getattr(scene_engine, "build_scene_contract_from_specs", None) if scene_engine else None
     if callable(engine_fn):
         try:
-            orchestration_v1 = _build_page_orchestration_v1(role_code)
+            orchestration_v1 = _build_page_orchestration_v1(role_code, role_source_code=role_source_code)
             zones_payload = orchestration_v1.get("zones") if isinstance(orchestration_v1, dict) else []
             zone_specs = []
             built_zones = {}
@@ -1730,16 +1741,79 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "progress": "running",
             "data_state": "business" if has_business_signal else "fallback",
         },
+        "blocks": [
+            {
+                "type": "hero",
+                "key": "workspace.hero",
+                "data": {
+                    "hero": {
+                        "title": "工作台",
+                        "updated_at": updated_at,
+                        "status_notice": partial_notice,
+                    },
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "portal.dashboard"}},
+                ],
+            },
+            {
+                "type": "metric",
+                "key": "workspace.metrics",
+                "data": {
+                    "metrics": business_metrics,
+                    "platform_metrics": platform_metrics,
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "operation.overview"}},
+                ],
+            },
+            {
+                "type": "risk",
+                "key": "workspace.risk",
+                "data": {
+                    "summary": (
+                        "存在高优先风险，请先处理系统提醒事项。"
+                        if risk_red >= 3
+                        else "存在需要跟进的风险，建议今日内完成处理。"
+                        if risk_red >= 1
+                        else "当前未出现严重风险，建议保持日常巡检节奏。"
+                    ),
+                    "buckets": {"red": risk_red, "amber": risk_amber, "green": risk_green},
+                    "actions": risk_actions,
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "risk.center"}},
+                ],
+            },
+            {
+                "type": "ops",
+                "key": "workspace.ops",
+                "data": {
+                    "bars": {
+                        "contract": max(0, min(100, 100 - (risk_business_count * 10))) if has_business_signal else 0,
+                        "output": max(0, min(100, 100 - (today_business_count * 8))) if has_business_signal else 0,
+                    },
+                    "kpi": {
+                        "cost_rate": max(0, min(100, 100 - (risk_business_count * 12))) if has_business_signal else 0,
+                        "payment_rate": max(0, min(100, 100 - (today_business_count * 6))) if has_business_signal else 0,
+                    },
+                },
+                "actions": [
+                    {"intent": "ui.contract", "payload": {"scene_key": "projects.execution"}},
+                ],
+            },
+        ],
         "advice": _build_advice_items(locked_caps),
         "contract_protocol": {
             "primary": "page_orchestration_v1",
             "legacy": {"key": "page_orchestration", "status": "compatibility"},
         },
         "interaction_contract": _build_interaction_contract(),
-        "page_orchestration_v1": _build_page_orchestration_v1(role_code),
-        "page_orchestration": _build_page_orchestration(role_code),
+        "page_orchestration_v1": _build_page_orchestration_v1(role_code, role_source_code=role_source_code),
+        "page_orchestration": _build_page_orchestration(role_code, role_source_code=role_source_code),
         "role_variant": {
-            "role_code": role_code,
+            "role_code": role_source_code,
+            "role_layout_variant": role_code,
             "mode": "heterogeneous_same_page",
             "focus": _role_focus_config(role_code).get("focus_blocks", []),
         },

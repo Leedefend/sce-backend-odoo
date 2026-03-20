@@ -393,3 +393,300 @@ Each entry must include:
 - completed_step: `新增 delivery_iteration_status_2026-03-20_mainline.md；生成 PR body（含 Architecture Impact/Layer Target/Affected Modules）`
 - active_commit: `cbc713c`
 - next_step: `Commit docs and execute make pr.push + make pr.create`
+
+### 2026-03-20T11:10:00Z
+- blocker_key: `batch_a.login_contract_closure`
+- layer_target: `Backend Intent Contract Layer`
+- module: `login contract mode + frontend session consume`
+- reason: `启动 Batch-A，收口 login 契约并保持前端启动链可用`
+- completed_step: `login 新增 default/compat/debug 三态返回；frontend login 改为 contract_mode=default 且优先消费 session.token；新增 login default 契约测试`
+- active_commit: `77037d0`
+- next_step: `Commit Batch-A changes and run restricted mainline verification`
+
+### 2026-03-20T11:40:00Z
+- blocker_key: `batch_a.login_contract_closure`
+- layer_target: `Backend Intent Contract Layer`
+- module: `login contract boundary tightening`
+- reason: `按评审意见补齐 P0-1 收口：默认模式、entitlement 语义、debug/compat 边界`
+- completed_step: `login 默认回落保持 default；entitlement 基于 groups 推导 role_code/is_internal_user/can_switch_company；debug payload 统一到 debug.groups+debug.intents；schema 与 smoke 测试同步补齐`
+- active_commit: `0aebd7e`
+- next_step: `Run restricted delivery mainline and prepare PR for Batch-A`
+
+### 2026-03-20T12:05:00Z
+- blocker_key: `batch_a.login_contract_closure`
+- layer_target: `Backend Intent Contract Layer`
+- module: `login contract edge-polish`
+- reason: `收边优化：命名语义、角色说明、debug 输出稳定性`
+- completed_step: `contract.mode 增补 contract.response_mode；移除未使用 _safe_env；debug intents 改稳定排序；计划文档补充 login 粗粒度 role 与 role_surface 语义边界`
+- active_commit: `pending`
+- next_step: `Commit polish changes and proceed to mainline verification`
+
+### 2026-03-20T12:35:00Z
+- blocker_key: `batch_b.contract_version_unification`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p0-3 semantic version normalization`
+- reason: `按主线计划进入 Batch-B，统一主链意图版本语义并补版本守卫`
+- completed_step: `intent_dispatcher/system_init/ui_contract/exceptions 的 contract_version 统一为 1.0.0；dispatcher 默认注入 schema_version=1.0.0；ui.contract 补 response_schema_version=1.0.0；contract_version_evolution_drill 扩展 login + semver 校验`
+- active_commit: `pending`
+- next_step: `Run verify.contract.version.evolution.drill in network-enabled runner and close Batch-B gate`
+
+### 2026-03-20T13:05:00Z
+- blocker_key: `batch_c.role_source_consistency`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p0-2 role source unification`
+- reason: `进入 Batch-C，收口 role_surface 到 workspace/page 编排镜像，消除角色漂移`
+- completed_step: `workspace_home/page_contracts 引入 role_source_code；hero.role_code 与 page.context.role_code 镜像 role_surface.role_code；保留 role_variant 仅用于布局策略；smoke/guard 断言同步更新并通过`
+- active_commit: `pending`
+- next_step: `Commit Batch-C changes and continue Batch-D startup chain hardening`
+
+### 2026-03-20T13:35:00Z
+- blocker_key: `batch_d.startup_chain_mainline`
+- layer_target: `Frontend Startup Chain`
+- module: `p0-4 login-init-uicontract hardening`
+- reason: `按主线计划固定唯一启动路径，并把例外白名单显式化`
+- completed_step: `session.login 读取并限制 bootstrap.next_intent；loadAppInit 强制走 system.init（支持 session.bootstrap 先导）；移除 app.init 启动调用；新增 startup_chain_mainline_guard 并通过`
+- active_commit: `pending`
+- next_step: `Commit Batch-D changes and continue P1 contract layering`
+
+### 2026-03-20T14:05:00Z
+- blocker_key: `batch_e.system_init_layering`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-1 init contract layering`
+- reason: `进入 P1，先对 system.init 做兼容式四区块分层，降低超级聚合复杂度`
+- completed_step: `新增 init_contract_v1（session/nav/surface/bootstrap_refs）；handler 在返回前注入分层结构；smoke 增加四区块断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-E changes and continue P1-2 workspace_home on-demand loading`
+
+### 2026-03-20T14:35:00Z
+- blocker_key: `batch_f.workspace_home_on_demand`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-2 workspace_home lazy delivery`
+- reason: `继续 P1 收口，降低默认 system.init 负载并保留显式按需能力`
+- completed_step: `system.init 增加 with 参数解析并默认仅返回 workspace_home_ref；显式 with=['workspace_home'] 才返回完整 workspace_home；前端主链显式带 with 保持现有能力；smoke 增加默认/按需两条断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-F changes and continue P1-3 intent catalog split`
+
+### 2026-03-20T15:05:00Z
+- blocker_key: `batch_g.intent_catalog_split`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-3 intent catalog decoupling`
+- reason: `把全量 intents 从 system.init 拆分到独立目录意图，保持启动链轻量可预测`
+- completed_step: `新增 meta.intent_catalog handler；system.init 改为最小启动 intents 集合并返回 intent_catalog_ref；smoke 增加 meta.intent_catalog 覆盖并校验 system.init 不再暴露全量 intents；schema 增补 intent_catalog_ref/intents_meta`
+- active_commit: `pending`
+- next_step: `Commit Batch-G changes and continue P1-4 capability delivery-level closure`
+
+### 2026-03-20T15:35:00Z
+- blocker_key: `batch_h.capability_delivery_authenticity`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-4 capability delivery fields`
+- reason: `补齐 capability 交付真实性字段，支撑交付面板与前端入口语义收口`
+- completed_step: `contract_governance 增加 delivery_level/target_scene_key/entry_kind 规范化与推导；smoke 增加字段和值域断言；schema 补齐 capability 新字段类型`
+- active_commit: `pending`
+- next_step: `Commit Batch-H changes and continue P1-5 default_route semantic completion`
+
+### 2026-03-20T16:05:00Z
+- blocker_key: `batch_i.default_route_semantic_completion`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-5 default_route semantic fields`
+- reason: `补齐 default_route 可消费语义，前端不再依赖 menu_id 反推 scene`
+- completed_step: `scene_nav_contract/nav_dispatcher/identity_resolver 三处 default_route 统一补充 scene_key/route/reason；smoke 增加 default_route 语义字段断言；schema 同步更新`
+- active_commit: `pending`
+- next_step: `Commit Batch-I changes and move to P2 governance enhancement batches`
+
+### 2026-03-20T16:30:00Z
+- blocker_key: `batch_j.intent_canonical_alias_governance`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-1 intent canonical-alias registry`
+- reason: `将 alias/canonical 治理从文档约束提升为目录契约可追溯输出`
+- completed_step: `intent_surface_builder 增加 canonical/alias 收敛与 intent_catalog 列表；meta.intent_catalog 输出 intent_catalog；smoke 断言 app.init->system.init alias 关系；schema 补齐 status/canonical 类型`
+- active_commit: `pending`
+- next_step: `Commit Batch-J changes and continue P2-2 governance-delta evidence closure`
+
+### 2026-03-20T16:55:00Z
+- blocker_key: `batch_k.surface_mapping_evidence`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-2 governance delta evidence`
+- reason: `把治理差异从抽象计数升级为可审计 surface_mapping（before/after/removed）`
+- completed_step: `scene_governance_payload_builder 增加 governance surface_mapping 汇总并纳入 scene_governance_v1；补 removed.scene_codes_sample；smoke 增加 surface_mapping 结构断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-K changes and continue P2-3 scene metrics unification`
+
+### 2026-03-20T17:20:00Z
+- blocker_key: `batch_l.scene_metrics_unification`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-3 scene governance metrics`
+- reason: `统一 scene 指标命名口径，减少不同统计字段混用`
+- completed_step: `scene_governance_payload_builder 新增 scene_metrics（scene_registry_count/scene_deliverable_count/scene_navigable_count/scene_excluded_count）；smoke 增加四字段断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-L changes and continue P2-4 homepage blockization planning`
+
+### 2026-03-20T17:50:00Z
+- blocker_key: `batch_m.workspace_home_blockization`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-4 workspace_home blocks`
+- reason: `将首页结构推进为 block-first 契约，减少页面特例字段耦合`
+- completed_step: `workspace_home 新增 blocks（hero/metric/risk/ops）统一 type/key/data/actions 结构；保留旧字段兼容；smoke 增加 workspace_home.blocks 基础结构断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-M changes and prepare integrated status summary`
+
+### 2026-03-20T18:20:00Z
+- blocker_key: `batch_n.contract_closure_regression_guard`
+- layer_target: `Ops/Verification Guard`
+- module: `backend contract closure guard`
+- reason: `将 G~M 批次关键收口点固化为可执行门禁，防止后续回退`
+- completed_step: `新增 scripts/verify/backend_contract_closure_guard.py；Makefile 增加 verify.backend.contract.closure.guard 目标；任务单落库`
+- active_commit: `pending`
+- next_step: `Run guard + typecheck and commit Batch-N`
+
+### 2026-03-20T18:45:00Z
+- blocker_key: `batch_o.mainline_integration_and_phase_status`
+- layer_target: `Ops/Verification + Release Docs`
+- module: `mainline guard integration`
+- reason: `把收口 guard 真正并入主链验证，并生成阶段总览供合并前审阅`
+- completed_step: `verify.product.delivery.mainline 增加 backend_contract_closure_guard 步骤与汇总状态；新增 backend_contract_closure_phase_status_v1.md 阶段总览`
+- active_commit: `pending`
+- next_step: `Run closure guard + typecheck and commit Batch-O`
+
+### 2026-03-20T19:10:00Z
+- blocker_key: `batch_p.contract_snapshot_baseline`
+- layer_target: `Ops/Verification Guard`
+- module: `closure snapshot baseline`
+- reason: `为 meta.intent_catalog 与 scene_governance_v1 建立可对比快照基线，避免字段漂移无感`
+- completed_step: `新增 backend_contract_closure_snapshot_guard.py 并生成 baseline；verify.backend.contract.closure.guard 串联 snapshot guard；新增独立 make 目标 verify.backend.contract.closure.snapshot.guard`
+- active_commit: `pending`
+- next_step: `Run closure guard stack and commit Batch-P`
+
+### 2026-03-20T19:35:00Z
+- blocker_key: `batch_q.intent_alias_snapshot_guard`
+- layer_target: `Ops/Verification Guard`
+- module: `intent canonical alias drift guard`
+- reason: `将 alias/canonical 治理输出固化为可审计快照，避免 catalog 漂移影响收口稳定性`
+- completed_step: `新增 intent_canonical_alias_snapshot_guard.py；生成 baseline intent_canonical_alias_snapshot.json；verify.backend.contract.closure.guard 串联 alias snapshot guard；新增独立 make 目标 verify.intent.canonical_alias.snapshot.guard`
+- active_commit: `pending`
+- next_step: `Run closure guard stack and commit Batch-Q`
+
+### 2026-03-20T20:00:00Z
+- blocker_key: `batch_r.contract_closure_mainline_target`
+- layer_target: `Ops/Verification Guard`
+- module: `closure guard aggregation`
+- reason: `为 CI 提供单一入口，避免收口守卫目标分散调用`
+- completed_step: `Makefile 新增 verify.backend.contract.closure.mainline（结构守卫+双快照守卫）；product delivery mainline 改为调用聚合目标并更新步骤标识`
+- active_commit: `pending`
+- next_step: `Run closure mainline target and commit Batch-R`
+
+### 2026-03-20T20:25:00Z
+- blocker_key: `batch_s.closure_mainline_summary_artifact`
+- layer_target: `Ops/Verification Guard`
+- module: `closure mainline summary`
+- reason: `将收口门禁执行结果结构化沉淀为 artifact，供看板与审计直接消费`
+- completed_step: `新增 backend_contract_closure_mainline_summary.py 与 schema_guard；closure mainline 目标输出 summary artifact 并内联 schema 校验；新增独立 schema make 目标`
+- active_commit: `pending`
+- next_step: `Run closure mainline target and commit Batch-S`
+
+### 2026-03-20T20:50:00Z
+- blocker_key: `batch_t.delivery_summary_integration`
+- layer_target: `Ops/Readiness Summary`
+- module: `delivery readiness summary bridge`
+- reason: `将契约收口门禁结果并入交付总览，减少多处查看成本`
+- completed_step: `delivery_readiness_scoreboard_refresh 支持 contract_closure 段；summary markdown 新增 Contract Closure 小节与检查表`
+- active_commit: `pending`
+- next_step: `Run scoreboard refresh and commit Batch-T`
+
+### 2026-03-20T21:10:00Z
+- blocker_key: `iteration_closure.backend_contract_closure`
+- layer_target: `Release/Iteration Closure`
+- module: `iteration closure pack`
+- reason: `按主线要求进行本轮收口，形成可审阅的收口报告与最终验证证据`
+- completed_step: `执行 verify.backend.contract.closure.mainline + refresh.delivery.readiness.scoreboard + frontend strict typecheck 全部通过；新增 backend_contract_closure_iteration_closure_v1.md`
+- active_commit: `pending`
+- next_step: `Commit closure report and handoff for PR/merge`
+
+### 2026-03-20T22:00:00Z
+- blocker_key: `post_closure.batch_a_polish_and_block_first`
+- layer_target: `Backend Contract + Frontend View Composition`
+- module: `login compat sunset polish / workspace_home block-first fallback`
+- reason: `补齐阶段复核后的非阻塞收边项，确保 login 契约与首页消费路径在默认模式下更稳定`
+- completed_step: `login 合约新增 compat_requested/compat_enabled/deprecation_notice 与 compat 关闭开关回退；debug intents 输出排序稳定；HomeView 关键区域改为 blocks 优先并保留 legacy 回退；smoke 增加 default/compat-disabled 合约断言；frontend strict typecheck 与 python compile 通过`
+- active_commit: `pending`
+- next_step: `继续按主计划推进下一批次（P0-2 role 真源统一）`
+
+### 2026-03-20T22:20:00Z
+- blocker_key: `p0_2.role_source_unification`
+- layer_target: `Backend Intent Contract Layer`
+- module: `system.init role source mirror`
+- reason: `落实 role_surface 为单一真源，防止 workspace_home/page_orchestration 上下文角色漂移`
+- completed_step: `system_init 新增 _ensure_role_context_mirror，在 role_surface 生成后统一回填 workspace_home.record.hero.role_code 与 page_orchestration_v1.page.context.role_code，并同步 home page_contracts 的 context/meta.role_source_code；smoke 增加 page_contracts + workspace_home 强一致断言`
+- active_commit: `pending`
+- next_step: `继续 P0 主线，推进契约版本职责统一（P0-3）`
+
+### 2026-03-20T22:40:00Z
+- blocker_key: `p0_3.version_responsibility_unification`
+- layer_target: `Backend Intent Contract Layer + Frontend Schema`
+- module: `login/system.init/ui.contract version semantics`
+- reason: `统一主链版本字段职责，避免 v1/nav-1/view-contract-1 与 semver 混用`
+- completed_step: `system.init base schema_version 统一为 1.0.0 并在 init_contract_v1 显式输出 contract_version/schema_version；login.contract 新增 contract_version/schema_version；ui.contract 将非语义化 schema_version 下沉为 payload_schema_version，meta.schema_version 固定 1.0.0；smoke 增加 login/system.init/ui.contract 版本断言；frontend schema 同步字段`
+- active_commit: `pending`
+- next_step: `继续 P0-4 启动链强约束与例外白名单验证`
+
+### 2026-03-20T23:05:00Z
+- blocker_key: `p0_4.startup_chain_enforcement`
+- layer_target: `Frontend API Contract Guard + Backend Login Contract`
+- module: `intent startup chain gate / login bootstrap exceptions`
+- reason: `固定 login -> system.init -> ui.contract 主链，避免已登录未初始化阶段直接调用业务 intent`
+- completed_step: `frontend intentRequest 增加启动链门禁（token 存在且 initStatus!=ready 时仅允许 login/auth.login/auth.logout/system.init/session.bootstrap/sys.intents/scene.health；支持 meta.startup_chain_bypass 例外）；login.bootstrap 增加 allowed_exception_intents；smoke 增加 bootstrap 例外字段断言；frontend strict typecheck 与 python compile 通过`
+- active_commit: `pending`
+- next_step: `回到主线，继续 P1 分层优化（init 分层与 workspace_home 按需加载）`
+
+### 2026-03-20T23:20:00Z
+- blocker_key: `p1_1.system_init_layered_sections`
+- layer_target: `Backend Intent Contract Layer + Frontend Schema`
+- module: `system.init four-block sections`
+- reason: `把 init 从混合聚合输出推进为可消费的四区块分层结构`
+- completed_step: `system_init_payload_builder 输出 system_init_sections_v1（session/nav/surface/bootstrap_refs + contract_version/schema_version），并保持 init_contract_v1 兼容映射；schema 增加 system_init_sections_v1 类型；smoke 增加分层字段断言；python compile 与 frontend strict typecheck 通过`
+- active_commit: `pending`
+- next_step: `继续 P1-2：workspace_home 按需加载与引用化验证`
+
+### 2026-03-20T23:40:00Z
+- blocker_key: `p1_2.workspace_home_on_demand_loading`
+- layer_target: `Frontend Session Bootstrap + Backend Contract Consumption`
+- module: `system.init default slim + workspace_home lazy fetch`
+- reason: `默认 system.init 返回引用而非完整 workspace_home，降低启动负载并保持首屏可按需补全`
+- completed_step: `session.loadAppInit 去掉默认 with=[workspace_home]，改为消费 workspace_home_ref；新增 loadWorkspaceHomeOnDemand() 二次请求 system.init(with workspace_home)；HomeView 挂载时依据 workspace_home_ref(intent=ui.contract, scene=portal.dashboard, loaded=false) 触发按需拉取；smoke 断言默认 loaded=false；frontend strict typecheck 与 python compile 通过`
+- active_commit: `pending`
+- next_step: `继续 P1 主线：P1-3 intent catalog 解耦与最小面收敛`
+
+### 2026-03-20T23:55:00Z
+- blocker_key: `p1_3.intent_catalog_decoupling`
+- layer_target: `Backend Intent Contract Layer`
+- module: `system.init minimal intents + catalog ref`
+- reason: `进一步收口 init 返回面，避免在 init 中携带 intent 目录元信息`
+- completed_step: `system.init _build_minimal_intent_surface 改为仅返回最小 intents 列表；build_base 移除 intents_meta 注入；system.init smoke 增加 notIn(intents_meta) 断言；全量 intent 元信息继续通过 meta.intent_catalog 返回`
+- active_commit: `pending`
+- next_step: `继续 P1-5 补强 default_route 语义消费与前端落地`
+
+### 2026-03-21T00:10:00Z
+- blocker_key: `p1_5.default_route_frontend_semantic_consume`
+- layer_target: `Frontend Session Routing`
+- module: `default_route semantic landing`
+- reason: `让前端优先消费 default_route(route/scene_key/reason) 而不是仅依赖 role_surface 推导`
+- completed_step: `session store 增加 defaultRoute 状态（restore/persist/clear 全链路），loadAppInit 解析 default_route；resolveLandingPath 优先按 default_route.route，其次 default_route.scene_key，再回退 role_surface；frontend strict typecheck 通过`
+- active_commit: `pending`
+- next_step: `继续 P2 治理增强或进入阶段回顾收口`
+
+### 2026-03-21T00:25:00Z
+- blocker_key: `p2_4.home_blocks_only_render`
+- layer_target: `Frontend Home Composition`
+- module: `home block-first strict consumption`
+- reason: `落实首页 block 化终态，去除 hero/metrics/risk/ops 对 legacy 字段的运行时依赖`
+- completed_step: `HomeView 去除 hero/metrics/risk/ops 对 workspaceHome 旧字段回退，统一仅消费 workspace_home.blocks（hero/metric/risk/ops）；保留空态容错；frontend strict typecheck 通过`
+- active_commit: `pending`
+- next_step: `按计划继续推进 P2 治理项并准备阶段回顾`
+
+### 2026-03-21T00:40:00Z
+- blocker_key: `stage_acceptance.closure_v1_1_1`
+- layer_target: `Release Acceptance`
+- module: `backend contract closure stage acceptance`
+- reason: `进入阶段收口，输出可审阅验收结论与证据入口`
+- completed_step: `新增 backend_contract_closure_stage_acceptance_v1.md，按 P0/P1/P2 对账并给出通过结论；执行后端 py_compile、前端 strict typecheck、HomeView legacy 回退引用扫描三类证据校验全部通过`
+- active_commit: `pending`
+- next_step: `进入分类提交与 PR 准备`

@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-20T03:39:44Z
-- branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `cbc713c`
+- generated_at_utc: 2026-03-20T07:04:53Z
+- branch: `codex/backend-contract-closure-batch-a`
+- commit_ref: `6f3bb3a`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -22,7 +22,7 @@
 | Company access preflight | PASS (strict) | `artifacts/backend/scene_company_access_preflight_report.json` |
 | Multi-company evidence accumulation | PASS (strict) | `artifacts/backend/scene_multi_company_evidence_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
-| CI restricted profile readiness | PASS (2026-03-20T03:00:16Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
+| CI restricted profile readiness | PASS (2026-03-20T04:21:27Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
 | CI strict profile readiness | FAIL (2026-03-20T03:12:32Z) | `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness` |
 | Mainline one-command summary | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 | Product delivery action closure smoke | PASS | `artifacts/backend/product_delivery_action_closure_report.json` |
@@ -54,7 +54,7 @@
 
 1. Frontend/action closure/module-9/journey evidence are all script-bound and green in current mainline run.
 2. Remaining blocking posture is strict live-fetch dependency in network-restricted runners; use strict on live-enabled runners, restricted for local restricted verification.
-5. CI profile posture: strict=FAIL (2026-03-20T03:12:32Z), restricted=PASS (2026-03-20T03:00:16Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs. Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`.
+5. CI profile posture: strict=FAIL (2026-03-20T03:12:32Z), restricted=PASS (2026-03-20T04:21:27Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs. Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`.
 
 ## Repro Command Set (Default)
 

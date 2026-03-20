@@ -1,7 +1,8 @@
 {
   "min_api_version": "v1",
-  "min_contract_version": "v0.1",
-  "required_meta_keys": ["api_version", "contract_version"],
+  "min_contract_version": "1.0.0",
+  "required_meta_keys": ["api_version", "contract_version", "schema_version"],
+  "semver_meta_keys": ["contract_version", "schema_version"],
   "required_envelope_keys": ["ok", "data", "meta"],
   "required_system_init_data_keys": ["user", "nav", "scenes", "capabilities", "intents"],
   "required_ui_contract_data_keys": ["head", "fields", "views"]
