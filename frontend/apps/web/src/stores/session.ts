@@ -431,9 +431,13 @@ export const useSessionStore = defineStore('session', {
       const db = String(config.odooDb || '').trim();
       const result = await intentRequest<LoginResponse>({
         intent: 'login',
-        params: { login: username, password, ...(db ? { db } : {}) },
+        params: { login: username, password, contract_mode: 'default', ...(db ? { db } : {}) },
       });
-      this.setToken(result.token);
+      const token = String(result.session?.token || result.token || '').trim();
+      if (!token) {
+        throw new Error('login response missing token');
+      }
+      this.setToken(token);
     },
     async logout() {
       try {

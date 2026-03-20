@@ -22,9 +22,14 @@ export interface IntentResponse<T> {
 }
 
 export interface LoginResponse {
-  token: string;
+  token?: string;
   token_type?: string;
   expires_at?: number;
+  session?: {
+    token?: string;
+    token_type?: string;
+    expires_at?: number;
+  };
   user: {
     id: number;
     name: string;
@@ -35,6 +40,14 @@ export interface LoginResponse {
     allowed_company_ids?: number[];
     groups?: string[];
   };
+  entitlement?: {
+    contract_mode?: string;
+  };
+  bootstrap?: {
+    next_intent?: string;
+    mode?: string;
+  };
+  meta?: Record<string, unknown>;
   system?: {
     intents?: Array<{ name: string; description?: string }>;
   };
