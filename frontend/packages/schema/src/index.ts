@@ -103,6 +103,9 @@ export interface AppInitResponse {
     capability_state?: string;
     reason?: string;
     reason_code?: string;
+    delivery_level?: 'exclusive' | 'shared' | 'placeholder';
+    target_scene_key?: string;
+    entry_kind?: 'exclusive' | 'alias';
     group_key?: string;
     group_label?: string;
   }>;

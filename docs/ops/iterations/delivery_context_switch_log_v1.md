@@ -474,3 +474,12 @@ Each entry must include:
 - completed_step: `新增 meta.intent_catalog handler；system.init 改为最小启动 intents 集合并返回 intent_catalog_ref；smoke 增加 meta.intent_catalog 覆盖并校验 system.init 不再暴露全量 intents；schema 增补 intent_catalog_ref/intents_meta`
 - active_commit: `pending`
 - next_step: `Commit Batch-G changes and continue P1-4 capability delivery-level closure`
+
+### 2026-03-20T15:35:00Z
+- blocker_key: `batch_h.capability_delivery_authenticity`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-4 capability delivery fields`
+- reason: `补齐 capability 交付真实性字段，支撑交付面板与前端入口语义收口`
+- completed_step: `contract_governance 增加 delivery_level/target_scene_key/entry_kind 规范化与推导；smoke 增加字段和值域断言；schema 补齐 capability 新字段类型`
+- active_commit: `pending`
+- next_step: `Commit Batch-H changes and continue P1-5 default_route semantic completion`
