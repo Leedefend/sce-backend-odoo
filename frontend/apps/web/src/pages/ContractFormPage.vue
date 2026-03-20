@@ -1,9 +1,10 @@
 <template>
   <main class="page">
     <header class="header">
-      <div>
-        <h1>{{ isProjectQuickIntakeMode ? '快速创建项目' : pageTitle }}</h1>
-        <p v-if="isProjectQuickIntakeMode" class="meta">快速创建模式：仅创建项目管理对象，保存后自动进入项目驾驶舱。</p>
+      <div class="header-main">
+        <h1>{{ pageDisplayTitle }}</h1>
+        <p v-if="pageDisplaySubtitle" class="page-subtitle">{{ pageDisplaySubtitle }}</p>
+        <p v-if="isProjectCreatePage && intakeStatusLine" class="page-status-line">{{ intakeStatusLine }}</p>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
       </div>
@@ -19,15 +20,7 @@
           {{ action.label }}
         </button>
         <button
-          v-if="isProjectStandardIntakeMode && !recordId"
-          class="primary"
-          :disabled="isStandardCreateDisabled"
-          @click="saveRecord"
-        >
-          {{ normalCreateButtonLabel }}
-        </button>
-        <button
-          v-if="!hasPrimaryHeaderAction && !(isProjectStandardIntakeMode && !recordId)"
+          v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
           class="primary"
           :disabled="isQuickSubmitDisabled"
           @click="saveRecord"
@@ -35,29 +28,29 @@
           {{ submitButtonLabel }}
         </button>
         <!-- compat token: v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson" -->
-        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
-        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
-        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy" @click="reload">重新加载</button>
+        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy" @click="reload">重新加载</button>
       </div>
     </header>
 
     <StatusPanel v-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
-    <section v-else class="card">
-      <section v-if="warnings.length" class="block warn">
+    <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
+      <section v-if="warnings.length && !isProjectCreatePage" class="block warn">
         <h3>提示信息</h3>
         <ul>
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
-      <section v-if="strictContractMissingSummary" class="block contract-missing-block">
+      <section v-if="strictContractMissingSummary && !isProjectCreatePage" class="block contract-missing-block">
         <h3>契约缺口提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
 
-      <section v-if="workflowTransitions.length" class="block">
+      <section v-if="workflowTransitions.length && !isProjectCreatePage" class="block">
         <h3>流程操作</h3>
         <div class="chips">
           <button
@@ -73,7 +66,7 @@
         </div>
       </section>
 
-      <section v-if="showSearchFilters && searchFilters.length" class="block">
+      <section v-if="showSearchFilters && searchFilters.length && !isProjectCreatePage" class="block">
         <h3>快捷筛选</h3>
         <div class="chips">
           <button
@@ -90,6 +83,9 @@
       </section>
 
       <section class="form-grid">
+        <div v-if="isProjectCreatePage" class="form-flow-guide">
+          <p class="form-flow-guide-main">只需完成核心信息即可创建项目</p>
+        </div>
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -106,11 +102,25 @@
         <p v-if="onchangeWarnings.length" class="validation-warn">
           {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
         </p>
+        <p v-if="submissionFeedback" class="submission-feedback" :class="`submission-feedback--${submissionFeedback.kind}`">
+          {{ submissionFeedback.message }}
+        </p>
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
-        <section v-for="section in layoutSections" :key="section.key" class="form-section">
-          <h3 class="form-section-title">{{ section.title }}</h3>
+        <section v-for="section in layoutSections" :key="section.key" :class="['form-section', sectionToneClass(section)]">
+          <div class="form-section-head">
+            <h3 class="form-section-title">{{ sectionDisplayTitle(section) }}</h3>
+            <button
+              v-if="isProjectCreatePage && isAdvancedSection(section)"
+              class="chip-btn"
+              :disabled="busy"
+              @click="advancedExpanded = !advancedExpanded"
+            >
+              {{ advancedExpanded ? '收起' : '展开' }}
+            </button>
+          </div>
+          <p v-if="sectionDisplayHint(section)" class="form-section-hint">{{ sectionDisplayHint(section) }}</p>
           <div class="form-section-grid">
             <div v-for="node in visibleSectionFields(section)" :key="node.key" class="field">
               <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
@@ -258,14 +268,25 @@
             </div>
           </div>
         </section>
-        <div v-if="hasAdvancedFields" class="layout-divider advanced-toggle">
+        <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
           </button>
         </div>
+
       </section>
 
-      <section v-if="bodyActions.length" class="block">
+      <section v-if="isProjectCreatePage" class="form-footer">
+        <p class="form-footer-hint">填写完成后点击“创建项目”</p>
+        <div class="form-footer-actions">
+          <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
+          <button class="primary" :disabled="isIntakeCreateDisabled" @click="saveRecord">
+            {{ intakeCreateButtonLabel }}
+          </button>
+        </div>
+      </section>
+
+      <section v-if="bodyActions.length && !isProjectCreatePage" class="block">
         <h3>可执行操作</h3>
         <div class="chips">
           <button
@@ -429,6 +450,7 @@ function resolveWorkspaceContextQuery() {
 const status = ref<UiStatus>('loading');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
+const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: string } | null>(null);
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
@@ -517,9 +539,14 @@ const isProjectStandardIntakeMode = computed(() => {
   if (isProjectQuickIntakeMode.value) return false;
   return String(route.query.scene_key || '').trim() === 'projects.intake';
 });
+const isProjectCreatePage = computed(() => {
+  const routeModel = String(route.params.model || '').trim();
+  const routeId = String(route.params.id || '').trim().toLowerCase();
+  return routeModel === 'project.project' && routeId === 'new';
+});
 const isProjectIntakeCreateMode = computed(() => isProjectQuickIntakeMode.value || isProjectStandardIntakeMode.value);
 const intakeAutosaveKey = computed(() => {
-  if (!isProjectIntakeCreateMode.value) return '';
+  if (!isProjectCreatePage.value) return '';
   const mode = isProjectQuickIntakeMode.value ? 'quick' : 'standard';
   const userId = Number(session.user?.id || 0) || 0;
   return `sc:intake:autosave:project.project:${mode}:u${userId}`;
@@ -553,12 +580,84 @@ const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
 
+const intakeRequiredFields = computed(() => {
+  if (!isProjectCreatePage.value) return [];
+  return layoutNodes.value
+    .filter((node) => node.kind === 'field' && node.required && isFieldVisible(node.name))
+    .map((node) => ({ name: node.name, label: node.label || node.name }));
+});
+
+const intakeRequiredReadyCount = computed(() => {
+  if (!isProjectCreatePage.value) return 0;
+  return intakeRequiredFields.value.filter((field) => {
+    const value = formData[field.name];
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (typeof value === 'number') return Number.isFinite(value) && value > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'boolean') return true;
+    return Boolean(value);
+  }).length;
+});
+
+const intakeMissingRequiredLabels = computed(() => {
+  if (!isProjectCreatePage.value) return [];
+  return intakeRequiredFields.value
+    .filter((field) => {
+      const value = formData[field.name];
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string') return value.trim().length === 0;
+      if (typeof value === 'number') return !Number.isFinite(value) || value <= 0;
+      if (Array.isArray(value)) return value.length === 0;
+      return false;
+    })
+    .map((field) => {
+      const label = String(field.label || '').trim();
+      if (label === '名称') return '项目名称';
+      return label;
+    })
+    .slice(0, 5);
+});
+
+const intakeRequiredSummary = computed(() => {
+  if (!isProjectCreatePage.value) return '';
+  const total = intakeRequiredFields.value.length;
+  const done = intakeRequiredReadyCount.value;
+  if (total <= 0) return '当前契约未提供必填字段约束。';
+  return `${done}/${total}`;
+});
+
+const intakeStatusLine = computed(() => {
+  if (!isProjectCreatePage.value) return '';
+  if (!intakeMissingRequiredLabels.value.length) {
+    return `还缺：无 ｜ 当前进度：${intakeRequiredSummary.value}`;
+  }
+  return `还缺：${intakeMissingRequiredLabels.value.join('、')} ｜ 当前进度：${intakeRequiredSummary.value}`;
+});
+
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
   return model.value ? `业务表单 · ${model.value}` : '业务表单';
+});
+
+const pageDisplayTitle = computed(() => {
+  if (isProjectCreatePage.value) return '创建项目';
+  return pageTitle.value;
+});
+
+const pageDisplaySubtitle = computed(() => {
+  if (isProjectCreatePage.value) {
+    return '填写核心信息即可完成项目立项';
+  }
+  return '';
+});
+
+const intakeCreateButtonLabel = computed(() => {
+  if (!isProjectCreatePage.value) return '创建项目';
+  return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
 });
 
 const submitButtonLabel = computed(() => {
@@ -590,6 +689,12 @@ const isStandardCreateDisabled = computed(() => {
   if (!canSave.value) return true;
   if (isProjectStandardIntakeMode.value) return !standardCreateReady.value;
   return false;
+});
+
+const isIntakeCreateDisabled = computed(() => {
+  if (!isProjectCreatePage.value) return false;
+  if (isProjectQuickIntakeMode.value) return isQuickSubmitDisabled.value;
+  return isStandardCreateDisabled.value;
 });
 
 function persistIntakeAutosave() {
@@ -2063,6 +2168,33 @@ function visibleSectionFields(section: LayoutSection) {
   return section.fields.filter((node) => isFieldVisible(node.name));
 }
 
+function sectionDisplayTitle(section: LayoutSection) {
+  if (!isProjectCreatePage.value) return section.title;
+  const raw = String(section.title || '').trim();
+  const lower = raw.toLowerCase();
+  if (lower.includes('高级')) return '高级信息（可选）';
+  if (section.kind === 'default' || lower.includes('核心') || lower.includes('主体')) return '核心信息';
+  return raw || '信息分组';
+}
+
+function sectionDisplayHint(section: LayoutSection) {
+  if (!isProjectCreatePage.value) return '';
+  const title = sectionDisplayTitle(section);
+  if (title === '核心信息') return '完成项目创建所需的最少信息';
+  if (title === '高级信息（可选）') return '';
+  return '';
+}
+
+function isAdvancedSection(section: LayoutSection) {
+  const title = sectionDisplayTitle(section);
+  return title === '高级信息（可选）';
+}
+
+function sectionToneClass(section: LayoutSection) {
+  if (!isProjectCreatePage.value) return '';
+  return isAdvancedSection(section) ? 'form-section--advanced' : 'form-section--core';
+}
+
 const contractReadiness = computed<FormContractReadiness>(() => {
   if (!contract.value) {
     return { usable: false, issues: ['contract not loaded'], fieldCount: 0, layoutFieldCount: 0, visibleCandidateCount: 0 };
@@ -2863,8 +2995,15 @@ async function openFilter(filterKey: string) {
   });
 }
 
+async function cancelIntake() {
+  if (!isProjectCreatePage.value) return;
+  const target = session.resolveLandingPath('/');
+  await router.replace({ path: target, query: resolveWorkspaceContextQuery() });
+}
+
 async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (!canSave.value || !model.value) return;
+  submissionFeedback.value = null;
   validationErrors.value = [];
   const standardCreateMode = isProjectStandardIntakeMode.value;
   if (standardCreateMode) {
@@ -2875,6 +3014,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     if (!Number.isFinite(managerId) || managerId <= 0) draftErrors.push('请填写项目经理');
     if (draftErrors.length) {
       validationErrors.value = draftErrors;
+      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
       return;
     }
   }
@@ -2882,6 +3022,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (one2manyIssues.length) {
     showOne2manyErrors.value = true;
     validationErrors.value = one2manyIssues.slice(0, 5);
+    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
     return;
   }
   showOne2manyErrors.value = false;
@@ -2893,6 +3034,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   const scenePrecheckIssues = collectSceneValidationPrecheckErrors(labels);
   if (scenePrecheckIssues.length) {
     validationErrors.value = scenePrecheckIssues;
+    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
     return;
   }
   if (!standardCreateMode) {
@@ -2904,10 +3046,12 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
     if (policyIssues.length) {
       validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
+      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
       return;
     }
     if (issues.length) {
       validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
+      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
       return;
     }
   }
@@ -2936,11 +3080,13 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     }
     if (recordId.value) {
       await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
+      submissionFeedback.value = { kind: 'success', message: '保存成功，已同步最新表单内容。' };
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
     const created = await createRecord({ model: model.value, vals: values });
     if (created?.id) {
+      submissionFeedback.value = { kind: 'success', message: '项目已创建' };
       clearIntakeAutosave();
       const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
@@ -2975,6 +3121,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       });
       return;
     }
+  } catch (err) {
+    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '创建失败，请检查填写内容');
+    validationErrors.value = [message];
+    submissionFeedback.value = { kind: 'error', message: '创建失败，请检查填写内容' };
   } finally {
     busyKind.value = null;
   }
@@ -3049,18 +3199,42 @@ watch(
 <style scoped>
 .page {
   display: grid;
-  gap: 12px;
+  gap: 6px;
+  padding-bottom: 24px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-start;
 }
 
+.header-main {
+  display: grid;
+  gap: 0;
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.page-status-line {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.header-main h1 {
+  margin: 0;
+  font-size: 36px;
+  line-height: 1.12;
+}
+
 .meta {
-  margin: 2px 0;
+  margin: 1px 0;
   color: #64748b;
   font-size: 12px;
 }
@@ -3069,16 +3243,32 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+.action-hint {
+  width: 100%;
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  text-align: right;
 }
 
 .card {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 12px;
+  padding: 10px;
   background: #fff;
   max-width: 1360px;
   width: 100%;
   margin: 0 auto;
+}
+
+.card--flow {
+  max-width: 1280px;
+  width: 100%;
+  border-color: #cfd8e3;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
 .block {
@@ -3108,7 +3298,7 @@ watch(
 
 .block h3 {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .chips {
@@ -3141,7 +3331,20 @@ watch(
 
 .form-grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+}
+
+.form-flow-guide {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-flow-guide-main {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
 }
 
 .form-section {
@@ -3152,10 +3355,40 @@ watch(
   background: #f8fafc;
 }
 
+.form-section--core {
+  border-color: #cfd8e3;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 #eef2f7;
+}
+
+.form-section--advanced {
+  border-color: #e2e8f0;
+  border-style: dashed;
+  background: #ffffff;
+}
+
 .form-section-title {
   margin: 0 0 10px;
   font-size: 13px;
   color: #1e293b;
+}
+
+.form-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.form-section-head .form-section-title {
+  margin: 0;
+}
+
+.form-section-hint {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .form-section-grid {
@@ -3178,6 +3411,32 @@ watch(
   font-size: 12px;
 }
 
+.submission-feedback {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.submission-feedback--success {
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.submission-feedback--warn {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+
+.submission-feedback--error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+}
+
 .layout-divider {
   grid-column: 1 / -1;
   font-size: 12px;
@@ -3192,6 +3451,45 @@ watch(
   border-bottom: 0;
   padding-bottom: 0;
   margin-top: 2px;
+}
+
+.form-footer {
+  grid-column: 1 / -1;
+  border: 0;
+  border-top: 1px solid #d5dee8;
+  border-radius: 0;
+  margin-top: 4px;
+  padding: 12px 0 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+.form-footer-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  flex: 1 1 360px;
+  min-width: 240px;
+}
+
+.form-footer-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.form-footer-actions .primary,
+.form-footer-actions .ghost {
+  min-width: 116px;
+  min-height: 38px;
+  white-space: nowrap;
 }
 
 .field {
@@ -3299,8 +3597,23 @@ watch(
   .header {
     flex-direction: column;
   }
+  .header-main h1 {
+    font-size: 30px;
+  }
   .form-grid {
     grid-template-columns: 1fr;
+  }
+  .form-footer {
+    align-items: stretch;
+  }
+  .form-footer-hint {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+  .form-footer-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
   }
 }
 
