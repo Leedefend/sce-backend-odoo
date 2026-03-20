@@ -438,3 +438,12 @@ Each entry must include:
 - completed_step: `workspace_home/page_contracts 引入 role_source_code；hero.role_code 与 page.context.role_code 镜像 role_surface.role_code；保留 role_variant 仅用于布局策略；smoke/guard 断言同步更新并通过`
 - active_commit: `pending`
 - next_step: `Commit Batch-C changes and continue Batch-D startup chain hardening`
+
+### 2026-03-20T13:35:00Z
+- blocker_key: `batch_d.startup_chain_mainline`
+- layer_target: `Frontend Startup Chain`
+- module: `p0-4 login-init-uicontract hardening`
+- reason: `按主线计划固定唯一启动路径，并把例外白名单显式化`
+- completed_step: `session.login 读取并限制 bootstrap.next_intent；loadAppInit 强制走 system.init（支持 session.bootstrap 先导）；移除 app.init 启动调用；新增 startup_chain_mainline_guard 并通过`
+- active_commit: `pending`
+- next_step: `Commit Batch-D changes and continue P1 contract layering`

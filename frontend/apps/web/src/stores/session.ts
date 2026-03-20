@@ -227,6 +227,7 @@ export interface SessionState {
   initError: string | null;
   initTraceId: string | null;
   initMeta: AppInitResponse['meta'] | null;
+  bootstrapNextIntent: string;
 }
 
 const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
@@ -279,6 +280,7 @@ export const useSessionStore = defineStore('session', {
     initError: null,
     initTraceId: null,
     initMeta: null,
+    bootstrapNextIntent: 'system.init',
   }),
   actions: {
     setToken(token: string) {
@@ -319,6 +321,7 @@ export const useSessionStore = defineStore('session', {
           this.lastLatencyMs = parsed.lastLatencyMs ?? null;
           this.lastWriteMode = parsed.lastWriteMode ?? '';
           this.initMeta = parsed.initMeta ?? null;
+          this.bootstrapNextIntent = String(parsed.bootstrapNextIntent || 'system.init').trim() || 'system.init';
         } catch {
           // ignore corrupted cache
         }
@@ -358,6 +361,7 @@ export const useSessionStore = defineStore('session', {
       this.lastIntent = '';
       this.lastLatencyMs = null;
       this.lastWriteMode = '';
+      this.bootstrapNextIntent = 'system.init';
       this.isReady = false;
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_SCOPED);
@@ -415,6 +419,7 @@ export const useSessionStore = defineStore('session', {
         lastLatencyMs: this.lastLatencyMs,
         lastWriteMode: this.lastWriteMode,
         initMeta: this.initMeta,
+        bootstrapNextIntent: this.bootstrapNextIntent,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     },
@@ -437,6 +442,12 @@ export const useSessionStore = defineStore('session', {
       if (!token) {
         throw new Error('login response missing token');
       }
+      const nextIntent = String(result.bootstrap?.next_intent || 'system.init').trim();
+      const allowedBootstrapIntents = new Set(['system.init', 'session.bootstrap']);
+      if (!allowedBootstrapIntents.has(nextIntent)) {
+        throw new Error(`login bootstrap next_intent unsupported: ${nextIntent}`);
+      }
+      this.bootstrapNextIntent = nextIntent;
       this.setToken(token);
     },
     async logout() {
@@ -451,14 +462,21 @@ export const useSessionStore = defineStore('session', {
       this.initStatus = 'loading';
       this.initError = null;
       this.initTraceId = null;
+      const bootstrapIntent = String(this.bootstrapNextIntent || 'system.init').trim();
+      if (bootstrapIntent === 'session.bootstrap') {
+        await intentRequest({ intent: 'session.bootstrap', params: {} });
+      }
+      if (bootstrapIntent !== 'system.init' && bootstrapIntent !== 'session.bootstrap') {
+        throw new Error(`unsupported bootstrap intent: ${bootstrapIntent}`);
+      }
       const debugIntent =
         import.meta.env.DEV ||
         localStorage.getItem('DEBUG_INTENT') === '1' ||
         new URLSearchParams(window.location.search).get('debug') === '1';
 
-      // A1: 打印本次 app.init 的有效参数
+      // A1: 打印本次 system.init 的有效参数
       if (debugIntent) {
-        console.group('[A1] app.init 请求诊断');
+        console.group('[A1] system.init 请求诊断');
         console.log('1. API Base URL:', import.meta.env.VITE_API_BASE_URL);
         console.log('2. Authorization 存在:', !!this.token);
         if (this.token) {
@@ -468,7 +486,7 @@ export const useSessionStore = defineStore('session', {
       }
 
       const requestParams = {
-        intent: 'app.init',
+        intent: 'system.init',
         params: {
           scene: 'web',
           with_preload: false,
@@ -495,7 +513,7 @@ export const useSessionStore = defineStore('session', {
       }
       // A1: 打印响应诊断信息
       if (debugIntent) {
-        console.group('[A1] app.init 响应诊断');
+        console.group('[A1] system.init 响应诊断');
         console.log('1. Response keys:', Object.keys(result));
 
         // 检查 meta 字段
@@ -525,7 +543,7 @@ export const useSessionStore = defineStore('session', {
 
       if (debugIntent) {
         // eslint-disable-next-line no-console
-        console.info('[debug] app.init result', result);
+        console.info('[debug] system.init result', result);
       }
       this.user = result.user;
       const rawCapabilities = (result as AppInitResponse & { capabilities?: Array<string | { key?: string }> }).capabilities ?? [];
@@ -691,7 +709,7 @@ export const useSessionStore = defineStore('session', {
       } as AppInitResponse['meta'];
       const candidates = [result.nav];
       if (debugIntent) {
-        console.info('[debug] app.init candidates:', candidates.map(c => ({
+        console.info('[debug] system.init candidates:', candidates.map(c => ({
           type: typeof c,
           isArray: Array.isArray(c),
           length: Array.isArray(c) ? c.length : 'N/A'
@@ -699,13 +717,13 @@ export const useSessionStore = defineStore('session', {
       }
       const nav = (candidates.find((entry) => Array.isArray(entry)) ?? null) as NavNode[] | null;
       if (!nav) {
-        this.initError = 'app.init missing required nav contract';
+        this.initError = 'system.init missing required nav contract';
         this.initStatus = 'error';
-        throw new Error('app.init missing required nav contract');
+        throw new Error('system.init missing required nav contract');
       }
       if (debugIntent) {
         // eslint-disable-next-line no-console
-        console.info('[debug] app.init nav length', nav.length);
+        console.info('[debug] system.init nav length', nav.length);
         // 调试：打印第一个导航项的结构
         if (nav.length > 0) {
           console.info('[debug] First nav item:', JSON.stringify(nav[0], null, 2));
