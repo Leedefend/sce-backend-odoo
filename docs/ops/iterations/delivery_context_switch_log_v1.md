@@ -267,3 +267,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_scoreboard_refresh 增加 delivery_readiness_ci_summary.json 输出并验证内容`
 - active_commit: `63d5be0`
 - next_step: `Refresh scoreboard snapshot and commit docs alignment`
+
+### 2026-03-20T06:20:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `ci summary markdown quick view`
+- reason: `让非研发同学无需解析 JSON 即可查看 CI profile 状态`
+- completed_step: `delivery_readiness_scoreboard_refresh 增加 delivery_readiness_ci_summary.md 输出并在 README 增加快速入口`
+- active_commit: `bccb80c`
+- next_step: `Commit script and docs, then continue blocker burn-down`
