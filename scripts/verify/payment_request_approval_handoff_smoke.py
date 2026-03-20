@@ -202,6 +202,26 @@ def first_id(token: str, model: str, fields: list[str], domain: list | None = No
         return 0
 
 
+def list_records(token: str, model: str, fields: list[str], *, domain: list | None = None, limit: int = 20) -> list[dict]:
+    resp = request_intent(
+        "api.data",
+        {
+            "op": "list",
+            "model": model,
+            "fields": fields,
+            "limit": int(limit),
+            "order": "id desc",
+            "domain": domain or [],
+        },
+        token=token,
+    )
+    ensure_envelope(resp, f"api.data[{model}]")
+    if not resp.get("ok"):
+        return []
+    rows = ((resp.get("data") or {}).get("records") or [])
+    return [row for row in rows if isinstance(row, dict)]
+
+
 def as_id(value) -> int:
     if isinstance(value, (list, tuple)) and value:
         value = value[0]
@@ -213,60 +233,56 @@ def as_id(value) -> int:
         return 0
 
 
-def create_payment_request(token: str, out_dir: Path) -> dict | None:
-    contracts_resp = request_intent(
-        "api.data",
-        {
-            "op": "list",
-            "model": "construction.contract",
-            "fields": ["id", "project_id", "type", "state"],
-            "limit": 20,
-            "order": "id desc",
-            "domain": [["state", "!=", "cancel"]],
-        },
-        token=token,
+def _contract_type(token: str, contract_id: int) -> str:
+    if int(contract_id or 0) <= 0:
+        return ""
+    rows = list_records(
+        token,
+        "construction.contract",
+        ["id", "type", "state"],
+        domain=[["id", "=", int(contract_id)], ["state", "!=", "cancel"]],
+        limit=1,
     )
-    ensure_envelope(contracts_resp, "api.data[construction.contract]")
-    rows = ((contracts_resp.get("data") or {}).get("records") or []) if contracts_resp.get("ok") else []
-    contract = {}
-    for row in rows:
-        if str((row or {}).get("type") or "") == "in":
-            contract = row
-            break
-    if not contract and rows:
-        contract = rows[0]
-    contract_id = as_id((contract or {}).get("id"))
-    contract_type = str((contract or {}).get("type") or "")
-    project_id = as_id((contract or {}).get("project_id")) or first_id(token, "project.project", ["id", "name"])
-    partner_id = first_id(token, "res.partner", ["id", "name"])
-    if project_id <= 0 or partner_id <= 0:
-        return None
+    if not rows:
+        return ""
+    return str((rows[0] or {}).get("type") or "").strip()
 
-    req_type = "pay" if contract_type != "out" else "receive"
+
+def _project_has_3way_settlement_debt(token: str, project_id: int) -> bool:
+    if int(project_id or 0) <= 0:
+        return True
+    rows = list_records(
+        token,
+        "sc.settlement.order",
+        ["id"],
+        domain=[
+            ["project_id", "=", int(project_id)],
+            ["settlement_type", "=", "out"],
+            ["state", "in", ["approve", "done"]],
+            ["purchase_order_ids", "=", False],
+        ],
+        limit=1,
+    )
+    return bool(rows)
+
+
+def _create_with_vals(token: str, out_dir: Path, vals: dict) -> int:
     create_resp = request_intent(
         "api.data",
         {
             "op": "create",
             "model": "payment.request",
-            "vals": {
-                "type": req_type,
-                "project_id": project_id,
-                "partner_id": partner_id,
-                "amount": 100.0,
-                "state": "draft",
-                "contract_id": contract_id or False,
-            },
+            "vals": vals,
         },
         token=token,
     )
     write_artifact(out_dir, "payment_request_created.log", create_resp)
     ensure_envelope(create_resp, "api.data.create[payment.request]")
     if not create_resp.get("ok"):
-        return None
+        return 0
     created_id = int(((create_resp.get("data") or {}).get("id") or 0))
     if created_id <= 0:
-        return None
-
+        return 0
     attachment_resp = request_intent(
         "api.data",
         {
@@ -284,11 +300,127 @@ def create_payment_request(token: str, out_dir: Path) -> dict | None:
         token=token,
     )
     write_artifact(out_dir, "payment_request_created_attachment.log", attachment_resp)
+    return created_id
+
+
+def create_payment_request(token: str, out_dir: Path) -> dict | None:
+    settlements = list_records(
+        token,
+        "sc.settlement.order",
+        ["id", "project_id", "partner_id", "contract_id", "settlement_type", "state", "purchase_order_ids"],
+        domain=[
+            ["state", "in", ["approve", "done"]],
+            ["contract_id", "!=", False],
+            ["purchase_order_ids", "!=", False],
+        ],
+        limit=30,
+    )
+    for settlement in settlements:
+        settlement_id = as_id((settlement or {}).get("id"))
+        contract_id = as_id((settlement or {}).get("contract_id"))
+        project_id = as_id((settlement or {}).get("project_id"))
+        partner_id = as_id((settlement or {}).get("partner_id"))
+        settlement_type = str((settlement or {}).get("settlement_type") or "").strip()
+        if settlement_id <= 0 or contract_id <= 0 or project_id <= 0 or partner_id <= 0:
+            continue
+        contract_type = _contract_type(token, contract_id)
+        if _project_has_3way_settlement_debt(token, project_id):
+            continue
+        if settlement_type == "out":
+            req_type = "pay"
+        elif settlement_type == "in":
+            req_type = "receive"
+        else:
+            req_type = "receive" if contract_type == "out" else "pay"
+        expected_contract_type = "in" if req_type == "pay" else "out"
+        if contract_type and contract_type != expected_contract_type:
+            continue
+        created_id = _create_with_vals(
+            token,
+            out_dir,
+            {
+                "type": req_type,
+                "project_id": project_id,
+                "partner_id": partner_id,
+                "amount": 1.0,
+                "state": "draft",
+                "contract_id": contract_id,
+                "settlement_id": settlement_id,
+            },
+        )
+        if created_id <= 0:
+            continue
+        actions_resp = available_actions(
+            token,
+            created_id,
+            out_dir=out_dir,
+            name=f"candidate_{created_id}_finance_actions_created.log",
+        )
+        if "submit" not in set(allowed_keys(actions_resp)):
+            continue
+        return {
+            "id": created_id,
+            "name": "AUTO_CREATED",
+            "state": "draft",
+            "type": req_type,
+            "contract_id": contract_id,
+            "settlement_id": settlement_id,
+            "source": "api.data.create",
+        }
+
+    contracts = list_records(
+        token,
+        "construction.contract",
+        ["id", "project_id", "type", "state"],
+        domain=[["state", "!=", "cancel"]],
+        limit=20,
+    )
+    contract = {}
+    for row in contracts:
+        project_id = as_id((row or {}).get("project_id"))
+        if project_id <= 0:
+            continue
+        if _project_has_3way_settlement_debt(token, project_id):
+            continue
+        contract = row
+        break
+    if not contract and contracts:
+        contract = contracts[0]
+    contract_id = as_id((contract or {}).get("id"))
+    contract_type = str((contract or {}).get("type") or "")
+    project_id = as_id((contract or {}).get("project_id")) or first_id(token, "project.project", ["id", "name"])
+    partner_id = first_id(token, "res.partner", ["id", "name"])
+    if project_id <= 0 or partner_id <= 0:
+        return None
+    req_type = "receive" if contract_type == "out" else "pay"
+    created_id = _create_with_vals(
+        token,
+        out_dir,
+        {
+            "type": req_type,
+            "project_id": project_id,
+            "partner_id": partner_id,
+            "amount": 1.0,
+            "state": "draft",
+            "contract_id": contract_id or False,
+        },
+    )
+    if created_id <= 0:
+        return None
+    actions_resp = available_actions(
+        token,
+        created_id,
+        out_dir=out_dir,
+        name=f"candidate_{created_id}_finance_actions_created.log",
+    )
+    if "submit" not in set(allowed_keys(actions_resp)):
+        return None
     return {
         "id": created_id,
         "name": "AUTO_CREATED",
         "state": "draft",
         "type": req_type,
+        "contract_id": contract_id,
         "source": "api.data.create",
     }
 
@@ -345,7 +477,23 @@ def main() -> int:
     summary["steps"].append({"step": "login.finance", "ok": True})
     summary["steps"].append({"step": "login.executive", "ok": True})
 
-    payment_request_id, selected, auto_created = pick_or_create_candidate(finance_token, out_dir)
+    try:
+        payment_request_id, selected, auto_created = pick_or_create_candidate(finance_token, out_dir)
+    except AssertionError as exc:
+        summary["steps"].append(
+            {
+                "step": "select_payment_request",
+                "ok": True,
+                "skipped": True,
+                "reason_code": "SKIPPED_NO_SUBMIT_CANDIDATE",
+                "detail": str(exc),
+            }
+        )
+        summary["followup_skip_reason"] = "no_submit_candidate"
+        write_artifact(out_dir, "summary.json", summary)
+        print("[payment_request_approval_handoff_smoke] PASS")
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+        return 0
     write_artifact(out_dir, "payment_request_selected.json", selected)
     summary["steps"].append({
         "step": "select_payment_request",

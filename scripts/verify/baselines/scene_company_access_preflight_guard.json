@@ -1,0 +1,18 @@
+{
+  "profiles": [
+    {
+      "key": "primary",
+      "target_company_id": 1,
+      "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.company_primary.json"
+    },
+    {
+      "key": "secondary",
+      "target_company_id": 2,
+      "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.company_secondary.json"
+    }
+  ],
+  "min_reachable_count_block": 1,
+  "min_reachable_count_target": 2,
+  "report_json": "artifacts/backend/scene_company_access_preflight_report.json",
+  "report_md": "artifacts/backend/scene_company_access_preflight_report.md"
+}

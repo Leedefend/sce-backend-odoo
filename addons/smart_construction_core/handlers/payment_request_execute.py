@@ -24,10 +24,13 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
     DESCRIPTION = "Execute payment request semantic action via one intent"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = [
+    REQUIRED_GROUPS = ["base.group_user"]
+    ACCESS_GROUPS = [
         "smart_construction_core.group_sc_cap_finance_user",
         "smart_core.group_sc_finance_approver",
         "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_custom.group_sc_role_finance",
+        "smart_construction_custom.group_sc_role_executive",
     ]
     ACL_MODE = "explicit_check"
 
@@ -44,7 +47,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
             raise AccessError("PERMISSION_DENIED: missing required group")
         if user.has_group("base.group_system"):
             return
-        required = [str(x).strip() for x in (getattr(self, "REQUIRED_GROUPS", []) or []) if str(x).strip()]
+        required = [str(x).strip() for x in (getattr(self, "ACCESS_GROUPS", []) or []) if str(x).strip()]
         for xmlid in required:
             try:
                 if user.has_group(xmlid):

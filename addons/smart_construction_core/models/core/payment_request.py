@@ -501,7 +501,11 @@ class PaymentRequest(models.Model):
             rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
 
     def action_submit(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
+        has_finance_submit_access = (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+        if not has_finance_submit_access:
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         for rec in self:
             if rec._get_attachment_count() <= 0:
@@ -587,7 +591,11 @@ class PaymentRequest(models.Model):
         return result
 
     def action_done(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
+        has_finance_done_access = (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+        if not has_finance_done_access:
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
         for rec in self:
             if rec.validation_status != "validated":
@@ -629,7 +637,11 @@ class PaymentRequest(models.Model):
         return Ledger.create(vals)
 
     def action_cancel(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
+        has_finance_cancel_access = (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+        if not has_finance_cancel_access:
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
         self.with_context(allow_transition=True).write({"state": "cancel"})
 
