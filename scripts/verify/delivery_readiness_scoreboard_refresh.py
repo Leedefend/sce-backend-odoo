@@ -14,6 +14,7 @@ SCOREBOARD_PATH = ROOT / "docs" / "product" / "delivery" / "v1" / "delivery_read
 STATE_PATH = ROOT / "artifacts" / "backend" / "delivery_ci_profile_status.json"
 SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.json"
 SUMMARY_MD_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.md"
+MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_mainline_run_summary.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -53,6 +54,22 @@ def _to_summary_payload(state: dict) -> dict:
             "command": str(row.get("command") or PROFILE_COMMANDS[name]).strip(),
         }
 
+    mainline_summary = _load_json(MAINLINE_SUMMARY_PATH)
+    mainline = {
+        "present": bool(mainline_summary),
+        "path": str(MAINLINE_SUMMARY_PATH.relative_to(ROOT)),
+    }
+    if mainline_summary:
+        mainline.update(
+            {
+                "ok": bool(mainline_summary.get("ok")),
+                "profile": str(mainline_summary.get("profile") or "").strip(),
+                "generated_at_utc": str(mainline_summary.get("generated_at_utc") or "").strip(),
+                "commit_ref": str(mainline_summary.get("commit_ref") or "").strip(),
+                "steps": mainline_summary.get("steps") if isinstance(mainline_summary.get("steps"), dict) else {},
+            }
+        )
+
     return {
         "generated_at_utc": _utc_now(),
         "scoreboard": {
@@ -60,6 +77,7 @@ def _to_summary_payload(state: dict) -> dict:
             "branch": _git(["git", "branch", "--show-current"]) or "unknown",
             "commit_ref": _git(["git", "rev-parse", "--short", "HEAD"]) or "unknown",
         },
+        "mainline": mainline,
         "profiles": {
             "strict": _profile("strict"),
             "restricted": _profile("restricted"),
@@ -72,6 +90,7 @@ def _to_summary_markdown(payload: dict) -> str:
     profiles = payload.get("profiles") if isinstance(payload.get("profiles"), dict) else {}
     strict = profiles.get("strict") if isinstance(profiles.get("strict"), dict) else {}
     restricted = profiles.get("restricted") if isinstance(profiles.get("restricted"), dict) else {}
+    mainline = payload.get("mainline") if isinstance(payload.get("mainline"), dict) else {}
 
     lines = [
         "# Delivery Readiness CI Summary",
@@ -80,6 +99,7 @@ def _to_summary_markdown(payload: dict) -> str:
         f"- branch: {scoreboard.get('branch', '')}",
         f"- commit_ref: {scoreboard.get('commit_ref', '')}",
         f"- scoreboard: {scoreboard.get('path', '')}",
+        f"- mainline_summary: {mainline.get('path', '')}",
         "",
         "## Profiles",
         "",
@@ -98,6 +118,28 @@ def _to_summary_markdown(payload: dict) -> str:
             cmd=str(restricted.get("command", "")),
         ),
     ]
+
+    if mainline.get("present"):
+        steps = mainline.get("steps") if isinstance(mainline.get("steps"), dict) else {}
+        lines.extend(
+            [
+                "",
+                "## Mainline",
+                "",
+                f"- ok: {mainline.get('ok')}",
+                f"- profile: {mainline.get('profile', '')}",
+                f"- generated_at_utc: {mainline.get('generated_at_utc', '')}",
+                f"- commit_ref: {mainline.get('commit_ref', '')}",
+                "",
+                "| step | status |",
+                "|---|---|",
+                f"| frontend_gate | {steps.get('frontend_gate', '')} |",
+                f"| scene_delivery_readiness | {steps.get('scene_delivery_readiness', '')} |",
+                f"| governance_truth | {steps.get('governance_truth', '')} |",
+            ]
+        )
+    else:
+        lines.extend(["", "## Mainline", "", "- unavailable"]) 
     return "\n".join(lines) + "\n"
 
 
