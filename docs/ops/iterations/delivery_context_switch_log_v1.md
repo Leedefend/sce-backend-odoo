@@ -301,5 +301,14 @@ Each entry must include:
 - module: `one-command seal-mode verify`
 - reason: `主线迭代需要一个稳定单命令，减少多人协作时执行口径偏差`
 - completed_step: `新增 verify.product.delivery.mainline 串联 frontend gate + ci.scene.delivery.readiness + governance truth`
-- active_commit: `232689d`
+- active_commit: `17a2aab`
 - next_step: `Run verify.product.delivery.mainline and commit feat/docs`
+
+### 2026-03-20T06:45:00Z
+- blocker_key: `gap.delivery_evidence_productization`
+- layer_target: `Ops/Delivery Mainline`
+- module: `mainline run evidence artifact`
+- reason: `一键主线命令需要提供可机读执行结果，便于流水线挂件和回溯`
+- completed_step: `verify.product.delivery.mainline 已在 restricted 档位跑通，并输出 delivery_mainline_run_summary.{json,md}`
+- active_commit: `17a2aab`
+- next_step: `Commit docs refresh and continue P0 blocker closure`
