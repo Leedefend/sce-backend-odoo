@@ -222,6 +222,22 @@ def _strip_ui_base_contract_for_frontend(payload):
         cleaned[key] = _strip_ui_base_contract_for_frontend(value)
     return cleaned
 
+
+def _parse_with_tokens(value) -> set[str]:
+    tokens: set[str] = set()
+    if isinstance(value, str):
+        for part in value.split(","):
+            token = str(part or "").strip().lower()
+            if token:
+                tokens.add(token)
+        return tokens
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            token = str(item or "").strip().lower()
+            if token:
+                tokens.add(token)
+    return tokens
+
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
     return provider_resolve_scene_channel(env, user, params, get_header=collector.get_request_header)
@@ -411,7 +427,12 @@ class SystemInitHandler(BaseIntentHandler):
             apply_contract_governance_fn=apply_contract_governance,
         )
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
-        data["workspace_home"] = build_workspace_home_contract(data)
+        with_tokens = _parse_with_tokens(params.get("with"))
+        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
+        if include_workspace_home:
+            data["workspace_home"] = build_workspace_home_contract(data)
+        else:
+            data.pop("workspace_home", None)
         data["page_contracts"] = build_page_contracts(data)
         role_surface = data.get("role_surface") if isinstance(data, dict) else {}
         role_pruned = False
@@ -479,6 +500,15 @@ class SystemInitHandler(BaseIntentHandler):
                 contract_meta = scene_nav_contract.get("meta")
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
+
+        landing_scene_key = "portal.dashboard"
+        if isinstance(role_surface, dict):
+            landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip() or landing_scene_key
+        data["workspace_home_ref"] = {
+            "intent": "ui.contract",
+            "scene_key": landing_scene_key,
+            "loaded": bool(include_workspace_home),
+        }
 
         data["scene_governance_v1"] = build_scene_governance_payload_v1(
             data=data,

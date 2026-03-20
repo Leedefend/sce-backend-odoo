@@ -158,6 +158,12 @@ export interface AppInitResponse {
   };
   nav: NavNode[];
   default_route?: { menu_id?: number } | string;
+  workspace_home?: Record<string, unknown>;
+  workspace_home_ref?: {
+    intent?: string;
+    scene_key?: string;
+    loaded?: boolean;
+  };
   intents?: string[];
   feature_flags?: Record<string, unknown>;
   meta?: Record<string, unknown>;

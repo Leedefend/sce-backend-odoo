@@ -490,6 +490,7 @@ export const useSessionStore = defineStore('session', {
         params: {
           scene: 'web',
           with_preload: false,
+          with: ['workspace_home'],
           root_xmlid: 'smart_construction_core.menu_sc_root',
         },
       };

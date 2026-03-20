@@ -456,3 +456,12 @@ Each entry must include:
 - completed_step: `新增 init_contract_v1（session/nav/surface/bootstrap_refs）；handler 在返回前注入分层结构；smoke 增加四区块断言`
 - active_commit: `pending`
 - next_step: `Commit Batch-E changes and continue P1-2 workspace_home on-demand loading`
+
+### 2026-03-20T14:35:00Z
+- blocker_key: `batch_f.workspace_home_on_demand`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-2 workspace_home lazy delivery`
+- reason: `继续 P1 收口，降低默认 system.init 负载并保留显式按需能力`
+- completed_step: `system.init 增加 with 参数解析并默认仅返回 workspace_home_ref；显式 with=['workspace_home'] 才返回完整 workspace_home；前端主链显式带 with 保持现有能力；smoke 增加默认/按需两条断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-F changes and continue P1-3 intent catalog split`
