@@ -15,11 +15,13 @@ class MetaIntentCatalogHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []
 
     def handle(self, payload=None, ctx=None):
-        intents, intents_meta = IntentSurfaceBuilder().collect(self.env, self.env.user)
+        builder = IntentSurfaceBuilder()
+        intents, intents_meta = builder.collect(self.env, self.env.user)
+        intent_catalog = builder.collect_catalog(self.env, self.env.user)
         return {
             "intents": intents,
             "intents_meta": intents_meta,
+            "intent_catalog": intent_catalog,
         }, {
             "schema_version": "1.0.0",
         }
-

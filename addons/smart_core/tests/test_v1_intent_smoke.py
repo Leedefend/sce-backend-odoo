@@ -273,10 +273,23 @@ class TestV1IntentSmoke(HttpCase):
         row = data.get("data", {}) or {}
         intents = row.get("intents") or []
         intents_meta = row.get("intents_meta") or {}
+        intent_catalog = row.get("intent_catalog") or []
         self.assertIsInstance(intents, list)
         self.assertIsInstance(intents_meta, dict)
+        self.assertIsInstance(intent_catalog, list)
         self.assertIn("system.init", intents)
         self.assertIn("ui.contract", intents)
         self.assertIn("api.data", intents)
         self.assertIn("meta.intent_catalog", intents)
         self.assertIn("meta.intent_catalog", intents_meta)
+        self.assertEqual((intents_meta.get("system.init") or {}).get("status"), "canonical")
+        self.assertEqual((intents_meta.get("system.init") or {}).get("canonical"), "system.init")
+
+        app_init_alias = None
+        for item in intent_catalog:
+            if isinstance(item, dict) and str(item.get("name") or "") == "app.init":
+                app_init_alias = item
+                break
+        self.assertIsNotNone(app_init_alias)
+        self.assertEqual(str((app_init_alias or {}).get("status") or ""), "alias")
+        self.assertEqual(str((app_init_alias or {}).get("canonical") or ""), "system.init")
