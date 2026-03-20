@@ -53,8 +53,10 @@ def _check_payment_request(scene_row: dict) -> list[str]:
 
     search_surface = _as_dict(scene_row.get("search_surface"))
     filters = _as_list(search_surface.get("filters"))
-    if len(filters) < 1:
-        issues.append("search_filters<1")
+    fields = _as_list(search_surface.get("fields"))
+    group_by = _as_list(search_surface.get("group_by"))
+    if len(filters) + len(fields) + len(group_by) < 1:
+        issues.append("search_surface_empty")
     return issues
 
 
@@ -166,4 +168,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
