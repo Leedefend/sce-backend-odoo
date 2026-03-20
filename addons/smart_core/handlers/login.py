@@ -33,6 +33,16 @@ def _resolve_contract_mode(params: Dict[str, Any]) -> str:
     return "default"
 
 
+def _resolve_compat_enabled(env, params: Dict[str, Any]) -> bool:
+    if "compat_enabled" in params:
+        return _to_bool(params.get("compat_enabled"))
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.login.compat_enabled", "1")
+    except Exception:
+        raw = "1"
+    return _to_bool(raw)
+
+
 def _user_groups_xmlids(user) -> list[str]:
     """把用户所属组转成外部ID列表（module.xmlid），无外部ID的过滤掉。"""
     try:
@@ -100,6 +110,10 @@ class LoginHandler(BaseIntentHandler):
         db = params.get("db") or params.get("database")
         want_company_id = params.get("company_id")
         contract_mode = _resolve_contract_mode(params)
+        compat_requested = contract_mode == "compat"
+        compat_enabled = _resolve_compat_enabled(self.env, params)
+        if compat_requested and not compat_enabled:
+            contract_mode = "default"
 
         if not login or not password:
             return self.err(400, "缺少登录信息")
@@ -169,12 +183,24 @@ class LoginHandler(BaseIntentHandler):
             "bootstrap": {
                 "next_intent": "system.init",
                 "mode": "full",
+                "allowed_exception_intents": ["session.bootstrap", "scene.health"],
             },
             "contract": {
+                "contract_version": "1.0.0",
+                "schema_version": "1.0.0",
                 "response_mode": contract_mode,
                 "mode": contract_mode,
+                "compat_requested": compat_requested,
+                "compat_enabled": compat_enabled,
+                "compat_deprecated": True,
+                "compat_sunset_phase": "next_iteration",
             },
         }
+
+        if compat_requested and not compat_enabled:
+            data["contract"]["deprecation_notice"] = "compat_mode_disabled_fallback_to_default"
+        elif compat_requested:
+            data["contract"]["deprecation_notice"] = "compat_mode_deprecated_use_default"
 
         # Compatibility surface: legacy top-level token fields only.
         if contract_mode in {"compat", "debug"}:

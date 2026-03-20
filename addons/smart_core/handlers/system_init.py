@@ -239,7 +239,60 @@ def _parse_with_tokens(value) -> set[str]:
     return tokens
 
 
-def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> tuple[list[str], dict]:
+def _resolve_role_source_code(data: dict) -> str:
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    role_code = str(role_surface.get("role_code") or "").strip().lower()
+    return role_code or "owner"
+
+
+def _ensure_role_context_mirror(data: dict) -> None:
+    if not isinstance(data, dict):
+        return
+    role_code = _resolve_role_source_code(data)
+
+    workspace_home = data.get("workspace_home") if isinstance(data.get("workspace_home"), dict) else None
+    if isinstance(workspace_home, dict):
+        record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
+        hero = record.get("hero") if isinstance(record.get("hero"), dict) else {}
+        hero["role_code"] = role_code
+        record["hero"] = hero
+        workspace_home["record"] = record
+
+        page_orchestration_v1 = (
+            workspace_home.get("page_orchestration_v1")
+            if isinstance(workspace_home.get("page_orchestration_v1"), dict)
+            else {}
+        )
+        page = page_orchestration_v1.get("page") if isinstance(page_orchestration_v1.get("page"), dict) else {}
+        context = page.get("context") if isinstance(page.get("context"), dict) else {}
+        context["role_code"] = role_code
+        page["context"] = context
+        page_orchestration_v1["page"] = page
+        workspace_home["page_orchestration_v1"] = page_orchestration_v1
+
+    page_contracts = data.get("page_contracts") if isinstance(data.get("page_contracts"), dict) else {}
+    pages = page_contracts.get("pages") if isinstance(page_contracts.get("pages"), dict) else {}
+    home_page = pages.get("home") if isinstance(pages.get("home"), dict) else {}
+    home_orchestration = (
+        home_page.get("page_orchestration_v1")
+        if isinstance(home_page.get("page_orchestration_v1"), dict)
+        else {}
+    )
+    home_page_meta = home_orchestration.get("meta") if isinstance(home_orchestration.get("meta"), dict) else {}
+    page = home_orchestration.get("page") if isinstance(home_orchestration.get("page"), dict) else {}
+    context = page.get("context") if isinstance(page.get("context"), dict) else {}
+    context["role_code"] = role_code
+    page["context"] = context
+    home_orchestration["page"] = page
+    home_page_meta["role_source_code"] = role_code
+    home_orchestration["meta"] = home_page_meta
+    home_page["page_orchestration_v1"] = home_orchestration
+    pages["home"] = home_page
+    page_contracts["pages"] = pages
+    data["page_contracts"] = page_contracts
+
+
+def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
     minimal_order = [
         "system.init",
         "ui.contract",
@@ -249,12 +302,8 @@ def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> tup
         "auth.logout",
     ]
     minimal = [name for name in minimal_order if name in (intents or [])]
-    minimal_meta = {
-        name: intents_meta.get(name)
-        for name in minimal
-        if isinstance(intents_meta, dict) and isinstance(intents_meta.get(name), dict)
-    }
-    return minimal, minimal_meta
+    _ = intents_meta
+    return minimal
 
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
@@ -349,7 +398,7 @@ class SystemInitHandler(BaseIntentHandler):
 
         # -------- 2.5) 可用意图（最小启动集合 + 独立目录引用）--------
         intents_all, intents_meta_all = IntentSurfaceBuilder().collect(env, user)
-        intents, intents_meta = _build_minimal_intent_surface(intents_all, intents_meta_all)
+        intents = _build_minimal_intent_surface(intents_all, intents_meta_all)
 
         # -------- 3/4) 首页契约 + 可选预取（仅 etag，不回传整包契约）--------
         preload_builder = SystemInitPreloadBuilder()
@@ -373,13 +422,13 @@ class SystemInitHandler(BaseIntentHandler):
             },
             default_route=nav_data.get("defaultRoute") or {"menu_id": None},
             intents=intents,
-            intents_meta=intents_meta,
             feature_flags=nav_data.get("feature_flags") or {"ai_enabled": True},
             capabilities=normalize_capabilities(_load_capabilities_for_user(env, user)),
             scene_channel=scene_channel,
             channel_selector=channel_selector,
             channel_source_ref=channel_source_ref,
             contract_mode=contract_mode,
+            contract_version=CONTRACT_VERSION,
         )
         # Keep explicit contract_mode mapping in handler for governance coverage guard.
         data.update({"contract_mode": contract_mode})
@@ -453,6 +502,7 @@ class SystemInitHandler(BaseIntentHandler):
         else:
             data.pop("workspace_home", None)
         data["page_contracts"] = build_page_contracts(data)
+        _ensure_role_context_mirror(data)
         role_surface = data.get("role_surface") if isinstance(data, dict) else {}
         role_pruned = False
         if isinstance(role_surface, dict) and isinstance(data.get("nav"), list):

@@ -197,13 +197,18 @@ class UiContractHandler(BaseIntentHandler):
                     "meta": {"intent": self.INTENT_TYPE, "op": op, "etag": etag,
                              "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000),
                              "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
+                             "schema_version": "1.0.0",
                              "contract_mode": contract_mode, "contract_surface": contract_surface},
                     "code": 304}
 
         meta_out = dict(meta)
+        payload_schema_version = meta_out.pop("schema_version", None)
+        if payload_schema_version:
+            meta_out["payload_schema_version"] = payload_schema_version
         meta_out.update({"intent": self.INTENT_TYPE, "op": op, "version": self.VERSION,
                          "etag": etag, "elapsed_ms": int((time.time()-t0)*1000),
                          "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
+                         "schema_version": "1.0.0",
                          "contract_mode": contract_mode, "contract_surface": contract_surface})
         meta_out.setdefault("response_schema_version", "1.0.0")
         return {"ok": True, "data": data or {}, "meta": meta_out}
