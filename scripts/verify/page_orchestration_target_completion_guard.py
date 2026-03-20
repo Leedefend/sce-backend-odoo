@@ -115,8 +115,8 @@ def main() -> int:
         "workspace_home_contract_builder.py",
         files["home_builder"],
         [
-            '"page_orchestration_v1": _build_page_orchestration_v1(role_code)',
-            '"page_orchestration": _build_page_orchestration(role_code)',
+            '"page_orchestration_v1": _build_page_orchestration_v1(role_code, role_source_code=role_source_code)',
+            '"page_orchestration": _build_page_orchestration(role_code, role_source_code=role_source_code)',
             'fn = getattr(provider, "build_v1_zones", None)',
             'fn = getattr(provider, "build_v1_page_profile", None)',
             'fn = getattr(provider, "build_v1_data_sources", None)',
@@ -220,4 +220,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

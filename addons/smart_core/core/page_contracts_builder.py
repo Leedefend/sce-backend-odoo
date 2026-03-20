@@ -69,9 +69,16 @@ def _load_data_provider():
         return None
 
 
-def _normalize_role_code(data: Dict[str, Any]) -> str:
+def _resolve_role_source_code(data: Dict[str, Any]) -> str:
     role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
     role_code = str(role_surface.get("role_code") or "").strip().lower()
+    if role_code:
+        return role_code
+    return "owner"
+
+
+def _normalize_role_code(data: Dict[str, Any]) -> str:
+    role_code = _resolve_role_source_code(data)
     if role_code in SUPPORTED_ROLE_CODES:
         return role_code
     return "owner"
@@ -385,7 +392,13 @@ def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
     return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]
 
 
-def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code: str) -> Dict[str, Any]:
+def _build_page_orchestration_v1(
+    page_key: str,
+    page: Dict[str, Any],
+    role_code: str,
+    role_source_code: str | None = None,
+) -> Dict[str, Any]:
+    source_role_code = str(role_source_code or "").strip().lower() or role_code
     sections = page.get("sections") if isinstance(page.get("sections"), list) else []
     title = ""
     texts = page.get("texts") if isinstance(page.get("texts"), dict) else {}
@@ -517,7 +530,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "header": {},
             "global_actions": page_actions,
             "filters": [],
-            "context": {"role_code": role_code},
+            "context": {"role_code": source_role_code},
         },
         "zones": zones,
         "data_sources": data_sources,
@@ -540,6 +553,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "schema_version": "1.0.0",
             "page_key": page_key,
             "role_variant": role_code,
+            "role_source_code": source_role_code,
             "semantic_profile": page_type,
             "role_zone_order": _role_zone_order(role_code, page_type, page_key),
             "role_focus_sections": list(focus_sections.keys()),
@@ -548,7 +562,9 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
 
 
 def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
-    role_code = _normalize_role_code(_data if isinstance(_data, dict) else {})
+    safe_data = _data if isinstance(_data, dict) else {}
+    role_source_code = _resolve_role_source_code(safe_data)
+    role_code = _normalize_role_code(safe_data)
     payload = {
         "schema_version": "v1",
         "pages": {
@@ -1398,5 +1414,10 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             continue
         if isinstance(page.get("page_orchestration_v1"), dict):
             continue
-        page["page_orchestration_v1"] = _build_page_orchestration_v1(str(key), page, role_code)
+        page["page_orchestration_v1"] = _build_page_orchestration_v1(
+            str(key),
+            page,
+            role_code,
+            role_source_code=role_source_code,
+        )
     return payload
