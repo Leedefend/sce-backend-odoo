@@ -564,3 +564,12 @@ Each entry must include:
 - completed_step: `新增 intent_canonical_alias_snapshot_guard.py；生成 baseline intent_canonical_alias_snapshot.json；verify.backend.contract.closure.guard 串联 alias snapshot guard；新增独立 make 目标 verify.intent.canonical_alias.snapshot.guard`
 - active_commit: `pending`
 - next_step: `Run closure guard stack and commit Batch-Q`
+
+### 2026-03-20T20:00:00Z
+- blocker_key: `batch_r.contract_closure_mainline_target`
+- layer_target: `Ops/Verification Guard`
+- module: `closure guard aggregation`
+- reason: `为 CI 提供单一入口，避免收口守卫目标分散调用`
+- completed_step: `Makefile 新增 verify.backend.contract.closure.mainline（结构守卫+双快照守卫）；product delivery mainline 改为调用聚合目标并更新步骤标识`
+- active_commit: `pending`
+- next_step: `Run closure mainline target and commit Batch-R`

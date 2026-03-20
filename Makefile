@@ -2603,6 +2603,16 @@ verify.backend.contract.closure.snapshot.guard: guard.prod.forbid
 verify.intent.canonical_alias.snapshot.guard: guard.prod.forbid
 	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
 
+.PHONY: verify.backend.contract.closure.mainline
+verify.backend.contract.closure.mainline: guard.prod.forbid
+	@echo "[verify.backend.contract.closure.mainline] step=closure_structure_guard"
+	@python3 scripts/verify/backend_contract_closure_guard.py
+	@echo "[verify.backend.contract.closure.mainline] step=closure_snapshot_guard"
+	@python3 scripts/verify/backend_contract_closure_snapshot_guard.py
+	@echo "[verify.backend.contract.closure.mainline] step=intent_alias_snapshot_guard"
+	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
+	@echo "[OK] verify.backend.contract.closure.mainline done"
+
 .PHONY: verify.product.delivery.ready
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
@@ -2633,9 +2643,9 @@ verify.product.delivery.mainline: guard.prod.forbid
 	else \
 	  MODULE9_STATUS=SKIP; \
 	fi; \
-	echo "[verify.product.delivery.mainline] step=backend_contract_closure_guard"; \
+	echo "[verify.product.delivery.mainline] step=backend_contract_closure_mainline"; \
 	if [ "$$MODULE9_STATUS" = "PASS" ]; then \
-	  if ! $(MAKE) --no-print-directory verify.backend.contract.closure.guard; then CONTRACT_CLOSURE_STATUS=FAIL; fi; \
+	  if ! $(MAKE) --no-print-directory verify.backend.contract.closure.mainline; then CONTRACT_CLOSURE_STATUS=FAIL; fi; \
 	else \
 	  CONTRACT_CLOSURE_STATUS=SKIP; \
 	fi; \
