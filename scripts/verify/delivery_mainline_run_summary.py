@@ -35,13 +35,15 @@ def main() -> int:
     parser.add_argument("--profile", default="restricted")
     parser.add_argument("--frontend", required=True)
     parser.add_argument("--scene", required=True)
+    parser.add_argument("--action-closure", required=True)
     parser.add_argument("--governance", required=True)
     args = parser.parse_args()
 
     frontend = _norm_status(args.frontend)
     scene = _norm_status(args.scene)
+    action_closure = _norm_status(args.action_closure)
     governance = _norm_status(args.governance)
-    ok = frontend == "PASS" and scene == "PASS" and governance == "PASS"
+    ok = frontend == "PASS" and scene == "PASS" and action_closure == "PASS" and governance == "PASS"
 
     payload = {
         "generated_at_utc": _utc_now(),
@@ -52,6 +54,7 @@ def main() -> int:
         "steps": {
             "frontend_gate": frontend,
             "scene_delivery_readiness": scene,
+            "action_closure_smoke": action_closure,
             "governance_truth": governance,
         },
     }
@@ -72,6 +75,7 @@ def main() -> int:
         "|---|---|",
         f"| frontend_gate | {frontend} |",
         f"| scene_delivery_readiness | {scene} |",
+        f"| action_closure_smoke | {action_closure} |",
         f"| governance_truth | {governance} |",
     ]
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -84,4 +88,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

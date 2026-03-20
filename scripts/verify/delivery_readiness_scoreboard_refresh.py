@@ -16,6 +16,7 @@ STATE_PATH = ROOT / "artifacts" / "backend" / "delivery_ci_profile_status.json"
 SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.json"
 SUMMARY_MD_PATH = ROOT / "artifacts" / "backend" / "delivery_readiness_ci_summary.md"
 MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "delivery_mainline_run_summary.json"
+ACTION_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_action_closure_report.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -182,6 +183,7 @@ def _to_summary_markdown(payload: dict) -> str:
                 "|---|---|",
                 f"| frontend_gate | {steps.get('frontend_gate', '')} |",
                 f"| scene_delivery_readiness | {steps.get('scene_delivery_readiness', '')} |",
+                f"| action_closure_smoke | {steps.get('action_closure_smoke', '')} |",
                 f"| governance_truth | {steps.get('governance_truth', '')} |",
             ]
         )
@@ -305,6 +307,10 @@ def _status_label(state: dict) -> str:
     return f"{value} ({ts})" if ts else value
 
 
+def _bool_status_label(value: bool) -> str:
+    return "PASS" if bool(value) else "FAIL"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Refresh delivery readiness scoreboard snapshot and CI profile status rows")
     parser.add_argument("--profile", choices=["strict", "restricted"], help="CI profile to update")
@@ -343,6 +349,15 @@ def main() -> int:
     lines = _replace_snapshot(lines)
     strict_label = _status_label(state["profiles"]["strict"])
     restricted_label = _status_label(state["profiles"]["restricted"])
+    mainline = summary_payload.get("mainline") if isinstance(summary_payload.get("mainline"), dict) else {}
+    mainline_present = bool(mainline.get("present"))
+    mainline_ok = bool(mainline.get("ok")) if mainline_present else False
+    mainline_label = _bool_status_label(mainline_ok) if mainline_present else "UNKNOWN"
+
+    action_closure_payload = _load_json(ACTION_CLOSURE_REPORT_PATH)
+    action_closure_present = bool(action_closure_payload)
+    action_closure_ok = bool(action_closure_payload.get("ok")) if action_closure_present else False
+    action_closure_label = _bool_status_label(action_closure_ok) if action_closure_present else "UNKNOWN"
 
     lines = _upsert_evidence_row(
         lines,
@@ -355,6 +370,18 @@ def main() -> int:
         "CI restricted profile readiness",
         restricted_label,
         PROFILE_COMMANDS["restricted"],
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Mainline one-command summary",
+        mainline_label,
+        str(MAINLINE_SUMMARY_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Product delivery action closure smoke",
+        action_closure_label,
+        str(ACTION_CLOSURE_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _normalize_evidence_table(lines)
     lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)
