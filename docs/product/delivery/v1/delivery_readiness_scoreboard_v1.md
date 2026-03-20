@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-03-20T00:59:16Z
+- generated_at_utc: 2026-03-20T01:04:37Z
 - branch: `codex/delivery-sprint-seal-gaps`
-- commit_ref: `907a483`
+- commit_ref: `333e6f5`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 

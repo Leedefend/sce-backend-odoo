@@ -321,3 +321,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_scoreboard_refresh 聚合 delivery_mainline_run_summary 到 CI summary JSON/MD`
 - active_commit: `907a483`
 - next_step: `Refresh scoreboard snapshot and commit docs alignment`
+
+### 2026-03-20T07:02:00Z
+- blocker_key: `gap.delivery_evidence_productization`
+- layer_target: `Ops/Delivery Mainline`
+- module: `overall_ok policy gate`
+- reason: `流水线需要单布尔判断，同时保留 strict/restricted/mainline 三信号策略可切换`
+- completed_step: `delivery_readiness_ci_summary 增加 overall.ok + policy + signals，并支持 DELIVERY_READINESS_OVERALL_POLICY`
+- active_commit: `333e6f5`
+- next_step: `Commit feat/docs and continue mainline closure`
