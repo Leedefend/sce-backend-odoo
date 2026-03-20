@@ -51,14 +51,14 @@
       </div>
     </aside>
 
-    <section class="content">
+    <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal }">
       <header
         class="topbar"
-        :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar }"
+        :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
       >
-        <div>
-          <p v-if="!useMinimalTopbar" class="eyebrow">智能工程协作平台</p>
-          <div class="breadcrumb">
+        <div class="topbar-main">
+          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="eyebrow">智能工程协作平台</p>
+          <div v-if="!sceneHeaderMinimal" class="breadcrumb">
             <button
               v-for="(item, index) in breadcrumb"
               :key="`${item.label}-${index}`"
@@ -70,7 +70,9 @@
               {{ item.label }}
             </button>
           </div>
-          <h1 v-if="!useMinimalTopbar" class="headline">{{ pageTitle }}</h1>
+          <p v-if="!useMinimalTopbar && sceneHeaderMinimal" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
+          <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="headline">{{ pageTitle }}</h1>
+          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
       </header>
 
@@ -362,6 +364,21 @@ const pageTitle = computed(() => {
     return '记录';
   }
   return '工作台';
+});
+
+const topbarSubtitle = computed(() => {
+  const sceneKey = String(routeSceneKey.value || '').trim();
+  if (sceneKey === 'projects.intake') {
+    return '创建项目 · 填写基础信息完成立项';
+  }
+  return '';
+});
+
+const sceneHeaderMinimal = computed(() => String(routeSceneKey.value || '').trim() === 'projects.intake');
+
+const sceneHeaderAnchorLine = computed(() => {
+  if (!sceneHeaderMinimal.value) return '';
+  return '项目立项 / 创建项目';
 });
 
 provide('pageTitle', pageTitle);
@@ -932,6 +949,11 @@ async function logout() {
   overscroll-behavior: contain;
 }
 
+.content--scene-compact {
+  gap: 6px;
+  padding: 20px 20px 24px;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -943,8 +965,26 @@ async function logout() {
   box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
 }
 
+.topbar-main {
+  min-width: 0;
+}
+
 .topbar--compact {
   padding: 12px 18px;
+}
+
+.topbar--scene-minimal {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.scene-anchor-line {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .topbar--compact .breadcrumb {
@@ -997,6 +1037,12 @@ async function logout() {
   font-size: 30px;
   line-height: 1.15;
   font-weight: 700;
+}
+
+.headline-subtitle {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .breadcrumb {
@@ -1054,5 +1100,6 @@ async function logout() {
     height: auto;
     overflow: visible;
   }
+
 }
 </style>

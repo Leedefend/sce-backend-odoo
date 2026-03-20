@@ -808,11 +808,12 @@ export const useSessionStore = defineStore('session', {
     },
     resolveLandingPath(fallback = '/') {
       const defaultRoutePath = String(this.defaultRoute?.route || '').trim();
-      if (defaultRoutePath.startsWith('/')) {
+      const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
+      const startsWithNativeActionRoute = /^\/(a|f|r)\//.test(defaultRoutePath);
+      if (defaultRoutePath.startsWith('/') && !startsWithNativeActionRoute) {
         const normalized = normalizeLegacyWorkbenchPath(defaultRoutePath);
         if (normalized) return normalized;
       }
-      const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
       if (defaultRouteSceneKey) {
         const scene = getSceneByKey(defaultRouteSceneKey);
         const rawPath = String(scene?.target?.route || scene?.route || `/s/${defaultRouteSceneKey}`).trim();

@@ -42,6 +42,12 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <StatusPanel
+      v-else-if="status === 'idle' && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
+      :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
+      :message="idleDiagnosticMessage"
+      variant="info"
+    />
+    <StatusPanel
       v-if="status === 'idle' && validationHint"
       :title="pageText('validation_surface_title', '表单约束提示')"
       :message="validationHint"
@@ -96,6 +102,15 @@ const forbiddenCopy = ref({
 const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
+
+const idleDiagnosticMessage = computed(() => {
+  const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '').trim();
+  const hint = pageText(
+    'status_idle_diag_hint',
+    '请检查 scene registry target/action 映射，或确认该场景是否已切换到 scene-ready 渲染路径。',
+  );
+  return `${pageText('status_idle_diag_scene_prefix', '场景')}：${sceneKey || '-'}；${hint}`;
+});
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -533,11 +548,14 @@ async function resolveScene() {
         await router.replace({ path: target.route, query: workspaceContextQuery });
         return;
       }
-      // Safety fallback: keep scene shell active when route is already resolved
-      // but action/model target is intentionally absent.
-      status.value = 'idle';
+      setError(
+        new Error(pageText('error_scene_render_target_missing', 'scene render target missing')),
+        pageText('error_scene_render_target_missing', 'scene render target missing'),
+        ErrorCodes.SCENE_KIND_UNSUPPORTED,
+      );
+      errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
+      status.value = 'error';
       return;
-      // Do not early-fallback here; let explicit target/action resolution decide.
     }
 
     setError(

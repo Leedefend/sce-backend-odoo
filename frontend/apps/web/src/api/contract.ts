@@ -1,4 +1,5 @@
 import { intentRequest, intentRequestRaw } from './intents';
+import { ApiError } from './client';
 import type { ActionContract } from '@sc/schema';
 
 type LoadActionContractOptions = {
@@ -11,6 +12,37 @@ type LoadActionContractOptions = {
 type LoadModelContractOptions = LoadActionContractOptions & {
   viewType?: 'form' | 'tree' | 'kanban';
 };
+
+function rethrowContractError(err: unknown, context: { op: 'action_open' | 'model'; model?: string; actionId?: number }): never {
+  if (!(err instanceof ApiError)) {
+    throw err;
+  }
+  const message = String(err.message || '').trim();
+  const isNativeBlocked = err.status === 410 && message.includes('native ui.contract op is disabled');
+  if (!isNativeBlocked) {
+    throw err;
+  }
+  const subject = context.op === 'action_open'
+    ? `action_id=${Number(context.actionId || 0)}`
+    : `model=${String(context.model || '').trim() || '-'}`;
+  throw new ApiError(
+    `ui.contract blocked by delivery policy (${subject}); switch to scene-ready scene route (/s/:sceneKey)`,
+    err.status,
+    err.traceId,
+    {
+      reasonCode: 'UI_CONTRACT_NATIVE_BLOCKED',
+      kind: 'contract',
+      hint: 'Prefer Scene-ready contract path: system.init -> scene registry -> /s/:sceneKey',
+      errorCategory: err.errorCategory,
+      retryable: false,
+      suggestedAction: 'open_scene_route',
+      details: {
+        blocked_op: context.op,
+        blocked_subject: subject,
+      },
+    },
+  );
+}
 
 function buildActionContractParams(actionId: number, options?: LoadActionContractOptions) {
   const params: Record<string, unknown> = { op: 'action_open', action_id: actionId };
@@ -38,17 +70,25 @@ function buildActionContractParams(actionId: number, options?: LoadActionContrac
 }
 
 export async function loadActionContract(actionId: number, options?: LoadActionContractOptions) {
-  return intentRequest<ActionContract>({
-    intent: 'ui.contract',
-    params: buildActionContractParams(actionId, options),
-  });
+  try {
+    return await intentRequest<ActionContract>({
+      intent: 'ui.contract',
+      params: buildActionContractParams(actionId, options),
+    });
+  } catch (err) {
+    rethrowContractError(err, { op: 'action_open', actionId });
+  }
 }
 
 export async function loadActionContractRaw(actionId: number, options?: LoadActionContractOptions) {
-  return intentRequestRaw<ActionContract & Record<string, unknown>>({
-    intent: 'ui.contract',
-    params: buildActionContractParams(actionId, options),
-  });
+  try {
+    return await intentRequestRaw<ActionContract & Record<string, unknown>>({
+      intent: 'ui.contract',
+      params: buildActionContractParams(actionId, options),
+    });
+  } catch (err) {
+    rethrowContractError(err, { op: 'action_open', actionId });
+  }
 }
 
 function buildModelContractParams(model: string, options?: LoadModelContractOptions) {
@@ -81,8 +121,12 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
 }
 
 export async function loadModelContractRaw(model: string, options?: LoadModelContractOptions) {
-  return intentRequestRaw<ActionContract & Record<string, unknown>>({
-    intent: 'ui.contract',
-    params: buildModelContractParams(model, options),
-  });
+  try {
+    return await intentRequestRaw<ActionContract & Record<string, unknown>>({
+      intent: 'ui.contract',
+      params: buildModelContractParams(model, options),
+    });
+  } catch (err) {
+    rethrowContractError(err, { op: 'model', model });
+  }
 }
