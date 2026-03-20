@@ -546,3 +546,12 @@ Each entry must include:
 - completed_step: `verify.product.delivery.mainline 增加 backend_contract_closure_guard 步骤与汇总状态；新增 backend_contract_closure_phase_status_v1.md 阶段总览`
 - active_commit: `pending`
 - next_step: `Run closure guard + typecheck and commit Batch-O`
+
+### 2026-03-20T19:10:00Z
+- blocker_key: `batch_p.contract_snapshot_baseline`
+- layer_target: `Ops/Verification Guard`
+- module: `closure snapshot baseline`
+- reason: `为 meta.intent_catalog 与 scene_governance_v1 建立可对比快照基线，避免字段漂移无感`
+- completed_step: `新增 backend_contract_closure_snapshot_guard.py 并生成 baseline；verify.backend.contract.closure.guard 串联 snapshot guard；新增独立 make 目标 verify.backend.contract.closure.snapshot.guard`
+- active_commit: `pending`
+- next_step: `Run closure guard stack and commit Batch-P`
