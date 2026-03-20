@@ -2585,6 +2585,18 @@ verify.product.delivery.governance_truth: guard.prod.forbid
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
 
+.PHONY: verify.product.delivery.mainline
+verify.product.delivery.mainline: guard.prod.forbid
+	@echo "[verify.product.delivery.mainline] step=frontend_gate"
+	@pnpm -C frontend gate
+	@echo "[verify.product.delivery.mainline] step=scene_delivery_readiness profile=$${CI_SCENE_DELIVERY_PROFILE:-restricted}"
+	@CI_SCENE_DELIVERY_PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-restricted} \
+	SC_MULTI_COMPANY_EVIDENCE_STRICT=1 \
+	$(MAKE) --no-print-directory ci.scene.delivery.readiness
+	@echo "[verify.product.delivery.mainline] step=governance_truth"
+	@$(MAKE) --no-print-directory verify.product.delivery.governance_truth
+	@echo "[OK] verify.product.delivery.mainline done"
+
 .PHONY: export.product.delivery.package
 export.product.delivery.package: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_package_manifest.py
