@@ -276,3 +276,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_scoreboard_refresh 增加 delivery_readiness_ci_summary.md 输出并在 README 增加快速入口`
 - active_commit: `bccb80c`
 - next_step: `Commit script and docs, then continue blocker burn-down`
+
+### 2026-03-20T06:24:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `release blocking CI posture sync`
+- reason: `让管理视图直接看到 strict/restricted 状态，避免看板与摘要分离`
+- completed_step: `scoreboard refresh 自动写入 Release Blocking Gaps 的 CI posture 行，并与 CI summary 状态保持同步`
+- active_commit: `148316e`
+- next_step: `Commit sync enhancement and continue runtime blocker closure`
