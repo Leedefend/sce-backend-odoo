@@ -393,3 +393,12 @@ Each entry must include:
 - completed_step: `新增 delivery_iteration_status_2026-03-20_mainline.md；生成 PR body（含 Architecture Impact/Layer Target/Affected Modules）`
 - active_commit: `cbc713c`
 - next_step: `Commit docs and execute make pr.push + make pr.create`
+
+### 2026-03-20T11:10:00Z
+- blocker_key: `batch_a.login_contract_closure`
+- layer_target: `Backend Intent Contract Layer`
+- module: `login contract mode + frontend session consume`
+- reason: `启动 Batch-A，收口 login 契约并保持前端启动链可用`
+- completed_step: `login 新增 default/compat/debug 三态返回；frontend login 改为 contract_mode=default 且优先消费 session.token；新增 login default 契约测试`
+- active_commit: `77037d0`
+- next_step: `Commit Batch-A changes and run restricted mainline verification`
