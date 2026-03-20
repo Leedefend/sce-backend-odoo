@@ -2589,6 +2589,10 @@ verify.product.delivery.action_closure.smoke: guard.prod.forbid
 verify.product.delivery.module9.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py
 
+.PHONY: verify.backend.contract.closure.guard
+verify.backend.contract.closure.guard: guard.prod.forbid
+	@python3 scripts/verify/backend_contract_closure_guard.py
+
 .PHONY: verify.product.delivery.ready
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
