@@ -348,3 +348,12 @@ Each entry must include:
 - completed_step: `新增 verify.product.delivery.action_closure.smoke 并接入 mainline；最新运行显示 finance.payment_requests 因 search_filters<1 失败`
 - active_commit: `cbd2423`
 - next_step: `Fix finance.payment_requests scene action/search surface closure and rerun make verify.product.delivery.mainline`
+
+### 2026-03-20T09:15:00Z
+- blocker_key: `gap.finance_payment_requests_action_closure`
+- layer_target: `Ops/Delivery Mainline`
+- module: `action-closure smoke rule refinement`
+- reason: `payment_requests 场景存在 group_by 但 filters 为空，原规则过严导致误报阻断`
+- completed_step: `将 payment_requests 搜索闭环判定改为 filters/fields/group_by 任一非空即可；action_closure_smoke 与 mainline 均已 PASS`
+- active_commit: `57e4e88`
+- next_step: `Continue mainline delivery iteration and close next P0 blocker`
