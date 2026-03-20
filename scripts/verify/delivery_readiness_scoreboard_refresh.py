@@ -79,6 +79,35 @@ def _upsert_evidence_row(lines: list[str], evidence: str, status: str, source: s
     return lines
 
 
+def _normalize_evidence_table(lines: list[str]) -> list[str]:
+    start = -1
+    end = -1
+    for index, line in enumerate(lines):
+        if line.strip() == "## System-Bound Evidence Summary":
+            start = index
+            break
+    if start < 0:
+        return lines
+    for index in range(start + 1, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+    if end < 0:
+        end = len(lines)
+
+    section = lines[start:end]
+    normalized: list[str] = []
+    previous_was_table_row = False
+    for line in section:
+        is_table_row = line.startswith("|")
+        if not line.strip() and previous_was_table_row:
+            continue
+        normalized.append(line)
+        previous_was_table_row = is_table_row
+
+    return lines[:start] + normalized + lines[end:]
+
+
 def _status_label(state: dict) -> str:
     value = str(state.get("status") or "UNKNOWN").upper()
     if value not in {"PASS", "FAIL", "UNKNOWN"}:
@@ -131,6 +160,7 @@ def main() -> int:
         _status_label(state["profiles"]["restricted"]),
         PROFILE_COMMANDS["restricted"],
     )
+    lines = _normalize_evidence_table(lines)
     SCOREBOARD_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(SCOREBOARD_PATH)
@@ -141,4 +171,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
