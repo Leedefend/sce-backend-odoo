@@ -2587,15 +2587,31 @@ verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap ver
 
 .PHONY: verify.product.delivery.mainline
 verify.product.delivery.mainline: guard.prod.forbid
-	@echo "[verify.product.delivery.mainline] step=frontend_gate"
-	@pnpm -C frontend gate
-	@echo "[verify.product.delivery.mainline] step=scene_delivery_readiness profile=$${CI_SCENE_DELIVERY_PROFILE:-restricted}"
-	@CI_SCENE_DELIVERY_PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-restricted} \
-	SC_MULTI_COMPANY_EVIDENCE_STRICT=1 \
-	$(MAKE) --no-print-directory ci.scene.delivery.readiness
-	@echo "[verify.product.delivery.mainline] step=governance_truth"
-	@$(MAKE) --no-print-directory verify.product.delivery.governance_truth
-	@echo "[OK] verify.product.delivery.mainline done"
+	@PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-restricted}; \
+	FRONTEND_STATUS=PASS; SCENE_STATUS=PASS; GOVERNANCE_STATUS=PASS; \
+	echo "[verify.product.delivery.mainline] step=frontend_gate"; \
+	if ! pnpm -C frontend gate; then FRONTEND_STATUS=FAIL; fi; \
+	echo "[verify.product.delivery.mainline] step=scene_delivery_readiness profile=$$PROFILE"; \
+	if [ "$$FRONTEND_STATUS" = "PASS" ]; then \
+	  if ! CI_SCENE_DELIVERY_PROFILE=$$PROFILE SC_MULTI_COMPANY_EVIDENCE_STRICT=1 $(MAKE) --no-print-directory ci.scene.delivery.readiness; then \
+	    SCENE_STATUS=FAIL; \
+	  fi; \
+	else \
+	  SCENE_STATUS=SKIP; \
+	fi; \
+	echo "[verify.product.delivery.mainline] step=governance_truth"; \
+	if ! $(MAKE) --no-print-directory verify.product.delivery.governance_truth; then GOVERNANCE_STATUS=FAIL; fi; \
+	python3 scripts/verify/delivery_mainline_run_summary.py \
+	  --profile $$PROFILE \
+	  --frontend $$FRONTEND_STATUS \
+	  --scene $$SCENE_STATUS \
+	  --governance $$GOVERNANCE_STATUS; \
+	if [ "$$FRONTEND_STATUS" = "PASS" ] && [ "$$SCENE_STATUS" = "PASS" ] && [ "$$GOVERNANCE_STATUS" = "PASS" ]; then \
+	  echo "[OK] verify.product.delivery.mainline done"; \
+	else \
+	  echo "[FAIL] verify.product.delivery.mainline"; \
+	  exit 1; \
+	fi
 
 .PHONY: export.product.delivery.package
 export.product.delivery.package: guard.prod.forbid
