@@ -207,7 +207,12 @@ class TestV1IntentSmoke(HttpCase):
             first_cap = capabilities[0]
             self.assertIn("capability_state", first_cap)
             self.assertIn("capability_state_reason", first_cap)
+            self.assertIn("delivery_level", first_cap)
+            self.assertIn("target_scene_key", first_cap)
+            self.assertIn("entry_kind", first_cap)
             self.assertIn(first_cap.get("capability_state"), {"allow", "readonly", "deny", "pending", "coming_soon"})
+            self.assertIn(first_cap.get("delivery_level"), {"exclusive", "shared", "placeholder"})
+            self.assertIn(first_cap.get("entry_kind"), {"exclusive", "alias"})
         capability_groups = data.get("data", {}).get("capability_groups") or []
         if capability_groups:
             first_group = capability_groups[0]
