@@ -294,3 +294,12 @@ Each entry must include:
 - completed_step: `Release Blocking Gaps 的 CI posture 行在 strict=FAIL 时自动附加 restricted 恢复命令`
 - active_commit: `b24faf2`
 - next_step: `Commit recovery-hint enhancement and continue blocker closure`
+
+### 2026-03-20T06:35:00Z
+- blocker_key: `gap.delivery_evidence_productization`
+- layer_target: `Ops/Delivery Mainline`
+- module: `one-command seal-mode verify`
+- reason: `主线迭代需要一个稳定单命令，减少多人协作时执行口径偏差`
+- completed_step: `新增 verify.product.delivery.mainline 串联 frontend gate + ci.scene.delivery.readiness + governance truth`
+- active_commit: `232689d`
+- next_step: `Run verify.product.delivery.mainline and commit feat/docs`

@@ -70,6 +70,13 @@
     - `artifacts/backend/delivery_readiness_ci_summary.md`
   - Emits machine-readable CI summary for pipeline dashboards:
     - `artifacts/backend/delivery_readiness_ci_summary.json`
+- `make verify.product.delivery.mainline`
+  - One-command mainline seal-mode verification for daily iteration.
+  - Runs in order:
+    - `pnpm -C frontend gate`
+    - `CI_SCENE_DELIVERY_PROFILE=${CI_SCENE_DELIVERY_PROFILE:-restricted} SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make ci.scene.delivery.readiness`
+    - `make verify.product.delivery.governance_truth`
+  - Default profile is `restricted`; set `CI_SCENE_DELIVERY_PROFILE=strict` in live-enabled runners.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
