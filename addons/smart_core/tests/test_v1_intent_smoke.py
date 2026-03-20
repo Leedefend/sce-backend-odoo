@@ -69,7 +69,19 @@ class TestV1IntentSmoke(HttpCase):
         row = data.get("data", {}) or {}
         session = row.get("session") or {}
         self.assertTrue(session.get("token"), data)
+        contract = row.get("contract") or {}
+        self.assertEqual(contract.get("response_mode"), "default")
+        self.assertEqual(contract.get("mode"), "default")
+        self.assertEqual(contract.get("contract_version"), "1.0.0")
+        self.assertEqual(contract.get("schema_version"), "1.0.0")
+        self.assertFalse(bool(contract.get("compat_requested")))
+        self.assertTrue(bool(contract.get("compat_enabled")))
+        self.assertTrue(bool(contract.get("compat_deprecated")))
         self.assertIn("bootstrap", row)
+        bootstrap = row.get("bootstrap") or {}
+        allowed_exception_intents = bootstrap.get("allowed_exception_intents") or []
+        self.assertIn("session.bootstrap", allowed_exception_intents)
+        self.assertIn("scene.health", allowed_exception_intents)
         self.assertIn("entitlement", row)
         self.assertNotIn("token", row)
         self.assertNotIn("system", row)
@@ -87,6 +99,32 @@ class TestV1IntentSmoke(HttpCase):
         )
         self.assertTrue(data.get("ok"), data)
         self.assertTrue(data.get("data", {}).get("token"), data)
+
+    def test_anon_login_intent_compat_disabled_fallbacks_to_default(self):
+        self.env["ir.config_parameter"].sudo().set_param("smart_core.login.compat_enabled", "0")
+        payload = {
+            "intent": "login",
+            "params": {
+                "login": self.test_login,
+                "password": self.test_password,
+                "contract_mode": "compat",
+            },
+        }
+        data = self._post_intent(
+            payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        self.assertTrue(data.get("ok"), data)
+        row = data.get("data", {}) or {}
+        contract = row.get("contract") or {}
+        self.assertEqual(contract.get("response_mode"), "default")
+        self.assertEqual(contract.get("mode"), "default")
+        self.assertTrue(bool(contract.get("compat_requested")))
+        self.assertFalse(bool(contract.get("compat_enabled")))
+        self.assertEqual(contract.get("deprecation_notice"), "compat_mode_disabled_fallback_to_default")
+        self.assertNotIn("token", row)
+        self.env["ir.config_parameter"].sudo().set_param("smart_core.login.compat_enabled", "1")
 
     def test_anon_login_intent_debug_contract_mode(self):
         payload = {
@@ -141,9 +179,13 @@ class TestV1IntentSmoke(HttpCase):
         payload = {"intent": "system.init", "params": {}}
         data = self._post_intent(payload, headers={"Authorization": f"Bearer {token}"})
         self.assertTrue(data.get("ok"), data)
+        response_meta = data.get("meta") or {}
+        self.assertEqual(response_meta.get("contract_version"), "1.0.0")
+        self.assertEqual(response_meta.get("schema_version"), "1.0.0")
         self.assertIn("user", data.get("data", {}))
         self.assertIn("nav", data.get("data", {}))
         self.assertIn("intents", data.get("data", {}))
+        self.assertNotIn("intents_meta", data.get("data", {}))
         intents = data.get("data", {}).get("intents") or []
         self.assertIsInstance(intents, list)
         self.assertIn("meta.intent_catalog", intents)
@@ -152,14 +194,26 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("capabilities", data.get("data", {}))
         self.assertIn("capability_groups", data.get("data", {}))
         self.assertIn("init_contract_v1", data.get("data", {}))
+        self.assertIn("system_init_sections_v1", data.get("data", {}))
         self.assertIn("workspace_home_ref", data.get("data", {}))
         self.assertNotIn("workspace_home", data.get("data", {}))
+        workspace_home_ref = data.get("data", {}).get("workspace_home_ref") or {}
+        self.assertFalse(bool(workspace_home_ref.get("loaded")))
         default_route = data.get("data", {}).get("default_route") or {}
         if isinstance(default_route, dict):
             self.assertIn("reason", default_route)
             self.assertIn("route", default_route)
             self.assertIn("scene_key", default_route)
         init_contract = data.get("data", {}).get("init_contract_v1") or {}
+        sections_v1 = data.get("data", {}).get("system_init_sections_v1") or {}
+        self.assertEqual(sections_v1.get("contract_version"), "1.0.0")
+        self.assertEqual(sections_v1.get("schema_version"), "1.0.0")
+        self.assertIn("session", sections_v1)
+        self.assertIn("nav", sections_v1)
+        self.assertIn("surface", sections_v1)
+        self.assertIn("bootstrap_refs", sections_v1)
+        self.assertEqual(init_contract.get("contract_version"), "1.0.0")
+        self.assertEqual(init_contract.get("schema_version"), "1.0.0")
         self.assertIn("session", init_contract)
         self.assertIn("nav", init_contract)
         self.assertIn("surface", init_contract)
@@ -179,6 +233,14 @@ class TestV1IntentSmoke(HttpCase):
         role_surface = row.get("role_surface") or {}
         role_surface_code = str(role_surface.get("role_code") or "").strip().lower()
         if role_surface_code:
+            page_contracts = row.get("page_contracts") if isinstance(row.get("page_contracts"), dict) else {}
+            pages = page_contracts.get("pages") if isinstance(page_contracts.get("pages"), dict) else {}
+            home_page = pages.get("home") if isinstance(pages.get("home"), dict) else {}
+            home_orchestration = home_page.get("page_orchestration_v1") if isinstance(home_page.get("page_orchestration_v1"), dict) else {}
+            home_page_payload = home_orchestration.get("page") if isinstance(home_orchestration.get("page"), dict) else {}
+            home_context = home_page_payload.get("context") if isinstance(home_page_payload.get("context"), dict) else {}
+            self.assertEqual(str(home_context.get("role_code") or "").strip().lower(), role_surface_code)
+
             workspace_home = row.get("workspace_home") or {}
             workspace_record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
             hero = workspace_record.get("hero") if isinstance(workspace_record.get("hero"), dict) else {}
@@ -211,11 +273,23 @@ class TestV1IntentSmoke(HttpCase):
         data = self._post_intent(payload, headers={"Authorization": f"Bearer {token}"})
         self.assertTrue(data.get("ok"), data)
         row = data.get("data", {}) or {}
+        init_contract = row.get("init_contract_v1") if isinstance(row.get("init_contract_v1"), dict) else {}
+        self.assertEqual(init_contract.get("contract_version"), "1.0.0")
+        self.assertEqual(init_contract.get("schema_version"), "1.0.0")
         self.assertIn("workspace_home", row)
         self.assertIn("workspace_home_ref", row)
         ref = row.get("workspace_home_ref") or {}
         self.assertTrue(bool(ref.get("loaded")))
+        role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
+        role_surface_code = str(role_surface.get("role_code") or "").strip().lower()
         workspace_home = row.get("workspace_home") if isinstance(row.get("workspace_home"), dict) else {}
+        workspace_record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
+        hero = workspace_record.get("hero") if isinstance(workspace_record.get("hero"), dict) else {}
+        self.assertEqual(str(hero.get("role_code") or "").strip().lower(), role_surface_code)
+        orchestration_v1 = workspace_home.get("page_orchestration_v1") if isinstance(workspace_home.get("page_orchestration_v1"), dict) else {}
+        page_v1 = orchestration_v1.get("page") if isinstance(orchestration_v1.get("page"), dict) else {}
+        context_v1 = page_v1.get("context") if isinstance(page_v1.get("context"), dict) else {}
+        self.assertEqual(str(context_v1.get("role_code") or "").strip().lower(), role_surface_code)
         blocks = workspace_home.get("blocks") if isinstance(workspace_home.get("blocks"), list) else []
         self.assertTrue(bool(blocks))
         first_block = blocks[0] if blocks else {}
@@ -270,6 +344,28 @@ class TestV1IntentSmoke(HttpCase):
             self.assertIn("status_field", list_profile)
             self.assertIn("urgency_score", list_profile)
             self.assertIn("highlight_rule", list_profile)
+
+    def test_ui_contract_meta_semver_schema(self):
+        login_payload = {
+            "intent": "login",
+            "params": {"login": self.test_login, "password": self.test_password},
+        }
+        login_data = self._post_intent(
+            login_payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        login_row = login_data.get("data", {}) or {}
+        token = (login_row.get("session") or {}).get("token") or login_row.get("token")
+        self.assertTrue(token, login_data)
+
+        payload = {"intent": "ui.contract", "params": {"op": "nav"}}
+        data = self._post_intent(payload, headers={"Authorization": f"Bearer {token}"})
+        self.assertTrue(data.get("ok"), data)
+        meta = data.get("meta") or {}
+        self.assertEqual(meta.get("contract_version"), "1.0.0")
+        self.assertEqual(meta.get("schema_version"), "1.0.0")
+        self.assertTrue(bool(meta.get("payload_schema_version")))
 
     def test_meta_intent_catalog_intent(self):
         login_payload = {
