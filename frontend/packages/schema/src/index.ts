@@ -38,17 +38,21 @@ export interface LoginResponse {
     tz?: string;
     company_id?: number | null;
     allowed_company_ids?: number[];
-    groups?: string[];
   };
   entitlement?: {
-    contract_mode?: string;
+    role_code?: string;
+    is_internal_user?: boolean;
+    can_switch_company?: boolean;
   };
   bootstrap?: {
     next_intent?: string;
     mode?: string;
   };
-  meta?: Record<string, unknown>;
-  system?: {
+  contract?: {
+    mode?: string;
+  };
+  debug?: {
+    groups?: string[];
     intents?: Array<{ name: string; description?: string }>;
   };
 }

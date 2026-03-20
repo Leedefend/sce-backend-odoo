@@ -41,7 +41,7 @@ class TestV1IntentSmoke(HttpCase):
     def test_anon_login_intent(self):
         payload = {
             "intent": "login",
-            "params": {"login": self.test_login, "password": self.test_password},
+            "params": {"login": self.test_login, "password": self.test_password, "contract_mode": "compat"},
         }
         data = self._post_intent(
             payload,
@@ -78,7 +78,7 @@ class TestV1IntentSmoke(HttpCase):
     def test_anon_login_intent_without_db_query_param(self):
         payload = {
             "intent": "login",
-            "params": {"login": self.test_login, "password": self.test_password},
+            "params": {"login": self.test_login, "password": self.test_password, "contract_mode": "compat"},
         }
         data = self._post_intent(
             payload,
@@ -87,6 +87,42 @@ class TestV1IntentSmoke(HttpCase):
         )
         self.assertTrue(data.get("ok"), data)
         self.assertTrue(data.get("data", {}).get("token"), data)
+
+    def test_anon_login_intent_debug_contract_mode(self):
+        payload = {
+            "intent": "login",
+            "params": {"login": self.test_login, "password": self.test_password, "contract_mode": "debug"},
+        }
+        data = self._post_intent(
+            payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        self.assertTrue(data.get("ok"), data)
+        row = data.get("data", {}) or {}
+        self.assertTrue((row.get("session") or {}).get("token"), data)
+        self.assertTrue(row.get("token"), data)
+        self.assertIn("debug", row)
+        self.assertIn("groups", row.get("debug") or {})
+        self.assertIn("intents", row.get("debug") or {})
+        self.assertNotIn("system", row)
+
+    def test_anon_login_intent_default_without_contract_mode(self):
+        payload = {
+            "intent": "login",
+            "params": {"login": self.test_login, "password": self.test_password},
+        }
+        data = self._post_intent(
+            payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        self.assertTrue(data.get("ok"), data)
+        row = data.get("data", {}) or {}
+        session = row.get("session") or {}
+        self.assertTrue(session.get("token"), data)
+        self.assertNotIn("token", row)
+        self.assertNotIn("debug", row)
 
     def test_system_init_intent(self):
         login_payload = {
@@ -98,7 +134,8 @@ class TestV1IntentSmoke(HttpCase):
             headers={"X-Anonymous-Intent": "true"},
             with_db=True,
         )
-        token = login_data.get("data", {}).get("token")
+        login_row = login_data.get("data", {}) or {}
+        token = (login_row.get("session") or {}).get("token") or login_row.get("token")
         self.assertTrue(token, login_data)
 
         payload = {"intent": "system.init", "params": {}}

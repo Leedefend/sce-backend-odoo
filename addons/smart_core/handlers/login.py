@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from odoo import SUPERUSER_ID, api
 from odoo.http import request
@@ -30,8 +30,8 @@ def _resolve_contract_mode(params: Dict[str, Any]) -> str:
         return raw
     if _to_bool(params.get("debug")):
         return "debug"
-    # Compatibility window: callers not yet migrated keep legacy fields by default.
-    return "compat"
+    # New contract is the default surface.
+    return "default"
 
 
 def _safe_env():
@@ -82,6 +82,11 @@ def _load_user_profile(db_name: str, user_id: int) -> Dict[str, Any]:
             **_company_ids(user),
             "token_version": int(getattr(user, "token_version", 0) or 0),
         }
+
+
+def _is_internal_user(profile: Dict[str, Any]) -> bool:
+    groups = set(profile.get("groups") or [])
+    return "base.group_user" in groups
 
 
 class LoginHandler(BaseIntentHandler):
@@ -154,6 +159,10 @@ class LoginHandler(BaseIntentHandler):
             "allowed_company_ids": profile["allowed_company_ids"],
         }
 
+        can_switch_company = len(profile.get("allowed_company_ids") or []) > 1
+        is_internal_user = _is_internal_user(profile)
+        role_code = "internal_user" if is_internal_user else "external_user"
+
         data = {
             "session": {
                 "token": token,
@@ -162,28 +171,28 @@ class LoginHandler(BaseIntentHandler):
             },
             "user": user_data,
             "entitlement": {
-                "contract_mode": "user",
+                "role_code": role_code,
+                "is_internal_user": is_internal_user,
+                "can_switch_company": can_switch_company,
             },
             "bootstrap": {
                 "next_intent": "system.init",
                 "mode": "full",
             },
-            "meta": {
-                "contract_mode": contract_mode,
+            "contract": {
+                "mode": contract_mode,
             },
         }
 
+        # Compatibility surface: legacy top-level token fields only.
         if contract_mode in {"compat", "debug"}:
             data["token"] = token
             data["token_type"] = token_type
             data["expires_at"] = expires_at
 
         if contract_mode == "debug":
-            user_data["groups"] = profile["groups"]
-            data["system"] = {
-                "menus": [],
-                "models": [],
-                "views": [],
+            data["debug"] = {
+                "groups": profile["groups"],
                 "intents": _list_available_intents(),
             }
         return data, {}
