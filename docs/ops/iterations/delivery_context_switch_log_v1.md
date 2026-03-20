@@ -600,3 +600,93 @@ Each entry must include:
 - completed_step: `执行 verify.backend.contract.closure.mainline + refresh.delivery.readiness.scoreboard + frontend strict typecheck 全部通过；新增 backend_contract_closure_iteration_closure_v1.md`
 - active_commit: `pending`
 - next_step: `Commit closure report and handoff for PR/merge`
+
+### 2026-03-20T22:00:00Z
+- blocker_key: `post_closure.batch_a_polish_and_block_first`
+- layer_target: `Backend Contract + Frontend View Composition`
+- module: `login compat sunset polish / workspace_home block-first fallback`
+- reason: `补齐阶段复核后的非阻塞收边项，确保 login 契约与首页消费路径在默认模式下更稳定`
+- completed_step: `login 合约新增 compat_requested/compat_enabled/deprecation_notice 与 compat 关闭开关回退；debug intents 输出排序稳定；HomeView 关键区域改为 blocks 优先并保留 legacy 回退；smoke 增加 default/compat-disabled 合约断言；frontend strict typecheck 与 python compile 通过`
+- active_commit: `pending`
+- next_step: `继续按主计划推进下一批次（P0-2 role 真源统一）`
+
+### 2026-03-20T22:20:00Z
+- blocker_key: `p0_2.role_source_unification`
+- layer_target: `Backend Intent Contract Layer`
+- module: `system.init role source mirror`
+- reason: `落实 role_surface 为单一真源，防止 workspace_home/page_orchestration 上下文角色漂移`
+- completed_step: `system_init 新增 _ensure_role_context_mirror，在 role_surface 生成后统一回填 workspace_home.record.hero.role_code 与 page_orchestration_v1.page.context.role_code，并同步 home page_contracts 的 context/meta.role_source_code；smoke 增加 page_contracts + workspace_home 强一致断言`
+- active_commit: `pending`
+- next_step: `继续 P0 主线，推进契约版本职责统一（P0-3）`
+
+### 2026-03-20T22:40:00Z
+- blocker_key: `p0_3.version_responsibility_unification`
+- layer_target: `Backend Intent Contract Layer + Frontend Schema`
+- module: `login/system.init/ui.contract version semantics`
+- reason: `统一主链版本字段职责，避免 v1/nav-1/view-contract-1 与 semver 混用`
+- completed_step: `system.init base schema_version 统一为 1.0.0 并在 init_contract_v1 显式输出 contract_version/schema_version；login.contract 新增 contract_version/schema_version；ui.contract 将非语义化 schema_version 下沉为 payload_schema_version，meta.schema_version 固定 1.0.0；smoke 增加 login/system.init/ui.contract 版本断言；frontend schema 同步字段`
+- active_commit: `pending`
+- next_step: `继续 P0-4 启动链强约束与例外白名单验证`
+
+### 2026-03-20T23:05:00Z
+- blocker_key: `p0_4.startup_chain_enforcement`
+- layer_target: `Frontend API Contract Guard + Backend Login Contract`
+- module: `intent startup chain gate / login bootstrap exceptions`
+- reason: `固定 login -> system.init -> ui.contract 主链，避免已登录未初始化阶段直接调用业务 intent`
+- completed_step: `frontend intentRequest 增加启动链门禁（token 存在且 initStatus!=ready 时仅允许 login/auth.login/auth.logout/system.init/session.bootstrap/sys.intents/scene.health；支持 meta.startup_chain_bypass 例外）；login.bootstrap 增加 allowed_exception_intents；smoke 增加 bootstrap 例外字段断言；frontend strict typecheck 与 python compile 通过`
+- active_commit: `pending`
+- next_step: `回到主线，继续 P1 分层优化（init 分层与 workspace_home 按需加载）`
+
+### 2026-03-20T23:20:00Z
+- blocker_key: `p1_1.system_init_layered_sections`
+- layer_target: `Backend Intent Contract Layer + Frontend Schema`
+- module: `system.init four-block sections`
+- reason: `把 init 从混合聚合输出推进为可消费的四区块分层结构`
+- completed_step: `system_init_payload_builder 输出 system_init_sections_v1（session/nav/surface/bootstrap_refs + contract_version/schema_version），并保持 init_contract_v1 兼容映射；schema 增加 system_init_sections_v1 类型；smoke 增加分层字段断言；python compile 与 frontend strict typecheck 通过`
+- active_commit: `pending`
+- next_step: `继续 P1-2：workspace_home 按需加载与引用化验证`
+
+### 2026-03-20T23:40:00Z
+- blocker_key: `p1_2.workspace_home_on_demand_loading`
+- layer_target: `Frontend Session Bootstrap + Backend Contract Consumption`
+- module: `system.init default slim + workspace_home lazy fetch`
+- reason: `默认 system.init 返回引用而非完整 workspace_home，降低启动负载并保持首屏可按需补全`
+- completed_step: `session.loadAppInit 去掉默认 with=[workspace_home]，改为消费 workspace_home_ref；新增 loadWorkspaceHomeOnDemand() 二次请求 system.init(with workspace_home)；HomeView 挂载时依据 workspace_home_ref(intent=ui.contract, scene=portal.dashboard, loaded=false) 触发按需拉取；smoke 断言默认 loaded=false；frontend strict typecheck 与 python compile 通过`
+- active_commit: `pending`
+- next_step: `继续 P1 主线：P1-3 intent catalog 解耦与最小面收敛`
+
+### 2026-03-20T23:55:00Z
+- blocker_key: `p1_3.intent_catalog_decoupling`
+- layer_target: `Backend Intent Contract Layer`
+- module: `system.init minimal intents + catalog ref`
+- reason: `进一步收口 init 返回面，避免在 init 中携带 intent 目录元信息`
+- completed_step: `system.init _build_minimal_intent_surface 改为仅返回最小 intents 列表；build_base 移除 intents_meta 注入；system.init smoke 增加 notIn(intents_meta) 断言；全量 intent 元信息继续通过 meta.intent_catalog 返回`
+- active_commit: `pending`
+- next_step: `继续 P1-5 补强 default_route 语义消费与前端落地`
+
+### 2026-03-21T00:10:00Z
+- blocker_key: `p1_5.default_route_frontend_semantic_consume`
+- layer_target: `Frontend Session Routing`
+- module: `default_route semantic landing`
+- reason: `让前端优先消费 default_route(route/scene_key/reason) 而不是仅依赖 role_surface 推导`
+- completed_step: `session store 增加 defaultRoute 状态（restore/persist/clear 全链路），loadAppInit 解析 default_route；resolveLandingPath 优先按 default_route.route，其次 default_route.scene_key，再回退 role_surface；frontend strict typecheck 通过`
+- active_commit: `pending`
+- next_step: `继续 P2 治理增强或进入阶段回顾收口`
+
+### 2026-03-21T00:25:00Z
+- blocker_key: `p2_4.home_blocks_only_render`
+- layer_target: `Frontend Home Composition`
+- module: `home block-first strict consumption`
+- reason: `落实首页 block 化终态，去除 hero/metrics/risk/ops 对 legacy 字段的运行时依赖`
+- completed_step: `HomeView 去除 hero/metrics/risk/ops 对 workspaceHome 旧字段回退，统一仅消费 workspace_home.blocks（hero/metric/risk/ops）；保留空态容错；frontend strict typecheck 通过`
+- active_commit: `pending`
+- next_step: `按计划继续推进 P2 治理项并准备阶段回顾`
+
+### 2026-03-21T00:40:00Z
+- blocker_key: `stage_acceptance.closure_v1_1_1`
+- layer_target: `Release Acceptance`
+- module: `backend contract closure stage acceptance`
+- reason: `进入阶段收口，输出可审阅验收结论与证据入口`
+- completed_step: `新增 backend_contract_closure_stage_acceptance_v1.md，按 P0/P1/P2 对账并给出通过结论；执行后端 py_compile、前端 strict typecheck、HomeView legacy 回退引用扫描三类证据校验全部通过`
+- active_commit: `pending`
+- next_step: `进入分类提交与 PR 准备`
