@@ -20,7 +20,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
 
 _logger = logging.getLogger(__name__)
 
-CONTRACT_VERSION = "v0.1"
+CONTRACT_VERSION = "1.0.0"
 API_VERSION = "v1"
 
 VALID_VIEWS = {
@@ -205,6 +205,7 @@ class UiContractHandler(BaseIntentHandler):
                          "etag": etag, "elapsed_ms": int((time.time()-t0)*1000),
                          "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
                          "contract_mode": contract_mode, "contract_surface": contract_surface})
+        meta_out.setdefault("response_schema_version", "1.0.0")
         return {"ok": True, "data": data or {}, "meta": meta_out}
 
     def _should_block_frontend_native_op(self, *, op: str, source_mode: str) -> bool:

@@ -67,7 +67,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
 _logger = logging.getLogger(__name__)
 
 # Contract/API version markers for client compatibility
-CONTRACT_VERSION = "v0.1"
+CONTRACT_VERSION = "1.0.0"
 API_VERSION = "v1"
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
