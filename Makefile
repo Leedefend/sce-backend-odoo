@@ -3063,6 +3063,10 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 	test-install-gate test-upgrade-gate \
 	ci.clean ci.ps ci.logs gate.boundary
 
+.PHONY: refresh.delivery.readiness.scoreboard
+refresh.delivery.readiness.scoreboard: guard.prod.forbid
+	@python3 scripts/verify/delivery_readiness_scoreboard_refresh.py
+
 # CI preflight: fail-fast on contract drift before heavier test suites.
 ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.preflight
@@ -3073,16 +3077,23 @@ ci.scene.delivery.readiness: guard.prod.forbid
 	@CI_SCENE_DELIVERY_PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-strict}; \
 	 echo "[ci.scene.delivery.readiness] profile=$$CI_SCENE_DELIVERY_PROFILE"; \
 	 if [ "$$CI_SCENE_DELIVERY_PROFILE" = "restricted" ]; then \
-	   SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0 \
-	   SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=0 \
-	   SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=0 \
-	   $(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix; \
+	   if SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=0 \
+	      SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=0 \
+	      SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=0 \
+	      $(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix; then \
+	     python3 scripts/verify/delivery_readiness_scoreboard_refresh.py --profile $$CI_SCENE_DELIVERY_PROFILE --status PASS; \
+	     exit 0; \
+	   fi; \
 	 else \
-	   $(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix; \
-	 fi || \
-	  (python3 scripts/verify/scene_delivery_failure_brief.py; \
-	   python3 scripts/verify/scene_delivery_failure_brief_summary.py; \
-	   exit 1)
+	   if $(MAKE) --no-print-directory verify.scene.delivery.readiness.role_company_matrix; then \
+	     python3 scripts/verify/delivery_readiness_scoreboard_refresh.py --profile $$CI_SCENE_DELIVERY_PROFILE --status PASS; \
+	     exit 0; \
+	   fi; \
+	 fi; \
+	 python3 scripts/verify/delivery_readiness_scoreboard_refresh.py --profile $$CI_SCENE_DELIVERY_PROFILE --status FAIL; \
+	 python3 scripts/verify/scene_delivery_failure_brief.py; \
+	 python3 scripts/verify/scene_delivery_failure_brief_summary.py; \
+	 exit 1
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
