@@ -182,6 +182,15 @@ export interface AppInitResponse {
     version?: string;
     aliases?: string[];
     required_groups_xmlids?: string[];
+    status?: 'canonical' | 'alias';
+    canonical?: string;
+  }>;
+  intent_catalog?: Array<{
+    name?: string;
+    status?: 'canonical' | 'alias';
+    canonical?: string;
+    version?: string;
+    required_groups_xmlids?: string[];
   }>;
   feature_flags?: Record<string, unknown>;
   meta?: Record<string, unknown>;

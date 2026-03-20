@@ -492,3 +492,12 @@ Each entry must include:
 - completed_step: `scene_nav_contract/nav_dispatcher/identity_resolver 三处 default_route 统一补充 scene_key/route/reason；smoke 增加 default_route 语义字段断言；schema 同步更新`
 - active_commit: `pending`
 - next_step: `Commit Batch-I changes and move to P2 governance enhancement batches`
+
+### 2026-03-20T16:30:00Z
+- blocker_key: `batch_j.intent_canonical_alias_governance`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-1 intent canonical-alias registry`
+- reason: `将 alias/canonical 治理从文档约束提升为目录契约可追溯输出`
+- completed_step: `intent_surface_builder 增加 canonical/alias 收敛与 intent_catalog 列表；meta.intent_catalog 输出 intent_catalog；smoke 断言 app.init->system.init alias 关系；schema 补齐 status/canonical 类型`
+- active_commit: `pending`
+- next_step: `Commit Batch-J changes and continue P2-2 governance-delta evidence closure`
