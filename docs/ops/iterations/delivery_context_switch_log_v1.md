@@ -402,3 +402,12 @@ Each entry must include:
 - completed_step: `login 新增 default/compat/debug 三态返回；frontend login 改为 contract_mode=default 且优先消费 session.token；新增 login default 契约测试`
 - active_commit: `77037d0`
 - next_step: `Commit Batch-A changes and run restricted mainline verification`
+
+### 2026-03-20T11:40:00Z
+- blocker_key: `batch_a.login_contract_closure`
+- layer_target: `Backend Intent Contract Layer`
+- module: `login contract boundary tightening`
+- reason: `按评审意见补齐 P0-1 收口：默认模式、entitlement 语义、debug/compat 边界`
+- completed_step: `login 默认回落保持 default；entitlement 基于 groups 推导 role_code/is_internal_user/can_switch_company；debug payload 统一到 debug.groups+debug.intents；schema 与 smoke 测试同步补齐`
+- active_commit: `0aebd7e`
+- next_step: `Run restricted delivery mainline and prepare PR for Batch-A`
