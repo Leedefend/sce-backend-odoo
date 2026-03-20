@@ -17,6 +17,8 @@ def _sample_payload():
                     {"type": "header"},
                     {"type": "sheet"},
                     {"type": "field", "name": "name"},
+                    {"type": "field", "name": "project_code"},
+                    {"type": "field", "name": "code"},
                     {"type": "field", "name": "project_type_id"},
                     {"type": "field", "name": "create_uid"},
                     {"type": "field", "name": "message_ids"},
@@ -35,6 +37,8 @@ def _sample_payload():
         },
         "fields": {
             "name": {"string": "名称", "type": "char", "required": True, "readonly": False},
+            "project_code": {"string": "项目编号", "type": "char", "required": False, "readonly": True},
+            "code": {"string": "项目编号(别名)", "type": "char", "required": False, "readonly": True},
             "project_type_id": {"string": "项目类型", "type": "many2one", "required": False, "readonly": False},
             "manager_id": {"string": "项目经理", "type": "many2one", "required": False, "readonly": False},
             "company_id": {"string": "公司", "type": "many2one", "required": False, "readonly": False},
@@ -270,6 +274,8 @@ class TestProjectFormGovernance(unittest.TestCase):
             policy = field_policies.get(business_on_create) or {}
             self.assertIn("create", policy.get("visible_profiles") or [])
         for hidden_on_create in (
+            "project_code",
+            "code",
             "company_id",
             "analytic_account_id",
             "stage_id",
@@ -317,6 +323,22 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertEqual((cap_index.get("project.read") or {}).get("capability_state"), "allow")
         self.assertEqual((cap_index.get("finance.approval") or {}).get("capability_state"), "pending")
         self.assertEqual((cap_index.get("contract.edit") or {}).get("capability_state"), "readonly")
+
+    def test_project_form_governance_applies_when_view_type_contains_form(self):
+        data = _sample_payload()
+        data["head"]["view_type"] = "tree,form"
+        data["id"] = "new"
+        out = apply_contract_governance(data, "user")
+
+        self.assertEqual(out.get("render_profile"), "create")
+        fields = out.get("fields") or {}
+        self.assertNotIn("project_code", fields)
+        self.assertNotIn("code", fields)
+
+        field_policies = out.get("field_policies") or {}
+        for hidden_on_create in ("project_code", "code"):
+            policy = field_policies.get(hidden_on_create) or {}
+            self.assertNotIn("create", policy.get("visible_profiles") or [])
 
     def test_hud_mode_keeps_full_payload(self):
         data = _sample_payload()
