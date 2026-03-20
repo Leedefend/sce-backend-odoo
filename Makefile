@@ -2601,6 +2601,8 @@ verify.product.delivery.mainline: guard.prod.forbid
 	fi; \
 	echo "[verify.product.delivery.mainline] step=governance_truth"; \
 	if ! $(MAKE) --no-print-directory verify.product.delivery.governance_truth; then GOVERNANCE_STATUS=FAIL; fi; \
+		$(MAKE) --no-print-directory refresh.delivery.readiness.scoreboard >/dev/null; \
+		python3 -c "import json, pathlib; p=pathlib.Path('artifacts/backend/delivery_readiness_ci_summary.json'); d=json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}; o=d.get('overall') if isinstance(d.get('overall'), dict) else {}; print(f\"[verify.product.delivery.mainline] overall_ok={o.get('ok')} policy={o.get('policy')}\")"; \
 	python3 scripts/verify/delivery_mainline_run_summary.py \
 	  --profile $$PROFILE \
 	  --frontend $$FRONTEND_STATUS \
