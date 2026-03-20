@@ -312,3 +312,12 @@ Each entry must include:
 - completed_step: `verify.product.delivery.mainline 已在 restricted 档位跑通，并输出 delivery_mainline_run_summary.{json,md}`
 - active_commit: `17a2aab`
 - next_step: `Commit docs refresh and continue P0 blocker closure`
+
+### 2026-03-20T06:58:00Z
+- blocker_key: `gap.delivery_evidence_productization`
+- layer_target: `Ops/Delivery Mainline`
+- module: `single-entry CI summary aggregation`
+- reason: `将 mainline 结果并入 delivery_readiness_ci_summary，形成单一摘要入口`
+- completed_step: `delivery_readiness_scoreboard_refresh 聚合 delivery_mainline_run_summary 到 CI summary JSON/MD`
+- active_commit: `907a483`
+- next_step: `Refresh scoreboard snapshot and commit docs alignment`
