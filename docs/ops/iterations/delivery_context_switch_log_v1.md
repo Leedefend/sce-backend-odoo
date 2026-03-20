@@ -528,3 +528,12 @@ Each entry must include:
 - completed_step: `workspace_home 新增 blocks（hero/metric/risk/ops）统一 type/key/data/actions 结构；保留旧字段兼容；smoke 增加 workspace_home.blocks 基础结构断言`
 - active_commit: `pending`
 - next_step: `Commit Batch-M changes and prepare integrated status summary`
+
+### 2026-03-20T18:20:00Z
+- blocker_key: `batch_n.contract_closure_regression_guard`
+- layer_target: `Ops/Verification Guard`
+- module: `backend contract closure guard`
+- reason: `将 G~M 批次关键收口点固化为可执行门禁，防止后续回退`
+- completed_step: `新增 scripts/verify/backend_contract_closure_guard.py；Makefile 增加 verify.backend.contract.closure.guard 目标；任务单落库`
+- active_commit: `pending`
+- next_step: `Run guard + typecheck and commit Batch-N`
