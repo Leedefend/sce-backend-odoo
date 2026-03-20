@@ -249,3 +249,12 @@ Each entry must include:
 - completed_step: `新增 delivery_readiness_scoreboard_refresh 脚本并绑定到 ci.scene.delivery.readiness 成功/失败分支；restricted pass 与 strict fail 均已自动写入`
 - active_commit: `edf4be6`
 - next_step: `Commit feat/docs changes and continue runtime blocker burn-down`
+
+### 2026-03-20T06:12:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `scoreboard table normalization`
+- reason: `自动写回后需保证 evidence 表格连续无空行，避免 markdown 表解析异常`
+- completed_step: `delivery_readiness_scoreboard_refresh 增加 evidence section 归一化，并刷新 snapshot 到最新 commit`
+- active_commit: `e3150f9`
+- next_step: `Commit normalization follow-up and continue mainline blockers`
