@@ -384,3 +384,12 @@ Each entry must include:
 - completed_step: `frontend/governance_truth/delivery_evidence 状态收口；项目执行模块入口统一为 projects.execution；release blocking 文案保留 strict live fetch 现实阻断`
 - active_commit: `bd593b6`
 - next_step: `Continue strict-live runner verification and keep mainline evidence green`
+
+### 2026-03-20T10:35:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Product/Ops Governance`
+- module: `iteration completion record + PR readiness package`
+- reason: `按主线要求落库“当前迭代完成情况详细记录”，并准备合并前PR材料`
+- completed_step: `新增 delivery_iteration_status_2026-03-20_mainline.md；生成 PR body（含 Architecture Impact/Layer Target/Affected Modules）`
+- active_commit: `cbc713c`
+- next_step: `Commit docs and execute make pr.push + make pr.create`
