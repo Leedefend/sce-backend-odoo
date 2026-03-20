@@ -47,10 +47,18 @@ export interface LoginResponse {
   bootstrap?: {
     next_intent?: string;
     mode?: string;
+    allowed_exception_intents?: string[];
   };
   contract?: {
+    contract_version?: string;
+    schema_version?: string;
     response_mode?: string;
     mode?: string;
+    compat_requested?: boolean;
+    compat_enabled?: boolean;
+    compat_deprecated?: boolean;
+    compat_sunset_phase?: string;
+    deprecation_notice?: string;
   };
   debug?: {
     groups?: string[];
@@ -176,6 +184,14 @@ export interface AppInitResponse {
     intent?: string;
     loaded?: boolean;
     count?: number;
+  };
+  system_init_sections_v1?: {
+    contract_version?: string;
+    schema_version?: string;
+    session?: Record<string, unknown>;
+    nav?: Record<string, unknown>;
+    surface?: Record<string, unknown>;
+    bootstrap_refs?: Record<string, unknown>;
   };
   intents?: string[];
   intents_meta?: Record<string, {
