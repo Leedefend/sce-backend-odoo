@@ -105,7 +105,6 @@ _USER_SCENE_ACCESS_KEYS = (
 
 _PROJECT_FORM_PRIMARY_FIELDS = [
     "name",
-    "project_code",
     "project_type_id",
     "project_category_id",
     "lifecycle_state",
@@ -121,6 +120,8 @@ _PROJECT_FORM_PRIMARY_FIELDS = [
     "location",
 ]
 _PROJECT_FORM_CREATE_HIDDEN_FIELDS = {
+    "project_code",
+    "code",
     "company_id",
     "analytic_account_id",
     "lifecycle_state",
@@ -798,9 +799,14 @@ def _is_project_form_contract(data: dict) -> bool:
         or permissions.get("model")
     )
     view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
+    has_form_view = isinstance(views.get("form"), dict)
+    if not view_type and has_form_view:
         view_type = "form"
-    return model == "project.project" and view_type == "form"
+    if model != "project.project":
+        return False
+    if has_form_view:
+        return "form" in view_type if view_type else True
+    return view_type == "form"
 
 
 def _is_project_kanban_contract(data: dict) -> bool:
@@ -1444,11 +1450,20 @@ def _resolve_render_profile(data: dict) -> str:
     )
     if not can_write and not can_create:
         return _RENDER_PROFILE_READONLY
-    has_record = bool(
-        data.get("res_id")
-        or head.get("res_id")
-        or data.get("id")
-    )
+    has_record = False
+    for raw in (data.get("res_id"), head.get("res_id"), data.get("id")):
+        if raw in (None, "", False):
+            continue
+        token = str(raw).strip().lower()
+        if token in {"", "0", "new", "false", "null", "none"}:
+            continue
+        try:
+            if int(token) > 0:
+                has_record = True
+                break
+        except Exception:
+            # 非数字主键在当前项目契约中不作为“已有记录”判定依据
+            continue
     return _RENDER_PROFILE_EDIT if has_record else _RENDER_PROFILE_CREATE
 
 

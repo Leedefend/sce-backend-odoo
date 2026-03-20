@@ -54,7 +54,6 @@
                     </group>
                     <group string="项目标识（可选）" col="2" invisible="context.get('intake_mode') == 'quick'">
                         <group>
-                            <field name="project_code" readonly="1"/>
                             <field name="project_type_id"/>
                             <field name="project_category_id"/>
                         </group>
@@ -188,7 +187,7 @@
                 </page>
                 <page string="施工信息" name="sc_construction" groups="smart_construction_core.group_sc_cap_project_read">
                     <group col="4" string="施工项目信息" data-sc-anchor="schedule">
-                        <field name="project_code" readonly="1"/>
+                        <field name="project_code" readonly="1" invisible="id == False"/>
                         <field name="project_type_id"/>
                         <field name="project_category_id"/>
                         <field name="lifecycle_state"/>
