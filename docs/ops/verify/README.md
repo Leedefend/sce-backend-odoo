@@ -66,6 +66,7 @@
   - Refreshes scoreboard snapshot metadata (`generated_at_utc/branch/commit_ref`) and keeps CI strict/restricted evidence rows in sync with stored profile state.
   - Also synchronizes `Release Blocking Gaps` CI posture line from latest strict/restricted profile status.
   - When strict profile is `FAIL`, the posture line auto-appends a restricted-profile recovery command.
+  - Aggregates latest mainline run summary into the same CI summary payload when available.
   - Quick entry (human-readable):
     - `artifacts/backend/delivery_readiness_ci_summary.md`
   - Emits machine-readable CI summary for pipeline dashboards:
