@@ -15,7 +15,7 @@
   "ui_contract_raw": {
     "action": "set_channel",
     "company_id": 1,
-    "from_channel": "dev",
+    "from_channel": "stable",
     "to_channel": "dev"
   },
   "user": "admin",

@@ -27,6 +27,96 @@
     "view_type": "list"
   },
   "ui_contract_raw": {
+    "access_policy": {
+      "blocked_fields": [],
+      "degraded_fields": [],
+      "message": "",
+      "mode": "allow",
+      "policy_source": "none",
+      "reason_code": ""
+    },
+    "action_groups": [
+      {
+        "actions": [
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "intent": "open",
+            "key": "base.action_attachment",
+            "kind": "open",
+            "label": "Attachments",
+            "level": "toolbar",
+            "model": "ir.attachment",
+            "params": {
+              "target": "current"
+            },
+            "payload": {
+              "action_id": 26,
+              "context_raw": "{}",
+              "domain_raw": false,
+              "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    Create a new document\n                </p>\n                <p>\n                    Also you will find here all the related documents and download it by clicking on any individual document.\n                </p>\n            ",
+              "view_id": null,
+              "view_mode": "kanban,tree,form",
+              "xml_id": "base.action_attachment"
+            },
+            "selection": "none",
+            "semantic": "secondary",
+            "target_model": "ir.attachment",
+            "visible": {
+              "domain": [],
+              "states": []
+            },
+            "visible_profiles": [
+              "create",
+              "edit"
+            ]
+          },
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "intent": "open",
+            "key": "base.action_attachment",
+            "kind": "open",
+            "label": "Attachments",
+            "level": "toolbar",
+            "model": "ir.attachment",
+            "params": {
+              "target": "current"
+            },
+            "payload": {
+              "action_id": 26,
+              "context_raw": "{}",
+              "domain_raw": false,
+              "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    Create a new document\n                </p>\n                <p>\n                    Also you will find here all the related documents and download it by clicking on any individual document.\n                </p>\n            ",
+              "view_id": null,
+              "view_mode": "kanban,tree,form",
+              "xml_id": "base.action_attachment"
+            },
+            "selection": "none",
+            "target_model": "ir.attachment",
+            "visible": {
+              "domain": [],
+              "states": []
+            }
+          }
+        ],
+        "key": "other",
+        "label": "更多操作",
+        "overflow_actions": [],
+        "overflow_count": 0
+      }
+    ],
+    "action_policies": {
+      "base.action_attachment": {
+        "disabled_reason": "",
+        "enabled_when": {},
+        "semantic": "secondary",
+        "visible_profiles": [
+          "create",
+          "edit"
+        ]
+      }
+    },
     "buttons": [
       {
         "groups": [],
@@ -50,322 +140,1066 @@
           "xml_id": "base.action_attachment"
         },
         "selection": "none",
+        "semantic": "secondary",
         "target_model": "ir.attachment",
         "visible": {
           "domain": [],
           "states": []
-        }
+        },
+        "visible_profiles": [
+          "create",
+          "edit"
+        ]
       }
     ],
+    "contract_surface": "user",
     "degraded": false,
+    "field_groups": [
+      {
+        "collapsible": false,
+        "fields": [
+          "name",
+          "type",
+          "checksum",
+          "company_id",
+          "datas",
+          "db_datas",
+          "description",
+          "file_size"
+        ],
+        "label": "核心信息",
+        "name": "core",
+        "priority": 1
+      },
+      {
+        "collapsed_by_default": true,
+        "collapsible": true,
+        "fields": [
+          "access_token",
+          "create_date",
+          "create_uid",
+          "display_name",
+          "id",
+          "image_height",
+          "image_src",
+          "image_width",
+          "index_content",
+          "local_url",
+          "mimetype",
+          "original_id",
+          "public",
+          "raw",
+          "res_field",
+          "res_id",
+          "res_model",
+          "res_name",
+          "store_fname",
+          "url",
+          "voice_ids",
+          "write_date",
+          "write_uid"
+        ],
+        "label": "高级信息",
+        "name": "advanced",
+        "priority": 2
+      }
+    ],
+    "field_policies": {
+      "access_token": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "checksum": {
+        "group": "core",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "company_id": {
+        "group": "core",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "create_date": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "create_uid": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "datas": {
+        "group": "core",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "db_datas": {
+        "group": "core",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "description": {
+        "group": "core",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "display_name": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "file_size": {
+        "group": "core",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "id": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "image_height": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "image_src": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "image_width": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "index_content": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "local_url": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "mimetype": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "name": {
+        "group": "core",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [
+          "create",
+          "edit"
+        ],
+        "source_readonly": false,
+        "source_required": true,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "original_id": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "public": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "raw": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "res_field": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "res_id": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "res_model": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "res_name": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "store_fname": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "type": {
+        "group": "core",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [
+          "create",
+          "edit"
+        ],
+        "source_readonly": false,
+        "source_required": true,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
+      "url": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "voice_ids": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      },
+      "write_uid": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": true,
+        "source_required": false,
+        "visible_profiles": [
+          "edit",
+          "readonly"
+        ]
+      }
+    },
+    "field_semantics": {
+      "access_token": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      },
+      "checksum": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "company_id": {
+        "semantic_type": "relation",
+        "surface_role": "core",
+        "technical": false
+      },
+      "create_date": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      },
+      "create_uid": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      },
+      "datas": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "db_datas": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "description": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "display_name": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      },
+      "file_size": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "id": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      },
+      "image_height": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "image_src": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "image_width": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "index_content": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "local_url": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "mimetype": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "name": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "original_id": {
+        "semantic_type": "relation",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "public": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "raw": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "res_field": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "res_id": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "res_model": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "res_name": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "store_fname": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "type": {
+        "semantic_type": "business",
+        "surface_role": "core",
+        "technical": false
+      },
+      "url": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "voice_ids": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      },
+      "write_uid": {
+        "semantic_type": "technical",
+        "surface_role": "advanced",
+        "technical": true
+      }
+    },
     "fields": {
       "access_token": {
-        "context": {},
-        "domain": [],
         "name": "access_token",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "Access Token",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "char"
       },
       "checksum": {
-        "context": {},
-        "domain": [],
         "name": "checksum",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Checksum/SHA1",
+        "surface_role": "core",
+        "technical": false,
         "type": "char"
       },
       "company_id": {
-        "context": {},
         "domain": [],
         "name": "company_id",
         "readonly": false,
         "relation": "res.company",
+        "relation_entry": {
+          "action_id": 52,
+          "can_create": true,
+          "can_read": true,
+          "create_mode": "page",
+          "default_vals": {},
+          "field": "company_id",
+          "menu_id": null,
+          "model": "res.company",
+          "reason_code": "PAGE_ENTRY_READY",
+          "source": "backend_contract",
+          "view_mode": "tree,kanban,form",
+          "view_type": "form"
+        },
         "required": false,
-        "selection": [],
+        "semantic_type": "relation",
         "string": "Company",
+        "surface_role": "core",
+        "technical": false,
         "type": "many2one"
       },
       "create_date": {
-        "context": {},
-        "domain": [],
         "name": "create_date",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "Created on",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "datetime"
       },
       "create_uid": {
-        "context": {},
         "domain": [],
         "name": "create_uid",
         "readonly": true,
         "relation": "res.users",
+        "relation_entry": {
+          "action_id": 71,
+          "can_create": true,
+          "can_read": true,
+          "create_mode": "page",
+          "default_vals": {},
+          "field": "create_uid",
+          "menu_id": null,
+          "model": "res.users",
+          "reason_code": "PAGE_ENTRY_READY",
+          "source": "backend_contract",
+          "view_mode": "form",
+          "view_type": "form"
+        },
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "Created by",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "many2one"
       },
       "datas": {
-        "context": {},
-        "domain": [],
         "name": "datas",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "File Content (base64)",
+        "surface_role": "core",
+        "technical": false,
         "type": "binary"
       },
       "db_datas": {
-        "context": {},
-        "domain": [],
         "name": "db_datas",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Database Data",
+        "surface_role": "core",
+        "technical": false,
         "type": "binary"
       },
       "description": {
-        "context": {},
-        "domain": [],
         "name": "description",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Description",
+        "surface_role": "core",
+        "technical": false,
         "type": "text"
       },
       "display_name": {
-        "context": {},
-        "domain": [],
         "name": "display_name",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "Display Name",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "char"
       },
       "file_size": {
-        "context": {},
-        "domain": [],
         "name": "file_size",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "File Size",
+        "surface_role": "core",
+        "technical": false,
         "type": "integer"
       },
       "id": {
-        "context": {},
-        "domain": [],
         "name": "id",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "ID",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "integer"
       },
       "image_height": {
-        "context": {},
-        "domain": [],
         "name": "image_height",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Image Height",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "integer"
       },
       "image_src": {
-        "context": {},
-        "domain": [],
         "name": "image_src",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Image Src",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "image_width": {
-        "context": {},
-        "domain": [],
         "name": "image_width",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Image Width",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "integer"
       },
       "index_content": {
-        "context": {},
-        "domain": [],
         "name": "index_content",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Indexed Content",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "text"
       },
       "local_url": {
-        "context": {},
-        "domain": [],
         "name": "local_url",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Attachment URL",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "mimetype": {
-        "context": {},
-        "domain": [],
         "name": "mimetype",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Mime Type",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "name": {
-        "context": {},
-        "domain": [],
         "name": "name",
         "readonly": false,
         "required": true,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Name",
+        "surface_role": "core",
+        "technical": false,
         "type": "char"
       },
       "original_id": {
-        "context": {},
         "domain": [],
         "name": "original_id",
         "readonly": false,
         "relation": "ir.attachment",
+        "relation_entry": {
+          "action_id": 26,
+          "can_create": true,
+          "can_read": true,
+          "create_mode": "page",
+          "default_vals": {},
+          "field": "original_id",
+          "menu_id": null,
+          "model": "ir.attachment",
+          "reason_code": "PAGE_ENTRY_READY",
+          "source": "backend_contract",
+          "view_mode": "kanban,tree,form",
+          "view_type": "form"
+        },
         "required": false,
-        "selection": [],
+        "semantic_type": "relation",
         "string": "Original (unoptimized, unresized) attachment",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "many2one"
       },
       "public": {
-        "context": {},
-        "domain": [],
         "name": "public",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Is public document",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "boolean"
       },
       "raw": {
-        "context": {},
-        "domain": [],
         "name": "raw",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "File Content (raw)",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "binary"
       },
       "res_field": {
-        "context": {},
-        "domain": [],
         "name": "res_field",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Resource Field",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "res_id": {
-        "context": {},
-        "domain": [],
         "name": "res_id",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Resource ID",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "many2one_reference"
       },
       "res_model": {
-        "context": {},
-        "domain": [],
         "name": "res_model",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Resource Model",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "res_name": {
-        "context": {},
-        "domain": [],
         "name": "res_name",
         "readonly": true,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Resource Name",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "store_fname": {
-        "context": {},
-        "domain": [],
         "name": "store_fname",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Stored Filename",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "type": {
-        "context": {},
-        "domain": [],
         "name": "type",
         "readonly": false,
         "required": true,
-        "selection": [],
+        "selection": [
+          [
+            "url",
+            "URL"
+          ],
+          [
+            "binary",
+            "File"
+          ]
+        ],
+        "semantic_type": "business",
         "string": "Type",
+        "surface_role": "core",
+        "technical": false,
         "type": "selection"
       },
       "url": {
-        "context": {},
-        "domain": [],
         "name": "url",
         "readonly": false,
         "required": false,
-        "selection": [],
+        "semantic_type": "business",
         "string": "Url",
+        "surface_role": "advanced",
+        "technical": false,
         "type": "char"
       },
       "voice_ids": {
-        "context": {},
         "domain": [],
         "name": "voice_ids",
         "readonly": false,
         "relation": "discuss.voice.metadata",
+        "relation_entry": {
+          "action_id": null,
+          "can_create": true,
+          "can_read": true,
+          "create_mode": "disabled",
+          "default_vals": {},
+          "field": "voice_ids",
+          "menu_id": null,
+          "model": "discuss.voice.metadata",
+          "reason_code": "NO_VISIBLE_ACTION",
+          "source": "backend_contract",
+          "view_mode": "form",
+          "view_type": "form"
+        },
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "Voice",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "one2many"
       },
       "write_uid": {
-        "context": {},
         "domain": [],
         "name": "write_uid",
         "readonly": true,
         "relation": "res.users",
+        "relation_entry": {
+          "action_id": 71,
+          "can_create": true,
+          "can_read": true,
+          "create_mode": "page",
+          "default_vals": {},
+          "field": "write_uid",
+          "menu_id": null,
+          "model": "res.users",
+          "reason_code": "PAGE_ENTRY_READY",
+          "source": "backend_contract",
+          "view_mode": "form",
+          "view_type": "form"
+        },
         "required": false,
-        "selection": [],
+        "semantic_type": "technical",
         "string": "Last Updated by",
+        "surface_role": "advanced",
+        "technical": true,
         "type": "many2one"
       }
     },
-    "head": {},
+    "governed_from_native": true,
+    "head": {
+      "access_policy": {
+        "blocked_fields": [],
+        "degraded_fields": [],
+        "message": "",
+        "mode": "allow",
+        "policy_source": "none",
+        "reason_code": ""
+      }
+    },
+    "hide_filters_on_create": true,
     "missing_models": [],
     "permissions": {
       "domain_default": [],
@@ -374,16 +1208,18 @@
           1,
           2,
           3,
-          34,
           4,
-          33,
+          37,
+          69,
           7,
           8,
           9,
-          15,
+          36,
+          98,
           18,
-          60,
-          95
+          21,
+          90,
+          63
         ],
         "rights": {
           "create": true,
@@ -567,6 +1403,8 @@
         }
       }
     },
+    "render_mode": "governed",
+    "render_profile": "create",
     "reports": [],
     "search": {
       "defaults": {
@@ -692,7 +1530,67 @@
       ],
       "model": "ir.attachment",
       "saved_filters": [],
-      "version": 1
+      "version": 2
+    },
+    "source_mode": "governance_pipeline",
+    "surface_mapping": {
+      "native_to_governed": {
+        "buttons": {
+          "added": [],
+          "governed_count": 1,
+          "native_count": 1,
+          "removed": [],
+          "reordered": false
+        },
+        "field_modifiers": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "fields": {
+          "added": [],
+          "governed_count": 31,
+          "native_count": 31,
+          "removed": [],
+          "reordered": false
+        },
+        "header_buttons": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "layout_fields": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "layout_nodes": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "stat_buttons": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        }
+      }
+    },
+    "surface_policies": {
+      "actions_max": 8,
+      "actions_primary_max": 4,
+      "filters_max": 8,
+      "filters_primary_max": 5
     },
     "toolbar": {
       "footer": [],
@@ -728,6 +1626,26 @@
       ],
       "sidebar": []
     },
+    "validation_rules": [
+      {
+        "code": "REQUIRED",
+        "field": "name",
+        "message": "Name 为必填字段",
+        "when_profiles": [
+          "create",
+          "edit"
+        ]
+      },
+      {
+        "code": "REQUIRED",
+        "field": "type",
+        "message": "Type 为必填字段",
+        "when_profiles": [
+          "create",
+          "edit"
+        ]
+      }
+    ],
     "validator": {
       "defaults_sample": {
         "company_id": "dynamic",
@@ -1079,7 +1997,7 @@
         "sql_checks": [],
         "unique": []
       },
-      "version": 1
+      "version": 2
     },
     "views": {
       "form": {},

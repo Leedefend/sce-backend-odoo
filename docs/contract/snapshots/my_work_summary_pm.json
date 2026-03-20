@@ -14,8 +14,10 @@
   "ui_contract": null,
   "ui_contract_raw": {
     "facets": {
+      "priority_counts": [],
       "reason_code_counts": [],
       "section_counts": [],
+      "section_counts_filtered": [],
       "source_counts": []
     },
     "filters": {
@@ -85,7 +87,12 @@
         "label": "我关注的",
         "scene_key": "projects.list"
       }
-    ]
+    ],
+    "visibility": {
+      "message": "",
+      "partial_data_hidden": false,
+      "restricted_sources": []
+    }
   },
   "user": "pm",
   "user_fallback": "admin",
