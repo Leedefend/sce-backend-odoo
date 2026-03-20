@@ -339,3 +339,12 @@ Each entry must include:
 - completed_step: `verify.product.delivery.mainline 在末尾输出 overall_ok/policy（来自 delivery_readiness_ci_summary）`
 - active_commit: `b174ad8`
 - next_step: `Run mainline once and commit feat/docs`
+
+### 2026-03-20T07:55:00Z
+- blocker_key: `gap.finance_payment_requests_action_closure`
+- layer_target: `Ops/Delivery Mainline`
+- module: `action-closure smoke + mainline wiring`
+- reason: `把高频业务动作闭环纳入一键主线，直接暴露可交付阻断点`
+- completed_step: `新增 verify.product.delivery.action_closure.smoke 并接入 mainline；最新运行显示 finance.payment_requests 因 search_filters<1 失败`
+- active_commit: `cbd2423`
+- next_step: `Fix finance.payment_requests scene action/search surface closure and rerun make verify.product.delivery.mainline`

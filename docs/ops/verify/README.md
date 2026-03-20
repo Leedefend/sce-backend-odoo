@@ -83,6 +83,7 @@
   - Runs in order:
     - `pnpm -C frontend gate`
     - `CI_SCENE_DELIVERY_PROFILE=${CI_SCENE_DELIVERY_PROFILE:-restricted} SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make ci.scene.delivery.readiness`
+    - `make verify.product.delivery.action_closure.smoke`
     - `make verify.product.delivery.governance_truth`
   - Default profile is `restricted`; set `CI_SCENE_DELIVERY_PROFILE=strict` in live-enabled runners.
   - Prints final summary line from unified readiness payload:
@@ -90,6 +91,15 @@
   - Emits run summary artifacts:
     - `artifacts/backend/delivery_mainline_run_summary.json`
     - `artifacts/backend/delivery_mainline_run_summary.md`
+- `make verify.product.delivery.action_closure.smoke`
+  - Verifies action/search/workflow/validation closure signals for delivery high-frequency scenes.
+  - Current focus scenes:
+    - `finance.payment_requests`
+    - `projects.list`
+    - `cost.project_budget`
+  - Emits reports:
+    - `artifacts/backend/product_delivery_action_closure_report.json`
+    - `docs/ops/audit/product_delivery_action_closure_report.md`
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.

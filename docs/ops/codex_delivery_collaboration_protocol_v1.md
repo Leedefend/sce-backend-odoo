@@ -14,6 +14,16 @@ Keep iteration speed high and context stable while continuously closing delivery
   - `Module`
   - `Reason`
 
+## Mainline Delivery Objective (Persistent)
+
+- Prioritize product delivery closure over governance expansion.
+- Treat the following as P0 hard gaps and iterate continuously until closed:
+  - frontend delivery chain gate (`lint/typecheck:strict/build`)
+  - scene contract + scene engine runtime closure
+  - truthful capability gap backlog tiers (`Blocker/Pilot Risk/Post-GA`)
+  - auditable one-page delivery evidence board
+- Default execution mode is continuous iteration: complete the next planned step directly unless blocked by policy/env risk.
+
 ## Context-Switch Stability Rules
 
 - Maintain a running context-switch log in `docs/ops/iterations/delivery_context_switch_log_v1.md`.
@@ -45,4 +55,3 @@ Escalate immediately when:
 - gate repeatedly fails due to environment breakage,
 - required credentials/seed data are missing,
 - baseline thresholds conflict with observed stable runtime reality.
-
