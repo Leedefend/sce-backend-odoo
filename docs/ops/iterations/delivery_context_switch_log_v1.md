@@ -285,3 +285,12 @@ Each entry must include:
 - completed_step: `scoreboard refresh 自动写入 Release Blocking Gaps 的 CI posture 行，并与 CI summary 状态保持同步`
 - active_commit: `148316e`
 - next_step: `Commit sync enhancement and continue runtime blocker closure`
+
+### 2026-03-20T06:28:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `posture recovery hint`
+- reason: `strict 失败时需要在管理视图直接给出最短恢复命令`
+- completed_step: `Release Blocking Gaps 的 CI posture 行在 strict=FAIL 时自动附加 restricted 恢复命令`
+- active_commit: `b24faf2`
+- next_step: `Commit recovery-hint enhancement and continue blocker closure`
