@@ -537,3 +537,12 @@ Each entry must include:
 - completed_step: `新增 scripts/verify/backend_contract_closure_guard.py；Makefile 增加 verify.backend.contract.closure.guard 目标；任务单落库`
 - active_commit: `pending`
 - next_step: `Run guard + typecheck and commit Batch-N`
+
+### 2026-03-20T18:45:00Z
+- blocker_key: `batch_o.mainline_integration_and_phase_status`
+- layer_target: `Ops/Verification + Release Docs`
+- module: `mainline guard integration`
+- reason: `把收口 guard 真正并入主链验证，并生成阶段总览供合并前审阅`
+- completed_step: `verify.product.delivery.mainline 增加 backend_contract_closure_guard 步骤与汇总状态；新增 backend_contract_closure_phase_status_v1.md 阶段总览`
+- active_commit: `pending`
+- next_step: `Run closure guard + typecheck and commit Batch-O`
