@@ -330,3 +330,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_ci_summary 增加 overall.ok + policy + signals，并支持 DELIVERY_READINESS_OVERALL_POLICY`
 - active_commit: `333e6f5`
 - next_step: `Commit feat/docs and continue mainline closure`
+
+### 2026-03-20T07:10:00Z
+- blocker_key: `gap.delivery_evidence_productization`
+- layer_target: `Ops/Delivery Mainline`
+- module: `mainline overall print`
+- reason: `一键命令执行后需要终端直接给出可放行结论，减少人工翻日志`
+- completed_step: `verify.product.delivery.mainline 在末尾输出 overall_ok/policy（来自 delivery_readiness_ci_summary）`
+- active_commit: `b174ad8`
+- next_step: `Run mainline once and commit feat/docs`
