@@ -164,7 +164,17 @@ export interface AppInitResponse {
     scene_key?: string;
     loaded?: boolean;
   };
+  intent_catalog_ref?: {
+    intent?: string;
+    loaded?: boolean;
+    count?: number;
+  };
   intents?: string[];
+  intents_meta?: Record<string, {
+    version?: string;
+    aliases?: string[];
+    required_groups_xmlids?: string[];
+  }>;
   feature_flags?: Record<string, unknown>;
   meta?: Record<string, unknown>;
 }

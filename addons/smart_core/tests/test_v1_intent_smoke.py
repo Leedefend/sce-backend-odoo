@@ -144,6 +144,11 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("user", data.get("data", {}))
         self.assertIn("nav", data.get("data", {}))
         self.assertIn("intents", data.get("data", {}))
+        intents = data.get("data", {}).get("intents") or []
+        self.assertIsInstance(intents, list)
+        self.assertIn("meta.intent_catalog", intents)
+        self.assertIn("intent_catalog_ref", data.get("data", {}))
+        self.assertNotIn("api.data", intents)
         self.assertIn("capabilities", data.get("data", {}))
         self.assertIn("capability_groups", data.get("data", {}))
         self.assertIn("init_contract_v1", data.get("data", {}))
@@ -237,3 +242,31 @@ class TestV1IntentSmoke(HttpCase):
             self.assertIn("status_field", list_profile)
             self.assertIn("urgency_score", list_profile)
             self.assertIn("highlight_rule", list_profile)
+
+    def test_meta_intent_catalog_intent(self):
+        login_payload = {
+            "intent": "login",
+            "params": {"login": self.test_login, "password": self.test_password},
+        }
+        login_data = self._post_intent(
+            login_payload,
+            headers={"X-Anonymous-Intent": "true"},
+            with_db=True,
+        )
+        login_row = login_data.get("data", {}) or {}
+        token = (login_row.get("session") or {}).get("token") or login_row.get("token")
+        self.assertTrue(token, login_data)
+
+        payload = {"intent": "meta.intent_catalog", "params": {}}
+        data = self._post_intent(payload, headers={"Authorization": f"Bearer {token}"})
+        self.assertTrue(data.get("ok"), data)
+        row = data.get("data", {}) or {}
+        intents = row.get("intents") or []
+        intents_meta = row.get("intents_meta") or {}
+        self.assertIsInstance(intents, list)
+        self.assertIsInstance(intents_meta, dict)
+        self.assertIn("system.init", intents)
+        self.assertIn("ui.contract", intents)
+        self.assertIn("api.data", intents)
+        self.assertIn("meta.intent_catalog", intents)
+        self.assertIn("meta.intent_catalog", intents_meta)

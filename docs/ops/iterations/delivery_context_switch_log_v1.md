@@ -465,3 +465,12 @@ Each entry must include:
 - completed_step: `system.init 增加 with 参数解析并默认仅返回 workspace_home_ref；显式 with=['workspace_home'] 才返回完整 workspace_home；前端主链显式带 with 保持现有能力；smoke 增加默认/按需两条断言`
 - active_commit: `pending`
 - next_step: `Commit Batch-F changes and continue P1-3 intent catalog split`
+
+### 2026-03-20T15:05:00Z
+- blocker_key: `batch_g.intent_catalog_split`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-3 intent catalog decoupling`
+- reason: `把全量 intents 从 system.init 拆分到独立目录意图，保持启动链轻量可预测`
+- completed_step: `新增 meta.intent_catalog handler；system.init 改为最小启动 intents 集合并返回 intent_catalog_ref；smoke 增加 meta.intent_catalog 覆盖并校验 system.init 不再暴露全量 intents；schema 增补 intent_catalog_ref/intents_meta`
+- active_commit: `pending`
+- next_step: `Commit Batch-G changes and continue P1-4 capability delivery-level closure`
