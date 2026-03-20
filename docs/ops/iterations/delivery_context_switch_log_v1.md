@@ -510,3 +510,12 @@ Each entry must include:
 - completed_step: `scene_governance_payload_builder 增加 governance surface_mapping 汇总并纳入 scene_governance_v1；补 removed.scene_codes_sample；smoke 增加 surface_mapping 结构断言`
 - active_commit: `pending`
 - next_step: `Commit Batch-K changes and continue P2-3 scene metrics unification`
+
+### 2026-03-20T17:20:00Z
+- blocker_key: `batch_l.scene_metrics_unification`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p2-3 scene governance metrics`
+- reason: `统一 scene 指标命名口径，减少不同统计字段混用`
+- completed_step: `scene_governance_payload_builder 新增 scene_metrics（scene_registry_count/scene_deliverable_count/scene_navigable_count/scene_excluded_count）；smoke 增加四字段断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-L changes and continue P2-4 homepage blockization planning`

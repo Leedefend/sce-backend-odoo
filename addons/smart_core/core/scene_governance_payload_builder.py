@@ -154,6 +154,28 @@ def _governance_surface_mapping(
     }
 
 
+def _scene_metrics_unified(delivery_policy: Dict[str, Any], nav_policy: Dict[str, Any]) -> Dict[str, int]:
+    delivery_input_count = int(delivery_policy.get("scene_input_count") or 0)
+    delivery_scene_count = int(delivery_policy.get("delivery_scene_count") or 0)
+    delivery_excluded_count = int(delivery_policy.get("excluded_scene_count") or 0)
+
+    nav_input_count = int(nav_policy.get("scene_input_count") or 0)
+    nav_scene_count = int(nav_policy.get("scene_count") or 0)
+    nav_excluded_count = int(nav_policy.get("excluded_scene_count") or 0)
+
+    scene_registry_count = max(delivery_input_count, nav_input_count)
+    scene_deliverable_count = delivery_scene_count if delivery_scene_count > 0 else nav_scene_count
+    scene_navigable_count = nav_scene_count
+    scene_excluded_count = max(delivery_excluded_count, nav_excluded_count)
+
+    return {
+        "scene_registry_count": int(scene_registry_count),
+        "scene_deliverable_count": int(scene_deliverable_count),
+        "scene_navigable_count": int(scene_navigable_count),
+        "scene_excluded_count": int(scene_excluded_count),
+    }
+
+
 def build_scene_governance_payload_v1(
     *,
     data: Dict[str, Any],
@@ -183,6 +205,7 @@ def build_scene_governance_payload_v1(
     ]
     consumption_summary = _scene_type_consumption_summary(data)
     surface_mapping = _governance_surface_mapping(governance, nav_policy, delivery_policy)
+    scene_metrics = _scene_metrics_unified(delivery_policy, nav_policy)
 
     return {
         "contract_version": "v1",
@@ -191,6 +214,7 @@ def build_scene_governance_payload_v1(
         "runtime_source": _as_text(diagnostics.get("loaded_from")) or "unknown",
         "governance": governance,
         "surface_mapping": surface_mapping,
+        "scene_metrics": scene_metrics,
         "auto_degrade": auto_degrade,
         "delivery_policy": delivery_policy,
         "nav_policy": {
