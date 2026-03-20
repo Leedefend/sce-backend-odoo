@@ -420,3 +420,12 @@ Each entry must include:
 - completed_step: `contract.mode 增补 contract.response_mode；移除未使用 _safe_env；debug intents 改稳定排序；计划文档补充 login 粗粒度 role 与 role_surface 语义边界`
 - active_commit: `pending`
 - next_step: `Commit polish changes and proceed to mainline verification`
+
+### 2026-03-20T12:35:00Z
+- blocker_key: `batch_b.contract_version_unification`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p0-3 semantic version normalization`
+- reason: `按主线计划进入 Batch-B，统一主链意图版本语义并补版本守卫`
+- completed_step: `intent_dispatcher/system_init/ui_contract/exceptions 的 contract_version 统一为 1.0.0；dispatcher 默认注入 schema_version=1.0.0；ui.contract 补 response_schema_version=1.0.0；contract_version_evolution_drill 扩展 login + semver 校验`
+- active_commit: `pending`
+- next_step: `Run verify.contract.version.evolution.drill in network-enabled runner and close Batch-B gate`
