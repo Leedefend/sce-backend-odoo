@@ -49,6 +49,7 @@ export interface LoginResponse {
     mode?: string;
   };
   contract?: {
+    response_mode?: string;
     mode?: string;
   };
   debug?: {

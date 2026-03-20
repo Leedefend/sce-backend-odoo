@@ -411,3 +411,12 @@ Each entry must include:
 - completed_step: `login 默认回落保持 default；entitlement 基于 groups 推导 role_code/is_internal_user/can_switch_company；debug payload 统一到 debug.groups+debug.intents；schema 与 smoke 测试同步补齐`
 - active_commit: `0aebd7e`
 - next_step: `Run restricted delivery mainline and prepare PR for Batch-A`
+
+### 2026-03-20T12:05:00Z
+- blocker_key: `batch_a.login_contract_closure`
+- layer_target: `Backend Intent Contract Layer`
+- module: `login contract edge-polish`
+- reason: `收边优化：命名语义、角色说明、debug 输出稳定性`
+- completed_step: `contract.mode 增补 contract.response_mode；移除未使用 _safe_env；debug intents 改稳定排序；计划文档补充 login 粗粒度 role 与 role_surface 语义边界`
+- active_commit: `pending`
+- next_step: `Commit polish changes and proceed to mainline verification`
