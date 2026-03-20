@@ -61,3 +61,33 @@ class SystemInitPayloadBuilder:
             data["preload"].append({"key": "home", "etag": etags.get("home")})
         if preload_items:
             data["preload"].extend(preload_items)
+
+    @staticmethod
+    def attach_layered_contract(data: dict) -> None:
+        role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+        landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip() or "portal.dashboard"
+        data["init_contract_v1"] = {
+            "session": {
+                "user": data.get("user"),
+                "contract_mode": data.get("contract_mode"),
+                "scene_channel": data.get("scene_channel"),
+            },
+            "nav": {
+                "nav": data.get("nav"),
+                "default_route": data.get("default_route"),
+                "nav_meta": data.get("nav_meta"),
+            },
+            "surface": {
+                "role_surface": data.get("role_surface"),
+                "role_surface_map": data.get("role_surface_map"),
+                "capabilities": data.get("capabilities"),
+                "capability_groups": data.get("capability_groups"),
+                "feature_flags": data.get("feature_flags"),
+            },
+            "bootstrap_refs": {
+                "workspace_home_ref": {
+                    "intent": "ui.contract",
+                    "scene_key": landing_scene_key,
+                }
+            },
+        }
