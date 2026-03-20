@@ -2589,6 +2589,42 @@ verify.product.delivery.action_closure.smoke: guard.prod.forbid
 verify.product.delivery.module9.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py
 
+.PHONY: verify.backend.contract.closure.guard
+verify.backend.contract.closure.guard: guard.prod.forbid
+	@python3 scripts/verify/backend_contract_closure_guard.py
+	@python3 scripts/verify/backend_contract_closure_snapshot_guard.py
+	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
+
+.PHONY: verify.backend.contract.closure.snapshot.guard
+verify.backend.contract.closure.snapshot.guard: guard.prod.forbid
+	@python3 scripts/verify/backend_contract_closure_snapshot_guard.py
+
+.PHONY: verify.intent.canonical_alias.snapshot.guard
+verify.intent.canonical_alias.snapshot.guard: guard.prod.forbid
+	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
+
+.PHONY: verify.backend.contract.closure.mainline
+verify.backend.contract.closure.mainline: guard.prod.forbid
+	@STRUCTURE=PASS; SNAPSHOT=PASS; ALIAS=PASS; \
+	echo "[verify.backend.contract.closure.mainline] step=closure_structure_guard"; \
+	if ! python3 scripts/verify/backend_contract_closure_guard.py; then STRUCTURE=FAIL; fi; \
+	echo "[verify.backend.contract.closure.mainline] step=closure_snapshot_guard"; \
+	if ! python3 scripts/verify/backend_contract_closure_snapshot_guard.py; then SNAPSHOT=FAIL; fi; \
+	echo "[verify.backend.contract.closure.mainline] step=intent_alias_snapshot_guard"; \
+	if ! python3 scripts/verify/intent_canonical_alias_snapshot_guard.py; then ALIAS=FAIL; fi; \
+	python3 scripts/verify/backend_contract_closure_mainline_summary.py --structure $$STRUCTURE --snapshot $$SNAPSHOT --alias $$ALIAS; \
+	python3 scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py; \
+	if [ "$$STRUCTURE" = "PASS" ] && [ "$$SNAPSHOT" = "PASS" ] && [ "$$ALIAS" = "PASS" ]; then \
+	  echo "[OK] verify.backend.contract.closure.mainline done"; \
+	else \
+	  echo "[FAIL] verify.backend.contract.closure.mainline"; \
+	  exit 1; \
+	fi
+
+.PHONY: verify.backend.contract.closure.mainline.summary.schema.guard
+verify.backend.contract.closure.mainline.summary.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py
+
 .PHONY: verify.product.delivery.ready
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
@@ -2596,7 +2632,7 @@ verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap ver
 .PHONY: verify.product.delivery.mainline
 verify.product.delivery.mainline: guard.prod.forbid
 	@PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-restricted}; \
-	FRONTEND_STATUS=PASS; SCENE_STATUS=PASS; ACTION_STATUS=PASS; MODULE9_STATUS=PASS; GOVERNANCE_STATUS=PASS; \
+	FRONTEND_STATUS=PASS; SCENE_STATUS=PASS; ACTION_STATUS=PASS; MODULE9_STATUS=PASS; CONTRACT_CLOSURE_STATUS=PASS; GOVERNANCE_STATUS=PASS; \
 	echo "[verify.product.delivery.mainline] step=frontend_gate"; \
 	if ! pnpm -C frontend gate; then FRONTEND_STATUS=FAIL; fi; \
 	echo "[verify.product.delivery.mainline] step=scene_delivery_readiness profile=$$PROFILE"; \
@@ -2619,8 +2655,15 @@ verify.product.delivery.mainline: guard.prod.forbid
 	else \
 	  MODULE9_STATUS=SKIP; \
 	fi; \
+	echo "[verify.product.delivery.mainline] step=backend_contract_closure_mainline"; \
+	if [ "$$MODULE9_STATUS" = "PASS" ]; then \
+	  if ! $(MAKE) --no-print-directory verify.backend.contract.closure.mainline; then CONTRACT_CLOSURE_STATUS=FAIL; fi; \
+	else \
+	  CONTRACT_CLOSURE_STATUS=SKIP; \
+	fi; \
 	echo "[verify.product.delivery.mainline] step=governance_truth"; \
 	if ! $(MAKE) --no-print-directory verify.product.delivery.governance_truth; then GOVERNANCE_STATUS=FAIL; fi; \
+	echo "[verify.product.delivery.mainline] contract_closure_guard=$$CONTRACT_CLOSURE_STATUS"; \
 	python3 scripts/verify/delivery_mainline_run_summary.py \
 	  --profile $$PROFILE \
 	  --frontend $$FRONTEND_STATUS \
@@ -2630,7 +2673,7 @@ verify.product.delivery.mainline: guard.prod.forbid
 	  --governance $$GOVERNANCE_STATUS; \
 		$(MAKE) --no-print-directory refresh.delivery.readiness.scoreboard >/dev/null; \
 		python3 -c "import json, pathlib; p=pathlib.Path('artifacts/backend/delivery_readiness_ci_summary.json'); d=json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}; o=d.get('overall') if isinstance(d.get('overall'), dict) else {}; print(f\"[verify.product.delivery.mainline] overall_ok={o.get('ok')} policy={o.get('policy')}\")"; \
-	if [ "$$FRONTEND_STATUS" = "PASS" ] && [ "$$SCENE_STATUS" = "PASS" ] && [ "$$ACTION_STATUS" = "PASS" ] && [ "$$MODULE9_STATUS" = "PASS" ] && [ "$$GOVERNANCE_STATUS" = "PASS" ]; then \
+	if [ "$$FRONTEND_STATUS" = "PASS" ] && [ "$$SCENE_STATUS" = "PASS" ] && [ "$$ACTION_STATUS" = "PASS" ] && [ "$$MODULE9_STATUS" = "PASS" ] && [ "$$CONTRACT_CLOSURE_STATUS" = "PASS" ] && [ "$$GOVERNANCE_STATUS" = "PASS" ]; then \
 	  echo "[OK] verify.product.delivery.mainline done"; \
 	else \
 	  echo "[FAIL] verify.product.delivery.mainline"; \

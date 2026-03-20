@@ -107,6 +107,75 @@ def _scene_type_consumption_summary(data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _governance_surface_mapping(
+    governance: Dict[str, Any],
+    nav_policy: Dict[str, Any],
+    delivery_policy: Dict[str, Any],
+) -> Dict[str, Any]:
+    before = _as_dict(governance.get("before"))
+    after = _as_dict(governance.get("after"))
+    filtered = _as_dict(governance.get("filtered"))
+
+    before_scene_count = int(before.get("scene_count") or 0)
+    after_scene_count = int(after.get("scene_count") or 0)
+    before_capability_count = int(before.get("capability_count") or 0)
+    after_capability_count = int(after.get("capability_count") or 0)
+
+    removed_scene_count = int(filtered.get("scene_count") or max(before_scene_count - after_scene_count, 0))
+    removed_capability_count = int(filtered.get("capability_count") or max(before_capability_count - after_capability_count, 0))
+
+    removed_scene_codes: list[str] = []
+    for row in _as_list(nav_policy.get("excluded_scenes_sample")):
+        item = _as_dict(row)
+        code = _as_text(item.get("code"))
+        if code and code not in removed_scene_codes:
+            removed_scene_codes.append(code)
+    if not removed_scene_codes:
+        for row in _as_list(delivery_policy.get("excluded_scenes")):
+            item = _as_dict(row)
+            code = _as_text(item.get("code"))
+            if code and code not in removed_scene_codes:
+                removed_scene_codes.append(code)
+
+    return {
+        "before": {
+            "scene_count": before_scene_count,
+            "capability_count": before_capability_count,
+        },
+        "after": {
+            "scene_count": after_scene_count,
+            "capability_count": after_capability_count,
+        },
+        "removed": {
+            "scene_count": removed_scene_count,
+            "capability_count": removed_capability_count,
+            "scene_codes_sample": removed_scene_codes[:20],
+        },
+    }
+
+
+def _scene_metrics_unified(delivery_policy: Dict[str, Any], nav_policy: Dict[str, Any]) -> Dict[str, int]:
+    delivery_input_count = int(delivery_policy.get("scene_input_count") or 0)
+    delivery_scene_count = int(delivery_policy.get("delivery_scene_count") or 0)
+    delivery_excluded_count = int(delivery_policy.get("excluded_scene_count") or 0)
+
+    nav_input_count = int(nav_policy.get("scene_input_count") or 0)
+    nav_scene_count = int(nav_policy.get("scene_count") or 0)
+    nav_excluded_count = int(nav_policy.get("excluded_scene_count") or 0)
+
+    scene_registry_count = max(delivery_input_count, nav_input_count)
+    scene_deliverable_count = delivery_scene_count if delivery_scene_count > 0 else nav_scene_count
+    scene_navigable_count = nav_scene_count
+    scene_excluded_count = max(delivery_excluded_count, nav_excluded_count)
+
+    return {
+        "scene_registry_count": int(scene_registry_count),
+        "scene_deliverable_count": int(scene_deliverable_count),
+        "scene_navigable_count": int(scene_navigable_count),
+        "scene_excluded_count": int(scene_excluded_count),
+    }
+
+
 def build_scene_governance_payload_v1(
     *,
     data: Dict[str, Any],
@@ -135,6 +204,8 @@ def build_scene_governance_payload_v1(
         if _as_text(code)
     ]
     consumption_summary = _scene_type_consumption_summary(data)
+    surface_mapping = _governance_surface_mapping(governance, nav_policy, delivery_policy)
+    scene_metrics = _scene_metrics_unified(delivery_policy, nav_policy)
 
     return {
         "contract_version": "v1",
@@ -142,6 +213,8 @@ def build_scene_governance_payload_v1(
         "scene_contract_ref": _as_text(data.get("scene_contract_ref")),
         "runtime_source": _as_text(diagnostics.get("loaded_from")) or "unknown",
         "governance": governance,
+        "surface_mapping": surface_mapping,
+        "scene_metrics": scene_metrics,
         "auto_degrade": auto_degrade,
         "delivery_policy": delivery_policy,
         "nav_policy": {

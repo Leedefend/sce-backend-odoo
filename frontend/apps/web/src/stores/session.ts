@@ -215,6 +215,11 @@ export interface SessionState {
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
   workspaceHome: WorkspaceHomeContract | null;
+  workspaceHomeRef: {
+    intent?: string;
+    scene_key?: string;
+    loaded?: boolean;
+  } | null;
   pageContracts: Record<string, PageContract>;
   sceneReadyContractV1: SceneReadyContract | null;
   sceneGovernanceV1: SceneGovernancePayload | null;
@@ -227,6 +232,13 @@ export interface SessionState {
   initError: string | null;
   initTraceId: string | null;
   initMeta: AppInitResponse['meta'] | null;
+  defaultRoute: {
+    scene_key?: string;
+    route?: string;
+    reason?: string;
+    menu_id?: number;
+  } | null;
+  bootstrapNextIntent: string;
 }
 
 const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
@@ -267,6 +279,7 @@ export const useSessionStore = defineStore('session', {
       bundle: null,
     },
     workspaceHome: null,
+    workspaceHomeRef: null,
     pageContracts: {},
     sceneReadyContractV1: null,
     sceneGovernanceV1: null,
@@ -279,6 +292,8 @@ export const useSessionStore = defineStore('session', {
     initError: null,
     initTraceId: null,
     initMeta: null,
+    defaultRoute: null,
+    bootstrapNextIntent: 'system.init',
   }),
   actions: {
     setToken(token: string) {
@@ -306,6 +321,7 @@ export const useSessionStore = defineStore('session', {
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           this.workspaceHome = parsed.workspaceHome ?? null;
+          this.workspaceHomeRef = parsed.workspaceHomeRef ?? null;
           this.pageContracts = parsed.pageContracts ?? {};
           this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
           this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
@@ -319,6 +335,8 @@ export const useSessionStore = defineStore('session', {
           this.lastLatencyMs = parsed.lastLatencyMs ?? null;
           this.lastWriteMode = parsed.lastWriteMode ?? '';
           this.initMeta = parsed.initMeta ?? null;
+          this.defaultRoute = parsed.defaultRoute ?? null;
+          this.bootstrapNextIntent = String(parsed.bootstrapNextIntent || 'system.init').trim() || 'system.init';
         } catch {
           // ignore corrupted cache
         }
@@ -350,6 +368,7 @@ export const useSessionStore = defineStore('session', {
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
       this.workspaceHome = null;
+      this.workspaceHomeRef = null;
       this.pageContracts = {};
       this.sceneReadyContractV1 = null;
       this.sceneGovernanceV1 = null;
@@ -358,6 +377,8 @@ export const useSessionStore = defineStore('session', {
       this.lastIntent = '';
       this.lastLatencyMs = null;
       this.lastWriteMode = '';
+      this.defaultRoute = null;
+      this.bootstrapNextIntent = 'system.init';
       this.isReady = false;
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_SCOPED);
@@ -407,6 +428,7 @@ export const useSessionStore = defineStore('session', {
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
         workspaceHome: this.workspaceHome,
+        workspaceHomeRef: this.workspaceHomeRef,
         pageContracts: this.pageContracts,
         sceneReadyContractV1: this.sceneReadyContractV1,
         sceneGovernanceV1: this.sceneGovernanceV1,
@@ -415,6 +437,8 @@ export const useSessionStore = defineStore('session', {
         lastLatencyMs: this.lastLatencyMs,
         lastWriteMode: this.lastWriteMode,
         initMeta: this.initMeta,
+        defaultRoute: this.defaultRoute,
+        bootstrapNextIntent: this.bootstrapNextIntent,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     },
@@ -431,9 +455,19 @@ export const useSessionStore = defineStore('session', {
       const db = String(config.odooDb || '').trim();
       const result = await intentRequest<LoginResponse>({
         intent: 'login',
-        params: { login: username, password, ...(db ? { db } : {}) },
+        params: { login: username, password, contract_mode: 'default', ...(db ? { db } : {}) },
       });
-      this.setToken(result.token);
+      const token = String(result.session?.token || result.token || '').trim();
+      if (!token) {
+        throw new Error('login response missing token');
+      }
+      const nextIntent = String(result.bootstrap?.next_intent || 'system.init').trim();
+      const allowedBootstrapIntents = new Set(['system.init', 'session.bootstrap']);
+      if (!allowedBootstrapIntents.has(nextIntent)) {
+        throw new Error(`login bootstrap next_intent unsupported: ${nextIntent}`);
+      }
+      this.bootstrapNextIntent = nextIntent;
+      this.setToken(token);
     },
     async logout() {
       try {
@@ -447,14 +481,21 @@ export const useSessionStore = defineStore('session', {
       this.initStatus = 'loading';
       this.initError = null;
       this.initTraceId = null;
+      const bootstrapIntent = String(this.bootstrapNextIntent || 'system.init').trim();
+      if (bootstrapIntent === 'session.bootstrap') {
+        await intentRequest({ intent: 'session.bootstrap', params: {} });
+      }
+      if (bootstrapIntent !== 'system.init' && bootstrapIntent !== 'session.bootstrap') {
+        throw new Error(`unsupported bootstrap intent: ${bootstrapIntent}`);
+      }
       const debugIntent =
         import.meta.env.DEV ||
         localStorage.getItem('DEBUG_INTENT') === '1' ||
         new URLSearchParams(window.location.search).get('debug') === '1';
 
-      // A1: 打印本次 app.init 的有效参数
+      // A1: 打印本次 system.init 的有效参数
       if (debugIntent) {
-        console.group('[A1] app.init 请求诊断');
+        console.group('[A1] system.init 请求诊断');
         console.log('1. API Base URL:', import.meta.env.VITE_API_BASE_URL);
         console.log('2. Authorization 存在:', !!this.token);
         if (this.token) {
@@ -464,7 +505,7 @@ export const useSessionStore = defineStore('session', {
       }
 
       const requestParams = {
-        intent: 'app.init',
+        intent: 'system.init',
         params: {
           scene: 'web',
           with_preload: false,
@@ -491,7 +532,7 @@ export const useSessionStore = defineStore('session', {
       }
       // A1: 打印响应诊断信息
       if (debugIntent) {
-        console.group('[A1] app.init 响应诊断');
+        console.group('[A1] system.init 响应诊断');
         console.log('1. Response keys:', Object.keys(result));
 
         // 检查 meta 字段
@@ -521,7 +562,7 @@ export const useSessionStore = defineStore('session', {
 
       if (debugIntent) {
         // eslint-disable-next-line no-console
-        console.info('[debug] app.init result', result);
+        console.info('[debug] system.init result', result);
       }
       this.user = result.user;
       const rawCapabilities = (result as AppInitResponse & { capabilities?: Array<string | { key?: string }> }).capabilities ?? [];
@@ -673,6 +714,9 @@ export const useSessionStore = defineStore('session', {
           : null,
       };
       this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
+      this.workspaceHomeRef = ((result as AppInitResponse & {
+        workspace_home_ref?: { intent?: string; scene_key?: string; loaded?: boolean }
+      }).workspace_home_ref ?? null);
       this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});
       this.sceneReadyContractV1 = ((result as AppInitResponse & { scene_ready_contract_v1?: SceneReadyContract }).scene_ready_contract_v1 ?? null);
       this.sceneGovernanceV1 = ((result as AppInitResponse & { scene_governance_v1?: SceneGovernancePayload }).scene_governance_v1 ?? null);
@@ -685,9 +729,21 @@ export const useSessionStore = defineStore('session', {
         ...(result.meta ?? {}),
         nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,
       } as AppInitResponse['meta'];
+      const defaultRouteRaw = (result as AppInitResponse & { default_route?: unknown }).default_route;
+      if (defaultRouteRaw && typeof defaultRouteRaw === 'object') {
+        const row = defaultRouteRaw as Record<string, unknown>;
+        this.defaultRoute = {
+          scene_key: String(row.scene_key || ''),
+          route: String(row.route || ''),
+          reason: String(row.reason || ''),
+          menu_id: Number(row.menu_id || 0) || undefined,
+        };
+      } else {
+        this.defaultRoute = null;
+      }
       const candidates = [result.nav];
       if (debugIntent) {
-        console.info('[debug] app.init candidates:', candidates.map(c => ({
+        console.info('[debug] system.init candidates:', candidates.map(c => ({
           type: typeof c,
           isArray: Array.isArray(c),
           length: Array.isArray(c) ? c.length : 'N/A'
@@ -695,13 +751,13 @@ export const useSessionStore = defineStore('session', {
       }
       const nav = (candidates.find((entry) => Array.isArray(entry)) ?? null) as NavNode[] | null;
       if (!nav) {
-        this.initError = 'app.init missing required nav contract';
+        this.initError = 'system.init missing required nav contract';
         this.initStatus = 'error';
-        throw new Error('app.init missing required nav contract');
+        throw new Error('system.init missing required nav contract');
       }
       if (debugIntent) {
         // eslint-disable-next-line no-console
-        console.info('[debug] app.init nav length', nav.length);
+        console.info('[debug] system.init nav length', nav.length);
         // 调试：打印第一个导航项的结构
         if (nav.length > 0) {
           console.info('[debug] First nav item:', JSON.stringify(nav[0], null, 2));
@@ -715,6 +771,35 @@ export const useSessionStore = defineStore('session', {
       this.initStatus = 'ready';
       this.persist();
     },
+    async loadWorkspaceHomeOnDemand(force = false) {
+      if (!force && this.workspaceHome && Object.keys(this.workspaceHome).length > 0) {
+        return this.workspaceHome;
+      }
+      if (!this.token) {
+        return null;
+      }
+      const result = await intentRequest<AppInitResponse>({
+        intent: 'system.init',
+        params: {
+          scene: 'web',
+          with_preload: false,
+          with: ['workspace_home'],
+          root_xmlid: 'smart_construction_core.menu_sc_root',
+        },
+      });
+      const row = result as AppInitResponse & {
+        workspace_home?: WorkspaceHomeContract;
+        workspace_home_ref?: { intent?: string; scene_key?: string; loaded?: boolean };
+        page_contracts?: { pages?: Record<string, PageContract> };
+      };
+      this.workspaceHome = row.workspace_home ?? this.workspaceHome;
+      this.workspaceHomeRef = row.workspace_home_ref ?? this.workspaceHomeRef;
+      if (row.page_contracts?.pages) {
+        this.pageContracts = row.page_contracts.pages;
+      }
+      this.persist();
+      return this.workspaceHome;
+    },
     async ensureReady() {
       if (this.isReady) {
         return;
@@ -722,6 +807,19 @@ export const useSessionStore = defineStore('session', {
       await this.loadAppInit();
     },
     resolveLandingPath(fallback = '/') {
+      const defaultRoutePath = String(this.defaultRoute?.route || '').trim();
+      if (defaultRoutePath.startsWith('/')) {
+        const normalized = normalizeLegacyWorkbenchPath(defaultRoutePath);
+        if (normalized) return normalized;
+      }
+      const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
+      if (defaultRouteSceneKey) {
+        const scene = getSceneByKey(defaultRouteSceneKey);
+        const rawPath = String(scene?.target?.route || scene?.route || `/s/${defaultRouteSceneKey}`).trim();
+        const normalized = normalizeLegacyWorkbenchPath(rawPath);
+        if (normalized) return normalized;
+        return `/s/${defaultRouteSceneKey}`;
+      }
       const candidate = String(this.roleSurface?.landing_path || '').trim();
       if (candidate.startsWith('/')) {
         const normalized = normalizeLegacyWorkbenchPath(candidate);

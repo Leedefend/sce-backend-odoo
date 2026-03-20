@@ -67,7 +67,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
 _logger = logging.getLogger(__name__)
 
 # Contract/API version markers for client compatibility
-CONTRACT_VERSION = "v0.1"
+CONTRACT_VERSION = "1.0.0"
 API_VERSION = "v1"
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
@@ -222,6 +222,89 @@ def _strip_ui_base_contract_for_frontend(payload):
         cleaned[key] = _strip_ui_base_contract_for_frontend(value)
     return cleaned
 
+
+def _parse_with_tokens(value) -> set[str]:
+    tokens: set[str] = set()
+    if isinstance(value, str):
+        for part in value.split(","):
+            token = str(part or "").strip().lower()
+            if token:
+                tokens.add(token)
+        return tokens
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            token = str(item or "").strip().lower()
+            if token:
+                tokens.add(token)
+    return tokens
+
+
+def _resolve_role_source_code(data: dict) -> str:
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    role_code = str(role_surface.get("role_code") or "").strip().lower()
+    return role_code or "owner"
+
+
+def _ensure_role_context_mirror(data: dict) -> None:
+    if not isinstance(data, dict):
+        return
+    role_code = _resolve_role_source_code(data)
+
+    workspace_home = data.get("workspace_home") if isinstance(data.get("workspace_home"), dict) else None
+    if isinstance(workspace_home, dict):
+        record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
+        hero = record.get("hero") if isinstance(record.get("hero"), dict) else {}
+        hero["role_code"] = role_code
+        record["hero"] = hero
+        workspace_home["record"] = record
+
+        page_orchestration_v1 = (
+            workspace_home.get("page_orchestration_v1")
+            if isinstance(workspace_home.get("page_orchestration_v1"), dict)
+            else {}
+        )
+        page = page_orchestration_v1.get("page") if isinstance(page_orchestration_v1.get("page"), dict) else {}
+        context = page.get("context") if isinstance(page.get("context"), dict) else {}
+        context["role_code"] = role_code
+        page["context"] = context
+        page_orchestration_v1["page"] = page
+        workspace_home["page_orchestration_v1"] = page_orchestration_v1
+
+    page_contracts = data.get("page_contracts") if isinstance(data.get("page_contracts"), dict) else {}
+    pages = page_contracts.get("pages") if isinstance(page_contracts.get("pages"), dict) else {}
+    home_page = pages.get("home") if isinstance(pages.get("home"), dict) else {}
+    home_orchestration = (
+        home_page.get("page_orchestration_v1")
+        if isinstance(home_page.get("page_orchestration_v1"), dict)
+        else {}
+    )
+    home_page_meta = home_orchestration.get("meta") if isinstance(home_orchestration.get("meta"), dict) else {}
+    page = home_orchestration.get("page") if isinstance(home_orchestration.get("page"), dict) else {}
+    context = page.get("context") if isinstance(page.get("context"), dict) else {}
+    context["role_code"] = role_code
+    page["context"] = context
+    home_orchestration["page"] = page
+    home_page_meta["role_source_code"] = role_code
+    home_orchestration["meta"] = home_page_meta
+    home_page["page_orchestration_v1"] = home_orchestration
+    pages["home"] = home_page
+    page_contracts["pages"] = pages
+    data["page_contracts"] = page_contracts
+
+
+def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
+    minimal_order = [
+        "system.init",
+        "ui.contract",
+        "meta.intent_catalog",
+        "app.nav",
+        "app.open",
+        "auth.logout",
+    ]
+    minimal = [name for name in minimal_order if name in (intents or [])]
+    _ = intents_meta
+    return minimal
+
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     collector = RequestDiagnosticsCollector()
     return provider_resolve_scene_channel(env, user, params, get_header=collector.get_request_header)
@@ -313,8 +396,9 @@ class SystemInitHandler(BaseIntentHandler):
             or None
         )
 
-        # -------- 2.5) 可用意图（动态生成，严格基于注册+权限）--------
-        intents, intents_meta = IntentSurfaceBuilder().collect(env, user)
+        # -------- 2.5) 可用意图（最小启动集合 + 独立目录引用）--------
+        intents_all, intents_meta_all = IntentSurfaceBuilder().collect(env, user)
+        intents = _build_minimal_intent_surface(intents_all, intents_meta_all)
 
         # -------- 3/4) 首页契约 + 可选预取（仅 etag，不回传整包契约）--------
         preload_builder = SystemInitPreloadBuilder()
@@ -338,13 +422,13 @@ class SystemInitHandler(BaseIntentHandler):
             },
             default_route=nav_data.get("defaultRoute") or {"menu_id": None},
             intents=intents,
-            intents_meta=intents_meta,
             feature_flags=nav_data.get("feature_flags") or {"ai_enabled": True},
             capabilities=normalize_capabilities(_load_capabilities_for_user(env, user)),
             scene_channel=scene_channel,
             channel_selector=channel_selector,
             channel_source_ref=channel_source_ref,
             contract_mode=contract_mode,
+            contract_version=CONTRACT_VERSION,
         )
         # Keep explicit contract_mode mapping in handler for governance coverage guard.
         data.update({"contract_mode": contract_mode})
@@ -411,8 +495,14 @@ class SystemInitHandler(BaseIntentHandler):
             apply_contract_governance_fn=apply_contract_governance,
         )
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
-        data["workspace_home"] = build_workspace_home_contract(data)
+        with_tokens = _parse_with_tokens(params.get("with"))
+        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
+        if include_workspace_home:
+            data["workspace_home"] = build_workspace_home_contract(data)
+        else:
+            data.pop("workspace_home", None)
         data["page_contracts"] = build_page_contracts(data)
+        _ensure_role_context_mirror(data)
         role_surface = data.get("role_surface") if isinstance(data, dict) else {}
         role_pruned = False
         if isinstance(role_surface, dict) and isinstance(data.get("nav"), list):
@@ -480,6 +570,20 @@ class SystemInitHandler(BaseIntentHandler):
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
 
+        landing_scene_key = "portal.dashboard"
+        if isinstance(role_surface, dict):
+            landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip() or landing_scene_key
+        data["workspace_home_ref"] = {
+            "intent": "ui.contract",
+            "scene_key": landing_scene_key,
+            "loaded": bool(include_workspace_home),
+        }
+        data["intent_catalog_ref"] = {
+            "intent": "meta.intent_catalog",
+            "loaded": False,
+            "count": len(intents_all or []),
+        }
+
         data["scene_governance_v1"] = build_scene_governance_payload_v1(
             data=data,
             scene_diagnostics=scene_diagnostics,
@@ -488,6 +592,7 @@ class SystemInitHandler(BaseIntentHandler):
             asset_queue_metrics=get_queue_metrics(env),
         )
         data = _strip_ui_base_contract_for_frontend(data)
+        SystemInitPayloadBuilder.attach_layered_contract(data)
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 

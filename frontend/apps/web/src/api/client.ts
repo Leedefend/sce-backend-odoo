@@ -135,7 +135,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     localStorage.getItem('DEBUG_INTENT') === '1' ||
     new URLSearchParams(window.location.search).get('debug') === '1';
 
-  // A2: 网络级别校验 - 针对 app.init 请求
+  // A2: 网络级别校验 - 针对 system.init 请求
   const resolvedPath = resolveApiPath(path, dbHeader);
 
   let appInitPayload: AppInitIntentPayload | null = null;
@@ -143,14 +143,15 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   if (resolvedPath.startsWith('/api/v1/intent') && options.body && typeof options.body === 'string') {
     try {
       appInitPayload = JSON.parse(options.body) as AppInitIntentPayload;
-      isAppInitRequest = appInitPayload?.intent === 'app.init';
+      const initIntent = String(appInitPayload?.intent || '').trim();
+      isAppInitRequest = initIntent === 'system.init' || initIntent === 'app.init';
     } catch {
       isAppInitRequest = false;
     }
   }
 
   if (isAppInitRequest && debugIntent && appInitPayload) {
-    console.group('[A2] app.init 网络诊断快照');
+    console.group('[A2] system.init 网络诊断快照');
     console.log('Request URL:', `${config.apiBaseUrl}${resolvedPath}`);
     console.log('Request Headers:');
     console.log('  Authorization:', headers.has('Authorization') ? '存在' : '不存在');
@@ -184,12 +185,12 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     });
   }
 
-  // A2: 响应诊断 - 针对 app.init 请求
+  // A2: 响应诊断 - 针对 system.init 请求
   if (isAppInitRequest && debugIntent) {
     const responseClone = response.clone();
     try {
       const responseBody = (await responseClone.json()) as AppInitDiagnosticResponse;
-      console.group('[A2] app.init 响应诊断快照');
+      console.group('[A2] system.init 响应诊断快照');
       console.log('Response Status:', response.status);
       console.log('Response Headers:');
       console.log('  Content-Type:', response.headers.get('Content-Type'));

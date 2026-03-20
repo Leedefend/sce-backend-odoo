@@ -700,18 +700,36 @@ const homeSectionOrderMap = computed(() => {
   });
   return map;
 });
-const workspaceHero = computed(() => (workspaceHome.value.hero && typeof workspaceHome.value.hero === 'object'
-  ? workspaceHome.value.hero as Record<string, unknown>
-  : {}));
-const heroTitle = computed(() => asText(workspaceHero.value.title) || pageText('title', '工作台'));
-const heroLead = computed(() => asText(workspaceHero.value.lead) || pageText('hero_lead', '围绕项目经营、风险与审批，优先处理今天最关键事项。'));
+const workspaceBlocksByType = computed(() => {
+  const source = Array.isArray(workspaceHome.value.blocks) ? workspaceHome.value.blocks : [];
+  const map = new Map<string, Record<string, unknown>>();
+  source.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const row = item as Record<string, unknown>;
+    const type = asText(row.type).toLowerCase();
+    const data = (row.data && typeof row.data === 'object') ? row.data as Record<string, unknown> : {};
+    if (type && !map.has(type)) map.set(type, data);
+  });
+  return map;
+});
+const blockHeroData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('hero') || {});
+const blockMetricData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('metric') || {});
+const blockRiskData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('risk') || {});
+const blockOpsData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('ops') || {});
+const workspaceHeroEffective = computed<Record<string, unknown>>(() => {
+  return (blockHeroData.value.hero && typeof blockHeroData.value.hero === 'object')
+    ? blockHeroData.value.hero as Record<string, unknown>
+    : {};
+});
+const heroTitle = computed(() => asText(workspaceHeroEffective.value.title) || pageText('title', '工作台'));
+const heroLead = computed(() => asText(workspaceHeroEffective.value.lead) || pageText('hero_lead', '围绕项目经营、风险与审批，优先处理今天最关键事项。'));
 const heroProductTags = computed(() => {
-  const raw = Array.isArray(workspaceHero.value.product_tags) ? workspaceHero.value.product_tags : [];
+  const raw = Array.isArray(workspaceHeroEffective.value.product_tags) ? workspaceHeroEffective.value.product_tags : [];
   return raw.map((item) => asText(item)).filter(Boolean);
 });
-const dataUpdatedAt = computed(() => asText(workspaceHero.value.updated_at) || '--:--');
-const partialDataNotice = computed(() => asText(workspaceHero.value.status_notice));
-const partialDataDetailLine = computed(() => asText(workspaceHero.value.status_detail));
+const dataUpdatedAt = computed(() => asText(workspaceHeroEffective.value.updated_at) || '--:--');
+const partialDataNotice = computed(() => asText(workspaceHeroEffective.value.status_notice));
+const partialDataDetailLine = computed(() => asText(workspaceHeroEffective.value.status_detail));
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
@@ -1057,7 +1075,7 @@ function keywordList(key: string, fallbackCsv: string) {
 }
 
 const coreMetrics = computed<CoreMetric[]>(() => {
-  const source = Array.isArray(workspaceHome.value.metrics) ? workspaceHome.value.metrics : [];
+  const source = Array.isArray(blockMetricData.value.metrics) ? blockMetricData.value.metrics : [];
   return source
     .map((item, idx) => {
       const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
@@ -1102,10 +1120,14 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
 const primaryTodos = computed<SuggestionItem[]>(() => concreteTodos.value.slice(0, 3));
 const hasMoreTodos = computed(() => concreteTodos.value.length > 3);
 
-const riskBuckets = computed(() => {
-  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
-    ? workspaceHome.value.risk as Record<string, unknown>
+const workspaceRisk = computed<Record<string, unknown>>(() => {
+  return (blockRiskData.value.risk && typeof blockRiskData.value.risk === 'object')
+    ? blockRiskData.value.risk as Record<string, unknown>
     : {};
+});
+
+const riskBuckets = computed(() => {
+  const risk = workspaceRisk.value;
   const buckets = (risk.buckets && typeof risk.buckets === 'object')
     ? risk.buckets as Record<string, unknown>
     : {};
@@ -1117,9 +1139,7 @@ const riskBuckets = computed(() => {
 });
 
 const riskTrend = computed(() => {
-  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
-    ? workspaceHome.value.risk as Record<string, unknown>
-    : {};
+  const risk = workspaceRisk.value;
   const source = Array.isArray(risk.trend) ? risk.trend : [];
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
@@ -1132,9 +1152,7 @@ const riskTrend = computed(() => {
 });
 
 const riskSummaryLine = computed(() => {
-  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
-    ? workspaceHome.value.risk as Record<string, unknown>
-    : {};
+  const risk = workspaceRisk.value;
   return asText(risk.summary) || pageText('risk_summary_fallback', '当前未出现严重风险，建议保持日常巡检节奏。');
 });
 
@@ -1149,9 +1167,7 @@ function parseRiskActionId(raw: unknown): number {
 }
 
 const riskActionItems = computed<RiskActionItem[]>(() => {
-  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
-    ? workspaceHome.value.risk as Record<string, unknown>
-    : {};
+  const risk = workspaceRisk.value;
   const source = Array.isArray(risk.actions) ? risk.actions : [];
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
@@ -1174,9 +1190,7 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
 const primaryRiskActionItems = computed<RiskActionItem[]>(() => riskActionItems.value.slice(0, 2));
 
 const riskSources = computed(() => {
-  const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
-    ? workspaceHome.value.risk as Record<string, unknown>
-    : {};
+  const risk = workspaceRisk.value;
   const source = Array.isArray(risk.sources) ? risk.sources : [];
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
@@ -1187,10 +1201,14 @@ const riskSources = computed(() => {
   });
 });
 
-const opsBars = computed(() => {
-  const ops = (workspaceHome.value.ops && typeof workspaceHome.value.ops === 'object')
-    ? workspaceHome.value.ops as Record<string, unknown>
+const workspaceOps = computed<Record<string, unknown>>(() => {
+  return (blockOpsData.value.ops && typeof blockOpsData.value.ops === 'object')
+    ? blockOpsData.value.ops as Record<string, unknown>
     : {};
+});
+
+const opsBars = computed(() => {
+  const ops = workspaceOps.value;
   const bars = (ops.bars && typeof ops.bars === 'object') ? ops.bars as Record<string, unknown> : {};
   return {
     contract: Number(bars.contract || 100),
@@ -1199,9 +1217,7 @@ const opsBars = computed(() => {
 });
 
 const opsKpi = computed(() => {
-  const ops = (workspaceHome.value.ops && typeof workspaceHome.value.ops === 'object')
-    ? workspaceHome.value.ops as Record<string, unknown>
-    : {};
+  const ops = workspaceOps.value;
   const kpi = (ops.kpi && typeof ops.kpi === 'object') ? ops.kpi as Record<string, unknown> : {};
   return {
     costRate: Number(kpi.cost_rate || 0),
@@ -1986,6 +2002,16 @@ function resolveEnterErrorHint(code: string) {
 }
 
 onMounted(() => {
+  const workspaceHomeRef = session.workspaceHomeRef;
+  const shouldLoadWorkspaceHome = Boolean(
+    workspaceHomeRef
+    && workspaceHomeRef.loaded === false
+    && String(workspaceHomeRef.intent || '').trim() === 'ui.contract'
+    && String(workspaceHomeRef.scene_key || '').trim() === 'portal.dashboard',
+  );
+  if (shouldLoadWorkspaceHome) {
+    void session.loadWorkspaceHomeOnDemand().catch(() => {});
+  }
   void trackUsageEvent('workspace.view', {
     role_key: asText(roleSurface.value?.role_code) || 'unknown',
     landing_scene_key: roleLandingScene.value,

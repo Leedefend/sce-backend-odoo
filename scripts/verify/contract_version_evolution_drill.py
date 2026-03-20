@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 from python_http_smoke_utils import get_base_url, http_post_json
@@ -48,7 +49,8 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> tuple[bo
     if status >= 400 or not isinstance(payload, dict) or payload.get("ok") is not True:
         return False, ""
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
-    token = str(data.get("token") or "").strip()
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    token = str(session.get("token") or data.get("token") or "").strip()
     return bool(token), token
 
 
@@ -64,6 +66,13 @@ def _ensure_keys(obj: dict, keys: list[str], missing: list[str], prefix: str):
     for k in keys:
         if k not in obj:
             missing.append(f"{prefix}.{k}")
+
+
+_SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+
+
+def _is_semver(value: str) -> bool:
+    return bool(_SEMVER_RE.match(str(value or "").strip()))
 
 
 def main() -> int:
@@ -86,8 +95,19 @@ def main() -> int:
         errors.append("login failed for contract version drill")
         token = ""
 
+    login_payload = {}
     system_payload = {}
     ui_payload = {}
+    login_status, login_resp = http_post_json(
+        intent_url,
+        {"intent": "login", "params": {"db": db_name, "login": login, "password": password}},
+        headers={"X-Anonymous-Intent": "1"},
+    )
+    if login_status >= 400 or not isinstance(login_resp, dict):
+        errors.append("login unavailable for evolution drill")
+    else:
+        login_payload = login_resp
+
     if token:
         st_a, p_a = _intent(intent_url, token, "system.init", {"contract_mode": "user"})
         st_b, p_b = _intent(
@@ -104,13 +124,25 @@ def main() -> int:
 
     required_env = baseline.get("required_envelope_keys") if isinstance(baseline.get("required_envelope_keys"), list) else []
     required_meta = baseline.get("required_meta_keys") if isinstance(baseline.get("required_meta_keys"), list) else []
+    semver_meta_keys = baseline.get("semver_meta_keys") if isinstance(baseline.get("semver_meta_keys"), list) else []
     sys_keys = baseline.get("required_system_init_data_keys") if isinstance(baseline.get("required_system_init_data_keys"), list) else []
     ui_keys = baseline.get("required_ui_contract_data_keys") if isinstance(baseline.get("required_ui_contract_data_keys"), list) else []
+
+    if login_payload:
+        _ensure_keys(login_payload, required_env, missing, "login")
+        login_meta = login_payload.get("meta") if isinstance(login_payload.get("meta"), dict) else {}
+        _ensure_keys(login_meta, required_meta, missing, "login.meta")
+        for key in semver_meta_keys:
+            if not _is_semver(str(login_meta.get(key) or "")):
+                errors.append(f"login.meta.{key} not semver: {login_meta.get(key)!r}")
 
     if system_payload:
         _ensure_keys(system_payload, required_env, missing, "system.init")
         meta = system_payload.get("meta") if isinstance(system_payload.get("meta"), dict) else {}
         _ensure_keys(meta, required_meta, missing, "system.init.meta")
+        for key in semver_meta_keys:
+            if not _is_semver(str(meta.get(key) or "")):
+                errors.append(f"system.init.meta.{key} not semver: {meta.get(key)!r}")
         data = system_payload.get("data") if isinstance(system_payload.get("data"), dict) else {}
         if isinstance(data.get("data"), dict):
             data = data.get("data")
@@ -119,7 +151,10 @@ def main() -> int:
     if ui_payload:
         _ensure_keys(ui_payload, required_env, missing, "ui.contract")
         meta = ui_payload.get("meta") if isinstance(ui_payload.get("meta"), dict) else {}
-        _ensure_keys(meta, required_meta + ["schema_version"], missing, "ui.contract.meta")
+        _ensure_keys(meta, required_meta + ["response_schema_version"], missing, "ui.contract.meta")
+        for key in semver_meta_keys:
+            if not _is_semver(str(meta.get(key) or "")):
+                errors.append(f"ui.contract.meta.{key} not semver: {meta.get(key)!r}")
         data = ui_payload.get("data") if isinstance(ui_payload.get("data"), dict) else {}
         _ensure_keys(data, ui_keys, missing, "ui.contract.data")
 
@@ -127,7 +162,7 @@ def main() -> int:
         errors.append(f"required keys missing: {len(missing)}")
 
     min_api = str(baseline.get("min_api_version") or "v1")
-    min_contract = str(baseline.get("min_contract_version") or "v0.1")
+    min_contract = str(baseline.get("min_contract_version") or "1.0.0")
     api_ver = ""
     contract_ver = ""
     if ui_payload and isinstance(ui_payload.get("meta"), dict):

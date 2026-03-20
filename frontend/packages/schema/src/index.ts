@@ -22,9 +22,14 @@ export interface IntentResponse<T> {
 }
 
 export interface LoginResponse {
-  token: string;
+  token?: string;
   token_type?: string;
   expires_at?: number;
+  session?: {
+    token?: string;
+    token_type?: string;
+    expires_at?: number;
+  };
   user: {
     id: number;
     name: string;
@@ -33,9 +38,30 @@ export interface LoginResponse {
     tz?: string;
     company_id?: number | null;
     allowed_company_ids?: number[];
-    groups?: string[];
   };
-  system?: {
+  entitlement?: {
+    role_code?: string;
+    is_internal_user?: boolean;
+    can_switch_company?: boolean;
+  };
+  bootstrap?: {
+    next_intent?: string;
+    mode?: string;
+    allowed_exception_intents?: string[];
+  };
+  contract?: {
+    contract_version?: string;
+    schema_version?: string;
+    response_mode?: string;
+    mode?: string;
+    compat_requested?: boolean;
+    compat_enabled?: boolean;
+    compat_deprecated?: boolean;
+    compat_sunset_phase?: string;
+    deprecation_notice?: string;
+  };
+  debug?: {
+    groups?: string[];
     intents?: Array<{ name: string; description?: string }>;
   };
 }
@@ -85,6 +111,9 @@ export interface AppInitResponse {
     capability_state?: string;
     reason?: string;
     reason_code?: string;
+    delivery_level?: 'exclusive' | 'shared' | 'placeholder';
+    target_scene_key?: string;
+    entry_kind?: 'exclusive' | 'alias';
     group_key?: string;
     group_label?: string;
   }>;
@@ -139,8 +168,46 @@ export interface AppInitResponse {
     company_id?: number | null;
   };
   nav: NavNode[];
-  default_route?: { menu_id?: number } | string;
+  default_route?: {
+    menu_id?: number;
+    scene_key?: string | null;
+    route?: string;
+    reason?: string;
+  } | string;
+  workspace_home?: Record<string, unknown>;
+  workspace_home_ref?: {
+    intent?: string;
+    scene_key?: string;
+    loaded?: boolean;
+  };
+  intent_catalog_ref?: {
+    intent?: string;
+    loaded?: boolean;
+    count?: number;
+  };
+  system_init_sections_v1?: {
+    contract_version?: string;
+    schema_version?: string;
+    session?: Record<string, unknown>;
+    nav?: Record<string, unknown>;
+    surface?: Record<string, unknown>;
+    bootstrap_refs?: Record<string, unknown>;
+  };
   intents?: string[];
+  intents_meta?: Record<string, {
+    version?: string;
+    aliases?: string[];
+    required_groups_xmlids?: string[];
+    status?: 'canonical' | 'alias';
+    canonical?: string;
+  }>;
+  intent_catalog?: Array<{
+    name?: string;
+    status?: 'canonical' | 'alias';
+    canonical?: string;
+    version?: string;
+    required_groups_xmlids?: string[];
+  }>;
   feature_flags?: Record<string, unknown>;
   meta?: Record<string, unknown>;
 }

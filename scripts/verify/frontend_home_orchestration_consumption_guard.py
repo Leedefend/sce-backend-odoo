@@ -102,8 +102,8 @@ def main() -> int:
         "workspace_home_contract_builder.py",
         [
             '"semantic_protocol": {',
-            '"page_orchestration_v1": _build_page_orchestration_v1(role_code)',
-            '"page_orchestration": _build_page_orchestration(role_code)',
+            '"page_orchestration_v1": _build_page_orchestration_v1(role_code, role_source_code=role_source_code)',
+            '"page_orchestration": _build_page_orchestration(role_code, role_source_code=role_source_code)',
             '"role_variant": {',
         ],
         errors,

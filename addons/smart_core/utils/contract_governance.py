@@ -34,6 +34,9 @@ _USER_CAPABILITY_KEYS = (
     "capability_state_reason",
     "reason",
     "reason_code",
+    "delivery_level",
+    "target_scene_key",
+    "entry_kind",
     "version",
     "tags",
     "default_payload",
@@ -239,6 +242,9 @@ _CONTRACT_KEY_CANONICAL_MAP = {
     "viewType": "view_type",
     "recordId": "record_id",
     "reasonCode": "reason_code",
+    "deliveryLevel": "delivery_level",
+    "targetSceneKey": "target_scene_key",
+    "entryKind": "entry_kind",
     "capabilityState": "capability_state",
     "capabilityStateReason": "capability_state_reason",
     "defaultPayload": "default_payload",
@@ -403,6 +409,54 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
             return "pending"
         return "allow"
 
+    def _extract_scene_key_from_route(route: Any) -> str:
+        route_text = _safe_text(route)
+        if not route_text:
+            return ""
+        marker = "scene="
+        idx = route_text.find(marker)
+        if idx < 0:
+            return ""
+        tail = route_text[idx + len(marker):]
+        scene = tail.split("&", 1)[0].strip()
+        return scene
+
+    def _derive_target_scene_key(item: dict) -> str:
+        direct = _safe_text(item.get("target_scene_key"))
+        if direct:
+            return direct
+        payload = item.get("default_payload")
+        if isinstance(payload, dict):
+            payload_scene = _safe_text(payload.get("scene_key"))
+            if payload_scene:
+                return payload_scene
+            route_scene = _extract_scene_key_from_route(payload.get("route"))
+            if route_scene:
+                return route_scene
+        return ""
+
+    def _derive_entry_kind(item: dict, target_scene_key: str) -> str:
+        explicit = _safe_text(item.get("entry_kind")).lower()
+        if explicit in {"exclusive", "alias"}:
+            return explicit
+        payload = item.get("default_payload") if isinstance(item.get("default_payload"), dict) else {}
+        has_direct_entry = bool(payload.get("action_id") or payload.get("menu_id") or payload.get("route"))
+        if target_scene_key and has_direct_entry:
+            return "exclusive"
+        return "alias"
+
+    def _derive_delivery_level(item: dict, target_scene_key: str, entry_kind: str) -> str:
+        explicit = _safe_text(item.get("delivery_level")).lower()
+        if explicit in {"exclusive", "shared", "placeholder"}:
+            return explicit
+        payload = item.get("default_payload") if isinstance(item.get("default_payload"), dict) else {}
+        has_entry = bool(target_scene_key or payload.get("route") or payload.get("action_id") or payload.get("menu_id"))
+        if not has_entry:
+            return "placeholder"
+        if entry_kind == "exclusive":
+            return "exclusive"
+        return "shared"
+
     out: list[dict] = []
     for cap in capabilities or []:
         if not isinstance(cap, dict):
@@ -446,6 +500,10 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
             elif item["capability_state"] == "coming_soon":
                 reason = "能力尚在建设中，即将开放"
         item["capability_state_reason"] = reason
+        target_scene_key = _derive_target_scene_key(item)
+        item["target_scene_key"] = target_scene_key
+        item["entry_kind"] = _derive_entry_kind(item, target_scene_key)
+        item["delivery_level"] = _derive_delivery_level(item, target_scene_key, item["entry_kind"])
         out.append(item)
     return out
 

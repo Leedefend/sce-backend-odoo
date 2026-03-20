@@ -40,7 +40,8 @@ INTENT_ALIASES = {
 }
 
 API_VERSION = "v1"
-CONTRACT_VERSION = "v0.1"
+CONTRACT_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.0.0"
 _WRITE_INTENT_RE = re.compile(
     r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
     re.IGNORECASE,
@@ -392,6 +393,7 @@ class IntentDispatcher(http.Controller):
                 meta.setdefault("elapsed_ms", int((time.time() - ts0) * 1000))
                 meta.setdefault("api_version", API_VERSION)
                 meta.setdefault("contract_version", CONTRACT_VERSION)
+                meta.setdefault("schema_version", SCHEMA_VERSION)
 
                 # 标准化错误结构
                 if result.get("ok") is False:

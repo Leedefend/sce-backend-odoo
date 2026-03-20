@@ -34,7 +34,9 @@ def main() -> None:
     )
     _assert_envelope(login_resp, label="login")
     require_ok(status, login_resp, "login")
-    token = (login_resp.get("data") or {}).get("token")
+    login_data = (login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}
+    session = login_data.get("session") if isinstance(login_data.get("session"), dict) else {}
+    token = session.get("token") or login_data.get("token")
     if not token:
         raise RuntimeError("login response missing token")
 
