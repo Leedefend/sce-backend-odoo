@@ -193,6 +193,9 @@ def _upsert_release_gap_profile_posture(lines: list[str], strict_label: str, res
         "release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs."
     )
 
+    if strict_label.startswith("FAIL"):
+        posture_line += " Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`."
+
     for index in range(start + 1, end):
         if lines[index].startswith("5. CI profile posture:"):
             lines[index] = posture_line
