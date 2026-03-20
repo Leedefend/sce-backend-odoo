@@ -573,3 +573,12 @@ Each entry must include:
 - completed_step: `Makefile 新增 verify.backend.contract.closure.mainline（结构守卫+双快照守卫）；product delivery mainline 改为调用聚合目标并更新步骤标识`
 - active_commit: `pending`
 - next_step: `Run closure mainline target and commit Batch-R`
+
+### 2026-03-20T20:25:00Z
+- blocker_key: `batch_s.closure_mainline_summary_artifact`
+- layer_target: `Ops/Verification Guard`
+- module: `closure mainline summary`
+- reason: `将收口门禁执行结果结构化沉淀为 artifact，供看板与审计直接消费`
+- completed_step: `新增 backend_contract_closure_mainline_summary.py 与 schema_guard；closure mainline 目标输出 summary artifact 并内联 schema 校验；新增独立 schema make 目标`
+- active_commit: `pending`
+- next_step: `Run closure mainline target and commit Batch-S`

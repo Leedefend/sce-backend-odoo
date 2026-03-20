@@ -2605,13 +2605,25 @@ verify.intent.canonical_alias.snapshot.guard: guard.prod.forbid
 
 .PHONY: verify.backend.contract.closure.mainline
 verify.backend.contract.closure.mainline: guard.prod.forbid
-	@echo "[verify.backend.contract.closure.mainline] step=closure_structure_guard"
-	@python3 scripts/verify/backend_contract_closure_guard.py
-	@echo "[verify.backend.contract.closure.mainline] step=closure_snapshot_guard"
-	@python3 scripts/verify/backend_contract_closure_snapshot_guard.py
-	@echo "[verify.backend.contract.closure.mainline] step=intent_alias_snapshot_guard"
-	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
-	@echo "[OK] verify.backend.contract.closure.mainline done"
+	@STRUCTURE=PASS; SNAPSHOT=PASS; ALIAS=PASS; \
+	echo "[verify.backend.contract.closure.mainline] step=closure_structure_guard"; \
+	if ! python3 scripts/verify/backend_contract_closure_guard.py; then STRUCTURE=FAIL; fi; \
+	echo "[verify.backend.contract.closure.mainline] step=closure_snapshot_guard"; \
+	if ! python3 scripts/verify/backend_contract_closure_snapshot_guard.py; then SNAPSHOT=FAIL; fi; \
+	echo "[verify.backend.contract.closure.mainline] step=intent_alias_snapshot_guard"; \
+	if ! python3 scripts/verify/intent_canonical_alias_snapshot_guard.py; then ALIAS=FAIL; fi; \
+	python3 scripts/verify/backend_contract_closure_mainline_summary.py --structure $$STRUCTURE --snapshot $$SNAPSHOT --alias $$ALIAS; \
+	python3 scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py; \
+	if [ "$$STRUCTURE" = "PASS" ] && [ "$$SNAPSHOT" = "PASS" ] && [ "$$ALIAS" = "PASS" ]; then \
+	  echo "[OK] verify.backend.contract.closure.mainline done"; \
+	else \
+	  echo "[FAIL] verify.backend.contract.closure.mainline"; \
+	  exit 1; \
+	fi
+
+.PHONY: verify.backend.contract.closure.mainline.summary.schema.guard
+verify.backend.contract.closure.mainline.summary.schema.guard: guard.prod.forbid
+	@python3 scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py
 
 .PHONY: verify.product.delivery.ready
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
