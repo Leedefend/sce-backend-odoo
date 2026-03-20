@@ -488,6 +488,7 @@ class SystemInitHandler(BaseIntentHandler):
             asset_queue_metrics=get_queue_metrics(env),
         )
         data = _strip_ui_base_contract_for_frontend(data)
+        SystemInitPayloadBuilder.attach_layered_contract(data)
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 

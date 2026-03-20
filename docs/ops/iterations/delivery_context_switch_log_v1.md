@@ -447,3 +447,12 @@ Each entry must include:
 - completed_step: `session.login 读取并限制 bootstrap.next_intent；loadAppInit 强制走 system.init（支持 session.bootstrap 先导）；移除 app.init 启动调用；新增 startup_chain_mainline_guard 并通过`
 - active_commit: `pending`
 - next_step: `Commit Batch-D changes and continue P1 contract layering`
+
+### 2026-03-20T14:05:00Z
+- blocker_key: `batch_e.system_init_layering`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-1 init contract layering`
+- reason: `进入 P1，先对 system.init 做兼容式四区块分层，降低超级聚合复杂度`
+- completed_step: `新增 init_contract_v1（session/nav/surface/bootstrap_refs）；handler 在返回前注入分层结构；smoke 增加四区块断言`
+- active_commit: `pending`
+- next_step: `Commit Batch-E changes and continue P1-2 workspace_home on-demand loading`
