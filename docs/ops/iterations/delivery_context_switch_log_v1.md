@@ -258,3 +258,12 @@ Each entry must include:
 - completed_step: `delivery_readiness_scoreboard_refresh 增加 evidence section 归一化，并刷新 snapshot 到最新 commit`
 - active_commit: `e3150f9`
 - next_step: `Commit normalization follow-up and continue mainline blockers`
+
+### 2026-03-20T06:18:00Z
+- blocker_key: `gap.delivery_readiness_scoreboard`
+- layer_target: `Ops/CI Governance`
+- module: `ci summary artifact export`
+- reason: `为流水线与看板提供可直接消费的 strict/restricted 状态摘要`
+- completed_step: `delivery_readiness_scoreboard_refresh 增加 delivery_readiness_ci_summary.json 输出并验证内容`
+- active_commit: `63d5be0`
+- next_step: `Refresh scoreboard snapshot and commit docs alignment`
