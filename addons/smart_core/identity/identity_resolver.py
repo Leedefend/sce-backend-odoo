@@ -255,7 +255,7 @@ class IdentityResolver:
 
     def infer_default_route_from_nav(self, nav_tree: list) -> dict:
         if not isinstance(nav_tree, list):
-            return {"menu_id": None}
+            return {"menu_id": None, "scene_key": None, "route": "/workbench", "reason": "menu_fallback"}
 
         def dfs(nodes):
             for node in nodes or []:
@@ -268,11 +268,23 @@ class IdentityResolver:
                         return found
                 menu_id = node.get("menu_id") or node.get("id")
                 if menu_id:
-                    return menu_id
+                    scene_key = ""
+                    if isinstance(node.get("meta"), dict):
+                        scene_key = str((node.get("meta") or {}).get("scene_key") or "").strip()
+                    if not scene_key:
+                        scene_key = str(node.get("scene_key") or "").strip()
+                    return {
+                        "menu_id": menu_id,
+                        "scene_key": scene_key or None,
+                        "route": f"/workbench?scene={scene_key}" if scene_key else "/workbench",
+                        "reason": "menu_fallback",
+                    }
             return None
 
-        menu_id = dfs(nav_tree)
-        return {"menu_id": menu_id}
+        default_route = dfs(nav_tree)
+        if isinstance(default_route, dict):
+            return default_route
+        return {"menu_id": default_route, "scene_key": None, "route": "/workbench", "reason": "menu_fallback"}
 
     def resolve(self, env):
         user = env.user

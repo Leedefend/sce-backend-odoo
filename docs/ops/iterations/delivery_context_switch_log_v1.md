@@ -483,3 +483,12 @@ Each entry must include:
 - completed_step: `contract_governance 增加 delivery_level/target_scene_key/entry_kind 规范化与推导；smoke 增加字段和值域断言；schema 补齐 capability 新字段类型`
 - active_commit: `pending`
 - next_step: `Commit Batch-H changes and continue P1-5 default_route semantic completion`
+
+### 2026-03-20T16:05:00Z
+- blocker_key: `batch_i.default_route_semantic_completion`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p1-5 default_route semantic fields`
+- reason: `补齐 default_route 可消费语义，前端不再依赖 menu_id 反推 scene`
+- completed_step: `scene_nav_contract/nav_dispatcher/identity_resolver 三处 default_route 统一补充 scene_key/route/reason；smoke 增加 default_route 语义字段断言；schema 同步更新`
+- active_commit: `pending`
+- next_step: `Commit Batch-I changes and move to P2 governance enhancement batches`
