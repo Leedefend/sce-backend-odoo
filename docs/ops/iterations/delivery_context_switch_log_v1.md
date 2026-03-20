@@ -429,3 +429,12 @@ Each entry must include:
 - completed_step: `intent_dispatcher/system_init/ui_contract/exceptions 的 contract_version 统一为 1.0.0；dispatcher 默认注入 schema_version=1.0.0；ui.contract 补 response_schema_version=1.0.0；contract_version_evolution_drill 扩展 login + semver 校验`
 - active_commit: `pending`
 - next_step: `Run verify.contract.version.evolution.drill in network-enabled runner and close Batch-B gate`
+
+### 2026-03-20T13:05:00Z
+- blocker_key: `batch_c.role_source_consistency`
+- layer_target: `Backend Intent Contract Layer`
+- module: `p0-2 role source unification`
+- reason: `进入 Batch-C，收口 role_surface 到 workspace/page 编排镜像，消除角色漂移`
+- completed_step: `workspace_home/page_contracts 引入 role_source_code；hero.role_code 与 page.context.role_code 镜像 role_surface.role_code；保留 role_variant 仅用于布局策略；smoke/guard 断言同步更新并通过`
+- active_commit: `pending`
+- next_step: `Commit Batch-C changes and continue Batch-D startup chain hardening`

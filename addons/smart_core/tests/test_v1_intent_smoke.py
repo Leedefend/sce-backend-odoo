@@ -146,6 +146,24 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("intents", data.get("data", {}))
         self.assertIn("capabilities", data.get("data", {}))
         self.assertIn("capability_groups", data.get("data", {}))
+        row = data.get("data", {}) or {}
+        role_surface = row.get("role_surface") or {}
+        role_surface_code = str(role_surface.get("role_code") or "").strip().lower()
+        if role_surface_code:
+            workspace_home = row.get("workspace_home") or {}
+            workspace_record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
+            hero = workspace_record.get("hero") if isinstance(workspace_record.get("hero"), dict) else {}
+            hero_role_code = str(hero.get("role_code") or "").strip().lower()
+            if hero_role_code:
+                self.assertEqual(hero_role_code, role_surface_code)
+
+            page_orchestration_v1 = workspace_home.get("page_orchestration_v1") or {}
+            page = page_orchestration_v1.get("page") if isinstance(page_orchestration_v1.get("page"), dict) else {}
+            context = page.get("context") if isinstance(page.get("context"), dict) else {}
+            context_role_code = str(context.get("role_code") or "").strip().lower()
+            if context_role_code:
+                self.assertEqual(context_role_code, role_surface_code)
+
         self.assertIsInstance(data.get("data", {}).get("capability_groups"), list)
         capabilities = data.get("data", {}).get("capabilities") or []
         self.assertIsInstance(capabilities, list)
