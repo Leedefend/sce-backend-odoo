@@ -582,3 +582,12 @@ Each entry must include:
 - completed_step: `新增 backend_contract_closure_mainline_summary.py 与 schema_guard；closure mainline 目标输出 summary artifact 并内联 schema 校验；新增独立 schema make 目标`
 - active_commit: `pending`
 - next_step: `Run closure mainline target and commit Batch-S`
+
+### 2026-03-20T20:50:00Z
+- blocker_key: `batch_t.delivery_summary_integration`
+- layer_target: `Ops/Readiness Summary`
+- module: `delivery readiness summary bridge`
+- reason: `将契约收口门禁结果并入交付总览，减少多处查看成本`
+- completed_step: `delivery_readiness_scoreboard_refresh 支持 contract_closure 段；summary markdown 新增 Contract Closure 小节与检查表`
+- active_commit: `pending`
+- next_step: `Run scoreboard refresh and commit Batch-T`
