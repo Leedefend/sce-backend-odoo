@@ -13,7 +13,24 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "entries": []
+    "entries": [
+      {
+        "action_id": 529,
+        "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+        "allowed": true,
+        "deny_reason": [],
+        "desc": "查看角色可用能力",
+        "icon": "M",
+        "key": "capability_matrix",
+        "label": "能力矩阵",
+        "menu_id": 340,
+        "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix",
+        "target": {
+          "type": "url",
+          "value": "/portal/capability-matrix"
+        }
+      }
+    ]
   },
   "user": "pm",
   "user_fallback": "admin",

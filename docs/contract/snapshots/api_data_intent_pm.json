@@ -15,29 +15,123 @@
   "ui_contract_raw": {
     "raw": [
       {
-        "next_offset": 2,
+        "group_paging": {
+          "group_by_field": null,
+          "group_count": 0,
+          "group_limit": 5,
+          "group_offset": 0,
+          "has_group_page_offsets": false,
+          "has_more": false,
+          "next_group_offset": null,
+          "page_size": 3,
+          "prev_group_offset": null,
+          "query_fingerprint": "e4f5b0734f22a4ceb6392fe4c12e3e06ff05cc5c",
+          "window_digest": "96e44ebd262d9e1259628d52272d38fec2d7676e",
+          "window_end": 0,
+          "window_id": "group:0:5:e4f5b0734f22",
+          "window_identity": {
+            "algo": "sha1",
+            "group_by_field": null,
+            "group_count": 0,
+            "group_limit": 5,
+            "group_offset": 0,
+            "has_group_page_offsets": false,
+            "has_more": false,
+            "key": "v1:sha1:group:0:5:e4f5b0734f22:96e44ebd262d9e1259628d52272d38fec2d7676e",
+            "model": "project.project",
+            "next_group_offset": null,
+            "page_size": 3,
+            "prev_group_offset": null,
+            "query_fingerprint": "e4f5b0734f22a4ceb6392fe4c12e3e06ff05cc5c",
+            "version": "v1",
+            "window_digest": "96e44ebd262d9e1259628d52272d38fec2d7676e",
+            "window_empty": true,
+            "window_end": 0,
+            "window_id": "group:0:5:e4f5b0734f22",
+            "window_span": 0,
+            "window_start": 0
+          },
+          "window_key": "v1:sha1:group:0:5:e4f5b0734f22:96e44ebd262d9e1259628d52272d38fec2d7676e",
+          "window_start": 0
+        },
+        "group_summary": [],
+        "grouped_rows": [],
+        "next_offset": 5,
         "records": [
           {
-            "id": 4,
-            "name": "P2-空壳对照项目（演示）"
+            "id": 32,
+            "name": "测试创建项目草稿态"
           },
           {
-            "id": 3,
-            "name": "德阳智能制造产教融合项目"
+            "id": 31,
+            "name": "测试快速创建项目功能"
+          },
+          {
+            "id": 30,
+            "name": "测试快速创建项目功能"
+          },
+          {
+            "id": 29,
+            "name": "测试快速创建项目功能"
+          },
+          {
+            "id": 28,
+            "name": "测试快速创建项目功能"
           }
         ]
       },
       {
-        "count": 2,
+        "context_raw_applied": false,
+        "count": 5,
+        "domain_raw_applied": false,
+        "etag": "00cc5872c44d3d5a45e7dae3678a0d84c7a03600",
         "fields": [
           "id",
           "name"
         ],
+        "group_by": null,
+        "group_by_field": null,
+        "group_count": 0,
+        "group_has_more": false,
+        "group_limit": 5,
+        "group_offset": 0,
+        "group_page_size": null,
+        "group_query_fingerprint": "e4f5b0734f22a4ceb6392fe4c12e3e06ff05cc5c",
+        "group_window_digest": "96e44ebd262d9e1259628d52272d38fec2d7676e",
+        "group_window_end": 0,
+        "group_window_id": "group:0:5:e4f5b0734f22",
+        "group_window_identity": {
+          "algo": "sha1",
+          "group_by_field": null,
+          "group_count": 0,
+          "group_limit": 5,
+          "group_offset": 0,
+          "has_group_page_offsets": false,
+          "has_more": false,
+          "key": "v1:sha1:group:0:5:e4f5b0734f22:96e44ebd262d9e1259628d52272d38fec2d7676e",
+          "model": "project.project",
+          "next_group_offset": null,
+          "page_size": 3,
+          "prev_group_offset": null,
+          "query_fingerprint": "e4f5b0734f22a4ceb6392fe4c12e3e06ff05cc5c",
+          "version": "v1",
+          "window_digest": "96e44ebd262d9e1259628d52272d38fec2d7676e",
+          "window_empty": true,
+          "window_end": 0,
+          "window_id": "group:0:5:e4f5b0734f22",
+          "window_span": 0,
+          "window_start": 0
+        },
+        "group_window_key": "v1:sha1:group:0:5:e4f5b0734f22:96e44ebd262d9e1259628d52272d38fec2d7676e",
+        "group_window_start": 0,
         "limit": 5,
         "model": "project.project",
+        "need_group_total": false,
+        "next_group_offset": null,
         "offset": 0,
         "op": "list",
-        "order": "id desc"
+        "order": "id desc",
+        "prev_group_offset": null
       }
     ]
   },
