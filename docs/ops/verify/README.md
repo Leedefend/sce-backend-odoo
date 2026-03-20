@@ -67,6 +67,13 @@
   - Also synchronizes `Release Blocking Gaps` CI posture line from latest strict/restricted profile status.
   - When strict profile is `FAIL`, the posture line auto-appends a restricted-profile recovery command.
   - Aggregates latest mainline run summary into the same CI summary payload when available.
+  - Exposes single boolean `overall.ok` for pipeline gating (default policy: `mainline_or_restricted`).
+  - Policy override via env:
+    - `DELIVERY_READINESS_OVERALL_POLICY=mainline_or_restricted` (default)
+    - `DELIVERY_READINESS_OVERALL_POLICY=strict_only`
+    - `DELIVERY_READINESS_OVERALL_POLICY=restricted_only`
+    - `DELIVERY_READINESS_OVERALL_POLICY=mainline_only`
+    - `DELIVERY_READINESS_OVERALL_POLICY=strict_and_mainline`
   - Quick entry (human-readable):
     - `artifacts/backend/delivery_readiness_ci_summary.md`
   - Emits machine-readable CI summary for pipeline dashboards:
