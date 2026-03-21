@@ -690,3 +690,75 @@ Each entry must include:
 - completed_step: `新增 backend_contract_closure_stage_acceptance_v1.md，按 P0/P1/P2 对账并给出通过结论；执行后端 py_compile、前端 strict typecheck、HomeView legacy 回退引用扫描三类证据校验全部通过`
 - active_commit: `pending`
 - next_step: `进入分类提交与 PR 准备`
+
+### 2026-03-20T09:35:20Z
+- blocker_key: `governance.skills_bootstrap_v1`
+- layer_target: `Platform Layer`
+- module: `.codex/skills project governance pack`
+- reason: `将项目工程规矩固化为可复用 skills，优先 Skills、少量 MCP`
+- completed_step: `新增 10 个项目级 skill（project-governance-codex、contract-audit、batch-execution、odoo-module-change、frontend-contract-consumer、verify-and-gate、release-note-and-doc-update、create-plan、playwright-ui-check、openai-docs-first）及目录索引 README`
+- active_commit: `pending`
+- next_step: `由团队试点 login/system.init/ui.contract 收口链路，按反馈迭代 skill 细则`
+
+### 2026-03-20T09:47:27Z
+- blocker_key: `governance.collaboration_mechanism_v1_binding`
+- layer_target: `Platform Layer`
+- module: `.codex/skills collaboration mechanism hard-binding`
+- reason: `将《Codex 协作机制 v1》强制映射到总控与专项 skills，确保执行一致性`
+- completed_step: `project-governance-codex 增加固定角色、六大原则、标准工作流与批次模板；batch-execution/contract-audit/odoo-module-change/frontend-contract-consumer/verify-and-gate 分别补齐单目标批次、一主一辅并行、审计线禁改代码、启动链与 role 真源约束、三层门禁分离结论；README 增加场景强制绑定与触发示例`
+- active_commit: `pending`
+- next_step: `按 Batch-B 试运行机制并按实测结果微调 skill 文案`
+
+### 2026-03-20T10:11:19Z
+- blocker_key: `governance.skills_production_hardening_v2`
+- layer_target: `Platform Layer`
+- module: `.codex/skills + docs/ops/iterations`
+- reason: `将项目技能体系从可用版提升到生产约束版，并形成可审阅汇总`
+- completed_step: `完成 project-governance-codex/batch-execution/contract-audit/verify-and-gate/odoo-module-change/frontend-contract-consumer/release-note-and-doc-update/create-plan/openai-docs-first/playwright-ui-check 的执行强化版升级；README 升级为技能路由表+Batch输入总入口；新增 codex_skills_governance_upgrade_summary_v1.md 汇总文档`
+- active_commit: `pending`
+- next_step: `在 Batch-B（system.init 角色真源统一）试运行并收集门禁与审计反馈`
+
+### 2026-03-20T11:24:06Z
+- blocker_key: `batch_f1a.startup_chain_runtime_block_fix`
+- layer_target: `Frontend Contract Consumer Layer / Portal Runtime Stability Layer`
+- module: `ui.contract consumer + scene registry + startup route + runtime diagnostics`
+- reason: `修复 ui.contract 前端阻断导致的首屏/项目场景无数据问题，并补齐可诊断错误态`
+- completed_step: `修复 ui_contract handler 阻断条件（仅阻断 native surface）；前端 contract API 增强 UI_CONTRACT_NATIVE_BLOCKED 诊断；scene registry 收口直接 /a|/f|/r 路由到 /s；landing route 避免 default_route 落到原生 action/form 路径；SceneView 增加 idle 诊断面板与缺失渲染目标错误态；bootstrap 增加浏览器扩展噪音隔离`
+- active_commit: `pending`
+- next_step: `在 prod-sim 手工复测 projects.ledger/projects.list/projects.intake 并根据 trace_id 做二次收口`
+
+### 2026-03-20T15:29:42Z
+- blocker_key: `governance.project_code_create_semantic_fix`
+- layer_target: `Contract Governance Layer`
+- module: `smart_core contract_governance + .codex skills governance docs`
+- reason: `将“系统生成字段不进入创建态”的业务事实固化为治理规则与技能模板，防止再次由前端兜底`
+- completed_step: `在治理文档新增 Governance Patch v1.1：create/edit 判定排除 new/0/null 等伪记录、project.project 含 form 视图即触发表单治理、project_code/code 创建态不可见；在 project-governance-codex 与 contract-audit skills 中新增同等硬约束`
+- active_commit: `9ea7da6`
+- next_step: `按 Batch 验收模板继续执行 create 契约快照审计，确保所有创建页遵循系统生成字段隐藏规则`
+
+### 2026-03-20T15:32:04Z
+- blocker_key: `governance.release_note_template_example`
+- layer_target: `Project Governance Skill Layer`
+- module: `.codex/skills/release-note-and-doc-update/SKILL.md`
+- reason: `补充“治理层缺陷→根因修复”可复用 release-note 模板，统一团队复盘写法`
+- completed_step: `新增 Governance Incident Example 模板，覆盖目标/影响范围/风险分级/契约验证证据/回滚与后续批次字段，可直接用于系统生成字段创建态泄漏类问题`
+- active_commit: `9ea7da6`
+- next_step: `在下个治理批次按该模板生成正式 release note 并复用到其他模型`
+
+### 2026-03-20T15:34:51Z
+- blocker_key: `governance.release_template_file_addition`
+- layer_target: `Project Governance Skill Layer`
+- module: `docs/ops/releases/templates + release-note-and-doc-update skill`
+- reason: `沉淀独立模板文件，支持团队直接复制使用并统一入口`
+- completed_step: `新增 governance_incident_release_note_v1.md 独立模板；在 release-note-and-doc-update skill 的 Document Paths 中增加模板路径引用`
+- active_commit: `9ea7da6`
+- next_step: `后续批次直接按模板生成治理缺陷复盘文档并纳入收口证据`
+
+### 2026-03-20T15:36:48Z
+- blocker_key: `governance.project_code_incident_release_note_filled`
+- layer_target: `Release Documentation Layer`
+- module: `docs/ops/releases/governance_incident_project_code_create_semantic_fix_20260320.md`
+- reason: `基于模板产出本次项目编号泄漏事件的正式复盘文档，形成可审计收口材料`
+- completed_step: `完成已填充 release note，覆盖问题归因、风险分级、验证命令、契约证据路径、回滚方案与下一批次目标`
+- active_commit: `9ea7da6`
+- next_step: `复用该模板继续补齐其他治理类问题复盘文档`

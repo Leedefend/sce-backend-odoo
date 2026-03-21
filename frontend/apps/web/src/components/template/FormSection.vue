@@ -1,0 +1,279 @@
+<template>
+  <section :class="['template-form-section', toneClass]" data-component="FormSection">
+    <div class="template-form-section-head">
+      <h3 class="template-form-section-title">{{ title }}</h3>
+      <slot name="action" />
+    </div>
+    <p v-if="hint" class="template-form-section-hint">{{ hint }}</p>
+    <div class="template-form-section-grid" :style="gridStyle">
+      <template v-if="fields.length">
+        <div v-for="field in fields" :key="field.key" :class="['field', field.spanClass || defaultSpanClass(field.type)]">
+          <label class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
+          <template v-if="field.readonly">
+            <slot name="readonly" :field="field">
+              <span class="readonly-value">{{ readonlyText(field.value) }}</span>
+            </slot>
+          </template>
+          <template v-else-if="isBaseFieldType(field.type)">
+            <input
+              v-if="field.type === 'boolean'"
+              :checked="Boolean(field.value)"
+              class="input-checkbox"
+              type="checkbox"
+              @change="emitFieldChange(field, ($event.target as HTMLInputElement).checked)"
+            />
+            <select
+              v-else-if="field.type === 'selection'"
+              :value="String(field.inputValue ?? '')"
+              class="input"
+              @change="emitFieldChange(field, ($event.target as HTMLSelectElement).value)"
+            >
+              <option v-if="!field.required" value="">{{ selectPlaceholderText(field) }}</option>
+              <option v-for="option in field.selectionOptions || []" :key="`${field.name}-${option.value}`" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+            <select
+              v-else-if="field.type === 'many2one'"
+              class="input"
+              :value="String(field.inputValue ?? '')"
+              @change="emitFieldChange(field, ($event.target as HTMLSelectElement).value)"
+            >
+              <option value="">{{ selectPlaceholderText(field) }}</option>
+              <option v-for="option in field.relationOptions || []" :key="`${field.name}-${option.value}`" :value="option.value">
+                {{ option.label }}
+              </option>
+              <option
+                v-if="field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken"
+                :value="field.many2oneCreateToken"
+              >
+                {{ field.relationCreateMode === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
+              </option>
+            </select>
+            <input
+              v-else
+              :value="String(field.inputValue ?? '')"
+              class="input"
+              :type="inputType(field.type)"
+              :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
+              @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
+            />
+          </template>
+          <template v-else>
+            <slot name="fallback" :field="field">
+              <input
+                :value="String(field.inputValue ?? '')"
+                class="input"
+                :type="inputType(field.type)"
+                :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
+                @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
+              />
+            </slot>
+          </template>
+        </div>
+      </template>
+      <slot v-else />
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { FormSectionFieldSchema, FormSectionFieldChange, TemplateFieldType } from './formSection.types';
+import { resolveInputPlaceholder, resolveSelectPlaceholder } from './placeholder.mapper';
+
+const props = withDefaults(defineProps<{
+  title: string;
+  hint?: string;
+  columns?: 1 | 2;
+  tone?: 'core' | 'advanced';
+  fields?: FormSectionFieldSchema[];
+  selectPlaceholder?: (label: string) => string;
+  inputPlaceholder?: (label: string) => string;
+}>(), {
+  hint: '',
+  columns: 2,
+  tone: 'core',
+  fields: () => [],
+  selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
+  inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
+});
+
+const emit = defineEmits<{
+  (e: 'field-change', payload: FormSectionFieldChange): void;
+}>();
+
+const toneClass = computed(() => (props.tone === 'advanced' ? 'template-form-section--advanced' : 'template-form-section--core'));
+const gridStyle = computed(() => ({
+  gridTemplateColumns: props.columns === 1 ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+}));
+
+function isBaseFieldType(type: TemplateFieldType) {
+  return ['char', 'text', 'selection', 'many2one', 'boolean', 'date', 'datetime'].includes(String(type || '').trim().toLowerCase());
+}
+
+function defaultSpanClass(type: TemplateFieldType) {
+  return String(type || '').trim().toLowerCase() === 'text' ? 'field--full' : 'field--half';
+}
+
+function inputType(type: TemplateFieldType) {
+  const t = String(type || '').trim().toLowerCase();
+  if (t === 'date') return 'date';
+  if (t === 'datetime') return 'datetime-local';
+  return 'text';
+}
+
+function selectPlaceholderText(field: FormSectionFieldSchema) {
+  return props.selectPlaceholder(field.label);
+}
+
+function inputPlaceholderText(field: FormSectionFieldSchema) {
+  return props.inputPlaceholder(field.label);
+}
+
+function readonlyText(value: unknown) {
+  if (value === null || value === undefined || value === false) return '-';
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value);
+}
+
+function emitFieldChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {
+  emit('field-change', {
+    name: field.name,
+    type: field.type,
+    value,
+    descriptor: field.descriptor,
+  });
+}
+</script>
+
+<style scoped>
+.template-form-section {
+  grid-column: 1 / -1;
+  border: 0;
+  border-top: 1px solid #f1f3f6;
+  border-radius: 0;
+  background: transparent;
+  padding: 14px 0 0;
+}
+
+.template-form-section--core {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.template-form-section--advanced {
+  border-top: 1px solid #f2f4f7;
+  margin-top: 2px;
+}
+
+.template-form-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.template-form-section-title {
+  margin: 0;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.template-form-section-hint {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.template-form-section-grid {
+  display: grid;
+  row-gap: 16px;
+  column-gap: 24px;
+}
+
+.field {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  align-content: start;
+}
+
+.field--half {
+  grid-column: span 1;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 13px;
+  color: #111827;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.required {
+  color: #b91c1c;
+  margin-left: 2px;
+}
+
+.readonly-value {
+  font-size: 13px;
+  color: #475569;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.input {
+  border: 1px solid #e9ebef;
+  border-radius: 8px;
+  padding: 8px 12px;
+  height: 40px;
+  min-height: 40px;
+  width: 100%;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #0f172a;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+}
+
+select.input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #64748b 50%), linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+}
+
+.input[type='date'] {
+  min-width: 0;
+  padding-right: 10px;
+}
+
+@media (max-width: 860px) {
+  .template-form-section-grid {
+    grid-template-columns: 1fr !important;
+    row-gap: 16px;
+    column-gap: 0;
+  }
+}
+</style>

@@ -78,10 +78,22 @@ const SCENE_ROUTE_OVERRIDES: Record<string, string> = {
   'my_work.workspace': '/my-work',
 };
 
+const NATIVE_UI_CONTRACT_ROUTE_PREFIXES = ['/a/', '/f/', '/r/'];
+
 function resolveSceneRoute(code: string, route: string): string {
   const override = SCENE_ROUTE_OVERRIDES[code];
   if (override) return override;
   return route;
+}
+
+function normalizeDeliverySceneRoute(sceneKey: string, route: string): string {
+  const raw = String(route || '').trim();
+  if (!raw) return `/s/${sceneKey}`;
+  const lowered = raw.toLowerCase();
+  if (NATIVE_UI_CONTRACT_ROUTE_PREFIXES.some((prefix) => lowered.startsWith(prefix))) {
+    return `/s/${sceneKey}`;
+  }
+  return raw;
 }
 
 function normalizeSceneLayout(layout?: Partial<SceneLayout> | null): SceneLayout {
@@ -153,7 +165,7 @@ function buildSceneRegistry(source: Scene[]) {
   const normalized = coerceSceneSource(source);
   const validation = validateSceneRegistry(normalized as Scene[]);
   const nextErrors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
-  if (nextErrors.length) {
+  if (nextErrors.length && import.meta.env.DEV) {
     // eslint-disable-next-line no-console
     console.warn('[scene-registry] invalid scenes detected', nextErrors);
   }
@@ -204,7 +216,8 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
     return null;
   }
   const defaultRoute = `/s/${sceneKey}`;
-  const route = resolveSceneRoute(sceneKey, asText(pageRow.route) || asText(targetRow.route) || defaultRoute);
+  const resolvedRoute = resolveSceneRoute(sceneKey, asText(pageRow.route) || asText(targetRow.route) || defaultRoute);
+  const route = normalizeDeliverySceneRoute(sceneKey, resolvedRoute);
   const actionId = Number(targetRow.action_id || 0);
   const menuId = Number(targetRow.menu_id || 0);
   const requiredCapabilities = Array.isArray(permissionRow.required_capabilities)

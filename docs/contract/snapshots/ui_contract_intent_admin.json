@@ -14,6 +14,8 @@
   "ui_contract": null,
   "ui_contract_raw": {
     "buttons": [],
+    "contract_surface": "user",
+    "governed_from_native": true,
     "nav": [
       {
         "children": [],
@@ -305,27 +307,6 @@
                   "model": "res.users",
                   "scene": "web",
                   "sequence": 0
-                }
-              },
-              {
-                "children": [],
-                "icon": null,
-                "key": "menu:59",
-                "label": "Groups",
-                "menu_id": 59,
-                "meta": {
-                  "action_id": 68,
-                  "action_type": "ir.actions.act_window",
-                  "groups_xmlids": [
-                    91,
-                    94,
-                    7
-                  ],
-                  "menu_id": 59,
-                  "menu_xmlid": "base.menu_action_res_groups",
-                  "model": "res.groups",
-                  "scene": "web",
-                  "sequence": 3
                 }
               },
               {
@@ -1952,7 +1933,6 @@
         "menu_id": 1,
         "meta": {
           "groups_xmlids": [
-            2,
             4
           ],
           "menu_id": 1,
@@ -1974,7 +1954,68 @@
           "sequence": 1000
         }
       }
-    ]
+    ],
+    "render_mode": "governed",
+    "source_mode": "governance_pipeline",
+    "surface_mapping": {
+      "native_to_governed": {
+        "buttons": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "field_modifiers": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "fields": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "header_buttons": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "layout_fields": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "layout_nodes": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        },
+        "stat_buttons": {
+          "added": [],
+          "governed_count": 0,
+          "native_count": 0,
+          "removed": [],
+          "reordered": false
+        }
+      }
+    },
+    "surface_policies": {
+      "actions_max": 8,
+      "actions_primary_max": 4,
+      "filters_max": 8,
+      "filters_primary_max": 5
+    }
   },
   "user": "admin",
   "user_fallback": null,

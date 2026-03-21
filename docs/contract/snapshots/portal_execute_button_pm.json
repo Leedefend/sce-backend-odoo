@@ -23,7 +23,7 @@
     "target": {
       "method": "action_portal_demo_ping",
       "model": "project.project",
-      "res_id": 3
+      "res_id": 1
     }
   },
   "user": "pm",
