@@ -37,7 +37,7 @@ class TestPaymentRequestPermission(TransactionCase):
     def test_submit_allowed_for_finance_approver(self):
         user = self._create_user(
             login="u_fin_approver",
-            group_xmlids=["base.group_user", "smart_core.group_sc_finance_approver"],
+            group_xmlids=["base.group_user", "smart_core.group_smart_core_finance_approver"],
         )
         handler = PaymentRequestSubmitHandler(self.env(user=user.id), payload={})
         result = handler.run(payload={"params": {}})

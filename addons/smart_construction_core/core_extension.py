@@ -42,6 +42,160 @@ ROLE_SURFACE_OVERRIDES = {
     },
 }
 
+ROLE_GROUPS_EXPLICIT = {
+    "executive": {
+        "smart_construction_custom.group_sc_role_executive",
+        "smart_construction_core.group_sc_super_admin",
+        "smart_construction_core.group_sc_cap_config_admin",
+        "base.group_system",
+    },
+    "pm": {
+        "smart_construction_custom.group_sc_role_pm",
+        "smart_construction_custom.group_sc_role_project_manager",
+        "smart_construction_custom.group_sc_role_project_user",
+        "smart_construction_core.group_sc_role_project_manager",
+    },
+    "finance": {
+        "smart_construction_custom.group_sc_role_finance",
+        "smart_construction_custom.group_sc_role_payment_manager",
+        "smart_construction_custom.group_sc_role_payment_user",
+        "smart_construction_custom.group_sc_role_payment_read",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_finance_user",
+    },
+}
+
+ROLE_GROUPS_CAPABILITY_FALLBACK = {
+    "pm": {
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+    },
+    "finance": {
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_finance_manager",
+    },
+}
+
+ROLE_PRECEDENCE = ("executive", "pm", "finance")
+
+NAV_MENU_SCENE_MAP = {
+    "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
+    "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+    "smart_construction_core.menu_sc_project_project": "projects.ledger",
+    "smart_construction_core.menu_sc_project_management_scene": "project.management",
+    "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.menu_sc_root": "projects.list",
+    "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+    "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
+    "smart_construction_core.menu_sc_dictionary": "data.dictionary",
+    "smart_construction_core.menu_payment_request": "finance.payment_requests",
+    "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
+    "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
+    "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
+}
+
+NAV_ACTION_SCENE_MAP = {
+    "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
+    "smart_construction_core.action_project_initiation": "projects.intake",
+    "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
+    "smart_construction_core.action_sc_project_list": "projects.list",
+    "smart_construction_core.action_project_dashboard": "projects.dashboard",
+    "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
+    "smart_construction_core.action_project_dictionary": "data.dictionary",
+    "smart_construction_core.action_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.action_payment_request": "finance.payment_requests",
+    "smart_construction_core.action_payment_request_my": "finance.payment_requests",
+    "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
+    "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
+    "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
+}
+
+NAV_MODEL_VIEW_SCENE_MAP = {
+    ("project.project", "list"): "projects.list",
+    ("project.project", "form"): "projects.intake",
+    ("payment.request", "list"): "finance.payment_requests",
+    ("payment.request", "form"): "finance.payment_requests",
+}
+
+SERVER_ACTION_WINDOW_MAP = {
+    "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
+}
+
+FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+API_DATA_WRITE_ALLOWLIST = {
+    "project.project": ["name", "description", "date_start"],
+    "project.task": ["name", "description", "date_deadline", "project_id"],
+}
+API_DATA_UNLINK_ALLOWED_MODELS = ["project.task"]
+
+MODEL_CODE_MAPPING = {
+    "project": "project.project",
+    "task": "project.task",
+}
+
+CREATE_FIELD_FALLBACKS = {
+    "project.project": {
+        "selection_defaults": {
+            "privacy_visibility": "followers",
+            "rating_status": "stage",
+            "last_update_status": "to_define",
+            "rating_status_period": "monthly",
+        }
+    }
+}
+
+SURFACE_NAV_ALLOWLIST = {
+    "construction_pm_v1": [
+        "project.management",
+        "projects.dashboard",
+        "projects.ledger",
+        "projects.intake",
+        "my_work.workspace",
+    ]
+}
+SURFACE_DEEP_LINK_ALLOWLIST = {
+    "construction_pm_v1": [
+        "contract.center",
+        "cost.budget_alloc",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.project_progress",
+        "data.dictionary",
+        "finance.center",
+        "finance.operating_metrics",
+        "finance.payment_ledger",
+        "finance.payment_requests",
+        "finance.settlement_orders",
+        "finance.treasury_ledger",
+        "config.project_cost_code",
+        "risk.monitor",
+        "task.center",
+    ]
+}
+SURFACE_POLICY_DEFAULT_NAME = "construction_pm_v1"
+SURFACE_POLICY_DEFAULT_FILE = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
+
+CRITICAL_SCENE_TARGET_OVERRIDES = {
+    "projects.list",
+    "projects.detail",
+    "projects.intake",
+    "projects.ledger",
+    "projects.execution",
+    "projects.dashboard",
+    "project.management",
+    "my_work.workspace",
+    "portal.dashboard",
+    "finance.payment_requests",
+}
+
+CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
+    "my_work.workspace": "/my-work",
+}
+
 
 def _as_text(value: Any) -> str:
     if isinstance(value, dict):
@@ -314,6 +468,15 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.risk_action_execute import (
             RiskActionExecuteHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.app_catalog import (
+            AppCatalogHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.app_nav import (
+            AppNavHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.app_open import (
+            AppOpenHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
@@ -336,6 +499,9 @@ def smart_core_register(registry):
     registry["payment.request.execute"] = PaymentRequestExecuteHandler
     registry["project.dashboard"] = ProjectDashboardHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
+    registry["app.catalog"] = AppCatalogHandler
+    registry["app.nav"] = AppNavHandler
+    registry["app.open"] = AppOpenHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
@@ -354,6 +520,180 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.execute")
     _logger.info("[smart_core_register] registered project.dashboard")
     _logger.info("[smart_core_register] registered risk.action.execute")
+    _logger.info("[smart_core_register] registered app.catalog")
+    _logger.info("[smart_core_register] registered app.nav")
+    _logger.info("[smart_core_register] registered app.open")
+
+
+def smart_core_identity_profile(env):
+    del env
+    return {
+        "role_surface_map": ROLE_SURFACE_OVERRIDES,
+        "role_groups_explicit": ROLE_GROUPS_EXPLICIT,
+        "role_groups_capability_fallback": ROLE_GROUPS_CAPABILITY_FALLBACK,
+        "role_precedence": ROLE_PRECEDENCE,
+    }
+
+
+def smart_core_list_capabilities_for_user(env, user):
+    try:
+        from odoo.addons.smart_construction_core.services.capability_registry import (
+            list_capabilities_for_user as registry_list_capabilities_for_user,
+        )
+    except Exception:
+        return None
+    try:
+        capabilities = registry_list_capabilities_for_user(env, user)
+    except Exception:
+        return None
+    return capabilities if isinstance(capabilities, list) and capabilities else None
+
+
+def smart_core_capability_groups(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_core.services.capability_registry import CAPABILITY_GROUPS
+    except Exception:
+        return None
+    return [dict(item) for item in CAPABILITY_GROUPS if isinstance(item, dict)]
+
+
+def smart_core_nav_scene_maps(env):
+    del env
+    return {
+        "menu_scene_map": NAV_MENU_SCENE_MAP,
+        "action_xmlid_scene_map": NAV_ACTION_SCENE_MAP,
+        "model_view_scene_map": NAV_MODEL_VIEW_SCENE_MAP,
+    }
+
+
+def smart_core_scene_package_service_class(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
+    except Exception:
+        return None
+    return ScenePackageService
+
+
+def smart_core_scene_governance_service_class(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.services.scene_governance_service import SceneGovernanceService
+    except Exception:
+        return None
+    return SceneGovernanceService
+
+
+def smart_core_load_scene_configs(env, *, drift=None):
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
+    except Exception:
+        return None
+    try:
+        return load_scene_configs(env, drift=drift)
+    except Exception:
+        return None
+
+
+def smart_core_has_db_scenes(env):
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import has_db_scenes
+    except Exception:
+        return None
+    try:
+        return bool(has_db_scenes(env))
+    except Exception:
+        return None
+
+
+def smart_core_get_scene_version(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import get_scene_version
+    except Exception:
+        return None
+    try:
+        return get_scene_version()
+    except Exception:
+        return None
+
+
+def smart_core_get_schema_version(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import get_schema_version
+    except Exception:
+        return None
+    try:
+        return get_schema_version()
+    except Exception:
+        return None
+
+
+def smart_core_server_action_window_map(env):
+    del env
+    return dict(SERVER_ACTION_WINDOW_MAP)
+
+
+def smart_core_file_upload_allowed_models(env):
+    del env
+    return list(FILE_UPLOAD_ALLOWED_MODELS)
+
+
+def smart_core_file_download_allowed_models(env):
+    del env
+    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
+
+
+def smart_core_api_data_write_allowlist(env):
+    del env
+    return {str(model): list(fields) for model, fields in API_DATA_WRITE_ALLOWLIST.items()}
+
+
+def smart_core_api_data_unlink_allowed_models(env):
+    del env
+    return list(API_DATA_UNLINK_ALLOWED_MODELS)
+
+
+def smart_core_model_code_mapping(env):
+    del env
+    return dict(MODEL_CODE_MAPPING)
+
+
+def smart_core_create_field_fallbacks(env, model_name):
+    del env
+    return dict(CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
+
+
+def smart_core_surface_nav_allowlist(env):
+    del env
+    return {str(surface): list(codes) for surface, codes in SURFACE_NAV_ALLOWLIST.items()}
+
+
+def smart_core_surface_deep_link_allowlist(env):
+    del env
+    return {str(surface): list(codes) for surface, codes in SURFACE_DEEP_LINK_ALLOWLIST.items()}
+
+
+def smart_core_surface_policy_default_name(env):
+    del env
+    return SURFACE_POLICY_DEFAULT_NAME
+
+
+def smart_core_surface_policy_file_default(env):
+    del env
+    return SURFACE_POLICY_DEFAULT_FILE
+
+
+def smart_core_critical_scene_target_overrides(env):
+    del env
+    return list(CRITICAL_SCENE_TARGET_OVERRIDES)
+
+
+def smart_core_critical_scene_target_route_overrides(env):
+    del env
+    return dict(CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES)
 
 
 def smart_core_extend_system_init(data, env, user):

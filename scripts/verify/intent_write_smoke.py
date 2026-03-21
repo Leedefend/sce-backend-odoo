@@ -16,11 +16,11 @@ HANDLER_FILES = [
     ROOT / "addons" / "smart_core" / "handlers" / "scene_governance.py",
 ]
 TARGETS = {
-    "api.data.create": "smart_core.group_sc_data_operator",
-    "api.data.unlink": "smart_core.group_sc_data_operator",
-    "execute_button": "smart_core.group_sc_data_operator",
-    "payment.request.submit": "smart_core.group_sc_finance_approver",
-    "scene.governance.rollback": "smart_core.group_sc_scene_admin",
+    "api.data.create": "smart_core.group_smart_core_data_operator",
+    "api.data.unlink": "smart_core.group_smart_core_data_operator",
+    "execute_button": "smart_core.group_smart_core_data_operator",
+    "payment.request.submit": "smart_core.group_smart_core_finance_approver",
+    "scene.governance.rollback": "smart_core.group_smart_core_scene_admin",
 }
 
 

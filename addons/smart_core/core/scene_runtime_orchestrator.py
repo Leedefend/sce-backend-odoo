@@ -129,10 +129,10 @@ class SceneRuntimeOrchestrator:
             return
         runtime_ctx.append_resolve_error_fn(
             runtime_ctx.scene_diagnostics["resolve_errors"],
-            scene_key="projects.list",
+            scene_key="workspace.home",
             kind="target",
             code="TEST_CRITICAL_INJECTED",
-            ref="smart_construction_scene.test.injected",
+            ref="smart_scene.test.injected",
             message="injected critical resolve error for auto-degrade smoke",
             severity="critical",
         )

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# smart_core/handlers/app_nav.py
+# smart_construction_core/handlers/app_nav.py
 import json, hashlib, logging, time
 from typing import Any, Dict, List, Set
 from odoo import api, SUPERUSER_ID
-from ..core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from .app_catalog import APP_DEFS, _xmlid_to_id, _visible_menu_ids, _current_perms, _installed_modules
 
 _logger = logging.getLogger(__name__)

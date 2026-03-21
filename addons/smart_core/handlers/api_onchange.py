@@ -13,7 +13,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
     INTENT_TYPE = "api.onchange"
     DESCRIPTION = "Contract-driven onchange roundtrip"
     VERSION = "1.1.0"
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
 
     def _err(self, code: int, message: str):

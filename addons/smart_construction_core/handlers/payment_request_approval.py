@@ -29,7 +29,7 @@ from odoo.exceptions import AccessError, UserError
 class _BasePaymentApprovalHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
-    ACCESS_GROUPS = ["smart_core.group_sc_finance_approver"]
+    ACCESS_GROUPS = ["smart_core.group_smart_core_finance_approver"]
     ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     AUDIT_EVENT_CODE = ""
@@ -369,7 +369,7 @@ class PaymentRequestSubmitHandler(_BasePaymentApprovalHandler):
     ACTION_NAME = "submit"
     ACCESS_GROUPS = [
         "smart_construction_core.group_sc_cap_finance_user",
-        "smart_core.group_sc_finance_approver",
+        "smart_core.group_smart_core_finance_approver",
         "smart_construction_custom.group_sc_role_finance",
     ]
 
@@ -382,7 +382,7 @@ class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
     ACTION_METHOD = "action_approve"
     ACTION_NAME = "approve"
     ACCESS_GROUPS = [
-        "smart_core.group_sc_finance_approver",
+        "smart_core.group_smart_core_finance_approver",
         "smart_construction_custom.group_sc_role_executive",
     ]
 
@@ -395,7 +395,7 @@ class PaymentRequestRejectHandler(_BasePaymentApprovalHandler):
     ACTION_METHOD = "action_on_tier_rejected"
     ACTION_NAME = "reject"
     ACCESS_GROUPS = [
-        "smart_core.group_sc_finance_approver",
+        "smart_core.group_smart_core_finance_approver",
         "smart_construction_custom.group_sc_role_executive",
     ]
 
@@ -417,6 +417,6 @@ class PaymentRequestDoneHandler(_BasePaymentApprovalHandler):
     ACTION_NAME = "done"
     ACCESS_GROUPS = [
         "smart_construction_core.group_sc_cap_finance_manager",
-        "smart_core.group_sc_finance_approver",
+        "smart_core.group_smart_core_finance_approver",
         "smart_construction_custom.group_sc_role_finance",
     ]

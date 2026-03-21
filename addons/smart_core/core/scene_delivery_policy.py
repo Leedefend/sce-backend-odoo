@@ -5,6 +5,8 @@ import json
 import os
 from typing import Any
 
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+
 REASON_SCENE_INVALID = "SCENE_INVALID"
 REASON_SCENE_UNPUBLISHED = "SCENE_UNPUBLISHED"
 REASON_SCENE_TARGET_UNRESOLVED = "SCENE_TARGET_UNRESOLVED"
@@ -35,40 +37,52 @@ DELIVERY_MODE_INTERNAL = "internal"
 DELIVERY_MODE_DEMO = "demo"
 DELIVERY_MODE_DEEP_LINK_ONLY = "deep_link_only"
 
-SURFACE_POLICY_CONSTRUCTION_PM_V1 = "construction_pm_v1"
+SURFACE_POLICY_CONSTRUCTION_PM_V1 = "workspace_default_v1"
 BUILTIN_SURFACE_NAV_ALLOWLIST = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: {
-        "project.management",
-        "projects.dashboard",
-        "projects.ledger",
-        "projects.intake",
-        "my_work.workspace",
+        "workspace.home",
+        "workspace.list",
+        "workspace.management",
+        "portal.dashboard",
     },
 }
 BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: (
-        "contract.center",
-        "cost.budget_alloc",
-        "cost.cost_compare",
-        "cost.profit_compare",
-        "cost.project_boq",
-        "cost.project_budget",
-        "cost.project_cost_ledger",
-        "cost.project_progress",
-        "data.dictionary",
-        "finance.center",
-        "finance.operating_metrics",
-        "finance.payment_ledger",
-        "finance.payment_requests",
-        "finance.settlement_orders",
-        "finance.treasury_ledger",
-        "config.project_cost_code",
-        "risk.monitor",
-        "task.center",
+        "workspace.risk",
+        "workspace.finance",
+        "workspace.tasks",
+        "workspace.cost",
+        "workspace.overview",
     ),
 }
-SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
+SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/workspace_default_v1_scene_surface_policy.json"
 _SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "payload": {}}
+
+
+def _builtin_surface_nav_allowlist(env=None) -> dict:
+    payload = call_extension_hook_first(env, "smart_core_surface_nav_allowlist", env)
+    if isinstance(payload, dict):
+        return payload
+    return BUILTIN_SURFACE_NAV_ALLOWLIST
+
+
+def _builtin_surface_deep_link_allowlist(env=None) -> dict:
+    payload = call_extension_hook_first(env, "smart_core_surface_deep_link_allowlist", env)
+    if isinstance(payload, dict):
+        return payload
+    return BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST
+
+
+def _surface_policy_default_name(env=None) -> str:
+    payload = call_extension_hook_first(env, "smart_core_surface_policy_default_name", env)
+    value = str(payload or "").strip()
+    return value or SURFACE_POLICY_CONSTRUCTION_PM_V1
+
+
+def _surface_policy_default_file(env=None) -> str:
+    payload = call_extension_hook_first(env, "smart_core_surface_policy_file_default", env)
+    value = str(payload or "").strip()
+    return value or SURFACE_POLICY_FILE_DEFAULT
 
 
 def _to_bool(value: Any, default: bool = False) -> bool:
@@ -134,9 +148,9 @@ def _normalize_surfaces(raw: Any) -> list[str]:
     return out
 
 
-def _resolve_policy_file_path() -> str | None:
+def _resolve_policy_file_path(env=None) -> str | None:
     explicit = str(os.environ.get("SCENE_DELIVERY_POLICY_FILE") or "").strip()
-    rel_path = explicit or SURFACE_POLICY_FILE_DEFAULT
+    rel_path = explicit or _surface_policy_default_file(env)
     candidates = [
         rel_path,
         os.path.join("/mnt/e/sc-backend-odoo", rel_path),
@@ -151,8 +165,8 @@ def _resolve_policy_file_path() -> str | None:
     return None
 
 
-def _load_surface_policy_payload_from_file() -> dict:
-    path = _resolve_policy_file_path()
+def _load_surface_policy_payload_from_file(env=None) -> dict:
+    path = _resolve_policy_file_path(env)
     if not path:
         return {}
     try:
@@ -175,8 +189,8 @@ def _load_surface_policy_payload_from_file() -> dict:
     return normalized
 
 
-def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
-    payload = _load_surface_policy_payload_from_file()
+def _load_surface_policy_from_file(env=None) -> dict[str, dict[str, set[str]]]:
+    payload = _load_surface_policy_payload_from_file(env)
     surfaces = payload.get("surfaces") if isinstance(payload.get("surfaces"), dict) else {}
     out = {}
     for surface_key, policy in surfaces.items():
@@ -195,16 +209,16 @@ def _load_surface_policy_from_file() -> dict[str, dict[str, set[str]]]:
     return out
 
 
-def _resolve_default_surface_from_file() -> str:
-    payload = _load_surface_policy_payload_from_file()
+def _resolve_default_surface_from_file(env=None) -> str:
+    payload = _load_surface_policy_payload_from_file(env)
     raw = payload.get("default_surface") if isinstance(payload, dict) else ""
     value = _normalize_surface(raw)
     return value if value and value != "default" else ""
 
 
-def _select_surface_policy(surface: str) -> dict:
+def _select_surface_policy(surface: str, env=None) -> dict:
     key = _normalize_surface(surface)
-    file_policy_map = _load_surface_policy_from_file()
+    file_policy_map = _load_surface_policy_from_file(env)
     file_policy = file_policy_map.get(key) if isinstance(file_policy_map, dict) else None
     if isinstance(file_policy, dict):
         nav_allowlist = set(file_policy.get("nav_allowlist") or set())
@@ -217,14 +231,16 @@ def _select_surface_policy(surface: str) -> dict:
                 "nav_allowlist": nav_allowlist,
                 "deep_link_allowlist": deep_link_allowlist,
             }
+    builtin_nav_allowlist = _builtin_surface_nav_allowlist(env)
     nav_allowlist = {
         str(item or "").strip()
-        for item in (BUILTIN_SURFACE_NAV_ALLOWLIST.get(key) or set())
+        for item in (builtin_nav_allowlist.get(key) or set())
         if str(item or "").strip()
     }
+    builtin_deep_link_allowlist = _builtin_surface_deep_link_allowlist(env)
     deep_link_allowlist = {
         str(item or "").strip()
-        for item in (BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST.get(key) or ())
+        for item in (builtin_deep_link_allowlist.get(key) or ())
         if str(item or "").strip()
     }
     if not nav_allowlist and not deep_link_allowlist:
@@ -280,8 +296,8 @@ def resolve_delivery_policy_runtime(env, params: dict | None) -> dict:
     if not surface:
         surface = _coerce_surface_input(os.environ.get("SCENE_DELIVERY_SURFACE"))
     if not surface:
-        file_default = _resolve_default_surface_from_file() if bool(enabled) else ""
-        surface = file_default or (SURFACE_POLICY_CONSTRUCTION_PM_V1 if bool(enabled) else "default")
+        file_default = _resolve_default_surface_from_file(env) if bool(enabled) else ""
+        surface = file_default or (_surface_policy_default_name(env) if bool(enabled) else "default")
 
     runtime_env = str(os.environ.get("ENV") or "dev").strip().lower() or "dev"
     return {
@@ -306,7 +322,7 @@ def filter_delivery_scenes(
     excluded = []
     reason_counts = {}
     normalized_surface = _normalize_surface(surface)
-    surface_policy = _select_surface_policy(normalized_surface)
+    surface_policy = _select_surface_policy(normalized_surface, env=env)
 
     def _exclude(scene_code: str, reason_code: str):
         safe_reason = reason_code if reason_code in ALLOWED_REASON_CODES else REASON_SCENE_INVALID

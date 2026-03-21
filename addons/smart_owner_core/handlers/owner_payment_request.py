@@ -7,7 +7,7 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 class _BaseOwnerPaymentRequestHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     ACL_MODE = "explicit_check"
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
 
     def _build_response(self, action: str) -> dict:
         params = self.params if isinstance(self.params, dict) else {}
@@ -56,7 +56,7 @@ class OwnerPaymentRequestApproveHandler(_BaseOwnerPaymentRequestHandler):
     INTENT_TYPE = "owner.payment.request.approve"
     DESCRIPTION = "Approve owner payment request"
     VERSION = "0.1.0"
-    REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_finance_approver"]
 
     def handle(self, payload=None, ctx=None):
         return self._build_response("approve")
