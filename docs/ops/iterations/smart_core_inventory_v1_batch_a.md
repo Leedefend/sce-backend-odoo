@@ -28,6 +28,11 @@
 | `addons/smart_core/core/ui_base_contract_asset_producer.py` | minimal ui-base fallback | 资产缺失兜底契约 | 待审→已治理 | 去除 `project.project` / `projects.intake` 业务兜底，改通用 fallback | `smart_core` |
 | `addons/smart_core/core/ui_base_contract_asset_repository.py` | minimal ui-base fallback | 资产仓储兜底契约 | 待审→已治理 | 同上，去除业务模型硬编码 | `smart_core` |
 | `addons/smart_core/core/action_target_schema.py` | action target default | 通用 action 目标解析 | 待审→已治理 | 默认目标改为 `workspace.home/portal.dashboard`，不绑定行业场景 | `smart_core` |
+| `addons/smart_core/handlers/file_upload.py` | file upload allowlist | 上传模型白名单 | 待审→已治理 | 平台默认通用模型，行业模型白名单改为扩展 hook 注入 | `smart_core` + 扩展模块 |
+| `addons/smart_core/handlers/file_download.py` | file download allowlist | 下载模型白名单 | 待审→已治理 | 同上，改为扩展 hook 注入 | `smart_core` + 扩展模块 |
+| `addons/smart_core/handlers/api_data_write.py` | data write allowlist | 模型字段白名单写入 | 待审→已治理 | 平台默认通用 allowlist，行业映射由扩展提供 | `smart_core` + 扩展模块 |
+| `addons/smart_core/handlers/api_data_unlink.py` | data unlink allowlist | 模型删除白名单 | 待审→已治理 | 平台默认通用模型，行业删除白名单由扩展提供 | `smart_core` + 扩展模块 |
+| `addons/smart_core/core/scene_delivery_policy.py` | surface policy | 交付面策略/白名单 | 待审→已治理 | 内建 construction 策略迁移为扩展注入（名称/文件/白名单） | `smart_core` + 扩展模块 |
 | `addons/smart_core/handlers/system_init.py` | system.init | 平台启动契约聚合 | 保留（带治理） | extension facts 合并曾绑定特定模块名；本批改为通用 namespaced 合并 | `smart_core` |
 | `addons/smart_core/handlers/scene_package.py` | scene package handler | 场景包治理入口 | 待审→已治理 | 由扩展 hook 提供 service class，平台层不再直接导入建设模块 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
 | `addons/smart_core/handlers/scene_packages_installed.py` | scene package installed | 场景包清单查询 | 待审→已治理 | 同上，改为扩展注入 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
@@ -39,4 +44,4 @@
 
 - 已完成：`identity / capability / nav adapter / system.init ext_facts` 的平台层去行业硬编码。
 - 已冻结：平台层通过 extension hooks 获取行业映射与能力，不再直接导入建设行业实现。
-- 待下一批：按同样模式治理 `tests` 中的行业示例依赖（不影响运行时边界）。
+- 待下一批：按同样模式治理 `tests` 中的行业示例依赖（不影响运行时边界），并继续评估 `workspace_home_contract_builder` 的行业语义下沉拆分。

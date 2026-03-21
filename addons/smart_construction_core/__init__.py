@@ -23,4 +23,12 @@ from .core_extension import (  # noqa: F401
     smart_core_server_action_window_map,
     smart_core_critical_scene_target_overrides,
     smart_core_critical_scene_target_route_overrides,
+    smart_core_file_upload_allowed_models,
+    smart_core_file_download_allowed_models,
+    smart_core_api_data_write_allowlist,
+    smart_core_api_data_unlink_allowed_models,
+    smart_core_surface_nav_allowlist,
+    smart_core_surface_deep_link_allowlist,
+    smart_core_surface_policy_default_name,
+    smart_core_surface_policy_file_default,
 )
