@@ -670,6 +670,10 @@
   - `make verify.smart_core.minimum_surface.owner_startup_smoke`
 - Regression-D (same-route residency behavior for app shell open):
   - `make verify.smart_core.minimum_surface.same_route_guard`
+- Regression-E (minimum-surface app selection order independence):
+  - `make verify.smart_core.minimum_surface.order_regression_guard`
+- Regression-F (app.open fallback when first feature is not openable):
+  - `make verify.smart_core.minimum_surface.app_open_regression_guard`
 - Aggregate:
   - `make verify.smart_core.minimum_surface`
 
