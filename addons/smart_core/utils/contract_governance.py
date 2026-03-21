@@ -218,6 +218,19 @@ _FORM_ACTION_READONLY_KEYWORDS = (
 )
 _FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
 _FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
+
+
+def _governance_primary_model(data: dict) -> str:
+    governance = _as_dict(data.get("governance"))
+    head = _as_dict(data.get("head"))
+    permissions = _as_dict(data.get("permissions"))
+    return _safe_text(
+        governance.get("primary_model")
+        or data.get("governance_primary_model")
+        or head.get("model")
+        or data.get("model")
+        or permissions.get("model")
+    )
 _FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
 _FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
 _FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
@@ -309,7 +322,7 @@ def _contains_demo_marker(value: Any) -> bool:
     text = _safe_text(value).lower()
     if not text:
         return False
-    return any(marker in text for marker in ("demo", "showcase", "smart_construction_demo"))
+    return any(marker in text for marker in ("demo", "showcase", "domain_demo"))
 
 
 def _has_demo_semantics(item: dict) -> bool:
@@ -341,7 +354,7 @@ def _normalized_tags_for_item(item: dict) -> list[str]:
     if "internal" in key or "internal" in code or "internal" in name:
         tags.add("internal")
     combined = f"{key} {code} {name} {target_text}"
-    if "showcase" in combined or "demo" in combined or "smart_construction_demo" in combined:
+    if "showcase" in combined or "demo" in combined or "domain_demo" in combined:
         tags.add("demo")
     return sorted(tags)
 
@@ -709,7 +722,8 @@ def _apply_user_surface_policies(data: dict) -> None:
     if view_type in {"form"}:
         filters_primary_max = 0
         actions_primary_max = 3
-    if model == "project.project":
+    primary_model = _governance_primary_model(data)
+    if model and primary_model and model == primary_model:
         filters_primary_max = min(filters_primary_max, 4)
         actions_primary_max = min(actions_primary_max, 3)
     data["surface_policies"] = {
@@ -802,7 +816,8 @@ def _is_project_form_contract(data: dict) -> bool:
     has_form_view = isinstance(views.get("form"), dict)
     if not view_type and has_form_view:
         view_type = "form"
-    if model != "project.project":
+    primary_model = _governance_primary_model(data)
+    if not primary_model or model != primary_model:
         return False
     if has_form_view:
         return "form" in view_type if view_type else True
@@ -823,7 +838,8 @@ def _is_project_kanban_contract(data: dict) -> bool:
     view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
     if not view_type and isinstance(views.get("kanban"), dict):
         view_type = "kanban"
-    return model == "project.project" and "kanban" in view_type
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model and model == primary_model and "kanban" in view_type)
 
 
 def _is_form_contract(data: dict) -> bool:
