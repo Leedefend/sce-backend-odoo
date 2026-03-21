@@ -674,6 +674,8 @@
   - `make verify.smart_core.minimum_surface.order_regression_guard`
 - Regression-F (app.open fallback when first feature is not openable):
   - `make verify.smart_core.minimum_surface.app_open_regression_guard`
+- Regression-G (platform-only nav isolation; sidebar must not leak industry scenes):
+  - `make verify.smart_core.minimum_surface.nav_isolation_guard`
 - Aggregate:
   - `make verify.smart_core.minimum_surface`
 

@@ -1,5 +1,6 @@
 import { config } from '../config';
 import { useSessionStore } from '../stores/session';
+import { resolveActiveDb } from '../services/dbContext';
 
 type UnknownObject = Record<string, unknown>;
 
@@ -110,7 +111,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   headers.set('x-tenant', config.tenant);
 
   // Delivery hardening: never fallback to sc_demo implicitly.
-  const dbHeader = String(config.odooDb || '').trim();
+  const dbHeader = resolveActiveDb(String(config.odooDb || '').trim());
   if (dbHeader) {
     headers.set('X-Odoo-DB', dbHeader);
   }

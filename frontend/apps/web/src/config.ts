@@ -1,3 +1,5 @@
+import { resolveActiveDb } from './services/dbContext';
+
 const appEnv = String(import.meta.env.VITE_APP_ENV ?? 'dev').trim();
 const envDb = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
 const isLocalHost = typeof window !== 'undefined'
@@ -23,7 +25,7 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  odooDb: runtimeDb || localBlockedEnvDb || enforcedDb || localDefaultDb,
+  odooDb: resolveActiveDb(runtimeDb || localBlockedEnvDb || enforcedDb || localDefaultDb),
 };
 
 // C1: 在开发模式下打印环境变量

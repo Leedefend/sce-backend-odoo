@@ -70,10 +70,95 @@ _logger = logging.getLogger(__name__)
 CONTRACT_VERSION = "1.0.0"
 API_VERSION = "v1"
 
+_INDUSTRY_EXTENSION_MODULES = (
+    "smart_construction_core",
+    "smart_construction_scene",
+    "smart_construction_portal",
+    "smart_construction_demo",
+)
+
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
+
+
+def _is_any_module_installed(env, module_names: List[str]) -> bool:
+    safe_names = [str(name or "").strip() for name in (module_names or []) if str(name or "").strip()]
+    if not safe_names:
+        return False
+    try:
+        count = env["ir.module.module"].sudo().search_count([
+            ("name", "in", safe_names),
+            ("state", "=", "installed"),
+        ])
+        return bool(count)
+    except Exception:
+        return False
+
+
+def _is_platform_minimum_surface_mode(env) -> bool:
+    return not _is_any_module_installed(env, list(_INDUSTRY_EXTENSION_MODULES))
+
+
+def _build_platform_minimum_nav_contract() -> dict:
+    workspace_leaf = {
+        "key": "scene:workspace.home",
+        "label": "工作台",
+        "title": "工作台",
+        "menu_id": None,
+        "children": [],
+        "scene_key": "workspace.home",
+        "meta": {
+            "scene_key": "workspace.home",
+            "action_type": "scene.contract",
+            "scene_source": "platform_minimum_surface",
+        },
+    }
+    group_node = {
+        "key": "group:role_primary",
+        "label": "我的场景",
+        "title": "我的场景",
+        "menu_id": None,
+        "children": [workspace_leaf],
+        "meta": {
+            "group_key": "role_primary",
+            "scene_source": "platform_minimum_surface",
+        },
+    }
+    root_node = {
+        "key": "root:scene_contract",
+        "label": "场景导航",
+        "title": "场景导航",
+        "menu_id": None,
+        "children": [group_node],
+        "meta": {
+            "scene_source": "platform_minimum_surface",
+            "menu_xmlid": "scene.contract.root",
+        },
+    }
+    default_route = {
+        "menu_id": None,
+        "scene_key": "workspace.home",
+        "route": "/",
+        "reason": "platform_minimum_surface",
+    }
+    return {
+        "source": "platform_minimum_surface",
+        "nav": [root_node],
+        "default_route": default_route,
+        "meta": {
+            "platform_minimum_surface": True,
+            "scene_count": 1,
+            "scene_input_count": 1,
+            "excluded_scene_count": 0,
+            "candidate_count": 1,
+            "group_count": 1,
+            "remaining_group_count": 0,
+            "remaining_hidden": False,
+            "policy_applied": False,
+        },
+    }
 
 
 def _merge_extension_facts(data: dict) -> None:
@@ -376,7 +461,26 @@ class SystemInitHandler(BaseIntentHandler):
 
         # -------- 2) 导航（净化 + 指纹）--------
         p_nav = SystemInitNavRequestBuilder.build(params, scene)
-        nav_data, nav_versions = NavDispatcher(env, su_env).build_nav(p_nav)
+        try:
+            nav_data, nav_versions = NavDispatcher(env, su_env).build_nav(p_nav)
+        except KeyError as exc:
+            if "app.menu.config" not in str(exc):
+                raise
+            _logger.warning(
+                "system.init: app.menu.config missing, fallback to minimal nav surface trace=%s db=%s",
+                trace_id,
+                env.cr.dbname,
+            )
+            nav_data = {
+                "nav": [],
+                "defaultRoute": {"menu_id": None},
+                "feature_flags": {"ai_enabled": True},
+            }
+            nav_versions = {
+                "menu": 1,
+                "fingerprint": "fallback-no-app-menu-config",
+                "nav_source": "fallback_minimal",
+            }
 
         nav_tree_raw = nav_data.get("nav") or []
         nav_tree = NavTreeCleaner().clean(nav_tree_raw)
@@ -572,9 +676,35 @@ class SystemInitHandler(BaseIntentHandler):
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
 
-        landing_scene_key = "portal.dashboard"
-        if isinstance(role_surface, dict):
-            landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip() or landing_scene_key
+        platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
+        if platform_minimum_surface_mode:
+            minimum_nav_contract = _build_platform_minimum_nav_contract()
+            data["nav_legacy"] = data.get("nav") or []
+            data["nav_contract"] = minimum_nav_contract
+            data["nav"] = minimum_nav_contract.get("nav") or []
+            minimum_default_route = {
+                "menu_id": None,
+                "scene_key": "workspace.home",
+                "route": "/",
+                "reason": "platform_minimum_surface",
+            }
+            data["default_route"] = minimum_default_route
+            if isinstance(minimum_nav_contract, dict):
+                minimum_nav_contract["default_route"] = dict(minimum_default_route)
+                nav_contract_meta = minimum_nav_contract.get("meta")
+                if isinstance(nav_contract_meta, dict):
+                    nav_contract_meta["platform_minimum_surface"] = True
+            if isinstance(data.get("nav_meta"), dict):
+                data["nav_meta"]["platform_minimum_surface"] = True
+                data["nav_meta"]["platform_minimum_reason"] = "industry_modules_absent"
+                data["nav_meta"]["nav_source"] = "platform_minimum_surface"
+
+        default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}
+        landing_scene_key = str(default_route_payload.get("scene_key") or "").strip()
+        if not landing_scene_key and isinstance(role_surface, dict):
+            landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip()
+        if not landing_scene_key:
+            landing_scene_key = "workspace.home" if platform_minimum_surface_mode else "portal.dashboard"
         data["workspace_home_ref"] = {
             "intent": "ui.contract",
             "scene_key": landing_scene_key,

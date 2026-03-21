@@ -72,6 +72,15 @@
                 required
               />
             </label>
+            <label>
+              {{ pageText('db_label', '数据库') }}
+              <input
+                v-model="dbName"
+                autocomplete="off"
+                :placeholder="pageText('db_placeholder', '请输入数据库名（如 sc_minimal）')"
+                :disabled="loading"
+              />
+            </label>
             <p
               v-if="pageSectionEnabled('error', true) && pageSectionTagIs('error', 'section') && error"
               class="error"
@@ -98,6 +107,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { resolveActiveDb } from '../services/dbContext';
+import { config } from '../config';
+import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 
 const router = useRouter();
 const route = useRoute();
@@ -113,6 +125,7 @@ const pageGlobalActions = pageContract.globalActions;
 
 const username = ref('');
 const password = ref('');
+const dbName = ref(resolveActiveDb(String(config.odooDb || '').trim()));
 const loading = ref(false);
 const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);
@@ -152,9 +165,17 @@ async function onSubmit() {
   error.value = '';
   loading.value = true;
   try {
-    await session.login(username.value, password.value);
+    await session.login(username.value, password.value, dbName.value);
     await session.loadAppInit();
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : session.resolveLandingPath('/');
+    const rawRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : '';
+    const hasWorkspaceHome = Boolean(session.workspaceHome && Object.keys(session.workspaceHome).length > 0);
+    const isLikelyUnboundActionRoute =
+      /^\/(f|a|r)\//.test(rawRedirect)
+      && !/[?&](action_id|menu_id|scene_key|scene)=/.test(rawRedirect);
+    const normalizedRedirect = normalizeLegacyWorkbenchPath(rawRedirect);
+    const redirect = (!hasWorkspaceHome || isLikelyUnboundActionRoute)
+      ? session.resolveLandingPath('/')
+      : (normalizedRedirect || session.resolveLandingPath('/'));
     await router.push(redirect);
   } catch (err) {
     error.value = normalizeLoginError(err);
