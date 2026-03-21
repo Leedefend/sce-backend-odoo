@@ -749,6 +749,28 @@ def _workspace_v1_focus_map(role_code: str) -> List[str]:
     return list(defaults.get(_to_text(role_code).lower(), defaults["owner"]))
 
 
+def _workspace_v1_copy(defaults: Dict[str, str]) -> Dict[str, str]:
+    out = dict(defaults or {})
+    provider = _load_data_provider()
+    if provider is None:
+        return out
+    fn = getattr(provider, "build_v1_copy_overrides", None)
+    if not callable(fn):
+        return out
+    try:
+        payload = fn()
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return out
+    for key, value in payload.items():
+        k = _to_text(key)
+        v = _to_text(value)
+        if k and v:
+            out[k] = v
+    return out
+
+
 def _impact_score(row: Dict[str, Any]) -> int:
     amount_raw = (
         row.get("amount")
@@ -1583,6 +1605,34 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
     priority_model = _to_text(profile.get("priority_model")) or (
         "task_first" if role_code == "pm" else "metric_first" if role_code == "finance" else "role_first"
     )
+    v1_copy = _workspace_v1_copy(
+        {
+            "zone.hero.title": "核心关注",
+            "zone.hero.description": "角色上下文与默认入口。",
+            "zone.today_focus.title": "今日优先事项",
+            "zone.today_focus.description": "先处理行动项，再快速处置风险提醒。",
+            "zone.analysis.title": "项目总体状态",
+            "zone.analysis.description": "关键指标、执行进展与风险动态。",
+            "zone.quick_entries.title": "常用功能",
+            "zone.quick_entries.description": "按业务场景快速进入处理。",
+            "block.hero_record_summary.title": "角色与入口摘要",
+            "block.todo_list_today.title": "今日行动",
+            "block.risk_alert_panel.title": "系统提醒（高优先）",
+            "block.advice_fold.title": "系统建议（补充）",
+            "block.metric_row_core.title": "关键指标",
+            "block.progress_summary_ops.title": "综合进展",
+            "block.activity_feed_risk.title": "风险动态",
+            "block.entry_grid_scene.title": "常用功能",
+            "action.open_landing.label": "打开默认入口",
+            "action.open_my_work.label": "查看全部",
+            "action.open_risk_dashboard.label": "进入风险驾驶舱",
+            "action.open_scene.label": "进入场景",
+            "page.title": "工作台",
+            "page.subtitle": "先处理行动项，再关注风险与总体状态",
+            "page.badge.runtime_ok": "运行正常",
+            "page.action.refresh": "刷新",
+        }
+    )
     mobile_priority = profile.get("mobile_priority") if isinstance(profile.get("mobile_priority"), list) and profile.get("mobile_priority") else ["hero", "today_focus", "analysis"]
 
     zones: List[Dict[str, Any]] = []
@@ -1598,8 +1648,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         zones = [
         {
             "key": "hero",
-            "title": "核心关注",
-            "description": "角色上下文与默认入口。",
+            "title": v1_copy.get("zone.hero.title") or "核心关注",
+            "description": v1_copy.get("zone.hero.description") or "角色上下文与默认入口。",
             "zone_type": "hero",
             "display_mode": "stack",
             "priority": 40,
@@ -1608,7 +1658,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 {
                     "key": "hero_record_summary",
                     "block_type": "record_summary",
-                    "title": "角色与入口摘要",
+                    "title": v1_copy.get("block.hero_record_summary.title") or "角色与入口摘要",
                     "priority": 100,
                     "importance": "critical",
                     "tone": "info",
@@ -1619,15 +1669,15 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "refreshable": True,
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [{"key": "open_landing", "label": "打开默认入口", "intent": "ui.contract"}],
+                    "actions": [{"key": "open_landing", "label": v1_copy.get("action.open_landing.label") or "打开默认入口", "intent": "ui.contract"}],
                     "payload": {"style_variant": "default"},
                 }
             ],
         },
         {
             "key": "today_focus",
-            "title": "今日优先事项",
-            "description": "先处理行动项，再快速处置风险提醒。",
+            "title": v1_copy.get("zone.today_focus.title") or "今日优先事项",
+            "description": v1_copy.get("zone.today_focus.description") or "先处理行动项，再快速处置风险提醒。",
             "zone_type": "primary",
             "display_mode": "grid",
             "priority": 100,
@@ -1636,7 +1686,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 {
                     "key": "todo_list_today",
                     "block_type": "todo_list",
-                    "title": "今日行动",
+                    "title": v1_copy.get("block.todo_list_today.title") or "今日行动",
                     "priority": 98,
                     "importance": "critical",
                     "tone": "warning",
@@ -1647,13 +1697,13 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "refreshable": True,
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [{"key": "open_my_work", "label": "查看全部", "intent": "ui.contract"}],
+                    "actions": [{"key": "open_my_work", "label": v1_copy.get("action.open_my_work.label") or "查看全部", "intent": "ui.contract"}],
                     "payload": {"item_layout": "card", "max_items": 4},
                 },
                 {
                     "key": "risk_alert_panel",
                     "block_type": "alert_panel",
-                    "title": "系统提醒（高优先）",
+                    "title": v1_copy.get("block.risk_alert_panel.title") or "系统提醒（高优先）",
                     "priority": 97,
                     "importance": "critical",
                     "tone": "danger",
@@ -1664,13 +1714,13 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "refreshable": True,
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}],
+                    "actions": [{"key": "open_risk_dashboard", "label": v1_copy.get("action.open_risk_dashboard.label") or "进入风险驾驶舱", "intent": "ui.contract"}],
                     "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 3},
                 },
                 {
                     "key": "advice_fold",
                     "block_type": "accordion_group",
-                    "title": "系统建议（补充）",
+                    "title": v1_copy.get("block.advice_fold.title") or "系统建议（补充）",
                     "priority": 40,
                     "importance": "low",
                     "tone": "warning",
@@ -1688,8 +1738,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         },
         {
             "key": "analysis",
-            "title": "项目总体状态",
-            "description": "关键指标、执行进展与风险动态。",
+            "title": v1_copy.get("zone.analysis.title") or "项目总体状态",
+            "description": v1_copy.get("zone.analysis.description") or "关键指标、执行进展与风险动态。",
             "zone_type": "secondary",
             "display_mode": "grid",
             "priority": 80,
@@ -1698,7 +1748,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 {
                     "key": "metric_row_core",
                     "block_type": "metric_row",
-                    "title": "关键指标",
+                    "title": v1_copy.get("block.metric_row_core.title") or "关键指标",
                     "priority": 80,
                     "importance": "medium",
                     "tone": "neutral",
@@ -1715,7 +1765,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 {
                     "key": "progress_summary_ops",
                     "block_type": "progress_summary",
-                    "title": "综合进展",
+                    "title": v1_copy.get("block.progress_summary_ops.title") or "综合进展",
                     "priority": 70,
                     "importance": "medium",
                     "tone": "info",
@@ -1732,7 +1782,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 {
                     "key": "activity_feed_risk",
                     "block_type": "activity_feed",
-                    "title": "风险动态",
+                    "title": v1_copy.get("block.activity_feed_risk.title") or "风险动态",
                     "priority": 60,
                     "importance": "medium",
                     "tone": "info",
@@ -1750,8 +1800,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         },
         {
             "key": "quick_entries",
-            "title": "常用功能",
-            "description": "按业务场景快速进入处理。",
+            "title": v1_copy.get("zone.quick_entries.title") or "常用功能",
+            "description": v1_copy.get("zone.quick_entries.description") or "按业务场景快速进入处理。",
             "zone_type": "supporting",
             "display_mode": "grid",
             "priority": 60,
@@ -1760,7 +1810,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 {
                     "key": "entry_grid_scene",
                     "block_type": "entry_grid",
-                    "title": "常用功能",
+                    "title": v1_copy.get("block.entry_grid_scene.title") or "常用功能",
                     "priority": 65,
                     "importance": "medium",
                     "tone": "neutral",
@@ -1771,7 +1821,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "refreshable": True,
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [{"key": "open_scene", "label": "进入场景", "intent": "ui.contract"}],
+                    "actions": [{"key": "open_scene", "label": v1_copy.get("action.open_scene.label") or "进入场景", "intent": "ui.contract"}],
                     "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
                 },
             ],
@@ -1811,8 +1861,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         "scene_key": _workspace_scene("dashboard"),
         "page": {
             "key": "portal.dashboard",
-            "title": "工作台",
-            "subtitle": "先处理行动项，再关注风险与总体状态",
+            "title": v1_copy.get("page.title") or "工作台",
+            "subtitle": v1_copy.get("page.subtitle") or "先处理行动项，再关注风险与总体状态",
             "page_type": "workspace",
             "intent": "ui.contract",
             "scene_key": _workspace_scene("dashboard"),
@@ -1821,8 +1871,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
             "priority_model": priority_model,
             "status": "ready",
             "breadcrumbs": [],
-            "header": {"badges": [{"label": "运行正常", "tone": "success"}]},
-            "global_actions": [{"key": "refresh", "label": "刷新", "intent": "api.data"}],
+            "header": {"badges": [{"label": v1_copy.get("page.badge.runtime_ok") or "运行正常", "tone": "success"}]},
+            "global_actions": [{"key": "refresh", "label": v1_copy.get("page.action.refresh") or "刷新", "intent": "api.data"}],
             "filters": [],
             "context": {"role_code": source_role_code},
         },
