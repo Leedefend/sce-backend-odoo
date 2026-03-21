@@ -24,6 +24,7 @@ from ..utils.reason_codes import (
     REASON_UNSUPPORTED_SOURCE,
     failure_meta_for_reason,
 )
+from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 
@@ -44,7 +45,15 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_UNLINK"
 
-    ALLOWED_MODELS = {"project.task"}
+    ALLOWED_MODELS = {"res.partner"}
+
+    def _allowed_models(self) -> set[str]:
+        payload = call_extension_hook_first(self.env, "smart_core_api_data_unlink_allowed_models", self.env)
+        if isinstance(payload, (list, tuple, set)):
+            values = {str(item).strip() for item in payload if str(item).strip()}
+            if values:
+                return values
+        return set(self.ALLOWED_MODELS)
 
     def _err(self, code: int, message: str, reason_code: str):
         return {
@@ -155,7 +164,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         model = self._get_model(params)
         if not model:
             return self._err(400, "缺少参数 model", REASON_MISSING_PARAMS)
-        if model not in self.ALLOWED_MODELS:
+        if model not in self._allowed_models():
             return self._err(403, f"模型不允许删除: {model}", REASON_UNSUPPORTED_SOURCE)
         if model not in self.env:
             return self._err(404, f"未知模型: {model}", REASON_NOT_FOUND)

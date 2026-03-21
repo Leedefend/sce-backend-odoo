@@ -121,6 +121,48 @@ SERVER_ACTION_WINDOW_MAP = {
     "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
 }
 
+FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+API_DATA_WRITE_ALLOWLIST = {
+    "project.project": ["name", "description", "date_start"],
+    "project.task": ["name", "description", "date_deadline", "project_id"],
+}
+API_DATA_UNLINK_ALLOWED_MODELS = ["project.task"]
+
+SURFACE_NAV_ALLOWLIST = {
+    "construction_pm_v1": [
+        "project.management",
+        "projects.dashboard",
+        "projects.ledger",
+        "projects.intake",
+        "my_work.workspace",
+    ]
+}
+SURFACE_DEEP_LINK_ALLOWLIST = {
+    "construction_pm_v1": [
+        "contract.center",
+        "cost.budget_alloc",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.project_progress",
+        "data.dictionary",
+        "finance.center",
+        "finance.operating_metrics",
+        "finance.payment_ledger",
+        "finance.payment_requests",
+        "finance.settlement_orders",
+        "finance.treasury_ledger",
+        "config.project_cost_code",
+        "risk.monitor",
+        "task.center",
+    ]
+}
+SURFACE_POLICY_DEFAULT_NAME = "construction_pm_v1"
+SURFACE_POLICY_DEFAULT_FILE = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
+
 CRITICAL_SCENE_TARGET_OVERRIDES = {
     "projects.list",
     "projects.detail",
@@ -576,6 +618,46 @@ def smart_core_get_schema_version(env):
 def smart_core_server_action_window_map(env):
     del env
     return dict(SERVER_ACTION_WINDOW_MAP)
+
+
+def smart_core_file_upload_allowed_models(env):
+    del env
+    return list(FILE_UPLOAD_ALLOWED_MODELS)
+
+
+def smart_core_file_download_allowed_models(env):
+    del env
+    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
+
+
+def smart_core_api_data_write_allowlist(env):
+    del env
+    return {str(model): list(fields) for model, fields in API_DATA_WRITE_ALLOWLIST.items()}
+
+
+def smart_core_api_data_unlink_allowed_models(env):
+    del env
+    return list(API_DATA_UNLINK_ALLOWED_MODELS)
+
+
+def smart_core_surface_nav_allowlist(env):
+    del env
+    return {str(surface): list(codes) for surface, codes in SURFACE_NAV_ALLOWLIST.items()}
+
+
+def smart_core_surface_deep_link_allowlist(env):
+    del env
+    return {str(surface): list(codes) for surface, codes in SURFACE_DEEP_LINK_ALLOWLIST.items()}
+
+
+def smart_core_surface_policy_default_name(env):
+    del env
+    return SURFACE_POLICY_DEFAULT_NAME
+
+
+def smart_core_surface_policy_file_default(env):
+    del env
+    return SURFACE_POLICY_DEFAULT_FILE
 
 
 def smart_core_critical_scene_target_overrides(env):

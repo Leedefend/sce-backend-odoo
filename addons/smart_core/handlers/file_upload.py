@@ -9,6 +9,7 @@ from typing import Any, Dict
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 
@@ -27,8 +28,16 @@ class FileUploadHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
 
-    ALLOWED_MODELS = {"project.project", "project.task"}
+    ALLOWED_MODELS = {"res.partner"}
     MAX_BYTES = 5 * 1024 * 1024
+
+    def _allowed_models(self):
+        payload = call_extension_hook_first(self.env, "smart_core_file_upload_allowed_models", self.env)
+        if isinstance(payload, (list, tuple, set)):
+            values = {str(item).strip() for item in payload if str(item).strip()}
+            if values:
+                return values
+        return set(self.ALLOWED_MODELS)
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
@@ -54,7 +63,7 @@ class FileUploadHandler(BaseIntentHandler):
 
         if not model:
             return self._err(400, "缺少参数 model")
-        if model not in self.ALLOWED_MODELS:
+        if model not in self._allowed_models():
             return self._err(403, f"模型不允许上传: {model}")
         if not res_id:
             return self._err(400, "缺少参数 res_id")
