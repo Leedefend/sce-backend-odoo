@@ -38,15 +38,26 @@ class AppOpenHandler(BaseIntentHandler):
 
         app_id = payload.get("app")
         feature_key = payload.get("feature")
-        if not app_id or not feature_key:
-            raise ValueError("missing param: app / feature")
+        if not app_id:
+            app_id = "workspace"
+
+        if app_id == "workspace" and not feature_key:
+            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
         app = next((a for a in APP_DEFS if a["id"] == app_id), None)
         if not app:
-            raise ValueError(f"unknown app: {app_id}")
+            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
+
+        if not feature_key:
+            first_feature = next((x for x in app.get("features", []) if isinstance(x, dict) and x.get("key")), None)
+            if first_feature:
+                feature_key = first_feature.get("key")
         f = next((x for x in app.get("features", []) if x["key"] == feature_key), None)
         if not f:
-            raise ValueError(f"unknown feature: {app_id}:{feature_key}")
+            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
         # 权限二次校验
         need = set(f.get("required_permissions") or [])
