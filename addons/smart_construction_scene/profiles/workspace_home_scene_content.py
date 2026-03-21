@@ -478,6 +478,14 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
     }
 
 
+def build_v1_zone_order() -> Dict[str, List[str]]:
+    return {
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
+        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+    }
+
+
 def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     role = _to_text(role_code).lower()
     audience_map = {
