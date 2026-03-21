@@ -4,6 +4,37 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List
 
 
+def build_scene_aliases() -> Dict[str, str]:
+    return {
+        "default": "workspace.home",
+        "dashboard": "portal.dashboard",
+        "project_list": "projects.list",
+        "project_management": "project.management",
+        "execution": "projects.execution",
+        "operation_overview": "operation.overview",
+        "risk_center": "risk.center",
+        "task_center": "task.center",
+        "cost_center": "cost.project_boq",
+        "finance_center": "finance.center",
+    }
+
+
+def resolve_scene_by_source(source_key: str) -> str:
+    aliases = build_scene_aliases()
+    text = _to_text(source_key).lower()
+    if "risk" in text or "风险" in text:
+        return aliases["risk_center"]
+    if "task" in text or "任务" in text:
+        return aliases["task_center"]
+    if "cost" in text or "boq" in text or "成本" in text:
+        return aliases["cost_center"]
+    if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
+        return aliases["finance_center"]
+    if "project" in text or "项目" in text:
+        return aliases["project_list"]
+    return aliases["project_management"]
+
+
 def _to_text(value: Any) -> str:
     text = str(value or "").strip()
     return text
