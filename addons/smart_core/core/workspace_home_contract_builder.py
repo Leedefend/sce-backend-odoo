@@ -65,7 +65,7 @@ def _workspace_scene_aliases() -> Dict[str, str]:
                 pass
     return {
         "default": "workspace.home",
-        "dashboard": "portal.dashboard",
+        "dashboard": "workspace.home",
         "project_list": "workspace.list",
         "project_management": "workspace.management",
         "execution": "workspace.execution",
@@ -81,6 +81,19 @@ def _workspace_scene(name: str) -> str:
     aliases = _workspace_scene_aliases()
     key = str(name or "").strip().lower()
     return aliases.get(key) or aliases.get("default") or "workspace.home"
+
+
+def _resolve_workspace_keyword_overrides(data: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(data, dict):
+        return {}
+    direct_payload = data.get("workspace_keyword_overrides")
+    if isinstance(direct_payload, dict):
+        return direct_payload
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    ext_payload = ext_facts.get("workspace_keyword_overrides")
+    if isinstance(ext_payload, dict):
+        return ext_payload
+    return {}
 
 
 def _workspace_layout_texts(defaults: Dict[str, str]) -> Dict[str, str]:
@@ -384,7 +397,7 @@ def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
             return resolver(action_key, page_key)
     except Exception:
         pass
-    fallback_scene = str(page_key or "").strip().lower() or "portal.dashboard"
+    fallback_scene = str(page_key or "").strip().lower() or "workspace.home"
     return {"kind": "scene.key", "scene_key": fallback_scene}
 
 
@@ -542,8 +555,19 @@ def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[s
     return collections
 
 
-def _provider_token_set(hook_name: str, defaults: Iterable[str]) -> Tuple[str, ...]:
+def _provider_token_set(
+    hook_name: str,
+    defaults: Iterable[str],
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> Tuple[str, ...]:
     base = tuple(_to_text(item).lower() for item in (defaults or []) if _to_text(item))
+    override_bucket = keyword_overrides.get("token_sets") if isinstance(keyword_overrides, dict) else {}
+    if isinstance(override_bucket, dict):
+        override_tokens = override_bucket.get(hook_name)
+        if isinstance(override_tokens, (list, tuple, set)):
+            normalized_override = tuple(_to_text(item).lower() for item in override_tokens if _to_text(item))
+            if normalized_override:
+                return normalized_override
     provider = _load_data_provider()
     if provider is None:
         return base
@@ -560,7 +584,12 @@ def _provider_token_set(hook_name: str, defaults: Iterable[str]) -> Tuple[str, .
     return normalized or base
 
 
-def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[str, Any]) -> bool:
+def _is_risk_semantic_action(
+    source_key: str,
+    row: Dict[str, Any],
+    action: Dict[str, Any],
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> bool:
     source_text = _to_text(source_key).lower()
     status_text = _to_text(action.get("status") or row.get("status") or row.get("state") or row.get("severity") or row.get("level")).lower()
     title_text = _to_text(action.get("title") or row.get("title") or row.get("name") or row.get("label")).lower()
@@ -593,11 +622,21 @@ def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[
         "成本",
         "合同",
         "延期",
-    ))
+    ), keyword_overrides=keyword_overrides)
     return any(token in merged for token in risk_tokens)
 
 
-def _route_scene_by_source(source_key: str) -> str:
+def _route_scene_by_source(source_key: str, keyword_overrides: Dict[str, Any] | None = None) -> str:
+    text = _to_text(source_key).lower()
+    override_routes = keyword_overrides.get("source_scene_routes") if isinstance(keyword_overrides, dict) else {}
+    if isinstance(override_routes, dict):
+        for token, target in override_routes.items():
+            token_text = _to_text(token).lower()
+            target_text = _to_text(target)
+            if not token_text or not target_text:
+                continue
+            if token_text in text:
+                return _workspace_scene(target_text)
     provider = _load_data_provider()
     if provider is not None:
         fn = getattr(provider, "resolve_scene_by_source", None)
@@ -608,7 +647,6 @@ def _route_scene_by_source(source_key: str) -> str:
                     return resolved
             except Exception:
                 pass
-    text = _to_text(source_key).lower()
     if "risk" in text or "风险" in text:
         return _workspace_scene("risk_center")
     if "task" in text or "任务" in text:
@@ -616,10 +654,10 @@ def _route_scene_by_source(source_key: str) -> str:
     if "cost" in text or "boq" in text or "成本" in text:
         return _workspace_scene("cost_center")
     if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
-        return _workspace_scene("finance_center")
+        return _workspace_scene("default")
     if "project" in text or "项目" in text:
         return _workspace_scene("project_list")
-    return _workspace_scene("project_management")
+    return _workspace_scene("default")
 
 
 def _parse_deadline(value: Any) -> datetime | None:
@@ -803,7 +841,15 @@ def _impact_score(row: Dict[str, Any]) -> int:
     return min(40, score)
 
 
-def _urgency_score(row: Dict[str, Any], title: str, source_key: str, status_text: str, role_code: str = "", source_kind: str = "business") -> int:
+def _urgency_score(
+    row: Dict[str, Any],
+    title: str,
+    source_key: str,
+    status_text: str,
+    role_code: str = "",
+    source_kind: str = "business",
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> int:
     profile = _role_ranking_profile(role_code)
     severity_weight = _to_int(profile.get("severity_weight") or 0)
     deadline_weight = _to_int(profile.get("deadline_weight") or 0)
@@ -813,8 +859,16 @@ def _urgency_score(row: Dict[str, Any], title: str, source_key: str, status_text
 
     score = 0
     merged = f"{status_text} {title} {_to_text(source_key)}".lower()
-    critical_tokens = _provider_token_set("build_critical_status_tokens", ("critical", "urgent", "overdue", "严重", "紧急", "逾期", "高"))
-    warning_tokens = _provider_token_set("build_warning_status_tokens", ("warning", "high", "关注", "预警", "待处理"))
+    critical_tokens = _provider_token_set(
+        "build_critical_status_tokens",
+        ("critical", "urgent", "overdue", "严重", "紧急", "逾期", "高"),
+        keyword_overrides=keyword_overrides,
+    )
+    warning_tokens = _provider_token_set(
+        "build_warning_status_tokens",
+        ("warning", "high", "关注", "预警", "待处理"),
+        keyword_overrides=keyword_overrides,
+    )
     if any(token in merged for token in critical_tokens):
         score += severity_weight
     elif any(token in merged for token in warning_tokens):
@@ -847,15 +901,30 @@ def _urgency_score(row: Dict[str, Any], title: str, source_key: str, status_text
     return score
 
 
-def _to_business_action(source_key: str, row: Dict[str, Any], index: int, role_code: str = "", source_kind: str = "business") -> Dict[str, Any]:
+def _to_business_action(
+    source_key: str,
+    row: Dict[str, Any],
+    index: int,
+    role_code: str = "",
+    source_kind: str = "business",
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
     title = _to_text(row.get("title") or row.get("name") or row.get("label") or row.get("display_name"))
     if not title:
         title = f"待处理事项 {index + 1}"
     description = _to_text(row.get("description") or row.get("summary") or row.get("hint") or "进入场景继续处理业务")
-    scene_key = _to_text(row.get("scene_key") or row.get("scene") or _route_scene_by_source(source_key))
+    scene_key = _to_text(
+        row.get("scene_key")
+        or row.get("scene")
+        or _route_scene_by_source(source_key, keyword_overrides=keyword_overrides)
+    )
     route = _to_text(row.get("route")) or f"/s/{scene_key}"
     status_text = _to_text(row.get("status") or row.get("state") or row.get("level") or row.get("severity")).lower()
-    urgent_keywords = _provider_token_set("build_urgent_keywords", ("urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高"))
+    urgent_keywords = _provider_token_set(
+        "build_urgent_keywords",
+        ("urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高"),
+        keyword_overrides=keyword_overrides,
+    )
     is_urgent = any(word in status_text for word in urgent_keywords) or _is_urgent_capability(title, source_key)
     urgency_score = _urgency_score(
         row=row,
@@ -864,6 +933,7 @@ def _to_business_action(source_key: str, row: Dict[str, Any], index: int, role_c
         status_text=status_text,
         role_code=role_code,
         source_kind=source_kind,
+        keyword_overrides=keyword_overrides,
     )
     impact_score = _impact_score(row)
     return {
@@ -887,7 +957,11 @@ def _to_business_action(source_key: str, row: Dict[str, Any], index: int, role_c
     }
 
 
-def _build_business_today_actions(data: Dict[str, Any], role_code: str = "") -> List[Dict[str, Any]]:
+def _build_business_today_actions(
+    data: Dict[str, Any],
+    role_code: str = "",
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
     collections = _extract_business_collections(data)
     candidates: List[Dict[str, Any]] = []
     preferred_sources = [
@@ -910,7 +984,16 @@ def _build_business_today_actions(data: Dict[str, Any], role_code: str = "") -> 
     for source_key in ordered_sources:
         rows = collections.get(source_key, [])
         for idx, row in enumerate(rows[:6]):
-            candidates.append(_to_business_action(source_key, row, idx, role_code=role_code, source_kind="business"))
+            candidates.append(
+                _to_business_action(
+                    source_key,
+                    row,
+                    idx,
+                    role_code=role_code,
+                    source_kind="business",
+                    keyword_overrides=keyword_overrides,
+                )
+            )
     candidates.sort(key=lambda item: (-_to_int(item.get("urgency_score")), 0 if item.get("status") == "urgent" else 1))
     dedup: List[Dict[str, Any]] = []
     seen: set = set()
@@ -991,8 +1074,17 @@ def _build_capability_today_actions(ready_caps: Iterable[Dict[str, Any]], role_c
     return actions
 
 
-def _build_today_actions(data: Dict[str, Any], ready_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
-    business_actions = _build_business_today_actions(data, role_code=role_code)
+def _build_today_actions(
+    data: Dict[str, Any],
+    ready_caps: Iterable[Dict[str, Any]],
+    role_code: str = "",
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
+    business_actions = _build_business_today_actions(
+        data,
+        role_code=role_code,
+        keyword_overrides=keyword_overrides,
+    )
     if len(business_actions) >= 4:
         return business_actions[:4]
 
@@ -1066,15 +1158,32 @@ def _build_business_visibility_diagnosis(data: Dict[str, Any], role_code: str) -
     }
 
 
-def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, Any]], role_code: str = "") -> List[Dict[str, Any]]:
+def _build_risk_actions(
+    data: Dict[str, Any],
+    locked_caps: Iterable[Dict[str, Any]],
+    role_code: str = "",
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
     collections = _extract_business_collections(data)
     preferred = ["risk_actions", "risk", "risk_events", "alerts", "today_actions"]
     actions: List[Dict[str, Any]] = []
     for source_key in preferred:
         rows = collections.get(source_key, [])
         for idx, row in enumerate(rows[:6]):
-            action = _to_business_action(source_key, row, idx, role_code=role_code, source_kind="business")
-            if not _is_risk_semantic_action(source_key, row, action):
+            action = _to_business_action(
+                source_key,
+                row,
+                idx,
+                role_code=role_code,
+                source_kind="business",
+                keyword_overrides=keyword_overrides,
+            )
+            if not _is_risk_semantic_action(
+                source_key,
+                row,
+                action,
+                keyword_overrides=keyword_overrides,
+            ):
                 continue
             action["scene_key"] = _workspace_scene("risk_center")
             action["route"] = f"/s/{action['scene_key']}"
@@ -1095,8 +1204,20 @@ def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, An
             for idx, row in enumerate(signal_payload[:6] if isinstance(signal_payload, list) else []):
                 if not isinstance(row, dict):
                     continue
-                action = _to_business_action("today_actions", row, idx, role_code=role_code, source_kind="business")
-                if not _is_risk_semantic_action("today_actions", row, action):
+                action = _to_business_action(
+                    "today_actions",
+                    row,
+                    idx,
+                    role_code=role_code,
+                    source_kind="business",
+                    keyword_overrides=keyword_overrides,
+                )
+                if not _is_risk_semantic_action(
+                    "today_actions",
+                    row,
+                    action,
+                    keyword_overrides=keyword_overrides,
+                ):
                     continue
                 action["scene_key"] = _workspace_scene("risk_center")
                 action["route"] = f"/s/{action['scene_key']}"
@@ -1193,27 +1314,27 @@ def _build_metric_sets(ready_count: int, locked_count: int, preview_count: int, 
             "tone": _tone_from_level(_metric_level(today_action_count, 3, 6)),
             "progress": "pending" if today_action_count > 0 else "completed",
             "delta": "行动优先",
-            "hint": "基于任务、审批、风险等业务动作聚合。",
+            "hint": "基于任务、待办、关键事项等动作聚合。",
         },
         {
             "key": "biz.risk_actions",
-            "label": "高优先风险事项",
+            "label": "高优先关键事项",
             "value": str(risk_action_count),
             "level": _metric_level(risk_action_count, 1, 3),
             "tone": _tone_from_level(_metric_level(risk_action_count, 1, 3)),
             "progress": "blocked" if risk_action_count > 0 else "running",
-            "delta": "风险跟进",
-            "hint": "需要优先处理的风险提醒与异常事项。",
+            "delta": "事项跟进",
+            "hint": "需要优先处理的关键提醒与异常事项。",
         },
         {
             "key": "biz.project_scope",
-            "label": "在管业务场景数",
+            "label": "可用业务场景数",
             "value": str(scene_count),
             "level": _metric_level(scene_count, 3, 12),
             "tone": _tone_from_level(_metric_level(scene_count, 3, 12)),
             "progress": "running",
             "delta": "业务覆盖",
-            "hint": "当前账号可直接进入的业务场景覆盖范围。",
+            "hint": "当前账号可直接进入的场景覆盖范围。",
         },
         {
             "key": "biz.execution_pressure",
@@ -1223,7 +1344,7 @@ def _build_metric_sets(ready_count: int, locked_count: int, preview_count: int, 
             "tone": _tone_from_level(_metric_level((today_action_count * 10) + (risk_action_count * 20), 30, 70)),
             "progress": "running",
             "delta": "综合评估",
-            "hint": "根据今日行动量与高优先风险计算的运行负载指标。",
+            "hint": "根据今日行动量与高优先事项计算的运行负载指标。",
         },
     ]
     platform_metrics = [
@@ -1334,8 +1455,8 @@ def _v1_page_profile(role_code: str) -> Dict[str, Any]:
             if isinstance(value, dict) and value:
                 return value
     audience_map = {
-        "pm": ["project_manager", "construction_manager"],
-        "finance": ["finance_manager", "construction_manager"],
+        "pm": ["internal_user", "reviewer"],
+        "finance": ["internal_user", "reviewer"],
         "owner": ["owner", "executive"],
     }
     audience = audience_map.get(role_code, ["owner"])
@@ -1398,7 +1519,7 @@ def _v1_action_schema(role_code: str) -> Dict[str, Any]:
     specs: Dict[str, Dict[str, str]] = {
         "open_landing": {"label": "打开默认入口", "intent": "ui.contract"},
         "open_my_work": {"label": "查看全部", "intent": "ui.contract"},
-        "open_risk_dashboard": {"label": "进入风险驾驶舱", "intent": "ui.contract"},
+        "open_risk_dashboard": {"label": "进入重点事项", "intent": "ui.contract"},
         "open_scene": {"label": "进入场景", "intent": "ui.contract"},
         "refresh": {"label": "刷新", "intent": "api.data"},
     }
@@ -1422,7 +1543,7 @@ def _v1_action_schema(role_code: str) -> Dict[str, Any]:
         actions[action_key] = {
             "label": label,
             "intent": intent,
-            "target": _shared_action_target(action_key, "portal.dashboard"),
+            "target": _shared_action_target(action_key, "workspace.home"),
             "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
         }
     return {"actions": actions}
@@ -1860,7 +1981,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         "contract_version": "page_orchestration_v1",
         "scene_key": _workspace_scene("dashboard"),
         "page": {
-            "key": "portal.dashboard",
+            "key": "workspace.home",
             "title": v1_copy.get("page.title") or "工作台",
             "subtitle": v1_copy.get("page.subtitle") or "先处理行动项，再关注风险与总体状态",
             "page_type": "workspace",
@@ -1968,8 +2089,19 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         partial_notice = ""
     role_source_code = _resolve_role_source_code(data)
     role_code = _normalize_role_code(data)
-    today_actions = _build_today_actions(data, ready_caps, role_code=role_code)
-    risk_actions = _build_risk_actions(data, locked_caps, role_code=role_code)
+    keyword_overrides = _resolve_workspace_keyword_overrides(data)
+    today_actions = _build_today_actions(
+        data,
+        ready_caps,
+        role_code=role_code,
+        keyword_overrides=keyword_overrides,
+    )
+    risk_actions = _build_risk_actions(
+        data,
+        locked_caps,
+        role_code=role_code,
+        keyword_overrides=keyword_overrides,
+    )
     today_business_count = len([row for row in today_actions if _to_text(row.get("source")) == "business"])
     risk_business_count = len([row for row in risk_actions if _to_text(row.get("source")) == "business"])
     urgent_risk_count = len([row for row in risk_actions if _to_text(row.get("status")) == "urgent"])
@@ -1992,8 +2124,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         or _to_int(extraction_stats.get("risk_actions_business")) > 0
     )
     scene_contract_core: Dict[str, Any] = {
-        "scene": {"key": "portal.dashboard", "page": "portal.dashboard"},
-        "page": {"key": "portal.dashboard", "title": "工作台", "route": "/"},
+        "scene": {"key": "workspace.home", "page": "workspace.home"},
+        "page": {"key": "workspace.home", "title": "工作台", "route": "/"},
         "nav_ref": {
             "active_scene_key": _workspace_scene("dashboard"),
             "active_menu_key": f"scene:{_workspace_scene('dashboard')}",
@@ -2045,8 +2177,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                     "blocks": list(row.get("blocks") or []),
                 }
             contract = engine_fn(
-                scene_hint={"key": "portal.dashboard", "page": "portal.dashboard"},
-                page_hint={"key": "portal.dashboard", "title": "工作台", "route": "/"},
+                scene_hint={"key": "workspace.home", "page": "workspace.home"},
+                page_hint={"key": "workspace.home", "title": "工作台", "route": "/"},
                 zone_specs=zone_specs,
                 built_zones=built_zones,
                 record={"hero": {"title": "工作台"}},
@@ -2140,19 +2272,19 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "today_actions.subtitle": "先处理高优先事项，再进入对应场景。",
                 "today_actions.count_prefix": "待处理",
                 "today_actions.coming_soon_action": "即将开放",
-                "risk.aria_label": "关键告警区",
-                "risk.title": "关键告警",
-                "risk.subtitle": "快速识别当前重点告警。",
-                "risk.bucket.red": "严重 ⚠",
-                "risk.bucket.amber": "关注 ⏳",
+                "risk.aria_label": "关键事项区",
+                "risk.title": "关键事项",
+                "risk.subtitle": "快速识别当前重点事项。",
+                "risk.bucket.red": "高优先 ⚠",
+                "risk.bucket.amber": "处理中 ⏳",
                 "risk.bucket.green": "正常 ✓",
-                "risk.trend_title": "告警趋势（7/30 天）",
-                "risk.sources_title": "告警来源分布",
-                "risk.actions_title": "告警待处理清单",
+                "risk.trend_title": "事项趋势（7/30 天）",
+                "risk.sources_title": "事项来源分布",
+                "risk.actions_title": "事项待处理清单",
                 "risk.actions.detail": "看详情",
                 "risk.actions.assign": "分派",
                 "risk.actions.close": "关闭",
-                "risk.actions.approve": "发起审批",
+                "risk.actions.approve": "提交处理",
                 "ops.title": "运行总体状态",
                 "ops.aria_label": "运行总体状态区",
                 "ops.compare.title": "关键指标对比",
@@ -2173,9 +2305,9 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             }),
             "actions": _workspace_layout_actions({
                 "todo_default": "查看详情",
-                "todo_approval": "处理审批事项",
+                "todo_approval": "处理待办事项",
                 "todo_contract": "查看异常事项",
-                "todo_risk": "处理告警事项",
+                "todo_risk": "处理关键事项",
                 "todo_change": "确认变更事项",
                 "todo_overdue": "处理逾期任务",
             }),

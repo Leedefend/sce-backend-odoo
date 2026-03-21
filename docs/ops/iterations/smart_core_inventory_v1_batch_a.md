@@ -54,6 +54,9 @@
 | `addons/smart_core/handlers/scene_governance.py` | scene governance handler | 场景治理入口 | 待审→已治理 | 同上，改为扩展注入 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
 | `docs/ops/smart_core_platform_minimum_surface_v1.md` | 平台最小能力面冻结文档 | 平台最小能力面定义与评审基线 | 新增（第十一阶段） | 固化 owner-only/minimal 部署下 `smart_core` 的必须能力面与 guard/smoke 验收链路 | `docs/ops` |
 | `scripts/verify/smart_core_minimum_*` | minimum-surface guards/smokes | handler/contract/startup/same-route 验证 | 新增（第十一阶段） | 将最小能力面转成可执行验证，防止 boundary 迁移回归 | `scripts/verify` |
+| `addons/smart_core/handlers/system_init.py` | platform-only nav isolation | 最小启动面导航合同强制收口 | 待审→已治理（第十二阶段） | 在无行业模块时强制 `nav/nav_contract/default_route` 仅指向 `workspace.home`，阻断行业菜单泄漏 | `smart_core` |
+| `scripts/verify/smart_core_platform_minimum_nav_isolation_guard.py` | nav isolation guard | 平台-only 侧栏导航隔离守卫 | 新增（第十二阶段） | 固化“平台模式不得出现行业 scene key”的可执行回归门禁 | `scripts/verify` |
+| `scripts/verify/smart_core_*minimum*`（请求层） | DB pinning | 最小面守卫请求数据库绑定 | 待审→已治理（第十二阶段） | 增加 `?db` + `X-Odoo-DB` 绑定，消除默认库漂移导致的假失败 | `scripts/verify` |
 | `addons/smart_core/security/*.xml` | 平台安全组 | 平台治理权限 | 保留 | 已完成 canonical 组治理 | `smart_core` |
 | `addons/smart_core/tools/intent_write_guard.py` | verify guard | 写入意图守卫 | 待审 | 规则扫描路径包含建设模块，需抽象为可配置扫描目标 | `smart_core` |
 
@@ -61,5 +64,6 @@
 
 - 已完成：`identity / capability / nav adapter / system.init ext_facts` 的平台层去行业硬编码。
 - 已冻结：平台层通过 extension hooks 获取行业映射与能力，不再直接导入建设行业实现。
-- 已冻结：`smart_core` 最小能力面（文档 + Guard-A/B + Smoke-C + Regression-D）已形成可执行校验入口（`make verify.smart_core.minimum_surface`）。
+- 已冻结：`smart_core` 最小能力面（文档 + Guard-A/B + Smoke-C + Regression-D/E/F/G）已形成可执行校验入口（`make verify.smart_core.minimum_surface`）。
+- 已冻结：平台-only 验证链路在 `sc_platform_core` 下具备强 DB 绑定，不再出现默认数据库漂移导致的误判。
 - 待下一批：按同样模式治理 `tests` 中的行业示例依赖，并继续拆分 `contract_governance.py` 的 project-form 专项规则为可配置 profile（当前函数命名与字段清单仍偏历史语义）。
