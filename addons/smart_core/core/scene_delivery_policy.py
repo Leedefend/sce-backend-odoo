@@ -315,6 +315,7 @@ def filter_delivery_scenes(
     contract_mode: str = "user",
     runtime_env: str = "dev",
     enabled: bool = False,
+    env=None,
 ) -> dict:
     scene_items = [item for item in (scenes or []) if isinstance(item, dict)]
     delivery_scenes = []
