@@ -618,6 +618,23 @@ def _parse_deadline(value: Any) -> datetime | None:
 
 
 def _role_ranking_profile(role_code: str) -> Dict[str, int]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_role_ranking_profile", None)
+        if callable(fn):
+            try:
+                payload = fn(_to_text(role_code).lower())
+                if isinstance(payload, dict):
+                    return {
+                        "severity_weight": _to_int(payload.get("severity_weight") or 0),
+                        "deadline_weight": _to_int(payload.get("deadline_weight") or 0),
+                        "pending_weight": _to_int(payload.get("pending_weight") or 0),
+                        "source_weight": _to_int(payload.get("source_weight") or 0),
+                        "impact_weight": _to_int(payload.get("impact_weight") or 0),
+                    }
+            except Exception:
+                pass
+
     role = _to_text(role_code).lower()
     if role == "finance":
         return {
@@ -642,6 +659,28 @@ def _role_ranking_profile(role_code: str) -> Dict[str, int]:
         "source_weight": 12,
         "impact_weight": 20,
     }
+
+
+def _workspace_expected_collections(role_code: str) -> List[str]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_expected_collections", None)
+        if callable(fn):
+            try:
+                payload = fn(_to_text(role_code).lower())
+                if isinstance(payload, list):
+                    normalized = [_to_text(item) for item in payload if _to_text(item)]
+                    if normalized:
+                        return normalized
+            except Exception:
+                pass
+
+    default_by_role = {
+        "pm": ["today_actions", "alerts", "tasks"],
+        "finance": ["today_actions", "alerts", "records"],
+        "owner": ["today_actions", "alerts", "tasks"],
+    }
+    return default_by_role.get(_to_text(role_code).lower(), ["today_actions", "alerts"])
 
 
 def _impact_score(row: Dict[str, Any]) -> int:
@@ -914,12 +953,7 @@ def _build_business_visibility_diagnosis(data: Dict[str, Any], role_code: str) -
     collections = _extract_business_collections(data)
     collection_counts = {str(key): len(rows) for key, rows in collections.items()}
     total_rows = sum(collection_counts.values())
-    expected_by_role = {
-        "pm": ["project_actions", "risk_actions", "tasks", "project_tasks"],
-        "finance": ["payment_requests", "risk_actions", "project_actions"],
-        "owner": ["project_actions", "risk_actions", "payment_requests"],
-    }
-    expected = expected_by_role.get(role_code, ["project_actions", "risk_actions"])
+    expected = _workspace_expected_collections(role_code)
     missing_expected = [key for key in expected if _to_int(collection_counts.get(key)) <= 0]
 
     likely_cause = "healthy"

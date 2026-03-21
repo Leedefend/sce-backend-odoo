@@ -168,6 +168,43 @@ def build_ops_meta(*, defaults: Dict[str, str], has_business_signal: bool) -> Di
     return payload
 
 
+def build_role_ranking_profile(role_code: str) -> Dict[str, int]:
+    role = _to_text(role_code).lower()
+    if role == "finance":
+        return {
+            "severity_weight": 55,
+            "deadline_weight": 45,
+            "pending_weight": 12,
+            "source_weight": 10,
+            "impact_weight": 22,
+        }
+    if role == "owner":
+        return {
+            "severity_weight": 65,
+            "deadline_weight": 35,
+            "pending_weight": 8,
+            "source_weight": 8,
+            "impact_weight": 28,
+        }
+    return {
+        "severity_weight": 60,
+        "deadline_weight": 40,
+        "pending_weight": 15,
+        "source_weight": 12,
+        "impact_weight": 20,
+    }
+
+
+def build_expected_collections(role_code: str) -> List[str]:
+    role = _to_text(role_code).lower()
+    expected_by_role = {
+        "pm": ["project_actions", "risk_actions", "tasks", "project_tasks"],
+        "finance": ["payment_requests", "risk_actions", "project_actions"],
+        "owner": ["project_actions", "risk_actions", "payment_requests"],
+    }
+    return list(expected_by_role.get(role, ["project_actions", "risk_actions"]))
+
+
 def resolve_scene_by_source(source_key: str) -> str:
     aliases = build_scene_aliases()
     text = _to_text(source_key).lower()
