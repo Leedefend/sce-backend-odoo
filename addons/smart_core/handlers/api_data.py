@@ -22,6 +22,7 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 _NOT_NULL_COLUMN_RE = re.compile(r'null value in column "([^"]+)"', re.IGNORECASE)
@@ -532,7 +533,7 @@ class ApiDataHandler(BaseIntentHandler):
                     if name in defaults and defaults.get(name) is not None:
                         safe_vals[name] = defaults.get(name)
 
-        self._apply_project_create_fallbacks(env_model, safe_vals)
+        self._apply_create_fallbacks(env_model, safe_vals)
         return safe_vals
 
     def _selection_options(self, env_model, field_name: str) -> List[str]:
@@ -567,15 +568,8 @@ class ApiDataHandler(BaseIntentHandler):
             return True
         return False
 
-    def _apply_project_create_fallbacks(self, env_model, safe_vals: Dict[str, Any]) -> None:
-        if env_model._name != "project.project":
-            return
-        # 交付环境兜底：避免项目创建暴露技术字段导致 NOT NULL 中断
-        self._fill_selection_fallback(env_model, safe_vals, "privacy_visibility", preferred="followers")
-        self._fill_selection_fallback(env_model, safe_vals, "rating_status", preferred="stage")
-        self._fill_selection_fallback(env_model, safe_vals, "last_update_status", preferred="to_define")
-        self._fill_selection_fallback(env_model, safe_vals, "rating_status_period", preferred="monthly")
-        # 交付环境可见性兜底：确保新建项目默认对创建人可见，且落在当前公司域内。
+    def _apply_create_fallbacks(self, env_model, safe_vals: Dict[str, Any]) -> None:
+        # 通用兜底：创建用户/公司/激活状态。
         if "user_id" in env_model._fields and safe_vals.get("user_id") in (None, False, ""):
             uid = int(getattr(env_model.env, "uid", 0) or 0)
             if uid > 0:
@@ -589,6 +583,18 @@ class ApiDataHandler(BaseIntentHandler):
                 pass
         if "active" in env_model._fields and safe_vals.get("active") in (None, ""):
             safe_vals["active"] = True
+
+        # 扩展兜底：行业模块可以注入模型级 fallback，不在平台层硬编码。
+        payload = call_extension_hook_first(
+            env_model.env,
+            "smart_core_create_field_fallbacks",
+            env_model.env,
+            env_model._name,
+        )
+        if isinstance(payload, dict):
+            selection_defaults = payload.get("selection_defaults") if isinstance(payload.get("selection_defaults"), dict) else {}
+            for field_name, preferred in selection_defaults.items():
+                self._fill_selection_fallback(env_model, safe_vals, str(field_name), preferred=str(preferred or ""))
 
     def _extract_not_null_column(self, error: Exception) -> str:
         message = str(error or "")

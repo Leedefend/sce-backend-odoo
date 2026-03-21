@@ -40,6 +40,10 @@
 | `addons/smart_core/core/workspace_home_contract_builder.py` | keyword/state token semantics | 语义关键词与状态词典 | 待审→已治理（第五阶段） | 风险识别 token、紧急/关注状态词典、紧急关键词改为 provider hook-first，平台仅保留通用 fallback | `smart_core`（协议骨架） + 行业 profile（语义实现） |
 | `addons/smart_core/core/workspace_home_contract_builder.py` | orchestration zone/focus priority semantics | 编排分区与焦点优先级 | 待审→已治理（第六阶段） | role_zone_order 与 v1_focus_map 改为 provider hook-first，平台保留默认顺序 fallback | `smart_core`（编排骨架） + 行业 profile（语义实现） |
 | `addons/smart_core/core/workspace_home_contract_builder.py` | orchestration copy semantics | 编排页分区/块标题与页面文案 | 待审→已治理（第七阶段） | `_build_page_orchestration_v1` 中 zone/block/page/action 文案改为 provider hook-first（`build_v1_copy_overrides`） | `smart_core`（编排骨架） + 行业 profile（语义实现） |
+| `addons/smart_core/handlers/api_data.py` | create fallback semantics | 创建兜底字段策略 | 待审→已治理（第八阶段） | 去除平台层 `project.project` 特判，改为通用兜底 + extension hook `smart_core_create_field_fallbacks` | `smart_core`（通用兜底） + 行业扩展（模型特例） |
+| `addons/smart_core/handlers/load_contract.py` | model code mapping semantics | model_code 别名映射 | 待审→已治理（第八阶段） | 去除平台层 project/task 别名硬编码，改为 extension hook `smart_core_model_code_mapping` 注入 | `smart_core`（通用映射骨架） + 行业扩展（映射定义） |
+| `addons/smart_core/core/scene_delivery_policy.py` | surface default semantics | 交付面策略默认值 | 待审→已治理（第八阶段） | 平台默认策略名/allowlist 从 construction 特定降为 workspace 通用值；行业策略继续由扩展注入覆盖 | `smart_core`（通用默认） + 行业扩展（策略覆盖） |
+| `addons/smart_core/core/scene_ready_contract_builder.py` | scene-ready seed action injection | 场景动作种子注入入口 | 待审→已治理（第八阶段，部分） | `_scene_ready_entry` 先读取 provider payload，支持 `default_actions` 与 `skip_pilot_seed`，减少平台层直接场景特判命中 | `smart_core`（注入入口） + scene provider（场景语义） |
 | `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` | workspace scene aliases | 行业工作台场景语义映射 | 保留（行业侧） | 承载行业 scene alias 与 source 语义路由 | `smart_construction_scene` |
 | `addons/smart_core/handlers/system_init.py` | system.init | 平台启动契约聚合 | 保留（带治理） | extension facts 合并曾绑定特定模块名；本批改为通用 namespaced 合并 | `smart_core` |
 | `addons/smart_core/handlers/scene_package.py` | scene package handler | 场景包治理入口 | 待审→已治理 | 由扩展 hook 提供 service class，平台层不再直接导入建设模块 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
@@ -52,4 +56,4 @@
 
 - 已完成：`identity / capability / nav adapter / system.init ext_facts` 的平台层去行业硬编码。
 - 已冻结：平台层通过 extension hooks 获取行业映射与能力，不再直接导入建设行业实现。
-- 待下一批：按同样模式治理 `tests` 中的行业示例依赖（不影响运行时边界），并评估 legacy page_orchestration 的文案与分区标签是否同步 provider 化。
+- 待下一批：按同样模式治理 `tests` 中的行业示例依赖，并完成 `scene_ready_contract_builder` 与 `contract_governance.py` 的行业场景/模型特判下沉（当前仍有残留）。

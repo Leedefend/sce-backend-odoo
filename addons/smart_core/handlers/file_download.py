@@ -16,7 +16,7 @@ _logger = logging.getLogger(__name__)
 class FileDownloadHandler(BaseIntentHandler):
     """
     Intent: file.download
-    - 允许 project.project / project.task 附件下载
+    - 按 allowlist 限定可下载附件 model
     """
 
     INTENT_TYPE = "file.download"

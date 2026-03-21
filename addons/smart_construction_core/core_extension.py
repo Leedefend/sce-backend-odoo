@@ -129,6 +129,22 @@ API_DATA_WRITE_ALLOWLIST = {
 }
 API_DATA_UNLINK_ALLOWED_MODELS = ["project.task"]
 
+MODEL_CODE_MAPPING = {
+    "project": "project.project",
+    "task": "project.task",
+}
+
+CREATE_FIELD_FALLBACKS = {
+    "project.project": {
+        "selection_defaults": {
+            "privacy_visibility": "followers",
+            "rating_status": "stage",
+            "last_update_status": "to_define",
+            "rating_status_period": "monthly",
+        }
+    }
+}
+
 SURFACE_NAV_ALLOWLIST = {
     "construction_pm_v1": [
         "project.management",
@@ -638,6 +654,16 @@ def smart_core_api_data_write_allowlist(env):
 def smart_core_api_data_unlink_allowed_models(env):
     del env
     return list(API_DATA_UNLINK_ALLOWED_MODELS)
+
+
+def smart_core_model_code_mapping(env):
+    del env
+    return dict(MODEL_CODE_MAPPING)
+
+
+def smart_core_create_field_fallbacks(env, model_name):
+    del env
+    return dict(CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
 
 
 def smart_core_surface_nav_allowlist(env):
