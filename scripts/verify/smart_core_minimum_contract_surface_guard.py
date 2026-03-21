@@ -86,10 +86,18 @@ def main() -> int:
         if not apps:
             errors.append("app.catalog: data.apps is empty")
 
+        workspace_app = None
+        for item in apps:
+            if not isinstance(item, dict):
+                continue
+            app_id = str((item.get("meta") or {}).get("app_id") or "").strip() or str(item.get("key") or "").replace("app:", "", 1)
+            if app_id == "workspace":
+                workspace_app = item
+                break
+        if workspace_app is None:
+            errors.append("minimum surface baseline broken: workspace app missing in app.catalog")
+
         app_param = "workspace"
-        if apps:
-            first = apps[0] if isinstance(apps[0], dict) else {}
-            app_param = str((first.get("meta") or {}).get("app_id") or "").strip() or str(first.get("key") or "app:workspace").replace("app:", "", 1)
 
         status, nav_resp = _post(intent_url, token, "app.nav", {"app": app_param})
         _assert_envelope(nav_resp, "app.nav", errors)
