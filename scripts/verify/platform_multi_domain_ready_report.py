@@ -27,7 +27,8 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> tuple[bo
     if status >= 400 or not isinstance(payload, dict) or payload.get("ok") is not True:
         return False, "", f"login failed: {login}"
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
-    token = str(data.get("token") or "").strip()
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    token = str(session.get("token") or data.get("token") or "").strip()
     if not token:
         return False, "", f"token missing: {login}"
     return True, token, ""
