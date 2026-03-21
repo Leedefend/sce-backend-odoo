@@ -66,14 +66,14 @@ def _workspace_scene_aliases() -> Dict[str, str]:
     return {
         "default": "workspace.home",
         "dashboard": "portal.dashboard",
-        "project_list": "projects.list",
-        "project_management": "project.management",
-        "execution": "projects.execution",
-        "operation_overview": "operation.overview",
-        "risk_center": "risk.center",
-        "task_center": "task.center",
-        "cost_center": "cost.project_boq",
-        "finance_center": "finance.center",
+        "project_list": "workspace.list",
+        "project_management": "workspace.management",
+        "execution": "workspace.execution",
+        "operation_overview": "workspace.overview",
+        "risk_center": "workspace.risk",
+        "task_center": "workspace.tasks",
+        "cost_center": "workspace.cost",
+        "finance_center": "workspace.finance",
     }
 
 
@@ -130,8 +130,8 @@ def _workspace_layout_actions(defaults: Dict[str, str]) -> Dict[str, str]:
 def _workspace_hero_payload(*, has_business_signal: bool, gap_level: str, updated_at: str, partial_notice: str) -> Dict[str, Any]:
     defaults = {
         "title": "工作台",
-        "lead": "先做什么、风险在哪、状态如何：围绕今日行动推进业务闭环。",
-        "product_tags": ["业务管理", "经营状态", "风险预警"],
+        "lead": "先做什么、状态如何、下一步去哪：围绕今日行动推进工作闭环。",
+        "product_tags": ["工作协同", "状态洞察", "系统提醒"],
         "updated_at": updated_at,
         "status_notice": partial_notice,
         "status_detail": (
@@ -184,10 +184,10 @@ def _workspace_risk_summary_text(risk_red: int) -> str:
             except Exception:
                 pass
     if risk_red >= 3:
-        return "存在高优先风险，请先处理系统提醒事项。"
+        return "存在高优先告警，请先处理系统提醒事项。"
     if risk_red >= 1:
-        return "存在需要跟进的风险，建议今日内完成处理。"
-    return "当前未出现严重风险，建议保持日常巡检节奏。"
+        return "存在需要跟进的告警，建议今日内完成处理。"
+    return "当前未出现严重告警，建议保持日常巡检节奏。"
 
 
 def _workspace_ops_payload(*, has_business_signal: bool, risk_business_count: int, today_business_count: int) -> Dict[str, Any]:
@@ -1856,35 +1856,35 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "metrics.aria_label": "核心价值区",
                 "today_actions.aria_label": "今日行动",
                 "today_actions.title": "今日行动",
-                "today_actions.subtitle": "先处理高优先事项，再进入对应业务场景。",
+                "today_actions.subtitle": "先处理高优先事项，再进入对应场景。",
                 "today_actions.count_prefix": "待处理",
                 "today_actions.coming_soon_action": "即将开放",
-                "risk.aria_label": "关键风险区",
-                "risk.title": "关键风险",
-                "risk.subtitle": "10 秒识别整体风险态势。",
+                "risk.aria_label": "关键告警区",
+                "risk.title": "关键告警",
+                "risk.subtitle": "快速识别当前重点告警。",
                 "risk.bucket.red": "严重 ⚠",
                 "risk.bucket.amber": "关注 ⏳",
                 "risk.bucket.green": "正常 ✓",
-                "risk.trend_title": "风险趋势（7/30 天）",
-                "risk.sources_title": "风险来源分布",
-                "risk.actions_title": "风险待处理清单",
+                "risk.trend_title": "告警趋势（7/30 天）",
+                "risk.sources_title": "告警来源分布",
+                "risk.actions_title": "告警待处理清单",
                 "risk.actions.detail": "看详情",
                 "risk.actions.assign": "分派",
                 "risk.actions.close": "关闭",
                 "risk.actions.approve": "发起审批",
-                "ops.title": "项目总体状态",
-                "ops.aria_label": "项目总体状态区",
-                "ops.compare.title": "合同履约与产值完成",
-                "ops.compare.contract": "合同额",
-                "ops.compare.output": "累计产值",
-                "ops.kpi.cost_rate": "成本控制率",
-                "ops.kpi.payment_rate": "资金支付率",
-                "ops.kpi.output_trend": "本月产值趋势",
-                "ops.kpi.output_note": "基于当前可见业务数据",
+                "ops.title": "运行总体状态",
+                "ops.aria_label": "运行总体状态区",
+                "ops.compare.title": "关键指标对比",
+                "ops.compare.contract": "指标 A",
+                "ops.compare.output": "指标 B",
+                "ops.kpi.cost_rate": "效率指标",
+                "ops.kpi.payment_rate": "完成指标",
+                "ops.kpi.output_trend": "趋势指标",
+                "ops.kpi.output_note": "基于当前可见运行数据",
                 "advice.title": "系统提醒",
                 "advice.aria_label": "系统提醒",
                 "group_overview.title": "常用功能",
-                "group_overview.subtitle": "按业务域快速进入核心功能。",
+                "group_overview.subtitle": "按分组快速进入核心功能。",
                 "group_overview.capability_count_prefix": "功能数",
                 "group_overview.allow_prefix": "可用",
                 "group_overview.readonly_prefix": "只读",
@@ -1892,9 +1892,9 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             }),
             "actions": _workspace_layout_actions({
                 "todo_default": "查看详情",
-                "todo_approval": "审核付款申请",
-                "todo_contract": "查看合同异常",
-                "todo_risk": "处理风险事项",
+                "todo_approval": "处理审批事项",
+                "todo_contract": "查看异常事项",
+                "todo_risk": "处理告警事项",
                 "todo_change": "确认变更事项",
                 "todo_overdue": "处理逾期任务",
             }),
