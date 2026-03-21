@@ -1,13 +1,17 @@
 <template>
-  <main class="page">
-    <header class="header">
-      <div>
-        <h1>{{ isProjectQuickIntakeMode ? '快速创建项目' : pageTitle }}</h1>
-        <p v-if="isProjectQuickIntakeMode" class="meta">快速创建模式：仅创建项目管理对象，保存后自动进入项目驾驶舱。</p>
+  <LayoutShell :flow="isProjectCreatePage">
+    <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
+      <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
-      </div>
-      <div class="actions">
+      </template>
+      <template #status>
+        <template v-if="isProjectCreatePage">
+          <p class="header-status-item">当前进度：{{ intakeRequiredSummary }}</p>
+          <p class="header-status-item" :class="{ 'header-status-item--danger': intakeMissingSummary !== '无' }">缺少：{{ intakeMissingSummary }}</p>
+        </template>
+      </template>
+      <template #actions>
         <button
           v-for="action in headerActionsVisible"
           :key="`hdr-${action.key}`"
@@ -19,45 +23,36 @@
           {{ action.label }}
         </button>
         <button
-          v-if="isProjectStandardIntakeMode && !recordId"
-          class="primary"
-          :disabled="isStandardCreateDisabled"
-          @click="saveRecord"
-        >
-          {{ normalCreateButtonLabel }}
-        </button>
-        <button
-          v-if="!hasPrimaryHeaderAction && !(isProjectStandardIntakeMode && !recordId)"
+          v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
           class="primary"
           :disabled="isQuickSubmitDisabled"
           @click="saveRecord"
         >
           {{ submitButtonLabel }}
         </button>
-        <!-- compat token: v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson" -->
-        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
-        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
-        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy" @click="reload">重新加载</button>
-      </div>
-    </header>
+        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy" @click="reload">重新加载</button>
+      </template>
+    </PageHeaderTemplate>
 
     <StatusPanel v-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
-    <section v-else class="card">
-      <section v-if="warnings.length" class="block warn">
+    <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
+      <section v-if="warnings.length && !isProjectCreatePage" class="block warn">
         <h3>提示信息</h3>
         <ul>
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
-      <section v-if="strictContractMissingSummary" class="block contract-missing-block">
+      <section v-if="strictContractMissingSummary && !isProjectCreatePage" class="block contract-missing-block">
         <h3>契约缺口提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
 
-      <section v-if="workflowTransitions.length" class="block">
+      <section v-if="workflowTransitions.length && !isProjectCreatePage" class="block">
         <h3>流程操作</h3>
         <div class="chips">
           <button
@@ -73,7 +68,7 @@
         </div>
       </section>
 
-      <section v-if="showSearchFilters && searchFilters.length" class="block">
+      <section v-if="showSearchFilters && searchFilters.length && !isProjectCreatePage" class="block">
         <h3>快捷筛选</h3>
         <div class="chips">
           <button
@@ -90,6 +85,9 @@
       </section>
 
       <section class="form-grid">
+        <div v-if="isProjectCreatePage" class="form-flow-guide">
+          <p class="form-flow-guide-main">只需完成核心信息即可创建项目</p>
+        </div>
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -106,166 +104,52 @@
         <p v-if="onchangeWarnings.length" class="validation-warn">
           {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
         </p>
+        <p v-if="submissionFeedback" class="submission-feedback" :class="`submission-feedback--${submissionFeedback.kind}`">
+          {{ submissionFeedback.message }}
+        </p>
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
-        <section v-for="section in layoutSections" :key="section.key" class="form-section">
-          <h3 class="form-section-title">{{ section.title }}</h3>
-          <div class="form-section-grid">
-            <div v-for="node in visibleSectionFields(section)" :key="node.key" class="field">
-              <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
-              <template v-if="node.readonly">
-                <FieldValue :value="formData[node.name]" :field="node.descriptor" />
-              </template>
-              <template v-else>
-                <input
-                  v-if="fieldType(node.descriptor) === 'boolean'"
-                  :checked="Boolean(formData[node.name])"
-                  class="input-checkbox"
-                  type="checkbox"
-                  @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
-                />
-                <select
-                  v-else-if="fieldType(node.descriptor) === 'selection'"
-                  :value="inputFieldValue(node.name)"
-                  class="input"
-                  @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option v-if="!node.required" value="">请选择</option>
-                  <option v-for="option in node.descriptor?.selection || []" :key="option[0]" :value="option[0]">
-                    {{ option[1] }}
-                  </option>
-                </select>
-                <div v-else-if="fieldType(node.descriptor) === 'many2one'" class="relation-editor">
-                  <select
-                    class="input"
-                    :value="many2oneValue(node.name)"
-                    @change="setMany2oneField(node.name, node.descriptor, ($event.target as HTMLSelectElement).value)"
-                  >
-                    <option value="">请选择</option>
-                    <option
-                      v-for="option in relationOptionsForField(node.name)"
-                      :key="`${node.name}-${option.id}`"
-                      :value="String(option.id)"
-                    >
-                      {{ option.label }}
-                    </option>
-                    <option v-if="relationCreateMode(node.name, node.descriptor) !== 'none'" :value="MANY2ONE_CREATE_OPTION">
-                      {{ relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
-                    </option>
-                  </select>
-                </div>
-                <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
-                  <input
-                    class="input relation-search"
-                    type="text"
-                    :value="relationKeyword(node.name)"
-                    placeholder="搜索并多选..."
-                    @input="setRelationKeyword(node.name, ($event.target as HTMLInputElement).value)"
-                  />
-                  <select
-                    class="input"
-                    multiple
-                    size="6"
-                    :value="relationIds(node.name).map((id) => String(id))"
-                    @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
-                  >
-                    <option
-                      v-for="option in filteredRelationOptions(node.name)"
-                      :key="`${node.name}-${option.id}`"
-                      :value="String(option.id)"
-                    >
-                      {{ option.label }}
-                    </option>
-                  </select>
-                </div>
-                <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
-                  <div class="o2m-toolbar">
-                    <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
-                    <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
-                  </div>
-                  <div class="o2m-list">
-                    <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
-                      <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
-                      <div class="o2m-fields">
-                        <label
-                          v-for="column in one2manyColumns(node.name)"
-                          :key="`${row.key}-${column.name}`"
-                          class="o2m-field"
-                        >
-                          <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
-                          <input
-                            v-if="column.ttype === 'boolean'"
-                            class="input-checkbox"
-                            type="checkbox"
-                            :checked="Boolean(row.values[column.name])"
-                            @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).checked)"
-                          />
-                          <select
-                            v-else-if="column.ttype === 'selection'"
-                            class="input"
-                            :value="String(row.values[column.name] ?? '')"
-                            @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLSelectElement).value)"
-                          >
-                            <option value="">请选择</option>
-                            <option v-for="option in column.selection || []" :key="String(option[0])" :value="String(option[0])">
-                              {{ String(option[1]) }}
-                            </option>
-                          </select>
-                          <input
-                            v-else
-                            class="input"
-                            :type="one2manyColumnInputType(column)"
-                            :value="one2manyColumnDisplayValue(column, row.values[column.name])"
-                            :placeholder="column.label"
-                            @input="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).value)"
-                          />
-                        </label>
-                      </div>
-                      <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
-                      <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
-                        {{ one2manyRowErrors(node.name, row.key).join('；') }}
-                      </p>
-                      <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
-                        {{ one2manyRowHints(node.name, row).join('；') }}
-                      </p>
-                    </div>
-                  </div>
-                  <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
-                    <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
-                    <div class="chips">
-                      <button
-                        v-for="row in removedOne2manyRows(node.name)"
-                        :key="`rm-${row.key}`"
-                        class="chip-btn"
-                        type="button"
-                        :disabled="busy"
-                        @click="restoreOne2manyRow(node.name, row.key)"
-                      >
-                        撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <input
-                  v-else
-                  :value="inputFieldValue(node.name)"
-                  class="input"
-                  :type="fieldInputType(fieldType(node.descriptor))"
-                  @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
-                />
-              </template>
-            </div>
-          </div>
-        </section>
-        <div v-if="hasAdvancedFields" class="layout-divider advanced-toggle">
+        <FormSectionTemplate
+          v-for="section in templateSections"
+          :key="section.key"
+          :title="section.title"
+          :hint="section.hint"
+          :tone="section.tone"
+          :columns="2"
+          :fields="section.fields"
+          @field-change="onTemplateFieldChange"
+        >
+          <template v-if="isProjectCreatePage && section.isAdvanced" #action>
+            <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
+              {{ advancedExpanded ? '收起' : '展开' }}
+            </button>
+          </template>
+          <template #readonly="{ field }">
+            <FieldValue :value="field.value" :field="field.descriptor" />
+          </template>
+          <template #fallback="{ field }">
+            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
+          </template>
+        </FormSectionTemplate>
+        <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
           </button>
         </div>
+
       </section>
 
-      <section v-if="bodyActions.length" class="block">
+      <PageFooterTemplate v-if="isProjectCreatePage" hint="填写完成后点击“创建项目”">
+        <template #default>
+          <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
+          <button class="primary" :disabled="isIntakeCreateDisabled" @click="saveRecord">
+            {{ intakeCreateButtonLabel }}
+          </button>
+        </template>
+      </PageFooterTemplate>
+
+      <section v-if="bodyActions.length && !isProjectCreatePage" class="block">
         <h3>可执行操作</h3>
         <div class="chips">
           <button
@@ -287,7 +171,7 @@
       title="表单上下文"
       :entries="hudEntries"
     />
-  </main>
+  </LayoutShell>
 </template>
 
 <script setup lang="ts">
@@ -296,6 +180,20 @@ import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import LayoutShell from '../components/template/LayoutShell.vue';
+import PageHeaderTemplate from '../components/template/PageHeader.vue';
+import FormSectionTemplate from '../components/template/FormSection.vue';
+import PageFooterTemplate from '../components/template/PageFooter.vue';
+import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
+import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
+import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
+import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
+import { resolveTemplateSectionPresentation } from '../components/template/sectionPresentation.mapper';
+import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
+import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
+import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
+import { createRelationFallbackAdapter } from '../components/template/relationFallback.adapter';
+import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
 import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
@@ -378,6 +276,15 @@ type LayoutSection = {
   fields: LayoutNode[];
 };
 
+type TemplateSectionView = {
+  key: string;
+  title: string;
+  hint: string;
+  tone: 'core' | 'advanced';
+  isAdvanced: boolean;
+  fields: FormSectionFieldSchema[];
+};
+
 type RelationOption = {
   id: number;
   label: string;
@@ -429,6 +336,7 @@ function resolveWorkspaceContextQuery() {
 const status = ref<UiStatus>('loading');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
+const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: string } | null>(null);
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
@@ -517,9 +425,14 @@ const isProjectStandardIntakeMode = computed(() => {
   if (isProjectQuickIntakeMode.value) return false;
   return String(route.query.scene_key || '').trim() === 'projects.intake';
 });
+const isProjectCreatePage = computed(() => {
+  const routeModel = String(route.params.model || '').trim();
+  const routeId = String(route.params.id || '').trim().toLowerCase();
+  return routeModel === 'project.project' && routeId === 'new';
+});
 const isProjectIntakeCreateMode = computed(() => isProjectQuickIntakeMode.value || isProjectStandardIntakeMode.value);
 const intakeAutosaveKey = computed(() => {
-  if (!isProjectIntakeCreateMode.value) return '';
+  if (!isProjectCreatePage.value) return '';
   const mode = isProjectQuickIntakeMode.value ? 'quick' : 'standard';
   const userId = Number(session.user?.id || 0) || 0;
   return `sc:intake:autosave:project.project:${mode}:u${userId}`;
@@ -553,12 +466,82 @@ const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
 
+const intakeRequiredFields = computed(() => {
+  if (!isProjectCreatePage.value) return [];
+  return layoutNodes.value
+    .filter((node) => node.kind === 'field' && node.required && isFieldVisible(node.name))
+    .map((node) => ({ name: node.name, label: node.label || node.name }));
+});
+
+const intakeRequiredReadyCount = computed(() => {
+  if (!isProjectCreatePage.value) return 0;
+  return intakeRequiredFields.value.filter((field) => {
+    const value = formData[field.name];
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (typeof value === 'number') return Number.isFinite(value) && value > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'boolean') return true;
+    return Boolean(value);
+  }).length;
+});
+
+const intakeMissingRequiredLabels = computed(() => {
+  if (!isProjectCreatePage.value) return [];
+  return intakeRequiredFields.value
+    .filter((field) => {
+      const value = formData[field.name];
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string') return value.trim().length === 0;
+      if (typeof value === 'number') return !Number.isFinite(value) || value <= 0;
+      if (Array.isArray(value)) return value.length === 0;
+      return false;
+    })
+    .map((field) => {
+      const label = String(field.label || '').trim();
+      if (label === '名称') return '项目名称';
+      return label;
+    })
+    .slice(0, 5);
+});
+
+const intakeRequiredSummary = computed(() => {
+  if (!isProjectCreatePage.value) return '';
+  const total = intakeRequiredFields.value.length;
+  const done = intakeRequiredReadyCount.value;
+  if (total <= 0) return '当前契约未提供必填字段约束。';
+  return `${done}/${total}`;
+});
+
+const intakeMissingSummary = computed(() => {
+  if (!isProjectCreatePage.value) return '';
+  if (!intakeMissingRequiredLabels.value.length) return '无';
+  return intakeMissingRequiredLabels.value.join('、');
+});
+
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
   return model.value ? `业务表单 · ${model.value}` : '业务表单';
+});
+
+const pageDisplayTitle = computed(() => {
+  if (isProjectCreatePage.value) return '创建项目';
+  return pageTitle.value;
+});
+
+const pageDisplaySubtitle = computed(() => {
+  if (isProjectCreatePage.value) {
+    return '填写核心信息即可完成项目立项';
+  }
+  return '';
+});
+
+const intakeCreateButtonLabel = computed(() => {
+  if (!isProjectCreatePage.value) return '创建项目';
+  return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
 });
 
 const submitButtonLabel = computed(() => {
@@ -590,6 +573,12 @@ const isStandardCreateDisabled = computed(() => {
   if (!canSave.value) return true;
   if (isProjectStandardIntakeMode.value) return !standardCreateReady.value;
   return false;
+});
+
+const isIntakeCreateDisabled = computed(() => {
+  if (!isProjectCreatePage.value) return false;
+  if (isProjectQuickIntakeMode.value) return isQuickSubmitDisabled.value;
+  return isStandardCreateDisabled.value;
 });
 
 function persistIntakeAutosave() {
@@ -1291,6 +1280,9 @@ function relationEntry(descriptor?: FieldDescriptor) {
 function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
   const entry = relationEntry(descriptor);
   if (!entry) return 'none';
+  if (entry.model === 'sc.dictionary' && entry.canCreate) {
+    return 'quick';
+  }
   if (entry.createMode === 'page' && entry.actionId) return 'page';
   if (entry.createMode === 'quick' && entry.canCreate) return 'quick';
   return 'none';
@@ -2062,6 +2054,81 @@ const layoutSections = computed<LayoutSection[]>(() => {
 function visibleSectionFields(section: LayoutSection) {
   return section.fields.filter((node) => isFieldVisible(node.name));
 }
+
+function sectionTemplateFields(section: LayoutSection): FormSectionFieldSchema[] {
+  return buildSectionFieldSchemas(visibleSectionFields(section));
+}
+
+const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
+  resolveFieldType: (descriptor) => fieldType(descriptor) || 'char',
+  resolveRequired: (field) => shouldShowRequiredMark(field as LayoutNode),
+  resolveSpanClass: (field) => resolveFieldSpanClass({
+    fieldName: field.name,
+    fieldType: fieldType(field.descriptor),
+  }),
+  resolveRawValue: (fieldName) => formData[fieldName],
+  resolveMany2oneValue: many2oneValue,
+  normalizeDateInputValue: toDateInputValue,
+  normalizeDatetimeInputValue: toDatetimeInputValue,
+  resolveTextInputValue: inputFieldValue,
+  resolveInputPlaceholder: (label) => resolveInputPlaceholder(label),
+  resolveSelectionOptions: (descriptor) => mapDescriptorSelectionOptions(descriptor),
+  resolveRelationOptions: (fieldName) => mapRelationOptions(relationOptionsForField(fieldName)),
+  resolveRelationCreateMode: (fieldName, descriptor) => relationCreateMode(fieldName, descriptor),
+  many2oneCreateToken: MANY2ONE_CREATE_OPTION,
+});
+
+const templateSections = computed<TemplateSectionView[]>(() => layoutSections.value.map((section) => {
+  const presentation = resolveTemplateSectionPresentation(section, {
+    projectCreateMode: isProjectCreatePage.value,
+  });
+  return {
+    key: section.key,
+    title: presentation.title,
+    hint: presentation.hint,
+    tone: presentation.tone,
+    isAdvanced: presentation.isAdvanced,
+    fields: sectionTemplateFields(section),
+  };
+}));
+
+function onTemplateFieldChange(payload: FormSectionFieldChange) {
+  dispatchTemplateFieldChange(payload, {
+    onBoolean: (name, value) => setBooleanField(name, value),
+    onSelection: (name, value) => setSelectionField(name, value),
+    onMany2one: (name, descriptor, value) => setMany2oneField(name, descriptor, value),
+    onText: (name, value) => setTextField(name, value),
+  });
+}
+
+const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRelationFallbackAdapter({
+  busy: busy.value,
+  showOne2manyErrors: showOne2manyErrors.value,
+  relationKeyword,
+  setRelationKeyword,
+  relationIds,
+  filteredRelationOptions,
+  setRelationMultiField,
+  addOne2manyRow,
+  one2manySummary,
+  visibleOne2manyRows,
+  one2manyRowStateLabel,
+  one2manyColumns,
+  setOne2manyRowField,
+  removeOne2manyRow,
+  one2manyRowErrors,
+  one2manyRowHints,
+  removedOne2manyRows,
+  restoreOne2manyRow,
+  one2manyRowLabel,
+  selectPlaceholder: resolveSelectPlaceholder,
+  one2manyColumnInputType,
+  one2manyColumnDisplayValue,
+  inputFieldValue,
+  fieldInputType,
+  inputPlaceholder: resolveInputPlaceholder,
+  setTextField,
+}));
 
 const contractReadiness = computed<FormContractReadiness>(() => {
   if (!contract.value) {
@@ -2863,8 +2930,15 @@ async function openFilter(filterKey: string) {
   });
 }
 
+async function cancelIntake() {
+  if (!isProjectCreatePage.value) return;
+  const target = session.resolveLandingPath('/');
+  await router.replace({ path: target, query: resolveWorkspaceContextQuery() });
+}
+
 async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (!canSave.value || !model.value) return;
+  submissionFeedback.value = null;
   validationErrors.value = [];
   const standardCreateMode = isProjectStandardIntakeMode.value;
   if (standardCreateMode) {
@@ -2875,6 +2949,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     if (!Number.isFinite(managerId) || managerId <= 0) draftErrors.push('请填写项目经理');
     if (draftErrors.length) {
       validationErrors.value = draftErrors;
+      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
       return;
     }
   }
@@ -2882,6 +2957,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (one2manyIssues.length) {
     showOne2manyErrors.value = true;
     validationErrors.value = one2manyIssues.slice(0, 5);
+    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
     return;
   }
   showOne2manyErrors.value = false;
@@ -2893,6 +2969,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   const scenePrecheckIssues = collectSceneValidationPrecheckErrors(labels);
   if (scenePrecheckIssues.length) {
     validationErrors.value = scenePrecheckIssues;
+    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
     return;
   }
   if (!standardCreateMode) {
@@ -2904,10 +2981,12 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
     if (policyIssues.length) {
       validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
+      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
       return;
     }
     if (issues.length) {
       validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
+      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
       return;
     }
   }
@@ -2936,11 +3015,13 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     }
     if (recordId.value) {
       await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
+      submissionFeedback.value = { kind: 'success', message: '保存成功，已同步最新表单内容。' };
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
     const created = await createRecord({ model: model.value, vals: values });
     if (created?.id) {
+      submissionFeedback.value = { kind: 'success', message: '项目已创建' };
       clearIntakeAutosave();
       const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
@@ -2975,6 +3056,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       });
       return;
     }
+  } catch (err) {
+    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '创建失败，请检查填写内容');
+    validationErrors.value = [message];
+    submissionFeedback.value = { kind: 'error', message: '创建失败，请检查填写内容' };
   } finally {
     busyKind.value = null;
   }
@@ -3049,7 +3134,14 @@ watch(
 <style scoped>
 .page {
   display: grid;
-  gap: 12px;
+  gap: 6px;
+  padding-bottom: 24px;
+}
+
+.page--flow {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 32px;
 }
 
 .header {
@@ -3059,8 +3151,37 @@ watch(
   align-items: flex-start;
 }
 
+.header--flow {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.header-main {
+  display: grid;
+  gap: 0;
+}
+
+.page-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.page-status-line {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.header-main h1 {
+  margin: 0;
+  font-size: 36px;
+  line-height: 1.12;
+}
+
 .meta {
-  margin: 2px 0;
+  margin: 1px 0;
   color: #64748b;
   font-size: 12px;
 }
@@ -3069,16 +3190,58 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+.actions:empty {
+  display: none;
+}
+
+.header-status {
+  display: grid;
+  gap: 4px;
+  margin-left: auto;
+  text-align: right;
+  min-width: 240px;
+  padding-top: 3px;
+}
+
+.header-status-item {
+  margin: 0;
+  font-size: 12px;
+  color: #737b87;
+  line-height: 1.3;
+}
+
+.header-status-item--danger {
+  color: #9a7a3e;
+}
+
+.action-hint {
+  width: 100%;
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  text-align: right;
 }
 
 .card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
+  border: 1px solid #eef0f2;
+  border-radius: 8px;
+  padding: 18px;
   background: #fff;
   max-width: 1360px;
   width: 100%;
   margin: 0 auto;
+}
+
+.card--flow {
+  max-width: 1280px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 .block {
@@ -3108,7 +3271,7 @@ watch(
 
 .block h3 {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .chips {
@@ -3141,27 +3304,27 @@ watch(
 
 .form-grid {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
-.form-section {
+.card--flow .form-grid {
+  max-width: 100%;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.form-flow-guide {
   grid-column: 1 / -1;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px;
-  background: #f8fafc;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-.form-section-title {
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: #1e293b;
-}
-
-.form-section-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
+.form-flow-guide-main {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
 }
 
 .validation-error {
@@ -3176,6 +3339,32 @@ watch(
   margin: 0;
   color: #92400e;
   font-size: 12px;
+}
+
+.submission-feedback {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.submission-feedback--success {
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.submission-feedback--warn {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+
+.submission-feedback--error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
 }
 
 .layout-divider {
@@ -3194,136 +3383,28 @@ watch(
   margin-top: 2px;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.relation-editor {
-  display: grid;
-  gap: 6px;
-}
-
-.o2m-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.o2m-summary {
-  font-size: 12px;
-  color: #475569;
-}
-
-.o2m-list {
-  display: grid;
-  gap: 6px;
-}
-
-.o2m-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 1fr) auto;
-  gap: 6px;
-  align-items: center;
-}
-
-.o2m-row-state {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: 12px;
-  color: #475569;
-}
-
-.o2m-fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 6px;
-}
-
-.o2m-field {
-  display: grid;
-  gap: 4px;
-}
-
-.o2m-removed {
-  display: grid;
-  gap: 4px;
-}
-
-.o2m-row-error {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #b91c1c;
-  font-size: 12px;
-}
-
-.o2m-row-hint {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #92400e;
-  font-size: 12px;
-}
-
-.relation-search {
-  font-size: 12px;
-}
-
-.label {
-  font-size: 12px;
-  color: #334155;
-  font-weight: 600;
-}
-
-.required {
-  color: #b91c1c;
-  margin-left: 2px;
-}
-
-.input {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 8px 10px;
-  min-height: 36px;
-  width: 100%;
-  font-size: 13px;
-}
-
-@media (max-width: 1280px) {
-  .form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 860px) {
-  .header {
-    flex-direction: column;
-  }
   .form-grid {
     grid-template-columns: 1fr;
   }
 }
 
-select.input[multiple] {
-  min-height: 120px;
-}
-
-.input-checkbox {
-  width: 18px;
-  height: 18px;
-}
-
 .ghost,
 .primary {
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 8px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #e5e7eb;
   background: #fff;
+  font-weight: 500;
 }
 
 .primary {
   background: #111827;
   color: #fff;
   border-color: #111827;
+}
+
+.ghost {
+  color: #6b7280;
 }
 </style>

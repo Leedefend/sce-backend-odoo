@@ -138,7 +138,7 @@ class UiContractHandler(BaseIntentHandler):
             else:
                 return self._err(400, "缺少 op/subject 或无法从参数推断（需要 menu_id / action_id / model）")
 
-        if self._should_block_frontend_native_op(op=op, source_mode=source_mode):
+        if self._should_block_frontend_native_op(op=op, source_mode=source_mode, contract_surface=contract_surface):
             return self._err(410, "native ui.contract op is disabled for frontend delivery; use scene-ready contract")
 
         # 上下文透传
@@ -213,8 +213,10 @@ class UiContractHandler(BaseIntentHandler):
         meta_out.setdefault("response_schema_version", "1.0.0")
         return {"ok": True, "data": data or {}, "meta": meta_out}
 
-    def _should_block_frontend_native_op(self, *, op: str, source_mode: str) -> bool:
+    def _should_block_frontend_native_op(self, *, op: str, source_mode: str, contract_surface: str) -> bool:
         if op not in FRONTEND_BLOCKED_NATIVE_OPS:
+            return False
+        if str(contract_surface or "").strip().lower() != "native":
             return False
         if source_mode in INTERNAL_NATIVE_SOURCE_MODES:
             return False
