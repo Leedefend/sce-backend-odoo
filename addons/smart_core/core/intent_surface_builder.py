@@ -55,7 +55,7 @@ class IntentSurfaceBuilder:
         return (not req) or req.issubset(user_xmlids)
 
     def collect(self, env, user) -> Tuple[List[str], Dict[str, dict]]:
-        user_xmlids = IdentityResolver().user_group_xmlids(user)
+        user_xmlids = IdentityResolver(env).user_group_xmlids(user)
         canonical_rows: dict[str, dict] = {}
         alias_rows: dict[str, set[str]] = {}
 

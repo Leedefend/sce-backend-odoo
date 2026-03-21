@@ -42,6 +42,85 @@ ROLE_SURFACE_OVERRIDES = {
     },
 }
 
+ROLE_GROUPS_EXPLICIT = {
+    "executive": {
+        "smart_construction_custom.group_sc_role_executive",
+        "smart_construction_core.group_sc_super_admin",
+        "smart_construction_core.group_sc_cap_config_admin",
+        "base.group_system",
+    },
+    "pm": {
+        "smart_construction_custom.group_sc_role_pm",
+        "smart_construction_custom.group_sc_role_project_manager",
+        "smart_construction_custom.group_sc_role_project_user",
+        "smart_construction_core.group_sc_role_project_manager",
+    },
+    "finance": {
+        "smart_construction_custom.group_sc_role_finance",
+        "smart_construction_custom.group_sc_role_payment_manager",
+        "smart_construction_custom.group_sc_role_payment_user",
+        "smart_construction_custom.group_sc_role_payment_read",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_finance_user",
+    },
+}
+
+ROLE_GROUPS_CAPABILITY_FALLBACK = {
+    "pm": {
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+    },
+    "finance": {
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_finance_manager",
+    },
+}
+
+ROLE_PRECEDENCE = ("executive", "pm", "finance")
+
+NAV_MENU_SCENE_MAP = {
+    "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
+    "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+    "smart_construction_core.menu_sc_project_project": "projects.ledger",
+    "smart_construction_core.menu_sc_project_management_scene": "project.management",
+    "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.menu_sc_root": "projects.list",
+    "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+    "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
+    "smart_construction_core.menu_sc_dictionary": "data.dictionary",
+    "smart_construction_core.menu_payment_request": "finance.payment_requests",
+    "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
+    "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
+    "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
+}
+
+NAV_ACTION_SCENE_MAP = {
+    "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
+    "smart_construction_core.action_project_initiation": "projects.intake",
+    "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
+    "smart_construction_core.action_sc_project_list": "projects.list",
+    "smart_construction_core.action_project_dashboard": "projects.dashboard",
+    "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
+    "smart_construction_core.action_project_dictionary": "data.dictionary",
+    "smart_construction_core.action_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.action_payment_request": "finance.payment_requests",
+    "smart_construction_core.action_payment_request_my": "finance.payment_requests",
+    "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
+    "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
+    "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
+}
+
+NAV_MODEL_VIEW_SCENE_MAP = {
+    ("project.project", "list"): "projects.list",
+    ("project.project", "form"): "projects.intake",
+    ("payment.request", "list"): "finance.payment_requests",
+    ("payment.request", "form"): "finance.payment_requests",
+}
+
+SERVER_ACTION_WINDOW_MAP = {
+    "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
+}
+
 
 def _as_text(value: Any) -> str:
     if isinstance(value, dict):
@@ -369,6 +448,117 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered app.catalog")
     _logger.info("[smart_core_register] registered app.nav")
     _logger.info("[smart_core_register] registered app.open")
+
+
+def smart_core_identity_profile(env):
+    del env
+    return {
+        "role_surface_map": ROLE_SURFACE_OVERRIDES,
+        "role_groups_explicit": ROLE_GROUPS_EXPLICIT,
+        "role_groups_capability_fallback": ROLE_GROUPS_CAPABILITY_FALLBACK,
+        "role_precedence": ROLE_PRECEDENCE,
+    }
+
+
+def smart_core_list_capabilities_for_user(env, user):
+    try:
+        from odoo.addons.smart_construction_core.services.capability_registry import (
+            list_capabilities_for_user as registry_list_capabilities_for_user,
+        )
+    except Exception:
+        return None
+    try:
+        capabilities = registry_list_capabilities_for_user(env, user)
+    except Exception:
+        return None
+    return capabilities if isinstance(capabilities, list) and capabilities else None
+
+
+def smart_core_capability_groups(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_core.services.capability_registry import CAPABILITY_GROUPS
+    except Exception:
+        return None
+    return [dict(item) for item in CAPABILITY_GROUPS if isinstance(item, dict)]
+
+
+def smart_core_nav_scene_maps(env):
+    del env
+    return {
+        "menu_scene_map": NAV_MENU_SCENE_MAP,
+        "action_xmlid_scene_map": NAV_ACTION_SCENE_MAP,
+        "model_view_scene_map": NAV_MODEL_VIEW_SCENE_MAP,
+    }
+
+
+def smart_core_scene_package_service_class(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
+    except Exception:
+        return None
+    return ScenePackageService
+
+
+def smart_core_scene_governance_service_class(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.services.scene_governance_service import SceneGovernanceService
+    except Exception:
+        return None
+    return SceneGovernanceService
+
+
+def smart_core_load_scene_configs(env, *, drift=None):
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
+    except Exception:
+        return None
+    try:
+        return load_scene_configs(env, drift=drift)
+    except Exception:
+        return None
+
+
+def smart_core_has_db_scenes(env):
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import has_db_scenes
+    except Exception:
+        return None
+    try:
+        return bool(has_db_scenes(env))
+    except Exception:
+        return None
+
+
+def smart_core_get_scene_version(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import get_scene_version
+    except Exception:
+        return None
+    try:
+        return get_scene_version()
+    except Exception:
+        return None
+
+
+def smart_core_get_schema_version(env):
+    del env
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import get_schema_version
+    except Exception:
+        return None
+    try:
+        return get_schema_version()
+    except Exception:
+        return None
+
+
+def smart_core_server_action_window_map(env):
+    del env
+    return dict(SERVER_ACTION_WINDOW_MAP)
 
 
 def smart_core_extend_system_init(data, env, user):

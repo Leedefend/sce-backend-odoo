@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+
 ROLE_SURFACE_MAP = {
     "owner": {
         "label": "Owner",
@@ -28,54 +30,68 @@ ROLE_SURFACE_MAP = {
 }
 
 ROLE_GROUPS_EXPLICIT = {
-    "executive": {
-        "smart_construction_custom.group_sc_role_executive",
-        "smart_construction_core.group_sc_super_admin",
-        "smart_construction_core.group_sc_cap_config_admin",
-        "base.group_system",
-    },
-    "pm": {
-        "smart_construction_custom.group_sc_role_pm",
-        "smart_construction_custom.group_sc_role_project_manager",
-        "smart_construction_custom.group_sc_role_project_user",
-        "smart_construction_core.group_sc_role_project_manager",
-    },
-    "finance": {
-        "smart_construction_custom.group_sc_role_finance",
-        "smart_construction_custom.group_sc_role_payment_manager",
-        "smart_construction_custom.group_sc_role_payment_user",
-        "smart_construction_custom.group_sc_role_payment_read",
-        "smart_construction_core.group_sc_role_finance_manager",
-        "smart_construction_core.group_sc_role_finance_user",
-    },
+    "executive": {"base.group_system"},
+    "pm": set(),
+    "finance": set(),
 }
 
 ROLE_GROUPS_CAPABILITY_FALLBACK = {
-    "pm": {
-        "smart_construction_core.group_sc_cap_project_manager",
-        "smart_construction_core.group_sc_cap_project_user",
-    },
-    "finance": {
-        "smart_construction_core.group_sc_cap_finance_user",
-        "smart_construction_core.group_sc_cap_finance_manager",
-    },
+    "pm": set(),
+    "finance": set(),
 }
 
 ROLE_PRECEDENCE = ("executive", "pm", "finance")
 
 
 class IdentityResolver:
+    def __init__(self, env=None):
+        self._env = env
+        self._role_surface_map = ROLE_SURFACE_MAP
+        self._role_groups_explicit = ROLE_GROUPS_EXPLICIT
+        self._role_groups_capability_fallback = ROLE_GROUPS_CAPABILITY_FALLBACK
+        self._role_precedence = ROLE_PRECEDENCE
+        profile = self._load_extension_identity_profile()
+        if not isinstance(profile, dict):
+            return
+        role_surface_map = profile.get("role_surface_map")
+        if isinstance(role_surface_map, dict) and role_surface_map:
+            self._role_surface_map = role_surface_map
+        role_groups_explicit = profile.get("role_groups_explicit")
+        if isinstance(role_groups_explicit, dict):
+            self._role_groups_explicit = {
+                str(role): {str(group) for group in (groups or []) if str(group).strip()}
+                for role, groups in role_groups_explicit.items()
+                if str(role).strip()
+            }
+        role_groups_capability_fallback = profile.get("role_groups_capability_fallback")
+        if isinstance(role_groups_capability_fallback, dict):
+            self._role_groups_capability_fallback = {
+                str(role): {str(group) for group in (groups or []) if str(group).strip()}
+                for role, groups in role_groups_capability_fallback.items()
+                if str(role).strip()
+            }
+        role_precedence = profile.get("role_precedence")
+        if isinstance(role_precedence, (tuple, list)) and role_precedence:
+            normalized = tuple(str(item).strip() for item in role_precedence if str(item).strip())
+            if normalized:
+                self._role_precedence = normalized
+
+    def _load_extension_identity_profile(self):
+        if self._env is None:
+            return None
+        return call_extension_hook_first(self._env, "smart_core_identity_profile", self._env)
+
     def user_group_xmlids(self, user) -> set:
         ext_map = user.groups_id.sudo().get_external_id()
         return {xml for xml in ext_map.values() if xml}
 
     def resolve_role_code_with_evidence(self, user_xmlids: set) -> tuple[str, dict]:
         explicit_hits: Dict[str, List[str]] = {}
-        for role in ROLE_PRECEDENCE:
-            hits = sorted((ROLE_GROUPS_EXPLICIT.get(role) or set()) & user_xmlids)
+        for role in self._role_precedence:
+            hits = sorted((self._role_groups_explicit.get(role) or set()) & user_xmlids)
             if hits:
                 explicit_hits[role] = hits
-        for role in ROLE_PRECEDENCE:
+        for role in self._role_precedence:
             hits = explicit_hits.get(role) or []
             if hits:
                 evidence = {
@@ -88,7 +104,7 @@ class IdentityResolver:
 
         capability_hits: Dict[str, List[str]] = {}
         for role in ("pm", "finance"):
-            hits = sorted((ROLE_GROUPS_CAPABILITY_FALLBACK.get(role) or set()) & user_xmlids)
+            hits = sorted((self._role_groups_capability_fallback.get(role) or set()) & user_xmlids)
             if hits:
                 capability_hits[role] = hits
         for role in ("pm", "finance"):
@@ -159,7 +175,7 @@ class IdentityResolver:
         role_surface_overrides: dict | None = None,
     ) -> dict:
         role_code, role_evidence = self.resolve_role_code_with_evidence(user_xmlids)
-        role_meta = ROLE_SURFACE_MAP.get(role_code) or ROLE_SURFACE_MAP["owner"]
+        role_meta = self._role_surface_map.get(role_code) or self._role_surface_map.get("owner") or {}
         role_meta = self._merge_role_meta(role_code, role_meta, role_surface_overrides)
         scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
         menu_candidates = list(role_meta.get("menu_xmlids") or [])
@@ -190,7 +206,7 @@ class IdentityResolver:
 
     def build_role_surface_map_payload(self) -> Dict[str, dict]:
         payload = {}
-        for role_code, role_meta in ROLE_SURFACE_MAP.items():
+        for role_code, role_meta in self._role_surface_map.items():
             payload[role_code] = {
                 "role_code": role_code,
                 "role_label": role_meta.get("label") or role_code,

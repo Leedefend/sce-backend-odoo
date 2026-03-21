@@ -9,10 +9,13 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-HANDLER_DIRS = [
-    ROOT / "addons" / "smart_core" / "handlers",
-    ROOT / "addons" / "smart_construction_core" / "handlers",
-]
+
+
+def _handler_dirs():
+    addons_root = ROOT / "addons"
+    if not addons_root.is_dir():
+        return []
+    return [path for path in sorted(addons_root.glob("*/handlers")) if path.is_dir()]
 WRITE_HINT_PATTERN = re.compile(
     r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
     re.IGNORECASE,
@@ -27,7 +30,7 @@ def _literal(node):
 
 
 def _iter_handler_classes():
-    for handler_dir in HANDLER_DIRS:
+    for handler_dir in _handler_dirs():
         if not handler_dir.is_dir():
             continue
         for path in sorted(handler_dir.glob("*.py")):

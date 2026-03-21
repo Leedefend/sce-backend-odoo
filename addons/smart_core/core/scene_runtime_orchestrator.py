@@ -132,7 +132,7 @@ class SceneRuntimeOrchestrator:
             scene_key="projects.list",
             kind="target",
             code="TEST_CRITICAL_INJECTED",
-            ref="smart_construction_scene.test.injected",
+            ref="smart_scene.test.injected",
             message="injected critical resolve error for auto-degrade smoke",
             severity="critical",
         )

@@ -3,13 +3,11 @@ from __future__ import annotations
 
 from typing import List
 
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+
 
 DEFAULT_CAPABILITY_GROUPS = [
-    {"key": "project_management", "label": "项目管理", "icon": "briefcase"},
-    {"key": "contract_management", "label": "合同管理", "icon": "file-text"},
-    {"key": "cost_management", "label": "成本管理", "icon": "calculator"},
-    {"key": "finance_management", "label": "财务管理", "icon": "wallet"},
-    {"key": "material_management", "label": "物资管理", "icon": "boxes"},
+    {"key": "workspace", "label": "工作台", "icon": "layout-grid"},
     {"key": "governance", "label": "治理配置", "icon": "shield"},
     {"key": "analytics", "label": "经营分析", "icon": "chart"},
     {"key": "others", "label": "其他能力", "icon": "grid"},
@@ -27,16 +25,8 @@ def _infer_group_key(capability_key: str) -> str:
     key = str(capability_key or "").strip().lower()
     if not key:
         return "others"
-    if key.startswith(("project.", "scene.project", "wbs.", "progress.", "tender.")):
-        return "project_management"
-    if key.startswith(("contract.", "settlement.")):
-        return "contract_management"
-    if key.startswith(("cost.", "budget.", "boq.")):
-        return "cost_management"
-    if key.startswith(("finance.", "payment.", "treasury.")):
-        return "finance_management"
-    if key.startswith(("material.", "purchase.", "stock.")):
-        return "material_management"
+    if key.startswith(("workspace.", "my.", "app.")):
+        return "workspace"
     if key.startswith(("usage.", "report.", "dashboard.", "analytics.")):
         return "analytics"
     if key.startswith(("scene.", "portal.", "config.", "permission.", "subscription.", "pack.")):
@@ -103,16 +93,16 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 
 
 def load_capabilities_for_user(env, user) -> List[dict]:
-    try:
-        from odoo.addons.smart_construction_core.services.capability_registry import (
-            list_capabilities_for_user as registry_list_capabilities_for_user,
-        )
+    extension_caps = call_extension_hook_first(env, "smart_core_list_capabilities_for_user", env, user)
+    if isinstance(extension_caps, list) and extension_caps:
+        return extension_caps
 
-        registry_caps = registry_list_capabilities_for_user(env, user)
-        if isinstance(registry_caps, list) and registry_caps:
-            return registry_caps
+    try:
+        extension_groups = call_extension_hook_first(env, "smart_core_capability_groups", env)
+        if isinstance(extension_groups, list) and extension_groups:
+            global DEFAULT_CAPABILITY_GROUPS
+            DEFAULT_CAPABILITY_GROUPS = [dict(item) for item in extension_groups if isinstance(item, dict)]
     except Exception:
-        # Keep backward compatibility: fall back to DB-backed capability catalog.
         pass
 
     try:
