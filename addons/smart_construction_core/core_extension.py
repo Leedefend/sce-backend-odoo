@@ -121,6 +121,23 @@ SERVER_ACTION_WINDOW_MAP = {
     "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
 }
 
+CRITICAL_SCENE_TARGET_OVERRIDES = {
+    "projects.list",
+    "projects.detail",
+    "projects.intake",
+    "projects.ledger",
+    "projects.execution",
+    "projects.dashboard",
+    "project.management",
+    "my_work.workspace",
+    "portal.dashboard",
+    "finance.payment_requests",
+}
+
+CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
+    "my_work.workspace": "/my-work",
+}
+
 
 def _as_text(value: Any) -> str:
     if isinstance(value, dict):
@@ -559,6 +576,16 @@ def smart_core_get_schema_version(env):
 def smart_core_server_action_window_map(env):
     del env
     return dict(SERVER_ACTION_WINDOW_MAP)
+
+
+def smart_core_critical_scene_target_overrides(env):
+    del env
+    return list(CRITICAL_SCENE_TARGET_OVERRIDES)
+
+
+def smart_core_critical_scene_target_route_overrides(env):
+    del env
+    return dict(CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES)
 
 
 def smart_core_extend_system_init(data, env, user):

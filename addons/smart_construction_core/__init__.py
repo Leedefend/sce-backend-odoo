@@ -21,4 +21,6 @@ from .core_extension import (  # noqa: F401
     smart_core_get_scene_version,
     smart_core_get_schema_version,
     smart_core_server_action_window_map,
+    smart_core_critical_scene_target_overrides,
+    smart_core_critical_scene_target_route_overrides,
 )

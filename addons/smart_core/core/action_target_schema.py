@@ -24,7 +24,7 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     key = str(action_key or "").strip().lower()
     page = str(page_key or "").strip().lower()
     if key == "open_risk_dashboard":
-        return scene_target("projects.dashboard")
+        return scene_target("portal.dashboard")
     if key == "open_my_work":
         return scene_target("my_work.workspace")
     if key == "apply_filters":
@@ -32,7 +32,7 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     if key == "open_list":
         if page in {"usage_analytics", "scene_health"}:
             return scene_target(page)
-        return scene_target("projects.list")
+        return scene_target("workspace.home")
     if key == "open_workbench":
         return scene_target("portal.dashboard")
     if key == "open_menu":
@@ -44,6 +44,5 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     if key == "open_landing":
         return scene_target("portal.dashboard")
     if key == "open_scene":
-        return scene_target("projects.list")
+        return scene_target("workspace.home")
     return scene_target(page)
-

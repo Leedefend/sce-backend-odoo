@@ -24,6 +24,10 @@
 | `addons/smart_core/models/ui_base_contract_asset_event_trigger.py` | asset trigger | 资产刷新触发器 | 待审→已治理 | 场景来源改为 provider hook | `smart_core`（触发器） + 扩展模块（scene source） |
 | `addons/smart_core/core/workspace_home_data_provider.py` | workspace profile provider | 工作台数据模板来源 | 待审→已治理 | 去除行业目录硬编码，改为 addons profile 自动发现 | `smart_core`（发现机制） + 行业模块（profile 文件） |
 | `addons/smart_core/app_config_engine/services/resolvers/action_resolver.py` | server→window mapping | server action 映射 | 待审→已治理 | 去除建设模块映射硬编码，改为 extension hook 注入 | `smart_core`（解析骨架） + 扩展模块（映射定义） |
+| `addons/smart_core/core/scene_provider.py`（critical overrides） | critical scene target 纠偏 | 关键场景 target/route 收口 | 待审→已治理 | 由平台默认最小集合 + 扩展注入，不在平台层固化行业场景集合 | `smart_core`（策略入口） + 扩展模块（策略数据） |
+| `addons/smart_core/core/ui_base_contract_asset_producer.py` | minimal ui-base fallback | 资产缺失兜底契约 | 待审→已治理 | 去除 `project.project` / `projects.intake` 业务兜底，改通用 fallback | `smart_core` |
+| `addons/smart_core/core/ui_base_contract_asset_repository.py` | minimal ui-base fallback | 资产仓储兜底契约 | 待审→已治理 | 同上，去除业务模型硬编码 | `smart_core` |
+| `addons/smart_core/core/action_target_schema.py` | action target default | 通用 action 目标解析 | 待审→已治理 | 默认目标改为 `workspace.home/portal.dashboard`，不绑定行业场景 | `smart_core` |
 | `addons/smart_core/handlers/system_init.py` | system.init | 平台启动契约聚合 | 保留（带治理） | extension facts 合并曾绑定特定模块名；本批改为通用 namespaced 合并 | `smart_core` |
 | `addons/smart_core/handlers/scene_package.py` | scene package handler | 场景包治理入口 | 待审→已治理 | 由扩展 hook 提供 service class，平台层不再直接导入建设模块 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
 | `addons/smart_core/handlers/scene_packages_installed.py` | scene package installed | 场景包清单查询 | 待审→已治理 | 同上，改为扩展注入 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
