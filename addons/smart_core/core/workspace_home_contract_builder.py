@@ -234,6 +234,139 @@ def _workspace_ops_payload(*, has_business_signal: bool, risk_business_count: in
     }
 
 
+def _workspace_risk_payload(
+    *,
+    summary: str,
+    risk_red: int,
+    risk_amber: int,
+    risk_green: int,
+    risk_d30: int,
+    risk_d7: int,
+    risk_now: int,
+    risk_max: int,
+    risk_actions: List[Dict[str, Any]],
+    permission_denied: int,
+) -> Dict[str, Any]:
+    defaults = {
+        "summary": summary,
+        "buckets": {"red": int(risk_red or 0), "amber": int(risk_amber or 0), "green": int(risk_green or 0)},
+        "tone": "danger" if risk_red > 0 else "warning" if risk_amber > 0 else "success",
+        "progress": "blocked" if risk_red > 0 else "running",
+        "trend": [
+            {"label": "30天前", "value": int(risk_d30 or 0), "percent": round((risk_d30 / risk_max) * 100)},
+            {"label": "7天前", "value": int(risk_d7 or 0), "percent": round((risk_d7 / risk_max) * 100)},
+            {"label": "当前", "value": int(risk_now or 0), "percent": round((risk_now / risk_max) * 100)},
+        ],
+        "sources": [
+            {"label": "业务告警动作", "count": len([row for row in risk_actions if _to_text(row.get("source")) == "business"])},
+            {"label": "能力兜底动作", "count": len([row for row in risk_actions if _to_text(row.get("source")) != "business"])},
+            {"label": "权限限制", "count": int(permission_denied or 0)},
+        ],
+        "actions": list(risk_actions or []),
+    }
+    provider = _load_data_provider()
+    if provider is None:
+        return defaults
+    fn = getattr(provider, "build_risk_payload", None)
+    if not callable(fn):
+        return defaults
+    try:
+        payload = fn(
+            defaults=defaults,
+            summary=_to_text(summary),
+            risk_red=int(risk_red or 0),
+            risk_amber=int(risk_amber or 0),
+            risk_green=int(risk_green or 0),
+            risk_actions=list(risk_actions or []),
+            permission_denied=int(permission_denied or 0),
+        )
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return defaults
+    merged = dict(defaults)
+    text = _to_text(payload.get("summary"))
+    if text:
+        merged["summary"] = text
+    buckets = payload.get("buckets")
+    if isinstance(buckets, dict):
+        merged["buckets"] = {
+            "red": _to_int(buckets.get("red")),
+            "amber": _to_int(buckets.get("amber")),
+            "green": _to_int(buckets.get("green")),
+        }
+    tone = _to_text(payload.get("tone"))
+    if tone in STATE_TONES:
+        merged["tone"] = tone
+    progress = _to_text(payload.get("progress"))
+    if progress in PROGRESS_STATES:
+        merged["progress"] = progress
+    trend = payload.get("trend")
+    if isinstance(trend, list) and trend:
+        normalized_trend: List[Dict[str, Any]] = []
+        for row in trend:
+            if not isinstance(row, dict):
+                continue
+            normalized_trend.append(
+                {
+                    "label": _to_text(row.get("label")) or "-",
+                    "value": _to_int(row.get("value")),
+                    "percent": _to_int(row.get("percent")),
+                }
+            )
+        if normalized_trend:
+            merged["trend"] = normalized_trend
+    sources = payload.get("sources")
+    if isinstance(sources, list) and sources:
+        normalized_sources: List[Dict[str, Any]] = []
+        for row in sources:
+            if not isinstance(row, dict):
+                continue
+            normalized_sources.append(
+                {
+                    "label": _to_text(row.get("label")) or "-",
+                    "count": _to_int(row.get("count")),
+                }
+            )
+        if normalized_sources:
+            merged["sources"] = normalized_sources
+    actions = payload.get("actions")
+    if isinstance(actions, list):
+        merged["actions"] = actions
+    return merged
+
+
+def _workspace_ops_meta(*, has_business_signal: bool) -> Dict[str, str]:
+    defaults = {
+        "tone": "info",
+        "progress": "running",
+        "data_state": "business" if has_business_signal else "fallback",
+    }
+    provider = _load_data_provider()
+    if provider is None:
+        return defaults
+    fn = getattr(provider, "build_ops_meta", None)
+    if not callable(fn):
+        return defaults
+    try:
+        payload = fn(defaults=defaults, has_business_signal=bool(has_business_signal))
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return defaults
+    merged = dict(defaults)
+    tone = _to_text(payload.get("tone"))
+    if tone in STATE_TONES:
+        merged["tone"] = tone
+    progress = _to_text(payload.get("progress"))
+    if progress in PROGRESS_STATES:
+        merged["progress"] = progress
+    data_state = _to_text(payload.get("data_state"))
+    if data_state in ("business", "fallback", "mixed"):
+        merged["data_state"] = data_state
+    return merged
+
+
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     global _ACTION_TARGET_RESOLVER
     if callable(_ACTION_TARGET_RESOLVER):
@@ -1810,11 +1943,24 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         partial_notice=partial_notice,
     )
     risk_summary_text = _workspace_risk_summary_text(risk_red)
+    risk_payload = _workspace_risk_payload(
+        summary=risk_summary_text,
+        risk_red=risk_red,
+        risk_amber=risk_amber,
+        risk_green=risk_green,
+        risk_d30=risk_d30,
+        risk_d7=risk_d7,
+        risk_now=risk_now,
+        risk_max=risk_max,
+        risk_actions=risk_actions,
+        permission_denied=permission_denied,
+    )
     ops_payload = _workspace_ops_payload(
         has_business_signal=has_business_signal,
         risk_business_count=risk_business_count,
         today_business_count=today_business_count,
     )
+    ops_meta = _workspace_ops_meta(has_business_signal=has_business_signal)
     return {
         "scene": scene_contract_core.get("scene") or {},
         "page": scene_contract_core.get("page") or {},
@@ -1904,28 +2050,20 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         "platform_metrics": platform_metrics,
         "today_actions": today_actions,
         "risk": {
-            "summary": risk_summary_text,
-            "buckets": {"red": risk_red, "amber": risk_amber, "green": risk_green},
-            "tone": "danger" if risk_red > 0 else "warning" if risk_amber > 0 else "success",
-            "progress": "blocked" if risk_red > 0 else "running",
-            "trend": [
-                {"label": "30天前", "value": risk_d30, "percent": round((risk_d30 / risk_max) * 100)},
-                {"label": "7天前", "value": risk_d7, "percent": round((risk_d7 / risk_max) * 100)},
-                {"label": "当前", "value": risk_now, "percent": round((risk_now / risk_max) * 100)},
-            ],
-            "sources": [
-                {"label": "业务风险动作", "count": len([row for row in risk_actions if _to_text(row.get("source")) == "business"])},
-                {"label": "能力兜底动作", "count": len([row for row in risk_actions if _to_text(row.get("source")) != "business"])},
-                {"label": "权限限制", "count": permission_denied},
-            ],
-            "actions": risk_actions,
+            "summary": _to_text(risk_payload.get("summary")),
+            "buckets": dict(risk_payload.get("buckets") or {}),
+            "tone": _to_text(risk_payload.get("tone")) or "info",
+            "progress": _to_text(risk_payload.get("progress")) or "running",
+            "trend": list(risk_payload.get("trend") or []),
+            "sources": list(risk_payload.get("sources") or []),
+            "actions": list(risk_payload.get("actions") or []),
         },
         "ops": {
             "bars": ops_payload.get("bars") or {},
             "kpi": ops_payload.get("kpi") or {},
-            "tone": "info",
-            "progress": "running",
-            "data_state": "business" if has_business_signal else "fallback",
+            "tone": _to_text(ops_meta.get("tone")) or "info",
+            "progress": _to_text(ops_meta.get("progress")) or "running",
+            "data_state": _to_text(ops_meta.get("data_state")) or "fallback",
         },
         "blocks": [
             {
@@ -1957,9 +2095,9 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "type": "risk",
                 "key": "workspace.risk",
                 "data": {
-                    "summary": risk_summary_text,
-                    "buckets": {"red": risk_red, "amber": risk_amber, "green": risk_green},
-                    "actions": risk_actions,
+                    "summary": _to_text(risk_payload.get("summary")),
+                    "buckets": dict(risk_payload.get("buckets") or {}),
+                    "actions": list(risk_payload.get("actions") or []),
                 },
                 "actions": [
                     {"intent": "ui.contract", "payload": {"scene_key": _workspace_scene("risk_center")}},
