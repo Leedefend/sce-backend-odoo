@@ -701,6 +701,54 @@ def _workspace_expected_collections(role_code: str) -> List[str]:
     return default_by_role.get(_to_text(role_code).lower(), ["today_actions", "alerts"])
 
 
+def _workspace_v1_zone_order(role_code: str) -> List[str]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_zone_order", None)
+        if callable(fn):
+            try:
+                payload = fn()
+                if isinstance(payload, dict) and payload:
+                    order = payload.get(_to_text(role_code).lower())
+                    if isinstance(order, list):
+                        normalized = [_to_text(item) for item in order if _to_text(item)]
+                        if normalized:
+                            return normalized
+            except Exception:
+                pass
+
+    default_order = {
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
+        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+    }
+    return list(default_order.get(_to_text(role_code).lower(), default_order["owner"]))
+
+
+def _workspace_v1_focus_map(role_code: str) -> List[str]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_focus_map", None)
+        if callable(fn):
+            try:
+                payload = fn()
+                if isinstance(payload, dict) and payload:
+                    ordered = payload.get(_to_text(role_code).lower())
+                    if isinstance(ordered, list):
+                        normalized = [_to_text(item) for item in ordered if _to_text(item)]
+                        if normalized:
+                            return normalized
+            except Exception:
+                pass
+
+    defaults = {
+        "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
+        "finance": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "metric_row_core"],
+        "owner": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
+    }
+    return list(defaults.get(_to_text(role_code).lower(), defaults["owner"]))
+
+
 def _impact_score(row: Dict[str, Any]) -> int:
     amount_raw = (
         row.get("amount")
@@ -1739,12 +1787,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                 if _to_text((block or {}).get("key")) != "advice_fold"
             ]
             break
-    role_zone_order = {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
-        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
-    }
-    preferred_order = role_zone_order.get(role_code, role_zone_order["owner"])
+    preferred_order = _workspace_v1_zone_order(role_code)
     effective_order = preferred_order
     priority_map = {key: 100 - (idx * 10) for idx, key in enumerate(effective_order)}
     for zone in zones:
@@ -1752,19 +1795,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         if zone_key in priority_map:
             zone["priority"] = priority_map[zone_key]
 
-    v1_focus_map = {
-        "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
-        "finance": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "metric_row_core"],
-        "owner": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
-    }
-    provider = _load_data_provider()
-    if provider is not None:
-        fn = getattr(provider, "build_v1_focus_map", None)
-        if callable(fn):
-            payload = fn()
-            if isinstance(payload, dict) and payload:
-                v1_focus_map = payload
-    focus_blocks = {str(key): idx + 1 for idx, key in enumerate(v1_focus_map.get(role_code, []))}
+    focus_blocks = {str(key): idx + 1 for idx, key in enumerate(_workspace_v1_focus_map(role_code))}
     for zone in zones:
         blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
         for block in blocks:
