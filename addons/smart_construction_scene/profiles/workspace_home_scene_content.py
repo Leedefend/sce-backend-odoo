@@ -486,6 +486,35 @@ def build_v1_zone_order() -> Dict[str, List[str]]:
     }
 
 
+def build_v1_copy_overrides() -> Dict[str, str]:
+    return {
+        "zone.hero.title": "核心关注",
+        "zone.hero.description": "角色上下文与默认入口。",
+        "zone.today_focus.title": "今日优先事项",
+        "zone.today_focus.description": "先处理行动项，再快速处置风险提醒。",
+        "zone.analysis.title": "项目总体状态",
+        "zone.analysis.description": "关键指标、执行进展与风险动态。",
+        "zone.quick_entries.title": "常用功能",
+        "zone.quick_entries.description": "按业务场景快速进入处理。",
+        "block.hero_record_summary.title": "角色与入口摘要",
+        "block.todo_list_today.title": "今日行动",
+        "block.risk_alert_panel.title": "系统提醒（高优先）",
+        "block.advice_fold.title": "系统建议（补充）",
+        "block.metric_row_core.title": "关键指标",
+        "block.progress_summary_ops.title": "综合进展",
+        "block.activity_feed_risk.title": "风险动态",
+        "block.entry_grid_scene.title": "常用功能",
+        "action.open_landing.label": "打开默认入口",
+        "action.open_my_work.label": "查看全部",
+        "action.open_risk_dashboard.label": "进入风险驾驶舱",
+        "action.open_scene.label": "进入场景",
+        "page.title": "工作台",
+        "page.subtitle": "先处理行动项，再关注风险与总体状态",
+        "page.badge.runtime_ok": "运行正常",
+        "page.action.refresh": "刷新",
+    }
+
+
 def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     role = _to_text(role_code).lower()
     audience_map = {
