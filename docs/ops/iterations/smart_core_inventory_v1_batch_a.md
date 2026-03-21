@@ -33,6 +33,8 @@
 | `addons/smart_core/handlers/api_data_write.py` | data write allowlist | 模型字段白名单写入 | 待审→已治理 | 平台默认通用 allowlist，行业映射由扩展提供 | `smart_core` + 扩展模块 |
 | `addons/smart_core/handlers/api_data_unlink.py` | data unlink allowlist | 模型删除白名单 | 待审→已治理 | 平台默认通用模型，行业删除白名单由扩展提供 | `smart_core` + 扩展模块 |
 | `addons/smart_core/core/scene_delivery_policy.py` | surface policy | 交付面策略/白名单 | 待审→已治理 | 内建 construction 策略迁移为扩展注入（名称/文件/白名单） | `smart_core` + 扩展模块 |
+| `addons/smart_core/core/workspace_home_contract_builder.py` | workspace scene routing | 工作台动作与场景路由 | 待审→已治理（阶段性） | 场景别名与 source→scene 路由改由 profile provider 注入，页面动作目标不再在平台层写死 | `smart_core`（编排骨架） + 行业 profile（语义映射） |
+| `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` | workspace scene aliases | 行业工作台场景语义映射 | 保留（行业侧） | 承载行业 scene alias 与 source 语义路由 | `smart_construction_scene` |
 | `addons/smart_core/handlers/system_init.py` | system.init | 平台启动契约聚合 | 保留（带治理） | extension facts 合并曾绑定特定模块名；本批改为通用 namespaced 合并 | `smart_core` |
 | `addons/smart_core/handlers/scene_package.py` | scene package handler | 场景包治理入口 | 待审→已治理 | 由扩展 hook 提供 service class，平台层不再直接导入建设模块 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
 | `addons/smart_core/handlers/scene_packages_installed.py` | scene package installed | 场景包清单查询 | 待审→已治理 | 同上，改为扩展注入 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
@@ -44,4 +46,4 @@
 
 - 已完成：`identity / capability / nav adapter / system.init ext_facts` 的平台层去行业硬编码。
 - 已冻结：平台层通过 extension hooks 获取行业映射与能力，不再直接导入建设行业实现。
-- 待下一批：按同样模式治理 `tests` 中的行业示例依赖（不影响运行时边界），并继续评估 `workspace_home_contract_builder` 的行业语义下沉拆分。
+- 待下一批：按同样模式治理 `tests` 中的行业示例依赖（不影响运行时边界），继续下沉 `workspace_home_contract_builder` 的文案与业务指标语义块。

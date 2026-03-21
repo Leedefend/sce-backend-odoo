@@ -46,6 +46,43 @@ _DATA_PROVIDER_MODULE = None
 _SCENE_ENGINE_MODULE = None
 
 
+def _workspace_scene_aliases() -> Dict[str, str]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_scene_aliases", None)
+        if callable(fn):
+            try:
+                payload = fn()
+                if isinstance(payload, dict):
+                    out = {
+                        str(key or "").strip().lower(): str(value or "").strip()
+                        for key, value in payload.items()
+                        if str(key or "").strip() and str(value or "").strip()
+                    }
+                    if out:
+                        return out
+            except Exception:
+                pass
+    return {
+        "default": "workspace.home",
+        "dashboard": "portal.dashboard",
+        "project_list": "projects.list",
+        "project_management": "project.management",
+        "execution": "projects.execution",
+        "operation_overview": "operation.overview",
+        "risk_center": "risk.center",
+        "task_center": "task.center",
+        "cost_center": "cost.project_boq",
+        "finance_center": "finance.center",
+    }
+
+
+def _workspace_scene(name: str) -> str:
+    aliases = _workspace_scene_aliases()
+    key = str(name or "").strip().lower()
+    return aliases.get(key) or aliases.get("default") or "workspace.home"
+
+
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     global _ACTION_TARGET_RESOLVER
     if callable(_ACTION_TARGET_RESOLVER):
@@ -259,18 +296,28 @@ def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[
 
 
 def _route_scene_by_source(source_key: str) -> str:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "resolve_scene_by_source", None)
+        if callable(fn):
+            try:
+                resolved = str(fn(source_key) or "").strip()
+                if resolved:
+                    return resolved
+            except Exception:
+                pass
     text = _to_text(source_key).lower()
     if "risk" in text or "风险" in text:
-        return "risk.center"
+        return _workspace_scene("risk_center")
     if "task" in text or "任务" in text:
-        return "task.center"
+        return _workspace_scene("task_center")
     if "cost" in text or "boq" in text or "成本" in text:
-        return "cost.project_boq"
+        return _workspace_scene("cost_center")
     if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
-        return "finance.center"
+        return _workspace_scene("finance_center")
     if "project" in text or "项目" in text:
-        return "projects.list"
-    return "project.management"
+        return _workspace_scene("project_list")
+    return _workspace_scene("project_management")
 
 
 def _parse_deadline(value: Any) -> datetime | None:
@@ -621,8 +668,8 @@ def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, An
             action = _to_business_action(source_key, row, idx, role_code=role_code, source_kind="business")
             if not _is_risk_semantic_action(source_key, row, action):
                 continue
-            action["scene_key"] = "risk.center"
-            action["route"] = "/s/risk.center"
+            action["scene_key"] = _workspace_scene("risk_center")
+            action["route"] = f"/s/{action['scene_key']}"
             action["source"] = "business"
             action["status"] = "urgent"
             action["tone"] = "danger"
@@ -643,8 +690,8 @@ def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, An
                 action = _to_business_action("today_actions", row, idx, role_code=role_code, source_kind="business")
                 if not _is_risk_semantic_action("today_actions", row, action):
                     continue
-                action["scene_key"] = "risk.center"
-                action["route"] = "/s/risk.center"
+                action["scene_key"] = _workspace_scene("risk_center")
+                action["route"] = f"/s/{action['scene_key']}"
                 action["source"] = "business"
                 action["source_detail"] = "semantic_template"
                 action["status"] = "urgent"
@@ -673,8 +720,8 @@ def _build_risk_actions(data: Dict[str, Any], locked_caps: Iterable[Dict[str, An
                 "title": _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key")) or "受限能力",
                 "description": _to_text(cap.get("reason")) or "当前账号尚未开通该能力。",
                 "entry_key": _to_text(cap.get("key")),
-                "scene_key": "risk.center",
-                "route": "/s/risk.center",
+                "scene_key": _workspace_scene("risk_center"),
+                "route": f"/s/{_workspace_scene('risk_center')}",
                 "source": "capability_fallback",
                 "source_detail": "capability_template",
                 "urgency_score": _urgency_score(
@@ -1392,14 +1439,14 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
 
     return {
         "contract_version": "page_orchestration_v1",
-        "scene_key": "portal.dashboard",
+        "scene_key": _workspace_scene("dashboard"),
         "page": {
             "key": "portal.dashboard",
             "title": "工作台",
             "subtitle": "先处理行动项，再关注风险与总体状态",
             "page_type": "workspace",
             "intent": "ui.contract",
-            "scene_key": "portal.dashboard",
+            "scene_key": _workspace_scene("dashboard"),
             "layout_mode": "dashboard",
             "audience": audience,
             "priority_model": priority_model,
@@ -1528,7 +1575,11 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     scene_contract_core: Dict[str, Any] = {
         "scene": {"key": "portal.dashboard", "page": "portal.dashboard"},
         "page": {"key": "portal.dashboard", "title": "工作台", "route": "/"},
-        "nav_ref": {"active_scene_key": "portal.dashboard", "active_menu_key": "scene:portal.dashboard", "active_menu_id": None},
+        "nav_ref": {
+            "active_scene_key": _workspace_scene("dashboard"),
+            "active_menu_key": f"scene:{_workspace_scene('dashboard')}",
+            "active_menu_id": None,
+        },
         "zones": {},
         "record": {"hero": {"title": "工作台", "role_code": role_source_code}},
         "permissions": {},
@@ -1753,7 +1804,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                     },
                 },
                 "actions": [
-                    {"intent": "ui.contract", "payload": {"scene_key": "portal.dashboard"}},
+                    {"intent": "ui.contract", "payload": {"scene_key": _workspace_scene("dashboard")}},
                 ],
             },
             {
@@ -1764,7 +1815,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                     "platform_metrics": platform_metrics,
                 },
                 "actions": [
-                    {"intent": "ui.contract", "payload": {"scene_key": "operation.overview"}},
+                    {"intent": "ui.contract", "payload": {"scene_key": _workspace_scene("operation_overview")}},
                 ],
             },
             {
@@ -1782,7 +1833,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                     "actions": risk_actions,
                 },
                 "actions": [
-                    {"intent": "ui.contract", "payload": {"scene_key": "risk.center"}},
+                    {"intent": "ui.contract", "payload": {"scene_key": _workspace_scene("risk_center")}},
                 ],
             },
             {
@@ -1799,7 +1850,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                     },
                 },
                 "actions": [
-                    {"intent": "ui.contract", "payload": {"scene_key": "projects.execution"}},
+                    {"intent": "ui.contract", "payload": {"scene_key": _workspace_scene("execution")}},
                 ],
             },
         ],
