@@ -32,7 +32,7 @@ _logger = logging.getLogger(__name__)
 class ApiDataUnlinkHandler(BaseIntentHandler):
     """
     Intent: api.data.unlink
-    - 限定 model=project.task
+    - 按 allowlist 限定可删除 model
     - 返回删除 ids
     """
 

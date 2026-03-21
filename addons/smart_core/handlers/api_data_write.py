@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # 📄 smart_core/handlers/api_data_write.py
-# v0.6: Minimal write intent (create/update) for project.project
+# v0.6: Minimal write intent (create/update)
 
 import logging
 from typing import Any, Dict, List
@@ -34,7 +34,7 @@ _logger = logging.getLogger(__name__)
 class ApiDataWriteHandler(BaseIntentHandler):
     """
     Intent: api.data.create / api.data.write
-    - 限定 model=project.project
+    - 按 allowlist 限定可写 model
     - 字段白名单写入
     - 返回固定写入契约
     """

@@ -556,6 +556,13 @@ def _scene_ready_entry(
 ) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
     scene_payload = dict(item)
+    runtime_ctx = runtime_context if isinstance(runtime_context, dict) else {}
+    scene_provider_payload = _resolve_scene_provider_payload(scene_key, runtime_ctx)
+
+    if not isinstance(scene_payload.get("actions"), list):
+        provider_actions = scene_provider_payload.get("default_actions") if isinstance(scene_provider_payload.get("default_actions"), list) else []
+        if provider_actions:
+            scene_payload["actions"] = provider_actions
 
     if _scene_key_matches(scene_key, "finance.payment_requests") and not isinstance(scene_payload.get("actions"), list):
         scene_payload["actions"] = [
@@ -685,7 +692,8 @@ def _scene_ready_entry(
             },
         ]
 
-    scene_payload = _seed_pilot_scene_contract(scene_key, scene_payload)
+    if not bool(scene_provider_payload.get("skip_pilot_seed")):
+        scene_payload = _seed_pilot_scene_contract(scene_key, scene_payload)
 
     base_contract_raw = item.get("ui_base_contract") if isinstance(item.get("ui_base_contract"), dict) else {}
     base_contract_adapted = adapt_ui_base_contract(base_contract_raw, scene_key=scene_key)
@@ -696,7 +704,6 @@ def _scene_ready_entry(
     )
     runtime_payload = scene_payload.get("runtime") if isinstance(scene_payload.get("runtime"), dict) else {}
     runtime_merged = dict(runtime_payload)
-    runtime_ctx = runtime_context if isinstance(runtime_context, dict) else {}
     role_code = _text(runtime_ctx.get("role_code"))
     if role_code:
         runtime_merged["role_code"] = role_code
@@ -707,7 +714,6 @@ def _scene_ready_entry(
     if strategy_payload:
         runtime_merged["action_surface_strategy"] = strategy_payload
 
-    scene_provider_payload = _resolve_scene_provider_payload(scene_key, runtime_ctx)
     provider_next_scene = _text(scene_provider_payload.get("next_scene") or scene_provider_payload.get("next_scene_key"))
     provider_next_scene_route = _text(scene_provider_payload.get("next_scene_route"))
     if provider_next_scene and not _text(runtime_merged.get("next_scene") or runtime_merged.get("next_scene_key")):

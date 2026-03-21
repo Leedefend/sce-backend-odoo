@@ -27,6 +27,8 @@ from .core_extension import (  # noqa: F401
     smart_core_file_download_allowed_models,
     smart_core_api_data_write_allowlist,
     smart_core_api_data_unlink_allowed_models,
+    smart_core_model_code_mapping,
+    smart_core_create_field_fallbacks,
     smart_core_surface_nav_allowlist,
     smart_core_surface_deep_link_allowlist,
     smart_core_surface_policy_default_name,

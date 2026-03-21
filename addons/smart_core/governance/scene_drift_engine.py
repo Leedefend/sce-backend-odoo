@@ -4,8 +4,8 @@ from __future__ import annotations
 from odoo import fields
 
 CRITICAL_SCENES = {
-    "projects.list",
-    "projects.ledger",
+    "workspace.home",
+    "workspace.list",
 }
 
 

@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 class FileUploadHandler(BaseIntentHandler):
     """
     Intent: file.upload
-    - 允许 project.project / project.task 附件上传
+    - 按 allowlist 限定可上传附件 model
     - 传入 base64 数据
     """
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/load_contract.py
 from ..core.base_handler import BaseIntentHandler
+from ..utils.extension_hooks import call_extension_hook_first
 from odoo import api, SUPERUSER_ID
 import json, re, hashlib
 
@@ -10,12 +11,20 @@ VALID_INCLUDE = {'model','view','action','permission'}
 def _json(obj):
     return json.dumps(obj, ensure_ascii=False, default=str, separators=(",",":"))
 
-def _convert_model_code(code: str) -> str:
+def _convert_model_code(code: str, env=None) -> str:
     mapping = {
-        'partner':'res.partner','product':'product.product','project':'project.project',
-        'task':'project.task','user':'res.users','company':'res.company',
+        'partner':'res.partner','product':'product.product',
+        'user':'res.users','company':'res.company',
         'order':'sale.order','invoice':'account.move','employee':'hr.employee',
     }
+    if env is not None:
+        ext = call_extension_hook_first(env, "smart_core_model_code_mapping", env)
+        if isinstance(ext, dict):
+            for key, value in ext.items():
+                k = str(key or "").strip()
+                v = str(value or "").strip()
+                if k and v:
+                    mapping[k] = v
     return mapping.get(code, code)
 
 class LoadContractHandler(BaseIntentHandler):
@@ -59,7 +68,7 @@ class LoadContractHandler(BaseIntentHandler):
             return self._err(400, "缺少参数 model 或 model_code，且无法从 menu_id / action_id 推导")
 
         # 别名映射与常规化
-        code = _convert_model_code(raw_model)
+        code = _convert_model_code(raw_model, self.env)
         if "." not in code and "_" in code:
             code = code.replace("_", ".")
         model_name = code

@@ -37,39 +37,25 @@ DELIVERY_MODE_INTERNAL = "internal"
 DELIVERY_MODE_DEMO = "demo"
 DELIVERY_MODE_DEEP_LINK_ONLY = "deep_link_only"
 
-SURFACE_POLICY_CONSTRUCTION_PM_V1 = "construction_pm_v1"
+SURFACE_POLICY_CONSTRUCTION_PM_V1 = "workspace_default_v1"
 BUILTIN_SURFACE_NAV_ALLOWLIST = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: {
-        "project.management",
-        "projects.dashboard",
-        "projects.ledger",
-        "projects.intake",
-        "my_work.workspace",
+        "workspace.home",
+        "workspace.list",
+        "workspace.management",
+        "portal.dashboard",
     },
 }
 BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {
     SURFACE_POLICY_CONSTRUCTION_PM_V1: (
-        "contract.center",
-        "cost.budget_alloc",
-        "cost.cost_compare",
-        "cost.profit_compare",
-        "cost.project_boq",
-        "cost.project_budget",
-        "cost.project_cost_ledger",
-        "cost.project_progress",
-        "data.dictionary",
-        "finance.center",
-        "finance.operating_metrics",
-        "finance.payment_ledger",
-        "finance.payment_requests",
-        "finance.settlement_orders",
-        "finance.treasury_ledger",
-        "config.project_cost_code",
-        "risk.monitor",
-        "task.center",
+        "workspace.risk",
+        "workspace.finance",
+        "workspace.tasks",
+        "workspace.cost",
+        "workspace.overview",
     ),
 }
-SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
+SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/workspace_default_v1_scene_surface_policy.json"
 _SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "payload": {}}
 
 
