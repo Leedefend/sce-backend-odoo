@@ -659,6 +659,20 @@
   - `make verify.baseline.all` (platform + business)
   - `make gate.baseline.all` (platform gate + business gate)
 
+## smart_core Minimum Surface
+- Baseline document:
+  - `docs/ops/smart_core_platform_minimum_surface_v1.md`
+- Guard-A (minimum handler presence + alias surface):
+  - `make verify.smart_core.minimum_surface.handler_guard`
+- Guard-B (minimum contract/envelope chain):
+  - `make verify.smart_core.minimum_surface.contract_guard`
+- Smoke-C (owner-only startup chain):
+  - `make verify.smart_core.minimum_surface.owner_startup_smoke`
+- Regression-D (same-route residency behavior for app shell open):
+  - `make verify.smart_core.minimum_surface.same_route_guard`
+- Aggregate:
+  - `make verify.smart_core.minimum_surface`
+
 ## Business Increment Preflight
 - Readiness report (non-blocking):
   - `make verify.business.increment.readiness`
