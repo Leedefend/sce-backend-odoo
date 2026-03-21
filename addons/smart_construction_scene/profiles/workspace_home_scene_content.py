@@ -115,6 +115,59 @@ def build_ops_payload(
     }
 
 
+def build_risk_payload(
+    *,
+    defaults: Dict[str, Any],
+    summary: str,
+    risk_red: int,
+    risk_amber: int,
+    risk_green: int,
+    risk_actions: List[Dict[str, Any]],
+    permission_denied: int,
+) -> Dict[str, Any]:
+    payload = dict(defaults or {})
+    payload["summary"] = _to_text(summary) or payload.get("summary") or ""
+    payload["buckets"] = {
+        "red": _to_int(risk_red),
+        "amber": _to_int(risk_amber),
+        "green": _to_int(risk_green),
+    }
+    payload["tone"] = "danger" if _to_int(risk_red) > 0 else "warning" if _to_int(risk_amber) > 0 else "success"
+    payload["progress"] = "blocked" if _to_int(risk_red) > 0 else "running"
+
+    trend = payload.get("trend") if isinstance(payload.get("trend"), list) else []
+    normalized_trend: List[Dict[str, Any]] = []
+    default_labels = ["30天前", "7天前", "当前"]
+    for index, row in enumerate(trend[:3]):
+        if not isinstance(row, dict):
+            continue
+        normalized_trend.append(
+            {
+                "label": default_labels[index],
+                "value": _to_int(row.get("value")),
+                "percent": _to_int(row.get("percent")),
+            }
+        )
+    if normalized_trend:
+        payload["trend"] = normalized_trend
+
+    payload["sources"] = [
+        {"label": "业务告警动作", "count": len([row for row in list(risk_actions or []) if _to_text((row or {}).get("source")) == "business"])},
+        {"label": "能力兜底动作", "count": len([row for row in list(risk_actions or []) if _to_text((row or {}).get("source")) != "business"])},
+        {"label": "权限限制", "count": _to_int(permission_denied)},
+    ]
+    payload["actions"] = list(risk_actions or [])
+    return payload
+
+
+def build_ops_meta(*, defaults: Dict[str, str], has_business_signal: bool) -> Dict[str, str]:
+    payload = dict(defaults or {})
+    payload["tone"] = "info"
+    payload["progress"] = "running"
+    payload["data_state"] = "business" if has_business_signal else "fallback"
+    return payload
+
+
 def resolve_scene_by_source(source_key: str) -> str:
     aliases = build_scene_aliases()
     text = _to_text(source_key).lower()
