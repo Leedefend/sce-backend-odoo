@@ -159,16 +159,16 @@ onMounted(() => {
 <style scoped>
 .tree {
   list-style: none;
-  padding-left: 10px;
+  padding-left: 6px;
   margin: 0;
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .node {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .label {
@@ -180,9 +180,9 @@ onMounted(() => {
 }
 
 .node.active .label {
-  font-weight: 700;
-  color: #2563eb;
-  background: #eff6ff;
+  font-weight: 600;
+  color: #1f3b77;
+  background: #f1f5f9;
 }
 
 .node.ancestor .label {
@@ -199,31 +199,31 @@ onMounted(() => {
 }
 
 .toggle {
-  width: 22px;
+  width: 18px;
   border: none;
   background: transparent;
   cursor: pointer;
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .toggle-spacer {
-  width: 22px;
+  width: 18px;
   display: inline-block;
-  flex: 0 0 22px;
+  flex: 0 0 18px;
 }
 
 .label {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
   transition: background-color 0.2s;
 }
 
 .label:hover {
-  background-color: #f1f5f9;
+  background-color: #f3f4f6;
 }
 
 .expand-enter-active,
