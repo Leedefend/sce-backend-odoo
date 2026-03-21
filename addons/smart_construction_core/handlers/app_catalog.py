@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# smart_core/handlers/app_catalog.py
+# smart_construction_core/handlers/app_catalog.py
 import json, hashlib, logging, time
 from typing import Any, Dict, List, Set
 
 from odoo import api, SUPERUSER_ID
-from ..core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 
 _logger = logging.getLogger(__name__)
 

@@ -11,4 +11,22 @@
     <field name="implied_ids" eval="[(4, ref('group_smart_core_user'))]"/>
     <field name="category_id" ref="base.module_category_hidden"/>
   </record>
+
+  <record id="group_smart_core_data_operator" model="res.groups">
+    <field name="name">Smart Core Data Operator</field>
+    <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    <field name="category_id" ref="base.module_category_hidden"/>
+  </record>
+
+  <record id="group_smart_core_scene_admin" model="res.groups">
+    <field name="name">Smart Core Scene Admin</field>
+    <field name="implied_ids" eval="[(4, ref('group_smart_core_admin'))]"/>
+    <field name="category_id" ref="base.module_category_hidden"/>
+  </record>
+
+  <record id="group_smart_core_finance_approver" model="res.groups">
+    <field name="name">Smart Core Finance Approver</field>
+    <field name="implied_ids" eval="[(4, ref('group_smart_core_data_operator'))]"/>
+    <field name="category_id" ref="base.module_category_hidden"/>
+  </record>
 </odoo>

@@ -74,7 +74,7 @@ def _sample_payload() -> dict:
                 "label": "提交立项",
                 "requiredCapabilities": ["project.lifecycle.transition"],
                 "required_capabilities": ["project.lifecycle.transition"],
-                "groupsXmlids": ["smart_core.group_sc_data_operator"],
+                "groupsXmlids": ["smart_core.group_smart_core_data_operator"],
                 "required_roles": ["pm"],
                 "level": "header",
             },

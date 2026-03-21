@@ -23,7 +23,7 @@ _logger = logging.getLogger(__name__)
 class ExecuteButtonHandler(BaseIntentHandler):
     INTENT_TYPE = "execute_button"
     DESCRIPTION = "执行模型按钮方法"
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "button methods can trigger business side effects beyond replay-safe scope"
 

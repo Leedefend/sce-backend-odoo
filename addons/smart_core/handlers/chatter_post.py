@@ -20,7 +20,7 @@ from ..utils.reason_codes import (
 class ChatterPostHandler(BaseIntentHandler):
     INTENT_TYPE = "chatter.post"
     DESCRIPTION = "Post a chatter message (mail.thread)"
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "message_post appends chatter history and should not replay"
 

@@ -22,7 +22,7 @@
       "intent_type": "api.data.batch",
       "class_name": "ApiDataBatchHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -40,7 +40,7 @@
       "intent_type": "api.data.create",
       "class_name": "ApiDataWriteHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -58,7 +58,7 @@
       "intent_type": "api.data.unlink",
       "class_name": "ApiDataUnlinkHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -172,7 +172,7 @@
       "intent_type": "chatter.post",
       "class_name": "ChatterPostHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -206,7 +206,7 @@
       "intent_type": "execute_button",
       "class_name": "ExecuteButtonHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -243,7 +243,7 @@
       "intent_type": "file.upload",
       "class_name": "FileUploadHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -346,7 +346,7 @@
       "intent_type": "my.work.complete",
       "class_name": "MyWorkCompleteHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -364,7 +364,7 @@
       "intent_type": "my.work.complete_batch",
       "class_name": "MyWorkCompleteBatchHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -436,7 +436,7 @@
       "class_name": "PaymentRequestDoneHandler",
       "required_groups": [
         "smart_construction_core.group_sc_cap_finance_manager",
-        "smart_core.group_sc_finance_approver"
+        "smart_core.group_smart_core_finance_approver"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -460,7 +460,7 @@
       "class_name": "PaymentRequestExecuteHandler",
       "required_groups": [
         "smart_construction_core.group_sc_cap_finance_user",
-        "smart_core.group_sc_finance_approver",
+        "smart_core.group_smart_core_finance_approver",
         "smart_construction_core.group_sc_cap_finance_manager"
       ],
       "etag_enabled": false,
@@ -501,7 +501,7 @@
       "class_name": "PaymentRequestSubmitHandler",
       "required_groups": [
         "smart_construction_core.group_sc_cap_finance_user",
-        "smart_core.group_sc_finance_approver"
+        "smart_core.group_smart_core_finance_approver"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -796,7 +796,7 @@
       "intent_type": "system.ping.construction",
       "class_name": "SystemPingConstructionHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -912,7 +912,7 @@
       "intent_type": "usage.track",
       "class_name": "UsageTrackHandler",
       "required_groups": [
-        "smart_core.group_sc_data_operator"
+        "smart_core.group_smart_core_data_operator"
       ],
       "etag_enabled": false,
       "has_test_file": true,
