@@ -37,8 +37,17 @@ def _assert_envelope(payload: dict[str, Any], intent: str, errors: list[str]) ->
         errors.append(f"{intent}: meta.trace_id missing")
 
 
-def _post(intent_url: str, token: str | None, intent: str, params: dict[str, Any] | None = None) -> tuple[int, dict[str, Any]]:
+def _post(
+    intent_url: str,
+    token: str | None,
+    intent: str,
+    params: dict[str, Any] | None = None,
+    *,
+    db_name: str = "",
+) -> tuple[int, dict[str, Any]]:
     headers = {"X-Anonymous-Intent": "1"} if token is None else {"Authorization": f"Bearer {token}"}
+    if db_name:
+        headers["X-Odoo-DB"] = db_name
     status, payload = http_post_json(intent_url, {"intent": intent, "params": params or {}}, headers=headers)
     return status, payload if isinstance(payload, dict) else {}
 
@@ -51,8 +60,10 @@ def main() -> int:
     login = str(os.getenv("E2E_LOGIN") or "admin").strip()
     password = str(os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
     intent_url = f"{base_url}/api/v1/intent"
+    if db_name:
+        intent_url = f"{intent_url}?db={db_name}"
 
-    status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password})
+    status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
     _assert_envelope(login_resp, "login", errors)
     if status >= 400 or login_resp.get("ok") is not True:
         errors.append(f"login failed: status={status}")
@@ -66,7 +77,7 @@ def main() -> int:
             errors.append(f"login: missing data.{key}")
 
     if token:
-        status, init_resp = _post(intent_url, token, "system.init", {"contract_mode": "user"})
+        status, init_resp = _post(intent_url, token, "system.init", {"contract_mode": "user"}, db_name=db_name)
         _assert_envelope(init_resp, "system.init", errors)
         if status >= 400 or init_resp.get("ok") is not True:
             errors.append(f"system.init failed: status={status}")
@@ -77,7 +88,7 @@ def main() -> int:
         if "default_route" not in init_data:
             errors.append("system.init: missing data.default_route")
 
-        status, catalog_resp = _post(intent_url, token, "app.catalog", {})
+        status, catalog_resp = _post(intent_url, token, "app.catalog", {}, db_name=db_name)
         _assert_envelope(catalog_resp, "app.catalog", errors)
         if status >= 400 or catalog_resp.get("ok") is not True:
             errors.append(f"app.catalog failed: status={status}")
@@ -99,7 +110,7 @@ def main() -> int:
 
         app_param = "workspace"
 
-        status, nav_resp = _post(intent_url, token, "app.nav", {"app": app_param})
+        status, nav_resp = _post(intent_url, token, "app.nav", {"app": app_param}, db_name=db_name)
         _assert_envelope(nav_resp, "app.nav", errors)
         if status >= 400 or nav_resp.get("ok") is not True:
             errors.append(f"app.nav failed: status={status}")
@@ -107,7 +118,7 @@ def main() -> int:
         if not isinstance(nav_data.get("sections"), list):
             errors.append("app.nav: data.sections must be list")
 
-        status, open_resp = _post(intent_url, token, "app.open", {"app": app_param})
+        status, open_resp = _post(intent_url, token, "app.open", {"app": app_param}, db_name=db_name)
         _assert_envelope(open_resp, "app.open", errors)
         if status >= 400 or open_resp.get("ok") is not True:
             errors.append(f"app.open failed: status={status}")
@@ -119,12 +130,12 @@ def main() -> int:
         if not str(open_data.get("route") or "").strip():
             errors.append("app.open: data.route missing")
 
-        status, meta_resp = _post(intent_url, token, "meta.describe_model", {"model": "res.users"})
+        status, meta_resp = _post(intent_url, token, "meta.describe_model", {"model": "res.users"}, db_name=db_name)
         _assert_envelope(meta_resp, "meta.describe_model", errors)
         if status >= 400 or meta_resp.get("ok") is not True:
             errors.append(f"meta.describe_model failed: status={status}")
 
-        status, permission_resp = _post(intent_url, token, "permission.check", {"capability_key": "platform.home"})
+        status, permission_resp = _post(intent_url, token, "permission.check", {"capability_key": "platform.home"}, db_name=db_name)
         _assert_envelope(permission_resp, "permission.check", errors)
         if status >= 400 or permission_resp.get("ok") is not True:
             errors.append(f"permission.check failed: status={status}")

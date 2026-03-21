@@ -8,8 +8,17 @@ import sys
 from python_http_smoke_utils import get_base_url, http_post_json
 
 
-def _post(intent_url: str, token: str | None, intent: str, params: dict | None = None) -> tuple[int, dict]:
+def _post(
+    intent_url: str,
+    token: str | None,
+    intent: str,
+    params: dict | None = None,
+    *,
+    db_name: str = "",
+) -> tuple[int, dict]:
     headers = {"X-Anonymous-Intent": "1"} if token is None else {"Authorization": f"Bearer {token}"}
+    if db_name:
+        headers["X-Odoo-DB"] = db_name
     status, payload = http_post_json(intent_url, {"intent": intent, "params": params or {}}, headers=headers)
     return status, payload if isinstance(payload, dict) else {}
 
@@ -25,14 +34,16 @@ def main() -> int:
     login = str(os.getenv("E2E_LOGIN") or "admin").strip()
     password = str(os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
     intent_url = f"{base_url}/api/v1/intent"
+    if db_name:
+        intent_url = f"{intent_url}?db={db_name}"
 
-    status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password})
+    status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
     _assert_ok(status, login_resp, "login")
     token = (((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token")
     if not str(token or "").strip():
         raise RuntimeError("login response missing data.session.token")
 
-    status, catalog_resp = _post(intent_url, token, "app.catalog", {})
+    status, catalog_resp = _post(intent_url, token, "app.catalog", {}, db_name=db_name)
     _assert_ok(status, catalog_resp, "app.catalog")
     catalog_data = catalog_resp.get("data") if isinstance(catalog_resp.get("data"), dict) else {}
     apps = catalog_data.get("apps") if isinstance(catalog_data.get("apps"), list) else []
@@ -50,10 +61,10 @@ def main() -> int:
     if not has_workspace:
         raise RuntimeError("minimum surface baseline broken: workspace app missing in app.catalog")
 
-    status, nav_resp = _post(intent_url, token, "app.nav", {"app": "workspace"})
+    status, nav_resp = _post(intent_url, token, "app.nav", {"app": "workspace"}, db_name=db_name)
     _assert_ok(status, nav_resp, "app.nav(workspace)")
 
-    status, open_resp = _post(intent_url, token, "app.open", {"app": "workspace"})
+    status, open_resp = _post(intent_url, token, "app.open", {"app": "workspace"}, db_name=db_name)
     _assert_ok(status, open_resp, "app.open(workspace)")
 
     print("[smart_core_minimum_surface_order_regression_guard] PASS")
@@ -67,4 +78,3 @@ if __name__ == "__main__":
         print("[smart_core_minimum_surface_order_regression_guard] FAIL")
         print(f" - {exc}")
         sys.exit(1)
-

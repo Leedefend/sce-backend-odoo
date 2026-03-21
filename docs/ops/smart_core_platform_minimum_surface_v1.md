@@ -38,6 +38,7 @@
 - `app.catalog -> app.nav -> app.open` 全链路可用
 - `ui.contract`/`meta.describe_model`/`permission.check` 可调用
 - 不因行业模块缺失出现 500
+- 平台模式侧栏导航仅包含 `workspace.home`（不得泄漏行业 scene 菜单）
 
 ## same-route 冻结规则
 - `isSameRouteTarget()` 是信号，不是错误。
@@ -48,6 +49,9 @@
 - Guard-B：`make verify.smart_core.minimum_surface.contract_guard`
 - Smoke-C：`make verify.smart_core.minimum_surface.owner_startup_smoke`
 - Regression-D：`make verify.smart_core.minimum_surface.same_route_guard`
+- Regression-E：`make verify.smart_core.minimum_surface.order_regression_guard`
+- Regression-F：`make verify.smart_core.minimum_surface.app_open_regression_guard`
+- Regression-G：`make verify.smart_core.minimum_surface.nav_isolation_guard`
 - 聚合：`make verify.smart_core.minimum_surface`
 
 ## PR 评审四问（边界必答）

@@ -6,6 +6,15 @@
     @action="handleHomeBlockAction"
   />
 
+  <section v-else-if="showMinimumWorkspaceFallback" class="minimum-workspace-fallback">
+    <h2>{{ pageText('minimum_workspace_title', '工作区已就绪') }}</h2>
+    <p>{{ pageText('minimum_workspace_hint', '当前环境未返回完整首页契约，已切换到最小可用视图。') }}</p>
+    <div class="minimum-workspace-actions">
+      <button class="primary" @click="openRoleLanding">{{ pageText('minimum_workspace_open_landing', '进入默认场景') }}</button>
+      <button class="ghost" @click="goToMyWork">{{ pageText('minimum_workspace_open_my_work', '进入我的工作') }}</button>
+    </div>
+  </section>
+
   <section v-else class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
     <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :class="homeSectionClass('hero')" :style="homeSectionStyle('hero')">
@@ -819,6 +828,11 @@ const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKe
 const searchKeyword = computed(() => searchText.value.trim());
 const workspaceContextQuery = computed(() => {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+});
+const showMinimumWorkspaceFallback = computed(() => {
+  if (useUnifiedHomeRenderer.value) return false;
+  const hasWorkspaceHome = Object.keys(workspaceHome.value || {}).length > 0;
+  return !hasWorkspaceHome;
 });
 
 function homeLayoutText(key: string, fallback: string) {
@@ -2189,6 +2203,32 @@ function highlightParts(raw: string) {
 .capability-home {
   display: grid;
   gap: 16px;
+}
+
+.minimum-workspace-fallback {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.minimum-workspace-fallback h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.minimum-workspace-fallback p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.minimum-workspace-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .focus-layout {

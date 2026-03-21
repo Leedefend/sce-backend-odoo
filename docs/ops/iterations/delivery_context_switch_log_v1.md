@@ -762,3 +762,30 @@ Each entry must include:
 - completed_step: `完成已填充 release note，覆盖问题归因、风险分级、验证命令、契约证据路径、回滚方案与下一批次目标`
 - active_commit: `9ea7da6`
 - next_step: `复用该模板继续补齐其他治理类问题复盘文档`
+
+### 2026-03-21T15:34:06Z
+- blocker_key: `platform_minimum_surface_system_init_route_leak`
+- layer_target: `Platform Layer / Startup Minimum Surface`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: `平台-only 数据库验证时 system.init 仍可能落到 portal.dashboard，需强制回归 workspace.home 最小启动面`
+- completed_step: `新增行业模块安装态判断；在无行业模块时强制 default_route=workspace.home(/) 并同步 workspace_home_ref/nav_meta，阻断行业场景默认跳转`
+- active_commit: `pending`
+- next_step: `重启服务后在 sc_platform_core 执行 login/system.init 前端链路复测，确认不再进入行业内容`
+
+### 2026-03-21T15:44:00Z
+- blocker_key: `platform_minimum_surface_sidebar_industry_menu_leak`
+- layer_target: `Platform Layer / Startup Minimum Surface`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: `平台-only 数据库侧栏仍下发行业场景菜单，点击后报“未配置”，需在 system.init 导航面做硬收口`
+- completed_step: `新增 platform minimum nav contract（仅 workspace.home）；平台模式下强制覆盖 nav/nav_contract/default_route/nav_meta.nav_source，阻断行业菜单下发`
+- active_commit: `pending`
+- next_step: `在 sc_platform_core 复测 system.init.nav scene_key 集合仅包含 workspace.home，并做前端实测`
+
+### 2026-03-21T15:49:59Z
+- blocker_key: `platform_minimum_surface_nav_leak_regression_guard`
+- layer_target: `Platform Layer / Minimum Surface Guard`
+- module: `scripts/verify/smart_core_platform_minimum_nav_isolation_guard.py + Makefile + docs/ops`
+- reason: `把“平台-only 导航不得泄漏行业菜单”固化为可执行回归门禁，避免后续边界迭代回退`
+- completed_step: `新增 nav_isolation_guard 并接入 verify.smart_core.minimum_surface 聚合链；文档同步加入 Regression-G 基线`
+- active_commit: `pending`
+- next_step: `在 sc_platform_core 执行 minimum_surface 全链验证并出具收口结论`
