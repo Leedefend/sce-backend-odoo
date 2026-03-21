@@ -1,11 +1,12 @@
 <template>
   <div
-    class="shell"
+    class="shell layout-shell"
+    data-component="LayoutShell"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
   >
-    <aside class="sidebar" :class="sidebarClass">
+    <aside class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
         <div class="logo">SC</div>
         <div>
@@ -13,6 +14,8 @@
           <p class="subtitle">{{ sidebarSubtitle }}</p>
         </div>
       </div>
+
+      <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
 
       <div class="role-surface">
         <p class="role-label">当前角色：{{ roleLabel }}</p>
@@ -32,17 +35,19 @@
         </div>
       </div>
 
-      <div class="search">
-        <input v-model="query" type="search" placeholder="搜索菜单..." />
-      </div>
+      <div class="nav-shell">
+        <div class="search">
+          <input v-model="query" type="search" placeholder="搜索菜单..." />
+        </div>
 
-      <div class="menu">
-        <MenuTree
-          :nodes="filteredMenu"
-          :active-menu-id="activeMenuId"
-          :capabilities="capabilities"
-          @select="handleSelect"
-        />
+        <div class="menu">
+          <MenuTree
+            :nodes="filteredMenu"
+            :active-menu-id="activeMenuId"
+            :capabilities="capabilities"
+            @select="handleSelect"
+          />
+        </div>
       </div>
 
       <div class="footer">
@@ -200,6 +205,22 @@ const rootTitle = computed(() => {
   return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
 });
 const userName = computed(() => session.user?.name ?? '访客');
+const enterpriseLabel = computed(() => {
+  const user = session.user as Record<string, unknown> | null;
+  const company = user?.company;
+  if (company && typeof company === 'object' && !Array.isArray(company)) {
+    const nested = company as Record<string, unknown>;
+    const name = String(nested.name || nested.display_name || '').trim();
+    if (name) return name;
+  }
+  if (Array.isArray(company) && company.length >= 2) {
+    const name = String(company[1] || '').trim();
+    if (name) return name;
+  }
+  const directName = String(user?.company_name || '').trim();
+  if (directName) return directName;
+  return effectiveDb.value && effectiveDb.value !== 'N/A' ? effectiveDb.value : '默认企业';
+});
 const sidebarSubtitle = computed(() => {
   if (!isDeliveryMode.value) return userName.value;
   const raw = String(userName.value || '').trim();
@@ -805,24 +826,24 @@ async function logout() {
   --accent: #2f3a5f;
   --accent-2: #e07a5f;
   --panel: #ffffff;
+  --layout-divider: #e5e7eb;
   min-height: 100vh;
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  background: radial-gradient(circle at top left, #f7e9dc 0%, #f6f3ef 45%, #eef1f7 100%);
+  grid-template-columns: 220px minmax(0, 1fr);
+  background: linear-gradient(180deg, #f8fafc 0%, #f3f5f8 100%);
   color: var(--ink);
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
 
 .sidebar {
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
+  padding: 18px 14px 14px;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 10px;
+  border-right: 1px solid #e5e7eb;
+  background: transparent;
   height: 100vh;
   overflow: hidden;
   position: sticky;
@@ -836,87 +857,114 @@ async function logout() {
 
 .brand {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
+  padding: 1px 2px 6px;
+}
+
+.enterprise-line {
+  margin: 0;
+  padding: 0 2px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #2f3a5f, #1b263b);
   color: white;
   display: grid;
   place-items: center;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
 }
 
 .title {
   font-weight: 700;
-  font-size: 28px;
+  font-size: 16px;
   line-height: 1.1;
   margin: 0;
+  color: #0f172a;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 14px;
-  color: var(--muted);
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.nav-shell {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .search input {
   width: 100%;
-  padding: 11px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: white;
-  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 13px;
+  color: #0f172a;
 }
 
 .role-surface {
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: rgba(255, 255, 255, 0.85);
+  padding: 8px 4px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  background: transparent;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .role-label {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--muted);
+  color: #64748b;
 }
 
 .role-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .role-menus {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .role-menu-item {
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: white;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.84);
   border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
   color: #334155;
 }
 
 .menu {
   overflow: auto;
-  padding-right: 4px;
+  padding-right: 2px;
   padding-top: 0;
   min-height: 0;
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -925,33 +973,39 @@ async function logout() {
 
 .footer {
   display: grid;
-  gap: 8px;
+  gap: 6px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  background: transparent;
 }
 
 .ghost {
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  padding: 7px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
   background: transparent;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
 }
 
 .content {
-  padding: 28px 32px;
+  padding: 24px 32px;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
   height: 100vh;
   overflow: auto;
   overscroll-behavior: contain;
+  background: #f8fafc;
 }
 
 .content--scene-compact {
   gap: 6px;
-  padding: 20px 20px 24px;
+  padding: 24px 32px;
 }
 
 .topbar {

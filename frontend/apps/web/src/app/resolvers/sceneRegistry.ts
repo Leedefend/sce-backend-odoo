@@ -165,7 +165,7 @@ function buildSceneRegistry(source: Scene[]) {
   const normalized = coerceSceneSource(source);
   const validation = validateSceneRegistry(normalized as Scene[]);
   const nextErrors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
-  if (nextErrors.length) {
+  if (nextErrors.length && import.meta.env.DEV) {
     // eslint-disable-next-line no-console
     console.warn('[scene-registry] invalid scenes detected', nextErrors);
   }
