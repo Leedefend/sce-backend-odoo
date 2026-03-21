@@ -91,17 +91,13 @@ def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
 
 def _build_scene_minimal_ui_base_contract(scene_key: str, scene: dict) -> dict:
     target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
-    model = _text(target.get("model")) or "project.project"
+    model = _text(target.get("model")) or "res.partner"
     payload = {
         "model": model,
         "views": {"tree": {"fields": ["name"]}},
         "fields": {"name": {"type": "char"}},
         "search": {"fields": ["name"]},
     }
-    key = _text(scene_key)
-    if key == "projects.intake":
-        payload["views"] = {"form": {"fields": ["name", "partner_id", "date_start"]}}
-        payload["validator"] = {"required": ["name"]}
     return canonicalize_ui_base_contract(payload)
 
 
