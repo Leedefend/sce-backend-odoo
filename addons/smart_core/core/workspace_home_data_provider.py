@@ -84,7 +84,7 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
 def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     role = _to_text(role_code).lower()
     default = {
-        "audience": ["project_manager", "construction_manager"] if role == "pm" else ["finance_manager", "construction_manager"] if role == "finance" else ["owner", "executive"],
+        "audience": ["internal_user", "reviewer"] if role == "pm" else ["internal_user", "reviewer"] if role == "finance" else ["owner", "executive"],
         "priority_model": "task_first" if role == "pm" else "metric_first" if role == "finance" else "role_first",
         "mobile_priority": ["today_focus", "analysis", "quick_entries", "hero"],
     }

@@ -789,3 +789,66 @@ Each entry must include:
 - completed_step: `新增 nav_isolation_guard 并接入 verify.smart_core.minimum_surface 聚合链；文档同步加入 Regression-G 基线`
 - active_commit: `pending`
 - next_step: `在 sc_platform_core 执行 minimum_surface 全链验证并出具收口结论`
+
+### 2026-03-21T16:06:39Z
+- blocker_key: `batch_b_obvious_boundary_migration_plan`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `docs/ops/iterations/smart_core_inventory_v1_batch_b_migration_plan.md`
+- reason: `进入 Batch-B（只迁明显越界点），先冻结可执行迁移顺序与候选清单，避免边改边漂移`
+- completed_step: `新增 Batch-B 迁移计划：P0/P1/P2 候选、边界说明、执行顺序与 minimum-surface 门禁要求`
+- active_commit: `pending`
+- next_step: `按 Step-1 落地 page_contracts/page_orchestration 行业语义下沉`
+
+### 2026-03-21T16:10:28Z
+- blocker_key: `batch_b_step1_page_audience_neutralization`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/page_contracts_builder.py + addons/smart_core/core/page_orchestration_data_provider.py`
+- reason: `执行 Batch-B Step-1，先下沉页面层默认受众中的行业角色语义，平台保留中性默认`
+- completed_step: `page_audience 默认角色从 project/finance 语义改为 internal/reviewer 中性集合；action target fallback 默认场景收敛为 workspace.home；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `继续 Step-1 第二段：page_contracts 文案关键词与 role_focus 的行业词抽离为 extension profile`
+
+### 2026-03-21T16:16:12Z
+- blocker_key: `batch_b_step1_page_profile_override_hook`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/page_contracts_builder.py + addons/smart_core/core/page_orchestration_data_provider.py`
+- reason: `完成 Step-1 第二段：为页面默认受众/焦点/动作增加 profile 覆盖入口，并进一步中性化默认动作文案`
+- completed_step: `新增 page_profile_overrides 解析（支持 data/ext_facts）；page_audience/role_focus/default_actions 支持 overrides；risk/my_work 默认动作文案与 key 收敛为中性“工作区/工作概览”；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `进入 Batch-B Step-2：workspace_home_* 默认内容中的行业语义下沉`
+
+### 2026-03-21T16:19:55Z
+- blocker_key: `batch_b_step2_workspace_home_neutral_defaults`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py + addons/smart_core/core/workspace_home_data_provider.py`
+- reason: `执行 Batch-B Step-2，先收敛 workspace_home 默认 scene 与 audience 的行业语义`
+- completed_step: `workspace_scene aliases 默认 dashboard→workspace.home；workspace_home fallback scene/page hints 全部收敛到 workspace.home；v1_page_profile audience 从 project/finance 角色语义改为 internal/reviewer 中性集合；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `继续 Step-2 下一段：workspace_home 文案关键词（risk/payment/project）抽离为 extension profile`
+
+### 2026-03-21T16:22:38Z
+- blocker_key: `batch_b_step2_workspace_home_copy_neutralization`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py`
+- reason: `继续 Step-2，先将平台默认 layout/actions 文案从行业风险/审批语义收敛为中性事项语义`
+- completed_step: `workspace_home layout.texts 中 risk 区域文案改为“关键事项”语义；layout.actions 中 todo_approval/todo_risk 改为中性表达；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `继续 Step-2：将剩余 risk/payment/project 关键词字典提取到 extension profile 覆盖`
+
+### 2026-03-21T16:27:40Z
+- blocker_key: `batch_b_step2_workspace_home_keyword_neutralization`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py`
+- reason: `继续 Step-2，将 workspace_home 的 source 路由与指标文案中的 risk/payment/project 行业措辞进一步中性化`
+- completed_step: `route_by_source 对 finance/payment 默认回落至 workspace.home；metrics 中“风险/在管项目”描述收敛为“关键事项/可用场景”；v1_action_schema 的 open_risk_dashboard 标签改为中性“进入重点事项”；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `进入 Step-2 收口尾段：将 remaining 关键词集合做 ext_facts/profile 覆盖入口并冻结默认中性词表`
+
+### 2026-03-21T16:37:02Z
+- blocker_key: `batch_b_step2_workspace_home_keyword_override_chain`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py`
+- reason: `完成 Step-2 收口尾段，把 workspace_home 的关键词词表覆盖能力打通到 today/risk action 生成链路，避免平台默认词表再次硬编码行业语义`
+- completed_step: `新增 workspace_keyword_overrides 解析（支持 data/ext_facts）；_build_business_today_actions/_build_today_actions/_build_risk_actions 全链路透传 keyword_overrides；risk 语义识别与 source 路由统一走可覆盖词表；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `进入 Batch-B Step-3，统一 scene_delivery_policy/action_target_schema/system_init_payload_builder/scene_provider 的默认 scene target 为 workspace.home`
