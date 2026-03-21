@@ -15,6 +15,34 @@ _logger = logging.getLogger(__name__)
 def _md5(d: Any) -> str:
     return hashlib.md5(json.dumps(d, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
 
+
+def _is_feature_openable(env, su_env, app_id: str, feature: Dict[str, Any], perms: set[str]) -> bool:
+    if not isinstance(feature, dict):
+        return False
+
+    need = set(feature.get("required_permissions") or [])
+    is_system_admin = False
+    try:
+        is_system_admin = bool(env.user.has_group("base.group_system"))
+    except Exception:
+        is_system_admin = False
+    if need and not need.issubset(perms) and not is_system_admin:
+        return False
+
+    open_payload = feature.get("open") if isinstance(feature.get("open"), dict) else {}
+    if not open_payload:
+        return False
+    if str(open_payload.get("internal_route") or "").strip():
+        return True
+    if str(open_payload.get("workflow_id") or "").strip():
+        return True
+    if str(open_payload.get("odoo_menu_xmlid") or "").strip():
+        return bool(_xmlid_to_id(su_env, open_payload.get("odoo_menu_xmlid")))
+    if str(open_payload.get("odoo_action_xmlid") or "").strip():
+        return bool(_xmlid_to_id(su_env, open_payload.get("odoo_action_xmlid")))
+    _logger.info("[app.open] feature not openable app=%s feature=%s", app_id, feature.get("key"))
+    return False
+
 class AppOpenHandler(BaseIntentHandler):
     """
     意图：app.open
@@ -50,18 +78,28 @@ class AppOpenHandler(BaseIntentHandler):
             data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
             return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
+        have = _current_perms(env)
+        openable_features = [
+            item
+            for item in (app.get("features") or [])
+            if _is_feature_openable(env, su_env, app_id, item, have)
+        ]
+
         if not feature_key:
-            first_feature = next((x for x in app.get("features", []) if isinstance(x, dict) and x.get("key")), None)
-            if first_feature:
-                feature_key = first_feature.get("key")
+            first_openable = next((x for x in openable_features if isinstance(x, dict) and x.get("key")), None)
+            if first_openable:
+                feature_key = first_openable.get("key")
         f = next((x for x in app.get("features", []) if x["key"] == feature_key), None)
         if not f:
             data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
             return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
+        if feature_key and not _is_feature_openable(env, su_env, app_id, f, have):
+            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
+
         # 权限二次校验
         need = set(f.get("required_permissions") or [])
-        have = _current_perms(env)
         is_system_admin = False
         try:
             is_system_admin = bool(env.user.has_group("base.group_system"))
