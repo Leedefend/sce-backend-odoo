@@ -46,6 +46,7 @@
 | `addons/smart_core/core/scene_ready_contract_builder.py` | scene-ready seed action injection | 场景动作种子注入入口 | 待审→已治理（第八阶段，部分） | `_scene_ready_entry` 先读取 provider payload，支持 `default_actions` 与 `skip_pilot_seed`，减少平台层直接场景特判命中 | `smart_core`（注入入口） + scene provider（场景语义） |
 | `addons/smart_core/core/scene_ready_contract_builder.py` | pilot strict scope semantics | pilot 严格模式场景范围 | 待审→已治理（第九阶段） | pilot strict 范围从行业场景白名单收敛为 `workspace.home` 默认，行业场景由 provider 明确声明 | `smart_core`（最小默认） + scene provider（场景声明） |
 | `addons/smart_core/utils/contract_governance.py` | governance primary model semantics | 治理主模型判定 | 待审→已治理（第九阶段，部分） | `project.project` 强匹配改为 `_governance_primary_model`，支持从治理上下文注入主模型；demo marker 去除 `smart_construction_demo` 字面量 | `smart_core`（治理骨架） + 上层契约（模型声明） |
+| `addons/smart_core/handlers/app_shell.py` | app surface fallback intents | `app.catalog` / `app.nav` / `app.open` 通用兜底 | 待审→已治理（第十阶段） | 在 `smart_core` 提供最小 app intent 兜底，确保未启用 construction 扩展时仍保留系统启动面与导航能力 | `smart_core`（最小兜底） + 扩展模块（覆写实现） |
 | `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` | workspace scene aliases | 行业工作台场景语义映射 | 保留（行业侧） | 承载行业 scene alias 与 source 语义路由 | `smart_construction_scene` |
 | `addons/smart_core/handlers/system_init.py` | system.init | 平台启动契约聚合 | 保留（带治理） | extension facts 合并曾绑定特定模块名；本批改为通用 namespaced 合并 | `smart_core` |
 | `addons/smart_core/handlers/scene_package.py` | scene package handler | 场景包治理入口 | 待审→已治理 | 由扩展 hook 提供 service class，平台层不再直接导入建设模块 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
