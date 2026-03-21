@@ -47,11 +47,24 @@ class AppNavHandler(BaseIntentHandler):
 
         app_id = payload.get("app")
         if not app_id:
-            raise ValueError("missing param: app")
+            app_id = "workspace"
 
         app = next((a for a in APP_DEFS if a["id"] == app_id), None)
         if not app:
-            raise ValueError(f"unknown app: {app_id}")
+            data = {
+                "sections": [
+                    {
+                        "key": f"section:{app_id}:work",
+                        "label": "工作",
+                        "children": [],
+                        "meta": {"section": "work", "fallback": True},
+                    }
+                ],
+                "meta": {"fingerprint": _md5({"app": app_id, "fallback": True})},
+            }
+            meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE}
+            top_etag = _md5({"fp": data["meta"]["fingerprint"], "uid": env.uid})
+            return {"status":"success","data":data,"meta":{**meta,"etag":top_etag},"ok":True}
 
         visible_mids = _visible_menu_ids(env)
         perms = _current_perms(env)

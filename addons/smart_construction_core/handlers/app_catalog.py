@@ -155,6 +155,15 @@ class AppCatalogHandler(BaseIntentHandler):
                     "meta": {"app_id": app["id"], "category": app.get("category")},
                 })
 
+        if not apps_out:
+            apps_out.append({
+                "key": "app:workspace",
+                "label": "工作台",
+                "icon": None,
+                "badges": {"todo": 0},
+                "meta": {"app_id": "workspace", "category": "platform", "fallback": True},
+            })
+
         fp = _apps_fingerprint(env, su_env, apps_out)
         data = {"apps": apps_out, "meta": {"fingerprint": fp, "scene": scene}}
         meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE}

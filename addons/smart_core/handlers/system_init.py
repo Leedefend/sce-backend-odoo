@@ -523,6 +523,7 @@ class SystemInitHandler(BaseIntentHandler):
             contract_mode=contract_mode,
             runtime_env=delivery_runtime.get("runtime_env") or "dev",
             enabled=bool(delivery_runtime.get("enabled")),
+            env=env,
         )
         if isinstance(data.get("nav_meta"), dict):
             data["nav_meta"]["delivery_policy"] = delivery_result.get("meta") or {}
