@@ -2,18 +2,21 @@
 import time
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.extension_hooks import call_extension_hook_first
 
 
 def _service(env, user):
-    from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
-    return ScenePackageService(env, user)
+    service_cls = call_extension_hook_first(env, "smart_core_scene_package_service_class", env)
+    if service_cls is None:
+        raise RuntimeError("scene package service provider is not configured")
+    return service_cls(env, user)
 
 
 class ScenePackagesInstalledHandler(BaseIntentHandler):
     INTENT_TYPE = "scene.packages.installed"
     DESCRIPTION = "Installed scene package registry"
     VERSION = "1.0.0"
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_config_admin"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()

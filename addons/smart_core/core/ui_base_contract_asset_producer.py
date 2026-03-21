@@ -9,6 +9,10 @@ from odoo import api
 
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
+from odoo.addons.smart_core.core.scene_registry_provider import (
+    has_db_scenes as registry_has_db_scenes,
+    load_scene_configs as registry_load_scene_configs,
+)
 from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonicalize_ui_base_contract
 from odoo.addons.smart_core.core.ui_base_contract_asset_repository import upsert_asset
 
@@ -54,13 +58,9 @@ def _scene_action_id(env, scene: dict) -> int:
 
 def _load_scene_rows(env) -> tuple[list[dict], str]:
     try:
-        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs, has_db_scenes
-    except Exception:
-        return [], "fallback"
-    try:
-        payload = load_scene_configs(env) or []
+        payload = registry_load_scene_configs(env) or []
         rows = payload if isinstance(payload, list) else []
-        source = "db" if has_db_scenes(env) else "fallback"
+        source = "db" if registry_has_db_scenes(env) else "fallback"
         return rows, source
     except Exception:
         return [], "fallback"
@@ -91,17 +91,13 @@ def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
 
 def _build_scene_minimal_ui_base_contract(scene_key: str, scene: dict) -> dict:
     target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
-    model = _text(target.get("model")) or "project.project"
+    model = _text(target.get("model")) or "res.partner"
     payload = {
         "model": model,
         "views": {"tree": {"fields": ["name"]}},
         "fields": {"name": {"type": "char"}},
         "search": {"fields": ["name"]},
     }
-    key = _text(scene_key)
-    if key == "projects.intake":
-        payload["views"] = {"form": {"fields": ["name", "partner_id", "date_start"]}}
-        payload["validator"] = {"required": ["name"]}
     return canonicalize_ui_base_contract(payload)
 
 

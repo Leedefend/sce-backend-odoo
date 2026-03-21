@@ -6,24 +6,41 @@ import os
 from urllib.parse import parse_qs, urlparse
 from typing import Callable
 
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from odoo.addons.smart_core.core.scene_registry_provider import (
+    get_schema_version as registry_get_schema_version,
+    get_scene_version as registry_get_scene_version,
+    has_db_scenes as registry_has_db_scenes,
+    load_scene_configs as registry_load_scene_configs,
+)
+
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
-CRITICAL_SCENE_TARGET_OVERRIDES = {
-    "projects.list",
-    "projects.detail",
-    "projects.intake",
-    "projects.ledger",
-    "projects.execution",
-    "projects.dashboard",
-    "project.management",
-    "my_work.workspace",
-    "portal.dashboard",
-    "finance.payment_requests",
-}
+CRITICAL_SCENE_TARGET_OVERRIDES = {"workspace.home", "portal.dashboard"}
 
-CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
-    "my_work.workspace": "/my-work",
-}
+CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {}
+
+
+def _critical_scene_target_overrides(env) -> set[str]:
+    payload = call_extension_hook_first(env, "smart_core_critical_scene_target_overrides", env)
+    if isinstance(payload, (list, tuple, set)):
+        values = {str(item).strip() for item in payload if str(item).strip()}
+        if values:
+            return values
+    return set(CRITICAL_SCENE_TARGET_OVERRIDES)
+
+
+def _critical_scene_target_route_overrides(env) -> dict[str, str]:
+    payload = call_extension_hook_first(env, "smart_core_critical_scene_target_route_overrides", env)
+    if isinstance(payload, dict):
+        values = {
+            str(key).strip(): str(value).strip()
+            for key, value in payload.items()
+            if str(key).strip() and str(value).strip()
+        }
+        if values:
+            return values
+    return dict(CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES)
 
 
 def _normalize_scene_channel(value: str | None) -> str | None:
@@ -127,6 +144,8 @@ def load_scene_contract(env, scene_channel: str, use_pinned: bool, *, logger=Non
 
 
 def merge_missing_scenes_from_registry(env, scenes, warnings):
+    critical_target_overrides = _critical_scene_target_overrides(env)
+    critical_route_overrides = _critical_scene_target_route_overrides(env)
     def _capability_target_map() -> dict[str, dict]:
         out: dict[str, dict] = {}
         try:
@@ -227,10 +246,6 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
             hydrated["route"] = f"/s/{code}"
         scene_payload["target"] = hydrated
 
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
-    except Exception:
-        return scenes
     current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
     dropped_pkg_variants = []
     filtered = []
@@ -247,7 +262,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         if isinstance(scene, dict)
     }
     existing = {code for code in existing if code}
-    registry_scenes = load_scene_configs(env) or []
+    registry_scenes = registry_load_scene_configs(env) or []
     registry_map = {}
     for scene in registry_scenes:
         if not isinstance(scene, dict):
@@ -266,7 +281,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         if not code:
             continue
 
-        route_override = CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES.get(code)
+        route_override = critical_route_overrides.get(code)
         if route_override:
             current_target = scene.get("target")
             forced_target = {"route": route_override}
@@ -279,7 +294,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
             scene["target"] = _hydrate_target(scene.get("target"))
         _ensure_minimal_route_target(scene, code)
 
-        if code not in CRITICAL_SCENE_TARGET_OVERRIDES:
+        if code not in critical_target_overrides:
             continue
         registry_scene = registry_map.get(code) or {}
         registry_target = registry_scene.get("target")
@@ -371,26 +386,11 @@ def load_scenes_from_db_or_fallback(env, *, drift=None, logger=None) -> dict:
         "loaded_from": "fallback",
     }
     try:
-        from odoo.addons.smart_construction_scene.scene_registry import (
-            get_schema_version,
-            get_scene_version,
-            has_db_scenes,
-            load_scene_configs,
-        )
-    except Exception as exc:
-        if logger is not None:
-            try:
-                logger.warning("scene registry import failed: %s", exc)
-            except Exception:
-                pass
-        return out
-
-    try:
-        scenes_payload = load_scene_configs(env, drift=drift) or []
+        scenes_payload = registry_load_scene_configs(env, drift=drift) or []
         out["scenes"] = scenes_payload if isinstance(scenes_payload, list) else []
-        out["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
-        out["scene_version"] = get_scene_version()
-        out["schema_version"] = get_schema_version()
+        out["loaded_from"] = "db" if registry_has_db_scenes(env) else "fallback"
+        out["scene_version"] = registry_get_scene_version(env)
+        out["schema_version"] = registry_get_schema_version(env)
     except Exception as exc:
         if logger is not None:
             try:

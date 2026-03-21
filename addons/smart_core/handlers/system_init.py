@@ -82,20 +82,21 @@ def _merge_extension_facts(data: dict) -> None:
         return
     # Transitional compatibility: keep top-level reads stable while enforcing
     # extension hooks to write facts into a namespaced container only.
-    core_facts = ext_facts.get("smart_construction_core")
-    if isinstance(core_facts, dict):
+    for ext_module, module_facts in ext_facts.items():
+        if not isinstance(module_facts, dict):
+            continue
         for key in ("entitlements", "usage"):
-            if key in core_facts and key not in data:
-                data[key] = core_facts.get(key)
-        workspace_collections = core_facts.get("workspace_collections")
+            if key in module_facts and key not in data:
+                data[key] = module_facts.get(key)
+        workspace_collections = module_facts.get("workspace_collections")
         if isinstance(workspace_collections, dict):
             for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
                 rows = workspace_collections.get(key)
                 if key not in data and isinstance(rows, list):
                     data[key] = rows
-        provider_payload = core_facts.get("role_surface_override_provider")
+        provider_payload = module_facts.get("role_surface_override_provider")
         if isinstance(provider_payload, dict):
-            provider_key = str(provider_payload.get("key") or "").strip()
+            provider_key = str(provider_payload.get("key") or "").strip() or str(ext_module or "").strip()
             if provider_key:
                 providers = data.get("role_surface_override_providers")
                 if not isinstance(providers, dict):
@@ -369,7 +370,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene = params.get("scene") or "web"
 
         user = env.user
-        identity_resolver = IdentityResolver()
+        identity_resolver = IdentityResolver(env)
         user_groups_xmlids = identity_resolver.user_group_xmlids(user)
         user_dict = SystemInitIdentityPayload.build(user, user_groups_xmlids)
 

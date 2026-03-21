@@ -4,6 +4,263 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List
 
 
+def build_scene_aliases() -> Dict[str, str]:
+    return {
+        "default": "workspace.home",
+        "dashboard": "portal.dashboard",
+        "project_list": "projects.list",
+        "project_management": "project.management",
+        "execution": "projects.execution",
+        "operation_overview": "operation.overview",
+        "risk_center": "risk.center",
+        "task_center": "task.center",
+        "cost_center": "cost.project_boq",
+        "finance_center": "finance.center",
+    }
+
+
+def build_layout_texts_overrides() -> Dict[str, str]:
+    return {
+        "hero.role_label": "当前岗位",
+        "hero.landing_label": "默认入口",
+        "entry.navigate": "进入场景",
+        "entry.navigate_short": "进入",
+        "entry.meta.menu": "菜单",
+        "entry.meta.action": "动作",
+        "todo.empty": "当前暂无待办事项",
+        "risk.summary": "风险概览",
+        "ops.title": "经营态势",
+    }
+
+
+def build_layout_actions_overrides() -> Dict[str, str]:
+    return {
+        "todo_default": "查看详情",
+        "todo_approval": "处理审批",
+        "todo_contract": "查看合同",
+        "todo_risk": "处理风险",
+        "todo_change": "确认变更",
+        "todo_overdue": "处理逾期",
+    }
+
+
+def build_workspace_hero_payload(
+    *,
+    has_business_signal: bool,
+    gap_level: str,
+    updated_at: str,
+    partial_notice: str,
+) -> Dict[str, Any]:
+    status_detail = ""
+    if not has_business_signal:
+        status_detail = "当前业务明细不足，已回退到系统就绪入口。"
+    elif _to_text(gap_level).lower() == "limited":
+        status_detail = "当前可见业务数据偏少，建议核对岗位授权与数据分配。"
+    return {
+        "title": "工程协作工作台",
+        "lead": "围绕项目执行、经营态势与风险事项，快速完成今日关键动作。",
+        "product_tags": ["项目执行", "经营态势", "风险预警"],
+        "updated_at": _to_text(updated_at),
+        "status_notice": _to_text(partial_notice),
+        "status_detail": status_detail,
+    }
+
+
+def build_risk_summary_text(*, risk_red: int) -> str:
+    red = _to_int(risk_red)
+    if red >= 3:
+        return "存在高优先风险，请优先完成处置并跟进闭环。"
+    if red >= 1:
+        return "存在待跟进风险，建议在今日完成核查与责任落实。"
+    return "当前未发现高优先风险，建议保持日常巡检节奏。"
+
+
+def build_ops_payload(
+    *,
+    has_business_signal: bool,
+    risk_business_count: int,
+    today_business_count: int,
+) -> Dict[str, Any]:
+    if not has_business_signal:
+        return {
+            "bars": {"contract": 0, "output": 0},
+            "kpi": {
+                "cost_rate": 0,
+                "payment_rate": 0,
+                "cost_rate_delta": 0,
+                "payment_rate_delta": 0,
+                "output_trend_delta": 0,
+            },
+        }
+
+    risk_count = _to_int(risk_business_count)
+    today_count = _to_int(today_business_count)
+    contract_score = max(0, min(100, 100 - (risk_count * 10)))
+    output_score = max(0, min(100, 100 - (today_count * 8)))
+    cost_score = max(0, min(100, 100 - (risk_count * 12)))
+    payment_score = max(0, min(100, 100 - (today_count * 6)))
+
+    return {
+        "bars": {
+            "contract": contract_score,
+            "output": output_score,
+        },
+        "kpi": {
+            "cost_rate": cost_score,
+            "payment_rate": payment_score,
+            "cost_rate_delta": 0,
+            "payment_rate_delta": 0,
+            "output_trend_delta": 0,
+        },
+    }
+
+
+def build_risk_payload(
+    *,
+    defaults: Dict[str, Any],
+    summary: str,
+    risk_red: int,
+    risk_amber: int,
+    risk_green: int,
+    risk_actions: List[Dict[str, Any]],
+    permission_denied: int,
+) -> Dict[str, Any]:
+    payload = dict(defaults or {})
+    payload["summary"] = _to_text(summary) or payload.get("summary") or ""
+    payload["buckets"] = {
+        "red": _to_int(risk_red),
+        "amber": _to_int(risk_amber),
+        "green": _to_int(risk_green),
+    }
+    payload["tone"] = "danger" if _to_int(risk_red) > 0 else "warning" if _to_int(risk_amber) > 0 else "success"
+    payload["progress"] = "blocked" if _to_int(risk_red) > 0 else "running"
+
+    trend = payload.get("trend") if isinstance(payload.get("trend"), list) else []
+    normalized_trend: List[Dict[str, Any]] = []
+    default_labels = ["30天前", "7天前", "当前"]
+    for index, row in enumerate(trend[:3]):
+        if not isinstance(row, dict):
+            continue
+        normalized_trend.append(
+            {
+                "label": default_labels[index],
+                "value": _to_int(row.get("value")),
+                "percent": _to_int(row.get("percent")),
+            }
+        )
+    if normalized_trend:
+        payload["trend"] = normalized_trend
+
+    payload["sources"] = [
+        {"label": "业务告警动作", "count": len([row for row in list(risk_actions or []) if _to_text((row or {}).get("source")) == "business"])},
+        {"label": "能力兜底动作", "count": len([row for row in list(risk_actions or []) if _to_text((row or {}).get("source")) != "business"])},
+        {"label": "权限限制", "count": _to_int(permission_denied)},
+    ]
+    payload["actions"] = list(risk_actions or [])
+    return payload
+
+
+def build_ops_meta(*, defaults: Dict[str, str], has_business_signal: bool) -> Dict[str, str]:
+    payload = dict(defaults or {})
+    payload["tone"] = "info"
+    payload["progress"] = "running"
+    payload["data_state"] = "business" if has_business_signal else "fallback"
+    return payload
+
+
+def build_role_ranking_profile(role_code: str) -> Dict[str, int]:
+    role = _to_text(role_code).lower()
+    if role == "finance":
+        return {
+            "severity_weight": 55,
+            "deadline_weight": 45,
+            "pending_weight": 12,
+            "source_weight": 10,
+            "impact_weight": 22,
+        }
+    if role == "owner":
+        return {
+            "severity_weight": 65,
+            "deadline_weight": 35,
+            "pending_weight": 8,
+            "source_weight": 8,
+            "impact_weight": 28,
+        }
+    return {
+        "severity_weight": 60,
+        "deadline_weight": 40,
+        "pending_weight": 15,
+        "source_weight": 12,
+        "impact_weight": 20,
+    }
+
+
+def build_expected_collections(role_code: str) -> List[str]:
+    role = _to_text(role_code).lower()
+    expected_by_role = {
+        "pm": ["project_actions", "risk_actions", "tasks", "project_tasks"],
+        "finance": ["payment_requests", "risk_actions", "project_actions"],
+        "owner": ["project_actions", "risk_actions", "payment_requests"],
+    }
+    return list(expected_by_role.get(role, ["project_actions", "risk_actions"]))
+
+
+def build_risk_semantic_tokens() -> List[str]:
+    return [
+        "risk",
+        "alert",
+        "warning",
+        "exception",
+        "overdue",
+        "blocked",
+        "critical",
+        "urgent",
+        "payment",
+        "cost",
+        "contract",
+        "delay",
+        "风险",
+        "预警",
+        "异常",
+        "逾期",
+        "阻塞",
+        "严重",
+        "紧急",
+        "付款",
+        "成本",
+        "合同",
+        "延期",
+    ]
+
+
+def build_critical_status_tokens() -> List[str]:
+    return ["critical", "urgent", "overdue", "严重", "紧急", "逾期", "高"]
+
+
+def build_warning_status_tokens() -> List[str]:
+    return ["warning", "high", "关注", "预警", "待处理"]
+
+
+def build_urgent_keywords() -> List[str]:
+    return ["urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高"]
+
+
+def resolve_scene_by_source(source_key: str) -> str:
+    aliases = build_scene_aliases()
+    text = _to_text(source_key).lower()
+    if "risk" in text or "风险" in text:
+        return aliases["risk_center"]
+    if "task" in text or "任务" in text:
+        return aliases["task_center"]
+    if "cost" in text or "boq" in text or "成本" in text:
+        return aliases["cost_center"]
+    if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
+        return aliases["finance_center"]
+    if "project" in text or "项目" in text:
+        return aliases["project_list"]
+    return aliases["project_management"]
+
+
 def _to_text(value: Any) -> str:
     text = str(value or "").strip()
     return text
@@ -218,6 +475,43 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
         "pm": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
         "finance": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "metric_row_core"],
         "owner": ["todo_list_today", "risk_alert_panel", "metric_row_core", "progress_summary_ops"],
+    }
+
+
+def build_v1_zone_order() -> Dict[str, List[str]]:
+    return {
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
+        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+    }
+
+
+def build_v1_copy_overrides() -> Dict[str, str]:
+    return {
+        "zone.hero.title": "核心关注",
+        "zone.hero.description": "角色上下文与默认入口。",
+        "zone.today_focus.title": "今日优先事项",
+        "zone.today_focus.description": "先处理行动项，再快速处置风险提醒。",
+        "zone.analysis.title": "项目总体状态",
+        "zone.analysis.description": "关键指标、执行进展与风险动态。",
+        "zone.quick_entries.title": "常用功能",
+        "zone.quick_entries.description": "按业务场景快速进入处理。",
+        "block.hero_record_summary.title": "角色与入口摘要",
+        "block.todo_list_today.title": "今日行动",
+        "block.risk_alert_panel.title": "系统提醒（高优先）",
+        "block.advice_fold.title": "系统建议（补充）",
+        "block.metric_row_core.title": "关键指标",
+        "block.progress_summary_ops.title": "综合进展",
+        "block.activity_feed_risk.title": "风险动态",
+        "block.entry_grid_scene.title": "常用功能",
+        "action.open_landing.label": "打开默认入口",
+        "action.open_my_work.label": "查看全部",
+        "action.open_risk_dashboard.label": "进入风险驾驶舱",
+        "action.open_scene.label": "进入场景",
+        "page.title": "工作台",
+        "page.subtitle": "先处理行动项，再关注风险与总体状态",
+        "page.badge.runtime_ok": "运行正常",
+        "page.action.refresh": "刷新",
     }
 
 

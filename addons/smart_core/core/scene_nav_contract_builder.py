@@ -23,9 +23,15 @@ EXCLUDED_REASON_NO_NAV_TARGET = "target_fields_empty"
 EXCLUDED_REASON_ACCESS_DENIED = "access_denied"
 EXCLUDED_REASON_DEPRECATED_ALIAS = "deprecated_alias"
 
-NAV_HIDDEN_SCENE_CODES = {
-    "projects.dashboard",
-}
+NAV_HIDDEN_SCENE_CODES = set()
+
+
+def _hidden_scene_codes() -> set[str]:
+    return set(NAV_HIDDEN_SCENE_CODES)
+
+
+def _demo_target_markers() -> tuple[str, ...]:
+    return ("demo",)
 
 
 def _to_bool(value, default=False) -> bool:
@@ -60,7 +66,7 @@ def _delivery_gate_reason(scene: dict, code: str, target: dict) -> str | None:
             str(target.get("route") or ""),
         ]
     ).lower()
-    if "smart_construction_demo" in target_text:
+    if any(marker in target_text for marker in _demo_target_markers()):
         return EXCLUDED_REASON_DEMO_TARGET
     return None
 
@@ -83,7 +89,7 @@ def _scene_valid(scene: dict) -> tuple[bool, str | None]:
     code = str(scene.get("code") or scene.get("key") or "").strip()
     if not code:
         return False, EXCLUDED_REASON_NO_CODE
-    if code in NAV_HIDDEN_SCENE_CODES:
+    if code in _hidden_scene_codes():
         return False, EXCLUDED_REASON_DEPRECATED_ALIAS
     if "__pkg" in code:
         return False, EXCLUDED_REASON_IMPORTED_PKG
@@ -115,7 +121,7 @@ def _scene_structurally_valid(scene: dict) -> tuple[bool, str | None]:
     code = str(scene.get("code") or scene.get("key") or "").strip()
     if not code:
         return False, EXCLUDED_REASON_NO_CODE
-    if code in NAV_HIDDEN_SCENE_CODES:
+    if code in _hidden_scene_codes():
         return False, EXCLUDED_REASON_DEPRECATED_ALIAS
     target = scene.get("target")
     if not isinstance(target, dict):

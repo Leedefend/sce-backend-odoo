@@ -8,6 +8,7 @@
 import logging, odoo
 from odoo import api
 from odoo.http import request
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 
@@ -272,11 +273,9 @@ class ActionResolver:
         可选：将某些 server 动作映射为固定 act_window，避免执行代码。
         - 如无定制映射，返回 None。
         """
-        mapping = {
-            # 执行结构入口：server 动作返回 notification + next，前端无 next 语义；
-            # 直接落到执行结构窗口动作，避免误跳到项目台账链路触发无关能力门禁。
-            "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
-        }
+        mapping = call_extension_hook_first(self.env, "smart_core_server_action_window_map", self.env)
+        if not isinstance(mapping, dict):
+            mapping = {}
         target_xmlid = None
         if server_xmlid and server_xmlid in mapping:
             target_xmlid = mapping[server_xmlid]

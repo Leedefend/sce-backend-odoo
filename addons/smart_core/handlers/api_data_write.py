@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # 📄 smart_core/handlers/api_data_write.py
-# v0.6: Minimal write intent (create/update) for project.project
+# v0.6: Minimal write intent (create/update)
 
 import logging
 from typing import Any, Dict, List
@@ -26,6 +26,7 @@ from ..utils.reason_codes import (
     REASON_USER_ERROR,
     failure_meta_for_reason,
 )
+from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ _logger = logging.getLogger(__name__)
 class ApiDataWriteHandler(BaseIntentHandler):
     """
     Intent: api.data.create / api.data.write
-    - 限定 model=project.project
+    - 按 allowlist 限定可写 model
     - 字段白名单写入
     - 返回固定写入契约
     """
@@ -43,15 +44,32 @@ class ApiDataWriteHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell v0.6 minimal write intent (create/update)"
     VERSION = "0.6.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_WRITE"
 
     ALLOWED_MODELS = {
-        "project.project": {"name", "description", "date_start"},
-        "project.task": {"name", "description", "date_deadline", "project_id"},
+        "res.partner": {"name", "email", "phone"},
     }
+
+    def _allowed_models(self) -> Dict[str, set[str]]:
+        payload = call_extension_hook_first(self.env, "smart_core_api_data_write_allowlist", self.env)
+        if isinstance(payload, dict):
+            out: Dict[str, set[str]] = {}
+            for model_name, fields in payload.items():
+                model = str(model_name or "").strip()
+                if not model:
+                    continue
+                normalized = {str(item).strip() for item in (fields or []) if str(item).strip()}
+                if normalized:
+                    out[model] = normalized
+            if out:
+                return out
+        return {
+            str(model_name): {str(field).strip() for field in (field_names or []) if str(field).strip()}
+            for model_name, field_names in self.ALLOWED_MODELS.items()
+        }
 
     def _err(self, code: int, message: str, reason_code: str):
         return {
@@ -184,7 +202,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
 
         if not model:
             return self._err(400, "缺少参数 model", REASON_MISSING_PARAMS)
-        allowed_fields = self.ALLOWED_MODELS.get(model)
+        allowed_fields = self._allowed_models().get(model)
         if not allowed_fields:
             return self._err(403, f"模型不允许写入: {model}", REASON_UNSUPPORTED_SOURCE)
         if model not in self.env:

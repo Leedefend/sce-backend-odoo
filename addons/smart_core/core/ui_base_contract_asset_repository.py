@@ -149,23 +149,8 @@ def _resolve_scene_action_id(env, scene: dict) -> int:
 
 
 def _minimal_ui_base_contract(scene_key: str) -> dict:
-    key = _text(scene_key)
-    if key == "projects.intake":
-        return {
-            "model": "project.project",
-            "views": {"form": {"fields": ["name", "partner_id", "date_start"]}},
-            "fields": {"name": {"type": "char"}},
-            "validator": {"required": ["name"]},
-        }
-    if key in {"projects.list", "workspace.home", "my_work.workspace"}:
-        return {
-            "model": "project.project",
-            "views": {"tree": {"fields": ["name", "stage_id", "user_id"]}},
-            "fields": {"name": {"type": "char"}},
-            "search": {"fields": ["name"]},
-        }
     return {
-        "model": "project.project",
+        "model": "res.partner",
         "views": {"tree": {"fields": ["name"]}},
         "fields": {"name": {"type": "char"}},
         "search": {"fields": ["name"]},

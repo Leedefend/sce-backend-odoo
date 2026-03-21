@@ -77,7 +77,7 @@ def list_owner_capabilities() -> list[dict]:
             "capability_state": "allow",
             "default_payload": {"scene_key": "owner.payment.center", "route": "/workbench?scene=owner.payment.center"},
             "required_roles": ["owner"],
-            "required_groups": ["smart_core.group_sc_data_operator"],
+            "required_groups": ["smart_core.group_smart_core_data_operator"],
         },
         {
             "key": "owner.payment_request.approve",
@@ -92,7 +92,7 @@ def list_owner_capabilities() -> list[dict]:
             "capability_state": "allow",
             "default_payload": {"scene_key": "owner.payment.center", "route": "/workbench?scene=owner.payment.center"},
             "required_roles": ["owner"],
-            "required_groups": ["smart_core.group_sc_finance_approver"],
+            "required_groups": ["smart_core.group_smart_core_finance_approver"],
         },
         {
             "key": "owner.report.overview",
@@ -122,6 +122,6 @@ def list_owner_capabilities() -> list[dict]:
             "capability_state": "pending",
             "default_payload": {"scene_key": "owner.report.overview", "route": "/workbench?scene=owner.report.overview"},
             "required_roles": ["owner"],
-            "required_groups": ["smart_core.group_sc_finance_approver"],
+            "required_groups": ["smart_core.group_smart_core_finance_approver"],
         },
     ]
