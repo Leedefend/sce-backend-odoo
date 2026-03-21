@@ -205,6 +205,46 @@ def build_expected_collections(role_code: str) -> List[str]:
     return list(expected_by_role.get(role, ["project_actions", "risk_actions"]))
 
 
+def build_risk_semantic_tokens() -> List[str]:
+    return [
+        "risk",
+        "alert",
+        "warning",
+        "exception",
+        "overdue",
+        "blocked",
+        "critical",
+        "urgent",
+        "payment",
+        "cost",
+        "contract",
+        "delay",
+        "风险",
+        "预警",
+        "异常",
+        "逾期",
+        "阻塞",
+        "严重",
+        "紧急",
+        "付款",
+        "成本",
+        "合同",
+        "延期",
+    ]
+
+
+def build_critical_status_tokens() -> List[str]:
+    return ["critical", "urgent", "overdue", "严重", "紧急", "逾期", "高"]
+
+
+def build_warning_status_tokens() -> List[str]:
+    return ["warning", "high", "关注", "预警", "待处理"]
+
+
+def build_urgent_keywords() -> List[str]:
+    return ["urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高"]
+
+
 def resolve_scene_by_source(source_key: str) -> str:
     aliases = build_scene_aliases()
     text = _to_text(source_key).lower()

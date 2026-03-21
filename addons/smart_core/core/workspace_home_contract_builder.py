@@ -542,6 +542,24 @@ def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[s
     return collections
 
 
+def _provider_token_set(hook_name: str, defaults: Iterable[str]) -> Tuple[str, ...]:
+    base = tuple(_to_text(item).lower() for item in (defaults or []) if _to_text(item))
+    provider = _load_data_provider()
+    if provider is None:
+        return base
+    fn = getattr(provider, hook_name, None)
+    if not callable(fn):
+        return base
+    try:
+        payload = fn()
+    except Exception:
+        payload = None
+    if not isinstance(payload, (list, tuple, set)):
+        return base
+    normalized = tuple(_to_text(item).lower() for item in payload if _to_text(item))
+    return normalized or base
+
+
 def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[str, Any]) -> bool:
     source_text = _to_text(source_key).lower()
     status_text = _to_text(action.get("status") or row.get("status") or row.get("state") or row.get("severity") or row.get("level")).lower()
@@ -551,7 +569,7 @@ def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[
     route_text = _to_text(action.get("route") or row.get("route")).lower()
     merged = " ".join([source_text, status_text, title_text, desc_text, scene_text, route_text])
 
-    risk_tokens = (
+    risk_tokens = _provider_token_set("build_risk_semantic_tokens", (
         "risk",
         "alert",
         "warning",
@@ -575,7 +593,7 @@ def _is_risk_semantic_action(source_key: str, row: Dict[str, Any], action: Dict[
         "成本",
         "合同",
         "延期",
-    )
+    ))
     return any(token in merged for token in risk_tokens)
 
 
@@ -725,9 +743,11 @@ def _urgency_score(row: Dict[str, Any], title: str, source_key: str, status_text
 
     score = 0
     merged = f"{status_text} {title} {_to_text(source_key)}".lower()
-    if any(token in merged for token in ("critical", "urgent", "overdue", "严重", "紧急", "逾期", "高")):
+    critical_tokens = _provider_token_set("build_critical_status_tokens", ("critical", "urgent", "overdue", "严重", "紧急", "逾期", "高"))
+    warning_tokens = _provider_token_set("build_warning_status_tokens", ("warning", "high", "关注", "预警", "待处理"))
+    if any(token in merged for token in critical_tokens):
         score += severity_weight
-    elif any(token in merged for token in ("warning", "high", "关注", "预警", "待处理")):
+    elif any(token in merged for token in warning_tokens):
         score += max(20, int(severity_weight * 0.58))
     if _is_urgent_capability(title, source_key):
         score += max(8, int(severity_weight * 0.33))
@@ -765,7 +785,7 @@ def _to_business_action(source_key: str, row: Dict[str, Any], index: int, role_c
     scene_key = _to_text(row.get("scene_key") or row.get("scene") or _route_scene_by_source(source_key))
     route = _to_text(row.get("route")) or f"/s/{scene_key}"
     status_text = _to_text(row.get("status") or row.get("state") or row.get("level") or row.get("severity")).lower()
-    urgent_keywords = ("urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高")
+    urgent_keywords = _provider_token_set("build_urgent_keywords", ("urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高"))
     is_urgent = any(word in status_text for word in urgent_keywords) or _is_urgent_capability(title, source_key)
     urgency_score = _urgency_score(
         row=row,
