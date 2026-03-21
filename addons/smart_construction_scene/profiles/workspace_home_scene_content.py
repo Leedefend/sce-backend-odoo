@@ -19,6 +19,102 @@ def build_scene_aliases() -> Dict[str, str]:
     }
 
 
+def build_layout_texts_overrides() -> Dict[str, str]:
+    return {
+        "hero.role_label": "当前岗位",
+        "hero.landing_label": "默认入口",
+        "entry.navigate": "进入场景",
+        "entry.navigate_short": "进入",
+        "entry.meta.menu": "菜单",
+        "entry.meta.action": "动作",
+        "todo.empty": "当前暂无待办事项",
+        "risk.summary": "风险概览",
+        "ops.title": "经营态势",
+    }
+
+
+def build_layout_actions_overrides() -> Dict[str, str]:
+    return {
+        "todo_default": "查看详情",
+        "todo_approval": "处理审批",
+        "todo_contract": "查看合同",
+        "todo_risk": "处理风险",
+        "todo_change": "确认变更",
+        "todo_overdue": "处理逾期",
+    }
+
+
+def build_workspace_hero_payload(
+    *,
+    has_business_signal: bool,
+    gap_level: str,
+    updated_at: str,
+    partial_notice: str,
+) -> Dict[str, Any]:
+    status_detail = ""
+    if not has_business_signal:
+        status_detail = "当前业务明细不足，已回退到系统就绪入口。"
+    elif _to_text(gap_level).lower() == "limited":
+        status_detail = "当前可见业务数据偏少，建议核对岗位授权与数据分配。"
+    return {
+        "title": "工程协作工作台",
+        "lead": "围绕项目执行、经营态势与风险事项，快速完成今日关键动作。",
+        "product_tags": ["项目执行", "经营态势", "风险预警"],
+        "updated_at": _to_text(updated_at),
+        "status_notice": _to_text(partial_notice),
+        "status_detail": status_detail,
+    }
+
+
+def build_risk_summary_text(*, risk_red: int) -> str:
+    red = _to_int(risk_red)
+    if red >= 3:
+        return "存在高优先风险，请优先完成处置并跟进闭环。"
+    if red >= 1:
+        return "存在待跟进风险，建议在今日完成核查与责任落实。"
+    return "当前未发现高优先风险，建议保持日常巡检节奏。"
+
+
+def build_ops_payload(
+    *,
+    has_business_signal: bool,
+    risk_business_count: int,
+    today_business_count: int,
+) -> Dict[str, Any]:
+    if not has_business_signal:
+        return {
+            "bars": {"contract": 0, "output": 0},
+            "kpi": {
+                "cost_rate": 0,
+                "payment_rate": 0,
+                "cost_rate_delta": 0,
+                "payment_rate_delta": 0,
+                "output_trend_delta": 0,
+            },
+        }
+
+    risk_count = _to_int(risk_business_count)
+    today_count = _to_int(today_business_count)
+    contract_score = max(0, min(100, 100 - (risk_count * 10)))
+    output_score = max(0, min(100, 100 - (today_count * 8)))
+    cost_score = max(0, min(100, 100 - (risk_count * 12)))
+    payment_score = max(0, min(100, 100 - (today_count * 6)))
+
+    return {
+        "bars": {
+            "contract": contract_score,
+            "output": output_score,
+        },
+        "kpi": {
+            "cost_rate": cost_score,
+            "payment_rate": payment_score,
+            "cost_rate_delta": 0,
+            "payment_rate_delta": 0,
+            "output_trend_delta": 0,
+        },
+    }
+
+
 def resolve_scene_by_source(source_key: str) -> str:
     aliases = build_scene_aliases()
     text = _to_text(source_key).lower()

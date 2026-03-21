@@ -83,6 +83,157 @@ def _workspace_scene(name: str) -> str:
     return aliases.get(key) or aliases.get("default") or "workspace.home"
 
 
+def _workspace_layout_texts(defaults: Dict[str, str]) -> Dict[str, str]:
+    out = dict(defaults or {})
+    provider = _load_data_provider()
+    if provider is None:
+        return out
+    fn = getattr(provider, "build_layout_texts_overrides", None)
+    if not callable(fn):
+        return out
+    try:
+        payload = fn()
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return out
+    for key, value in payload.items():
+        k = _to_text(key)
+        v = _to_text(value)
+        if k and v:
+            out[k] = v
+    return out
+
+
+def _workspace_layout_actions(defaults: Dict[str, str]) -> Dict[str, str]:
+    out = dict(defaults or {})
+    provider = _load_data_provider()
+    if provider is None:
+        return out
+    fn = getattr(provider, "build_layout_actions_overrides", None)
+    if not callable(fn):
+        return out
+    try:
+        payload = fn()
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return out
+    for key, value in payload.items():
+        k = _to_text(key)
+        v = _to_text(value)
+        if k and v:
+            out[k] = v
+    return out
+
+
+def _workspace_hero_payload(*, has_business_signal: bool, gap_level: str, updated_at: str, partial_notice: str) -> Dict[str, Any]:
+    defaults = {
+        "title": "工作台",
+        "lead": "先做什么、风险在哪、状态如何：围绕今日行动推进业务闭环。",
+        "product_tags": ["业务管理", "经营状态", "风险预警"],
+        "updated_at": updated_at,
+        "status_notice": partial_notice,
+        "status_detail": (
+            "当前业务明细不足，主区已回退到系统就绪入口。"
+            if not has_business_signal
+            else "当前角色可见业务数据偏少，建议核对数据权限与分配策略。"
+            if gap_level == "limited"
+            else ""
+        ),
+    }
+    provider = _load_data_provider()
+    if provider is None:
+        return defaults
+    fn = getattr(provider, "build_workspace_hero_payload", None)
+    if not callable(fn):
+        return defaults
+    try:
+        payload = fn(
+            has_business_signal=bool(has_business_signal),
+            gap_level=_to_text(gap_level),
+            updated_at=_to_text(updated_at),
+            partial_notice=_to_text(partial_notice),
+        )
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return defaults
+    merged = dict(defaults)
+    for key in ("title", "lead", "updated_at", "status_notice", "status_detail"):
+        text = _to_text(payload.get(key))
+        if text:
+            merged[key] = text
+    tags = payload.get("product_tags")
+    if isinstance(tags, list):
+        normalized = [_to_text(item) for item in tags if _to_text(item)]
+        if normalized:
+            merged["product_tags"] = normalized
+    return merged
+
+
+def _workspace_risk_summary_text(risk_red: int) -> str:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_risk_summary_text", None)
+        if callable(fn):
+            try:
+                text = _to_text(fn(risk_red=int(risk_red or 0)))
+                if text:
+                    return text
+            except Exception:
+                pass
+    if risk_red >= 3:
+        return "存在高优先风险，请先处理系统提醒事项。"
+    if risk_red >= 1:
+        return "存在需要跟进的风险，建议今日内完成处理。"
+    return "当前未出现严重风险，建议保持日常巡检节奏。"
+
+
+def _workspace_ops_payload(*, has_business_signal: bool, risk_business_count: int, today_business_count: int) -> Dict[str, Any]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_ops_payload", None)
+        if callable(fn):
+            try:
+                payload = fn(
+                    has_business_signal=bool(has_business_signal),
+                    risk_business_count=int(risk_business_count or 0),
+                    today_business_count=int(today_business_count or 0),
+                )
+                if isinstance(payload, dict):
+                    bars = payload.get("bars") if isinstance(payload.get("bars"), dict) else {}
+                    kpi = payload.get("kpi") if isinstance(payload.get("kpi"), dict) else {}
+                    return {
+                        "bars": {
+                            "contract": _to_int(bars.get("contract")),
+                            "output": _to_int(bars.get("output")),
+                        },
+                        "kpi": {
+                            "cost_rate": _to_int(kpi.get("cost_rate")),
+                            "payment_rate": _to_int(kpi.get("payment_rate")),
+                            "cost_rate_delta": _to_int(kpi.get("cost_rate_delta")),
+                            "payment_rate_delta": _to_int(kpi.get("payment_rate_delta")),
+                            "output_trend_delta": _to_int(kpi.get("output_trend_delta")),
+                        },
+                    }
+            except Exception:
+                pass
+    return {
+        "bars": {
+            "contract": max(0, min(100, 100 - (risk_business_count * 10))) if has_business_signal else 0,
+            "output": max(0, min(100, 100 - (today_business_count * 8))) if has_business_signal else 0,
+        },
+        "kpi": {
+            "cost_rate": max(0, min(100, 100 - (risk_business_count * 12))) if has_business_signal else 0,
+            "payment_rate": max(0, min(100, 100 - (today_business_count * 6))) if has_business_signal else 0,
+            "cost_rate_delta": 0,
+            "payment_rate_delta": 0,
+            "output_trend_delta": 0,
+        },
+    }
+
+
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     global _ACTION_TARGET_RESOLVER
     if callable(_ACTION_TARGET_RESOLVER):
@@ -1652,6 +1803,18 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             }
         except Exception as exc:
             scene_engine_meta = {"enabled": False, "error": _to_text(exc)}
+    hero_payload = _workspace_hero_payload(
+        has_business_signal=has_business_signal,
+        gap_level=_to_text(visibility_diagnosis.get("gap_level")),
+        updated_at=updated_at,
+        partial_notice=partial_notice,
+    )
+    risk_summary_text = _workspace_risk_summary_text(risk_red)
+    ops_payload = _workspace_ops_payload(
+        has_business_signal=has_business_signal,
+        risk_business_count=risk_business_count,
+        today_business_count=today_business_count,
+    )
     return {
         "scene": scene_contract_core.get("scene") or {},
         "page": scene_contract_core.get("page") or {},
@@ -1679,7 +1842,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 {"key": "filters", "enabled": False, "tag": "section"},
                 {"key": "scene_groups", "enabled": False, "tag": "div"},
             ],
-            "texts": {
+            "texts": _workspace_layout_texts({
                 "hero.role_label": "当前角色",
                 "hero.landing_label": "默认入口",
                 "hero.open_landing_action": "打开默认入口",
@@ -1726,41 +1889,22 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "group_overview.allow_prefix": "可用",
                 "group_overview.readonly_prefix": "只读",
                 "group_overview.deny_prefix": "禁用",
-            },
-            "actions": {
+            }),
+            "actions": _workspace_layout_actions({
                 "todo_default": "查看详情",
                 "todo_approval": "审核付款申请",
                 "todo_contract": "查看合同异常",
                 "todo_risk": "处理风险事项",
                 "todo_change": "确认变更事项",
                 "todo_overdue": "处理逾期任务",
-            },
+            }),
         },
-        "hero": {
-            "title": "工作台",
-            "lead": "先做什么、风险在哪、状态如何：围绕今日行动推进业务闭环。",
-            "product_tags": ["项目管理", "经营状态", "风险预警"],
-            "updated_at": updated_at,
-            "status_notice": partial_notice,
-            "status_detail": (
-                "当前业务明细不足，主区已回退到系统就绪入口。"
-                if not has_business_signal
-                else "当前角色可见业务数据偏少，建议核对项目归属与示例数据分配。"
-                if _to_text(visibility_diagnosis.get("gap_level")) == "limited"
-                else ""
-            ),
-        },
+        "hero": hero_payload,
         "metrics": business_metrics,
         "platform_metrics": platform_metrics,
         "today_actions": today_actions,
         "risk": {
-            "summary": (
-                "存在高优先风险，请先处理系统提醒事项。"
-                if risk_red >= 3
-                else "存在需要跟进的风险，建议今日内完成处理。"
-                if risk_red >= 1
-                else "当前未出现严重风险，建议保持日常巡检节奏。"
-            ),
+            "summary": risk_summary_text,
             "buckets": {"red": risk_red, "amber": risk_amber, "green": risk_green},
             "tone": "danger" if risk_red > 0 else "warning" if risk_amber > 0 else "success",
             "progress": "blocked" if risk_red > 0 else "running",
@@ -1777,17 +1921,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "actions": risk_actions,
         },
         "ops": {
-            "bars": {
-                "contract": max(0, min(100, 100 - (risk_business_count * 10))) if has_business_signal else 0,
-                "output": max(0, min(100, 100 - (today_business_count * 8))) if has_business_signal else 0,
-            },
-            "kpi": {
-                "cost_rate": max(0, min(100, 100 - (risk_business_count * 12))) if has_business_signal else 0,
-                "payment_rate": max(0, min(100, 100 - (today_business_count * 6))) if has_business_signal else 0,
-                "cost_rate_delta": 0,
-                "payment_rate_delta": 0,
-                "output_trend_delta": 0,
-            },
+            "bars": ops_payload.get("bars") or {},
+            "kpi": ops_payload.get("kpi") or {},
             "tone": "info",
             "progress": "running",
             "data_state": "business" if has_business_signal else "fallback",
@@ -1798,9 +1933,9 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "key": "workspace.hero",
                 "data": {
                     "hero": {
-                        "title": "工作台",
-                        "updated_at": updated_at,
-                        "status_notice": partial_notice,
+                        "title": hero_payload.get("title") or "工作台",
+                        "updated_at": hero_payload.get("updated_at") or updated_at,
+                        "status_notice": hero_payload.get("status_notice") or partial_notice,
                     },
                 },
                 "actions": [
@@ -1822,13 +1957,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "type": "risk",
                 "key": "workspace.risk",
                 "data": {
-                    "summary": (
-                        "存在高优先风险，请先处理系统提醒事项。"
-                        if risk_red >= 3
-                        else "存在需要跟进的风险，建议今日内完成处理。"
-                        if risk_red >= 1
-                        else "当前未出现严重风险，建议保持日常巡检节奏。"
-                    ),
+                    "summary": risk_summary_text,
                     "buckets": {"red": risk_red, "amber": risk_amber, "green": risk_green},
                     "actions": risk_actions,
                 },
@@ -1840,13 +1969,10 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "type": "ops",
                 "key": "workspace.ops",
                 "data": {
-                    "bars": {
-                        "contract": max(0, min(100, 100 - (risk_business_count * 10))) if has_business_signal else 0,
-                        "output": max(0, min(100, 100 - (today_business_count * 8))) if has_business_signal else 0,
-                    },
+                    "bars": ops_payload.get("bars") or {},
                     "kpi": {
-                        "cost_rate": max(0, min(100, 100 - (risk_business_count * 12))) if has_business_signal else 0,
-                        "payment_rate": max(0, min(100, 100 - (today_business_count * 6))) if has_business_signal else 0,
+                        "cost_rate": _to_int((ops_payload.get("kpi") or {}).get("cost_rate")),
+                        "payment_rate": _to_int((ops_payload.get("kpi") or {}).get("payment_rate")),
                     },
                 },
                 "actions": [
