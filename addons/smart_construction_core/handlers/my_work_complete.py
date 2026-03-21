@@ -31,7 +31,7 @@ class MyWorkCompleteHandler(BaseIntentHandler):
     DESCRIPTION = "Complete a todo item from my-work list"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "single complete keeps lightweight behavior while batch intent owns replay contract"
 
@@ -81,7 +81,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
     DESCRIPTION = "Complete multiple todo items from my-work list"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     AUDIT_MAX_PAYLOAD_BYTES = 16 * 1024

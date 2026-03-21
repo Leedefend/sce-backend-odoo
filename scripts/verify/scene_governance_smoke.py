@@ -13,7 +13,7 @@ TARGETS = {
     "scene.governance.rollback",
     "scene.governance.pin_stable",
 }
-REQUIRED_GROUP = "smart_core.group_sc_scene_admin"
+REQUIRED_GROUP = "smart_core.group_smart_core_scene_admin"
 REQUIRED_ACL_MODE = "explicit_check"
 
 

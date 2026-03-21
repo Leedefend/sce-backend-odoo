@@ -17,7 +17,7 @@ def _service(env, user):
 
 
 class _BaseSceneGovernanceHandler(BaseIntentHandler):
-    REQUIRED_GROUPS = ["smart_core.group_sc_scene_admin"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]
     ACL_MODE = "explicit_check"
 
     def _params(self, payload):

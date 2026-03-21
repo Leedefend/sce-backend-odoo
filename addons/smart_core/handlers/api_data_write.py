@@ -43,7 +43,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell v0.6 minimal write intent (create/update)"
     VERSION = "0.6.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_WRITE"

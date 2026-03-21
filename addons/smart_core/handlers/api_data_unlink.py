@@ -39,7 +39,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell minimal unlink intent"
     VERSION = "0.1.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_UNLINK"

@@ -314,6 +314,15 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.risk_action_execute import (
             RiskActionExecuteHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.app_catalog import (
+            AppCatalogHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.app_nav import (
+            AppNavHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.app_open import (
+            AppOpenHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
@@ -336,6 +345,9 @@ def smart_core_register(registry):
     registry["payment.request.execute"] = PaymentRequestExecuteHandler
     registry["project.dashboard"] = ProjectDashboardHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
+    registry["app.catalog"] = AppCatalogHandler
+    registry["app.nav"] = AppNavHandler
+    registry["app.open"] = AppOpenHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
@@ -354,6 +366,9 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.execute")
     _logger.info("[smart_core_register] registered project.dashboard")
     _logger.info("[smart_core_register] registered risk.action.execute")
+    _logger.info("[smart_core_register] registered app.catalog")
+    _logger.info("[smart_core_register] registered app.nav")
+    _logger.info("[smart_core_register] registered app.open")
 
 
 def smart_core_extend_system_init(data, env, user):
