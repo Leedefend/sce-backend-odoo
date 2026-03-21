@@ -226,47 +226,11 @@ def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
             "kind": "workspace",
             "intent": {
                 "title": "工作台：先处理高优先级行动",
-                "summary": "优先处理今日待办与风险动作，完成后自动刷新投影。",
+                "summary": "优先处理今日待办，完成后自动刷新当前视图。",
                 "empty_title": "当前暂无待处理事项",
                 "empty_hint": "建议切换筛选条件或进入场景导航继续巡检。",
                 "primary_action": {"label": "查看我的工作", "target": "/my-work"},
-                "secondary_action": {"label": "进入风险中心", "target": "/s/risk.center"},
-            },
-        }
-    if _scene_key_matches(scene_key, "finance.payment_requests"):
-        return {
-            "kind": "finance",
-            "intent": {
-                "title": "付款审批：优先处理审批与分派动作",
-                "summary": "在审批链闭环后自动刷新列表与工作台投影。",
-                "empty_title": "当前暂无付款申请",
-                "empty_hint": "可进入财务工作台查看其他待处理事项。",
-                "primary_action": {"label": "进入财务工作台", "target": "/s/finance.workspace"},
-                "secondary_action": {"label": "返回工作台", "target": "/my-work"},
-            },
-        }
-    if _scene_key_matches(scene_key, "risk.center"):
-        return {
-            "kind": "risk",
-            "intent": {
-                "title": "风险中心：先处理严重与逾期风险",
-                "summary": "优先执行认领、升级、关闭动作并回写状态。",
-                "empty_title": "当前暂无风险动作",
-                "empty_hint": "建议前往工作台继续巡检并拉取最新风险数据。",
-                "primary_action": {"label": "返回工作台", "target": "/my-work"},
-                "secondary_action": {"label": "查看项目驾驶舱", "target": "/s/project.management"},
-            },
-        }
-    if _scene_key_matches(scene_key, "project.management"):
-        return {
-            "kind": "project",
-            "intent": {
-                "title": "项目驾驶舱：先看风险，再执行动作",
-                "summary": "聚焦关键指标与风险区块，进入具体场景完成处置闭环。",
-                "empty_title": "当前暂无项目数据",
-                "empty_hint": "建议前往项目列表或立项场景继续操作。",
-                "primary_action": {"label": "查看项目列表", "target": "/s/projects.list"},
-                "secondary_action": {"label": "发起项目立项", "target": "/s/projects.intake"},
+                "secondary_action": {"label": "进入场景导航", "target": "/"},
             },
         }
     return {
@@ -285,9 +249,9 @@ def _default_view_modes(scene_key: str, page: Dict[str, Any], scene: Dict[str, A
     mode_candidates: List[str] = []
     layout_kind = _text((scene.get("layout") if isinstance(scene.get("layout"), dict) else {}).get("kind"))
     page_mode = _text(page.get("mode"))
-    if layout_kind in {"list", "table"} or _scene_key_matches(scene_key, "finance.payment_requests", "risk.center"):
+    if layout_kind in {"list", "table"}:
         mode_candidates = ["tree", "kanban"]
-    elif layout_kind in {"workspace", "dashboard"} or _scene_key_matches(scene_key, "workspace.home", "project.management"):
+    elif layout_kind in {"workspace", "dashboard"} or _scene_key_matches(scene_key, "workspace.home"):
         mode_candidates = ["kanban", "tree"]
     elif page_mode:
         mode_candidates = [page_mode]
@@ -313,12 +277,6 @@ def _default_projection(scene_key: str) -> Dict[str, Any]:
     kind = "generic"
     if _scene_key_matches(scene_key, "workspace.home"):
         kind = "workspace_home"
-    elif _scene_key_matches(scene_key, "finance.payment_requests"):
-        kind = "finance_payment_requests"
-    elif _scene_key_matches(scene_key, "risk.center"):
-        kind = "risk_center"
-    elif _scene_key_matches(scene_key, "project.management"):
-        kind = "project_management"
     return {
         "kind": kind,
         "summary_items": [],
@@ -335,9 +293,7 @@ def _default_action_surface(scene_key: str, actions: List[Dict[str, Any]]) -> Di
             unique_keys.append(key)
     if not unique_keys and _scene_key_matches(scene_key, "workspace.home"):
         unique_keys = ["open_my_work", "open_risk_center"]
-    elif not unique_keys and _scene_key_matches(scene_key, "project.management"):
-        unique_keys = ["open_projects_list", "open_projects_intake"]
-    selection_mode = "multi" if _scene_key_matches(scene_key, "finance.payment_requests", "risk.center") else "single"
+    selection_mode = "single"
     return {
         "primary_actions": unique_keys[:3],
         "groups": [{
@@ -350,7 +306,7 @@ def _default_action_surface(scene_key: str, actions: List[Dict[str, Any]]) -> Di
 
 
 def _seed_pilot_scene_contract(scene_key: str, scene_payload: Dict[str, Any]) -> Dict[str, Any]:
-    if not _scene_key_matches(scene_key, "workspace.home", "finance.payment_requests", "risk.center", "project.management"):
+    if not _scene_key_matches(scene_key, "workspace.home"):
         return scene_payload
     payload = dict(scene_payload)
     layout = _as_dict(payload.get("layout"))
@@ -457,9 +413,6 @@ def _apply_pilot_strict_contract(scene_key: str, item: Dict[str, Any], compiled:
     is_pilot_scene = _scene_key_matches(
         scene_key,
         "workspace.home",
-        "finance.payment_requests",
-        "risk.center",
-        "project.management",
     )
     scene_payload = _as_dict(compiled.get("scene"))
     page_payload = _as_dict(compiled.get("page"))
@@ -563,134 +516,6 @@ def _scene_ready_entry(
         provider_actions = scene_provider_payload.get("default_actions") if isinstance(scene_provider_payload.get("default_actions"), list) else []
         if provider_actions:
             scene_payload["actions"] = provider_actions
-
-    if _scene_key_matches(scene_key, "finance.payment_requests") and not isinstance(scene_payload.get("actions"), list):
-        scene_payload["actions"] = [
-            {
-                "key": "approve_payment_request",
-                "label": "批准",
-                "intent": "record.update",
-                "placement": "toolbar",
-                "target": {
-                    "mutation": {
-                        "type": "transition",
-                        "model": "finance.payment.request",
-                        "operation": "approve",
-                        "payload_schema": {
-                            "required": ["record_id"],
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection", "workbench_projection"],
-                        "scope": "local",
-                    },
-                },
-            },
-            {
-                "key": "reject_payment_request",
-                "label": "驳回",
-                "intent": "record.update",
-                "placement": "toolbar",
-                "target": {
-                    "mutation": {
-                        "type": "transition",
-                        "model": "finance.payment.request",
-                        "operation": "reject",
-                        "payload_schema": {
-                            "required": ["record_id", "reason"],
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection", "workbench_projection"],
-                        "scope": "local",
-                    },
-                },
-            },
-            {
-                "key": "assign_payment_request",
-                "label": "指派",
-                "intent": "record.update",
-                "placement": "toolbar",
-                "target": {
-                    "mutation": {
-                        "type": "assign",
-                        "model": "finance.payment.request",
-                        "operation": "assign",
-                        "payload_schema": {
-                            "required": ["record_id", "assignee_id"],
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection", "workbench_projection"],
-                        "scope": "local",
-                    },
-                },
-            },
-        ]
-
-    if _scene_key_matches(scene_key, "risk.center") and not isinstance(scene_payload.get("actions"), list):
-        scene_payload["actions"] = [
-            {
-                "key": "claim_risk_action",
-                "label": "认领",
-                "intent": "record.update",
-                "placement": "toolbar",
-                "target": {
-                    "mutation": {
-                        "type": "transition",
-                        "model": "project.risk.action",
-                        "operation": "claim",
-                        "payload_schema": {
-                            "required": ["risk_action_id"],
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection", "workbench_projection"],
-                        "scope": "local",
-                    },
-                },
-            },
-            {
-                "key": "escalate_risk_action",
-                "label": "升级",
-                "intent": "record.update",
-                "placement": "toolbar",
-                "target": {
-                    "mutation": {
-                        "type": "transition",
-                        "model": "project.risk.action",
-                        "operation": "escalate",
-                        "payload_schema": {
-                            "required": ["risk_action_id", "note"],
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection", "workbench_projection"],
-                        "scope": "local",
-                    },
-                },
-            },
-            {
-                "key": "close_risk_action",
-                "label": "关闭",
-                "intent": "record.update",
-                "placement": "toolbar",
-                "target": {
-                    "mutation": {
-                        "type": "transition",
-                        "model": "project.risk.action",
-                        "operation": "close",
-                        "payload_schema": {
-                            "required": ["risk_action_id"],
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection", "workbench_projection"],
-                        "scope": "local",
-                    },
-                },
-            },
-        ]
 
     if not bool(scene_provider_payload.get("skip_pilot_seed")):
         scene_payload = _seed_pilot_scene_contract(scene_key, scene_payload)
@@ -842,8 +667,8 @@ def _scene_ready_entry(
         next_scene_key = next_scene_key or provider_next_key
         next_scene_route = next_scene_route or provider_next_route
 
-    if not next_scene_key and _scene_key_matches(scene_key, "projects.intake"):
-        next_scene_key = "project.management"
+    if not next_scene_key and _scene_key_matches(scene_key, "workspace.intake"):
+        next_scene_key = "workspace.management"
     if not next_scene_route and next_scene_key:
         next_scene_route = f"/s/{next_scene_key}"
 
