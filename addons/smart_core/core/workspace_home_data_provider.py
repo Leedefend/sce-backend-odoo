@@ -16,18 +16,22 @@ def _load_industry_provider():
     global _PROVIDER
     if _PROVIDER is not None:
         return _PROVIDER
-    provider_path = Path(__file__).resolve().parents[2] / "smart_construction_scene" / "profiles" / "workspace_home_scene_content.py"
-    try:
-        spec = spec_from_file_location("smart_construction_workspace_home_scene_content", provider_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _PROVIDER = module
-        return module
-    except Exception:
-        _PROVIDER = False
-        return None
+    addons_root = Path(__file__).resolve().parents[2]
+    for provider_path in sorted(addons_root.glob("*/profiles/workspace_home_scene_content.py")):
+        try:
+            module_key = provider_path.parts[-3]
+            module_name = f"{module_key}_workspace_home_scene_content"
+            spec = spec_from_file_location(module_name, provider_path)
+            if spec is None or spec.loader is None:
+                continue
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+            _PROVIDER = module
+            return module
+        except Exception:
+            continue
+    _PROVIDER = False
+    return None
 
 
 def _call_provider(name: str, fallback: Any, *args: Any) -> Any:

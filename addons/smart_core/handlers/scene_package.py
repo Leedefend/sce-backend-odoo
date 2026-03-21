@@ -3,6 +3,7 @@ import json
 import time
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.extension_hooks import call_extension_hook_first
 
 
 def _trace_id_from_context(ctx) -> str:
@@ -13,12 +14,14 @@ def _trace_id_from_context(ctx) -> str:
 
 
 def _service(env, user):
-    from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
-    return ScenePackageService(env, user)
+    service_cls = call_extension_hook_first(env, "smart_core_scene_package_service_class", env)
+    if service_cls is None:
+        raise RuntimeError("scene package service provider is not configured")
+    return service_cls(env, user)
 
 
 class _BaseScenePackageHandler(BaseIntentHandler):
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_config_admin"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]
     ACL_MODE = "explicit_check"
 
     def _params(self, payload):

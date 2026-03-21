@@ -6,6 +6,13 @@ import os
 from urllib.parse import parse_qs, urlparse
 from typing import Callable
 
+from odoo.addons.smart_core.core.scene_registry_provider import (
+    get_schema_version as registry_get_schema_version,
+    get_scene_version as registry_get_scene_version,
+    has_db_scenes as registry_has_db_scenes,
+    load_scene_configs as registry_load_scene_configs,
+)
+
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
 CRITICAL_SCENE_TARGET_OVERRIDES = {
@@ -227,10 +234,6 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
             hydrated["route"] = f"/s/{code}"
         scene_payload["target"] = hydrated
 
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
-    except Exception:
-        return scenes
     current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
     dropped_pkg_variants = []
     filtered = []
@@ -247,7 +250,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         if isinstance(scene, dict)
     }
     existing = {code for code in existing if code}
-    registry_scenes = load_scene_configs(env) or []
+    registry_scenes = registry_load_scene_configs(env) or []
     registry_map = {}
     for scene in registry_scenes:
         if not isinstance(scene, dict):
@@ -371,26 +374,11 @@ def load_scenes_from_db_or_fallback(env, *, drift=None, logger=None) -> dict:
         "loaded_from": "fallback",
     }
     try:
-        from odoo.addons.smart_construction_scene.scene_registry import (
-            get_schema_version,
-            get_scene_version,
-            has_db_scenes,
-            load_scene_configs,
-        )
-    except Exception as exc:
-        if logger is not None:
-            try:
-                logger.warning("scene registry import failed: %s", exc)
-            except Exception:
-                pass
-        return out
-
-    try:
-        scenes_payload = load_scene_configs(env, drift=drift) or []
+        scenes_payload = registry_load_scene_configs(env, drift=drift) or []
         out["scenes"] = scenes_payload if isinstance(scenes_payload, list) else []
-        out["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
-        out["scene_version"] = get_scene_version()
-        out["schema_version"] = get_schema_version()
+        out["loaded_from"] = "db" if registry_has_db_scenes(env) else "fallback"
+        out["scene_version"] = registry_get_scene_version(env)
+        out["schema_version"] = registry_get_schema_version(env)
     except Exception as exc:
         if logger is not None:
             try:

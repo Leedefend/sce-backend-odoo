@@ -3,48 +3,53 @@ from __future__ import annotations
 
 from typing import Dict
 
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+
 
 class OdooNavAdapter:
-    MENU_SCENE_MAP = {
-        "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
-        "smart_construction_core.menu_sc_project_initiation": "projects.intake",
-        "smart_construction_core.menu_sc_project_project": "projects.ledger",
-        "smart_construction_core.menu_sc_project_management_scene": "project.management",
-        "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
-        "smart_construction_core.menu_sc_root": "projects.list",
-        "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
-        "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
-        "smart_construction_core.menu_sc_dictionary": "data.dictionary",
-        "smart_construction_core.menu_payment_request": "finance.payment_requests",
-        "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
-        "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
-        "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
-    }
+    MENU_SCENE_MAP = {}
 
-    ACTION_XMLID_SCENE_MAP = {
-        "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
-        "smart_construction_core.action_project_initiation": "projects.intake",
-        "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
-        "smart_construction_core.action_sc_project_list": "projects.list",
-        "smart_construction_core.action_project_dashboard": "projects.dashboard",
-        "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
-        "smart_construction_core.action_project_dictionary": "data.dictionary",
-        "smart_construction_core.action_project_cost_code": "config.project_cost_code",
-        "smart_construction_core.action_payment_request": "finance.payment_requests",
-        "smart_construction_core.action_payment_request_my": "finance.payment_requests",
-        "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
-        "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
-        "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
-    }
+    ACTION_XMLID_SCENE_MAP = {}
 
-    MODEL_VIEW_SCENE_MAP = {
-        ("project.project", "list"): "projects.list",
-        ("project.project", "form"): "projects.intake",
-        ("payment.request", "list"): "finance.payment_requests",
-        ("payment.request", "form"): "finance.payment_requests",
-    }
+    MODEL_VIEW_SCENE_MAP = {}
+
+    def __init__(self):
+        self.menu_scene_map = dict(self.MENU_SCENE_MAP)
+        self.action_xmlid_scene_map = dict(self.ACTION_XMLID_SCENE_MAP)
+        self.model_view_scene_map = dict(self.MODEL_VIEW_SCENE_MAP)
+        self._extension_loaded = False
+
+    def _load_extension_scene_maps(self, env):
+        if self._extension_loaded:
+            return
+        self._extension_loaded = True
+        payload = call_extension_hook_first(env, "smart_core_nav_scene_maps", env)
+        if not isinstance(payload, dict):
+            return
+        menu_scene_map = payload.get("menu_scene_map")
+        if isinstance(menu_scene_map, dict):
+            self.menu_scene_map.update({str(k): str(v) for k, v in menu_scene_map.items() if str(k).strip() and str(v).strip()})
+        action_scene_map = payload.get("action_xmlid_scene_map")
+        if isinstance(action_scene_map, dict):
+            self.action_xmlid_scene_map.update(
+                {str(k): str(v) for k, v in action_scene_map.items() if str(k).strip() and str(v).strip()}
+            )
+        model_view_scene_map = payload.get("model_view_scene_map")
+        if isinstance(model_view_scene_map, dict):
+            normalized = {}
+            for key, value in model_view_scene_map.items():
+                if not (isinstance(key, (list, tuple)) and len(key) == 2):
+                    continue
+                model_name = str(key[0] or "").strip()
+                view_mode = str(key[1] or "").strip()
+                scene_key = str(value or "").strip()
+                if not model_name or not view_mode or not scene_key:
+                    continue
+                normalized[(model_name, view_mode)] = scene_key
+            self.model_view_scene_map.update(normalized)
 
     def enrich(self, env, nav_tree):
+        self._load_extension_scene_maps(env)
         self._normalize_nav_groups(env, nav_tree)
         self._apply_scene_keys(env, nav_tree)
         return nav_tree
@@ -101,7 +106,7 @@ class OdooNavAdapter:
         return value
 
     def _apply_scene_keys(self, env, nodes):
-        action_id_map = self._resolve_action_ids(env, self.ACTION_XMLID_SCENE_MAP)
+        action_id_map = self._resolve_action_ids(env, self.action_xmlid_scene_map)
 
         for node in nodes or []:
             meta = node.get("meta") or {}
@@ -109,8 +114,8 @@ class OdooNavAdapter:
             if menu_xmlid:
                 node["xmlid"] = menu_xmlid
             scene_key = None
-            if menu_xmlid and menu_xmlid in self.MENU_SCENE_MAP:
-                scene_key = self.MENU_SCENE_MAP[menu_xmlid]
+            if menu_xmlid and menu_xmlid in self.menu_scene_map:
+                scene_key = self.menu_scene_map[menu_xmlid]
             if not scene_key:
                 action_id = meta.get("action_id")
                 if isinstance(action_id, str) and action_id.isdigit():
@@ -119,8 +124,8 @@ class OdooNavAdapter:
                     scene_key = action_id_map[action_id]
             if not scene_key:
                 action_xmlid = meta.get("action_xmlid")
-                if action_xmlid and action_xmlid in self.ACTION_XMLID_SCENE_MAP:
-                    scene_key = self.ACTION_XMLID_SCENE_MAP[action_xmlid]
+                if action_xmlid and action_xmlid in self.action_xmlid_scene_map:
+                    scene_key = self.action_xmlid_scene_map[action_xmlid]
                     meta["scene_key_inferred_from"] = "action_xmlid"
             if not scene_key:
                 model = meta.get("model")
@@ -130,8 +135,8 @@ class OdooNavAdapter:
                     if isinstance(view_modes, list) and view_modes:
                         view_mode = view_modes[0]
                 key = (model, self._normalize_view_mode(view_mode)) if model else None
-                if key in self.MODEL_VIEW_SCENE_MAP:
-                    scene_key = self.MODEL_VIEW_SCENE_MAP[key]
+                if key in self.model_view_scene_map:
+                    scene_key = self.model_view_scene_map[key]
             if scene_key:
                 node["scene_key"] = scene_key
                 meta["scene_key"] = scene_key

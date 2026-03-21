@@ -1,0 +1,38 @@
+# smart_core 现有内容盘点表 v1（Batch-A）
+
+## Layer Target
+- `Platform Layer` / `Domain Boundary Governance`
+
+## Module
+- `addons/smart_core`
+- `addons/smart_construction_core`（仅作为扩展注入源）
+
+## Reason
+- 冻结 `smart_core` 平台边界，先完成“保留 / 迁出 / 待审”分类，再进入后续迁移批次。
+
+## 盘点结果（第一轮）
+
+| 路径 | 对象 | 当前职责 | 判定 | 原因 | 建议归属 |
+| --- | --- | --- | --- | --- | --- |
+| `addons/smart_core/core/handler_registry.py` | intent handler registry | 平台 intent 运行时注册 | 保留 | 纯 runtime 机制，无行业对象 | `smart_core` |
+| `addons/smart_core/core/base_handler.py` | BaseIntentHandler | 平台 handler 协议基类 | 保留 | 平台协议核心 | `smart_core` |
+| `addons/smart_core/core/capability_provider.py` | capability provider | 用户能力加载与分组 | 待审→已治理 | 之前直接导入建设行业 registry；本批改为 extension hook 注入 | `smart_core`（运行时） + `smart_construction_core`（能力定义） |
+| `addons/smart_core/identity/identity_resolver.py` | role resolver | role 真源解析与 role surface | 待审→已治理 | 之前内置行业角色组映射；本批改为 extension profile 注入 | `smart_core`（解析引擎） + `smart_construction_core`（角色映射） |
+| `addons/smart_core/adapters/odoo_nav_adapter.py` | nav scene adapter | 菜单/action 到 scene 的映射 | 待审→已治理 | 之前硬编码建设行业 scene 映射；本批改为 extension hook 注入 | `smart_core`（适配骨架） + `smart_construction_core`（行业映射） |
+| `addons/smart_core/core/scene_provider.py` | scene source loader | 场景配置装载与回退 | 待审→已治理 | 之前直接导入建设 scene_registry；本批改为 provider hook 注入 | `smart_core`（加载骨架） + 扩展模块（scene source） |
+| `addons/smart_core/core/ui_base_contract_asset_producer.py` | ui base asset producer | 基础契约资产生成 | 待审→已治理 | 场景来源改为 provider hook，不再直接导入建设 scene_registry | `smart_core`（资产生成） + 扩展模块（scene source） |
+| `addons/smart_core/models/ui_base_contract_asset_event_trigger.py` | asset trigger | 资产刷新触发器 | 待审→已治理 | 场景来源改为 provider hook | `smart_core`（触发器） + 扩展模块（scene source） |
+| `addons/smart_core/core/workspace_home_data_provider.py` | workspace profile provider | 工作台数据模板来源 | 待审→已治理 | 去除行业目录硬编码，改为 addons profile 自动发现 | `smart_core`（发现机制） + 行业模块（profile 文件） |
+| `addons/smart_core/app_config_engine/services/resolvers/action_resolver.py` | server→window mapping | server action 映射 | 待审→已治理 | 去除建设模块映射硬编码，改为 extension hook 注入 | `smart_core`（解析骨架） + 扩展模块（映射定义） |
+| `addons/smart_core/handlers/system_init.py` | system.init | 平台启动契约聚合 | 保留（带治理） | extension facts 合并曾绑定特定模块名；本批改为通用 namespaced 合并 | `smart_core` |
+| `addons/smart_core/handlers/scene_package.py` | scene package handler | 场景包治理入口 | 待审→已治理 | 由扩展 hook 提供 service class，平台层不再直接导入建设模块 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
+| `addons/smart_core/handlers/scene_packages_installed.py` | scene package installed | 场景包清单查询 | 待审→已治理 | 同上，改为扩展注入 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
+| `addons/smart_core/handlers/scene_governance.py` | scene governance handler | 场景治理入口 | 待审→已治理 | 同上，改为扩展注入 | `smart_core`（handler 壳） + 扩展模块（service 提供） |
+| `addons/smart_core/security/*.xml` | 平台安全组 | 平台治理权限 | 保留 | 已完成 canonical 组治理 | `smart_core` |
+| `addons/smart_core/tools/intent_write_guard.py` | verify guard | 写入意图守卫 | 待审 | 规则扫描路径包含建设模块，需抽象为可配置扫描目标 | `smart_core` |
+
+## 本批收口结论
+
+- 已完成：`identity / capability / nav adapter / system.init ext_facts` 的平台层去行业硬编码。
+- 已冻结：平台层通过 extension hooks 获取行业映射与能力，不再直接导入建设行业实现。
+- 待下一批：按同样模式治理 `tests` 中的行业示例依赖（不影响运行时边界）。

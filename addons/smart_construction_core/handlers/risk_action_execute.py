@@ -19,6 +19,8 @@ class RiskActionExecuteHandler(BaseIntentHandler):
     DESCRIPTION = "Execute risk action mutation operations"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
+    ACL_MODE = "explicit_check"
 
     _SUPPORTED_ACTIONS = {"claim", "escalate", "close"}
 
