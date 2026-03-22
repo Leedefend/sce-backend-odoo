@@ -852,3 +852,12 @@ Each entry must include:
 - completed_step: `新增 workspace_keyword_overrides 解析（支持 data/ext_facts）；_build_business_today_actions/_build_today_actions/_build_risk_actions 全链路透传 keyword_overrides；risk 语义识别与 source 路由统一走可覆盖词表；minimum-surface 全链验证通过`
 - active_commit: `pending`
 - next_step: `进入 Batch-B Step-3，统一 scene_delivery_policy/action_target_schema/system_init_payload_builder/scene_provider 的默认 scene target 为 workspace.home`
+
+### 2026-03-22T00:00:37Z
+- blocker_key: `batch_b_step3_default_scene_target_workspace_home`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/action_target_schema.py + addons/smart_core/core/system_init_payload_builder.py + addons/smart_core/core/scene_provider.py + addons/smart_core/core/scene_delivery_policy.py + addons/smart_core/handlers/system_init.py`
+- reason: `执行 Batch-B Step-3，统一平台默认 scene target，彻底移除 portal.dashboard 作为平台默认落点`
+- completed_step: `open_risk_dashboard/open_workbench/open_landing 默认 target 统一为 workspace.home；system_init_payload_builder landing_scene 默认改 workspace.home；critical scene target overrides 收敛为 workspace.home；surface nav allowlist 去除 portal.dashboard；system.init 兜底 landing_scene_key 固定 workspace.home`
+- active_commit: `pending`
+- next_step: `运行 minimum-surface 全链与 nav isolation 回归，确认平台-only 仍可稳定启动且无行业默认场景泄漏`
