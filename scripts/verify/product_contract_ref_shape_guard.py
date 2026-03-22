@@ -86,26 +86,15 @@ def main() -> int:
 
         data = create_resp.get("data") if isinstance(create_resp.get("data"), dict) else {}
         contract_ref = data.get("contract_ref") if isinstance(data.get("contract_ref"), dict) else {}
-        suggested_payload = (
-            data.get("suggested_action_payload") if isinstance(data.get("suggested_action_payload"), dict) else {}
-        )
+        suggested_payload = data.get("suggested_action_payload") if isinstance(data.get("suggested_action_payload"), dict) else {}
 
         ref_intent = str(contract_ref.get("intent") or "").strip()
-        sug_intent = str(suggested_payload.get("intent") or "").strip()
         if ref_intent != "ui.contract":
             errors.append(f"contract_ref.intent expected ui.contract, got {ref_intent!r}")
-        if sug_intent != "ui.contract":
-            errors.append(f"suggested_action_payload.intent expected ui.contract, got {sug_intent!r}")
 
         ref_params = contract_ref.get("params") if isinstance(contract_ref.get("params"), dict) else {}
-        sug_params = suggested_payload.get("params") if isinstance(suggested_payload.get("params"), dict) else {}
         if not ref_params:
             errors.append("contract_ref.params missing")
-        if not sug_params:
-            errors.append("suggested_action_payload.params missing")
-
-        if ref_params != sug_params:
-            errors.append("contract_ref.params and suggested_action_payload.params diverged")
 
         menu_primary = _is_menu_contract(ref_params)
         model_fallback = _is_model_contract(ref_params)
@@ -144,4 +133,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

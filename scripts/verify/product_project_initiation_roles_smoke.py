@@ -34,24 +34,28 @@ def _role_defs() -> list[dict]:
             "role": "owner",
             "login": str(os.getenv("ROLE_OWNER_LOGIN") or "demo_role_owner").strip(),
             "password": str(os.getenv("ROLE_OWNER_PASSWORD") or "demo").strip(),
+            "expect_capability_allow": True,
             "expect_create": False,
         },
         {
             "role": "pm",
             "login": str(os.getenv("ROLE_PM_LOGIN") or "demo_role_pm").strip(),
             "password": str(os.getenv("ROLE_PM_PASSWORD") or "demo").strip(),
+            "expect_capability_allow": True,
             "expect_create": True,
         },
         {
             "role": "finance",
             "login": str(os.getenv("ROLE_FINANCE_LOGIN") or "demo_role_finance").strip(),
             "password": str(os.getenv("ROLE_FINANCE_PASSWORD") or "demo").strip(),
+            "expect_capability_allow": True,
             "expect_create": False,
         },
         {
             "role": "executive",
             "login": str(os.getenv("ROLE_EXECUTIVE_LOGIN") or "demo_role_executive").strip(),
             "password": str(os.getenv("ROLE_EXECUTIVE_PASSWORD") or "demo").strip(),
+            "expect_capability_allow": True,
             "expect_create": True,
         },
     ]
@@ -83,7 +87,13 @@ def main() -> int:
         login = str(role.get("login") or "").strip()
         password = str(role.get("password") or "").strip()
         expect_create = bool(role.get("expect_create"))
-        role_result: dict = {"role": role_name, "login": login, "expect_create": expect_create}
+        expect_capability_allow = bool(role.get("expect_capability_allow", expect_create))
+        role_result: dict = {
+            "role": role_name,
+            "login": login,
+            "expect_capability_allow": expect_capability_allow,
+            "expect_create": expect_create,
+        }
 
         try:
             status, login_resp = _post(
@@ -123,6 +133,24 @@ def main() -> int:
             open_data = open_resp.get("data") if isinstance(open_resp.get("data"), dict) else {}
             role_result["open_subject"] = str(open_data.get("subject") or "")
             role_result["open_scene_key"] = str(open_data.get("scene_key") or "")
+
+            status, cap_resp = _post(
+                intent_url,
+                token,
+                "permission.check",
+                {"capability_key": "project.initiation.enter"},
+                db_name=db_name,
+            )
+            if status >= 500:
+                raise RuntimeError(f"permission.check 500 status={status}")
+            _expect_contract_safe(cap_resp, label=f"{role_name}.permission.check")
+            cap_data = cap_resp.get("data") if isinstance(cap_resp.get("data"), dict) else {}
+            allow = bool(cap_data.get("allow") is True)
+            role_result["capability_allow"] = allow
+            if expect_capability_allow and not allow:
+                raise RuntimeError("expected capability allow but got deny")
+            if (not expect_capability_allow) and allow:
+                raise RuntimeError("expected capability deny but got allow")
 
             create_params = {
                 "name": f"P12B-ROLE-{role_name}-{uuid4().hex[:8]}",
@@ -185,4 +213,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
