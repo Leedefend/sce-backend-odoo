@@ -724,9 +724,7 @@ class SystemInitHandler(BaseIntentHandler):
             asset_queue_metrics=get_queue_metrics(env),
         )
         data = _strip_ui_base_contract_for_frontend(data)
-        SystemInitPayloadBuilder.attach_layered_contract(data)
-        if contract_mode == "hud":
-            data["scene_diagnostics"] = scene_diagnostics
+        data = SystemInitPayloadBuilder.slim_to_minimal_surface(data, params=params)
 
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
@@ -746,15 +744,8 @@ class SystemInitHandler(BaseIntentHandler):
             contract_mode=contract_mode,
             nav_fp=nav_fp,
         )
-        if contract_mode == "hud":
-            SystemInitPayloadBuilder.attach_hud(
-                data,
-                trace_id=trace_id,
-                elapsed_ms=elapsed_ms,
-                contract_version=CONTRACT_VERSION,
-                scene_trace_meta=scene_trace_meta,
-            )
-        if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
-            SystemInitPayloadBuilder.attach_diagnostic(data, diagnostic_info)
+        _ = scene_trace_meta
+        _ = diag_enabled
+        _ = diagnostic_info
 
         return {"status": "success", "data": data, "meta": meta_with_etag, "ok": True}

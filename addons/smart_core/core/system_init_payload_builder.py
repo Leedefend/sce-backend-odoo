@@ -1,8 +1,134 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 
 class SystemInitPayloadBuilder:
+    MINIMAL_ALLOWED_KEYS = {
+        "user",
+        "nav",
+        "nav_meta",
+        "default_route",
+        "intents",
+        "feature_flags",
+        "role_surface",
+        "version",
+        "init_meta",
+    }
+
+    @staticmethod
+    def _extract_scene_keys_from_nav(nav: list) -> list[str]:
+        keys: list[str] = []
+
+        def _walk(nodes):
+            if not isinstance(nodes, list):
+                return
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                scene_key = ""
+                if isinstance(node.get("meta"), dict):
+                    scene_key = str((node.get("meta") or {}).get("scene_key") or "").strip()
+                if not scene_key:
+                    scene_key = str(node.get("scene_key") or "").strip()
+                if scene_key and scene_key not in keys:
+                    keys.append(scene_key)
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                _walk(children)
+
+        _walk(nav)
+        return keys
+
+    @staticmethod
+    def _extract_scene_key_from_route(route: str) -> str:
+        raw = str(route or "").strip()
+        if not raw:
+            return ""
+        try:
+            parsed = urlparse(raw)
+            path = str(parsed.path or "").strip()
+            if path.startswith("/s/"):
+                return path.replace("/s/", "", 1).strip("/")
+        except Exception:
+            return ""
+        return ""
+
+    @classmethod
+    def slim_to_minimal_surface(cls, data: dict, *, params: dict | None = None) -> dict:
+        row = data if isinstance(data, dict) else {}
+        params = params if isinstance(params, dict) else {}
+        preload_requested = bool(params.get("with_preload", False))
+
+        nav = row.get("nav") if isinstance(row.get("nav"), list) else []
+        default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
+        intents = row.get("intents") if isinstance(row.get("intents"), list) else []
+        feature_flags = row.get("feature_flags") if isinstance(row.get("feature_flags"), dict) else {}
+        role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
+
+        scene_subset: list[str] = []
+        landing_scene_key = str(default_route.get("scene_key") or role_surface.get("landing_scene_key") or "workspace.home").strip()
+        if landing_scene_key:
+            scene_subset.append(landing_scene_key)
+
+        fallback_scene_key = "workspace.home"
+        if fallback_scene_key not in scene_subset:
+            scene_subset.append(fallback_scene_key)
+
+        nav_scene_keys = cls._extract_scene_keys_from_nav(nav)
+        for key in nav_scene_keys:
+            if key not in scene_subset:
+                scene_subset.append(key)
+
+        deep_scene_key = str(params.get("scene_key") or "").strip()
+        if not deep_scene_key:
+            deep_scene_key = cls._extract_scene_key_from_route(str(params.get("route") or ""))
+        if deep_scene_key and deep_scene_key not in scene_subset:
+            scene_subset.append(deep_scene_key)
+
+        version = {
+            "contract_version": str(row.get("contract_version") or "1.0.0"),
+            "schema_version": str(row.get("schema_version") or "1.0.0"),
+            "scene_version": str(row.get("scene_version") or "v1"),
+        }
+
+        init_meta = {
+            "contract_mode": str(row.get("contract_mode") or "default"),
+            "scene_channel": str(row.get("scene_channel") or "stable"),
+            "scene_channel_selector": str(row.get("scene_channel_selector") or ""),
+            "scene_channel_source_ref": str(row.get("scene_channel_source_ref") or ""),
+            "nav_meta": row.get("nav_meta") if isinstance(row.get("nav_meta"), dict) else {},
+            "scene_subset": scene_subset,
+            "scene_subset_count": len(scene_subset),
+            "page_contract_meta": {
+                "preload": False,
+                "intent": "scene.page_contract",
+            },
+            "workspace_home_preload_hint": {
+                "intent": "ui.contract",
+                "scene_key": landing_scene_key or "workspace.home",
+            },
+            "preload_requested": preload_requested,
+            "payload_keys_before": sorted(list(row.keys())),
+        }
+
+        minimal = {
+            "user": row.get("user") if isinstance(row.get("user"), dict) else {},
+            "nav": nav,
+            "nav_meta": row.get("nav_meta") if isinstance(row.get("nav_meta"), dict) else {},
+            "default_route": default_route,
+            "intents": intents,
+            "feature_flags": feature_flags,
+            "role_surface": role_surface,
+            "version": version,
+            "init_meta": init_meta,
+        }
+        if preload_requested:
+            if isinstance(row.get("workspace_home"), dict):
+                minimal["workspace_home"] = row.get("workspace_home")
+            if isinstance(row.get("scene_ready_contract_v1"), dict):
+                minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
+        return minimal
     @staticmethod
     def build_base(
         *,

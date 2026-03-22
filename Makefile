@@ -867,7 +867,7 @@ verify.smart_core.minimum_surface.app_open_regression_guard: guard.prod.forbid c
 verify.smart_core.minimum_surface.nav_isolation_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/smart_core_platform_minimum_nav_isolation_guard.py"
 
-verify.smart_core.minimum_surface: verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard
+verify.smart_core.minimum_surface: verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.system_init.minimal_surface
 	@echo "[OK] verify.smart_core.minimum_surface done"
 
 verify.prod.guard: check-compose-env
@@ -2400,12 +2400,30 @@ verify.contract.handler_boundary.guard: guard.prod.forbid
 verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate verify.contract.handler_boundary.guard
 	@echo "[OK] verify.boundary.guard done"
 
-.PHONY: verify.system_init.runtime_context.stability
+.PHONY: verify.system_init.runtime_context.stability verify.system_init.minimal_shape verify.system_init.duplication_guard verify.system_init.scene_subset_guard verify.system_init.no_page_contract_payload verify.system_init.payload_budget verify.system_init.minimal_surface
 verify.system_init.snapshot_equivalence: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/system_init_snapshot_equivalence.py
 
 verify.system_init.runtime_context.stability: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/system_init_runtime_context_stability.py
+
+verify.system_init.minimal_shape: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/system_init_minimal_shape_guard.py"
+
+verify.system_init.duplication_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/system_init_duplication_guard.py"
+
+verify.system_init.scene_subset_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/system_init_scene_subset_guard.py"
+
+verify.system_init.no_page_contract_payload: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/system_init_no_page_contract_payload_guard.py"
+
+verify.system_init.payload_budget: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) SYSTEM_INIT_MAX_BYTES=$(or $(SYSTEM_INIT_MAX_BYTES),65536) SYSTEM_INIT_MAX_NAV_COUNT=$(or $(SYSTEM_INIT_MAX_NAV_COUNT),80) SYSTEM_INIT_MAX_INTENT_COUNT=$(or $(SYSTEM_INIT_MAX_INTENT_COUNT),300) python3 /mnt/scripts/verify/system_init_payload_budget_guard.py"
+
+verify.system_init.minimal_surface: verify.system_init.minimal_shape verify.system_init.duplication_guard verify.system_init.scene_subset_guard verify.system_init.no_page_contract_payload verify.system_init.payload_budget
+	@echo "[OK] verify.system_init.minimal_surface done"
 
 verify.intent.capability.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/intent_capability_matrix_report.py
