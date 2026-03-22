@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-22T22:30:00Z
+- blocker_key: `phase16d_orchestration_platformization`
+- layer_target: `Platform Layer / Scene Orchestration Layer / Frontend Layer`
+- module: `addons/smart_core + addons/smart_construction_core + frontend/apps/web + scripts/verify + docs/ops`
+- reason: `将 execution 场景编排试点迁入 smart_core，并建立平台化 guard 与旧模式标记`
+- completed_step: `完成 execution platform carrier、legacy marker、前端去语义化补丁与 orchestration platform guard`
+- active_commit: `e3a598f`
+- next_step: `Run architecture guards, execution regression, frontend API smoke, then classify and commit the batch`
+
 ### 2026-03-22T14:10:00Z
 - blocker_key: `phase16b_native_alignment_orchestration_correction`
 - layer_target: `Ops Governance / Scene Orchestration Policy / Verify Gate`
