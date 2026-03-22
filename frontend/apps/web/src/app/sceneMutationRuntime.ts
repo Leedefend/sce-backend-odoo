@@ -30,18 +30,11 @@ function asDict(value: unknown): Record<string, unknown> {
     : {};
 }
 
-const LEGACY_MODEL_EXECUTE_INTENT: Record<string, string> = {
-  'finance.payment.request': 'payment.request.execute',
-  'payment.request': 'payment.request.execute',
-  'project.risk.action': 'risk.action.execute',
-};
-
 function resolveIntentByMutation(mutation: MutationContract): string {
   const payloadSchema = asDict(mutation.payload_schema);
   const explicitIntent = asText(mutation.execute_intent || payloadSchema.execute_intent);
   if (explicitIntent) return explicitIntent;
-  const model = asText(mutation.model).toLowerCase();
-  return LEGACY_MODEL_EXECUTE_INTENT[model] || '';
+  return '';
 }
 
 function buildParams(input: SceneMutationExecuteInput): Record<string, unknown> {
@@ -70,7 +63,7 @@ function buildParams(input: SceneMutationExecuteInput): Record<string, unknown> 
 export async function executeSceneMutation(input: SceneMutationExecuteInput): Promise<SceneMutationExecuteResult> {
   const intent = resolveIntentByMutation(input.mutation);
   if (!intent) {
-    throw new Error(`unsupported mutation model: ${input.mutation.model}`);
+    throw new Error('missing execute_intent in mutation contract');
   }
   const params = buildParams(input);
   const response = await intentRequestRaw<Record<string, unknown>>({
