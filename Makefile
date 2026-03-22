@@ -792,7 +792,7 @@ verify.portal.ui.v0_8.semantic.strict.container: verify.portal.ui.v0_8.semantic.
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 
-.PHONY: verify.portal.minimum_runtime_surface verify.product.project_initiation verify.product.project_initiation.roles verify.product.contract_ref_shape_guard verify.product.project_initiation.full verify.phase12b.baseline verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.smart_core.minimum_surface
+.PHONY: verify.portal.minimum_runtime_surface verify.product.project_initiation verify.product.project_initiation.roles verify.product.contract_ref_shape_guard verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard verify.product.phase12c verify.phase12b.baseline verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.smart_core.minimum_surface
 verify.portal.minimum_runtime_surface: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/portal_minimum_runtime_surface_guard.py"
 
@@ -807,6 +807,21 @@ verify.product.contract_ref_shape_guard: guard.prod.forbid check-compose-project
 
 verify.product.project_initiation.full: verify.product.project_initiation verify.product.contract_ref_shape_guard verify.product.project_initiation.roles
 	@echo "[OK] verify.product.project_initiation.full done"
+
+verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_initiation_dashboard_smoke.py"
+
+verify.product.suggested_action_shape_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_suggested_action_shape_guard.py"
+
+verify.product.project_context_chain_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_context_chain_guard.py"
+
+verify.product.project_dashboard_non_empty_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_dashboard_non_empty_guard.py"
+
+verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
+	@echo "[OK] verify.product.phase12c done"
 
 verify.phase12b.baseline: guard.prod.forbid
 	@echo "[Layer:platform] verify.smart_core.minimum_surface"
