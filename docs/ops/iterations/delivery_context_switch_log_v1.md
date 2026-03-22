@@ -915,3 +915,12 @@ Each entry must include:
 - completed_step: `初始化 sc_platform_core platform-only DB；minimal surface 保留顶层 nav_meta；with_preload=true 时保留 workspace_home/scene_ready_contract_v1；verify.system_init.minimal_surface、verify.smart_core.minimum_surface(DB=sc_platform_core)、verify.portal.minimum_runtime_surface(DB=sc_platform_core)、verify.phase12b.baseline(platform=sc_platform_core, product=sc_demo) 全部 PASS`
 - active_commit: `pending`
 - next_step: `归档 artifacts 并分类提交 Phase 12-D 改动`
+
+### 2026-03-22T16:10:00Z
+- blocker_key: `phase12e_startup_layer_contract_freeze`
+- layer_target: `Platform Contract Layer + Verify/Gate Layer + Docs`
+- module: `docs/architecture/system_init_startup_contract_layers_v1.md + scripts/verify/system_init_startup_layer_contract_guard.py + Makefile + docs/ops/verify`
+- reason: `Phase 12-E / Batch E1：先冻结 boot/preload/runtime 三层启动协议，防止 Phase 12-D 刚拆下去的字段重新回流到 boot surface`
+- completed_step: `新增 system.init startup contract layers 文档；新增 verify.system_init.startup_layer_contract，同步冻结 boot 仅最小启动面、preload 仅首屏可渲染面、runtime 必须走独立入口；verify.system_init.minimal_surface 聚合链与 verify README 已接入新 guard`
+- active_commit: `pending`
+- next_step: `运行 sc_platform_core 上的 system_init/platform/phase12b 基线验证，确认 Batch E1 收口后再进入 Phase 12-E Batch E2 preload 正式路径`
