@@ -351,6 +351,10 @@ function blockEmptyText(blockKey: string) {
 
 function humanReason(reasonCode: string) {
   const code = asText(reasonCode);
+  if (code === 'EXECUTION_READY_TO_START') return '当前满足首轮试点前提，可以开始执行。';
+  if (code === 'EXECUTION_READY_TO_COMPLETE') return '当前任务正在执行中，可以推进到执行完成。';
+  if (code === 'EXECUTION_BLOCKED_REQUIRES_UNBLOCK') return '当前执行处于阻塞态，需要先解除阻塞后再继续。';
+  if (code === 'EXECUTION_ALREADY_DONE') return '当前项目执行已完成，无需继续推进。';
   if (code === 'EXECUTION_TASK_MISSING') return '当前项目还没有可推进的任务。';
   if (code === 'EXECUTION_TASK_START_FAILED') return '任务未能成功进入执行中。';
   if (code === 'EXECUTION_TASK_NOT_IN_PROGRESS') return '当前没有处于执行中的任务，无法完成推进。';
@@ -366,6 +370,8 @@ function humanReason(reasonCode: string) {
   if (code === 'EXECUTION_TRANSITION_READY_TO_IN_PROGRESS') return '已从执行就绪推进到执行中。';
   if (code === 'EXECUTION_TRANSITION_IN_PROGRESS_TO_DONE') return '已从执行中推进到执行完成。';
   if (code === 'EXECUTION_TRANSITION_BLOCKED_TO_READY') return '已从执行阻塞恢复到执行就绪。';
+  if (code === 'EXECUTION_TRANSITION_NOT_ALLOWED') return '当前状态不允许执行这一步推进。';
+  if (code === 'EXECUTION_TRANSITION_WRITE_FAILED') return '执行状态写入失败，请刷新后重试。';
   return code || '已返回结果';
 }
 
