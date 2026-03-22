@@ -10,6 +10,9 @@ from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_block_f
 from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter import (
     ProjectPlanBootstrapEnterHandler,
 )
+from odoo.addons.smart_construction_core.handlers.project_execution_enter import (
+    ProjectExecutionEnterHandler,
+)
 
 
 @tagged("sc_smoke", "project_plan_bootstrap_backend")
@@ -25,7 +28,7 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
             "project_id": 21,
             "title": "计划编排：Demo",
             "summary": {"project_code": "P-21"},
-            "blocks": [{"key": "plan_summary_detail"}],
+            "blocks": [{"key": "plan_summary_detail"}, {"key": "plan_tasks"}, {"key": "next_actions"}],
             "suggested_action": {"intent": "project.plan_bootstrap.block.fetch"},
             "runtime_fetch_hints": {"blocks": {"plan_summary_detail": {"intent": "project.plan_bootstrap.block.fetch"}}},
         }
@@ -53,3 +56,15 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
             result = handler.handle(payload={"project_id": 21, "block_key": "plan_summary_detail"}, ctx={})
         self.assertTrue(result.get("ok"))
         self.assertEqual((((result.get("data") or {}).get("block") or {}).get("block_type")), "plan_summary_detail")
+
+    def test_execution_enter_requires_project_id(self):
+        handler = ProjectExecutionEnterHandler(self.env, payload={})
+        result = handler.handle(payload={}, ctx={})
+        self.assertFalse(result.get("ok"))
+        self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_CONTEXT_MISSING")
+
+    def test_execution_enter_returns_scheduling_placeholder(self):
+        handler = ProjectExecutionEnterHandler(self.env, payload={"project_id": 21})
+        result = handler.handle(payload={"project_id": 21}, ctx={})
+        self.assertTrue(result.get("ok"))
+        self.assertEqual(((result.get("data") or {}).get("scene_key")), "project.execution")
