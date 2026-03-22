@@ -48,6 +48,13 @@ class ProjectExecutionStateMachine:
         state = str(raw or "").strip().lower()
         return state if state in cls.STATES else "ready"
 
+    @staticmethod
+    def normalize_task_state(raw) -> str:
+        state = str(raw or "").strip().lower()
+        if state in {"draft", "ready", "in_progress", "done", "cancelled", "blocked"}:
+            return state
+        return "draft"
+
     @classmethod
     def allowed_targets(cls, state: str) -> Tuple[str, ...]:
         return cls.ALLOWED_TRANSITIONS.get(cls.normalize_state(state), ())

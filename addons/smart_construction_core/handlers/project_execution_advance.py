@@ -53,6 +53,79 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             "reason_code": reason_code,
         }
 
+    def _project_tasks(self, project):
+        try:
+            task_model = self.env["project.task"]
+        except Exception:
+            return []
+        try:
+            return task_model.search([("project_id", "=", int(project.id))], order="priority desc, id asc")
+        except Exception:
+            return []
+
+    def _prepare_task_for_execution(self, project) -> tuple[bool, str]:
+        tasks = self._project_tasks(project)
+        if not tasks:
+            return False, "EXECUTION_TASK_MISSING"
+        task = tasks[0]
+        task_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", "draft"))
+        if task_state not in {"draft", "ready", "in_progress"}:
+            return False, "EXECUTION_TASK_START_FAILED"
+        try:
+            if task_state == "draft" and hasattr(task, "action_prepare_task"):
+                task.action_prepare_task()
+                task_state = "ready"
+            if task_state == "ready" and hasattr(task, "action_start_task"):
+                task.action_start_task()
+                task_state = "in_progress"
+            if task_state == "in_progress" and "kanban_state" in getattr(task, "_fields", {}):
+                task.sudo().write({"kanban_state": "normal"})
+        except Exception:
+            return False, "EXECUTION_TASK_START_FAILED"
+        return task_state == "in_progress", "EXECUTION_TRANSITION_READY_TO_IN_PROGRESS"
+
+    def _complete_task_for_execution(self, project) -> tuple[bool, str]:
+        tasks = self._project_tasks(project)
+        if not tasks:
+            return False, "EXECUTION_TASK_MISSING"
+        task = tasks.filtered(
+            lambda rec: ProjectExecutionStateMachine.normalize_task_state(getattr(rec, "sc_state", "")) == "in_progress"
+        )[:1]
+        if not task:
+            return False, "EXECUTION_TASK_NOT_IN_PROGRESS"
+        try:
+            if hasattr(task, "action_mark_done"):
+                task.action_mark_done()
+            if "kanban_state" in getattr(task, "_fields", {}):
+                task.sudo().write({"kanban_state": "done"})
+        except Exception:
+            return False, "EXECUTION_TASK_COMPLETE_FAILED"
+        return True, "EXECUTION_TRANSITION_IN_PROGRESS_TO_DONE"
+
+    def _recover_task_for_ready(self, project) -> tuple[bool, str]:
+        tasks = self._project_tasks(project)
+        if not tasks:
+            return False, "EXECUTION_TASK_MISSING"
+        task = tasks[0]
+        try:
+            task_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", "draft"))
+            if task_state == "draft" and hasattr(task, "action_prepare_task"):
+                task.action_prepare_task()
+            if "kanban_state" in getattr(task, "_fields", {}):
+                task.sudo().write({"kanban_state": "normal"})
+        except Exception:
+            return False, "EXECUTION_TASK_RECOVER_FAILED"
+        return True, "EXECUTION_TRANSITION_BLOCKED_TO_READY"
+
+    def _apply_real_task_transition(self, project, *, from_state: str, to_state: str) -> tuple[bool, str]:
+        if to_state == "in_progress":
+            return self._prepare_task_for_execution(project)
+        if to_state == "done":
+            return self._complete_task_for_execution(project)
+        if to_state == "ready":
+            return self._recover_task_for_ready(project)
+        return True, ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
+
     def _post_transition_note(self, project, *, from_state: str, to_state: str, reason_code: str, result: str) -> None:
         if not project or not hasattr(project, "message_post"):
             return
@@ -184,6 +257,25 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
             }
 
+        task_success, task_reason_code = self._apply_real_task_transition(project, from_state=from_state, to_state=to_state)
+        if not task_success:
+            return {
+                "ok": True,
+                "data": {
+                    "result": "blocked",
+                    "project_id": int(project.id),
+                    "from_state": from_state,
+                    "to_state": from_state,
+                    "reason_code": task_reason_code,
+                    "suggested_action": self._build_suggested_action(int(project.id), task_reason_code),
+                },
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "elapsed_ms": int((time.time() - ts0) * 1000),
+                    "trace_id": trace_id,
+                },
+            }
+
         try:
             project.sudo().write({"sc_execution_state": to_state})
         except Exception:
@@ -205,7 +297,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
             }
 
-        reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
+        reason_code = task_reason_code or ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
         self._post_transition_note(
             project,
             from_state=from_state,

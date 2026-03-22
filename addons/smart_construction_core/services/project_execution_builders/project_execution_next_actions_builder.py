@@ -23,6 +23,24 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
 
         current_state = ProjectExecutionStateMachine.normalize_state(getattr(project, "sc_execution_state", "ready"))
         action = ProjectExecutionStateMachine.action_payload(int(project.id), current_state)
+        task_model = self._model("project.task")
+        task_domain = self._project_domain("project.task", project)
+        task_total = 0
+        active_count = 0
+        done_count = 0
+        if task_model is not None:
+            try:
+                task_total = int(task_model.search_count(task_domain))
+                active_count = int(task_model.search_count(task_domain + [("sc_state", "in", ["ready", "in_progress"])]))
+                done_count = int(task_model.search_count(task_domain + [("sc_state", "=", "done")]))
+            except Exception:
+                task_total = 0
+                active_count = 0
+                done_count = 0
+        if task_total <= 0:
+            action["state"] = "blocked"
+            action["reason_code"] = "EXECUTION_TASK_MISSING"
+            action["hint"] = "当前状态：执行任务缺失。下一步：先在 Odoo 项目任务中创建或准备任务。"
         actions = [action]
         return self._envelope(
             state="ready",
@@ -37,6 +55,9 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                     "current_state_label": ProjectExecutionStateMachine.STATE_LABEL.get(current_state, current_state),
                     "allowed_targets": list(ProjectExecutionStateMachine.allowed_targets(current_state)),
                     "next_step_label": str(action.get("label") or ""),
+                    "task_total": task_total,
+                    "task_active_count": active_count,
+                    "task_done_count": done_count,
                 },
             },
         )

@@ -89,3 +89,30 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         result = handler.handle(payload={}, ctx={})
         self.assertFalse(result.get("ok"))
         self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_CONTEXT_MISSING")
+
+    def test_execution_advance_updates_real_project_task(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Execution Real Usage Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+            }
+        )
+        task = self.env["project.task"].create(
+            {
+                "name": "Root Task",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+        self.assertEqual(task.sc_state, "draft")
+
+        handler = ProjectExecutionAdvanceHandler(self.env, payload={"project_id": project.id})
+        result = handler.handle(payload={"project_id": project.id}, ctx={})
+        self.assertTrue(result.get("ok"))
+        self.assertEqual(((result.get("data") or {}).get("result")), "success")
+
+        task.invalidate_recordset(["sc_state", "kanban_state"])
+        self.assertEqual(task.sc_state, "in_progress")
+        self.assertEqual(task.kanban_state, "normal")

@@ -12,6 +12,18 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
     title = "执行任务"
     required_groups = ()
 
+    @staticmethod
+    def _task_state(task) -> str:
+        sc_state = str(getattr(task, "sc_state", "") or "").strip().lower()
+        if sc_state in {"draft", "ready", "in_progress", "done", "cancelled"}:
+            return sc_state
+        kanban_state = str(getattr(task, "kanban_state", "") or "").strip().lower()
+        if kanban_state == "done":
+            return "done"
+        if kanban_state == "blocked":
+            return "blocked"
+        return "open"
+
     def build(self, project=None, context=None):
         visibility = self._visibility()
         empty_data = {
@@ -21,6 +33,9 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
                 "open_count": 0,
                 "blocked_count": 0,
                 "overdue_count": 0,
+                "source_model": "project.task",
+                "state_field": "sc_state",
+                "empty_hint": "当前项目还没有执行任务，请先在 Odoo 项目任务中创建或准备任务。",
             },
         }
         if not visibility.get("allowed"):
@@ -43,12 +58,15 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
         open_count = 0
         blocked_count = 0
         overdue_count = 0
+        in_progress_count = 0
         for task in rows:
-            kanban_state = str(getattr(task, "kanban_state", "") or "")
-            if kanban_state != "done":
+            task_state = self._task_state(task)
+            if task_state != "done":
                 open_count += 1
-            if kanban_state == "blocked":
+            if task_state == "blocked":
                 blocked_count += 1
+            if task_state == "in_progress":
+                in_progress_count += 1
             deadline_value = getattr(task, "date_deadline", False)
             deadline = str(deadline_value or "")
             if deadline_value and deadline_value < fields.Date.today():
@@ -60,7 +78,7 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
                     "assignee_name": str(getattr(getattr(task, "user_ids", False)[:1], "display_name", "") or ""),
                     "stage_name": str(getattr(getattr(task, "stage_id", None), "display_name", "") or ""),
                     "deadline": deadline,
-                    "state": "done" if kanban_state == "done" else "blocked" if kanban_state == "blocked" else "open",
+                    "state": task_state,
                 }
             )
 
@@ -73,7 +91,11 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
                     "count": len(items),
                     "open_count": open_count,
                     "blocked_count": blocked_count,
+                    "in_progress_count": in_progress_count,
                     "overdue_count": overdue_count,
+                    "source_model": "project.task",
+                    "state_field": "sc_state",
+                    "empty_hint": "当前项目还没有执行任务，请先在 Odoo 项目任务中创建或准备任务。",
                 },
             },
         )
