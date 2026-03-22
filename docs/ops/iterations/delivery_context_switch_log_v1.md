@@ -969,3 +969,12 @@ Each entry must include:
 - completed_step: `project.dashboard.open 改为 deprecated thin wrapper 并显式声明退场 Phase 12-G；项目主路径 capability 改指向 project.dashboard.enter；新增 next_actions runtime block 与 project.plan_bootstrap.enter reserve-only intent；新增 dashboard entry/block contract guards 与 product dashboard baseline 聚合；phase12b baseline 归档 dashboard flow + contract guard artifacts；文档补齐 dashboard contract freeze 与 plan bootstrap predesign`
 - active_commit: `pending`
 - next_step: `执行 frontend/product/baseline 验证并分类提交 Batch E5`
+
+### 2026-03-22T20:20:00Z
+- blocker_key: `phase13a_project_plan_bootstrap_flow`
+- layer_target: `Domain/Product Handler Layer + Verify/Gate Layer + Frontend Consumer Layer`
+- module: `addons/smart_construction_core + scripts/verify + docs/ops + Makefile`
+- reason: `Phase 13-A：在已标准化的 project.dashboard 之上，交付 project.plan_bootstrap 最小入口与 runtime block，并打通 dashboard -> plan 连续产品流`
+- completed_step: `project.plan_bootstrap.enter 从 reserve-only 升级为最小 entry contract；新增 project.plan_bootstrap.block.fetch 与 plan_summary_detail runtime block；dashboard next_actions 中 plan 动作升级为可执行入口并保持 project_id 连续；新增 verify.product.project_flow.dashboard_plan 并纳入 product dashboard baseline；补充 plan bootstrap runtime contract 文档`
+- active_commit: `pending`
+- next_step: `运行 py_compile + backend/product/frontend 验证，收口 Phase 13-A 后分类提交并输出 tmp 总结`

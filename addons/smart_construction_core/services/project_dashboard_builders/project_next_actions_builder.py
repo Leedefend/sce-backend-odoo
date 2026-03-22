@@ -19,17 +19,17 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
 
         actions = [
             {
-                "key": "plan_bootstrap_reserved",
+                "key": "plan_bootstrap_enter",
                 "label": "发起计划编排",
-                "hint": "预留下一场景入口：project.plan_bootstrap.enter",
+                "hint": "进入项目计划编排，继续从驾驶舱下钻到计划启动场景。",
                 "intent": "project.plan_bootstrap.enter",
                 "params": {
                     "project_id": int(project.id),
                     "source": "project.dashboard.next_actions",
                 },
-                "state": "planned",
-                "reason_code": "PLAN_BOOTSTRAP_RESERVED",
-                "source": "phase_12_e5",
+                "state": "available",
+                "reason_code": "PLAN_BOOTSTRAP_READY",
+                "source": "phase_13_a",
             }
         ]
 

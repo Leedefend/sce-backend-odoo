@@ -169,7 +169,7 @@ function blockData(blockKey: string) {
 function blockCaption(blockKey: string) {
   if (blockKey === 'progress') return '进度区块独立加载，失败不影响整页。';
   if (blockKey === 'risks') return '风险区块独立加载，失败不影响整页。';
-  if (blockKey === 'next_actions') return '下一步动作独立加载，并预留计划编排入口。';
+  if (blockKey === 'next_actions') return '下一步动作独立加载，并提供计划编排入口。';
   return '区块按需加载。';
 }
 

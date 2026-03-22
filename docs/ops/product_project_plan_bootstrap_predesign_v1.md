@@ -1,29 +1,12 @@
 # Product Plan Bootstrap Predesign v1
 
-## Scope
-- Reserve only
-- No full scene delivery in Phase 12-E
+## Status
+- Superseded by `docs/ops/product_project_plan_bootstrap_runtime_contract_v1.md` in Phase 13-A
+- Keep this file only as the reserve-stage decision record
 
-## Intent
+## Original Intent
 - `project.plan_bootstrap.enter`
-
-## Purpose
-- Provide a contract-safe target for the next product scene after `project.dashboard`
-- Let `dashboard -> plan` direction exist before the actual scene is implemented
-
-## Current Contract
-- success data:
-  - `state`
-  - `project_id`
-  - `scene_key`
-  - `reason_code`
-  - `message`
-  - `suggested_action`
-
-## Current Status
-- `state = planned`
-- not used as the primary startup path
-- exposed from `next_actions` runtime block only as a reserved direction
+- reserve direction from `project.dashboard`
 
 ## Exit Condition
-- Replace this reserve-only intent with a real `project.plan_bootstrap` scene delivery batch
+- fulfilled by Phase 13-A minimal entry + runtime block delivery
