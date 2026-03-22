@@ -4,6 +4,13 @@
 - 冻结 `smart_core` 在不依赖行业模块时的最小可运行能力面。
 - 为 boundary/provider 迭代提供固定验收基线。
 
+## 分层基线关系
+- Platform Baseline（本文件）：仅验证平台内核最小能力面。
+- Portal Baseline（运行时交付层）：验证前端交付链路最小可渲染面（`workspace.home` 可打开、same-route 稳定、非空渲染）。
+- Product Baseline（业务场景层）：验证产品场景闭环（如 `project.initiation` 创建与 contract 回传）。
+
+三层关系：先过 Platform，再过 Portal，最后过 Product。
+
 ## Layer Target
 - `Platform Layer`
 

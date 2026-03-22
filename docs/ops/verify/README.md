@@ -681,6 +681,31 @@
 - Aggregate:
   - `make verify.smart_core.minimum_surface`
 
+## Portal Minimum Runtime Surface
+- Guard (portal runtime minimum surface on frontend delivery path):
+  - `make verify.portal.minimum_runtime_surface`
+- Coverage:
+  - owner-only startup chain available
+  - `workspace.home` openable
+  - same-route residency remains stable
+  - no workbench fallback
+  - no error panel
+  - page non-empty and at least one block renderable
+
+## Product Baseline: Project Initiation
+- Smoke:
+  - `make verify.product.project_initiation`
+- Coverage:
+  - login -> open product scene -> create record
+  - create result state is ready/success
+  - suggested_action exists
+  - contract return path available (no fallback-only response)
+
+## Recommended Execution Order
+1. `make verify.smart_core.minimum_surface ...`
+2. `make verify.portal.minimum_runtime_surface ...`
+3. `make verify.product.project_initiation ...`
+
 ## Business Increment Preflight
 - Readiness report (non-blocking):
   - `make verify.business.increment.readiness`
