@@ -8,9 +8,9 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_construction_core.services.project_execution_service import ProjectExecutionService
 
 
-class ProjectExecutionEnterHandler(BaseIntentHandler):
-    INTENT_TYPE = "project.execution.enter"
-    DESCRIPTION = "返回项目执行最小 scene-ready contract"
+class ProjectExecutionBlockFetchHandler(BaseIntentHandler):
+    INTENT_TYPE = "project.execution.block.fetch"
+    DESCRIPTION = "按需返回 project.execution runtime block"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
@@ -26,7 +26,9 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
     def _resolve_project_id(self, params: Dict[str, Any], ctx: Dict[str, Any]) -> int:
         candidates = [
             (params or {}).get("project_id"),
-            (params or {}).get("record_id"),
+            ((params or {}).get("project_context") or {}).get("project_id")
+            if isinstance((params or {}).get("project_context"), dict)
+            else None,
             (ctx or {}).get("project_id"),
             (ctx or {}).get("record_id"),
         ]
@@ -42,13 +44,15 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             params = params.get("params") or {}
         ctx = ctx or {}
+
         project_id = self._resolve_project_id(params, ctx)
-        if project_id <= 0:
+        block_key = str(params.get("block_key") or "").strip().lower()
+        if project_id <= 0 or not block_key:
             return {
                 "ok": False,
                 "error": {
-                    "code": "PROJECT_CONTEXT_MISSING",
-                    "message": "缺少 project_id，无法进入执行场景",
+                    "code": "MISSING_PARAMS",
+                    "message": "缺少参数：project_id 或 block_key",
                     "suggested_action": "fix_input",
                 },
                 "meta": {
@@ -59,22 +63,7 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
             }
 
         service = ProjectExecutionService(self.env)
-        data = service.build_entry(project_id=project_id, context=ctx)
-        if int(data.get("project_id") or 0) <= 0:
-            return {
-                "ok": False,
-                "error": {
-                    "code": "PROJECT_NOT_FOUND",
-                    "message": "项目不存在或当前账号不可访问",
-                    "suggested_action": "fix_input",
-                },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": str((self.context or {}).get("trace_id") or ""),
-                },
-            }
-
+        data = service.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)
         return {
             "ok": True,
             "data": data,
