@@ -2400,7 +2400,7 @@ verify.contract.handler_boundary.guard: guard.prod.forbid
 verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate verify.contract.handler_boundary.guard
 	@echo "[OK] verify.boundary.guard done"
 
-.PHONY: verify.system_init.runtime_context.stability verify.system_init.minimal_shape verify.system_init.duplication_guard verify.system_init.scene_subset_guard verify.system_init.no_page_contract_payload verify.system_init.payload_budget verify.system_init.minimal_surface
+.PHONY: verify.system_init.runtime_context.stability verify.system_init.minimal_shape verify.system_init.duplication_guard verify.system_init.scene_subset_guard verify.system_init.no_page_contract_payload verify.system_init.payload_budget verify.system_init.startup_layer_contract verify.system_init.minimal_surface
 verify.system_init.snapshot_equivalence: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/system_init_snapshot_equivalence.py
 
@@ -2422,7 +2422,10 @@ verify.system_init.no_page_contract_payload: guard.prod.forbid check-compose-pro
 verify.system_init.payload_budget: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) SYSTEM_INIT_MAX_BYTES=$(or $(SYSTEM_INIT_MAX_BYTES),65536) SYSTEM_INIT_MAX_NAV_COUNT=$(or $(SYSTEM_INIT_MAX_NAV_COUNT),80) SYSTEM_INIT_MAX_INTENT_COUNT=$(or $(SYSTEM_INIT_MAX_INTENT_COUNT),300) python3 /mnt/scripts/verify/system_init_payload_budget_guard.py"
 
-verify.system_init.minimal_surface: verify.system_init.minimal_shape verify.system_init.duplication_guard verify.system_init.scene_subset_guard verify.system_init.no_page_contract_payload verify.system_init.payload_budget
+verify.system_init.startup_layer_contract: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/system_init_startup_layer_contract_guard.py"
+
+verify.system_init.minimal_surface: verify.system_init.minimal_shape verify.system_init.duplication_guard verify.system_init.scene_subset_guard verify.system_init.no_page_contract_payload verify.system_init.payload_budget verify.system_init.startup_layer_contract
 	@echo "[OK] verify.system_init.minimal_surface done"
 
 verify.intent.capability.matrix.report: guard.prod.forbid

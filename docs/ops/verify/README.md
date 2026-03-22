@@ -684,7 +684,9 @@
   - `make verify.system_init.scene_subset_guard`
   - `make verify.system_init.no_page_contract_payload`
   - `make verify.system_init.payload_budget`
+  - `make verify.system_init.startup_layer_contract`
   - aggregate: `make verify.system_init.minimal_surface`
+  - contract doc: `docs/architecture/system_init_startup_contract_layers_v1.md`
 - Aggregate:
   - `make verify.smart_core.minimum_surface`
 

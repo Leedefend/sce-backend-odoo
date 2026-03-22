@@ -25,7 +25,12 @@ def _post(
     return status, payload if isinstance(payload, dict) else {}
 
 
-def fetch_system_init_payload() -> dict[str, Any]:
+def fetch_system_init_payload(
+    *,
+    with_preload: bool | None = None,
+    contract_mode: str | None = None,
+    extra_params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
     login = str(os.getenv("E2E_LOGIN") or "admin").strip()
@@ -49,13 +54,21 @@ def fetch_system_init_payload() -> dict[str, Any]:
     if not token:
         raise RuntimeError("login response missing data.session.token")
 
-    with_preload = str(os.getenv("SYSTEM_INIT_WITH_PRELOAD") or "0").strip() in {"1", "true", "yes"}
-    contract_mode = str(os.getenv("SYSTEM_INIT_CONTRACT_MODE") or "default").strip() or "default"
+    resolved_with_preload = with_preload
+    if resolved_with_preload is None:
+        resolved_with_preload = str(os.getenv("SYSTEM_INIT_WITH_PRELOAD") or "0").strip() in {"1", "true", "yes"}
+    resolved_contract_mode = str(contract_mode or os.getenv("SYSTEM_INIT_CONTRACT_MODE") or "default").strip() or "default"
+    params = {
+        "with_preload": bool(resolved_with_preload),
+        "contract_mode": resolved_contract_mode,
+    }
+    if isinstance(extra_params, dict):
+        params.update(extra_params)
     status, init_resp = _post(
         intent_url,
         token,
         "system.init",
-        {"with_preload": with_preload, "contract_mode": contract_mode},
+        params,
         db_name=db_name,
     )
     require_ok(status, init_resp, "system.init")
@@ -66,10 +79,9 @@ def fetch_system_init_payload() -> dict[str, Any]:
         "intent_url": intent_url,
         "db_name": db_name,
         "login": login,
-        "with_preload": with_preload,
-        "contract_mode": contract_mode,
+        "with_preload": bool(resolved_with_preload),
+        "contract_mode": resolved_contract_mode,
         "response": init_resp,
         "data": data,
         "payload_bytes": raw_bytes,
     }
-
