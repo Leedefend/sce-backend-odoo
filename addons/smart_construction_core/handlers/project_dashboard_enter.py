@@ -5,7 +5,7 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
-from odoo.addons.smart_construction_core.orchestration.project_dashboard_scene_orchestrator import (
+from odoo.addons.smart_core.orchestration.project_dashboard_scene_orchestrator import (
     ProjectDashboardSceneOrchestrator,
 )
 

@@ -13,7 +13,7 @@ from odoo.addons.smart_construction_core.handlers.project_dashboard_enter import
 from odoo.addons.smart_construction_core.handlers.project_dashboard_open import (
     ProjectDashboardOpenHandler,
 )
-from odoo.addons.smart_construction_core.orchestration.project_dashboard_scene_orchestrator import (
+from odoo.addons.smart_core.orchestration.project_dashboard_scene_orchestrator import (
     ProjectDashboardSceneOrchestrator,
 )
 from odoo.addons.smart_construction_core.services.project_dashboard_service import (

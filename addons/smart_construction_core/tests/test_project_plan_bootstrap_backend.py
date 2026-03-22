@@ -16,7 +16,7 @@ from odoo.addons.smart_construction_core.handlers.project_execution_enter import
 from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
     ProjectExecutionAdvanceHandler,
 )
-from odoo.addons.smart_construction_core.orchestration.project_plan_bootstrap_scene_orchestrator import (
+from odoo.addons.smart_core.orchestration.project_plan_bootstrap_scene_orchestrator import (
     ProjectPlanBootstrapSceneOrchestrator,
 )
 from odoo.addons.smart_construction_core.services.project_execution_service import (
