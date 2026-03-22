@@ -44,11 +44,8 @@ def main() -> int:
         if duplicate_top_keys:
             errors.append(f"top-level duplicate payload keys present: {', '.join(duplicate_top_keys)}")
 
-        payload_keys_before = init_meta.get("payload_keys_before") if isinstance(init_meta.get("payload_keys_before"), list) else []
-        if payload_keys_before:
-            duplicate_before = sorted(set(payload_keys_before) & {"scenes", "capabilities", "capability_groups", "page_contracts"})
-        else:
-            duplicate_before = []
+        if "payload_keys_before" in init_meta:
+            errors.append("init_meta must not expose payload_keys_before")
 
         if isinstance(data.get("capability_groups"), list):
             for index, group in enumerate(data.get("capability_groups") or []):
@@ -61,7 +58,7 @@ def main() -> int:
             "status": "PASS" if not errors else "FAIL",
             "payload_bytes": result.get("payload_bytes"),
             "duplicate_top_keys": duplicate_top_keys,
-            "payload_keys_before_has_heavy_fields": duplicate_before,
+            "init_meta_keys": sorted(init_meta.keys()),
             "errors": errors,
         }
     except Exception as exc:
@@ -75,8 +72,7 @@ def main() -> int:
         f"- status: {report.get('status', 'FAIL')}",
         f"- payload_bytes: {report.get('payload_bytes', '-')}",
         f"- duplicate_top_keys: {', '.join(report.get('duplicate_top_keys') or []) or '(none)'}",
-        "- payload_keys_before_has_heavy_fields: "
-        + (", ".join(report.get("payload_keys_before_has_heavy_fields") or []) or "(none)"),
+        f"- init_meta_keys: {', '.join(report.get('init_meta_keys') or []) or '(none)'}",
     ]
     if errors:
         lines.extend(["", "## Errors", *[f"- {item}" for item in errors]])
@@ -93,4 +89,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -5,6 +5,9 @@ from urllib.parse import urlparse
 
 
 class SystemInitPayloadBuilder:
+    BUILD_MODE_BOOT = "boot"
+    BUILD_MODE_PRELOAD = "preload"
+    BUILD_MODE_DEBUG = "debug"
     MINIMAL_ALLOWED_KEYS = {
         "user",
         "nav",
@@ -15,6 +18,13 @@ class SystemInitPayloadBuilder:
         "role_surface",
         "version",
         "init_meta",
+    }
+    MINIMAL_NAV_META_KEYS = {
+        "nav_source",
+        "platform_minimum_surface",
+        "platform_minimum_reason",
+        "role_surface_pruned",
+        "role_surface_code",
     }
 
     @staticmethod
@@ -55,15 +65,35 @@ class SystemInitPayloadBuilder:
         return ""
 
     @classmethod
-    def slim_to_minimal_surface(cls, data: dict, *, params: dict | None = None) -> dict:
-        row = data if isinstance(data, dict) else {}
+    def resolve_build_mode(cls, params: dict | None = None) -> str:
+        params = params if isinstance(params, dict) else {}
+        explicit = str(
+            params.get("_build_mode")
+            or params.get("build_mode")
+            or params.get("startup_build_mode")
+            or ""
+        ).strip().lower()
+        if explicit in {cls.BUILD_MODE_BOOT, cls.BUILD_MODE_PRELOAD, cls.BUILD_MODE_DEBUG}:
+            return explicit
+        if bool(params.get("with_preload", False)):
+            return cls.BUILD_MODE_PRELOAD
+        return cls.BUILD_MODE_BOOT
+
+    @classmethod
+    def _build_minimal_nav_meta(cls, row: dict) -> dict:
+        raw = row.get("nav_meta") if isinstance(row.get("nav_meta"), dict) else {}
+        minimal: dict = {}
+        for key in cls.MINIMAL_NAV_META_KEYS:
+            if key in raw:
+                minimal[key] = raw.get(key)
+        return minimal
+
+    @classmethod
+    def _build_minimal_init_meta(cls, row: dict, *, params: dict | None = None) -> dict:
         params = params if isinstance(params, dict) else {}
         preload_requested = bool(params.get("with_preload", False))
-
         nav = row.get("nav") if isinstance(row.get("nav"), list) else []
         default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
-        intents = row.get("intents") if isinstance(row.get("intents"), list) else []
-        feature_flags = row.get("feature_flags") if isinstance(row.get("feature_flags"), dict) else {}
         role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
 
         scene_subset: list[str] = []
@@ -86,36 +116,50 @@ class SystemInitPayloadBuilder:
         if deep_scene_key and deep_scene_key not in scene_subset:
             scene_subset.append(deep_scene_key)
 
-        version = {
-            "contract_version": str(row.get("contract_version") or "1.0.0"),
-            "schema_version": str(row.get("schema_version") or "1.0.0"),
-            "scene_version": str(row.get("scene_version") or "v1"),
-        }
-
-        init_meta = {
+        return {
             "contract_mode": str(row.get("contract_mode") or "default"),
-            "scene_channel": str(row.get("scene_channel") or "stable"),
-            "scene_channel_selector": str(row.get("scene_channel_selector") or ""),
-            "scene_channel_source_ref": str(row.get("scene_channel_source_ref") or ""),
-            "nav_meta": row.get("nav_meta") if isinstance(row.get("nav_meta"), dict) else {},
+            "preload_requested": preload_requested,
             "scene_subset": scene_subset,
             "scene_subset_count": len(scene_subset),
             "page_contract_meta": {
-                "preload": False,
                 "intent": "scene.page_contract",
             },
             "workspace_home_preload_hint": {
                 "intent": "ui.contract",
                 "scene_key": landing_scene_key or "workspace.home",
             },
-            "preload_requested": preload_requested,
-            "payload_keys_before": sorted(list(row.keys())),
         }
+
+    @classmethod
+    def build_startup_surface(
+        cls,
+        data: dict,
+        *,
+        params: dict | None = None,
+        build_mode: str | None = None,
+        inspect_payload: dict | None = None,
+    ) -> dict:
+        row = data if isinstance(data, dict) else {}
+        params = params if isinstance(params, dict) else {}
+        resolved_build_mode = build_mode or cls.resolve_build_mode(params)
+
+        nav = row.get("nav") if isinstance(row.get("nav"), list) else []
+        default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
+        intents = row.get("intents") if isinstance(row.get("intents"), list) else []
+        feature_flags = row.get("feature_flags") if isinstance(row.get("feature_flags"), dict) else {}
+        role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
+
+        version = {
+            "contract_version": str(row.get("contract_version") or "1.0.0"),
+            "schema_version": str(row.get("schema_version") or "1.0.0"),
+            "scene_version": str(row.get("scene_version") or "v1"),
+        }
+        init_meta = cls._build_minimal_init_meta(row, params=params)
 
         minimal = {
             "user": row.get("user") if isinstance(row.get("user"), dict) else {},
             "nav": nav,
-            "nav_meta": row.get("nav_meta") if isinstance(row.get("nav_meta"), dict) else {},
+            "nav_meta": cls._build_minimal_nav_meta(row),
             "default_route": default_route,
             "intents": intents,
             "feature_flags": feature_flags,
@@ -123,12 +167,18 @@ class SystemInitPayloadBuilder:
             "version": version,
             "init_meta": init_meta,
         }
-        if preload_requested:
+        if bool(params.get("with_preload", False)):
             if isinstance(row.get("workspace_home"), dict):
                 minimal["workspace_home"] = row.get("workspace_home")
             if isinstance(row.get("scene_ready_contract_v1"), dict):
                 minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
+        if resolved_build_mode == cls.BUILD_MODE_DEBUG:
+            minimal["startup_inspect"] = inspect_payload if isinstance(inspect_payload, dict) else {}
         return minimal
+
+    @classmethod
+    def slim_to_minimal_surface(cls, data: dict, *, params: dict | None = None) -> dict:
+        return cls.build_startup_surface(data, params=params)
     @staticmethod
     def build_base(
         *,

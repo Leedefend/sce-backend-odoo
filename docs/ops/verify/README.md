@@ -685,6 +685,8 @@
   - `make verify.system_init.no_page_contract_payload`
   - `make verify.system_init.payload_budget`
   - `make verify.system_init.startup_layer_contract`
+  - `make verify.system_init.init_meta_minimal_guard`
+  - `make verify.system_init.latency_budget`
   - aggregate: `make verify.system_init.minimal_surface`
   - contract doc: `docs/architecture/system_init_startup_contract_layers_v1.md`
 - Aggregate:
@@ -756,6 +758,15 @@
   - `artifacts/baselines/product/*`
 - Failure hint:
   - 退出码 `21/22/23` 分别表示 `platform/portal/product` 层失败
+
+## Phase 12-F Aggregate
+- One-command startup-optimization chain:
+  - `make verify.phase12f`
+- Purpose:
+  - confirm `system.init` now builds `boot/preload` from source path instead of full-payload-then-reduce
+  - enforce `init_meta` minimal contract
+  - enforce startup latency / payload budget evidence
+  - keep platform/portal/runtime/product baseline green
 
 ## Recommended Execution Order
 1. `make verify.smart_core.minimum_surface ...`
