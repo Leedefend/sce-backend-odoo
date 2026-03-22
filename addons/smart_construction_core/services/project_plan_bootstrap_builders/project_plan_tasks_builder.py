@@ -12,6 +12,18 @@ class ProjectPlanTasksBuilder(BaseProjectBlockBuilder):
     title = "计划任务"
     required_groups = ()
 
+    @staticmethod
+    def _task_state(task) -> str:
+        sc_state = str(getattr(task, "sc_state", "") or "").strip().lower()
+        if sc_state in {"draft", "ready", "in_progress", "done", "cancelled"}:
+            return sc_state
+        kanban_state = str(getattr(task, "kanban_state", "") or "").strip().lower()
+        if kanban_state == "done":
+            return "done"
+        if kanban_state == "blocked":
+            return "blocked"
+        return "open"
+
     def build(self, project=None, context=None):
         visibility = self._visibility()
         empty_data = {
@@ -20,6 +32,9 @@ class ProjectPlanTasksBuilder(BaseProjectBlockBuilder):
                 "count": 0,
                 "open_count": 0,
                 "overdue_count": 0,
+                "source_model": "project.task",
+                "state_field": "sc_state",
+                "empty_hint": "当前项目还没有计划任务，请先在 Odoo 项目任务中补齐任务。",
             },
         }
         if not visibility.get("allowed"):
@@ -41,11 +56,14 @@ class ProjectPlanTasksBuilder(BaseProjectBlockBuilder):
         items = []
         overdue_count = 0
         open_count = 0
+        ready_count = 0
         for task in rows:
             deadline = str(getattr(task, "date_deadline", "") or "")
-            kanban_state = str(getattr(task, "kanban_state", "") or "")
-            if kanban_state != "done":
+            task_state = self._task_state(task)
+            if task_state != "done":
                 open_count += 1
+            if task_state in {"ready", "in_progress"}:
+                ready_count += 1
             if deadline and getattr(task, "date_deadline", False) and getattr(task, "date_deadline") < fields.Date.today():
                 overdue_count += 1
             stage = getattr(getattr(task, "stage_id", None), "display_name", "") or ""
@@ -56,7 +74,7 @@ class ProjectPlanTasksBuilder(BaseProjectBlockBuilder):
                     "stage_name": str(stage),
                     "deadline": deadline,
                     "priority": str(getattr(task, "priority", "") or ""),
-                    "state": "done" if kanban_state == "done" else "open",
+                    "state": task_state,
                 }
             )
 
@@ -69,7 +87,11 @@ class ProjectPlanTasksBuilder(BaseProjectBlockBuilder):
                 "summary": {
                     "count": len(items),
                     "open_count": open_count,
+                    "ready_count": ready_count,
                     "overdue_count": overdue_count,
+                    "source_model": "project.task",
+                    "state_field": "sc_state",
+                    "empty_hint": "当前项目还没有计划任务，请先在 Odoo 项目任务中补齐任务。",
                 },
             },
         )

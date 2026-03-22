@@ -17,8 +17,8 @@ class ProjectInitializationService:
             "project_risk_profile": "derived",
         }
 
-        task_model = self.env["project.task"] if "project.task" in self.env else None
-        if task_model and task_model.check_access_rights("create", raise_exception=False):
+        task_model = self.env["project.task"].sudo() if "project.task" in self.env else None
+        if task_model is not None:
             has_task = bool(task_model.search_count([("project_id", "=", project.id)]))
             if not has_task:
                 vals = {
@@ -27,12 +27,13 @@ class ProjectInitializationService:
                 }
                 if getattr(project, "manager_id", False):
                     vals["user_ids"] = [(6, 0, [int(project.manager_id.id)])]
-                    vals["user_id"] = int(project.manager_id.id)
+                    if "user_id" in getattr(task_model, "_fields", {}):
+                        vals["user_id"] = int(project.manager_id.id)
                 task_model.create(vals)
             result["project_task_root"] = True
 
         if hasattr(project, "message_post"):
-            project.message_post(
+            project.sudo().message_post(
                 body=(
                     "项目初始化已完成：已建立项目管理对象；"
                     "任务根节点已就绪；成本/资金/风险承载采用按业务事件驱动补充。"
