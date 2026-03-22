@@ -751,6 +751,8 @@
   - `make verify.product.project_execution_advance_smoke`
 - Execution state smoke:
   - `make verify.product.project_execution_state_smoke`
+- Execution consistency guard:
+  - `make verify.product.project_execution_consistency_guard`
 - Phase 12-C legacy flow/shape/context guards:
   - `make verify.product.project_flow.initiation_dashboard`
   - `make verify.product.suggested_action_shape_guard`
@@ -778,6 +780,8 @@
   - `project.execution.advance` keeps contract-safe action result with `result/from_state/to_state/reason_code/suggested_action`
   - execution state machine frozen to `ready/in_progress/blocked/done`
   - allowed state transitions frozen to `ready->in_progress`, `in_progress->done`, `blocked->ready`
+  - execution runtime summary keeps `task_open_count/task_in_progress_count/task_done_count/followup_activity_count/consistency_state/execution_scope`
+  - execution scope frozen to `single_open_task_only`
   - suggested_action shape frozen (`intent/params/reason_code`)
   - `project_id` context chain continuous
   - dashboard contract non-empty (not shell-only)
@@ -823,6 +827,7 @@
 11. `make verify.product.project_execution_advance_smoke ...`
 12. `make verify.product.project_execution_state_transition_guard ...`
 13. `make verify.product.project_execution_state_smoke ...`
+14. `make verify.product.project_execution_consistency_guard ...`
 14. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight

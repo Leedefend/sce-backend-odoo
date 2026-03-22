@@ -4,6 +4,7 @@
 - Intent: `project.execution.advance`
 - Runtime block: `project.execution.block.fetch(block_key=next_actions)`
 - Persistence field: `project.project.sc_execution_state`
+- Advance boundary: `docs/ops/product_project_execution_advance_scope_v1.md`
 
 ## Frozen State Set
 - `ready`
