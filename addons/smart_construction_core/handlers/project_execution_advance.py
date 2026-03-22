@@ -5,6 +5,9 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_construction_core.services.project_execution_state_machine import (
+    ProjectExecutionStateMachine,
+)
 
 
 class ProjectExecutionAdvanceHandler(BaseIntentHandler):
@@ -35,6 +38,19 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 return project_id
         return 0
 
+    @staticmethod
+    def _resolve_target_state(params: Dict[str, Any]) -> str:
+        return ProjectExecutionStateMachine.normalize_state((params or {}).get("target_state"))
+
+    @staticmethod
+    def _build_suggested_action(project_id: int, reason_code: str) -> dict:
+        return {
+            "key": "refresh_execution_next_actions",
+            "intent": "project.execution.block.fetch",
+            "params": {"project_id": int(project_id), "block_key": "next_actions"},
+            "reason_code": reason_code,
+        }
+
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = payload or self.params or {}
@@ -42,6 +58,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             params = params.get("params") or {}
         ctx = ctx or {}
         project_id = self._resolve_project_id(params, ctx)
+        requested_target_state = self._resolve_target_state(params)
         trace_id = str((self.context or {}).get("trace_id") or "")
         if project_id <= 0:
             return {
@@ -60,7 +77,6 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             }
 
         project_model = self.env["project.project"]
-        task_model = self.env["project.task"]
         try:
             project = project_model.browse(project_id).exists()
         except Exception:
@@ -71,13 +87,10 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 "data": {
                     "result": "blocked",
                     "project_id": project_id,
+                    "from_state": "ready",
+                    "to_state": "ready",
                     "reason_code": "PROJECT_NOT_FOUND",
-                    "suggested_action": {
-                        "key": "return_execution_entry",
-                        "intent": "project.execution.enter",
-                        "params": {"project_id": project_id},
-                        "reason_code": "PROJECT_NOT_FOUND",
-                    },
+                    "suggested_action": self._build_suggested_action(project_id, "PROJECT_NOT_FOUND"),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -86,31 +99,40 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
             }
 
-        task_domain = [("project_id", "=", int(project.id))]
+        from_state = ProjectExecutionStateMachine.normalize_state(getattr(project, "sc_execution_state", "ready"))
+        to_state = requested_target_state or ProjectExecutionStateMachine.default_target(from_state)
+        if not ProjectExecutionStateMachine.can_transition(from_state, to_state):
+            reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
+            return {
+                "ok": True,
+                "data": {
+                    "result": "blocked",
+                    "project_id": int(project.id),
+                    "from_state": from_state,
+                    "to_state": from_state,
+                    "reason_code": reason_code,
+                    "suggested_action": self._build_suggested_action(int(project.id), reason_code),
+                },
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "elapsed_ms": int((time.time() - ts0) * 1000),
+                    "trace_id": trace_id,
+                },
+            }
+
         try:
-            task_total = int(task_model.search_count(task_domain))
+            project.sudo().write({"sc_execution_state": to_state})
         except Exception:
-            task_total = 0
-        blocked_count = 0
-        if "kanban_state" in getattr(task_model, "_fields", {}):
-            try:
-                blocked_count = int(task_model.search_count(task_domain + [("kanban_state", "=", "blocked")]))
-            except Exception:
-                blocked_count = 0
-
-        if task_total <= 0:
+            reason_code = "EXECUTION_TRANSITION_WRITE_FAILED"
             return {
                 "ok": True,
                 "data": {
                     "result": "blocked",
                     "project_id": int(project.id),
-                    "reason_code": "EXECUTION_TASKS_MISSING",
-                    "suggested_action": {
-                        "key": "return_execution_entry",
-                        "intent": "project.execution.enter",
-                        "params": {"project_id": int(project.id)},
-                        "reason_code": "EXECUTION_TASKS_MISSING",
-                    },
+                    "from_state": from_state,
+                    "to_state": from_state,
+                    "reason_code": reason_code,
+                    "suggested_action": self._build_suggested_action(int(project.id), reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -119,39 +141,16 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
             }
 
-        if blocked_count > 0:
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "reason_code": "EXECUTION_TASKS_BLOCKED",
-                    "suggested_action": {
-                        "key": "refresh_execution_tasks",
-                        "intent": "project.execution.block.fetch",
-                        "params": {"project_id": int(project.id), "block_key": "execution_tasks"},
-                        "reason_code": "EXECUTION_TASKS_BLOCKED",
-                    },
-                },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
-
+        reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
         return {
             "ok": True,
             "data": {
                 "result": "success",
                 "project_id": int(project.id),
-                "reason_code": "EXECUTION_ADVANCED",
-                "suggested_action": {
-                    "key": "refresh_execution_tasks",
-                    "intent": "project.execution.block.fetch",
-                    "params": {"project_id": int(project.id), "block_key": "execution_tasks"},
-                    "reason_code": "EXECUTION_ADVANCED",
-                },
+                "from_state": from_state,
+                "to_state": to_state,
+                "reason_code": reason_code,
+                "suggested_action": self._build_suggested_action(int(project.id), reason_code),
             },
             "meta": {
                 "intent": self.INTENT_TYPE,
