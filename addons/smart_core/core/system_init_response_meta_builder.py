@@ -18,6 +18,7 @@ class SystemInitResponseMetaBuilder:
         api_version: str,
         contract_mode: str,
         nav_fp: str,
+        startup_profile: dict | None = None,
     ) -> tuple[dict, dict]:
         scene_trace_meta = contract_assembler.build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
         meta = contract_assembler.build_meta(
@@ -38,4 +39,7 @@ class SystemInitResponseMetaBuilder:
             contract_version=contract_version,
             api_version=api_version,
         )
-        return scene_trace_meta, {**meta, "etag": top_etag}
+        out = {**meta, "etag": top_etag}
+        if isinstance(startup_profile, dict):
+            out["startup_profile"] = startup_profile
+        return scene_trace_meta, out

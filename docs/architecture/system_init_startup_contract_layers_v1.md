@@ -42,11 +42,12 @@ Allowed top-level keys:
 - `init_meta`
 
 Required metadata refs under `init_meta`:
-- `page_contract_meta`
-- `workspace_home_preload_hint`
+- `contract_mode`
+- `preload_requested=false`
 - `scene_subset`
 - `scene_subset_count`
-- `preload_requested=false`
+- `workspace_home_preload_hint`
+- `page_contract_meta.intent`
 
 Boot must not include:
 - `workspace_home`
@@ -57,6 +58,7 @@ Boot must not include:
 - `scene_catalog`
 - `scene_details`
 - full scene/runtime aggregates such as `scenes`, `capabilities`, `capability_groups`, `ext_facts`
+- heavy startup diagnostics such as nav-policy validation counts, delivery scene counts, asset bind counts
 
 Responsibility boundary:
 - boot can say where to fetch next
@@ -117,6 +119,9 @@ Runtime endpoint semantics:
 - `workspace.collections`
   - returns business collections only (`task_items/payment_requests/risk_actions/project_actions`)
   - must not return preload/page payloads such as `workspace_home` or `page_contracts`
+- `system.init.inspect`
+  - reserved for startup inspect/debug payloads
+  - owns heavy nav/runtime diagnostic facts removed from default `system.init`
 
 Runtime must not flow back into boot/preload by default.
 
@@ -142,3 +147,4 @@ The guard must fail when:
 - boot returns preload/runtime payloads
 - preload returns runtime-only payloads
 - undocumented keys re-enter either boot or preload surface
+- `init_meta` re-expands beyond the minimal startup contract

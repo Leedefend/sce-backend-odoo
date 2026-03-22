@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any
 
 from intent_smoke_utils import require_ok
@@ -64,6 +65,7 @@ def fetch_system_init_payload(
     }
     if isinstance(extra_params, dict):
         params.update(extra_params)
+    ts0 = time.perf_counter()
     status, init_resp = _post(
         intent_url,
         token,
@@ -71,10 +73,12 @@ def fetch_system_init_payload(
         params,
         db_name=db_name,
     )
+    wall_elapsed_ms = int((time.perf_counter() - ts0) * 1000)
     require_ok(status, init_resp, "system.init")
 
     raw_bytes = len(json.dumps(init_resp, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     data = init_resp.get("data") if isinstance(init_resp.get("data"), dict) else {}
+    meta = init_resp.get("meta") if isinstance(init_resp.get("meta"), dict) else {}
     return {
         "intent_url": intent_url,
         "db_name": db_name,
@@ -83,5 +87,7 @@ def fetch_system_init_payload(
         "contract_mode": resolved_contract_mode,
         "response": init_resp,
         "data": data,
+        "meta": meta,
         "payload_bytes": raw_bytes,
+        "wall_elapsed_ms": wall_elapsed_ms,
     }

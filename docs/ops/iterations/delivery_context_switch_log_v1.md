@@ -942,3 +942,12 @@ Each entry must include:
 - completed_step: `新增 page.contract/scene.page_contract 与 workspace.collections 正式 handler；scene.catalog/scene.detail 纳入统一 runtime fetch smoke；system.init 不再内部构造 page_contracts 输出面；前端 usePageContract 改为运行时按需拉取 page.contract；新增 verify.runtime.fetch_entrypoints 并接入 Phase 12-B baseline/README；sc_platform_core baseline + frontend strict typecheck 全部 PASS`
 - active_commit: `pending`
 - next_step: `分类提交 Batch E3 后，进入 Phase 12-E Batch E4：按新分层恢复 project.dashboard.enter 与 initiation -> dashboard suggested_action 主线`
+
+### 2026-03-22T17:05:00Z
+- blocker_key: `phase12f_system_init_build_path_optimization`
+- layer_target: `Platform Startup Build Layer + Verify/Gate Layer + Diagnostics Layer`
+- module: `addons/smart_core/handlers/system_init.py + addons/smart_core/handlers/system_init_inspect.py + addons/smart_core/core/system_init_payload_builder.py + addons/smart_core/core/system_init_response_meta_builder.py + scripts/verify/system_init_* + Makefile + docs/architecture + docs/ops/verify`
+- reason: `Phase 12-F：把 system.init 从“先富包再裁剪”优化为 boot/preload 原生最小构建，冻结 init_meta.minimal，并把重型诊断迁到 inspect/debug 路径`
+- completed_step: `system.init 增加 boot/preload/debug 构建模式；默认 boot 不再构建 preload refs/scene_ready/governance 富包；默认 nav_meta 收敛为最小启动字段；init_meta 仅保留 contract_mode/preload_requested/scene_subset/workspace_home_preload_hint/page_contract_meta.intent；新增 system.init.inspect；新增 verify.system_init.init_meta_minimal_guard、verify.system_init.latency_budget 与 verify.phase12f；sc_platform_core + sc_demo 全链 PASS。当前产物显示 boot payload≈3.3KB / 214ms，preload payload≈126KB / 2.8s`
+- active_commit: `pending`
+- next_step: `分类提交 Phase 12-F 优化批次，并继续下一轮产品 dashboard 主线恢复`
