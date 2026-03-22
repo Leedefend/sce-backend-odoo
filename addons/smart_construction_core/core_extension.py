@@ -476,6 +476,12 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_dashboard_open import (
             ProjectDashboardOpenHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_dashboard_enter import (
+            ProjectDashboardEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_dashboard_block_fetch import (
+            ProjectDashboardBlockFetchHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -507,6 +513,8 @@ def smart_core_register(registry):
     registry["payment.request.execute"] = PaymentRequestExecuteHandler
     registry["project.dashboard"] = ProjectDashboardHandler
     registry["project.dashboard.open"] = ProjectDashboardOpenHandler
+    registry["project.dashboard.enter"] = ProjectDashboardEnterHandler
+    registry["project.dashboard.block.fetch"] = ProjectDashboardBlockFetchHandler
     registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
@@ -530,6 +538,8 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.execute")
     _logger.info("[smart_core_register] registered project.dashboard")
     _logger.info("[smart_core_register] registered project.dashboard.open")
+    _logger.info("[smart_core_register] registered project.dashboard.enter")
+    _logger.info("[smart_core_register] registered project.dashboard.block.fetch")
     _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")

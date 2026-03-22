@@ -951,3 +951,12 @@ Each entry must include:
 - completed_step: `system.init 增加 boot/preload/debug 构建模式；默认 boot 不再构建 preload refs/scene_ready/governance 富包；默认 nav_meta 收敛为最小启动字段；init_meta 仅保留 contract_mode/preload_requested/scene_subset/workspace_home_preload_hint/page_contract_meta.intent；新增 system.init.inspect；新增 verify.system_init.init_meta_minimal_guard、verify.system_init.latency_budget 与 verify.phase12f；sc_platform_core + sc_demo 全链 PASS。当前产物显示 boot payload≈3.3KB / 214ms，preload payload≈126KB / 2.8s`
 - active_commit: `pending`
 - next_step: `分类提交 Phase 12-F 优化批次，并继续下一轮产品 dashboard 主线恢复`
+
+### 2026-03-22T18:20:00Z
+- blocker_key: `phase12e_batch_e4_project_dashboard_mainline_restore`
+- layer_target: `Domain/Product Handler Layer + Frontend Layer + Verify/Gate Layer`
+- module: `addons/smart_construction_core + frontend/apps/web + scripts/verify + docs/ops`
+- reason: `Phase 12-E / Batch E4：按 entry + runtime block 分层恢复 project.dashboard 主线，并打通 initiation -> dashboard.enter 第一条产品流`
+- completed_step: `新增 project.dashboard.enter 与 project.dashboard.block.fetch；project.initiation.enter 成功态 suggested_action 改指向 dashboard.enter；dashboard entry 收口为 project_id/title/summary/blocks/suggested_action/runtime_fetch_hints；progress/risks 两个 runtime block 独立拉取；前端 ProjectManagementDashboardView 改为先拉 entry 再并行拉 block，区块失败不打断整页；新增 verify.product.project_dashboard_flow 并接入 verify.phase12b.baseline；补充 dashboard runtime contract 文档`
+- active_commit: `pending`
+- next_step: `重启后端并执行 product/frontend/baseline 验证，收口 Batch E4 后分类提交`

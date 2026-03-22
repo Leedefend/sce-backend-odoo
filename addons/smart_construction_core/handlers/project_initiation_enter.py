@@ -116,7 +116,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
             },
             "suggested_action": "open_project_dashboard",
             "suggested_action_payload": {
-                "intent": "project.dashboard.open",
+                "intent": "project.dashboard.enter",
                 "reason_code": "PROJECT_INITIATION_CREATED",
                 "params": {
                     "project_id": int(project.id),

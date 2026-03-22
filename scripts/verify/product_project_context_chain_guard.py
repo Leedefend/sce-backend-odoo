@@ -78,23 +78,16 @@ def main() -> int:
             raise RuntimeError("project_id mismatch between record.id and suggested_action_payload.params.project_id")
 
         status, dash_resp = _post(intent_url, token, intent, params, db_name=db_name)
-        _assert_ok(status, dash_resp, "project.dashboard.open")
+        _assert_ok(status, dash_resp, "project.dashboard.enter")
         dash_data = dash_resp.get("data") if isinstance(dash_resp.get("data"), dict) else {}
-        context_project_id = int(((dash_data.get("project_context") or {}) if isinstance(dash_data.get("project_context"), dict) else {}).get("project_id") or 0)
+        context_project_id = int(dash_data.get("project_id") or 0)
         if context_project_id != project_id:
             raise RuntimeError("project_id mismatch between initiation and dashboard project_context")
-
-        contract_ref = dash_data.get("contract_ref") if isinstance(dash_data.get("contract_ref"), dict) else {}
-        contract_params = contract_ref.get("params") if isinstance(contract_ref.get("params"), dict) else {}
-        contract_project_id = int(contract_params.get("project_id") or 0)
-        if contract_project_id != project_id:
-            raise RuntimeError("project_id mismatch between initiation and dashboard contract_ref.params.project_id")
 
         report["chain"] = {
             "record_project_id": project_id,
             "suggested_project_id": suggested_project_id,
             "dashboard_project_context_id": context_project_id,
-            "contract_ref_project_id": contract_project_id,
         }
     except Exception as exc:
         report["status"] = "FAIL"
@@ -111,4 +104,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -85,6 +85,16 @@ def _load_scene_engine_module():
 class ProjectDashboardService:
     """Assemble project.dashboard contract using block builders."""
 
+    ENTRY_BLOCKS = (
+        ("progress", "项目进度", "deferred"),
+        ("risks", "风险提醒", "deferred"),
+    )
+    RUNTIME_BLOCK_MAP = {
+        "progress": "block.project.progress",
+        "risks": "block.project.risk",
+        "risk": "block.project.risk",
+    }
+
     ZONE_BLOCKS = (
         ("header", "项目头部信息", "hero", "stack", "block.project.header"),
         ("metrics", "关键指标", "primary", "grid", "block.project.metrics"),
@@ -159,6 +169,95 @@ class ProjectDashboardService:
             "project": project_payload,
             "diagnostics": diagnostics,
             "zones": zones,
+        }
+
+    def build_entry(self, project_id=None, context=None):
+        project, project_resolution = self._resolve_project_with_diagnostics(project_id)
+        project_payload = self._project_payload(project)
+        resolved_project_id = int(project_payload.get("id") or 0)
+        if resolved_project_id <= 0:
+            return {
+                "project_id": 0,
+                "title": "项目驾驶舱",
+                "summary": {
+                    "project_code": "",
+                    "manager_name": "",
+                    "partner_name": "",
+                    "stage_name": "",
+                    "health_state": "",
+                    "resolution_reason": str(project_resolution.get("reason") or ""),
+                },
+                "blocks": [
+                    {"key": key, "title": title, "state": state}
+                    for key, title, state in self.ENTRY_BLOCKS
+                ],
+                "suggested_action": {},
+                "runtime_fetch_hints": {"blocks": {}},
+            }
+
+        blocks = [{"key": key, "title": title, "state": state} for key, title, state in self.ENTRY_BLOCKS]
+        runtime_fetch_hints = {
+            "blocks": {
+                key: {
+                    "intent": "project.dashboard.block.fetch",
+                    "params": {
+                        "project_id": resolved_project_id,
+                        "block_key": key,
+                    },
+                }
+                for key, _, _ in self.ENTRY_BLOCKS
+            }
+        }
+        first_action = runtime_fetch_hints["blocks"].get("progress") or {}
+        return {
+            "project_id": resolved_project_id,
+            "title": str(project_payload.get("name") or "项目驾驶舱"),
+            "summary": {
+                "project_code": str(project_payload.get("project_code") or ""),
+                "manager_name": str(project_payload.get("manager_name") or ""),
+                "partner_name": str(project_payload.get("partner_name") or ""),
+                "stage_name": str(project_payload.get("stage_name") or ""),
+                "health_state": str(project_payload.get("health_state") or ""),
+            },
+            "blocks": blocks,
+            "suggested_action": {
+                "key": "load_dashboard_progress",
+                "intent": str(first_action.get("intent") or ""),
+                "params": dict(first_action.get("params") or {}),
+                "reason_code": "PROJECT_DASHBOARD_READY",
+            },
+            "runtime_fetch_hints": runtime_fetch_hints,
+        }
+
+    def build_runtime_block(self, block_key, project_id=None, context=None):
+        normalized_key = str(block_key or "").strip().lower()
+        builder_key = self.RUNTIME_BLOCK_MAP.get(normalized_key)
+        project, project_resolution = self._resolve_project_with_diagnostics(project_id)
+        resolved_project_id = int(getattr(project, "id", 0) or 0)
+        if not builder_key:
+            return {
+                "project_id": resolved_project_id,
+                "block_key": normalized_key or "",
+                "block": self._error_block(normalized_key or "unknown", "UNSUPPORTED_BLOCK_KEY"),
+                "degraded": True,
+                "project_resolution": project_resolution,
+            }
+
+        builder = self._builder_map.get(builder_key)
+        if builder is None:
+            block = self._error_block(builder_key, "BLOCK_BUILDER_NOT_FOUND")
+        else:
+            try:
+                block = builder.build(project=project, context=dict(context or {}))
+            except Exception:
+                block = self._error_block(builder_key, "BLOCK_BUILD_FAILED")
+        state = str((block or {}).get("state") or "").strip().lower()
+        return {
+            "project_id": resolved_project_id,
+            "block_key": "risks" if normalized_key == "risk" else normalized_key,
+            "block": block if isinstance(block, dict) else self._error_block(builder_key, "INVALID_BLOCK_PAYLOAD"),
+            "degraded": state != "ready",
+            "project_resolution": project_resolution,
         }
 
     def _build_zones(self, project, context):
@@ -335,6 +434,25 @@ class ProjectDashboardService:
         return None, diagnostics
 
     def _project_payload(self, project):
+        def _safe_text(value):
+            try:
+                return str(value or "")
+            except Exception:
+                return ""
+
+        def _safe_rel_name(record, field_name):
+            try:
+                relation = getattr(record, field_name, None)
+            except Exception:
+                return ""
+            return _safe_text(getattr(relation, "display_name", ""))
+
+        def _safe_field(record, field_name):
+            try:
+                return getattr(record, field_name, "")
+            except Exception:
+                return ""
+
         if not project:
             return {
                 "id": 0,
@@ -348,11 +466,12 @@ class ProjectDashboardService:
             }
         return {
             "id": int(project.id),
-            "name": str(getattr(project, "name", "") or ""),
-            "project_code": str(getattr(project, "project_code", "") or ""),
-            "partner_name": str(getattr(getattr(project, "partner_id", None), "display_name", "") or ""),
-            "manager_name": str(getattr(getattr(project, "user_id", None), "display_name", "") or ""),
-            "stage_name": str(getattr(getattr(project, "stage_id", None), "display_name", "") or ""),
+            "name": _safe_text(_safe_field(project, "name")),
+            "project_code": _safe_text(_safe_field(project, "project_code")),
+            "partner_name": _safe_rel_name(project, "partner_id"),
+            "manager_name": _safe_rel_name(project, "user_id"),
+            "stage_name": _safe_rel_name(project, "stage_id"),
+            "health_state": _safe_text(_safe_field(project, "health_state")),
             "state": "ready",
             "date": str(fields.Date.today()),
         }
