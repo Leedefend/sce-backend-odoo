@@ -55,6 +55,27 @@ def _fetch_action(intent_url: str, token: str, db_name: str, project_id: int):
     return advance_action
 
 
+def _fetch_execution_tasks(intent_url: str, token: str, db_name: str, project_id: int):
+    status, block_resp = _post(
+        intent_url,
+        token,
+        "project.execution.block.fetch",
+        {"project_id": project_id, "block_key": "execution_tasks"},
+        db_name=db_name,
+    )
+    _assert_ok(status, block_resp, "project.execution.block.fetch(execution_tasks)")
+    data = block_resp.get("data") if isinstance(block_resp.get("data"), dict) else {}
+    block = data.get("block") if isinstance(data.get("block"), dict) else {}
+    payload = block.get("data") if isinstance(block.get("data"), dict) else {}
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    items = payload.get("items") if isinstance(payload.get("items"), list) else []
+    return {
+        "state": str(block.get("state") or ""),
+        "summary": summary,
+        "items": items,
+    }
+
+
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
@@ -106,6 +127,7 @@ def main() -> int:
             raise RuntimeError("plan next_actions missing project.execution.enter")
 
         advance_action = _fetch_action(intent_url, token, db_name, project_id)
+        before_tasks = _fetch_execution_tasks(intent_url, token, db_name, project_id)
         advance_params = advance_action.get("params") if isinstance(advance_action.get("params"), dict) else {}
         if int(advance_params.get("project_id") or 0) != project_id:
             raise RuntimeError("execution advance project_id mismatch")
@@ -127,6 +149,21 @@ def main() -> int:
         suggested = advance_data.get("suggested_action") if isinstance(advance_data.get("suggested_action"), dict) else {}
         if not str(suggested.get("intent") or "").strip():
             raise RuntimeError("advance suggested_action.intent missing")
+        after_tasks = _fetch_execution_tasks(intent_url, token, db_name, project_id)
+        if str((before_tasks.get("summary") or {}).get("source_model") or "").strip() != "project.task":
+            raise RuntimeError("execution_tasks before advance is not sourced from project.task")
+        if str((after_tasks.get("summary") or {}).get("source_model") or "").strip() != "project.task":
+            raise RuntimeError("execution_tasks after advance is not sourced from project.task")
+        before_items = before_tasks.get("items") if isinstance(before_tasks.get("items"), list) else []
+        after_items = after_tasks.get("items") if isinstance(after_tasks.get("items"), list) else []
+        if not before_items or not after_items:
+            raise RuntimeError("execution task list missing before/after advance")
+        before_first = before_items[0] if isinstance(before_items[0], dict) else {}
+        after_first = after_items[0] if isinstance(after_items[0], dict) else {}
+        if int(after_first.get("task_id") or 0) != int(before_first.get("task_id") or 0):
+            raise RuntimeError("execution task identity drift after advance")
+        if result == "success" and str(after_first.get("state") or "").strip() == str(before_first.get("state") or "").strip():
+            raise RuntimeError("execution advance did not change first task state")
 
         report["advance"] = {
             "project_id": project_id,
@@ -137,6 +174,9 @@ def main() -> int:
             "to_state": str(advance_data.get("to_state") or ""),
             "result_reason_code": str(advance_data.get("reason_code") or ""),
             "suggested_action_intent": str(suggested.get("intent") or ""),
+            "task_source_model": str((after_tasks.get("summary") or {}).get("source_model") or ""),
+            "task_state_before": str(before_first.get("state") or ""),
+            "task_state_after": str(after_first.get("state") or ""),
         }
     except Exception as exc:
         report["status"] = "FAIL"
