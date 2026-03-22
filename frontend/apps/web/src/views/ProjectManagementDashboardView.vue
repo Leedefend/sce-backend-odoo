@@ -48,7 +48,7 @@
             当前账号无权限查看该区块。
           </div>
           <div v-else-if="blockData(descriptor.key)?.state === 'empty'" class="block-status">
-            当前区块暂无数据。
+            {{ blockEmptyText(descriptor.key) }}
           </div>
           <template v-else>
             <section v-if="descriptor.key === 'progress'" class="metric-list">
@@ -309,10 +309,52 @@ function taskRows(blockKey: string) {
       key: asText(row.task_id || row.key || `${blockKey}_${index + 1}`),
       title: asText(row.name || '未命名任务'),
       subtitle: [asText(row.stage_name || ''), asText(row.deadline || '')].filter(Boolean).join(' · ') || '暂无补充信息',
-      stateLabel: state === 'done' ? '已完成' : state === 'blocked' ? '阻塞' : '进行中',
-      stateTone: state === 'done' ? 'success' : state === 'blocked' ? 'warning' : 'info',
+      stateLabel:
+        state === 'draft' ? '草稿'
+          : state === 'ready' ? '就绪'
+            : state === 'in_progress' ? '进行中'
+              : state === 'done' ? '已完成'
+                : state === 'cancelled' ? '已取消'
+                  : state === 'blocked' ? '阻塞' : '待处理',
+      stateTone:
+        state === 'done' ? 'success'
+          : state === 'blocked' || state === 'cancelled' ? 'warning'
+            : state === 'ready' ? 'success' : 'info',
     };
   });
+}
+
+function blockEmptyText(blockKey: string) {
+  const payload = blockData(blockKey);
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const hint = asText(summary.empty_hint || '');
+  if (hint) return hint;
+  if (blockKey === 'plan_tasks') return '当前项目还没有计划任务。';
+  if (blockKey === 'execution_tasks') return '当前项目还没有执行任务。';
+  return '当前区块暂无数据。';
+}
+
+function humanReason(reasonCode: string) {
+  const code = asText(reasonCode);
+  if (code === 'EXECUTION_TASK_MISSING') return '当前项目还没有可推进的任务。';
+  if (code === 'EXECUTION_TASK_START_FAILED') return '任务未能成功进入执行中。';
+  if (code === 'EXECUTION_TASK_NOT_IN_PROGRESS') return '当前没有处于执行中的任务，无法完成推进。';
+  if (code === 'EXECUTION_TASK_COMPLETE_FAILED') return '任务未能成功完成。';
+  if (code === 'EXECUTION_TASK_RECOVER_FAILED') return '任务未能恢复到可执行状态。';
+  if (code === 'EXECUTION_TRANSITION_READY_TO_IN_PROGRESS') return '已从执行就绪推进到执行中。';
+  if (code === 'EXECUTION_TRANSITION_IN_PROGRESS_TO_DONE') return '已从执行中推进到执行完成。';
+  if (code === 'EXECUTION_TRANSITION_BLOCKED_TO_READY') return '已从执行阻塞恢复到执行就绪。';
+  return code || '已返回结果';
+}
+
+function humanExecutionState(state: string) {
+  const value = asText(state);
+  if (value === 'ready') return '执行就绪';
+  if (value === 'in_progress') return '执行中';
+  if (value === 'blocked') return '执行阻塞';
+  if (value === 'done') return '执行完成';
+  return value || '-';
 }
 
 function actionStateLabel(state: string) {
@@ -491,8 +533,8 @@ async function runAction(action: ActionCard) {
       variant: blocked ? 'warning' : 'success',
       title: blocked ? '执行推进受阻' : '执行推进完成',
       message: fromState && toState
-        ? `状态变化：${fromState} → ${toState}。原因：${reasonCode || '无'}。`
-        : `执行结果：${reasonCode || '已返回结果'}。`,
+        ? `状态变化：${humanExecutionState(fromState)} → ${humanExecutionState(toState)}。${humanReason(reasonCode)}`
+        : `执行结果：${humanReason(reasonCode)}。`,
     };
     await Promise.allSettled([
       refreshBlock('next_actions'),
