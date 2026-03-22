@@ -46,6 +46,10 @@
 - `frontend/apps/web/src/layouts/AppShell.vue`
   - status: `contract/meta driven`
   - rule: shell presentation must come from route meta / contract context, not hardcoded business scene keys
+- `frontend/apps/web/src/views/SceneView.vue`
+  - status: `registry_only`
+  - rule: scene resolution must come from the normalized scene registry only
+  - removed: scene-ready runtime fallback reconstruction
 
 ## Legacy Exit Rules
 - no new `*_scene_orchestrator.py` may be added under `addons/smart_construction_core/orchestration`
@@ -56,17 +60,19 @@
 - any new business slice must start from platform-owned orchestration ownership and pass re-audit before implementation
 
 ## Reopen Slice Readiness
-- status: `ready_for_decision`
+- status: `READY_FOR_SLICE`
 - reason:
   - orchestration ownership for the main product chain is now correct on the core dashboard/plan/execution path
   - dashboard full-contract assembly no longer lives in domain service
-  - frontend main path is contract-driven
-  - residual frontend cleanup remains outside the current main-path scope, so reopening a new slice is now a product decision, not an architecture blocker
+  - frontend main path is contract-driven and zero raw business-semantic tokens remain outside the explicit baseline constant file
+  - final slice readiness audit returns `READY_FOR_SLICE`
 
 ## Required Guards
 - `make verify.architecture.orchestration_platform_guard`
 - `make verify.architecture.five_layer_workspace_audit`
 - `make verify.product.native_alignment_guard`
+- `make verify.frontend.zero_business_semantics`
+- `make verify.architecture.final_slice_readiness_audit`
 
 ## Next Recommended Step
-- perform a short decision round on whether to reopen the next business slice, using the latest re-audit result and native-alignment gate as the entry condition
+- reopen the next business slice only from the current frozen baseline and keep `verify.architecture.final_slice_readiness_audit` plus `verify.product.v0_1_stability_baseline` green during the next round
