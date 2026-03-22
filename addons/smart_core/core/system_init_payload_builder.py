@@ -65,7 +65,7 @@ class SystemInitPayloadBuilder:
     @staticmethod
     def attach_layered_contract(data: dict) -> None:
         role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
-        landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip() or "portal.dashboard"
+        landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip() or "workspace.home"
         contract_version = str(data.get("contract_version") or "1.0.0")
         schema_version = str(data.get("schema_version") or "1.0.0")
         sections_payload = {

@@ -7,6 +7,7 @@ import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
+import { resolveActiveDb, setActiveDb } from '../services/dbContext';
 
 export interface RoleSurface {
   role_code: string;
@@ -451,8 +452,14 @@ export const useSessionStore = defineStore('session', {
       this.lastWriteMode = params.writeMode ?? '';
       this.persist();
     },
-    async login(username: string, password: string) {
-      const db = String(config.odooDb || '').trim();
+    async login(username: string, password: string, dbOverride?: string) {
+      const configuredDb = config.odooDbPinned
+        ? String(config.odooDb || '').trim()
+        : resolveActiveDb(String(config.odooDb || '').trim());
+      const db = String(dbOverride || configuredDb).trim();
+      if (db) {
+        setActiveDb(db, true);
+      }
       const result = await intentRequest<LoginResponse>({
         intent: 'login',
         params: { login: username, password, contract_mode: 'default', ...(db ? { db } : {}) },
@@ -740,6 +747,15 @@ export const useSessionStore = defineStore('session', {
         };
       } else {
         this.defaultRoute = null;
+      }
+      const hasWorkspaceHome = Boolean(this.workspaceHome && Object.keys(this.workspaceHome).length > 0);
+      if (!hasWorkspaceHome && !this.defaultRoute) {
+        this.defaultRoute = {
+          scene_key: '',
+          route: '/',
+          reason: 'minimum_workspace_fallback',
+          menu_id: undefined,
+        };
       }
       const candidates = [result.nav];
       if (debugIntent) {

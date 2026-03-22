@@ -16,7 +16,7 @@ from odoo.addons.smart_core.core.scene_registry_provider import (
 
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
-CRITICAL_SCENE_TARGET_OVERRIDES = {"workspace.home", "portal.dashboard"}
+CRITICAL_SCENE_TARGET_OVERRIDES = {"workspace.home"}
 
 CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {}
 

@@ -38,6 +38,9 @@ try:
 except Exception:
   sys.exit(0)
 token=(data.get("data") or {}).get("token") or ""
+if not token:
+  session=((data.get("data") or {}).get("session") or {})
+  token=session.get("token") or ""
 print(token)
 PY
 )"

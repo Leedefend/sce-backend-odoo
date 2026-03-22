@@ -20,9 +20,7 @@ def _post(
     if db_name:
         headers["X-Odoo-DB"] = db_name
     status, payload = http_post_json(intent_url, {"intent": intent, "params": params or {}}, headers=headers)
-    if not isinstance(payload, dict):
-        payload = {}
-    return status, payload
+    return status, payload if isinstance(payload, dict) else {}
 
 
 def _assert_ok(status: int, payload: dict, label: str) -> None:
@@ -45,9 +43,6 @@ def main() -> int:
     if not str(token or "").strip():
         raise RuntimeError("login response missing data.session.token")
 
-    status, init_resp = _post(intent_url, token, "system.init", {"contract_mode": "user"}, db_name=db_name)
-    _assert_ok(status, init_resp, "system.init")
-
     status, catalog_resp = _post(intent_url, token, "app.catalog", {}, db_name=db_name)
     _assert_ok(status, catalog_resp, "app.catalog")
     catalog_data = catalog_resp.get("data") if isinstance(catalog_resp.get("data"), dict) else {}
@@ -66,18 +61,13 @@ def main() -> int:
     if not has_workspace:
         raise RuntimeError("minimum surface baseline broken: workspace app missing in app.catalog")
 
-    app_id = "workspace"
+    status, nav_resp = _post(intent_url, token, "app.nav", {"app": "workspace"}, db_name=db_name)
+    _assert_ok(status, nav_resp, "app.nav(workspace)")
 
-    status, nav_resp = _post(intent_url, token, "app.nav", {"app": app_id}, db_name=db_name)
-    _assert_ok(status, nav_resp, "app.nav")
+    status, open_resp = _post(intent_url, token, "app.open", {"app": "workspace"}, db_name=db_name)
+    _assert_ok(status, open_resp, "app.open(workspace)")
 
-    status, open_resp = _post(intent_url, token, "app.open", {"app": app_id}, db_name=db_name)
-    _assert_ok(status, open_resp, "app.open")
-    open_data = open_resp.get("data") if isinstance(open_resp.get("data"), dict) else {}
-    if str(open_data.get("subject") or "") != "ui.contract":
-        raise RuntimeError("app.open did not return ui.contract subject")
-
-    print("[smart_core_owner_startup_smoke] PASS")
+    print("[smart_core_minimum_surface_order_regression_guard] PASS")
     return 0
 
 
@@ -85,6 +75,6 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except Exception as exc:
-        print("[smart_core_owner_startup_smoke] FAIL")
-        print(f" - ENV_UNSTABLE: {exc}")
+        print("[smart_core_minimum_surface_order_regression_guard] FAIL")
+        print(f" - {exc}")
         sys.exit(1)

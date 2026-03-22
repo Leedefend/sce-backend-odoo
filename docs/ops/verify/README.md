@@ -662,6 +662,8 @@
 ## smart_core Minimum Surface
 - Baseline document:
   - `docs/ops/smart_core_platform_minimum_surface_v1.md`
+- Guard-A0 (legacy group sunset; REQUIRED_GROUPS must not reference legacy/industry groups):
+  - `make verify.smart_core.minimum_surface.legacy_group_guard`
 - Guard-A (minimum handler presence + alias surface):
   - `make verify.smart_core.minimum_surface.handler_guard`
 - Guard-B (minimum contract/envelope chain):
@@ -670,6 +672,12 @@
   - `make verify.smart_core.minimum_surface.owner_startup_smoke`
 - Regression-D (same-route residency behavior for app shell open):
   - `make verify.smart_core.minimum_surface.same_route_guard`
+- Regression-E (minimum-surface app selection order independence):
+  - `make verify.smart_core.minimum_surface.order_regression_guard`
+- Regression-F (app.open fallback when first feature is not openable):
+  - `make verify.smart_core.minimum_surface.app_open_regression_guard`
+- Regression-G (platform-only nav isolation; sidebar must not leak industry scenes):
+  - `make verify.smart_core.minimum_surface.nav_isolation_guard`
 - Aggregate:
   - `make verify.smart_core.minimum_surface`
 

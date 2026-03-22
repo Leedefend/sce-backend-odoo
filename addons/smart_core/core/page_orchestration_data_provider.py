@@ -82,9 +82,9 @@ def build_semantic_from_section(page_key: str, section_key: str, tag: str) -> Di
 def build_action_templates(section_key: str) -> list[Dict[str, Any]]:
     key = _to_text(section_key).lower()
     if "risk" in key:
-        return [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}]
+        return [{"key": "open_workspace_overview", "label": "查看重点事项", "intent": "ui.contract"}]
     if any(token in key for token in ("approval", "todo", "next_actions")):
-        return [{"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"}]
+        return [{"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"}]
     if any(token in key for token in ("filter", "group", "slice")):
         return [{"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"}]
     if any(token in key for token in ("table", "list", "records")):
@@ -110,11 +110,11 @@ def build_page_type(page_key: str) -> str:
 def build_page_audience(page_key: str) -> list[str]:
     key = _to_text(page_key).lower()
     if key in {"usage_analytics", "scene_health"}:
-        return ["executive", "owner", "project_manager"]
+        return ["executive", "owner", "internal_user"]
     if key in {"my_work", "action", "record"}:
-        return ["project_manager", "finance_manager", "owner"]
+        return ["internal_user", "owner", "reviewer"]
     if key in {"home", "workbench"}:
-        return ["project_manager", "finance_manager", "owner", "executive"]
+        return ["internal_user", "owner", "executive"]
     return ["generic_user"]
 
 
@@ -128,7 +128,7 @@ def build_default_page_actions(page_key: str) -> list[Dict[str, Any]]:
     if key == "my_work":
         return [
             {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
-            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key == "workbench":
@@ -144,8 +144,8 @@ def build_default_page_actions(page_key: str) -> list[Dict[str, Any]]:
         ]
     if key in {"action", "record", "scene"}:
         return [
-            {"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"},
-            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"},
+            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]

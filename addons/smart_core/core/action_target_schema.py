@@ -24,7 +24,7 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     key = str(action_key or "").strip().lower()
     page = str(page_key or "").strip().lower()
     if key == "open_risk_dashboard":
-        return scene_target("portal.dashboard")
+        return scene_target("workspace.home")
     if key == "open_my_work":
         return scene_target("my_work.workspace")
     if key == "apply_filters":
@@ -34,7 +34,9 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
             return scene_target(page)
         return scene_target("workspace.home")
     if key == "open_workbench":
-        return scene_target("portal.dashboard")
+        return scene_target("workspace.home")
+    if key == "open_workspace_overview":
+        return scene_target("workspace.home")
     if key == "open_menu":
         return menu_first_reachable_target()
     if key in {"refresh_page", "refresh"}:
@@ -42,7 +44,7 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     if key == "open_usage_analytics":
         return route_path_target("/admin/usage-analytics")
     if key == "open_landing":
-        return scene_target("portal.dashboard")
+        return scene_target("workspace.home")
     if key == "open_scene":
         return scene_target("workspace.home")
     return scene_target(page)
