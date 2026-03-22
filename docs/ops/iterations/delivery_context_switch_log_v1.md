@@ -897,3 +897,21 @@ Each entry must include:
 - completed_step: `新增 project.dashboard.open handler 与 project.dashboard 合同标准块（summary/progress/next_actions）；project.initiation.enter 成功后 suggested_action 指向 dashboard；新增 flow/shape/context/non-empty 四类 product guard 与 verify.product.phase12c 聚合目标；文档同步`
 - active_commit: `pending`
 - next_step: `分类提交 Phase 12-C 改动并准备 PR`
+
+### 2026-03-22T10:58:00Z
+- blocker_key: `phase12d_system_init_surface_slimming`
+- layer_target: `Platform Layer + Verify/Gate Layer`
+- module: `addons/smart_core/handlers/system_init.py + addons/smart_core/core/system_init_payload_builder.py + scripts/verify/system_init_* + Makefile + docs/ops`
+- reason: `Phase 12-D：system.init 返回面收口为最小启动契约，并新增 payload/shape/duplication/scene-subset/page-contract 拆包门禁`
+- completed_step: `system.init 增加 slim_to_minimal_surface 收口路径；新增 scene.catalog/scene.detail 按需场景查询；新增 verify.system_init.minimal_shape/duplication_guard/scene_subset_guard/no_page_contract_payload/payload_budget 与聚合目标 verify.system_init.minimal_surface；verify README 同步执行链`
+- active_commit: `pending`
+- next_step: `在 platform-only DB 执行 verify.smart_core.minimum_surface + verify.portal.minimum_runtime_surface + verify.phase12b.baseline，归档 artifacts 后分类提交`
+
+### 2026-03-22T12:20:00Z
+- blocker_key: `phase12d_system_init_surface_slimming`
+- layer_target: `Platform Layer + Verify/Gate Layer`
+- module: `addons/smart_core/core/system_init_payload_builder.py + scripts/verify/system_init_minimal_shape_guard.py + docs/ops/iterations`
+- reason: `修复 Phase 12-D 收口后的两处回归：platform minimum nav_meta 被裁掉、with_preload=true 的 portal minimum runtime 面被一并裁空`
+- completed_step: `初始化 sc_platform_core platform-only DB；minimal surface 保留顶层 nav_meta；with_preload=true 时保留 workspace_home/scene_ready_contract_v1；verify.system_init.minimal_surface、verify.smart_core.minimum_surface(DB=sc_platform_core)、verify.portal.minimum_runtime_surface(DB=sc_platform_core)、verify.phase12b.baseline(platform=sc_platform_core, product=sc_demo) 全部 PASS`
+- active_commit: `pending`
+- next_step: `归档 artifacts 并分类提交 Phase 12-D 改动`

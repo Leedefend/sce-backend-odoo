@@ -678,6 +678,13 @@
   - `make verify.smart_core.minimum_surface.app_open_regression_guard`
 - Regression-G (platform-only nav isolation; sidebar must not leak industry scenes):
   - `make verify.smart_core.minimum_surface.nav_isolation_guard`
+- Guard-H (system.init minimal surface slimming guards):
+  - `make verify.system_init.minimal_shape`
+  - `make verify.system_init.duplication_guard`
+  - `make verify.system_init.scene_subset_guard`
+  - `make verify.system_init.no_page_contract_payload`
+  - `make verify.system_init.payload_budget`
+  - aggregate: `make verify.system_init.minimal_surface`
 - Aggregate:
   - `make verify.smart_core.minimum_surface`
 
@@ -724,8 +731,9 @@
   - `make verify.phase12b.baseline`
 - Execution order (hard):
   1. `verify.smart_core.minimum_surface` (Platform)
-  2. `verify.portal.minimum_runtime_surface` (Portal)
-  3. `verify.product.project_initiation.full` (Product)
+  2. `verify.system_init.minimal_surface` (Platform Init Slimming)
+  3. `verify.portal.minimum_runtime_surface` (Portal)
+  4. `verify.product.project_initiation.full` (Product)
 - Layered artifact archive:
   - `artifacts/baselines/platform/*`
   - `artifacts/baselines/portal/*`
@@ -735,9 +743,10 @@
 
 ## Recommended Execution Order
 1. `make verify.smart_core.minimum_surface ...`
-2. `make verify.portal.minimum_runtime_surface ...`
-3. `make verify.product.project_initiation.full ...`
-4. `make verify.phase12b.baseline ...`（用于统一门禁回归）
+2. `make verify.system_init.minimal_surface ...`
+3. `make verify.portal.minimum_runtime_surface ...`
+4. `make verify.product.project_initiation.full ...`
+5. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight
 - Readiness report (non-blocking):
