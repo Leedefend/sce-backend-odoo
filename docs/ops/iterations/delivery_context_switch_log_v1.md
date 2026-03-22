@@ -933,3 +933,12 @@ Each entry must include:
 - completed_step: `session boot 阶段改从 init_meta.workspace_home_preload_hint 生成 preload ref；loadWorkspaceHomeOnDemand 正式走 system.init(with_preload=true) 并消费 workspace_home + scene_ready_contract_v1；新增 verify.portal.preload_runtime_surface，并接入 Phase 12-B baseline portal 链与 README`
 - active_commit: `pending`
 - next_step: `运行 preload portal guard + sc_platform_core baseline + 前端 strict typecheck，确认 Batch E2 收口后再进入 Phase 12-E Batch E3 runtime fetch 入口`
+
+### 2026-03-22T16:55:00Z
+- blocker_key: `phase12e_runtime_fetch_entrypoints`
+- layer_target: `Platform Runtime Fetch Layer + Frontend Contract Consumer Layer + Verify/Gate Layer`
+- module: `addons/smart_core/handlers/runtime_fetch.py + addons/smart_core/core/runtime_fetch_context_builder.py + addons/smart_core/core/runtime_page_contract_builder.py + frontend/apps/web/src/app/pageContract.ts + frontend/apps/web/src/stores/session.ts + scripts/verify/runtime_fetch_entrypoints_smoke.py + Makefile + docs/ops/verify`
+- reason: `Phase 12-E / Batch E3：把 slim init 后缺失的 page/scene/collection 数据迁移到正式 runtime 入口，并切断前端对 system.init.page_contracts 的残留依赖`
+- completed_step: `新增 page.contract/scene.page_contract 与 workspace.collections 正式 handler；scene.catalog/scene.detail 纳入统一 runtime fetch smoke；system.init 不再内部构造 page_contracts 输出面；前端 usePageContract 改为运行时按需拉取 page.contract；新增 verify.runtime.fetch_entrypoints 并接入 Phase 12-B baseline/README；sc_platform_core baseline + frontend strict typecheck 全部 PASS`
+- active_commit: `pending`
+- next_step: `分类提交 Batch E3 后，进入 Phase 12-E Batch E4：按新分层恢复 project.dashboard.enter 与 initiation -> dashboard suggested_action 主线`

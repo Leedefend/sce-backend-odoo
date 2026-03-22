@@ -735,7 +735,6 @@ export const useSessionStore = defineStore('session', {
             loaded: false,
           }
         : null);
-      this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});
       this.sceneReadyContractV1 = ((result as AppInitResponse & { scene_ready_contract_v1?: SceneReadyContract }).scene_ready_contract_v1 ?? null);
       this.sceneGovernanceV1 = ((result as AppInitResponse & { scene_governance_v1?: SceneGovernancePayload }).scene_governance_v1 ?? null);
       if (this.sceneReadyContractV1?.scenes?.length) {
@@ -835,6 +834,38 @@ export const useSessionStore = defineStore('session', {
       }
       this.persist();
       return this.workspaceHome;
+    },
+    async ensurePageContract(pageKey: string, force = false) {
+      const normalizedPageKey = String(pageKey || '').trim().toLowerCase();
+      if (!normalizedPageKey) {
+        return {} as PageContract;
+      }
+      const cached = this.pageContracts?.[normalizedPageKey];
+      if (!force && cached && Object.keys(cached).length > 0) {
+        return cached;
+      }
+      const result = await intentRequest<{
+        page_key?: string;
+        page_contract?: PageContract;
+      }>({
+        intent: 'page.contract',
+        params: {
+          page_key: normalizedPageKey,
+          scene: 'web',
+          root_xmlid: 'smart_construction_core.menu_sc_root',
+        },
+      });
+      const runtimePayload = (result && typeof result === 'object') ? result : {};
+      const runtimePageKey = String(runtimePayload.page_key || normalizedPageKey).trim().toLowerCase() || normalizedPageKey;
+      const runtimeContract = (runtimePayload.page_contract && typeof runtimePayload.page_contract === 'object')
+        ? (runtimePayload.page_contract as PageContract)
+        : ({} as PageContract);
+      this.pageContracts = {
+        ...this.pageContracts,
+        [runtimePageKey]: runtimeContract,
+      };
+      this.persist();
+      return runtimeContract;
     },
     async ensureReady() {
       if (this.isReady) {

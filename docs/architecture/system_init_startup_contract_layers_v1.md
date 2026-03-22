@@ -106,6 +106,18 @@ Purpose:
 - fetch heavy, page-specific, scene-specific, or collection-specific payloads on demand
 - keep startup protocol stable and narrow
 
+Runtime endpoint semantics:
+- `page.contract`
+  - returns a single page contract only (`data.page_contract`)
+  - must not return `page_contracts.pages` aggregate wrapper
+- `scene.catalog`
+  - returns runtime-discoverable scene directory for on-demand navigation/catalog reads
+- `scene.detail`
+  - returns one resolved scene payload by `scene_key`
+- `workspace.collections`
+  - returns business collections only (`task_items/payment_requests/risk_actions/project_actions`)
+  - must not return preload/page payloads such as `workspace_home` or `page_contracts`
+
 Runtime must not flow back into boot/preload by default.
 
 ## Consumption Order
@@ -124,6 +136,7 @@ This layer contract is enforced by:
 - `make verify.system_init.startup_layer_contract`
 - `make verify.system_init.minimal_surface`
 - `make verify.smart_core.minimum_surface`
+- `make verify.runtime.fetch_entrypoints`
 
 The guard must fail when:
 - boot returns preload/runtime payloads

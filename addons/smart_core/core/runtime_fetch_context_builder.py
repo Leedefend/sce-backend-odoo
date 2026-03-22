@@ -1,0 +1,99 @@
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+from typing import Any
+
+from odoo.addons.smart_core.core.capability_provider import (
+    build_capability_groups as provider_build_capability_groups,
+    load_capabilities_for_user as provider_load_capabilities_for_user,
+)
+from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
+from odoo.addons.smart_core.core.system_init_components_factory import SystemInitComponentsFactory
+from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
+from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
+from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
+from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
+from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
+from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
+from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
+from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
+    normalize_capabilities,
+    resolve_contract_mode,
+)
+
+
+def _merge_extension_facts(data: dict[str, Any]) -> None:
+    ext_facts = data.get("ext_facts")
+    if not isinstance(ext_facts, dict):
+        return
+    for _, module_facts in ext_facts.items():
+        if not isinstance(module_facts, dict):
+            continue
+        for key in ("entitlements", "usage"):
+            if key in module_facts and key not in data:
+                data[key] = module_facts.get(key)
+        workspace_collections = module_facts.get("workspace_collections")
+        if isinstance(workspace_collections, dict):
+            for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
+                rows = workspace_collections.get(key)
+                if key not in data and isinstance(rows, list):
+                    data[key] = rows
+        provider_payload = module_facts.get("role_surface_override_provider")
+        if isinstance(provider_payload, dict):
+            provider_key = str(provider_payload.get("key") or "").strip()
+            if not provider_key:
+                continue
+            providers = data.get("role_surface_override_providers")
+            if not isinstance(providers, dict):
+                providers = {}
+            merged = dict(provider_payload)
+            merged.pop("key", None)
+            providers[provider_key] = merged
+            data["role_surface_override_providers"] = providers
+
+
+def build_runtime_fetch_context(env, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    params = params if isinstance(params, dict) else {}
+    contract_mode = resolve_contract_mode(params)
+    user = env.user
+    identity_resolver = IdentityResolver(env)
+    user_groups_xmlids = identity_resolver.user_group_xmlids(user)
+    components = SystemInitComponentsFactory.create()
+    nav_request = SystemInitNavRequestBuilder.build(params, params.get("scene") or "web")
+    nav_meta = {
+        "debug_params_keys": sorted(list(params.keys())),
+        "debug_root_xmlid": nav_request.get("root_xmlid"),
+        "root_xmlid": nav_request.get("root_xmlid"),
+    }
+    data = SystemInitPayloadBuilder.build_base(
+        user_dict=SystemInitIdentityPayload.build(user, user_groups_xmlids),
+        nav_tree=[],
+        nav_meta=nav_meta,
+        default_route={"menu_id": None},
+        intents=[],
+        feature_flags={"ai_enabled": True},
+        capabilities=normalize_capabilities(provider_load_capabilities_for_user(env, user)),
+        scene_channel="runtime",
+        channel_selector="runtime_fetch",
+        channel_source_ref="runtime_fetch",
+        contract_mode=contract_mode,
+        contract_version="1.0.0",
+    )
+    data.update({"contract_mode": contract_mode})
+    run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
+    _merge_extension_facts(data)
+    surface_ctx = SystemInitSurfaceContext(
+        data=data,
+        contract_mode=contract_mode,
+        scene_diagnostics={},
+        capability_surface_engine=components["capability_surface_engine"],
+        identity_resolver=identity_resolver,
+        user_groups_xmlids=user_groups_xmlids,
+        nav_tree=[],
+        scene_diagnostics_builder=SceneDiagnosticsBuilder,
+        build_capability_groups_fn=provider_build_capability_groups,
+        apply_contract_governance_fn=apply_contract_governance,
+    )
+    data, _ = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
+    return data

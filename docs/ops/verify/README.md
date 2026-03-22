@@ -695,6 +695,8 @@
   - `make verify.portal.minimum_runtime_surface`
 - Guard (formal preload path must stay renderable and runtime-light):
   - `make verify.portal.preload_runtime_surface`
+- Smoke (formal runtime fetch entrypoints after slim init):
+  - `make verify.runtime.fetch_entrypoints`
 - Coverage:
   - owner-only startup chain available
   - `workspace.home` openable
@@ -704,6 +706,12 @@
   - page non-empty and at least one block renderable
   - preload keeps `workspace_home` + `scene_ready_contract_v1` only
   - preload does not carry `page_contracts` / `runtime_collections` / `workspace_collections`
+  - runtime fetch entrypoints stay on dedicated intents:
+    - `page.contract`
+    - `scene.catalog`
+    - `scene.detail`
+    - `workspace.collections`
+  - `page.contract` returns single-page payload only, not `page_contracts.pages`
 
 ## Product Baseline: Project Initiation
 - Smoke:
@@ -739,7 +747,9 @@
   1. `verify.smart_core.minimum_surface` (Platform)
   2. `verify.system_init.minimal_surface` (Platform Init Slimming)
   3. `verify.portal.minimum_runtime_surface` (Portal)
-  4. `verify.product.project_initiation.full` (Product)
+  4. `verify.portal.preload_runtime_surface` (Portal Preload)
+  5. `verify.runtime.fetch_entrypoints` (Portal Runtime Fetch)
+  6. `verify.product.project_initiation.full` (Product)
 - Layered artifact archive:
   - `artifacts/baselines/platform/*`
   - `artifacts/baselines/portal/*`
@@ -751,8 +761,10 @@
 1. `make verify.smart_core.minimum_surface ...`
 2. `make verify.system_init.minimal_surface ...`
 3. `make verify.portal.minimum_runtime_surface ...`
-4. `make verify.product.project_initiation.full ...`
-5. `make verify.phase12b.baseline ...`（用于统一门禁回归）
+4. `make verify.portal.preload_runtime_surface ...`
+5. `make verify.runtime.fetch_entrypoints ...`
+6. `make verify.product.project_initiation.full ...`
+7. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight
 - Readiness report (non-blocking):

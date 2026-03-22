@@ -792,12 +792,15 @@ verify.portal.ui.v0_8.semantic.strict.container: verify.portal.ui.v0_8.semantic.
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 
-.PHONY: verify.portal.minimum_runtime_surface verify.portal.preload_runtime_surface verify.product.project_initiation verify.product.project_initiation.roles verify.product.contract_ref_shape_guard verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard verify.product.phase12c verify.phase12b.baseline verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.smart_core.minimum_surface
+.PHONY: verify.portal.minimum_runtime_surface verify.portal.preload_runtime_surface verify.runtime.fetch_entrypoints verify.product.project_initiation verify.product.project_initiation.roles verify.product.contract_ref_shape_guard verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard verify.product.phase12c verify.phase12b.baseline verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.smart_core.minimum_surface
 verify.portal.minimum_runtime_surface: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/portal_minimum_runtime_surface_guard.py"
 
 verify.portal.preload_runtime_surface: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/portal_preload_runtime_surface_guard.py"
+
+verify.runtime.fetch_entrypoints: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/runtime_fetch_entrypoints_smoke.py"
 
 verify.product.project_initiation: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_initiation_smoke.py"
@@ -832,6 +835,7 @@ verify.phase12b.baseline: guard.prod.forbid
 	@echo "[Layer:portal] verify.portal.minimum_runtime_surface"
 	@$(MAKE) verify.portal.minimum_runtime_surface DB_NAME=$(or $(PORTAL_DB_NAME),$(or $(PLATFORM_DB_NAME),$(DB_NAME)) ) E2E_LOGIN=$(or $(PORTAL_LOGIN),$(or $(PLATFORM_LOGIN),$(E2E_LOGIN))) E2E_PASSWORD=$(or $(PORTAL_PASSWORD),$(or $(PLATFORM_PASSWORD),$(E2E_PASSWORD))) || (echo "❌ [portal] baseline failed" && exit 22)
 	@$(MAKE) verify.portal.preload_runtime_surface DB_NAME=$(or $(PORTAL_DB_NAME),$(or $(PLATFORM_DB_NAME),$(DB_NAME)) ) E2E_LOGIN=$(or $(PORTAL_LOGIN),$(or $(PLATFORM_LOGIN),$(E2E_LOGIN))) E2E_PASSWORD=$(or $(PORTAL_PASSWORD),$(or $(PLATFORM_PASSWORD),$(E2E_PASSWORD))) || (echo "❌ [portal preload] baseline failed" && exit 22)
+	@$(MAKE) verify.runtime.fetch_entrypoints DB_NAME=$(or $(PORTAL_DB_NAME),$(or $(PLATFORM_DB_NAME),$(DB_NAME)) ) E2E_LOGIN=$(or $(PORTAL_LOGIN),$(or $(PLATFORM_LOGIN),$(E2E_LOGIN))) E2E_PASSWORD=$(or $(PORTAL_PASSWORD),$(or $(PLATFORM_PASSWORD),$(E2E_PASSWORD))) || (echo "❌ [runtime fetch] baseline failed" && exit 22)
 	@echo "[Layer:product] verify.product.project_initiation.full"
 	@$(MAKE) verify.product.project_initiation.full DB_NAME=$(or $(PRODUCT_DB_NAME),$(DB_NAME)) E2E_LOGIN=$(or $(PRODUCT_LOGIN),$(E2E_LOGIN)) E2E_PASSWORD=$(or $(PRODUCT_PASSWORD),$(E2E_PASSWORD)) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) ROLE_EXECUTIVE_LOGIN=$(or $(ROLE_EXECUTIVE_LOGIN),demo_role_executive) ROLE_EXECUTIVE_PASSWORD=$(or $(ROLE_EXECUTIVE_PASSWORD),demo) || (echo "❌ [product] baseline failed" && exit 23)
 	@mkdir -p artifacts/baselines/platform artifacts/baselines/portal artifacts/baselines/product
@@ -843,6 +847,7 @@ verify.phase12b.baseline: guard.prod.forbid
 	@cp -f artifacts/backend/smart_core_platform_minimum_nav_isolation_guard.json artifacts/baselines/platform/ 2>/dev/null || true
 	@cp -f artifacts/backend/portal_minimum_runtime_surface_guard.json artifacts/baselines/portal/ 2>/dev/null || true
 	@cp -f artifacts/backend/portal_preload_runtime_surface_guard.json artifacts/baselines/portal/ 2>/dev/null || true
+	@cp -f artifacts/backend/runtime_fetch_entrypoints_smoke.json artifacts/baselines/portal/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_initiation_smoke.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_contract_ref_shape_guard.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_initiation_roles_smoke.json artifacts/baselines/product/ 2>/dev/null || true

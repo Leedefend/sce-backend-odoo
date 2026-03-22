@@ -1,4 +1,4 @@
-import { computed } from 'vue';
+import { computed, watchEffect } from 'vue';
 import { useSessionStore, type PageContract } from '../stores/session';
 
 function asText(value: unknown): string {
@@ -19,7 +19,14 @@ type GlobalActionConfig = { key: string; label: string; intent: string };
 
 export function usePageContract(pageKey: string) {
   const session = useSessionStore();
-  const contract = computed<PageContract>(() => session.pageContracts?.[pageKey] || {});
+  const normalizedPageKey = asText(pageKey).trim().toLowerCase();
+  watchEffect(() => {
+    if (!normalizedPageKey || !session.token) return;
+    const cached = session.pageContracts?.[normalizedPageKey];
+    if (cached && Object.keys(cached).length > 0) return;
+    void session.ensurePageContract(normalizedPageKey).catch(() => {});
+  });
+  const contract = computed<PageContract>(() => session.pageContracts?.[normalizedPageKey] || {});
   const sceneContractV1 = computed<Record<string, unknown>>(() => {
     const raw = contract.value?.scene_contract_v1;
     if (!raw || typeof raw !== 'object') return {};
