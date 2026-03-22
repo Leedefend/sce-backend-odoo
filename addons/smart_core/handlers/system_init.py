@@ -325,6 +325,22 @@ def _parse_with_tokens(value) -> set[str]:
     return tokens
 
 
+def _filter_startup_scenes_for_preload(scenes, allowed_scene_keys: list[str] | None) -> list[dict]:
+    if not isinstance(scenes, list):
+        return []
+    allowed = {str(item or "").strip() for item in (allowed_scene_keys or []) if str(item or "").strip()}
+    if not allowed:
+        return [row for row in scenes if isinstance(row, dict)]
+    filtered = []
+    for row in scenes:
+        if not isinstance(row, dict):
+            continue
+        scene_key = str(row.get("code") or row.get("key") or "").strip()
+        if scene_key in allowed:
+            filtered.append(row)
+    return filtered
+
+
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
     minimal_order = [
         "system.init",
@@ -601,11 +617,16 @@ class SystemInitHandler(BaseIntentHandler):
         )
         if isinstance(data.get("nav_meta"), dict):
             data["nav_meta"]["delivery_policy"] = delivery_result.get("meta") or {}
+        startup_scene_subset = SystemInitPayloadBuilder.resolve_startup_scene_subset(data, params=params)
+        preload_scenes = _filter_startup_scenes_for_preload(
+            delivery_result.get("delivery_scenes") if isinstance(delivery_result, dict) else [],
+            startup_scene_subset,
+        )
 
         # Scene-first nav contract (v1): sidebar nav source switches from native menu facts
         # to scene orchestration contract. Keep legacy nav for rollback/diagnostics.
         nav_contract_input = dict(data)
-        nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
+        nav_contract_input["scenes"] = preload_scenes
         nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
         role_code = ""
         if isinstance(role_surface, dict):

@@ -21,17 +21,23 @@ class ProjectPlanNextActionsBuilder(BaseProjectBlockBuilder):
         task_total = self._safe_count("project.task", self._project_domain("project.task", project))
         milestone_total = self._safe_count("project.milestone", self._project_domain("project.milestone", project))
         execution_state = "available"
+        current_state = "plan_ready"
+        current_state_label = "计划准备已就绪"
+        next_step_label = "进入执行推进"
         reason_code = "PLAN_READY_FOR_EXECUTION"
-        hint = "计划准备就绪，可进入执行场景。"
+        hint = "当前状态：计划准备已就绪。下一步：进入执行推进。"
         if task_total <= 0 and milestone_total <= 0:
             execution_state = "blocked"
+            current_state = "plan_input_incomplete"
+            current_state_label = "计划输入待补齐"
+            next_step_label = "先补齐计划任务或里程碑"
             reason_code = "PLAN_INPUT_INCOMPLETE"
-            hint = "计划任务与里程碑尚未成形，暂不建议进入执行。"
+            hint = "当前状态：计划任务与里程碑尚未成形。下一步：先补齐计划输入，再进入执行推进。"
 
         actions = [
             {
                 "key": "execution_enter",
-                "label": "进入项目执行",
+                "label": "下一步：进入执行推进",
                 "hint": hint,
                 "intent": "project.execution.enter",
                 "params": {
@@ -52,6 +58,9 @@ class ProjectPlanNextActionsBuilder(BaseProjectBlockBuilder):
                     "count": len(actions),
                     "available_count": len([row for row in actions if str(row.get("state") or "") == "available"]),
                     "blocked_count": len([row for row in actions if str(row.get("state") or "") == "blocked"]),
+                    "current_state": current_state,
+                    "current_state_label": current_state_label,
+                    "next_step_label": next_step_label,
                 },
             },
         )

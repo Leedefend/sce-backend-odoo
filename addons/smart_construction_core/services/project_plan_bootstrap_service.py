@@ -64,7 +64,7 @@ class ProjectPlanBootstrapService:
         first_action = runtime_fetch_hints["blocks"].get("next_actions") or runtime_fetch_hints["blocks"].get("plan_summary_detail") or {}
         return {
             "project_id": resolved_project_id,
-            "title": "计划编排：%s" % str(project_payload.get("name") or "项目"),
+            "title": "计划准备：%s" % str(project_payload.get("name") or "项目"),
             "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
             "blocks": blocks,
             "suggested_action": {

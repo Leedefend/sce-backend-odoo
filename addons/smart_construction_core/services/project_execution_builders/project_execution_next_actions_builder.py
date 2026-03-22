@@ -34,7 +34,9 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                     "ready_count": len([row for row in actions if str(row.get("state") or "") == "ready"]),
                     "blocked_count": len([row for row in actions if str(row.get("state") or "") == "blocked"]),
                     "current_state": current_state,
+                    "current_state_label": ProjectExecutionStateMachine.STATE_LABEL.get(current_state, current_state),
                     "allowed_targets": list(ProjectExecutionStateMachine.allowed_targets(current_state)),
+                    "next_step_label": str(action.get("label") or ""),
                 },
             },
         )

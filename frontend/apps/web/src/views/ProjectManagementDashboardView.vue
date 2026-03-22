@@ -1,7 +1,7 @@
 <template>
   <section class="project-dashboard-page">
     <section v-if="pageStatus === 'loading'" class="status-wrap">
-      <StatusPanel title="正在进入项目驾驶舱..." variant="info" />
+      <StatusPanel :title="loadingTitle" variant="info" />
     </section>
     <section v-else-if="pageStatus === 'error'" class="status-wrap">
       <StatusPanel :title="errorTitle" :message="errorMessage" variant="error" />
@@ -9,12 +9,19 @@
     <section v-else class="dashboard-shell">
       <header class="hero-card">
         <div>
-          <p class="eyebrow">Project Dashboard</p>
-          <h1>{{ entry?.title || '项目驾驶舱' }}</h1>
+          <p class="eyebrow">{{ currentSceneLabel }}</p>
+          <h1>{{ entry?.title || '项目生命周期工作台' }}</h1>
           <p class="hero-subtitle">项目 ID {{ entry?.project_id || '-' }}</p>
+          <p class="hero-state">{{ currentStateText }}</p>
+          <p class="hero-next">{{ nextStepText }}</p>
         </div>
         <button type="button" class="ghost-button" @click="refreshAllBlocks">刷新区块</button>
       </header>
+
+      <section v-if="transitionFeedback" class="feedback-banner" :data-variant="transitionFeedback.variant">
+        <strong>{{ transitionFeedback.title }}</strong>
+        <p>{{ transitionFeedback.message }}</p>
+      </section>
 
       <section class="summary-card">
         <div v-for="item in summaryRows" :key="item.key" class="summary-item">
@@ -50,6 +57,7 @@
                 <strong>{{ item.value }}</strong>
               </div>
             </section>
+
             <section v-else-if="descriptor.key === 'risks'" class="risk-list">
               <div class="risk-summary">
                 <span>风险评分 {{ riskSummary.score }}</span>
@@ -61,15 +69,44 @@
                 <p>{{ item.description }}</p>
               </div>
             </section>
+
+            <section v-else-if="descriptor.key === 'plan_summary_detail'" class="metric-list">
+              <div v-for="item in planSummaryRows" :key="item.key" class="metric-row">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            </section>
+
+            <section v-else-if="descriptor.key === 'plan_tasks' || descriptor.key === 'execution_tasks'" class="task-list">
+              <div v-for="item in taskRows(descriptor.key)" :key="item.key" class="task-row">
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.subtitle }}</p>
+                </div>
+                <span class="action-state" :data-tone="item.stateTone">{{ item.stateLabel }}</span>
+              </div>
+            </section>
+
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
               <div v-for="item in nextActions" :key="item.key" class="action-card">
                 <div>
                   <strong>{{ item.label }}</strong>
                   <p>{{ item.hint }}</p>
                 </div>
-                <span class="action-state" :data-tone="item.state">{{ item.stateLabel }}</span>
+                <div class="action-side">
+                  <span class="action-state" :data-tone="item.stateTone">{{ item.stateLabel }}</span>
+                  <button
+                    type="button"
+                    class="primary-button"
+                    :disabled="item.disabled"
+                    @click="runAction(item)"
+                  >
+                    {{ item.buttonLabel }}
+                  </button>
+                </div>
               </div>
             </section>
+
             <section v-else class="block-status">暂未支持的区块。</section>
           </template>
         </article>
@@ -84,19 +121,21 @@ import { useRoute } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
 
-type DashboardRuntimeHint = {
+type RuntimeHint = {
   intent?: string;
   params?: Record<string, unknown>;
+  reason_code?: string;
+  key?: string;
 };
 
-type DashboardEntry = {
+type GenericEntry = {
   project_id?: number;
   title?: string;
   summary?: Record<string, unknown>;
   blocks?: Array<{ key?: string; title?: string; state?: string }>;
-  suggested_action?: DashboardRuntimeHint & { reason_code?: string; key?: string };
+  suggested_action?: RuntimeHint;
   runtime_fetch_hints?: {
-    blocks?: Record<string, DashboardRuntimeHint>;
+    blocks?: Record<string, RuntimeHint>;
   };
 };
 
@@ -122,12 +161,34 @@ type BlockRuntimeState = {
   payload: RuntimeBlockEnvelope | null;
 };
 
+type ActionFeedback = {
+  variant: 'success' | 'warning';
+  title: string;
+  message: string;
+};
+
+type ActionCard = {
+  key: string;
+  label: string;
+  hint: string;
+  intent: string;
+  params: Record<string, unknown>;
+  state: string;
+  stateLabel: string;
+  stateTone: string;
+  buttonLabel: string;
+  disabled: boolean;
+};
+
 const route = useRoute();
 const pageStatus = ref<'loading' | 'error' | 'ready'>('loading');
-const errorTitle = ref('项目驾驶舱加载失败');
+const errorTitle = ref('产品生命周期工作台加载失败');
 const errorMessage = ref('');
-const entry = ref<DashboardEntry | null>(null);
+const loadingTitle = ref('正在进入项目驾驶舱...');
+const currentEntryIntent = ref('project.dashboard.enter');
+const entry = ref<GenericEntry | null>(null);
 const runtimeBlocks = ref<Record<string, BlockRuntimeState>>({});
+const transitionFeedback = ref<ActionFeedback | null>(null);
 
 function asText(value: unknown) {
   return String(value || '').trim();
@@ -145,6 +206,12 @@ function resolveProjectIdFromQuery() {
   return Number.isFinite(projectId) && projectId > 0 ? projectId : 0;
 }
 
+const currentSceneLabel = computed(() => {
+  if (currentEntryIntent.value === 'project.plan_bootstrap.enter') return '计划准备';
+  if (currentEntryIntent.value === 'project.execution.enter') return '执行推进';
+  return '项目驾驶舱';
+});
+
 const blockDescriptors = computed(() => entry.value?.blocks || []);
 
 const summaryRows = computed(() => {
@@ -155,6 +222,8 @@ const summaryRows = computed(() => {
     { key: 'partner_name', label: '建设单位', value: asText(summary.partner_name || '--') || '--' },
     { key: 'stage_name', label: '当前阶段', value: asText(summary.stage_name || '--') || '--' },
     { key: 'health_state', label: '健康度', value: asText(summary.health_state || '--') || '--' },
+    { key: 'date_start', label: '计划开始', value: asText(summary.date_start || '--') || '--' },
+    { key: 'date_end', label: '计划结束', value: asText(summary.date_end || '--') || '--' },
   ];
 });
 
@@ -167,9 +236,12 @@ function blockData(blockKey: string) {
 }
 
 function blockCaption(blockKey: string) {
-  if (blockKey === 'progress') return '进度区块独立加载，失败不影响整页。';
-  if (blockKey === 'risks') return '风险区块独立加载，失败不影响整页。';
-  if (blockKey === 'next_actions') return '下一步动作独立加载，并提供计划编排入口。';
+  if (blockKey === 'progress') return '当前状态：查看项目全局进度。下一步：确认是否进入计划准备。';
+  if (blockKey === 'risks') return '当前状态：识别阻塞项。下一步：优先处理高优先级风险。';
+  if (blockKey === 'plan_summary_detail') return '当前状态：查看计划准备度。下一步：确认能否进入执行推进。';
+  if (blockKey === 'plan_tasks') return '当前状态：核对计划任务。下一步：补齐关键计划输入。';
+  if (blockKey === 'execution_tasks') return '当前状态：查看执行任务。下一步：根据执行状态推进。';
+  if (blockKey === 'next_actions') return '当前状态：查看可执行动作。下一步：按建议动作继续推进。';
   return '区块按需加载。';
 }
 
@@ -183,6 +255,19 @@ const progressRows = computed(() => {
     { key: 'task_overdue', label: '延期任务', value: `${asNumber(data.task_overdue)} 项` },
     { key: 'milestone_progress', label: '里程碑完成率', value: `${asNumber(data.milestone_progress)}%` },
     { key: 'critical_path_health', label: '关键路径', value: asText(data.critical_path_health || '--') || '--' },
+  ];
+});
+
+const planSummaryRows = computed(() => {
+  const payload = blockData('plan_summary_detail');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  return [
+    { key: 'task_total', label: '计划任务总数', value: `${asNumber(data.task_total)} 项` },
+    { key: 'task_open', label: '待完成任务', value: `${asNumber(data.task_open)} 项` },
+    { key: 'task_overdue', label: '延期任务', value: `${asNumber(data.task_overdue)} 项` },
+    { key: 'milestone_total', label: '里程碑总数', value: `${asNumber(data.milestone_total)} 项` },
+    { key: 'milestone_done', label: '已完成里程碑', value: `${asNumber(data.milestone_done)} 项` },
+    { key: 'planning_health', label: '计划状态', value: asText(data.planning_health || '--') || '--' },
   ];
 });
 
@@ -213,21 +298,80 @@ const riskAlerts = computed(() => {
   });
 });
 
-const nextActions = computed(() => {
+function taskRows(blockKey: string) {
+  const payload = blockData(blockKey);
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const items = Array.isArray(data.items) ? data.items : [];
+  return items.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const state = asText(row.state || 'open') || 'open';
+    return {
+      key: asText(row.task_id || row.key || `${blockKey}_${index + 1}`),
+      title: asText(row.name || '未命名任务'),
+      subtitle: [asText(row.stage_name || ''), asText(row.deadline || '')].filter(Boolean).join(' · ') || '暂无补充信息',
+      stateLabel: state === 'done' ? '已完成' : state === 'blocked' ? '阻塞' : '进行中',
+      stateTone: state === 'done' ? 'success' : state === 'blocked' ? 'warning' : 'info',
+    };
+  });
+}
+
+function actionStateLabel(state: string) {
+  if (state === 'ready' || state === 'available') return '可执行';
+  if (state === 'blocked') return '受阻';
+  if (state === 'planned') return '预留';
+  return '待处理';
+}
+
+const nextActions = computed<ActionCard[]>(() => {
   const payload = blockData('next_actions');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const actions = Array.isArray(data.actions) ? data.actions : [];
   return actions.map((item, index) => {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     const state = asText(row.state || 'available') || 'available';
+    const intent = asText(row.intent || '');
     return {
       key: asText(row.key || `action_${index + 1}`),
       label: asText(row.label || row.key || '下一步动作'),
       hint: asText(row.hint || '等待后续场景接入'),
+      intent,
+      params: (row.params && typeof row.params === 'object') ? row.params as Record<string, unknown> : {},
       state,
-      stateLabel: state === 'planned' ? '预留' : '可用',
+      stateLabel: actionStateLabel(state),
+      stateTone: state === 'blocked' ? 'warning' : 'success',
+      buttonLabel: intent.endsWith('.enter') ? '进入' : intent === 'project.execution.advance' ? '推进' : '执行',
+      disabled: !intent || state === 'blocked' && intent !== 'project.execution.advance',
     };
   });
+});
+
+const currentStateText = computed(() => {
+  const payload = blockData('next_actions');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const stateLabel = asText(summary.current_state_label || '');
+  if (stateLabel) {
+    return `当前状态：${stateLabel}`;
+  }
+  if (currentEntryIntent.value === 'project.plan_bootstrap.enter') {
+    return '当前状态：正在核对计划准备度。';
+  }
+  if (currentEntryIntent.value === 'project.execution.enter') {
+    return '当前状态：正在查看执行推进状态。';
+  }
+  return '当前状态：已完成立项，正在查看项目驾驶舱。';
+});
+
+const nextStepText = computed(() => {
+  const payload = blockData('next_actions');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const nextStepLabel = asText(summary.next_step_label || '');
+  if (nextStepLabel) {
+    return `下一步：${nextStepLabel}`;
+  }
+  const firstAction = nextActions.value[0];
+  return firstAction ? `下一步：${firstAction.label}` : '下一步：刷新区块并继续查看建议动作。';
 });
 
 function resetRuntimeBlocks() {
@@ -262,7 +406,7 @@ async function refreshBlock(blockKey: string) {
       intent: hint.intent,
       params: hint.params || {},
       context: {
-        scene_key: 'project.dashboard',
+        scene_key: currentEntryIntent.value.replace('.enter', ''),
         page_key: 'project.management.dashboard',
         project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
       },
@@ -292,41 +436,92 @@ async function refreshAllBlocks() {
   await Promise.allSettled(tasks);
 }
 
-async function loadDashboardEntry() {
-  const projectId = resolveProjectIdFromQuery();
-  if (projectId <= 0) {
-    pageStatus.value = 'error';
-    errorTitle.value = '缺少项目上下文';
-    errorMessage.value = '访问项目驾驶舱必须提供 project_id。';
-    return;
-  }
-
+async function loadEntry(intent: string, params: Record<string, unknown>) {
+  const projectId = asNumber(params.project_id || resolveProjectIdFromQuery());
+  loadingTitle.value = intent === 'project.plan_bootstrap.enter'
+    ? '正在进入计划准备...'
+    : intent === 'project.execution.enter'
+      ? '正在进入执行推进...'
+      : '正在进入项目驾驶舱...';
+  pageStatus.value = 'loading';
   try {
-    pageStatus.value = 'loading';
-    const data = await intentRequest<DashboardEntry>({
-      intent: 'project.dashboard.enter',
-      params: { project_id: projectId },
+    const data = await intentRequest<GenericEntry>({
+      intent,
+      params,
       context: {
-        scene_key: 'project.dashboard',
+        scene_key: intent.replace('.enter', ''),
         page_key: 'project.management.dashboard',
         project_id: projectId,
       },
     });
+    currentEntryIntent.value = intent;
     entry.value = (data && typeof data === 'object') ? data : {};
     resetRuntimeBlocks();
     pageStatus.value = 'ready';
     await refreshAllBlocks();
   } catch (err) {
     pageStatus.value = 'error';
-    errorTitle.value = '项目驾驶舱加载失败';
+    errorTitle.value = '产品生命周期工作台加载失败';
     errorMessage.value = err instanceof Error ? err.message : 'unknown error';
   }
+}
+
+async function runAction(action: ActionCard) {
+  if (!action.intent || action.disabled) return;
+  try {
+    if (action.intent.endsWith('.enter')) {
+      transitionFeedback.value = null;
+      await loadEntry(action.intent, action.params);
+      return;
+    }
+    const result = await intentRequest<Record<string, unknown>>({
+      intent: action.intent,
+      params: action.params,
+      context: {
+        scene_key: currentEntryIntent.value.replace('.enter', ''),
+        page_key: 'project.management.dashboard',
+        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+      },
+    });
+    const fromState = asText(result.from_state || '');
+    const toState = asText(result.to_state || '');
+    const reasonCode = asText(result.reason_code || '');
+    const blocked = asText(result.result || '') === 'blocked';
+    transitionFeedback.value = {
+      variant: blocked ? 'warning' : 'success',
+      title: blocked ? '执行推进受阻' : '执行推进完成',
+      message: fromState && toState
+        ? `状态变化：${fromState} → ${toState}。原因：${reasonCode || '无'}。`
+        : `执行结果：${reasonCode || '已返回结果'}。`,
+    };
+    await Promise.allSettled([
+      refreshBlock('next_actions'),
+      refreshBlock('execution_tasks'),
+    ]);
+  } catch (err) {
+    transitionFeedback.value = {
+      variant: 'warning',
+      title: '动作执行失败',
+      message: err instanceof Error ? err.message : 'unknown error',
+    };
+  }
+}
+
+async function loadLifecycleEntry() {
+  const projectId = resolveProjectIdFromQuery();
+  if (projectId <= 0) {
+    pageStatus.value = 'error';
+    errorTitle.value = '缺少项目上下文';
+    errorMessage.value = '访问项目生命周期工作台必须提供 project_id。';
+    return;
+  }
+  await loadEntry('project.dashboard.enter', { project_id: projectId });
 }
 
 watch(
   () => route.fullPath,
   () => {
-    void loadDashboardEntry();
+    void loadLifecycleEntry();
   },
   { immediate: true },
 );
@@ -354,7 +549,8 @@ watch(
 
 .hero-card,
 .summary-card,
-.block-card {
+.block-card,
+.feedback-banner {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(22, 55, 89, 0.08);
   border-radius: 18px;
@@ -384,9 +580,42 @@ watch(
 }
 
 .hero-subtitle,
-.block-header p {
+.block-header p,
+.hero-state,
+.hero-next {
   margin: 8px 0 0;
   color: #627d98;
+}
+
+.hero-state {
+  color: #102a43;
+  font-weight: 600;
+}
+
+.hero-next {
+  color: #0b6e4f;
+}
+
+.feedback-banner {
+  padding: 16px 18px;
+}
+
+.feedback-banner[data-variant='success'] {
+  border-color: rgba(12, 126, 89, 0.22);
+}
+
+.feedback-banner[data-variant='warning'] {
+  border-color: rgba(180, 83, 9, 0.22);
+}
+
+.feedback-banner strong {
+  display: block;
+  color: #102a43;
+}
+
+.feedback-banner p {
+  margin: 8px 0 0;
+  color: #486581;
 }
 
 .summary-card {
@@ -429,107 +658,118 @@ watch(
   align-items: flex-start;
 }
 
-.metric-list,
-.risk-list,
-.action-list {
-  display: grid;
-  gap: 10px;
-}
-
-.metric-row,
-.risk-summary {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #f6f9fb;
-  color: #243b53;
-}
-
-.risk-summary {
-  flex-wrap: wrap;
-}
-
-.risk-alert {
-  padding: 12px;
-  border-radius: 12px;
-  background: #fff6f4;
-  border: 1px solid rgba(191, 90, 60, 0.12);
-}
-
-.risk-alert strong {
-  color: #7c2d12;
-}
-
-.risk-alert p {
-  margin: 6px 0 0;
-  color: #9a3412;
-}
-
-.action-card {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f6f9fb;
-}
-
-.action-card p {
-  margin: 6px 0 0;
-  color: #627d98;
-}
-
-.action-state {
-  padding: 4px 10px;
+.ghost-button,
+.primary-button {
   border-radius: 999px;
-  font-size: 12px;
-  background: #d9e2ec;
-  color: #243b53;
+  border: 1px solid rgba(16, 42, 67, 0.12);
+  background: #fff;
+  color: #102a43;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
-.action-state[data-tone='planned'] {
-  background: #fff7ed;
-  color: #b45309;
+.primary-button {
+  background: #102a43;
+  color: #fff;
+}
+
+.primary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .block-status {
-  padding: 14px;
-  border-radius: 12px;
-  background: #f6f9fb;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.04);
   color: #52606d;
 }
 
 .block-status-error {
-  background: #fff1f2;
-  color: #b42318;
+  background: rgba(190, 24, 93, 0.08);
+  color: #9d174d;
 }
 
 .block-status-warning {
-  background: #fff7ed;
-  color: #b45309;
+  background: rgba(180, 83, 9, 0.08);
+  color: #9a3412;
 }
 
-.ghost-button {
-  border: 1px solid rgba(16, 42, 67, 0.12);
+.metric-list,
+.task-list,
+.action-list,
+.risk-list {
+  display: grid;
+  gap: 12px;
+}
+
+.metric-row,
+.task-row,
+.action-card,
+.risk-alert {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(240, 244, 248, 0.72);
+}
+
+.risk-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #334e68;
+}
+
+.action-side {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.action-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 10px;
   border-radius: 999px;
-  background: white;
+  font-size: 12px;
+  background: rgba(16, 42, 67, 0.08);
   color: #102a43;
-  padding: 8px 14px;
-  cursor: pointer;
 }
 
-@media (max-width: 720px) {
-  .project-dashboard-page {
-    padding: 12px;
-  }
+.action-state[data-tone='warning'] {
+  background: rgba(180, 83, 9, 0.12);
+  color: #9a3412;
+}
 
+.action-state[data-tone='success'] {
+  background: rgba(12, 126, 89, 0.14);
+  color: #0b6e4f;
+}
+
+.action-state[data-tone='info'] {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+@media (max-width: 900px) {
   .hero-card,
-  .block-header {
+  .block-header,
+  .metric-row,
+  .task-row,
+  .action-card,
+  .risk-alert {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .action-side {
+    justify-items: start;
   }
 }
 </style>

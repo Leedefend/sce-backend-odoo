@@ -4,6 +4,8 @@ from __future__ import annotations
 import time
 from typing import Any, Dict
 
+from odoo.exceptions import AccessError
+
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_construction_core.services.project_execution_state_machine import (
     ProjectExecutionStateMachine,
@@ -50,6 +52,61 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             "params": {"project_id": int(project_id), "block_key": "next_actions"},
             "reason_code": reason_code,
         }
+
+    def _post_transition_note(self, project, *, from_state: str, to_state: str, reason_code: str, result: str) -> None:
+        if not project or not hasattr(project, "message_post"):
+            return
+        try:
+            from_label = ProjectExecutionStateMachine.STATE_LABEL.get(from_state, from_state)
+            to_label = ProjectExecutionStateMachine.STATE_LABEL.get(to_state, to_state)
+            project.sudo().message_post(
+                body=(
+                    "执行推进记录：%s。状态变化 %s → %s。原因：%s。"
+                    % ("成功" if result == "success" else "阻塞", from_label, to_label, reason_code)
+                )
+            )
+        except Exception:
+            return
+
+    def _schedule_followup_activity(self, project, *, to_state: str) -> None:
+        if not project or not hasattr(project, "activity_schedule"):
+            return
+        if to_state not in {"in_progress", "ready"}:
+            return
+        try:
+            activity_model = self.env["mail.activity"] if "mail.activity" in self.env else None
+        except Exception:
+            activity_model = None
+        activity_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)
+        if activity_model is None or not activity_type:
+            return
+        summary = "执行推进跟进"
+        try:
+            existing = activity_model.sudo().search_count([
+                ("res_model", "=", "project.project"),
+                ("res_id", "=", int(project.id)),
+                ("summary", "=", summary),
+            ])
+        except Exception:
+            existing = 0
+        if existing:
+            return
+        user_id = int(getattr(getattr(project, "user_id", None), "id", 0) or self.env.user.id or 0)
+        if user_id <= 0:
+            return
+        note = (
+            "执行状态已进入“%s”。请根据当前任务与下一步动作继续推进。"
+            % ProjectExecutionStateMachine.STATE_LABEL.get(to_state, to_state)
+        )
+        try:
+            project.sudo().activity_schedule(
+                activity_type_id=int(activity_type.id),
+                summary=summary,
+                note=note,
+                user_id=user_id,
+            )
+        except (AccessError, Exception):
+            return
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -103,6 +160,13 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         to_state = requested_target_state or ProjectExecutionStateMachine.default_target(from_state)
         if not ProjectExecutionStateMachine.can_transition(from_state, to_state):
             reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
+            self._post_transition_note(
+                project,
+                from_state=from_state,
+                to_state=from_state,
+                reason_code=reason_code,
+                result="blocked",
+            )
             return {
                 "ok": True,
                 "data": {
@@ -142,6 +206,14 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             }
 
         reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
+        self._post_transition_note(
+            project,
+            from_state=from_state,
+            to_state=to_state,
+            reason_code=reason_code,
+            result="success",
+        )
+        self._schedule_followup_activity(project, to_state=to_state)
         return {
             "ok": True,
             "data": {
