@@ -1041,3 +1041,12 @@ Each entry must include:
 - completed_step: `修复 ProjectInitializationService 中 Odoo recordset 布尔判断导致根任务未创建的问题；project.initiation.enter 之后稳定生成真实 project.task 根任务；plan_tasks 与 execution_tasks 统一读取并暴露 project.task/sc_state 语义；execution.advance 调用真实任务状态迁移（draft->ready->in_progress / in_progress->done），并同步更新 next_actions、chatter、activity；前端补充任务状态/空态/执行结果人类可读提示；execution advance smoke 增加“真实任务前后状态变化 + source_model=project.task”校验`
 - active_commit: `pending`
 - next_step: `输出 Phase 14-B tmp 总结，并按分类提交本轮真实使用收口改动`
+
+### 2026-03-23T02:20:00Z
+- blocker_key: `phase14c_controlled_productization`
+- layer_target: `Domain/Product Layer + Verification Layer + Docs Layer`
+- module: `addons/smart_construction_core + scripts/verify + docs/ops + tmp`
+- reason: `Phase 14-C：在不扩复杂度的前提下，将 execution flow 收口为稳定可用形态，统一 sc_state 真源、锁定 advance 边界、增加 project/task/activity 一致性 guard，并补非开发人员 playbook`
+- completed_step: `抽出 task state support 与 execution consistency guard；dashboard/plan/execution 构建统一改为以 sc_state 统计，不再以 kanban_state 作为业务真源；execution.advance 限定为 single_open_task_only 范围，遇到多开放任务或 project/task 漂移直接阻断；next_actions summary 暴露 task/activity 一致性证据；新增 execution consistency guard 脚本、advance scope 文档与 v0.1 playbook`
+- active_commit: `pending`
+- next_step: `执行 Phase 14-C 定向验证，输出 /tmp 总结并分类提交`

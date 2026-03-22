@@ -64,6 +64,7 @@ Recommended `next_actions` fields:
 
 ## Execution State Machine
 - persisted field: `project.project.sc_execution_state`
+- task business state field: `project.task.sc_state`
 - frozen state set:
   - `ready`
   - `in_progress`
@@ -75,3 +76,4 @@ Recommended `next_actions` fields:
   - `blocked -> ready`
 - reference doc:
   - `docs/ops/product_project_execution_state_machine_v1.md`
+  - `docs/ops/product_project_execution_advance_scope_v1.md`
