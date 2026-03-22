@@ -16,6 +16,9 @@ from odoo.addons.smart_construction_core.handlers.project_execution_enter import
 from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
     ProjectExecutionAdvanceHandler,
 )
+from odoo.addons.smart_construction_core.services.project_execution_service import (
+    ProjectExecutionService,
+)
 
 
 @tagged("sc_smoke", "project_plan_bootstrap_backend")
@@ -174,3 +177,68 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
             ((result.get("data") or {}).get("reason_code")),
             "EXECUTION_SCOPE_MULTI_OPEN_TASKS_UNSUPPORTED",
         )
+
+    def test_execution_pilot_precheck_block_reports_ready_project(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Pilot Precheck Ready Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+                "date_start": "2026-03-23",
+            }
+        )
+        self.env["project.task"].create(
+            {
+                "name": "Project Root Task",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+
+        service = ProjectExecutionService(self.env)
+        result = service.build_runtime_block("pilot_precheck", project_id=project.id, context={})
+        block = result.get("block") if isinstance(result.get("block"), dict) else {}
+        data = block.get("data") if isinstance(block.get("data"), dict) else {}
+        summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
+        checks = data.get("checks") if isinstance(data.get("checks"), list) else []
+
+        self.assertEqual(block.get("block_type"), "checklist")
+        self.assertEqual(summary.get("overall_state"), "ready")
+        self.assertEqual(summary.get("failed_count"), 0)
+        self.assertTrue(checks)
+
+    def test_execution_pilot_precheck_detects_multi_open_task_violation(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Pilot Precheck Blocked Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+                "date_start": "2026-03-23",
+            }
+        )
+        self.env["project.task"].create(
+            {
+                "name": "Project Root Task A",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+        self.env["project.task"].create(
+            {
+                "name": "Project Root Task B",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+
+        service = ProjectExecutionService(self.env)
+        result = service.build_runtime_block("pilot_precheck", project_id=project.id, context={})
+        block = result.get("block") if isinstance(result.get("block"), dict) else {}
+        data = block.get("data") if isinstance(block.get("data"), dict) else {}
+        summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
+
+        self.assertEqual(summary.get("overall_state"), "blocked")
+        self.assertEqual(summary.get("primary_reason_code"), "PILOT_SINGLE_OPEN_TASK_REQUIRED")

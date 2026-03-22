@@ -18,10 +18,12 @@ class ProjectExecutionService:
     )
     ENTRY_BLOCKS = (
         ("execution_tasks", "执行任务", "deferred"),
+        ("pilot_precheck", "试点前检查", "deferred"),
         ("next_actions", "执行下一步", "deferred"),
     )
     RUNTIME_BLOCK_MAP = {
         "execution_tasks": "block.project.execution_tasks",
+        "pilot_precheck": "block.project.execution_pilot_precheck",
         "next_actions": "block.project.execution_next_actions",
     }
 
