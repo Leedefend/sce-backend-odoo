@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-22T14:10:00Z
+- blocker_key: `phase16b_native_alignment_orchestration_correction`
+- layer_target: `Ops Governance / Scene Orchestration Policy / Verify Gate`
+- module: `docs/ops + scripts/verify + Makefile`
+- reason: `将 v0.2 扩展方向从自建 project-domain 业务实现纠偏为 native reuse + orchestration-only`
+- completed_step: `落库 native mapping、通用 orchestration template、风险扫描、第二业务链重新决策与 executable guard`
+- active_commit: `0c7a51d`
+- next_step: `Run native alignment audit on current workspace, write tmp summary, and keep project-payment draft as blocked sample`
+
 ### 2026-03-22T13:20:00Z
 - blocker_key: `phase16a_pilot_expansion_preparation`
 - layer_target: `Ops/Product Planning`
