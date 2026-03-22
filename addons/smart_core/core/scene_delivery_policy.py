@@ -43,7 +43,6 @@ BUILTIN_SURFACE_NAV_ALLOWLIST = {
         "workspace.home",
         "workspace.list",
         "workspace.management",
-        "portal.dashboard",
     },
 }
 BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {

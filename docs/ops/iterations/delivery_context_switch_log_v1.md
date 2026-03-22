@@ -762,3 +762,111 @@ Each entry must include:
 - completed_step: `完成已填充 release note，覆盖问题归因、风险分级、验证命令、契约证据路径、回滚方案与下一批次目标`
 - active_commit: `9ea7da6`
 - next_step: `复用该模板继续补齐其他治理类问题复盘文档`
+
+### 2026-03-21T15:34:06Z
+- blocker_key: `platform_minimum_surface_system_init_route_leak`
+- layer_target: `Platform Layer / Startup Minimum Surface`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: `平台-only 数据库验证时 system.init 仍可能落到 portal.dashboard，需强制回归 workspace.home 最小启动面`
+- completed_step: `新增行业模块安装态判断；在无行业模块时强制 default_route=workspace.home(/) 并同步 workspace_home_ref/nav_meta，阻断行业场景默认跳转`
+- active_commit: `pending`
+- next_step: `重启服务后在 sc_platform_core 执行 login/system.init 前端链路复测，确认不再进入行业内容`
+
+### 2026-03-21T15:44:00Z
+- blocker_key: `platform_minimum_surface_sidebar_industry_menu_leak`
+- layer_target: `Platform Layer / Startup Minimum Surface`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: `平台-only 数据库侧栏仍下发行业场景菜单，点击后报“未配置”，需在 system.init 导航面做硬收口`
+- completed_step: `新增 platform minimum nav contract（仅 workspace.home）；平台模式下强制覆盖 nav/nav_contract/default_route/nav_meta.nav_source，阻断行业菜单下发`
+- active_commit: `pending`
+- next_step: `在 sc_platform_core 复测 system.init.nav scene_key 集合仅包含 workspace.home，并做前端实测`
+
+### 2026-03-21T15:49:59Z
+- blocker_key: `platform_minimum_surface_nav_leak_regression_guard`
+- layer_target: `Platform Layer / Minimum Surface Guard`
+- module: `scripts/verify/smart_core_platform_minimum_nav_isolation_guard.py + Makefile + docs/ops`
+- reason: `把“平台-only 导航不得泄漏行业菜单”固化为可执行回归门禁，避免后续边界迭代回退`
+- completed_step: `新增 nav_isolation_guard 并接入 verify.smart_core.minimum_surface 聚合链；文档同步加入 Regression-G 基线`
+- active_commit: `pending`
+- next_step: `在 sc_platform_core 执行 minimum_surface 全链验证并出具收口结论`
+
+### 2026-03-21T16:06:39Z
+- blocker_key: `batch_b_obvious_boundary_migration_plan`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `docs/ops/iterations/smart_core_inventory_v1_batch_b_migration_plan.md`
+- reason: `进入 Batch-B（只迁明显越界点），先冻结可执行迁移顺序与候选清单，避免边改边漂移`
+- completed_step: `新增 Batch-B 迁移计划：P0/P1/P2 候选、边界说明、执行顺序与 minimum-surface 门禁要求`
+- active_commit: `pending`
+- next_step: `按 Step-1 落地 page_contracts/page_orchestration 行业语义下沉`
+
+### 2026-03-21T16:10:28Z
+- blocker_key: `batch_b_step1_page_audience_neutralization`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/page_contracts_builder.py + addons/smart_core/core/page_orchestration_data_provider.py`
+- reason: `执行 Batch-B Step-1，先下沉页面层默认受众中的行业角色语义，平台保留中性默认`
+- completed_step: `page_audience 默认角色从 project/finance 语义改为 internal/reviewer 中性集合；action target fallback 默认场景收敛为 workspace.home；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `继续 Step-1 第二段：page_contracts 文案关键词与 role_focus 的行业词抽离为 extension profile`
+
+### 2026-03-21T16:16:12Z
+- blocker_key: `batch_b_step1_page_profile_override_hook`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/page_contracts_builder.py + addons/smart_core/core/page_orchestration_data_provider.py`
+- reason: `完成 Step-1 第二段：为页面默认受众/焦点/动作增加 profile 覆盖入口，并进一步中性化默认动作文案`
+- completed_step: `新增 page_profile_overrides 解析（支持 data/ext_facts）；page_audience/role_focus/default_actions 支持 overrides；risk/my_work 默认动作文案与 key 收敛为中性“工作区/工作概览”；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `进入 Batch-B Step-2：workspace_home_* 默认内容中的行业语义下沉`
+
+### 2026-03-21T16:19:55Z
+- blocker_key: `batch_b_step2_workspace_home_neutral_defaults`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py + addons/smart_core/core/workspace_home_data_provider.py`
+- reason: `执行 Batch-B Step-2，先收敛 workspace_home 默认 scene 与 audience 的行业语义`
+- completed_step: `workspace_scene aliases 默认 dashboard→workspace.home；workspace_home fallback scene/page hints 全部收敛到 workspace.home；v1_page_profile audience 从 project/finance 角色语义改为 internal/reviewer 中性集合；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `继续 Step-2 下一段：workspace_home 文案关键词（risk/payment/project）抽离为 extension profile`
+
+### 2026-03-21T16:22:38Z
+- blocker_key: `batch_b_step2_workspace_home_copy_neutralization`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py`
+- reason: `继续 Step-2，先将平台默认 layout/actions 文案从行业风险/审批语义收敛为中性事项语义`
+- completed_step: `workspace_home layout.texts 中 risk 区域文案改为“关键事项”语义；layout.actions 中 todo_approval/todo_risk 改为中性表达；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `继续 Step-2：将剩余 risk/payment/project 关键词字典提取到 extension profile 覆盖`
+
+### 2026-03-21T16:27:40Z
+- blocker_key: `batch_b_step2_workspace_home_keyword_neutralization`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py`
+- reason: `继续 Step-2，将 workspace_home 的 source 路由与指标文案中的 risk/payment/project 行业措辞进一步中性化`
+- completed_step: `route_by_source 对 finance/payment 默认回落至 workspace.home；metrics 中“风险/在管项目”描述收敛为“关键事项/可用场景”；v1_action_schema 的 open_risk_dashboard 标签改为中性“进入重点事项”；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `进入 Step-2 收口尾段：将 remaining 关键词集合做 ext_facts/profile 覆盖入口并冻结默认中性词表`
+
+### 2026-03-21T16:37:02Z
+- blocker_key: `batch_b_step2_workspace_home_keyword_override_chain`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/workspace_home_contract_builder.py`
+- reason: `完成 Step-2 收口尾段，把 workspace_home 的关键词词表覆盖能力打通到 today/risk action 生成链路，避免平台默认词表再次硬编码行业语义`
+- completed_step: `新增 workspace_keyword_overrides 解析（支持 data/ext_facts）；_build_business_today_actions/_build_today_actions/_build_risk_actions 全链路透传 keyword_overrides；risk 语义识别与 source 路由统一走可覆盖词表；minimum-surface 全链验证通过`
+- active_commit: `pending`
+- next_step: `进入 Batch-B Step-3，统一 scene_delivery_policy/action_target_schema/system_init_payload_builder/scene_provider 的默认 scene target 为 workspace.home`
+
+### 2026-03-22T00:00:37Z
+- blocker_key: `batch_b_step3_default_scene_target_workspace_home`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `addons/smart_core/core/action_target_schema.py + addons/smart_core/core/system_init_payload_builder.py + addons/smart_core/core/scene_provider.py + addons/smart_core/core/scene_delivery_policy.py + addons/smart_core/handlers/system_init.py`
+- reason: `执行 Batch-B Step-3，统一平台默认 scene target，彻底移除 portal.dashboard 作为平台默认落点`
+- completed_step: `open_risk_dashboard/open_workbench/open_landing 默认 target 统一为 workspace.home；system_init_payload_builder landing_scene 默认改 workspace.home；critical scene target overrides 收敛为 workspace.home；surface nav allowlist 去除 portal.dashboard；system.init 兜底 landing_scene_key 固定 workspace.home`
+- active_commit: `pending`
+- next_step: `运行 minimum-surface 全链与 nav isolation 回归，确认平台-only 仍可稳定启动且无行业默认场景泄漏`
+
+### 2026-03-22T00:07:11Z
+- blocker_key: `batch_b_step4_legacy_group_sunset_guard`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `scripts/verify/smart_core_legacy_group_required_groups_guard.py + Makefile + docs/ops`
+- reason: `执行 Batch-B Step-4，固化 legacy group sunset 门禁，防止 smart_core handlers 的 REQUIRED_GROUPS 回退到 group_sc_* 或行业组`
+- completed_step: `新增 legacy_group_guard（扫描 smart_core handlers REQUIRED_GROUPS）；minimum_surface 聚合新增 Guard-A0；文档同步补齐 Guard-A0 约束与命令入口`
+- active_commit: `pending`
+- next_step: `执行 minimum-surface 全链验证并分类提交 Step-4 收口`

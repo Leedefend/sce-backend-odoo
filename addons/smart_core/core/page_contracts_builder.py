@@ -30,6 +30,60 @@ _ACTION_TARGET_RESOLVER = None
 _DATA_PROVIDER_MODULE = None
 
 
+def _resolve_page_profile_overrides(data: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(data, dict):
+        return {}
+    direct_payload = data.get("page_profile_overrides")
+    if isinstance(direct_payload, dict):
+        return direct_payload
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    ext_payload = ext_facts.get("page_profile_overrides") if isinstance(ext_facts.get("page_profile_overrides"), dict) else {}
+    return ext_payload or {}
+
+
+def _resolve_override_list(overrides: Dict[str, Any] | None, bucket: str, key: str) -> list[str]:
+    if not isinstance(overrides, dict):
+        return []
+    bucket_payload = overrides.get(bucket)
+    if not isinstance(bucket_payload, dict):
+        return []
+    raw = bucket_payload.get(str(key or "").strip().lower())
+    if not isinstance(raw, list):
+        return []
+    out: list[str] = []
+    for item in raw:
+        token = str(item or "").strip()
+        if token:
+            out.append(token)
+    return out
+
+
+def _resolve_override_actions(overrides: Dict[str, Any] | None, key: str) -> list[Dict[str, Any]]:
+    if not isinstance(overrides, dict):
+        return []
+    bucket_payload = overrides.get("default_page_actions")
+    if not isinstance(bucket_payload, dict):
+        return []
+    raw = bucket_payload.get(str(key or "").strip().lower())
+    if not isinstance(raw, list):
+        return []
+    out: list[Dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        action_key = str(item.get("key") or "").strip()
+        if not action_key:
+            continue
+        out.append(
+            {
+                "key": action_key,
+                "label": str(item.get("label") or action_key),
+                "intent": str(item.get("intent") or "ui.contract"),
+            }
+        )
+    return out
+
+
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     global _ACTION_TARGET_RESOLVER
     if callable(_ACTION_TARGET_RESOLVER):
@@ -47,7 +101,7 @@ def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
             return resolver(action_key, page_key)
     except Exception:
         pass
-    fallback_scene = str(page_key or "").strip().lower() or "portal.dashboard"
+    fallback_scene = str(page_key or "").strip().lower() or "workspace.home"
     return {"kind": "scene.key", "scene_key": fallback_scene}
 
 
@@ -106,7 +160,10 @@ def _normalize_page_type(page_key: str) -> str:
     return "list"
 
 
-def _page_audience(page_key: str) -> list[str]:
+def _page_audience(page_key: str, profile_overrides: Dict[str, Any] | None = None) -> list[str]:
+    override_value = _resolve_override_list(profile_overrides, "page_audience", page_key)
+    if override_value:
+        return override_value
     provider = _load_data_provider()
     if provider:
         fn = getattr(provider, "build_page_audience", None)
@@ -116,11 +173,11 @@ def _page_audience(page_key: str) -> list[str]:
                 return value
     key = str(page_key or "").strip().lower()
     if key in {"usage_analytics", "scene_health"}:
-        return ["executive", "owner", "project_manager"]
+        return ["executive", "owner", "internal_user"]
     if key in {"my_work", "action", "record"}:
-        return ["project_manager", "finance_manager", "owner"]
+        return ["internal_user", "owner", "reviewer"]
     if key in {"home", "workbench"}:
-        return ["project_manager", "finance_manager", "owner", "executive"]
+        return ["internal_user", "owner", "executive"]
     return ["generic_user"]
 
 
@@ -196,7 +253,15 @@ def _role_zone_order(role_code: str, page_type: str, page_key: str = "") -> list
     return ["hero", "primary", "secondary", "supporting"]
 
 
-def _role_focus_sections(role_code: str, page_key: str) -> list[str]:
+def _role_focus_sections(
+    role_code: str,
+    page_key: str,
+    profile_overrides: Dict[str, Any] | None = None,
+) -> list[str]:
+    override_key = f"{str(role_code or '').strip().lower()}::{str(page_key or '').strip().lower()}"
+    override_value = _resolve_override_list(profile_overrides, "role_focus_sections", override_key)
+    if override_value:
+        return override_value
     provider = _load_data_provider()
     if provider:
         fn = getattr(provider, "build_role_focus_sections", None)
@@ -292,9 +357,9 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
                 return payload
     key = str(section_key or "").strip().lower()
     if "risk" in key:
-        return [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}]
+        return [{"key": "open_workspace_overview", "label": "查看重点事项", "intent": "ui.contract"}]
     if any(token in key for token in ("approval", "todo", "next_actions")):
-        return [{"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"}]
+        return [{"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"}]
     if any(token in key for token in ("filter", "group", "slice")):
         return [{"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"}]
     if any(token in key for token in ("table", "list", "records")):
@@ -352,7 +417,10 @@ def _section_data_source(page_key: str, section_key: str, section_tag: str) -> D
     }
 
 
-def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
+def _default_page_actions(page_key: str, profile_overrides: Dict[str, Any] | None = None) -> list[Dict[str, Any]]:
+    override_value = _resolve_override_actions(profile_overrides, page_key)
+    if override_value:
+        return override_value
     provider = _load_data_provider()
     if provider:
         fn = getattr(provider, "build_default_page_actions", None)
@@ -369,7 +437,7 @@ def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
     if key == "my_work":
         return [
             {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
-            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key == "workbench":
@@ -385,8 +453,8 @@ def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
         ]
     if key in {"action", "record", "scene"}:
         return [
-            {"key": "open_my_work", "label": "进入我的工作", "intent": "ui.contract"},
-            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"},
+            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]
@@ -397,6 +465,7 @@ def _build_page_orchestration_v1(
     page: Dict[str, Any],
     role_code: str,
     role_source_code: str | None = None,
+    profile_overrides: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     source_role_code = str(role_source_code or "").strip().lower() or role_code
     sections = page.get("sections") if isinstance(page.get("sections"), list) else []
@@ -407,11 +476,16 @@ def _build_page_orchestration_v1(
     if not title:
         title = page_key.replace("_", " ").strip().title() or "Page"
 
-    audience = _page_audience(page_key)
+    audience = _page_audience(page_key, profile_overrides=profile_overrides)
     page_type = _normalize_page_type(page_key)
     zone_buckets: Dict[str, Dict[str, Any]] = {}
     data_sources: Dict[str, Dict[str, Any]] = _base_data_sources()
-    focus_sections = {key: idx + 1 for idx, key in enumerate(_role_focus_sections(role_code, page_key))}
+    focus_sections = {
+        key: idx + 1
+        for idx, key in enumerate(
+            _role_focus_sections(role_code, page_key, profile_overrides=profile_overrides)
+        )
+    }
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):
             continue
@@ -480,7 +554,7 @@ def _build_page_orchestration_v1(
         )
 
     action_schema_actions: Dict[str, Any] = {}
-    page_actions = _default_page_actions(page_key)
+    page_actions = _default_page_actions(page_key, profile_overrides=profile_overrides)
     for action in page_actions:
         action_key = str(action.get("key") or "").strip()
         if not action_key:
@@ -563,6 +637,7 @@ def _build_page_orchestration_v1(
 
 def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
     safe_data = _data if isinstance(_data, dict) else {}
+    profile_overrides = _resolve_page_profile_overrides(safe_data)
     role_source_code = _resolve_role_source_code(safe_data)
     role_code = _normalize_role_code(safe_data)
     payload = {
@@ -1419,5 +1494,6 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             page,
             role_code,
             role_source_code=role_source_code,
+            profile_overrides=profile_overrides,
         )
     return payload
