@@ -731,6 +731,8 @@
   - `make verify.product.project_dashboard_block_contract_guard`
 - Project dashboard aggregate:
   - `make verify.product.project_dashboard_baseline`
+- Dashboard -> plan flow:
+  - `make verify.product.project_flow.dashboard_plan`
 - Phase 12-C legacy flow/shape/context guards:
   - `make verify.product.project_flow.initiation_dashboard`
   - `make verify.product.suggested_action_shape_guard`
@@ -749,6 +751,8 @@
   - runtime block fetch available through `project.dashboard.block.fetch`
   - supported runtime blocks frozen to `progress/risks/next_actions`
   - deprecated alias `project.dashboard.open` is thin-wrapper only
+  - dashboard `next_actions` exposes `project.plan_bootstrap.enter` and keeps `project_id` continuous into plan entry/runtime
+  - `project.plan_bootstrap.enter` keeps minimal entry shape and its runtime data stays behind `project.plan_bootstrap.block.fetch`
   - suggested_action shape frozen (`intent/params/reason_code`)
   - `project_id` context chain continuous
   - dashboard contract non-empty (not shell-only)
@@ -788,7 +792,8 @@
 5. `make verify.runtime.fetch_entrypoints ...`
 6. `make verify.product.project_initiation.full ...`
 7. `make verify.product.project_dashboard_baseline ...`
-8. `make verify.phase12b.baseline ...`（用于统一门禁回归）
+8. `make verify.product.project_flow.dashboard_plan ...`
+9. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight
 - Readiness report (non-blocking):
