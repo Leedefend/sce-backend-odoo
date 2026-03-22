@@ -55,6 +55,27 @@ def _assert_open_ok(intent_url: str, token: str, app_id: str, label: str, *, db_
         raise RuntimeError(f"{label}: app.open returned empty subject for app={app_id}")
 
 
+def _assert_partial_permission_fallback(intent_url: str, token: str, label: str, *, db_name: str) -> None:
+    if label != "owner":
+        return
+    # Regression: app is visible but specific configured feature may be non-openable.
+    # Requirement: must not 500; must return openable target or safe fallback.
+    status, payload = _post(
+        intent_url,
+        token,
+        "app.open",
+        {"app": "project_management", "feature": "project_overview"},
+        db_name=db_name,
+    )
+    if status >= 500:
+        raise RuntimeError(f"owner: app.open hard failed on restricted feature status={status}")
+    if status < 400 and payload.get("ok") is True:
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        subject = str(data.get("subject") or "").strip()
+        if not subject:
+            raise RuntimeError("owner: app.open restricted feature returned empty subject")
+
+
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
@@ -92,6 +113,8 @@ def main() -> int:
             if not app_id:
                 continue
             _assert_open_ok(intent_url, token, app_id, label, db_name=db_name)
+
+        _assert_partial_permission_fallback(intent_url, token, label, db_name=db_name)
 
     print("[smart_core_app_open_fallback_regression_guard] PASS")
     return 0

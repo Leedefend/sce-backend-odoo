@@ -43,6 +43,13 @@ def _is_feature_openable(env, su_env, app_id: str, feature: Dict[str, Any], perm
     _logger.info("[app.open] feature not openable app=%s feature=%s", app_id, feature.get("key"))
     return False
 
+
+def _workspace_fallback_payload(reason: str = "") -> Dict[str, Any]:
+    payload = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+    if reason:
+        payload["fallback_reason"] = str(reason)
+    return payload
+
 class AppOpenHandler(BaseIntentHandler):
     """
     意图：app.open
@@ -70,12 +77,12 @@ class AppOpenHandler(BaseIntentHandler):
             app_id = "workspace"
 
         if app_id == "workspace" and not feature_key:
-            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            data = _workspace_fallback_payload("workspace_default")
             return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
         app = next((a for a in APP_DEFS if a["id"] == app_id), None)
         if not app:
-            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            data = _workspace_fallback_payload("app_not_found")
             return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
         have = _current_perms(env)
@@ -91,11 +98,11 @@ class AppOpenHandler(BaseIntentHandler):
                 feature_key = first_openable.get("key")
         f = next((x for x in app.get("features", []) if x["key"] == feature_key), None)
         if not f:
-            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            data = _workspace_fallback_payload("no_openable_feature")
             return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
         if feature_key and not _is_feature_openable(env, su_env, app_id, f, have):
-            data = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+            data = _workspace_fallback_payload("feature_not_openable")
             return {"status":"success","data":data,"meta":{"intent":self.INTENT_TYPE,"elapsed_ms":int((time.time()-ts0)*1000)},"ok":True}
 
         # 权限二次校验
