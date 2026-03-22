@@ -792,7 +792,10 @@ verify.portal.ui.v0_8.semantic.strict.container: verify.portal.ui.v0_8.semantic.
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 
-.PHONY: verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.smart_core.minimum_surface
+.PHONY: verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard verify.smart_core.minimum_surface
+verify.smart_core.minimum_surface.legacy_group_guard: guard.prod.forbid
+	@python3 scripts/verify/smart_core_legacy_group_required_groups_guard.py
+
 verify.smart_core.minimum_surface.handler_guard: guard.prod.forbid
 	@python3 scripts/verify/smart_core_minimum_handler_surface_guard.py
 
@@ -814,7 +817,7 @@ verify.smart_core.minimum_surface.app_open_regression_guard: guard.prod.forbid c
 verify.smart_core.minimum_surface.nav_isolation_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/smart_core_platform_minimum_nav_isolation_guard.py"
 
-verify.smart_core.minimum_surface: verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard
+verify.smart_core.minimum_surface: verify.smart_core.minimum_surface.legacy_group_guard verify.smart_core.minimum_surface.handler_guard verify.smart_core.minimum_surface.contract_guard verify.smart_core.minimum_surface.owner_startup_smoke verify.smart_core.minimum_surface.same_route_guard verify.smart_core.minimum_surface.order_regression_guard verify.smart_core.minimum_surface.app_open_regression_guard verify.smart_core.minimum_surface.nav_isolation_guard
 	@echo "[OK] verify.smart_core.minimum_surface done"
 
 verify.prod.guard: check-compose-env
