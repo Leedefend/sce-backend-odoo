@@ -111,7 +111,9 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   headers.set('x-tenant', config.tenant);
 
   // Delivery hardening: never fallback to sc_demo implicitly.
-  const dbHeader = resolveActiveDb(String(config.odooDb || '').trim());
+  const dbHeader = config.odooDbPinned
+    ? String(config.odooDb || '').trim()
+    : resolveActiveDb(String(config.odooDb || '').trim());
   if (dbHeader) {
     headers.set('X-Odoo-DB', dbHeader);
   }

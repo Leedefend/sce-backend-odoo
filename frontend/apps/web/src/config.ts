@@ -16,6 +16,7 @@ const localBlockedEnvDb = isLocalHost && envDbNormalized === 'sc_delivery_local'
 const allowLocalFallbackDb = appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
 // For local dev/test only, fallback to sc_demo when db env is not explicitly set.
 const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
+const pinnedDb = runtimeDb || localBlockedEnvDb || enforcedDb;
 
 export const config = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
@@ -25,7 +26,8 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  odooDb: resolveActiveDb(runtimeDb || localBlockedEnvDb || enforcedDb || localDefaultDb),
+  odooDb: pinnedDb || resolveActiveDb(localDefaultDb),
+  odooDbPinned: Boolean(pinnedDb),
 };
 
 // C1: 在开发模式下打印环境变量
