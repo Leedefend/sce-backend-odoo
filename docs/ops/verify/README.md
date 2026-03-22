@@ -695,16 +695,39 @@
 ## Product Baseline: Project Initiation
 - Smoke:
   - `make verify.product.project_initiation`
+- Roles Matrix Smoke:
+  - `make verify.product.project_initiation.roles`
+- ContractRef Shape Guard:
+  - `make verify.product.contract_ref_shape_guard`
+- Product aggregate:
+  - `make verify.product.project_initiation.full`
 - Coverage:
   - login -> open product scene -> create record
   - create result state is ready/success
   - suggested_action exists
   - contract return path available (no fallback-only response)
+  - role matrix behavior deterministic (`owner/pm/finance/executive`)
+  - contract_ref/suggested_action_payload shape frozen (`ui.contract` + `op=menu` first)
+
+## Phase 12-B Aggregate Baseline
+- One-command layered chain:
+  - `make verify.phase12b.baseline`
+- Execution order (hard):
+  1. `verify.smart_core.minimum_surface` (Platform)
+  2. `verify.portal.minimum_runtime_surface` (Portal)
+  3. `verify.product.project_initiation.full` (Product)
+- Layered artifact archive:
+  - `artifacts/baselines/platform/*`
+  - `artifacts/baselines/portal/*`
+  - `artifacts/baselines/product/*`
+- Failure hint:
+  - 退出码 `21/22/23` 分别表示 `platform/portal/product` 层失败
 
 ## Recommended Execution Order
 1. `make verify.smart_core.minimum_surface ...`
 2. `make verify.portal.minimum_runtime_surface ...`
-3. `make verify.product.project_initiation ...`
+3. `make verify.product.project_initiation.full ...`
+4. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight
 - Readiness report (non-blocking):
