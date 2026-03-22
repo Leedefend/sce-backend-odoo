@@ -4,6 +4,9 @@ from __future__ import annotations
 from odoo import fields
 
 from odoo.addons.smart_construction_core.services.project_dashboard_builders.base import BaseProjectBlockBuilder
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 
 class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
@@ -11,18 +14,6 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
     block_type = "execution_task_list"
     title = "执行任务"
     required_groups = ()
-
-    @staticmethod
-    def _task_state(task) -> str:
-        sc_state = str(getattr(task, "sc_state", "") or "").strip().lower()
-        if sc_state in {"draft", "ready", "in_progress", "done", "cancelled"}:
-            return sc_state
-        kanban_state = str(getattr(task, "kanban_state", "") or "").strip().lower()
-        if kanban_state == "done":
-            return "done"
-        if kanban_state == "blocked":
-            return "blocked"
-        return "open"
 
     def build(self, project=None, context=None):
         visibility = self._visibility()
@@ -60,17 +51,17 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
         overdue_count = 0
         in_progress_count = 0
         for task in rows:
-            task_state = self._task_state(task)
-            if task_state != "done":
+            task_state = ProjectTaskStateSupport.normalize(getattr(task, "sc_state", "draft"))
+            if not ProjectTaskStateSupport.is_done(task_state):
                 open_count += 1
-            if task_state == "blocked":
-                blocked_count += 1
             if task_state == "in_progress":
                 in_progress_count += 1
             deadline_value = getattr(task, "date_deadline", False)
             deadline = str(deadline_value or "")
             if deadline_value and deadline_value < fields.Date.today():
                 overdue_count += 1
+            if task_state == "draft" and getattr(task, "readiness_status", "") == "blocked":
+                blocked_count += 1
             items.append(
                 {
                     "task_id": int(task.id),

@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from .base import BaseProjectBlockBuilder
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 
 class ProjectMetricsBuilder(BaseProjectBlockBuilder):
@@ -41,7 +44,7 @@ class ProjectMetricsBuilder(BaseProjectBlockBuilder):
         if not progress_rate:
             progress_rate = float(getattr(project, "progress_rate_latest", 0.0) or 0.0)
         if not progress_rate and task_total > 0:
-            done = self._safe_count("project.task", task_domain + [("kanban_state", "=", "done")]) if self._model_has_fields("project.task", ["kanban_state"]) else 0
+            done = self._safe_count("project.task", task_domain + ProjectTaskStateSupport.done_domain())
             progress_rate = self._safe_rate(done, task_total)
         contract_executed_amount = self._safe_read_group_sum_any(
             "construction.contract",

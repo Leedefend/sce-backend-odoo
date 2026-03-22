@@ -4,6 +4,9 @@ from __future__ import annotations
 from odoo import fields
 
 from .base import BaseProjectBlockBuilder
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 
 class ProjectProgressBuilder(BaseProjectBlockBuilder):
@@ -57,8 +60,14 @@ class ProjectProgressBuilder(BaseProjectBlockBuilder):
 
         task_domain = self._project_domain("project.task", project)
         total = self._safe_count("project.task", task_domain)
-        done = self._safe_count("project.task", task_domain + [("kanban_state", "=", "done")]) if self._model_has_fields("project.task", ["kanban_state"]) else 0
-        blocked = self._safe_count("project.task", task_domain + [("kanban_state", "=", "blocked")]) if self._model_has_fields("project.task", ["kanban_state"]) else 0
+        done = self._safe_count("project.task", task_domain + ProjectTaskStateSupport.done_domain())
+        blocked = 0
+        try:
+            for task in self.env["project.task"].search(task_domain):
+                if ProjectTaskStateSupport.normalize(getattr(task, "sc_state", "draft")) == "draft" and getattr(task, "readiness_status", "") == "blocked":
+                    blocked += 1
+        except Exception:
+            blocked = 0
         critical = self._safe_count("project.task", task_domain + [("priority", "in", ["2", "3"])]) if self._model_has_fields("project.task", ["priority"]) else 0
         overdue = self._safe_count("project.task", task_domain + [("date_deadline", "<", fields.Date.today())]) if self._model_has_fields("project.task", ["date_deadline"]) else 0
         open_count = max(total - done, 0)
