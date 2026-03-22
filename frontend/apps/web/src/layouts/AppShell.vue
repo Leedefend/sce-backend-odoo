@@ -388,18 +388,13 @@ const pageTitle = computed(() => {
 });
 
 const topbarSubtitle = computed(() => {
-  const sceneKey = String(routeSceneKey.value || '').trim();
-  if (sceneKey === 'projects.intake') {
-    return '创建项目 · 填写基础信息完成立项';
-  }
-  return '';
+  return String(route.meta?.sceneSubtitle || '').trim();
 });
 
-const sceneHeaderMinimal = computed(() => String(routeSceneKey.value || '').trim() === 'projects.intake');
+const sceneHeaderMinimal = computed(() => String(route.meta?.sceneHeaderMode || '').trim() === 'minimal');
 
 const sceneHeaderAnchorLine = computed(() => {
-  if (!sceneHeaderMinimal.value) return '';
-  return '项目立项 / 创建项目';
+  return sceneHeaderMinimal.value ? String(route.meta?.sceneAnchorLine || '').trim() : '';
 });
 
 provide('pageTitle', pageTitle);

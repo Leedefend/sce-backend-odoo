@@ -2,6 +2,7 @@ export interface MutationContract {
   type: string;
   model: string;
   operation: string;
+  execute_intent?: string;
   payload_schema?: Record<string, unknown>;
 }
 
@@ -53,6 +54,7 @@ export function normalizeSceneActionProtocol(row: unknown): SceneActionProtocol 
         type: asText(mutationRaw.type),
         model: asText(mutationRaw.model),
         operation: asText(mutationRaw.operation),
+        execute_intent: asText(mutationRaw.execute_intent || mutationRaw.payload_schema?.execute_intent) || undefined,
         payload_schema: asDict(mutationRaw.payload_schema),
       }
     : undefined;
@@ -79,4 +81,3 @@ export function normalizeSceneActionProtocol(row: unknown): SceneActionProtocol 
     raw: payload,
   };
 }
-
