@@ -7,7 +7,7 @@
     {
       "zone_key": "zone.header",
       "block_key": "block.project.header",
-      "capability_key": "project.dashboard.open",
+      "capability_key": "project.dashboard.enter",
       "source_model": "project.project",
       "source_action": "smart_construction_core.action_sc_project_kanban_lifecycle",
       "intent_key": "project.dashboard"
@@ -15,7 +15,7 @@
     {
       "zone_key": "zone.metrics",
       "block_key": "block.project.metrics",
-      "capability_key": "project.dashboard.open",
+      "capability_key": "project.dashboard.enter",
       "source_model": "project.project",
       "source_action": "smart_construction_core.action_project_dashboard",
       "intent_key": "project.dashboard"

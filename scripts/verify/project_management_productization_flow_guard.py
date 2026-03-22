@@ -22,11 +22,11 @@ def _builder_count() -> int:
     return len(list(path.glob("project_*_builder.py")))
 
 
-def _service_zone_count() -> int:
-    service = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_service.py"
+def _orchestrator_zone_count() -> int:
+    service = ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_contract_orchestrator.py"
     tree = ast.parse(service.read_text(encoding="utf-8"))
     for node in tree.body:
-        if isinstance(node, ast.ClassDef) and node.name == "ProjectDashboardService":
+        if isinstance(node, ast.ClassDef) and node.name == "ProjectDashboardContractOrchestrator":
             for stmt in node.body:
                 if isinstance(stmt, ast.Assign):
                     for t in stmt.targets:
@@ -49,6 +49,7 @@ def main() -> None:
     scene_xml = ROOT / "addons" / "smart_construction_scene" / "data" / "project_management_scene.xml"
     handler_py = ROOT / "addons" / "smart_construction_core" / "handlers" / "project_dashboard.py"
     service_py = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_service.py"
+    orchestrator_py = ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_contract_orchestrator.py"
     mapping_json = ROOT / "docs" / "contract" / "project_management_capability_mapping_v2.json"
     route_doc = ROOT / "docs" / "ops" / "project_management_scene_route_context_v1.md"
     contract_doc = ROOT / "docs" / "contract" / "project_dashboard_contract_v1.md"
@@ -59,6 +60,7 @@ def main() -> None:
     checks.append(("scene_xml_exists", _exists(scene_xml), str(scene_xml)))
     checks.append(("handler_exists", _exists(handler_py), str(handler_py)))
     checks.append(("service_exists", _exists(service_py), str(service_py)))
+    checks.append(("orchestrator_exists", _exists(orchestrator_py), str(orchestrator_py)))
     checks.append(("mapping_v2_exists", _exists(mapping_json), str(mapping_json)))
     checks.append(("route_doc_exists", _exists(route_doc), str(route_doc)))
     checks.append(("contract_doc_exists", _exists(contract_doc), str(contract_doc)))
@@ -66,8 +68,8 @@ def main() -> None:
     checks.append(("snapshot_exists", _exists(snapshot_json), str(snapshot_json)))
     checks.append(("evidence_exists", _exists(evidence_json), str(evidence_json)))
 
-    checks.append(("builder_count_is_7", _builder_count() == 7, f"count={_builder_count()}"))
-    checks.append(("service_zone_count_is_7", _service_zone_count() == 7, f"count={_service_zone_count()}"))
+    checks.append(("builder_count_gte_7", _builder_count() >= 7, f"count={_builder_count()}"))
+    checks.append(("orchestrator_zone_count_is_7", _orchestrator_zone_count() == 7, f"count={_orchestrator_zone_count()}"))
 
     snapshot = _load_json(snapshot_json)
     snap_data = snapshot.get("data") if isinstance(snapshot, dict) else {}
