@@ -4,6 +4,7 @@
 - Scene entry intent: `project.dashboard.enter`
 - Runtime block intent: `project.dashboard.block.fetch`
 - Product flow: `project.initiation.enter -> project.dashboard.enter`
+- Compat alias: `project.dashboard.open` (deprecated, thin wrapper only, target removal `Phase 12-G`)
 
 ## Entry Contract
 `project.dashboard.enter` returns only:
@@ -27,6 +28,7 @@ Constraints:
 Supported `block_key` values:
 - `progress`
 - `risks`
+- `next_actions`
 
 Runtime fetch shape:
 - `project_id`
@@ -38,6 +40,19 @@ Block behavior:
 - each block loads independently
 - block failure must degrade to block-level error, not page-level error
 - `project.dashboard.block.fetch` keeps `ok=true` for supported block keys and carries block state in `block.state`
+- public block response shape is frozen to:
+  - `project_id`
+  - `block_key`
+  - `block`
+  - `degraded`
+
+## Next Actions
+- `next_actions` block is the reserved bridge from dashboard to the next scene
+- current reserved direction:
+  - `project.plan_bootstrap.enter`
+- current status:
+  - planned only
+  - no full scene implementation in Phase 12-E
 
 ## Initiation Flow
 - `project.initiation.enter` success path must return:
@@ -51,4 +66,7 @@ Block behavior:
 
 ## Verify
 - `make verify.product.project_dashboard_flow`
+- `make verify.product.project_dashboard_entry_contract_guard`
+- `make verify.product.project_dashboard_block_contract_guard`
+- `make verify.product.project_dashboard_baseline`
 - `make verify.phase12b.baseline`

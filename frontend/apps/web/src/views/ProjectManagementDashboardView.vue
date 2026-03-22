@@ -61,6 +61,15 @@
                 <p>{{ item.description }}</p>
               </div>
             </section>
+            <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
+              <div v-for="item in nextActions" :key="item.key" class="action-card">
+                <div>
+                  <strong>{{ item.label }}</strong>
+                  <p>{{ item.hint }}</p>
+                </div>
+                <span class="action-state" :data-tone="item.state">{{ item.stateLabel }}</span>
+              </div>
+            </section>
             <section v-else class="block-status">暂未支持的区块。</section>
           </template>
         </article>
@@ -160,6 +169,7 @@ function blockData(blockKey: string) {
 function blockCaption(blockKey: string) {
   if (blockKey === 'progress') return '进度区块独立加载，失败不影响整页。';
   if (blockKey === 'risks') return '风险区块独立加载，失败不影响整页。';
+  if (blockKey === 'next_actions') return '下一步动作独立加载，并预留计划编排入口。';
   return '区块按需加载。';
 }
 
@@ -199,6 +209,23 @@ const riskAlerts = computed(() => {
       code: asText(row.code || `risk_${index + 1}`),
       title: asText(row.title || row.code || '风险提醒'),
       description: hint ? `${hint} 当前值 ${value}` : `当前值 ${value}`,
+    };
+  });
+});
+
+const nextActions = computed(() => {
+  const payload = blockData('next_actions');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const actions = Array.isArray(data.actions) ? data.actions : [];
+  return actions.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const state = asText(row.state || 'available') || 'available';
+    return {
+      key: asText(row.key || `action_${index + 1}`),
+      label: asText(row.label || row.key || '下一步动作'),
+      hint: asText(row.hint || '等待后续场景接入'),
+      state,
+      stateLabel: state === 'planned' ? '预留' : '可用',
     };
   });
 });
@@ -403,7 +430,8 @@ watch(
 }
 
 .metric-list,
-.risk-list {
+.risk-list,
+.action-list {
   display: grid;
   gap: 10px;
 }
@@ -437,6 +465,34 @@ watch(
 .risk-alert p {
   margin: 6px 0 0;
   color: #9a3412;
+}
+
+.action-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f6f9fb;
+}
+
+.action-card p {
+  margin: 6px 0 0;
+  color: #627d98;
+}
+
+.action-state {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #d9e2ec;
+  color: #243b53;
+}
+
+.action-state[data-tone='planned'] {
+  background: #fff7ed;
+  color: #b45309;
 }
 
 .block-status {

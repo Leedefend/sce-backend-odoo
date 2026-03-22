@@ -37,7 +37,7 @@ def _assert_dashboard_contract_non_empty(contract: dict) -> None:
     blocks = contract.get("blocks") if isinstance(contract.get("blocks"), list) else []
     if not blocks:
         raise RuntimeError("dashboard_contract.blocks is empty")
-    required = {"progress", "risks"}
+    required = {"progress", "risks", "next_actions"}
     seen = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
     missing = sorted(required - seen)
     if missing:
@@ -104,6 +104,9 @@ def main() -> int:
             "project_id": project_id,
             "suggested_action_intent": intent,
             "title": str(dash_data.get("title") or ""),
+            "block_keys": sorted(
+                {str(item.get("key") or "").strip() for item in (dash_data.get("blocks") or []) if isinstance(item, dict)}
+            ),
         }
     except Exception as exc:
         report["status"] = "FAIL"

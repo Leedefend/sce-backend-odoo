@@ -36,7 +36,7 @@
 - 二级降级（仅一级不可用时）：
   - `contract_ref.params = { op: model, model }`
 - 当 `suggested_action_payload.intent = ui.contract` 时，必须与 `contract_ref` 入口一致。
-- 当 `suggested_action_payload.intent` 指向产品动作（如 `project.dashboard.open`）时，必须保证能收敛到可执行 `contract_ref`。
+- 当 `suggested_action_payload.intent` 指向产品动作（如 `project.dashboard.enter`）时，必须保证能收敛到可执行入口。
 
 ## Suggested Action Shape（冻结）
 - `suggested_action_payload.intent`：必填
@@ -61,6 +61,7 @@
 - `project_id` 在场景链路中连续（initiation -> suggested_action -> dashboard.open -> contract_ref）
 - dashboard entry 返回面保持最小（仅 `project_id/title/summary/blocks/suggested_action/runtime_fetch_hints`）
 - dashboard 重数据必须通过 runtime block fetch 获取
+- `project.dashboard.open` 仅保留 deprecated alias，不允许作为主路径继续扩散
 
 ## Verify Command
 - `make verify.product.project_initiation DB_NAME=<db> E2E_LOGIN=<login> E2E_PASSWORD=<password>`
