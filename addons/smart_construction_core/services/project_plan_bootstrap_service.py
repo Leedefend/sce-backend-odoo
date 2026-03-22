@@ -20,9 +20,13 @@ class ProjectPlanBootstrapService:
     BLOCK_RESPONSE_KEYS = ("project_id", "block_key", "block", "degraded")
     ENTRY_BLOCKS = (
         ("plan_summary_detail", "计划摘要", "deferred"),
+        ("plan_tasks", "计划任务", "deferred"),
+        ("next_actions", "计划下一步", "deferred"),
     )
     RUNTIME_BLOCK_MAP = {
         "plan_summary_detail": "block.project.plan_summary_detail",
+        "plan_tasks": "block.project.plan_tasks",
+        "next_actions": "block.project.plan_next_actions",
     }
 
     def __init__(self, env):
@@ -57,14 +61,14 @@ class ProjectPlanBootstrapService:
                 for key, _, _ in self.ENTRY_BLOCKS
             }
         }
-        first_action = runtime_fetch_hints["blocks"].get("plan_summary_detail") or {}
+        first_action = runtime_fetch_hints["blocks"].get("next_actions") or runtime_fetch_hints["blocks"].get("plan_summary_detail") or {}
         return {
             "project_id": resolved_project_id,
             "title": "计划编排：%s" % str(project_payload.get("name") or "项目"),
             "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
             "blocks": blocks,
             "suggested_action": {
-                "key": "load_plan_summary_detail",
+                "key": "load_plan_next_actions",
                 "intent": str(first_action.get("intent") or ""),
                 "params": dict(first_action.get("params") or {}),
                 "reason_code": "PROJECT_PLAN_BOOTSTRAP_READY",

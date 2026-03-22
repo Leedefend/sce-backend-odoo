@@ -24,6 +24,8 @@
 ## Runtime Blocks
 Current supported runtime blocks:
 - `plan_summary_detail`
+- `plan_tasks`
+- `next_actions`
 
 Public `project.plan_bootstrap.block.fetch` response keeps:
 - `project_id`
@@ -45,7 +47,16 @@ Recommended data fields:
 - `planning_health`
 - `summary`
 
+Recommended `plan_tasks` fields:
+- `items`
+- `summary`
+
+Recommended `next_actions` fields:
+- `actions`
+- `summary`
+
 ## Flow Guarantee
 - dashboard `next_actions` must expose `project.plan_bootstrap.enter`
 - `params.project_id` must stay equal to the original initiation record id
-- plan entry must expose runtime fetch hint for `plan_summary_detail`
+- plan entry must expose runtime fetch hints for `plan_summary_detail/plan_tasks/next_actions`
+- plan `next_actions` must expose `project.execution.enter`

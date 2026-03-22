@@ -43,18 +43,22 @@ def _assert_plan_entry_shape(entry: dict, project_id: int) -> None:
         raise RuntimeError("plan entry project_id mismatch")
     blocks = entry.get("blocks") if isinstance(entry.get("blocks"), list) else []
     block_keys = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
-    if "plan_summary_detail" not in block_keys:
-        raise RuntimeError("plan entry missing plan_summary_detail block")
+    expected_block_keys = {"plan_summary_detail", "plan_tasks", "next_actions"}
+    if block_keys != expected_block_keys:
+        raise RuntimeError(f"plan entry block keys drift: {sorted(block_keys)}")
     runtime_fetch_hints = entry.get("runtime_fetch_hints") if isinstance(entry.get("runtime_fetch_hints"), dict) else {}
     block_hints = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
-    hint = block_hints.get("plan_summary_detail") if isinstance(block_hints.get("plan_summary_detail"), dict) else {}
-    if str(hint.get("intent") or "").strip() != "project.plan_bootstrap.block.fetch":
-        raise RuntimeError("plan runtime hint intent mismatch")
-    params = hint.get("params") if isinstance(hint.get("params"), dict) else {}
-    if int(params.get("project_id") or 0) != project_id:
-        raise RuntimeError("plan runtime hint project_id mismatch")
-    if str(params.get("block_key") or "").strip() != "plan_summary_detail":
-        raise RuntimeError("plan runtime hint block_key mismatch")
+    if set(block_hints.keys()) != expected_block_keys:
+        raise RuntimeError(f"plan runtime hint keys drift: {sorted(block_hints.keys())}")
+    for block_key in expected_block_keys:
+        hint = block_hints.get(block_key) if isinstance(block_hints.get(block_key), dict) else {}
+        if str(hint.get("intent") or "").strip() != "project.plan_bootstrap.block.fetch":
+            raise RuntimeError(f"plan runtime hint intent mismatch for {block_key}")
+        params = hint.get("params") if isinstance(hint.get("params"), dict) else {}
+        if int(params.get("project_id") or 0) != project_id:
+            raise RuntimeError(f"plan runtime hint project_id mismatch for {block_key}")
+        if str(params.get("block_key") or "").strip() != block_key:
+            raise RuntimeError(f"plan runtime hint block_key mismatch for {block_key}")
 
 
 def main() -> int:

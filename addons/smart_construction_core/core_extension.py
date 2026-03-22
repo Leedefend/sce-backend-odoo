@@ -488,6 +488,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_block_fetch import (
             ProjectPlanBootstrapBlockFetchHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_execution_enter import (
+            ProjectExecutionEnterHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -523,6 +526,7 @@ def smart_core_register(registry):
     registry["project.dashboard.block.fetch"] = ProjectDashboardBlockFetchHandler
     registry["project.plan_bootstrap.enter"] = ProjectPlanBootstrapEnterHandler
     registry["project.plan_bootstrap.block.fetch"] = ProjectPlanBootstrapBlockFetchHandler
+    registry["project.execution.enter"] = ProjectExecutionEnterHandler
     registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
@@ -550,6 +554,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered project.dashboard.block.fetch")
     _logger.info("[smart_core_register] registered project.plan_bootstrap.enter")
     _logger.info("[smart_core_register] registered project.plan_bootstrap.block.fetch")
+    _logger.info("[smart_core_register] registered project.execution.enter")
     _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")

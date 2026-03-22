@@ -978,3 +978,12 @@ Each entry must include:
 - completed_step: `project.plan_bootstrap.enter 从 reserve-only 升级为最小 entry contract；新增 project.plan_bootstrap.block.fetch 与 plan_summary_detail runtime block；dashboard next_actions 中 plan 动作升级为可执行入口并保持 project_id 连续；新增 verify.product.project_flow.dashboard_plan 并纳入 product dashboard baseline；补充 plan bootstrap runtime contract 文档`
 - active_commit: `pending`
 - next_step: `运行 py_compile + backend/product/frontend 验证，收口 Phase 13-A 后分类提交并输出 tmp 总结`
+
+### 2026-03-22T21:15:00Z
+- blocker_key: `phase13b_b1_plan_dispatch_stabilization`
+- layer_target: `Domain/Product Handler Layer + Verify/Gate Layer + Frontend Consumer Layer`
+- module: `addons/smart_construction_core + scripts/verify + docs/ops + Makefile`
+- reason: `Phase 13-B / Batch B1：把 project.plan_bootstrap 从可用节点升级为稳定调度节点，新增轻量 plan_tasks、调度 next_actions、contract guards 与 pre-execution 全链 smoke`
+- completed_step: `project.plan_bootstrap 新增 plan_tasks 与 next_actions runtime blocks；next_actions 暴露 project.execution.enter 并带 state/reason 调度语义；新增 execution.enter 调度占位 handler；补齐 plan entry/block contract guards 与 verify.product.project_flow.full_chain_pre_execution；product dashboard baseline 纳入 plan guards + pre-execution flow；文档同步 plan contract 扩容`
+- active_commit: `pending`
+- next_step: `运行静态/前端/product/baseline 验证，收口 Phase 13-B B1 后分类提交并写入 tmp 总结`
