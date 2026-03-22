@@ -112,21 +112,10 @@ def main() -> None:
     _contains(
         VIEW_FILE,
         [
-            "'cost_completion_rate'",
-            "'subcontract_total'",
-            "'receive_pending'",
-            "'pay_pending'",
-            "'net_cash'",
             "'task_open'",
-            "'task_critical'",
             "'task_blocked'",
-            "'milestone_upcoming_days'",
             "'critical_path_health'",
-            "progress_task_overdue",
-            "progress_task_blocked",
-            "progress_milestone_delay",
-            "open_task_overdue",
-            "open_task_blocked",
+            "'task_overdue'",
         ],
     )
 

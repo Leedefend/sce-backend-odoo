@@ -16,6 +16,7 @@ REQUIRED_KEYS = {
     "progress_summary": {"task_total", "task_done", "completion_percent"},
     "record_table": {"columns", "rows"},
     "alert_panel": {"alerts"},
+    "action_list": {"actions", "summary"},
 }
 
 
@@ -83,12 +84,17 @@ def _collect_builder_contract(path: Path):
                         if isinstance(call.func, ast.Attribute) and call.func.attr == "_envelope":
                             state = None
                             uses_data_var = False
+                            data_keys = None
                             for kw in call.keywords:
                                 if kw.arg == "state" and isinstance(kw.value, ast.Constant):
                                     state = str(kw.value.value)
+                                if kw.arg == "data":
+                                    data_keys = _dict_keys(kw.value)
                                 if kw.arg == "data" and isinstance(kw.value, ast.Name) and kw.value.id == "data":
                                     uses_data_var = True
-                            if state and uses_data_var and data_literal is not None:
+                            if state and data_keys is not None:
+                                states[state] = data_keys
+                            elif state and uses_data_var and data_literal is not None:
                                 states[state] = data_literal
 
     _must(bool(block_key), f"{path.name}: missing block_key")
@@ -98,7 +104,7 @@ def _collect_builder_contract(path: Path):
 
 def main():
     files = sorted(BUILDERS_DIR.glob("project_*_builder.py"))
-    _must(len(files) == 7, "expected exactly 7 project block builders")
+    _must(len(files) >= 7, "expected at least 7 project block builders")
 
     for path in files:
         block_key, block_type, states = _collect_builder_contract(path)

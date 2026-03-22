@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CORE_EXTENSION = ROOT / "addons" / "smart_construction_core" / "core_extension.py"
 HANDLER = ROOT / "addons" / "smart_construction_core" / "handlers" / "project_dashboard.py"
-SERVICE = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_service.py"
+ORCHESTRATOR = ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_contract_orchestrator.py"
 
 
 def _must(cond: bool, msg: str) -> None:
@@ -32,8 +32,8 @@ def _check_handler() -> None:
     required = [
         'INTENT_TYPE = "project.dashboard"',
         'DESCRIPTION = "Project management dashboard contract"',
-        "service = ProjectDashboardService(self.env)",
-        "data = service.build(project_id=project_id, context=ctx)",
+        "ProjectDashboardContractOrchestrator(self.env)",
+        "data = orchestrator.build_contract(project_id=project_id, context=ctx)",
         '"intent": self.INTENT_TYPE',
         '"contract_version": "v1"',
     ]
@@ -41,10 +41,11 @@ def _check_handler() -> None:
         _must(frag in text, f"handler missing fragment: {frag}")
 
 
-def _check_service() -> None:
-    text = SERVICE.read_text(encoding="utf-8")
+def _check_orchestrator() -> None:
+    text = ORCHESTRATOR.read_text(encoding="utf-8")
     required = [
         "ZONE_BLOCKS = (",
+        "def build_contract(self, project_id=None, context=None):",
         '"scene": {',
         '"key": "project.management"',
         '"page": "project.management.dashboard"',
@@ -58,7 +59,7 @@ def _check_service() -> None:
 def main() -> None:
     _check_core_extension()
     _check_handler()
-    _check_service()
+    _check_orchestrator()
     print("[verify.project.dashboard.runtime_chain] PASS")
 
 

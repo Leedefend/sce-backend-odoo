@@ -12,6 +12,7 @@ OUT_JSON = ROOT / "artifacts" / "backend" / "orchestration_platform_guard.json"
 PLATFORM_ORCHESTRATORS = {
     "project.execution": ROOT / "addons" / "smart_core" / "orchestration" / "project_execution_scene_orchestrator.py",
     "project.dashboard": ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_scene_orchestrator.py",
+    "project.dashboard.contract": ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_contract_orchestrator.py",
     "project.plan_bootstrap": ROOT / "addons" / "smart_core" / "orchestration" / "project_plan_bootstrap_scene_orchestrator.py",
 }
 LEGACY_DIR = ROOT / "addons" / "smart_construction_core" / "orchestration"
@@ -23,6 +24,7 @@ FORBIDDEN_INDUSTRY_ORCHESTRATORS = {
 HANDLER_IMPORT_RULES = {
     "addons/smart_construction_core/handlers/project_execution_enter.py": "from odoo.addons.smart_core.orchestration.project_execution_scene_orchestrator import (",
     "addons/smart_construction_core/handlers/project_execution_block_fetch.py": "from odoo.addons.smart_core.orchestration.project_execution_scene_orchestrator import (",
+    "addons/smart_construction_core/handlers/project_dashboard.py": "from odoo.addons.smart_core.orchestration.project_dashboard_contract_orchestrator import (",
     "addons/smart_construction_core/handlers/project_dashboard_enter.py": "from odoo.addons.smart_core.orchestration.project_dashboard_scene_orchestrator import (",
     "addons/smart_construction_core/handlers/project_dashboard_block_fetch.py": "from odoo.addons.smart_core.orchestration.project_dashboard_scene_orchestrator import (",
     "addons/smart_construction_core/handlers/project_plan_bootstrap_enter.py": "from odoo.addons.smart_core.orchestration.project_plan_bootstrap_scene_orchestrator import (",
@@ -40,6 +42,14 @@ FORBIDDEN_FRONTEND_PATTERNS = {
         "const LEGACY_MODEL_EXECUTE_INTENT",
         "if (model === 'finance.payment.request' || model === 'payment.request')",
         "if (model === 'project.risk.action')",
+    ],
+}
+FORBIDDEN_SERVICE_PATTERNS = {
+    "addons/smart_construction_core/services/project_dashboard_service.py": [
+        "def build(self, project_id=None, context=None):",
+        "build_scene_contract_from_specs",
+        "dashboard_orchestration_kernel.py",
+        "build_project_dashboard_scene_content",
     ],
 }
 
@@ -109,6 +119,21 @@ def main() -> int:
                     "severity": "high",
                     "path": rel,
                     "message": f"found forbidden frontend business semantic branch `{pattern}`",
+                }
+            )
+
+    for rel, patterns in FORBIDDEN_SERVICE_PATTERNS.items():
+        path = ROOT / rel
+        text = _read(path)
+        for pattern in patterns:
+            if pattern not in text:
+                continue
+            findings.append(
+                {
+                    "rule": "domain_service_dashboard_contract_assembly_forbidden",
+                    "severity": "high",
+                    "path": rel,
+                    "message": f"found forbidden dashboard contract assembly token `{pattern}`",
                 }
             )
 
