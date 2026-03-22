@@ -37,6 +37,15 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "project.dashboard",
+            "name": "项目驾驶舱（产品场景）",
+            "target": {
+                "route": "/s/project.dashboard",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
+                "action_xmlid": "smart_construction_core.action_project_dashboard",
+            },
+        },
+        {
             "code": "projects.dashboard_showcase",
             "name": "项目驾驶舱（演示）",
             "is_test": True,

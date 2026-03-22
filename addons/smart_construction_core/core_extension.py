@@ -85,7 +85,7 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_management_scene": "project.management",
     "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
     "smart_construction_core.menu_sc_root": "projects.list",
-    "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+    "smart_construction_core.menu_sc_project_dashboard": "project.dashboard",
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
@@ -99,7 +99,7 @@ NAV_ACTION_SCENE_MAP = {
     "smart_construction_core.action_project_initiation": "project.initiation",
     "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
     "smart_construction_core.action_sc_project_list": "projects.list",
-    "smart_construction_core.action_project_dashboard": "projects.dashboard",
+    "smart_construction_core.action_project_dashboard": "project.dashboard",
     "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.action_project_dictionary": "data.dictionary",
     "smart_construction_core.action_project_cost_code": "config.project_cost_code",
@@ -148,6 +148,7 @@ CREATE_FIELD_FALLBACKS = {
 SURFACE_NAV_ALLOWLIST = {
     "construction_pm_v1": [
         "project.management",
+        "project.dashboard",
         "projects.dashboard",
         "projects.ledger",
         "project.initiation",
@@ -472,6 +473,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_initiation_enter import (
             ProjectInitiationEnterHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_dashboard_open import (
+            ProjectDashboardOpenHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -502,6 +506,7 @@ def smart_core_register(registry):
     registry["payment.request.available_actions"] = PaymentRequestAvailableActionsHandler
     registry["payment.request.execute"] = PaymentRequestExecuteHandler
     registry["project.dashboard"] = ProjectDashboardHandler
+    registry["project.dashboard.open"] = ProjectDashboardOpenHandler
     registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
@@ -524,6 +529,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.available_actions")
     _logger.info("[smart_core_register] registered payment.request.execute")
     _logger.info("[smart_core_register] registered project.dashboard")
+    _logger.info("[smart_core_register] registered project.dashboard.open")
     _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")
