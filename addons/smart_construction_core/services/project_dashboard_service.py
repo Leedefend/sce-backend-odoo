@@ -83,17 +83,7 @@ def _load_scene_engine_module():
 
 
 class ProjectDashboardService:
-    """Assemble project.dashboard contract using block builders."""
-
-    ENTRY_SUMMARY_KEYS = (
-        "project_code",
-        "manager_name",
-        "partner_name",
-        "stage_name",
-        "health_state",
-    )
-    ENTRY_BLOCK_ITEM_KEYS = ("key", "title", "state")
-    BLOCK_RESPONSE_KEYS = ("project_id", "block_key", "block", "degraded")
+    """Provide business-truth-backed dashboard data for orchestration carriers."""
 
     ENTRY_BLOCKS = (
         ("progress", "项目进度", "deferred"),
@@ -144,8 +134,8 @@ class ProjectDashboardService:
 
     def build(self, project_id=None, context=None):
         ctx = dict(context or {})
-        project, project_resolution = self._resolve_project_with_diagnostics(project_id)
-        project_payload = self._project_payload(project)
+        project, project_resolution = self.resolve_project_with_diagnostics(project_id)
+        project_payload = self.project_payload(project)
         zones = self._build_zones(project=project, context=ctx)
         scene = self._scene_content.get("scene") if isinstance(self._scene_content.get("scene"), dict) else {}
         page = self._scene_content.get("page") if isinstance(self._scene_content.get("page"), dict) else {}
@@ -183,79 +173,21 @@ class ProjectDashboardService:
             "zones": zones,
         }
 
-    def build_entry(self, project_id=None, context=None):
-        project, _project_resolution = self._resolve_project_with_diagnostics(project_id)
-        project_payload = self._project_payload(project)
-        resolved_project_id = int(project_payload.get("id") or 0)
-        if resolved_project_id <= 0:
-            return {
-                "project_id": 0,
-                "title": "项目驾驶舱",
-                "summary": {key: "" for key in self.ENTRY_SUMMARY_KEYS},
-                "blocks": [
-                    {"key": key, "title": title, "state": state}
-                    for key, title, state in self.ENTRY_BLOCKS
-                ],
-                "suggested_action": {},
-                "runtime_fetch_hints": {"blocks": {}},
-            }
-
-        blocks = [{"key": key, "title": title, "state": state} for key, title, state in self.ENTRY_BLOCKS]
-        runtime_fetch_hints = {
-            "blocks": {
-                key: {
-                    "intent": "project.dashboard.block.fetch",
-                    "params": {
-                        "project_id": resolved_project_id,
-                        "block_key": key,
-                    },
-                }
-                for key, _, _ in self.ENTRY_BLOCKS
-            }
-        }
-        first_action = runtime_fetch_hints["blocks"].get("progress") or {}
-        return {
-            "project_id": resolved_project_id,
-            "title": "项目驾驶舱：%s" % str(project_payload.get("name") or "项目"),
-            "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
-            "blocks": blocks,
-            "suggested_action": {
-                "key": "load_dashboard_progress",
-                "intent": str(first_action.get("intent") or ""),
-                "params": dict(first_action.get("params") or {}),
-                "reason_code": "PROJECT_DASHBOARD_READY",
-            },
-            "runtime_fetch_hints": runtime_fetch_hints,
-        }
-
-    def build_runtime_block(self, block_key, project_id=None, context=None):
+    def build_block(self, block_key, project=None, context=None):
         normalized_key = str(block_key or "").strip().lower()
         builder_key = self.RUNTIME_BLOCK_MAP.get(normalized_key)
-        project, _project_resolution = self._resolve_project_with_diagnostics(project_id)
-        resolved_project_id = int(getattr(project, "id", 0) or 0)
         if not builder_key:
-            return {
-                "project_id": resolved_project_id,
-                "block_key": normalized_key or "",
-                "block": self._error_block(normalized_key or "unknown", "UNSUPPORTED_BLOCK_KEY"),
-                "degraded": True,
-            }
+            return self.error_block(normalized_key or "unknown", "UNSUPPORTED_BLOCK_KEY")
 
         builder = self._builder_map.get(builder_key)
         if builder is None:
-            block = self._error_block(builder_key, "BLOCK_BUILDER_NOT_FOUND")
+            block = self.error_block(builder_key, "BLOCK_BUILDER_NOT_FOUND")
         else:
             try:
                 block = builder.build(project=project, context=dict(context or {}))
             except Exception:
-                block = self._error_block(builder_key, "BLOCK_BUILD_FAILED")
-        state = str((block or {}).get("state") or "").strip().lower()
-        return {
-            "project_id": resolved_project_id,
-            "block_key": "risks" if normalized_key == "risk" else normalized_key,
-            "block": block if isinstance(block, dict) else self._error_block(builder_key, "INVALID_BLOCK_PAYLOAD"),
-            "degraded": state != "ready",
-        }
+                block = self.error_block(builder_key, "BLOCK_BUILD_FAILED")
+        return block if isinstance(block, dict) else self.error_block(builder_key, "INVALID_BLOCK_PAYLOAD")
 
     def _build_zones(self, project, context):
         zone_specs = self._scene_content.get("zone_blocks") if isinstance(self._scene_content.get("zone_blocks"), list) else []
@@ -263,7 +195,7 @@ class ProjectDashboardService:
         fn = getattr(kernel, "build_single_block_zones", None) if kernel else None
         if callable(fn):
             try:
-                payload = fn(zone_specs, self._builder_map, project, context, self._error_block)
+                payload = fn(zone_specs, self._builder_map, project, context, self.error_block)
                 if isinstance(payload, dict) and payload:
                     return payload
             except Exception:
@@ -277,7 +209,7 @@ class ProjectDashboardService:
                 continue
             block_key = str(spec.get("block_key") or "").strip()
             builder = self._builder_map.get(block_key)
-            block = builder.build(project=project, context=context) if builder else self._error_block(block_key, "BLOCK_BUILDER_NOT_FOUND")
+            block = builder.build(project=project, context=context) if builder else self.error_block(block_key, "BLOCK_BUILDER_NOT_FOUND")
             zones[key] = {
                 "zone_key": str(spec.get("zone_key") or ("zone.%s" % key)),
                 "title": str(spec.get("title") or key),
@@ -313,10 +245,10 @@ class ProjectDashboardService:
         return (["|"] * (len(ors) - 1)) + ors
 
     def _resolve_project(self, project_id):
-        project, _diag = self._resolve_project_with_diagnostics(project_id)
+        project, _diag = self.resolve_project_with_diagnostics(project_id)
         return project
 
-    def _resolve_project_with_diagnostics(self, project_id):
+    def resolve_project_with_diagnostics(self, project_id):
         model_in_env = False
         model_error = ""
         try:
@@ -430,7 +362,7 @@ class ProjectDashboardService:
         )
         return None, diagnostics
 
-    def _project_payload(self, project):
+    def project_payload(self, project):
         def _safe_text(value):
             try:
                 return str(value or "")
@@ -489,7 +421,7 @@ class ProjectDashboardService:
         return out
 
     @staticmethod
-    def _error_block(block_key, code):
+    def error_block(block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",

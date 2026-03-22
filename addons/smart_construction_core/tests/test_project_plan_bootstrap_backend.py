@@ -16,8 +16,14 @@ from odoo.addons.smart_construction_core.handlers.project_execution_enter import
 from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
     ProjectExecutionAdvanceHandler,
 )
+from odoo.addons.smart_construction_core.orchestration.project_plan_bootstrap_scene_orchestrator import (
+    ProjectPlanBootstrapSceneOrchestrator,
+)
 from odoo.addons.smart_construction_core.services.project_execution_service import (
     ProjectExecutionService,
+)
+from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service import (
+    ProjectPlanBootstrapService,
 )
 from odoo.addons.smart_construction_core.orchestration.project_execution_scene_orchestrator import (
     ProjectExecutionSceneOrchestrator,
@@ -35,6 +41,9 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
     def test_entry_returns_minimal_shape(self):
         fake_entry = {
             "project_id": 21,
+            "scene_key": "project.plan_bootstrap",
+            "scene_label": "计划准备",
+            "state_fallback_text": "当前状态：正在核对计划准备度。",
             "title": "计划编排：Demo",
             "summary": {"project_code": "P-21"},
             "blocks": [{"key": "plan_summary_detail"}, {"key": "plan_tasks"}, {"key": "next_actions"}],
@@ -43,7 +52,7 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         }
         handler = ProjectPlanBootstrapEnterHandler(self.env, payload={"project_id": 21})
         with patch(
-            "odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter.ProjectPlanBootstrapService.build_entry",
+            "odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter.ProjectPlanBootstrapSceneOrchestrator.build_entry",
             return_value=fake_entry,
         ):
             result = handler.handle(payload={"project_id": 21}, ctx={})
@@ -59,7 +68,7 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         }
         handler = ProjectPlanBootstrapBlockFetchHandler(self.env, payload={"project_id": 21, "block_key": "plan_summary_detail"})
         with patch(
-            "odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_block_fetch.ProjectPlanBootstrapService.build_runtime_block",
+            "odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_block_fetch.ProjectPlanBootstrapSceneOrchestrator.build_runtime_block",
             return_value=fake_block,
         ):
             result = handler.handle(payload={"project_id": 21, "block_key": "plan_summary_detail"}, ctx={})
@@ -71,6 +80,56 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         result = handler.handle(payload={}, ctx={})
         self.assertFalse(result.get("ok"))
         self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_CONTEXT_MISSING")
+
+    def test_plan_enter_uses_orchestration_carrier_shape(self):
+        fake_entry = {
+            "project_id": 21,
+            "scene_key": "project.plan_bootstrap",
+            "scene_label": "计划准备",
+            "state_fallback_text": "当前状态：正在核对计划准备度。",
+            "title": "计划准备：Demo",
+            "summary": {"project_code": "P-21"},
+            "blocks": [{"key": "plan_summary_detail"}, {"key": "plan_tasks"}, {"key": "next_actions"}],
+            "suggested_action": {"intent": "project.plan_bootstrap.block.fetch"},
+            "runtime_fetch_hints": {"blocks": {"next_actions": {"intent": "project.plan_bootstrap.block.fetch"}}},
+        }
+        handler = ProjectPlanBootstrapEnterHandler(self.env, payload={"project_id": 21})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter.ProjectPlanBootstrapSceneOrchestrator.build_entry",
+            return_value=fake_entry,
+        ):
+            result = handler.handle(payload={"project_id": 21}, ctx={})
+        self.assertTrue(result.get("ok"))
+        self.assertEqual(((result.get("data") or {}).get("scene_key")), "project.plan_bootstrap")
+
+    def test_plan_orchestrator_runtime_block_shape(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Plan Orchestrator Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+                "date_start": "2026-03-23",
+            }
+        )
+        orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
+        result = orchestrator.build_runtime_block("next_actions", project_id=project.id, context={})
+        block = result.get("block") if isinstance(result.get("block"), dict) else {}
+        self.assertEqual(result.get("block_key"), "next_actions")
+        self.assertTrue(isinstance(block, dict))
+
+    def test_plan_service_build_block_returns_block_payload(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Plan Build Block Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+                "date_start": "2026-03-23",
+            }
+        )
+        service = ProjectPlanBootstrapService(self.env)
+        block = service.build_block("plan_summary_detail", project=project, context={})
+        self.assertTrue(isinstance(block, dict))
+        self.assertTrue(str(block.get("block_type") or "").strip())
 
     def test_execution_enter_returns_scheduling_placeholder(self):
         fake_entry = {
