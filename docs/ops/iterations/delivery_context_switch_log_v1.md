@@ -1131,3 +1131,12 @@ Each entry must include:
 - completed_step: `新增 execution runtime block=pilot_precheck，用于检查 root task、single open task、execution/task/activity 一致性、关键字段和 lifecycle；next_actions 接入 pilot precheck 结果，阻断文案改为首轮试点可理解提示；前端新增试点前检查清单展示并统一 blocked/reason/empty hint；新增 project_execution_pilot_precheck_guard 与 verify.product.v0_1_pilot_readiness 聚合链；补试点配置、precheck 说明、Odoo 原生对齐说明和 release note`
 - active_commit: `pending`
 - next_step: `执行 Phase 15-A 定向验证，输出 tmp 总结并分类提交`
+
+### 2026-03-23T09:20:00Z
+- blocker_key: `phase17a_cost_native_slice`
+- layer_target: `Platform Layer + Domain Layer + Verification Layer + Docs Layer`
+- module: `addons/smart_core + addons/smart_construction_core + scripts/verify + docs/ops + tmp`
+- reason: `Phase 17-A：按 READY_FOR_SLICE 基线重开第一条 native slice，冻结 cost native mapping，落地只读 adapter、平台 contract orchestrator、execution->cost 导航和定向门禁`
+- completed_step: `定义 account.move 作为 cost primary carrier、project.project 作为 secondary context；新增 cost_tracking_native_adapter 仅负责 account.move/account.move.line 读取与轻量汇总；新增 smart_core/orchestration/cost_tracking_contract_orchestrator.py 和 cost.tracking.enter/block.fetch handlers；execution_next_actions 增加 cost.tracking.enter 导航动作；补 entry/block/flow verify 与 mapping/release 文档`
+- active_commit: `pending`
+- next_step: `执行 native alignment + cost slice contract/flow 验证，输出 tmp 总结并按分类提交`
