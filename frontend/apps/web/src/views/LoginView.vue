@@ -125,7 +125,11 @@ const pageGlobalActions = pageContract.globalActions;
 
 const username = ref('');
 const password = ref('');
-const dbName = ref(resolveActiveDb(String(config.odooDb || '').trim()));
+const dbName = ref(
+  config.odooDbPinned
+    ? String(config.odooDb || '').trim()
+    : resolveActiveDb(String(config.odooDb || '').trim()),
+);
 const loading = ref(false);
 const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);

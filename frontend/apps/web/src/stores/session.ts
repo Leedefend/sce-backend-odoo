@@ -453,7 +453,10 @@ export const useSessionStore = defineStore('session', {
       this.persist();
     },
     async login(username: string, password: string, dbOverride?: string) {
-      const db = String(dbOverride || resolveActiveDb(String(config.odooDb || '').trim())).trim();
+      const configuredDb = config.odooDbPinned
+        ? String(config.odooDb || '').trim()
+        : resolveActiveDb(String(config.odooDb || '').trim());
+      const db = String(dbOverride || configuredDb).trim();
       if (db) {
         setActiveDb(db, true);
       }
@@ -746,7 +749,7 @@ export const useSessionStore = defineStore('session', {
         this.defaultRoute = null;
       }
       const hasWorkspaceHome = Boolean(this.workspaceHome && Object.keys(this.workspaceHome).length > 0);
-      if (!hasWorkspaceHome) {
+      if (!hasWorkspaceHome && !this.defaultRoute) {
         this.defaultRoute = {
           scene_key: '',
           route: '/',
