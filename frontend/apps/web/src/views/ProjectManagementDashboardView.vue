@@ -87,6 +87,18 @@
               </div>
             </section>
 
+            <section v-else-if="descriptor.key === 'pilot_precheck'" class="risk-list">
+              <div class="risk-summary">
+                <span>检查结果 {{ pilotPrecheckSummary.stateLabel }}</span>
+                <span>通过 {{ pilotPrecheckSummary.passedCount }}</span>
+                <span>阻断 {{ pilotPrecheckSummary.failedCount }}</span>
+              </div>
+              <div v-for="item in pilotPrecheckRows" :key="item.key" class="risk-alert">
+                <strong>{{ item.title }}</strong>
+                <p>{{ item.description }}</p>
+              </div>
+            </section>
+
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
               <div v-for="item in nextActions" :key="item.key" class="action-card">
                 <div>
@@ -241,6 +253,7 @@ function blockCaption(blockKey: string) {
   if (blockKey === 'plan_summary_detail') return '当前状态：查看计划准备度。下一步：确认能否进入执行推进。';
   if (blockKey === 'plan_tasks') return '当前状态：核对计划任务。下一步：补齐关键计划输入。';
   if (blockKey === 'execution_tasks') return '当前状态：查看执行任务。下一步：根据执行状态推进。';
+  if (blockKey === 'pilot_precheck') return '当前状态：核对首轮试点前提。下一步：先清除阻断项，再执行推进。';
   if (blockKey === 'next_actions') return '当前状态：查看可执行动作。下一步：按建议动作继续推进。';
   return '区块按需加载。';
 }
@@ -332,6 +345,7 @@ function blockEmptyText(blockKey: string) {
   if (hint) return hint;
   if (blockKey === 'plan_tasks') return '当前项目还没有计划任务。';
   if (blockKey === 'execution_tasks') return '当前项目还没有执行任务。';
+  if (blockKey === 'pilot_precheck') return '当前项目还没有试点前检查结果。';
   return '当前区块暂无数据。';
 }
 
@@ -342,6 +356,13 @@ function humanReason(reasonCode: string) {
   if (code === 'EXECUTION_TASK_NOT_IN_PROGRESS') return '当前没有处于执行中的任务，无法完成推进。';
   if (code === 'EXECUTION_TASK_COMPLETE_FAILED') return '任务未能成功完成。';
   if (code === 'EXECUTION_TASK_RECOVER_FAILED') return '任务未能恢复到可执行状态。';
+  if (code === 'EXECUTION_SCOPE_MULTI_OPEN_TASKS_UNSUPPORTED') return '首轮试点仅允许 1 个开放任务，请先收口到单任务。';
+  if (code === 'EXECUTION_PROJECT_TASK_STATE_DRIFT') return '项目执行态与任务状态不一致，请先校正数据。';
+  if (code === 'EXECUTION_PROJECT_ACTIVITY_DRIFT') return '跟进行为与 mail.activity 不一致，请先校正活动记录。';
+  if (code === 'PILOT_ROOT_TASK_MISSING') return '试点前必须先初始化项目根任务。';
+  if (code === 'PILOT_SINGLE_OPEN_TASK_REQUIRED') return '试点版要求仅保留 1 个开放任务。';
+  if (code === 'PILOT_REQUIRED_FIELDS_MISSING') return '试点关键字段仍未补齐，请先补全配置。';
+  if (code === 'PILOT_LIFECYCLE_STATE_BLOCKED') return '当前项目生命周期状态不允许作为首轮试点。';
   if (code === 'EXECUTION_TRANSITION_READY_TO_IN_PROGRESS') return '已从执行就绪推进到执行中。';
   if (code === 'EXECUTION_TRANSITION_IN_PROGRESS_TO_DONE') return '已从执行中推进到执行完成。';
   if (code === 'EXECUTION_TRANSITION_BLOCKED_TO_READY') return '已从执行阻塞恢复到执行就绪。';
@@ -364,6 +385,43 @@ function actionStateLabel(state: string) {
   return '待处理';
 }
 
+function actionHint(row: Record<string, unknown>) {
+  const rawHint = asText(row.hint || '等待后续场景接入');
+  const reasonCode = asText(row.reason_code || '');
+  const reason = humanReason(reasonCode);
+  if (!reasonCode) return rawHint;
+  if (rawHint.includes(reason)) return rawHint;
+  return `${rawHint} ${reason}`;
+}
+
+const pilotPrecheckSummary = computed(() => {
+  const payload = blockData('pilot_precheck');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const overall = asText(summary.overall_state || '');
+  return {
+    stateLabel: overall === 'ready' ? '通过' : '受阻',
+    passedCount: asNumber(summary.passed_count),
+    failedCount: asNumber(summary.failed_count),
+  };
+});
+
+const pilotPrecheckRows = computed(() => {
+  const payload = blockData('pilot_precheck');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const checks = Array.isArray(data.checks) ? data.checks : [];
+  return checks.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const status = asText(row.status || 'fail');
+    const reasonCode = asText(row.reason_code || '');
+    return {
+      key: asText(row.key || `pilot_check_${index + 1}`),
+      title: `${asText(row.label || row.key || '试点检查')} · ${status === 'pass' ? '通过' : '受阻'}`,
+      description: asText(row.message || '') || humanReason(reasonCode),
+    };
+  });
+});
+
 const nextActions = computed<ActionCard[]>(() => {
   const payload = blockData('next_actions');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
@@ -375,7 +433,7 @@ const nextActions = computed<ActionCard[]>(() => {
     return {
       key: asText(row.key || `action_${index + 1}`),
       label: asText(row.label || row.key || '下一步动作'),
-      hint: asText(row.hint || '等待后续场景接入'),
+      hint: actionHint(row),
       intent,
       params: (row.params && typeof row.params === 'object') ? row.params as Record<string, unknown> : {},
       state,
@@ -392,6 +450,10 @@ const currentStateText = computed(() => {
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
   const stateLabel = asText(summary.current_state_label || '');
+  const pilotState = asText(summary.pilot_precheck_state || '');
+  if (pilotState === 'blocked') {
+    return `当前状态：${stateLabel || '执行推进'}，且未通过首轮试点检查。`;
+  }
   if (stateLabel) {
     return `当前状态：${stateLabel}`;
   }
@@ -408,6 +470,11 @@ const nextStepText = computed(() => {
   const payload = blockData('next_actions');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const pilotState = asText(summary.pilot_precheck_state || '');
+  const pilotMessage = asText(summary.pilot_primary_message || '');
+  if (pilotState === 'blocked' && pilotMessage) {
+    return `下一步：${pilotMessage}`;
+  }
   const nextStepLabel = asText(summary.next_step_label || '');
   if (nextStepLabel) {
     return `下一步：${nextStepLabel}`;
@@ -539,6 +606,7 @@ async function runAction(action: ActionCard) {
     await Promise.allSettled([
       refreshBlock('next_actions'),
       refreshBlock('execution_tasks'),
+      refreshBlock('pilot_precheck'),
     ]);
   } catch (err) {
     transitionFeedback.value = {
