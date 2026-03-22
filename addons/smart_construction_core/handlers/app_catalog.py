@@ -21,6 +21,13 @@ APP_DEFS: List[Dict[str, Any]] = [
         "flags": [],  # 例如 ["ai_enabled"]
         "features": [
             {
+                "key": "project_initiation",
+                "label": "项目立项",
+                "kind": "work",
+                "open": {"odoo_menu_xmlid": "smart_construction_core.menu_sc_project_initiation"},
+                "required_permissions": ["project.create"],
+            },
+            {
                 "key": "project_overview",
                 "label": "项目总览",
                 "kind": "work",

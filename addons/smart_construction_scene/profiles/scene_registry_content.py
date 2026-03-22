@@ -63,6 +63,15 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "project.initiation",
+            "name": "项目立项（产品场景）",
+            "target": {
+                "route": "/s/project.initiation",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_initiation",
+                "action_xmlid": "smart_construction_core.action_project_initiation",
+            },
+        },
+        {
             "code": "projects.list",
             "name": "项目列表",
             "target": {

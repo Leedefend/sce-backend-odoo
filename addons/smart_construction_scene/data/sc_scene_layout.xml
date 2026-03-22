@@ -117,6 +117,71 @@
             <field name="active_version_id" ref="sc_scene_version_projects_intake_v2"/>
         </record>
 
+        <!-- Project initiation product scene -->
+        <record id="sc_scene_version_project_initiation_v1" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_project_initiation"/>
+            <field name="version">v1</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'project.initiation',
+                'name': '项目立项（产品场景）',
+                'version': 'v1',
+                'page': {
+                    'key': 'project.initiation.form',
+                    'title': '项目立项',
+                    'page_type': 'record',
+                    'page_mode': 'form'
+                },
+                'layout': {'kind': 'record', 'sidebar': 'fixed', 'header': 'full'},
+                'zone_blocks': [
+                    {
+                        'key': 'hero',
+                        'title': '立项概览',
+                        'zone_type': 'hero',
+                        'display_mode': 'stack',
+                        'block_key': 'block.projects.intake.hero'
+                    },
+                    {
+                        'key': 'form_main',
+                        'title': '立项信息',
+                        'zone_type': 'primary',
+                        'display_mode': 'form',
+                        'block_key': 'block.projects.intake.form'
+                    }
+                ],
+                'form_profile': {
+                    'model': 'project.project',
+                    'view_type': 'form',
+                    'mode': 'create_first',
+                    'primary_fields': [
+                        'name',
+                        'manager_id',
+                        'date_start',
+                        'description'
+                    ],
+                    'required_fields': [
+                        'name'
+                    ],
+                    'submit_action': 'project.initiation.enter'
+                },
+                'action_specs': {
+                    'submit': {
+                        'label': '提交立项',
+                        'intent': 'project.initiation.enter'
+                    }
+                },
+                'target': {
+                    'route': '/s/project.initiation',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_initiation',
+                    'action_xmlid': 'smart_construction_core.action_project_initiation'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_project_initiation" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_project_initiation_v1"/>
+        </record>
+
         <!-- Portal lifecycle scene -->
         <record id="sc_scene_version_portal_lifecycle_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_portal_lifecycle"/>
