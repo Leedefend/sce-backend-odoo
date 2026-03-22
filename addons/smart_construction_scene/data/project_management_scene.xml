@@ -70,7 +70,7 @@
                             {
                                 'key': 'block.project.header',
                                 'block_type': 'record_summary',
-                                'capability_key': 'project.dashboard.open'
+                                'capability_key': 'project.dashboard.enter'
                             }
                         ]
                     },
@@ -84,7 +84,7 @@
                             {
                                 'key': 'block.project.metrics',
                                 'block_type': 'metric_row',
-                                'capability_key': 'project.dashboard.open'
+                                'capability_key': 'project.dashboard.enter'
                             }
                         ]
                     },

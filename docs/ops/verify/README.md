@@ -726,6 +726,11 @@
   - `make verify.product.project_initiation.full`
 - Project dashboard flow:
   - `make verify.product.project_dashboard_flow`
+- Project dashboard contract guards:
+  - `make verify.product.project_dashboard_entry_contract_guard`
+  - `make verify.product.project_dashboard_block_contract_guard`
+- Project dashboard aggregate:
+  - `make verify.product.project_dashboard_baseline`
 - Phase 12-C legacy flow/shape/context guards:
   - `make verify.product.project_flow.initiation_dashboard`
   - `make verify.product.suggested_action_shape_guard`
@@ -742,6 +747,8 @@
   - initiation -> dashboard.enter product flow available
   - dashboard entry is minimal (`project_id/title/summary/blocks/suggested_action/runtime_fetch_hints`)
   - runtime block fetch available through `project.dashboard.block.fetch`
+  - supported runtime blocks frozen to `progress/risks/next_actions`
+  - deprecated alias `project.dashboard.open` is thin-wrapper only
   - suggested_action shape frozen (`intent/params/reason_code`)
   - `project_id` context chain continuous
   - dashboard contract non-empty (not shell-only)
@@ -756,7 +763,7 @@
   4. `verify.portal.preload_runtime_surface` (Portal Preload)
   5. `verify.runtime.fetch_entrypoints` (Portal Runtime Fetch)
   6. `verify.product.project_initiation.full` (Product)
-  7. `verify.product.project_dashboard_flow` (Product Dashboard Flow)
+  7. `verify.product.project_dashboard_baseline` (Product Dashboard Flow + Contract Guards)
 - Layered artifact archive:
   - `artifacts/baselines/platform/*`
   - `artifacts/baselines/portal/*`
@@ -780,7 +787,7 @@
 4. `make verify.portal.preload_runtime_surface ...`
 5. `make verify.runtime.fetch_entrypoints ...`
 6. `make verify.product.project_initiation.full ...`
-7. `make verify.product.project_dashboard_flow ...`
+7. `make verify.product.project_dashboard_baseline ...`
 8. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight

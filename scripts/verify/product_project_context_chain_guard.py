@@ -83,11 +83,19 @@ def main() -> int:
         context_project_id = int(dash_data.get("project_id") or 0)
         if context_project_id != project_id:
             raise RuntimeError("project_id mismatch between initiation and dashboard project_context")
+        runtime_fetch_hints = dash_data.get("runtime_fetch_hints") if isinstance(dash_data.get("runtime_fetch_hints"), dict) else {}
+        block_hints = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
+        progress_hint = block_hints.get("progress") if isinstance(block_hints.get("progress"), dict) else {}
+        progress_params = progress_hint.get("params") if isinstance(progress_hint.get("params"), dict) else {}
+        runtime_project_id = int(progress_params.get("project_id") or 0)
+        if runtime_project_id != project_id:
+            raise RuntimeError("project_id mismatch between dashboard entry and runtime block hint")
 
         report["chain"] = {
             "record_project_id": project_id,
             "suggested_project_id": suggested_project_id,
             "dashboard_project_context_id": context_project_id,
+            "runtime_hint_project_id": runtime_project_id,
         }
     except Exception as exc:
         report["status"] = "FAIL"

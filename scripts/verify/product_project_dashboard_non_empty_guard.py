@@ -83,6 +83,9 @@ def main() -> int:
         blocks = dash_data.get("blocks") if isinstance(dash_data.get("blocks"), list) else []
         if not blocks:
             raise RuntimeError("dashboard entry blocks empty")
+        block_keys = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
+        if block_keys != {"progress", "risks", "next_actions"}:
+            raise RuntimeError(f"dashboard block keys mismatch: {sorted(block_keys)}")
         non_empty_count = 0
         for item in blocks:
             if not isinstance(item, dict):
@@ -94,6 +97,7 @@ def main() -> int:
 
         report["blocks_total"] = len(blocks)
         report["blocks_non_empty"] = non_empty_count
+        report["block_keys"] = sorted(block_keys)
     except Exception as exc:
         report["status"] = "FAIL"
         report.setdefault("errors", []).append(str(exc))

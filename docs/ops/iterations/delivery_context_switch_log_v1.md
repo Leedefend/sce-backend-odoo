@@ -960,3 +960,12 @@ Each entry must include:
 - completed_step: `新增 project.dashboard.enter 与 project.dashboard.block.fetch；project.initiation.enter 成功态 suggested_action 改指向 dashboard.enter；dashboard entry 收口为 project_id/title/summary/blocks/suggested_action/runtime_fetch_hints；progress/risks 两个 runtime block 独立拉取；前端 ProjectManagementDashboardView 改为先拉 entry 再并行拉 block，区块失败不打断整页；新增 verify.product.project_dashboard_flow 并接入 verify.phase12b.baseline；补充 dashboard runtime contract 文档`
 - active_commit: `pending`
 - next_step: `重启后端并执行 product/frontend/baseline 验证，收口 Batch E4 后分类提交`
+
+### 2026-03-22T19:20:00Z
+- blocker_key: `phase12e_batch_e5_dashboard_contract_freeze_and_alias_closure`
+- layer_target: `Domain/Product Handler Layer + Verify/Gate Layer + Frontend Layer`
+- module: `addons/smart_construction_core + addons/smart_construction_scene + frontend/apps/web + scripts/verify + docs/ops + Makefile`
+- reason: `Phase 12-E / Batch E5：收口 project.dashboard.open 兼容入口，冻结 dashboard entry/block contract，补 next_actions runtime block，并仅预留下一场景 plan bootstrap 接口`
+- completed_step: `project.dashboard.open 改为 deprecated thin wrapper 并显式声明退场 Phase 12-G；项目主路径 capability 改指向 project.dashboard.enter；新增 next_actions runtime block 与 project.plan_bootstrap.enter reserve-only intent；新增 dashboard entry/block contract guards 与 product dashboard baseline 聚合；phase12b baseline 归档 dashboard flow + contract guard artifacts；文档补齐 dashboard contract freeze 与 plan bootstrap predesign`
+- active_commit: `pending`
+- next_step: `执行 frontend/product/baseline 验证并分类提交 Batch E5`

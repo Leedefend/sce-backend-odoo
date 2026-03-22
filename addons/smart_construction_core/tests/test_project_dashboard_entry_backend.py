@@ -10,6 +10,9 @@ from odoo.addons.smart_construction_core.handlers.project_dashboard_block_fetch 
 from odoo.addons.smart_construction_core.handlers.project_dashboard_enter import (
     ProjectDashboardEnterHandler,
 )
+from odoo.addons.smart_construction_core.handlers.project_dashboard_open import (
+    ProjectDashboardOpenHandler,
+)
 
 
 @tagged("sc_smoke", "project_dashboard_entry_backend")
@@ -25,7 +28,7 @@ class TestProjectDashboardEntryBackend(TransactionCase):
             "project_id": 11,
             "title": "Demo",
             "summary": {"project_code": "P-11"},
-            "blocks": [{"key": "progress"}, {"key": "risks"}],
+            "blocks": [{"key": "progress"}, {"key": "risks"}, {"key": "next_actions"}],
             "suggested_action": {"intent": "project.dashboard.block.fetch"},
             "runtime_fetch_hints": {"blocks": {"progress": {"intent": "project.dashboard.block.fetch"}}},
         }
@@ -53,3 +56,22 @@ class TestProjectDashboardEntryBackend(TransactionCase):
             result = handler.handle(payload={"project_id": 11, "block_key": "progress"}, ctx={})
         self.assertTrue(result.get("ok"))
         self.assertEqual((((result.get("data") or {}).get("block") or {}).get("block_type")), "progress_summary")
+
+    def test_open_is_deprecated_alias_wrapper(self):
+        fake_entry = {
+            "project_id": 11,
+            "title": "Demo",
+            "summary": {"project_code": "P-11"},
+            "blocks": [{"key": "progress"}, {"key": "risks"}, {"key": "next_actions"}],
+            "suggested_action": {"intent": "project.dashboard.block.fetch"},
+            "runtime_fetch_hints": {"blocks": {"progress": {"intent": "project.dashboard.block.fetch"}}},
+        }
+        handler = ProjectDashboardOpenHandler(self.env, payload={"project_id": 11})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.project_dashboard_open.ProjectDashboardEnterHandler.handle",
+            return_value={"ok": True, "data": fake_entry, "meta": {"intent": "project.dashboard.enter"}},
+        ):
+            result = handler.handle(payload={"project_id": 11}, ctx={})
+        self.assertTrue(result.get("ok"))
+        self.assertTrue(((result.get("meta") or {}).get("deprecated")))
+        self.assertEqual((((result.get("data") or {}).get("entry") or {}).get("project_id")), 11)

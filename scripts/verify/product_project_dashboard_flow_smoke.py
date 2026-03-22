@@ -43,14 +43,14 @@ def _assert_entry_shape(entry: dict, project_id: int) -> None:
         raise RuntimeError("dashboard entry project_id mismatch")
     blocks = entry.get("blocks") if isinstance(entry.get("blocks"), list) else []
     block_keys = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
-    missing = sorted({"progress", "risks"} - block_keys)
+    missing = sorted({"progress", "risks", "next_actions"} - block_keys)
     if missing:
         raise RuntimeError(f"dashboard entry missing blocks: {', '.join(missing)}")
     runtime_fetch_hints = entry.get("runtime_fetch_hints") if isinstance(entry.get("runtime_fetch_hints"), dict) else {}
     hints = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
     if not hints:
         raise RuntimeError("dashboard entry missing runtime_fetch_hints.blocks")
-    for block_key in ("progress", "risks"):
+    for block_key in ("progress", "risks", "next_actions"):
         hint = hints.get(block_key) if isinstance(hints.get(block_key), dict) else {}
         if str(hint.get("intent") or "").strip() != "project.dashboard.block.fetch":
             raise RuntimeError(f"runtime hint intent mismatch for {block_key}")
@@ -130,12 +130,29 @@ def main() -> int:
         if str(block.get("block_type") or "").strip() != "progress_summary":
             raise RuntimeError("runtime progress block type mismatch")
 
+        next_actions_hint = block_hints.get("next_actions") if isinstance(block_hints.get("next_actions"), dict) else {}
+        status, next_actions_resp = _post(
+            intent_url,
+            token,
+            str(next_actions_hint.get("intent") or "project.dashboard.block.fetch"),
+            next_actions_hint.get("params") if isinstance(next_actions_hint.get("params"), dict) else {"project_id": project_id, "block_key": "next_actions"},
+            db_name=db_name,
+        )
+        _assert_ok(status, next_actions_resp, "project.dashboard.block.fetch(next_actions)")
+        next_actions_data = next_actions_resp.get("data") if isinstance(next_actions_resp.get("data"), dict) else {}
+        next_block = next_actions_data.get("block") if isinstance(next_actions_data.get("block"), dict) else {}
+        if str(next_actions_data.get("block_key") or "").strip() != "next_actions":
+            raise RuntimeError("runtime next_actions block key mismatch")
+        if str(next_block.get("block_type") or "").strip() != "action_list":
+            raise RuntimeError("runtime next_actions block type mismatch")
+
         report["flow"] = {
             "project_id": project_id,
             "suggested_action_intent": suggested_intent,
             "dashboard_entry_keys": sorted(dash_entry.keys()),
             "runtime_block_key": str(progress_data.get("block_key") or ""),
             "runtime_block_state": str(block.get("state") or ""),
+            "runtime_next_actions_state": str(next_block.get("state") or ""),
         }
     except Exception as exc:
         report["status"] = "FAIL"
