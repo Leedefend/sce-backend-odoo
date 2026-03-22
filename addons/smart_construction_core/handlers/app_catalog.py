@@ -35,6 +35,13 @@ APP_DEFS: List[Dict[str, Any]] = [
                 "required_permissions": ["project.view_all"],
             },
             {
+                "key": "project_dashboard",
+                "label": "项目驾驶舱",
+                "kind": "work",
+                "open": {"odoo_menu_xmlid": "smart_construction_core.menu_sc_project_dashboard"},
+                "required_permissions": ["project.view_all"],
+            },
+            {
                 "key": "task_board",
                 "label": "任务看板",
                 "kind": "work",

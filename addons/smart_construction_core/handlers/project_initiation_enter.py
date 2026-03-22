@@ -90,17 +90,21 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
             }
 
-        menu_xmlid = "smart_construction_core.menu_sc_project_initiation"
+        menu_xmlid = "smart_construction_core.menu_sc_project_dashboard"
         menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
         contract_params = {
             "op": "menu",
             "menu_id": int(menu.id) if menu else 0,
             "menu_xmlid": menu_xmlid,
+            "project_id": int(project.id),
+            "scene_key": "project.dashboard",
         }
         if int(contract_params.get("menu_id") or 0) <= 0:
             contract_params = {
                 "op": "model",
                 "model": "project.project",
+                "project_id": int(project.id),
+                "scene_key": "project.dashboard",
             }
 
         data = {
@@ -110,10 +114,14 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 "id": int(project.id),
                 "name": str(project.name or ""),
             },
-            "suggested_action": "open_project_record",
+            "suggested_action": "open_project_dashboard",
             "suggested_action_payload": {
-                "intent": "ui.contract",
-                "params": dict(contract_params),
+                "intent": "project.dashboard.open",
+                "reason_code": "PROJECT_INITIATION_CREATED",
+                "params": {
+                    "project_id": int(project.id),
+                    "reason_code": "PROJECT_INITIATION_CREATED",
+                },
             },
             "contract_ref": {
                 "intent": "ui.contract",
