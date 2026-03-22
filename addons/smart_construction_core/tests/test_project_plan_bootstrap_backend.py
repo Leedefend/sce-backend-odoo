@@ -64,7 +64,19 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_CONTEXT_MISSING")
 
     def test_execution_enter_returns_scheduling_placeholder(self):
+        fake_entry = {
+            "project_id": 21,
+            "title": "项目执行：Demo",
+            "summary": {"project_code": "P-21"},
+            "blocks": [{"key": "execution_tasks"}],
+            "suggested_action": {"intent": "project.execution.block.fetch"},
+            "runtime_fetch_hints": {"blocks": {"execution_tasks": {"intent": "project.execution.block.fetch"}}},
+        }
         handler = ProjectExecutionEnterHandler(self.env, payload={"project_id": 21})
-        result = handler.handle(payload={"project_id": 21}, ctx={})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.project_execution_enter.ProjectExecutionService.build_entry",
+            return_value=fake_entry,
+        ):
+            result = handler.handle(payload={"project_id": 21}, ctx={})
         self.assertTrue(result.get("ok"))
-        self.assertEqual(((result.get("data") or {}).get("scene_key")), "project.execution")
+        self.assertEqual(set((result.get("data") or {}).keys()), set(fake_entry.keys()))
