@@ -888,3 +888,12 @@ Each entry must include:
 - completed_step: `新增 verify.product.project_initiation.roles 与 verify.product.contract_ref_shape_guard；冻结 contract_ref/suggested_action_payload 为 ui.contract menu-first；新增 verify.product.project_initiation.full 与 verify.phase12b.baseline 并完成分层 artifacts 归档；补充 Product Scene Template 与候选场景预选文档`
 - active_commit: `pending`
 - next_step: `分类提交 Phase 12-B 改动并准备 PR`
+
+### 2026-03-22T10:35:00Z
+- blocker_key: `phase12c_dashboard_flow_chain`
+- layer_target: `Scene Layer + Product Handler Layer + Verification Layer`
+- module: `smart_construction_core handlers + smart_construction_scene layout + scripts/verify + Makefile + docs/ops`
+- reason: `Phase 12-C：实现 project.dashboard 产品场景，打通 initiation -> dashboard，冻结 suggested_action 结构并新增 project context chain 与 non-empty guard`
+- completed_step: `新增 project.dashboard.open handler 与 project.dashboard 合同标准块（summary/progress/next_actions）；project.initiation.enter 成功后 suggested_action 指向 dashboard；新增 flow/shape/context/non-empty 四类 product guard 与 verify.product.phase12c 聚合目标；文档同步`
+- active_commit: `pending`
+- next_step: `分类提交 Phase 12-C 改动并准备 PR`
