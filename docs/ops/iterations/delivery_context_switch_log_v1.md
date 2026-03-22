@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-23T00:35:00Z
+- blocker_key: `phase16e_v0_1_stability_baseline`
+- layer_target: `Platform Layer / Domain Layer / Frontend Layer / Verify Governance / Docs`
+- module: `frontend/apps/web + addons/smart_construction_core + scripts/verify + docs/ops + Makefile`
+- reason: `在重开新业务切片前，先冻结 v0.1 新基线，把项目创建主线和主产品链聚合为一条稳定验证链`
+- completed_step: `新增项目创建主线常量与 mainline guard，明确 projects.intake 与 project.initiation.enter 的分工，并落地 verify.product.v0_1_stability_baseline 聚合门禁且一次性通过`
+- active_commit: `ebae876`
+- next_step: `Write tmp summary, classify frontend/governance/docs commits, then decide whether to reopen the next slice`
+
 ### 2026-03-22T23:45:00Z
 - blocker_key: `phase16d_dashboard_full_contract_platformization`
 - layer_target: `Platform Layer / Scene Orchestration Layer / Verify Governance / Docs`
