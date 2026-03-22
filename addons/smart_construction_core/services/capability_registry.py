@@ -66,6 +66,7 @@ _CAPABILITIES: list[dict[str, Any]] = [
     _cap("project.dashboard.open", "项目驾驶舱（兼容）", "兼容旧入口，转发到项目驾驶舱最小入口", "project_management", "project.dashboard", required_roles=["pm", "executive"], status="deprecated"),
     _cap("project.plan_bootstrap.enter", "计划编排入口", "进入项目计划编排最小入口", "project_management", "project.plan_bootstrap", required_roles=["pm", "executive"]),
     _cap("project.execution.enter", "项目执行入口", "进入项目执行最小入口", "project_management", "project.execution", required_roles=["pm", "executive"]),
+    _cap("project.execution.advance", "推进执行", "执行最小推进动作", "project_management", "project.execution", required_roles=["pm", "executive"]),
     _cap("project.lifecycle.open", "生命周期视图", "查看项目生命周期与阻塞项", "project_management", "portal.lifecycle", required_roles=["pm", "executive"]),
     _cap("project.task.list", "任务列表", "查看项目任务与待办", "project_management", "projects.ledger", required_roles=["owner", "pm", "executive"]),
     _cap("project.task.board", "任务看板", "按状态查看任务推进", "project_management", "projects.ledger", required_roles=["pm", "executive"]),

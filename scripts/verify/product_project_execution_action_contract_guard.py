@@ -11,12 +11,11 @@ from uuid import uuid4
 from python_http_smoke_utils import get_base_url, http_post_json
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_entry_contract_guard.json"
+OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_action_contract_guard.json"
 
-ENTRY_KEYS = {"project_id", "title", "summary", "blocks", "suggested_action", "runtime_fetch_hints"}
-SUMMARY_KEYS = {"project_code", "manager_name", "stage_name", "date_start", "date_end"}
-BLOCK_KEYS = {"execution_tasks", "next_actions"}
-BLOCK_ITEM_KEYS = {"key", "title", "state"}
+DATA_KEYS = {"result", "project_id", "reason_code", "suggested_action"}
+SUGGESTED_ACTION_KEYS = {"key", "intent", "params", "reason_code"}
+ALLOWED_RESULTS = {"success", "blocked"}
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -55,53 +54,52 @@ def main() -> int:
             raise RuntimeError("login token missing")
 
         status, create_resp = _post(intent_url, token, "project.initiation.enter", {
-            "name": f"P13B-EXEC-ENTRY-{uuid4().hex[:8]}",
-            "description": "execution entry contract guard",
-            "date_start": str(os.getenv("P13B_DATE_START") or "2026-03-22"),
+            "name": f"P13C-ACTION-{uuid4().hex[:8]}",
+            "description": "execution action contract guard",
+            "date_start": str(os.getenv("P13C_DATE_START") or "2026-03-22"),
         }, db_name=db_name)
         _assert_ok(status, create_resp, "project.initiation.enter")
         project_id = int((((create_resp.get("data") or {}) if isinstance(create_resp.get("data"), dict) else {}).get("record") or {}).get("id") or 0)
         if project_id <= 0:
             raise RuntimeError("project id missing")
 
-        status, entry_resp = _post(intent_url, token, "project.execution.enter", {"project_id": project_id}, db_name=db_name)
-        _assert_ok(status, entry_resp, "project.execution.enter")
-        entry = entry_resp.get("data") if isinstance(entry_resp.get("data"), dict) else {}
-        if set(entry.keys()) != ENTRY_KEYS:
-            raise RuntimeError(f"entry keys drift: {sorted(entry.keys())}")
-        summary = entry.get("summary") if isinstance(entry.get("summary"), dict) else {}
-        if set(summary.keys()) != SUMMARY_KEYS:
-            raise RuntimeError(f"entry summary keys drift: {sorted(summary.keys())}")
-        blocks = entry.get("blocks") if isinstance(entry.get("blocks"), list) else []
-        seen_blocks = set()
-        for row in blocks:
-            if not isinstance(row, dict):
-                raise RuntimeError("entry block row is not object")
-            if set(row.keys()) != BLOCK_ITEM_KEYS:
-                raise RuntimeError(f"entry block item keys drift: {sorted(row.keys())}")
-            seen_blocks.add(str(row.get("key") or "").strip())
-        if seen_blocks != BLOCK_KEYS:
-            raise RuntimeError(f"entry block keys drift: {sorted(seen_blocks)}")
-        hints = (((entry.get("runtime_fetch_hints") or {}) if isinstance(entry.get("runtime_fetch_hints"), dict) else {}).get("blocks") or {})
-        if set(hints.keys()) != BLOCK_KEYS:
-            raise RuntimeError(f"runtime hint block keys drift: {sorted(hints.keys())}")
+        status, advance_resp = _post(intent_url, token, "project.execution.advance", {"project_id": project_id}, db_name=db_name)
+        _assert_ok(status, advance_resp, "project.execution.advance")
+        data = advance_resp.get("data") if isinstance(advance_resp.get("data"), dict) else {}
+        if set(data.keys()) != DATA_KEYS:
+            raise RuntimeError(f"action data keys drift: {sorted(data.keys())}")
+        if str(data.get("result") or "").strip() not in ALLOWED_RESULTS:
+            raise RuntimeError(f"action result drift: {data.get('result')!r}")
+        if int(data.get("project_id") or 0) != project_id:
+            raise RuntimeError("action project_id mismatch")
+        if not str(data.get("reason_code") or "").strip():
+            raise RuntimeError("action reason_code missing")
+        suggested = data.get("suggested_action") if isinstance(data.get("suggested_action"), dict) else {}
+        if set(suggested.keys()) != SUGGESTED_ACTION_KEYS:
+            raise RuntimeError(f"suggested_action keys drift: {sorted(suggested.keys())}")
+        if not str(suggested.get("intent") or "").strip():
+            raise RuntimeError("suggested_action.intent missing")
+        if not isinstance(suggested.get("params"), dict):
+            raise RuntimeError("suggested_action.params missing")
+        if not str(suggested.get("reason_code") or "").strip():
+            raise RuntimeError("suggested_action.reason_code missing")
 
-        report["entry"] = {
+        report["action"] = {
             "project_id": project_id,
-            "entry_keys": sorted(entry.keys()),
-            "summary_keys": sorted(summary.keys()),
-            "block_keys": sorted(seen_blocks),
+            "result": str(data.get("result") or ""),
+            "reason_code": str(data.get("reason_code") or ""),
+            "suggested_action_intent": str(suggested.get("intent") or ""),
         }
     except Exception as exc:
         report["status"] = "FAIL"
         report.setdefault("errors", []).append(str(exc))
         _write_json(OUT_JSON, report)
-        print("[product_project_execution_entry_contract_guard] FAIL")
+        print("[product_project_execution_action_contract_guard] FAIL")
         print(f" - {exc}")
         return 1
 
     _write_json(OUT_JSON, report)
-    print("[product_project_execution_entry_contract_guard] PASS")
+    print("[product_project_execution_action_contract_guard] PASS")
     return 0
 
 

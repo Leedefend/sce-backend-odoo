@@ -110,6 +110,8 @@ def main() -> int:
         if int(execution_entry.get("project_id") or 0) != project_id:
             raise RuntimeError("execution entry project_id mismatch")
         execution_hints = (((execution_entry.get("runtime_fetch_hints") or {}) if isinstance(execution_entry.get("runtime_fetch_hints"), dict) else {}).get("blocks") or {})
+        if sorted(execution_hints.keys()) != ["execution_tasks", "next_actions"]:
+            raise RuntimeError(f"execution runtime hints drift: {sorted(execution_hints.keys())}")
         execution_hint = execution_hints.get("execution_tasks") if isinstance(execution_hints.get("execution_tasks"), dict) else {}
         if str(execution_hint.get("intent") or "").strip() != "project.execution.block.fetch":
             raise RuntimeError("execution runtime hint intent mismatch")
@@ -125,6 +127,16 @@ def main() -> int:
             raise RuntimeError("execution runtime block key mismatch")
         if str(execution_block.get("block_type") or "").strip() != "execution_task_list":
             raise RuntimeError("execution runtime block type mismatch")
+
+        next_actions_hint = execution_hints.get("next_actions") if isinstance(execution_hints.get("next_actions"), dict) else {}
+        status, execution_next_resp = _post(intent_url, token, "project.execution.block.fetch", ((next_actions_hint.get("params") or {}) if isinstance(next_actions_hint.get("params"), dict) else {"project_id": project_id, "block_key": "next_actions"}), db_name=db_name)
+        _assert_ok(status, execution_next_resp, "project.execution.block.fetch(next_actions)")
+        execution_next_block = (((execution_next_resp.get("data") or {}).get("block")) or {})
+        if str(execution_next_block.get("block_type") or "").strip() != "action_list":
+            raise RuntimeError("execution next_actions block type mismatch")
+        next_actions = ((((execution_next_block.get("data") or {}) if isinstance(execution_next_block.get("data"), dict) else {}).get("actions")) or [])
+        if not any(isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.advance" for row in next_actions):
+            raise RuntimeError("execution next_actions missing project.execution.advance")
 
         report["flow"] = {
             "project_id": project_id,
