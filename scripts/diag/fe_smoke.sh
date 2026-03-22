@@ -30,6 +30,22 @@ if [[ -z "${AUTH_TOKEN}" && -n "${E2E_LOGIN}" && -n "${E2E_PASSWORD}" ]]; then
     fi
     exit 1
   fi
+  login_next_intent="$(python3 - <<'PY'
+import json
+import sys
+try:
+  data=json.load(open("/tmp/fe_smoke_login.json"))
+except Exception:
+  sys.exit(0)
+payload=(data.get("data") or {})
+bootstrap=payload.get("bootstrap") or {}
+print(bootstrap.get("next_intent") or "")
+PY
+)"
+  if [[ "${login_next_intent}" != "system.init" && "${login_next_intent}" != "session.bootstrap" ]]; then
+    echo "[$(ts)] FAIL: login bootstrap.next_intent invalid (${login_next_intent})"
+    exit 1
+  fi
   AUTH_TOKEN="$(python3 - <<'PY'
 import json
 import sys
@@ -50,7 +66,7 @@ PY
   fi
 fi
 
-payload='{"intent":"app.init","params":{"scene":"web","with_preload":false,"root_xmlid":"smart_construction_core.menu_sc_root"}}'
+payload='{"intent":"system.init","params":{"scene":"web","with_preload":false,"root_xmlid":"smart_construction_core.menu_sc_root"}}'
 
 auth_header=()
 if [[ -n "${AUTH_TOKEN}" ]]; then
@@ -75,31 +91,67 @@ if [[ "${status_code}" != "200" ]]; then
   exit 1
 fi
 
-nav_version="$(python3 - <<'PY'
+mapfile -t smoke_fields < <(python3 - <<'PY'
 import json
 import sys
 try:
-  data=json.load(open("/tmp/fe_smoke_resp.json"))
+  envelope=json.load(open("/tmp/fe_smoke_resp.json"))
 except Exception:
   sys.exit(0)
-meta=data.get("meta") or {}
-nav_meta=data.get("nav_meta") or {}
-print(meta.get("nav_version") or nav_meta.get("menu") or meta.get("parts",{}).get("nav") or "")
+payload=(envelope.get("data") or {})
+meta=envelope.get("meta") or {}
+nav=payload.get("nav") if isinstance(payload.get("nav"), list) else []
+default_route=payload.get("default_route") if isinstance(payload.get("default_route"), dict) else {}
+role_surface=payload.get("role_surface") if isinstance(payload.get("role_surface"), dict) else {}
+landing_path=role_surface.get("landing_path") or ""
+landing_scene=role_surface.get("landing_scene_key") or ""
+landing_source="default_route"
+if not (default_route.get("scene_key") or default_route.get("route")):
+  landing_source="role_surface"
+for item in (
+  meta.get("trace_id") or meta.get("traceId") or "",
+  str(len(nav)),
+  default_route.get("scene_key") or "",
+  default_route.get("route") or "",
+  default_route.get("reason") or "",
+  landing_scene,
+  landing_path,
+  landing_source,
+):
+  print(item)
 PY
-)"
+)
 
-trace_id="$(python3 - <<'PY'
-import json
-import sys
-try:
-  data=json.load(open("/tmp/fe_smoke_resp.json"))
-except Exception:
-  sys.exit(0)
-meta=data.get("meta") or {}
-print(meta.get("trace_id") or meta.get("traceId") or "")
-PY
-)"
+trace_id="${smoke_fields[0]:-}"
+nav_count="${smoke_fields[1]:-}"
+default_route_scene="${smoke_fields[2]:-}"
+default_route_path="${smoke_fields[3]:-}"
+default_route_reason="${smoke_fields[4]:-}"
+role_landing_scene="${smoke_fields[5]:-}"
+role_landing_path="${smoke_fields[6]:-}"
+landing_source="${smoke_fields[7]:-}"
 
-echo "[$(ts)] OK: app.init 200"
-echo "nav_version=${nav_version}"
+if [[ -z "${trace_id}" ]]; then
+  echo "[$(ts)] FAIL: system.init trace_id missing"
+  exit 1
+fi
+
+if [[ "${nav_count}" == "0" || -z "${nav_count}" ]]; then
+  echo "[$(ts)] FAIL: system.init nav missing"
+  exit 1
+fi
+
+if [[ -z "${default_route_scene}" && -z "${default_route_path}" && -z "${role_landing_scene}" && -z "${role_landing_path}" ]]; then
+  echo "[$(ts)] FAIL: system.init landing target missing default_route and role_surface fallback"
+  exit 1
+fi
+
+echo "[$(ts)] OK: login -> system.init 200"
+echo "nav_count=${nav_count}"
+echo "default_route.scene_key=${default_route_scene}"
+echo "default_route.route=${default_route_path}"
+echo "default_route.reason=${default_route_reason}"
+echo "role_surface.landing_scene_key=${role_landing_scene}"
+echo "role_surface.landing_path=${role_landing_path}"
+echo "landing_source=${landing_source}"
 echo "trace_id=${trace_id}"

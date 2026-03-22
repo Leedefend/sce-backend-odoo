@@ -13,6 +13,7 @@
     "format": "prettier -w ."
   },
   "devDependencies": {
+    "playwright": "^1.54.2",
     "prettier": "^3.2.5"
   }
 }

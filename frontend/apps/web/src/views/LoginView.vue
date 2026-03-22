@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { usePageContract } from '../app/pageContract';
@@ -145,6 +145,12 @@ const valueLines = computed(() => [
   pageText('value_line_3', '让资金协同'),
   pageText('value_line_4', '让风险可预警'),
 ]);
+
+onMounted(() => {
+  if (typeof route.query.redirect === 'string' && route.query.redirect.trim()) {
+    session.clearSession();
+  }
+});
 
 watch([username, password], () => {
   if (error.value) error.value = '';

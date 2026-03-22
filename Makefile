@@ -525,6 +525,19 @@ verify.portal.execute_button_smoke.container: guard.prod.forbid check-compose-pr
 verify.portal.fe_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) DB_NAME=$(DB_NAME) AUTH_TOKEN=$(AUTH_TOKEN) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		bash scripts/diag/fe_smoke.sh
+verify.portal.login_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+		node scripts/verify/fe_login_browser_smoke.mjs
+.PHONY: verify.portal.login_browser_smoke.prod_sim
+verify.portal.login_browser_smoke.prod_sim: guard.prod.forbid
+	@$(MAKE) --no-print-directory deploy.prod.sim.oneclick \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		DB_NAME=sc_prod_sim
+	@$(MAKE) --no-print-directory verify.portal.login_browser_smoke.host \
+		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim \
+		BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts \
+		DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo
 verify.portal.fe_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) AUTH_TOKEN=$(AUTH_TOKEN) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) bash /mnt/scripts/diag/fe_smoke.sh"
 verify.portal.view_state: guard.prod.forbid check-compose-project check-compose-env
