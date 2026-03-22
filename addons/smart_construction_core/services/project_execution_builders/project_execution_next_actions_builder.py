@@ -94,6 +94,30 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
             pilot_primary_reason_code = "EXECUTION_TASK_MISSING"
             pilot_primary_message = "请先创建项目根任务，并确保仅保留一个开放任务。"
         actions = [action]
+        cost_action_state = "planned"
+        cost_reason_code = "COST_TRACKING_AFTER_EXECUTION"
+        cost_hint = "当前切片只读复用 account.move 成本事实。下一步：进入成本跟踪查看原生汇总。"
+        if task_total <= 0:
+            cost_action_state = "blocked"
+            cost_reason_code = "EXECUTION_TASK_MISSING"
+            cost_hint = "当前缺少执行任务，暂无法形成 execution -> cost 连续路径。"
+        elif current_state in ("in_progress", "done"):
+            cost_action_state = "available"
+        actions.append(
+            {
+                "key": "cost_tracking_enter",
+                "label": "下一步：查看成本跟踪",
+                "hint": cost_hint,
+                "intent": "cost.tracking.enter",
+                "params": {
+                    "project_id": int(project.id),
+                    "source": "project.execution.next_actions",
+                },
+                "state": cost_action_state,
+                "reason_code": cost_reason_code,
+                "source": "phase_17_a",
+            }
+        )
         return self._envelope(
             state="ready",
             visibility=visibility,
@@ -102,6 +126,7 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                 "summary": {
                     "count": len(actions),
                     "ready_count": len([row for row in actions if str(row.get("state") or "") == "ready"]),
+                    "available_count": len([row for row in actions if str(row.get("state") or "") == "available"]),
                     "blocked_count": len([row for row in actions if str(row.get("state") or "") == "blocked"]),
                     "current_state": current_state,
                     "current_state_label": ProjectExecutionStateMachine.STATE_LABEL.get(current_state, current_state),
