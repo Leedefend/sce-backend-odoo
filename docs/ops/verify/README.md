@@ -701,6 +701,12 @@
   - `make verify.product.contract_ref_shape_guard`
 - Product aggregate:
   - `make verify.product.project_initiation.full`
+- Phase 12-C flow/shape/context guards:
+  - `make verify.product.project_flow.initiation_dashboard`
+  - `make verify.product.suggested_action_shape_guard`
+  - `make verify.product.project_context_chain_guard`
+  - `make verify.product.project_dashboard_non_empty_guard`
+  - `make verify.product.phase12c`
 - Coverage:
   - login -> open product scene -> create record
   - create result state is ready/success
@@ -708,6 +714,10 @@
   - contract return path available (no fallback-only response)
   - role matrix behavior deterministic (`owner/pm/finance/executive`)
   - contract_ref/suggested_action_payload shape frozen (`ui.contract` + `op=menu` first)
+  - initiation -> dashboard product flow available
+  - suggested_action shape frozen (`intent/params/reason_code`)
+  - `project_id` context chain continuous
+  - dashboard contract non-empty (not shell-only)
 
 ## Phase 12-B Aggregate Baseline
 - One-command layered chain:
