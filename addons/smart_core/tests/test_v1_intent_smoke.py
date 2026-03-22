@@ -232,15 +232,10 @@ class TestV1IntentSmoke(HttpCase):
         row = data.get("data", {}) or {}
         role_surface = row.get("role_surface") or {}
         role_surface_code = str(role_surface.get("role_code") or "").strip().lower()
+        init_meta = row.get("init_meta") if isinstance(row.get("init_meta"), dict) else {}
+        page_contract_meta = init_meta.get("page_contract_meta") if isinstance(init_meta.get("page_contract_meta"), dict) else {}
+        self.assertIn(str(page_contract_meta.get("intent") or "").strip(), {"scene.page_contract", "page.contract"})
         if role_surface_code:
-            page_contracts = row.get("page_contracts") if isinstance(row.get("page_contracts"), dict) else {}
-            pages = page_contracts.get("pages") if isinstance(page_contracts.get("pages"), dict) else {}
-            home_page = pages.get("home") if isinstance(pages.get("home"), dict) else {}
-            home_orchestration = home_page.get("page_orchestration_v1") if isinstance(home_page.get("page_orchestration_v1"), dict) else {}
-            home_page_payload = home_orchestration.get("page") if isinstance(home_orchestration.get("page"), dict) else {}
-            home_context = home_page_payload.get("context") if isinstance(home_page_payload.get("context"), dict) else {}
-            self.assertEqual(str(home_context.get("role_code") or "").strip().lower(), role_surface_code)
-
             workspace_home = row.get("workspace_home") or {}
             workspace_record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
             hero = workspace_record.get("hero") if isinstance(workspace_record.get("hero"), dict) else {}
