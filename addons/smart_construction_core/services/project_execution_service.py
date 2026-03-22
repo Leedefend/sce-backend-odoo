@@ -7,20 +7,8 @@ from odoo.addons.smart_construction_core.services.project_execution_builders imp
 
 
 class ProjectExecutionService:
-    """Assemble project.execution minimal entry and runtime blocks."""
+    """Provide business-truth-backed execution data for orchestration carriers."""
 
-    ENTRY_SUMMARY_KEYS = (
-        "project_code",
-        "manager_name",
-        "stage_name",
-        "date_start",
-        "date_end",
-    )
-    ENTRY_BLOCKS = (
-        ("execution_tasks", "执行任务", "deferred"),
-        ("pilot_precheck", "试点前检查", "deferred"),
-        ("next_actions", "执行下一步", "deferred"),
-    )
     RUNTIME_BLOCK_MAP = {
         "execution_tasks": "block.project.execution_tasks",
         "pilot_precheck": "block.project.execution_pilot_precheck",
@@ -32,76 +20,21 @@ class ProjectExecutionService:
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
 
-    def build_entry(self, project_id=None, context=None):
-        project, _diag = self._resolve_project_with_diagnostics(project_id)
-        project_payload = self._project_payload(project)
-        resolved_project_id = int(project_payload.get("id") or 0)
-        blocks = [{"key": key, "title": title, "state": state} for key, title, state in self.ENTRY_BLOCKS]
-        if resolved_project_id <= 0:
-            return {
-                "project_id": 0,
-                "title": "项目执行",
-                "summary": {key: "" for key in self.ENTRY_SUMMARY_KEYS},
-                "blocks": blocks,
-                "suggested_action": {},
-                "runtime_fetch_hints": {"blocks": {}},
-            }
-
-        runtime_fetch_hints = {
-            "blocks": {
-                key: {
-                    "intent": "project.execution.block.fetch",
-                    "params": {
-                        "project_id": resolved_project_id,
-                        "block_key": key,
-                    },
-                }
-                for key, _, _ in self.ENTRY_BLOCKS
-            }
-        }
-        first_action = runtime_fetch_hints["blocks"].get("next_actions") or runtime_fetch_hints["blocks"].get("execution_tasks") or {}
-        return {
-            "project_id": resolved_project_id,
-            "title": "执行推进：%s" % str(project_payload.get("name") or "项目"),
-            "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
-            "blocks": blocks,
-            "suggested_action": {
-                "key": "load_execution_next_actions",
-                "intent": str(first_action.get("intent") or ""),
-                "params": dict(first_action.get("params") or {}),
-                "reason_code": "PROJECT_EXECUTION_READY",
-            },
-            "runtime_fetch_hints": runtime_fetch_hints,
-        }
-
-    def build_runtime_block(self, block_key, project_id=None, context=None):
+    def build_block(self, block_key, project=None, context=None):
         normalized_key = str(block_key or "").strip().lower()
         builder_key = self.RUNTIME_BLOCK_MAP.get(normalized_key)
-        project, _diag = self._resolve_project_with_diagnostics(project_id)
-        resolved_project_id = int(getattr(project, "id", 0) or 0)
         if not builder_key:
-            return {
-                "project_id": resolved_project_id,
-                "block_key": normalized_key or "",
-                "block": self._error_block(normalized_key or "unknown", "UNSUPPORTED_BLOCK_KEY"),
-                "degraded": True,
-            }
+            return self.error_block(normalized_key or "unknown", "UNSUPPORTED_BLOCK_KEY")
 
         builder = self._builder_map.get(builder_key)
         if builder is None:
-            block = self._error_block(builder_key, "BLOCK_BUILDER_NOT_FOUND")
+            block = self.error_block(builder_key, "BLOCK_BUILDER_NOT_FOUND")
         else:
             try:
                 block = builder.build(project=project, context=dict(context or {}))
             except Exception:
-                block = self._error_block(builder_key, "BLOCK_BUILD_FAILED")
-        state = str((block or {}).get("state") or "").strip().lower()
-        return {
-            "project_id": resolved_project_id,
-            "block_key": normalized_key or "",
-            "block": block if isinstance(block, dict) else self._error_block(builder_key, "INVALID_BLOCK_PAYLOAD"),
-            "degraded": state != "ready",
-        }
+                block = self.error_block(builder_key, "BLOCK_BUILD_FAILED")
+        return block if isinstance(block, dict) else self.error_block(builder_key, "INVALID_BLOCK_PAYLOAD")
 
     def _model(self, model_name):
         try:
@@ -128,7 +61,7 @@ class ProjectExecutionService:
             return [ors[0]]
         return (["|"] * (len(ors) - 1)) + ors
 
-    def _resolve_project_with_diagnostics(self, project_id):
+    def resolve_project_with_diagnostics(self, project_id):
         Project = self._model("project.project")
         if Project is None:
             return None, {"resolved_project_id": 0, "reason": "project.project model not available"}
@@ -155,7 +88,7 @@ class ProjectExecutionService:
             pass
         return None, {"resolved_project_id": 0, "reason": "no project resolved"}
 
-    def _project_payload(self, project):
+    def project_payload(self, project):
         def _safe_text(value):
             try:
                 return str(value or "")
@@ -197,7 +130,7 @@ class ProjectExecutionService:
         }
 
     @staticmethod
-    def _error_block(block_key, code):
+    def error_block(block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",

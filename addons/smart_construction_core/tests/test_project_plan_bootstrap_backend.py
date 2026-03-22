@@ -19,6 +19,9 @@ from odoo.addons.smart_construction_core.handlers.project_execution_advance impo
 from odoo.addons.smart_construction_core.services.project_execution_service import (
     ProjectExecutionService,
 )
+from odoo.addons.smart_construction_core.orchestration.project_execution_scene_orchestrator import (
+    ProjectExecutionSceneOrchestrator,
+)
 
 
 @tagged("sc_smoke", "project_plan_bootstrap_backend")
@@ -72,6 +75,7 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
     def test_execution_enter_returns_scheduling_placeholder(self):
         fake_entry = {
             "project_id": 21,
+            "scene_key": "project.execution",
             "title": "项目执行：Demo",
             "summary": {"project_code": "P-21"},
             "blocks": [{"key": "execution_tasks"}],
@@ -80,7 +84,7 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         }
         handler = ProjectExecutionEnterHandler(self.env, payload={"project_id": 21})
         with patch(
-            "odoo.addons.smart_construction_core.handlers.project_execution_enter.ProjectExecutionService.build_entry",
+            "odoo.addons.smart_construction_core.handlers.project_execution_enter.ProjectExecutionSceneOrchestrator.build_entry",
             return_value=fake_entry,
         ):
             result = handler.handle(payload={"project_id": 21}, ctx={})
@@ -197,8 +201,7 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         )
 
         service = ProjectExecutionService(self.env)
-        result = service.build_runtime_block("pilot_precheck", project_id=project.id, context={})
-        block = result.get("block") if isinstance(result.get("block"), dict) else {}
+        block = service.build_block("pilot_precheck", project=project, context={})
         data = block.get("data") if isinstance(block.get("data"), dict) else {}
         summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
         checks = data.get("checks") if isinstance(data.get("checks"), list) else []
@@ -235,10 +238,56 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         )
 
         service = ProjectExecutionService(self.env)
-        result = service.build_runtime_block("pilot_precheck", project_id=project.id, context={})
-        block = result.get("block") if isinstance(result.get("block"), dict) else {}
+        block = service.build_block("pilot_precheck", project=project, context={})
         data = block.get("data") if isinstance(block.get("data"), dict) else {}
         summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
 
         self.assertEqual(summary.get("overall_state"), "blocked")
         self.assertEqual(summary.get("primary_reason_code"), "PILOT_SINGLE_OPEN_TASK_REQUIRED")
+
+    def test_execution_enter_uses_orchestration_carrier_shape(self):
+        fake_entry = {
+            "project_id": 21,
+            "scene_key": "project.execution",
+            "scene_label": "执行推进",
+            "state_fallback_text": "当前状态：正在查看执行推进状态。",
+            "title": "执行推进：Demo",
+            "summary": {"project_code": "P-21"},
+            "blocks": [{"key": "execution_tasks"}, {"key": "pilot_precheck"}, {"key": "next_actions"}],
+            "suggested_action": {"intent": "project.execution.block.fetch"},
+            "runtime_fetch_hints": {"blocks": {"next_actions": {"intent": "project.execution.block.fetch"}}},
+        }
+        handler = ProjectExecutionEnterHandler(self.env, payload={"project_id": 21})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.project_execution_enter.ProjectExecutionSceneOrchestrator.build_entry",
+            return_value=fake_entry,
+        ):
+            result = handler.handle(payload={"project_id": 21}, ctx={})
+        self.assertTrue(result.get("ok"))
+        self.assertEqual(((result.get("data") or {}).get("scene_key")), "project.execution")
+
+    def test_execution_orchestrator_runtime_block_shape(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Execution Orchestrator Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+                "date_start": "2026-03-23",
+            }
+        )
+        self.env["project.task"].create(
+            {
+                "name": "Project Root Task",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+        orchestrator = ProjectExecutionSceneOrchestrator(self.env)
+        result = orchestrator.build_runtime_block("next_actions", project_id=project.id, context={})
+        block = result.get("block") if isinstance(result.get("block"), dict) else {}
+        data = block.get("data") if isinstance(block.get("data"), dict) else {}
+        actions = data.get("actions") if isinstance(data.get("actions"), list) else []
+
+        self.assertEqual(result.get("block_key"), "next_actions")
+        self.assertTrue(actions)

@@ -13,7 +13,17 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_entry_contract_guard.json"
 
-ENTRY_KEYS = {"project_id", "title", "summary", "blocks", "suggested_action", "runtime_fetch_hints"}
+ENTRY_KEYS = {
+    "project_id",
+    "scene_key",
+    "scene_label",
+    "state_fallback_text",
+    "title",
+    "summary",
+    "blocks",
+    "suggested_action",
+    "runtime_fetch_hints",
+}
 SUMMARY_KEYS = {"project_code", "manager_name", "stage_name", "date_start", "date_end"}
 BLOCK_KEYS = {"execution_tasks", "pilot_precheck", "next_actions"}
 BLOCK_ITEM_KEYS = {"key", "title", "state"}
@@ -69,6 +79,12 @@ def main() -> int:
         entry = entry_resp.get("data") if isinstance(entry_resp.get("data"), dict) else {}
         if set(entry.keys()) != ENTRY_KEYS:
             raise RuntimeError(f"entry keys drift: {sorted(entry.keys())}")
+        if str(entry.get("scene_key") or "").strip() != "project.execution":
+            raise RuntimeError(f"scene_key drift: {entry.get('scene_key')!r}")
+        if not str(entry.get("scene_label") or "").strip():
+            raise RuntimeError("scene_label missing")
+        if not str(entry.get("state_fallback_text") or "").strip():
+            raise RuntimeError("state_fallback_text missing")
         summary = entry.get("summary") if isinstance(entry.get("summary"), dict) else {}
         if set(summary.keys()) != SUMMARY_KEYS:
             raise RuntimeError(f"entry summary keys drift: {sorted(summary.keys())}")

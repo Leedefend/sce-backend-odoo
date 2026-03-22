@@ -142,6 +142,9 @@ type RuntimeHint = {
 
 type GenericEntry = {
   project_id?: number;
+  scene_key?: string;
+  scene_label?: string;
+  state_fallback_text?: string;
   title?: string;
   summary?: Record<string, unknown>;
   blocks?: Array<{ key?: string; title?: string; state?: string }>;
@@ -196,8 +199,8 @@ const route = useRoute();
 const pageStatus = ref<'loading' | 'error' | 'ready'>('loading');
 const errorTitle = ref('产品生命周期工作台加载失败');
 const errorMessage = ref('');
-const loadingTitle = ref('正在进入项目驾驶舱...');
-const currentEntryIntent = ref('project.dashboard.enter');
+const loadingTitle = ref('正在加载场景...');
+const currentSceneKey = ref('project.dashboard');
 const entry = ref<GenericEntry | null>(null);
 const runtimeBlocks = ref<Record<string, BlockRuntimeState>>({});
 const transitionFeedback = ref<ActionFeedback | null>(null);
@@ -219,9 +222,7 @@ function resolveProjectIdFromQuery() {
 }
 
 const currentSceneLabel = computed(() => {
-  if (currentEntryIntent.value === 'project.plan_bootstrap.enter') return '计划准备';
-  if (currentEntryIntent.value === 'project.execution.enter') return '执行推进';
-  return '项目驾驶舱';
+  return asText(entry.value?.scene_label || '') || '项目场景';
 });
 
 const blockDescriptors = computed(() => entry.value?.blocks || []);
@@ -319,9 +320,9 @@ function taskRows(blockKey: string) {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     const state = asText(row.state || 'open') || 'open';
     return {
-      key: asText(row.task_id || row.key || `${blockKey}_${index + 1}`),
-      title: asText(row.name || '未命名任务'),
-      subtitle: [asText(row.stage_name || ''), asText(row.deadline || '')].filter(Boolean).join(' · ') || '暂无补充信息',
+      key: asText(row.task_id || row.id || row.key || `${blockKey}_${index + 1}`),
+      title: asText(row.name || '未命名记录'),
+      subtitle: asText(row.subtitle || '') || [asText(row.stage_name || ''), asText(row.deadline || '')].filter(Boolean).join(' · ') || '暂无补充信息',
       stateLabel:
         state === 'draft' ? '草稿'
           : state === 'ready' ? '就绪'
@@ -463,13 +464,7 @@ const currentStateText = computed(() => {
   if (stateLabel) {
     return `当前状态：${stateLabel}`;
   }
-  if (currentEntryIntent.value === 'project.plan_bootstrap.enter') {
-    return '当前状态：正在核对计划准备度。';
-  }
-  if (currentEntryIntent.value === 'project.execution.enter') {
-    return '当前状态：正在查看执行推进状态。';
-  }
-  return '当前状态：已完成立项，正在查看项目驾驶舱。';
+  return asText(entry.value?.state_fallback_text || '') || '当前状态：正在查看场景状态。';
 });
 
 const nextStepText = computed(() => {
@@ -521,7 +516,7 @@ async function refreshBlock(blockKey: string) {
       intent: hint.intent,
       params: hint.params || {},
       context: {
-        scene_key: currentEntryIntent.value.replace('.enter', ''),
+        scene_key: currentSceneKey.value,
         page_key: 'project.management.dashboard',
         project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
       },
@@ -553,24 +548,20 @@ async function refreshAllBlocks() {
 
 async function loadEntry(intent: string, params: Record<string, unknown>) {
   const projectId = asNumber(params.project_id || resolveProjectIdFromQuery());
-  loadingTitle.value = intent === 'project.plan_bootstrap.enter'
-    ? '正在进入计划准备...'
-    : intent === 'project.execution.enter'
-      ? '正在进入执行推进...'
-      : '正在进入项目驾驶舱...';
+  loadingTitle.value = '正在加载场景...';
   pageStatus.value = 'loading';
   try {
     const data = await intentRequest<GenericEntry>({
       intent,
       params,
       context: {
-        scene_key: intent.replace('.enter', ''),
+        scene_key: currentSceneKey.value || intent.replace('.enter', ''),
         page_key: 'project.management.dashboard',
         project_id: projectId,
       },
     });
-    currentEntryIntent.value = intent;
     entry.value = (data && typeof data === 'object') ? data : {};
+    currentSceneKey.value = asText(entry.value?.scene_key || '') || intent.replace('.enter', '');
     resetRuntimeBlocks();
     pageStatus.value = 'ready';
     await refreshAllBlocks();
@@ -593,7 +584,7 @@ async function runAction(action: ActionCard) {
       intent: action.intent,
       params: action.params,
       context: {
-        scene_key: currentEntryIntent.value.replace('.enter', ''),
+        scene_key: currentSceneKey.value,
         page_key: 'project.management.dashboard',
         project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
       },
@@ -602,18 +593,15 @@ async function runAction(action: ActionCard) {
     const toState = asText(result.to_state || '');
     const reasonCode = asText(result.reason_code || '');
     const blocked = asText(result.result || '') === 'blocked';
+    const message = asText(result.message || '');
     transitionFeedback.value = {
       variant: blocked ? 'warning' : 'success',
-      title: blocked ? '执行推进受阻' : '执行推进完成',
+      title: blocked ? '动作执行受阻' : '动作执行完成',
       message: fromState && toState
         ? `状态变化：${humanExecutionState(fromState)} → ${humanExecutionState(toState)}。${humanReason(reasonCode)}`
-        : `执行结果：${humanReason(reasonCode)}。`,
+        : `执行结果：${message || humanReason(reasonCode)}。`,
     };
-    await Promise.allSettled([
-      refreshBlock('next_actions'),
-      refreshBlock('execution_tasks'),
-      refreshBlock('pilot_precheck'),
-    ]);
+    await refreshAllBlocks();
   } catch (err) {
     transitionFeedback.value = {
       variant: 'warning',
