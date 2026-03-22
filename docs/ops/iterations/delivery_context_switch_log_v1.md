@@ -924,3 +924,12 @@ Each entry must include:
 - completed_step: `新增 system.init startup contract layers 文档；新增 verify.system_init.startup_layer_contract，同步冻结 boot 仅最小启动面、preload 仅首屏可渲染面、runtime 必须走独立入口；verify.system_init.minimal_surface 聚合链与 verify README 已接入新 guard`
 - active_commit: `pending`
 - next_step: `运行 sc_platform_core 上的 system_init/platform/phase12b 基线验证，确认 Batch E1 收口后再进入 Phase 12-E Batch E2 preload 正式路径`
+
+### 2026-03-22T16:45:00Z
+- blocker_key: `phase12e_preload_formalization`
+- layer_target: `Frontend Startup Consumer Layer + Verify/Gate Layer`
+- module: `frontend/apps/web/src/stores/session.ts + frontend/packages/schema/src/index.ts + scripts/verify/portal_preload_runtime_surface_guard.py + Makefile + docs/ops/verify`
+- reason: `Phase 12-E / Batch E2：把 with_preload=true 从临时实现开关升级为正式 preload 路径，前端不再依赖 with=['workspace_home'] 这类实现细节`
+- completed_step: `session boot 阶段改从 init_meta.workspace_home_preload_hint 生成 preload ref；loadWorkspaceHomeOnDemand 正式走 system.init(with_preload=true) 并消费 workspace_home + scene_ready_contract_v1；新增 verify.portal.preload_runtime_surface，并接入 Phase 12-B baseline portal 链与 README`
+- active_commit: `pending`
+- next_step: `运行 preload portal guard + sc_platform_core baseline + 前端 strict typecheck，确认 Batch E2 收口后再进入 Phase 12-E Batch E3 runtime fetch 入口`

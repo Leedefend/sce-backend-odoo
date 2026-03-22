@@ -693,6 +693,8 @@
 ## Portal Minimum Runtime Surface
 - Guard (portal runtime minimum surface on frontend delivery path):
   - `make verify.portal.minimum_runtime_surface`
+- Guard (formal preload path must stay renderable and runtime-light):
+  - `make verify.portal.preload_runtime_surface`
 - Coverage:
   - owner-only startup chain available
   - `workspace.home` openable
@@ -700,6 +702,8 @@
   - no workbench fallback
   - no error panel
   - page non-empty and at least one block renderable
+  - preload keeps `workspace_home` + `scene_ready_contract_v1` only
+  - preload does not carry `page_contracts` / `runtime_collections` / `workspace_collections`
 
 ## Product Baseline: Project Initiation
 - Smoke:

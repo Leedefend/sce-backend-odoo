@@ -721,9 +721,20 @@ export const useSessionStore = defineStore('session', {
           : null,
       };
       this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
-      this.workspaceHomeRef = ((result as AppInitResponse & {
+      const initMeta = (result as AppInitResponse).init_meta ?? {};
+      const preloadHint = (initMeta.workspace_home_preload_hint && typeof initMeta.workspace_home_preload_hint === 'object')
+        ? initMeta.workspace_home_preload_hint
+        : null;
+      const workspaceHomeRefRaw = ((result as AppInitResponse & {
         workspace_home_ref?: { intent?: string; scene_key?: string; loaded?: boolean }
       }).workspace_home_ref ?? null);
+      this.workspaceHomeRef = workspaceHomeRefRaw ?? (preloadHint
+        ? {
+            intent: String(preloadHint.intent || 'ui.contract'),
+            scene_key: String(preloadHint.scene_key || ''),
+            loaded: false,
+          }
+        : null);
       this.pageContracts = ((result as AppInitResponse & { page_contracts?: { pages?: Record<string, PageContract> } }).page_contracts?.pages ?? {});
       this.sceneReadyContractV1 = ((result as AppInitResponse & { scene_ready_contract_v1?: SceneReadyContract }).scene_ready_contract_v1 ?? null);
       this.sceneGovernanceV1 = ((result as AppInitResponse & { scene_governance_v1?: SceneGovernancePayload }).scene_governance_v1 ?? null);
@@ -734,7 +745,9 @@ export const useSessionStore = defineStore('session', {
       }
       this.initMeta = {
         ...(result.meta ?? {}),
-        nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,
+        nav_meta: (result as AppInitResponse).nav_meta ?? null,
+        init_meta: initMeta,
+        version: (result as AppInitResponse).version ?? null,
       } as AppInitResponse['meta'];
       const defaultRouteRaw = (result as AppInitResponse & { default_route?: unknown }).default_route;
       if (defaultRouteRaw && typeof defaultRouteRaw === 'object') {
@@ -798,20 +811,27 @@ export const useSessionStore = defineStore('session', {
         intent: 'system.init',
         params: {
           scene: 'web',
-          with_preload: false,
-          with: ['workspace_home'],
+          with_preload: true,
           root_xmlid: 'smart_construction_core.menu_sc_root',
         },
       });
       const row = result as AppInitResponse & {
         workspace_home?: WorkspaceHomeContract;
         workspace_home_ref?: { intent?: string; scene_key?: string; loaded?: boolean };
-        page_contracts?: { pages?: Record<string, PageContract> };
+        scene_ready_contract_v1?: SceneReadyContract;
       };
       this.workspaceHome = row.workspace_home ?? this.workspaceHome;
-      this.workspaceHomeRef = row.workspace_home_ref ?? this.workspaceHomeRef;
-      if (row.page_contracts?.pages) {
-        this.pageContracts = row.page_contracts.pages;
+      this.workspaceHomeRef = row.workspace_home
+        ? {
+            ...(this.workspaceHomeRef ?? {}),
+            intent: String(this.workspaceHomeRef?.intent || 'ui.contract'),
+            scene_key: String(this.workspaceHomeRef?.scene_key || 'portal.dashboard'),
+            loaded: true,
+          }
+        : (row.workspace_home_ref ?? this.workspaceHomeRef);
+      this.sceneReadyContractV1 = row.scene_ready_contract_v1 ?? this.sceneReadyContractV1;
+      if (this.sceneReadyContractV1?.scenes?.length) {
+        setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
       }
       this.persist();
       return this.workspaceHome;
