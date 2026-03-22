@@ -879,3 +879,12 @@ Each entry must include:
 - completed_step: `新增 verify.portal.minimum_runtime_surface 与 verify.product.project_initiation；新增 project.initiation 场景与 project.initiation.enter handler（创建记录+suggested_action+contract_ref）；app.open 增强安全回退语义并补充部分权限回归；文档补齐平台/门户/产品分层基线与执行顺序`
 - active_commit: `pending`
 - next_step: `运行 Phase 12-A 验证链路并归档 artifacts，再按分类提交`
+
+### 2026-03-22T10:00:00Z
+- blocker_key: `phase12b_roles_contract_template_gate`
+- layer_target: `Platform Layer + Scene Layer + Verification Layer`
+- module: `scripts/verify + Makefile + smart_construction_core + docs/ops`
+- reason: `Phase 12-B：加固首产品场景（角色矩阵、contract_ref 冻结）、统一三层 baseline 聚合门禁、输出产品场景模板与下一候选预选`
+- completed_step: `新增 verify.product.project_initiation.roles 与 verify.product.contract_ref_shape_guard；冻结 contract_ref/suggested_action_payload 为 ui.contract menu-first；新增 verify.product.project_initiation.full 与 verify.phase12b.baseline 并完成分层 artifacts 归档；补充 Product Scene Template 与候选场景预选文档`
+- active_commit: `pending`
+- next_step: `分类提交 Phase 12-B 改动并准备 PR`
