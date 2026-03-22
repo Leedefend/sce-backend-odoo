@@ -104,6 +104,31 @@ export interface NavMeta {
 }
 
 export interface AppInitResponse {
+  nav_meta?: Record<string, unknown>;
+  version?: {
+    contract_version?: string;
+    schema_version?: string;
+    scene_version?: string;
+  };
+  init_meta?: {
+    contract_mode?: string;
+    scene_channel?: string;
+    scene_channel_selector?: string;
+    scene_channel_source_ref?: string;
+    nav_meta?: Record<string, unknown>;
+    scene_subset?: string[];
+    scene_subset_count?: number;
+    preload_requested?: boolean;
+    page_contract_meta?: {
+      intent?: string;
+      preload?: boolean;
+    };
+    workspace_home_preload_hint?: {
+      intent?: string;
+      scene_key?: string;
+    };
+    payload_keys_before?: string[];
+  };
   capabilities?: Array<string | {
     key?: string;
     label?: string;
@@ -180,6 +205,7 @@ export interface AppInitResponse {
     scene_key?: string;
     loaded?: boolean;
   };
+  scene_ready_contract_v1?: Record<string, unknown>;
   intent_catalog_ref?: {
     intent?: string;
     loaded?: boolean;
