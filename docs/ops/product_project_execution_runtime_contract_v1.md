@@ -24,6 +24,7 @@
 ## Runtime Blocks
 Current supported runtime blocks:
 - `execution_tasks`
+- `pilot_precheck`
 - `next_actions`
 
 Public `project.execution.block.fetch` response keeps:
@@ -37,6 +38,10 @@ Public `project.execution.block.fetch` response keeps:
 
 Recommended data fields:
 - `items`
+- `summary`
+
+Recommended `pilot_precheck` fields:
+- `checks`
 - `summary`
 
 Recommended `next_actions` fields:

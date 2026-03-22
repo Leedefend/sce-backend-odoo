@@ -1050,3 +1050,12 @@ Each entry must include:
 - completed_step: `抽出 task state support 与 execution consistency guard；dashboard/plan/execution 构建统一改为以 sc_state 统计，不再以 kanban_state 作为业务真源；execution.advance 限定为 single_open_task_only 范围，遇到多开放任务或 project/task 漂移直接阻断；next_actions summary 暴露 task/activity 一致性证据；新增 execution consistency guard 脚本、advance scope 文档与 v0.1 playbook`
 - active_commit: `pending`
 - next_step: `执行 Phase 14-C 定向验证，输出 /tmp 总结并分类提交`
+
+### 2026-03-23T03:10:00Z
+- blocker_key: `phase15a_first_pilot_readiness`
+- layer_target: `Domain/Product Layer + Frontend Layer + Verification Layer + Docs Layer`
+- module: `addons/smart_construction_core + frontend/apps/web + scripts/verify + docs/ops + tmp`
+- reason: `Phase 15-A：将 v0.1 从受控可用推进为首轮试点可交付，补试点前检查、试点配置、用户提示、聚合验证链和 Odoo 原生边界说明`
+- completed_step: `新增 execution runtime block=pilot_precheck，用于检查 root task、single open task、execution/task/activity 一致性、关键字段和 lifecycle；next_actions 接入 pilot precheck 结果，阻断文案改为首轮试点可理解提示；前端新增试点前检查清单展示并统一 blocked/reason/empty hint；新增 project_execution_pilot_precheck_guard 与 verify.product.v0_1_pilot_readiness 聚合链；补试点配置、precheck 说明、Odoo 原生对齐说明和 release note`
+- active_commit: `pending`
+- next_step: `执行 Phase 15-A 定向验证，输出 tmp 总结并分类提交`
