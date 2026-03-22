@@ -132,6 +132,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
+import { PROJECT_DASHBOARD_ENTRY_INTENT } from '../app/projectCreationBaseline';
 
 type RuntimeHint = {
   intent?: string;
@@ -619,7 +620,7 @@ async function loadLifecycleEntry() {
     errorMessage.value = '访问项目生命周期工作台必须提供 project_id。';
     return;
   }
-  await loadEntry('project.dashboard.enter', { project_id: projectId });
+  await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_id: projectId });
 }
 
 watch(
