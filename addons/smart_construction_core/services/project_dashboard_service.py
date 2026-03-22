@@ -216,7 +216,7 @@ class ProjectDashboardService:
         first_action = runtime_fetch_hints["blocks"].get("progress") or {}
         return {
             "project_id": resolved_project_id,
-            "title": str(project_payload.get("name") or "项目驾驶舱"),
+            "title": "项目驾驶舱：%s" % str(project_payload.get("name") or "项目"),
             "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
             "blocks": blocks,
             "suggested_action": {

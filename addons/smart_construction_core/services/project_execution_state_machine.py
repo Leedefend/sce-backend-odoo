@@ -20,16 +20,22 @@ class ProjectExecutionStateMachine:
         "done": "EXECUTION_ALREADY_DONE",
     }
     ACTION_LABEL = {
-        "ready": "开始执行",
-        "in_progress": "完成执行",
-        "blocked": "解除阻塞并回到就绪",
-        "done": "执行已完成",
+        "ready": "下一步：开始执行",
+        "in_progress": "下一步：完成执行",
+        "blocked": "下一步：解除阻塞并回到就绪",
+        "done": "当前已完成",
     }
     ACTION_HINT = {
-        "ready": "当前执行状态为 ready，可推进到 in_progress。",
-        "in_progress": "当前执行状态为 in_progress，可推进到 done。",
-        "blocked": "当前执行状态为 blocked，仅允许回到 ready。",
-        "done": "当前执行状态已为 done，不再允许继续推进。",
+        "ready": "当前状态：执行就绪。下一步：推进到执行中。",
+        "in_progress": "当前状态：执行中。下一步：推进到执行完成。",
+        "blocked": "当前状态：执行阻塞。下一步：解除阻塞并回到执行就绪。",
+        "done": "当前状态：执行已完成。下一步：无需继续推进。",
+    }
+    STATE_LABEL = {
+        "ready": "执行就绪",
+        "in_progress": "执行中",
+        "blocked": "执行阻塞",
+        "done": "执行完成",
     }
     TRANSITION_REASON = {
         ("ready", "in_progress"): "EXECUTION_TRANSITION_READY_TO_IN_PROGRESS",
@@ -83,6 +89,8 @@ class ProjectExecutionStateMachine:
             "state": "blocked" if blocked else "ready",
             "reason_code": cls.ACTION_REASON[state],
             "current_state": state,
+            "current_state_label": cls.STATE_LABEL[state],
             "target_state": target_state,
+            "target_state_label": cls.STATE_LABEL.get(target_state, cls.STATE_LABEL[state]),
             "source": "phase_13_c2",
         }

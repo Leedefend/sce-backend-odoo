@@ -1014,3 +1014,21 @@ Each entry must include:
 - completed_step: `新增 project.project.sc_execution_state 与 execution state machine 文档；project.execution.advance 返回 from_state/to_state 并按 ready->in_progress->done、blocked->ready 规则推进；execution next_actions 基于当前状态生成 target_state/reason_code；新增 verify.product.project_execution_state_transition_guard 与 verify.product.project_execution_state_smoke 并接入 product baseline 与 phase12b baseline artifacts`
 - active_commit: `pending`
 - next_step: `执行 mod.upgrade + restart + execution/product/phase12b 基线验证，确认状态机链路稳定后分类提交并输出 tmp 总结`
+
+### 2026-03-22T23:58:00Z
+- blocker_key: `project_dispatch_principles_alignment`
+- layer_target: `Project Governance / Documentation Layer`
+- module: `docs/ops/project_dispatch_principles_v1.md`
+- reason: `将用户提供的项目调度总体原则入库，作为后续任务调度前的强制校准基准`
+- completed_step: `新增 docs/ops/project_dispatch_principles_v1.md；后续每次任务先按“交付加速 / Odoo复用 / 架构边界”三层模型校准，若与原则冲突则先提出偏差与替代方案，再等待确认执行`
+- active_commit: `pending`
+- next_step: `在后续所有批次开始前显式引用该原则文档做调度校准`
+
+### 2026-03-22T24:20:00Z
+- blocker_key: `phase14a_first_deliverable_closure`
+- layer_target: `Platform Startup Layer + Domain/Product Layer + Frontend Layer + Documentation Layer`
+- module: `addons/smart_core + addons/smart_construction_core + frontend/apps/web + docs/ops`
+- reason: `Phase 14-A：以首个可交付产品为目标，优先修复 preload latency 阻塞，并收口四场景文案、执行推进反馈、Odoo 对齐与交付文档`
+- completed_step: `按调度原则先完成三层校准；将 preload 场景构建由全量 delivery_scenes 收口为 startup subset，目标是直接降低 scene_ready_contract_v1 构建耗时；统一 dashboard/plan/execution 文案与 next_actions 状态表达；execution.advance 成功/阻塞结果接入 chatter + activity；前端生命周期工作台补充状态变化反馈；补充 v0.1 产品概览、演示流和验收文档`
+- active_commit: `pending`
+- next_step: `执行 platform/product/frontend 定向验证，确认 latency budget 回归通过后输出 tmp 总结并分类提交`

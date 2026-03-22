@@ -60,7 +60,7 @@ class ProjectExecutionService:
         first_action = runtime_fetch_hints["blocks"].get("next_actions") or runtime_fetch_hints["blocks"].get("execution_tasks") or {}
         return {
             "project_id": resolved_project_id,
-            "title": "项目执行：%s" % str(project_payload.get("name") or "项目"),
+            "title": "执行推进：%s" % str(project_payload.get("name") or "项目"),
             "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
             "blocks": blocks,
             "suggested_action": {

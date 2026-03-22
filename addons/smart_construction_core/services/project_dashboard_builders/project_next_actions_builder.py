@@ -20,8 +20,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
         actions = [
             {
                 "key": "plan_bootstrap_enter",
-                "label": "发起计划编排",
-                "hint": "进入项目计划编排，继续从驾驶舱下钻到计划启动场景。",
+                "label": "下一步：进入计划准备",
+                "hint": "当前状态：已完成立项并进入驾驶舱。下一步：核对计划输入并进入计划准备。",
                 "intent": "project.plan_bootstrap.enter",
                 "params": {
                     "project_id": int(project.id),
@@ -65,6 +65,9 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 "summary": {
                     "count": len(actions),
                     "planned_count": len([row for row in actions if str(row.get("state") or "") == "planned"]),
+                    "current_state": "dashboard_review",
+                    "current_state_label": "已进入项目驾驶舱",
+                    "next_step_label": "进入计划准备",
                 },
             },
         )

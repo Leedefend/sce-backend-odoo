@@ -28,29 +28,6 @@ class SystemInitPayloadBuilder:
     }
 
     @staticmethod
-    def _extract_scene_keys_from_nav(nav: list) -> list[str]:
-        keys: list[str] = []
-
-        def _walk(nodes):
-            if not isinstance(nodes, list):
-                return
-            for node in nodes:
-                if not isinstance(node, dict):
-                    continue
-                scene_key = ""
-                if isinstance(node.get("meta"), dict):
-                    scene_key = str((node.get("meta") or {}).get("scene_key") or "").strip()
-                if not scene_key:
-                    scene_key = str(node.get("scene_key") or "").strip()
-                if scene_key and scene_key not in keys:
-                    keys.append(scene_key)
-                children = node.get("children") if isinstance(node.get("children"), list) else []
-                _walk(children)
-
-        _walk(nav)
-        return keys
-
-    @staticmethod
     def _extract_scene_key_from_route(route: str) -> str:
         raw = str(route or "").strip()
         if not raw:
@@ -92,7 +69,6 @@ class SystemInitPayloadBuilder:
     def _build_minimal_init_meta(cls, row: dict, *, params: dict | None = None) -> dict:
         params = params if isinstance(params, dict) else {}
         preload_requested = bool(params.get("with_preload", False))
-        nav = row.get("nav") if isinstance(row.get("nav"), list) else []
         default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
         role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
 
@@ -104,11 +80,6 @@ class SystemInitPayloadBuilder:
         fallback_scene_key = "workspace.home"
         if fallback_scene_key not in scene_subset:
             scene_subset.append(fallback_scene_key)
-
-        nav_scene_keys = cls._extract_scene_keys_from_nav(nav)
-        for key in nav_scene_keys:
-            if key not in scene_subset:
-                scene_subset.append(key)
 
         deep_scene_key = str(params.get("scene_key") or "").strip()
         if not deep_scene_key:
@@ -129,6 +100,17 @@ class SystemInitPayloadBuilder:
                 "scene_key": landing_scene_key or "workspace.home",
             },
         }
+
+    @classmethod
+    def resolve_startup_scene_subset(cls, row: dict, *, params: dict | None = None) -> list[str]:
+        init_meta = cls._build_minimal_init_meta(row if isinstance(row, dict) else {}, params=params)
+        scene_subset = init_meta.get("scene_subset") if isinstance(init_meta.get("scene_subset"), list) else []
+        unique_subset: list[str] = []
+        for item in scene_subset:
+            key = str(item or "").strip()
+            if key and key not in unique_subset:
+                unique_subset.append(key)
+        return unique_subset
 
     @classmethod
     def build_startup_surface(
