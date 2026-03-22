@@ -7,8 +7,14 @@ from typing import Any, Dict
 from odoo.exceptions import AccessError
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_construction_core.services.project_execution_consistency_guard import (
+    ProjectExecutionConsistencyGuard,
+)
 from odoo.addons.smart_construction_core.services.project_execution_state_machine import (
     ProjectExecutionStateMachine,
+)
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
 )
 
 
@@ -63,11 +69,16 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         except Exception:
             return []
 
-    def _prepare_task_for_execution(self, project) -> tuple[bool, str]:
+    def _actionable_open_task(self, project):
         tasks = self._project_tasks(project)
         if not tasks:
+            return False
+        return tasks.filtered(lambda rec: ProjectTaskStateSupport.is_open(getattr(rec, "sc_state", "draft")))[:1]
+
+    def _prepare_task_for_execution(self, project) -> tuple[bool, str]:
+        task = self._actionable_open_task(project)
+        if not task:
             return False, "EXECUTION_TASK_MISSING"
-        task = tasks[0]
         task_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", "draft"))
         if task_state not in {"draft", "ready", "in_progress"}:
             return False, "EXECUTION_TASK_START_FAILED"
@@ -78,8 +89,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             if task_state == "ready" and hasattr(task, "action_start_task"):
                 task.action_start_task()
                 task_state = "in_progress"
-            if task_state == "in_progress" and "kanban_state" in getattr(task, "_fields", {}):
-                task.sudo().write({"kanban_state": "normal"})
+            ProjectTaskStateSupport.sync_kanban_state(task)
         except Exception:
             return False, "EXECUTION_TASK_START_FAILED"
         return task_state == "in_progress", "EXECUTION_TRANSITION_READY_TO_IN_PROGRESS"
@@ -96,23 +106,20 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         try:
             if hasattr(task, "action_mark_done"):
                 task.action_mark_done()
-            if "kanban_state" in getattr(task, "_fields", {}):
-                task.sudo().write({"kanban_state": "done"})
+            ProjectTaskStateSupport.sync_kanban_state(task)
         except Exception:
             return False, "EXECUTION_TASK_COMPLETE_FAILED"
         return True, "EXECUTION_TRANSITION_IN_PROGRESS_TO_DONE"
 
     def _recover_task_for_ready(self, project) -> tuple[bool, str]:
-        tasks = self._project_tasks(project)
-        if not tasks:
+        task = self._actionable_open_task(project)
+        if not task:
             return False, "EXECUTION_TASK_MISSING"
-        task = tasks[0]
         try:
             task_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", "draft"))
             if task_state == "draft" and hasattr(task, "action_prepare_task"):
                 task.action_prepare_task()
-            if "kanban_state" in getattr(task, "_fields", {}):
-                task.sudo().write({"kanban_state": "normal"})
+            ProjectTaskStateSupport.sync_kanban_state(task)
         except Exception:
             return False, "EXECUTION_TASK_RECOVER_FAILED"
         return True, "EXECUTION_TRANSITION_BLOCKED_TO_READY"
@@ -142,42 +149,8 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             return
 
     def _schedule_followup_activity(self, project, *, to_state: str) -> None:
-        if not project or not hasattr(project, "activity_schedule"):
-            return
-        if to_state not in {"in_progress", "ready"}:
-            return
         try:
-            activity_model = self.env["mail.activity"] if "mail.activity" in self.env else None
-        except Exception:
-            activity_model = None
-        activity_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)
-        if activity_model is None or not activity_type:
-            return
-        summary = "执行推进跟进"
-        try:
-            existing = activity_model.sudo().search_count([
-                ("res_model", "=", "project.project"),
-                ("res_id", "=", int(project.id)),
-                ("summary", "=", summary),
-            ])
-        except Exception:
-            existing = 0
-        if existing:
-            return
-        user_id = int(getattr(getattr(project, "user_id", None), "id", 0) or self.env.user.id or 0)
-        if user_id <= 0:
-            return
-        note = (
-            "执行状态已进入“%s”。请根据当前任务与下一步动作继续推进。"
-            % ProjectExecutionStateMachine.STATE_LABEL.get(to_state, to_state)
-        )
-        try:
-            project.sudo().activity_schedule(
-                activity_type_id=int(activity_type.id),
-                summary=summary,
-                note=note,
-                user_id=user_id,
-            )
+            ProjectExecutionConsistencyGuard(self.env).reconcile_followup_activity(project, project_state=to_state)
         except (AccessError, Exception):
             return
 
@@ -231,6 +204,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
 
         from_state = ProjectExecutionStateMachine.normalize_state(getattr(project, "sc_execution_state", "ready"))
         to_state = requested_target_state or ProjectExecutionStateMachine.default_target(from_state)
+        consistency_guard = ProjectExecutionConsistencyGuard(self.env)
         if not ProjectExecutionStateMachine.can_transition(from_state, to_state):
             reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
             self._post_transition_note(
@@ -249,6 +223,46 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), reason_code),
+                },
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "elapsed_ms": int((time.time() - ts0) * 1000),
+                    "trace_id": trace_id,
+                },
+            }
+
+        scope_ok, scope_reason_code, _summary = consistency_guard.validate_scope(
+            project, from_state=from_state, to_state=to_state
+        )
+        if not scope_ok:
+            return {
+                "ok": True,
+                "data": {
+                    "result": "blocked",
+                    "project_id": int(project.id),
+                    "from_state": from_state,
+                    "to_state": from_state,
+                    "reason_code": scope_reason_code,
+                    "suggested_action": self._build_suggested_action(int(project.id), scope_reason_code),
+                },
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "elapsed_ms": int((time.time() - ts0) * 1000),
+                    "trace_id": trace_id,
+                },
+            }
+
+        alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
+        if not alignment_ok and from_state != "ready":
+            return {
+                "ok": True,
+                "data": {
+                    "result": "blocked",
+                    "project_id": int(project.id),
+                    "from_state": from_state,
+                    "to_state": from_state,
+                    "reason_code": alignment_reason_code,
+                    "suggested_action": self._build_suggested_action(int(project.id), alignment_reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -289,6 +303,25 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), reason_code),
+                },
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "elapsed_ms": int((time.time() - ts0) * 1000),
+                    "trace_id": trace_id,
+                },
+            }
+
+        alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
+        if not alignment_ok:
+            return {
+                "ok": True,
+                "data": {
+                    "result": "blocked",
+                    "project_id": int(project.id),
+                    "from_state": from_state,
+                    "to_state": from_state,
+                    "reason_code": alignment_reason_code,
+                    "suggested_action": self._build_suggested_action(int(project.id), alignment_reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,

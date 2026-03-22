@@ -4,6 +4,9 @@ from __future__ import annotations
 from odoo import fields
 
 from .base import BaseProjectBlockBuilder
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 
 class ProjectRiskBuilder(BaseProjectBlockBuilder):
@@ -32,11 +35,12 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                 "project.task",
                 task_domain + [("date_deadline", "<", fields.Date.today())],
             )
-        if self._model_has_fields("project.task", ["kanban_state"]):
-            progress_signals["task_blocked"] = self._safe_count(
-                "project.task",
-                task_domain + [("kanban_state", "=", "blocked")],
-            )
+        try:
+            for task in self.env["project.task"].search(task_domain):
+                if ProjectTaskStateSupport.normalize(getattr(task, "sc_state", "draft")) == "draft" and getattr(task, "readiness_status", "") == "blocked":
+                    progress_signals["task_blocked"] += 1
+        except Exception:
+            progress_signals["task_blocked"] = 0
 
         milestone_domain = self._project_domain("project.milestone", project)
         if self._model_has_fields("project.milestone", ["status"]):

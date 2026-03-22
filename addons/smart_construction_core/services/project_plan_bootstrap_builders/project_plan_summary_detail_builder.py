@@ -4,6 +4,9 @@ from __future__ import annotations
 from odoo import fields
 
 from odoo.addons.smart_construction_core.services.project_dashboard_builders.base import BaseProjectBlockBuilder
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 
 class ProjectPlanSummaryDetailBuilder(BaseProjectBlockBuilder):
@@ -36,7 +39,7 @@ class ProjectPlanSummaryDetailBuilder(BaseProjectBlockBuilder):
 
         task_domain = self._project_domain("project.task", project)
         total = self._safe_count("project.task", task_domain)
-        done = self._safe_count("project.task", task_domain + [("kanban_state", "=", "done")]) if self._model_has_fields("project.task", ["kanban_state"]) else 0
+        done = self._safe_count("project.task", task_domain + ProjectTaskStateSupport.done_domain())
         overdue = self._safe_count("project.task", task_domain + [("date_deadline", "<", fields.Date.today())]) if self._model_has_fields("project.task", ["date_deadline"]) else 0
         open_count = max(total - done, 0)
 
@@ -46,9 +49,7 @@ class ProjectPlanSummaryDetailBuilder(BaseProjectBlockBuilder):
 
         next_deadline = ""
         if self._model_has_fields("project.task", ["date_deadline"]):
-            next_task_domain = task_domain + [("date_deadline", "!=", False)]
-            if self._model_has_fields("project.task", ["kanban_state"]):
-                next_task_domain.append(("kanban_state", "!=", "done"))
+            next_task_domain = task_domain + [("date_deadline", "!=", False)] + ProjectTaskStateSupport.open_domain()
             try:
                 next_task = self.env["project.task"].search(
                     next_task_domain,

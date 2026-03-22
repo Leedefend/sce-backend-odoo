@@ -116,3 +116,61 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         task.invalidate_recordset(["sc_state", "kanban_state"])
         self.assertEqual(task.sc_state, "in_progress")
         self.assertEqual(task.kanban_state, "normal")
+        activity_count = self.env["mail.activity"].sudo().search_count(
+            [
+                ("res_model", "=", "project.project"),
+                ("res_id", "=", project.id),
+                ("summary", "=", "执行推进跟进"),
+            ]
+        )
+        self.assertEqual(activity_count, 1)
+
+        result_done = handler.handle(payload={"project_id": project.id, "target_state": "done"}, ctx={})
+        self.assertTrue(result_done.get("ok"))
+        self.assertEqual(((result_done.get("data") or {}).get("result")), "success")
+
+        task.invalidate_recordset(["sc_state", "kanban_state"])
+        self.assertEqual(task.sc_state, "done")
+        self.assertEqual(task.kanban_state, "done")
+        activity_count = self.env["mail.activity"].sudo().search_count(
+            [
+                ("res_model", "=", "project.project"),
+                ("res_id", "=", project.id),
+                ("summary", "=", "执行推进跟进"),
+            ]
+        )
+        self.assertEqual(activity_count, 0)
+
+    def test_execution_advance_blocks_when_multiple_open_tasks_exist(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Execution Scope Guard Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+            }
+        )
+        self.env["project.task"].create(
+            {
+                "name": "Root Task A",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+        self.env["project.task"].create(
+            {
+                "name": "Root Task B",
+                "project_id": project.id,
+                "user_ids": [(6, 0, [self.env.user.id])],
+                "user_id": self.env.user.id,
+            }
+        )
+
+        handler = ProjectExecutionAdvanceHandler(self.env, payload={"project_id": project.id})
+        result = handler.handle(payload={"project_id": project.id}, ctx={})
+        self.assertTrue(result.get("ok"))
+        self.assertEqual(((result.get("data") or {}).get("result")), "blocked")
+        self.assertEqual(
+            ((result.get("data") or {}).get("reason_code")),
+            "EXECUTION_SCOPE_MULTI_OPEN_TASKS_UNSUPPORTED",
+        )

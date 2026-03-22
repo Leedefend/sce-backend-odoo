@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from typing import Dict, Tuple
 
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
+
 
 class ProjectExecutionStateMachine:
     STATES: Tuple[str, ...] = ("ready", "in_progress", "blocked", "done")
@@ -50,10 +54,7 @@ class ProjectExecutionStateMachine:
 
     @staticmethod
     def normalize_task_state(raw) -> str:
-        state = str(raw or "").strip().lower()
-        if state in {"draft", "ready", "in_progress", "done", "cancelled", "blocked"}:
-            return state
-        return "draft"
+        return ProjectTaskStateSupport.normalize(raw)
 
     @classmethod
     def allowed_targets(cls, state: str) -> Tuple[str, ...]:
