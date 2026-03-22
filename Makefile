@@ -881,6 +881,10 @@ verify.product.native_alignment_guard: guard.prod.forbid
 verify.architecture.five_layer_workspace_audit: guard.prod.forbid
 	@python3 scripts/verify/five_layer_workspace_audit.py
 
+.PHONY: verify.architecture.orchestration_platform_guard
+verify.architecture.orchestration_platform_guard: guard.prod.forbid
+	@python3 scripts/verify/orchestration_platform_guard.py
+
 .PHONY: verify.product.v0_1_pilot_execution_review
 verify.product.v0_1_pilot_execution_review: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_v0_1_pilot_execution_review.py"
