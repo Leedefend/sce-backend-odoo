@@ -1032,3 +1032,12 @@ Each entry must include:
 - completed_step: `按调度原则先完成三层校准；将 preload 场景构建由全量 delivery_scenes 收口为 startup subset，目标是直接降低 scene_ready_contract_v1 构建耗时；统一 dashboard/plan/execution 文案与 next_actions 状态表达；execution.advance 成功/阻塞结果接入 chatter + activity；前端生命周期工作台补充状态变化反馈；补充 v0.1 产品概览、演示流和验收文档`
 - active_commit: `pending`
 - next_step: `执行 platform/product/frontend 定向验证，确认 latency budget 回归通过后输出 tmp 总结并分类提交`
+
+### 2026-03-23T00:10:00Z
+- blocker_key: `phase14b_first_real_usage`
+- layer_target: `Domain/Product Layer + Frontend Layer + Verification Layer`
+- module: `addons/smart_construction_core + frontend/apps/web + scripts/verify + docs/ops`
+- reason: `Phase 14-B：把 v0.1 从可演示产品推进为可真实使用产品，确保 plan/execution 统一接入 project.task，并让 execution.advance 改变真实数据`
+- completed_step: `修复 ProjectInitializationService 中 Odoo recordset 布尔判断导致根任务未创建的问题；project.initiation.enter 之后稳定生成真实 project.task 根任务；plan_tasks 与 execution_tasks 统一读取并暴露 project.task/sc_state 语义；execution.advance 调用真实任务状态迁移（draft->ready->in_progress / in_progress->done），并同步更新 next_actions、chatter、activity；前端补充任务状态/空态/执行结果人类可读提示；execution advance smoke 增加“真实任务前后状态变化 + source_model=project.task”校验`
+- active_commit: `pending`
+- next_step: `输出 Phase 14-B tmp 总结，并按分类提交本轮真实使用收口改动`
