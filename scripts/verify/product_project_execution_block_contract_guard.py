@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_block_contract_guard.json"
 
 RESPONSE_KEYS = {"project_id", "block_key", "block", "degraded"}
-SUPPORTED = {"execution_tasks": "execution_task_list"}
+SUPPORTED = {
+    "execution_tasks": "execution_task_list",
+    "next_actions": "action_list",
+}
 BLOCK_KEYS = {"block_key", "block_type", "title", "state", "visibility", "data", "error"}
 
 

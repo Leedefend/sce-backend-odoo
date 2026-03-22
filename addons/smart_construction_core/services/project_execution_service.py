@@ -18,9 +18,11 @@ class ProjectExecutionService:
     )
     ENTRY_BLOCKS = (
         ("execution_tasks", "执行任务", "deferred"),
+        ("next_actions", "执行下一步", "deferred"),
     )
     RUNTIME_BLOCK_MAP = {
         "execution_tasks": "block.project.execution_tasks",
+        "next_actions": "block.project.execution_next_actions",
     }
 
     def __init__(self, env):
@@ -55,14 +57,14 @@ class ProjectExecutionService:
                 for key, _, _ in self.ENTRY_BLOCKS
             }
         }
-        first_action = runtime_fetch_hints["blocks"].get("execution_tasks") or {}
+        first_action = runtime_fetch_hints["blocks"].get("next_actions") or runtime_fetch_hints["blocks"].get("execution_tasks") or {}
         return {
             "project_id": resolved_project_id,
             "title": "项目执行：%s" % str(project_payload.get("name") or "项目"),
             "summary": {key: str(project_payload.get(key) or "") for key in self.ENTRY_SUMMARY_KEYS},
             "blocks": blocks,
             "suggested_action": {
-                "key": "load_execution_tasks",
+                "key": "load_execution_next_actions",
                 "intent": str(first_action.get("intent") or ""),
                 "params": dict(first_action.get("params") or {}),
                 "reason_code": "PROJECT_EXECUTION_READY",

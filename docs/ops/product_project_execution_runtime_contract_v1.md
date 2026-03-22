@@ -24,6 +24,7 @@
 ## Runtime Blocks
 Current supported runtime blocks:
 - `execution_tasks`
+- `next_actions`
 
 Public `project.execution.block.fetch` response keeps:
 - `project_id`
@@ -38,7 +39,23 @@ Recommended data fields:
 - `items`
 - `summary`
 
+Recommended `next_actions` fields:
+- `actions`
+- `summary`
+
 ## Flow Guarantee
 - plan `next_actions` must expose `project.execution.enter`
 - `params.project_id` must stay equal to the original initiation record id
 - execution entry must expose runtime fetch hint for `execution_tasks`
+- execution entry must expose runtime fetch hint for `next_actions`
+
+## Execution Advance Action
+- intent: `project.execution.advance`
+- action result keeps contract-safe response only:
+  - `result`
+  - `project_id`
+  - `reason_code`
+  - `suggested_action`
+- `result` is frozen to:
+  - `success`
+  - `blocked`

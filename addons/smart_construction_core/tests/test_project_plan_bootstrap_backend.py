@@ -13,6 +13,9 @@ from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter i
 from odoo.addons.smart_construction_core.handlers.project_execution_enter import (
     ProjectExecutionEnterHandler,
 )
+from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
+    ProjectExecutionAdvanceHandler,
+)
 
 
 @tagged("sc_smoke", "project_plan_bootstrap_backend")
@@ -80,3 +83,9 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
             result = handler.handle(payload={"project_id": 21}, ctx={})
         self.assertTrue(result.get("ok"))
         self.assertEqual(set((result.get("data") or {}).keys()), set(fake_entry.keys()))
+
+    def test_execution_advance_requires_project_id(self):
+        handler = ProjectExecutionAdvanceHandler(self.env, payload={})
+        result = handler.handle(payload={}, ctx={})
+        self.assertFalse(result.get("ok"))
+        self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_CONTEXT_MISSING")

@@ -996,3 +996,12 @@ Each entry must include:
 - completed_step: `新增 project.execution 最小 entry service 与 execution.block.fetch；落地 execution_tasks runtime block；新增 verify.product.project_flow.full_chain_execution 与 execution entry/block contract guards；product dashboard baseline 纳入 execution guards 与 full-chain execution smoke；文档同步 execution contract 基线口径`
 - active_commit: `pending`
 - next_step: `运行静态/前端/product/baseline 验证，收口 Batch B2 后分类提交并写入 tmp 总结`
+
+### 2026-03-22T23:00:00Z
+- blocker_key: `phase13c_c1_execution_advance_chain`
+- layer_target: `Domain/Product Handler Layer + Verify/Gate Layer + Frontend Consumer Layer`
+- module: `addons/smart_construction_core + scripts/verify + docs/ops + Makefile`
+- reason: `Phase 13-C / Batch C1：把 project.execution 从可进入场景升级为可推进工作面，建立最小 execution.advance 动作链`
+- completed_step: `execution 新增 next_actions runtime block，动作结构收口为 state/reason_code/intent；新增 project.execution.advance，保证 success/blocked contract-safe 返回且不抛 500；新增 execution action contract guard 与 verify.product.project_execution_advance_smoke；product baseline 纳入 advance smoke 与 action guard，保证产品生命周期首次具备可推进能力`
+- active_commit: `pending`
+- next_step: `运行静态/前端/product/baseline 验证，收口 Batch C1 后分类提交并写入 tmp 总结`
