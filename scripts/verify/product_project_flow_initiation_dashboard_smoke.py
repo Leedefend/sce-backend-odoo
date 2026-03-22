@@ -37,7 +37,7 @@ def _assert_dashboard_contract_non_empty(contract: dict) -> None:
     blocks = contract.get("blocks") if isinstance(contract.get("blocks"), list) else []
     if not blocks:
         raise RuntimeError("dashboard_contract.blocks is empty")
-    required = {"summary", "progress", "next_actions"}
+    required = {"progress", "risks"}
     seen = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
     missing = sorted(required - seen)
     if missing:
@@ -86,27 +86,24 @@ def main() -> int:
         suggested = enter_data.get("suggested_action_payload") if isinstance(enter_data.get("suggested_action_payload"), dict) else {}
         intent = str(suggested.get("intent") or "").strip()
         params = suggested.get("params") if isinstance(suggested.get("params"), dict) else {}
-        if intent != "project.dashboard.open":
-            raise RuntimeError(f"expected suggested intent project.dashboard.open, got {intent!r}")
+        if intent != "project.dashboard.enter":
+            raise RuntimeError(f"expected suggested intent project.dashboard.enter, got {intent!r}")
         if int(params.get("project_id") or 0) != project_id:
             raise RuntimeError("suggested_action_payload.params.project_id mismatch")
 
         status, dash_resp = _post(intent_url, token, intent, params, db_name=db_name)
-        _assert_ok(status, dash_resp, "project.dashboard.open")
+        _assert_ok(status, dash_resp, "project.dashboard.enter")
         dash_data = dash_resp.get("data") if isinstance(dash_resp.get("data"), dict) else {}
-        if str(dash_data.get("scene_key") or "").strip() != "project.dashboard":
-            raise RuntimeError("project.dashboard.open returned unexpected scene_key")
-        dash_project_id = int(((dash_data.get("project_context") or {}) if isinstance(dash_data.get("project_context"), dict) else {}).get("project_id") or 0)
+        dash_project_id = int(dash_data.get("project_id") or 0)
         if dash_project_id != project_id:
-            raise RuntimeError("project context chain broken between initiation and dashboard.open")
+            raise RuntimeError("project context chain broken between initiation and dashboard.enter")
 
-        dashboard_contract = dash_data.get("dashboard_contract") if isinstance(dash_data.get("dashboard_contract"), dict) else {}
-        _assert_dashboard_contract_non_empty(dashboard_contract)
+        _assert_dashboard_contract_non_empty(dash_data)
 
         report["flow"] = {
             "project_id": project_id,
             "suggested_action_intent": intent,
-            "scene_key": str(dash_data.get("scene_key") or ""),
+            "title": str(dash_data.get("title") or ""),
         }
     except Exception as exc:
         report["status"] = "FAIL"
@@ -123,4 +120,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

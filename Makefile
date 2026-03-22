@@ -817,6 +817,10 @@ verify.product.project_initiation.full: verify.product.project_initiation verify
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_initiation_dashboard_smoke.py"
 
+.PHONY: verify.product.project_dashboard_flow
+verify.product.project_dashboard_flow: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_dashboard_flow_smoke.py"
+
 verify.product.suggested_action_shape_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_suggested_action_shape_guard.py"
 
@@ -838,6 +842,8 @@ verify.phase12b.baseline: guard.prod.forbid
 	@$(MAKE) verify.runtime.fetch_entrypoints DB_NAME=$(or $(PORTAL_DB_NAME),$(or $(PLATFORM_DB_NAME),$(DB_NAME)) ) E2E_LOGIN=$(or $(PORTAL_LOGIN),$(or $(PLATFORM_LOGIN),$(E2E_LOGIN))) E2E_PASSWORD=$(or $(PORTAL_PASSWORD),$(or $(PLATFORM_PASSWORD),$(E2E_PASSWORD))) || (echo "❌ [runtime fetch] baseline failed" && exit 22)
 	@echo "[Layer:product] verify.product.project_initiation.full"
 	@$(MAKE) verify.product.project_initiation.full DB_NAME=$(or $(PRODUCT_DB_NAME),$(DB_NAME)) E2E_LOGIN=$(or $(PRODUCT_LOGIN),$(E2E_LOGIN)) E2E_PASSWORD=$(or $(PRODUCT_PASSWORD),$(E2E_PASSWORD)) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) ROLE_EXECUTIVE_LOGIN=$(or $(ROLE_EXECUTIVE_LOGIN),demo_role_executive) ROLE_EXECUTIVE_PASSWORD=$(or $(ROLE_EXECUTIVE_PASSWORD),demo) || (echo "❌ [product] baseline failed" && exit 23)
+	@echo "[Layer:product] verify.product.project_dashboard_flow"
+	@$(MAKE) verify.product.project_dashboard_flow DB_NAME=$(or $(PRODUCT_DB_NAME),$(DB_NAME)) E2E_LOGIN=$(or $(PRODUCT_LOGIN),$(E2E_LOGIN)) E2E_PASSWORD=$(or $(PRODUCT_PASSWORD),$(E2E_PASSWORD)) || (echo "❌ [product flow] baseline failed" && exit 24)
 	@mkdir -p artifacts/baselines/platform artifacts/baselines/portal artifacts/baselines/product
 	@cp -f artifacts/backend/smart_core_minimum_contract_surface_guard.json artifacts/baselines/platform/ 2>/dev/null || true
 	@cp -f artifacts/backend/smart_core_owner_startup_smoke.json artifacts/baselines/platform/ 2>/dev/null || true
@@ -851,6 +857,7 @@ verify.phase12b.baseline: guard.prod.forbid
 	@cp -f artifacts/backend/product_project_initiation_smoke.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_contract_ref_shape_guard.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_initiation_roles_smoke.json artifacts/baselines/product/ 2>/dev/null || true
+	@cp -f artifacts/backend/product_project_dashboard_flow_smoke.json artifacts/baselines/product/ 2>/dev/null || true
 	@echo "[OK] verify.phase12b.baseline done"
 
 verify.smart_core.minimum_surface.legacy_group_guard: guard.prod.forbid

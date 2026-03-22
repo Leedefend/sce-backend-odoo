@@ -18,7 +18,7 @@
 2. `system.init`
 3. `app.open`（project app）
 4. `project.initiation.enter`
-5. `project.dashboard.open`（由 `suggested_action_payload` 指引）
+5. `project.dashboard.enter`（由 `suggested_action_payload` 指引）
 6. `ui.contract`（由 `contract_ref` 指引）
 
 ## Role Matrix（冻结）
@@ -43,7 +43,7 @@
 - `suggested_action_payload.params`：必填
 - `suggested_action_payload.reason_code`：必填（可由 `params.reason_code` 冗余承载）
 - 当前 `project.initiation.enter` 成功后约定：
-  - `intent = project.dashboard.open`
+  - `intent = project.dashboard.enter`
   - `params.project_id` 与创建记录 `record.id` 连续一致
 
 对应验证：`make verify.product.contract_ref_shape_guard`
@@ -59,12 +59,15 @@
 - `project.initiation -> project.dashboard` 链路打通
 - `suggested_action` shape 满足 intent/params/reason_code 冻结规范
 - `project_id` 在场景链路中连续（initiation -> suggested_action -> dashboard.open -> contract_ref）
+- dashboard entry 返回面保持最小（仅 `project_id/title/summary/blocks/suggested_action/runtime_fetch_hints`）
+- dashboard 重数据必须通过 runtime block fetch 获取
 
 ## Verify Command
 - `make verify.product.project_initiation DB_NAME=<db> E2E_LOGIN=<login> E2E_PASSWORD=<password>`
 - `make verify.product.project_initiation.roles DB_NAME=<db> ...`
 - `make verify.product.contract_ref_shape_guard DB_NAME=<db> ...`
 - `make verify.product.project_initiation.full DB_NAME=<db> ...`
+- `make verify.product.project_dashboard_flow DB_NAME=<db> ...`
 - `make verify.product.project_flow.initiation_dashboard DB_NAME=<db> ...`
 - `make verify.product.suggested_action_shape_guard DB_NAME=<db> ...`
 - `make verify.product.project_context_chain_guard DB_NAME=<db> ...`
@@ -74,6 +77,7 @@
 ## Evidence
 - Artifact: `artifacts/backend/product_project_initiation_smoke.json`
 - Artifact: `artifacts/backend/product_project_initiation_roles_smoke.json`
+- Artifact: `artifacts/backend/product_project_dashboard_flow_smoke.json`
 - Artifact: `artifacts/backend/product_contract_ref_shape_guard.json`
 - Artifact: `artifacts/backend/product_project_flow_initiation_dashboard_smoke.json`
 - Artifact: `artifacts/backend/product_suggested_action_shape_guard.json`

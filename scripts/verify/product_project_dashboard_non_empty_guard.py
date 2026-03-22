@@ -74,23 +74,20 @@ def main() -> int:
         status, dash_resp = _post(
             intent_url,
             token,
-            str(suggested.get("intent") or "project.dashboard.open"),
+            str(suggested.get("intent") or "project.dashboard.enter"),
             suggested.get("params") if isinstance(suggested.get("params"), dict) else {},
             db_name=db_name,
         )
-        _assert_ok(status, dash_resp, "project.dashboard.open")
+        _assert_ok(status, dash_resp, "project.dashboard.enter")
         dash_data = dash_resp.get("data") if isinstance(dash_resp.get("data"), dict) else {}
-        contract = dash_data.get("dashboard_contract") if isinstance(dash_data.get("dashboard_contract"), dict) else {}
-        blocks = contract.get("blocks") if isinstance(contract.get("blocks"), list) else []
+        blocks = dash_data.get("blocks") if isinstance(dash_data.get("blocks"), list) else []
         if not blocks:
-            raise RuntimeError("dashboard_contract.blocks empty")
+            raise RuntimeError("dashboard entry blocks empty")
         non_empty_count = 0
         for item in blocks:
             if not isinstance(item, dict):
                 continue
-            block = item.get("block") if isinstance(item.get("block"), dict) else {}
-            data = block.get("data") if isinstance(block.get("data"), dict) else {}
-            if data:
+            if str(item.get("state") or "").strip():
                 non_empty_count += 1
         if non_empty_count <= 0:
             raise RuntimeError("dashboard blocks are all empty shell")
@@ -112,4 +109,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
