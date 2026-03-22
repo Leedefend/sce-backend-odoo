@@ -348,9 +348,12 @@ export const useSessionStore = defineStore('session', {
       }
       // Always purge legacy unscoped token to avoid cross-db pollution.
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
-      if (this.menuTree.length) {
+      if (this.token && this.menuTree.length) {
         this.isReady = true;
         this.initStatus = 'ready';
+      } else {
+        this.isReady = false;
+        this.initStatus = 'idle';
       }
     },
     clearSession() {
@@ -381,6 +384,10 @@ export const useSessionStore = defineStore('session', {
       this.defaultRoute = null;
       this.bootstrapNextIntent = 'system.init';
       this.isReady = false;
+      this.initStatus = 'idle';
+      this.initError = null;
+      this.initTraceId = null;
+      this.initMeta = null;
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_SCOPED);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
@@ -473,6 +480,30 @@ export const useSessionStore = defineStore('session', {
       if (!allowedBootstrapIntents.has(nextIntent)) {
         throw new Error(`login bootstrap next_intent unsupported: ${nextIntent}`);
       }
+      this.user = result.user ?? null;
+      this.menuTree = [];
+      this.menuExpandedKeys = [];
+      this.currentAction = null;
+      this.capabilities = [];
+      this.scenes = [];
+      this.sceneVersion = null;
+      this.roleSurface = null;
+      this.roleSurfaceMap = {};
+      this.capabilityCatalog = {};
+      this.sceneActionHints = {};
+      this.capabilityGroups = [];
+      this.productFacts = { license: null, bundle: null };
+      this.workspaceHome = null;
+      this.workspaceHomeRef = null;
+      this.sceneReadyContractV1 = null;
+      this.sceneGovernanceV1 = null;
+      this.initMeta = null;
+      this.defaultRoute = null;
+      this.isReady = false;
+      this.initStatus = 'idle';
+      this.initError = null;
+      this.initTraceId = null;
+      setSceneRegistry([]);
       this.bootstrapNextIntent = nextIntent;
       this.setToken(token);
     },
@@ -878,6 +909,13 @@ export const useSessionStore = defineStore('session', {
       const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
       const startsWithNativeActionRoute = /^\/(a|f|r)\//.test(defaultRoutePath);
       if (defaultRoutePath.startsWith('/') && !startsWithNativeActionRoute) {
+        if (
+          defaultRoutePath.startsWith('/workbench')
+          && defaultRouteSceneKey
+          && !getSceneByKey(defaultRouteSceneKey)
+        ) {
+          return defaultRoutePath;
+        }
         const normalized = normalizeLegacyWorkbenchPath(defaultRoutePath);
         if (normalized) return normalized;
       }

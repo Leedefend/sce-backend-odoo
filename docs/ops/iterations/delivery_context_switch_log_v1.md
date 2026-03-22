@@ -16,6 +16,60 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-23T05:50:00Z
+- blocker_key: `custom_frontend_login_browser_prod_sim_pass`
+- layer_target: `Frontend Layer / Verify Governance`
+- module: `frontend/apps/web/src/views/LoginView.vue + frontend/apps/web/src/stores/session.ts + scripts/verify/fe_login_browser_smoke.mjs + scripts/verify/bootstrap_playwright_host_runtime.sh + Makefile`
+- reason: `收口 prod-sim 自定义前端浏览器登录闭环，解决 401 回跳重登被旧前端 session 污染的问题，并把 Playwright host runtime 引导固化到仓库命令`
+- completed_step: `登录页在 redirect 模式下先清空旧前端 session；host smoke 改为记录 relogin 失败细节；prod-sim 通过 deploy -> runtime bootstrap -> browser smoke 全链验证，fresh_login / auth_401_redirect / relogin_after_401 均通过，证据落在 artifacts/codex/login-browser-smoke/20260322T214949Z/`
+- active_commit: `c412b9e`
+- next_step: `Classify the prod-sim login closure changes and decide whether to keep the local Playwright runtime cache outside git`
+
+### 2026-03-23T05:32:00Z
+- blocker_key: `custom_frontend_login_browser_prod_sim_closure`
+- layer_target: `Frontend Layer / Verify Governance`
+- module: `Makefile + scripts/verify/bootstrap_playwright_host_runtime.sh + scripts/verify/fe_login_browser_smoke.mjs`
+- reason: `把自定义前端浏览器登录验证从开发态扩展到 prod-sim 交付形态，并将 Playwright host 运行库补齐收口为仓库内可复用 bootstrap`
+- completed_step: `确认 prod-sim 由 nginx 挂载 dist 且 /api 反代到 Odoo；新增 host runtime bootstrap，并补 verify.portal.login_browser_smoke.prod_sim 一键目标，准备对 http://127.0.0.1 的 prod-sim 入口执行真实浏览器登录闭环`
+- active_commit: `c412b9e`
+- next_step: `Run verify.portal.login_browser_smoke.prod_sim and record the pass/fail artifact path`
+
+### 2026-03-23T13:15:00Z
+- blocker_key: `custom_frontend_login_browser_smoke_pass`
+- layer_target: `Frontend Layer / Verify Governance`
+- module: `scripts/verify/fe_login_browser_smoke.mjs + .codex-runtime/playwright-libs + frontend/package.json + frontend/pnpm-lock.yaml + Makefile`
+- reason: `在无 sudo 条件下补齐本地 Playwright 运行库，并完成自定义前端 /login 与 401 redirect 浏览器级闭环验证`
+- completed_step: `通过本地 .deb 解包方式补齐 Playwright 依赖库、启动 Vite SPA 于 127.0.0.1:18082，并成功跑通 fresh_login / auth_401_redirect / relogin_after_401 三条浏览器用例；证据落在 artifacts/codex/login-browser-smoke/20260322T211536Z/`
+- active_commit: `c412b9e`
+- next_step: `Decide whether to keep local runtime bundle in repo workflow or fold it into a documented host bootstrap step`
+
+### 2026-03-23T13:08:00Z
+- blocker_key: `custom_frontend_login_browser_smoke_env_blocked`
+- layer_target: `Frontend Layer / Verify Governance`
+- module: `scripts/verify/fe_login_browser_smoke.mjs + frontend/package.json + frontend/pnpm-lock.yaml + Makefile`
+- reason: `补浏览器级 /login 与 401 redirect smoke，并把真实阻塞从“未覆盖”升级为“环境缺系统库”的可执行结论`
+- completed_step: `新增 verify.portal.login_browser_smoke.host 与 Playwright 脚本，安装 frontend workspace 的 playwright 及 chromium/headless-shell；最小 launch probe 与 login browser smoke 都被 libnspr4.so 缺失阻断，失败证据落在 artifacts/codex/login-browser-smoke/20260322T210654Z/summary.json；playwright install-deps chromium 进一步卡在 sudo 密码`
+- active_commit: `c412b9e`
+- next_step: `After system libs are installed (playwright install-deps chromium or equivalent apt packages), rerun verify.portal.login_browser_smoke.host`
+
+### 2026-03-23T12:46:00Z
+- blocker_key: `custom_frontend_login_runtime_smoke_pass`
+- layer_target: `Frontend Layer / Verify Governance`
+- module: `scripts/diag/fe_smoke.sh + Makefile verify.portal.fe_smoke.container`
+- reason: `把自定义前端登录成功验证从旧 app.init smoke 迁移到当前 login -> system.init 主链，并补齐 landing 语义断言`
+- completed_step: `fe_smoke 改为校验 login bootstrap.next_intent 与 system.init，断言 nav/trade_id/landing target；接受 default_route 与 role_surface fallback 两条合法落地路径；容器命令 make verify.portal.fe_smoke.container DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo 实测通过`
+- active_commit: `c412b9e`
+- next_step: `Decide whether to add browser-level /login redirect and relogin smoke on top of current intent-level runtime proof`
+
+### 2026-03-23T03:10:00Z
+- blocker_key: `custom_frontend_login_flow_state_closure`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/stores/session.ts + scripts/verify/startup_chain_mainline_guard.py`
+- reason: `修复自定义前端登录主链中的旧 init 状态污染，确保新登录周期不能绕过 login -> system.init`
+- completed_step: `restore 仅在 token+menuTree 同时存在时恢复 ready；clearSession 补齐 initStatus/initError/initTraceId/initMeta 清理；login 成功后先清空旧启动态再进入 system.init；启动链静态守卫同步覆盖并通过`
+- active_commit: `c412b9e`
+- next_step: `Run runtime login smoke in browser/container to confirm relogin and 401 redirect no longer leak stale ready state`
+
 ### 2026-03-23T01:10:00Z
 - blocker_key: `phase16d_final_closure_ready_for_slice`
 - layer_target: `Platform Layer / Scene Orchestration Layer / Frontend Layer / Verify Governance / Docs`

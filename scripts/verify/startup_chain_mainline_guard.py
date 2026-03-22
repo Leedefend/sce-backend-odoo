@@ -36,6 +36,9 @@ def main() -> int:
     _assert_contains(session_text, "allowedBootstrapIntents", errors, "session.ts")
     _assert_contains(session_text, "'system.init'", errors, "session.ts")
     _assert_contains(session_text, "'session.bootstrap'", errors, "session.ts")
+    _assert_contains(session_text, "if (this.token && this.menuTree.length)", errors, "session.ts")
+    _assert_contains(session_text, "this.initStatus = 'idle';", errors, "session.ts")
+    _assert_contains(session_text, "this.initTraceId = null;", errors, "session.ts")
 
     _assert_contains(login_view_text, "await session.login", errors, "LoginView.vue")
     _assert_contains(login_view_text, "await session.loadAppInit", errors, "LoginView.vue")
@@ -52,4 +55,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
