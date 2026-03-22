@@ -753,6 +753,11 @@
   - `make verify.product.project_execution_state_smoke`
 - Execution consistency guard:
   - `make verify.product.project_execution_consistency_guard`
+- Execution pilot precheck guard:
+  - `make verify.product.project_execution_pilot_precheck_guard`
+- Product v0.1 pilot readiness aggregate:
+  - `make verify.product.v0_1_pilot_readiness`
+  - includes lifecycle, execution pilot precheck/consistency/state, latency, and frontend API contract availability
 - Phase 12-C legacy flow/shape/context guards:
   - `make verify.product.project_flow.initiation_dashboard`
   - `make verify.product.suggested_action_shape_guard`
@@ -777,10 +782,12 @@
   - plan `next_actions` exposes `project.execution.enter` with state/reason scheduling semantics
   - `project.execution.enter` keeps minimal entry shape and its runtime data stays behind `project.execution.block.fetch`
   - supported execution runtime blocks frozen to `execution_tasks/next_actions`
+  - pilot precheck runtime block frozen to `pilot_precheck`
   - `project.execution.advance` keeps contract-safe action result with `result/from_state/to_state/reason_code/suggested_action`
   - execution state machine frozen to `ready/in_progress/blocked/done`
   - allowed state transitions frozen to `ready->in_progress`, `in_progress->done`, `blocked->ready`
   - execution runtime summary keeps `task_open_count/task_in_progress_count/task_done_count/followup_activity_count/consistency_state/execution_scope`
+  - pilot precheck keeps `overall_state/passed_count/failed_count/primary_reason_code/primary_message`
   - execution scope frozen to `single_open_task_only`
   - suggested_action shape frozen (`intent/params/reason_code`)
   - `project_id` context chain continuous
@@ -828,6 +835,7 @@
 12. `make verify.product.project_execution_state_transition_guard ...`
 13. `make verify.product.project_execution_state_smoke ...`
 14. `make verify.product.project_execution_consistency_guard ...`
+15. `make verify.product.project_execution_pilot_precheck_guard ...`
 14. `make verify.phase12b.baseline ...`（用于统一门禁回归）
 
 ## Business Increment Preflight
