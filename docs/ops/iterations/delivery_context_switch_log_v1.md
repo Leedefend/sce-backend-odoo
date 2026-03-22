@@ -870,3 +870,12 @@ Each entry must include:
 - completed_step: `新增 legacy_group_guard（扫描 smart_core handlers REQUIRED_GROUPS）；minimum_surface 聚合新增 Guard-A0；文档同步补齐 Guard-A0 约束与命令入口`
 - active_commit: `pending`
 - next_step: `执行 minimum-surface 全链验证并分类提交 Step-4 收口`
+
+### 2026-03-22T01:29:49Z
+- blocker_key: `phase12a_platform_portal_product_baseline`
+- layer_target: `Platform Layer + Scene Layer + Verification Layer`
+- module: `smart_core/smart_construction_core/smart_construction_scene + scripts/verify + docs/ops`
+- reason: `Phase 12-A：新增 portal minimum runtime verify、收口 app.open openable-first 策略、落地 project.initiation 产品场景闭环并补齐产品 smoke`
+- completed_step: `新增 verify.portal.minimum_runtime_surface 与 verify.product.project_initiation；新增 project.initiation 场景与 project.initiation.enter handler（创建记录+suggested_action+contract_ref）；app.open 增强安全回退语义并补充部分权限回归；文档补齐平台/门户/产品分层基线与执行顺序`
+- active_commit: `pending`
+- next_step: `运行 Phase 12-A 验证链路并归档 artifacts，再按分类提交`

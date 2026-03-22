@@ -9,14 +9,14 @@ _logger = logging.getLogger(__name__)
 
 ROLE_SURFACE_OVERRIDES = {
     "owner": {
-        "landing_scene_candidates": ["projects.list", "projects.intake"],
+        "landing_scene_candidates": ["projects.list", "project.initiation", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
         ],
     },
     "pm": {
-        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
+        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "project.initiation", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
@@ -33,7 +33,7 @@ ROLE_SURFACE_OVERRIDES = {
         ],
     },
     "executive": {
-        "landing_scene_candidates": ["portal.dashboard", "project.management", "projects.list", "projects.ledger", "projects.intake"],
+        "landing_scene_candidates": ["portal.dashboard", "project.management", "projects.list", "projects.ledger", "project.initiation", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_root",
             "smart_construction_core.menu_sc_projection_root",
@@ -80,7 +80,7 @@ ROLE_PRECEDENCE = ("executive", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
-    "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+    "smart_construction_core.menu_sc_project_initiation": "project.initiation",
     "smart_construction_core.menu_sc_project_project": "projects.ledger",
     "smart_construction_core.menu_sc_project_management_scene": "project.management",
     "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
@@ -96,7 +96,7 @@ NAV_MENU_SCENE_MAP = {
 
 NAV_ACTION_SCENE_MAP = {
     "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
-    "smart_construction_core.action_project_initiation": "projects.intake",
+    "smart_construction_core.action_project_initiation": "project.initiation",
     "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
     "smart_construction_core.action_sc_project_list": "projects.list",
     "smart_construction_core.action_project_dashboard": "projects.dashboard",
@@ -150,6 +150,7 @@ SURFACE_NAV_ALLOWLIST = {
         "project.management",
         "projects.dashboard",
         "projects.ledger",
+        "project.initiation",
         "projects.intake",
         "my_work.workspace",
     ]
@@ -468,6 +469,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.risk_action_execute import (
             RiskActionExecuteHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_initiation_enter import (
+            ProjectInitiationEnterHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -498,6 +502,7 @@ def smart_core_register(registry):
     registry["payment.request.available_actions"] = PaymentRequestAvailableActionsHandler
     registry["payment.request.execute"] = PaymentRequestExecuteHandler
     registry["project.dashboard"] = ProjectDashboardHandler
+    registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
     registry["app.nav"] = AppNavHandler
@@ -519,6 +524,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.available_actions")
     _logger.info("[smart_core_register] registered payment.request.execute")
     _logger.info("[smart_core_register] registered project.dashboard")
+    _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")
     _logger.info("[smart_core_register] registered app.nav")

@@ -59,7 +59,7 @@ def _cap(
 
 
 _CAPABILITIES: list[dict[str, Any]] = [
-    _cap("project.initiation.enter", "项目立项", "创建并发起项目立项流程", "project_management", "projects.intake", required_roles=["pm", "executive"]),
+    _cap("project.initiation.enter", "项目立项", "创建并发起项目立项流程", "project_management", "project.initiation", required_roles=["pm", "executive"]),
     _cap("project.list.open", "项目列表", "查看项目列表与筛选", "project_management", "projects.list", required_roles=["owner", "pm", "finance", "executive"]),
     _cap("project.board.open", "项目看板", "查看项目看板与状态分布", "project_management", "projects.ledger", required_roles=["owner", "pm", "executive"]),
     _cap("project.dashboard.open", "项目驾驶舱", "查看项目核心指标和异常", "project_management", "projects.dashboard", required_roles=["pm", "executive"]),
