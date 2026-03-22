@@ -118,6 +118,10 @@ def main() -> int:
             raise RuntimeError(f"unexpected advance result: {result!r}")
         if int(advance_data.get("project_id") or 0) != project_id:
             raise RuntimeError("advance result project_id mismatch")
+        if not str(advance_data.get("from_state") or "").strip():
+            raise RuntimeError("advance result from_state missing")
+        if not str(advance_data.get("to_state") or "").strip():
+            raise RuntimeError("advance result to_state missing")
         if not str(advance_data.get("reason_code") or "").strip():
             raise RuntimeError("advance result reason_code missing")
         suggested = advance_data.get("suggested_action") if isinstance(advance_data.get("suggested_action"), dict) else {}
@@ -129,6 +133,8 @@ def main() -> int:
             "action_state": str(advance_action.get("state") or ""),
             "action_reason_code": str(advance_action.get("reason_code") or ""),
             "result": result,
+            "from_state": str(advance_data.get("from_state") or ""),
+            "to_state": str(advance_data.get("to_state") or ""),
             "result_reason_code": str(advance_data.get("reason_code") or ""),
             "suggested_action_intent": str(suggested.get("intent") or ""),
         }

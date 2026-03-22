@@ -54,8 +54,24 @@ Recommended `next_actions` fields:
 - action result keeps contract-safe response only:
   - `result`
   - `project_id`
+  - `from_state`
+  - `to_state`
   - `reason_code`
   - `suggested_action`
 - `result` is frozen to:
   - `success`
   - `blocked`
+
+## Execution State Machine
+- persisted field: `project.project.sc_execution_state`
+- frozen state set:
+  - `ready`
+  - `in_progress`
+  - `blocked`
+  - `done`
+- allowed transitions:
+  - `ready -> in_progress`
+  - `in_progress -> done`
+  - `blocked -> ready`
+- reference doc:
+  - `docs/ops/product_project_execution_state_machine_v1.md`

@@ -13,9 +13,10 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_action_contract_guard.json"
 
-DATA_KEYS = {"result", "project_id", "reason_code", "suggested_action"}
+DATA_KEYS = {"result", "project_id", "from_state", "to_state", "reason_code", "suggested_action"}
 SUGGESTED_ACTION_KEYS = {"key", "intent", "params", "reason_code"}
 ALLOWED_RESULTS = {"success", "blocked"}
+ALLOWED_STATES = {"ready", "in_progress", "blocked", "done"}
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -72,6 +73,10 @@ def main() -> int:
             raise RuntimeError(f"action result drift: {data.get('result')!r}")
         if int(data.get("project_id") or 0) != project_id:
             raise RuntimeError("action project_id mismatch")
+        if str(data.get("from_state") or "").strip() not in ALLOWED_STATES:
+            raise RuntimeError(f"action from_state drift: {data.get('from_state')!r}")
+        if str(data.get("to_state") or "").strip() not in ALLOWED_STATES:
+            raise RuntimeError(f"action to_state drift: {data.get('to_state')!r}")
         if not str(data.get("reason_code") or "").strip():
             raise RuntimeError("action reason_code missing")
         suggested = data.get("suggested_action") if isinstance(data.get("suggested_action"), dict) else {}
@@ -87,6 +92,8 @@ def main() -> int:
         report["action"] = {
             "project_id": project_id,
             "result": str(data.get("result") or ""),
+            "from_state": str(data.get("from_state") or ""),
+            "to_state": str(data.get("to_state") or ""),
             "reason_code": str(data.get("reason_code") or ""),
             "suggested_action_intent": str(suggested.get("intent") or ""),
         }

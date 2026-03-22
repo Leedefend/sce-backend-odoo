@@ -578,6 +578,19 @@ class ProjectProject(models.Model):
         tracking=True,
         help='驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。'
     )
+    sc_execution_state = fields.Selection(
+        [
+            ('ready', '执行就绪'),
+            ('in_progress', '执行中'),
+            ('blocked', '执行阻塞'),
+            ('done', '执行完成'),
+        ],
+        string='执行状态',
+        default='ready',
+        tracking=True,
+        copy=False,
+        help='Phase 13-C 最小执行状态机：仅承载执行推进场景的 ready/in_progress/blocked/done。'
+    )
     sc_draft_autosaved_at = fields.Datetime(
         '草稿自动保存时间',
         readonly=True,

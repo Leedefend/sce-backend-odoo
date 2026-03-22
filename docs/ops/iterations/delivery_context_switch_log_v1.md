@@ -1005,3 +1005,12 @@ Each entry must include:
 - completed_step: `execution 新增 next_actions runtime block，动作结构收口为 state/reason_code/intent；新增 project.execution.advance，保证 success/blocked contract-safe 返回且不抛 500；新增 execution action contract guard 与 verify.product.project_execution_advance_smoke；product baseline 纳入 advance smoke 与 action guard，保证产品生命周期首次具备可推进能力`
 - active_commit: `pending`
 - next_step: `运行静态/前端/product/baseline 验证，收口 Batch C1 后分类提交并写入 tmp 总结`
+
+### 2026-03-22T23:40:00Z
+- blocker_key: `phase13c_c2_execution_state_machine`
+- layer_target: `Domain/Product Handler Layer + Verify/Gate Layer + Frontend Consumer Layer`
+- module: `addons/smart_construction_core + scripts/verify + docs/ops + Makefile`
+- reason: `Phase 13-C / Batch C2：为 project.execution.advance 建立最小状态机，冻结状态名/迁移方向，并把 execution next_actions 绑定到状态推进规则`
+- completed_step: `新增 project.project.sc_execution_state 与 execution state machine 文档；project.execution.advance 返回 from_state/to_state 并按 ready->in_progress->done、blocked->ready 规则推进；execution next_actions 基于当前状态生成 target_state/reason_code；新增 verify.product.project_execution_state_transition_guard 与 verify.product.project_execution_state_smoke 并接入 product baseline 与 phase12b baseline artifacts`
+- active_commit: `pending`
+- next_step: `执行 mod.upgrade + restart + execution/product/phase12b 基线验证，确认状态机链路稳定后分类提交并输出 tmp 总结`

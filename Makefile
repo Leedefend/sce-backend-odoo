@@ -849,6 +849,10 @@ verify.product.project_execution_block_contract_guard: guard.prod.forbid check-c
 verify.product.project_execution_action_contract_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_execution_action_contract_guard.py"
 
+.PHONY: verify.product.project_execution_state_transition_guard
+verify.product.project_execution_state_transition_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_execution_state_transition_guard.py"
+
 .PHONY: verify.product.project_flow.full_chain_execution
 verify.product.project_flow.full_chain_execution: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_full_chain_execution_smoke.py"
@@ -856,6 +860,10 @@ verify.product.project_flow.full_chain_execution: guard.prod.forbid check-compos
 .PHONY: verify.product.project_execution_advance_smoke
 verify.product.project_execution_advance_smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_execution_advance_smoke.py"
+
+.PHONY: verify.product.project_execution_state_smoke
+verify.product.project_execution_state_smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_execution_state_smoke.py"
 
 .PHONY: verify.product.project_dashboard_entry_contract_guard
 verify.product.project_dashboard_entry_contract_guard: guard.prod.forbid check-compose-project check-compose-env
@@ -866,7 +874,7 @@ verify.product.project_dashboard_block_contract_guard: guard.prod.forbid check-c
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_dashboard_block_contract_guard.py"
 
 .PHONY: verify.product.project_dashboard_baseline
-verify.product.project_dashboard_baseline: verify.product.project_dashboard_flow verify.product.project_flow.dashboard_plan verify.product.project_flow.full_chain_pre_execution verify.product.project_flow.full_chain_execution verify.product.project_execution_advance_smoke verify.product.project_dashboard_entry_contract_guard verify.product.project_dashboard_block_contract_guard verify.product.project_plan_entry_contract_guard verify.product.project_plan_block_contract_guard verify.product.project_execution_entry_contract_guard verify.product.project_execution_block_contract_guard verify.product.project_execution_action_contract_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
+verify.product.project_dashboard_baseline: verify.product.project_dashboard_flow verify.product.project_flow.dashboard_plan verify.product.project_flow.full_chain_pre_execution verify.product.project_flow.full_chain_execution verify.product.project_execution_advance_smoke verify.product.project_execution_state_transition_guard verify.product.project_execution_state_smoke verify.product.project_dashboard_entry_contract_guard verify.product.project_dashboard_block_contract_guard verify.product.project_plan_entry_contract_guard verify.product.project_plan_block_contract_guard verify.product.project_execution_entry_contract_guard verify.product.project_execution_block_contract_guard verify.product.project_execution_action_contract_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.project_dashboard_baseline done"
 
 verify.product.suggested_action_shape_guard: guard.prod.forbid check-compose-project check-compose-env
@@ -910,6 +918,8 @@ verify.phase12b.baseline: guard.prod.forbid
 	@cp -f artifacts/backend/product_project_flow_full_chain_pre_execution_smoke.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_flow_full_chain_execution_smoke.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_execution_advance_smoke.json artifacts/baselines/product/ 2>/dev/null || true
+	@cp -f artifacts/backend/product_project_execution_state_transition_guard.json artifacts/baselines/product/ 2>/dev/null || true
+	@cp -f artifacts/backend/product_project_execution_state_smoke.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_dashboard_entry_contract_guard.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_dashboard_block_contract_guard.json artifacts/baselines/product/ 2>/dev/null || true
 	@cp -f artifacts/backend/product_project_plan_entry_contract_guard.json artifacts/baselines/product/ 2>/dev/null || true
