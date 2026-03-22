@@ -704,7 +704,7 @@ class SystemInitHandler(BaseIntentHandler):
         if not landing_scene_key and isinstance(role_surface, dict):
             landing_scene_key = str(role_surface.get("landing_scene_key") or "").strip()
         if not landing_scene_key:
-            landing_scene_key = "workspace.home" if platform_minimum_surface_mode else "portal.dashboard"
+            landing_scene_key = "workspace.home"
         data["workspace_home_ref"] = {
             "intent": "ui.contract",
             "scene_key": landing_scene_key,
