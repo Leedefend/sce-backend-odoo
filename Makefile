@@ -869,6 +869,10 @@ verify.product.project_execution_state_smoke: guard.prod.forbid check-compose-pr
 verify.product.project_execution_consistency_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_execution_consistency_guard.py"
 
+.PHONY: verify.product.project_execution_pilot_precheck_guard
+verify.product.project_execution_pilot_precheck_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_execution_pilot_precheck_guard.py"
+
 .PHONY: verify.product.project_dashboard_entry_contract_guard
 verify.product.project_dashboard_entry_contract_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_dashboard_entry_contract_guard.py"
@@ -880,6 +884,10 @@ verify.product.project_dashboard_block_contract_guard: guard.prod.forbid check-c
 .PHONY: verify.product.project_dashboard_baseline
 verify.product.project_dashboard_baseline: verify.product.project_dashboard_flow verify.product.project_flow.dashboard_plan verify.product.project_flow.full_chain_pre_execution verify.product.project_flow.full_chain_execution verify.product.project_execution_advance_smoke verify.product.project_execution_state_transition_guard verify.product.project_execution_state_smoke verify.product.project_dashboard_entry_contract_guard verify.product.project_dashboard_block_contract_guard verify.product.project_plan_entry_contract_guard verify.product.project_plan_block_contract_guard verify.product.project_execution_entry_contract_guard verify.product.project_execution_block_contract_guard verify.product.project_execution_action_contract_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.project_dashboard_baseline done"
+
+.PHONY: verify.product.v0_1_pilot_readiness
+verify.product.v0_1_pilot_readiness: verify.product.project_initiation.full verify.product.project_execution_pilot_precheck_guard verify.product.project_execution_consistency_guard verify.product.project_execution_state_transition_guard verify.product.project_execution_state_smoke verify.product.project_execution_advance_smoke verify.product.project_execution_entry_contract_guard verify.product.project_execution_block_contract_guard verify.product.project_execution_action_contract_guard verify.system_init.latency_budget verify.frontend_api
+	@echo "[OK] verify.product.v0_1_pilot_readiness done"
 
 verify.product.suggested_action_shape_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_suggested_action_shape_guard.py"

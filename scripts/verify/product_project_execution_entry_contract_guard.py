@@ -15,7 +15,7 @@ OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_entry_con
 
 ENTRY_KEYS = {"project_id", "title", "summary", "blocks", "suggested_action", "runtime_fetch_hints"}
 SUMMARY_KEYS = {"project_code", "manager_name", "stage_name", "date_start", "date_end"}
-BLOCK_KEYS = {"execution_tasks", "next_actions"}
+BLOCK_KEYS = {"execution_tasks", "pilot_precheck", "next_actions"}
 BLOCK_ITEM_KEYS = {"key", "title", "state"}
 
 
