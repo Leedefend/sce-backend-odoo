@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-22T23:20:00Z
+- blocker_key: `phase16d_next_batch_orchestration_platformization`
+- layer_target: `Platform Layer / Scene Orchestration Layer / Frontend Layer / Verify Governance`
+- module: `addons/smart_core + addons/smart_construction_core + frontend/apps/web + scripts/verify + docs/ops`
+- reason: `继续完成 dashboard/plan carrier 平台化，移除前端 execute_intent legacy fallback，并在 re-audit 后再判断是否重开新业务切片`
+- completed_step: `完成 dashboard/plan carrier 迁移至 smart_core，更新 handlers/tests/guard，并落库 migration status 与 next-batch release note`
+- active_commit: `74b21c2`
+- next_step: `Run orchestration/native/five-layer guards plus dashboard-plan-execution regression chain, then classify and commit the batch`
+
 ### 2026-03-22T22:30:00Z
 - blocker_key: `phase16d_orchestration_platformization`
 - layer_target: `Platform Layer / Scene Orchestration Layer / Frontend Layer`
