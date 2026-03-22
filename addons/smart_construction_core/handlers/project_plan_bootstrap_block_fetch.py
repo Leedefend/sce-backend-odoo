@@ -5,7 +5,9 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
-from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service import ProjectPlanBootstrapService
+from odoo.addons.smart_construction_core.orchestration.project_plan_bootstrap_scene_orchestrator import (
+    ProjectPlanBootstrapSceneOrchestrator,
+)
 
 
 class ProjectPlanBootstrapBlockFetchHandler(BaseIntentHandler):
@@ -62,8 +64,8 @@ class ProjectPlanBootstrapBlockFetchHandler(BaseIntentHandler):
                 },
             }
 
-        service = ProjectPlanBootstrapService(self.env)
-        data = service.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)
+        orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
+        data = orchestrator.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)
         return {
             "ok": True,
             "data": data,

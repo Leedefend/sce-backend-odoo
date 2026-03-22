@@ -5,7 +5,9 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
-from odoo.addons.smart_construction_core.services.project_dashboard_service import ProjectDashboardService
+from odoo.addons.smart_construction_core.orchestration.project_dashboard_scene_orchestrator import (
+    ProjectDashboardSceneOrchestrator,
+)
 
 
 class ProjectDashboardEnterHandler(BaseIntentHandler):
@@ -62,8 +64,8 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
                 },
             }
 
-        service = ProjectDashboardService(self.env)
-        data = service.build_entry(project_id=project_id, context=ctx)
+        orchestrator = ProjectDashboardSceneOrchestrator(self.env)
+        data = orchestrator.build_entry(project_id=project_id, context=ctx)
         if int(data.get("project_id") or 0) <= 0:
             return {
                 "ok": False,
