@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-22T23:45:00Z
+- blocker_key: `phase16d_dashboard_full_contract_platformization`
+- layer_target: `Platform Layer / Scene Orchestration Layer / Verify Governance / Docs`
+- module: `addons/smart_core + addons/smart_construction_core + scripts/verify + docs/ops`
+- reason: `清除 dashboard 剩余 full-contract domain ownership，把 project.dashboard 完整 contract 组装迁入 smart_core，并重做 re-audit`
+- completed_step: `新增 smart-core dashboard full-contract orchestrator，handler 改走平台层，domain service 移除 build() 组装路径，dashboard 专项 guards 与 mapping baseline 同步，re-audit 变为 ready_for_decision`
+- active_commit: `37f7533`
+- next_step: `Write tmp summary, classify commits for architecture/governance/docs, then decide whether to reopen the next business slice`
+
 ### 2026-03-22T23:20:00Z
 - blocker_key: `phase16d_next_batch_orchestration_platformization`
 - layer_target: `Platform Layer / Scene Orchestration Layer / Frontend Layer / Verify Governance`
