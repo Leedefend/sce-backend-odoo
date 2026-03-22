@@ -662,6 +662,8 @@
 ## smart_core Minimum Surface
 - Baseline document:
   - `docs/ops/smart_core_platform_minimum_surface_v1.md`
+- Guard-A0 (legacy group sunset; REQUIRED_GROUPS must not reference legacy/industry groups):
+  - `make verify.smart_core.minimum_surface.legacy_group_guard`
 - Guard-A (minimum handler presence + alias surface):
   - `make verify.smart_core.minimum_surface.handler_guard`
 - Guard-B (minimum contract/envelope chain):

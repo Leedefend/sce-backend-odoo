@@ -861,3 +861,12 @@ Each entry must include:
 - completed_step: `open_risk_dashboard/open_workbench/open_landing 默认 target 统一为 workspace.home；system_init_payload_builder landing_scene 默认改 workspace.home；critical scene target overrides 收敛为 workspace.home；surface nav allowlist 去除 portal.dashboard；system.init 兜底 landing_scene_key 固定 workspace.home`
 - active_commit: `pending`
 - next_step: `运行 minimum-surface 全链与 nav isolation 回归，确认平台-only 仍可稳定启动且无行业默认场景泄漏`
+
+### 2026-03-22T00:07:11Z
+- blocker_key: `batch_b_step4_legacy_group_sunset_guard`
+- layer_target: `Platform Layer / Boundary Governance`
+- module: `scripts/verify/smart_core_legacy_group_required_groups_guard.py + Makefile + docs/ops`
+- reason: `执行 Batch-B Step-4，固化 legacy group sunset 门禁，防止 smart_core handlers 的 REQUIRED_GROUPS 回退到 group_sc_* 或行业组`
+- completed_step: `新增 legacy_group_guard（扫描 smart_core handlers REQUIRED_GROUPS）；minimum_surface 聚合新增 Guard-A0；文档同步补齐 Guard-A0 约束与命令入口`
+- active_commit: `pending`
+- next_step: `执行 minimum-surface 全链验证并分类提交 Step-4 收口`

@@ -45,6 +45,7 @@
 - 仅当「same-route 且不可渲染且无 fallback/redirect 且会进入空壳/死循环」时允许 error。
 
 ## Guard / Smoke 清单
+- Guard-A0：`make verify.smart_core.minimum_surface.legacy_group_guard`
 - Guard-A：`make verify.smart_core.minimum_surface.handler_guard`
 - Guard-B：`make verify.smart_core.minimum_surface.contract_guard`
 - Smoke-C：`make verify.smart_core.minimum_surface.owner_startup_smoke`
@@ -53,6 +54,11 @@
 - Regression-F：`make verify.smart_core.minimum_surface.app_open_regression_guard`
 - Regression-G：`make verify.smart_core.minimum_surface.nav_isolation_guard`
 - 聚合：`make verify.smart_core.minimum_surface`
+
+### Guard-A0 约束
+- `smart_core` handlers 的 `REQUIRED_GROUPS` 不允许引用 legacy `group_sc_*`。
+- `smart_core` handlers 的 `REQUIRED_GROUPS` 不允许引用行业组前缀 `smart_construction_core.*`。
+- legacy `group_sc_*` 仅保留于 `addons/smart_core/security/groups.xml` 兼容层（sunset 期间）。
 
 ## PR 评审四问（边界必答）
 - 改动后 `smart_core` 脱离行业模块还能独立启动吗？
