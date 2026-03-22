@@ -25,7 +25,7 @@ from odoo.addons.smart_construction_core.services.project_execution_service impo
 from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service import (
     ProjectPlanBootstrapService,
 )
-from odoo.addons.smart_construction_core.orchestration.project_execution_scene_orchestrator import (
+from odoo.addons.smart_core.orchestration.project_execution_scene_orchestrator import (
     ProjectExecutionSceneOrchestrator,
 )
 

@@ -5,6 +5,7 @@ type Dict = Record<string, unknown>;
 type ContractActionSelection = 'none' | 'single' | 'multi';
 
 type MutationPayload = {
+  execute_intent?: string;
   payload_schema?: {
     required?: string[];
   };
@@ -96,12 +97,13 @@ function mutationRequiresRecordContext(action: ContractActionButtonLike) {
 
 function buildMutationContext(action: ContractActionButtonLike, recordId: number) {
   const context = { ...(action.context || {}) } as Dict;
-  const modelName = String(action.mutation?.model || action.model || '').trim().toLowerCase();
-  if (modelName === 'project.risk.action' && !context.risk_action_id) {
-    context.risk_action_id = recordId;
-  }
-  if ((modelName === 'finance.payment.request' || modelName === 'payment.request') && !context.id) {
-    context.id = recordId;
+  const required = Array.isArray(action.mutation?.payload_schema?.required)
+    ? action.mutation?.payload_schema?.required
+    : [];
+  const requiredKeys = required.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean);
+  const idLikeKey = requiredKeys.find((item) => item === 'id' || item === 'record_id' || item.endsWith('_id')) || 'id';
+  if (recordId > 0 && !context[idLikeKey]) {
+    context[idLikeKey] = recordId;
   }
   return context;
 }
@@ -259,4 +261,3 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
     runContractAction,
   };
 }
-

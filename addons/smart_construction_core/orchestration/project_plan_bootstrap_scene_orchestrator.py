@@ -7,6 +7,8 @@ from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service
 
 
 class ProjectPlanBootstrapSceneOrchestrator:
+    LEGACY_ORCHESTRATION_MODE = "industry_local"
+
     ENTRY_SUMMARY_KEYS = (
         "project_code",
         "manager_name",

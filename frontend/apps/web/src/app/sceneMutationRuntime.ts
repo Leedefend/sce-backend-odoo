@@ -24,50 +24,47 @@ function asInt(value: unknown): number {
   return Number.isFinite(num) && num > 0 ? Math.trunc(num) : 0;
 }
 
+function asDict(value: unknown): Record<string, unknown> {
+  return (value && typeof value === 'object' && !Array.isArray(value))
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+const LEGACY_MODEL_EXECUTE_INTENT: Record<string, string> = {
+  'finance.payment.request': 'payment.request.execute',
+  'payment.request': 'payment.request.execute',
+  'project.risk.action': 'risk.action.execute',
+};
+
 function resolveIntentByMutation(mutation: MutationContract): string {
+  const payloadSchema = asDict(mutation.payload_schema);
+  const explicitIntent = asText(mutation.execute_intent || payloadSchema.execute_intent);
+  if (explicitIntent) return explicitIntent;
   const model = asText(mutation.model).toLowerCase();
-  if (model === 'finance.payment.request' || model === 'payment.request') {
-    return 'payment.request.execute';
-  }
-  if (model === 'project.risk.action') {
-    return 'risk.action.execute';
-  }
-  return '';
+  return LEGACY_MODEL_EXECUTE_INTENT[model] || '';
 }
 
 function buildParams(input: SceneMutationExecuteInput): Record<string, unknown> {
   const mutation = input.mutation;
   const operation = asText(mutation.operation).toLowerCase();
-  const model = asText(mutation.model).toLowerCase();
+  const payloadSchema = asDict(mutation.payload_schema);
   const context = (input.context && typeof input.context === 'object')
     ? (input.context as Record<string, unknown>)
     : {};
   const recordId = asInt(input.recordId);
-
-  if (model === 'finance.payment.request' || model === 'payment.request') {
-    return {
-      id: asInt(context.id) || asInt(context.record_id) || recordId,
-      action: operation,
-      reason: asText(context.reason),
-    };
-  }
-
-  if (model === 'project.risk.action') {
-    return {
-      action: operation,
-      risk_action_id: asInt(context.risk_action_id) || recordId,
-      project_id: asInt(context.project_id),
-      name: asText(context.name),
-      risk_level: asText(context.risk_level),
-      note: asText(context.note),
-      owner_id: asInt(context.owner_id),
-    };
-  }
-
-  return {
+  const params: Record<string, unknown> = {
+    ...context,
     action: operation,
-    id: asInt(context.id) || asInt(context.record_id) || recordId,
   };
+  const requiredKeys = Array.isArray(payloadSchema.required)
+    ? payloadSchema.required.map((item) => asText(item).toLowerCase()).filter(Boolean)
+    : [];
+  const idLikeKey = requiredKeys.find((item) => item === 'id' || item === 'record_id' || item.endsWith('_id')) || 'id';
+  const resolvedRecordId = asInt(context[idLikeKey]) || asInt(context.id) || asInt(context.record_id) || recordId;
+  if (resolvedRecordId > 0 && !params[idLikeKey]) {
+    params[idLikeKey] = resolvedRecordId;
+  }
+  return params;
 }
 
 export async function executeSceneMutation(input: SceneMutationExecuteInput): Promise<SceneMutationExecuteResult> {
