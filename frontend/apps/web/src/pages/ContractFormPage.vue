@@ -223,6 +223,7 @@ import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import { PROJECT_INTAKE_SCENE_KEY } from '../app/projectCreationBaseline';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -423,7 +424,7 @@ const isProjectStandardIntakeMode = computed(() => {
   if (String(model.value || '').trim() !== 'project.project') return false;
   if (recordId.value) return false;
   if (isProjectQuickIntakeMode.value) return false;
-  return String(route.query.scene_key || '').trim() === 'projects.intake';
+  return String(route.query.scene_key || '').trim() === PROJECT_INTAKE_SCENE_KEY;
 });
 const isProjectCreatePage = computed(() => {
   const routeModel = String(route.params.model || '').trim();

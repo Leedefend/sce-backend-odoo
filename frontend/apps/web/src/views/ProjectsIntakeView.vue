@@ -41,8 +41,10 @@ import type { NavNode } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
-
-const FULL_CREATE_MENU_XMLID = 'smart_construction_core.menu_sc_project_initiation';
+import {
+  PROJECT_INITIATION_MENU_XMLID,
+  PROJECT_INTAKE_SCENE_KEY,
+} from '../app/projectCreationBaseline';
 
 const session = useSessionStore();
 const router = useRouter();
@@ -77,12 +79,12 @@ function findNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode | null 
 }
 
 function resolveIntakeActionTarget() {
-  const scene = getSceneByKey('projects.intake');
+  const scene = getSceneByKey(PROJECT_INTAKE_SCENE_KEY);
   const sceneActionId = Number((scene?.target?.action_id as number) || 0);
   if (sceneActionId > 0) {
     return { actionId: sceneActionId, menuId: Number((scene?.target?.menu_id as number) || 0) || undefined };
   }
-  const sceneNode = findNodeBySceneKey(session.menuTree, 'projects.intake');
+  const sceneNode = findNodeBySceneKey(session.menuTree, PROJECT_INTAKE_SCENE_KEY);
   if (sceneNode?.meta?.action_id) {
     return {
       actionId: Number(sceneNode.meta.action_id),
@@ -97,7 +99,7 @@ function openQuickCreate() {
   void router.replace({
     path: '/f/project.project/new',
     query: {
-      scene_key: 'projects.intake',
+      scene_key: PROJECT_INTAKE_SCENE_KEY,
       scene_label: '项目立项',
       intake_mode: 'quick',
       ...workspaceContext,
@@ -106,13 +108,13 @@ function openQuickCreate() {
 }
 
 function openFullForm() {
-  const fullNode = findNodeByMenuXmlid(session.menuTree, FULL_CREATE_MENU_XMLID);
+  const fullNode = findNodeByMenuXmlid(session.menuTree, PROJECT_INITIATION_MENU_XMLID);
   if (fullNode?.meta?.action_id) {
     void router.replace({
       path: `/a/${Number(fullNode.meta.action_id)}`,
       query: {
         menu_id: Number(fullNode.menu_id || fullNode.id || 0) || undefined,
-        scene_key: 'projects.intake',
+        scene_key: PROJECT_INTAKE_SCENE_KEY,
         scene_label: '项目立项',
         intake_mode: undefined,
         context_raw: undefined,
@@ -127,7 +129,7 @@ function openFullForm() {
     path: `/a/${fallback.actionId}`,
     query: {
       menu_id: fallback.menuId,
-      scene_key: 'projects.intake',
+      scene_key: PROJECT_INTAKE_SCENE_KEY,
       scene_label: '项目立项',
       intake_mode: undefined,
       context_raw: undefined,
