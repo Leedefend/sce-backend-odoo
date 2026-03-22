@@ -90,10 +90,12 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
             }
 
-        menu = self.env.ref("smart_construction_core.menu_sc_project_initiation", raise_if_not_found=False)
+        menu_xmlid = "smart_construction_core.menu_sc_project_initiation"
+        menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
         contract_params = {
             "op": "menu",
             "menu_id": int(menu.id) if menu else 0,
+            "menu_xmlid": menu_xmlid,
         }
         if int(contract_params.get("menu_id") or 0) <= 0:
             contract_params = {
