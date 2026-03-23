@@ -42,21 +42,18 @@ type UseActionViewBatchRuntimeOptions = {
   lastBatchRequest: Ref<BatchRequestLike | null>;
 
   pageText: (key: string, fallback: string) => string;
-  setError: (err: unknown, fallback: string) => void;
-  load: () => Promise<void>;
-  clearSelection: () => void;
+  reportBatchError: (err: unknown, fallback: string) => void;
+  buildBatchRequestContext: () => Record<string, unknown>;
+  applyBatchSuccessReload: () => Promise<void>;
+  downloadCsv: (filename: string, mimeType: string, contentB64: string) => void;
 
   resolveTargetModel: () => string;
-  resolveRequestContext: () => Record<string, unknown>;
-  mergeContext: (base: unknown, extra: unknown) => Record<string, unknown>;
-  actionMetaContext: () => unknown;
 
   buildIfMatchMap: (ids: number[]) => Record<number, string>;
   buildIdempotencyKey: (action: string, ids: number[], extra?: Record<string, unknown>) => string;
 
   batchUpdateRecords: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
   exportRecordsCsv: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
-  downloadCsvBase64: (filename: string, mimeType: string, contentB64: string) => void;
 
   buildBatchUpdateRequest: (payload: Record<string, unknown>) => Record<string, unknown>;
   buildBatchErrorLine: (payload: Record<string, unknown>) => BatchErrorLine;
@@ -169,7 +166,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
           buildIfMatchMap: options.buildIfMatchMap,
           buildIdempotencyKey: options.buildIdempotencyKey,
         });
-        const requestContext = options.mergeContext(options.actionMetaContext(), options.resolveRequestContext());
+        const requestContext = options.buildBatchRequestContext();
         const result = await options.batchUpdateRecords(options.buildBatchUpdateRequest({
           model: targetModel,
           ids: options.selectedIds.value,
@@ -186,8 +183,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
           text: options.pageText,
         });
         options.applyBatchFailureArtifacts(result);
-        options.clearSelection();
-        await options.load();
+        await options.applyBatchSuccessReload();
         return;
       }
 
@@ -197,7 +193,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
         buildIfMatchMap: options.buildIfMatchMap,
         buildIdempotencyKey: options.buildIdempotencyKey,
       });
-      const requestContext = options.mergeContext(options.actionMetaContext(), options.resolveRequestContext());
+      const requestContext = options.buildBatchRequestContext();
       const result = await options.batchUpdateRecords(options.buildBatchUpdateRequest({
         model: targetModel,
         ids: options.selectedIds.value,
@@ -222,10 +218,9 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
         text: options.pageText,
       });
       options.applyBatchFailureArtifacts(result);
-      options.clearSelection();
-      await options.load();
+      await options.applyBatchSuccessReload();
     } catch (err) {
-      options.setError(err, 'batch update failed');
+      options.reportBatchError(err, 'batch update failed');
       const catchState = options.resolveBatchFailureCatchState({
         err,
         text: options.pageText,
@@ -268,7 +263,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
         buildIfMatchMap: options.buildIfMatchMap,
         buildIdempotencyKey: options.buildIdempotencyKey,
       });
-      const requestContext = options.mergeContext(options.actionMetaContext(), options.resolveRequestContext());
+      const requestContext = options.buildBatchRequestContext();
       const result = await options.batchUpdateRecords(options.buildBatchUpdateRequest({
         model: targetModel,
         ids: options.selectedIds.value,
@@ -295,10 +290,9 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
       });
       options.applyBatchFailureArtifacts(result);
       options.selectedAssigneeId.value = null;
-      options.clearSelection();
-      await options.load();
+      await options.applyBatchSuccessReload();
     } catch (err) {
-      options.setError(err, 'batch assign failed');
+      options.reportBatchError(err, 'batch assign failed');
       options.batchMessage.value = options.resolveBatchAssignFailureMessage(options.pageText);
       const catchState = options.resolveBatchFailureCatchState({
         err,
@@ -358,16 +352,16 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
         domain: exportDomain,
         columns: options.columns(),
         order: options.sortLabel(),
-        context: options.mergeContext(options.actionMetaContext(), options.resolveRequestContext()),
+        context: options.buildBatchRequestContext(),
       }));
       if (options.resolveBatchExportNoContent({ contentB64Raw: result.content_b64 })) {
         options.batchMessage.value = options.resolveExportNoContentMessage(options.pageText);
         return;
       }
-      options.downloadCsvBase64(result.file_name, result.mime_type, result.content_b64);
+      options.downloadCsv(result.file_name, result.mime_type, result.content_b64);
       options.batchMessage.value = options.resolveExportDoneMessage({ countRaw: result.count, text: options.pageText });
     } catch (err) {
-      options.setError(err, 'batch export failed');
+      options.reportBatchError(err, 'batch export failed');
       options.batchMessage.value = options.resolveExportFailedMessage(options.pageText);
       const catchState = options.resolveBatchExportCatchState({
         err,
@@ -391,7 +385,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
 
   function handleDownloadFailedCsv() {
     if (!options.failedCsvContentB64.value) return;
-    options.downloadCsvBase64(options.failedCsvFileName.value || 'batch_failed.csv', 'text/csv', options.failedCsvContentB64.value);
+    options.downloadCsv(options.failedCsvFileName.value || 'batch_failed.csv', 'text/csv', options.failedCsvContentB64.value);
   }
 
   async function handleLoadMoreFailures() {
@@ -410,7 +404,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
       }));
       options.applyBatchFailureArtifacts(result, options.resolveLoadMoreFailuresApplyPlan());
     } catch (err) {
-      options.setError(err, 'load more failures failed');
+      options.reportBatchError(err, 'load more failures failed');
       const catchState = options.resolveLoadMoreFailuresCatchState({
         err,
         text: options.pageText,

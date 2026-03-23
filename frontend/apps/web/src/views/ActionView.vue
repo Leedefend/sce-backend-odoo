@@ -479,6 +479,7 @@ import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useA
 import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
 import { useActionViewLoadDispatchRuntime } from '../app/action_runtime/useActionViewLoadDispatchRuntime';
 import { useActionViewActionEffectsRuntime } from '../app/action_runtime/useActionViewActionEffectsRuntime';
+import { useActionViewBatchEffectsRuntime } from '../app/action_runtime/useActionViewBatchEffectsRuntime';
 import { useActionViewActionPresentationRuntime } from '../app/action_runtime/useActionViewActionPresentationRuntime';
 import {
   normalizeGroupPageOffset,
@@ -2122,8 +2123,20 @@ const {
 });
 clearSelectionInvoker = selectionRuntimeClearSelection;
 
-
-
+const {
+  reportBatchError,
+  buildBatchRequestContext,
+  applyBatchSuccessReload,
+  downloadCsv,
+} = useActionViewBatchEffectsRuntime({
+  setError,
+  load: requestLoad,
+  clearSelection,
+  resolveRequestContext: resolveEffectiveRequestContext,
+  mergeContext,
+  actionMetaContext: () => actionMeta.value?.context,
+  downloadCsvBase64: downloadCsvBase64Runtime,
+});
 
 const {
   handleBatchAction,
@@ -2144,21 +2157,18 @@ const {
   batchHasMoreFailures,
   lastBatchRequest,
   pageText,
-  setError,
-  load: requestLoad,
-  clearSelection,
+  reportBatchError,
+  buildBatchRequestContext,
+  applyBatchSuccessReload,
+  downloadCsv,
   resolveTargetModel: () => resolveBatchAssignTargetModel({
     resolvedModelRaw: resolvedModelRef.value,
     routeModelRaw: model.value,
   }),
-  resolveRequestContext: resolveEffectiveRequestContext,
-  mergeContext,
-  actionMetaContext: () => actionMeta.value?.context,
   buildIfMatchMap,
   buildIdempotencyKey,
   batchUpdateRecords,
   exportRecordsCsv,
-  downloadCsvBase64: downloadCsvBase64Runtime,
   buildBatchUpdateRequest,
   buildBatchErrorLine,
   applyBatchFailureArtifacts,
