@@ -544,6 +544,11 @@ verify.portal.cost_slice_browser_smoke.host: guard.prod.forbid check-compose-pro
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/cost_slice_browser_smoke.mjs
+.PHONY: verify.portal.payment_slice_browser_smoke.host
+verify.portal.payment_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+		node scripts/verify/payment_slice_browser_smoke.mjs
 .PHONY: verify.portal.login_browser_smoke.prod_sim
 verify.portal.login_browser_smoke.prod_sim: guard.prod.forbid
 	@$(MAKE) --no-print-directory deploy.prod.sim.oneclick \
@@ -881,6 +886,14 @@ verify.release.cost_slice_prepared: verify.architecture.final_slice_readiness_au
 verify.release.cost_slice_freeze: verify.release.cost_slice_prepared
 	@echo "[OK] verify.release.cost_slice_freeze done"
 
+.PHONY: verify.release.payment_slice_prepared
+verify.release.payment_slice_prepared: verify.architecture.final_slice_readiness_audit verify.product.payment_entry_contract_guard verify.product.payment_list_block_guard verify.product.payment_summary_block_guard verify.product.project_flow.execution_payment verify.portal.payment_slice_browser_smoke.host
+	@echo "[OK] verify.release.payment_slice_prepared done"
+
+.PHONY: verify.release.payment_slice_freeze
+verify.release.payment_slice_freeze: verify.release.payment_slice_prepared
+	@echo "[OK] verify.release.payment_slice_freeze done"
+
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_initiation_dashboard_smoke.py"
 
@@ -927,6 +940,22 @@ verify.product.cost_entry_contract_guard: guard.prod.forbid check-compose-projec
 .PHONY: verify.product.cost_list_block_guard
 verify.product.cost_list_block_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_cost_list_block_guard.py"
+
+.PHONY: verify.product.payment_entry_contract_guard
+verify.product.payment_entry_contract_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_payment_entry_contract_guard.py"
+
+.PHONY: verify.product.payment_list_block_guard
+verify.product.payment_list_block_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_payment_list_block_guard.py"
+
+.PHONY: verify.product.payment_summary_block_guard
+verify.product.payment_summary_block_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_payment_summary_block_guard.py"
+
+.PHONY: verify.product.project_flow.execution_payment
+verify.product.project_flow.execution_payment: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_payment_smoke.py"
 
 .PHONY: verify.product.cost_summary_block_guard
 verify.product.cost_summary_block_guard: guard.prod.forbid check-compose-project check-compose-env

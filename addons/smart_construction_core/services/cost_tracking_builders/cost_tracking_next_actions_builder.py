@@ -37,6 +37,21 @@ class CostTrackingNextActionsBuilder(BaseProjectBlockBuilder):
                 "source": "fr3_prepared",
             }
         ]
+        actions.append(
+            {
+                "key": "payment_enter",
+                "label": "下一步：进入付款记录",
+                "hint": "从成本切片进入 FR-4 付款切片，录入项目付款并查看汇总。",
+                "intent": "payment.enter",
+                "params": {
+                    "project_id": int(project.id),
+                    "source": "cost.tracking.next_actions",
+                },
+                "state": "available",
+                "reason_code": "PAYMENT_SLICE_READY",
+                "source": "fr4_prepared",
+            }
+        )
         return self._envelope(
             state="ready",
             visibility=visibility,

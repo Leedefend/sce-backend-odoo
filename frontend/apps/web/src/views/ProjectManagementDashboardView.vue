@@ -146,6 +146,44 @@
               </div>
             </section>
 
+            <section v-else-if="descriptor.key === 'payment_entry'" class="payment-form-card">
+              <label class="cost-form-field">
+                <span>付款日期</span>
+                <input v-model="paymentEntryForm.date" type="date" class="cost-input" />
+              </label>
+              <label class="cost-form-field">
+                <span>金额</span>
+                <input v-model="paymentEntryForm.amount" type="number" min="0" step="0.01" class="cost-input" />
+              </label>
+              <label class="cost-form-field">
+                <span>说明</span>
+                <input v-model="paymentEntryForm.description" type="text" class="cost-input" placeholder="例如：材料款支付" />
+              </label>
+              <div class="cost-form-actions">
+                <button type="button" class="primary-button" :disabled="paymentEntrySubmitting" @click="submitPaymentEntry">
+                  {{ paymentEntrySubmitting ? '录入中...' : paymentEntrySubmitLabel }}
+                </button>
+                <span class="cost-form-hint">{{ paymentEntryHint }}</span>
+              </div>
+            </section>
+
+            <section v-else-if="descriptor.key === 'payment_list'" class="task-list">
+              <div v-for="item in paymentListRows" :key="item.key" class="task-row">
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.subtitle }}</p>
+                </div>
+                <span class="action-state" :data-tone="item.stateTone">{{ item.stateLabel }}</span>
+              </div>
+            </section>
+
+            <section v-else-if="descriptor.key === 'payment_summary'" class="metric-list">
+              <div v-for="item in paymentSummaryRows" :key="item.key" class="metric-row">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            </section>
+
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
               <div v-for="item in nextActions" :key="item.key" class="action-card">
                 <div>
@@ -275,6 +313,12 @@ const costEntryForm = ref({
   cost_code_id: 0,
 });
 const costEntrySubmitting = ref(false);
+const paymentEntryForm = ref({
+  date: '',
+  amount: '',
+  description: '',
+});
+const paymentEntrySubmitting = ref(false);
 
 function asText(value: unknown) {
   return String(value || '').trim();
@@ -310,6 +354,18 @@ const summaryRows = computed(() => {
       { key: 'cost_record_count', label: '成本记录数', value: `${asNumber(summary.cost_record_count)} 条` },
       { key: 'cost_total_amount', label: '成本合计', value: currency ? `${total} ${currency}` : `${total}` },
       { key: 'draft_cost_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_cost_amount)} ${currency}` : `${asNumber(summary.draft_cost_amount)}` },
+    ];
+  }
+  if (currentSceneKey.value === 'payment') {
+    const total = asNumber(summary.payment_total_amount);
+    const currency = asText(summary.currency_name || '');
+    return [
+      { key: 'project_code', label: '项目编码', value: asText(summary.project_code || '--') || '--' },
+      { key: 'manager_name', label: '项目经理', value: asText(summary.manager_name || '--') || '--' },
+      { key: 'stage_name', label: '当前阶段', value: asText(summary.stage_name || '--') || '--' },
+      { key: 'payment_record_count', label: '付款记录数', value: `${asNumber(summary.payment_record_count)} 条` },
+      { key: 'payment_total_amount', label: '付款合计', value: currency ? `${total} ${currency}` : `${total}` },
+      { key: 'draft_payment_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_payment_amount)} ${currency}` : `${asNumber(summary.draft_payment_amount)}` },
     ];
   }
   return [
@@ -423,6 +479,7 @@ function blockEmptyText(blockKey: string) {
   if (blockKey === 'execution_tasks') return '当前项目还没有执行任务。';
   if (blockKey === 'pilot_precheck') return '当前项目还没有试点前检查结果。';
   if (blockKey === 'cost_list') return '当前项目还没有成本记录。';
+  if (blockKey === 'payment_list') return '当前项目还没有付款记录。';
   return '当前区块暂无数据。';
 }
 
@@ -525,6 +582,55 @@ const costSummaryRows = computed(() => {
   ];
 });
 
+const paymentEntryPayload = computed(() => {
+  const payload = blockData('payment_entry');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  return (data.form && typeof data.form === 'object') ? data.form as Record<string, unknown> : {};
+});
+
+const paymentEntrySubmitLabel = computed(() => {
+  return asText(paymentEntryPayload.value.submit_label || '') || '记录付款';
+});
+
+const paymentEntryHint = computed(() => {
+  const payload = blockData('payment_entry');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  return asText(summary.state_fallback_text || '') || '录入后会刷新付款记录与付款汇总。';
+});
+
+const paymentListRows = computed(() => {
+  const payload = blockData('payment_list');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const records = Array.isArray(data.records) ? data.records : [];
+  return records.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const amount = asNumber(row.amount);
+    const currency = asText(row.currency_name || '');
+    return {
+      key: asText(row.payment_request_id || row.id || `payment_${index + 1}`),
+      title: asText(row.description || row.name || '付款记录'),
+      subtitle: [asText(row.date || ''), asText(row.partner_name || ''), asText(row.project_name || '')].filter(Boolean).join(' · ') || '暂无补充信息',
+      stateLabel: currency ? `${amount} ${currency}` : `${amount}`,
+      stateTone: asText(row.state || '') === 'draft' ? 'warning' : 'success',
+    };
+  });
+});
+
+const paymentSummaryRows = computed(() => {
+  const payload = blockData('payment_summary');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const currency = asText(summary.currency_name || '');
+  const total = asNumber(summary.total_payment_amount);
+  return [
+    { key: 'total_payment_amount', label: '项目付款合计', value: currency ? `${total} ${currency}` : `${total}` },
+    { key: 'record_count', label: '记录数量', value: `${asNumber(summary.record_count)} 条` },
+    { key: 'draft_record_count', label: '草稿记录', value: `${asNumber(summary.draft_record_count)} 条` },
+    { key: 'approved_record_count', label: '已完成/批准', value: `${asNumber(summary.approved_record_count)} 条` },
+  ];
+});
+
 const nextActions = computed<ActionCard[]>(() => {
   const payload = blockData('next_actions');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
@@ -605,11 +711,28 @@ function resetCostEntryForm() {
   };
 }
 
+function resetPaymentEntryForm() {
+  const defaults = paymentEntryPayload.value.defaults && typeof paymentEntryPayload.value.defaults === 'object'
+    ? paymentEntryPayload.value.defaults as Record<string, unknown>
+    : {};
+  paymentEntryForm.value = {
+    date: asText(defaults.date || ''),
+    amount: asText(defaults.amount || ''),
+    description: asText(defaults.description || ''),
+  };
+}
+
 function shouldHydrateCostEntryDefaults() {
   return !asText(costEntryForm.value.date)
     && !asText(costEntryForm.value.amount)
     && !asText(costEntryForm.value.description)
     && asNumber(costEntryForm.value.cost_code_id) <= 0;
+}
+
+function shouldHydratePaymentEntryDefaults() {
+  return !asText(paymentEntryForm.value.date)
+    && !asText(paymentEntryForm.value.amount)
+    && !asText(paymentEntryForm.value.description);
 }
 
 async function refreshBlock(blockKey: string) {
@@ -673,12 +796,27 @@ async function refreshAllBlocks() {
       if (seen.has(key)) continue;
       await refreshBlock(key);
     }
+  } else if (currentSceneKey.value === 'payment') {
+    const ordered = ['payment_entry', 'payment_summary', 'payment_list', 'next_actions'];
+    const seen = new Set<string>();
+    for (const key of ordered) {
+      if (!keys.includes(key)) continue;
+      seen.add(key);
+      await refreshBlock(key);
+    }
+    for (const key of keys) {
+      if (seen.has(key)) continue;
+      await refreshBlock(key);
+    }
   } else {
     const tasks = keys.map((key) => refreshBlock(key));
     await Promise.allSettled(tasks);
   }
   if (currentSceneKey.value === 'cost.tracking' && shouldHydrateCostEntryDefaults()) {
     resetCostEntryForm();
+  }
+  if (currentSceneKey.value === 'payment' && shouldHydratePaymentEntryDefaults()) {
+    resetPaymentEntryForm();
   }
 }
 
@@ -794,6 +932,44 @@ async function submitCostEntry() {
     };
   } finally {
     costEntrySubmitting.value = false;
+  }
+}
+
+async function submitPaymentEntry() {
+  if (paymentEntrySubmitting.value) return;
+  const formIntent = asText(paymentEntryPayload.value.intent || '');
+  if (!formIntent) return;
+  paymentEntrySubmitting.value = true;
+  try {
+    const result = await intentRequest<Record<string, unknown>>({
+      intent: formIntent,
+      params: {
+        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        date: paymentEntryForm.value.date,
+        amount: paymentEntryForm.value.amount,
+        description: paymentEntryForm.value.description,
+      },
+      context: {
+        scene_key: currentSceneKey.value,
+        page_key: 'project.management.dashboard',
+        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+      },
+    });
+    transitionFeedback.value = {
+      variant: 'success',
+      title: '付款记录已创建',
+      message: asText(result.summary_hint || '') || '已创建付款记录，并刷新付款记录与付款汇总。',
+    };
+    await Promise.allSettled([refreshBlock('payment_list'), refreshBlock('payment_summary'), refreshBlock('payment_entry')]);
+    resetPaymentEntryForm();
+  } catch (err) {
+    transitionFeedback.value = {
+      variant: 'warning',
+      title: '付款录入失败',
+      message: err instanceof Error ? err.message : 'unknown error',
+    };
+  } finally {
+    paymentEntrySubmitting.value = false;
   }
 }
 
