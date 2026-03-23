@@ -111,6 +111,14 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - Checklist template: `docs/ops/releases/templates/release_checklist_TEMPLATE.md`
 
 ## Current Review Baseline
+- First release slice freeze (FR-1):
+  - status: `release-ready slice`
+  - scope: `project creation -> dashboard`
+  - product contract: `docs/ops/releases/first_release_product_contract.md`
+  - freeze report: `docs/ops/releases/first_release_slice_freeze_report.md`
+  - verification matrix: `docs/ops/releases/first_release_verification_matrix.md`
+  - decision: `docs/ops/releases/first_release_slice_decision.md`
+  - release gate: `make verify.release.first_slice_freeze BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):

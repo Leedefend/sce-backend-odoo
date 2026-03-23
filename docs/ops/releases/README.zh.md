@@ -18,6 +18,14 @@ status: active
 - Release Checklist 模板（zh）：`docs/ops/releases/templates/release_checklist_TEMPLATE.zh.md`
 
 ## 当前评审基线
+- 首发切片冻结（FR-1）：
+  - 状态：`可发布切片`
+  - 范围：`项目创建 -> 驾驶舱`
+  - 产品口径：`docs/ops/releases/first_release_product_contract.md`
+  - 冻结报告：`docs/ops/releases/first_release_slice_freeze_report.md`
+  - 验证矩阵：`docs/ops/releases/first_release_verification_matrix.md`
+  - 阶段结论：`docs/ops/releases/first_release_slice_decision.md`
+  - 统一门禁：`make verify.release.first_slice_freeze BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：

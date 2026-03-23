@@ -1212,3 +1212,21 @@ Each entry must include:
 - completed_step: `基于 Batch-A/Batch-B 结果输出 ActionView freeze report、Batch-C 决策、主线切换声明、首发切片定义、首发 contract/guard 审计与前端 boundary 审计；同步更新 frontend violation inventory 的状态口径，并准备执行首发链 verify 收口`
 - active_commit: `18a20f4`
 - next_step: `运行 final_slice/architecture/project-flow 相关验证，补 first_slice_prepared_report 结果，并按 Phase 2-R 模板输出阶段结论`
+
+### 2026-03-23T11:10:00Z
+- blocker_key: `fr1_first_release_slice_freeze`
+- layer_target: `Release Governance Layer + Architecture Layer + Frontend Layer + Verify Layer`
+- module: `docs/ops/releases + docs/architecture + docs/product + docs/audit + Makefile`
+- reason: `FR-1：将“项目创建 -> 驾驶舱”从冻结准备态推进为正式冻结切片，固化产品口径、五层映射、dashboard block 白名单、release gate 和前端边界锁定`
+- completed_step: `输出 first_release_product_contract、first_release_slice_five_layer_freeze、dashboard_block_whitelist、first_release_verification_matrix、first_slice_frontend_boundary_lock、first_release_slice_freeze_report，并新增统一 gate=verify.release.first_slice_freeze 与 browser smoke host 入口`
+- active_commit: `3015f60`
+- next_step: `release gate 已通过；按 FR-1 模板输出“可发布切片”结论，并决定是否进入第二切片`
+
+### 2026-03-23T14:08:00Z
+- blocker_key: `fr1_first_release_slice_freeze_closure`
+- layer_target: `Release Governance Layer + Architecture Layer + Verify Layer`
+- module: `docs/ops/releases/README.md + docs/ops/releases/README.zh.md + docs/ops/releases/first_release_slice_decision.md + docs/ops/iterations/delivery_context_switch_log_v1.md`
+- reason: `把 FR-1 从“冻结文档已生成”推进到“索引可见、阶段结论可读、统一 gate 可复跑”的正式收口态`
+- completed_step: `补发布索引入口与 first_release_slice_decision 文档，并实测通过 make verify.release.first_slice_freeze；browser smoke 证据更新到 artifacts/codex/first-release-slice-browser-smoke/20260323T055646Z/`
+- active_commit: `3015f60`
+- next_step: `若继续推进，必须新开第二切片批次并单独声明 Layer Target / Module / Reason；FR-1 批次到此冻结`
