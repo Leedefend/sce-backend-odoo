@@ -184,3 +184,89 @@ Batch-B 允许暂时保留在页面的状态，必须满足至少一条：
   3. 再推进 interactive state 进 capsule
   4. 最后再判断 page shell 化程度
 - 如果 Batch-B 结束后页面仍保留大量不可解释状态面，才考虑是否需要 Batch-C
+
+---
+
+## Batch-B 执行结果
+
+- 状态：已完成
+- 完成日期：2026-03-23
+- 结果判断：
+  - Batch-B 已完成“state host 收缩批次”的预定目标
+  - `ActionView` 进一步从“页面承载大量交互与展示中间态”推进到“页面主要承载核心 load 数据面、group bridge、route/lifecycle bridge”
+  - 当前已不适合继续在 Batch-B 内做零碎收缩，后续应进入下一批判断
+
+### 本批提交
+
+1. `f71c8d1` `Define ActionView Phase 2 Batch-B boundary`
+2. `cd22ebd` `Shrink ActionView state host and HUD assembly`
+
+### 已完成项
+
+- Step 1：State Host Recalibration
+  - 页面剩余状态已按三类重新归档：
+    - 页面桥接保留态：`route/lifecycle/load host`
+    - runtime capsule：`selection/batch/group`
+    - assembler 展示派生：`advanced rows/hud entries`
+- Step 2：Display Glue Into Assembler
+  - HUD 条目拼装已进入 [useActionPageModel.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/assemblers/action/useActionPageModel.ts)
+  - `advanced rows` 已在上一批进入 assembler
+- Step 3：Interactive State Capsule
+  - 新增 [actionViewSelectionRuntimeState.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/runtime/actionViewSelectionRuntimeState.ts)
+  - 新增 [actionViewBatchRuntimeState.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/runtime/actionViewBatchRuntimeState.ts)
+  - [ActionView.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/views/ActionView.vue) 不再逐个声明 selection/batch 基础 ref
+- Step 4：Group Runtime Boundary Review
+  - 结论：`group runtime state` 已有独立 capsule，当前问题不在“状态是否独立”，而在“page shell 仍承担 route/drilldown bridge”
+  - 因此本批不继续拆 group 主逻辑，而将其纳入下一批重点
+- Step 5：Page Shell Review
+  - 当前 `ActionView` 可以描述为：
+    - 模板消费
+    - 核心 load 数据面 host
+    - group/route/lifecycle bridge
+  - 还不能描述为“极薄 page shell”
+
+### 页面保留态白名单结论
+
+- 本批结束后，暂时允许继续留在页面的状态：
+  - `status`
+  - `traceId`
+  - `lastTraceId`
+  - `records`
+  - `listTotalCount`
+  - `projectScopeTotals`
+  - `projectScopeMetrics`
+  - 与路由桥接直接相关的 filter/sort/viewMode/load 输入
+- 已不应继续由页面直接声明的状态：
+  - selection base state
+  - batch base state
+  - HUD entries 展示拼装
+  - advanced rows 展示拼装
+
+### Group Runtime 归宿结论
+
+- `group runtime state` 当前归宿：
+  - 状态层：runtime capsule
+  - 触发层：page shell bridge
+  - 展示层：模板消费
+- 这意味着 group 不是“页面状态面污染”的主因，但仍是 page shell 继续变薄的主要阻塞项
+
+### 验证结论
+
+- 通过：
+  - `make verify.frontend.typecheck.strict`
+  - `make verify.product.final_slice_readiness_audit`
+- 当前完成态：
+  - `final_slice_readiness_audit` 仍为 `READY_FOR_SLICE`
+  - 未引入新的前端业务推断
+  - 未牵出后端 contract 改动
+
+---
+
+## Batch-B 收口判断
+
+- Batch-B 已完成，不再建议继续在本批次追加小修
+- 当前剩余问题已集中为：
+  - `ActionView` 核心 load 数据面 host 仍在页面
+  - `group runtime` 的 route/drilldown bridge 仍由页面承担
+  - assembler 还不是唯一 page VM 主入口
+- 这些问题已经超出“state host 收缩批次”的自然范围，应进入下一批单独定义

@@ -10,11 +10,9 @@
 
 | Location | Violation Type | Description | Severity | Target Layer |
 | --- | --- | --- | --- | --- |
-| `frontend/apps/web/src/views/ActionView.vue:777` | State center in page | page still owns broad state host (`status/records/selection/batch/group`) | P1 | Page Assembly |
-| `frontend/apps/web/src/views/ActionView.vue:1295` | Page assembly not final | assembler exists but page still prepares most runtime glue before VM assembly | P1 | Page Assembly |
-| `frontend/apps/web/src/views/ActionView.vue:1605` | Page owns action runtime wiring | `useActionViewActionRuntime` is injected from page with broad navigation/mutation dependencies | P1 | Runtime |
-| `frontend/apps/web/src/views/ActionView.vue:2117` | Page owns batch runtime wiring | batch lifecycle is modularized but still assembled through page-level dependency injection | P1 | Runtime |
-| `frontend/apps/web/src/views/ActionView.vue:2083` | Load facade not fully closed | `loadPageInvoker/requestLoadPage` still makes page the central load dispatch bus | P1 | Runtime + Page Assembly |
+| `frontend/apps/web/src/views/ActionView.vue:797` | State center still retained in page shell | selection/batch 已进 capsule，但页面仍持有 `status/trace/records/group` 这类核心状态 host | P1 | Page Assembly |
+| `frontend/apps/web/src/views/ActionView.vue:1251` | Page assembly not final | assembler 已接管 HUD/advanced rows，但页面仍在 assembler 之前准备大量 display/state input | P1 | Page Assembly |
+| `frontend/apps/web/src/views/ActionView.vue:814` | Group runtime bridge still page-owned | group capsule 已存在，但 drilldown/window/route bridge 仍集中在 page shell | P1 | Runtime + Page Assembly |
 | `frontend/apps/web/src/views/HomeView.vue:1228` | Keyword business inference | todo action labels inferred by keywords | P1 | Contract Consumption |
 | `frontend/apps/web/src/views/HomeView.vue:1046` | Heuristic inference helper | keyword list/inclusion logic still drives business semantics | P1 | Contract Consumption |
 | `frontend/apps/web/src/views/SceneView.vue:280` | Page rebuilds scene model | fallback scene constructed directly from scene-ready deep fields | P2 | Contract Consumption + Routing |
@@ -35,6 +33,6 @@
 
 ## Immediate Closure Candidates
 
-1. `ActionView` load facade closure and dispatch ownership transfer (`P1`).
-2. `ActionView` action/batch facade slimming (`P1`).
-3. Introduce true page assembly entrypoint and shrink page local state (`P1`).
+1. `ActionView` state host shrink and keep-list closure (`P1`).
+2. `ActionView` group runtime boundary review (`P1`).
+3. Continue moving display glue into assembler (`P1`).
