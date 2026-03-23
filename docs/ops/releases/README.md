@@ -136,6 +136,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - verification matrix: `docs/ops/releases/cost_slice_verification_matrix.md`
   - decision: `docs/ops/releases/cost_slice_decision.md`
   - freeze gate: `make verify.release.cost_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
+- Fourth slice prepared (FR-4):
+  - status: `release-ready slice`
+  - scope: `project creation -> dashboard -> plan -> execution -> cost record -> payment record -> payment summary`
+  - product contract: `docs/ops/releases/payment_slice_product_contract.md`
+  - prepared report: `docs/ops/releases/payment_slice_prepared_report.md`
+  - freeze report: `docs/ops/releases/payment_slice_freeze_report.md`
+  - verification matrix: `docs/ops/releases/payment_slice_verification_matrix.md`
+  - decision: `docs/ops/releases/payment_slice_decision.md`
+  - freeze gate: `make verify.release.payment_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
