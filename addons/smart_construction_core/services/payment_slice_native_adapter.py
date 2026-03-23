@@ -81,9 +81,11 @@ class PaymentSliceNativeAdapter:
         draft_request_count = 0
         approved_request_count = 0
         approved_states = {"approve", "approved", "done"}
+        total_amount = 0.0
         for request in all_requests:
             request_count += 1
             amount = round(float(getattr(request, "amount", 0.0) or 0.0), 2)
+            total_amount += amount
             state = str(getattr(request, "state", "") or "")
             if state == "draft":
                 draft_request_count += 1
@@ -101,11 +103,7 @@ class PaymentSliceNativeAdapter:
                 "request_count": request_count,
                 "draft_request_count": draft_request_count,
                 "approved_request_count": approved_request_count,
-                "total_payment_amount": round(sum(float(row.get("amount") or 0.0) for row in requests) if requests else draft_amount + approved_amount + sum(
-                    round(float(getattr(row, "amount", 0.0) or 0.0), 2)
-                    for row in all_requests
-                    if str(getattr(row, "state", "") or "") not in {"draft", "approve", "approved", "done"}
-                ), 2),
+                "total_payment_amount": round(total_amount, 2),
                 "draft_payment_amount": round(draft_amount, 2),
                 "approved_payment_amount": round(approved_amount, 2),
                 "currency_name": currency_name,
