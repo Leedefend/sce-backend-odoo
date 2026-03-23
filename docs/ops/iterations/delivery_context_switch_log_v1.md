@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-23T15:30:00Z
+- blocker_key: `fr3_cost_slice_freeze_pass`
+- layer_target: `Release Governance Layer / Architecture Layer / Verify Governance`
+- module: `docs/ops/releases + docs/architecture + docs/ops/iterations + Makefile + scripts/verify`
+- reason: `将 FR-3 成本切片从 prepared 升级为正式 freeze，并固定唯一发布口径与统一 freeze gate`
+- completed_step: `已补 cost_slice_five_layer_freeze / cost_slice_freeze_report / cost_slice_decision / freeze gate，并实跑 make verify.release.cost_slice_freeze 通过；freeze 浏览器证据落在 artifacts/codex/cost-slice-browser-smoke/20260323T072645Z/`
+- active_commit: `654596a`
+- next_step: `Commit the FR-3 cost slice batch and do not reopen scope inside the freeze batch`
+
+### 2026-03-23T15:20:00Z
+- blocker_key: `fr3_cost_slice_prepared_pass`
+- layer_target: `Release Governance Layer / Domain Layer / Scene Layer / Frontend Layer / Verify Governance`
+- module: `docs/ops/releases + docs/architecture + docs/ops/iterations + addons/smart_construction_core + addons/smart_core + frontend/apps/web + scripts/verify + Makefile`
+- reason: `启动 FR-3 成本切片 Prepared，并在不扩展预算/审批/合同/付款范围的前提下打通 execution -> cost record -> cost summary，同时复制 FR-1 / FR-2 的治理与验证路径`
+- completed_step: `已落地 cost.tracking.record.create、cost_entry/cost_list/cost_summary blocks、execution -> cost next_action、FR-3 prepared guards、browser smoke 与统一门禁；make verify.release.cost_slice_prepared 在 prod-sim 配置下通过，浏览器证据落在 artifacts/codex/cost-slice-browser-smoke/20260323T072020Z/`
+- active_commit: `654596a`
+- next_step: `Commit the FR-3 prepared batch, then decide whether to open the FR-3 freeze-only iteration without expanding scope`
+
 ### 2026-03-23T08:40:00Z
 - blocker_key: `prod_sim_scene_runtime_boot_closure`
 - layer_target: `Platform Layer`
@@ -1248,3 +1266,12 @@ Each entry must include:
 - completed_step: `新增 verify.portal.second_slice_browser_smoke.host 与 verify.release.second_slice_freeze；browser smoke 真实通过 quick create -> dashboard -> plan -> execution -> execution.advance，全链证据落在 artifacts/codex/second-slice-browser-smoke/20260323T061942Z/；second_slice 文档口径升级为正式冻结发布`
 - active_commit: `9e311bc`
 - next_step: `如继续推进，应切换到成本/合同/结算等独立切片，第二切片不再扩写`
+
+### 2026-03-23T16:55:00Z
+- blocker_key: `fr3_cost_slice_prepared_start`
+- layer_target: `Release Governance Layer + Domain/Product Handler Layer + Frontend Layer + Verify Layer`
+- module: `docs/ops/releases + docs/architecture + docs/ops/iterations + addons/smart_construction_core + addons/smart_core + frontend/apps/web + scripts/verify + Makefile`
+- reason: `FR-3：按独立切片启动成本 Prepared 阶段，在现有只读 cost.tracking 基础上补最小录入、成本列表、成本汇总、execution->cost 连续链、browser smoke 与 prepared gate`
+- completed_step: `已冻结本轮边界：只做“项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本记录 -> 成本汇总”的 Prepared；明确禁止预算/分析/审批、合同/付款、结算与 FR-1/FR-2 扩写；恢复现状后确认当前 cost.tracking 仍是 Phase 17-A 只读切片，已有 account.move-based entry/block/flow verify，但缺写侧能力、前端消费、browser smoke、prepared 报告与统一 gate`
+- active_commit: `654596a`
+- next_step: `输出 FR-3 cost_slice_product_contract 与 cost_slice_five_layer_prepared，随后实现 account.move 最小写入能力与 cost scene prepared contract`
