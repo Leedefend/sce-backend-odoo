@@ -78,7 +78,39 @@ type UseActionPageModelOptions = {
   };
   hud: {
     visible: MaybeRef<boolean>;
-    entries: MaybeRef<Array<{ label: string; value: unknown }>>;
+    title?: MaybeRef<string>;
+    state: {
+      actionId: MaybeRef<unknown>;
+      menuId: MaybeRef<unknown>;
+      sceneKey: MaybeRef<unknown>;
+      model: MaybeRef<unknown>;
+      viewMode: MaybeRef<unknown>;
+      contractViewType: MaybeRef<unknown>;
+      activeContractFilterKey: MaybeRef<unknown>;
+      activeSavedFilterKey: MaybeRef<unknown>;
+      activeGroupByField: MaybeRef<unknown>;
+      groupWindowOffset: MaybeRef<unknown>;
+      groupWindowId: MaybeRef<unknown>;
+      groupQueryFingerprint: MaybeRef<unknown>;
+      groupWindowDigest: MaybeRef<unknown>;
+      groupWindowIdentityKey: MaybeRef<unknown>;
+      routeGroupFp: MaybeRef<unknown>;
+      routeGroupWid: MaybeRef<unknown>;
+      routeGroupWdg: MaybeRef<unknown>;
+      routeGroupWik: MaybeRef<unknown>;
+      contractActionCount: MaybeRef<unknown>;
+      contractLimit: MaybeRef<unknown>;
+      contractReadAllowed: MaybeRef<unknown>;
+      contractWarningCount: MaybeRef<unknown>;
+      contractDegraded: MaybeRef<unknown>;
+      sortLabel: MaybeRef<unknown>;
+      lastIntent: MaybeRef<unknown>;
+      lastWriteMode: MaybeRef<unknown>;
+      traceId: MaybeRef<unknown>;
+      lastTraceId: MaybeRef<unknown>;
+      lastLatencyMs: MaybeRef<unknown>;
+      routeFullPath: MaybeRef<unknown>;
+    };
   };
 };
 
@@ -105,6 +137,40 @@ function resolveContentKind(viewMode: string): 'list' | 'kanban' | 'advanced' {
   if (viewMode === 'tree') return 'list';
   if (viewMode === 'kanban') return 'kanban';
   return 'advanced';
+}
+
+function buildHudEntries(input: UseActionPageModelOptions['hud']['state']) {
+  return [
+    { label: 'action_id', value: unref(input.actionId) || '-' },
+    { label: 'menu_id', value: unref(input.menuId) || '-' },
+    { label: 'scene_key', value: unref(input.sceneKey) || '-' },
+    { label: 'model', value: unref(input.model) || '-' },
+    { label: 'view_mode', value: unref(input.viewMode) || '-' },
+    { label: 'contract_view_type', value: unref(input.contractViewType) || '-' },
+    { label: 'contract_filter', value: unref(input.activeContractFilterKey) || '-' },
+    { label: 'saved_filter', value: unref(input.activeSavedFilterKey) || '-' },
+    { label: 'group_by', value: unref(input.activeGroupByField) || '-' },
+    { label: 'group_offset', value: unref(input.groupWindowOffset) || 0 },
+    { label: 'group_window_id', value: unref(input.groupWindowId) || '-' },
+    { label: 'group_query_fp', value: unref(input.groupQueryFingerprint) || '-' },
+    { label: 'group_window_digest', value: unref(input.groupWindowDigest) || '-' },
+    { label: 'group_window_identity_key', value: unref(input.groupWindowIdentityKey) || '-' },
+    { label: 'route_group_fp', value: unref(input.routeGroupFp) || '-' },
+    { label: 'route_group_wid', value: unref(input.routeGroupWid) || '-' },
+    { label: 'route_group_wdg', value: unref(input.routeGroupWdg) || '-' },
+    { label: 'route_group_wik', value: unref(input.routeGroupWik) || '-' },
+    { label: 'contract_actions', value: unref(input.contractActionCount) || 0 },
+    { label: 'contract_limit', value: unref(input.contractLimit) || 0 },
+    { label: 'contract_read', value: unref(input.contractReadAllowed) },
+    { label: 'contract_warnings', value: unref(input.contractWarningCount) || 0 },
+    { label: 'contract_degraded', value: unref(input.contractDegraded) },
+    { label: 'order', value: unref(input.sortLabel) || '-' },
+    { label: 'last_intent', value: unref(input.lastIntent) || '-' },
+    { label: 'write_mode', value: unref(input.lastWriteMode) || '-' },
+    { label: 'trace_id', value: unref(input.traceId) || unref(input.lastTraceId) || '-' },
+    { label: 'latency_ms', value: unref(input.lastLatencyMs) ?? '-' },
+    { label: 'route', value: unref(input.routeFullPath) || '' },
+  ];
 }
 
 export function useActionPageModel(options: UseActionPageModelOptions) {
@@ -266,8 +332,8 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
         : undefined,
       hud: {
         visible: Boolean(unref(options.hud.visible)) && sectionVisibility.hud,
-        title: 'View Context',
-        entries: asList(unref(options.hud.entries)) as Array<{ label: string; value: unknown }>,
+        title: asText(unref(options.hud.title)) || 'View Context',
+        entries: buildHudEntries(options.hud.state),
       },
       sections: sectionVisibility,
     };
