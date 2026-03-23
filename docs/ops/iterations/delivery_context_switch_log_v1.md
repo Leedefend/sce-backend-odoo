@@ -1239,3 +1239,12 @@ Each entry must include:
 - completed_step: `对齐 dashboard/plan/execution flow smoke 到 scene carrier entry shape（含 scene_key/scene_label/state_fallback_text，并接受 execution pilot_precheck hint）；新增 second_slice_product_contract、second_slice_five_layer_freeze、second_slice_verification_matrix、second_slice_prepared_report、second_slice_decision，以及 make verify.release.second_slice_prepared；实测通过 prepared gate`
 - active_commit: `d9e65cc`
 - next_step: `若继续推进，下一批聚焦第二切片 browser smoke 与正式冻结判定；当前只允许宣称“冻结准备态”`
+
+### 2026-03-23T16:20:00Z
+- blocker_key: `fr2_second_slice_freeze`
+- layer_target: `Release Governance Layer + Frontend Layer + Verify Layer`
+- module: `scripts/verify/second_slice_browser_smoke.mjs + docs/ops/releases + docs/architecture + Makefile`
+- reason: `FR-2 正式冻结：补齐第二切片浏览器级证据，并将 prepared gate 升级为 freeze gate`
+- completed_step: `新增 verify.portal.second_slice_browser_smoke.host 与 verify.release.second_slice_freeze；browser smoke 真实通过 quick create -> dashboard -> plan -> execution -> execution.advance，全链证据落在 artifacts/codex/second-slice-browser-smoke/20260323T061942Z/；second_slice 文档口径升级为正式冻结发布`
+- active_commit: `9e311bc`
+- next_step: `如继续推进，应切换到成本/合同/结算等独立切片，第二切片不再扩写`

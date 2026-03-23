@@ -26,14 +26,14 @@ status: active
   - 验证矩阵：`docs/ops/releases/first_release_verification_matrix.md`
   - 阶段结论：`docs/ops/releases/first_release_slice_decision.md`
   - 统一门禁：`make verify.release.first_slice_freeze BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
-- 第二切片准备态（FR-2 prep）：
-  - 状态：`冻结准备态`
+- 第二切片冻结（FR-2）：
+  - 状态：`可发布切片`
   - 范围：`项目创建 -> 驾驶舱 -> 计划 -> 执行`
   - 产品口径：`docs/ops/releases/second_slice_product_contract.md`
-  - 准备报告：`docs/ops/releases/second_slice_prepared_report.md`
+  - 冻结报告：`docs/ops/releases/second_slice_freeze_report.md`
   - 验证矩阵：`docs/ops/releases/second_slice_verification_matrix.md`
   - 阶段结论：`docs/ops/releases/second_slice_decision.md`
-  - 统一门禁：`make verify.release.second_slice_prepared ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
+  - 统一门禁：`make verify.release.second_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
