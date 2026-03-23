@@ -184,6 +184,13 @@
               </div>
             </section>
 
+            <section v-else-if="descriptor.key === 'settlement_summary'" class="metric-list">
+              <div v-for="item in settlementSummaryRows" :key="item.key" class="metric-row">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            </section>
+
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
               <div v-for="item in nextActions" :key="item.key" class="action-card">
                 <div>
@@ -631,6 +638,26 @@ const paymentSummaryRows = computed(() => {
   ];
 });
 
+const settlementSummaryRows = computed(() => {
+  const payload = blockData('settlement_summary');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const currency = asText(summary.currency_name || '');
+  const totalCost = asNumber(summary.total_cost);
+  const totalPayment = asNumber(summary.total_payment);
+  const delta = asNumber(summary.delta);
+  const costCount = asNumber(summary.cost_record_count);
+  const paymentCount = asNumber(summary.payment_record_count);
+  const display = (value: number) => currency ? `${value} ${currency}` : `${value}`;
+  return [
+    { key: 'total_cost', label: '总成本', value: display(totalCost) },
+    { key: 'total_payment', label: '总付款', value: display(totalPayment) },
+    { key: 'delta', label: '差额', value: display(delta) },
+    { key: 'cost_record_count', label: '成本记录', value: `${costCount} 条` },
+    { key: 'payment_record_count', label: '付款记录', value: `${paymentCount} 条` },
+  ];
+});
+
 const nextActions = computed<ActionCard[]>(() => {
   const payload = blockData('next_actions');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
@@ -798,6 +825,18 @@ async function refreshAllBlocks() {
     }
   } else if (currentSceneKey.value === 'payment') {
     const ordered = ['payment_entry', 'payment_summary', 'payment_list', 'next_actions'];
+    const seen = new Set<string>();
+    for (const key of ordered) {
+      if (!keys.includes(key)) continue;
+      seen.add(key);
+      await refreshBlock(key);
+    }
+    for (const key of keys) {
+      if (seen.has(key)) continue;
+      await refreshBlock(key);
+    }
+  } else if (currentSceneKey.value === 'settlement') {
+    const ordered = ['settlement_summary'];
     const seen = new Set<string>();
     for (const key of ordered) {
       if (!keys.includes(key)) continue;

@@ -140,6 +140,28 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                 "source": "fr4_prepared",
             }
         )
+        settlement_action_state = "planned"
+        settlement_reason_code = "SETTLEMENT_AFTER_EXECUTION"
+        if task_total <= 0:
+            settlement_action_state = "blocked"
+            settlement_reason_code = "EXECUTION_TASK_MISSING"
+        elif current_state in ("in_progress", "done"):
+            settlement_action_state = "available"
+        actions.append(
+            {
+                "key": "settlement_enter",
+                "label": "下一步：查看结算结果",
+                "hint": "在项目链路中进入 FR-5 结算切片，查看项目级成本/付款只读汇总。",
+                "intent": "settlement.enter",
+                "params": {
+                    "project_id": int(project.id),
+                    "source": "project.execution.next_actions",
+                },
+                "state": settlement_action_state,
+                "reason_code": settlement_reason_code,
+                "source": "fr5_prepared",
+            }
+        )
         return self._envelope(
             state="ready",
             visibility=visibility,

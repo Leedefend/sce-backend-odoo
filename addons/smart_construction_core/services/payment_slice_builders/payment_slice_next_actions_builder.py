@@ -36,6 +36,21 @@ class PaymentSliceNextActionsBuilder(BaseProjectBlockBuilder):
                 "source": "fr4_prepared",
             }
         ]
+        actions.append(
+            {
+                "key": "settlement_enter",
+                "label": "下一步：查看结算结果",
+                "hint": "基于当前项目成本与付款事实，进入 FR-5 结算切片查看只读汇总。",
+                "intent": "settlement.enter",
+                "params": {
+                    "project_id": int(project.id),
+                    "source": "payment.slice.next_actions",
+                },
+                "state": "available",
+                "reason_code": "SETTLEMENT_SLICE_READY",
+                "source": "fr5_prepared",
+            }
+        )
         return self._envelope(
             state="ready",
             visibility=visibility,
@@ -43,11 +58,11 @@ class PaymentSliceNextActionsBuilder(BaseProjectBlockBuilder):
                 "actions": actions,
                 "summary": {
                     "count": len(actions),
-                    "available_count": 1,
+                    "available_count": len(actions),
                     "planned_count": 0,
                     "current_state": "payment_slice_prepared",
                     "current_state_label": "付款切片 Prepared",
-                    "next_step_label": "录入或核对付款记录",
+                    "next_step_label": "录入付款或查看结算结果",
                     "record_count": int(summary.get("request_count") or 0),
                 },
             },

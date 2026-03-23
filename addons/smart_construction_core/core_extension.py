@@ -515,6 +515,12 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.payment_slice_record_create import (
             PaymentSliceRecordCreateHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import (
+            SettlementSliceEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import (
+            SettlementSliceBlockFetchHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -559,6 +565,8 @@ def smart_core_register(registry):
     registry["payment.enter"] = PaymentSliceEnterHandler
     registry["payment.block.fetch"] = PaymentSliceBlockFetchHandler
     registry["payment.record.create"] = PaymentSliceRecordCreateHandler
+    registry["settlement.enter"] = SettlementSliceEnterHandler
+    registry["settlement.block.fetch"] = SettlementSliceBlockFetchHandler
     registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
@@ -595,6 +603,8 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.enter")
     _logger.info("[smart_core_register] registered payment.block.fetch")
     _logger.info("[smart_core_register] registered payment.record.create")
+    _logger.info("[smart_core_register] registered settlement.enter")
+    _logger.info("[smart_core_register] registered settlement.block.fetch")
     _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")
