@@ -319,27 +319,16 @@ const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 function normalizeDeliveryText(input: string) {
   const source = String(input || '').trim();
   if (!source) return '';
-  return source
-    .replace(/\s*\(\d+\)\s*$/g, '')
-    .replace(/^project\s*manager$/i, '项目经理')
-    .replace(/^purchase\s*manager$/i, '采购经理')
-    .replace(/^finance$/i, '财务主管')
-    .replace(/^executive$/i, '管理层')
-    .replace(/^ops$/i, '运维专员')
-    .replace(/^admin$/i, '系统管理员');
+  return source.replace(/\s*\(\d+\)\s*$/g, '');
 }
 
 function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
   const normalizedLabel = normalizeDeliveryText(roleLabelRaw);
   if (/[^\u0020-\u007e]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
   const code = String(roleCodeRaw || '').trim().toLowerCase();
-  if (/pm|project/.test(code)) return '项目经理';
-  if (/finance/.test(code)) return '财务主管';
-  if (/purchase|material/.test(code)) return '采购经理';
-  if (/executive|boss|leader/.test(code)) return '管理层';
-  if (/ops|operation/.test(code)) return '运维专员';
-  if (/admin/.test(code)) return '系统管理员';
-  return normalizedLabel || '负责人';
+  if (normalizedLabel) return normalizedLabel;
+  if (code) return normalizeDeliveryText(code.toUpperCase());
+  return '负责人';
 }
 
 function resolveActionBusinessTitle(action: unknown) {

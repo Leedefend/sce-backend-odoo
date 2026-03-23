@@ -23,7 +23,7 @@
     - 前端根据文本猜业务语义
     - 不属于纯 contract consumption
 
-### B. 非首发链路，本轮不动
+### B. 非首发链路或非本轮最短路径
 
 - [ActionView.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/views/ActionView.vue#L2678)
   - `load()`、`runContractAction()`、batch runtime 仍偏重，属于页面运行时过载
@@ -48,20 +48,24 @@
 - [SceneView.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/views/SceneView.vue#L304)
   - `scene not found` 不再直接打到错误页
   - 改为统一走 `workbench` 诊断降级，保持首发链路异常处理口径一致
+- [AppShell.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/layouts/AppShell.vue#L319)
+  - `normalizeDeliveryText()` 不再做角色业务映射，只保留中性展示清洗
+  - `resolveDeliveryRoleLabel()` 不再按 role code 推导“项目经理/财务主管/采购经理”等业务角色名
+  - shell 对角色展示改为优先消费 contract/后端标签，缺失时仅回退到原始 code 文本
 
 ## 未修复清单
 
 - [ActionView.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/views/ActionView.vue)
   - 运行时装配仍重
+  - 但当前文件已明显拆到 runtime/composable 驱动，库存文档行号与现状有漂移，不适合作为本轮最短收口目标
 - [SceneView.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/views/SceneView.vue)
   - 路由/目标解析仍偏厚
-- [AppShell.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/layouts/AppShell.vue)
-  - shell heuristics 未收口
 
 ## 风险评估
 
 - 本轮修复消除了首发链路内最直观的“前端文本关键词猜业务”问题
 - 同时收口了首发链路场景缺项时的错误页分叉
+- 同时收口了 shell 对业务角色名的前端推导
 - 但前端尚未整体回到纯渲染层
 - 因此结论是：
   - `首发链路更接近 contract-only`
