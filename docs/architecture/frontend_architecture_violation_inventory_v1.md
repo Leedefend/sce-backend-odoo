@@ -10,10 +10,11 @@
 
 | Location | Violation Type | Description | Severity | Target Layer |
 | --- | --- | --- | --- | --- |
-| `frontend/apps/web/src/views/ActionView.vue:2856` | Page owns central runtime | `load()` still orchestrates full contract->request->route->state pipeline | P1 | Runtime + Page Assembly |
-| `frontend/apps/web/src/views/ActionView.vue:2678` | Page owns action runtime | `runContractAction()` handles mutation/navigation/refresh flow in-view | P1 | Runtime |
-| `frontend/apps/web/src/views/ActionView.vue:3412` | Page owns batch runtime | batch lifecycle still coordinated in page | P1 | Runtime |
-| `frontend/apps/web/src/views/ActionView.vue:803` | State center in page | large ref/computed state surface remains in super component | P1 | Page Assembly |
+| `frontend/apps/web/src/views/ActionView.vue:777` | State center in page | page still owns broad state host (`status/records/selection/batch/group`) | P1 | Page Assembly |
+| `frontend/apps/web/src/views/ActionView.vue:1295` | Page assembly not final | assembler exists but page still prepares most runtime glue before VM assembly | P1 | Page Assembly |
+| `frontend/apps/web/src/views/ActionView.vue:1605` | Page owns action runtime wiring | `useActionViewActionRuntime` is injected from page with broad navigation/mutation dependencies | P1 | Runtime |
+| `frontend/apps/web/src/views/ActionView.vue:2117` | Page owns batch runtime wiring | batch lifecycle is modularized but still assembled through page-level dependency injection | P1 | Runtime |
+| `frontend/apps/web/src/views/ActionView.vue:2083` | Load facade not fully closed | `loadPageInvoker/requestLoadPage` still makes page the central load dispatch bus | P1 | Runtime + Page Assembly |
 | `frontend/apps/web/src/views/HomeView.vue:1228` | Keyword business inference | todo action labels inferred by keywords | P1 | Contract Consumption |
 | `frontend/apps/web/src/views/HomeView.vue:1046` | Heuristic inference helper | keyword list/inclusion logic still drives business semantics | P1 | Contract Consumption |
 | `frontend/apps/web/src/views/SceneView.vue:280` | Page rebuilds scene model | fallback scene constructed directly from scene-ready deep fields | P2 | Contract Consumption + Routing |
@@ -34,7 +35,6 @@
 
 ## Immediate Closure Candidates
 
-1. `ActionView` load/action/batch ownership transfer (`P1`).
-2. `HomeView` keyword inference removal (`P1`).
-3. Introduce page assembly entrypoint and shrink page local state (`P1`).
-
+1. `ActionView` load facade closure and dispatch ownership transfer (`P1`).
+2. `ActionView` action/batch facade slimming (`P1`).
+3. Introduce true page assembly entrypoint and shrink page local state (`P1`).
