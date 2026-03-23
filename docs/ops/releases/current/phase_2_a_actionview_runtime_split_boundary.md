@@ -189,3 +189,89 @@
   3. 再拆 `action`
   4. 再拆 `batch`
   5. 最后收敛到 assembler
+
+---
+
+## Batch-A 执行结果
+
+- 状态：已完成
+- 完成日期：2026-03-23
+- 结果判断：
+  - `ActionView` 已从“页面持有 load/action/batch 总控”推进到“页面主要负责模板消费、局部状态 host、少量路由/生命周期桥接”
+  - `useActionPageModel` 已开始接管纯展示派生装配，但还不是唯一 VM 入口
+  - Batch-A 达成了“运行时总控外移”的阶段目标，但未完成“页面 state host 清空”
+
+### 提交链
+
+1. `717f4b3` `Recalibrate ActionView Phase 2 hotspot inventory`
+2. `75d69e6` `Extract ActionView load dispatch runtime`
+3. `df3a37c` `Slim ActionView action runtime boundary`
+4. `a95ce61` `Slim ActionView batch runtime boundary`
+5. `ce10a00` `Move ActionView advanced rows into assembler`
+
+### 对应结果
+
+- Step 1：
+  - 新增 [actionview_runtime_hotspot_map_v1.md](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/docs/architecture/actionview_runtime_hotspot_map_v1.md)
+  - 更新 [frontend_architecture_violation_inventory_v1.md](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/docs/architecture/frontend_architecture_violation_inventory_v1.md)
+- Step 2：
+  - 新增 [useActionViewLoadDispatchRuntime.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/action_runtime/useActionViewLoadDispatchRuntime.ts)
+  - 页面不再持有 `loadPageInvoker/requestLoadPage`
+- Step 3：
+  - 新增 [useActionViewActionEffectsRuntime.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/action_runtime/useActionViewActionEffectsRuntime.ts)
+  - `useActionViewActionRuntime` 不再直接掌握 open/navigation/refresh 副作用
+- Step 4：
+  - 新增 [useActionViewBatchEffectsRuntime.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/action_runtime/useActionViewBatchEffectsRuntime.ts)
+  - `useActionViewBatchRuntime` 不再直接掌握 error/load/selection/context/download 副作用
+- Step 5：
+  - [useActionPageModel.ts](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/app/assemblers/action/useActionPageModel.ts) 开始直接消费 `advancedRecords`
+  - [ActionView.vue](/mnt/wsl/docker-desktop-bind-mounts/Ubuntu/0bf88c91312832ece483d20f9dd0da58b3449c7beac0658c5397b284fcec1f13/frontend/apps/web/src/views/ActionView.vue) 删除本地 `advancedRows` 展示派生
+
+### 验证结论
+
+- 每步完成后均通过：
+  - `make verify.frontend.typecheck.strict`
+  - `make verify.product.final_slice_readiness_audit`
+- 当前批次完成态：
+  - `final_slice_readiness_audit` 仍为 `READY_FOR_SLICE`
+  - 未引入新的前端业务语义推断
+  - 未牵出后端 contract 改动
+
+---
+
+## Batch-A 未完成项
+
+- `ActionView` 仍保留较大的页面状态面：
+  - `status`
+  - `records`
+  - `selectedIds`
+  - `batch*`
+  - `group runtime state`
+- `useActionPageModel` 仍以“展示 VM 装配”为主，尚未吞掉页面上的更多 display/state glue
+- `ActionView.vue` 仍是大文件，当前约 `2553` 行
+
+这些未完成项属于 Batch-B，不应在 Batch-A 内继续零碎修补。
+
+---
+
+## Batch-B 准入边界
+
+- 唯一目标：
+  - 继续压缩 `ActionView` 页面 state host，让 assembler/runtime 接管更多 display/state glue
+- 允许范围：
+  - `frontend/apps/web/src/views/ActionView.vue`
+  - `frontend/apps/web/src/app/assemblers/action/*`
+  - `frontend/apps/web/src/app/action_runtime/*`
+  - 与 `ActionView` 直接耦合的最小 verify/doc
+- 禁止事项：
+  - 不改后端 contract
+  - 不新增业务能力
+  - 不同时拆 `RecordView` / `SceneView`
+  - 不做全局 router/shell 重构
+
+### Batch-B 优先顺序
+
+1. 收缩页面 state host，优先处理纯展示/纯派生状态
+2. 把更多 display glue 推进 assembler
+3. 评估 `group runtime state` 是否可形成独立 capsule
+4. 再评估 `ActionView` 是否可以进入更小的 page shell 形态
