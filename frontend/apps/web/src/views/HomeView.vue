@@ -92,7 +92,7 @@
             <p class="today-desc">{{ item.description }}</p>
             <p v-if="typeof item.count === 'number'" class="today-count">{{ homeLayoutText('today_actions.count_prefix', '待处理') }} {{ item.count }}</p>
             <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
-              {{ item.ready === false ? homeLayoutText('today_actions.coming_soon_action', '即将开放') : todoActionLabel(item.title) }}
+              {{ item.ready === false ? homeLayoutText('today_actions.coming_soon_action', '即将开放') : todoActionLabel(item) }}
             </button>
           </article>
         </div>
@@ -466,11 +466,13 @@ type CapabilityEntry = {
   targetModel: string;
   targetRecordId: string;
   contextQuery: Record<string, string>;
+  actionLabel: string;
 };
 type SuggestionItem = {
   id: string;
   title: string;
   description: string;
+  actionLabel?: string;
   count?: number;
   status?: SuggestionStatus;
   tone?: SemanticTone;
@@ -1059,6 +1061,7 @@ const entries = computed<CapabilityEntry[]>(() => {
         targetModel: asText(payload.model),
         targetRecordId: asText(payload.record_id),
         contextQuery,
+        actionLabel: asText((tile as { action_label?: unknown }).action_label) || asText(payload.action_label),
         tags: [
           ...new Set(
             [
@@ -1074,19 +1077,6 @@ const entries = computed<CapabilityEntry[]>(() => {
   });
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
-
-function includesAny(value: string, keywords: string[]) {
-  const text = String(value || '').toLowerCase();
-  if (!text) return false;
-  return keywords.some((item) => text.includes(String(item || '').toLowerCase()));
-}
-
-function keywordList(key: string, fallbackCsv: string) {
-  return String(pageText(key, fallbackCsv) || '')
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 const coreMetrics = computed<CoreMetric[]>(() => {
   const source = Array.isArray(blockMetricData.value.metrics) ? blockMetricData.value.metrics : [];
@@ -1121,6 +1111,7 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
       id: asText(row.id) || `todo-${idx + 1}`,
       title: asText(row.title) || `${pageText('todo_title_fallback_prefix', '待办 ')}${idx + 1}`,
       description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
+      actionLabel: asText(row.action_label) || matched?.actionLabel || '',
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
       tone: normalizeTone(row.tone, statusRaw === 'urgent' ? 'danger' : 'info'),
@@ -1255,23 +1246,8 @@ function trendText(delta: number) {
   return pageText('trend_flat', '→ 0%');
 }
 
-function todoActionLabel(title: string) {
-  const text = String(title || '').toLowerCase();
-  if (includesAny(text, keywordList('todo_keywords_approval', '付款,支付,approval,审批'))) {
-    return homeLayoutText('actions.todo_approval', pageText('todo_label_approval', '审核付款申请'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_contract', '合同,contract'))) {
-    return homeLayoutText('actions.todo_contract', pageText('todo_label_contract', '查看合同异常'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_risk', '风险,risk'))) {
-    return homeLayoutText('actions.todo_risk', pageText('todo_label_risk', '处理风险事项'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_change', '变更,change'))) {
-    return homeLayoutText('actions.todo_change', pageText('todo_label_change', '确认变更事项'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_overdue', '逾期,任务,todo'))) {
-    return homeLayoutText('actions.todo_overdue', pageText('todo_label_overdue', '处理逾期任务'));
-  }
+function todoActionLabel(item: SuggestionItem) {
+  if (item.actionLabel) return item.actionLabel;
   return asText(workspaceLayoutActions.value.todo_default) || homeLayoutText('actions.todo_default', pageText('todo_label_default', '查看详情'));
 }
 
@@ -1602,7 +1578,7 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
       status: item.status,
       count: item.count,
       source: item.source || 'business',
-      action_label: todoActionLabel(item.title),
+      action_label: todoActionLabel(item),
       entry_id: item.entryId,
       action_key: 'open_scene',
     })),
@@ -1697,12 +1673,7 @@ function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return pageText('action_enter_disabled', '暂不可用');
   if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
   if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
-  const mergeText = `${entry.title} ${entry.subtitle} ${entry.key} ${entry.sceneKey}`.toLowerCase();
-  if (includesAny(mergeText, keywordList('action_enter_keywords_approval', 'payment,付款,支付,approval,审批'))) return pageText('action_enter_approval', '审核付款申请');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_contract', 'contract,合同'))) return pageText('action_enter_contract', '查看合同异常');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_risk', 'risk,风险,预警'))) return pageText('action_enter_risk', '处理风险事项');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_change', 'change,变更'))) return pageText('action_enter_change', '确认变更事项');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_task', 'task,任务,todo,待办'))) return pageText('action_enter_task', '处理任务');
+  if (entry.actionLabel) return entry.actionLabel;
   return pageText('action_enter_default', '进入处理');
 }
 

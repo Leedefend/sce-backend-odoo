@@ -302,9 +302,7 @@ async function resolveScene() {
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
-      setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
-      errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
-      status.value = 'error';
+      goWorkbench(ErrorCodes.CONTRACT_CONTEXT_MISSING);
       return;
     }
 

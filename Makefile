@@ -843,6 +843,9 @@ verify.frontend.zero_business_semantics: guard.prod.forbid
 verify.architecture.final_slice_readiness_audit: verify.architecture.orchestration_platform_guard verify.architecture.five_layer_workspace_audit verify.product.native_alignment_guard verify.frontend.zero_business_semantics
 	@python3 scripts/verify/final_slice_readiness_audit.py
 
+.PHONY: verify.product.final_slice_readiness_audit
+verify.product.final_slice_readiness_audit: verify.architecture.final_slice_readiness_audit
+
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_initiation_dashboard_smoke.py"
 
@@ -2630,6 +2633,9 @@ verify.intent.execution.path.report: guard.prod.forbid verify.intent.permission.
 
 verify.platform.kernel.baseline: guard.prod.forbid verify.intent.layered.catalog
 	@python3 scripts/verify/platform_kernel_baseline_guard.py
+
+.PHONY: verify.platform_kernel_baseline_guard
+verify.platform_kernel_baseline_guard: verify.platform.kernel.baseline
 
 verify.owner.industry.isolation: guard.prod.forbid
 	@python3 scripts/verify/owner_industry_isolation_probe.py

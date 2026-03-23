@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import json
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 
@@ -29,20 +30,25 @@ def _extract_scene_count() -> int:
     if not SCENE_REGISTRY.is_file():
         return 0
     try:
-        tree = ast.parse(SCENE_REGISTRY.read_text(encoding="utf-8"), filename=str(SCENE_REGISTRY))
+        spec = spec_from_file_location("platform_kernel_scene_registry_probe", SCENE_REGISTRY)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        loader = getattr(module, "load_scene_configs", None)
+        if not callable(loader):
+            raise RuntimeError("load_scene_configs missing")
+        rows = loader(None)
+        if not isinstance(rows, list):
+            return 0
+        scene_codes = {
+            str(row.get("code") or "").strip()
+            for row in rows
+            if isinstance(row, dict) and str(row.get("code") or "").strip()
+        }
+        return len(scene_codes)
     except Exception:
         return 0
-    scene_codes: set[str] = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Dict):
-            continue
-        for k, v in zip(node.keys, node.values):
-            if isinstance(k, ast.Constant) and k.value == "code":
-                if isinstance(v, ast.Constant) and isinstance(v.value, str):
-                    text = v.value.strip()
-                    if text:
-                        scene_codes.add(text)
-    return len(scene_codes)
 
 
 def _extract_capability_count() -> int:
