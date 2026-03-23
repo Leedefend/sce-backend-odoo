@@ -43,6 +43,15 @@ status: active
   - 验证矩阵：`docs/ops/releases/cost_slice_verification_matrix.md`
   - 阶段结论：`docs/ops/releases/cost_slice_decision.md`
   - 统一门禁：`make verify.release.cost_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
+- 第四切片 Prepared（FR-4）：
+  - 状态：`可发布切片`
+  - 范围：`项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本记录 -> 付款记录 -> 付款汇总`
+  - 产品口径：`docs/ops/releases/payment_slice_product_contract.md`
+  - Prepared 报告：`docs/ops/releases/payment_slice_prepared_report.md`
+  - 冻结报告：`docs/ops/releases/payment_slice_freeze_report.md`
+  - 验证矩阵：`docs/ops/releases/payment_slice_verification_matrix.md`
+  - 阶段结论：`docs/ops/releases/payment_slice_decision.md`
+  - 统一门禁：`make verify.release.payment_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：

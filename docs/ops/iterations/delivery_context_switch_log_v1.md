@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-23T16:35:00Z
+- blocker_key: `fr4_payment_slice_freeze_pass`
+- layer_target: `Release Governance Layer / Architecture Layer / Verify Governance`
+- module: `docs/ops/releases + docs/architecture + docs/ops/iterations + Makefile + scripts/verify`
+- reason: `将 FR-4 付款切片从 prepared 升级为正式 freeze，并固定唯一发布口径与统一 freeze gate`
+- completed_step: `已补 payment_slice_five_layer_freeze / payment_slice_freeze_report / payment_slice_decision / freeze gate，并实跑 make verify.release.payment_slice_freeze 通过；freeze 浏览器证据落在 artifacts/codex/payment-slice-browser-smoke/20260323T080926Z/`
+- active_commit: `6e322c7`
+- next_step: `Commit the FR-4 payment slice batch and do not reopen scope inside the freeze batch`
+
+### 2026-03-23T16:20:00Z
+- blocker_key: `fr4_payment_slice_prepared_in_progress`
+- layer_target: `Domain Layer / Scene Layer / Frontend Layer / Verify Governance / Release Governance`
+- module: `addons/smart_construction_core + addons/smart_core + frontend/apps/web + scripts/verify + docs/ops/releases + docs/architecture + Makefile`
+- reason: `启动 FR-4 付款切片 Prepared，并在不进入合同/审批/发票/结算语义的前提下打通 execution/cost -> payment entry -> payment summary`
+- completed_step: `已完成复用审计，确认复用 payment.request 作为最小主载体，明确不复用 finance.payment_requests 审批链；已开始落 payment.enter / block.fetch / record.create 与 prepared gate 骨架`
+- active_commit: `6e322c7`
+- next_step: `Run FR-4 prepared verifies, fix contract/frontend/runtime issues, then write the prepared report with evidence paths`
+
 ### 2026-03-23T15:30:00Z
 - blocker_key: `fr3_cost_slice_freeze_pass`
 - layer_target: `Release Governance Layer / Architecture Layer / Verify Governance`
