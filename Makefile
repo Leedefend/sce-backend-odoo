@@ -534,6 +534,11 @@ verify.portal.first_release_slice_browser_smoke.host: guard.prod.forbid check-co
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/first_release_slice_browser_smoke.mjs
+.PHONY: verify.portal.second_slice_browser_smoke.host
+verify.portal.second_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+		node scripts/verify/second_slice_browser_smoke.mjs
 .PHONY: verify.portal.login_browser_smoke.prod_sim
 verify.portal.login_browser_smoke.prod_sim: guard.prod.forbid
 	@$(MAKE) --no-print-directory deploy.prod.sim.oneclick \
@@ -858,6 +863,10 @@ verify.release.first_slice_freeze: verify.product.final_slice_readiness_audit ve
 .PHONY: verify.release.second_slice_prepared
 verify.release.second_slice_prepared: verify.architecture.final_slice_readiness_audit verify.product.project_dashboard_baseline verify.product.project_execution_consistency_guard verify.product.project_execution_pilot_precheck_guard
 	@echo "[OK] verify.release.second_slice_prepared done"
+
+.PHONY: verify.release.second_slice_freeze
+verify.release.second_slice_freeze: verify.release.second_slice_prepared verify.portal.second_slice_browser_smoke.host
+	@echo "[OK] verify.release.second_slice_freeze done"
 
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_initiation_dashboard_smoke.py"
