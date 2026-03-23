@@ -464,8 +464,6 @@ import { useActionViewTextRuntime } from '../app/action_runtime/useActionViewTex
 import { useActionViewTemplateUiStateRuntime } from '../app/action_runtime/useActionViewTemplateUiStateRuntime';
 import { useActionViewFilterUiStateRuntime } from '../app/action_runtime/useActionViewFilterUiStateRuntime';
 import { useActionViewPageDisplayStateRuntime } from '../app/action_runtime/useActionViewPageDisplayStateRuntime';
-import { useActionViewHudEntriesRuntime } from '../app/action_runtime/useActionViewHudEntriesRuntime';
-import { useActionViewHudEntriesInputRuntime } from '../app/action_runtime/useActionViewHudEntriesInputRuntime';
 import { useActionViewSurfaceIntentRuntime } from '../app/action_runtime/useActionViewSurfaceIntentRuntime';
 import { useActionViewAdvancedDisplayRuntime } from '../app/action_runtime/useActionViewAdvancedDisplayRuntime';
 import { useActionViewContentDisplayRuntime } from '../app/action_runtime/useActionViewContentDisplayRuntime';
@@ -609,9 +607,6 @@ import {
   resolveBatchExportTargetModel,
 } from '../app/runtime/actionViewBatchExportFlowRuntime';
 import {
-  type ActionViewBatchRequest,
-} from '../app/runtime/actionViewBatchArtifactsRuntime';
-import {
   resolveBatchFailureCsvApplyState,
   resolveBatchFailureDetailMergeState,
   resolveBatchFailureLinesState,
@@ -709,6 +704,12 @@ import {
 import {
   createActionViewGroupRuntimeCapsule,
 } from '../app/runtime/actionViewGroupRuntimeState';
+import {
+  createActionViewSelectionRuntimeCapsule,
+} from '../app/runtime/actionViewSelectionRuntimeState';
+import {
+  createActionViewBatchRuntimeCapsule,
+} from '../app/runtime/actionViewBatchRuntimeState';
 import { useActionViewGroupRuntime } from '../app/runtime/useActionViewGroupRuntime';
 import {
   extractActionResId,
@@ -793,16 +794,23 @@ const kanbanTitleFieldHint = ref('');
 const hasActiveField = ref(false);
 const hasAssigneeField = ref(false);
 const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
-const selectedAssigneeId = ref<number | null>(null);
-const selectedIds = ref<number[]>([]);
-const batchMessage = ref('');
-type BatchDetailLine = { text: string; actionRaw?: string; actionLabel?: string };
-const batchDetails = ref<BatchDetailLine[]>([]);
-const failedCsvFileName = ref('');
-const failedCsvContentB64 = ref('');
-const batchFailedOffset = ref(0);
-const batchFailedLimit = ref(12);
-const batchHasMoreFailures = ref(false);
+const selectionRuntimeCapsule = createActionViewSelectionRuntimeCapsule();
+const {
+  selectedAssigneeId,
+  selectedIds,
+} = selectionRuntimeCapsule.state;
+const batchRuntimeCapsule = createActionViewBatchRuntimeCapsule();
+const {
+  batchMessage,
+  batchDetails,
+  failedCsvFileName,
+  failedCsvContentB64,
+  batchFailedOffset,
+  batchFailedLimit,
+  batchHasMoreFailures,
+  lastBatchRequest,
+  batchBusy,
+} = batchRuntimeCapsule.state;
 const groupRuntimeCapsule = createActionViewGroupRuntimeCapsule();
 const { state: groupRuntimeState } = groupRuntimeCapsule;
 const {
@@ -829,8 +837,6 @@ const {
 } = groupRuntimeState;
 const headerActions = computed(() => pageGlobalActions.value);
 const advancedFields = ref<string[]>([]);
-const lastBatchRequest = ref<ActionViewBatchRequest | null>(null);
-const batchBusy = ref(false);
 const {
   isUiBusy,
   isViewModeDisabled,
@@ -1174,45 +1180,6 @@ function resolveContractActionCountForHud() {
   const footer = Array.isArray(toolbar.footer) ? toolbar.footer.length : 0;
   return header + sidebar + footer;
 }
-
-const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
-  staticInput: () => ({
-    actionId: actionId.value,
-    menuId: menuId.value,
-    sceneKey: sceneKey.value,
-    model: model.value,
-    viewMode: viewMode.value,
-    contractViewType: contractViewType.value,
-    activeContractFilterKey: activeContractFilterKey.value,
-    activeSavedFilterKey: activeSavedFilterKey.value,
-    activeGroupByField: activeGroupByField.value,
-    groupWindowOffset: groupWindowOffset.value,
-    groupWindowId: groupWindowId.value,
-    groupQueryFingerprint: groupQueryFingerprint.value,
-    groupWindowDigest: groupWindowDigest.value,
-    groupWindowIdentityKey: groupWindowIdentityKey.value,
-    routeGroupFp: String(route.query.group_fp || '').trim(),
-    routeGroupWid: String(route.query.group_wid || '').trim(),
-    routeGroupWdg: String(route.query.group_wdg || '').trim(),
-    routeGroupWik: String(route.query.group_wik || '').trim(),
-    contractActionCount: resolveContractActionCountForHud(),
-    contractLimit: contractLimit.value,
-    contractReadAllowed: contractReadAllowed.value,
-    contractWarningCount: contractWarningCount.value,
-    contractDegraded: contractDegraded.value,
-    sortLabel: sortLabel.value,
-    lastIntent: lastIntent.value,
-    lastWriteMode: lastWriteMode.value,
-    traceId: traceId.value,
-    lastTraceId: lastTraceId.value,
-    lastLatencyMs: lastLatencyMs.value,
-    routeFullPath: route.fullPath,
-  }),
-});
-const { buildHudEntries } = useActionViewHudEntriesRuntime({
-  buildHudEntriesInput,
-});
-const hudEntries = computed(() => buildHudEntries());
 const {
   contractFilterChips,
   contractPrimaryFilterChips,
@@ -1336,7 +1303,39 @@ const { vm } = useActionPageModel({
   },
   hud: {
     visible: showHud,
-    entries: hudEntries,
+    title: 'View Context',
+    state: {
+      actionId,
+      menuId,
+      sceneKey,
+      model,
+      viewMode,
+      contractViewType,
+      activeContractFilterKey,
+      activeSavedFilterKey,
+      activeGroupByField,
+      groupWindowOffset,
+      groupWindowId,
+      groupQueryFingerprint,
+      groupWindowDigest,
+      groupWindowIdentityKey,
+      routeGroupFp: computed(() => String(route.query.group_fp || '').trim()),
+      routeGroupWid: computed(() => String(route.query.group_wid || '').trim()),
+      routeGroupWdg: computed(() => String(route.query.group_wdg || '').trim()),
+      routeGroupWik: computed(() => String(route.query.group_wik || '').trim()),
+      contractActionCount: computed(() => resolveContractActionCountForHud()),
+      contractLimit,
+      contractReadAllowed,
+      contractWarningCount,
+      contractDegraded,
+      sortLabel,
+      lastIntent,
+      lastWriteMode,
+      traceId,
+      lastTraceId,
+      lastLatencyMs,
+      routeFullPath: computed(() => route.fullPath),
+    },
   },
 });
 
