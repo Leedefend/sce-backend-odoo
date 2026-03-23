@@ -1,4 +1,5 @@
 import type { LocationQueryRaw } from 'vue-router';
+import { ErrorCodes } from './error_codes';
 
 type QueryLike = LocationQueryRaw;
 
@@ -82,4 +83,28 @@ export function normalizeLegacyWorkbenchPath(rawPath: string): string {
     return nestedQuery ? `/?${nestedQuery}` : '/';
   }
   return nestedQuery ? `/s/${sceneKey}?${nestedQuery}` : `/s/${sceneKey}`;
+}
+
+export function buildSceneRegistryFallbackPath(input: {
+  sceneKey: string;
+  menuId?: number;
+  label?: string;
+  diag?: string;
+}): string {
+  const sceneKey = String(input.sceneKey || '').trim();
+  const params = new URLSearchParams();
+  params.set('reason', ErrorCodes.CONTRACT_CONTEXT_MISSING);
+  if (sceneKey) {
+    params.set('scene', sceneKey);
+  }
+  const menuId = Number(input.menuId || 0);
+  if (Number.isFinite(menuId) && menuId > 0) {
+    params.set('menu_id', String(menuId));
+  }
+  const label = String(input.label || '').trim();
+  if (label) {
+    params.set('label', label);
+  }
+  params.set('diag', String(input.diag || 'scene_registry_missing').trim() || 'scene_registry_missing');
+  return `${WORKBENCH_PATH}?${params.toString()}`;
 }

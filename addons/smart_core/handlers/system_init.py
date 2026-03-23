@@ -636,24 +636,21 @@ class SystemInitHandler(BaseIntentHandler):
             scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
             role_code=role_code or None,
             company_id=env.company.id if env.company else None,
-        ) if build_mode in {SystemInitPayloadBuilder.BUILD_MODE_PRELOAD, SystemInitPayloadBuilder.BUILD_MODE_DEBUG} else {}
+        )
         if isinstance(bind_result, dict) and bind_result:
             nav_contract_input["scenes"] = bind_result.get("scenes") or nav_contract_input.get("scenes") or []
-        if build_mode in {SystemInitPayloadBuilder.BUILD_MODE_PRELOAD, SystemInitPayloadBuilder.BUILD_MODE_DEBUG}:
-            data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
-                scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
-                role_surface=role_surface if isinstance(role_surface, dict) else {},
-                scene_version=data.get("scene_version"),
-                schema_version=data.get("schema_version"),
-                scene_channel=scene_channel,
-                action_surface_strategy=data.get("scene_action_surface_strategy") if isinstance(data.get("scene_action_surface_strategy"), dict) else {},
-                runtime_context={
-                    "role_code": role_code,
-                    "company_id": env.company.id if env.company else None,
-                },
-            )
-        else:
-            data.pop("scene_ready_contract_v1", None)
+        data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
+            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            role_surface=role_surface if isinstance(role_surface, dict) else {},
+            scene_version=data.get("scene_version"),
+            schema_version=data.get("schema_version"),
+            scene_channel=scene_channel,
+            action_surface_strategy=data.get("scene_action_surface_strategy") if isinstance(data.get("scene_action_surface_strategy"), dict) else {},
+            runtime_context={
+                "role_code": role_code,
+                "company_id": env.company.id if env.company else None,
+            },
+        )
         stage_ts = _mark("build_scene_runtime_surface", stage_ts)
         scene_nav_contract = build_scene_nav_contract(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
@@ -663,7 +660,10 @@ class SystemInitHandler(BaseIntentHandler):
             data["default_route"] = scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
             if isinstance(data.get("nav_meta"), dict):
                 data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
-                data["nav_meta"]["scene_ready_contract_v1"] = True
+                data["nav_meta"]["scene_ready_contract_v1"] = bool(
+                    isinstance(data.get("scene_ready_contract_v1"), dict)
+                    and ((data.get("scene_ready_contract_v1") or {}).get("scenes"))
+                )
                 contract_meta = scene_nav_contract.get("meta")
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta

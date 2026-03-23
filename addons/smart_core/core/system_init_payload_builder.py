@@ -13,6 +13,7 @@ class SystemInitPayloadBuilder:
         "nav",
         "nav_meta",
         "default_route",
+        "scene_ready_contract_v1",
         "intents",
         "feature_flags",
         "role_surface",
@@ -149,14 +150,94 @@ class SystemInitPayloadBuilder:
             "version": version,
             "init_meta": init_meta,
         }
+        if isinstance(row.get("scene_ready_contract_v1"), dict):
+            if bool(params.get("with_preload", False)):
+                minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
+            else:
+                minimal["scene_ready_contract_v1"] = cls._build_minimal_scene_ready_contract(
+                    row.get("scene_ready_contract_v1")
+                )
         if bool(params.get("with_preload", False)):
             if isinstance(row.get("workspace_home"), dict):
                 minimal["workspace_home"] = row.get("workspace_home")
-            if isinstance(row.get("scene_ready_contract_v1"), dict):
-                minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
         if resolved_build_mode == cls.BUILD_MODE_DEBUG:
             minimal["startup_inspect"] = inspect_payload if isinstance(inspect_payload, dict) else {}
         return minimal
+
+    @classmethod
+    def _build_minimal_scene_ready_contract(cls, payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        scenes = raw.get("scenes") if isinstance(raw.get("scenes"), list) else []
+        compact_scenes: list[dict] = []
+        for item in scenes:
+            if not isinstance(item, dict):
+                continue
+            compact: dict = {}
+            for key in (
+                "scene",
+                "page",
+                "permission_surface",
+                "workflow_surface",
+                "actions",
+                "next_scene",
+                "next_scene_route",
+            ):
+                value = item.get(key)
+                if value not in (None, {}, []):
+                    compact[key] = value
+            search_surface = item.get("search_surface") if isinstance(item.get("search_surface"), dict) else {}
+            if search_surface:
+                compact_search = {}
+                for key in ("default_sort", "filters", "fields", "group_by"):
+                    value = search_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_search[key] = value
+                if compact_search:
+                    compact["search_surface"] = compact_search
+            action_surface = item.get("action_surface") if isinstance(item.get("action_surface"), dict) else {}
+            if action_surface:
+                compact_action_surface = {}
+                for key in ("primary_actions", "groups", "selection_mode", "counts"):
+                    value = action_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_action_surface[key] = value
+                if compact_action_surface:
+                    compact["action_surface"] = compact_action_surface
+            validation_surface = item.get("validation_surface") if isinstance(item.get("validation_surface"), dict) else {}
+            if validation_surface:
+                compact_validation_surface = {}
+                required_fields = validation_surface.get("required_fields")
+                if required_fields not in (None, {}, []):
+                    compact_validation_surface["required_fields"] = required_fields
+                if compact_validation_surface:
+                    compact["validation_surface"] = compact_validation_surface
+            meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+            compact_meta = {}
+            for key in ("target", "next_scene", "ui_base_contract_source"):
+                value = meta.get(key)
+                if value not in (None, {}, []):
+                    compact_meta[key] = value
+            if compact_meta:
+                compact["meta"] = compact_meta
+            if compact:
+                compact_scenes.append(compact)
+
+        meta = raw.get("meta") if isinstance(raw.get("meta"), dict) else {}
+        compact_meta = {}
+        for key in ("generated_by", "scene_count", "mode"):
+            value = meta.get(key)
+            if value not in (None, {}, []):
+                compact_meta[key] = value
+        return {
+            "contract_version": str(raw.get("contract_version") or "v1"),
+            "schema_version": str(raw.get("schema_version") or "scene_ready_contract_v1"),
+            "scene_version": str(raw.get("scene_version") or ""),
+            "source_schema_version": str(raw.get("source_schema_version") or ""),
+            "scene_channel": str(raw.get("scene_channel") or ""),
+            "active_scene_key": str(raw.get("active_scene_key") or ""),
+            "scenes": compact_scenes,
+            "meta": compact_meta,
+        }
 
     @classmethod
     def slim_to_minimal_surface(cls, data: dict, *, params: dict | None = None) -> dict:

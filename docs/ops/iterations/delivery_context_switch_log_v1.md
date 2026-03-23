@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-23T08:40:00Z
+- blocker_key: `prod_sim_scene_runtime_boot_closure`
+- layer_target: `Platform Layer`
+- module: `addons/smart_core/handlers/system_init.py + addons/smart_core/core/system_init_payload_builder.py + addons/smart_core/core/scene_nav_contract_builder.py + scripts/verify/system_init_*`
+- reason: `prod-sim 的 boot surface 暴露了 project.initiation 默认落地页，却没有同时提供启动场景的可执行 scene runtime contract，导致自定义前端登录后只能进入 CONTRACT_CONTEXT_MISSING fallback`
+- completed_step: `确认根因在 boot 模式仅生成 scene nav、不绑定 startup subset scene assets 且不下发 scene_ready_contract_v1；开始收口为 boot 也携带 startup subset scene_ready_contract_v1，并把 default_route 从 /workbench 诊断路径纠正为真实 /s/:sceneKey`
+- active_commit: `57207e2`
+- next_step: `Run minimal-surface guards plus prod-sim frontend/browser smoke to verify project.initiation opens as a real scene after login`
+
 ### 2026-03-23T05:50:00Z
 - blocker_key: `custom_frontend_login_browser_prod_sim_pass`
 - layer_target: `Frontend Layer / Verify Governance`

@@ -45,6 +45,8 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { getSceneByKey } from '../app/resolvers/sceneRegistry';
+import { buildSceneRegistryFallbackPath } from '../app/routeQuery';
 
 const route = useRoute();
 const router = useRouter();
@@ -100,6 +102,16 @@ async function resolve() {
     }
     if (result.kind === 'redirect') {
       if (result.target.scene_key) {
+        if (!getSceneByKey(result.target.scene_key)) {
+          await router.replace(
+            buildSceneRegistryFallbackPath({
+              sceneKey: result.target.scene_key,
+              menuId: result.target.menu_id,
+              label: result.node?.title || result.node?.name || result.node?.label || result.target.scene_key,
+            }),
+          );
+          return;
+        }
         await router.replace({
           path: `/s/${result.target.scene_key}`,
           query: resolveCarryQuery({ menu_id: result.target.menu_id }),

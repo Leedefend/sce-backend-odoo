@@ -5,7 +5,7 @@ import { ApiError } from '../api/client';
 import { config } from '../config';
 import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
-import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { buildSceneRegistryFallbackPath, normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 import { resolveActiveDb, setActiveDb } from '../services/dbContext';
 
@@ -914,7 +914,11 @@ export const useSessionStore = defineStore('session', {
           && defaultRouteSceneKey
           && !getSceneByKey(defaultRouteSceneKey)
         ) {
-          return defaultRoutePath;
+          return buildSceneRegistryFallbackPath({
+            sceneKey: defaultRouteSceneKey,
+            menuId: Number(this.defaultRoute?.menu_id || 0) || undefined,
+            label: defaultRouteSceneKey,
+          });
         }
         const normalized = normalizeLegacyWorkbenchPath(defaultRoutePath);
         if (normalized) return normalized;

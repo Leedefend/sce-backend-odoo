@@ -19,6 +19,7 @@ REQUIRED_KEYS = {
     "nav",
     "nav_meta",
     "default_route",
+    "scene_ready_contract_v1",
     "intents",
     "feature_flags",
     "role_surface",
@@ -31,7 +32,6 @@ FORBIDDEN_KEYS = {
     "capabilities",
     "capability_groups",
     "page_contracts",
-    "scene_ready_contract_v1",
     "workspace_home",
     "runtime_collections",
     "ext_facts",
@@ -81,6 +81,11 @@ def main() -> int:
             errors.append("data.version must be object")
         if not isinstance(data.get("init_meta"), dict):
             errors.append("data.init_meta must be object")
+        scene_ready = data.get("scene_ready_contract_v1")
+        if not isinstance(scene_ready, dict):
+            errors.append("data.scene_ready_contract_v1 must be object")
+        elif not isinstance(scene_ready.get("scenes"), list) or not scene_ready.get("scenes"):
+            errors.append("data.scene_ready_contract_v1.scenes must be non-empty list")
 
         report = {
             "status": "PASS" if not errors else "FAIL",
