@@ -8,6 +8,9 @@
 ## Entry Contract
 `project.execution.enter` returns only:
 - `project_id`
+- `scene_key`
+- `scene_label`
+- `state_fallback_text`
 - `title`
 - `summary`
 - `blocks`

@@ -1230,3 +1230,12 @@ Each entry must include:
 - completed_step: `补发布索引入口与 first_release_slice_decision 文档，并实测通过 make verify.release.first_slice_freeze；browser smoke 证据更新到 artifacts/codex/first-release-slice-browser-smoke/20260323T055646Z/`
 - active_commit: `3015f60`
 - next_step: `若继续推进，必须新开第二切片批次并单独声明 Layer Target / Module / Reason；FR-1 批次到此冻结`
+
+### 2026-03-23T15:05:00Z
+- blocker_key: `fr2_second_slice_prepared_gate`
+- layer_target: `Release Governance Layer + Verify Layer + Architecture Layer`
+- module: `scripts/verify/product_project_flow_* + docs/ops/releases + docs/architecture + Makefile`
+- reason: `FR-2 准备态：将“项目创建 -> 驾驶舱 -> 计划 -> 执行”从已有 verify 集合推进为统一 prepared gate，并修复 scene carrier 升级后 flow smoke 的旧 contract 假设`
+- completed_step: `对齐 dashboard/plan/execution flow smoke 到 scene carrier entry shape（含 scene_key/scene_label/state_fallback_text，并接受 execution pilot_precheck hint）；新增 second_slice_product_contract、second_slice_five_layer_freeze、second_slice_verification_matrix、second_slice_prepared_report、second_slice_decision，以及 make verify.release.second_slice_prepared；实测通过 prepared gate`
+- active_commit: `d9e65cc`
+- next_step: `若继续推进，下一批聚焦第二切片 browser smoke 与正式冻结判定；当前只允许宣称“冻结准备态”`

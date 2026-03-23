@@ -34,13 +34,29 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
 
 
 def _assert_entry_shape(entry: dict, project_id: int) -> None:
-    allowed = {"project_id", "title", "summary", "blocks", "suggested_action", "runtime_fetch_hints"}
+    allowed = {
+        "project_id",
+        "scene_key",
+        "scene_label",
+        "state_fallback_text",
+        "title",
+        "summary",
+        "blocks",
+        "suggested_action",
+        "runtime_fetch_hints",
+    }
     keys = set(entry.keys())
     extra = sorted(keys - allowed)
     if extra:
         raise RuntimeError(f"dashboard entry has extra keys: {', '.join(extra)}")
     if int(entry.get("project_id") or 0) != project_id:
         raise RuntimeError("dashboard entry project_id mismatch")
+    if str(entry.get("scene_key") or "").strip() != "project.dashboard":
+        raise RuntimeError("dashboard entry scene_key mismatch")
+    if not str(entry.get("scene_label") or "").strip():
+        raise RuntimeError("dashboard entry scene_label missing")
+    if not str(entry.get("state_fallback_text") or "").strip():
+        raise RuntimeError("dashboard entry state_fallback_text missing")
     blocks = entry.get("blocks") if isinstance(entry.get("blocks"), list) else []
     block_keys = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
     missing = sorted({"progress", "risks", "next_actions"} - block_keys)

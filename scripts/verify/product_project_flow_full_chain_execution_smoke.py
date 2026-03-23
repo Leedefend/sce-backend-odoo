@@ -109,8 +109,14 @@ def main() -> int:
         execution_entry = execution_resp.get("data") if isinstance(execution_resp.get("data"), dict) else {}
         if int(execution_entry.get("project_id") or 0) != project_id:
             raise RuntimeError("execution entry project_id mismatch")
+        if str(execution_entry.get("scene_key") or "").strip() != "project.execution":
+            raise RuntimeError("execution entry scene_key mismatch")
+        if not str(execution_entry.get("scene_label") or "").strip():
+            raise RuntimeError("execution entry scene_label missing")
+        if not str(execution_entry.get("state_fallback_text") or "").strip():
+            raise RuntimeError("execution entry state_fallback_text missing")
         execution_hints = (((execution_entry.get("runtime_fetch_hints") or {}) if isinstance(execution_entry.get("runtime_fetch_hints"), dict) else {}).get("blocks") or {})
-        if sorted(execution_hints.keys()) != ["execution_tasks", "next_actions"]:
+        if sorted(execution_hints.keys()) != ["execution_tasks", "next_actions", "pilot_precheck"]:
             raise RuntimeError(f"execution runtime hints drift: {sorted(execution_hints.keys())}")
         execution_hint = execution_hints.get("execution_tasks") if isinstance(execution_hints.get("execution_tasks"), dict) else {}
         if str(execution_hint.get("intent") or "").strip() != "project.execution.block.fetch":
