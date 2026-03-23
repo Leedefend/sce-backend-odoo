@@ -119,6 +119,14 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - verification matrix: `docs/ops/releases/first_release_verification_matrix.md`
   - decision: `docs/ops/releases/first_release_slice_decision.md`
   - release gate: `make verify.release.first_slice_freeze BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
+- Second slice preparation (FR-2 prep):
+  - status: `prepared`
+  - scope: `project creation -> dashboard -> plan -> execution`
+  - product contract: `docs/ops/releases/second_slice_product_contract.md`
+  - prepared report: `docs/ops/releases/second_slice_prepared_report.md`
+  - verification matrix: `docs/ops/releases/second_slice_verification_matrix.md`
+  - decision: `docs/ops/releases/second_slice_decision.md`
+  - prepared gate: `make verify.release.second_slice_prepared ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):

@@ -34,13 +34,29 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
 
 
 def _assert_plan_entry_shape(entry: dict, project_id: int) -> None:
-    allowed = {"project_id", "title", "summary", "blocks", "suggested_action", "runtime_fetch_hints"}
+    allowed = {
+        "project_id",
+        "scene_key",
+        "scene_label",
+        "state_fallback_text",
+        "title",
+        "summary",
+        "blocks",
+        "suggested_action",
+        "runtime_fetch_hints",
+    }
     keys = set(entry.keys())
     extra = sorted(keys - allowed)
     if extra:
         raise RuntimeError(f"plan entry has extra keys: {', '.join(extra)}")
     if int(entry.get("project_id") or 0) != project_id:
         raise RuntimeError("plan entry project_id mismatch")
+    if str(entry.get("scene_key") or "").strip() != "project.plan_bootstrap":
+        raise RuntimeError("plan entry scene_key mismatch")
+    if not str(entry.get("scene_label") or "").strip():
+        raise RuntimeError("plan entry scene_label missing")
+    if not str(entry.get("state_fallback_text") or "").strip():
+        raise RuntimeError("plan entry state_fallback_text missing")
     blocks = entry.get("blocks") if isinstance(entry.get("blocks"), list) else []
     block_keys = {str(item.get("key") or "").strip() for item in blocks if isinstance(item, dict)}
     expected_block_keys = {"plan_summary_detail", "plan_tasks", "next_actions"}

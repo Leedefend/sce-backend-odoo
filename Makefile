@@ -855,6 +855,10 @@ verify.product.final_slice_readiness_audit: verify.architecture.final_slice_read
 verify.release.first_slice_freeze: verify.product.final_slice_readiness_audit verify.product.project_creation_mainline_guard verify.product.project_dashboard_entry_contract_guard verify.product.project_dashboard_block_contract_guard verify.product.project_flow.initiation_dashboard verify.portal.first_release_slice_browser_smoke.host
 	@echo "[OK] verify.release.first_slice_freeze done"
 
+.PHONY: verify.release.second_slice_prepared
+verify.release.second_slice_prepared: verify.architecture.final_slice_readiness_audit verify.product.project_dashboard_baseline verify.product.project_execution_consistency_guard verify.product.project_execution_pilot_precheck_guard
+	@echo "[OK] verify.release.second_slice_prepared done"
+
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_initiation_dashboard_smoke.py"
 

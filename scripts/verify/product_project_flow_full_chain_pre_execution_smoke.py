@@ -102,6 +102,8 @@ def main() -> int:
         plan_entry = plan_resp.get("data") if isinstance(plan_resp.get("data"), dict) else {}
         if int(plan_entry.get("project_id") or 0) != project_id:
             raise RuntimeError("plan entry project_id mismatch")
+        if str(plan_entry.get("scene_key") or "").strip() != "project.plan_bootstrap":
+            raise RuntimeError("plan entry scene_key mismatch")
         plan_hints = (((plan_entry.get("runtime_fetch_hints") or {}) if isinstance(plan_entry.get("runtime_fetch_hints"), dict) else {}).get("blocks") or {})
         if sorted(plan_hints.keys()) != ["next_actions", "plan_summary_detail", "plan_tasks"]:
             raise RuntimeError(f"plan runtime hints drift: {sorted(plan_hints.keys())}")
@@ -128,6 +130,8 @@ def main() -> int:
         execution_data = execution_resp.get("data") if isinstance(execution_resp.get("data"), dict) else {}
         if int(execution_data.get("project_id") or 0) != project_id:
             raise RuntimeError("execution enter project_id mismatch")
+        if str(execution_data.get("scene_key") or "").strip() != "project.execution":
+            raise RuntimeError("execution entry scene_key mismatch")
 
         report["flow"] = {
             "project_id": project_id,
