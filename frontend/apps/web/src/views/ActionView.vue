@@ -477,6 +477,7 @@ import { useActionViewLoadSuccessPhaseInputRuntime } from '../app/action_runtime
 import { useActionViewLoadSuccessRuntime } from '../app/action_runtime/useActionViewLoadSuccessRuntime';
 import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseRuntime';
 import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
+import { useActionViewLoadDispatchRuntime } from '../app/action_runtime/useActionViewLoadDispatchRuntime';
 import { useActionViewActionPresentationRuntime } from '../app/action_runtime/useActionViewActionPresentationRuntime';
 import {
   normalizeGroupPageOffset,
@@ -750,10 +751,7 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
 
-let loadPageInvoker: () => Promise<void> = async () => {};
-function requestLoadPage(): Promise<void> {
-  return loadPageInvoker();
-}
+const { bindLoad, requestLoad } = useActionViewLoadDispatchRuntime();
 
 let clearSelectionInvoker: () => void = () => {};
 function clearSelection(): void {
@@ -1062,7 +1060,7 @@ const {
   viewMode,
   normalizeActionViewMode,
   resolveActionViewModeLabel,
-  load: requestLoadPage,
+  load: requestLoad,
 });
 const sceneContractV1 = computed<Record<string, unknown>>(() => {
   const raw = pageContract.contract.value?.scene_contract_v1;
@@ -1402,7 +1400,7 @@ const {
     router.replace(routeState.target).catch(() => {});
   },
   trackUsageEvent,
-  load: requestLoadPage,
+  load: requestLoad,
   resolveActionViewRouteSnapshot,
   resolveRoutePresetSearchTerm,
   resolveRoutePresetAppliedLabel,
@@ -1528,7 +1526,7 @@ const {
   batchMessage,
   pageText,
   syncRouteListState,
-  load: requestLoadPage,
+  load: requestLoad,
   resolveReloadTriggerPlan,
   resolveFocusActionPushState,
   resolveWorkspaceContextQuery,
@@ -1607,7 +1605,7 @@ const { runContractAction } = useActionViewActionRuntime({
   batchBusy,
   batchMessage,
   pageText,
-  load: requestLoadPage,
+  load: requestLoad,
   sessionLoadAppInit: () => session.loadAppInit(),
   recordIntentTrace: (payload) => session.recordIntentTrace(payload),
   resolveActionContextRecordId: () => {
@@ -2080,7 +2078,7 @@ const {
 } = useActionViewLoadFacadeRuntime({
   executeLoad,
 });
-loadPageInvoker = loadPage;
+bindLoad(loadPage);
 
 const {
   handleSearch,
@@ -2092,7 +2090,7 @@ const {
   filterValue,
   groupWindowOffset,
   syncRouteListState,
-  load: requestLoadPage,
+  load: requestLoad,
   clearSelection,
 });
 
@@ -2134,7 +2132,7 @@ const {
   lastBatchRequest,
   pageText,
   setError,
-  load: requestLoadPage,
+  load: requestLoad,
   clearSelection,
   resolveTargetModel: () => resolveBatchAssignTargetModel({
     resolvedModelRaw: resolvedModelRef.value,
@@ -2236,14 +2234,14 @@ const {
 
 onMounted(async () => {
   applyRoutePreset();
-  await requestLoadPage();
+  await requestLoad();
 });
 
 watch(
   () => route.fullPath,
   () => {
     if (applyRoutePreset()) {
-      void requestLoadPage();
+      void requestLoad();
     }
   },
 );
