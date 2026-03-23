@@ -110,3 +110,38 @@
 3. 收 `runContractAction` facade 注入面
 4. 收 `batch runtime` 注入面
 5. 最后把 VM 入口收敛到 assembler
+
+## Batch-B 现状补充
+
+- Batch-A 完成后，以下热点已经不再成立为主问题：
+  - `loadPageInvoker/requestLoadPage` 页面总线
+  - action 副作用直接挂在 `useActionViewActionRuntime`
+  - batch 副作用直接挂在 `useActionViewBatchRuntime`
+- Batch-B 当前更准确的热点是：
+  - 页面仍保留核心 state host：
+    - `status`
+    - `traceId`
+    - `records`
+    - `group runtime state`
+  - assembler 已开始接管更多展示拼装：
+    - `advanced rows`
+    - `hud entries`
+  - selection/batch 基础状态已收进 capsule，但 group runtime 仍通过 page shell 连接 route/trigger
+
+## Batch-B 归宿判断
+
+- 已进入 runtime capsule：
+  - selection state
+  - batch base state
+  - group state
+- 已进入 assembler：
+  - advanced rows
+  - hud entries
+- 仍留在页面，且暂时合理：
+  - route bridge
+  - lifecycle trigger
+  - load 主状态
+  - records 主数据面
+- 仍需下一批继续压缩：
+  - group runtime bridge
+  - 以 `records/status/trace` 为中心的页面 host
