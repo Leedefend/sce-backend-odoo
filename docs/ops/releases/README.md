@@ -145,6 +145,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - verification matrix: `docs/ops/releases/payment_slice_verification_matrix.md`
   - decision: `docs/ops/releases/payment_slice_decision.md`
   - freeze gate: `make verify.release.payment_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
+- Fifth slice prepared (FR-5):
+  - status: `release-ready slice`
+  - scope: `project creation -> dashboard -> plan -> execution -> cost -> payment -> settlement result`
+  - product contract: `docs/ops/releases/settlement_slice_product_contract.md`
+  - prepared report: `docs/ops/releases/settlement_slice_prepared_report.md`
+  - freeze report: `docs/ops/releases/settlement_slice_freeze_report.md`
+  - verification matrix: `docs/ops/releases/settlement_slice_verification_matrix.md`
+  - decision: `docs/ops/releases/settlement_slice_decision.md`
+  - freeze gate: `make verify.release.settlement_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -228,3 +237,14 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.contract.evidence.guard`
     - contract evidence now includes `load_view_access_contract` section (allowed model + forbidden status/code) for release audit
     - contract evidence now includes `boundary_import_report` section (warning/violation/tracked modules) for layer-governance audit
+# Release Gates
+
+- `verify.release.first_slice_freeze`: FR-1 release freeze
+- `verify.release.second_slice_prepared`: FR-2 prepared
+- `verify.release.second_slice_freeze`: FR-2 freeze
+- `verify.release.cost_slice_prepared`: FR-3 prepared
+- `verify.release.cost_slice_freeze`: FR-3 freeze
+- `verify.release.payment_slice_prepared`: FR-4 prepared
+- `verify.release.payment_slice_freeze`: FR-4 freeze
+- `verify.release.settlement_slice_prepared`: FR-5 prepared
+- `verify.release.settlement_slice_freeze`: FR-5 freeze

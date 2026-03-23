@@ -1293,3 +1293,5 @@ Each entry must include:
 - completed_step: `已冻结本轮边界：只做“项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本记录 -> 成本汇总”的 Prepared；明确禁止预算/分析/审批、合同/付款、结算与 FR-1/FR-2 扩写；恢复现状后确认当前 cost.tracking 仍是 Phase 17-A 只读切片，已有 account.move-based entry/block/flow verify，但缺写侧能力、前端消费、browser smoke、prepared 报告与统一 gate`
 - active_commit: `654596a`
 - next_step: `输出 FR-3 cost_slice_product_contract 与 cost_slice_five_layer_prepared，随后实现 account.move 最小写入能力与 cost scene prepared contract`
+- 2026-03-23：启动 `FR-5 settlement slice (Prepared)`。范围固定为 `项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本 -> 付款 -> 结算结果`，只做项目级只读汇总，不引入合同、审批、发票、税务与分析体系。
+- 2026-03-23：完成 `FR-5 settlement slice (Freeze)` 收口。正式冻结口径固定为 `项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本 -> 付款 -> 结算结果`，统一门禁为 `make verify.release.settlement_slice_freeze`。
