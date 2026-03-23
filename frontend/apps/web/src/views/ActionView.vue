@@ -1281,17 +1281,6 @@ const {
   activeGroupByField,
 });
 
-const advancedRows = computed(() => {
-  return records.value.slice(0, 20).map((row, idx) => {
-    const rowId = String((row as Record<string, unknown>).id || idx).trim() || String(idx);
-    return {
-      key: `adv-${idx}-${rowId}`,
-      title: advancedRowTitle(row),
-      meta: advancedRowMeta(row),
-    };
-  });
-});
-
 const { vm } = useActionPageModel({
   page: {
     title: pageTitle,
@@ -1338,7 +1327,9 @@ const { vm } = useActionPageModel({
     kanbanOverviewItems: ledgerOverviewItems,
     advancedTitle: advancedViewTitle,
     advancedHint: advancedViewHint,
-    advancedRows,
+    advancedRecords: records,
+    resolveAdvancedRowTitle: (row) => advancedRowTitle(row),
+    resolveAdvancedRowMeta: (row) => advancedRowMeta(row),
   },
   empty: {
     reasonText: emptyReasonText,

@@ -69,7 +69,9 @@ type UseActionPageModelOptions = {
     kanbanOverviewItems: MaybeRef<unknown[]>;
     advancedTitle: MaybeRef<string>;
     advancedHint: MaybeRef<string>;
-    advancedRows: MaybeRef<unknown[]>;
+    advancedRecords: MaybeRef<unknown[]>;
+    resolveAdvancedRowTitle: (row: unknown) => string;
+    resolveAdvancedRowMeta: (row: unknown) => string;
   };
   empty: {
     reasonText: MaybeRef<string>;
@@ -86,6 +88,17 @@ function asText(value: unknown): string {
 
 function asList(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
+}
+
+function toAdvancedRowInput(row: unknown, idx: number) {
+  const rowRecord = row && typeof row === 'object' ? (row as Record<string, unknown>) : {};
+  const rowId = String(rowRecord.id || idx).trim() || String(idx);
+  return {
+    key: `adv-${idx}-${rowId}`,
+    title: '',
+    meta: '',
+    row,
+  };
 }
 
 function resolveContentKind(viewMode: string): 'list' | 'kanban' | 'advanced' {
@@ -151,8 +164,16 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
     const kanbanOverviewItems = asList(unref(options.content.kanbanOverviewItems))
       .map((item) => toProjectionMetricVM(item))
       .filter((item): item is NonNullable<ReturnType<typeof toProjectionMetricVM>> => Boolean(item));
-    const advancedRows = asList(unref(options.content.advancedRows))
-      .map((item) => toAdvancedRowVM(item))
+    const advancedRows = asList(unref(options.content.advancedRecords))
+      .slice(0, 20)
+      .map((row, idx) => {
+        const advancedRowInput = toAdvancedRowInput(row, idx);
+        return toAdvancedRowVM({
+          key: advancedRowInput.key,
+          title: options.content.resolveAdvancedRowTitle(advancedRowInput.row),
+          meta: options.content.resolveAdvancedRowMeta(advancedRowInput.row),
+        });
+      })
       .filter((item): item is NonNullable<ReturnType<typeof toAdvancedRowVM>> => Boolean(item));
 
     const routePresetLabel = asText(unref(options.routePreset.label));
