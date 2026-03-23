@@ -148,7 +148,7 @@ type GenericEntry = {
   state_fallback_text?: string;
   title?: string;
   summary?: Record<string, unknown>;
-  blocks?: Array<{ key?: string; title?: string; state?: string }>;
+  blocks?: Array<{ key?: string; title?: string; state?: string; caption?: string; empty_hint?: string }>;
   suggested_action?: RuntimeHint;
   runtime_fetch_hints?: {
     blocks?: Record<string, RuntimeHint>;
@@ -194,6 +194,17 @@ type ActionCard = {
   stateTone: string;
   buttonLabel: string;
   disabled: boolean;
+};
+
+type DashboardActionRow = Record<string, unknown> & {
+  state_label?: unknown;
+  state_tone?: unknown;
+  button_label?: unknown;
+  hint?: unknown;
+  message?: unknown;
+  title?: unknown;
+  subtitle?: unknown;
+  empty_hint?: unknown;
 };
 
 const route = useRoute();
@@ -250,13 +261,9 @@ function blockData(blockKey: string) {
 }
 
 function blockCaption(blockKey: string) {
-  if (blockKey === 'progress') return '当前状态：查看项目全局进度。下一步：确认是否进入计划准备。';
-  if (blockKey === 'risks') return '当前状态：识别阻塞项。下一步：优先处理高优先级风险。';
-  if (blockKey === 'plan_summary_detail') return '当前状态：查看计划准备度。下一步：确认能否进入执行推进。';
-  if (blockKey === 'plan_tasks') return '当前状态：核对计划任务。下一步：补齐关键计划输入。';
-  if (blockKey === 'execution_tasks') return '当前状态：查看执行任务。下一步：根据执行状态推进。';
-  if (blockKey === 'pilot_precheck') return '当前状态：核对首轮试点前提。下一步：先清除阻断项，再执行推进。';
-  if (blockKey === 'next_actions') return '当前状态：查看可执行动作。下一步：按建议动作继续推进。';
+  const descriptor = blockDescriptors.value.find((row) => asText(row.key || '') === blockKey);
+  const contractCaption = asText(descriptor?.caption || '');
+  if (contractCaption) return contractCaption;
   return '区块按需加载。';
 }
 
@@ -318,28 +325,24 @@ function taskRows(blockKey: string) {
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const items = Array.isArray(data.items) ? data.items : [];
   return items.map((item, index) => {
-    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const row = item && typeof item === 'object' ? item as DashboardActionRow : {};
     const state = asText(row.state || 'open') || 'open';
+    const stateLabel = asText(row.state_label || '');
+    const stateTone = asText(row.state_tone || '');
     return {
       key: asText(row.task_id || row.id || row.key || `${blockKey}_${index + 1}`),
-      title: asText(row.name || '未命名记录'),
+      title: asText(row.title || row.name || '未命名记录'),
       subtitle: asText(row.subtitle || '') || [asText(row.stage_name || ''), asText(row.deadline || '')].filter(Boolean).join(' · ') || '暂无补充信息',
-      stateLabel:
-        state === 'draft' ? '草稿'
-          : state === 'ready' ? '就绪'
-            : state === 'in_progress' ? '进行中'
-              : state === 'done' ? '已完成'
-                : state === 'cancelled' ? '已取消'
-                  : state === 'blocked' ? '阻塞' : '待处理',
-      stateTone:
-        state === 'done' ? 'success'
-          : state === 'blocked' || state === 'cancelled' ? 'warning'
-            : state === 'ready' ? 'success' : 'info',
+      stateLabel: stateLabel || state || '待处理',
+      stateTone: stateTone || 'info',
     };
   });
 }
 
 function blockEmptyText(blockKey: string) {
+  const descriptor = blockDescriptors.value.find((row) => asText(row.key || '') === blockKey);
+  const descriptorHint = asText(descriptor?.empty_hint || '');
+  if (descriptorHint) return descriptorHint;
   const payload = blockData(blockKey);
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
@@ -351,55 +354,13 @@ function blockEmptyText(blockKey: string) {
   return '当前区块暂无数据。';
 }
 
-function humanReason(reasonCode: string) {
-  const code = asText(reasonCode);
-  if (code === 'EXECUTION_READY_TO_START') return '当前满足首轮试点前提，可以开始执行。';
-  if (code === 'EXECUTION_READY_TO_COMPLETE') return '当前任务正在执行中，可以推进到执行完成。';
-  if (code === 'EXECUTION_BLOCKED_REQUIRES_UNBLOCK') return '当前执行处于阻塞态，需要先解除阻塞后再继续。';
-  if (code === 'EXECUTION_ALREADY_DONE') return '当前项目执行已完成，无需继续推进。';
-  if (code === 'EXECUTION_TASK_MISSING') return '当前项目还没有可推进的任务。';
-  if (code === 'EXECUTION_TASK_START_FAILED') return '任务未能成功进入执行中。';
-  if (code === 'EXECUTION_TASK_NOT_IN_PROGRESS') return '当前没有处于执行中的任务，无法完成推进。';
-  if (code === 'EXECUTION_TASK_COMPLETE_FAILED') return '任务未能成功完成。';
-  if (code === 'EXECUTION_TASK_RECOVER_FAILED') return '任务未能恢复到可执行状态。';
-  if (code === 'EXECUTION_SCOPE_MULTI_OPEN_TASKS_UNSUPPORTED') return '首轮试点仅允许 1 个开放任务，请先收口到单任务。';
-  if (code === 'EXECUTION_PROJECT_TASK_STATE_DRIFT') return '项目执行态与任务状态不一致，请先校正数据。';
-  if (code === 'EXECUTION_PROJECT_ACTIVITY_DRIFT') return '跟进行为与 mail.activity 不一致，请先校正活动记录。';
-  if (code === 'PILOT_ROOT_TASK_MISSING') return '试点前必须先初始化项目根任务。';
-  if (code === 'PILOT_SINGLE_OPEN_TASK_REQUIRED') return '试点版要求仅保留 1 个开放任务。';
-  if (code === 'PILOT_REQUIRED_FIELDS_MISSING') return '试点关键字段仍未补齐，请先补全配置。';
-  if (code === 'PILOT_LIFECYCLE_STATE_BLOCKED') return '当前项目生命周期状态不允许作为首轮试点。';
-  if (code === 'EXECUTION_TRANSITION_READY_TO_IN_PROGRESS') return '已从执行就绪推进到执行中。';
-  if (code === 'EXECUTION_TRANSITION_IN_PROGRESS_TO_DONE') return '已从执行中推进到执行完成。';
-  if (code === 'EXECUTION_TRANSITION_BLOCKED_TO_READY') return '已从执行阻塞恢复到执行就绪。';
-  if (code === 'EXECUTION_TRANSITION_NOT_ALLOWED') return '当前状态不允许执行这一步推进。';
-  if (code === 'EXECUTION_TRANSITION_WRITE_FAILED') return '执行状态写入失败，请刷新后重试。';
-  return code || '已返回结果';
-}
-
-function humanExecutionState(state: string) {
-  const value = asText(state);
-  if (value === 'ready') return '执行就绪';
-  if (value === 'in_progress') return '执行中';
-  if (value === 'blocked') return '执行阻塞';
-  if (value === 'done') return '执行完成';
-  return value || '-';
-}
-
 function actionStateLabel(state: string) {
-  if (state === 'ready' || state === 'available') return '可执行';
-  if (state === 'blocked') return '受阻';
-  if (state === 'planned') return '预留';
-  return '待处理';
+  return asText(state || '') || '待处理';
 }
 
 function actionHint(row: Record<string, unknown>) {
-  const rawHint = asText(row.hint || '等待后续场景接入');
-  const reasonCode = asText(row.reason_code || '');
-  const reason = humanReason(reasonCode);
-  if (!reasonCode) return rawHint;
-  if (rawHint.includes(reason)) return rawHint;
-  return `${rawHint} ${reason}`;
+  const rawHint = asText(row.hint || row.message || '');
+  return rawHint || '等待后续场景接入';
 }
 
 const pilotPrecheckSummary = computed(() => {
@@ -419,13 +380,12 @@ const pilotPrecheckRows = computed(() => {
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const checks = Array.isArray(data.checks) ? data.checks : [];
   return checks.map((item, index) => {
-    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const row = item && typeof item === 'object' ? item as DashboardActionRow : {};
     const status = asText(row.status || 'fail');
-    const reasonCode = asText(row.reason_code || '');
     return {
       key: asText(row.key || `pilot_check_${index + 1}`),
       title: `${asText(row.label || row.key || '试点检查')} · ${status === 'pass' ? '通过' : '受阻'}`,
-      description: asText(row.message || '') || humanReason(reasonCode),
+      description: asText(row.message || row.hint || row.reason_code || '') || '检查结果待确认',
     };
   });
 });
@@ -435,9 +395,12 @@ const nextActions = computed<ActionCard[]>(() => {
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const actions = Array.isArray(data.actions) ? data.actions : [];
   return actions.map((item, index) => {
-    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const row = item && typeof item === 'object' ? item as DashboardActionRow : {};
     const state = asText(row.state || 'available') || 'available';
     const intent = asText(row.intent || '');
+    const stateLabel = asText(row.state_label || '');
+    const stateTone = asText(row.state_tone || '');
+    const buttonLabel = asText(row.button_label || '');
     return {
       key: asText(row.key || `action_${index + 1}`),
       label: asText(row.label || row.key || '下一步动作'),
@@ -445,9 +408,9 @@ const nextActions = computed<ActionCard[]>(() => {
       intent,
       params: (row.params && typeof row.params === 'object') ? row.params as Record<string, unknown> : {},
       state,
-      stateLabel: actionStateLabel(state),
-      stateTone: state === 'blocked' ? 'warning' : 'success',
-      buttonLabel: intent.endsWith('.enter') ? '进入' : intent === 'project.execution.advance' ? '推进' : '执行',
+      stateLabel: stateLabel || actionStateLabel(state),
+      stateTone: stateTone || (state === 'blocked' ? 'warning' : 'success'),
+      buttonLabel: buttonLabel || '执行',
       disabled: !intent || state === 'blocked' && intent !== 'project.execution.advance',
     };
   });
@@ -460,7 +423,7 @@ const currentStateText = computed(() => {
   const stateLabel = asText(summary.current_state_label || '');
   const pilotState = asText(summary.pilot_precheck_state || '');
   if (pilotState === 'blocked') {
-    return `当前状态：${stateLabel || '执行推进'}，且未通过首轮试点检查。`;
+    return stateLabel ? `当前状态：${stateLabel}` : '当前状态：未通过首轮试点检查';
   }
   if (stateLabel) {
     return `当前状态：${stateLabel}`;
@@ -592,15 +555,14 @@ async function runAction(action: ActionCard) {
     });
     const fromState = asText(result.from_state || '');
     const toState = asText(result.to_state || '');
-    const reasonCode = asText(result.reason_code || '');
     const blocked = asText(result.result || '') === 'blocked';
     const message = asText(result.message || '');
     transitionFeedback.value = {
       variant: blocked ? 'warning' : 'success',
       title: blocked ? '动作执行受阻' : '动作执行完成',
       message: fromState && toState
-        ? `状态变化：${humanExecutionState(fromState)} → ${humanExecutionState(toState)}。${humanReason(reasonCode)}`
-        : `执行结果：${message || humanReason(reasonCode)}。`,
+        ? `状态变化：${fromState} → ${toState}。${message || '已返回结果'}`
+        : `执行结果：${message || '已返回结果'}。`,
     };
     await refreshAllBlocks();
   } catch (err) {
