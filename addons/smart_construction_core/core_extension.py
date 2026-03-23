@@ -506,6 +506,15 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.cost_tracking_record_create import (
             CostTrackingRecordCreateHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.payment_slice_enter import (
+            PaymentSliceEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.payment_slice_block_fetch import (
+            PaymentSliceBlockFetchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.payment_slice_record_create import (
+            PaymentSliceRecordCreateHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -547,6 +556,9 @@ def smart_core_register(registry):
     registry["cost.tracking.enter"] = CostTrackingEnterHandler
     registry["cost.tracking.block.fetch"] = CostTrackingBlockFetchHandler
     registry["cost.tracking.record.create"] = CostTrackingRecordCreateHandler
+    registry["payment.enter"] = PaymentSliceEnterHandler
+    registry["payment.block.fetch"] = PaymentSliceBlockFetchHandler
+    registry["payment.record.create"] = PaymentSliceRecordCreateHandler
     registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
@@ -580,6 +592,9 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered cost.tracking.enter")
     _logger.info("[smart_core_register] registered cost.tracking.block.fetch")
     _logger.info("[smart_core_register] registered cost.tracking.record.create")
+    _logger.info("[smart_core_register] registered payment.enter")
+    _logger.info("[smart_core_register] registered payment.block.fetch")
+    _logger.info("[smart_core_register] registered payment.record.create")
     _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")

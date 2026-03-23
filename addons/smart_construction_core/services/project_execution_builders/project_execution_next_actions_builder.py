@@ -118,6 +118,28 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                 "source": "fr3_prepared",
             }
         )
+        payment_action_state = "planned"
+        payment_reason_code = "PAYMENT_AFTER_EXECUTION"
+        if task_total <= 0:
+            payment_action_state = "blocked"
+            payment_reason_code = "EXECUTION_TASK_MISSING"
+        elif current_state in ("in_progress", "done"):
+            payment_action_state = "available"
+        actions.append(
+            {
+                "key": "payment_enter",
+                "label": "下一步：进入付款记录",
+                "hint": "在项目链路中进入 FR-4 付款切片，录入付款记录并查看汇总。",
+                "intent": "payment.enter",
+                "params": {
+                    "project_id": int(project.id),
+                    "source": "project.execution.next_actions",
+                },
+                "state": payment_action_state,
+                "reason_code": payment_reason_code,
+                "source": "fr4_prepared",
+            }
+        )
         return self._envelope(
             state="ready",
             visibility=visibility,
