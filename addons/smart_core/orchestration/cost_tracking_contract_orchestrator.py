@@ -7,22 +7,23 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import B
 
 class CostTrackingContractOrchestrator(BaseSceneEntryOrchestrator):
     scene_key = "cost.tracking"
-    scene_label = "成本跟踪"
-    state_fallback_text = "当前状态：正在查看原生成本跟踪。"
-    title_empty = "成本跟踪"
-    suggested_action_key = "load_cost_summary"
-    suggested_action_reason_code = "COST_TRACKING_READY"
+    scene_label = "成本记录"
+    state_fallback_text = "当前状态：正在查看项目成本记录。"
+    title_empty = "成本记录"
+    suggested_action_key = "load_cost_entry"
+    suggested_action_reason_code = "COST_SLICE_PREPARED_READY"
     block_fetch_intent = "cost.tracking.block.fetch"
     entry_summary_keys = (
         "project_code",
         "manager_name",
         "stage_name",
-        "posted_move_count",
-        "posted_cost_amount",
+        "cost_record_count",
+        "cost_total_amount",
     )
     entry_blocks = (
-        ("summary", "成本摘要", "deferred"),
-        ("recent_moves", "原生凭证", "deferred"),
+        ("cost_entry", "成本录入", "deferred"),
+        ("cost_list", "成本记录", "deferred"),
+        ("cost_summary", "成本汇总", "deferred"),
         ("next_actions", "成本下一步", "deferred"),
     )
 
@@ -31,7 +32,7 @@ class CostTrackingContractOrchestrator(BaseSceneEntryOrchestrator):
 
     def resolve_first_action(self, runtime_fetch_hints):
         blocks = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
-        return blocks.get("summary") or blocks.get("recent_moves") or {}
+        return blocks.get("cost_entry") or blocks.get("cost_list") or {}
 
     def resolve_title(self, project_payload):
-        return "成本跟踪：%s" % str(project_payload.get("name") or "项目")
+        return "成本记录：%s" % str(project_payload.get("name") or "项目")

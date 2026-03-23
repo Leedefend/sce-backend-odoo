@@ -99,6 +99,53 @@
               </div>
             </section>
 
+            <section v-else-if="descriptor.key === 'cost_entry'" class="cost-form-card">
+              <label class="cost-form-field">
+                <span>发生日期</span>
+                <input v-model="costEntryForm.date" type="date" class="cost-input" />
+              </label>
+              <label class="cost-form-field">
+                <span>金额</span>
+                <input v-model="costEntryForm.amount" type="number" min="0" step="0.01" class="cost-input" />
+              </label>
+              <label class="cost-form-field">
+                <span>说明</span>
+                <input v-model="costEntryForm.description" type="text" class="cost-input" placeholder="例如：材料进场" />
+              </label>
+              <label class="cost-form-field">
+                <span>成本类别</span>
+                <select v-model="costEntryForm.cost_code_id" class="cost-input">
+                  <option :value="0">未指定</option>
+                  <option v-for="item in costCategoryOptions" :key="item.value" :value="item.value">
+                    {{ item.label }}
+                  </option>
+                </select>
+              </label>
+              <div class="cost-form-actions">
+                <button type="button" class="primary-button" :disabled="costEntrySubmitting" @click="submitCostEntry">
+                  {{ costEntrySubmitting ? '录入中...' : costEntrySubmitLabel }}
+                </button>
+                <span class="cost-form-hint">{{ costEntryHint }}</span>
+              </div>
+            </section>
+
+            <section v-else-if="descriptor.key === 'cost_list'" class="task-list">
+              <div v-for="item in costListRows" :key="item.key" class="task-row">
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.subtitle }}</p>
+                </div>
+                <span class="action-state" :data-tone="item.stateTone">{{ item.stateLabel }}</span>
+              </div>
+            </section>
+
+            <section v-else-if="descriptor.key === 'cost_summary'" class="metric-list">
+              <div v-for="item in costSummaryRows" :key="item.key" class="metric-row">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            </section>
+
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
               <div v-for="item in nextActions" :key="item.key" class="action-card">
                 <div>
@@ -183,6 +230,11 @@ type ActionFeedback = {
   message: string;
 };
 
+type CostCategoryOption = {
+  value: number;
+  label: string;
+};
+
 type ActionCard = {
   key: string;
   label: string;
@@ -216,6 +268,13 @@ const currentSceneKey = ref('project.dashboard');
 const entry = ref<GenericEntry | null>(null);
 const runtimeBlocks = ref<Record<string, BlockRuntimeState>>({});
 const transitionFeedback = ref<ActionFeedback | null>(null);
+const costEntryForm = ref({
+  date: '',
+  amount: '',
+  description: '',
+  cost_code_id: 0,
+});
+const costEntrySubmitting = ref(false);
 
 function asText(value: unknown) {
   return String(value || '').trim();
@@ -241,6 +300,18 @@ const blockDescriptors = computed(() => entry.value?.blocks || []);
 
 const summaryRows = computed(() => {
   const summary = (entry.value?.summary && typeof entry.value.summary === 'object') ? entry.value.summary : {};
+  if (currentSceneKey.value === 'cost.tracking') {
+    const total = asNumber(summary.cost_total_amount);
+    const currency = asText(summary.currency_name || '');
+    return [
+      { key: 'project_code', label: '项目编码', value: asText(summary.project_code || '--') || '--' },
+      { key: 'manager_name', label: '项目经理', value: asText(summary.manager_name || '--') || '--' },
+      { key: 'stage_name', label: '当前阶段', value: asText(summary.stage_name || '--') || '--' },
+      { key: 'cost_record_count', label: '成本记录数', value: `${asNumber(summary.cost_record_count)} 条` },
+      { key: 'cost_total_amount', label: '成本合计', value: currency ? `${total} ${currency}` : `${total}` },
+      { key: 'draft_cost_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_cost_amount)} ${currency}` : `${asNumber(summary.draft_cost_amount)}` },
+    ];
+  }
   return [
     { key: 'project_code', label: '项目编码', value: asText(summary.project_code || '--') || '--' },
     { key: 'manager_name', label: '项目经理', value: asText(summary.manager_name || '--') || '--' },
@@ -351,6 +422,7 @@ function blockEmptyText(blockKey: string) {
   if (blockKey === 'plan_tasks') return '当前项目还没有计划任务。';
   if (blockKey === 'execution_tasks') return '当前项目还没有执行任务。';
   if (blockKey === 'pilot_precheck') return '当前项目还没有试点前检查结果。';
+  if (blockKey === 'cost_list') return '当前项目还没有成本记录。';
   return '当前区块暂无数据。';
 }
 
@@ -388,6 +460,69 @@ const pilotPrecheckRows = computed(() => {
       description: asText(row.message || row.hint || row.reason_code || '') || '检查结果待确认',
     };
   });
+});
+
+const costEntryPayload = computed(() => {
+  const payload = blockData('cost_entry');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  return (data.form && typeof data.form === 'object') ? data.form as Record<string, unknown> : {};
+});
+
+const costCategoryOptions = computed<CostCategoryOption[]>(() => {
+  const options = costEntryPayload.value.options;
+  const costCodeOptions = options && typeof options === 'object' ? (options as Record<string, unknown>).cost_code_id : [];
+  const rows = Array.isArray(costCodeOptions) ? costCodeOptions : [];
+  return rows.map((item) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    return {
+      value: asNumber(row.value),
+      label: asText(row.label || '未命名类别'),
+    };
+  });
+});
+
+const costEntrySubmitLabel = computed(() => {
+  return asText(costEntryPayload.value.submit_label || '') || '记录成本';
+});
+
+const costEntryHint = computed(() => {
+  const payload = blockData('cost_entry');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  return asText(summary.state_fallback_text || '') || '录入后会刷新成本记录与成本汇总。';
+});
+
+const costListRows = computed(() => {
+  const payload = blockData('cost_list');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const records = Array.isArray(data.records) ? data.records : [];
+  return records.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const amount = asNumber(row.amount);
+    const currency = asText(row.currency_name || '');
+    const category = asText(row.category_name || row.category_type || '');
+    return {
+      key: asText(row.move_id || row.id || `cost_${index + 1}`),
+      title: asText(row.description || row.name || '成本记录'),
+      subtitle: [asText(row.date || ''), category, asText(row.project_name || '')].filter(Boolean).join(' · ') || '暂无补充信息',
+      stateLabel: currency ? `${amount} ${currency}` : `${amount}`,
+      stateTone: asText(row.state || '') === 'posted' ? 'success' : 'warning',
+    };
+  });
+});
+
+const costSummaryRows = computed(() => {
+  const payload = blockData('cost_summary');
+  const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
+  const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
+  const currency = asText(summary.currency_name || '');
+  const total = asNumber(summary.total_cost_amount);
+  return [
+    { key: 'total_cost_amount', label: '项目成本合计', value: currency ? `${total} ${currency}` : `${total}` },
+    { key: 'record_count', label: '记录数量', value: `${asNumber(summary.record_count)} 条` },
+    { key: 'draft_record_count', label: '草稿记录', value: `${asNumber(summary.draft_record_count)} 条` },
+    { key: 'posted_record_count', label: '已过账记录', value: `${asNumber(summary.posted_record_count)} 条` },
+  ];
 });
 
 const nextActions = computed<ActionCard[]>(() => {
@@ -458,6 +593,25 @@ function resetRuntimeBlocks() {
   runtimeBlocks.value = nextState;
 }
 
+function resetCostEntryForm() {
+  const defaults = costEntryPayload.value.defaults && typeof costEntryPayload.value.defaults === 'object'
+    ? costEntryPayload.value.defaults as Record<string, unknown>
+    : {};
+  costEntryForm.value = {
+    date: asText(defaults.date || ''),
+    amount: asText(defaults.amount || ''),
+    description: asText(defaults.description || ''),
+    cost_code_id: asNumber(defaults.cost_code_id || 0),
+  };
+}
+
+function shouldHydrateCostEntryDefaults() {
+  return !asText(costEntryForm.value.date)
+    && !asText(costEntryForm.value.amount)
+    && !asText(costEntryForm.value.description)
+    && asNumber(costEntryForm.value.cost_code_id) <= 0;
+}
+
 async function refreshBlock(blockKey: string) {
   const key = asText(blockKey);
   if (!key) return;
@@ -506,8 +660,26 @@ async function refreshBlock(blockKey: string) {
 }
 
 async function refreshAllBlocks() {
-  const tasks = blockDescriptors.value.map((row) => refreshBlock(asText(row.key || '')));
-  await Promise.allSettled(tasks);
+  const keys = blockDescriptors.value.map((row) => asText(row.key || '')).filter(Boolean);
+  if (currentSceneKey.value === 'cost.tracking') {
+    const ordered = ['cost_entry', 'cost_summary', 'cost_list', 'next_actions'];
+    const seen = new Set<string>();
+    for (const key of ordered) {
+      if (!keys.includes(key)) continue;
+      seen.add(key);
+      await refreshBlock(key);
+    }
+    for (const key of keys) {
+      if (seen.has(key)) continue;
+      await refreshBlock(key);
+    }
+  } else {
+    const tasks = keys.map((key) => refreshBlock(key));
+    await Promise.allSettled(tasks);
+  }
+  if (currentSceneKey.value === 'cost.tracking' && shouldHydrateCostEntryDefaults()) {
+    resetCostEntryForm();
+  }
 }
 
 async function loadEntry(intent: string, params: Record<string, unknown>) {
@@ -544,6 +716,18 @@ async function runAction(action: ActionCard) {
       await loadEntry(action.intent, action.params);
       return;
     }
+    if (action.intent.endsWith('.block.fetch')) {
+      const blockKey = asText(action.params.block_key || '');
+      if (blockKey) {
+        await refreshBlock(blockKey);
+        transitionFeedback.value = {
+          variant: 'success',
+          title: '区块已刷新',
+          message: `已刷新 ${blockKey}。`,
+        };
+        return;
+      }
+    }
     const result = await intentRequest<Record<string, unknown>>({
       intent: action.intent,
       params: action.params,
@@ -571,6 +755,45 @@ async function runAction(action: ActionCard) {
       title: '动作执行失败',
       message: err instanceof Error ? err.message : 'unknown error',
     };
+  }
+}
+
+async function submitCostEntry() {
+  if (costEntrySubmitting.value) return;
+  const formIntent = asText(costEntryPayload.value.intent || '');
+  if (!formIntent) return;
+  costEntrySubmitting.value = true;
+  try {
+    const result = await intentRequest<Record<string, unknown>>({
+      intent: formIntent,
+      params: {
+        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        date: costEntryForm.value.date,
+        amount: costEntryForm.value.amount,
+        description: costEntryForm.value.description,
+        cost_code_id: costEntryForm.value.cost_code_id || 0,
+      },
+      context: {
+        scene_key: currentSceneKey.value,
+        page_key: 'project.management.dashboard',
+        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+      },
+    });
+    transitionFeedback.value = {
+      variant: 'success',
+      title: '成本记录已创建',
+      message: asText(result.summary_hint || '') || '已创建成本记录，并刷新成本记录与成本汇总。',
+    };
+    await Promise.allSettled([refreshBlock('cost_list'), refreshBlock('cost_summary'), refreshBlock('cost_entry')]);
+    resetCostEntryForm();
+  } catch (err) {
+    transitionFeedback.value = {
+      variant: 'warning',
+      title: '成本录入失败',
+      message: err instanceof Error ? err.message : 'unknown error',
+    };
+  } finally {
+    costEntrySubmitting.value = false;
   }
 }
 
@@ -766,9 +989,39 @@ watch(
 .metric-list,
 .task-list,
 .action-list,
-.risk-list {
+.risk-list,
+.cost-form-card {
   display: grid;
   gap: 12px;
+}
+
+.cost-form-field {
+  display: grid;
+  gap: 6px;
+  color: #345067;
+  font-size: 13px;
+}
+
+.cost-input {
+  width: 100%;
+  border: 1px solid rgba(49, 83, 114, 0.18);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.94);
+  color: #163047;
+}
+
+.cost-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.cost-form-hint {
+  color: #567185;
+  font-size: 13px;
 }
 
 .metric-row,

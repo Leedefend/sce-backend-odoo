@@ -106,8 +106,8 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
         actions.append(
             {
                 "key": "cost_tracking_enter",
-                "label": "下一步：查看成本跟踪",
-                "hint": cost_hint,
+                "label": "下一步：进入成本记录",
+                "hint": "从执行场景进入 FR-3 成本切片，录入项目成本并查看汇总。",
                 "intent": "cost.tracking.enter",
                 "params": {
                     "project_id": int(project.id),
@@ -115,7 +115,7 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                 },
                 "state": cost_action_state,
                 "reason_code": cost_reason_code,
-                "source": "phase_17_a",
+                "source": "fr3_prepared",
             }
         )
         return self._envelope(
