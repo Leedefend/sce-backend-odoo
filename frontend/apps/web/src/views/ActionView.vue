@@ -478,6 +478,7 @@ import { useActionViewLoadSuccessRuntime } from '../app/action_runtime/useAction
 import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseRuntime';
 import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
 import { useActionViewLoadDispatchRuntime } from '../app/action_runtime/useActionViewLoadDispatchRuntime';
+import { useActionViewActionEffectsRuntime } from '../app/action_runtime/useActionViewActionEffectsRuntime';
 import { useActionViewActionPresentationRuntime } from '../app/action_runtime/useActionViewActionPresentationRuntime';
 import {
   normalizeGroupPageOffset,
@@ -1600,21 +1601,14 @@ const {
   },
 });
 
-const { runContractAction } = useActionViewActionRuntime({
-  selectedIds,
-  batchBusy,
-  batchMessage,
-  pageText,
+const {
+  applyActionRefreshPolicy,
+  runOpenAction,
+  navigateByResponse,
+} = useActionViewActionEffectsRuntime({
   load: requestLoad,
   sessionLoadAppInit: () => session.loadAppInit(),
   recordIntentTrace: (payload) => session.recordIntentTrace(payload),
-  resolveActionContextRecordId: () => {
-    const fromRoute = toPositiveInt(route.query.res_id);
-    if (fromRoute) return fromRoute;
-    const fromContract = toPositiveInt(actionContract.value?.head?.res_id);
-    if (fromContract) return fromContract;
-    return null;
-  },
   resolveOpenNavigation: (input) => resolveContractActionOpenNavigation({ actionId: input.actionId, url: input.url }),
   buildRouteTarget: (nextActionId) => buildContractActionRouteTarget({
     nextActionId,
@@ -1628,14 +1622,8 @@ const { runContractAction } = useActionViewActionRuntime({
   openWindow: (url, target) => {
     window.open(url, target, 'noopener,noreferrer');
   },
+  pageText,
   resolveMissingOpenTargetMessage: (text) => resolveContractActionMissingOpenTargetMessage(text),
-  resolveExecIds: resolveContractActionExecIds,
-  resolveRunIds: resolveContractActionRunIds,
-  resolveCounters: resolveContractActionCounters,
-  resolveDoneMessage: resolveContractActionDoneMessage,
-  resolveRequiresRecordContextMessage: resolveContractActionRequiresRecordContextMessage,
-  resolveSelectionBlockMessage: resolveContractActionSelectionBlockMessage,
-  resolveMissingModelMessage: resolveContractActionMissingModelMessage,
   executeProjectionRefresh: async (payload) => {
     await executeProjectionRefresh(payload as {
       policy: ProjectionRefreshPolicy;
@@ -1645,11 +1633,36 @@ const { runContractAction } = useActionViewActionRuntime({
       recordTrace: (input: { intent: string; writeMode: string; latencyMs?: number }) => void;
     });
   },
+  resolveResponseActionId: resolveContractActionResponseActionId,
+  shouldNavigate: shouldNavigateContractAction,
+});
+
+const { runContractAction } = useActionViewActionRuntime({
+  selectedIds,
+  batchBusy,
+  batchMessage,
+  pageText,
+  load: requestLoad,
+  resolveActionContextRecordId: () => {
+    const fromRoute = toPositiveInt(route.query.res_id);
+    if (fromRoute) return fromRoute;
+    const fromContract = toPositiveInt(actionContract.value?.head?.res_id);
+    if (fromContract) return fromContract;
+    return null;
+  },
+  resolveExecIds: resolveContractActionExecIds,
+  resolveRunIds: resolveContractActionRunIds,
+  resolveCounters: resolveContractActionCounters,
+  resolveDoneMessage: resolveContractActionDoneMessage,
+  resolveRequiresRecordContextMessage: resolveContractActionRequiresRecordContextMessage,
+  resolveSelectionBlockMessage: resolveContractActionSelectionBlockMessage,
+  resolveMissingModelMessage: resolveContractActionMissingModelMessage,
+  applyActionRefreshPolicy,
+  runOpenAction,
   executeSceneMutation,
   executeButton,
   buildButtonRequest: buildContractActionButtonRequest,
-  resolveResponseActionId: resolveContractActionResponseActionId,
-  shouldNavigate: shouldNavigateContractAction,
+  navigateByResponse,
 });
 
 const { loadAssigneeOptions } = useActionViewAssigneeRuntime({

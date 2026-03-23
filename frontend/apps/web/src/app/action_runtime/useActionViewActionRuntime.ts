@@ -34,15 +34,7 @@ type UseActionViewActionRuntimeOptions = {
   batchMessage: Ref<string>;
   pageText: (key: string, fallback: string) => string;
   load: () => Promise<void>;
-  sessionLoadAppInit: () => Promise<void>;
-  recordIntentTrace: (payload: { intent: string; writeMode: string; latencyMs?: number }) => void;
   resolveActionContextRecordId: () => number | null;
-  resolveOpenNavigation: (input: { actionId?: number; url?: string }) => { kind: 'action' | 'url' | 'none'; actionId?: number; url: string };
-  buildRouteTarget: (nextActionId: number) => unknown;
-  routerPush: (target: unknown) => Promise<unknown>;
-  resolveNavigationUrl: (url: string) => string;
-  openWindow: (url: string, target: string) => void;
-  resolveMissingOpenTargetMessage: (text: (key: string, fallback: string) => string) => string;
   resolveExecIds: (input: { selectedIds: number[]; contextRecordId: number | null }) => number[];
   resolveRunIds: (ids: number[]) => number[];
   resolveCounters: (input: { successCount: number; failureCount: number; ok: boolean }) => { successCount: number; failureCount: number };
@@ -50,13 +42,8 @@ type UseActionViewActionRuntimeOptions = {
   resolveRequiresRecordContextMessage: (text: (key: string, fallback: string) => string) => string;
   resolveSelectionBlockMessage: (input: { selection: ContractActionSelection; selectedCount: number; text: (key: string, fallback: string) => string }) => string;
   resolveMissingModelMessage: (text: (key: string, fallback: string) => string) => string;
-  executeProjectionRefresh: (options: {
-    policy: Dict;
-    refreshScene: () => Promise<void>;
-    refreshWorkbench: () => Promise<void>;
-    refreshRoleSurface: () => Promise<void>;
-    recordTrace: (payload: { intent: string; writeMode: string; latencyMs?: number }) => void;
-  }) => Promise<void>;
+  applyActionRefreshPolicy: (policy?: Dict) => Promise<void>;
+  runOpenAction: (input: { actionId?: number; url?: string; target?: string }) => Promise<{ handled: boolean; message?: string }>;
   executeSceneMutation: (options: {
     mutation: MutationPayload;
     actionKey: string;
@@ -73,8 +60,7 @@ type UseActionViewActionRuntimeOptions = {
     kind: string;
     context?: Dict;
   }) => Dict;
-  resolveResponseActionId: (response: unknown) => number | null;
-  shouldNavigate: (input: { nextActionId: number | null }) => boolean;
+  navigateByResponse: (response: unknown) => Promise<boolean>;
 };
 
 function resolveSelectedIdsForAction(selection: ContractActionSelection, selectedIds: number[]) {
@@ -109,42 +95,18 @@ function buildMutationContext(action: ContractActionButtonLike, recordId: number
 }
 
 export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOptions) {
-  async function applyActionRefreshPolicy(policy?: Dict) {
-    if (!policy || !Array.isArray(policy.on_success) || !policy.on_success.length) {
-      await options.load();
-      return;
-    }
-    await options.executeProjectionRefresh({
-      policy,
-      refreshScene: async () => {
-        await options.load();
-      },
-      refreshWorkbench: async () => {
-        await options.sessionLoadAppInit();
-      },
-      refreshRoleSurface: async () => {
-        await options.sessionLoadAppInit();
-      },
-      recordTrace: ({ intent, writeMode, latencyMs }) => {
-        options.recordIntentTrace({ intent, writeMode, latencyMs });
-      },
-    });
-  }
-
   async function runContractAction(action: ContractActionButtonLike) {
     if (!action.enabled) return;
     if (action.kind === 'open') {
-      const openNavigation = options.resolveOpenNavigation({ actionId: action.actionId, url: action.url });
-      if (openNavigation.kind === 'action' && openNavigation.actionId) {
-        await options.routerPush(options.buildRouteTarget(openNavigation.actionId));
+      const openActionResult = await options.runOpenAction({
+        actionId: action.actionId,
+        url: action.url,
+        target: action.target,
+      });
+      if (openActionResult.handled) {
         return;
       }
-      if (openNavigation.kind === 'url') {
-        const navUrl = options.resolveNavigationUrl(openNavigation.url);
-        options.openWindow(navUrl, action.target === 'self' ? '_self' : '_blank');
-        return;
-      }
-      options.batchMessage.value = options.resolveMissingOpenTargetMessage(options.pageText);
+      options.batchMessage.value = openActionResult.message || '';
       return;
     }
 
@@ -219,19 +181,17 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
     try {
       let successCount = 0;
       let failureCount = 0;
-      for (const id of execIds) {
-        try {
-          const response = await options.executeButton(options.buildButtonRequest({
+        for (const id of execIds) {
+          try {
+            const response = await options.executeButton(options.buildButtonRequest({
             model: action.model,
             recordId: id,
             methodName: action.methodName,
             actionKey: action.key,
-            kind: action.kind,
-            context: action.context,
-          }));
-          const nextActionId = options.resolveResponseActionId(response);
-          if (options.shouldNavigate({ nextActionId })) {
-            await options.routerPush(options.buildRouteTarget(Number(nextActionId || 0)));
+              kind: action.kind,
+              context: action.context,
+            }));
+          if (await options.navigateByResponse(response)) {
             return;
           }
           ({ successCount, failureCount } = options.resolveCounters({
