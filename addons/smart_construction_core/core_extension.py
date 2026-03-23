@@ -503,6 +503,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.cost_tracking_block_fetch import (
             CostTrackingBlockFetchHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.cost_tracking_record_create import (
+            CostTrackingRecordCreateHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -543,6 +546,7 @@ def smart_core_register(registry):
     registry["project.execution.advance"] = ProjectExecutionAdvanceHandler
     registry["cost.tracking.enter"] = CostTrackingEnterHandler
     registry["cost.tracking.block.fetch"] = CostTrackingBlockFetchHandler
+    registry["cost.tracking.record.create"] = CostTrackingRecordCreateHandler
     registry["project.initiation.enter"] = ProjectInitiationEnterHandler
     registry["risk.action.execute"] = RiskActionExecuteHandler
     registry["app.catalog"] = AppCatalogHandler
@@ -575,6 +579,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered project.execution.advance")
     _logger.info("[smart_core_register] registered cost.tracking.enter")
     _logger.info("[smart_core_register] registered cost.tracking.block.fetch")
+    _logger.info("[smart_core_register] registered cost.tracking.record.create")
     _logger.info("[smart_core_register] registered project.initiation.enter")
     _logger.info("[smart_core_register] registered risk.action.execute")
     _logger.info("[smart_core_register] registered app.catalog")

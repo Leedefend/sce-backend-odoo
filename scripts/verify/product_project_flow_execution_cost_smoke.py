@@ -90,19 +90,73 @@ def main() -> int:
         if str(cost_entry.get("scene_key") or "").strip() != "cost.tracking":
             raise RuntimeError("cost scene_key mismatch")
         cost_hints = (((cost_entry.get("runtime_fetch_hints") or {}) if isinstance(cost_entry.get("runtime_fetch_hints"), dict) else {}).get("blocks") or {})
-        status, summary_resp = _post(intent_url, token, "cost.tracking.block.fetch", ((cost_hints.get("summary") or {}) if isinstance(cost_hints.get("summary"), dict) else {}).get("params") or {"project_id": project_id, "block_key": "summary"}, db_name=db_name)
-        _assert_ok(status, summary_resp, "cost.tracking.block.fetch(summary)")
+
+        status, cost_form_resp = _post(
+            intent_url,
+            token,
+            "cost.tracking.block.fetch",
+            ((cost_hints.get("cost_entry") or {}) if isinstance(cost_hints.get("cost_entry"), dict) else {}).get("params") or {"project_id": project_id, "block_key": "cost_entry"},
+            db_name=db_name,
+        )
+        _assert_ok(status, cost_form_resp, "cost.tracking.block.fetch(cost_entry)")
+        cost_form_block = (((cost_form_resp.get("data") or {}) if isinstance(cost_form_resp.get("data"), dict) else {}).get("block") or {})
+        form = ((((cost_form_block.get("data") or {}) if isinstance(cost_form_block.get("data"), dict) else {}).get("form")) or {})
+        options = (((form.get("options") or {}) if isinstance(form.get("options"), dict) else {}).get("cost_code_id") or [])
+        first_option = options[0] if isinstance(options, list) and options else {}
+        cost_code_id = int((first_option.get("value") or 0) if isinstance(first_option, dict) else 0)
+
+        status, create_cost_resp = _post(
+            intent_url,
+            token,
+            "cost.tracking.record.create",
+            {
+                "project_id": project_id,
+                "date": "2026-03-23",
+                "amount": "456.00",
+                "description": "FR-3 execution cost smoke",
+                "cost_code_id": cost_code_id,
+            },
+            db_name=db_name,
+        )
+        _assert_ok(status, create_cost_resp, "cost.tracking.record.create")
+
+        status, list_resp = _post(
+            intent_url,
+            token,
+            "cost.tracking.block.fetch",
+            ((cost_hints.get("cost_list") or {}) if isinstance(cost_hints.get("cost_list"), dict) else {}).get("params") or {"project_id": project_id, "block_key": "cost_list"},
+            db_name=db_name,
+        )
+        _assert_ok(status, list_resp, "cost.tracking.block.fetch(cost_list)")
+        list_data = list_resp.get("data") if isinstance(list_resp.get("data"), dict) else {}
+        list_block = list_data.get("block") if isinstance(list_data.get("block"), dict) else {}
+        records = ((((list_block.get("data") or {}) if isinstance(list_block.get("data"), dict) else {}).get("records")) or [])
+        if not isinstance(records, list) or not records:
+            raise RuntimeError("cost list records missing")
+
+        status, summary_resp = _post(
+            intent_url,
+            token,
+            "cost.tracking.block.fetch",
+            ((cost_hints.get("cost_summary") or {}) if isinstance(cost_hints.get("cost_summary"), dict) else {}).get("params") or {"project_id": project_id, "block_key": "cost_summary"},
+            db_name=db_name,
+        )
+        _assert_ok(status, summary_resp, "cost.tracking.block.fetch(cost_summary)")
         summary_data = summary_resp.get("data") if isinstance(summary_resp.get("data"), dict) else {}
         summary_block = summary_data.get("block") if isinstance(summary_data.get("block"), dict) else {}
-        if str(summary_data.get("block_key") or "").strip() != "summary":
+        if str(summary_data.get("block_key") or "").strip() != "cost_summary":
             raise RuntimeError("cost summary block key mismatch")
         if str(summary_block.get("block_type") or "").strip() != "fact_summary":
             raise RuntimeError("cost summary block type mismatch")
+        summary = ((((summary_block.get("data") or {}) if isinstance(summary_block.get("data"), dict) else {}).get("summary")) or {})
+        if float(summary.get("total_cost_amount") or 0.0) < 456.0:
+            raise RuntimeError("cost summary total too small")
 
         report["flow"] = {
             "project_id": project_id,
             "cost_action_state": str(cost_action.get("state") or ""),
             "cost_entry_keys": sorted(cost_entry.keys()),
+            "cost_list_count": len(records),
             "summary_block_state": str(summary_block.get("state") or ""),
         }
     except Exception as exc:

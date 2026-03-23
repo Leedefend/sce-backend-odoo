@@ -5,10 +5,10 @@ from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter i
 from odoo.addons.smart_construction_core.services.project_dashboard_builders.base import BaseProjectBlockBuilder
 
 
-class CostTrackingMoveListBuilder(BaseProjectBlockBuilder):
-    block_key = "block.cost.tracking_move_list"
+class CostTrackingListBuilder(BaseProjectBlockBuilder):
+    block_key = "block.cost.tracking_list"
     block_type = "record_list"
-    title = "原生凭证"
+    title = "成本记录"
     required_groups = ()
 
     def build(self, project=None, context=None):
@@ -21,7 +21,7 @@ class CostTrackingMoveListBuilder(BaseProjectBlockBuilder):
             return self._envelope(state="empty", visibility=visibility, data=empty_data)
 
         adapter = CostTrackingNativeAdapter(self.env)
-        records = adapter.recent_moves(project, limit=5)
+        records = adapter.recent_moves(project, limit=20)
         state = "ready" if records else "empty"
         return self._envelope(
             state=state,
@@ -30,7 +30,7 @@ class CostTrackingMoveListBuilder(BaseProjectBlockBuilder):
                 "records": records,
                 "summary": {
                     "count": len(records),
-                    "state_fallback_text": "当前项目暂无 account.move 成本记录。" if not records else "当前展示最近 5 条 account.move 成本记录。",
+                    "state_fallback_text": "当前项目暂无成本记录。" if not records else "当前展示最近 20 条项目成本记录。",
                 },
             },
         )

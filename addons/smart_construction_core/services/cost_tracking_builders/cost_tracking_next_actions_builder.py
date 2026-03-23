@@ -12,6 +12,7 @@ class CostTrackingNextActionsBuilder(BaseProjectBlockBuilder):
     required_groups = ()
 
     def build(self, project=None, context=None):
+        del context
         visibility = self._visibility()
         empty_data = {"actions": [], "summary": {}}
         if not visibility.get("allowed"):
@@ -23,17 +24,17 @@ class CostTrackingNextActionsBuilder(BaseProjectBlockBuilder):
         move_count = int(summary.get("move_count") or 0)
         actions = [
             {
-                "key": "open_native_account_moves",
-                "label": "继续：核对原生成本凭证",
-                "hint": "当前切片只读复用 account.move，不在编排层写入财务事实。",
-                "intent": "ui.contract",
+                "key": "refresh_cost_list",
+                "label": "继续：刷新成本记录",
+                "hint": "已接入项目成本录入、成本记录和成本汇总。若刚录入完成，可刷新区块核对结果。",
+                "intent": "cost.tracking.block.fetch",
                 "params": {
                     "project_id": int(project.id),
-                    "source": "cost.tracking.next_actions",
+                    "block_key": "cost_list",
                 },
-                "state": "available" if move_count > 0 else "planned",
-                "reason_code": "COST_NATIVE_READONLY_SLICE",
-                "source": "phase_17_a",
+                "state": "available",
+                "reason_code": "COST_SLICE_REFRESH_READY",
+                "source": "fr3_prepared",
             }
         ]
         return self._envelope(
@@ -45,9 +46,10 @@ class CostTrackingNextActionsBuilder(BaseProjectBlockBuilder):
                     "count": len(actions),
                     "available_count": len([row for row in actions if str(row.get("state") or "") == "available"]),
                     "planned_count": len([row for row in actions if str(row.get("state") or "") == "planned"]),
-                    "current_state": "cost_native_tracking",
-                    "current_state_label": "成本原生跟踪",
-                    "next_step_label": "核对原生凭证",
+                    "current_state": "cost_tracking_prepared",
+                    "current_state_label": "成本切片 Prepared",
+                    "next_step_label": "录入或核对成本记录",
+                    "record_count": move_count,
                 },
             },
         )

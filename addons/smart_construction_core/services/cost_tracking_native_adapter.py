@@ -5,7 +5,7 @@ from odoo import fields
 
 
 class CostTrackingNativeAdapter:
-    """Read-only native cost adapter based on account.move."""
+    """Prepared native cost adapter based on account.move."""
 
     SUPPORTED_MOVE_TYPES = ("in_invoice", "in_refund", "entry")
 
@@ -37,6 +37,7 @@ class CostTrackingNativeAdapter:
         Move = self._model("account.move")
         if Move is None or not project:
             return []
+        Move = Move.sudo()
         try:
             rows = Move.search(self.move_domain(project), order="date desc,id desc", limit=max(int(limit or 0), 0))
         except Exception:
@@ -56,16 +57,18 @@ class CostTrackingNativeAdapter:
             "journal_entry_count": 0,
             "posted_cost_amount": 0.0,
             "draft_cost_amount": 0.0,
+            "total_cost_amount": 0.0,
             "currency_name": "",
             "latest_move_date": "",
             "as_of_date": str(fields.Date.today()),
-            "readonly_boundary": "read_account_move_and_project_context_only",
+            "prepared_boundary": "account_move_project_cost_recording_only",
         }
         moves = self.recent_moves(project, limit=5)
         Move = self._model("account.move")
         if Move is None or not project:
             summary["recent_moves"] = moves
             return summary
+        Move = Move.sudo()
 
         try:
             all_moves = Move.search(self.move_domain(project), order="date desc,id desc")
@@ -111,6 +114,7 @@ class CostTrackingNativeAdapter:
                 "journal_entry_count": journal_entry_count,
                 "posted_cost_amount": round(posted_amount, 2),
                 "draft_cost_amount": round(draft_amount, 2),
+                "total_cost_amount": round(posted_amount + draft_amount, 2),
                 "currency_name": currency_name,
                 "latest_move_date": latest_move_date,
                 "recent_moves": moves,
@@ -137,6 +141,18 @@ class CostTrackingNativeAdapter:
         return round(amount, 2)
 
     def _move_payload(self, move):
+        expense_lines = []
+        for line in getattr(move, "line_ids", []):
+            try:
+                internal_group = str(getattr(getattr(line, "account_id", None), "internal_group", "") or "")
+                debit = float(getattr(line, "debit", 0.0) or 0.0)
+            except Exception:
+                continue
+            if internal_group in ("expense", "asset") and debit > 0:
+                expense_lines.append(line)
+        primary_line = expense_lines[0] if expense_lines else None
+        project = getattr(move, "project_id", None)
+        cost_code = getattr(primary_line, "cost_code_id", None) if primary_line else None
         return {
             "move_id": int(getattr(move, "id", 0) or 0),
             "name": str(getattr(move, "name", "") or getattr(move, "ref", "") or ""),
@@ -146,4 +162,9 @@ class CostTrackingNativeAdapter:
             "partner_name": str(getattr(getattr(move, "partner_id", None), "display_name", "") or ""),
             "amount": self._cost_amount(move),
             "currency_name": str(getattr(getattr(move, "currency_id", None), "name", "") or ""),
+            "description": str(getattr(primary_line, "name", "") or getattr(move, "ref", "") or getattr(move, "name", "") or ""),
+            "category_name": str(getattr(cost_code, "path_display", "") or getattr(cost_code, "display_name", "") or ""),
+            "category_type": str(getattr(cost_code, "type", "") or ""),
+            "project_id": int(getattr(project, "id", 0) or 0),
+            "project_name": str(getattr(project, "display_name", "") or ""),
         }

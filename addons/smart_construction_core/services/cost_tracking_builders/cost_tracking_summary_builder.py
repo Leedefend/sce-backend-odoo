@@ -8,10 +8,11 @@ from odoo.addons.smart_construction_core.services.project_dashboard_builders.bas
 class CostTrackingSummaryBuilder(BaseProjectBlockBuilder):
     block_key = "block.cost.tracking_summary"
     block_type = "fact_summary"
-    title = "成本跟踪摘要"
+    title = "成本汇总"
     required_groups = ()
 
     def build(self, project=None, context=None):
+        del context
         visibility = self._visibility()
         empty_data = {"summary": {}}
         if not visibility.get("allowed"):
@@ -24,5 +25,17 @@ class CostTrackingSummaryBuilder(BaseProjectBlockBuilder):
         return self._envelope(
             state="ready",
             visibility=visibility,
-            data={"summary": summary},
+            data={
+                "summary": {
+                    "project_id": int(summary.get("project_id") or 0),
+                    "carrier_model": str(summary.get("carrier_model") or "account.move"),
+                    "total_cost_amount": float(summary.get("total_cost_amount") or 0.0),
+                    "record_count": int(summary.get("move_count") or 0),
+                    "draft_record_count": int(summary.get("draft_move_count") or 0),
+                    "posted_record_count": int(summary.get("posted_move_count") or 0),
+                    "currency_name": str(summary.get("currency_name") or ""),
+                    "scope": "project_linked_account_move_only",
+                    "latest_move_date": str(summary.get("latest_move_date") or ""),
+                }
+            },
         )

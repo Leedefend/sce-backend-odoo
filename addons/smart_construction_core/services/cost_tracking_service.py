@@ -3,22 +3,27 @@ from __future__ import annotations
 
 from odoo import fields
 
+from odoo.addons.smart_construction_core.services.cost_tracking_entry_service import CostTrackingEntryService
 from odoo.addons.smart_construction_core.services.cost_tracking_builders import BUILDERS
 from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter import CostTrackingNativeAdapter
 
 
 class CostTrackingService:
-    """Read-only cost tracking service backed by native account.move facts."""
+    """Prepared cost tracking service backed by account.move facts."""
 
     RUNTIME_BLOCK_MAP = {
+        "cost_entry": "block.cost.tracking_entry_form",
+        "cost_list": "block.cost.tracking_list",
+        "cost_summary": "block.cost.tracking_summary",
+        "next_actions": "block.cost.tracking_next_actions",
         "summary": "block.cost.tracking_summary",
         "recent_moves": "block.cost.tracking_move_list",
-        "next_actions": "block.cost.tracking_next_actions",
     }
 
     def __init__(self, env):
         self.env = env
         self._adapter = CostTrackingNativeAdapter(env)
+        self._entry_service = CostTrackingEntryService(env)
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
 
@@ -128,10 +133,17 @@ class CostTrackingService:
             "stage_name": _safe_rel_name(project, "stage_id"),
             "date_start": str(_safe_field(project, "date_start") or ""),
             "date_end": str(_safe_field(project, "date") or _safe_field(project, "date_end") or ""),
-            "posted_move_count": int(summary.get("posted_move_count") or 0),
-            "posted_cost_amount": str(summary.get("posted_cost_amount") or 0.0),
+            "move_count": int(summary.get("move_count") or 0),
+            "draft_move_count": int(summary.get("draft_move_count") or 0),
+            "cost_record_count": int(summary.get("move_count") or 0),
+            "cost_total_amount": str(summary.get("total_cost_amount") or 0.0),
+            "draft_cost_amount": str(summary.get("draft_cost_amount") or 0.0),
+            "currency_name": _safe_text(summary.get("currency_name") or ""),
             "today": str(fields.Date.today()),
         }
+
+    def create_cost_entry(self, project=None, values=None, context=None):
+        return self._entry_service.create(project=project, values=values, context=context)
 
     @staticmethod
     def error_block(block_key, code):
