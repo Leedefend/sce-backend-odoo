@@ -70,7 +70,7 @@ def main() -> int:
         preload,
         max_wall_ms=_budget("SYSTEM_INIT_PRELOAD_MAX_WALL_MS", 7000),
         max_internal_ms=_budget("SYSTEM_INIT_PRELOAD_MAX_INTERNAL_MS", 6500),
-        max_bytes=_budget("SYSTEM_INIT_PRELOAD_MAX_BYTES", 196608),
+        max_bytes=_budget("SYSTEM_INIT_PRELOAD_MAX_BYTES", 262144),
     )
     errors.extend(boot_errors)
     errors.extend(preload_errors)

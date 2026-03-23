@@ -132,7 +132,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
-import { normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
+import { buildSceneRegistryFallbackPath, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import type { NavNode } from '@sc/schema';
 import {
@@ -788,6 +788,14 @@ function handleSelect(node: NavNode) {
     const rawPath = String(scene.target?.route || scene.route || `/s/${sceneKey}`).trim();
     const resolvedPath = normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
     router.push({ path: resolvedPath, query: { menu_id: node.menu_id || undefined } }).catch(() => {});
+    return;
+  }
+  if (sceneKey) {
+    router.push(buildSceneRegistryFallbackPath({
+      sceneKey,
+      menuId: Number(node.menu_id || node.id || 0) || undefined,
+      label: node.title || node.name || node.label || sceneKey,
+    })).catch(() => {});
     return;
   }
   if (node.menu_id) {

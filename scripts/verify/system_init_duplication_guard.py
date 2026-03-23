@@ -36,7 +36,6 @@ def main() -> int:
                 "capability_groups",
                 "page_contracts",
                 "workspace_home",
-                "scene_ready_contract_v1",
                 "ext_facts",
             )
             if key in data

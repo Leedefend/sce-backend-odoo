@@ -19,6 +19,7 @@ BOOT_KEYS = {
     "nav",
     "nav_meta",
     "default_route",
+    "scene_ready_contract_v1",
     "intents",
     "feature_flags",
     "role_surface",
@@ -27,11 +28,9 @@ BOOT_KEYS = {
 }
 PRELOAD_EXTRA_KEYS = {
     "workspace_home",
-    "scene_ready_contract_v1",
 }
 FORBIDDEN_BOOT_KEYS = {
     "workspace_home",
-    "scene_ready_contract_v1",
     "page_contracts",
     "runtime_collections",
     "scene_catalog",
@@ -67,6 +66,7 @@ def _validate_boot(data: dict[str, Any], errors: list[str]) -> dict[str, Any]:
     init_meta = data.get("init_meta") if isinstance(data.get("init_meta"), dict) else {}
     page_contract_meta = init_meta.get("page_contract_meta") if isinstance(init_meta.get("page_contract_meta"), dict) else {}
     preload_hint = init_meta.get("workspace_home_preload_hint") if isinstance(init_meta.get("workspace_home_preload_hint"), dict) else {}
+    scene_ready = data.get("scene_ready_contract_v1") if isinstance(data.get("scene_ready_contract_v1"), dict) else {}
 
     if unknown:
         errors.append(f"boot surface unknown keys present: {', '.join(unknown)}")
@@ -80,6 +80,10 @@ def _validate_boot(data: dict[str, Any], errors: list[str]) -> dict[str, Any]:
         errors.append("boot surface workspace_home_preload_hint.intent must be ui.contract")
     if not str(preload_hint.get("scene_key") or "").strip():
         errors.append("boot surface workspace_home_preload_hint.scene_key missing")
+    if not scene_ready:
+        errors.append("boot surface scene_ready_contract_v1 missing or empty")
+    elif not isinstance(scene_ready.get("scenes"), list) or not scene_ready.get("scenes"):
+        errors.append("boot surface scene_ready_contract_v1.scenes missing or empty")
 
     return {
         "keys": sorted(keys),
@@ -87,6 +91,7 @@ def _validate_boot(data: dict[str, Any], errors: list[str]) -> dict[str, Any]:
         "forbidden_keys": forbidden,
         "page_contract_meta": page_contract_meta,
         "workspace_home_preload_hint": preload_hint,
+        "scene_ready_loaded": bool(scene_ready),
     }
 
 

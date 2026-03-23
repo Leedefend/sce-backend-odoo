@@ -310,7 +310,7 @@ def build_scene_nav_contract(data: dict) -> dict:
     default_route = {
         "menu_id": (first_leaf or {}).get("menu_id"),
         "scene_key": default_scene_key or None,
-        "route": (f"/workbench?scene={default_scene_key}" if default_scene_key else "/workbench"),
+        "route": (f"/s/{default_scene_key}" if default_scene_key else "/workbench"),
         "reason": "role_landing" if default_scene_key else "menu_fallback",
     }
 

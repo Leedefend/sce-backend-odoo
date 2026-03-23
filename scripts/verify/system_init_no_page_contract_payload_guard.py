@@ -33,7 +33,6 @@ def main() -> int:
             for key in (
                 "page_contracts",
                 "workspace_home",
-                "scene_ready_contract_v1",
                 "workspace_home_ref",
             )
             if key in data
@@ -88,4 +87,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

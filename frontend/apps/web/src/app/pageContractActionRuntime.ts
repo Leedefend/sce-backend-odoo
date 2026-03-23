@@ -1,6 +1,6 @@
 import type { LocationQueryRaw, Router } from 'vue-router';
 import { getSceneByKey } from './resolvers/sceneRegistry';
-import { normalizeLegacyWorkbenchPath } from './routeQuery';
+import { buildSceneRegistryFallbackPath, normalizeLegacyWorkbenchPath } from './routeQuery';
 
 export type ContractActionDeps = {
   actionKey: string;
@@ -22,6 +22,9 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
 
   const resolveScenePath = (sceneKey: string): string => {
     const sceneNode = getSceneByKey(sceneKey);
+    if (!sceneNode) {
+      return buildSceneRegistryFallbackPath({ sceneKey, label: sceneKey });
+    }
     const rawPath = String(sceneNode?.target?.route || sceneNode?.route || `/s/${sceneKey}`).trim();
     return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
   };
