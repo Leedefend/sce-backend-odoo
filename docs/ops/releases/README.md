@@ -168,6 +168,14 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - contract: `docs/ops/releases/delivery_engine_v1_contract.md`
   - architecture: `docs/architecture/delivery_engine_v1.md`
   - unified gate: `make verify.release.delivery_engine.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Scene Contract Standardization v1:
+  - status: `runtime-governed released scene surface`
+  - scope: `released scenes -> standard scene contract adapter`
+  - audit: `docs/ops/audit/scene_contract_surface_audit_v1.md`
+  - standard: `docs/architecture/scene_contract_standard_v1.md`
+  - release surface: `docs/ops/releases/scene_contract_release_surface_v1.md`
+  - guard: `make verify.product.scene_contract_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - unified gate: `make verify.release.delivery_engine.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -264,4 +272,5 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.release.settlement_slice_freeze`: FR-5 freeze
 - `verify.release.navigation.contract_guard`: release navigation contract
 - `verify.release.navigation.surface`: release navigation contract + browser smoke
+- `verify.product.scene_contract_guard`: released scene contract guard
 - `verify.release.delivery_engine.v1`: delivery engine v1 guards + browser smoke

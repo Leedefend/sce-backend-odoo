@@ -1340,3 +1340,12 @@ Each entry must include:
 - completed_step: `新增 verify.portal.release_navigation_browser_smoke.host，实测通过 demo_pm 登录后侧边栏文本断言；证据落在 artifacts/codex/release-navigation-browser-smoke/20260324T023920Z/；同时新增统一入口 verify.release.navigation.surface`
 - active_commit: `8ea963b`
 - next_step: `若继续推进，应进入 release navigation role guard / IA 强化批次，而不是再回到零散菜单调整`
+
+### 2026-03-24T03:45:00Z
+- blocker_key: `scene_contract_standardization_v1`
+- layer_target: `Contract Governance Layer + Scene Orchestration Layer + Delivery Runtime Layer + Frontend Contract Consumption Layer`
+- module: `addons/smart_core/core/scene_contract_builder.py + released scene handlers + runtime_page_contract_builder + delivery/scene_service + scripts/verify/product_scene_contract_guard.py + frontend release entry consumer + docs/ops/audit + docs/architecture + docs/ops/releases`
+- reason: `在 FR-1~FR-5、release navigation、Delivery Engine v1 全部冻结的前提下，把 released scenes 收口成统一的 scene-level product delivery contract，并纳入统一 gate`
+- completed_step: `完成 live 审计，确认 released surface 由 route-only scene、runtime entry scenes、page.contract scene 三类组成；新增 scene_contract_standard_v1 adapter，接入 delivery_engine_v1.scenes、FR-2~FR-5 enter payload、my_work page.contract；新增 verify.product.scene_contract_guard，并实测通过 verify.release.delivery_engine.v1；文档补齐 audit/standard/release surface/context log`
+- active_commit: `44b767d`
+- next_step: `后续只能继续做 scene-level freeze/role guard/frontend VM 收口，不得重开 FR-1~FR-5 业务语义或回退到 technical-scene-first 导航`
