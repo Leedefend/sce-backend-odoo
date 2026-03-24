@@ -15,6 +15,7 @@ import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
 import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
 import { ApiError } from '../api/client';
+import { normalizeEditionQuery, parseEditionKeyFromQuery } from '../app/routeQuery';
 
 const APP_TITLE = '智能施工企业管理平台';
 
@@ -70,12 +71,23 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   applyDocumentTitle(to.name);
   const session = useSessionStore();
+  const normalizedEditionQuery = normalizeEditionQuery(to.query);
+  if (normalizedEditionQuery.changed) {
+    return {
+      path: to.path,
+      query: normalizedEditionQuery.query,
+      hash: to.hash,
+      replace: true,
+    };
+  }
+  const routeEditionKey = parseEditionKeyFromQuery(normalizedEditionQuery.query);
+  const editionChanged = to.name !== 'login' ? session.syncRequestedEditionKey(routeEditionKey) : false;
   if (to.name !== 'login' && !session.token) {
     return { name: 'login', query: { redirect: to.fullPath } };
   }
-  if (to.name !== 'login' && session.token && !session.isReady) {
+  if (to.name !== 'login' && session.token && (!session.isReady || editionChanged)) {
     try {
-      await session.ensureReady();
+      await session.loadAppInit();
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         return { name: 'login', query: { redirect: to.fullPath } };
