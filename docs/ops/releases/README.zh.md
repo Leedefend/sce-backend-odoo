@@ -61,6 +61,14 @@ status: active
   - 验证矩阵：`docs/ops/releases/settlement_slice_verification_matrix.md`
   - 阶段结论：`docs/ops/releases/settlement_slice_decision.md`
   - 统一门禁：`make verify.release.settlement_slice_freeze ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`
+- 发布导航契约：
+  - 状态：`运行态受治理的发布面`
+  - 范围：`侧边栏发布产品入口 = FR-1 -> FR-5 + 我的工作`
+  - 契约文档：`docs/ops/releases/release_navigation_contract.md`
+  - 事实审计：`tmp/NAVIGATION_FACT_AUDIT_2026-03-24.md`
+  - 契约守卫：`make verify.release.navigation.contract_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - 浏览器 smoke：`make verify.portal.release_navigation_browser_smoke.host ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - 统一门禁：`make verify.release.navigation.surface ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -148,3 +156,5 @@ status: active
 - `verify.release.payment_slice_freeze`：FR-4 Freeze
 - `verify.release.settlement_slice_prepared`：FR-5 Prepared
 - `verify.release.settlement_slice_freeze`：FR-5 Freeze
+- `verify.release.navigation.contract_guard`：发布导航契约
+- `verify.release.navigation.surface`：发布导航契约 + 浏览器 smoke

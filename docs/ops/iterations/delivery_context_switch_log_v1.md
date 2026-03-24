@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-23T17:35:00Z
+- blocker_key: `release_navigation_batch_planning`
+- layer_target: `Scene Navigation Contract / Frontend Navigation Consumption / Verify Governance`
+- module: `docs/ops/releases + docs/ops/iterations + addons/smart_core + addons/smart_construction_core + frontend/apps/web + scripts/verify`
+- reason: `将侧边栏导航纳入正式产品发布计划，收口“发布入口错误”和“导航过薄”问题，并建立独立导航门禁`
+- completed_step: `已完成问题归因，确认既有 FR-1~FR-5 browser smoke 主要通过 deep-link 进入切片，没有覆盖真实侧边栏发布入口；已落 release_navigation_batch_plan 与 navigation_smoke_gap_analysis 文档，冻结本批范围与后续验证方向`
+- active_commit: `8ea963b`
+- next_step: `Audit scene nav contract, role-surface shaping, and AppShell sidebar rendering to define the minimal release-navigation implementation set`
+
 ### 2026-03-23T16:35:00Z
 - blocker_key: `fr4_payment_slice_freeze_pass`
 - layer_target: `Release Governance Layer / Architecture Layer / Verify Governance`
@@ -1295,3 +1304,30 @@ Each entry must include:
 - next_step: `输出 FR-3 cost_slice_product_contract 与 cost_slice_five_layer_prepared，随后实现 account.move 最小写入能力与 cost scene prepared contract`
 - 2026-03-23：启动 `FR-5 settlement slice (Prepared)`。范围固定为 `项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本 -> 付款 -> 结算结果`，只做项目级只读汇总，不引入合同、审批、发票、税务与分析体系。
 - 2026-03-23：完成 `FR-5 settlement slice (Freeze)` 收口。正式冻结口径固定为 `项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本 -> 付款 -> 结算结果`，统一门禁为 `make verify.release.settlement_slice_freeze`。
+
+### 2026-03-24T02:10:00Z
+- blocker_key: `release_navigation_contract_batch_nav_1`
+- layer_target: `Platform Layer + Frontend Layer + Release Governance Layer`
+- module: `addons/smart_core/system.init + release_navigation_contract_builder + frontend session/AppShell/router + docs/ops/releases`
+- reason: `将演示侧边导航从 technical scene 暴露收口为 release-product-first 导航 contract，保证 FR-1 到 FR-5 作为产品入口暴露，而不是直接暴露 projects.list/projects.ledger 等技术 scene`
+- completed_step: `新增 system.init.release_navigation_v1 契约并在前端 schema/store 中接入；AppShell 侧边栏优先消费 release navigation；新增 /release/:productKey 产品入口页承接 FR-2 到 FR-5 的项目上下文选择；dashboard 成功进入后会记录最近 project_id 供产品入口复用`
+- active_commit: `8ea963b`
+- next_step: `部署到 prod.sim 环境并复验 demo_pm 的真实侧边栏展示；后续新批次再补 release navigation contract guard、role guard 与 browser smoke`
+
+### 2026-03-24T02:35:00Z
+- blocker_key: `release_navigation_runtime_guard_fix`
+- layer_target: `Platform Layer + Release Governance Layer + Verify Layer`
+- module: `addons/smart_core/system_init_payload_builder.py + scripts/verify/product_release_navigation_contract_guard.py + docs/ops/releases + Makefile`
+- reason: `运行态出现“代码里已有 release_navigation_v1，但 demo_pm 页面仍回退到场景导航”的不一致，需要把 release navigation 保留到最终 startup surface，并补最小 contract guard 防回退`
+- completed_step: `确认根因为 build_startup_surface 丢弃 release_navigation_v1；补保留逻辑后重启 Odoo 运行态，live system.init 已返回 FR-1~FR-5 + 我的工作；同时新增 release_navigation_contract 文档、product_release_navigation_contract_guard.py 与 verify.release.navigation.contract_guard`
+- active_commit: `8ea963b`
+- next_step: `执行 release navigation contract guard，若通过则进入下一批的 role guard / browser smoke / 信息架构强化`
+
+### 2026-03-24T02:45:00Z
+- blocker_key: `release_navigation_browser_evidence`
+- layer_target: `Verify Layer + Release Governance Layer`
+- module: `scripts/verify/release_navigation_browser_smoke.mjs + Makefile + docs/ops/releases`
+- reason: `仅有 contract guard 还不够，需要真实浏览器侧边栏证据来防止“后端有契约、页面没呈现”的回归`
+- completed_step: `新增 verify.portal.release_navigation_browser_smoke.host，实测通过 demo_pm 登录后侧边栏文本断言；证据落在 artifacts/codex/release-navigation-browser-smoke/20260324T023920Z/；同时新增统一入口 verify.release.navigation.surface`
+- active_commit: `8ea963b`
+- next_step: `若继续推进，应进入 release navigation role guard / IA 强化批次，而不是再回到零散菜单调整`
