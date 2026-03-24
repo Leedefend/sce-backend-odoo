@@ -205,6 +205,7 @@ export interface SessionState {
   user: AppInitResponse['user'] | null;
   menuTree: NavNode[];
   releaseNavigationTree: NavNode[];
+  deliveryEngineV1: AppInitResponse['delivery_engine_v1'] | null;
   menuExpandedKeys: string[];
   currentAction: NavMeta | null;
   capabilities: string[];
@@ -267,6 +268,7 @@ export const useSessionStore = defineStore('session', {
     user: null,
     menuTree: [],
     releaseNavigationTree: [],
+    deliveryEngineV1: null,
     menuExpandedKeys: [],
     currentAction: null,
     capabilities: [],
@@ -313,6 +315,7 @@ export const useSessionStore = defineStore('session', {
           this.user = parsed.user ?? null;
           this.menuTree = parsed.menuTree ?? [];
           this.releaseNavigationTree = parsed.releaseNavigationTree ?? [];
+          this.deliveryEngineV1 = parsed.deliveryEngineV1 ?? null;
           this.menuExpandedKeys = parsed.menuExpandedKeys ?? [];
           this.currentAction = parsed.currentAction ?? null;
           this.capabilities = parsed.capabilities ?? [];
@@ -364,6 +367,7 @@ export const useSessionStore = defineStore('session', {
       this.user = null;
       this.menuTree = [];
       this.releaseNavigationTree = [];
+      this.deliveryEngineV1 = null;
       this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
@@ -429,6 +433,7 @@ export const useSessionStore = defineStore('session', {
         user: this.user,
         menuTree: this.menuTree,
         releaseNavigationTree: this.releaseNavigationTree,
+        deliveryEngineV1: this.deliveryEngineV1,
         menuExpandedKeys: this.menuExpandedKeys,
         currentAction: this.currentAction,
         capabilities: this.capabilities,
@@ -488,6 +493,7 @@ export const useSessionStore = defineStore('session', {
       this.user = result.user ?? null;
       this.menuTree = [];
       this.releaseNavigationTree = [];
+      this.deliveryEngineV1 = null;
       this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
@@ -807,6 +813,7 @@ export const useSessionStore = defineStore('session', {
         };
       }
       const candidates = [result.nav];
+      this.deliveryEngineV1 = (result as AppInitResponse).delivery_engine_v1 ?? null;
       const releaseNav = Array.isArray(result.release_navigation_v1?.nav)
         ? result.release_navigation_v1?.nav
         : [];

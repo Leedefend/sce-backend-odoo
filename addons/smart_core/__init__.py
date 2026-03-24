@@ -20,6 +20,7 @@ from . import handlers
 from . import view
 from . import utils
 from . import models
+from . import delivery
 
 # Ensure intent controllers are registered on module load
 from .controllers import intent_dispatcher

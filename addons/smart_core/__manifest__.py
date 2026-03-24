@@ -23,6 +23,7 @@
         "security/smart_core_security.xml",
         "security/groups.xml",
         "security/ir.model.access.csv",
+        "data/product_policy_seed.xml",
         "data/ui_base_contract_asset_cron.xml",
         # 可选：默认参数/开关
         # "data/smart_core_params.xml",

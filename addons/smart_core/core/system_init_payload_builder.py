@@ -9,6 +9,7 @@ class SystemInitPayloadBuilder:
     BUILD_MODE_PRELOAD = "preload"
     BUILD_MODE_DEBUG = "debug"
     MINIMAL_ALLOWED_KEYS = {
+        "delivery_engine_v1",
         "user",
         "nav",
         "nav_meta",
@@ -157,6 +158,8 @@ class SystemInitPayloadBuilder:
             "version": version,
             "init_meta": init_meta,
         }
+        if isinstance(row.get("delivery_engine_v1"), dict):
+            minimal["delivery_engine_v1"] = row.get("delivery_engine_v1")
         if isinstance(row.get("release_navigation_v1"), dict):
             minimal["release_navigation_v1"] = row.get("release_navigation_v1")
         if isinstance(row.get("scene_ready_contract_v1"), dict):
