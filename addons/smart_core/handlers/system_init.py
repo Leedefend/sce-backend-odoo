@@ -44,6 +44,7 @@ from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_n
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
 from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
 from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
+from odoo.addons.smart_core.core.release_navigation_contract_builder import build_release_navigation_contract
 from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
@@ -668,6 +669,7 @@ class SystemInitHandler(BaseIntentHandler):
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
         stage_ts = _mark("build_scene_nav_contract", stage_ts)
+        data["release_navigation_v1"] = build_release_navigation_contract(data if isinstance(data, dict) else {})
 
         platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
         if platform_minimum_surface_mode:

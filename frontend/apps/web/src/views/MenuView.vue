@@ -47,6 +47,7 @@ import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { buildSceneRegistryFallbackPath } from '../app/routeQuery';
+import { PROJECT_INITIATION_MENU_XMLID, PROJECT_INTAKE_SCENE_KEY } from '../app/projectCreationBaseline';
 
 const route = useRoute();
 const router = useRouter();
@@ -68,6 +69,23 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
 }
 
+function normalizeMenuSceneKey(sceneKey: unknown) {
+  const normalized = String(sceneKey || '').trim();
+  if (normalized === 'project.initiation') {
+    return PROJECT_INTAKE_SCENE_KEY;
+  }
+  return normalized;
+}
+
+function isProjectIntakeMenuNode(node: { meta?: Record<string, unknown> } | null | undefined) {
+  const sceneKey = normalizeMenuSceneKey(node?.meta?.scene_key);
+  if (sceneKey === PROJECT_INTAKE_SCENE_KEY) {
+    return true;
+  }
+  const menuXmlid = String(node?.meta?.menu_xmlid || '').trim();
+  return menuXmlid === PROJECT_INITIATION_MENU_XMLID;
+}
+
 async function resolve() {
   loading.value = true;
   error.value = '';
@@ -79,6 +97,13 @@ async function resolve() {
     }
     const result = resolveMenuAction(session.menuTree, menuId);
     if (result.kind === 'leaf') {
+      if (isProjectIntakeMenuNode(result.node)) {
+        await router.replace({
+          path: `/s/${PROJECT_INTAKE_SCENE_KEY}`,
+          query: resolveCarryQuery({ menu_id: menuId }),
+        });
+        return;
+      }
       const policy = evaluateCapabilityPolicy({ source: result.node?.meta, available: session.capabilities });
       if (policy.state !== 'enabled') {
         await router.replace({
@@ -101,19 +126,20 @@ async function resolve() {
       return;
     }
     if (result.kind === 'redirect') {
-      if (result.target.scene_key) {
-        if (!getSceneByKey(result.target.scene_key)) {
+      const targetSceneKey = normalizeMenuSceneKey(result.target.scene_key);
+      if (targetSceneKey) {
+        if (!getSceneByKey(targetSceneKey)) {
           await router.replace(
             buildSceneRegistryFallbackPath({
-              sceneKey: result.target.scene_key,
+              sceneKey: targetSceneKey,
               menuId: result.target.menu_id,
-              label: result.node?.title || result.node?.name || result.node?.label || result.target.scene_key,
+              label: result.node?.title || result.node?.name || result.node?.label || targetSceneKey,
             }),
           );
           return;
         }
         await router.replace({
-          path: `/s/${result.target.scene_key}`,
+          path: `/s/${targetSceneKey}`,
           query: resolveCarryQuery({ menu_id: result.target.menu_id }),
         });
         return;

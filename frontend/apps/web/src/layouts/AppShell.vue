@@ -23,7 +23,7 @@
           <button class="ghost mini" @click="openRoleLanding">进入工作台</button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
         </div>
-        <div v-if="roleMenus.length" class="role-menus">
+        <div v-if="!hasReleaseNavigation && roleMenus.length" class="role-menus">
           <button
             v-for="menu in roleMenus"
             :key="`role-menu-${menu.id}`"
@@ -196,9 +196,12 @@ const router = useRouter();
 const query = ref('');
 
 const menuTree = computed(() => session.menuTree);
+const releaseNavigationTree = computed(() => session.releaseNavigationTree);
 const roleSurface = computed(() => session.roleSurface);
-const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
-const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
+const hasReleaseNavigation = computed(() => releaseNavigationTree.value.length > 0);
+const navigationTree = computed(() => hasReleaseNavigation.value ? releaseNavigationTree.value : menuTree.value);
+const rootNode = computed(() => (navigationTree.value.length === 1 ? navigationTree.value[0] : null));
+const menuNodes = computed(() => rootNode.value?.children ?? navigationTree.value);
 const menuCount = computed(() => menuNodes.value.length);
 const rootTitle = computed(() => {
   const root = rootNode.value;
@@ -634,7 +637,7 @@ function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
     }
     return null;
   };
-  return walk(menuTree.value, []) || [];
+  return walk(navigationTree.value, []) || [];
 }
 
 function findMenuIdBySceneKey(nodes: NavNode[], sceneKey?: string): number | undefined {
@@ -659,7 +662,7 @@ function findMenuIdBySceneKey(nodes: NavNode[], sceneKey?: string): number | und
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
   const menuId = activeMenuId.value;
-  const menuPath = findMenuPath(menuTree.value, menuId);
+      const menuPath = findMenuPath(navigationTree.value, menuId);
   if (menuPath.length) {
     menuPath.forEach((node) => {
       const label = node.title || node.name || node.label || '菜单';
@@ -715,7 +718,7 @@ const activeMenuId = computed(() => {
   const workspaceMenuId = asInteger(workspaceNavRef?.active_menu_id);
   if (workspaceMenuId) return workspaceMenuId;
 
-  const fromScene = findMenuIdBySceneKey(menuTree.value, activeSceneKey);
+  const fromScene = findMenuIdBySceneKey(navigationTree.value, activeSceneKey);
   if (fromScene) return fromScene;
 
   return undefined;
@@ -763,13 +766,21 @@ const roleMenus = computed(() => {
       }
     }
   };
-  walk(menuTree.value);
+  walk(navigationTree.value);
   return found.slice(0, 6);
 });
 
 function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
     node.menu_id = node.id as number;
+  }
+  const routePath = asText(node.meta?.route);
+  if (routePath) {
+    router.push({
+      path: routePath,
+      query: node.menu_id ? { menu_id: node.menu_id } : {},
+    }).catch(() => {});
+    return;
   }
   const sceneKey = resolveSceneKeyFromNode(node);
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;

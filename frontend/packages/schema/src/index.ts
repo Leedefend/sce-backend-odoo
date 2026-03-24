@@ -88,6 +88,7 @@ export interface NavNode {
 
 export interface NavMeta {
   name?: string;
+  route?: string;
   scene_key?: string;
   menu_id?: number;
   menu_xmlid?: string;
@@ -104,6 +105,13 @@ export interface NavMeta {
 }
 
 export interface AppInitResponse {
+  release_navigation_v1?: {
+    contract_version?: string;
+    source?: string;
+    role_code?: string;
+    nav?: NavNode[];
+    meta?: Record<string, unknown>;
+  };
   nav_meta?: Record<string, unknown>;
   version?: {
     contract_version?: string;
