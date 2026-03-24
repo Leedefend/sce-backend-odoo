@@ -83,6 +83,16 @@ status: active
   - 发布面文档：`docs/ops/releases/scene_contract_release_surface_v1.md`
   - 守卫：`make verify.product.scene_contract_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
   - 统一门禁：`make verify.release.delivery_engine.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Scene Freeze & Replication v1：
+  - 状态：`可版本绑定的发布场景资产`
+  - 范围：`released scene snapshot + replication + policy version binding`
+  - 架构文档：`docs/architecture/scene_freeze_model_v1.md`
+  - 发布面文档：`docs/ops/releases/scene_version_surface_v1.md`
+  - 守卫：
+    - `make verify.scene.freeze_snapshot_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.replication_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.version_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+  - 统一门禁：`make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -174,3 +184,7 @@ status: active
 - `verify.release.navigation.surface`：发布导航契约 + 浏览器 smoke
 - `verify.product.scene_contract_guard`：released scene contract 守卫
 - `verify.release.delivery_engine.v1`：Delivery Engine v1 守卫 + 浏览器 smoke
+- `verify.scene.freeze_snapshot_guard`：released scene freeze snapshot 守卫
+- `verify.scene.replication_guard`：released scene replication 守卫
+- `verify.scene.version_binding_guard`：released scene version binding 守卫
+- `verify.release.scene_asset.v1`：released scene asset 守卫 + 浏览器 smoke

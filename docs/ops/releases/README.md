@@ -176,6 +176,16 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - release surface: `docs/ops/releases/scene_contract_release_surface_v1.md`
   - guard: `make verify.product.scene_contract_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
   - unified gate: `make verify.release.delivery_engine.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Scene Freeze & Replication v1:
+  - status: `version-bindable released scene assets`
+  - scope: `released scene snapshot + replication + policy version binding`
+  - architecture: `docs/architecture/scene_freeze_model_v1.md`
+  - release surface: `docs/ops/releases/scene_version_surface_v1.md`
+  - guards:
+    - `make verify.scene.freeze_snapshot_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.replication_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.version_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+  - unified gate: `make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -274,3 +284,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.release.navigation.surface`: release navigation contract + browser smoke
 - `verify.product.scene_contract_guard`: released scene contract guard
 - `verify.release.delivery_engine.v1`: delivery engine v1 guards + browser smoke
+- `verify.scene.freeze_snapshot_guard`: released scene freeze snapshot guard
+- `verify.scene.replication_guard`: released scene replication guard
+- `verify.scene.version_binding_guard`: released scene version binding guard
+- `verify.release.scene_asset.v1`: released scene asset guards + browser smoke
