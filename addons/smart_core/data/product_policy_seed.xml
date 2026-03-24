@@ -5,6 +5,14 @@
             <field name="product_key">construction.standard</field>
             <field name="label">Construction Standard</field>
             <field name="version">v1</field>
+            <field name="scene_version_bindings" eval="{
+                'projects.intake': {'version': 'v1', 'channel': 'stable'},
+                'project.management': {'version': 'v1', 'channel': 'stable'},
+                'cost': {'version': 'v1', 'channel': 'stable'},
+                'payment': {'version': 'v1', 'channel': 'stable'},
+                'settlement': {'version': 'v1', 'channel': 'stable'},
+                'my_work.workspace': {'version': 'v1', 'channel': 'stable'}
+            }"/>
             <field name="menu_groups" eval="[
                 {
                     'group_key': 'released_products',

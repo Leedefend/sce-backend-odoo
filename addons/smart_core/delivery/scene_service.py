@@ -4,11 +4,19 @@ from __future__ import annotations
 from odoo.addons.smart_core.core.scene_contract_builder import (
     build_release_surface_scene_contract_from_delivery_entry,
 )
+from odoo.addons.smart_core.delivery.scene_snapshot_service import SceneSnapshotService
 
 
 class SceneService:
+    def __init__(self, env):
+        self.env = env
+        self.snapshot_service = SceneSnapshotService(env)
+
     def build_entries(self, *, policy: dict, scenes: list[dict]) -> list[dict]:
         scene_index = {}
+        binding_map = (
+            policy.get("scene_version_bindings") if isinstance(policy.get("scene_version_bindings"), dict) else {}
+        )
         for item in scenes or []:
             if not isinstance(item, dict):
                 continue
@@ -33,6 +41,24 @@ class SceneService:
                 or source.get("label")
                 or scene_key
             ).strip()
+            standard_contract = build_release_surface_scene_contract_from_delivery_entry(
+                {
+                    "scene_key": scene_key,
+                    "label": label,
+                    "route": route,
+                    "product_key": str(row.get("product_key") or "").strip(),
+                    "capability_key": str(row.get("capability_key") or "").strip(),
+                    "requires_project_context": bool(row.get("requires_project_context", False)),
+                    "state": "present" if source else "policy_only",
+                }
+            )
+            snapshot_binding = binding_map.get(scene_key) if isinstance(binding_map.get(scene_key), dict) else {}
+            snapshot = self.snapshot_service.resolve_snapshot(
+                scene_key=scene_key,
+                product_key=str(row.get("product_key") or "").strip(),
+                binding=snapshot_binding,
+            )
+            snapshot_contract = snapshot.get("contract_json") if isinstance(snapshot.get("contract_json"), dict) else {}
             entries.append(
                 {
                     "scene_key": scene_key,
@@ -43,17 +69,13 @@ class SceneService:
                     "requires_project_context": bool(row.get("requires_project_context", False)),
                     "state": "present" if source else "policy_only",
                     "source": "delivery_engine_v1",
-                    "scene_contract_standard_v1": build_release_surface_scene_contract_from_delivery_entry(
-                        {
-                            "scene_key": scene_key,
-                            "label": label,
-                            "route": route,
-                            "product_key": str(row.get("product_key") or "").strip(),
-                            "capability_key": str(row.get("capability_key") or "").strip(),
-                            "requires_project_context": bool(row.get("requires_project_context", False)),
-                            "state": "present" if source else "policy_only",
-                        }
-                    ),
+                    "scene_contract_standard_v1": snapshot_contract or standard_contract,
+                    "scene_asset_binding": {
+                        "version": str(snapshot_binding.get("version") or "v1").strip() or "v1",
+                        "channel": str(snapshot_binding.get("channel") or "stable").strip() or "stable",
+                        "resolved": bool(snapshot),
+                        "snapshot_id": int(snapshot.get("id") or 0),
+                    },
                 }
             )
         return entries

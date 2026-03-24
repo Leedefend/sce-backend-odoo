@@ -1011,6 +1011,22 @@ verify.product.delivery_policy_guard: guard.prod.forbid check-compose-project ch
 verify.product.scene_contract_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_scene_contract_guard.py"
 
+.PHONY: verify.scene.freeze_snapshot_guard
+verify.scene.freeze_snapshot_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_freeze_snapshot_guard.sh
+
+.PHONY: verify.scene.replication_guard
+verify.scene.replication_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_replication_guard.sh
+
+.PHONY: verify.scene.version_binding_guard
+verify.scene.version_binding_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_version_binding_guard.sh
+
+.PHONY: verify.release.scene_asset.v1
+verify.release.scene_asset.v1: verify.product.scene_contract_guard verify.scene.freeze_snapshot_guard verify.scene.replication_guard verify.scene.version_binding_guard verify.portal.release_navigation_browser_smoke.host
+	@echo "[OK] verify.release.scene_asset.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"
