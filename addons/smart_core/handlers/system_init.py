@@ -50,6 +50,7 @@ from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
 )
+from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -669,7 +670,24 @@ class SystemInitHandler(BaseIntentHandler):
                 if isinstance(contract_meta, dict):
                     data["nav_meta"]["scene_nav_meta"] = contract_meta
         stage_ts = _mark("build_scene_nav_contract", stage_ts)
-        data["release_navigation_v1"] = build_release_navigation_contract(data if isinstance(data, dict) else {})
+        legacy_release_navigation = build_release_navigation_contract(data if isinstance(data, dict) else {})
+        delivery_engine = DeliveryEngine(env)
+        delivery_payload = delivery_engine.build(
+            data=data if isinstance(data, dict) else {},
+            product_key="construction.standard",
+        )
+        data["delivery_engine_v1"] = delivery_payload
+        data["release_navigation_v1"] = {
+            "contract_version": str(delivery_payload.get("contract_version") or "v1"),
+            "source": "delivery_engine_v1",
+            "role_code": str(delivery_payload.get("role_code") or ""),
+            "nav": delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
+            "meta": {
+                "product_key": str(delivery_payload.get("product_key") or ""),
+                "delivery_engine_meta": delivery_payload.get("meta") if isinstance(delivery_payload.get("meta"), dict) else {},
+                "legacy_builder_contract_version": str(legacy_release_navigation.get("contract_version") or ""),
+            },
+        }
 
         platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
         if platform_minimum_surface_mode:

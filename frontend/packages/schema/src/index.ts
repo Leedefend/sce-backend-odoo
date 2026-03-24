@@ -105,6 +105,17 @@ export interface NavMeta {
 }
 
 export interface AppInitResponse {
+  delivery_engine_v1?: {
+    contract_version?: string;
+    source?: string;
+    product_key?: string;
+    role_code?: string;
+    nav?: NavNode[];
+    scenes?: Array<Record<string, unknown>>;
+    capabilities?: Array<Record<string, unknown>>;
+    product_policy?: Record<string, unknown>;
+    meta?: Record<string, unknown>;
+  };
   release_navigation_v1?: {
     contract_version?: string;
     source?: string;
