@@ -1387,3 +1387,13 @@ Each entry must include:
 - completed_step: `给 product policy 增加 lifecycle + access 字段；新增 ProductEditionPromotionService；runtime 新增 edition fallback diagnostics；新增 edition lifecycle/access/promotion 守卫与 release gate`
 - artifacts_hint: `artifacts/backend/edition_*_guard.json + artifacts/codex/release-navigation-browser-smoke/`
 - next_step: `整理本轮结果并按实现批/治理批分类提交，或继续进入 edition runtime routing / edition freeze surface`
+
+## 2026-03-24T06:35:00Z Edition Runtime Routing v1
+
+- branch: `codex/next-round`
+- head: `54e0301`
+- layer_target: `Platform Layer + Frontend Layer + Release Governance Layer`
+- module: `addons/smart_core/handlers/system_init.py + addons/smart_core/core/system_init_payload_builder.py + frontend/apps/web/src/stores/session.ts + frontend/apps/web/src/api/intents.ts + frontend/apps/web/src/router/index.ts + scripts/verify/edition_* + docs/architecture + docs/ops/releases`
+- reason: `在 edition lifecycle 已完成的前提下，统一 requested/effective edition runtime context、route/query 注入优先级和 fallback diagnostics，并把 preview 渠道推进为受控可访问 runtime`
+- completed_step: `system.init 新增 edition_runtime_v1；frontend session/store 固化 requested/effective edition；router 支持受控 edition query 注入与非法 query 清洗；后续 runtime intents 自动透传 effective edition；新增 runtime_routing/session_context/route_fallback 三条 guard 与 verify.release.edition_runtime.v1`
+- next_step: `执行 smart_core 模块升级、前端构建与 edition runtime 全量门禁，确认 preview runtime 不污染 standard surface`
