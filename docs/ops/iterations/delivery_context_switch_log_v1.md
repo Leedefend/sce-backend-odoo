@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-24T03:05:00Z
+- blocker_key: `delivery_engine_v1_bootstrap`
+- layer_target: `Platform Layer / Scene Layer / Verify Governance`
+- module: `addons/smart_core/delivery + addons/smart_core/handlers/system_init.py + addons/smart_core/core/system_init_payload_builder.py + frontend/apps/web/src/stores/session.ts + scripts/verify + docs/ops/releases`
+- reason: `将发布导航 runtime 升级为 Delivery Engine v1，统一输出 product policy、menu、scene、capability，并保持 release_navigation_v1 兼容收口`
+- completed_step: `已完成复用审计，确认复用现有 scenes/capabilities/runtime；已开始落 product policy seed、delivery engine service、startup payload 接入与三类 integrity guard 骨架`
+- active_commit: `5fb878c`
+- next_step: `Run smart_core module upgrade, verify delivery_engine_v1 live in system.init, then execute release delivery guards and browser smoke`
+
 ### 2026-03-23T17:35:00Z
 - blocker_key: `release_navigation_batch_planning`
 - layer_target: `Scene Navigation Contract / Frontend Navigation Consumption / Verify Governance`
