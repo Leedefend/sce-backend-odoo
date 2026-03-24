@@ -5,6 +5,7 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.scene_contract_builder import attach_release_surface_scene_contract
 from odoo.addons.smart_core.orchestration.settlement_slice_contract_orchestrator import (
     SettlementSliceContractOrchestrator,
 )
@@ -66,6 +67,14 @@ class SettlementSliceEnterHandler(BaseIntentHandler):
 
         orchestrator = SettlementSliceContractOrchestrator(self.env)
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
+        data = attach_release_surface_scene_contract(
+            data,
+            product_key="fr5",
+            capability="delivery.fr5.settlement_summary",
+            route="/s/project.management",
+            diagnostics_ref=self.INTENT_TYPE,
+            trace_id=str((self.context or {}).get("trace_id") or ""),
+        )
         if int(data.get("project_id") or 0) <= 0:
             return {
                 "ok": False,

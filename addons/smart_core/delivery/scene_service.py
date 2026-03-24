@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.scene_contract_builder import (
+    build_release_surface_scene_contract_from_delivery_entry,
+)
+
 
 class SceneService:
     def build_entries(self, *, policy: dict, scenes: list[dict]) -> list[dict]:
@@ -39,7 +43,17 @@ class SceneService:
                     "requires_project_context": bool(row.get("requires_project_context", False)),
                     "state": "present" if source else "policy_only",
                     "source": "delivery_engine_v1",
+                    "scene_contract_standard_v1": build_release_surface_scene_contract_from_delivery_entry(
+                        {
+                            "scene_key": scene_key,
+                            "label": label,
+                            "route": route,
+                            "product_key": str(row.get("product_key") or "").strip(),
+                            "capability_key": str(row.get("capability_key") or "").strip(),
+                            "requires_project_context": bool(row.get("requires_project_context", False)),
+                            "state": "present" if source else "policy_only",
+                        }
+                    ),
                 }
             )
         return entries
-
