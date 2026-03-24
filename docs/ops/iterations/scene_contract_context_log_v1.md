@@ -48,3 +48,20 @@ Possible directions:
 - standardize more frontend scene VM consumption on `scene_contract_standard_v1`
 - define scene-level freeze criteria for future released slices
 - extend role-level scene contract guards without changing released product policy
+
+## 2026-03-24 (Scene Freeze & Replication v1)
+
+- batch: `Scene Freeze & Replication v1`
+- status: `in_progress`
+- scope:
+  - released scene snapshot model
+  - explicit freeze service
+  - replication service
+  - product policy scene version binding
+  - guard baseline
+
+## Facts Frozen For This Batch
+
+- snapshot writes are explicit operations, not implicit runtime side effects
+- released scene asset truth lives in `addons/smart_core`, not in the legacy tile-scene support models
+- `sc.product.policy.scene_version_bindings` is the released product selector for active scene asset versions

@@ -1349,3 +1349,12 @@ Each entry must include:
 - completed_step: `完成 live 审计，确认 released surface 由 route-only scene、runtime entry scenes、page.contract scene 三类组成；新增 scene_contract_standard_v1 adapter，接入 delivery_engine_v1.scenes、FR-2~FR-5 enter payload、my_work page.contract；新增 verify.product.scene_contract_guard，并实测通过 verify.release.delivery_engine.v1；文档补齐 audit/standard/release surface/context log`
 - active_commit: `44b767d`
 - next_step: `后续只能继续做 scene-level freeze/role guard/frontend VM 收口，不得重开 FR-1~FR-5 业务语义或回退到 technical-scene-first 导航`
+
+### 2026-03-24T04:25:00Z
+- blocker_key: `scene_freeze_replication_v1`
+- layer_target: `Platform Layer + Delivery Runtime Layer + Release Governance Layer`
+- module: `addons/smart_core/models/scene_snapshot.py + addons/smart_core/delivery/scene_snapshot_service.py + addons/smart_core/delivery/scene_replication_service.py + addons/smart_core/models/product_policy.py + scripts/verify/scene_*_guard.sh + docs/architecture + docs/ops/releases`
+- reason: `把 released scene 从 runtime contract 升级为可冻结、可复制、可版本绑定的产品资产，同时保持 FR-1~FR-5、release navigation、Delivery Engine v1 不重开`
+- completed_step: `实现显式 snapshot 冻结模型与 service；product policy 新增 scene_version_bindings；delivery_engine_v1.scenes 优先消费绑定 snapshot；新增 freeze/replication/version binding 三条 shell guard 与统一 gate verify.release.scene_asset.v1`
+- active_commit: `900b454`
+- next_step: `执行 smart_core 模块升级、release scene asset guards 与 verify.release.delivery_engine.v1，确认 snapshot/binding 不破坏已冻结发布面`
