@@ -93,6 +93,18 @@ status: active
     - `make verify.scene.replication_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.scene.version_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
   - 统一门禁：`make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Scene Lifecycle Governance v1：
+  - 状态：`受生命周期治理的发布场景资产`
+  - 范围：`snapshot lifecycle state + promotion + active stable uniqueness + runtime fallback diagnostics`
+  - 架构文档：
+    - `docs/architecture/scene_lifecycle_model_v1.md`
+    - `docs/architecture/scene_promotion_policy_v1.md`
+  - 发布面文档：`docs/ops/releases/scene_asset_lifecycle_surface_v1.md`
+  - 守卫：
+    - `make verify.scene.lifecycle_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.active_uniqueness_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+  - 统一门禁：`make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -187,4 +199,7 @@ status: active
 - `verify.scene.freeze_snapshot_guard`：released scene freeze snapshot 守卫
 - `verify.scene.replication_guard`：released scene replication 守卫
 - `verify.scene.version_binding_guard`：released scene version binding 守卫
+- `verify.scene.lifecycle_guard`：released scene lifecycle 守卫
+- `verify.scene.promotion_guard`：released scene promotion 守卫
+- `verify.scene.active_uniqueness_guard`：released scene active stable uniqueness 守卫
 - `verify.release.scene_asset.v1`：released scene asset 守卫 + 浏览器 smoke

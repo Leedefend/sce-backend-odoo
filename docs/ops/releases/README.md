@@ -186,6 +186,18 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - `make verify.scene.replication_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.scene.version_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
   - unified gate: `make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Scene Lifecycle Governance v1:
+  - status: `lifecycle-governed released scene assets`
+  - scope: `snapshot lifecycle state + promotion + active stable uniqueness + runtime fallback diagnostics`
+  - architecture:
+    - `docs/architecture/scene_lifecycle_model_v1.md`
+    - `docs/architecture/scene_promotion_policy_v1.md`
+  - release surface: `docs/ops/releases/scene_asset_lifecycle_surface_v1.md`
+  - guards:
+    - `make verify.scene.lifecycle_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.active_uniqueness_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+  - unified gate: `make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -287,4 +299,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.scene.freeze_snapshot_guard`: released scene freeze snapshot guard
 - `verify.scene.replication_guard`: released scene replication guard
 - `verify.scene.version_binding_guard`: released scene version binding guard
+- `verify.scene.lifecycle_guard`: released scene lifecycle guard
+- `verify.scene.promotion_guard`: released scene promotion guard
+- `verify.scene.active_uniqueness_guard`: released scene active stable uniqueness guard
 - `verify.release.scene_asset.v1`: released scene asset guards + browser smoke

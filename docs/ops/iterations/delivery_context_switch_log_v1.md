@@ -1358,3 +1358,12 @@ Each entry must include:
 - completed_step: `实现显式 snapshot 冻结模型与 service；product policy 新增 scene_version_bindings；delivery_engine_v1.scenes 优先消费绑定 snapshot；新增 freeze/replication/version binding 三条 shell guard 与统一 gate verify.release.scene_asset.v1`
 - active_commit: `900b454`
 - next_step: `执行 smart_core 模块升级、release scene asset guards 与 verify.release.delivery_engine.v1，确认 snapshot/binding 不破坏已冻结发布面`
+
+### 2026-03-24T05:05:00Z
+- blocker_key: `scene_lifecycle_governance_v1`
+- layer_target: `Platform Layer + Delivery Runtime Layer + Release Governance Layer`
+- module: `addons/smart_core/models/scene_snapshot.py + addons/smart_core/delivery/scene_promotion_service.py + addons/smart_core/delivery/scene_snapshot_service.py + addons/smart_core/delivery/product_policy_service.py + addons/smart_core/delivery/scene_service.py + scripts/verify/scene_*_guard.sh + docs/architecture + docs/ops/releases`
+- reason: `在 scene freeze/replication/version binding 已完成的前提下，引入 lifecycle state、promotion policy、active stable uniqueness 与 runtime fallback diagnostics，让 released scene asset 成为受控发布单元`
+- completed_step: `新增 snapshot state/promotion 字段；新增 scene_promotion_service；product policy 仅接受 active stable 绑定；delivery runtime 输出 snapshot fallback diagnostics；新增 lifecycle/promotion/active_uniqueness 三条 guard 并接入 verify.release.scene_asset.v1`
+- active_commit: `9de784a`
+- next_step: `执行 smart_core 模块升级与完整门禁，确认 lifecycle governance 不打穿 released scene delivery`
