@@ -56,12 +56,18 @@ try:
             raise RuntimeError(f"{row.get('scene_key')}: identity.version drift")
         if governance.get("released") is not True:
             raise RuntimeError(f"{row.get('scene_key')}: governance.released must be true")
+        if str(row.get("state") or "").strip() != "draft":
+            raise RuntimeError(f"{row.get('scene_key')}: freeze snapshot must default to draft")
+        if row.get("is_active") is not False:
+            raise RuntimeError(f"{row.get('scene_key')}: draft freeze snapshot must default to inactive")
         report["snapshots"].append(
             {
                 "scene_key": row.get("scene_key"),
                 "product_key": row.get("product_key"),
                 "version": row.get("version"),
                 "channel": row.get("channel"),
+                "state": row.get("state"),
+                "is_active": row.get("is_active"),
                 "snapshot_id": row.get("id"),
             }
         )

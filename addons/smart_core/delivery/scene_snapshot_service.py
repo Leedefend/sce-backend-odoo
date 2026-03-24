@@ -4,6 +4,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from odoo import fields
+
 from odoo.addons.smart_core.core.scene_contract_builder import (
     SCENE_CONTRACT_STANDARD_VERSION,
     build_release_surface_scene_contract_from_delivery_entry,
@@ -19,16 +21,10 @@ def _dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _policy_row_by_scene(policy: dict[str, Any], scene_key: str) -> dict[str, Any]:
-    for row in policy.get("scenes") or []:
-        if not isinstance(row, dict):
-            continue
-        if _text(row.get("scene_key")) == scene_key:
-            return row
-    return {}
-
-
 class SceneSnapshotService:
+    RELEASEABLE_STATES = {"beta", "stable"}
+    BINDABLE_STATE = "stable"
+
     def __init__(self, env):
         self.env = env
         self.policy_service = ProductPolicyService(env)
@@ -132,13 +128,16 @@ class SceneSnapshotService:
             "route": route,
             "version": version,
             "channel": channel,
-            "is_active": True,
+            "state": "draft",
+            "is_active": False,
             "source_type": source_type,
             "source_ref": source_ref,
             "source_contract_version": SCENE_CONTRACT_STANDARD_VERSION,
             "contract_json": self._normalize_contract(contract, scene_key=scene_key, product_key=product_key, capability_key=capability_key),
             "meta_json": meta or {},
             "note": note,
+            "activated_at": False,
+            "deprecated_at": False,
         }
         if cloned_from_snapshot_id:
             values["cloned_from_snapshot_id"] = int(cloned_from_snapshot_id)
@@ -173,12 +172,59 @@ class SceneSnapshotService:
                 ("product_key", "=", product_key),
                 ("version", "=", version),
                 ("channel", "=", channel),
+                ("state", "=", self.BINDABLE_STATE),
                 ("is_active", "=", True),
                 ("active", "=", True),
             ],
             limit=1,
         )
         return rec.to_runtime_dict() if rec else {}
+
+    def resolve_snapshot_with_diagnostics(
+        self,
+        *,
+        scene_key: str,
+        product_key: str,
+        binding: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        bind = _dict(binding)
+        version = _text(bind.get("version")) or "v1"
+        channel = _text(bind.get("channel")) or "stable"
+        diagnostics = {
+            "snapshot_bound": bool(bind),
+            "snapshot_version": version,
+            "snapshot_channel": channel,
+            "snapshot_resolved": False,
+            "snapshot_state": "",
+            "snapshot_id": 0,
+            "snapshot_fallback_reason": "",
+        }
+        if not bind:
+            diagnostics["snapshot_fallback_reason"] = "BINDING_MISSING"
+            return {}, diagnostics
+        rec = self._model().search(
+            [
+                ("scene_key", "=", scene_key),
+                ("product_key", "=", product_key),
+                ("version", "=", version),
+                ("channel", "=", channel),
+                ("active", "=", True),
+            ],
+            limit=1,
+        )
+        if not rec:
+            diagnostics["snapshot_fallback_reason"] = "SNAPSHOT_NOT_FOUND"
+            return {}, diagnostics
+        diagnostics["snapshot_state"] = _text(rec.state)
+        diagnostics["snapshot_id"] = int(rec.id)
+        if rec.state != self.BINDABLE_STATE:
+            diagnostics["snapshot_fallback_reason"] = f"SNAPSHOT_STATE_{_text(rec.state).upper() or 'UNKNOWN'}"
+            return {}, diagnostics
+        if rec.is_active is not True:
+            diagnostics["snapshot_fallback_reason"] = "SNAPSHOT_INACTIVE"
+            return {}, diagnostics
+        diagnostics["snapshot_resolved"] = True
+        return rec.to_runtime_dict(), diagnostics
 
     def clone_snapshot(
         self,
@@ -265,3 +311,75 @@ class SceneSnapshotService:
                 "channel": _text(value.get("channel")) or "stable",
             }
         return out
+
+    def list_active_stable_snapshots(self, *, scene_key: str, product_key: str) -> list[dict[str, Any]]:
+        rows = self._model().search(
+            [
+                ("scene_key", "=", scene_key),
+                ("product_key", "=", product_key),
+                ("state", "=", "stable"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ]
+        )
+        return [row.to_runtime_dict() for row in rows]
+
+    def validate_snapshot_contract(self, contract: dict[str, Any], *, scene_key: str, product_key: str, capability_key: str) -> None:
+        payload = _dict(contract)
+        if _text(payload.get("contract_version")) != SCENE_CONTRACT_STANDARD_VERSION:
+            raise ValueError("SCENE_CONTRACT_VERSION_INVALID")
+        identity = _dict(payload.get("identity"))
+        governance = _dict(payload.get("governance"))
+        target = _dict(payload.get("target"))
+        page = _dict(payload.get("page"))
+        if _text(identity.get("scene_key")) != scene_key:
+            raise ValueError("SCENE_KEY_MISMATCH")
+        if _text(identity.get("product_key")) != product_key:
+            raise ValueError("PRODUCT_KEY_MISMATCH")
+        if _text(identity.get("capability")) != capability_key:
+            raise ValueError("CAPABILITY_KEY_MISMATCH")
+        if _text(governance.get("contract_version")) != SCENE_CONTRACT_STANDARD_VERSION:
+            raise ValueError("GOVERNANCE_CONTRACT_VERSION_INVALID")
+        if not _text(target.get("route")):
+            raise ValueError("SCENE_TARGET_ROUTE_MISSING")
+        if not isinstance(page.get("blocks"), list):
+            raise ValueError("SCENE_PAGE_BLOCKS_INVALID")
+
+    def bindable_snapshot_exists(self, *, scene_key: str, product_key: str, binding: dict[str, Any] | None = None) -> bool:
+        snapshot, _diagnostics = self.resolve_snapshot_with_diagnostics(
+            scene_key=scene_key,
+            product_key=product_key,
+            binding=binding,
+        )
+        return bool(snapshot)
+
+    def mark_snapshot_state(
+        self,
+        *,
+        snapshot_id: int,
+        state: str,
+        is_active: bool,
+        state_reason: str = "",
+        promotion_note: str = "",
+        promoted_from_snapshot_id: int | None = None,
+        deprecated_at: Any = False,
+        activated_at: Any = False,
+    ) -> dict[str, Any]:
+        rec = self._model().browse(int(snapshot_id))
+        if not rec.exists():
+            raise ValueError("SNAPSHOT_NOT_FOUND")
+        values = {
+            "state": state,
+            "is_active": is_active,
+            "state_reason": state_reason,
+            "promotion_note": promotion_note,
+            "activated_at": activated_at,
+            "deprecated_at": deprecated_at,
+        }
+        if promoted_from_snapshot_id:
+            values["promoted_from_snapshot_id"] = int(promoted_from_snapshot_id)
+        rec.write(values)
+        return rec.to_runtime_dict()
+
+    def now(self):
+        return fields.Datetime.now()

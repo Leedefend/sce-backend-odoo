@@ -59,11 +59,16 @@ try:
         raise RuntimeError("clone channel drift")
     if int(clone.get("cloned_from_snapshot_id") or 0) <= 0:
         raise RuntimeError("clone missing cloned_from_snapshot_id")
+    if str(clone.get("state") or "").strip() != "draft":
+        raise RuntimeError("replicated snapshot must default to draft")
+    if clone.get("is_active") is not False:
+        raise RuntimeError("replicated snapshot must default to inactive")
     report["clone"] = {
         "scene_key": clone.get("scene_key"),
         "product_key": clone.get("product_key"),
         "version": clone.get("version"),
         "channel": clone.get("channel"),
+        "state": clone.get("state"),
         "snapshot_id": clone.get("id"),
         "cloned_from_snapshot_id": clone.get("cloned_from_snapshot_id"),
     }

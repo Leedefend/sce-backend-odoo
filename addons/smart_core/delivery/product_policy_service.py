@@ -195,6 +195,62 @@ class ProductPolicyService:
     def __init__(self, env):
         self.env = env
 
+    def _snapshot_binding_is_releaseable(self, *, scene_key: str, product_key: str, binding: dict | None) -> bool:
+        row = binding if isinstance(binding, dict) else {}
+        version = str(row.get("version") or "").strip() or "v1"
+        channel = str(row.get("channel") or "").strip() or "stable"
+        rec = self.env["sc.scene.snapshot"].sudo().search(
+            [
+                ("scene_key", "=", scene_key),
+                ("product_key", "=", product_key),
+                ("version", "=", version),
+                ("channel", "=", channel),
+                ("state", "=", "stable"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ],
+            limit=1,
+        )
+        return bool(rec)
+
+    def _sanitize_scene_version_bindings(self, payload: dict) -> dict:
+        bindings = payload.get("scene_version_bindings") if isinstance(payload.get("scene_version_bindings"), dict) else {}
+        sanitized = {}
+        diagnostics = {}
+        for scene_key, binding in bindings.items():
+            key = str(scene_key or "").strip()
+            if not key:
+                continue
+            row = binding if isinstance(binding, dict) else {}
+            product_key = ""
+            for scene_row in payload.get("scenes") or []:
+                if isinstance(scene_row, dict) and str(scene_row.get("scene_key") or "").strip() == key:
+                    product_key = str(scene_row.get("product_key") or "").strip()
+                    break
+            if not product_key:
+                diagnostics[key] = {
+                    "binding_allowed": False,
+                    "reason": "SCENE_POLICY_MISSING",
+                }
+                continue
+            if self._snapshot_binding_is_releaseable(scene_key=key, product_key=product_key, binding=row):
+                sanitized[key] = {
+                    "version": str(row.get("version") or "").strip() or "v1",
+                    "channel": str(row.get("channel") or "").strip() or "stable",
+                }
+                diagnostics[key] = {
+                    "binding_allowed": True,
+                    "reason": "ACTIVE_STABLE_BOUND",
+                }
+            else:
+                diagnostics[key] = {
+                    "binding_allowed": False,
+                    "reason": "SNAPSHOT_NOT_ACTIVE_STABLE",
+                }
+        payload["scene_version_bindings"] = sanitized
+        payload["scene_binding_diagnostics"] = diagnostics
+        return payload
+
     def get_policy(self, product_key: str | None = None) -> dict:
         key = str(product_key or DEFAULT_PRODUCT_POLICY["product_key"]).strip() or DEFAULT_PRODUCT_POLICY["product_key"]
         try:
@@ -204,7 +260,7 @@ class ProductPolicyService:
         if rec:
             payload = rec.to_runtime_dict()
             if isinstance(payload, dict) and payload.get("product_key"):
-                return payload
+                return self._sanitize_scene_version_bindings(payload)
         fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
         fallback["product_key"] = key
-        return fallback
+        return self._sanitize_scene_version_bindings(fallback)

@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+from odoo.addons.smart_core.delivery.scene_promotion_service import ScenePromotionService
 from odoo.addons.smart_core.delivery.scene_replication_service import SceneReplicationService
 from odoo.addons.smart_core.delivery.scene_snapshot_service import SceneSnapshotService
 
@@ -49,8 +50,14 @@ def clone_policy_payload(source: dict) -> dict:
 report = {"status": "PASS", "preview_policy": PREVIEW_KEY, "binding": {}, "resolved_scene": {}}
 try:
     snapshot_service = SceneSnapshotService(env)
-    snapshot_service.freeze_policy_surface(product_key="construction.standard", version="v1", channel="stable")
-    SceneReplicationService(env).clone(
+    promotion_service = ScenePromotionService(env)
+    frozen = snapshot_service.freeze_policy_surface(product_key="construction.standard", version="v1", channel="stable")
+    base_snapshot = next((row for row in frozen if str(row.get("scene_key") or "").strip() == "project.management" and str(row.get("product_key") or "").strip() == "fr2"), None)
+    if not isinstance(base_snapshot, dict):
+        raise RuntimeError("base snapshot missing for project.management")
+    promotion_service.promote_to_ready(int(base_snapshot["id"]), state_reason="guard_prepare_ready")
+    promotion_service.promote_to_stable(int(base_snapshot["id"]), replace_active=True, state_reason="guard_prepare_stable")
+    beta_clone = SceneReplicationService(env).clone(
         source_scene_key="project.management",
         source_product_key="fr2",
         source_version="v1",
@@ -60,6 +67,9 @@ try:
         target_label="FR-2 项目推进 Beta",
         note="version binding guard beta clone",
     )
+    promotion_service.promote_to_ready(int(beta_clone["id"]), state_reason="guard_preview_ready")
+    promotion_service.promote_to_beta(int(beta_clone["id"]), state_reason="guard_preview_beta")
+    promotion_service.promote_to_stable(int(beta_clone["id"]), replace_active=True, state_reason="guard_preview_stable")
 
     source_policy = env["sc.product.policy"].sudo().search([("product_key", "=", "construction.standard")], limit=1)
     if not source_policy:
@@ -102,6 +112,10 @@ try:
         raise RuntimeError("preview binding version drift")
     if str(binding.get("channel") or "").strip() != "beta":
         raise RuntimeError("preview binding channel drift")
+    if binding.get("binding_allowed") is not True:
+        raise RuntimeError("preview binding_allowed drift")
+    if str(binding.get("snapshot_state") or "").strip() != "stable":
+        raise RuntimeError("preview snapshot_state drift")
     if str(identity.get("version") or "").strip() != "v2":
         raise RuntimeError("preview scene contract version drift")
     report["binding"] = binding

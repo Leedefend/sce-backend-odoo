@@ -1023,8 +1023,20 @@ verify.scene.replication_guard: guard.prod.forbid check-compose-project check-co
 verify.scene.version_binding_guard: guard.prod.forbid check-compose-project check-compose-env
 	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_version_binding_guard.sh
 
+.PHONY: verify.scene.lifecycle_guard
+verify.scene.lifecycle_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_lifecycle_guard.sh
+
+.PHONY: verify.scene.promotion_guard
+verify.scene.promotion_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_promotion_guard.sh
+
+.PHONY: verify.scene.active_uniqueness_guard
+verify.scene.active_uniqueness_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/scene_active_uniqueness_guard.sh
+
 .PHONY: verify.release.scene_asset.v1
-verify.release.scene_asset.v1: verify.product.scene_contract_guard verify.scene.freeze_snapshot_guard verify.scene.replication_guard verify.scene.version_binding_guard verify.portal.release_navigation_browser_smoke.host
+verify.release.scene_asset.v1: verify.product.scene_contract_guard verify.scene.freeze_snapshot_guard verify.scene.replication_guard verify.scene.version_binding_guard verify.scene.lifecycle_guard verify.scene.promotion_guard verify.scene.active_uniqueness_guard verify.portal.release_navigation_browser_smoke.host
 	@echo "[OK] verify.release.scene_asset.v1 done"
 
 .PHONY: verify.product.project_flow.execution_settlement

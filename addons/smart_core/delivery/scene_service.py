@@ -17,6 +17,9 @@ class SceneService:
         binding_map = (
             policy.get("scene_version_bindings") if isinstance(policy.get("scene_version_bindings"), dict) else {}
         )
+        binding_diagnostics = (
+            policy.get("scene_binding_diagnostics") if isinstance(policy.get("scene_binding_diagnostics"), dict) else {}
+        )
         for item in scenes or []:
             if not isinstance(item, dict):
                 continue
@@ -53,7 +56,7 @@ class SceneService:
                 }
             )
             snapshot_binding = binding_map.get(scene_key) if isinstance(binding_map.get(scene_key), dict) else {}
-            snapshot = self.snapshot_service.resolve_snapshot(
+            snapshot, snapshot_diagnostics = self.snapshot_service.resolve_snapshot_with_diagnostics(
                 scene_key=scene_key,
                 product_key=str(row.get("product_key") or "").strip(),
                 binding=snapshot_binding,
@@ -75,7 +78,15 @@ class SceneService:
                         "channel": str(snapshot_binding.get("channel") or "stable").strip() or "stable",
                         "resolved": bool(snapshot),
                         "snapshot_id": int(snapshot.get("id") or 0),
+                        "snapshot_state": str(snapshot.get("state") or snapshot_diagnostics.get("snapshot_state") or "").strip(),
+                        "snapshot_fallback_reason": str(snapshot_diagnostics.get("snapshot_fallback_reason") or "").strip(),
+                        "binding_allowed": bool(_binding_diag(binding_diagnostics, scene_key).get("binding_allowed", False)),
                     },
                 }
             )
         return entries
+
+
+def _binding_diag(diags: dict, scene_key: str) -> dict:
+    row = diags.get(scene_key)
+    return row if isinstance(row, dict) else {}
