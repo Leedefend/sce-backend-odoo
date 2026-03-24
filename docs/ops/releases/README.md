@@ -218,6 +218,16 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - `make verify.edition.access_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.edition.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.release.edition_lifecycle.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Edition Runtime Routing v1:
+  - status: `edition runtime requested/effective context governed`
+  - scope: `route/query injection + system.init edition runtime contract + session/store pass-through`
+  - architecture: `docs/architecture/edition_runtime_routing_model_v1.md`
+  - release surface: `docs/ops/releases/edition_runtime_surface_v1.md`
+  - gate:
+    - `make verify.edition.runtime_routing_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+    - `make verify.edition.session_context_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+    - `make verify.edition.route_fallback_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
+    - `make verify.release.edition_runtime.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -330,3 +340,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.edition.access_guard`: edition access control guard
 - `verify.edition.promotion_guard`: edition promotion and rollback guard
 - `verify.release.edition_lifecycle.v1`: release edition lifecycle gate
+- `verify.edition.runtime_routing_guard`: edition runtime requested/effective guard
+- `verify.edition.session_context_guard`: edition session/store context guard
+- `verify.edition.route_fallback_guard`: edition route fallback guard
+- `verify.release.edition_runtime.v1`: release edition runtime gate

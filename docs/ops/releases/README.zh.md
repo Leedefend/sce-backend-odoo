@@ -125,6 +125,16 @@ status: active
     - `make verify.edition.access_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.edition.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.release.edition_lifecycle.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Edition Runtime Routing v1：
+  - 状态：`edition runtime 的 requested/effective 上下文已受治理`
+  - 范围：`route/query edition 注入 + system.init edition runtime contract + session/store 透传`
+  - 架构文档：`docs/architecture/edition_runtime_routing_model_v1.md`
+  - 发布面文档：`docs/ops/releases/edition_runtime_surface_v1.md`
+  - 门禁：
+    - `make verify.edition.runtime_routing_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+    - `make verify.edition.session_context_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+    - `make verify.edition.route_fallback_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
+    - `make verify.release.edition_runtime.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -230,3 +240,7 @@ status: active
 - `verify.edition.access_guard`：edition 访问控制守卫
 - `verify.edition.promotion_guard`：edition promotion / rollback 守卫
 - `verify.release.edition_lifecycle.v1`：release edition lifecycle 门禁
+- `verify.edition.runtime_routing_guard`：edition runtime requested/effective 守卫
+- `verify.edition.session_context_guard`：edition session/store 上下文守卫
+- `verify.edition.route_fallback_guard`：edition route fallback 守卫
+- `verify.release.edition_runtime.v1`：release edition runtime 门禁
