@@ -4,6 +4,9 @@ from __future__ import annotations
 from typing import Any
 
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
+from odoo.addons.smart_core.core.scene_contract_builder import (
+    build_release_surface_scene_contract_from_page_contract,
+)
 
 
 def _resolve_role_source_code(data: dict[str, Any]) -> str:
@@ -55,6 +58,16 @@ def build_runtime_page_contracts(data: dict[str, Any]) -> dict[str, Any]:
         meta["role_source_code"] = role_code
         orchestration["meta"] = meta
         page["page_orchestration_v1"] = orchestration
+        if page_key == "my_work":
+            page["scene_contract_standard_v1"] = build_release_surface_scene_contract_from_page_contract(
+                page,
+                scene_key="my_work.workspace",
+                title="我的工作",
+                product_key="my_work",
+                capability="delivery.my_work.workspace",
+                route="/my-work",
+                diagnostics_ref="page.contract:my_work",
+            )
         pages[page_key] = page
     payload["pages"] = pages
     return payload

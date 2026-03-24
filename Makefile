@@ -921,7 +921,7 @@ verify.release.navigation.surface: verify.release.navigation.contract_guard veri
 	@echo "[OK] verify.release.navigation.surface done"
 
 .PHONY: verify.release.delivery_engine.v1
-verify.release.delivery_engine.v1: verify.product.delivery_menu_integrity_guard verify.product.delivery_scene_integrity_guard verify.product.delivery_policy_guard verify.portal.release_navigation_browser_smoke.host
+verify.release.delivery_engine.v1: verify.product.delivery_menu_integrity_guard verify.product.delivery_scene_integrity_guard verify.product.delivery_policy_guard verify.product.scene_contract_guard verify.portal.release_navigation_browser_smoke.host
 	@echo "[OK] verify.release.delivery_engine.v1 done"
 
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
@@ -1006,6 +1006,10 @@ verify.product.delivery_scene_integrity_guard: guard.prod.forbid check-compose-p
 .PHONY: verify.product.delivery_policy_guard
 verify.product.delivery_policy_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_delivery_policy_guard.py"
+
+.PHONY: verify.product.scene_contract_guard
+verify.product.scene_contract_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_scene_contract_guard.py"
 
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env

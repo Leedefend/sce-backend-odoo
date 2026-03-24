@@ -2,9 +2,9 @@
   <section class="release-entry">
     <header class="hero">
       <p class="eyebrow">产品切片入口</p>
-      <h1>{{ product.title }}</h1>
-      <p class="description">{{ product.description }}</p>
-      <p class="scope">{{ product.scope }}</p>
+      <h1>{{ productView.title }}</h1>
+      <p class="description">{{ productView.description }}</p>
+      <p class="scope">{{ productView.scope }}</p>
     </header>
 
     <section class="actions">
@@ -18,6 +18,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useSessionStore } from '../stores/session';
 
 type ProductDescriptor = {
   title: string;
@@ -50,8 +51,31 @@ const PRODUCT_TEXT: Record<string, ProductDescriptor> = {
 
 const router = useRouter();
 const route = useRoute();
+const session = useSessionStore();
 
 const productKey = computed(() => String(route.params.productKey || '').trim().toLowerCase());
+const releasedScene = computed<Record<string, unknown>>(() => {
+  const rows = session.deliveryEngineV1?.scenes;
+  if (!Array.isArray(rows)) return {};
+  return (
+    rows.find((item) => {
+      if (!item || typeof item !== 'object') return false;
+      return String((item as Record<string, unknown>).product_key || '').trim().toLowerCase() === productKey.value;
+    }) as Record<string, unknown> | undefined
+  ) ?? {};
+});
+const releasedSceneContract = computed<Record<string, unknown>>(() => {
+  const raw = releasedScene.value.scene_contract_standard_v1;
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+});
+const releasedIdentity = computed<Record<string, unknown>>(() => {
+  const raw = releasedSceneContract.value.identity;
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+});
+const releasedState = computed<Record<string, unknown>>(() => {
+  const raw = releasedSceneContract.value.state;
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+});
 const product = computed<ProductDescriptor>(() => {
   return PRODUCT_TEXT[productKey.value] ?? {
     title: '产品入口',
@@ -59,6 +83,11 @@ const product = computed<ProductDescriptor>(() => {
     scope: '请先新建项目，或从已有项目继续。',
   };
 });
+const productView = computed<ProductDescriptor>(() => ({
+  title: String(releasedIdentity.value.title || '').trim() || product.value.title,
+  description: String(releasedState.value.message || '').trim() || product.value.description,
+  scope: product.value.scope,
+}));
 const recentProjectId = computed(() => {
   if (typeof window === 'undefined') return '';
   return String(window.localStorage.getItem('sc_last_project_id') || '').trim();

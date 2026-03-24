@@ -111,7 +111,16 @@ export interface AppInitResponse {
     product_key?: string;
     role_code?: string;
     nav?: NavNode[];
-    scenes?: Array<Record<string, unknown>>;
+    scenes?: Array<Record<string, unknown> & {
+      scene_key?: string;
+      label?: string;
+      route?: string;
+      product_key?: string;
+      capability_key?: string;
+      requires_project_context?: boolean;
+      state?: string;
+      scene_contract_standard_v1?: Record<string, unknown>;
+    }>;
     capabilities?: Array<Record<string, unknown>>;
     product_policy?: Record<string, unknown>;
     meta?: Record<string, unknown>;

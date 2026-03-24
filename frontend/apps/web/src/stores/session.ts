@@ -129,6 +129,7 @@ export interface WorkspaceHomeContract {
     extensions?: Record<string, unknown>;
     diagnostics?: Record<string, unknown>;
   };
+  scene_contract_standard_v1?: Record<string, unknown>;
   role_variant?: {
     role_code?: string;
     mode?: string;
@@ -170,6 +171,7 @@ export interface PageContract {
     extensions?: Record<string, unknown>;
     diagnostics?: Record<string, unknown>;
   };
+  scene_contract_standard_v1?: Record<string, unknown>;
   actions?: Record<string, unknown>;
 }
 
