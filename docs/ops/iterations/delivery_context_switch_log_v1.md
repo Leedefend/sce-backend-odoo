@@ -1376,3 +1376,14 @@ Each entry must include:
 - completed_step: `给 product policy 增加 base_product_key/edition_key；新增 construction.preview seed policy；delivery runtime 支持 edition-aware policy resolution；新增 edition policy / scene edition binding / release edition surface 三条 guard 与文档`
 - active_commit: `e253d96`
 - next_step: `执行 smart_core 模块升级与 edition guards，确认 standard/preview 分流在 runtime 层可验证且互不污染`
+
+## 2026-03-24T06:00:00Z Edition Lifecycle Governance v1
+
+- branch: `codex/next-round`
+- head: `98935cf`
+- layer_target: `Platform Layer / Delivery Runtime / Release Governance`
+- module: `addons/smart_core/models/product_policy.py + addons/smart_core/delivery/product_policy_service.py + addons/smart_core/delivery/product_edition_promotion_service.py + addons/smart_core/delivery/delivery_engine.py + scripts/verify/edition_* + docs/architecture + docs/ops/releases`
+- reason: `在 product edition stratification 基础上，把 edition 从可解析分层升级为受控发布渠道，并补齐 access/promotion/rollback 门禁`
+- completed_step: `给 product policy 增加 lifecycle + access 字段；新增 ProductEditionPromotionService；runtime 新增 edition fallback diagnostics；新增 edition lifecycle/access/promotion 守卫与 release gate`
+- artifacts_hint: `artifacts/backend/edition_*_guard.json + artifacts/codex/release-navigation-browser-smoke/`
+- next_step: `整理本轮结果并按实现批/治理批分类提交，或继续进入 edition runtime routing / edition freeze surface`
