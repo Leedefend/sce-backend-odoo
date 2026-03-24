@@ -11,7 +11,7 @@ class DeliveryEngine:
     def __init__(self, env):
         self.env = env
         self.menu_service = MenuService()
-        self.scene_service = SceneService()
+        self.scene_service = SceneService(env)
         self.capability_service = CapabilityService()
         self.product_policy_service = ProductPolicyService(env)
 
@@ -46,6 +46,7 @@ class DeliveryEngine:
                     for row in policy.get("scenes") or []
                     if isinstance(row, dict) and str(row.get("scene_key") or "").strip()
                 ],
+                "scene_version_bindings": policy.get("scene_version_bindings") if isinstance(policy.get("scene_version_bindings"), dict) else {},
                 "capability_keys": [
                     str(row.get("capability_key") or row.get("key") or "").strip()
                     for row in policy.get("capabilities") or []
@@ -59,4 +60,3 @@ class DeliveryEngine:
                 "group_count": len((nav[0].get("children") if nav else []) or []),
             },
         }
-

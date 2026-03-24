@@ -8,6 +8,14 @@ DEFAULT_PRODUCT_POLICY = {
     "product_key": "construction.standard",
     "label": "Construction Standard",
     "version": "v1",
+    "scene_version_bindings": {
+        "projects.intake": {"version": "v1", "channel": "stable"},
+        "project.management": {"version": "v1", "channel": "stable"},
+        "cost": {"version": "v1", "channel": "stable"},
+        "payment": {"version": "v1", "channel": "stable"},
+        "settlement": {"version": "v1", "channel": "stable"},
+        "my_work.workspace": {"version": "v1", "channel": "stable"},
+    },
     "menu_groups": [
         {
             "group_key": "released_products",
@@ -200,4 +208,3 @@ class ProductPolicyService:
         fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
         fallback["product_key"] = key
         return fallback
-

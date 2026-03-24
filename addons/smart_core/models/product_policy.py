@@ -16,6 +16,7 @@ class ScProductPolicy(models.Model):
     menu_groups = fields.Json(required=True, default=list)
     scene_entries = fields.Json(required=True, default=list)
     capability_entries = fields.Json(required=True, default=list)
+    scene_version_bindings = fields.Json(required=True, default=dict)
 
     _sql_constraints = [
         ("sc_product_policy_key_uniq", "unique(product_key)", "Product policy key must be unique."),
@@ -30,4 +31,5 @@ class ScProductPolicy(models.Model):
             "menu_groups": self.menu_groups if isinstance(self.menu_groups, list) else [],
             "scenes": self.scene_entries if isinstance(self.scene_entries, list) else [],
             "capabilities": self.capability_entries if isinstance(self.capability_entries, list) else [],
+            "scene_version_bindings": self.scene_version_bindings if isinstance(self.scene_version_bindings, dict) else {},
         }
