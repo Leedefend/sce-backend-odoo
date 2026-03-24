@@ -88,6 +88,13 @@ class SystemInitPayloadBuilder:
         if deep_scene_key and deep_scene_key not in scene_subset:
             scene_subset.append(deep_scene_key)
 
+        role_scene_candidates = role_surface.get("scene_candidates") if isinstance(role_surface.get("scene_candidates"), list) else []
+        for candidate in role_scene_candidates:
+            scene_key = str(candidate or "").strip()
+            if not scene_key or scene_key in scene_subset:
+                continue
+            scene_subset.append(scene_key)
+
         return {
             "contract_mode": str(row.get("contract_mode") or "default"),
             "preload_requested": preload_requested,
@@ -150,6 +157,8 @@ class SystemInitPayloadBuilder:
             "version": version,
             "init_meta": init_meta,
         }
+        if isinstance(row.get("release_navigation_v1"), dict):
+            minimal["release_navigation_v1"] = row.get("release_navigation_v1")
         if isinstance(row.get("scene_ready_contract_v1"), dict):
             if bool(params.get("with_preload", False)):
                 minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")

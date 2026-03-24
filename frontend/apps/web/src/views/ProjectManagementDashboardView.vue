@@ -874,6 +874,9 @@ async function loadEntry(intent: string, params: Record<string, unknown>) {
       },
     });
     entry.value = (data && typeof data === 'object') ? data : {};
+    if (typeof window !== 'undefined' && entry.value?.project_id) {
+      window.localStorage.setItem('sc_last_project_id', String(entry.value.project_id));
+    }
     currentSceneKey.value = asText(entry.value?.scene_key || '') || intent.replace('.enter', '');
     resetRuntimeBlocks();
     pageStatus.value = 'ready';

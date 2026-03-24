@@ -16,7 +16,7 @@ ROLE_SURFACE_OVERRIDES = {
         ],
     },
     "pm": {
-        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "project.initiation", "projects.intake"],
+        "landing_scene_candidates": ["projects.intake", "projects.list", "projects.ledger", "my_work.workspace"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
@@ -827,7 +827,7 @@ def smart_core_extend_system_init(data, env, user):
             "priority": 100,
             "domain_key": "construction",
             "root_xmlids": ["smart_construction_core.menu_sc_root"],
-            "scene_codes": ["portal.dashboard", "project.management", "projects.list", "projects.intake"],
+            "scene_codes": ["projects.intake", "projects.list", "projects.ledger", "my_work.workspace", "project.management"],
             "role_surface_overrides": ROLE_SURFACE_OVERRIDES,
         }
 

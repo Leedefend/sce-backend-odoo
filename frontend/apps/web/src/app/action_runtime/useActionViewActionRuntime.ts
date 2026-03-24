@@ -217,7 +217,6 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
   }
 
   return {
-    applyActionRefreshPolicy,
     runContractAction,
   };
 }

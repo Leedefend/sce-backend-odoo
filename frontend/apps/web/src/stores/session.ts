@@ -204,6 +204,7 @@ export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
   menuTree: NavNode[];
+  releaseNavigationTree: NavNode[];
   menuExpandedKeys: string[];
   currentAction: NavMeta | null;
   capabilities: string[];
@@ -265,6 +266,7 @@ export const useSessionStore = defineStore('session', {
     token: null,
     user: null,
     menuTree: [],
+    releaseNavigationTree: [],
     menuExpandedKeys: [],
     currentAction: null,
     capabilities: [],
@@ -310,6 +312,7 @@ export const useSessionStore = defineStore('session', {
           const parsed = JSON.parse(cached) as Partial<SessionState>;
           this.user = parsed.user ?? null;
           this.menuTree = parsed.menuTree ?? [];
+          this.releaseNavigationTree = parsed.releaseNavigationTree ?? [];
           this.menuExpandedKeys = parsed.menuExpandedKeys ?? [];
           this.currentAction = parsed.currentAction ?? null;
           this.capabilities = parsed.capabilities ?? [];
@@ -360,6 +363,7 @@ export const useSessionStore = defineStore('session', {
       this.token = null;
       this.user = null;
       this.menuTree = [];
+      this.releaseNavigationTree = [];
       this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
@@ -424,6 +428,7 @@ export const useSessionStore = defineStore('session', {
       const snapshot: Partial<SessionState> = {
         user: this.user,
         menuTree: this.menuTree,
+        releaseNavigationTree: this.releaseNavigationTree,
         menuExpandedKeys: this.menuExpandedKeys,
         currentAction: this.currentAction,
         capabilities: this.capabilities,
@@ -482,6 +487,7 @@ export const useSessionStore = defineStore('session', {
       }
       this.user = result.user ?? null;
       this.menuTree = [];
+      this.releaseNavigationTree = [];
       this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
@@ -801,6 +807,9 @@ export const useSessionStore = defineStore('session', {
         };
       }
       const candidates = [result.nav];
+      const releaseNav = Array.isArray(result.release_navigation_v1?.nav)
+        ? result.release_navigation_v1?.nav
+        : [];
       if (debugIntent) {
         console.info('[debug] system.init candidates:', candidates.map(c => ({
           type: typeof c,
@@ -824,8 +833,12 @@ export const useSessionStore = defineStore('session', {
       }
       // 为导航项添加 key 属性
       const menuTreeWithKeys = nav.map((item, index) => addKeys(item, index));
+      const releaseNavigationTreeWithKeys = releaseNav.map((item, index) => addKeys(item, index + 1000));
       this.menuTree = menuTreeWithKeys;
-      this.menuExpandedKeys = filterExpandedKeys(this.menuTree, this.menuExpandedKeys);
+      this.releaseNavigationTree = releaseNavigationTreeWithKeys;
+      const activeTree = this.releaseNavigationTree.length ? this.releaseNavigationTree : this.menuTree;
+      const filteredExpandedKeys = filterExpandedKeys(activeTree, this.menuExpandedKeys);
+      this.menuExpandedKeys = filteredExpandedKeys.length ? filteredExpandedKeys : defaultExpandedKeys(activeTree);
       this.isReady = true;
       this.initStatus = 'ready';
       this.persist();
@@ -969,4 +982,19 @@ function filterExpandedKeys(tree: NavNode[], keys: string[]): string[] {
   };
   walk(tree);
   return keys.filter((key) => available.has(key));
+}
+
+function defaultExpandedKeys(tree: NavNode[]): string[] {
+  const keys: string[] = [];
+  tree.forEach((node) => {
+    if (node.key && node.children?.length) {
+      keys.push(node.key);
+    }
+    node.children?.forEach((child) => {
+      if (child.key && child.children?.length) {
+        keys.push(child.key);
+      }
+    });
+  });
+  return keys;
 }
