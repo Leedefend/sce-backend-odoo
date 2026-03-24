@@ -4,6 +4,8 @@ import { ErrorCodes } from './error_codes';
 type QueryLike = LocationQueryRaw;
 
 const SCENE_QUERY_KEYS = ['scene', 'scene_key', 'sceneKey'] as const;
+const EDITION_QUERY_KEYS = ['edition', 'edition_key', 'editionKey'] as const;
+const ALLOWED_EDITIONS = new Set(['standard', 'preview']);
 const WORKBENCH_PATH = '/workbench';
 
 export function firstQueryValue(raw: unknown): string {
@@ -22,6 +24,52 @@ export function parseSceneKeyFromQuery(query: QueryLike): string {
     if (normalized) return normalized;
   }
   return '';
+}
+
+export function normalizeEditionKey(raw: unknown): string {
+  const value = firstQueryValue(raw).toLowerCase();
+  return ALLOWED_EDITIONS.has(value) ? value : '';
+}
+
+export function parseEditionKeyFromQuery(query: QueryLike): string {
+  for (const key of EDITION_QUERY_KEYS) {
+    const normalized = normalizeEditionKey(query[key]);
+    if (normalized) return normalized;
+  }
+  return '';
+}
+
+export function normalizeEditionQuery(query: QueryLike): { query: QueryLike; changed: boolean } {
+  const nextQuery: QueryLike = { ...query };
+  let changed = false;
+  let resolved = '';
+  for (const key of EDITION_QUERY_KEYS) {
+    const raw = firstQueryValue(nextQuery[key]);
+    if (!raw) continue;
+    const normalized = normalizeEditionKey(raw);
+    if (!resolved && normalized) {
+      resolved = normalized;
+    }
+    if (!normalized || key !== 'edition') {
+      delete nextQuery[key];
+      changed = true;
+      continue;
+    }
+    if (normalized !== raw) {
+      nextQuery[key] = normalized;
+      changed = true;
+    }
+  }
+  if (resolved) {
+    if (firstQueryValue(nextQuery.edition) !== resolved) {
+      nextQuery.edition = resolved;
+      changed = true;
+    }
+  } else if ('edition' in nextQuery) {
+    delete nextQuery.edition;
+    changed = true;
+  }
+  return { query: nextQuery, changed };
 }
 
 export function normalizeEmbeddedSceneQuery(query: QueryLike): { query: QueryLike; changed: boolean } {

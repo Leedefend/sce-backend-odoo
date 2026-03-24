@@ -675,11 +675,34 @@ class SystemInitHandler(BaseIntentHandler):
         delivery_edition_key = str(((params or {}).get("edition_key") or "standard")).strip() or "standard"
         delivery_payload = delivery_engine.build(
             data=data if isinstance(data, dict) else {},
-            product_key="construction.standard",
+            product_key=f"construction.{delivery_edition_key}",
             edition_key=delivery_edition_key,
             base_product_key="construction",
         )
         data["delivery_engine_v1"] = delivery_payload
+        edition_diagnostics = (
+            delivery_payload.get("product_policy", {}).get("edition_diagnostics")
+            if isinstance(delivery_payload.get("product_policy"), dict)
+            else {}
+        )
+        effective_base_product_key = str(delivery_payload.get("base_product_key") or "construction").strip() or "construction"
+        effective_edition_key = str(delivery_payload.get("edition_key") or "standard").strip() or "standard"
+        effective_product_key = str(delivery_payload.get("product_key") or f"{effective_base_product_key}.{effective_edition_key}").strip()
+        requested_product_key = f"construction.{delivery_edition_key}"
+        data["edition_runtime_v1"] = {
+            "contract_version": "v1",
+            "requested": {
+                "product_key": requested_product_key,
+                "base_product_key": "construction",
+                "edition_key": delivery_edition_key,
+            },
+            "effective": {
+                "product_key": effective_product_key,
+                "base_product_key": effective_base_product_key,
+                "edition_key": effective_edition_key,
+            },
+            "diagnostics": edition_diagnostics if isinstance(edition_diagnostics, dict) else {},
+        }
         data["release_navigation_v1"] = {
             "contract_version": str(delivery_payload.get("contract_version") or "v1"),
             "source": "delivery_engine_v1",

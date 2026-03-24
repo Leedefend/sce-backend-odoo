@@ -127,6 +127,20 @@ export interface AppInitResponse {
     product_policy?: Record<string, unknown>;
     meta?: Record<string, unknown>;
   };
+  edition_runtime_v1?: {
+    contract_version?: string;
+    requested?: {
+      product_key?: string;
+      base_product_key?: string;
+      edition_key?: string;
+    };
+    effective?: {
+      product_key?: string;
+      base_product_key?: string;
+      edition_key?: string;
+    };
+    diagnostics?: Record<string, unknown>;
+  };
   release_navigation_v1?: {
     contract_version?: string;
     source?: string;

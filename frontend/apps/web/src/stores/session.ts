@@ -5,7 +5,7 @@ import { ApiError } from '../api/client';
 import { config } from '../config';
 import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
-import { buildSceneRegistryFallbackPath, normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { buildSceneRegistryFallbackPath, normalizeEditionKey, normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 import { resolveActiveDb, setActiveDb } from '../services/dbContext';
 
@@ -208,6 +208,9 @@ export interface SessionState {
   menuTree: NavNode[];
   releaseNavigationTree: NavNode[];
   deliveryEngineV1: AppInitResponse['delivery_engine_v1'] | null;
+  editionRuntimeV1: AppInitResponse['edition_runtime_v1'] | null;
+  requestedEditionKey: string;
+  effectiveEditionKey: string;
   menuExpandedKeys: string[];
   currentAction: NavMeta | null;
   capabilities: string[];
@@ -271,6 +274,9 @@ export const useSessionStore = defineStore('session', {
     menuTree: [],
     releaseNavigationTree: [],
     deliveryEngineV1: null,
+    editionRuntimeV1: null,
+    requestedEditionKey: 'standard',
+    effectiveEditionKey: 'standard',
     menuExpandedKeys: [],
     currentAction: null,
     capabilities: [],
@@ -318,6 +324,9 @@ export const useSessionStore = defineStore('session', {
           this.menuTree = parsed.menuTree ?? [];
           this.releaseNavigationTree = parsed.releaseNavigationTree ?? [];
           this.deliveryEngineV1 = parsed.deliveryEngineV1 ?? null;
+          this.editionRuntimeV1 = parsed.editionRuntimeV1 ?? null;
+          this.requestedEditionKey = normalizeEditionKey(parsed.requestedEditionKey) || 'standard';
+          this.effectiveEditionKey = normalizeEditionKey(parsed.effectiveEditionKey) || 'standard';
           this.menuExpandedKeys = parsed.menuExpandedKeys ?? [];
           this.currentAction = parsed.currentAction ?? null;
           this.capabilities = parsed.capabilities ?? [];
@@ -370,6 +379,9 @@ export const useSessionStore = defineStore('session', {
       this.menuTree = [];
       this.releaseNavigationTree = [];
       this.deliveryEngineV1 = null;
+      this.editionRuntimeV1 = null;
+      this.requestedEditionKey = 'standard';
+      this.effectiveEditionKey = 'standard';
       this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
@@ -436,6 +448,9 @@ export const useSessionStore = defineStore('session', {
         menuTree: this.menuTree,
         releaseNavigationTree: this.releaseNavigationTree,
         deliveryEngineV1: this.deliveryEngineV1,
+        editionRuntimeV1: this.editionRuntimeV1,
+        requestedEditionKey: this.requestedEditionKey,
+        effectiveEditionKey: this.effectiveEditionKey,
         menuExpandedKeys: this.menuExpandedKeys,
         currentAction: this.currentAction,
         capabilities: this.capabilities,
@@ -496,6 +511,9 @@ export const useSessionStore = defineStore('session', {
       this.menuTree = [];
       this.releaseNavigationTree = [];
       this.deliveryEngineV1 = null;
+      this.editionRuntimeV1 = null;
+      this.requestedEditionKey = 'standard';
+      this.effectiveEditionKey = 'standard';
       this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
@@ -520,6 +538,15 @@ export const useSessionStore = defineStore('session', {
       setSceneRegistry([]);
       this.bootstrapNextIntent = nextIntent;
       this.setToken(token);
+    },
+    syncRequestedEditionKey(rawEditionKey?: string | null) {
+      const normalized = normalizeEditionKey(rawEditionKey) || this.requestedEditionKey || 'standard';
+      if (normalized === this.requestedEditionKey) {
+        return false;
+      }
+      this.requestedEditionKey = normalized;
+      this.persist();
+      return true;
     },
     async logout() {
       try {
@@ -562,6 +589,7 @@ export const useSessionStore = defineStore('session', {
           scene: 'web',
           with_preload: false,
           root_xmlid: 'smart_construction_core.menu_sc_root',
+          edition_key: this.requestedEditionKey || 'standard',
         },
       };
       if (debugIntent) {
@@ -816,6 +844,16 @@ export const useSessionStore = defineStore('session', {
       }
       const candidates = [result.nav];
       this.deliveryEngineV1 = (result as AppInitResponse).delivery_engine_v1 ?? null;
+      this.editionRuntimeV1 = (result as AppInitResponse).edition_runtime_v1 ?? null;
+      const requestedEditionKey = normalizeEditionKey(this.editionRuntimeV1?.requested?.edition_key)
+        || normalizeEditionKey(this.requestedEditionKey)
+        || 'standard';
+      const effectiveEditionKey = normalizeEditionKey(this.editionRuntimeV1?.effective?.edition_key)
+        || normalizeEditionKey(this.deliveryEngineV1?.edition_key)
+        || requestedEditionKey
+        || 'standard';
+      this.requestedEditionKey = requestedEditionKey;
+      this.effectiveEditionKey = effectiveEditionKey;
       const releaseNav = Array.isArray(result.release_navigation_v1?.nav)
         ? result.release_navigation_v1?.nav
         : [];
@@ -865,6 +903,7 @@ export const useSessionStore = defineStore('session', {
           scene: 'web',
           with_preload: true,
           root_xmlid: 'smart_construction_core.menu_sc_root',
+          edition_key: this.requestedEditionKey || 'standard',
         },
       });
       const row = result as AppInitResponse & {

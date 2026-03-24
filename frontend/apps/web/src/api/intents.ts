@@ -76,6 +76,46 @@ function resolveEnvelopeTraceId(meta: Record<string, unknown>, fallback: string)
   return fallback;
 }
 
+function cloneRecord(input: unknown): Record<string, unknown> {
+  return input && typeof input === 'object' && !Array.isArray(input)
+    ? { ...(input as Record<string, unknown>) }
+    : {};
+}
+
+function applyEditionRuntimeContext(
+  session: ReturnType<typeof useSessionStore>,
+  payload: IntentPayload,
+): IntentPayload {
+  const intent = String(payload.intent || '').trim();
+  if (!intent || intent === 'login' || intent === 'auth.login') {
+    return payload;
+  }
+  const requestedEditionKey = String(session.requestedEditionKey || 'standard').trim() || 'standard';
+  const effectiveEditionKey = String(session.effectiveEditionKey || requestedEditionKey || 'standard').trim() || 'standard';
+  const params = cloneRecord(payload.params);
+  const context = cloneRecord(payload.context);
+  const meta = cloneRecord(payload.meta);
+  const routedEditionKey = intent === 'system.init' ? requestedEditionKey : effectiveEditionKey;
+  if (!String(params.edition_key || '').trim()) {
+    params.edition_key = routedEditionKey;
+  }
+  context.edition_runtime_v1 = {
+    requested_edition_key: requestedEditionKey,
+    effective_edition_key: effectiveEditionKey,
+    routed_edition_key: String(params.edition_key || routedEditionKey).trim() || routedEditionKey,
+  };
+  meta.edition_runtime_v1 = {
+    requested_edition_key: requestedEditionKey,
+    effective_edition_key: effectiveEditionKey,
+  };
+  return {
+    ...payload,
+    params,
+    context,
+    meta,
+  };
+}
+
 function throwEnvelopeError(
   payload: IntentPayload,
   traceId: string,
@@ -99,41 +139,42 @@ export async function intentRequest<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
   const startedAt = Date.now();
-  enforceStartupChainOrThrow(session, payload);
+  const runtimePayload = applyEditionRuntimeContext(session, payload);
+  enforceStartupChainOrThrow(session, runtimePayload);
   try {
     const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
       method: 'POST',
-      headers: buildHeaders(payload.intent, traceId),
-      body: JSON.stringify(payload),
+      headers: buildHeaders(runtimePayload.intent, traceId),
+      body: JSON.stringify(runtimePayload),
     });
     const resolvedTrace = response.traceId || traceId;
     session.recordIntentTrace({
       traceId: resolvedTrace,
-      intent: payload.intent,
+      intent: runtimePayload.intent,
       latencyMs: Date.now() - startedAt,
-      writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
+      writeMode: runtimePayload.intent.includes('write') || runtimePayload.intent.includes('create') ? 'write' : 'read',
     });
 
     const parsed = parseIntentEnvelope<T>(response.body);
     const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
     if (!parsed.ok) {
-      throwEnvelopeError(payload, envelopeTrace, parsed.error);
+      throwEnvelopeError(runtimePayload, envelopeTrace, parsed.error);
     }
     // eslint-disable-next-line no-console
-    console.info(`[trace] intent=${payload.intent} status=ok trace=${envelopeTrace}`);
+    console.info(`[trace] intent=${runtimePayload.intent} status=ok trace=${envelopeTrace}`);
     return parsed.data;
   } catch (err) {
     const errorTrace = err instanceof ApiError ? err.traceId || traceId : traceId;
     session.recordIntentTrace({
       traceId: errorTrace,
-      intent: payload.intent,
+      intent: runtimePayload.intent,
       latencyMs: Date.now() - startedAt,
-      writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
+      writeMode: runtimePayload.intent.includes('write') || runtimePayload.intent.includes('create') ? 'write' : 'read',
     });
     // eslint-disable-next-line no-console
-    if (!payload.silentErrors) {
+    if (!runtimePayload.silentErrors) {
       // eslint-disable-next-line no-console
-      console.warn(`[trace] intent=${payload.intent} status=error trace=${errorTrace}`);
+      console.warn(`[trace] intent=${runtimePayload.intent} status=error trace=${errorTrace}`);
     }
     throw err;
   }
@@ -143,24 +184,25 @@ export async function intentRequestRaw<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
   const startedAt = Date.now();
-  enforceStartupChainOrThrow(session, payload);
+  const runtimePayload = applyEditionRuntimeContext(session, payload);
+  enforceStartupChainOrThrow(session, runtimePayload);
   const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
     method: 'POST',
-    headers: buildHeaders(payload.intent, traceId),
-    body: JSON.stringify(payload),
+    headers: buildHeaders(runtimePayload.intent, traceId),
+    body: JSON.stringify(runtimePayload),
   });
   const resolvedTrace = response.traceId || traceId;
   session.recordIntentTrace({
     traceId: resolvedTrace,
-    intent: payload.intent,
+    intent: runtimePayload.intent,
     latencyMs: Date.now() - startedAt,
-    writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
+    writeMode: runtimePayload.intent.includes('write') || runtimePayload.intent.includes('create') ? 'write' : 'read',
   });
 
   const parsed = parseIntentEnvelope<T>(response.body);
   const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
   if (!parsed.ok) {
-    throwEnvelopeError(payload, envelopeTrace, parsed.error);
+    throwEnvelopeError(runtimePayload, envelopeTrace, parsed.error);
   }
   const result: IntentRawResult<T> = {
     data: parsed.data,
