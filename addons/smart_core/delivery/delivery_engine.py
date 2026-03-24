@@ -29,6 +29,9 @@ class DeliveryEngine:
             product_key=product_key,
             edition_key=edition_key,
             base_product_key=base_product_key,
+            role_code=str(role_surface.get("role_code") or "").strip(),
+            enforce_release=True,
+            enforce_access=True,
         )
         nav = self.menu_service.build_nav(policy=policy, role_surface=role_surface)
         scenes = self.scene_service.build_entries(policy=policy, scenes=runtime.get("scenes") or [])
@@ -63,6 +66,7 @@ class DeliveryEngine:
                 ],
                 "scene_version_bindings": policy.get("scene_version_bindings") if isinstance(policy.get("scene_version_bindings"), dict) else {},
                 "scene_binding_diagnostics": policy.get("scene_binding_diagnostics") if isinstance(policy.get("scene_binding_diagnostics"), dict) else {},
+                "edition_diagnostics": policy.get("edition_diagnostics") if isinstance(policy.get("edition_diagnostics"), dict) else {},
                 "capability_keys": [
                     str(row.get("capability_key") or row.get("key") or "").strip()
                     for row in policy.get("capabilities") or []
@@ -74,5 +78,6 @@ class DeliveryEngine:
                 "scene_count": len(scenes),
                 "capability_count": len(capabilities),
                 "group_count": len((nav[0].get("children") if nav else []) or []),
+                "edition_diagnostics": policy.get("edition_diagnostics") if isinstance(policy.get("edition_diagnostics"), dict) else {},
             },
         }

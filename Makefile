@@ -1052,6 +1052,22 @@ verify.release.edition_surface.v1: verify.product.edition_policy_guard verify.sc
 	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/release_edition_surface_guard.sh
 	@echo "[OK] verify.release.edition_surface.v1 done"
 
+.PHONY: verify.edition.lifecycle_guard
+verify.edition.lifecycle_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/edition_lifecycle_guard.sh
+
+.PHONY: verify.edition.access_guard
+verify.edition.access_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/edition_access_guard.sh
+
+.PHONY: verify.edition.promotion_guard
+verify.edition.promotion_guard: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(DB_NAME) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) ENV=$(ENV) ENV_FILE=$(ENV_FILE) bash scripts/verify/edition_promotion_guard.sh
+
+.PHONY: verify.release.edition_lifecycle.v1
+verify.release.edition_lifecycle.v1: verify.release.edition_surface.v1 verify.edition.lifecycle_guard verify.edition.access_guard verify.edition.promotion_guard verify.release.delivery_engine.v1
+	@echo "[OK] verify.release.edition_lifecycle.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"

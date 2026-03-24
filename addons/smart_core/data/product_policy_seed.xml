@@ -5,6 +5,9 @@
             <field name="product_key">construction.standard</field>
             <field name="base_product_key">construction</field>
             <field name="edition_key">standard</field>
+            <field name="state">stable</field>
+            <field name="access_level">public</field>
+            <field name="allowed_role_codes" eval="[]"/>
             <field name="label">Construction Standard</field>
             <field name="version">v1</field>
             <field name="scene_version_bindings" eval="{
@@ -56,6 +59,9 @@
             <field name="product_key">construction.preview</field>
             <field name="base_product_key">construction</field>
             <field name="edition_key">preview</field>
+            <field name="state">preview</field>
+            <field name="access_level">role_restricted</field>
+            <field name="allowed_role_codes" eval="['pm', 'executive']"/>
             <field name="label">Construction Preview</field>
             <field name="version">v1</field>
             <field name="scene_version_bindings" eval="{

@@ -8,6 +8,9 @@ DEFAULT_PRODUCT_POLICY = {
     "product_key": "construction.standard",
     "base_product_key": "construction",
     "edition_key": "standard",
+    "state": "stable",
+    "access_level": "public",
+    "allowed_role_codes": [],
     "label": "Construction Standard",
     "version": "v1",
     "scene_version_bindings": {
@@ -194,8 +197,18 @@ DEFAULT_PRODUCT_POLICY = {
 
 
 class ProductPolicyService:
+    RELEASEABLE_STATES = {"preview", "stable"}
+
     def __init__(self, env):
         self.env = env
+
+    def _stable_policy_domain(self, *, base_product_key: str):
+        return [
+            ("base_product_key", "=", str(base_product_key or "").strip() or "construction"),
+            ("state", "=", "stable"),
+            ("access_level", "=", "public"),
+            ("active", "=", True),
+        ]
 
     def resolve_policy_identity(
         self,
@@ -237,6 +250,69 @@ class ProductPolicyService:
             limit=1,
         )
         return bool(rec)
+
+    def _access_allowed(self, payload: dict, *, role_code: str) -> bool:
+        access_level = str(payload.get("access_level") or "").strip() or "public"
+        if access_level == "public":
+            return True
+        if access_level == "internal":
+            return False
+        if access_level == "role_restricted":
+            allowed = payload.get("allowed_role_codes") if isinstance(payload.get("allowed_role_codes"), list) else []
+            return str(role_code or "").strip() in {str(item or "").strip() for item in allowed if str(item or "").strip()}
+        return False
+
+    def _policy_releaseable(self, payload: dict) -> bool:
+        state = str(payload.get("state") or "").strip() or "draft"
+        return state in self.RELEASEABLE_STATES
+
+    def _attach_edition_diagnostics(
+        self,
+        payload: dict,
+        *,
+        requested_product_key: str,
+        requested_base_product_key: str,
+        requested_edition_key: str,
+        role_code: str,
+        fallback_reason: str = "",
+        access_allowed: bool = True,
+    ) -> dict:
+        row = copy.deepcopy(payload if isinstance(payload, dict) else {})
+        row["edition_diagnostics"] = {
+            "requested_product_key": requested_product_key,
+            "requested_base_product_key": requested_base_product_key,
+            "requested_edition_key": requested_edition_key,
+            "resolved_product_key": str(row.get("product_key") or "").strip(),
+            "resolved_base_product_key": str(row.get("base_product_key") or "").strip(),
+            "resolved_edition_key": str(row.get("edition_key") or "").strip(),
+            "requested_role_code": str(role_code or "").strip(),
+            "policy_state": str(row.get("state") or "").strip(),
+            "access_level": str(row.get("access_level") or "").strip(),
+            "access_allowed": bool(access_allowed),
+            "fallback_reason": str(fallback_reason or "").strip(),
+            "fallback_applied": bool(fallback_reason),
+        }
+        return row
+
+    def _fallback_stable_policy(self, *, base_product_key: str) -> dict:
+        try:
+            rec = self.env["sc.product.policy"].sudo().search(
+                self._stable_policy_domain(base_product_key=base_product_key),
+                order="edition_key asc, id asc",
+                limit=1,
+            )
+        except Exception:
+            rec = None
+        if rec:
+            return rec.to_runtime_dict()
+        fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
+        fallback["product_key"] = f"{base_product_key}.standard"
+        fallback["base_product_key"] = base_product_key
+        fallback["edition_key"] = "standard"
+        fallback["state"] = "stable"
+        fallback["access_level"] = "public"
+        fallback["allowed_role_codes"] = []
+        return fallback
 
     def _sanitize_scene_version_bindings(self, payload: dict) -> dict:
         bindings = payload.get("scene_version_bindings") if isinstance(payload.get("scene_version_bindings"), dict) else {}
@@ -282,12 +358,16 @@ class ProductPolicyService:
         *,
         edition_key: str | None = None,
         base_product_key: str | None = None,
+        role_code: str | None = None,
+        enforce_release: bool = False,
+        enforce_access: bool = False,
     ) -> dict:
         key, resolved_base_product_key, resolved_edition_key = self.resolve_policy_identity(
             product_key=product_key,
             edition_key=edition_key,
             base_product_key=base_product_key,
         )
+        resolved_role_code = str(role_code or "").strip()
         try:
             rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", key), ("active", "=", True)], limit=1)
         except Exception:
@@ -295,10 +375,48 @@ class ProductPolicyService:
         if rec:
             payload = rec.to_runtime_dict()
             if isinstance(payload, dict) and payload.get("product_key"):
-                return self._sanitize_scene_version_bindings(payload)
+                payload = self._sanitize_scene_version_bindings(payload)
+                access_allowed = self._access_allowed(payload, role_code=resolved_role_code) if enforce_access else True
+                release_allowed = self._policy_releaseable(payload) if enforce_release else True
+                if access_allowed and release_allowed:
+                    return self._attach_edition_diagnostics(
+                        payload,
+                        requested_product_key=key,
+                        requested_base_product_key=resolved_base_product_key,
+                        requested_edition_key=resolved_edition_key,
+                        role_code=resolved_role_code,
+                        access_allowed=access_allowed,
+                    )
+                fallback_reason = "EDITION_ACCESS_DENIED" if not access_allowed else "EDITION_STATE_NOT_RELEASEABLE"
+                fallback = self._sanitize_scene_version_bindings(
+                    self._fallback_stable_policy(base_product_key=resolved_base_product_key)
+                )
+                return self._attach_edition_diagnostics(
+                    fallback,
+                    requested_product_key=key,
+                    requested_base_product_key=resolved_base_product_key,
+                    requested_edition_key=resolved_edition_key,
+                    role_code=resolved_role_code,
+                    fallback_reason=fallback_reason,
+                    access_allowed=access_allowed,
+                )
         fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
         fallback["product_key"] = key
         fallback["base_product_key"] = resolved_base_product_key
         fallback["edition_key"] = resolved_edition_key
         fallback["label"] = "Construction Preview" if resolved_edition_key == "preview" else fallback.get("label")
-        return self._sanitize_scene_version_bindings(fallback)
+        if enforce_release or enforce_access:
+            fallback = self._sanitize_scene_version_bindings(
+                self._fallback_stable_policy(base_product_key=resolved_base_product_key)
+            )
+        else:
+            fallback = self._sanitize_scene_version_bindings(fallback)
+        return self._attach_edition_diagnostics(
+            fallback,
+            requested_product_key=key,
+            requested_base_product_key=resolved_base_product_key,
+            requested_edition_key=resolved_edition_key,
+            role_code=resolved_role_code,
+            fallback_reason="POLICY_NOT_FOUND",
+            access_allowed=True,
+        )
