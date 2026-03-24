@@ -198,6 +198,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - `make verify.scene.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.scene.active_uniqueness_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
   - unified gate: `make verify.release.scene_asset.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+- Product Edition Stratification v1:
+  - status: `edition-aware released product delivery`
+  - scope: `construction.standard + construction.preview edition policies and scene binding isolation`
+  - architecture: `docs/architecture/product_edition_model_v1.md`
+  - release surface: `docs/ops/releases/product_edition_surface_v1.md`
+  - guards:
+    - `make verify.product.edition_policy_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.scene.edition_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.edition_surface.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -303,3 +312,6 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.scene.promotion_guard`: released scene promotion guard
 - `verify.scene.active_uniqueness_guard`: released scene active stable uniqueness guard
 - `verify.release.scene_asset.v1`: released scene asset guards + browser smoke
+- `verify.product.edition_policy_guard`: product edition policy guard
+- `verify.scene.edition_binding_guard`: scene edition binding isolation guard
+- `verify.release.edition_surface.v1`: release edition surface guard

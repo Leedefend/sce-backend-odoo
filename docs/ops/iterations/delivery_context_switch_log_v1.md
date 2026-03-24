@@ -1367,3 +1367,12 @@ Each entry must include:
 - completed_step: `新增 snapshot state/promotion 字段；新增 scene_promotion_service；product policy 仅接受 active stable 绑定；delivery runtime 输出 snapshot fallback diagnostics；新增 lifecycle/promotion/active_uniqueness 三条 guard 并接入 verify.release.scene_asset.v1`
 - active_commit: `9de784a`
 - next_step: `执行 smart_core 模块升级与完整门禁，确认 lifecycle governance 不打穿 released scene delivery`
+
+### 2026-03-24T05:25:00Z
+- blocker_key: `product_edition_stratification_v1`
+- layer_target: `Platform Layer + Delivery Runtime Layer + Release Governance Layer`
+- module: `addons/smart_core/models/product_policy.py + addons/smart_core/data/product_policy_seed.xml + addons/smart_core/delivery/product_policy_service.py + addons/smart_core/delivery/delivery_engine.py + addons/smart_core/handlers/system_init.py + scripts/verify/*edition* + docs/architecture + docs/ops/releases`
+- reason: `在不改变 released navigation、Scene Asset v1 与 Delivery Engine v1 现有 standard 语义的前提下，引入 product + edition 分层，并验证 construction.preview 的 scene binding 不污染 construction.standard`
+- completed_step: `给 product policy 增加 base_product_key/edition_key；新增 construction.preview seed policy；delivery runtime 支持 edition-aware policy resolution；新增 edition policy / scene edition binding / release edition surface 三条 guard 与文档`
+- active_commit: `e253d96`
+- next_step: `执行 smart_core 模块升级与 edition guards，确认 standard/preview 分流在 runtime 层可验证且互不污染`
