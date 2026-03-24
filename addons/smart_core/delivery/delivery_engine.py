@@ -47,6 +47,7 @@ class DeliveryEngine:
                     if isinstance(row, dict) and str(row.get("scene_key") or "").strip()
                 ],
                 "scene_version_bindings": policy.get("scene_version_bindings") if isinstance(policy.get("scene_version_bindings"), dict) else {},
+                "scene_binding_diagnostics": policy.get("scene_binding_diagnostics") if isinstance(policy.get("scene_binding_diagnostics"), dict) else {},
                 "capability_keys": [
                     str(row.get("capability_key") or row.get("key") or "").strip()
                     for row in policy.get("capabilities") or []
