@@ -114,6 +114,17 @@ status: active
     - `make verify.product.edition_policy_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.scene.edition_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.release.edition_surface.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+
+- Edition Lifecycle Governance v1：
+  - 状态：`edition 生命周期、访问控制、promotion 与 rollback 已治理`
+  - 范围：`在 construction.standard + construction.preview 之上建立 preview/stable 渠道治理`
+  - 架构文档：`docs/architecture/product_edition_lifecycle_model_v1.md`
+  - 发布面文档：`docs/ops/releases/product_edition_lifecycle_surface_v1.md`
+  - 门禁：
+    - `make verify.edition.lifecycle_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.edition.access_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.edition.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.edition_lifecycle.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -215,3 +226,7 @@ status: active
 - `verify.product.edition_policy_guard`：product edition policy 守卫
 - `verify.scene.edition_binding_guard`：scene edition binding 隔离守卫
 - `verify.release.edition_surface.v1`：release edition surface 守卫
+- `verify.edition.lifecycle_guard`：edition 生命周期守卫
+- `verify.edition.access_guard`：edition 访问控制守卫
+- `verify.edition.promotion_guard`：edition promotion / rollback 守卫
+- `verify.release.edition_lifecycle.v1`：release edition lifecycle 门禁

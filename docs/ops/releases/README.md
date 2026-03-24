@@ -207,6 +207,17 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - `make verify.product.edition_policy_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.scene.edition_binding_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.release.edition_surface.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+
+- Edition Lifecycle Governance v1:
+  - status: `edition lifecycle, access control, promotion and rollback governed`
+  - scope: `preview/stable channel governance on top of construction.standard + construction.preview`
+  - architecture: `docs/architecture/product_edition_lifecycle_model_v1.md`
+  - release surface: `docs/ops/releases/product_edition_lifecycle_surface_v1.md`
+  - gate:
+    - `make verify.edition.lifecycle_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.edition.access_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.edition.promotion_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.edition_lifecycle.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -315,3 +326,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.product.edition_policy_guard`: product edition policy guard
 - `verify.scene.edition_binding_guard`: scene edition binding isolation guard
 - `verify.release.edition_surface.v1`: release edition surface guard
+- `verify.edition.lifecycle_guard`: edition lifecycle state guard
+- `verify.edition.access_guard`: edition access control guard
+- `verify.edition.promotion_guard`: edition promotion and rollback guard
+- `verify.release.edition_lifecycle.v1`: release edition lifecycle gate
