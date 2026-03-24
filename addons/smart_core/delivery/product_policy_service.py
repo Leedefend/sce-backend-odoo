@@ -6,6 +6,8 @@ import copy
 
 DEFAULT_PRODUCT_POLICY = {
     "product_key": "construction.standard",
+    "base_product_key": "construction",
+    "edition_key": "standard",
     "label": "Construction Standard",
     "version": "v1",
     "scene_version_bindings": {
@@ -195,6 +197,29 @@ class ProductPolicyService:
     def __init__(self, env):
         self.env = env
 
+    def resolve_policy_identity(
+        self,
+        *,
+        product_key: str | None = None,
+        edition_key: str | None = None,
+        base_product_key: str | None = None,
+    ) -> tuple[str, str, str]:
+        explicit_product_key = str(product_key or "").strip()
+        explicit_edition_key = str(edition_key or "").strip()
+        explicit_base_product_key = str(base_product_key or "").strip() or "construction"
+        if explicit_product_key:
+            parts = explicit_product_key.split(".", 1)
+            if len(parts) == 2 and parts[0] and parts[1]:
+                return explicit_product_key, parts[0], parts[1]
+            return explicit_product_key, explicit_base_product_key, explicit_edition_key or "standard"
+        resolved_edition_key = explicit_edition_key or DEFAULT_PRODUCT_POLICY["edition_key"]
+        resolved_base_product_key = explicit_base_product_key or DEFAULT_PRODUCT_POLICY["base_product_key"]
+        return (
+            f"{resolved_base_product_key}.{resolved_edition_key}",
+            resolved_base_product_key,
+            resolved_edition_key,
+        )
+
     def _snapshot_binding_is_releaseable(self, *, scene_key: str, product_key: str, binding: dict | None) -> bool:
         row = binding if isinstance(binding, dict) else {}
         version = str(row.get("version") or "").strip() or "v1"
@@ -251,8 +276,18 @@ class ProductPolicyService:
         payload["scene_binding_diagnostics"] = diagnostics
         return payload
 
-    def get_policy(self, product_key: str | None = None) -> dict:
-        key = str(product_key or DEFAULT_PRODUCT_POLICY["product_key"]).strip() or DEFAULT_PRODUCT_POLICY["product_key"]
+    def get_policy(
+        self,
+        product_key: str | None = None,
+        *,
+        edition_key: str | None = None,
+        base_product_key: str | None = None,
+    ) -> dict:
+        key, resolved_base_product_key, resolved_edition_key = self.resolve_policy_identity(
+            product_key=product_key,
+            edition_key=edition_key,
+            base_product_key=base_product_key,
+        )
         try:
             rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", key), ("active", "=", True)], limit=1)
         except Exception:
@@ -263,4 +298,7 @@ class ProductPolicyService:
                 return self._sanitize_scene_version_bindings(payload)
         fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
         fallback["product_key"] = key
+        fallback["base_product_key"] = resolved_base_product_key
+        fallback["edition_key"] = resolved_edition_key
+        fallback["label"] = "Construction Preview" if resolved_edition_key == "preview" else fallback.get("label")
         return self._sanitize_scene_version_bindings(fallback)

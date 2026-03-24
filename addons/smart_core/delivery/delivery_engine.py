@@ -15,10 +15,21 @@ class DeliveryEngine:
         self.capability_service = CapabilityService()
         self.product_policy_service = ProductPolicyService(env)
 
-    def build(self, *, data: dict, product_key: str | None = None) -> dict:
+    def build(
+        self,
+        *,
+        data: dict,
+        product_key: str | None = None,
+        edition_key: str | None = None,
+        base_product_key: str | None = None,
+    ) -> dict:
         runtime = data if isinstance(data, dict) else {}
         role_surface = runtime.get("role_surface") if isinstance(runtime.get("role_surface"), dict) else {}
-        policy = self.product_policy_service.get_policy(product_key=product_key)
+        policy = self.product_policy_service.get_policy(
+            product_key=product_key,
+            edition_key=edition_key,
+            base_product_key=base_product_key,
+        )
         nav = self.menu_service.build_nav(policy=policy, role_surface=role_surface)
         scenes = self.scene_service.build_entries(policy=policy, scenes=runtime.get("scenes") or [])
         capabilities = self.capability_service.build_entries(policy=policy, capabilities=runtime.get("capabilities") or [])
@@ -26,12 +37,16 @@ class DeliveryEngine:
             "contract_version": "v1",
             "source": "delivery_engine_v1",
             "product_key": str(policy.get("product_key") or "").strip(),
+            "base_product_key": str(policy.get("base_product_key") or "").strip(),
+            "edition_key": str(policy.get("edition_key") or "").strip(),
             "role_code": str(role_surface.get("role_code") or "").strip(),
             "nav": nav,
             "scenes": scenes,
             "capabilities": capabilities,
             "product_policy": {
                 "product_key": str(policy.get("product_key") or "").strip(),
+                "base_product_key": str(policy.get("base_product_key") or "").strip(),
+                "edition_key": str(policy.get("edition_key") or "").strip(),
                 "label": str(policy.get("label") or "").strip(),
                 "version": str(policy.get("version") or "").strip(),
                 "menu_keys": [

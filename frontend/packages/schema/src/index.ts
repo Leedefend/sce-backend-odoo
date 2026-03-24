@@ -109,6 +109,8 @@ export interface AppInitResponse {
     contract_version?: string;
     source?: string;
     product_key?: string;
+    base_product_key?: string;
+    edition_key?: string;
     role_code?: string;
     nav?: NavNode[];
     scenes?: Array<Record<string, unknown> & {

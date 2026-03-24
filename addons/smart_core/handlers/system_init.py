@@ -672,9 +672,12 @@ class SystemInitHandler(BaseIntentHandler):
         stage_ts = _mark("build_scene_nav_contract", stage_ts)
         legacy_release_navigation = build_release_navigation_contract(data if isinstance(data, dict) else {})
         delivery_engine = DeliveryEngine(env)
+        delivery_edition_key = str(((params or {}).get("edition_key") or "standard")).strip() or "standard"
         delivery_payload = delivery_engine.build(
             data=data if isinstance(data, dict) else {},
             product_key="construction.standard",
+            edition_key=delivery_edition_key,
+            base_product_key="construction",
         )
         data["delivery_engine_v1"] = delivery_payload
         data["release_navigation_v1"] = {
@@ -684,6 +687,7 @@ class SystemInitHandler(BaseIntentHandler):
             "nav": delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
             "meta": {
                 "product_key": str(delivery_payload.get("product_key") or ""),
+                "edition_key": str(delivery_payload.get("edition_key") or ""),
                 "delivery_engine_meta": delivery_payload.get("meta") if isinstance(delivery_payload.get("meta"), dict) else {},
                 "legacy_builder_contract_version": str(legacy_release_navigation.get("contract_version") or ""),
             },
