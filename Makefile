@@ -1175,6 +1175,27 @@ verify.portal.release_operator_surface_browser_smoke.host:
 verify.release.operator_surface.v1: verify.release.approval.v1 verify.release.operator_surface_guard verify.release.operator_orchestration_guard verify.portal.release_operator_surface_browser_smoke.host
 	@echo "[OK] verify.release.operator_surface.v1 done"
 
+.PHONY: verify.release.operator_read_model_guard
+verify.release.operator_read_model_guard:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_operator_read_model_guard.sh
+
+.PHONY: verify.portal.release_operator_read_model_browser_smoke.host
+verify.portal.release_operator_read_model_browser_smoke.host:
+	@mkdir -p $(ARTIFACTS_DIR)/codex
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node scripts/verify/release_operator_read_model_browser_smoke.mjs
+
+.PHONY: verify.release.operator_read_model.v1
+verify.release.operator_read_model.v1: verify.release.operator_surface.v1 verify.release.operator_read_model_guard verify.portal.release_operator_read_model_browser_smoke.host
+	@echo "[OK] verify.release.operator_read_model.v1 done"
+
+.PHONY: verify.release.operator_write_model_guard
+verify.release.operator_write_model_guard:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_operator_write_model_guard.sh
+
+.PHONY: verify.release.operator_write_model.v1
+verify.release.operator_write_model.v1: verify.release.operator_read_model.v1 verify.release.operator_write_model_guard
+	@echo "[OK] verify.release.operator_write_model.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"

@@ -4,6 +4,7 @@ from __future__ import annotations
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.delivery.release_operator_surface_service import ReleaseOperatorSurfaceService
 from odoo.addons.smart_core.delivery.release_orchestrator import ReleaseOrchestrator
+from odoo.addons.smart_core.delivery.release_operator_write_model_service import ReleaseOperatorWriteModelService
 
 
 def _params(payload):
@@ -35,13 +36,9 @@ class ReleaseOperatorPromoteHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = _params(payload)
+        write_model = ReleaseOperatorWriteModelService(self.env).build_from_intent(intent=self.INTENT_TYPE, params=params)
         orchestrator = ReleaseOrchestrator(self.env)
-        return orchestrator.promote_snapshot(
-            product_key=str(params.get("product_key") or "").strip(),
-            snapshot_id=int(params.get("snapshot_id") or 0),
-            note=str(params.get("note") or "").strip(),
-            replace_active=bool(params.get("replace_active", True)),
-        )
+        return orchestrator.submit_write_model(write_model)
 
 
 class ReleaseOperatorApproveHandler(BaseIntentHandler):
@@ -52,15 +49,9 @@ class ReleaseOperatorApproveHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = _params(payload)
+        write_model = ReleaseOperatorWriteModelService(self.env).build_from_intent(intent=self.INTENT_TYPE, params=params)
         orchestrator = ReleaseOrchestrator(self.env)
-        action_id = int(params.get("action_id") or 0)
-        approved = orchestrator.approve_action(
-            action_id=action_id,
-            note=str(params.get("note") or "").strip(),
-        )
-        if bool(params.get("execute_after_approval", True)):
-            return orchestrator.execute_action(action_id=action_id)
-        return approved
+        return orchestrator.submit_write_model(write_model)
 
 
 class ReleaseOperatorRollbackHandler(BaseIntentHandler):
@@ -71,9 +62,6 @@ class ReleaseOperatorRollbackHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = _params(payload)
+        write_model = ReleaseOperatorWriteModelService(self.env).build_from_intent(intent=self.INTENT_TYPE, params=params)
         orchestrator = ReleaseOrchestrator(self.env)
-        return orchestrator.rollback_snapshot(
-            product_key=str(params.get("product_key") or "").strip(),
-            target_snapshot_id=int(params.get("target_snapshot_id") or 0) or None,
-            note=str(params.get("note") or "").strip(),
-        )
+        return orchestrator.submit_write_model(write_model)

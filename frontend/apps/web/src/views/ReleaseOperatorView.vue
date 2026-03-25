@@ -1,5 +1,5 @@
 <template>
-  <section class="release-operator">
+  <section class="release-operator" :data-read-model-version="readModel.contract_version || ''">
     <header class="hero">
       <div>
         <p class="eyebrow">Release Operator Surface</p>
@@ -178,6 +178,7 @@ type OperatorPendingAction = {
 };
 
 type OperatorSurface = {
+  read_model_v1?: Record<string, unknown>;
   identity?: Record<string, unknown>;
   products?: Array<Record<string, unknown>>;
   release_state?: {
@@ -204,13 +205,39 @@ const loading = ref(false);
 const errorMessage = ref('');
 const surface = ref<OperatorSurface>({});
 
+function buildLegacyReadModel(value: OperatorSurface): Record<string, unknown> {
+  return {
+    contract_version: '',
+    identity: value.identity || {},
+    products: Array.isArray(value.products) ? value.products : [],
+    current_release_state: value.release_state || {},
+    pending_approval_queue: value.pending_approval || {},
+    candidate_snapshots: Array.isArray(value.candidate_snapshots) ? value.candidate_snapshots : [],
+    release_history_summary: value.release_history || {},
+    available_operator_actions: value.available_actions || {},
+  };
+}
+
+const readModel = computed<Record<string, unknown>>(() => {
+  const row = surface.value.read_model_v1;
+  if (row && typeof row === 'object') {
+    return row as Record<string, unknown>;
+  }
+  return buildLegacyReadModel(surface.value);
+});
+
+function syncReadModelRuntimeMarker(contractVersion: string) {
+  if (typeof window === 'undefined') return;
+  (window as Window & { __releaseOperatorReadModelVersion?: string }).__releaseOperatorReadModelVersion = contractVersion;
+}
+
 const currentProductKey = computed(() => {
   const raw = String(route.query.product_key || '').trim();
   return raw || 'construction.standard';
 });
 
 const products = computed(() => {
-  const rows = Array.isArray(surface.value.products) ? surface.value.products : [];
+  const rows = Array.isArray(readModel.value.products) ? readModel.value.products : [];
   return rows.map((row) => ({
     product_key: String(row.product_key || '').trim(),
     label: String(row.label || row.product_key || '').trim(),
@@ -218,11 +245,13 @@ const products = computed(() => {
 });
 
 const releaseState = computed(() => {
-  const state = surface.value.release_state || {};
+  const state = (readModel.value.current_release_state && typeof readModel.value.current_release_state === 'object')
+    ? readModel.value.current_release_state as Record<string, unknown>
+    : {};
   const activeSnapshot = state.active_snapshot || {};
   const runtimeSummary = state.runtime_summary || {};
   return {
-    product_key: String((surface.value.identity || {}).product_key || '').trim(),
+    product_key: String((readModel.value.identity as Record<string, unknown> | undefined)?.product_key || '').trim(),
     active_version: String(activeSnapshot.version || runtimeSummary.active_snapshot_version || '').trim(),
     latest_action_type: String(runtimeSummary.latest_action_type || '').trim(),
     latest_action_approval_state: String(runtimeSummary.latest_action_approval_state || '').trim(),
@@ -230,14 +259,20 @@ const releaseState = computed(() => {
 });
 
 const pendingApprovals = computed(() => {
-  const rows = surface.value.pending_approval?.actions;
+  const queue = (readModel.value.pending_approval_queue && typeof readModel.value.pending_approval_queue === 'object')
+    ? readModel.value.pending_approval_queue as Record<string, unknown>
+    : {};
+  const rows = queue.actions;
   return Array.isArray(rows) ? rows : [];
 });
 
 const candidateSnapshots = computed(() => {
-  const rows = Array.isArray(surface.value.candidate_snapshots) ? surface.value.candidate_snapshots : [];
-  const promoteActions = Array.isArray((surface.value as Record<string, unknown>).available_actions?.promote)
-    ? ((surface.value as Record<string, unknown>).available_actions?.promote as OperatorAction[])
+  const rows = Array.isArray(readModel.value.candidate_snapshots) ? readModel.value.candidate_snapshots : [];
+  const availableActions = (readModel.value.available_operator_actions && typeof readModel.value.available_operator_actions === 'object')
+    ? readModel.value.available_operator_actions as Record<string, unknown>
+    : {};
+  const promoteActions = Array.isArray(availableActions.promote)
+    ? (availableActions.promote as OperatorAction[])
     : [];
   return rows.map((row) => ({
     ...row,
@@ -246,17 +281,26 @@ const candidateSnapshots = computed(() => {
 });
 
 const rollbackAction = computed<OperatorAction>(() => {
-  const row = surface.value.available_actions?.rollback;
+  const availableActions = (readModel.value.available_operator_actions && typeof readModel.value.available_operator_actions === 'object')
+    ? readModel.value.available_operator_actions as Record<string, unknown>
+    : {};
+  const row = availableActions.rollback;
   return row && typeof row === 'object' ? row : { enabled: false, params: {} };
 });
 
 const historyActions = computed(() => {
-  const rows = surface.value.release_history?.actions;
+  const history = (readModel.value.release_history_summary && typeof readModel.value.release_history_summary === 'object')
+    ? readModel.value.release_history_summary as Record<string, unknown>
+    : {};
+  const rows = history.actions;
   return Array.isArray(rows) ? rows : [];
 });
 
 const historySnapshots = computed(() => {
-  const rows = surface.value.release_history?.snapshots;
+  const history = (readModel.value.release_history_summary && typeof readModel.value.release_history_summary === 'object')
+    ? readModel.value.release_history_summary as Record<string, unknown>
+    : {};
+  const rows = history.snapshots;
   return Array.isArray(rows) ? rows : [];
 });
 
@@ -274,6 +318,7 @@ async function loadSurface() {
         },
       });
       surface.value = result || {};
+      syncReadModelRuntimeMarker(String((result?.read_model_v1 as Record<string, unknown> | undefined)?.contract_version || ''));
       loading.value = false;
       return;
     } catch (error) {
@@ -283,6 +328,7 @@ async function loadSurface() {
       }
     }
   }
+  syncReadModelRuntimeMarker('');
   errorMessage.value = String((lastError as Error)?.message || lastError || 'release operator load failed');
   loading.value = false;
 }
