@@ -3,6 +3,7 @@
 from .delivery_engine import DeliveryEngine
 from .edition_release_snapshot_service import EditionReleaseSnapshotService
 from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
+from .release_audit_trail_service import ReleaseAuditTrailService
 from .release_orchestrator import ReleaseOrchestrator
 from .product_edition_promotion_service import ProductEditionPromotionService
 from .scene_promotion_service import ScenePromotionService
