@@ -1447,3 +1447,13 @@ Each entry must include:
 - reason: `在 release audit trail 已完成的前提下，把 release action 从可执行流程升级为受 executor policy 与最小 approval 约束的发布控制系统`
 - completed_step: `新增 release approval policy service；release_action 增加 policy/approval 字段；release_orchestrator 强制执行 executor/approval 规则；新增 verify.release.policy_guard / verify.release.approval_guard / verify.release.approval.v1`
 - next_step: `执行 smart_core 模块升级与 approval 门禁，确认 preview 可直发、standard 需批、rollback 仅高权限可执行，同时保持既有 audit/orchestration 语义不回退`
+## 2026-03-25T08:20:00Z
+
+- branch: `codex/next-round`
+- head: `479d3a5`
+- Layer Target: `Platform Layer / Delivery Runtime Layer / Release Governance Layer / Frontend Layer`
+- Module: `addons/smart_core/delivery + addons/smart_core/handlers + frontend/apps/web + scripts/verify + docs/ops/releases`
+- Reason: `Release Operator Surface v1 minimal operable release surface`
+- completed_step:
+  - `release approval policy v1 committed`
+  - `release operator surface v1 started`
