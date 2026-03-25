@@ -145,6 +145,16 @@ status: active
     - `make verify.edition.release_snapshot_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.edition.rollback_evidence_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.release.edition_freeze.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
+- Release Audit Trail Surface v1：
+  - 状态：`release action + release snapshot + lineage + rollback evidence + runtime 命中已统一收口为审计面`
+  - 范围：`基于 sc.release.action 和 sc.edition.release.snapshot 构建可导出的 release audit trail`
+  - 架构文档：`docs/architecture/release_audit_trail_model_v1.md`
+  - 发布面文档：`docs/ops/releases/release_audit_trail_surface_v1.md`
+  - 门禁：
+    - `make verify.release.audit_surface_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.audit_lineage_consistency_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.audit_runtime_consistency_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+    - `make verify.release.audit_trail.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -265,3 +275,7 @@ status: active
 - `verify.release.action_guard`：release action 记录守卫
 - `verify.release.orchestration_guard`：release orchestration promote/rollback 守卫
 - `verify.release.orchestration.v1`：release orchestration 门禁
+- `verify.release.audit_surface_guard`：release audit trail surface 守卫
+- `verify.release.audit_lineage_consistency_guard`：release audit lineage 一致性守卫
+- `verify.release.audit_runtime_consistency_guard`：release audit runtime 一致性守卫
+- `verify.release.audit_trail.v1`：release audit trail 门禁

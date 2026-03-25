@@ -1427,3 +1427,13 @@ Each entry must include:
 - reason: `在 release snapshot lineage 已完成的前提下，把 promotion/rollback 从独立能力升级为可记录、可执行、可回溯的 release action 流程系统`
 - completed_step: `新增 sc.release.action；新增 ReleaseOrchestrator 统一编排 promote/rollback；引入 release action / orchestration guards 与 verify.release.orchestration.v1`
 - next_step: `执行 smart_core 模块升级与 release orchestration 门禁，确认 promote/rollback 结果可原子记录且动作链可回溯`
+
+## 2026-03-25T03:40:00Z Release Audit Trail Surface v1
+
+- branch: `codex/next-round`
+- head: `7f53e00`
+- layer_target: `Platform Layer + Delivery Runtime + Release Governance`
+- module: `addons/smart_core/delivery/release_audit_trail_service.py + addons/smart_core/handlers/system_init.py + scripts/verify/release_audit_* + docs/architecture + docs/ops/releases`
+- reason: `在 release orchestration 已完成的前提下，把 release action、release snapshot、snapshot lineage、rollback evidence 与 runtime 命中诊断统一收口为可读、可导出、可校验的 release audit trail surface`
+- completed_step: `新增 ReleaseAuditTrailService；system.init edition_runtime_v1 追加 release_audit_trail_summary；新增 audit surface / lineage consistency / runtime consistency 三条 guard 与 verify.release.audit_trail.v1`
+- next_step: `执行 smart_core 模块升级与 audit trail 全量门禁，确认 standard/preview 的 runtime 命中、rollback 依据和动作历史在同一审计面内自洽`
