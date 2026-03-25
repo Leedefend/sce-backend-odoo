@@ -5,6 +5,9 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_construction_core.services.project_context_contract import (
+    attach_project_context_to_runtime_payload,
+)
 from odoo.addons.smart_core.orchestration.cost_tracking_contract_orchestrator import (
     CostTrackingContractOrchestrator,
 )
@@ -66,6 +69,8 @@ class CostTrackingBlockFetchHandler(BaseIntentHandler):
 
         orchestrator = CostTrackingContractOrchestrator(self.env)
         data = orchestrator.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)
+        project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
+        data = attach_project_context_to_runtime_payload(data, project)
         return {
             "ok": True,
             "data": data,

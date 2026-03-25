@@ -6,6 +6,9 @@ from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.scene_contract_builder import attach_release_surface_scene_contract
+from odoo.addons.smart_construction_core.services.project_context_contract import (
+    attach_project_context_to_scene_payload,
+)
 from odoo.addons.smart_core.orchestration.settlement_slice_contract_orchestrator import (
     SettlementSliceContractOrchestrator,
 )
@@ -50,23 +53,10 @@ class SettlementSliceEnterHandler(BaseIntentHandler):
         ctx = ctx or {}
 
         project_id = self._resolve_project_id(params, ctx)
-        if project_id <= 0:
-            return {
-                "ok": False,
-                "error": {
-                    "code": "PROJECT_CONTEXT_MISSING",
-                    "message": "缺少 project_id，无法进入结算场景",
-                    "suggested_action": "fix_input",
-                },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": str((self.context or {}).get("trace_id") or ""),
-                },
-            }
-
         orchestrator = SettlementSliceContractOrchestrator(self.env)
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
+        project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
+        data = attach_project_context_to_scene_payload(data, project)
         data = attach_release_surface_scene_contract(
             data,
             product_key="fr5",

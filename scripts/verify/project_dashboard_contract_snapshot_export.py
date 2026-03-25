@@ -8,15 +8,15 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SERVICE = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_service.py"
+ORCHESTRATOR = ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_contract_orchestrator.py"
 BUILDERS_DIR = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders"
 OUT = ROOT / "tmp" / "project_dashboard_contract_snapshot_v1.json"
 
 
 def _load_zone_blocks():
-    tree = ast.parse(SERVICE.read_text(encoding="utf-8"))
+    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     for node in tree.body:
-        if isinstance(node, ast.ClassDef) and node.name == "ProjectDashboardService":
+        if isinstance(node, ast.ClassDef) and node.name == "ProjectDashboardContractOrchestrator":
             for stmt in node.body:
                 if isinstance(stmt, ast.Assign):
                     for t in stmt.targets:
@@ -51,8 +51,17 @@ def _load_builder_types():
                 btype = line.split("=", 1)[1].strip().strip('"')
         if key and btype:
             out[key] = btype
-    if len(out) != 7:
-        raise SystemExit("unexpected builder count for snapshot")
+    required = {
+        "block.project.header",
+        "block.project.metrics",
+        "block.project.progress",
+        "block.project.contract",
+        "block.project.cost",
+        "block.project.finance",
+        "block.project.risk",
+    }
+    if not required.issubset(set(out.keys())):
+        raise SystemExit("required dashboard builder set incomplete for snapshot")
     return out
 
 
@@ -66,11 +75,20 @@ def main():
             "scene": {"key": "project.management", "page": "project.management.dashboard"},
             "page": {"key": "project.management.dashboard", "title": "项目管理控制台", "route": "/s/project.management"},
             "route_context": {
-                "primary_protocol": "/s/project.management?project_id=<id>",
-                "query_key": "project_id",
+                "primary_protocol": "/s/project.management",
                 "scene_route": "/s/project.management",
-                "project_route_template": "/s/project.management?project_id={project_id}",
-                "project_route": "/s/project.management?project_id=123",
+                "context_transport": "scene_payload.project_context",
+                "project_route_template": "/s/project.management",
+                "project_route": "/s/project.management",
+            },
+            "project_context": {
+                "project_id": 123,
+                "project_name": "DEMO PROJECT",
+                "stage": "executing",
+                "stage_label": "执行中",
+                "milestone": "execution_started",
+                "milestone_label": "已开工",
+                "status": "healthy",
             },
             "project": {
                 "id": 123,

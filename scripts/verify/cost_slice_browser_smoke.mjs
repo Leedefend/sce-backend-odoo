@@ -130,14 +130,12 @@ async function ensureCostEntryReady(page) {
       await form.waitFor({ timeout: 20000 });
     } catch (error) {
       const debug = await page.evaluate(async () => {
-        const match = window.location.search.match(/project_id=(\d+)/);
-        const projectId = match ? Number(match[1]) : 0;
         const response = await fetch('/api/v1/intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             intent: 'cost.tracking.block.fetch',
-            params: { project_id: projectId, block_key: 'cost_entry' },
+            params: { block_key: 'cost_entry' },
           }),
         });
         return response.json();
@@ -197,12 +195,7 @@ try {
   await waitForScene(page, '项目驾驶舱', ['项目进度', '风险提醒', '下一步动作']);
   const dashboard = await snapshot(page);
   writeJson('dashboard_snapshot.json', dashboard);
-
-  log('plan');
-  await clickActionCard(page, '下一步：进入计划准备');
-  await waitForScene(page, '计划准备', ['计划摘要', '计划任务', '计划下一步']);
-  const plan = await snapshot(page);
-  writeJson('plan_snapshot.json', plan);
+  assert(!dashboard.search.includes('project_id='), 'dashboard route should not depend on project_id query');
 
   log('execution');
   await clickActionCard(page, '下一步：进入执行推进');

@@ -6,9 +6,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 ROUTER = ROOT / "frontend/apps/web/src/router/index.ts"
-SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
-WORKSPACE_CTX = ROOT / "frontend/apps/web/src/app/workspaceContext.ts"
 PM_VIEW = ROOT / "frontend/apps/web/src/views/ProjectManagementDashboardView.vue"
+MY_WORK_VIEW = ROOT / "frontend/apps/web/src/views/MyWorkView.vue"
+RELEASE_ENTRY_VIEW = ROOT / "frontend/apps/web/src/views/ReleaseProductEntryView.vue"
 
 
 def _must(text: str, token: str, label: str, errors: list[str]) -> None:
@@ -19,21 +19,31 @@ def _must(text: str, token: str, label: str, errors: list[str]) -> None:
 def main() -> int:
     errors: list[str] = []
     router_text = ROUTER.read_text(encoding="utf-8", errors="ignore")
-    scene_text = SCENE_VIEW.read_text(encoding="utf-8", errors="ignore")
-    ctx_text = WORKSPACE_CTX.read_text(encoding="utf-8", errors="ignore")
+    pm_text = PM_VIEW.read_text(encoding="utf-8", errors="ignore") if PM_VIEW.exists() else ""
+    my_work_text = MY_WORK_VIEW.read_text(encoding="utf-8", errors="ignore") if MY_WORK_VIEW.exists() else ""
+    release_entry_text = RELEASE_ENTRY_VIEW.read_text(encoding="utf-8", errors="ignore") if RELEASE_ENTRY_VIEW.exists() else ""
 
     _must(router_text, "ProjectManagementDashboardView", "router", errors)
     _must(router_text, "path: '/pm/dashboard'", "router", errors)
-
-    _must(scene_text, "sceneKey === 'project.management'", "SceneView", errors)
-    _must(scene_text, "path: '/pm/dashboard'", "SceneView", errors)
-    _must(scene_text, "query: workspaceContextQuery", "SceneView", errors)
-
-    _must(ctx_text, "project_id", "workspaceContext", errors)
-    _must(ctx_text, "context.project_id", "workspaceContext", errors)
+    _must(router_text, "path: '/s/project.management'", "router", errors)
 
     if not PM_VIEW.exists():
-      errors.append("missing frontend/apps/web/src/views/ProjectManagementDashboardView.vue")
+        errors.append("missing frontend/apps/web/src/views/ProjectManagementDashboardView.vue")
+    else:
+        _must(pm_text, "const currentProjectContext = computed", "ProjectManagementDashboardView", errors)
+        _must(pm_text, "entry.value?.project_context", "ProjectManagementDashboardView", errors)
+        _must(pm_text, "loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value })", "ProjectManagementDashboardView", errors)
+        _must(pm_text, "const currentSceneKey = ref('project.dashboard')", "ProjectManagementDashboardView", errors)
+
+    if not MY_WORK_VIEW.exists():
+        errors.append("missing frontend/apps/web/src/views/MyWorkView.vue")
+    else:
+        _must(my_work_text, "router.push({ path: '/s/project.management' })", "MyWorkView", errors)
+
+    if not RELEASE_ENTRY_VIEW.exists():
+        errors.append("missing frontend/apps/web/src/views/ReleaseProductEntryView.vue")
+    else:
+        _must(release_entry_text, "path: '/s/project.management'", "ReleaseProductEntryView", errors)
 
     if errors:
         print("[frontend_project_management_scene_bridge_guard] FAIL")

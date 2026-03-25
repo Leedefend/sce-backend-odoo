@@ -52,6 +52,8 @@ class ProjectExecutionService:
         for field in ("manager_id", "owner_id", "user_id"):
             if field in f:
                 ors.append((field, "=", uid))
+        if "create_uid" in f:
+            ors.append(("create_uid", "=", uid))
         for field in ("user_ids", "member_ids", "member_user_ids"):
             if field in f:
                 ors.append((field, "in", [uid]))
@@ -73,6 +75,13 @@ class ProjectExecutionService:
                     return record, {"resolved_project_id": int(record.id), "reason": "explicit_project_id"}
             except Exception:
                 pass
+        try:
+            if "create_uid" in getattr(Project, "_fields", {}):
+                record = Project.search([("create_uid", "=", int(self.env.user.id))], order="create_date desc,id desc", limit=1)
+                if record:
+                    return record, {"resolved_project_id": int(record.id), "reason": "creator_domain"}
+        except Exception:
+            pass
         domain = self._project_domain_for_user()
         try:
             record = Project.search(domain, order="write_date desc,id desc", limit=1)

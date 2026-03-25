@@ -56,6 +56,8 @@ class PaymentSliceService:
         for field_name in ("manager_id", "owner_id", "user_id"):
             if field_name in field_map:
                 ors.append((field_name, "=", uid))
+        if "create_uid" in field_map:
+            ors.append(("create_uid", "=", uid))
         for field_name in ("user_ids", "member_ids", "member_user_ids"):
             if field_name in field_map:
                 ors.append((field_name, "in", [uid]))
@@ -77,6 +79,13 @@ class PaymentSliceService:
                     return record, {"resolved_project_id": int(record.id), "reason": "explicit_project_id"}
             except Exception:
                 pass
+        try:
+            if "create_uid" in getattr(Project, "_fields", {}):
+                record = Project.search([("create_uid", "=", int(self.env.user.id))], order="create_date desc,id desc", limit=1)
+                if record:
+                    return record, {"resolved_project_id": int(record.id), "reason": "creator_domain"}
+        except Exception:
+            pass
         domain = self._project_domain_for_user()
         try:
             record = Project.search(domain, order="write_date desc,id desc", limit=1)

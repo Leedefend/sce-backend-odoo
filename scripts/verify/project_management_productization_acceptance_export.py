@@ -41,10 +41,16 @@ def main() -> None:
         ("snapshot_zone_count_7", len(zones) == 7, "zones count"),
         ("snapshot_intent", (meta.get("intent") or "") == "project.dashboard", "meta.intent"),
         ("snapshot_contract_version", (meta.get("contract_version") or "") == "v1", "meta.contract_version"),
+        ("snapshot_project_context_present", isinstance(data.get("project_context"), dict), "data.project_context"),
         (
             "route_protocol_fixed",
-            ((data.get("route_context") or {}).get("primary_protocol") == "/s/project.management?project_id=<id>"),
+            ((data.get("route_context") or {}).get("primary_protocol") == "/s/project.management"),
             "route_context.primary_protocol",
+        ),
+        (
+            "route_context_transport_fixed",
+            ((data.get("route_context") or {}).get("context_transport") == "scene_payload.project_context"),
+            "route_context.context_transport",
         ),
         ("evidence_mapping_rows_7", evidence.get("mapping_rows") == 7, "evidence.mapping_rows"),
         ("evidence_zone_count_service_7", evidence.get("zone_count_service") == 7, "evidence.zone_count_service"),

@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from odoo import fields
 
+from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter import CostTrackingNativeAdapter
+from odoo.addons.smart_construction_core.services.payment_slice_native_adapter import PaymentSliceNativeAdapter
+
 from .project_dashboard_builders import BUILDERS
 
 
@@ -23,6 +26,8 @@ class ProjectDashboardService:
 
     def __init__(self, env):
         self.env = env
+        self._cost_adapter = CostTrackingNativeAdapter(env)
+        self._payment_adapter = PaymentSliceNativeAdapter(env)
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
 
@@ -58,6 +63,8 @@ class ProjectDashboardService:
         for field in ("manager_id", "owner_id", "user_id"):
             if field in f:
                 ors.append((field, "=", uid))
+        if "create_uid" in f:
+            ors.append(("create_uid", "=", uid))
         for field in ("user_ids", "member_ids", "member_user_ids"):
             if field in f:
                 ors.append((field, "in", [uid]))
@@ -119,6 +126,25 @@ class ProjectDashboardService:
                 diagnostics["reason"] = "explicit project_id not found or inaccessible"
             except Exception:
                 diagnostics["reason"] = "explicit project_id browse failed"
+        try:
+            if "create_uid" in getattr(Project, "_fields", {}):
+                creator_domain = [("create_uid", "=", int(self.env.user.id))]
+                diagnostics["candidate_counts"]["creator_domain"] = int(Project.search_count(creator_domain))
+                record = Project.search(creator_domain, order="create_date desc,id desc", limit=1)
+                if record:
+                    diagnostics.update(
+                        {
+                            "resolved_project_id": int(record.id),
+                            "resolution_path": "creator_domain",
+                            "reason": "matched latest project created by current user",
+                        }
+                    )
+                    return record, diagnostics
+            else:
+                diagnostics["candidate_counts"]["creator_domain"] = 0
+        except Exception:
+            diagnostics["candidate_counts"]["creator_domain"] = -1
+            diagnostics["reason"] = "creator_domain search failed"
         domain = self._project_domain_for_user()
         diagnostics["user_domain"] = domain
         try:
@@ -213,9 +239,27 @@ class ProjectDashboardService:
                 "partner_name": "",
                 "manager_name": "",
                 "stage_name": "",
+                "lifecycle_state": "",
+                "milestone": "",
                 "state": "empty",
+                "progress_percent": "0",
+                "cost_total": "0",
+                "payment_total": "0",
+                "status": "",
                 "date": str(fields.Date.today()),
             }
+        progress_percent = 0.0
+        try:
+            task_model = self._model("project.task")
+            if task_model is not None:
+                total = int(task_model.search_count([("project_id", "=", int(project.id))]))
+                done = int(task_model.search_count([("project_id", "=", int(project.id)), ("stage_id.fold", "=", True)]))
+                if total > 0:
+                    progress_percent = round((done / float(total)) * 100.0, 2)
+        except Exception:
+            progress_percent = 0.0
+        cost_summary = self._cost_adapter.summary(project)
+        payment_summary = self._payment_adapter.summary(project)
         return {
             "id": int(project.id),
             "name": _safe_text(_safe_field(project, "name")),
@@ -224,7 +268,13 @@ class ProjectDashboardService:
             "manager_name": _safe_rel_name(project, "user_id"),
             "stage_name": _safe_rel_name(project, "stage_id"),
             "health_state": _safe_text(_safe_field(project, "health_state")),
+            "lifecycle_state": _safe_text(_safe_field(project, "lifecycle_state")),
+            "milestone": _safe_text(_safe_field(project, "sc_execution_state")),
             "state": "ready",
+            "progress_percent": str(progress_percent),
+            "cost_total": str(cost_summary.get("total_cost_amount") or 0.0),
+            "payment_total": str(payment_summary.get("total_payment_amount") or 0.0),
+            "status": _safe_text(_safe_field(project, "health_state") or _safe_field(project, "state")),
             "date": str(fields.Date.today()),
         }
 

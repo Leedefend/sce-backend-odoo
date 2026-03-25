@@ -89,6 +89,75 @@ class BaseProjectBlockBuilder:
                 }
         return {"allowed": True, "reason_code": "OK", "reason": ""}
 
+    def _project_context(self, project):
+        if not project:
+            return {
+                "project_id": 0,
+                "project_name": "",
+                "stage": "",
+                "stage_label": "",
+                "milestone": "",
+                "milestone_label": "",
+                "status": "",
+            }
+        stage = str(getattr(project, "lifecycle_state", "") or "").strip()
+        milestone = str(getattr(project, "sc_execution_state", "") or "").strip()
+        stage_label = ""
+        milestone_label = ""
+        try:
+            stage_label = str(getattr(getattr(project, "stage_id", None), "display_name", "") or "")
+        except Exception:
+            stage_label = ""
+        try:
+            milestone_label = str(getattr(project, "sc_execution_state_label", "") or "")
+        except Exception:
+            milestone_label = ""
+        return {
+            "project_id": int(getattr(project, "id", 0) or 0),
+            "project_name": str(getattr(project, "display_name", "") or getattr(project, "name", "") or ""),
+            "stage": stage,
+            "stage_label": stage_label or stage,
+            "milestone": milestone,
+            "milestone_label": milestone_label or milestone,
+            "status": str(getattr(project, "health_state", "") or getattr(project, "state", "") or ""),
+        }
+
+    def _next_action(
+        self,
+        *,
+        project,
+        key,
+        label,
+        action_kind,
+        target_scene,
+        intent,
+        priority,
+        hint="",
+        params=None,
+        state="available",
+        reason_code="",
+        source="",
+    ):
+        payload = dict(params or {})
+        project_context = self._project_context(project)
+        if project_context.get("project_id") and "project_context" not in payload:
+            payload["project_context"] = project_context
+        if project_context.get("project_id") and "project_id" not in payload:
+            payload["project_id"] = project_context["project_id"]
+        return {
+            "key": str(key or ""),
+            "label": str(label or ""),
+            "hint": str(hint or ""),
+            "action_kind": str(action_kind or "guidance"),
+            "target_scene": str(target_scene or ""),
+            "intent": str(intent or ""),
+            "priority": int(priority or 0),
+            "params": payload,
+            "state": str(state or "available"),
+            "reason_code": str(reason_code or ""),
+            "source": str(source or ""),
+        }
+
     def _envelope(self, *, state, visibility, data, error_code="", error_message=""):
         return {
             "block_key": self.block_key,

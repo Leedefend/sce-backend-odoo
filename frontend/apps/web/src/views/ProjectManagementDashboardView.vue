@@ -224,7 +224,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
-import { PROJECT_DASHBOARD_ENTRY_INTENT } from '../app/projectCreationBaseline';
+import { consumePendingProjectContext, PROJECT_DASHBOARD_ENTRY_INTENT } from '../app/projectCreationBaseline';
 
 type RuntimeHint = {
   intent?: string;
@@ -327,6 +327,14 @@ const paymentEntryForm = ref({
 });
 const paymentEntrySubmitting = ref(false);
 
+const SCENE_ENTRY_INTENTS: Record<string, string> = {
+  'project.dashboard': 'project.dashboard.enter',
+  'project.execution': 'project.execution.enter',
+  'cost.tracking': 'cost.tracking.enter',
+  payment: 'payment.enter',
+  settlement: 'settlement.enter',
+};
+
 function asText(value: unknown) {
   return String(value || '').trim();
 }
@@ -336,12 +344,12 @@ function asNumber(value: unknown) {
   return Number.isFinite(num) ? num : 0;
 }
 
-function resolveProjectIdFromQuery() {
-  const rawId = route.query.project_id;
-  const value = Array.isArray(rawId) ? rawId[0] : rawId;
-  const projectId = Number(value || 0);
-  return Number.isFinite(projectId) && projectId > 0 ? projectId : 0;
-}
+const currentProjectContext = computed<Record<string, unknown>>(() => {
+  const raw = entry.value?.project_context;
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+});
+
+const currentProjectId = computed(() => asNumber(currentProjectContext.value.project_id || entry.value?.project_id || 0));
 
 const currentSceneLabel = computed(() => {
   return asText(entry.value?.scene_label || '') || '项目场景';
@@ -373,6 +381,17 @@ const summaryRows = computed(() => {
       { key: 'payment_record_count', label: '付款记录数', value: `${asNumber(summary.payment_record_count)} 条` },
       { key: 'payment_total_amount', label: '付款合计', value: currency ? `${total} ${currency}` : `${total}` },
       { key: 'draft_payment_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_payment_amount)} ${currency}` : `${asNumber(summary.draft_payment_amount)}` },
+    ];
+  }
+  if (currentSceneKey.value === 'project.dashboard') {
+    return [
+      { key: 'project_name', label: '项目名称', value: asText(currentProjectContext.value.project_name || entry.value?.title || '--') || '--' },
+      { key: 'stage_label', label: '当前阶段', value: asText(currentProjectContext.value.stage_label || summary.stage_name || '--') || '--' },
+      { key: 'milestone_label', label: '当前里程碑', value: asText(currentProjectContext.value.milestone_label || '--') || '--' },
+      { key: 'status', label: '当前状态', value: asText(currentProjectContext.value.status || summary.status || '--') || '--' },
+      { key: 'progress_percent', label: '执行进度', value: `${asNumber(summary.progress_percent)}%` },
+      { key: 'cost_total', label: '成本合计', value: `${asNumber(summary.cost_total)}` },
+      { key: 'payment_total', label: '付款合计', value: `${asNumber(summary.payment_total)}` },
     ];
   }
   return [
@@ -492,6 +511,15 @@ function blockEmptyText(blockKey: string) {
 
 function actionStateLabel(state: string) {
   return asText(state || '') || '待处理';
+}
+
+function actionButtonLabel(row: Record<string, unknown>, state: string) {
+  const explicit = asText(row.button_label || '');
+  if (explicit) return explicit;
+  const actionKind = asText(row.action_kind || '');
+  if (actionKind === 'transition') return '推进';
+  if (actionKind === 'guidance') return '进入';
+  return state === 'blocked' ? '受阻' : '执行';
 }
 
 function actionHint(row: Record<string, unknown>) {
@@ -678,7 +706,7 @@ const nextActions = computed<ActionCard[]>(() => {
       state,
       stateLabel: stateLabel || actionStateLabel(state),
       stateTone: stateTone || (state === 'blocked' ? 'warning' : 'success'),
-      buttonLabel: buttonLabel || '执行',
+      buttonLabel: actionButtonLabel(row, state) || buttonLabel || '执行',
       disabled: !intent || state === 'blocked' && intent !== 'project.execution.advance',
     };
   });
@@ -786,7 +814,7 @@ async function refreshBlock(blockKey: string) {
       context: {
         scene_key: currentSceneKey.value,
         page_key: 'project.management.dashboard',
-        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        project_id: currentProjectId.value,
       },
     });
     runtimeBlocks.value = {
@@ -859,8 +887,11 @@ async function refreshAllBlocks() {
   }
 }
 
+function currentEntryIntent() {
+  return SCENE_ENTRY_INTENTS[currentSceneKey.value] || PROJECT_DASHBOARD_ENTRY_INTENT;
+}
+
 async function loadEntry(intent: string, params: Record<string, unknown>) {
-  const projectId = asNumber(params.project_id || resolveProjectIdFromQuery());
   loadingTitle.value = '正在加载场景...';
   pageStatus.value = 'loading';
   try {
@@ -870,13 +901,10 @@ async function loadEntry(intent: string, params: Record<string, unknown>) {
       context: {
         scene_key: currentSceneKey.value || intent.replace('.enter', ''),
         page_key: 'project.management.dashboard',
-        project_id: projectId,
+        project_id: currentProjectId.value,
       },
     });
     entry.value = (data && typeof data === 'object') ? data : {};
-    if (typeof window !== 'undefined' && entry.value?.project_id) {
-      window.localStorage.setItem('sc_last_project_id', String(entry.value.project_id));
-    }
     currentSceneKey.value = asText(entry.value?.scene_key || '') || intent.replace('.enter', '');
     resetRuntimeBlocks();
     pageStatus.value = 'ready';
@@ -914,7 +942,7 @@ async function runAction(action: ActionCard) {
       context: {
         scene_key: currentSceneKey.value,
         page_key: 'project.management.dashboard',
-        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        project_id: currentProjectId.value,
       },
     });
     const fromState = asText(result.from_state || '');
@@ -928,6 +956,10 @@ async function runAction(action: ActionCard) {
         ? `状态变化：${fromState} → ${toState}。${message || '已返回结果'}`
         : `执行结果：${message || '已返回结果'}。`,
     };
+    if (asText(action.intent) === 'project.connection.transition' || asText(result.to_state || '')) {
+      await loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
+      return;
+    }
     await refreshAllBlocks();
   } catch (err) {
     transitionFeedback.value = {
@@ -947,7 +979,8 @@ async function submitCostEntry() {
     const result = await intentRequest<Record<string, unknown>>({
       intent: formIntent,
       params: {
-        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        project_id: currentProjectId.value,
+        project_context: currentProjectContext.value,
         date: costEntryForm.value.date,
         amount: costEntryForm.value.amount,
         description: costEntryForm.value.description,
@@ -956,7 +989,7 @@ async function submitCostEntry() {
       context: {
         scene_key: currentSceneKey.value,
         page_key: 'project.management.dashboard',
-        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        project_id: currentProjectId.value,
       },
     });
     transitionFeedback.value = {
@@ -964,7 +997,7 @@ async function submitCostEntry() {
       title: '成本记录已创建',
       message: asText(result.summary_hint || '') || '已创建成本记录，并刷新成本记录与成本汇总。',
     };
-    await Promise.allSettled([refreshBlock('cost_list'), refreshBlock('cost_summary'), refreshBlock('cost_entry')]);
+    await loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
     resetCostEntryForm();
   } catch (err) {
     transitionFeedback.value = {
@@ -986,7 +1019,8 @@ async function submitPaymentEntry() {
     const result = await intentRequest<Record<string, unknown>>({
       intent: formIntent,
       params: {
-        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        project_id: currentProjectId.value,
+        project_context: currentProjectContext.value,
         date: paymentEntryForm.value.date,
         amount: paymentEntryForm.value.amount,
         description: paymentEntryForm.value.description,
@@ -994,7 +1028,7 @@ async function submitPaymentEntry() {
       context: {
         scene_key: currentSceneKey.value,
         page_key: 'project.management.dashboard',
-        project_id: entry.value?.project_id || resolveProjectIdFromQuery(),
+        project_id: currentProjectId.value,
       },
     });
     transitionFeedback.value = {
@@ -1002,7 +1036,7 @@ async function submitPaymentEntry() {
       title: '付款记录已创建',
       message: asText(result.summary_hint || '') || '已创建付款记录，并刷新付款记录与付款汇总。',
     };
-    await Promise.allSettled([refreshBlock('payment_list'), refreshBlock('payment_summary'), refreshBlock('payment_entry')]);
+    await loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
     resetPaymentEntryForm();
   } catch (err) {
     transitionFeedback.value = {
@@ -1016,14 +1050,11 @@ async function submitPaymentEntry() {
 }
 
 async function loadLifecycleEntry() {
-  const projectId = resolveProjectIdFromQuery();
-  if (projectId <= 0) {
-    pageStatus.value = 'error';
-    errorTitle.value = '缺少项目上下文';
-    errorMessage.value = '访问项目生命周期工作台必须提供 project_id。';
-    return;
-  }
-  await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_id: projectId });
+  const pendingProjectContext = consumePendingProjectContext();
+  await loadEntry(
+    PROJECT_DASHBOARD_ENTRY_INTENT,
+    pendingProjectContext ? { project_context: pendingProjectContext } : {},
+  );
 }
 
 watch(

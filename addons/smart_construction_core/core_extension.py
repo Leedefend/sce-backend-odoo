@@ -497,6 +497,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
             ProjectExecutionAdvanceHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_connection_transition import (
+            ProjectConnectionTransitionHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.cost_tracking_enter import (
             CostTrackingEnterHandler,
         )
@@ -559,6 +562,7 @@ def smart_core_register(registry):
     registry["project.execution.enter"] = ProjectExecutionEnterHandler
     registry["project.execution.block.fetch"] = ProjectExecutionBlockFetchHandler
     registry["project.execution.advance"] = ProjectExecutionAdvanceHandler
+    registry["project.connection.transition"] = ProjectConnectionTransitionHandler
     registry["cost.tracking.enter"] = CostTrackingEnterHandler
     registry["cost.tracking.block.fetch"] = CostTrackingBlockFetchHandler
     registry["cost.tracking.record.create"] = CostTrackingRecordCreateHandler

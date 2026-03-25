@@ -23,7 +23,13 @@ class ProjectDashboardSceneOrchestrator(BaseSceneEntryOrchestrator):
         "manager_name",
         "partner_name",
         "stage_name",
+        "lifecycle_state",
+        "milestone",
         "health_state",
+        "progress_percent",
+        "cost_total",
+        "payment_total",
+        "status",
     )
     entry_blocks = (
         ("progress", "项目进度", "deferred"),

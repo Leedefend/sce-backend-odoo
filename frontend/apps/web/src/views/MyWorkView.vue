@@ -1004,7 +1004,7 @@ function goWorkbench() {
 }
 
 function goRiskCockpit() {
-  router.push({ path: '/s/projects.dashboard' }).catch(() => {});
+  router.push({ path: '/s/project.management' }).catch(() => {});
 }
 
 async function handleMyWorkBlockAction(event: PageBlockActionEvent) {
