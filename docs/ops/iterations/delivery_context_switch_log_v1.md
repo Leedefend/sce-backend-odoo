@@ -1437,3 +1437,13 @@ Each entry must include:
 - reason: `在 release orchestration 已完成的前提下，把 release action、release snapshot、snapshot lineage、rollback evidence 与 runtime 命中诊断统一收口为可读、可导出、可校验的 release audit trail surface`
 - completed_step: `新增 ReleaseAuditTrailService；system.init edition_runtime_v1 追加 release_audit_trail_summary；新增 audit surface / lineage consistency / runtime consistency 三条 guard 与 verify.release.audit_trail.v1`
 - next_step: `执行 smart_core 模块升级与 audit trail 全量门禁，确认 standard/preview 的 runtime 命中、rollback 依据和动作历史在同一审计面内自洽`
+
+## 2026-03-25T05:10:00Z Release Approval Policy v1
+
+- branch: `codex/next-round`
+- head: `b31171a`
+- layer_target: `Platform Layer + Delivery Runtime + Release Governance`
+- module: `addons/smart_core/delivery/release_approval_policy_service.py + addons/smart_core/models/release_action.py + addons/smart_core/delivery/release_orchestrator.py + scripts/verify/release_policy_guard.sh + scripts/verify/release_approval_guard.sh + docs/architecture + docs/ops/releases`
+- reason: `在 release audit trail 已完成的前提下，把 release action 从可执行流程升级为受 executor policy 与最小 approval 约束的发布控制系统`
+- completed_step: `新增 release approval policy service；release_action 增加 policy/approval 字段；release_orchestrator 强制执行 executor/approval 规则；新增 verify.release.policy_guard / verify.release.approval_guard / verify.release.approval.v1`
+- next_step: `执行 smart_core 模块升级与 approval 门禁，确认 preview 可直发、standard 需批、rollback 仅高权限可执行，同时保持既有 audit/orchestration 语义不回退`

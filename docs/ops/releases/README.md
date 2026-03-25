@@ -248,6 +248,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - `make verify.release.audit_lineage_consistency_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
     - `make verify.release.audit_runtime_consistency_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
     - `make verify.release.audit_trail.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
+- Release Approval Policy v1:
+  - status: `release action executor policy and minimal approval governed`
+  - scope: `policy-bound release execution on top of release action/orchestration/audit trail`
+  - architecture: `docs/architecture/release_approval_policy_model_v1.md`
+  - release surface: `docs/ops/releases/release_approval_policy_surface_v1.md`
+  - gate:
+    - `make verify.release.policy_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.approval_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.approval.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Project management scene productization (v0.1):
@@ -379,3 +388,6 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.release.audit_lineage_consistency_guard`: release audit lineage consistency guard
 - `verify.release.audit_runtime_consistency_guard`: release audit runtime consistency guard
 - `verify.release.audit_trail.v1`: release audit trail gate
+- `verify.release.policy_guard`: release policy surface guard
+- `verify.release.approval_guard`: release approval execution guard
+- `verify.release.approval.v1`: release approval policy gate
