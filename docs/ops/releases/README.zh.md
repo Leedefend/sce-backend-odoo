@@ -262,3 +262,6 @@ status: active
 - `verify.release_snapshot.active_uniqueness_guard`：release snapshot active released 唯一性守卫
 - `verify.release_snapshot.lineage_guard`：runtime released snapshot lineage 诊断守卫
 - `verify.release.snapshot_lineage.v1`：release snapshot lineage 门禁
+- `verify.release.action_guard`：release action 记录守卫
+- `verify.release.orchestration_guard`：release orchestration promote/rollback 守卫
+- `verify.release.orchestration.v1`：release orchestration 门禁
