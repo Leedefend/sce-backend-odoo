@@ -51,6 +51,7 @@ from odoo.addons.smart_core.core.scene_delivery_policy import (
     resolve_delivery_policy_runtime,
 )
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -679,6 +680,7 @@ class SystemInitHandler(BaseIntentHandler):
             edition_key=delivery_edition_key,
             base_product_key="construction",
         )
+        release_snapshot_service = EditionReleaseSnapshotService(env)
         data["delivery_engine_v1"] = delivery_payload
         edition_diagnostics = (
             delivery_payload.get("product_policy", {}).get("edition_diagnostics")
@@ -689,6 +691,15 @@ class SystemInitHandler(BaseIntentHandler):
         effective_edition_key = str(delivery_payload.get("edition_key") or "standard").strip() or "standard"
         effective_product_key = str(delivery_payload.get("product_key") or f"{effective_base_product_key}.{effective_edition_key}").strip()
         requested_product_key = f"construction.{delivery_edition_key}"
+        released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
+        runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}
+        if released_snapshot_lineage:
+            runtime_diagnostics["released_snapshot_lineage"] = released_snapshot_lineage
+            meta = delivery_payload.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                delivery_payload["meta"] = meta
+            meta["released_snapshot_lineage"] = released_snapshot_lineage
         data["edition_runtime_v1"] = {
             "contract_version": "v1",
             "requested": {
@@ -701,7 +712,7 @@ class SystemInitHandler(BaseIntentHandler):
                 "base_product_key": effective_base_product_key,
                 "edition_key": effective_edition_key,
             },
-            "diagnostics": edition_diagnostics if isinstance(edition_diagnostics, dict) else {},
+            "diagnostics": runtime_diagnostics,
         }
         data["release_navigation_v1"] = {
             "contract_version": str(delivery_payload.get("contract_version") or "v1"),

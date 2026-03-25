@@ -2,6 +2,7 @@
 
 from .delivery_engine import DeliveryEngine
 from .edition_release_snapshot_service import EditionReleaseSnapshotService
+from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
 from .product_edition_promotion_service import ProductEditionPromotionService
 from .scene_promotion_service import ScenePromotionService
 from .scene_snapshot_service import SceneSnapshotService

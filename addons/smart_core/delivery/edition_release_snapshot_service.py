@@ -7,6 +7,7 @@ from typing import Any
 from odoo import fields
 
 from .delivery_engine import DeliveryEngine
+from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
 from .product_policy_service import ProductPolicyService
 
 
@@ -30,6 +31,7 @@ class EditionReleaseSnapshotService:
         self.env = env
         self.policy_service = ProductPolicyService(env)
         self.delivery_engine = DeliveryEngine(env)
+        self.promotion_service = EditionReleaseSnapshotPromotionService(env)
 
     def _model(self):
         return self.env["sc.edition.release.snapshot"].sudo()
@@ -153,6 +155,29 @@ class EditionReleaseSnapshotService:
         }
         return snapshot
 
+    def _lineage_meta(self, rec) -> dict[str, Any]:
+        runtime = rec.snapshot_json if isinstance(rec.snapshot_json, dict) else {}
+        runtime_meta = _dict(runtime.get("runtime_meta"))
+        return {
+            "snapshot_id": int(rec.id),
+            "product_key": _text(rec.product_key),
+            "base_product_key": _text(rec.base_product_key),
+            "edition_key": _text(rec.edition_key),
+            "version": _text(rec.version) or "v1",
+            "channel": _text(rec.channel) or "stable",
+            "state": _text(rec.state) or "candidate",
+            "is_active": bool(rec.is_active),
+            "released_at": rec.released_at.isoformat() if rec.released_at else "",
+            "approved_at": rec.approved_at.isoformat() if rec.approved_at else "",
+            "frozen_at": rec.frozen_at.isoformat() if rec.frozen_at else "",
+            "state_reason": _text(rec.state_reason),
+            "promotion_note": _text(rec.promotion_note),
+            "promoted_from_snapshot_id": int(rec.promoted_from_snapshot_id.id) if rec.promoted_from_snapshot_id else 0,
+            "rollback_target_snapshot_id": int(rec.rollback_target_snapshot_id.id) if rec.rollback_target_snapshot_id else 0,
+            "replaced_by_snapshot_id": int(rec.replaced_by_snapshot_id.id) if rec.replaced_by_snapshot_id else 0,
+            "effective_runtime": _dict(runtime_meta.get("effective")),
+        }
+
     def freeze_release_surface(
         self,
         *,
@@ -191,6 +216,7 @@ class EditionReleaseSnapshotService:
         rollback_target_id = int(current_active.id) if current_active and (not target or int(current_active.id) != int(target.id)) else False
         policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", resolved_product_key), ("active", "=", True)], limit=1)
         values = {
+            "state": "candidate",
             "product_key": resolved_product_key,
             "base_product_key": resolved_base_product_key,
             "edition_key": resolved_edition_key,
@@ -198,9 +224,12 @@ class EditionReleaseSnapshotService:
             "version": resolved_version,
             "channel": channel,
             "frozen_at": now,
-            "activated_at": now if replace_active else False,
+            "approved_at": False,
+            "released_at": False,
+            "activated_at": False,
             "superseded_at": False,
             "source_policy_id": int(policy_rec.id) if policy_rec else False,
+            "promoted_from_snapshot_id": False,
             "rollback_target_snapshot_id": rollback_target_id or False,
             "replaced_by_snapshot_id": False,
             "snapshot_json": payload,
@@ -214,16 +243,28 @@ class EditionReleaseSnapshotService:
                 },
                 "rollback_basis_available": bool(rollback_target_id),
             },
+            "state_reason": "frozen_release_surface_candidate",
+            "promotion_note": "",
             "note": _text(note) or "frozen from edition delivery surface",
-            "is_active": bool(replace_active),
+            "is_active": False,
         }
         if target:
             target.write(values)
             rec = target
         else:
             rec = model.create(values)
-        if replace_active and current_active and int(current_active.id) != int(rec.id):
-            current_active.write({"is_active": False, "superseded_at": now, "replaced_by_snapshot_id": int(rec.id)})
+        self.promotion_service.promote_to_approved(
+            int(rec.id),
+            state_reason="freeze_surface_approved",
+            promotion_note="approved by freeze service",
+        )
+        if replace_active:
+            return self.promotion_service.promote_to_released(
+                int(rec.id),
+                replace_active=True,
+                state_reason="freeze_surface_released",
+                promotion_note="released by freeze service",
+            )
         return rec.to_runtime_dict()
 
     def list_snapshots(self, *, product_key: str | None = None) -> list[dict[str, Any]]:
@@ -234,16 +275,39 @@ class EditionReleaseSnapshotService:
 
     def resolve_active_snapshot(self, *, product_key: str) -> dict[str, Any]:
         rec = self._model().search(
-            [("product_key", "=", _text(product_key)), ("is_active", "=", True), ("active", "=", True)],
+            [
+                ("product_key", "=", _text(product_key)),
+                ("state", "=", "released"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ],
             order="activated_at desc, id desc",
             limit=1,
         )
         return rec.to_runtime_dict() if rec else {}
 
+    def resolve_active_snapshot_lineage(self, *, product_key: str) -> dict[str, Any]:
+        rec = self._model().search(
+            [
+                ("product_key", "=", _text(product_key)),
+                ("state", "=", "released"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ],
+            order="released_at desc, activated_at desc, id desc",
+            limit=1,
+        )
+        return self._lineage_meta(rec) if rec else {}
+
     def rollback_to_snapshot(self, *, product_key: str, target_snapshot_id: int | None = None, note: str = "") -> dict[str, Any]:
         current = self._model().search(
-            [("product_key", "=", _text(product_key)), ("is_active", "=", True), ("active", "=", True)],
-            order="activated_at desc, id desc",
+            [
+                ("product_key", "=", _text(product_key)),
+                ("state", "=", "released"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ],
+            order="released_at desc, activated_at desc, id desc",
             limit=1,
         )
         if not current:
@@ -253,7 +317,28 @@ class EditionReleaseSnapshotService:
             raise ValueError("ROLLBACK_TARGET_NOT_FOUND")
         if _text(target.product_key) != _text(product_key):
             raise ValueError("ROLLBACK_TARGET_PRODUCT_MISMATCH")
+        if _text(target.state) not in {"approved", "released", "superseded"}:
+            raise ValueError("ROLLBACK_TARGET_NOT_RELEASEABLE")
         now = self.now()
-        current.write({"is_active": False, "superseded_at": now, "note": _text(note) or "rolled back to previous release snapshot"})
-        target.write({"is_active": True, "activated_at": now, "superseded_at": False})
+        current.write(
+            {
+                "state": "superseded",
+                "is_active": False,
+                "superseded_at": now,
+                "state_reason": "rolled_back_to_previous_released_snapshot",
+                "promotion_note": _text(note) or "rolled back to previous release snapshot",
+            }
+        )
+        target.write(
+            {
+                "state": "released",
+                "is_active": True,
+                "released_at": target.released_at or now,
+                "activated_at": now,
+                "superseded_at": False,
+                "state_reason": "rollback_reactivated_released_snapshot",
+                "promotion_note": _text(note) or "rollback reactivated previous release snapshot",
+                "replaced_by_snapshot_id": False,
+            }
+        )
         return target.to_runtime_dict()
