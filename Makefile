@@ -1102,6 +1102,22 @@ verify.edition.rollback_evidence_guard: guard.prod.forbid check-compose-project 
 verify.release.edition_freeze.v1: verify.release.edition_runtime.v1 verify.edition.freeze_surface_guard verify.edition.release_snapshot_guard verify.edition.rollback_evidence_guard
 	@echo "[OK] verify.release.edition_freeze.v1 done"
 
+.PHONY: verify.release_snapshot.promotion_guard
+verify.release_snapshot.promotion_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_snapshot_promotion_guard.sh
+
+.PHONY: verify.release_snapshot.active_uniqueness_guard
+verify.release_snapshot.active_uniqueness_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_snapshot_active_uniqueness_guard.sh
+
+.PHONY: verify.release_snapshot.lineage_guard
+verify.release_snapshot.lineage_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/release_snapshot_lineage_guard.py"
+
+.PHONY: verify.release.snapshot_lineage.v1
+verify.release.snapshot_lineage.v1: verify.release.edition_freeze.v1 verify.release_snapshot.promotion_guard verify.release_snapshot.active_uniqueness_guard verify.release_snapshot.lineage_guard
+	@echo "[OK] verify.release.snapshot_lineage.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"

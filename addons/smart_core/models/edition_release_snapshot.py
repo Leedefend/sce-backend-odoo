@@ -11,6 +11,17 @@ class ScEditionReleaseSnapshot(models.Model):
 
     active = fields.Boolean(default=True)
     is_active = fields.Boolean(default=False, index=True)
+    state = fields.Selection(
+        [
+            ("candidate", "Candidate"),
+            ("approved", "Approved"),
+            ("released", "Released"),
+            ("superseded", "Superseded"),
+        ],
+        default="candidate",
+        required=True,
+        index=True,
+    )
     product_key = fields.Char(required=True, index=True)
     base_product_key = fields.Char(required=True, index=True)
     edition_key = fields.Char(required=True, index=True)
@@ -23,9 +34,16 @@ class ScEditionReleaseSnapshot(models.Model):
         index=True,
     )
     frozen_at = fields.Datetime(required=True, default=fields.Datetime.now)
+    approved_at = fields.Datetime()
+    released_at = fields.Datetime()
     activated_at = fields.Datetime()
     superseded_at = fields.Datetime()
     source_policy_id = fields.Many2one("sc.product.policy", string="Source Policy", ondelete="set null")
+    promoted_from_snapshot_id = fields.Many2one(
+        "sc.edition.release.snapshot",
+        string="Promoted From Snapshot",
+        ondelete="set null",
+    )
     rollback_target_snapshot_id = fields.Many2one(
         "sc.edition.release.snapshot",
         string="Rollback Target Snapshot",
@@ -38,6 +56,8 @@ class ScEditionReleaseSnapshot(models.Model):
     )
     snapshot_json = fields.Json(required=True, default=dict)
     meta_json = fields.Json(required=True, default=dict)
+    state_reason = fields.Char()
+    promotion_note = fields.Text()
     note = fields.Char()
 
     _sql_constraints = [
@@ -58,14 +78,20 @@ class ScEditionReleaseSnapshot(models.Model):
             "label": str(self.label or "").strip(),
             "version": str(self.version or "").strip() or "v1",
             "channel": str(self.channel or "").strip() or "stable",
+            "state": str(self.state or "").strip() or "candidate",
             "is_active": bool(self.is_active),
             "frozen_at": self.frozen_at.isoformat() if self.frozen_at else "",
+            "approved_at": self.approved_at.isoformat() if self.approved_at else "",
+            "released_at": self.released_at.isoformat() if self.released_at else "",
             "activated_at": self.activated_at.isoformat() if self.activated_at else "",
             "superseded_at": self.superseded_at.isoformat() if self.superseded_at else "",
             "source_policy_id": int(self.source_policy_id.id) if self.source_policy_id else 0,
+            "promoted_from_snapshot_id": int(self.promoted_from_snapshot_id.id) if self.promoted_from_snapshot_id else 0,
             "rollback_target_snapshot_id": int(self.rollback_target_snapshot_id.id) if self.rollback_target_snapshot_id else 0,
             "replaced_by_snapshot_id": int(self.replaced_by_snapshot_id.id) if self.replaced_by_snapshot_id else 0,
             "snapshot_json": self.snapshot_json if isinstance(self.snapshot_json, dict) else {},
             "meta_json": self.meta_json if isinstance(self.meta_json, dict) else {},
+            "state_reason": str(self.state_reason or "").strip(),
+            "promotion_note": str(self.promotion_note or "").strip(),
             "note": str(self.note or "").strip(),
         }

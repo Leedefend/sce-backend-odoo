@@ -64,6 +64,7 @@ try:
             "effective_product_key": effective.get("product_key"),
             "rollback_target_snapshot_id": row.get("rollback_target_snapshot_id"),
         }
+    env.cr.commit()
 except Exception as exc:
     report["status"] = "FAIL"
     report["error"] = str(exc)
