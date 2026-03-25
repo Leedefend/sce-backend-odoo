@@ -3,3 +3,4 @@ access_sc_ui_base_contract_asset_admin,access.sc.ui.base.contract.asset.admin,mo
 access_sc_product_policy_admin,access.sc.product.policy.admin,model_sc_product_policy,smart_core.group_smart_core_admin,1,1,1,1
 access_sc_scene_snapshot_admin,access.sc.scene.snapshot.admin,model_sc_scene_snapshot,smart_core.group_smart_core_admin,1,1,1,1
 access_sc_edition_release_snapshot_admin,access.sc.edition.release.snapshot.admin,model_sc_edition_release_snapshot,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_release_action_admin,access.sc.release.action.admin,model_sc_release_action,smart_core.group_smart_core_admin,1,1,1,1
