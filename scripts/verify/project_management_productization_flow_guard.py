@@ -79,13 +79,21 @@ def main() -> None:
     checks.append(("snapshot_zone_count", len((snap_data or {}).get("zones") or {}) == 7, "zones==7"))
     checks.append(("snapshot_intent", (snap_meta or {}).get("intent") == "project.dashboard", "meta.intent"))
     checks.append(("snapshot_contract_version", (snap_meta or {}).get("contract_version") == "v1", "meta.contract_version"))
+    checks.append(("snapshot_project_context", isinstance((snap_data or {}).get("project_context"), dict), "data.project_context"))
 
     evidence = _load_json(evidence_json)
     checks.append(("evidence_zone_count_snapshot", (evidence.get("zone_count_snapshot") == 7), "evidence.zone_count_snapshot"))
     checks.append(("evidence_zone_count_service", (evidence.get("zone_count_service") == 7), "evidence.zone_count_service"))
     checks.append(("evidence_mapping_rows", (evidence.get("mapping_rows") == 7), "evidence.mapping_rows"))
     checks.append(
-        ("evidence_route_protocol", evidence.get("route_primary_protocol") == "/s/project.management?project_id=<id>", "evidence.route_primary_protocol")
+        ("evidence_route_protocol", evidence.get("route_primary_protocol") == "/s/project.management", "evidence.route_primary_protocol")
+    )
+    checks.append(
+        (
+            "evidence_context_transport",
+            evidence.get("route_context_transport") == "scene_payload.project_context",
+            "evidence.route_context_transport",
+        )
     )
 
     passed = [c for c in checks if c[1]]

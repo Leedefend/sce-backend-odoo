@@ -23,6 +23,7 @@ class SettlementSliceContractOrchestrator(BaseSceneEntryOrchestrator):
     )
     entry_blocks = (
         ("settlement_summary", "结算结果", "deferred"),
+        ("next_actions", "结算下一步", "deferred"),
     )
 
     def __init__(self, env):

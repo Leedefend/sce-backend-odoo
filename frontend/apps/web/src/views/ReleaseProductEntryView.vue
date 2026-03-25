@@ -8,7 +8,7 @@
     </header>
 
     <section class="actions">
-      <button v-if="recentProjectId" class="primary" @click="openRecentProject">继续最近项目</button>
+      <button class="primary" @click="openRecentProject">进入项目驾驶舱</button>
       <button class="ghost" @click="openProjectsIntake">新建项目</button>
       <button class="ghost" @click="openProjectList">选择已有项目</button>
     </section>
@@ -88,11 +88,6 @@ const productView = computed<ProductDescriptor>(() => ({
   description: String(releasedState.value.message || '').trim() || product.value.description,
   scope: product.value.scope,
 }));
-const recentProjectId = computed(() => {
-  if (typeof window === 'undefined') return '';
-  return String(window.localStorage.getItem('sc_last_project_id') || '').trim();
-});
-
 function openProjectsIntake() {
   router.push('/s/projects.intake').catch(() => {});
 }
@@ -105,16 +100,8 @@ function openProjectList() {
 }
 
 function openRecentProject() {
-  if (!recentProjectId.value) {
-    openProjectsIntake();
-    return;
-  }
   router.push({
     path: '/s/project.management',
-    query: {
-      project_id: recentProjectId.value,
-      ...(productKey.value ? { release_product: productKey.value } : {}),
-    },
   }).catch(() => {});
 }
 </script>

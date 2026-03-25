@@ -223,7 +223,7 @@ import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
-import { PROJECT_INTAKE_SCENE_KEY } from '../app/projectCreationBaseline';
+import { PROJECT_INTAKE_SCENE_KEY, setPendingProjectContext } from '../app/projectCreationBaseline';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -3024,6 +3024,17 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     if (created?.id) {
       submissionFeedback.value = { kind: 'success', message: '项目已创建' };
       clearIntakeAutosave();
+      if (model.value === 'project.project') {
+        setPendingProjectContext({
+          project_id: Number(created.id),
+          project_name: String(values.name || formData.name || ''),
+          stage: 'initiated',
+          stage_label: '已立项',
+          milestone: '',
+          milestone_label: '',
+          status: 'active',
+        });
+      }
       const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
       const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
@@ -3033,7 +3044,6 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
         await router.replace({
           path: routePath,
           query: {
-            project_id: String(created.id),
             ...resolveWorkspaceContextQuery(),
           },
         });
@@ -3044,7 +3054,6 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
         await router.replace({
           path: resolvedNextRoute,
           query: {
-            project_id: String(created.id),
             ...resolveWorkspaceContextQuery(),
           },
         });

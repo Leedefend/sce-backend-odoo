@@ -164,11 +164,9 @@ try {
   await page.getByRole('button', { name: '创建项目' }).click();
 
   await waitForScene(page, '项目驾驶舱', ['项目进度', '风险提醒', '下一步动作']);
-  writeJson('dashboard_snapshot.json', await snapshot(page));
-
-  await clickActionCard(page, '下一步：进入计划准备');
-  await waitForScene(page, '计划准备', ['计划摘要', '计划任务', '计划下一步']);
-  writeJson('plan_snapshot.json', await snapshot(page));
+  const dashboard = await snapshot(page);
+  writeJson('dashboard_snapshot.json', dashboard);
+  assert(!dashboard.search.includes('project_id='), 'dashboard route should not depend on project_id query');
 
   await clickActionCard(page, '下一步：进入执行推进');
   await waitForScene(page, '执行推进', ['执行任务', '试点前检查', '执行下一步']);

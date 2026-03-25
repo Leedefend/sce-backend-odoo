@@ -23,49 +23,52 @@ class CostTrackingNextActionsBuilder(BaseProjectBlockBuilder):
         summary = CostTrackingNativeAdapter(self.env).summary(project)
         move_count = int(summary.get("move_count") or 0)
         actions = [
-            {
-                "key": "refresh_cost_list",
-                "label": "继续：刷新成本记录",
-                "hint": "已接入项目成本录入、成本记录和成本汇总。若刚录入完成，可刷新区块核对结果。",
-                "intent": "cost.tracking.block.fetch",
-                "params": {
-                    "project_id": int(project.id),
-                    "block_key": "cost_list",
-                },
-                "state": "available",
-                "reason_code": "COST_SLICE_REFRESH_READY",
-                "source": "fr3_prepared",
-            }
+            self._next_action(
+                project=project,
+                key="refresh_cost_list",
+                label="继续：刷新成本记录",
+                hint="已接入项目成本录入、成本记录和成本汇总。若刚录入完成，可刷新区块核对结果。",
+                action_kind="guidance",
+                target_scene="cost.tracking",
+                intent="cost.tracking.block.fetch",
+                priority=10,
+                params={"block_key": "cost_list"},
+                state="available",
+                reason_code="COST_SLICE_REFRESH_READY",
+                source="fr3_prepared",
+            )
         ]
         actions.append(
-            {
-                "key": "payment_enter",
-                "label": "下一步：进入付款记录",
-                "hint": "从成本切片进入 FR-4 付款切片，录入项目付款并查看汇总。",
-                "intent": "payment.enter",
-                "params": {
-                    "project_id": int(project.id),
-                    "source": "cost.tracking.next_actions",
-                },
-                "state": "available",
-                "reason_code": "PAYMENT_SLICE_READY",
-                "source": "fr4_prepared",
-            }
+            self._next_action(
+                project=project,
+                key="payment_enter",
+                label="下一步：进入付款记录",
+                hint="从成本切片进入 FR-4 付款切片，录入项目付款并查看汇总。",
+                action_kind="guidance",
+                target_scene="payment",
+                intent="payment.enter",
+                priority=20,
+                params={"source": "cost.tracking.next_actions"},
+                state="available",
+                reason_code="PAYMENT_SLICE_READY",
+                source="fr4_prepared",
+            )
         )
         actions.append(
-            {
-                "key": "settlement_enter",
-                "label": "下一步：查看结算结果",
-                "hint": "从成本切片进入 FR-5 结算切片，查看项目级成本/付款只读汇总。",
-                "intent": "settlement.enter",
-                "params": {
-                    "project_id": int(project.id),
-                    "source": "cost.tracking.next_actions",
-                },
-                "state": "available",
-                "reason_code": "SETTLEMENT_SLICE_READY",
-                "source": "fr5_prepared",
-            }
+            self._next_action(
+                project=project,
+                key="settlement_enter",
+                label="下一步：查看结算结果",
+                hint="从成本切片进入 FR-5 结算切片，查看项目级成本/付款只读汇总。",
+                action_kind="guidance",
+                target_scene="settlement",
+                intent="settlement.enter",
+                priority=30,
+                params={"source": "cost.tracking.next_actions"},
+                state="available",
+                reason_code="SETTLEMENT_SLICE_READY",
+                source="fr5_prepared",
+            )
         )
         return self._envelope(
             state="ready",

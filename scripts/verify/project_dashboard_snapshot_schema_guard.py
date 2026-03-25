@@ -36,11 +36,16 @@ def main():
 
     route_context = data.get("route_context") or {}
     _must(
-        route_context.get("primary_protocol") == "/s/project.management?project_id=<id>",
+        route_context.get("primary_protocol") == "/s/project.management",
         "snapshot route_context.primary_protocol mismatch",
     )
-    _must(route_context.get("query_key") == "project_id", "snapshot route_context.query_key mismatch")
     _must(route_context.get("scene_route") == "/s/project.management", "snapshot route_context.scene_route mismatch")
+    _must(route_context.get("context_transport") == "scene_payload.project_context", "snapshot route_context.context_transport mismatch")
+
+    project_context = data.get("project_context") or {}
+    _must(isinstance(project_context, dict), "snapshot project_context must be object")
+    for key in ("project_id", "project_name", "stage", "milestone", "status"):
+        _must(key in project_context, f"snapshot project_context missing key: {key}")
 
     zones = data.get("zones") or {}
     _must(isinstance(zones, dict), "snapshot zones must be object")

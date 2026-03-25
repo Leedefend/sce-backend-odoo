@@ -93,7 +93,22 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
             pilot_failed_count = 1
             pilot_primary_reason_code = "EXECUTION_TASK_MISSING"
             pilot_primary_message = "请先创建项目根任务，并确保仅保留一个开放任务。"
-        actions = [action]
+        actions = [
+            self._next_action(
+                project=project,
+                key=str(action.get("key") or "project_execution_advance"),
+                label=str(action.get("label") or "推进执行"),
+                hint=str(action.get("hint") or ""),
+                action_kind="transition",
+                target_scene="project.execution",
+                intent=str(action.get("intent") or "project.execution.advance"),
+                priority=10,
+                params=dict(action.get("params") or {}),
+                state=str(action.get("state") or "available"),
+                reason_code=str(action.get("reason_code") or ""),
+                source=str(action.get("source") or "execution_state_machine"),
+            )
+        ]
         cost_action_state = "planned"
         cost_reason_code = "COST_TRACKING_AFTER_EXECUTION"
         cost_hint = "当前切片只读复用 account.move 成本事实。下一步：进入成本跟踪查看原生汇总。"
@@ -104,19 +119,20 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
         elif current_state in ("in_progress", "done"):
             cost_action_state = "available"
         actions.append(
-            {
-                "key": "cost_tracking_enter",
-                "label": "下一步：进入成本记录",
-                "hint": "从执行场景进入 FR-3 成本切片，录入项目成本并查看汇总。",
-                "intent": "cost.tracking.enter",
-                "params": {
-                    "project_id": int(project.id),
-                    "source": "project.execution.next_actions",
-                },
-                "state": cost_action_state,
-                "reason_code": cost_reason_code,
-                "source": "fr3_prepared",
-            }
+            self._next_action(
+                project=project,
+                key="cost_tracking_enter",
+                label="下一步：进入成本记录",
+                hint="从执行场景进入 FR-3 成本切片，录入项目成本并查看汇总。",
+                action_kind="guidance",
+                target_scene="cost.tracking",
+                intent="cost.tracking.enter",
+                priority=20,
+                params={"source": "project.execution.next_actions"},
+                state=cost_action_state,
+                reason_code=cost_reason_code,
+                source="fr3_prepared",
+            )
         )
         payment_action_state = "planned"
         payment_reason_code = "PAYMENT_AFTER_EXECUTION"
@@ -126,19 +142,20 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
         elif current_state in ("in_progress", "done"):
             payment_action_state = "available"
         actions.append(
-            {
-                "key": "payment_enter",
-                "label": "下一步：进入付款记录",
-                "hint": "在项目链路中进入 FR-4 付款切片，录入付款记录并查看汇总。",
-                "intent": "payment.enter",
-                "params": {
-                    "project_id": int(project.id),
-                    "source": "project.execution.next_actions",
-                },
-                "state": payment_action_state,
-                "reason_code": payment_reason_code,
-                "source": "fr4_prepared",
-            }
+            self._next_action(
+                project=project,
+                key="payment_enter",
+                label="下一步：进入付款记录",
+                hint="在项目链路中进入 FR-4 付款切片，录入付款记录并查看汇总。",
+                action_kind="guidance",
+                target_scene="payment",
+                intent="payment.enter",
+                priority=30,
+                params={"source": "project.execution.next_actions"},
+                state=payment_action_state,
+                reason_code=payment_reason_code,
+                source="fr4_prepared",
+            )
         )
         settlement_action_state = "planned"
         settlement_reason_code = "SETTLEMENT_AFTER_EXECUTION"
@@ -148,19 +165,20 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
         elif current_state in ("in_progress", "done"):
             settlement_action_state = "available"
         actions.append(
-            {
-                "key": "settlement_enter",
-                "label": "下一步：查看结算结果",
-                "hint": "在项目链路中进入 FR-5 结算切片，查看项目级成本/付款只读汇总。",
-                "intent": "settlement.enter",
-                "params": {
-                    "project_id": int(project.id),
-                    "source": "project.execution.next_actions",
-                },
-                "state": settlement_action_state,
-                "reason_code": settlement_reason_code,
-                "source": "fr5_prepared",
-            }
+            self._next_action(
+                project=project,
+                key="settlement_enter",
+                label="下一步：查看结算结果",
+                hint="在项目链路中进入 FR-5 结算切片，查看项目级成本/付款只读汇总。",
+                action_kind="guidance",
+                target_scene="settlement",
+                intent="settlement.enter",
+                priority=40,
+                params={"source": "project.execution.next_actions"},
+                state=settlement_action_state,
+                reason_code=settlement_reason_code,
+                source="fr5_prepared",
+            )
         )
         return self._envelope(
             state="ready",

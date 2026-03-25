@@ -56,6 +56,8 @@ class ProjectPlanBootstrapService:
         for field in ("manager_id", "owner_id", "user_id"):
             if field in f:
                 ors.append((field, "=", uid))
+        if "create_uid" in f:
+            ors.append(("create_uid", "=", uid))
         for field in ("user_ids", "member_ids", "member_user_ids"):
             if field in f:
                 ors.append((field, "in", [uid]))
@@ -113,6 +115,25 @@ class ProjectPlanBootstrapService:
                 diagnostics["reason"] = "explicit project_id not found or inaccessible"
             except Exception:
                 diagnostics["reason"] = "explicit project_id browse failed"
+        try:
+            if "create_uid" in getattr(Project, "_fields", {}):
+                creator_domain = [("create_uid", "=", int(self.env.user.id))]
+                diagnostics["candidate_counts"]["creator_domain"] = int(Project.search_count(creator_domain))
+                record = Project.search(creator_domain, order="create_date desc,id desc", limit=1)
+                if record:
+                    diagnostics.update(
+                        {
+                            "resolved_project_id": int(record.id),
+                            "resolution_path": "creator_domain",
+                            "reason": "matched latest project created by current user",
+                        }
+                    )
+                    return record, diagnostics
+            else:
+                diagnostics["candidate_counts"]["creator_domain"] = 0
+        except Exception:
+            diagnostics["candidate_counts"]["creator_domain"] = -1
+            diagnostics["reason"] = "creator_domain search failed"
         domain = self._project_domain_for_user()
         diagnostics["user_domain"] = domain
         try:

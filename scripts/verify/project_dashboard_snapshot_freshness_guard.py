@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOT = ROOT / "tmp" / "project_dashboard_contract_snapshot_v1.json"
-SERVICE = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_service.py"
+ORCHESTRATOR = ROOT / "addons" / "smart_core" / "orchestration" / "project_dashboard_contract_orchestrator.py"
 BUILDERS_DIR = ROOT / "addons" / "smart_construction_core" / "services" / "project_dashboard_builders"
 MAPPING = ROOT / "docs" / "contract" / "project_management_capability_mapping_v2.json"
 
@@ -20,16 +20,16 @@ def _must(cond: bool, msg: str) -> None:
 
 
 def _load_zone_blocks():
-    tree = ast.parse(SERVICE.read_text(encoding="utf-8"))
+    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     for node in tree.body:
-        if isinstance(node, ast.ClassDef) and node.name == "ProjectDashboardService":
+        if isinstance(node, ast.ClassDef) and node.name == "ProjectDashboardContractOrchestrator":
             for stmt in node.body:
                 if isinstance(stmt, ast.Assign):
                     for t in stmt.targets:
                         if isinstance(t, ast.Name) and t.id == "ZONE_BLOCKS":
                             rows = ast.literal_eval(stmt.value)
                             return list(rows)
-    raise SystemExit("ZONE_BLOCKS not found in service")
+    raise SystemExit("ZONE_BLOCKS not found in orchestrator")
 
 
 def _load_builder_types():
@@ -46,7 +46,16 @@ def _load_builder_types():
                 block_type = s.split("=", 1)[1].strip().strip('"')
         if block_key and block_type:
             out[block_key] = block_type
-    _must(len(out) == 7, "expected 7 builder block_type entries")
+    required = {
+        "block.project.header",
+        "block.project.metrics",
+        "block.project.progress",
+        "block.project.contract",
+        "block.project.cost",
+        "block.project.finance",
+        "block.project.risk",
+    }
+    _must(required.issubset(set(out.keys())), "required dashboard builder block_type entries missing")
     return out
 
 

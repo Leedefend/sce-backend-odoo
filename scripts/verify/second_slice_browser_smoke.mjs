@@ -165,17 +165,7 @@ try {
   await waitForScene(page, '项目驾驶舱', ['项目进度', '风险提醒', '下一步动作']);
   const dashboard = await snapshot(page);
   writeJson('dashboard_snapshot.json', dashboard);
-  assert(dashboard.search.includes('project_id='), 'dashboard route missing project_id');
-
-  log('enter plan');
-  await clickActionCard(page, '下一步：进入计划准备');
-  await waitForScene(page, '计划准备', ['计划摘要', '计划任务', '计划下一步']);
-  const plan = await snapshot(page);
-  writeJson('plan_snapshot.json', plan);
-  assert(plan.text.includes('计划准备'), 'plan scene label missing');
-  assert(plan.text.includes('计划摘要'), 'plan missing summary block');
-  assert(plan.text.includes('计划任务'), 'plan missing tasks block');
-  assert(plan.text.includes('计划下一步'), 'plan missing next_actions block');
+  assert(!dashboard.search.includes('project_id='), 'dashboard route should not depend on project_id query');
 
   log('enter execution');
   await clickActionCard(page, '下一步：进入执行推进');

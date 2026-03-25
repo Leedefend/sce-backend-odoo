@@ -135,7 +135,7 @@ try {
   writeJson('dashboard_snapshot.json', dash);
 
   assert(dash.pathname === '/s/project.management', `unexpected dashboard path: ${dash.pathname}`);
-  assert(dash.search.includes('project_id='), 'dashboard route missing project_id');
+  assert(!dash.search.includes('project_id='), 'dashboard route should not depend on project_id query');
   assert(dash.text.includes('项目进度'), 'dashboard missing progress block');
   assert(dash.text.includes('风险提醒'), 'dashboard missing risks block');
   assert(dash.text.includes('下一步动作'), 'dashboard missing next_actions block');
