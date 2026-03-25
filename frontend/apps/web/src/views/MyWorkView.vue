@@ -16,7 +16,7 @@
       <div class="hero-main">
         <div>
           <h2>{{ pageText('title', '我的工作') }}</h2>
-          <p>{{ pageText('hero_subtitle', '聚合待办并直接处理，默认从“待我处理”开工。') }}</p>
+          <p>{{ pageText('hero_subtitle', '聚合待办、提醒与辅助入口；项目主流程默认从项目驾驶舱进入。') }}</p>
         </div>
         <div class="hero-tools">
           <button

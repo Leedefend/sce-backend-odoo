@@ -1799,7 +1799,9 @@ function openRoleLanding() {
     target: 'landing',
     from: 'workspace.home',
   }).catch(() => {});
-  router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value }).catch(() => {});
+  void session.resolvePrimaryEntryPath('/my-work').then((path) => {
+    router.push({ path, query: workspaceContextQuery.value }).catch(() => {});
+  });
 }
 
 function goToMyWork() {
@@ -1844,6 +1846,13 @@ function goHome() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: '/' }).catch(() => {});
+}
+
+async function redirectToPrimaryEntryFromHome() {
+  if (route.path !== '/') return;
+  const path = await session.resolvePrimaryEntryPath('/my-work');
+  if (!path || path === '/') return;
+  await router.replace({ path, query: workspaceContextQuery.value });
 }
 
 function toggleEmptyHelp() {
@@ -1988,6 +1997,7 @@ function resolveEnterErrorHint(code: string) {
 }
 
 onMounted(() => {
+  void redirectToPrimaryEntryFromHome().catch(() => {});
   const workspaceHomeRef = session.workspaceHomeRef;
   const shouldLoadWorkspaceHome = Boolean(
     workspaceHomeRef

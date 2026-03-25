@@ -28,6 +28,7 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
             "task_blocked": 0,
             "milestone_delay": 0,
         }
+        lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
 
         task_domain = self._project_domain("project.task", project)
         if self._model_has_fields("project.task", ["date_deadline"]):
@@ -83,6 +84,45 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     "hint": "里程碑发生延期，建议复核关键路径并调整资源。",
                     "source": "business",
                     "action_key": "open_task_list",
+                }
+            )
+
+        cost_count = self._safe_count("account.move", self._project_domain("account.move", project))
+        payment_count = self._safe_count("payment.request", self._project_domain("payment.request", project))
+        if lifecycle_state in {"in_progress", "closing", "warranty", "done"} and cost_count <= 0:
+            alerts.append(
+                {
+                    "level": "warning",
+                    "code": "EXECUTION_COST_MISSING",
+                    "title": "执行中缺少成本记录",
+                    "value": 0,
+                    "hint": "项目已进入执行阶段，但尚未形成成本事实，建议优先录入成本。",
+                    "source": "product_connection_layer",
+                    "action_key": "open_cost_tracking",
+                }
+            )
+        if lifecycle_state in {"in_progress", "closing", "warranty", "done"} and payment_count <= 0:
+            alerts.append(
+                {
+                    "level": "warning",
+                    "code": "EXECUTION_PAYMENT_MISSING",
+                    "title": "执行中缺少付款记录",
+                    "value": 0,
+                    "hint": "项目已进入执行阶段，但尚未形成付款记录，建议补齐资金事实。",
+                    "source": "product_connection_layer",
+                    "action_key": "open_payment_tracking",
+                }
+            )
+        if lifecycle_state in {"closing", "warranty", "done"} and (cost_count <= 0 or payment_count <= 0):
+            alerts.append(
+                {
+                    "level": "danger",
+                    "code": "SETTLEMENT_PRECONDITION_BLOCKED",
+                    "title": "结算前置条件不足",
+                    "value": 0,
+                    "hint": "当前成本或付款事实不完整，暂不满足结算收口条件。",
+                    "source": "product_connection_layer",
+                    "action_key": "open_settlement_summary",
                 }
             )
 

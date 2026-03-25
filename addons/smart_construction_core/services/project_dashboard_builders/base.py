@@ -137,6 +137,8 @@ class BaseProjectBlockBuilder:
         state="available",
         reason_code="",
         source="",
+        recommended=False,
+        reason="",
     ):
         payload = dict(params or {})
         project_context = self._project_context(project)
@@ -156,6 +158,8 @@ class BaseProjectBlockBuilder:
             "state": str(state or "available"),
             "reason_code": str(reason_code or ""),
             "source": str(source or ""),
+            "recommended": bool(recommended),
+            "reason": str(reason or ""),
         }
 
     def _envelope(self, *, state, visibility, data, error_code="", error_message=""):

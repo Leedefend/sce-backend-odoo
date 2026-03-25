@@ -18,6 +18,21 @@
         <button type="button" class="ghost-button" @click="refreshAllBlocks">刷新区块</button>
       </header>
 
+      <section v-if="currentSceneKey === 'project.dashboard'" class="state-explain-card">
+        <article class="state-explain-item">
+          <span class="state-explain-label">阶段说明</span>
+          <strong>{{ stateExplain.stageExplain }}</strong>
+        </article>
+        <article class="state-explain-item">
+          <span class="state-explain-label">里程碑说明</span>
+          <strong>{{ stateExplain.milestoneExplain }}</strong>
+        </article>
+        <article class="state-explain-item">
+          <span class="state-explain-label">当前状态说明</span>
+          <strong>{{ stateExplain.statusExplain }}</strong>
+        </article>
+      </section>
+
       <section v-if="transitionFeedback" class="feedback-banner" :data-variant="transitionFeedback.variant">
         <strong>{{ transitionFeedback.title }}</strong>
         <p>{{ transitionFeedback.message }}</p>
@@ -194,8 +209,12 @@
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
               <div v-for="item in nextActions" :key="item.key" class="action-card">
                 <div>
-                  <strong>{{ item.label }}</strong>
+                  <div class="action-title-row">
+                    <strong>{{ item.label }}</strong>
+                    <span v-if="item.recommended" class="recommended-badge">推荐</span>
+                  </div>
                   <p>{{ item.hint }}</p>
+                  <p v-if="item.reason" class="action-reason">{{ item.reason }}</p>
                 </div>
                 <div class="action-side">
                   <span class="action-state" :data-tone="item.stateTone">{{ item.stateLabel }}</span>
@@ -221,10 +240,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
 import { consumePendingProjectContext, PROJECT_DASHBOARD_ENTRY_INTENT } from '../app/projectCreationBaseline';
+import { useSessionStore } from '../stores/session';
 
 type RuntimeHint = {
   intent?: string;
@@ -284,6 +304,7 @@ type ActionCard = {
   key: string;
   label: string;
   hint: string;
+  reason: string;
   intent: string;
   params: Record<string, unknown>;
   state: string;
@@ -291,6 +312,7 @@ type ActionCard = {
   stateTone: string;
   buttonLabel: string;
   disabled: boolean;
+  recommended: boolean;
 };
 
 type DashboardActionRow = Record<string, unknown> & {
@@ -305,6 +327,8 @@ type DashboardActionRow = Record<string, unknown> & {
 };
 
 const route = useRoute();
+const router = useRouter();
+const session = useSessionStore();
 const pageStatus = ref<'loading' | 'error' | 'ready'>('loading');
 const errorTitle = ref('产品生命周期工作台加载失败');
 const errorMessage = ref('');
@@ -405,6 +429,16 @@ const summaryRows = computed(() => {
   ];
 });
 
+const stateExplain = computed(() => {
+  const raw = entry.value?.state_explain;
+  const data = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  return {
+    stageExplain: asText(data.stage_explain || '') || '系统会根据当前主阶段解释项目所处位置。',
+    milestoneExplain: asText(data.milestone_explain || '') || '系统会根据当前里程碑解释项目推进状态。',
+    statusExplain: asText(data.status_explain || '') || '系统会结合业务事实解释当前状态与下一步。',
+  };
+});
+
 function blockState(blockKey: string): BlockRuntimeState {
   return runtimeBlocks.value[blockKey] || { loading: false, error: '', payload: null };
 }
@@ -463,12 +497,11 @@ const riskAlerts = computed(() => {
   const alerts = Array.isArray(data.alerts) ? data.alerts : [];
   return alerts.map((item, index) => {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-    const value = asNumber(row.value);
     const hint = asText(row.hint || '');
     return {
       code: asText(row.code || `risk_${index + 1}`),
       title: asText(row.title || row.code || '风险提醒'),
-      description: hint ? `${hint} 当前值 ${value}` : `当前值 ${value}`,
+      description: hint || `当前值 ${asNumber(row.value)}`,
     };
   });
 });
@@ -697,10 +730,13 @@ const nextActions = computed<ActionCard[]>(() => {
     const stateLabel = asText(row.state_label || '');
     const stateTone = asText(row.state_tone || '');
     const buttonLabel = asText(row.button_label || '');
+    const reason = asText(row.reason || '');
+    const recommended = Boolean(row.recommended);
     return {
       key: asText(row.key || `action_${index + 1}`),
       label: asText(row.label || row.key || '下一步动作'),
       hint: actionHint(row),
+      reason,
       intent,
       params: (row.params && typeof row.params === 'object') ? row.params as Record<string, unknown> : {},
       state,
@@ -708,7 +744,11 @@ const nextActions = computed<ActionCard[]>(() => {
       stateTone: stateTone || (state === 'blocked' ? 'warning' : 'success'),
       buttonLabel: actionButtonLabel(row, state) || buttonLabel || '执行',
       disabled: !intent || state === 'blocked' && intent !== 'project.execution.advance',
+      recommended,
     };
+  }).sort((left, right) => {
+    if (left.recommended !== right.recommended) return left.recommended ? -1 : 1;
+    return 0;
   });
 });
 
@@ -891,6 +931,10 @@ function currentEntryIntent() {
   return SCENE_ENTRY_INTENTS[currentSceneKey.value] || PROJECT_DASHBOARD_ENTRY_INTENT;
 }
 
+function reloadCurrentScene() {
+  return loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
+}
+
 async function loadEntry(intent: string, params: Record<string, unknown>) {
   loadingTitle.value = '正在加载场景...';
   pageStatus.value = 'loading';
@@ -906,13 +950,20 @@ async function loadEntry(intent: string, params: Record<string, unknown>) {
     });
     entry.value = (data && typeof data === 'object') ? data : {};
     currentSceneKey.value = asText(entry.value?.scene_key || '') || intent.replace('.enter', '');
+    session.setActiveProjectContext(currentProjectContext.value);
     resetRuntimeBlocks();
     pageStatus.value = 'ready';
     await refreshAllBlocks();
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'unknown error';
+    if (intent === PROJECT_DASHBOARD_ENTRY_INTENT && message.includes('PROJECT_NOT_FOUND')) {
+      session.clearActiveProjectContext();
+      await router.replace('/my-work');
+      return;
+    }
     pageStatus.value = 'error';
     errorTitle.value = '产品生命周期工作台加载失败';
-    errorMessage.value = err instanceof Error ? err.message : 'unknown error';
+    errorMessage.value = message;
   }
 }
 
@@ -957,10 +1008,10 @@ async function runAction(action: ActionCard) {
         : `执行结果：${message || '已返回结果'}。`,
     };
     if (asText(action.intent) === 'project.connection.transition' || asText(result.to_state || '')) {
-      await loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
+      await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_context: currentProjectContext.value });
       return;
     }
-    await refreshAllBlocks();
+    await reloadCurrentScene();
   } catch (err) {
     transitionFeedback.value = {
       variant: 'warning',
@@ -997,7 +1048,7 @@ async function submitCostEntry() {
       title: '成本记录已创建',
       message: asText(result.summary_hint || '') || '已创建成本记录，并刷新成本记录与成本汇总。',
     };
-    await loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
+    await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_context: currentProjectContext.value });
     resetCostEntryForm();
   } catch (err) {
     transitionFeedback.value = {
@@ -1036,7 +1087,7 @@ async function submitPaymentEntry() {
       title: '付款记录已创建',
       message: asText(result.summary_hint || '') || '已创建付款记录，并刷新付款记录与付款汇总。',
     };
-    await loadEntry(currentEntryIntent(), { project_context: currentProjectContext.value });
+    await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_context: currentProjectContext.value });
     resetPaymentEntryForm();
   } catch (err) {
     transitionFeedback.value = {
@@ -1051,9 +1102,12 @@ async function submitPaymentEntry() {
 
 async function loadLifecycleEntry() {
   const pendingProjectContext = consumePendingProjectContext();
+  const activeProjectContext = currentProjectId.value > 0 ? currentProjectContext.value : session.activeProjectContext;
   await loadEntry(
     PROJECT_DASHBOARD_ENTRY_INTENT,
-    pendingProjectContext ? { project_context: pendingProjectContext } : {},
+    pendingProjectContext
+      ? { project_context: pendingProjectContext }
+      : (activeProjectContext && typeof activeProjectContext === 'object' ? { project_context: activeProjectContext } : {}),
   );
 }
 
@@ -1087,6 +1141,7 @@ watch(
 }
 
 .hero-card,
+.state-explain-card,
 .summary-card,
 .block-card,
 .feedback-banner {
@@ -1162,6 +1217,26 @@ watch(
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   padding: 16px;
+}
+
+.state-explain-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.state-explain-item {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(240, 244, 248, 0.72);
+}
+
+.state-explain-label {
+  font-size: 12px;
+  color: #7b8794;
 }
 
 .summary-item {
@@ -1284,6 +1359,31 @@ watch(
   padding: 14px 16px;
   border-radius: 14px;
   background: rgba(240, 244, 248, 0.72);
+}
+
+.action-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.recommended-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(12, 126, 89, 0.14);
+  color: #0b6e4f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.action-reason {
+  margin: 6px 0 0;
+  color: #486581;
+  font-size: 13px;
 }
 
 .risk-summary {
