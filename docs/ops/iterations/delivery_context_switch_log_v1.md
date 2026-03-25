@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-25T12:10:00Z
+- blocker_key: `construction_project_business_closed_loop_spec_v1_draft`
+- layer_target: `Documentation / Product Governance`
+- module: `docs/product + docs/ops/iterations`
+- reason: `将施工企业项目管理业务闭环规范以产品草案形式落库，明确业务阶段模型、已发布切片承载关系与 next_actions 约束，为后续产品定义迭代提供稳定基线`
+- completed_step: `已确认三项关键修正：业务阶段与发布切片分离；成本/付款不作为项目主阶段；只有阶段性动作才能推进 project.stage；正在落库 v1 草案文档`
+- active_commit: `2d4249f`
+- next_step: `Review the first draft with the user and iterate the business loop spec until it becomes a stable product constitution`
+
+### 2026-03-25T12:35:00Z
+- blocker_key: `construction_project_business_closed_loop_spec_v1_1_milestone_enhancement`
+- layer_target: `Documentation / Product Governance`
+- module: `docs/product + docs/ops/iterations`
+- reason: `基于产品评审意见，为业务闭环规范加入 milestone 层，并优先拆透 executing 阶段与 next_actions 生成条件，使文档从“正确”升级为“可控 + 可扩展”`
+- completed_step: `已将规范升级为 v1.1 草案，新增 project.milestone 模型、stage/milestone/data 三层关系、executing 阶段关键里程碑、ready_for_settlement 退出条件，以及 stage + milestone 联合驱动的 next_actions 口径`
+- active_commit: `2d4249f`
+- next_step: `Continue iterating the executing-stage milestone set and settlement entry criteria until the business loop spec becomes stable enough for implementation freeze`
+
+### 2026-03-25T12:55:00Z
+- blocker_key: `construction_enterprise_product_design_v2_baseline`
+- layer_target: `Documentation / Product Governance`
+- module: `docs/product + docs/ops/iterations`
+- reason: `将施工企业管理系统的产品总体蓝图、能力域结构、项目模型和分阶段实施策略正式落库，形成可驱动后续开发设计的主文档`
+- completed_step: `已新增产品设计主文档 v2，明确三层结构、能力域体系、项目模型、驾驶舱、next_actions、实施阶段与系统约束，并与既有业务闭环规范形成“总文档 + 闭环细化文档”的双文档结构`
+- active_commit: `2d4249f`
+- next_step: `Use the v2 product design document as the master blueprint, then continue refining executing-stage and Phase 1 implementation design`
+
 ### 2026-03-24T03:05:00Z
 - blocker_key: `delivery_engine_v1_bootstrap`
 - layer_target: `Platform Layer / Scene Layer / Verify Governance`
@@ -1497,3 +1524,13 @@ Each entry must include:
 - reason: `在 operator contract freeze 已稳定的前提下，把 promote/approve/rollback 执行流程标准化为统一 execution protocol，并为每个 release action 固化 execution trace`
 - completed_step: `新增 release_execution_protocol_v1；release action 开始持久化 execution_protocol_version / execution_trace_json；audit trail 暴露 execution trace；新增 verify.release.execution_protocol.v1`
 - next_step: `执行静态检查、smart_core 升级与 execution protocol 门禁，确认发布系统已经从协议稳定推进到协议执行稳定`
+
+## 2026-03-25T14:35:00Z Productization Iteration Direction v1
+
+- branch: `codex/next-round`
+- head: `2d4249f`
+- layer_target: `Docs / Product Governance Layer`
+- module: `docs/product/construction_productization_iteration_direction_v1.md + docs/product/construction_enterprise_management_system_product_design_v2.md + docs/product/construction_project_business_closed_loop_spec_v1_draft.md`
+- reason: `在产品总体设计、闭环规范和产品化状态审计已经形成的前提下，补一份长期指导后续批次的方向总纲，锁定系统当前唯一正确方向为 Product Connection Layer`
+- completed_step: `产品化迭代方向总纲已落库；已明确当前阶段为 Productization Phase 1；已锁定下一轮唯一任务为 Project Connection Layer v1`
+- next_step: `围绕 released scene、project context、internal carrier、next_actions 四要素，拆出 Project Connection Layer v1 的逐文件执行单`
