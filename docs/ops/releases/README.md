@@ -358,3 +358,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.edition.release_snapshot_guard`: edition release snapshot guard
 - `verify.edition.rollback_evidence_guard`: edition rollback evidence guard
 - `verify.release.edition_freeze.v1`: release edition freeze gate
+- `verify.release_snapshot.promotion_guard`: release snapshot promotion lineage guard
+- `verify.release_snapshot.active_uniqueness_guard`: release snapshot active released uniqueness guard
+- `verify.release_snapshot.lineage_guard`: runtime released snapshot lineage diagnostics guard
+- `verify.release.snapshot_lineage.v1`: release snapshot lineage gate
