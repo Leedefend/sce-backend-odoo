@@ -1118,6 +1118,18 @@ verify.release_snapshot.lineage_guard: guard.prod.forbid check-compose-project c
 verify.release.snapshot_lineage.v1: verify.release.edition_freeze.v1 verify.release_snapshot.promotion_guard verify.release_snapshot.active_uniqueness_guard verify.release_snapshot.lineage_guard
 	@echo "[OK] verify.release.snapshot_lineage.v1 done"
 
+.PHONY: verify.release.action_guard
+verify.release.action_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_action_guard.sh
+
+.PHONY: verify.release.orchestration_guard
+verify.release.orchestration_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_orchestration_guard.sh
+
+.PHONY: verify.release.orchestration.v1
+verify.release.orchestration.v1: verify.release.snapshot_lineage.v1 verify.release.action_guard verify.release.orchestration_guard
+	@echo "[OK] verify.release.orchestration.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"
