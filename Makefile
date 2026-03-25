@@ -1086,6 +1086,22 @@ verify.edition.route_fallback_guard: guard.prod.forbid check-compose-project che
 verify.release.edition_runtime.v1: verify.release.edition_lifecycle.v1 verify.edition.runtime_routing_guard verify.edition.session_context_guard verify.edition.route_fallback_guard
 	@echo "[OK] verify.release.edition_runtime.v1 done"
 
+.PHONY: verify.edition.freeze_surface_guard
+verify.edition.freeze_surface_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/edition_freeze_surface_guard.sh
+
+.PHONY: verify.edition.release_snapshot_guard
+verify.edition.release_snapshot_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/edition_release_snapshot_guard.sh
+
+.PHONY: verify.edition.rollback_evidence_guard
+verify.edition.rollback_evidence_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/edition_rollback_evidence_guard.sh
+
+.PHONY: verify.release.edition_freeze.v1
+verify.release.edition_freeze.v1: verify.release.edition_runtime.v1 verify.edition.freeze_surface_guard verify.edition.release_snapshot_guard verify.edition.rollback_evidence_guard
+	@echo "[OK] verify.release.edition_freeze.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"

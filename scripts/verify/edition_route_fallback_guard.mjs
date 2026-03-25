@@ -71,6 +71,27 @@ async function waitForRequestMatch(requests, predicate, timeoutMs = 20000) {
   return null;
 }
 
+async function waitForSessionSnapshot(page, predicate, timeoutMs = 20000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const snapshot = await page.evaluate(() => {
+      const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_4'));
+      const cache = cacheKey ? JSON.parse(localStorage.getItem(cacheKey) || 'null') : null;
+      return {
+        pathname: window.location.pathname,
+        search: window.location.search,
+        requestedEditionKey: cache?.requestedEditionKey || '',
+        effectiveEditionKey: cache?.effectiveEditionKey || '',
+        editionRuntimeV1: cache?.editionRuntimeV1 || null,
+        deliveryEngineV1: cache?.deliveryEngineV1 || null,
+      };
+    });
+    if (predicate(snapshot)) return snapshot;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return null;
+}
+
 let browser;
 let page;
 try {
@@ -113,25 +134,15 @@ try {
   assert(previewInit, 'preview route should request preview system.init');
   assert(fallbackSummary, 'subsequent runtime request should fallback to effective standard edition');
 
-  const snapshot = await page.evaluate(() => {
-    const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_4'));
-    const cache = cacheKey ? JSON.parse(localStorage.getItem(cacheKey) || 'null') : null;
-    return {
-      pathname: window.location.pathname,
-      search: window.location.search,
-      requestedEditionKey: cache?.requestedEditionKey || '',
-      effectiveEditionKey: cache?.effectiveEditionKey || '',
-      editionRuntimeV1: cache?.editionRuntimeV1 || null,
-      deliveryEngineV1: cache?.deliveryEngineV1 || null,
-    };
-  });
-  assert(snapshot.requestedEditionKey === 'preview', 'requested edition should preserve preview');
-  assert(snapshot.effectiveEditionKey === 'standard', 'effective edition should fallback to standard');
-  assert(
-    snapshot.editionRuntimeV1?.diagnostics?.fallback_reason === 'EDITION_ACCESS_DENIED',
-    'fallback reason should be EDITION_ACCESS_DENIED',
+  const snapshot = await waitForSessionSnapshot(
+    page,
+    (value) =>
+      value?.requestedEditionKey === 'preview'
+      && value?.effectiveEditionKey === 'standard'
+      && value?.editionRuntimeV1?.diagnostics?.fallback_reason === 'EDITION_ACCESS_DENIED'
+      && value?.deliveryEngineV1?.product_key === 'construction.standard',
   );
-  assert(snapshot.deliveryEngineV1?.product_key === 'construction.standard', 'preview fallback must not pollute standard surface');
+  assert(snapshot, 'session fallback runtime context did not stabilize');
 
   writeJson('session_snapshot.json', snapshot);
   await page.screenshot({ path: path.join(outDir, 'edition-route-fallback.png'), fullPage: true });
