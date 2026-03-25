@@ -1397,3 +1397,13 @@ Each entry must include:
 - reason: `在 edition lifecycle 已完成的前提下，统一 requested/effective edition runtime context、route/query 注入优先级和 fallback diagnostics，并把 preview 渠道推进为受控可访问 runtime`
 - completed_step: `system.init 新增 edition_runtime_v1；frontend session/store 固化 requested/effective edition；router 支持受控 edition query 注入与非法 query 清洗；后续 runtime intents 自动透传 effective edition；新增 runtime_routing/session_context/route_fallback 三条 guard 与 verify.release.edition_runtime.v1`
 - next_step: `执行 smart_core 模块升级、前端构建与 edition runtime 全量门禁，确认 preview runtime 不污染 standard surface`
+
+## 2026-03-24T07:15:00Z Edition Freeze Surface v1
+
+- branch: `codex/next-round`
+- head: `aa85bd3`
+- layer_target: `Platform Layer + Delivery Runtime + Release Governance`
+- module: `addons/smart_core/models/edition_release_snapshot.py + addons/smart_core/delivery/edition_release_snapshot_service.py + scripts/verify/edition_* + docs/architecture + docs/ops/releases`
+- reason: `在 edition runtime routing 已完成的前提下，把 edition 渠道升级为可冻结、可回滚、可审计的正式发布面，并建立 release snapshot 资产`
+- completed_step: `新增 sc.edition.release.snapshot 与 EditionReleaseSnapshotService；显式冻结 policy/nav/capabilities/scenes/scene bindings/runtime meta 为 edition_freeze_surface_v1；新增 rollback_target 证据链与 verify.release.edition_freeze.v1`
+- next_step: `执行 smart_core 模块升级与 freeze surface 全量门禁，确认 standard/preview 可冻结且 rollback 证据可回放`

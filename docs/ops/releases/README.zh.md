@@ -135,6 +135,16 @@ status: active
     - `make verify.edition.session_context_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
     - `make verify.edition.route_fallback_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
     - `make verify.release.edition_runtime.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
+- Edition Freeze Surface v1：
+  - 状态：`edition 发布面已可冻结、可回放、可审计回滚`
+  - 范围：`把 policy/nav/capabilities/scenes/scene bindings/runtime meta 固化为 release snapshot`
+  - 架构文档：`docs/architecture/edition_freeze_surface_model_v1.md`
+  - 发布面文档：`docs/ops/releases/edition_freeze_surface_v1.md`
+  - 门禁：
+    - `make verify.edition.freeze_surface_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.edition.release_snapshot_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.edition.rollback_evidence_guard ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim`
+    - `make verify.release.edition_freeze.v1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://127.0.0.1 ARTIFACTS_DIR=artifacts DB_NAME=sc_prod_sim E2E_LOGIN=demo_pm E2E_PASSWORD=demo E2E_FALLBACK_LOGIN=demo_finance E2E_FALLBACK_PASSWORD=demo`
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
@@ -244,3 +254,7 @@ status: active
 - `verify.edition.session_context_guard`：edition session/store 上下文守卫
 - `verify.edition.route_fallback_guard`：edition route fallback 守卫
 - `verify.release.edition_runtime.v1`：release edition runtime 门禁
+- `verify.edition.freeze_surface_guard`：edition freeze surface 守卫
+- `verify.edition.release_snapshot_guard`：edition release snapshot 守卫
+- `verify.edition.rollback_evidence_guard`：edition rollback evidence 守卫
+- `verify.release.edition_freeze.v1`：release edition freeze 门禁
