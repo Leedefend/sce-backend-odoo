@@ -30,7 +30,6 @@ class ProjectQuickCreateWizard(models.TransientModel):
         project = self.env["project.project"].create(vals)
         return {
             "type": "ir.actions.act_url",
-            "url": "/s/project.management?project_id=%s" % int(project.id),
+            "url": "/s/project.management",
             "target": "self",
         }
-
