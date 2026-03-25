@@ -1407,3 +1407,13 @@ Each entry must include:
 - reason: `在 edition runtime routing 已完成的前提下，把 edition 渠道升级为可冻结、可回滚、可审计的正式发布面，并建立 release snapshot 资产`
 - completed_step: `新增 sc.edition.release.snapshot 与 EditionReleaseSnapshotService；显式冻结 policy/nav/capabilities/scenes/scene bindings/runtime meta 为 edition_freeze_surface_v1；新增 rollback_target 证据链与 verify.release.edition_freeze.v1`
 - next_step: `执行 smart_core 模块升级与 freeze surface 全量门禁，确认 standard/preview 可冻结且 rollback 证据可回放`
+
+## 2026-03-25T01:20:00Z Release Snapshot Promotion Lineage v1
+
+- branch: `codex/next-round`
+- head: `88ba1bb`
+- layer_target: `Platform Layer + Delivery Runtime + Release Governance`
+- module: `addons/smart_core/models/edition_release_snapshot.py + addons/smart_core/delivery/edition_release_snapshot_service.py + addons/smart_core/delivery/edition_release_snapshot_promotion_service.py + addons/smart_core/handlers/system_init.py + scripts/verify/release_snapshot_* + docs/architecture + docs/ops/releases`
+- reason: `在不改变 released navigation、Scene Asset v1、Delivery Engine v1、Edition Runtime Routing v1 与 Edition Freeze Surface v1 语义的前提下，把 release snapshot 从 freeze evidence 升级为受 candidate/approved/released/superseded 治理的 promotion lineage 资产`
+- completed_step: `扩展 release snapshot lifecycle state；新增 release snapshot promotion service；建立 active released 唯一性与显式替换协议；runtime diagnostics 暴露 released_snapshot_lineage；新增 verify.release.snapshot_lineage.v1`
+- next_step: `执行模块升级与 lineage guards，确认 runtime 始终命中 active released snapshot，并可用 released snapshot 作为后续 rollback/release 审计依据`

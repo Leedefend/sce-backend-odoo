@@ -258,3 +258,7 @@ status: active
 - `verify.edition.release_snapshot_guard`：edition release snapshot 守卫
 - `verify.edition.rollback_evidence_guard`：edition rollback evidence 守卫
 - `verify.release.edition_freeze.v1`：release edition freeze 门禁
+- `verify.release_snapshot.promotion_guard`：release snapshot promotion lineage 守卫
+- `verify.release_snapshot.active_uniqueness_guard`：release snapshot active released 唯一性守卫
+- `verify.release_snapshot.lineage_guard`：runtime released snapshot lineage 诊断守卫
+- `verify.release.snapshot_lineage.v1`：release snapshot lineage 门禁
