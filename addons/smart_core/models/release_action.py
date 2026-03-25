@@ -52,6 +52,25 @@ class ScReleaseAction(models.Model):
         string="Result Snapshot",
         ondelete="set null",
     )
+    policy_key = fields.Char(index=True)
+    approval_required = fields.Boolean(default=False)
+    approval_state = fields.Selection(
+        [
+            ("not_required", "Not Required"),
+            ("pending_approval", "Pending Approval"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+        ],
+        default="not_required",
+        required=True,
+        index=True,
+    )
+    allowed_executor_role_codes_json = fields.Json(default=list)
+    required_approver_role_codes_json = fields.Json(default=list)
+    policy_snapshot_json = fields.Json(default=dict)
+    approved_by_user_id = fields.Many2one("res.users", string="Approved By", ondelete="set null")
+    approved_at = fields.Datetime()
+    approval_note = fields.Text()
     reason_code = fields.Char()
     note = fields.Text()
     request_payload_json = fields.Json(required=True, default=dict)
@@ -75,6 +94,15 @@ class ScReleaseAction(models.Model):
             "source_snapshot_id": int(self.source_snapshot_id.id) if self.source_snapshot_id else 0,
             "target_snapshot_id": int(self.target_snapshot_id.id) if self.target_snapshot_id else 0,
             "result_snapshot_id": int(self.result_snapshot_id.id) if self.result_snapshot_id else 0,
+            "policy_key": str(self.policy_key or "").strip(),
+            "approval_required": bool(self.approval_required),
+            "approval_state": str(self.approval_state or "").strip() or "not_required",
+            "allowed_executor_role_codes_json": self.allowed_executor_role_codes_json if isinstance(self.allowed_executor_role_codes_json, list) else [],
+            "required_approver_role_codes_json": self.required_approver_role_codes_json if isinstance(self.required_approver_role_codes_json, list) else [],
+            "policy_snapshot_json": self.policy_snapshot_json if isinstance(self.policy_snapshot_json, dict) else {},
+            "approved_by_user_id": int(self.approved_by_user_id.id) if self.approved_by_user_id else 0,
+            "approved_at": self.approved_at.isoformat() if self.approved_at else "",
+            "approval_note": str(self.approval_note or "").strip(),
             "reason_code": str(self.reason_code or "").strip(),
             "note": str(self.note or "").strip(),
             "request_payload_json": self.request_payload_json if isinstance(self.request_payload_json, dict) else {},
