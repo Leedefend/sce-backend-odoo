@@ -63,6 +63,12 @@ class ReleaseApprovalPolicyService:
             roles.add("executive")
         return sorted(roles)
 
+    def resolve_actor_role_codes(self, user) -> list[str]:
+        return self._role_codes_for_user(user)
+
+    def roles_match(self, actor_roles: list[str], required_roles: list[str]) -> bool:
+        return self._role_match(actor_roles, required_roles)
+
     def resolve_policy(self, *, action_type: str, product_key: str) -> dict[str, Any]:
         identity = self._release_identity(product_key=product_key)
         edition_key = identity["edition_key"]

@@ -135,6 +135,41 @@ function throwEnvelopeError(
   });
 }
 
+function shouldRetryIntentRequest(payload: IntentPayload, error: unknown, attempt: number): boolean {
+  if (!(error instanceof ApiError)) return false;
+  if (attempt >= 2) return false;
+  const intent = String(payload.intent || '').trim();
+  if (!['system.init', 'app.init', 'release.operator.surface'].includes(intent)) return false;
+  return [0, 502, 503, 504].includes(Number(error.status || 0));
+}
+
+async function requestIntentEnvelope<T>(
+  runtimePayload: IntentPayload,
+  traceId: string,
+): Promise<{ response: Awaited<ReturnType<typeof apiRequestRaw<IntentEnvelope<T>>>>; resolvedTrace: string }> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
+        method: 'POST',
+        headers: buildHeaders(runtimePayload.intent, traceId),
+        body: JSON.stringify(runtimePayload),
+      });
+      return {
+        response,
+        resolvedTrace: response.traceId || traceId,
+      };
+    } catch (error) {
+      lastError = error;
+      if (!shouldRetryIntentRequest(runtimePayload, error, attempt)) {
+        throw error;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 1200 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 export async function intentRequest<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
@@ -142,12 +177,7 @@ export async function intentRequest<T>(payload: IntentPayload) {
   const runtimePayload = applyEditionRuntimeContext(session, payload);
   enforceStartupChainOrThrow(session, runtimePayload);
   try {
-    const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
-      method: 'POST',
-      headers: buildHeaders(runtimePayload.intent, traceId),
-      body: JSON.stringify(runtimePayload),
-    });
-    const resolvedTrace = response.traceId || traceId;
+    const { response, resolvedTrace } = await requestIntentEnvelope<T>(runtimePayload, traceId);
     session.recordIntentTrace({
       traceId: resolvedTrace,
       intent: runtimePayload.intent,
@@ -186,12 +216,7 @@ export async function intentRequestRaw<T>(payload: IntentPayload) {
   const startedAt = Date.now();
   const runtimePayload = applyEditionRuntimeContext(session, payload);
   enforceStartupChainOrThrow(session, runtimePayload);
-  const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
-    method: 'POST',
-    headers: buildHeaders(runtimePayload.intent, traceId),
-    body: JSON.stringify(runtimePayload),
-  });
-  const resolvedTrace = response.traceId || traceId;
+  const { response, resolvedTrace } = await requestIntentEnvelope<T>(runtimePayload, traceId);
   session.recordIntentTrace({
     traceId: resolvedTrace,
     intent: runtimePayload.intent,
