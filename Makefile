@@ -559,6 +559,11 @@ verify.portal.release_navigation_browser_smoke.host: guard.prod.forbid check-com
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/release_navigation_browser_smoke.mjs
+.PHONY: verify.portal.project_dashboard_primary_entry_browser_smoke.host
+verify.portal.project_dashboard_primary_entry_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+		node scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
 .PHONY: verify.portal.login_browser_smoke.prod_sim
 verify.portal.login_browser_smoke.prod_sim: guard.prod.forbid
 	@$(MAKE) --no-print-directory deploy.prod.sim.oneclick \
@@ -2093,6 +2098,13 @@ verify.frontend.scene_contract_v1.consumption.guard: guard.prod.forbid
 .PHONY: verify.project.management.acceptance
 verify.project.management.acceptance: guard.prod.forbid verify.project.management.productization verify.frontend.project_management.scene_bridge.guard
 	@python3 scripts/verify/project_management_productization_acceptance_export.py
+
+.PHONY: verify.product.main_entry_convergence_guard
+verify.product.main_entry_convergence_guard: guard.prod.forbid
+	@bash scripts/verify/main_entry_convergence_guard.sh
+
+.PHONY: verify.product.main_entry_convergence.v1
+verify.product.main_entry_convergence.v1: guard.prod.forbid verify.product.main_entry_convergence_guard verify.project.management.acceptance verify.portal.project_dashboard_primary_entry_browser_smoke.host
 
 verify.frontend.intent_channel.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_intent_channel_guard.py

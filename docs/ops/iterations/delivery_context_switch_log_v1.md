@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-26T08:20:00Z
+- blocker_key: `main_entry_convergence_v1`
+- layer_target: `Frontend Entry Layer / Construction Domain Layer / Product Verification`
+- module: `frontend/apps/web/src/views + frontend/apps/web/src/stores/session.ts + addons/smart_construction_core/services + scripts/verify + docs`
+- reason: `将项目驾驶舱正式收口为产品主入口，工作台退居辅助入口，并补齐主入口解释、推荐动作、风险提示与返回驾驶舱的稳定节奏`
+- completed_step: `已新增项目主入口上下文解析、登录后优先进入 project.management、驾驶舱 state_explain/recommended/risk 展示、动作后回到驾驶舱，以及 main entry convergence guard/browser smoke`
+- active_commit: `ffb0d5e`
+- next_step: `Run build plus main-entry convergence gates, then confirm project.management is the only default product entry for PM users`
+
 ### 2026-03-25T12:10:00Z
 - blocker_key: `construction_project_business_closed_loop_spec_v1_draft`
 - layer_target: `Documentation / Product Governance`
