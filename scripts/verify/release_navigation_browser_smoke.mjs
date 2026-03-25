@@ -87,10 +87,27 @@ async function waitForSidebar(page) {
   throw lastError;
 }
 
+async function expandSidebarTree(page) {
+  for (let round = 0; round < 3; round += 1) {
+    const toggles = page.locator('.sidebar .toggle');
+    const count = await toggles.count();
+    if (!count) return;
+    for (let index = 0; index < count; index += 1) {
+      const toggle = toggles.nth(index);
+      const marker = String((await toggle.textContent().catch(() => '')) || '').trim();
+      if (marker.includes('▸')) {
+        await toggle.click().catch(() => {});
+      }
+    }
+    await page.waitForTimeout(400);
+  }
+}
+
 async function waitForReleaseNavigation(page) {
   let lastError;
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
+      await expandSidebarTree(page);
       await page.waitForFunction((labels) => {
         const textNodes = Array.from(
           document.querySelectorAll('.sidebar .label, .sidebar .role-menu-item, .sidebar .title, .sidebar .role-label')

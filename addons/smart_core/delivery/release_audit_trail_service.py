@@ -138,6 +138,8 @@ class ReleaseAuditTrailService:
             "request_payload_json": deepcopy(_dict(payload.get("request_payload_json"))),
             "result_payload_json": deepcopy(_dict(payload.get("result_payload_json"))),
             "diagnostics_json": deepcopy(_dict(payload.get("diagnostics_json"))),
+            "execution_protocol_version": _text(payload.get("execution_protocol_version")),
+            "execution_trace_json": deepcopy(_dict(payload.get("execution_trace_json"))),
         }
 
     def _active_released_snapshot(self, *, product_key: str):

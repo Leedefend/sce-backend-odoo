@@ -3,6 +3,7 @@
 from .delivery_engine import DeliveryEngine
 from .release_operator_contract_registry import build_release_operator_contract_registry
 from .release_approval_policy_service import ReleaseApprovalPolicyService
+from .release_execution_engine import ReleaseExecutionEngine
 from .edition_release_snapshot_service import EditionReleaseSnapshotService
 from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
 from .release_audit_trail_service import ReleaseAuditTrailService

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from odoo import fields, models
 
+from odoo.addons.smart_core.delivery.release_execution_engine import RELEASE_EXECUTION_PROTOCOL_VERSION
+
 
 class ScReleaseAction(models.Model):
     _name = "sc.release.action"
@@ -76,6 +78,8 @@ class ScReleaseAction(models.Model):
     request_payload_json = fields.Json(required=True, default=dict)
     result_payload_json = fields.Json(required=True, default=dict)
     diagnostics_json = fields.Json(required=True, default=dict)
+    execution_protocol_version = fields.Char(required=True, default=RELEASE_EXECUTION_PROTOCOL_VERSION)
+    execution_trace_json = fields.Json(required=True, default=dict)
 
     def to_runtime_dict(self) -> dict:
         self.ensure_one()
@@ -108,4 +112,6 @@ class ScReleaseAction(models.Model):
             "request_payload_json": self.request_payload_json if isinstance(self.request_payload_json, dict) else {},
             "result_payload_json": self.result_payload_json if isinstance(self.result_payload_json, dict) else {},
             "diagnostics_json": self.diagnostics_json if isinstance(self.diagnostics_json, dict) else {},
+            "execution_protocol_version": str(self.execution_protocol_version or "").strip() or RELEASE_EXECUTION_PROTOCOL_VERSION,
+            "execution_trace_json": self.execution_trace_json if isinstance(self.execution_trace_json, dict) else {},
         }
