@@ -8,11 +8,16 @@ from odoo import fields
 from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
 from .edition_release_snapshot_service import EditionReleaseSnapshotService
 from .release_approval_policy_service import ReleaseApprovalPolicyService
+from .release_execution_engine import RELEASE_EXECUTION_PROTOCOL_VERSION, ReleaseExecutionEngine
 from .release_operator_write_model_service import RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION
 
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 class ReleaseOrchestrator:
@@ -21,6 +26,7 @@ class ReleaseOrchestrator:
         self.snapshot_service = EditionReleaseSnapshotService(env)
         self.promotion_service = EditionReleaseSnapshotPromotionService(env)
         self.approval_policy_service = ReleaseApprovalPolicyService(env)
+        self.execution_engine = ReleaseExecutionEngine(env)
 
     def _action_model(self):
         return self.env["sc.release.action"].sudo()
@@ -93,14 +99,35 @@ class ReleaseOrchestrator:
                 "request_payload_json": request_payload if isinstance(request_payload, dict) else {},
                 "result_payload_json": {"status": "pending"},
                 "diagnostics_json": {"orchestrator": "release_orchestrator_v1", "status": "pending"},
+                "execution_protocol_version": RELEASE_EXECUTION_PROTOCOL_VERSION,
+                "execution_trace_json": {"contract_version": RELEASE_EXECUTION_PROTOCOL_VERSION, "runs": []},
                 **policy_fields,
             }
         )
 
-    def _mark_running(self, action) -> None:
-        action.write({"state": "running", "executed_at": self.now()})
+    def _append_trace_run(self, action, trace_run: dict[str, Any] | None = None) -> dict[str, Any]:
+        current = action.execution_trace_json if isinstance(action.execution_trace_json, dict) else {}
+        runs = list(current.get("runs") or []) if isinstance(current.get("runs"), list) else []
+        if isinstance(trace_run, dict) and trace_run:
+            runs.append(trace_run)
+        merged = {
+            "contract_version": RELEASE_EXECUTION_PROTOCOL_VERSION,
+            "runs": runs,
+        }
+        action.write({"execution_protocol_version": RELEASE_EXECUTION_PROTOCOL_VERSION, "execution_trace_json": merged})
+        return merged
 
-    def _mark_succeeded(self, action, *, result_snapshot_id: int | None, result_payload: dict[str, Any], diagnostics: dict[str, Any]) -> dict[str, Any]:
+    def _mark_running(self, action, *, trace_run: dict[str, Any] | None = None) -> None:
+        values = {"state": "running", "executed_at": self.now()}
+        if isinstance(trace_run, dict) and trace_run:
+            current = action.execution_trace_json if isinstance(action.execution_trace_json, dict) else {}
+            runs = list(current.get("runs") or []) if isinstance(current.get("runs"), list) else []
+            values["execution_protocol_version"] = RELEASE_EXECUTION_PROTOCOL_VERSION
+            values["execution_trace_json"] = {"contract_version": RELEASE_EXECUTION_PROTOCOL_VERSION, "runs": runs + [trace_run]}
+        action.write(values)
+
+    def _mark_succeeded(self, action, *, result_snapshot_id: int | None, result_payload: dict[str, Any], diagnostics: dict[str, Any], trace_run: dict[str, Any] | None = None) -> dict[str, Any]:
+        trace_payload = self._append_trace_run(action, trace_run)
         action.write(
             {
                 "state": "succeeded",
@@ -109,22 +136,28 @@ class ReleaseOrchestrator:
                 "reason_code": "OK",
                 "result_payload_json": result_payload if isinstance(result_payload, dict) else {},
                 "diagnostics_json": diagnostics if isinstance(diagnostics, dict) else {},
+                "execution_protocol_version": RELEASE_EXECUTION_PROTOCOL_VERSION,
+                "execution_trace_json": trace_payload,
             }
         )
         return action.to_runtime_dict()
 
-    def _mark_failed(self, action, *, reason_code: str, diagnostics: dict[str, Any]) -> dict[str, Any]:
+    def _mark_failed(self, action, *, reason_code: str, diagnostics: dict[str, Any], trace_run: dict[str, Any] | None = None) -> dict[str, Any]:
+        trace_payload = self._append_trace_run(action, trace_run)
         action.write(
             {
                 "state": "failed",
                 "completed_at": self.now(),
                 "reason_code": _text(reason_code),
                 "diagnostics_json": diagnostics if isinstance(diagnostics, dict) else {},
+                "execution_protocol_version": RELEASE_EXECUTION_PROTOCOL_VERSION,
+                "execution_trace_json": trace_payload,
             }
         )
         return action.to_runtime_dict()
 
-    def _mark_pending_approval(self, action, *, diagnostics: dict[str, Any]) -> dict[str, Any]:
+    def _mark_pending_approval(self, action, *, diagnostics: dict[str, Any], trace_run: dict[str, Any] | None = None) -> dict[str, Any]:
+        trace_payload = self._append_trace_run(action, trace_run)
         merged_diagnostics = dict(action.diagnostics_json or {}) if isinstance(action.diagnostics_json, dict) else {}
         merged_diagnostics.update(diagnostics if isinstance(diagnostics, dict) else {})
         action.write(
@@ -132,13 +165,19 @@ class ReleaseOrchestrator:
                 "state": "pending",
                 "reason_code": "APPROVAL_REQUIRED",
                 "diagnostics_json": merged_diagnostics,
+                "execution_protocol_version": RELEASE_EXECUTION_PROTOCOL_VERSION,
+                "execution_trace_json": trace_payload,
             }
         )
         return action.to_runtime_dict()
 
     def approve_action(self, *, action_id: int, note: str = "") -> dict[str, Any]:
         action = self._load_action(action_id)
-        return self.approval_policy_service.approve_action(action=action, user=self.env.user, note=note, auto=False)
+        run = self.execution_engine.run_approval(action=action, user=self.env.user, note=note, auto=False)
+        self._append_trace_run(action, run)
+        if _text(run.get("state")) != "succeeded":
+            raise ValueError(_text(run.get("reason_code")) or "RELEASE_APPROVAL_FAILED")
+        return action.to_runtime_dict()
 
     def approve_and_execute_action(self, *, action_id: int, note: str = "") -> dict[str, Any]:
         self.approve_action(action_id=action_id, note=note)
@@ -148,57 +187,28 @@ class ReleaseOrchestrator:
         action = self._load_action(action_id)
         if _text(action.state) == "succeeded":
             return action.to_runtime_dict()
-
-        executor_allowed, executor_reason, executor_diag = self.approval_policy_service.can_execute(action=action, user=self.env.user)
-        if not executor_allowed:
-            return self._mark_failed(
-                action,
-                reason_code=executor_reason,
-                diagnostics={"orchestrator": "release_orchestrator_v1", "approval": executor_diag},
-            )
-
-        if bool(action.approval_required) and _text(action.approval_state) != "approved":
-            allow_self_approval = bool((action.policy_snapshot_json or {}).get("allow_self_approval")) if isinstance(action.policy_snapshot_json, dict) else False
-            if allow_self_approval:
-                approver_allowed, _, _ = self.approval_policy_service.can_approve(action=action, user=self.env.user)
-                if approver_allowed:
-                    self.approval_policy_service.approve_action(action=action, user=self.env.user, note="auto approval during orchestration", auto=True)
-            if _text(action.approval_state) != "approved":
-                return self._mark_pending_approval(
+        with self.env.cr.savepoint():
+            outcome = self.execution_engine.execute_release_action(action=action, user=self.env.user)
+            trace_run = outcome.get("trace_run") if isinstance(outcome.get("trace_run"), dict) else {}
+            status = _text(outcome.get("status"))
+            diagnostics = {"orchestrator": "release_orchestrator_v1", **(_dict(outcome.get("diagnostics")))}
+            if status == "pending_approval":
+                return self._mark_pending_approval(action, diagnostics=diagnostics, trace_run=trace_run)
+            if status == "failed":
+                return self._mark_failed(
                     action,
-                    diagnostics={"orchestrator": "release_orchestrator_v1", "approval_state": _text(action.approval_state)},
+                    reason_code=_text(outcome.get("reason_code")) or "RELEASE_EXECUTION_FAILED",
+                    diagnostics=diagnostics,
+                    trace_run=trace_run,
                 )
-
-        request_payload = action.request_payload_json if isinstance(action.request_payload_json, dict) else {}
-        try:
-            with self.env.cr.savepoint():
-                self._mark_running(action)
-                if _text(action.action_type) == "promote_snapshot":
-                    result = self.promotion_service.promote_to_released(
-                        int(request_payload.get("snapshot_id") or action.target_snapshot_id.id or 0),
-                        replace_active=bool(request_payload.get("replace_active", True)),
-                        state_reason="release_orchestrator_promoted",
-                        promotion_note=_text(action.note) or "promoted by release orchestrator",
-                    )
-                elif _text(action.action_type) == "rollback_snapshot":
-                    result = self.snapshot_service.rollback_to_snapshot(
-                        product_key=_text(action.product_key),
-                        target_snapshot_id=int(request_payload.get("target_snapshot_id") or action.target_snapshot_id.id or 0) or None,
-                        note=_text(action.note) or "rollback by release orchestrator",
-                    )
-                else:
-                    raise ValueError(f"UNSUPPORTED_RELEASE_ACTION_TYPE:{_text(action.action_type)}")
+            result = outcome.get("result") if isinstance(outcome.get("result"), dict) else {}
+            self._mark_running(action)
             return self._mark_succeeded(
                 action,
                 result_snapshot_id=int(result.get("id") or 0),
                 result_payload=result,
-                diagnostics={"orchestrator": "release_orchestrator_v1", "operation": _text(action.action_type)},
-            )
-        except Exception as exc:
-            return self._mark_failed(
-                action,
-                reason_code=str(exc),
-                diagnostics={"orchestrator": "release_orchestrator_v1", "operation": _text(action.action_type), "error": str(exc)},
+                diagnostics=diagnostics,
+                trace_run=trace_run,
             )
 
     def submit_write_model(self, write_model: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -1204,6 +1204,18 @@ verify.release.operator_contract_guard:
 verify.release.operator_contract_freeze.v1: verify.release.operator_write_model.v1 verify.release.operator_contract_guard
 	@echo "[OK] verify.release.operator_contract_freeze.v1 done"
 
+.PHONY: verify.release.execution_protocol_guard
+verify.release.execution_protocol_guard:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_execution_protocol_guard.sh
+
+.PHONY: verify.release.execution_trace_guard
+verify.release.execution_trace_guard:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_execution_trace_guard.sh
+
+.PHONY: verify.release.execution_protocol.v1
+verify.release.execution_protocol.v1: verify.release.operator_contract_freeze.v1 verify.release.execution_protocol_guard verify.release.execution_trace_guard
+	@echo "[OK] verify.release.execution_protocol.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"
