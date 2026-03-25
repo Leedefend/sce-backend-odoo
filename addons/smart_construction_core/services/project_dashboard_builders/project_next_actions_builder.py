@@ -18,6 +18,11 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
             return self._envelope(state="empty", visibility=visibility, data={"actions": [], "summary": {}})
 
         lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
+        cost_count = self._safe_count("account.move", self._project_domain("account.move", project))
+        payment_count = self._safe_count("payment.request", self._project_domain("payment.request", project))
+        recommend_cost = lifecycle_state in {"in_progress", "closing", "warranty", "done"} and cost_count <= 0
+        recommend_payment = lifecycle_state in {"in_progress", "closing", "warranty", "done"} and cost_count > 0 and payment_count <= 0
+        recommend_settlement = lifecycle_state in {"closing", "warranty", "done"} and cost_count > 0 and payment_count > 0
         actions = [
             self._next_action(
                 project=project,
@@ -32,6 +37,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 state="available" if lifecycle_state == "draft" else "planned",
                 reason_code="PROJECT_START_EXECUTION",
                 source="product_connection_layer_v1",
+                recommended=lifecycle_state == "draft",
+                reason="项目已完成立项，下一步应显式进入执行阶段。" if lifecycle_state == "draft" else "",
             ),
             self._next_action(
                 project=project,
@@ -46,6 +53,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 state="available",
                 reason_code="PROJECT_EXECUTION_READY",
                 source="product_connection_layer_v1",
+                recommended=lifecycle_state == "draft",
+                reason="当前项目已就绪，建议先进入执行推进确认任务状态。" if lifecycle_state == "draft" else "",
             ),
             self._next_action(
                 project=project,
@@ -60,6 +69,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 state="available" if lifecycle_state in {"in_progress", "closing", "warranty", "done"} else "planned",
                 reason_code="COST_TRACKING_READY",
                 source="product_connection_layer_v1",
+                recommended=recommend_cost,
+                reason="当前项目已进入执行阶段，建议优先录入成本，形成经营事实基线。" if recommend_cost else "",
             ),
             self._next_action(
                 project=project,
@@ -74,6 +85,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 state="available" if lifecycle_state in {"in_progress", "closing", "warranty", "done"} else "planned",
                 reason_code="PAYMENT_READY",
                 source="product_connection_layer_v1",
+                recommended=recommend_payment,
+                reason="当前项目已有成本记录，建议继续录入付款，完成资金侧闭环。" if recommend_payment else "",
             ),
             self._next_action(
                 project=project,
@@ -88,6 +101,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 state="available" if lifecycle_state in {"closing", "warranty", "done"} else "planned",
                 reason_code="SETTLEMENT_READY",
                 source="product_connection_layer_v1",
+                recommended=recommend_settlement,
+                reason="当前项目已具备成本与付款事实，建议进入结算结果检查是否满足收口条件。" if recommend_settlement else "",
             ),
         ]
 
@@ -113,10 +128,19 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                     state="available",
                     reason_code="PROJECT_RULE_ACTION",
                     source=str(item.get("action_type") or "rule"),
+                    recommended=False,
+                    reason="",
                 )
             )
 
         actions = sorted(actions, key=lambda row: int(row.get("priority") or 9999))
+        if not any(bool(row.get("recommended")) for row in actions):
+            for row in actions:
+                if str(row.get("state") or "") != "available":
+                    continue
+                row["recommended"] = True
+                row["reason"] = str(row.get("reason") or "").strip() or "当前项目已经进入主入口，建议先执行这一项以继续推进主线。"
+                break
         return self._envelope(
             state="ready",
             visibility=visibility,

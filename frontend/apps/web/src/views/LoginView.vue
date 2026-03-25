@@ -183,9 +183,10 @@ async function onSubmit() {
       /^\/(f|a|r)\//.test(rawRedirect)
       && !/[?&](action_id|menu_id|scene_key|scene)=/.test(rawRedirect);
     const normalizedRedirect = normalizeLegacyWorkbenchPath(rawRedirect);
+    const primaryEntry = await session.resolvePrimaryEntryPath('/my-work');
     const redirect = (!hasWorkspaceHome || isLikelyUnboundActionRoute)
-      ? session.resolveLandingPath('/')
-      : (normalizedRedirect || session.resolveLandingPath('/'));
+      ? primaryEntry
+      : (normalizedRedirect || primaryEntry);
     await router.push(redirect);
   } catch (err) {
     error.value = normalizeLoginError(err);

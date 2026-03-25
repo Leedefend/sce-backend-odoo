@@ -57,6 +57,7 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
         project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
         data = attach_project_context_to_scene_payload(data, project)
+        data["state_explain"] = orchestrator._service.build_state_explain(project)
         data = attach_release_surface_scene_contract(
             data,
             product_key="fr2",

@@ -278,6 +278,34 @@ class ProjectDashboardService:
             "date": str(fields.Date.today()),
         }
 
+    def build_state_explain(self, project):
+        if not project:
+            return {
+                "stage_explain": "当前没有可用项目，无法进入项目驾驶舱。",
+                "milestone_explain": "暂无项目里程碑。",
+                "status_explain": "请先选择项目或创建项目。",
+            }
+        lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
+        milestone = str(getattr(project, "sc_execution_state", "") or "").strip().lower()
+        status = str(getattr(project, "health_state", "") or getattr(project, "state", "") or "").strip()
+        stage_explain_map = {
+            "draft": "项目已创建，当前处于主线启动阶段。",
+            "in_progress": "项目已进入执行主线，当前重点是形成任务、成本与付款事实。",
+            "closing": "项目已进入收口阶段，应优先检查结算前置条件。",
+            "warranty": "项目处于收尾/质保阶段，需持续跟踪尾项与结算状态。",
+            "done": "项目主线已完成，当前以复核经营结果为主。",
+        }
+        milestone_explain_map = {
+            "ready": "当前执行准备已完成，可以进入执行推进。",
+            "in_progress": "当前执行正在推进，建议优先补齐成本与付款事实。",
+            "done": "当前执行动作已完成，可继续检查成本、付款与结算结果。",
+        }
+        return {
+            "stage_explain": stage_explain_map.get(lifecycle_state, "当前项目处于已发布主线中，请按下一步动作推进。"),
+            "milestone_explain": milestone_explain_map.get(milestone, "当前里程碑尚未进入显式执行状态。"),
+            "status_explain": status or "当前项目状态正常。",
+        }
+
     @staticmethod
     def error_block(block_key, code):
         return {

@@ -8,6 +8,7 @@ import type { Scene } from '../app/resolvers/sceneRegistry';
 import { buildSceneRegistryFallbackPath, normalizeEditionKey, normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 import { resolveActiveDb, setActiveDb } from '../services/dbContext';
+import { MY_WORK_PATH, normalizeProjectEntryContext, PROJECT_MANAGEMENT_PATH } from '../app/projectEntryContext';
 
 export interface RoleSurface {
   role_code: string;
@@ -248,6 +249,7 @@ export interface SessionState {
     menu_id?: number;
   } | null;
   bootstrapNextIntent: string;
+  activeProjectContext: Record<string, unknown> | null;
 }
 
 const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
@@ -309,6 +311,7 @@ export const useSessionStore = defineStore('session', {
     initMeta: null,
     defaultRoute: null,
     bootstrapNextIntent: 'system.init',
+    activeProjectContext: null,
   }),
   actions: {
     setToken(token: string) {
@@ -408,6 +411,7 @@ export const useSessionStore = defineStore('session', {
       this.initRequestSeq = 0;
       this.defaultRoute = null;
       this.bootstrapNextIntent = 'system.init';
+      this.activeProjectContext = null;
       this.isReady = false;
       this.initStatus = 'idle';
       this.initError = null;
@@ -535,6 +539,7 @@ export const useSessionStore = defineStore('session', {
       this.initMeta = null;
       this.initRequestSeq = 0;
       this.defaultRoute = null;
+      this.activeProjectContext = null;
       this.isReady = false;
       this.initStatus = 'idle';
       this.initError = null;
@@ -976,6 +981,38 @@ export const useSessionStore = defineStore('session', {
         return;
       }
       await this.loadAppInit();
+    },
+    setActiveProjectContext(context?: Record<string, unknown> | null) {
+      this.activeProjectContext = normalizeProjectEntryContext(context) || null;
+    },
+    clearActiveProjectContext() {
+      this.activeProjectContext = null;
+    },
+    async resolvePrimaryEntryPath(fallback = MY_WORK_PATH) {
+      const preferredContext = normalizeProjectEntryContext(this.activeProjectContext);
+      if (preferredContext?.project_id) {
+        this.activeProjectContext = preferredContext;
+        return PROJECT_MANAGEMENT_PATH;
+      }
+      try {
+        const result = await intentRequest<{
+          available?: boolean;
+          route?: string;
+          project_context?: Record<string, unknown>;
+        }>({
+          intent: 'project.entry.context.resolve',
+          params: {},
+        });
+        const resolvedContext = normalizeProjectEntryContext(result?.project_context);
+        if (resolvedContext?.project_id && result?.available !== false) {
+          this.activeProjectContext = resolvedContext;
+          return String(result.route || PROJECT_MANAGEMENT_PATH).trim() || PROJECT_MANAGEMENT_PATH;
+        }
+      } catch {
+        // degrade to fallback
+      }
+      this.activeProjectContext = null;
+      return this.resolveLandingPath(fallback);
     },
     resolveLandingPath(fallback = '/') {
       const defaultRoutePath = String(this.defaultRoute?.route || '').trim();
