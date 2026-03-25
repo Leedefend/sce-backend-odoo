@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 from .release_operator_read_model_service import ReleaseOperatorReadModelService
+from .release_operator_contract_versions import RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION
 
-
-RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION = "release_operator_surface_v1"
 
 
 class ReleaseOperatorSurfaceService:
@@ -13,9 +12,12 @@ class ReleaseOperatorSurfaceService:
         self.read_model_service = ReleaseOperatorReadModelService(env)
 
     def build_surface(self, *, product_key: str = "", action_limit: int = 20) -> dict[str, Any]:
+        from .release_operator_contract_registry import build_release_operator_contract_registry
+
         read_model = self.read_model_service.build_read_model(product_key=product_key, action_limit=action_limit)
         return {
             "contract_version": RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION,
+            "contract_registry": build_release_operator_contract_registry(),
             "read_model_v1": read_model,
             "identity": dict(read_model.get("identity") or {}),
             "products": list(read_model.get("products") or []),
