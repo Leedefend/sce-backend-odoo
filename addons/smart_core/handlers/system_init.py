@@ -52,6 +52,7 @@ from odoo.addons.smart_core.core.scene_delivery_policy import (
 )
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
+from odoo.addons.smart_core.delivery.release_audit_trail_service import ReleaseAuditTrailService
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -681,6 +682,7 @@ class SystemInitHandler(BaseIntentHandler):
             base_product_key="construction",
         )
         release_snapshot_service = EditionReleaseSnapshotService(env)
+        release_audit_service = ReleaseAuditTrailService(env)
         data["delivery_engine_v1"] = delivery_payload
         edition_diagnostics = (
             delivery_payload.get("product_policy", {}).get("edition_diagnostics")
@@ -692,6 +694,7 @@ class SystemInitHandler(BaseIntentHandler):
         effective_product_key = str(delivery_payload.get("product_key") or f"{effective_base_product_key}.{effective_edition_key}").strip()
         requested_product_key = f"construction.{delivery_edition_key}"
         released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
+        release_audit_trail_summary = release_audit_service.build_runtime_summary(product_key=effective_product_key)
         runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}
         if released_snapshot_lineage:
             runtime_diagnostics["released_snapshot_lineage"] = released_snapshot_lineage
@@ -700,6 +703,13 @@ class SystemInitHandler(BaseIntentHandler):
                 meta = {}
                 delivery_payload["meta"] = meta
             meta["released_snapshot_lineage"] = released_snapshot_lineage
+        if release_audit_trail_summary:
+            runtime_diagnostics["release_audit_trail_summary"] = release_audit_trail_summary
+            meta = delivery_payload.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                delivery_payload["meta"] = meta
+            meta["release_audit_trail_summary"] = release_audit_trail_summary
         data["edition_runtime_v1"] = {
             "contract_version": "v1",
             "requested": {

@@ -1130,6 +1130,22 @@ verify.release.orchestration_guard: guard.prod.forbid check-compose-project chec
 verify.release.orchestration.v1: verify.release.snapshot_lineage.v1 verify.release.action_guard verify.release.orchestration_guard
 	@echo "[OK] verify.release.orchestration.v1 done"
 
+.PHONY: verify.release.audit_surface_guard
+verify.release.audit_surface_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_audit_surface_guard.sh
+
+.PHONY: verify.release.audit_lineage_consistency_guard
+verify.release.audit_lineage_consistency_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/release_audit_lineage_consistency_guard.sh
+
+.PHONY: verify.release.audit_runtime_consistency_guard
+verify.release.audit_runtime_consistency_guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/release_audit_runtime_consistency_guard.py"
+
+.PHONY: verify.release.audit_trail.v1
+verify.release.audit_trail.v1: verify.release.orchestration.v1 verify.release.audit_surface_guard verify.release.audit_lineage_consistency_guard verify.release.audit_runtime_consistency_guard
+	@echo "[OK] verify.release.audit_trail.v1 done"
+
 .PHONY: verify.product.project_flow.execution_settlement
 verify.product.project_flow.execution_settlement: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_flow_execution_settlement_smoke.py"
