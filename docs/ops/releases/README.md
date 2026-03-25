@@ -362,3 +362,6 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.release_snapshot.active_uniqueness_guard`: release snapshot active released uniqueness guard
 - `verify.release_snapshot.lineage_guard`: runtime released snapshot lineage diagnostics guard
 - `verify.release.snapshot_lineage.v1`: release snapshot lineage gate
+- `verify.release.action_guard`: release action recording guard
+- `verify.release.orchestration_guard`: release orchestration promote/rollback guard
+- `verify.release.orchestration.v1`: release orchestration gate

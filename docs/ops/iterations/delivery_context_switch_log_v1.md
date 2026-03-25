@@ -1417,3 +1417,13 @@ Each entry must include:
 - reason: `在不改变 released navigation、Scene Asset v1、Delivery Engine v1、Edition Runtime Routing v1 与 Edition Freeze Surface v1 语义的前提下，把 release snapshot 从 freeze evidence 升级为受 candidate/approved/released/superseded 治理的 promotion lineage 资产`
 - completed_step: `扩展 release snapshot lifecycle state；新增 release snapshot promotion service；建立 active released 唯一性与显式替换协议；runtime diagnostics 暴露 released_snapshot_lineage；新增 verify.release.snapshot_lineage.v1`
 - next_step: `执行模块升级与 lineage guards，确认 runtime 始终命中 active released snapshot，并可用 released snapshot 作为后续 rollback/release 审计依据`
+
+## 2026-03-25T02:20:00Z Release Rollback Orchestration v1
+
+- branch: `codex/next-round`
+- head: `cf6dedb`
+- layer_target: `Platform Layer + Delivery Runtime + Release Governance`
+- module: `addons/smart_core/models/release_action.py + addons/smart_core/delivery/release_orchestrator.py + addons/smart_core/security/ir.model.access.csv + scripts/verify/release_* + docs/architecture + docs/ops/releases`
+- reason: `在 release snapshot lineage 已完成的前提下，把 promotion/rollback 从独立能力升级为可记录、可执行、可回溯的 release action 流程系统`
+- completed_step: `新增 sc.release.action；新增 ReleaseOrchestrator 统一编排 promote/rollback；引入 release action / orchestration guards 与 verify.release.orchestration.v1`
+- next_step: `执行 smart_core 模块升级与 release orchestration 门禁，确认 promote/rollback 结果可原子记录且动作链可回溯`
