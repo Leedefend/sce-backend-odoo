@@ -400,3 +400,5 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.release.operator_read_model.v1`: release operator read model gate
 - `verify.release.operator_write_model_guard`: release operator write model guard
 - `verify.release.operator_write_model.v1`: release operator write model gate
+- `verify.release.operator_contract_guard`: release operator contract freeze guard
+- `verify.release.operator_contract_freeze.v1`: release operator contract freeze gate

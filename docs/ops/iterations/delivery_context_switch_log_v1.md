@@ -1477,3 +1477,13 @@ Each entry must include:
 - reason: `在 Release Operator Read Model v1 已完成的前提下，把 operator promote/approve/rollback 写路径统一收口成 write model contract，并强制所有写操作先经过模型层再进入 orchestrator`
 - completed_step: `write model service 骨架已接入；release operator handlers 改为先 build write model；orchestrator 新增 submit_write_model；新增 verify.release.operator_write_model.v1`
 - next_step: `执行静态检查、smart_core 升级与 write model 门禁，确认 promote/approve/rollback 三条写路径都通过统一 write model contract`
+
+## 2026-03-25T10:50:00Z Release Operator Contract Freeze v1
+
+- branch: `codex/next-round`
+- head: `97d2034`
+- layer_target: `Platform Layer + Release Governance Layer + Verify Layer`
+- module: `addons/smart_core/delivery/release_operator_contract_registry.py + addons/smart_core/delivery/release_operator_*_service.py + scripts/verify/release_operator_contract_guard.sh + docs/architecture + docs/ops/releases`
+- reason: `在 operator read/write model 已稳定的前提下，把 operator 协议收口为冻结 contract，并引入 version registry 与 contract guard，确保后续变更必须走版本升级`
+- completed_step: `新增 release_operator_contract_registry_v1；operator surface/read/write model 都开始暴露 contract_registry；新增 verify.release.operator_contract_guard / verify.release.operator_contract_freeze.v1`
+- next_step: `执行静态检查与 contract freeze gate，确认 operator 协议层已经从结构稳定升级为协议稳定`
