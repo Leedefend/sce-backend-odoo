@@ -1457,3 +1457,23 @@ Each entry must include:
 - completed_step:
   - `release approval policy v1 committed`
   - `release operator surface v1 started`
+
+## 2026-03-25T09:40:00Z Release Operator Read Model v1
+
+- branch: `codex/next-round`
+- head: `795eac8`
+- layer_target: `Platform Layer + Delivery Runtime Layer + Frontend Layer + Verify Layer`
+- module: `addons/smart_core/delivery/release_operator_read_model_service.py + addons/smart_core/delivery/release_operator_surface_service.py + frontend/apps/web/src/views/ReleaseOperatorView.vue + scripts/verify/release_operator_read_model_* + docs/architecture + docs/ops/releases`
+- reason: `在 Release Operator Surface v1 已完成的前提下，把 operator 的混合读取数据抽成稳定只读 read model，并让 surface / 页面统一消费`
+- completed_step: `read model 骨架已接入；surface 开始由 read model 装配；页面改为优先消费 read_model_v1；新增 read model guard/browser smoke/gate 入口`
+- next_step: `执行前端 build、smart_core 升级与 read model 全量门禁，确认 operator surface 与页面都稳定命中 release_operator_read_model_v1`
+
+## 2026-03-25T10:25:00Z Release Operator Write Model v1
+
+- branch: `codex/next-round`
+- head: `795eac8`
+- layer_target: `Platform Layer + Delivery Runtime Layer + Verify Layer`
+- module: `addons/smart_core/delivery/release_operator_write_model_service.py + addons/smart_core/delivery/release_orchestrator.py + addons/smart_core/handlers/release_operator.py + scripts/verify/release_operator_write_model_guard.sh + docs/architecture + docs/ops/releases`
+- reason: `在 Release Operator Read Model v1 已完成的前提下，把 operator promote/approve/rollback 写路径统一收口成 write model contract，并强制所有写操作先经过模型层再进入 orchestrator`
+- completed_step: `write model service 骨架已接入；release operator handlers 改为先 build write model；orchestrator 新增 submit_write_model；新增 verify.release.operator_write_model.v1`
+- next_step: `执行静态检查、smart_core 升级与 write model 门禁，确认 promote/approve/rollback 三条写路径都通过统一 write model contract`

@@ -292,3 +292,11 @@ status: active
 - `verify.release.policy_guard`：release policy surface 守卫
 - `verify.release.approval_guard`：release approval 执行守卫
 - `verify.release.approval.v1`：release approval policy 门禁
+- `verify.release.operator_surface_guard`：release operator surface 守卫
+- `verify.release.operator_orchestration_guard`：release operator orchestration 守卫
+- `verify.release.operator_surface.v1`：release operator surface 门禁
+- `verify.release.operator_read_model_guard`：release operator read model 守卫
+- `verify.portal.release_operator_read_model_browser_smoke.host`：release operator read model 浏览器 smoke
+- `verify.release.operator_read_model.v1`：release operator read model 门禁
+- `verify.release.operator_write_model_guard`：release operator write model 守卫
+- `verify.release.operator_write_model.v1`：release operator write model 门禁
