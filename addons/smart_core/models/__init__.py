@@ -7,3 +7,4 @@ from . import ui_base_contract_asset
 from . import ui_base_contract_asset_event_trigger
 from . import product_policy
 from . import scene_snapshot
+from . import edition_release_snapshot

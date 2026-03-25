@@ -235,6 +235,7 @@ export interface SessionState {
   lastIntent: string;
   lastLatencyMs: number | null;
   lastWriteMode: string;
+  initRequestSeq: number;
   isReady: boolean;
   initStatus: 'idle' | 'loading' | 'ready' | 'error';
   initError: string | null;
@@ -300,6 +301,7 @@ export const useSessionStore = defineStore('session', {
     lastIntent: '',
     lastLatencyMs: null,
     lastWriteMode: '',
+    initRequestSeq: 0,
     isReady: false,
     initStatus: 'idle',
     initError: null,
@@ -403,6 +405,7 @@ export const useSessionStore = defineStore('session', {
       this.lastIntent = '';
       this.lastLatencyMs = null;
       this.lastWriteMode = '';
+      this.initRequestSeq = 0;
       this.defaultRoute = null;
       this.bootstrapNextIntent = 'system.init';
       this.isReady = false;
@@ -530,6 +533,7 @@ export const useSessionStore = defineStore('session', {
       this.sceneReadyContractV1 = null;
       this.sceneGovernanceV1 = null;
       this.initMeta = null;
+      this.initRequestSeq = 0;
       this.defaultRoute = null;
       this.isReady = false;
       this.initStatus = 'idle';
@@ -557,6 +561,8 @@ export const useSessionStore = defineStore('session', {
       this.clearSession();
     },
     async loadAppInit() {
+      const requestSeq = this.initRequestSeq + 1;
+      this.initRequestSeq = requestSeq;
       this.initStatus = 'loading';
       this.initError = null;
       this.initTraceId = null;
@@ -601,6 +607,9 @@ export const useSessionStore = defineStore('session', {
       try {
         result = await intentRequest<AppInitResponse>(requestParams);
       } catch (err) {
+        if (requestSeq !== this.initRequestSeq) {
+          throw err;
+        }
         if (err instanceof ApiError) {
           this.initError = err.message;
           this.initTraceId = err.traceId ?? null;
@@ -609,6 +618,9 @@ export const useSessionStore = defineStore('session', {
         }
         this.initStatus = 'error';
         throw err;
+      }
+      if (requestSeq !== this.initRequestSeq) {
+        return result;
       }
       // A1: 打印响应诊断信息
       if (debugIntent) {
