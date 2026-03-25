@@ -8,6 +8,7 @@ from odoo import fields
 from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
 from .edition_release_snapshot_service import EditionReleaseSnapshotService
 from .release_approval_policy_service import ReleaseApprovalPolicyService
+from .release_operator_write_model_service import RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION
 
 
 def _text(value: Any) -> str:
@@ -199,6 +200,36 @@ class ReleaseOrchestrator:
                 reason_code=str(exc),
                 diagnostics={"orchestrator": "release_orchestrator_v1", "operation": _text(action.action_type), "error": str(exc)},
             )
+
+    def submit_write_model(self, write_model: dict[str, Any] | None = None) -> dict[str, Any]:
+        payload = write_model if isinstance(write_model, dict) else {}
+        if _text(payload.get("contract_version")) != RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION:
+            raise ValueError("RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_DRIFT")
+        operation = _text(payload.get("operation"))
+        identity = payload.get("identity") if isinstance(payload.get("identity"), dict) else {}
+        model_payload = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+        product_key = _text(identity.get("product_key"))
+        note = _text(model_payload.get("note"))
+        if operation == "promote_snapshot":
+            return self.promote_snapshot(
+                product_key=product_key,
+                snapshot_id=int(model_payload.get("snapshot_id") or 0),
+                note=note,
+                replace_active=bool(model_payload.get("replace_active", True)),
+            )
+        if operation == "approve_action":
+            action_id = int(model_payload.get("action_id") or 0)
+            approved = self.approve_action(action_id=action_id, note=note)
+            if bool(model_payload.get("execute_after_approval", True)):
+                return self.execute_action(action_id=action_id)
+            return approved
+        if operation == "rollback_snapshot":
+            return self.rollback_snapshot(
+                product_key=product_key,
+                target_snapshot_id=int(model_payload.get("target_snapshot_id") or 0) or None,
+                note=note,
+            )
+        raise ValueError(f"UNSUPPORTED_RELEASE_OPERATOR_WRITE_OPERATION:{operation}")
 
     def promote_snapshot(
         self,

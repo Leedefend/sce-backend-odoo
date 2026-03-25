@@ -29,6 +29,16 @@ function parseMeta(raw: unknown): Record<string, unknown> {
   return isObject(raw) ? raw : {};
 }
 
+function isEmptyObject(raw: unknown): raw is Record<string, unknown> {
+  return isObject(raw) && Object.keys(raw).length === 0;
+}
+
+function extractHybridPayload<T>(body: Record<string, unknown>): T | undefined {
+  const businessEntries = Object.entries(body).filter(([key]) => !['ok', 'data', 'meta', 'error', 'status', 'code'].includes(key));
+  if (!businessEntries.length) return undefined;
+  return Object.fromEntries(businessEntries) as T;
+}
+
 function parseError(raw: unknown): IntentEnvelopeError | undefined {
   if (!isObject(raw)) return undefined;
   return {
@@ -55,8 +65,9 @@ export function parseIntentEnvelope<T>(body: IntentEnvelope<T> | T): ParsedInten
   const payload = body as IntentEnvelope<T> & { error?: unknown; meta?: unknown; ok?: boolean };
   const parsedError = parseError(payload.error);
   const fallbackError = payload.ok === false && !parsedError ? parseError(body) : undefined;
+  const hybridPayload = hasEnvelope && hasData && isEmptyObject(payload.data) ? extractHybridPayload<T>(body) : undefined;
   return {
-    data: hasData ? (payload.data as T) : (body as T),
+    data: hybridPayload ?? (hasData ? (payload.data as T) : (body as T)),
     meta: parseMeta(payload.meta),
     ok: payload.ok !== false,
     error: parsedError || fallbackError,
