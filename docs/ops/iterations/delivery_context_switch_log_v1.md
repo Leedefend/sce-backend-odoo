@@ -1487,3 +1487,13 @@ Each entry must include:
 - reason: `在 operator read/write model 已稳定的前提下，把 operator 协议收口为冻结 contract，并引入 version registry 与 contract guard，确保后续变更必须走版本升级`
 - completed_step: `新增 release_operator_contract_registry_v1；operator surface/read/write model 都开始暴露 contract_registry；新增 verify.release.operator_contract_guard / verify.release.operator_contract_freeze.v1`
 - next_step: `执行静态检查与 contract freeze gate，确认 operator 协议层已经从结构稳定升级为协议稳定`
+
+## 2026-03-25T11:10:00Z Release Execution Protocol v1
+
+- branch: `codex/next-round`
+- head: `8cd6bd1`
+- layer_target: `Delivery Runtime Layer + Release Orchestration Layer + Audit Layer + Verify Layer`
+- module: `addons/smart_core/delivery/release_execution_engine.py + addons/smart_core/delivery/release_orchestrator.py + addons/smart_core/models/release_action.py + addons/smart_core/delivery/release_audit_trail_service.py + scripts/verify/release_execution_* + docs/architecture + docs/ops/releases`
+- reason: `在 operator contract freeze 已稳定的前提下，把 promote/approve/rollback 执行流程标准化为统一 execution protocol，并为每个 release action 固化 execution trace`
+- completed_step: `新增 release_execution_protocol_v1；release action 开始持久化 execution_protocol_version / execution_trace_json；audit trail 暴露 execution trace；新增 verify.release.execution_protocol.v1`
+- next_step: `执行静态检查、smart_core 升级与 execution protocol 门禁，确认发布系统已经从协议稳定推进到协议执行稳定`

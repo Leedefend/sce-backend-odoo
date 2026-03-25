@@ -302,3 +302,4 @@ status: active
 - `verify.release.operator_write_model.v1`：release operator write model 门禁
 - `verify.release.operator_contract_guard`：release operator contract freeze 守卫
 - `verify.release.operator_contract_freeze.v1`：release operator contract freeze 门禁
+- `verify.release.execution_protocol.v1`：release execution protocol 门禁
