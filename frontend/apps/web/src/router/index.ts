@@ -10,6 +10,7 @@ import SceneView from '../views/SceneView.vue';
 import ProjectManagementDashboardView from '../views/ProjectManagementDashboardView.vue';
 import ProjectsIntakeView from '../views/ProjectsIntakeView.vue';
 import ReleaseProductEntryView from '../views/ReleaseProductEntryView.vue';
+import ReleaseOperatorView from '../views/ReleaseOperatorView.vue';
 import MyWorkView from '../views/MyWorkView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
@@ -27,6 +28,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'my-work': '我的工作',
     'project-management-dashboard': '项目管理驾驶舱',
     'release-product-entry': '产品切片入口',
+    'release-operator': '发布控制台',
     scene: '业务场景',
     menu: '业务菜单',
     action: '业务动作',
@@ -55,6 +57,7 @@ const router = createRouter({
     { path: '/s/projects.intake', name: 'scene-projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell' } },
     { path: '/s/project.initiation', redirect: '/s/projects.intake', meta: { layout: 'shell' } },
     { path: '/release/:productKey', name: 'release-product-entry', component: ReleaseProductEntryView, meta: { layout: 'shell' } },
+    { path: '/release/operator', name: 'release-operator', component: ReleaseOperatorView, meta: { layout: 'shell' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
     // Diagnostic-only surface; must not be used as product navigation.

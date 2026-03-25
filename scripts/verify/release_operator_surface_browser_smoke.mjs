@@ -29,15 +29,7 @@ const LOGIN = String(process.env.E2E_LOGIN || 'demo_pm').trim();
 const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
 const ARTIFACTS_DIR = String(process.env.ARTIFACTS_DIR || 'artifacts').trim() || 'artifacts';
 const ts = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'release-navigation-browser-smoke', ts);
-const EXPECTED_LABELS = [
-  'FR-1 项目立项',
-  'FR-2 项目推进',
-  'FR-3 成本记录',
-  'FR-4 付款记录',
-  'FR-5 结算结果',
-  '我的工作',
-];
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'release-operator-surface-browser-smoke', ts);
 
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -45,15 +37,10 @@ const summary = {
   base_url: BASE_URL,
   db_name: DB_NAME,
   login: LOGIN,
-  expected_labels: EXPECTED_LABELS,
   console_errors: [],
   page_errors: [],
   cases: [],
 };
-
-function log(message) {
-  console.log(`[release_navigation_browser_smoke] ${message}`);
-}
 
 function writeJson(fileName, payload) {
   fs.writeFileSync(path.join(outDir, fileName), `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
@@ -73,32 +60,14 @@ async function recoverFromTransientFailure(page) {
   await page.waitForTimeout(1500);
 }
 
-async function waitForSidebar(page) {
-  let lastError;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      await page.locator('.sidebar').waitFor({ timeout: 20000 });
-      return;
-    } catch (error) {
-      lastError = error;
-      await recoverFromTransientFailure(page);
-    }
-  }
-  throw lastError;
-}
-
-async function waitForReleaseNavigation(page) {
+async function waitForOperatorPage(page) {
   let lastError;
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
-      await page.waitForFunction((labels) => {
-        const textNodes = Array.from(
-          document.querySelectorAll('.sidebar .label, .sidebar .role-menu-item, .sidebar .title, .sidebar .role-label')
-        )
-          .map((el) => (el.textContent || '').trim())
-          .filter(Boolean);
-        return labels.every((label) => textNodes.includes(label));
-      }, EXPECTED_LABELS, { timeout: 12000 });
+      await page.getByRole('heading', { name: '发布控制台' }).waitFor({ timeout: 12000 });
+      await page.getByRole('heading', { name: '当前发布状态' }).waitFor({ timeout: 12000 });
+      await page.getByRole('heading', { name: '待审批动作' }).waitFor({ timeout: 12000 });
+      await page.getByRole('heading', { name: '发布历史' }).waitFor({ timeout: 12000 });
       return;
     } catch (error) {
       lastError = error;
@@ -114,7 +83,7 @@ async function fillLoginForm(page) {
   await page.locator('input[placeholder*="数据库"]').fill(DB_NAME);
 }
 
-async function fetchLoginToken() {
+async function fetchLoginToken(page) {
   let payload = null;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const response = await fetch(`${API_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`, {
@@ -151,7 +120,7 @@ async function fetchLoginToken() {
 }
 
 async function bootstrapLogin(page) {
-  const token = await fetchLoginToken();
+  const token = await fetchLoginToken(page);
   await page.addInitScript(({ token, dbName }) => {
     sessionStorage.setItem(`sc_auth_token:${dbName}`, token);
     sessionStorage.setItem('sc_auth_token:default', token);
@@ -177,67 +146,46 @@ try {
     summary.page_errors.push(String(err?.message || err));
   });
 
-  log('login demo_pm');
   await bootstrapLogin(page);
-  await page.goto(`${BASE_URL}/?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
-  await waitForSidebar(page);
-  await waitForReleaseNavigation(page);
+  await page.goto(`${BASE_URL}/release/operator?product_key=construction.standard&db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded' });
+  await waitForOperatorPage(page);
 
-  const snapshot = await page.evaluate(() => {
-    const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_4'));
-    const cache = cacheKey ? JSON.parse(localStorage.getItem(cacheKey) || 'null') : null;
-    const sidebarText = Array.from(
-      document.querySelectorAll('.sidebar .label, .sidebar .role-menu-item, .sidebar .title, .sidebar .role-label')
-    )
-      .map((el) => (el.textContent || '').trim())
-      .filter(Boolean);
-    return {
-      href: window.location.href,
-      pathname: window.location.pathname,
-      search: window.location.search,
-      title: document.title,
-      sidebar_text: sidebarText,
-      cache_release_labels: ((cache?.releaseNavigationTree || []).flatMap((root) =>
-        (root.children || []).flatMap((group) =>
-          (group.children || []).map((child) => child.label || child.title || child.name || '')
-        )
-      )).filter(Boolean),
-    };
-  });
-  snapshot.release_labels = snapshot.cache_release_labels.length ? snapshot.cache_release_labels : snapshot.sidebar_text;
+  const snapshot = await page.evaluate(() => ({
+    href: window.location.href,
+    title: document.title,
+    headings: Array.from(document.querySelectorAll('h1, h2, h3')).map((el) => (el.textContent || '').trim()).filter(Boolean),
+    buttons: Array.from(document.querySelectorAll('button')).map((el) => (el.textContent || '').trim()).filter(Boolean),
+  }));
 
-  for (const label of EXPECTED_LABELS) {
-    assert(snapshot.release_labels.includes(label), `release navigation missing label: ${label}`);
-    assert(snapshot.sidebar_text.includes(label), `sidebar missing label: ${label}`);
-  }
-  writeJson('sidebar_snapshot.json', snapshot);
-  await page.screenshot({ path: path.join(outDir, 'sidebar.png'), fullPage: true });
+  assert(snapshot.headings.includes('发布控制台'), 'missing release operator title');
+  assert(snapshot.headings.includes('当前发布状态'), 'missing current release state section');
+  assert(snapshot.headings.includes('待审批动作'), 'missing pending approval section');
+  assert(snapshot.headings.includes('发布历史'), 'missing release history section');
+
+  writeJson('operator_snapshot.json', snapshot);
+  await page.screenshot({ path: path.join(outDir, 'release_operator.png'), fullPage: true });
 
   summary.cases.push({
-    case_id: 'release_navigation_visible_for_demo_pm',
+    case_id: 'release_operator_surface_visible',
     status: 'PASS',
-    route: `${snapshot.pathname}${snapshot.search}`,
+    route: '/release/operator?product_key=construction.standard',
   });
+
   writeJson('summary.json', summary);
   fs.writeFileSync(
     path.join(outDir, 'summary.md'),
     [
-      '# Release Navigation Browser Smoke',
+      '# Release Operator Surface Browser Smoke',
       '',
       `- base_url: \`${BASE_URL}\``,
       `- db_name: \`${DB_NAME}\``,
       `- login: \`${LOGIN}\``,
-      '',
-      '## Expected Labels',
-      ...EXPECTED_LABELS.map((item) => `- ${item}`),
       '',
       '## Cases',
       ...summary.cases.map((item) => `- ${item.case_id}: ${item.status} (${item.route})`),
     ].join('\n'),
     'utf8',
   );
-  log(`PASS artifacts=${outDir}`);
 } catch (error) {
   summary.status = 'FAIL';
   summary.error = String(error?.message || error);
@@ -245,14 +193,9 @@ try {
     if (page) {
       await page.screenshot({ path: path.join(outDir, 'failure.png'), fullPage: true });
     }
-  } catch {
-    // ignore screenshot failure
-  }
+  } catch {}
   writeJson('summary.json', summary);
-  log(`FAIL ${summary.error}`);
   throw error;
 } finally {
-  if (browser) {
-    await browser.close();
-  }
+  if (browser) await browser.close();
 }

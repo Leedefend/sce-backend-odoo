@@ -139,6 +139,10 @@ class ReleaseOrchestrator:
         action = self._load_action(action_id)
         return self.approval_policy_service.approve_action(action=action, user=self.env.user, note=note, auto=False)
 
+    def approve_and_execute_action(self, *, action_id: int, note: str = "") -> dict[str, Any]:
+        self.approve_action(action_id=action_id, note=note)
+        return self.execute_action(action_id=action_id)
+
     def execute_action(self, *, action_id: int) -> dict[str, Any]:
         action = self._load_action(action_id)
         if _text(action.state) == "succeeded":

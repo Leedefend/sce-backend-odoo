@@ -22,6 +22,7 @@
         <div class="role-actions">
           <button class="ghost mini" @click="openRoleLanding">进入工作台</button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
+          <button v-if="showReleaseOperatorEntry" class="ghost mini" @click="router.push('/release/operator')">发布控制</button>
         </div>
         <div v-if="!hasReleaseNavigation && roleMenus.length" class="role-menus">
           <button
@@ -318,6 +319,10 @@ const menuLabel = computed(() => {
 
 const hudEnabled = computed(() => isHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
+const showReleaseOperatorEntry = computed(() => {
+  const roleCode = String(roleSurface.value?.role_code || '').trim().toLowerCase();
+  return ['pm', 'executive', 'admin'].includes(roleCode);
+});
 
 function normalizeDeliveryText(input: string) {
   const source = String(input || '').trim();
