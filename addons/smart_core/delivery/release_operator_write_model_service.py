@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-
-RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION = "release_operator_write_model_v1"
+from .release_operator_contract_versions import RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION
 
 
 def _text(value: Any) -> str:
@@ -48,6 +47,8 @@ class ReleaseOperatorWriteModelService:
         }
 
     def build_promote_write_model(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        from .release_operator_contract_registry import build_release_operator_contract_registry
+
         params = params if isinstance(params, dict) else {}
         identity = self._resolve_identity(product_key=_text(params.get("product_key")))
         snapshot_id = int(params.get("snapshot_id") or 0)
@@ -55,6 +56,7 @@ class ReleaseOperatorWriteModelService:
             raise ValueError("SNAPSHOT_ID_REQUIRED")
         return {
             "contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+            "contract_registry": build_release_operator_contract_registry(),
             "operation": "promote_snapshot",
             "identity": identity,
             "payload": {
@@ -65,6 +67,8 @@ class ReleaseOperatorWriteModelService:
         }
 
     def build_approve_write_model(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        from .release_operator_contract_registry import build_release_operator_contract_registry
+
         params = params if isinstance(params, dict) else {}
         action_id = int(params.get("action_id") or 0)
         if action_id <= 0:
@@ -72,6 +76,7 @@ class ReleaseOperatorWriteModelService:
         identity = self._approve_identity(action_id=action_id)
         return {
             "contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+            "contract_registry": build_release_operator_contract_registry(),
             "operation": "approve_action",
             "identity": identity,
             "payload": {
@@ -82,10 +87,13 @@ class ReleaseOperatorWriteModelService:
         }
 
     def build_rollback_write_model(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        from .release_operator_contract_registry import build_release_operator_contract_registry
+
         params = params if isinstance(params, dict) else {}
         identity = self._resolve_identity(product_key=_text(params.get("product_key")))
         return {
             "contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+            "contract_registry": build_release_operator_contract_registry(),
             "operation": "rollback_snapshot",
             "identity": identity,
             "payload": {

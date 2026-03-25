@@ -6,10 +6,10 @@ from typing import Any
 
 from .release_approval_policy_service import ReleaseApprovalPolicyService
 from .release_audit_trail_service import ReleaseAuditTrailService
-from .release_operator_write_model_service import RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION
-
-
-RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION = "release_operator_read_model_v1"
+from .release_operator_contract_versions import (
+    RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
+    RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+)
 
 
 def _text(value: Any) -> str:
@@ -157,6 +157,8 @@ class ReleaseOperatorReadModelService:
         }
 
     def build_read_model(self, *, product_key: str = "", action_limit: int = 20) -> dict[str, Any]:
+        from .release_operator_contract_registry import build_release_operator_contract_registry
+
         identity = self._resolve_identity(product_key=product_key)
         audit = self.audit_service.build_audit_trail(product_key=identity["product_key"], action_limit=action_limit)
         active_snapshot = _dict(audit.get("active_released_snapshot"))
@@ -184,6 +186,7 @@ class ReleaseOperatorReadModelService:
         }
         return {
             "contract_version": RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
+            "contract_registry": build_release_operator_contract_registry(),
             "identity": {
                 "product_key": identity["product_key"],
                 "base_product_key": identity["base_product_key"],
