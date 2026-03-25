@@ -392,3 +392,11 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - `verify.release.policy_guard`: release policy surface guard
 - `verify.release.approval_guard`: release approval execution guard
 - `verify.release.approval.v1`: release approval policy gate
+- `verify.release.operator_surface_guard`: release operator surface guard
+- `verify.release.operator_orchestration_guard`: release operator orchestration guard
+- `verify.release.operator_surface.v1`: release operator surface gate
+- `verify.release.operator_read_model_guard`: release operator read model guard
+- `verify.portal.release_operator_read_model_browser_smoke.host`: release operator read model browser smoke
+- `verify.release.operator_read_model.v1`: release operator read model gate
+- `verify.release.operator_write_model_guard`: release operator write model guard
+- `verify.release.operator_write_model.v1`: release operator write model gate
