@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-26T13:35:00Z
+- blocker_key: `frontend_takeover_consumption_alignment_v1`
+- layer_target: `Frontend Layer / Page Orchestration Layer / Verify Layer`
+- module: `frontend/apps/web/src/views/ActionView.vue + frontend/apps/web/src/pages/ContractFormPage.vue + frontend/apps/web/src/app`
+- reason: `把前端正式切到后端新增的 capability_profile / render_policy / form_semantics / list_semantics / kanban_semantics，避免继续从 views.* 猜测页面承接能力`
+- completed_step: `ActionView 已过滤 recommended_runtime=native 的视图模式并展示原生兜底入口；ContractFormPage 在 form 命中原生兜底时会直接给出原生入口；Action runtime 读取列表列与看板字段优先使用 semantic_page.*`
+- active_commit: `73e7cde`
+- next_step: `Commit the backend+frontend takeover alignment batch, then use the new semantics to drive company/organization/user/project/task product pages`
+
+### 2026-03-26T13:15:00Z
+- blocker_key: `native_view_support_profile_enhancement_v1`
+- layer_target: `Platform Layer / Page Orchestration Layer / Verify Layer`
+- module: `addons/smart_core/handlers/load_contract.py + addons/smart_core/tests`
+- reason: `在不追求全能力承载的前提下，为 form/tree/kanban 三类页面统一输出后端承载画像、前端承接建议与 open_native 兜底动作，支撑“高频标准页前端承接，复杂页原生兜底”的产品策略`
+- completed_step: `load_contract 已新增 semantic_page.capability_profile 与 native_view.render_policy；form/tree/kanban 现在会明确输出 support_tier / takeover_class / recommended_runtime / fallback_action；新增 3 条 post_install 测试并通过`
+- active_commit: `73e7cde`
+- next_step: `Use capability_profile in the next frontend product batch so page routing can choose frontend takeover or native fallback without guessing`
+
 ### 2026-03-26T12:20:00Z
 - blocker_key: `frontend_takeover_scope_freeze_v1`
 - layer_target: `Product Governance / Frontend Routing Governance / Documentation`

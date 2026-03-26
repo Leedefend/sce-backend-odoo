@@ -48,6 +48,10 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
+    <section v-if="showNativeFallbackPanel" class="contract-native-fallback">
+      <StatusPanel title="当前页面建议使用原生页面" :message="nativeFallbackMessage" variant="info" />
+      <button class="contract-chip" @click="openNativeFallback">打开原生页面</button>
+    </section>
     <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
@@ -400,6 +404,7 @@ import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GroupSummaryBar from '../components/GroupSummaryBar.vue';
+import StatusPanel from '../components/StatusPanel.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
@@ -418,6 +423,7 @@ import { findSceneReadyEntry, resolveListSceneReady } from '../app/resolvers/sce
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
+import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
 import { useActionViewActionRuntime } from '../app/action_runtime/useActionViewActionRuntime';
 import { useActionViewBatchRuntime } from '../app/action_runtime/useActionViewBatchRuntime';
 import { useActionViewSelectionRuntime } from '../app/action_runtime/useActionViewSelectionRuntime';
@@ -1241,11 +1247,27 @@ const {
   advancedRowMeta,
   buildGroupKey,
   resolveModelFromContract,
+  resolveModeRecommendedRuntime,
 } = useActionViewContractShapeRuntime({
   pageText,
   actionContract,
   advancedFields,
   activeGroupByField,
+});
+const actionableViewModes = computed(() => {
+  const modes = availableViewModes.value;
+  const filtered = modes.filter((mode) => resolveModeRecommendedRuntime(actionContract.value, mode) !== 'native');
+  return filtered.length ? filtered : modes;
+});
+const nativeFallbackPolicy = computed(() => resolveContractViewRenderPolicy(actionContract.value, viewMode.value || contractViewType.value));
+const nativeFallbackUrl = computed(() => {
+  const action = nativeFallbackPolicy.value.fallbackAction;
+  return Object.keys(action || {}).length ? buildNativeFallbackUrl(action) : '';
+});
+const showNativeFallbackPanel = computed(() => nativeFallbackPolicy.value.recommendedRuntime === 'native' && Boolean(nativeFallbackUrl.value));
+const nativeFallbackMessage = computed(() => {
+  const reason = nativeFallbackPolicy.value.notes[0] || '当前页面命中了原生兜底条件。';
+  return `${reason} 请使用原生页面完成本次操作。`;
 });
 
 const { vm } = useActionPageModel({
@@ -1259,7 +1281,7 @@ const { vm } = useActionPageModel({
     sceneKey,
     pageMode,
     viewMode,
-    availableViewModes,
+    availableViewModes: actionableViewModes,
   },
   headerActions,
   routePreset: {
@@ -1528,6 +1550,11 @@ const {
   pageActionIntent,
   pageActionTarget,
 });
+
+function openNativeFallback() {
+  if (!nativeFallbackUrl.value) return;
+  window.location.assign(nativeFallbackUrl.value);
+}
 
 const {
   fetchScopedTotal,
@@ -2357,6 +2384,11 @@ watch(
   margin: 4px 0 0;
   color: #7a271a;
   font-size: 12px;
+}
+
+.contract-native-fallback {
+  display: grid;
+  gap: 12px;
 }
 
 .empty-next {
