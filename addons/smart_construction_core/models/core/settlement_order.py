@@ -221,37 +221,10 @@ class ScSettlementOrder(models.Model):
         return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
 
     def _sync_settlement_evidence(self, event_code="settlement_done"):
-        Evidence = self.env["sc.business.evidence"].sudo()
-        for rec in self.filtered(lambda item: item.project_id and item.state == "done"):
-            relation_chain = {
-                "event_code": event_code,
-                "settlement_id": rec.id,
-                "settlement_name": rec.name,
-                "settlement_state": rec.state,
-                "project_id": rec.project_id.id,
-                "project_name": rec.project_id.display_name,
-                "settlement_type": rec.settlement_type,
-                "paid_amount": rec.paid_amount or 0.0,
-                "remaining_amount": rec.remaining_amount or 0.0,
-                "payment_request_ids": rec.payment_request_ids.ids,
-                "line_count": len(rec.line_ids),
-                "trace": [
-                    f"sc.settlement.order#{rec.id}",
-                    *[f"payment.request#{request.id}" for request in rec.payment_request_ids],
-                ],
-            }
-            Evidence.upsert_evidence(
-                name=f"Settlement Evidence {rec.name}",
-                business_model="project.project",
-                business_id=rec.project_id.id,
-                evidence_type="settlement",
-                source_model=self._name,
-                source_id=rec.id,
-                amount=rec.amount_total,
-                quantity=float(len(rec.line_ids)),
-                operator=self.env.user,
-                relation_chain=relation_chain,
-            )
+        self.env["sc.evidence.builder"].build(
+            self.filtered(lambda item: item.project_id and item.state in ("approve", "done")),
+            event_code=event_code,
+        )
 
     def _check_contract_consistency_or_raise(self, strict=True):
         """
@@ -314,10 +287,22 @@ class ScSettlementOrder(models.Model):
             rec._check_purchase_orders_or_raise(strict=True)
         self.env["sc.data.validator"].validate_or_raise()
         self.write({"state": "approve"})
+        self.env["sc.evidence.policy"].ensure_records(
+            self.filtered(lambda rec: rec.project_id),
+            evidence_type="settlement",
+            auto_build=True,
+            event_code="settlement_approve",
+        )
 
     def action_done(self):
         self.write({"state": "done"})
         self._sync_settlement_evidence(event_code="settlement_done")
+        self.env["sc.evidence.policy"].ensure_records(
+            self.filtered(lambda rec: rec.project_id),
+            evidence_type="settlement",
+            auto_build=False,
+            event_code="settlement_done",
+        )
 
     def action_cancel(self):
         self._check_payments_before_cancel()

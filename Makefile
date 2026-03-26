@@ -1361,6 +1361,40 @@ verify.demo.evidence_completeness: guard.prod.forbid check-compose-project check
 verify.product.evidence_system.v1: guard.prod.forbid verify.payment_evidence_guard verify.cost_evidence_guard verify.settlement_evidence_guard verify.evidence_chain_project verify.intent.evidence_trace verify.project_dashboard_evidence_contract verify.demo.evidence_completeness
 	@echo "[OK] verify.product.evidence_system.v1 done"
 
+.PHONY: verify.evidence_production_blocking
+verify.evidence_production_blocking: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=blocking bash scripts/verify/evidence_production_runtime_guard.sh
+	@echo "[OK] verify.evidence_production_blocking done"
+
+.PHONY: verify.dashboard_read_model_guard
+verify.dashboard_read_model_guard: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=dashboard bash scripts/verify/evidence_production_runtime_guard.sh
+	@echo "[OK] verify.dashboard_read_model_guard done"
+
+.PHONY: verify.risk_engine_from_evidence
+verify.risk_engine_from_evidence: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=risk bash scripts/verify/evidence_production_runtime_guard.sh
+	@echo "[OK] verify.risk_engine_from_evidence done"
+
+.PHONY: verify.next_action_from_evidence
+verify.next_action_from_evidence: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=action bash scripts/verify/evidence_production_runtime_guard.sh
+	@echo "[OK] verify.next_action_from_evidence done"
+
+.PHONY: verify.evidence_immutability
+verify.evidence_immutability: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=immutability bash scripts/verify/evidence_production_runtime_guard.sh
+	@echo "[OK] verify.evidence_immutability done"
+
+.PHONY: verify.product.evidence_production.v1
+verify.product.evidence_production.v1: guard.prod.forbid verify.evidence_production_blocking verify.dashboard_read_model_guard verify.risk_engine_from_evidence verify.next_action_from_evidence verify.evidence_immutability
+	@echo "[OK] verify.product.evidence_production.v1 done"
+
+.PHONY: verify.account_move_evidence_guard
+verify.account_move_evidence_guard: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/account_move_evidence_guard.sh
+	@echo "[OK] verify.account_move_evidence_guard done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 

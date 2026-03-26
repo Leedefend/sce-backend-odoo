@@ -22,13 +22,12 @@ class ProjectMetricsBuilder(BaseProjectBlockBuilder):
 
         task_domain = self._project_domain("project.task", project)
         contract_domain = self._project_domain("construction.contract", project)
-        cost_domain = self._project_domain("project.cost.ledger", project)
-        payment_domain = self._project_domain("payment.request", project)
+        evidence_summary = self._evidence_summary(project)
 
         task_total = self._safe_count("project.task", task_domain)
         contract_total = self._safe_count("construction.contract", contract_domain)
-        cost_rows = self._safe_count("project.cost.ledger", cost_domain)
-        payment_total = self._safe_count("payment.request", payment_domain)
+        cost_rows = int(evidence_summary.get("cost_count") or 0)
+        payment_total = int(evidence_summary.get("payment_count") or 0)
 
         contract_amount_total = self._safe_read_group_sum_any("construction.contract", contract_domain, ["amount_total", "amount"])
         reported_output = 0.0
@@ -37,9 +36,7 @@ class ProjectMetricsBuilder(BaseProjectBlockBuilder):
                 reported_output = float(getattr(project, field_name, 0.0) or 0.0)
                 if reported_output:
                     break
-        cost_spent = float(getattr(project, "cost_actual", 0.0) or 0.0)
-        if not cost_spent:
-            cost_spent = self._safe_read_group_sum_any("project.cost.ledger", cost_domain, ["amount", "actual_amount"])
+        cost_spent = float(evidence_summary.get("cost_total") or 0.0)
         progress_rate = float(getattr(project, "actual_percent", 0.0) or 0.0)
         if not progress_rate:
             progress_rate = float(getattr(project, "progress_rate_latest", 0.0) or 0.0)
@@ -54,11 +51,7 @@ class ProjectMetricsBuilder(BaseProjectBlockBuilder):
         contract_execution_rate = self._safe_rate(contract_executed_amount, contract_amount_total)
         if not progress_rate and contract_execution_rate:
             progress_rate = contract_execution_rate
-        received_amount = self._safe_read_group_sum_any(
-            "payment.request",
-            payment_domain + [("type", "=", "receive"), ("state", "in", ["done", "approved", "approve"])],
-            ["amount"],
-        )
+        received_amount = float(evidence_summary.get("receive_done_total") or 0.0)
         revenue_target = float(getattr(project, "budget_active_revenue_target", 0.0) or 0.0)
         base_amount = contract_amount_total or revenue_target
         progress_output = (base_amount * progress_rate / 100.0) if (base_amount and progress_rate) else 0.0
@@ -80,7 +73,7 @@ class ProjectMetricsBuilder(BaseProjectBlockBuilder):
                 {"key": "task_total", "label": "任务总数", "value": task_total, "unit": "项"},
                 {"key": "contract_total", "label": "合同数", "value": contract_total, "unit": "份"},
                 {"key": "cost_rows", "label": "成本台账", "value": cost_rows, "unit": "行"},
-                {"key": "payment_total", "label": "资金申请", "value": payment_total, "unit": "笔"},
+                {"key": "payment_total", "label": "资金证据", "value": payment_total, "unit": "笔"},
             ],
             "kpi": {
                 "contract_amount": contract_amount_total,
