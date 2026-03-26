@@ -9,6 +9,45 @@
   <section v-else-if="showMinimumWorkspaceFallback" class="minimum-workspace-fallback">
     <h2>{{ pageText('minimum_workspace_title', '工作区已就绪') }}</h2>
     <p>{{ pageText('minimum_workspace_hint', '当前环境未返回完整首页契约，已切换到最小可用视图。') }}</p>
+    <section v-if="showEnterpriseEnablementCard" class="enterprise-enablement-card">
+      <header class="enterprise-enablement-header">
+        <div>
+          <p class="enterprise-enablement-eyebrow">企业启用</p>
+          <h3>先建立公司，再建立组织架构</h3>
+          <p class="enterprise-enablement-lead">
+            当前 Sprint 0 已接入企业启用主路径。先完成公司信息，再继续进入组织架构。
+          </p>
+        </div>
+        <button
+          v-if="enterprisePrimaryAction"
+          class="enterprise-enablement-primary"
+          @click="openEnterpriseEnablementTarget(enterprisePrimaryAction)"
+        >
+          进入公司管理
+        </button>
+      </header>
+      <div class="enterprise-enablement-steps">
+        <article
+          v-for="step in enterpriseEnablementSteps"
+          :key="`enterprise-fallback-step-${step.key}`"
+          class="enterprise-step"
+          :class="`status-${step.status || 'pending'}`"
+        >
+          <div class="enterprise-step-head">
+            <strong>{{ step.label }}</strong>
+            <span>{{ enterpriseStepStatusLabel(step.status) }}</span>
+          </div>
+          <p class="enterprise-step-hint">{{ step.next_hint }}</p>
+          <button
+            class="enterprise-step-action"
+            :disabled="!step.target || !step.target.action_id"
+            @click="openEnterpriseEnablementTarget(step.target)"
+          >
+            打开{{ step.label }}
+          </button>
+        </article>
+      </div>
+    </section>
     <div class="minimum-workspace-actions">
       <button class="primary" @click="openRoleLanding">{{ pageText('minimum_workspace_open_landing', '进入默认场景') }}</button>
       <button class="ghost" @click="goToMyWork">{{ pageText('minimum_workspace_open_my_work', '进入我的工作') }}</button>
@@ -70,6 +109,46 @@
       <p class="contract-missing-title">契约缺口提示</p>
       <p class="contract-missing-summary">{{ homeStrictContractMissingSummary }}</p>
       <p v-if="homeStrictContractDefaultsSummary" class="contract-missing-defaults">{{ homeStrictContractDefaultsSummary }}</p>
+    </section>
+
+    <section v-if="showEnterpriseEnablementCard" class="enterprise-enablement-card">
+      <header class="enterprise-enablement-header">
+        <div>
+          <p class="enterprise-enablement-eyebrow">企业启用</p>
+          <h3>先建立公司，再建立组织架构</h3>
+          <p class="enterprise-enablement-lead">
+            当前 Sprint 0 已接入企业启用主路径。先完成公司信息，再继续进入组织架构。
+          </p>
+        </div>
+        <button
+          v-if="enterprisePrimaryAction"
+          class="enterprise-enablement-primary"
+          @click="openEnterpriseEnablementTarget(enterprisePrimaryAction)"
+        >
+          进入公司管理
+        </button>
+      </header>
+      <div class="enterprise-enablement-steps">
+        <article
+          v-for="step in enterpriseEnablementSteps"
+          :key="`enterprise-step-${step.key}`"
+          class="enterprise-step"
+          :class="`status-${step.status || 'pending'}`"
+        >
+          <div class="enterprise-step-head">
+            <strong>{{ step.label }}</strong>
+            <span>{{ enterpriseStepStatusLabel(step.status) }}</span>
+          </div>
+          <p class="enterprise-step-hint">{{ step.next_hint }}</p>
+          <button
+            class="enterprise-step-action"
+            :disabled="!step.target || !step.target.action_id"
+            @click="openEnterpriseEnablementTarget(step.target)"
+          >
+            打开{{ step.label }}
+          </button>
+        </article>
+      </div>
     </section>
 
     <section class="focus-layout">
@@ -565,6 +644,12 @@ const heroQuickActions = computed(() => {
   }
   return fallback;
 });
+const enterpriseEnablement = computed(() => session.enterpriseEnablement);
+const enterpriseEnablementSteps = computed(() => enterpriseEnablement.value?.steps || []);
+const enterprisePrimaryAction = computed(() => enterpriseEnablement.value?.primary_action || enterpriseEnablementSteps.value[0]?.target || null);
+const showEnterpriseEnablementCard = computed(() => {
+  return isAdmin.value && enterpriseEnablementSteps.value.length > 0;
+});
 const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
 const capabilityGroups = computed(() => session.capabilityGroups);
@@ -655,6 +740,7 @@ const homeOrchestrationContract = computed<PageOrchestrationContract>(() => {
   return workspacePageOrchestrationV1.value as PageOrchestrationContract;
 });
 const useUnifiedHomeRenderer = computed(() => {
+  if (showEnterpriseEnablementCard.value) return false;
   if (asText(route.query.legacy_home) === '1') return false;
   const contract = homeOrchestrationContract.value || {};
   const zones = Array.isArray(contract.zones) ? contract.zones : [];
@@ -1812,6 +1898,32 @@ function goToMyWork() {
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
+function enterpriseStepStatusLabel(status: string) {
+  if (status === 'active') return '当前步骤';
+  if (status === 'done' || status === 'completed') return '已完成';
+  return '下一步';
+}
+
+function openEnterpriseEnablementTarget(target: { action_id?: number; menu_id?: number; route?: string } | null | undefined) {
+  if (!target) return;
+  const actionId = Number(target.action_id || 0);
+  const menuId = Number(target.menu_id || 0);
+  const routePath = asText(target.route);
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'enterprise_enablement',
+    from: 'workspace.home',
+    action_id: actionId || undefined,
+    menu_id: menuId || undefined,
+  }).catch(() => {});
+  if (routePath && actionId > 0) {
+    router.push({ path: routePath, query: { ...workspaceContextQuery.value, menu_id: menuId || undefined } }).catch(() => {});
+    return;
+  }
+  if (actionId > 0) {
+    router.push({ path: `/a/${actionId}`, query: { ...workspaceContextQuery.value, menu_id: menuId || undefined } }).catch(() => {});
+  }
+}
+
 async function executeHeroAction(actionKey: string) {
   void trackUsageEvent('workspace.nav_click', {
     target: actionKey,
@@ -1999,11 +2111,12 @@ function resolveEnterErrorHint(code: string) {
 onMounted(() => {
   void redirectToPrimaryEntryFromHome().catch(() => {});
   const workspaceHomeRef = session.workspaceHomeRef;
+  const workspaceHomeSceneKey = String(workspaceHomeRef?.scene_key || '').trim();
   const shouldLoadWorkspaceHome = Boolean(
     workspaceHomeRef
     && workspaceHomeRef.loaded === false
     && String(workspaceHomeRef.intent || '').trim() === 'ui.contract'
-    && String(workspaceHomeRef.scene_key || '').trim() === 'portal.dashboard',
+    && ['portal.dashboard', 'workspace.home'].includes(workspaceHomeSceneKey),
   );
   if (shouldLoadWorkspaceHome) {
     void session.loadWorkspaceHomeOnDemand().catch(() => {});
@@ -2319,6 +2432,116 @@ function highlightParts(raw: string) {
   font-size: 12px;
 }
 
+.enterprise-enablement-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid #d6d3d1;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fffaf0 0%, #f5efe6 100%);
+  box-shadow: 0 12px 30px rgba(120, 113, 108, 0.12);
+}
+
+.enterprise-enablement-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.enterprise-enablement-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #92400e;
+}
+
+.enterprise-enablement-header h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #292524;
+}
+
+.enterprise-enablement-lead {
+  margin: 8px 0 0;
+  color: #57534e;
+}
+
+.enterprise-enablement-primary,
+.enterprise-step-action {
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.enterprise-enablement-primary {
+  padding: 12px 18px;
+  background: #1c1917;
+  color: #fafaf9;
+  box-shadow: 0 8px 18px rgba(28, 25, 23, 0.18);
+}
+
+.enterprise-enablement-primary:hover,
+.enterprise-step-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.enterprise-enablement-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.enterprise-step {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e7e5e4;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.enterprise-step.status-active {
+  border-color: #f59e0b;
+  background: rgba(255, 251, 235, 0.95);
+}
+
+.enterprise-step-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.enterprise-step-head strong {
+  color: #1c1917;
+}
+
+.enterprise-step-head span {
+  font-size: 12px;
+  color: #a16207;
+}
+
+.enterprise-step-hint {
+  margin: 0;
+  color: #57534e;
+  min-height: 40px;
+}
+
+.enterprise-step-action {
+  justify-self: start;
+  padding: 10px 14px;
+  background: #f5f5f4;
+  color: #1c1917;
+}
+
+.enterprise-step-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .hero-main {
   display: grid;
   gap: 4px;
@@ -2467,6 +2690,9 @@ function highlightParts(raw: string) {
 @media (max-width: 1120px) {
   .focus-layout {
     grid-template-columns: 1fr;
+  }
+  .enterprise-enablement-header {
+    flex-direction: column;
   }
   .hero-info-row {
     align-items: flex-start;

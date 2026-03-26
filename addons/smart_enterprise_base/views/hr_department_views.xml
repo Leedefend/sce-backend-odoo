@@ -1,0 +1,55 @@
+<odoo>
+    <record id="view_department_tree_enterprise_base" model="ir.ui.view">
+        <field name="name">hr.department.tree.enterprise.base</field>
+        <field name="model">hr.department</field>
+        <field name="arch" type="xml">
+            <tree default_order="company_id, parent_id, name">
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="sc_manager_user_id"/>
+                <field name="company_id"/>
+                <field name="sc_is_active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_department_form_enterprise_base" model="ir.ui.view">
+        <field name="name">hr.department.form.enterprise.base</field>
+        <field name="model">hr.department</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        所有部门都必须归属到公司。创建一级部门后，可继续在当前页面补齐下级部门。
+                    </div>
+                    <group>
+                        <field name="name"/>
+                        <field name="parent_id"/>
+                        <field name="sc_manager_user_id"/>
+                        <field name="company_id"/>
+                        <field name="sc_is_active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_department_search_enterprise_base" model="ir.ui.view">
+        <field name="name">hr.department.search.enterprise.base</field>
+        <field name="model">hr.department</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="parent_id"/>
+                <field name="sc_manager_user_id"/>
+                <filter name="sc_department_active_true" string="启用中" domain="[('sc_is_active', '=', True)]"/>
+                <filter name="sc_department_active_false" string="已停用" domain="[('sc_is_active', '=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_by_company_id" string="公司" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_by_parent_id" string="上级部门" context="{'group_by': 'parent_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

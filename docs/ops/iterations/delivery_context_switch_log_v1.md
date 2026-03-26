@@ -16,6 +16,51 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-26T12:20:00Z
+- blocker_key: `frontend_takeover_scope_freeze_v1`
+- layer_target: `Product Governance / Frontend Routing Governance / Documentation`
+- module: `docs/product + docs/ops/assessment + docs/ops/iterations`
+- reason: `将“高频标准页前端承接，低频复杂页原生兜底”正式冻结为当前产品交付阶段唯一策略，防止继续以“全量替代原生”作为产品化前提而拖慢交付`
+- completed_step: `已新增前端承接范围清单 v1，冻结白名单、黑名单、模块落位、统一 open_native 降级规则，并同步到启用主路径总纲和冲刺计划`
+- active_commit: `8a76679`
+- next_step: `Start the next product interaction batch only after classifying target pages as frontend-takeover, native-retained, or conditional-takeover under the frozen scope`
+
+### 2026-03-26T11:05:00Z
+- blocker_key: `sprint0_frontend_user_acceptance_closure_v1`
+- layer_target: `Contract Layer / Entry Layer / Interaction Layer / Verify Layer`
+- module: `smart_enterprise_base + smart_construction_demo + frontend/apps/web + scripts/verify + Makefile`
+- reason: `把 Sprint 0 从“后台可用”推进到“前端主路径可见”，固定系统管理员验收账号、首页企业启用卡片和浏览器级 smoke，满足双验收中的用户验收`
+- completed_step: `Home 页已消费 enterprise_enablement.mainline，并新增专用前端 smoke；Sprint 0 用户验收账号固定为 admin/admin；verify.product.enablement.sprint0 已升级为后台 guard + 前端浏览器 smoke 的组合门禁`
+- active_commit: `8a76679`
+- next_step: `Run module upgrades and the upgraded Sprint 0 gate, then decide whether Sprint 0 can be considered fully complete and ready to commit`
+
+### 2026-03-26T10:20:00Z
+- blocker_key: `sprint0_enterprise_base_execution_v1`
+- layer_target: `Fact Layer / Entry Layer / Interaction Layer / Verify Layer`
+- module: `addons/smart_enterprise_base + smart_construction_core dependency edge + scripts/verify + docs`
+- reason: `在纠正行业模块越界后，将 Sprint 0 的公司/组织启用闭环正式迁移到基础模块，并验证用户可见入口、下一步动作、错误提示与契约输出都成立`
+- completed_step: `已新增 smart_enterprise_base；公司/组织入口改挂企业基础菜单；smart_construction_core 改为依赖消费；Sprint 0 guard 通过；smart_enterprise_base 后端测试 3 条通过`
+- active_commit: `8a76679`
+- next_step: `Review the Sprint 0 base-module batch, then decide whether to commit it or continue closing remaining UX surface details before commit`
+
+### 2026-03-26T10:20:00Z
+- blocker_key: `sprint0_module_boundary_correction_v1`
+- layer_target: `Product Governance / Module Boundary Governance / Documentation`
+- module: `docs/product + docs/ops/assessment + docs/ops/iterations`
+- reason: `纠正 Sprint 0 的模块归属错误，明确公司/组织/用户/角色不应继续放在施工行业模块实现，避免行业域反向拥有企业主数据真源`
+- completed_step: `已冻结新的边界规则，确认 smart_construction_core 中未提交的公司/组织实现只能视为无效 WIP；已落 Sprint 0 模块边界重排方案，指定后续应改由基础模块承载`
+- active_commit: `8a76679`
+- next_step: `Do not continue Sprint 0 implementation in smart_construction_core; first create the correct base-module execution plan and then migrate the implementation carrier`
+
+### 2026-03-26T10:00:00Z
+- blocker_key: `construction_system_enablement_user_visible_sprint_rule_v1`
+- layer_target: `Product Governance / Sprint Execution Governance / Documentation`
+- module: `docs/product + docs/ops/assessment + docs/ops/iterations`
+- reason: `冻结新的冲刺执行口径，禁止后续迭代再以“只完成事实层/模型层/guard层”作为收口标准，强制每轮必须形成用户可见、可操作、可验证的全链路闭环`
+- completed_step: `已把执行总则升级为 user-visible end-to-end slice，明确五层闭环、双验收、开工前四问，以及“没有用户可见入口不开工、没有用户操作回路不收口”的硬规则`
+- active_commit: `8a76679`
+- next_step: `Execute Sprint 0 and future batches only under the new user-visible full-chain rule, with every low-level task bound to a concrete user action`
+
 ### 2026-03-26T03:45:00Z
 - blocker_key: `business_fact_consistency_audit_v1`
 - layer_target: `Domain Layer / Demo Seed Layer / Verify Layer`
@@ -1571,3 +1616,23 @@ Each entry must include:
 - reason: `在 cockpit main entry、decision flow 和 project switcher 已成立的前提下，把 showroom demo 项目收口为 3 个官方闭环样板，避免驾驶舱继续被 SCENE-CONTRACT 等运行时噪声项目主导`
 - completed_step: `已锁定执行中/付款中/结算完成三类官方样板；cockpit round2 seed 改为按 profile 补齐/清理成本与付款事实；project entry context 开始优先 sc_demo_showcase_ready 样板；新增 verify.demo.business_closure.v1`
 - next_step: `复核驾驶舱运行态是否已优先展示官方样板，并根据手验结果决定是否继续收口样板口径或直接分类提交`
+
+## 2026-03-26T09:20:00Z Construction System Enablement Mainline v1
+
+- branch: `codex/next-round`
+- head: `8a76679`
+- layer_target: `Docs / Product Governance Layer`
+- module: `docs/product/construction_system_enablement_mainline_v1.md + docs/ops/assessment/construction_system_enablement_sprint_plan_v1_2026-03-26.md`
+- reason: `在 evidence 生产、消费和异常处置闭环已成立的前提下，把后续迭代目标从“经营能力补强”校准为“系统可启用、项目可运行”的主路径，并按 Sprint 0-4 固化审核后再执行的冲刺计划`
+- completed_step: `已落库启用主路径总纲；已按公司/组织/角色/用户/项目/任务顺序固化 Sprint 0-4 计划；已明确本轮仅做计划输出、不进入实现`
+- next_step: `等待 Owner 审核 Sprint 0-4 计划；确认后仅从 Sprint 0 开始执行`
+
+## 2026-03-26T11:45:00Z Sprint 0 Home Route Unification v1
+
+- branch: `codex/next-round`
+- head: `8a76679`
+- layer_target: `Frontend Layer / Product Entry Layer / Verify Layer`
+- module: `frontend/apps/web/src/stores/session.ts + frontend/apps/web/src/views/HomeView.vue + scripts/verify/enterprise_enablement_frontend_smoke.mjs`
+- reason: `Sprint 0 在 prod-sim 自定义前端验收时暴露出首页主路径存在 / 与 portal.dashboard/workspace.home 的循环导航语义，且统一首页渲染会遮挡企业启用入口，需要先统一首页语义并把企业启用入口提升为管理员首页第一入口`
+- completed_step: `已将 portal.dashboard/workspace.home 归一为 /；已让 enterprise enablement 在管理员首页优先于 unified home renderer 展示；frontend smoke 改为按解析出的主动作目标继续进入公司入口；verify.product.enablement.sprint0 已重新通过`
+- next_step: `在首页主路径稳定后，进入 Sprint 1 用户+角色冲刺拆解，并先写清管理员的新用户创建与登录后的用户可见链路`

@@ -16,6 +16,7 @@
         'product',
         'web',
         'smart_core',
+        'smart_enterprise_base',
         'base_tier_validation',
         'base_tier_validation_server_action',
     ],
@@ -27,6 +28,7 @@
         'data/project_stage_requirement_items.xml',
         'data/cron_signup_throttle_gc.xml',
         'data/sc_extension_params.xml',
+        'data/sc_extension_runtime_sync.xml',
         'data/sc_subscription_default.xml',
         'data/sc_capability_group_seed.xml',
 

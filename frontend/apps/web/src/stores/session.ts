@@ -68,6 +68,34 @@ export interface ProductFacts {
   } | null;
 }
 
+export interface EnterpriseEnablementStepTarget {
+  action_id: number;
+  menu_id: number;
+  action_xmlid: string;
+  menu_xmlid: string;
+  route: string;
+}
+
+export interface EnterpriseEnablementStep {
+  key: string;
+  label: string;
+  status: string;
+  entry_xmlid: string;
+  action_xmlid: string;
+  next_hint: string;
+  target: EnterpriseEnablementStepTarget | null;
+}
+
+export interface EnterpriseEnablementFacts {
+  version: string;
+  phase: string;
+  theme: string;
+  entry_root_xmlid: string;
+  current_company_id: number;
+  primary_action: EnterpriseEnablementStepTarget | null;
+  steps: EnterpriseEnablementStep[];
+}
+
 export interface WorkspaceHomeContract {
   schema_version?: string;
   semantic_protocol?: {
@@ -223,6 +251,7 @@ export interface SessionState {
   sceneActionHints: Record<string, SceneActionHint>;
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
+  enterpriseEnablement: EnterpriseEnablementFacts | null;
   workspaceHome: WorkspaceHomeContract | null;
   workspaceHomeRef: {
     intent?: string;
@@ -270,6 +299,18 @@ function resolveUserCompanyId(user: unknown): number | null {
   return null;
 }
 
+function normalizeEnterpriseEnablementTarget(raw: unknown): EnterpriseEnablementStepTarget | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const row = raw as Record<string, unknown>;
+  return {
+    action_id: Number(row.action_id || 0),
+    menu_id: Number(row.menu_id || 0),
+    action_xmlid: String(row.action_xmlid || ''),
+    menu_xmlid: String(row.menu_xmlid || ''),
+    route: String(row.route || ''),
+  };
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -294,6 +335,7 @@ export const useSessionStore = defineStore('session', {
       license: null,
       bundle: null,
     },
+    enterpriseEnablement: null,
     workspaceHome: null,
     workspaceHomeRef: null,
     pageContracts: {},
@@ -310,8 +352,8 @@ export const useSessionStore = defineStore('session', {
     initTraceId: null,
     initMeta: null,
     defaultRoute: null,
-    bootstrapNextIntent: 'system.init',
-    activeProjectContext: null,
+  bootstrapNextIntent: 'system.init',
+  activeProjectContext: null,
   }),
   actions: {
     setToken(token: string) {
@@ -343,6 +385,7 @@ export const useSessionStore = defineStore('session', {
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
+          this.enterpriseEnablement = parsed.enterpriseEnablement ?? null;
           this.workspaceHome = parsed.workspaceHome ?? null;
           this.workspaceHomeRef = parsed.workspaceHomeRef ?? null;
           this.pageContracts = parsed.pageContracts ?? {};
@@ -398,6 +441,7 @@ export const useSessionStore = defineStore('session', {
       this.sceneActionHints = {};
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
+      this.enterpriseEnablement = null;
       this.workspaceHome = null;
       this.workspaceHomeRef = null;
       this.pageContracts = {};
@@ -469,6 +513,7 @@ export const useSessionStore = defineStore('session', {
         sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
+        enterpriseEnablement: this.enterpriseEnablement,
         workspaceHome: this.workspaceHome,
         workspaceHomeRef: this.workspaceHomeRef,
         pageContracts: this.pageContracts,
@@ -532,6 +577,7 @@ export const useSessionStore = defineStore('session', {
       this.sceneActionHints = {};
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
+      this.enterpriseEnablement = null;
       this.workspaceHome = null;
       this.workspaceHomeRef = null;
       this.sceneReadyContractV1 = null;
@@ -810,6 +856,38 @@ export const useSessionStore = defineStore('session', {
             }
           : null,
       };
+      const enterpriseEnablementRaw = (extFacts.enterprise_enablement && typeof extFacts.enterprise_enablement === 'object')
+        ? (extFacts.enterprise_enablement as Record<string, unknown>)
+        : {};
+      const enterpriseMainlineRaw = (enterpriseEnablementRaw.mainline && typeof enterpriseEnablementRaw.mainline === 'object')
+        ? (enterpriseEnablementRaw.mainline as Record<string, unknown>)
+        : {};
+      this.enterpriseEnablement = Object.keys(enterpriseMainlineRaw).length
+        ? {
+            version: String(enterpriseMainlineRaw.version || ''),
+            phase: String(enterpriseMainlineRaw.phase || ''),
+            theme: String(enterpriseMainlineRaw.theme || ''),
+            entry_root_xmlid: String(enterpriseMainlineRaw.entry_root_xmlid || ''),
+            current_company_id: Number(enterpriseMainlineRaw.current_company_id || 0),
+            primary_action: normalizeEnterpriseEnablementTarget(enterpriseMainlineRaw.primary_action),
+            steps: Array.isArray(enterpriseMainlineRaw.steps)
+              ? enterpriseMainlineRaw.steps
+                .map((item) => {
+                  const row = (item && typeof item === 'object') ? (item as Record<string, unknown>) : {};
+                  return {
+                    key: String(row.key || ''),
+                    label: String(row.label || row.key || ''),
+                    status: String(row.status || ''),
+                    entry_xmlid: String(row.entry_xmlid || ''),
+                    action_xmlid: String(row.action_xmlid || ''),
+                    next_hint: String(row.next_hint || ''),
+                    target: normalizeEnterpriseEnablementTarget(row.target),
+                  };
+                })
+                .filter((item) => item.key.length > 0)
+              : [],
+          }
+        : null;
       this.workspaceHome = ((result as AppInitResponse & { workspace_home?: WorkspaceHomeContract }).workspace_home ?? null);
       const initMeta = (result as AppInitResponse).init_meta ?? {};
       const preloadHint = (initMeta.workspace_home_preload_hint && typeof initMeta.workspace_home_preload_hint === 'object')
@@ -1031,30 +1109,51 @@ export const useSessionStore = defineStore('session', {
           });
         }
         const normalized = normalizeLegacyWorkbenchPath(defaultRoutePath);
+        if (isUnifiedHomePath(normalized)) return '/';
         if (normalized) return normalized;
       }
       if (defaultRouteSceneKey) {
+        if (isUnifiedHomeSceneKey(defaultRouteSceneKey)) {
+          return '/';
+        }
         const scene = getSceneByKey(defaultRouteSceneKey);
         const rawPath = String(scene?.target?.route || scene?.route || `/s/${defaultRouteSceneKey}`).trim();
         const normalized = normalizeLegacyWorkbenchPath(rawPath);
+        if (isUnifiedHomePath(normalized)) return '/';
         if (normalized) return normalized;
         return `/s/${defaultRouteSceneKey}`;
       }
       const candidate = String(this.roleSurface?.landing_path || '').trim();
       if (candidate.startsWith('/')) {
         const normalized = normalizeLegacyWorkbenchPath(candidate);
+        if (isUnifiedHomePath(normalized)) return '/';
         return normalized || fallback;
       }
       const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
       if (sceneKey) {
+        if (isUnifiedHomeSceneKey(sceneKey)) {
+          return '/';
+        }
         const scene = getSceneByKey(sceneKey);
         const rawPath = String(scene?.target?.route || scene?.route || `/s/${sceneKey}`).trim();
-        return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
+        const normalized = normalizeLegacyWorkbenchPath(rawPath);
+        if (isUnifiedHomePath(normalized)) return '/';
+        return normalized || `/s/${sceneKey}`;
       }
       return fallback;
     },
   },
 });
+
+function isUnifiedHomeSceneKey(sceneKey: string): boolean {
+  const normalized = String(sceneKey || '').trim().toLowerCase();
+  return normalized === 'workspace.home' || normalized === 'portal.dashboard';
+}
+
+function isUnifiedHomePath(path: string): boolean {
+  const normalized = String(path || '').trim().toLowerCase();
+  return normalized === '/' || normalized === '/s/workspace.home' || normalized === '/s/portal.dashboard';
+}
 
 function addKeys(node: NavNode, index = 0): NavNode {
   const key = (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id || index}`;

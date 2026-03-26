@@ -1425,6 +1425,12 @@ verify.evidence_exception_lifecycle: guard.prod.forbid check-compose-project che
 	@CHECK_MODE=lifecycle bash scripts/verify/evidence_exception_runtime_guard.sh
 	@echo "[OK] verify.evidence_exception_lifecycle done"
 
+.PHONY: verify.product.enablement.sprint0
+verify.product.enablement.sprint0: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/company_department_guard.sh
+	@DB_NAME=$(or $(DB_NAME),sc_demo) E2E_LOGIN=$(or $(E2E_LOGIN),admin) E2E_PASSWORD=$(or $(E2E_PASSWORD),admin) node scripts/verify/enterprise_enablement_frontend_smoke.mjs
+	@echo "[OK] verify.product.enablement.sprint0 done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 

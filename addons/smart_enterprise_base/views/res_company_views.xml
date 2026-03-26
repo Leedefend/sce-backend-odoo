@@ -1,0 +1,60 @@
+<odoo>
+    <record id="view_company_form_enterprise_base" model="ir.ui.view">
+        <field name="name">res.company.form.enterprise.base</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <div class="alert alert-info" role="alert">
+                    先完成公司信息保存，再点击“组织架构”进入下一步。
+                </div>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button type="object"
+                        name="action_open_enterprise_departments"
+                        class="oe_stat_button"
+                        icon="fa-sitemap"
+                        string="组织架构">
+                    <field name="sc_department_count" widget="statinfo" string="部门数"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="企业启用信息">
+                    <field name="sc_short_name"/>
+                    <field name="sc_credit_code"/>
+                    <field name="sc_contact_phone"/>
+                    <field name="sc_address"/>
+                    <field name="sc_is_active"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_company_tree_enterprise_base" model="ir.ui.view">
+        <field name="name">res.company.tree.enterprise.base</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="sc_short_name" optional="show"/>
+                <field name="sc_credit_code" optional="show"/>
+                <field name="sc_contact_phone" optional="show"/>
+                <field name="sc_is_active" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_company_search_enterprise_base" model="ir.ui.view">
+        <field name="name">res.company.search.enterprise.base</field>
+        <field name="model">res.company</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="sc_short_name"/>
+                <field name="sc_credit_code"/>
+                <filter name="sc_company_active_true" string="启用中" domain="[('sc_is_active', '=', True)]"/>
+                <filter name="sc_company_active_false" string="已停用" domain="[('sc_is_active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+</odoo>
