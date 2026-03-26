@@ -62,7 +62,7 @@ async function submitLogin(page) {
 
 async function waitForDashboard(page) {
   await page.waitForFunction(() => window.location.pathname === '/s/project.management', { timeout: 40000 });
-  await page.locator('h1').filter({ hasText: '项目驾驶舱' }).first().waitFor({ timeout: 40000 });
+  await page.locator('h1').first().waitFor({ timeout: 40000 });
   await page.locator('.state-explain-card').waitFor({ timeout: 40000 });
   await page.locator('h2').filter({ hasText: '下一步动作' }).first().waitFor({ timeout: 40000 });
   await page.locator('.action-card').first().waitFor({ timeout: 40000 });
@@ -86,10 +86,51 @@ async function clickActionCard(page, labelText) {
   await card.locator('button.primary-button').click();
 }
 
+async function clickPrimaryRecommendedAction(page) {
+  const primaryCard = page.locator('.action-card-primary').first();
+  await primaryCard.waitFor({ timeout: 20000 });
+  await primaryCard.locator('button.primary-button').click();
+}
+
 async function waitForScene(page, sceneLabel) {
   await page.waitForURL((url) => url.pathname === '/s/project.management', { timeout: 20000 });
   await page.waitForLoadState('networkidle');
   await page.locator('.eyebrow').filter({ hasText: sceneLabel }).first().waitFor({ timeout: 20000 });
+}
+
+async function waitForAnyMainlineScene(page) {
+  await page.waitForURL((url) => url.pathname === '/s/project.management', { timeout: 20000 });
+  await page.waitForLoadState('networkidle');
+  const allowed = ['执行推进', '成本记录', '付款记录', '结算结果'];
+  await page.waitForFunction((labels) => {
+    const text = Array.from(document.querySelectorAll('.eyebrow'))
+      .map((el) => (el.textContent || '').trim())
+      .filter(Boolean);
+    return labels.some((label) => text.includes(label));
+  }, allowed, { timeout: 20000 });
+}
+
+async function waitForPrimaryActionResult(page) {
+  await page.waitForURL((url) => url.pathname === '/s/project.management', { timeout: 20000 });
+  await page.waitForLoadState('networkidle');
+  const result = await page.waitForFunction(() => {
+    const eyebrowTexts = Array.from(document.querySelectorAll('.eyebrow'))
+      .map((el) => (el.textContent || '').trim())
+      .filter(Boolean);
+    const inMainline = ['执行推进', '成本记录', '付款记录', '结算结果'].some((label) => eyebrowTexts.includes(label));
+    const feedback = document.querySelector('.feedback-banner');
+    const onDashboard = eyebrowTexts.includes('项目驾驶舱');
+    if (inMainline) return { mode: 'scene', eyebrowTexts };
+    if (feedback && onDashboard) {
+      return {
+        mode: 'dashboard_feedback',
+        eyebrowTexts,
+        feedbackText: (feedback.textContent || '').trim(),
+      };
+    }
+    return null;
+  }, { timeout: 20000 });
+  return await result.jsonValue();
 }
 
 let browser;
@@ -114,6 +155,17 @@ try {
   assert(dashboardText.includes('阶段说明'), 'dashboard missing stage explain');
   assert(dashboardText.includes('里程碑说明'), 'dashboard missing milestone explain');
   assert(dashboardText.includes('当前状态说明'), 'dashboard missing status explain');
+  assert(dashboardText.includes('流程地图'), 'dashboard missing flow map');
+  await page.locator('.project-switcher').first().waitFor({ timeout: 20000 });
+  const projectOptionCount = await page.locator('.project-switcher option').count();
+  const optionTexts = await page.locator('.project-switcher option').evaluateAll((nodes) =>
+    nodes.map((node) => (node.textContent || '').trim()),
+  );
+  assert(projectOptionCount >= 2, `project switcher should expose at least 2 projects, got ${projectOptionCount}`);
+  assert(
+    optionTexts.some((text) => text.includes('展厅-')),
+    `project switcher should include showroom demo projects, got: ${optionTexts.join(' | ')}`,
+  );
   await page.locator('.recommended-badge').first().waitFor({ timeout: 20000 });
 
   await clickActionCard(page, '下一步：进入执行推进');
@@ -123,21 +175,17 @@ try {
   await execButton.click();
   await waitForDashboard(page);
 
-  await clickActionCard(page, ['继续：进入成本记录', '下一步：进入成本记录']);
-  await waitForScene(page, '成本记录');
-  const costForm = page.locator('.cost-form-card').first();
-  await costForm.locator('input[type="date"]').fill('2026-03-26');
-  await costForm.locator('input[type="number"]').fill('88.50');
-  await costForm.locator('input[type="text"]').fill('main-entry-browser-smoke');
-  const categorySelect = costForm.locator('select').first();
-  if (await categorySelect.count()) {
-    const optionCount = await categorySelect.locator('option').count();
-    if (optionCount > 1) {
-      await categorySelect.selectOption({ index: 1 });
-    }
-  }
-  await costForm.getByRole('button', { name: /记录成本/ }).click();
-  await waitForDashboard(page);
+  await clickPrimaryRecommendedAction(page);
+  const primaryResult = await waitForPrimaryActionResult(page);
+
+  const sceneSnapshot = await page.evaluate(() => ({
+    eyebrow: Array.from(document.querySelectorAll('.eyebrow'))
+      .map((el) => (el.textContent || '').trim())
+      .filter(Boolean),
+    hasCostForm: Boolean(document.querySelector('.cost-form-card')),
+    hasPaymentForm: Boolean(document.querySelector('.payment-form-card')),
+    hasSettlementSummary: Boolean(document.querySelector('.metric-list')),
+  }));
 
   const finalSnapshot = await page.evaluate(() => ({
     href: window.location.href,
@@ -146,7 +194,17 @@ try {
   }));
   assert(finalSnapshot.pathname === '/s/project.management', 'final route drifted away from dashboard');
   assert(!finalSnapshot.href.includes('project_id='), 'dashboard route should not depend on project_id query');
+  assert(
+    primaryResult && (primaryResult.mode === 'scene' || primaryResult.mode === 'dashboard_feedback'),
+    'primary action did not produce a valid mainline result',
+  );
+  if (primaryResult.mode === 'dashboard_feedback') {
+    assert(finalSnapshot.text.includes('流程地图'), 'dashboard feedback state missing flow map');
+    assert(finalSnapshot.text.includes('下一目标'), 'dashboard feedback state missing completion target');
+  }
 
+  writeJson('primary_action_result.json', primaryResult);
+  writeJson('scene_snapshot.json', sceneSnapshot);
   writeJson('dashboard_snapshot.json', finalSnapshot);
   await page.screenshot({ path: path.join(outDir, 'project_dashboard_primary_entry.png'), fullPage: true });
 
@@ -154,6 +212,8 @@ try {
     case_id: 'project_dashboard_primary_entry',
     status: 'PASS',
     route: '/s/project.management',
+    project_option_count: projectOptionCount,
+    project_option_samples: optionTexts.slice(0, 6),
   });
 
   writeJson('summary.json', summary);

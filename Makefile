@@ -1302,6 +1302,11 @@ verify.product.project_context_chain_guard: guard.prod.forbid check-compose-proj
 verify.product.project_dashboard_non_empty_guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "E2E_BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) python3 /mnt/scripts/verify/product_project_dashboard_non_empty_guard.py"
 
+.PHONY: verify.product.project_dashboard_decision.v1
+verify.product.project_dashboard_decision.v1: guard.prod.forbid
+	@bash scripts/verify/project_dashboard_decision_guard.sh
+	@echo "[OK] verify.product.project_dashboard_decision.v1 done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 

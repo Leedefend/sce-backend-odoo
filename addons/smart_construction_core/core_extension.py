@@ -482,6 +482,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_entry_context_resolve import (
             ProjectEntryContextResolveHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_entry_context_options import (
+            ProjectEntryContextOptionsHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.project_dashboard_block_fetch import (
             ProjectDashboardBlockFetchHandler,
         )
@@ -560,6 +563,7 @@ def smart_core_register(registry):
     registry["project.dashboard.open"] = ProjectDashboardOpenHandler
     registry["project.dashboard.enter"] = ProjectDashboardEnterHandler
     registry["project.entry.context.resolve"] = ProjectEntryContextResolveHandler
+    registry["project.entry.context.options"] = ProjectEntryContextOptionsHandler
     registry["project.dashboard.block.fetch"] = ProjectDashboardBlockFetchHandler
     registry["project.plan_bootstrap.enter"] = ProjectPlanBootstrapEnterHandler
     registry["project.plan_bootstrap.block.fetch"] = ProjectPlanBootstrapBlockFetchHandler

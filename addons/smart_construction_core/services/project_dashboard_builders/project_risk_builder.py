@@ -7,6 +7,9 @@ from .base import BaseProjectBlockBuilder
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
+from odoo.addons.smart_construction_core.services.project_risk_alert_service import (
+    ProjectRiskAlertService,
+)
 
 
 class ProjectRiskBuilder(BaseProjectBlockBuilder):
@@ -23,6 +26,7 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
             return self._envelope(state="empty", visibility=visibility, data={"alerts": [], "quick_actions": []})
 
         alerts = []
+        decision_alert_service = ProjectRiskAlertService(self.env)
         progress_signals = {
             "task_overdue": 0,
             "task_blocked": 0,
@@ -58,6 +62,8 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     "title": "任务延期风险",
                     "value": progress_signals["task_overdue"],
                     "hint": "存在已逾期任务，请优先处理进度偏差。",
+                    "impact": "关键路径推进可能继续滞后，并影响后续成本与付款节奏。",
+                    "recommended_action": "优先进入执行推进，处理延期任务并更新计划状态。",
                     "source": "business",
                     "action_key": "open_task_list",
                 }
@@ -70,6 +76,8 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     "title": "任务阻塞风险",
                     "value": progress_signals["task_blocked"],
                     "hint": "存在阻塞任务，建议立即排除关键路径阻塞点。",
+                    "impact": "执行推进可能停滞，驾驶舱推荐动作会持续受阻。",
+                    "recommended_action": "先排除阻塞任务，再继续成本、付款和结算主线。",
                     "source": "business",
                     "action_key": "open_task_list",
                 }
@@ -82,47 +90,31 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     "title": "里程碑延期风险",
                     "value": progress_signals["milestone_delay"],
                     "hint": "里程碑发生延期，建议复核关键路径并调整资源。",
+                    "impact": "项目收口时间会被推迟，后续经营动作的时间窗被压缩。",
+                    "recommended_action": "优先复核关键路径和里程碑状态，必要时重新安排资源。",
                     "source": "business",
                     "action_key": "open_task_list",
                 }
             )
 
-        cost_count = self._safe_count("account.move", self._project_domain("account.move", project))
-        payment_count = self._safe_count("payment.request", self._project_domain("payment.request", project))
-        if lifecycle_state in {"in_progress", "closing", "warranty", "done"} and cost_count <= 0:
+        decision_alerts = decision_alert_service.build(project)
+        for item in decision_alerts:
+            row = item if isinstance(item, dict) else {}
+            code = str(row.get("code") or "").strip()
+            if code and any(str(existing.get("code") or "").strip() == code for existing in alerts):
+                continue
+            level = str(row.get("level") or "info").strip().lower()
             alerts.append(
                 {
-                    "level": "warning",
-                    "code": "EXECUTION_COST_MISSING",
-                    "title": "执行中缺少成本记录",
+                    "level": "danger" if level == "blocking" else level,
+                    "code": code or "DECISION_ALERT",
+                    "title": str(row.get("title") or row.get("message") or "风险提醒").strip(),
                     "value": 0,
-                    "hint": "项目已进入执行阶段，但尚未形成成本事实，建议优先录入成本。",
-                    "source": "product_connection_layer",
-                    "action_key": "open_cost_tracking",
-                }
-            )
-        if lifecycle_state in {"in_progress", "closing", "warranty", "done"} and payment_count <= 0:
-            alerts.append(
-                {
-                    "level": "warning",
-                    "code": "EXECUTION_PAYMENT_MISSING",
-                    "title": "执行中缺少付款记录",
-                    "value": 0,
-                    "hint": "项目已进入执行阶段，但尚未形成付款记录，建议补齐资金事实。",
-                    "source": "product_connection_layer",
-                    "action_key": "open_payment_tracking",
-                }
-            )
-        if lifecycle_state in {"closing", "warranty", "done"} and (cost_count <= 0 or payment_count <= 0):
-            alerts.append(
-                {
-                    "level": "danger",
-                    "code": "SETTLEMENT_PRECONDITION_BLOCKED",
-                    "title": "结算前置条件不足",
-                    "value": 0,
-                    "hint": "当前成本或付款事实不完整，暂不满足结算收口条件。",
-                    "source": "product_connection_layer",
-                    "action_key": "open_settlement_summary",
+                    "hint": str(row.get("message") or "").strip(),
+                    "impact": str(row.get("impact") or "").strip() or "当前问题会影响主线推进，请优先处理。",
+                    "recommended_action": str(row.get("recommended_action") or "").strip() or "按驾驶舱推荐动作继续推进。",
+                    "source": "decision_layer_v1",
+                    "action_key": str(row.get("action") or "").strip() or "open_risk_list",
                 }
             )
 
@@ -138,13 +130,15 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     {
                         "level": "warning",
                         "code": "ACTIVITY_OVERDUE",
-                        "title": "存在逾期待办",
-                        "value": overdue_count,
-                        "hint": "流程待办已逾期，请尽快闭环。",
-                        "source": "business",
-                        "action_key": "open_task_list",
-                    }
-                )
+                    "title": "存在逾期待办",
+                    "value": overdue_count,
+                    "hint": "流程待办已逾期，请尽快闭环。",
+                    "impact": "流程闭环节奏被拖慢，用户待办与项目事实会继续脱节。",
+                    "recommended_action": "优先处理逾期待办，再返回项目驾驶舱继续主线动作。",
+                    "source": "business",
+                    "action_key": "open_task_list",
+                }
+            )
         if not alerts:
             alerts.append(
                 {
@@ -153,6 +147,8 @@ class ProjectRiskBuilder(BaseProjectBlockBuilder):
                     "title": "暂无高优先级风险提醒",
                     "value": 0,
                     "hint": "当前进度与风险状态稳定。",
+                    "impact": "当前没有阻断主线的显著问题，可以按推荐动作继续推进。",
+                    "recommended_action": "直接按照驾驶舱推荐动作继续推进项目。",
                     "source": "capability_fallback",
                     "action_key": "open_risk_list",
                 }
