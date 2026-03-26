@@ -5,9 +5,73 @@ from odoo import api, fields, models
 
 from .state_guard import raise_guard
 
+_TASK_PROGRESS_EVIDENCE_BACKFILL_KEY = "sc.task_progress_evidence.backfill.v0_1"
+_TASK_PROGRESS_EVIDENCE_BACKFILL_COUNT_KEY = "sc.task_progress_evidence.backfill.v0_1.count"
+
 
 class ProjectTask(models.Model):
     _inherit = "project.task"
+
+    def _register_hook(self):
+        res = super()._register_hook()
+        self._backfill_progress_evidence()
+        return res
+
+    @api.model
+    def _backfill_progress_evidence(self):
+        ICP = self.env["ir.config_parameter"].sudo()
+        if ICP.get_param(_TASK_PROGRESS_EVIDENCE_BACKFILL_KEY) == "1":
+            return
+
+        Task = self.sudo()
+        tasks = Task.search([("project_id", "!=", False)])
+        if not tasks:
+            ICP.set_param(_TASK_PROGRESS_EVIDENCE_BACKFILL_KEY, "1")
+            ICP.set_param(_TASK_PROGRESS_EVIDENCE_BACKFILL_COUNT_KEY, "0")
+            return
+
+        Evidence = self.env["sc.business.evidence"].sudo()
+        evidence_rows = Evidence.search(
+            [
+                ("source_model", "=", "project.task"),
+                ("evidence_type", "=", "progress"),
+                ("source_id", "in", tasks.ids),
+            ]
+        )
+        covered_ids = {int(item.source_id or 0) for item in evidence_rows}
+        missing = tasks.filtered(lambda task: int(task.id) not in covered_ids)
+        if missing:
+            missing._sync_progress_evidence("task_progress_backfill")
+
+        ICP.set_param(_TASK_PROGRESS_EVIDENCE_BACKFILL_KEY, "1")
+        ICP.set_param(_TASK_PROGRESS_EVIDENCE_BACKFILL_COUNT_KEY, str(len(missing)))
+
+    def _sync_progress_evidence(self, event_code="task_updated"):
+        Evidence = self.env["sc.business.evidence"].sudo()
+        for task in self.filtered(lambda rec: rec.project_id):
+            progress_ratio = task._get_progress_ratio()
+            relation_chain = {
+                "event_code": str(event_code or "task_updated"),
+                "project_id": int(task.project_id.id),
+                "task_id": int(task.id),
+                "task_name": str(task.display_name or task.name or ""),
+                "task_state": str(task.sc_state or ""),
+                "readiness_status": str(task.readiness_status or ""),
+                "deadline": str(task.date_deadline or ""),
+                "progress_ratio": float(progress_ratio or 0.0) if progress_ratio is not None else 0.0,
+            }
+            Evidence.upsert_evidence(
+                business_model="project.project",
+                business_id=int(task.project_id.id),
+                evidence_type="progress",
+                source_model=task._name,
+                source_id=int(task.id),
+                name="Progress Evidence %s" % (task.display_name or task.name or task.id),
+                amount=float(progress_ratio or 0.0) if progress_ratio is not None else 0.0,
+                quantity=1.0,
+                operator=self.env.user,
+                relation_chain=relation_chain,
+            )
 
     sc_state = fields.Selection(
         [
@@ -178,11 +242,17 @@ class ProjectTask(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             self._ensure_no_direct_state_write(vals)
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._sync_progress_evidence("task_created")
+        return records
 
     def write(self, vals):
         self._ensure_no_direct_state_write(vals)
-        return super().write(vals)
+        res = super().write(vals)
+        watched_fields = {"sc_state", "project_id", "date_deadline", "progress", "progress_rate", "stage_id"}
+        if watched_fields.intersection(set(vals.keys())):
+            self._sync_progress_evidence("task_updated")
+        return res
 
     def action_prepare_task(self):
         for task in self:

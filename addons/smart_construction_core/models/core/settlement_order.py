@@ -220,6 +220,39 @@ class ScSettlementOrder(models.Model):
             return default
         return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
 
+    def _sync_settlement_evidence(self, event_code="settlement_done"):
+        Evidence = self.env["sc.business.evidence"].sudo()
+        for rec in self.filtered(lambda item: item.project_id and item.state == "done"):
+            relation_chain = {
+                "event_code": event_code,
+                "settlement_id": rec.id,
+                "settlement_name": rec.name,
+                "settlement_state": rec.state,
+                "project_id": rec.project_id.id,
+                "project_name": rec.project_id.display_name,
+                "settlement_type": rec.settlement_type,
+                "paid_amount": rec.paid_amount or 0.0,
+                "remaining_amount": rec.remaining_amount or 0.0,
+                "payment_request_ids": rec.payment_request_ids.ids,
+                "line_count": len(rec.line_ids),
+                "trace": [
+                    f"sc.settlement.order#{rec.id}",
+                    *[f"payment.request#{request.id}" for request in rec.payment_request_ids],
+                ],
+            }
+            Evidence.upsert_evidence(
+                name=f"Settlement Evidence {rec.name}",
+                business_model="project.project",
+                business_id=rec.project_id.id,
+                evidence_type="settlement",
+                source_model=self._name,
+                source_id=rec.id,
+                amount=rec.amount_total,
+                quantity=float(len(rec.line_ids)),
+                operator=self.env.user,
+                relation_chain=relation_chain,
+            )
+
     def _check_contract_consistency_or_raise(self, strict=True):
         """
         strict=True 用于 approve 时强制校验；strict=False 受参数控制。
@@ -284,6 +317,7 @@ class ScSettlementOrder(models.Model):
 
     def action_done(self):
         self.write({"state": "done"})
+        self._sync_settlement_evidence(event_code="settlement_done")
 
     def action_cancel(self):
         self._check_payments_before_cancel()

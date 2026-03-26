@@ -485,6 +485,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.project_entry_context_options import (
             ProjectEntryContextOptionsHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.business_evidence_trace import (
+            BusinessEvidenceTraceHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.project_dashboard_block_fetch import (
             ProjectDashboardBlockFetchHandler,
         )
@@ -564,6 +567,7 @@ def smart_core_register(registry):
     registry["project.dashboard.enter"] = ProjectDashboardEnterHandler
     registry["project.entry.context.resolve"] = ProjectEntryContextResolveHandler
     registry["project.entry.context.options"] = ProjectEntryContextOptionsHandler
+    registry["business.evidence.trace"] = BusinessEvidenceTraceHandler
     registry["project.dashboard.block.fetch"] = ProjectDashboardBlockFetchHandler
     registry["project.plan_bootstrap.enter"] = ProjectPlanBootstrapEnterHandler
     registry["project.plan_bootstrap.block.fetch"] = ProjectPlanBootstrapBlockFetchHandler
@@ -604,6 +608,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered project.dashboard.open")
     _logger.info("[smart_core_register] registered project.dashboard.enter")
     _logger.info("[smart_core_register] registered project.entry.context.resolve")
+    _logger.info("[smart_core_register] registered business.evidence.trace")
     _logger.info("[smart_core_register] registered project.dashboard.block.fetch")
     _logger.info("[smart_core_register] registered project.plan_bootstrap.enter")
     _logger.info("[smart_core_register] registered project.plan_bootstrap.block.fetch")

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_business_evidence_tree" model="ir.ui.view">
+        <field name="name">sc.business.evidence.tree</field>
+        <field name="model">sc.business.evidence</field>
+        <field name="arch" type="xml">
+            <tree string="Business Evidence" create="false" edit="false" delete="false">
+                <field name="operate_time"/>
+                <field name="name"/>
+                <field name="evidence_type"/>
+                <field name="business_model"/>
+                <field name="business_id"/>
+                <field name="amount"/>
+                <field name="quantity"/>
+                <field name="source_model"/>
+                <field name="source_id"/>
+                <field name="operator_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_business_evidence_form" model="ir.ui.view">
+        <field name="name">sc.business.evidence.form</field>
+        <field name="model">sc.business.evidence</field>
+        <field name="arch" type="xml">
+            <form string="Business Evidence" create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="evidence_type"/>
+                            <field name="operate_time"/>
+                            <field name="operator_id"/>
+                        </group>
+                        <group>
+                            <field name="business_model"/>
+                            <field name="business_id"/>
+                            <field name="source_model"/>
+                            <field name="source_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="quantity"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="relation_chain" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_business_evidence" model="ir.actions.act_window">
+        <field name="name">Business Evidence</field>
+        <field name="res_model">sc.business.evidence</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
