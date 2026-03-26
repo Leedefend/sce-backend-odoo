@@ -272,6 +272,80 @@ class ProjectDashboardService:
             progress_percent = 0.0
         evidence_summary = self._evidence_summary_service.summary_for_project(project)
         evidence_chain = self._evidence_chain_service.build_project_chain(int(project.id), limit=20)
+        risk_analysis = self._decision_engine.analyze(project)
+        risk_count = int(risk_analysis.get("risk_count") or 0)
+        exception_model = self._model("sc.evidence.exception")
+        exception_open_count = 0
+        exception_resolved_count = 0
+        if exception_model is not None:
+            try:
+                exception_open_count = int(
+                    exception_model.search_count([("project_id", "=", int(project.id)), ("status", "in", ["open", "processing"])])
+                )
+                exception_resolved_count = int(
+                    exception_model.search_count([("project_id", "=", int(project.id)), ("status", "=", "resolved")])
+                )
+            except Exception:
+                exception_open_count = 0
+                exception_resolved_count = 0
+        fact_metrics = [
+            {
+                "key": "payment_total",
+                "label": "已付款",
+                "value": float(evidence_summary.get("pay_total") or 0.0),
+                "unit": "元",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "payment",
+                    },
+                },
+            },
+            {
+                "key": "cost_total",
+                "label": "已发生成本",
+                "value": float(evidence_summary.get("cost_total") or 0.0),
+                "unit": "元",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "cost",
+                    },
+                },
+            },
+            {
+                "key": "settlement_total",
+                "label": "已结算",
+                "value": float(evidence_summary.get("settlement_total") or 0.0),
+                "unit": "元",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "settlement",
+                    },
+                },
+            },
+            {
+                "key": "risk_count",
+                "label": "风险事项",
+                "value": risk_count,
+                "unit": "项",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "risk",
+                    },
+                },
+            },
+        ]
         return {
             "id": int(project.id),
             "name": _safe_text(_safe_field(project, "name")),
@@ -290,6 +364,7 @@ class ProjectDashboardService:
             "payment_executed_record_count": str(evidence_summary.get("pay_done_count") or 0),
             "evidence_refs": evidence_chain.get("evidence_refs") or [],
             "evidence_summary": evidence_summary,
+            "fact_metrics": fact_metrics,
             "facts": {
                 "cost_total": str(evidence_summary.get("cost_total") or 0.0),
                 "payment_total": str(evidence_summary.get("pay_total") or 0.0),
@@ -298,6 +373,9 @@ class ProjectDashboardService:
                 "cost_evidence_count": int(evidence_summary.get("cost_count") or 0),
                 "payment_evidence_count": int(evidence_summary.get("payment_count") or 0),
                 "settlement_evidence_count": int(evidence_summary.get("settlement_count") or 0),
+                "risk_count": risk_count,
+                "exception_open_count": exception_open_count,
+                "exception_resolved_count": exception_resolved_count,
             },
             "status": _safe_text(_safe_field(project, "health_state") or _safe_field(project, "state")),
             "date": str(fields.Date.today()),

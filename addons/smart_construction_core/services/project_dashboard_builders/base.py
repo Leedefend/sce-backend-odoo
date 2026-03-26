@@ -78,6 +78,26 @@ class BaseProjectBlockBuilder:
     def _evidence_summary(self, project):
         return self.env["sc.evidence.summary.service"].summary_for_project(project)
 
+    @staticmethod
+    def _trace_action(project, evidence_type):
+        return {
+            "intent": "business.evidence.trace",
+            "payload": {
+                "business_model": "project.project",
+                "business_id": int(getattr(project, "id", 0) or 0),
+                "evidence_type": str(evidence_type or ""),
+            },
+        }
+
+    def _trace_metric(self, *, project, key, label, value, unit="", evidence_type=""):
+        return {
+            "key": str(key or ""),
+            "label": str(label or ""),
+            "value": value,
+            "unit": str(unit or ""),
+            "trace_action": self._trace_action(project, evidence_type),
+        }
+
     def _visibility(self):
         for group_xmlid in self.required_groups or ():
             try:

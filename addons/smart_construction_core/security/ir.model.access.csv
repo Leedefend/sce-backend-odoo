@@ -172,3 +172,6 @@ access_sc_project_next_action_rule_read,sc.project.next.action.rule.read,model_s
 access_project_risk_action_sc_read,project.risk.action sc read,model_project_risk_action,smart_construction_core.group_sc_cap_project_read,1,0,0,0
 access_project_risk_action_sc_user,project.risk.action sc user,model_project_risk_action,smart_construction_core.group_sc_cap_project_user,1,1,1,0
 access_project_risk_action_sc_manager,project.risk.action sc manager,model_project_risk_action,smart_construction_core.group_sc_cap_project_manager,1,1,1,1
+access_sc_evidence_exception_sc_read,sc.evidence.exception sc read,model_sc_evidence_exception,smart_construction_core.group_sc_cap_project_read,1,0,0,0
+access_sc_evidence_exception_sc_user,sc.evidence.exception sc user,model_sc_evidence_exception,smart_construction_core.group_sc_cap_project_user,1,1,1,0
+access_sc_evidence_exception_sc_manager,sc.evidence.exception sc manager,model_sc_evidence_exception,smart_construction_core.group_sc_cap_project_manager,1,1,1,1

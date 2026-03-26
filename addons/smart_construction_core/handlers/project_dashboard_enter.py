@@ -64,6 +64,7 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
         data["completion"] = orchestrator._service.build_completion(project)
         data["evidence_refs"] = list((project_payload.get("evidence_refs") or []))
         data["facts"] = dict(project_payload.get("facts") or {})
+        data["fact_metrics"] = list((project_payload.get("fact_metrics") or []))
         data = attach_release_surface_scene_contract(
             data,
             product_key="fr2",

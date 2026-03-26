@@ -35,6 +35,8 @@ from . import test_reason_codes_backend
 from . import test_payment_request_permission
 from . import test_account_move_evidence_backend
 from . import test_evidence_production_backend
+from . import test_evidence_consumption_backend
+from . import test_evidence_exception_backend
 from . import test_scene_governance_payload_backend
 from . import test_scene_package_payload_backend
 from . import test_intent_surface_coverage_gate
