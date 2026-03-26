@@ -3,9 +3,7 @@ from __future__ import annotations
 
 from odoo import fields
 
-from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter import CostTrackingNativeAdapter
 from odoo.addons.smart_construction_core.services.evidence_chain_service import EvidenceChainService
-from odoo.addons.smart_construction_core.services.payment_slice_native_adapter import PaymentSliceNativeAdapter
 from odoo.addons.smart_construction_core.services.project_decision_engine_service import ProjectDecisionEngineService
 from odoo.addons.smart_construction_core.services.project_metrics_explain_service import ProjectMetricsExplainService
 from odoo.addons.smart_construction_core.services.project_state_explain_service import ProjectStateExplainService
@@ -33,9 +31,8 @@ class ProjectDashboardService:
 
     def __init__(self, env):
         self.env = env
-        self._cost_adapter = CostTrackingNativeAdapter(env)
         self._evidence_chain_service = EvidenceChainService(env)
-        self._payment_adapter = PaymentSliceNativeAdapter(env)
+        self._evidence_summary_service = env["sc.evidence.summary.service"]
         self._decision_engine = ProjectDecisionEngineService(env)
         self._state_explain_service = ProjectStateExplainService(env)
         self._metrics_explain_service = ProjectMetricsExplainService(env)
@@ -273,10 +270,8 @@ class ProjectDashboardService:
                     progress_percent = round((done / float(total)) * 100.0, 2)
         except Exception:
             progress_percent = 0.0
-        cost_summary = self._cost_adapter.summary(project)
-        payment_summary = self._payment_adapter.summary(project)
+        evidence_summary = self._evidence_summary_service.summary_for_project(project)
         evidence_chain = self._evidence_chain_service.build_project_chain(int(project.id), limit=20)
-        evidence_summary = evidence_chain.get("summary") or {}
         return {
             "id": int(project.id),
             "name": _safe_text(_safe_field(project, "name")),
@@ -289,16 +284,16 @@ class ProjectDashboardService:
             "milestone": _safe_text(_safe_field(project, "sc_execution_state")),
             "state": "ready",
             "progress_percent": str(progress_percent),
-            "cost_total": str(cost_summary.get("total_cost_amount") or 0.0),
-            "payment_total": str(payment_summary.get("total_payment_amount") or 0.0),
-            "payment_executed_total": str(payment_summary.get("executed_payment_amount") or 0.0),
-            "payment_executed_record_count": str(payment_summary.get("ledger_count") or 0),
+            "cost_total": str(evidence_summary.get("cost_total") or 0.0),
+            "payment_total": str(evidence_summary.get("pay_total") or 0.0),
+            "payment_executed_total": str(evidence_summary.get("pay_done_total") or 0.0),
+            "payment_executed_record_count": str(evidence_summary.get("pay_done_count") or 0),
             "evidence_refs": evidence_chain.get("evidence_refs") or [],
             "evidence_summary": evidence_summary,
             "facts": {
-                "cost_total": str(cost_summary.get("total_cost_amount") or 0.0),
-                "payment_total": str(payment_summary.get("total_payment_amount") or 0.0),
-                "payment_executed_total": str(payment_summary.get("executed_payment_amount") or 0.0),
+                "cost_total": str(evidence_summary.get("cost_total") or 0.0),
+                "payment_total": str(evidence_summary.get("pay_total") or 0.0),
+                "payment_executed_total": str(evidence_summary.get("pay_done_total") or 0.0),
                 "evidence_count": int(evidence_summary.get("evidence_count") or 0),
                 "cost_evidence_count": int(evidence_summary.get("cost_count") or 0),
                 "payment_evidence_count": int(evidence_summary.get("payment_count") or 0),

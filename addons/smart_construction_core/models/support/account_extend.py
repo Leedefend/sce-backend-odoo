@@ -11,11 +11,12 @@ class AccountMove(models.Model):
         help="用于将发票/凭证成本写入项目台账。",
     )
 
-    def action_post(self):
-        res = super().action_post()
-        if self._is_cost_enabled("smart_construction_core.sc_cost_from_account_move"):
-            self._create_cost_ledger_entries()
-        return res
+    def _post(self, soft=True):
+        moves = super()._post(soft=soft)
+        if moves and moves._is_cost_enabled("smart_construction_core.sc_cost_from_account_move"):
+            moves._create_cost_ledger_entries()
+            moves.env["sc.evidence.policy"].ensure_account_move_cost_evidence(moves)
+        return moves
 
     def button_draft(self):
         res = super().button_draft()
@@ -38,7 +39,7 @@ class AccountMove(models.Model):
     def _create_cost_ledger_entries(self):
         ledger_obj = self.env["project.cost.ledger"]
         for move in self.filtered(lambda m: m.move_type in ("in_invoice", "entry")):
-            for line in move.line_ids.filtered(lambda l: not l.display_type):
+            for line in move.line_ids.filtered(lambda l: l._is_cost_ledger_candidate()):
                 vals = line._prepare_cost_ledger_vals()
                 if not vals:
                     continue
@@ -75,17 +76,21 @@ class AccountMoveLine(models.Model):
         string="成本科目",
     )
 
+    def _is_cost_ledger_candidate(self):
+        self.ensure_one()
+        return bool(
+            self.project_id
+            and self.cost_code_id
+            and self.account_id.internal_group in ("expense", "asset")
+            and float(self.debit or 0.0) > 0.0
+        )
+
     def _prepare_cost_ledger_vals(self):
         self.ensure_one()
+        if not self._is_cost_ledger_candidate():
+            return False
         project = self.project_id
-        if not project or not self.cost_code_id:
-            return False
-        internal_group = self.account_id.internal_group
-        if internal_group not in ("expense", "asset"):
-            return False
         amount = self.debit
-        if amount <= 0:
-            return False
         return {
             "project_id": project.id,
             "wbs_id": self.wbs_id.id,

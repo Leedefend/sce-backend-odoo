@@ -75,6 +75,9 @@ class BaseProjectBlockBuilder:
             return []
         return [("project_id", "=", int(project.id))]
 
+    def _evidence_summary(self, project):
+        return self.env["sc.evidence.summary.service"].summary_for_project(project)
+
     def _visibility(self):
         for group_xmlid in self.required_groups or ():
             try:

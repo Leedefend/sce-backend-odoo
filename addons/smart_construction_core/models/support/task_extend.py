@@ -47,31 +47,10 @@ class ProjectTask(models.Model):
         ICP.set_param(_TASK_PROGRESS_EVIDENCE_BACKFILL_COUNT_KEY, str(len(missing)))
 
     def _sync_progress_evidence(self, event_code="task_updated"):
-        Evidence = self.env["sc.business.evidence"].sudo()
-        for task in self.filtered(lambda rec: rec.project_id):
-            progress_ratio = task._get_progress_ratio()
-            relation_chain = {
-                "event_code": str(event_code or "task_updated"),
-                "project_id": int(task.project_id.id),
-                "task_id": int(task.id),
-                "task_name": str(task.display_name or task.name or ""),
-                "task_state": str(task.sc_state or ""),
-                "readiness_status": str(task.readiness_status or ""),
-                "deadline": str(task.date_deadline or ""),
-                "progress_ratio": float(progress_ratio or 0.0) if progress_ratio is not None else 0.0,
-            }
-            Evidence.upsert_evidence(
-                business_model="project.project",
-                business_id=int(task.project_id.id),
-                evidence_type="progress",
-                source_model=task._name,
-                source_id=int(task.id),
-                name="Progress Evidence %s" % (task.display_name or task.name or task.id),
-                amount=float(progress_ratio or 0.0) if progress_ratio is not None else 0.0,
-                quantity=1.0,
-                operator=self.env.user,
-                relation_chain=relation_chain,
-            )
+        self.env["sc.evidence.builder"].build(
+            self.filtered(lambda rec: rec.project_id),
+            event_code=event_code,
+        )
 
     sc_state = fields.Selection(
         [

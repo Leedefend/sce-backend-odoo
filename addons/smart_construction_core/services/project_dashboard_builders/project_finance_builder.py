@@ -25,31 +25,15 @@ class ProjectFinanceBuilder(BaseProjectBlockBuilder):
                 data={"rows": [], "columns": [], "quick_actions": []},
             )
 
-        domain = self._project_domain("payment.request", project)
+        evidence_summary = self._evidence_summary(project)
         contract_domain = self._project_domain("construction.contract", project)
         contract_out_domain = contract_domain + [("type", "=", "out")]
         contract_in_domain = contract_domain + [("type", "=", "in")]
-        total = self._safe_count("payment.request", domain)
-        received_amount = self._safe_read_group_sum_any(
-            "payment.request",
-            domain + [("type", "=", "receive"), ("state", "in", ["done", "approved", "approve"])],
-            ["amount"],
-        )
-        paid_amount = self._safe_read_group_sum_any(
-            "payment.request",
-            domain + [("type", "=", "pay"), ("state", "in", ["done", "approved", "approve"])],
-            ["amount"],
-        )
-        receive_pending = self._safe_read_group_sum_any(
-            "payment.request",
-            domain + [("type", "=", "receive"), ("state", "in", ["draft", "submitted", "pending", "confirm"])],
-            ["amount"],
-        )
-        pay_pending = self._safe_read_group_sum_any(
-            "payment.request",
-            domain + [("type", "=", "pay"), ("state", "in", ["draft", "submitted", "pending", "confirm"])],
-            ["amount"],
-        )
+        total = int(evidence_summary.get("payment_count") or 0)
+        received_amount = float(evidence_summary.get("receive_done_total") or 0.0)
+        paid_amount = float(evidence_summary.get("pay_done_total") or 0.0)
+        receive_pending = float(evidence_summary.get("receive_pending_total") or 0.0)
+        pay_pending = float(evidence_summary.get("pay_pending_total") or 0.0)
         receivable = self._safe_read_group_sum_any("construction.contract", contract_out_domain, ["amount_total", "amount"])
         payable = self._safe_read_group_sum_any("construction.contract", contract_in_domain, ["amount_total", "amount"])
         cash_gap = round(receivable - received_amount, 2)
@@ -57,7 +41,7 @@ class ProjectFinanceBuilder(BaseProjectBlockBuilder):
         data = {
             "columns": ["payment_request_total"],
             "column_labels": {
-                "payment_request_total": "资金申请总数",
+                "payment_request_total": "资金证据总数",
             },
             "rows": [{"payment_request_total": total}],
             "summary": {

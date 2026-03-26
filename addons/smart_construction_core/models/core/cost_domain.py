@@ -394,38 +394,10 @@ class ProjectCostLedger(models.Model):
             )
 
     def _sync_cost_evidence(self, event_code="cost_ledger_created"):
-        Evidence = self.env["sc.business.evidence"].sudo()
-        for rec in self.filtered(lambda item: item.project_id):
-            relation_chain = {
-                "event_code": event_code,
-                "cost_ledger_id": rec.id,
-                "project_id": rec.project_id.id,
-                "project_name": rec.project_id.display_name,
-                "cost_code_id": rec.cost_code_id.id if rec.cost_code_id else False,
-                "cost_code_name": rec.cost_code_id.display_name if rec.cost_code_id else False,
-                "period": rec.period,
-                "date": str(rec.date) if rec.date else False,
-                "source_model": rec.source_model,
-                "source_id": rec.source_id,
-                "source_line_id": rec.source_line_id,
-                "trace": [
-                    f"project.cost.ledger#{rec.id}",
-                    f"{rec.source_model}#{rec.source_id}" if rec.source_model and rec.source_id else False,
-                ],
-            }
-            relation_chain["trace"] = [item for item in relation_chain["trace"] if item]
-            Evidence.upsert_evidence(
-                name=f"Cost Evidence {rec.id}",
-                business_model="project.project",
-                business_id=rec.project_id.id,
-                evidence_type="cost",
-                source_model=self._name,
-                source_id=rec.id,
-                amount=rec.amount,
-                quantity=rec.qty or 0.0,
-                operator=self.env.user,
-                relation_chain=relation_chain,
-            )
+        self.env["sc.evidence.builder"].build(
+            self.filtered(lambda item: item.project_id),
+            event_code=event_code,
+        )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -459,6 +431,12 @@ class ProjectCostLedger(models.Model):
             )
         records = super().create(vals_list)
         records._sync_cost_evidence(event_code="cost_ledger_created")
+        self.env["sc.evidence.policy"].ensure_records(
+            records.filtered(lambda rec: rec.project_id),
+            evidence_type="cost",
+            auto_build=False,
+            event_code="cost_ledger_created",
+        )
         return records
 
     def write(self, vals):
@@ -487,9 +465,24 @@ class ProjectCostLedger(models.Model):
             super(ProjectCostLedger, rec).write(rec_vals)
         if any(key in vals for key in ("project_id", "cost_code_id", "amount", "qty", "source_model", "source_id")):
             self._sync_cost_evidence(event_code="cost_ledger_updated")
+            self.env["sc.evidence.policy"].ensure_records(
+                self.filtered(lambda rec: rec.project_id),
+                evidence_type="cost",
+                auto_build=False,
+                event_code="cost_ledger_updated",
+            )
         return True
 
     def unlink(self):
+        evidence_rows = self.env["sc.business.evidence"].sudo().search(
+            [
+                ("source_model", "=", self._name),
+                ("source_id", "in", self.ids),
+                ("evidence_type", "=", "cost"),
+            ]
+        )
+        if evidence_rows:
+            evidence_rows.with_context(allow_evidence_mutation=True).unlink()
         for rec in self:
             self._ensure_period_unlocked(rec.period_id, "Delete")
         return super().unlink()

@@ -13,6 +13,11 @@ from . import my_work_aggregate_service
 from . import project_dashboard_builders
 from . import project_dashboard_service
 from . import evidence_chain_service
+from . import evidence_builder_service
+from . import evidence_policy_service
+from . import evidence_summary_service
+from . import evidence_risk_engine_service
+from . import evidence_action_engine_service
 from . import project_creation_service
 from . import cost_tracking_builders
 from . import cost_tracking_entry_service
