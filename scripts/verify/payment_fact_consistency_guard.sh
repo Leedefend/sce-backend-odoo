@@ -88,9 +88,15 @@ for name in PROJECT_NAMES:
         "adapter_total_payment_amount": num(adapter_summary.get("total_payment_amount")),
         "payment_payload_record_count": intval(payment_payload.get("payment_record_count")),
         "payment_payload_total": num(payment_payload.get("payment_total_amount")),
+        "payment_payload_executed_count": intval(payment_payload.get("executed_payment_record_count")),
+        "payment_payload_executed_total": num(payment_payload.get("executed_payment_amount")),
         "dashboard_payment_total": num(dashboard_payload.get("payment_total")),
+        "dashboard_payment_executed_total": num(dashboard_payload.get("payment_executed_total")),
+        "dashboard_payment_executed_count": intval(dashboard_payload.get("payment_executed_record_count")),
         "settlement_total_payment": num(settlement_summary.get("total_payment")),
+        "settlement_executed_payment": num(settlement_summary.get("executed_payment_amount")),
         "settlement_payment_record_count": intval(settlement_summary.get("payment_record_count")),
+        "settlement_executed_payment_record_count": intval(settlement_summary.get("executed_payment_record_count")),
         "decision_payment_count": intval((decision.get("facts") or {}).get("payment_count")),
         "decision_payment_total": num((decision.get("facts") or {}).get("payment_total")),
     }
@@ -114,8 +120,18 @@ for name in PROJECT_NAMES:
         report["errors"].append(f"{name}: decision_payment_count {row['decision_payment_count']} != request_count {row['request_count']}")
     if row["decision_payment_total"] != row["request_total"]:
         report["errors"].append(f"{name}: decision_payment_total {row['decision_payment_total']} != request_total {row['request_total']}")
-    if row["ledger_total"] == row["dashboard_payment_total"] and row["ledger_total"] != row["request_total"] and row["ledger_count"] > 0:
-        report["errors"].append(f"{name}: dashboard_payment_total appears ledger-driven instead of request-driven")
+    if row["payment_payload_executed_count"] != row["ledger_count"]:
+        report["errors"].append(f"{name}: payment_payload_executed_count {row['payment_payload_executed_count']} != ledger_count {row['ledger_count']}")
+    if row["payment_payload_executed_total"] != row["ledger_total"]:
+        report["errors"].append(f"{name}: payment_payload_executed_total {row['payment_payload_executed_total']} != ledger_total {row['ledger_total']}")
+    if row["dashboard_payment_executed_total"] != row["ledger_total"]:
+        report["errors"].append(f"{name}: dashboard_payment_executed_total {row['dashboard_payment_executed_total']} != ledger_total {row['ledger_total']}")
+    if row["dashboard_payment_executed_count"] != row["ledger_count"]:
+        report["errors"].append(f"{name}: dashboard_payment_executed_count {row['dashboard_payment_executed_count']} != ledger_count {row['ledger_count']}")
+    if row["settlement_executed_payment"] != row["ledger_total"]:
+        report["errors"].append(f"{name}: settlement_executed_payment {row['settlement_executed_payment']} != ledger_total {row['ledger_total']}")
+    if row["settlement_executed_payment_record_count"] != row["ledger_count"]:
+        report["errors"].append(f"{name}: settlement_executed_payment_record_count {row['settlement_executed_payment_record_count']} != ledger_count {row['ledger_count']}")
 
 if report["errors"]:
     report["status"] = "FAIL"
