@@ -33,6 +33,11 @@ class CostTrackingNativeAdapter:
             ("move_type", "in", list(self.SUPPORTED_MOVE_TYPES)),
         ]
 
+    def ledger_domain(self, project):
+        if not project or not self._has_fields("project.cost.ledger", ["project_id"]):
+            return [("id", "=", 0)]
+        return [("project_id", "=", int(project.id))]
+
     def recent_moves(self, project, *, limit=5):
         Move = self._model("account.move")
         if Move is None or not project:
@@ -47,9 +52,10 @@ class CostTrackingNativeAdapter:
     def summary(self, project):
         summary = {
             "project_id": int(getattr(project, "id", 0) or 0),
-            "carrier_model": "account.move",
+            "carrier_model": "project.cost.ledger",
             "secondary_context_model": "project.project",
             "supported_move_types": list(self.SUPPORTED_MOVE_TYPES),
+            "ledger_count": 0,
             "move_count": 0,
             "posted_move_count": 0,
             "draft_move_count": 0,
@@ -61,11 +67,46 @@ class CostTrackingNativeAdapter:
             "currency_name": "",
             "latest_move_date": "",
             "as_of_date": str(fields.Date.today()),
-            "prepared_boundary": "account_move_project_cost_recording_only",
+            "prepared_boundary": "project_cost_ledger_first_with_account_move_fallback",
         }
         moves = self.recent_moves(project, limit=5)
+        Ledger = self._model("project.cost.ledger")
         Move = self._model("account.move")
-        if Move is None or not project:
+        if not project:
+            summary["recent_moves"] = moves
+            return summary
+
+        if Ledger is not None:
+            Ledger = Ledger.sudo()
+            try:
+                ledger_rows = Ledger.search(self.ledger_domain(project), order="date desc,id desc")
+            except Exception:
+                ledger_rows = []
+            if ledger_rows:
+                total_amount = 0.0
+                latest_move_date = ""
+                currency_name = str(getattr(getattr(project, "company_id", None), "currency_id", None).name or "")
+                for row in ledger_rows:
+                    try:
+                        total_amount += float(getattr(row, "amount", 0.0) or 0.0)
+                    except Exception:
+                        continue
+                    if not latest_move_date:
+                        latest_move_date = str(getattr(row, "date", "") or "")
+                summary.update(
+                    {
+                        "ledger_count": len(ledger_rows),
+                        "posted_cost_amount": round(total_amount, 2),
+                        "draft_cost_amount": 0.0,
+                        "total_cost_amount": round(total_amount, 2),
+                        "currency_name": currency_name,
+                        "latest_move_date": latest_move_date,
+                        "recent_moves": moves,
+                    }
+                )
+                return summary
+
+        if Move is None:
             summary["recent_moves"] = moves
             return summary
         Move = Move.sudo()

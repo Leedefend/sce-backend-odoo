@@ -66,12 +66,19 @@ class ProjectEntryContextService:
         project_id = int(context.get("project_id") or 0)
         project_name = str(context.get("project_name") or "")
         lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
+        showcase = bool(getattr(project, "sc_demo_showcase", False))
+        showcase_ready = bool(getattr(project, "sc_demo_showcase_ready", False))
+        noisy = cls._is_noisy_project_name(project_name)
         rank = 0
         if project_id and project_id == int(active_project_id or 0):
-            rank += 1000
+            rank += 800 if showcase_ready or not noisy else 25
+        if showcase_ready:
+            rank += 500
+        if showcase:
+            rank += 150
         if cls._is_demo_showroom_project(project_name):
             rank += 200
-        if not cls._is_noisy_project_name(project_name):
+        if not noisy:
             rank += 100
         if lifecycle_state in {"in_progress", "closing", "warranty", "done"}:
             rank += 40

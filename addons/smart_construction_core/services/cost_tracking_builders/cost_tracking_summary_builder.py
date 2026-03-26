@@ -28,13 +28,13 @@ class CostTrackingSummaryBuilder(BaseProjectBlockBuilder):
             data={
                 "summary": {
                     "project_id": int(summary.get("project_id") or 0),
-                    "carrier_model": str(summary.get("carrier_model") or "account.move"),
+                    "carrier_model": str(summary.get("carrier_model") or "project.cost.ledger"),
                     "total_cost_amount": float(summary.get("total_cost_amount") or 0.0),
-                    "record_count": int(summary.get("move_count") or 0),
+                    "record_count": int(summary.get("ledger_count") or summary.get("move_count") or 0),
                     "draft_record_count": int(summary.get("draft_move_count") or 0),
                     "posted_record_count": int(summary.get("posted_move_count") or 0),
                     "currency_name": str(summary.get("currency_name") or ""),
-                    "scope": "project_linked_account_move_only",
+                    "scope": "project_cost_ledger_first_with_account_move_fallback",
                     "latest_move_date": str(summary.get("latest_move_date") or ""),
                 }
             },
