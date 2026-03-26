@@ -263,6 +263,9 @@ class PaymentRequest(models.Model):
         records.filtered(
             lambda r: r.type == "pay" and r.state in ("submit", "approve", "approved")
         )._enforce_funding_gate()
+        records.filtered(lambda r: r.type == "pay" and r.project_id)._sync_payment_evidence(
+            event_code="payment_request_created"
+        )
         return records
 
     def write(self, vals):
@@ -289,6 +292,19 @@ class PaymentRequest(models.Model):
         res = super().write(vals)
         if any(key in vals for key in ("state", "type", "project_id", "amount")):
             self._enforce_funding_gate(vals)
+        if any(
+            key in vals
+            for key in (
+                "state",
+                "type",
+                "project_id",
+                "amount",
+                "settlement_id",
+                "partner_id",
+            )
+        ):
+            event_code = f"payment_request_{vals.get('state')}" if vals.get("state") else "payment_request_updated"
+            self.filtered(lambda r: r.type == "pay" and r.project_id)._sync_payment_evidence(event_code=event_code)
         return res
 
     def _get_attachment_count(self):
@@ -325,6 +341,44 @@ class PaymentRequest(models.Model):
             company_id=self.company_id,
             project_id=self.project_id,
         )
+
+    def _sync_payment_evidence(self, event_code="payment_request_updated"):
+        Evidence = self.env["sc.business.evidence"].sudo()
+        for rec in self.filtered(lambda item: item.type == "pay" and item.project_id):
+            relation_chain = {
+                "event_code": event_code,
+                "payment_request_id": rec.id,
+                "payment_request_name": rec.name,
+                "payment_request_state": rec.state,
+                "payment_type": rec.type,
+                "project_id": rec.project_id.id,
+                "project_name": rec.project_id.display_name,
+                "settlement_id": rec.settlement_id.id if rec.settlement_id else False,
+                "settlement_name": rec.settlement_id.display_name if rec.settlement_id else False,
+                "partner_id": rec.partner_id.id if rec.partner_id else False,
+                "partner_name": rec.partner_id.display_name if rec.partner_id else False,
+                "paid_amount_total": rec.paid_amount_total or 0.0,
+                "unpaid_amount": rec.unpaid_amount or 0.0,
+                "is_fully_paid": bool(rec.is_fully_paid),
+                "ledger_ids": rec.ledger_line_ids.ids,
+                "ledger_count": len(rec.ledger_line_ids),
+                "trace": [
+                    f"payment.request#{rec.id}",
+                    *[f"payment.ledger#{ledger.id}" for ledger in rec.ledger_line_ids],
+                ],
+            }
+            Evidence.upsert_evidence(
+                name=f"Payment Evidence {rec.name}",
+                business_model="project.project",
+                business_id=rec.project_id.id,
+                evidence_type="payment",
+                source_model=self._name,
+                source_id=rec.id,
+                amount=rec.amount,
+                quantity=1.0,
+                operator=self.env.user,
+                relation_chain=relation_chain,
+            )
 
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):

@@ -68,6 +68,33 @@ SCENARIOS: Dict[str, List[str]] = {
     },
 }
 
+SCENARIO_ALIASES = {
+    "project_normal": "s60_project_cockpit",
+    "project_over_budget": "s60_project_cockpit",
+    "project_payment_delay": "s60_project_cockpit",
+}
+
+SCENARIO_PROFILES: Dict[str, Dict[str, object]] = {
+    "project_normal": {
+        "label": "正常项目",
+        "release_ready": True,
+        "showcase_project": "展厅-智慧园区运营中心",
+        "expected_risk": "EXECUTION_COST_MISSING",
+    },
+    "project_over_budget": {
+        "label": "超预算项目",
+        "release_ready": True,
+        "showcase_project": "展厅-产线升级改造工程",
+        "expected_risk": "PAYMENT_EXCEEDS_COST",
+    },
+    "project_payment_delay": {
+        "label": "付款风险项目",
+        "release_ready": True,
+        "showcase_project": "展厅-装配式住宅试点",
+        "expected_risk": "PAYMENT_MISSING",
+    },
+}
+
 
 RELEASE_SCENARIOS: List[str] = [
     "s00_min_path",
@@ -134,6 +161,8 @@ def load_scenario(
     scenario = (scenario or "").strip()
     if not scenario:
         raise ValueError("scenario is required, e.g. 's10_contract_payment'")
+
+    scenario = SCENARIO_ALIASES.get(scenario, scenario)
 
     if scenario not in SCENARIOS:
         known = ", ".join(sorted(SCENARIOS.keys()))

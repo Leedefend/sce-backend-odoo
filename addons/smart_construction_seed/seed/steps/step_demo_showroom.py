@@ -313,8 +313,10 @@ def _ensure_cockpit_payments(env, project, settlement=False):
     samples = [
         ("receive", "approved", 2_800_000.0, "节点回款A"),
         ("receive", "done", 1_650_000.0, "节点回款B"),
-        ("pay", "draft", 1_200_000.0, "分包付款A"),
-        ("pay", "draft", 860_000.0, "材料付款B"),
+        # full_journey doubles as the over-budget showcase. Keep pay-side facts
+        # above cost facts so the risk engine can explain the anomaly.
+        ("pay", "draft", 2_650_000.0, "分包付款A"),
+        ("pay", "draft", 2_230_000.0, "材料付款B"),
     ]
     for req_type, state, amount, note_text in samples:
         name = f"{marker}-{project.id}-{note_text}"

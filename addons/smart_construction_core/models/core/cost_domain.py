@@ -393,6 +393,40 @@ class ProjectCostLedger(models.Model):
                 reasons=["period is locked"],
             )
 
+    def _sync_cost_evidence(self, event_code="cost_ledger_created"):
+        Evidence = self.env["sc.business.evidence"].sudo()
+        for rec in self.filtered(lambda item: item.project_id):
+            relation_chain = {
+                "event_code": event_code,
+                "cost_ledger_id": rec.id,
+                "project_id": rec.project_id.id,
+                "project_name": rec.project_id.display_name,
+                "cost_code_id": rec.cost_code_id.id if rec.cost_code_id else False,
+                "cost_code_name": rec.cost_code_id.display_name if rec.cost_code_id else False,
+                "period": rec.period,
+                "date": str(rec.date) if rec.date else False,
+                "source_model": rec.source_model,
+                "source_id": rec.source_id,
+                "source_line_id": rec.source_line_id,
+                "trace": [
+                    f"project.cost.ledger#{rec.id}",
+                    f"{rec.source_model}#{rec.source_id}" if rec.source_model and rec.source_id else False,
+                ],
+            }
+            relation_chain["trace"] = [item for item in relation_chain["trace"] if item]
+            Evidence.upsert_evidence(
+                name=f"Cost Evidence {rec.id}",
+                business_model="project.project",
+                business_id=rec.project_id.id,
+                evidence_type="cost",
+                source_model=self._name,
+                source_id=rec.id,
+                amount=rec.amount,
+                quantity=rec.qty or 0.0,
+                operator=self.env.user,
+                relation_chain=relation_chain,
+            )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -423,7 +457,9 @@ class ProjectCostLedger(models.Model):
                 operation_label="记载成本台账",
                 blocked_states=("paused", "closed"),
             )
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._sync_cost_evidence(event_code="cost_ledger_created")
+        return records
 
     def write(self, vals):
         Period = self.env["project.cost.period"]
@@ -449,6 +485,8 @@ class ProjectCostLedger(models.Model):
                     rec_vals.setdefault("period", period_rec.period)
             self._ensure_period_unlocked(period_rec, "Write")
             super(ProjectCostLedger, rec).write(rec_vals)
+        if any(key in vals for key in ("project_id", "cost_code_id", "amount", "qty", "source_model", "source_id")):
+            self._sync_cost_evidence(event_code="cost_ledger_updated")
         return True
 
     def unlink(self):

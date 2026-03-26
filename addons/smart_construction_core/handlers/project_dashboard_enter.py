@@ -56,11 +56,14 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
         orchestrator = ProjectDashboardSceneOrchestrator(self.env)
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
         project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
+        project_payload = orchestrator._service.project_payload(project)
         data = attach_project_context_to_scene_payload(data, project)
         data["state_explain"] = orchestrator._service.build_state_explain(project)
         data["metrics_explain"] = orchestrator._service.build_metrics_explain(project)
         data["flow_map"] = orchestrator._service.build_flow_map(project)
         data["completion"] = orchestrator._service.build_completion(project)
+        data["evidence_refs"] = list((project_payload.get("evidence_refs") or []))
+        data["facts"] = dict(project_payload.get("facts") or {})
         data = attach_release_surface_scene_contract(
             data,
             product_key="fr2",
