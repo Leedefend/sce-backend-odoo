@@ -38,6 +38,10 @@
 
     <StatusPanel v-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
+    <section v-else-if="showFormNativeFallback" class="card">
+      <StatusPanel title="当前表单建议使用原生页面" :message="formNativeFallbackMessage" variant="info" />
+      <button class="primary" @click="openFormNativeFallback">打开原生页面</button>
+    </section>
 
     <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
       <section v-if="warnings.length && !isProjectCreatePage" class="block warn">
@@ -223,6 +227,7 @@ import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
 import { PROJECT_INTAKE_SCENE_KEY, setPendingProjectContext } from '../app/projectCreationBaseline';
 
 type UiStatus = 'loading' | 'ok' | 'error';
@@ -386,6 +391,15 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const busy = computed(() => busyKind.value !== null);
+const formRenderPolicy = computed(() => resolveContractViewRenderPolicy(contract.value, 'form'));
+const formNativeFallbackUrl = computed(() => {
+  const action = formRenderPolicy.value.fallbackAction;
+  return Object.keys(action || {}).length ? buildNativeFallbackUrl(action) : '';
+});
+const showFormNativeFallback = computed(() => formRenderPolicy.value.recommendedRuntime === 'native' && Boolean(formNativeFallbackUrl.value));
+const formNativeFallbackMessage = computed(() => (
+  formRenderPolicy.value.notes[0] || '当前表单命中了原生兜底条件，请使用原生页面完成操作。'
+));
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
   const profile = String(contract.value?.render_profile || '').trim().toLowerCase();
@@ -2787,6 +2801,11 @@ async function reload() {
     errorMessage.value = err instanceof Error ? err.message : 'load failed';
     status.value = 'error';
   }
+}
+
+function openFormNativeFallback() {
+  if (!formNativeFallbackUrl.value) return;
+  window.location.assign(formNativeFallbackUrl.value);
 }
 
 async function runAction(action: ContractAction) {

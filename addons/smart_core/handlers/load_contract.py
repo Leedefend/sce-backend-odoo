@@ -336,8 +336,105 @@ class LoadContractHandler(BaseIntentHandler):
                 "title_field": title_field,
                 "subtitle_field": subtitle_field,
                 "stage_field": stage_field,
+                "group_by_field": str(kanban_view.get("default_group_by") or stage_field or ""),
                 "card_fields": card_fields,
                 "metric_fields": metric_fields,
+                "quick_action_count": len(kanban_view.get("quick_actions") if isinstance(kanban_view.get("quick_actions"), list) else []),
+                "support_tier": "lightweight",
+            }
+
+        def _extract_form_semantics(form_view):
+            if not isinstance(form_view, dict):
+                return None
+            layout = form_view.get("layout") if isinstance(form_view.get("layout"), list) else []
+            field_modifiers = form_view.get("field_modifiers") if isinstance(form_view.get("field_modifiers"), dict) else {}
+            subviews = form_view.get("subviews") if isinstance(form_view.get("subviews"), dict) else {}
+
+            relation_items = []
+            for field_name, sv in subviews.items():
+                if not isinstance(sv, dict):
+                    continue
+                field_meta = fields.get(field_name) if isinstance(fields.get(field_name), dict) else {}
+                policies = sv.get("policies") if isinstance(sv.get("policies"), dict) else {}
+                inline_edit = bool(policies.get("inline_edit"))
+                relation_items.append({
+                    "field": field_name,
+                    "relation_model": str(field_meta.get("relation") or ""),
+                    "field_type": str(field_meta.get("type") or ""),
+                    "preferred_view_type": "tree" if isinstance(sv.get("tree"), dict) else ("form" if isinstance(sv.get("form"), dict) else ""),
+                    "editable": {
+                        "inline_edit": inline_edit,
+                        "can_create": bool(policies.get("can_create", True)),
+                        "can_unlink": bool(policies.get("can_unlink", True)),
+                    },
+                    "takeover_hint": "native" if inline_edit else "frontend",
+                })
+
+            behavior_map = {}
+            for field_name, modifier in field_modifiers.items():
+                if not isinstance(modifier, dict):
+                    continue
+                behavior_map[field_name] = {
+                    "readonly": bool(modifier.get("readonly")),
+                    "required": bool(modifier.get("required")),
+                    "invisible": bool(modifier.get("invisible")),
+                    "widget": str(modifier.get("widget") or ""),
+                    "has_domain": "domain" in modifier and modifier.get("domain") not in (None, [], ""),
+                    "has_context": "context" in modifier and modifier.get("context") not in (None, {}, ""),
+                }
+            for relation in relation_items:
+                field_name = str(relation.get("field") or "")
+                if field_name and field_name not in behavior_map:
+                    behavior_map[field_name] = {
+                        "readonly": False,
+                        "required": False,
+                        "invisible": False,
+                        "widget": "",
+                        "has_domain": False,
+                        "has_context": False,
+                    }
+
+            return {
+                "layout_section_count": len(layout),
+                "has_statusbar": isinstance(form_view.get("statusbar"), dict) and bool(form_view.get("statusbar")),
+                "has_notebook": any(isinstance(node, dict) and node.get("type") == "notebook" for node in layout),
+                "has_chatter": isinstance(form_view.get("chatter"), dict) and bool(form_view.get("chatter")),
+                "has_attachments": isinstance(form_view.get("attachments"), dict) and bool(form_view.get("attachments")),
+                "relation_fields": relation_items,
+                "field_behavior_map": behavior_map,
+            }
+
+        def _extract_list_semantics(tree_view, *, toolbar_actions):
+            if not isinstance(tree_view, dict):
+                return None
+            capabilities = tree_view.get("capabilities") if isinstance(tree_view.get("capabilities"), dict) else {}
+            columns_schema = tree_view.get("columns_schema") if isinstance(tree_view.get("columns_schema"), list) else []
+            row_actions = tree_view.get("row_actions") if isinstance(tree_view.get("row_actions"), list) else []
+            normalized_columns = []
+            for col in columns_schema:
+                if not isinstance(col, dict):
+                    continue
+                normalized_columns.append({
+                    "name": str(col.get("name") or ""),
+                    "widget": str(col.get("widget") or ""),
+                    "optional": str(col.get("optional") or ""),
+                    "readonly": bool(col.get("readonly")),
+                    "invisible": bool(col.get("invisible") or col.get("column_invisible")),
+                    "has_sum": bool(col.get("sum")),
+                })
+
+            return {
+                "columns": normalized_columns,
+                "default_order": str(tree_view.get("default_order") or ""),
+                "page_size": int(tree_view.get("page_size") or 50),
+                "editable": {
+                    "inline_edit": bool(capabilities.get("inline_edit")),
+                    "can_create": bool(capabilities.get("can_create", True)),
+                    "can_delete": bool(capabilities.get("can_delete", True)),
+                },
+                "row_action_keys": [str(item.get("name") or item.get("key") or "") for item in row_actions if isinstance(item, dict)],
+                "toolbar_action_count": len(toolbar_actions),
+                "supports_export_current_result": True,
             }
 
         def _permission_verdict(value):
@@ -552,6 +649,8 @@ class LoadContractHandler(BaseIntentHandler):
             toolbar_actions.extend(toolbar.get("footer") if isinstance(toolbar.get("footer"), list) else [])
         normalized_toolbar_actions = _with_action_gate_list(_normalize_action_list(toolbar_actions, default_prefix="toolbar"))
         normalized_header_actions = _with_action_gate_list(normalized_header_actions)
+        form_semantics = _extract_form_semantics(views.get("form"))
+        list_semantics = _extract_list_semantics(views.get("tree"), toolbar_actions=normalized_toolbar_actions)
 
         is_closed_state = str(state_value).lower() in closed_states if state_value else False
         action_gating = {
@@ -582,6 +681,18 @@ class LoadContractHandler(BaseIntentHandler):
                 },
             )
 
+        capability_profile = self._build_view_capability_profile(
+            model_name=model_name,
+            primary_view_type=view_type,
+            views=views,
+            fields=fields,
+            permissions=permissions,
+            search_semantics=search_semantics,
+            kanban_semantics=kanban_semantics,
+            head=head,
+            data=data,
+        )
+
         data["semantic_page"] = {
             "version": "v1",
             "source": "load_contract",
@@ -593,8 +704,11 @@ class LoadContractHandler(BaseIntentHandler):
             "permissions": permissions,
             "permission_verdicts": permission_verdicts,
             "action_gating": action_gating,
+            "form_semantics": form_semantics,
+            "list_semantics": list_semantics,
             "search_semantics": search_semantics,
             "kanban_semantics": kanban_semantics,
+            "capability_profile": capability_profile,
             "actions": {
                 "buttons": buttons,
                 "toolbar": toolbar_actions,
@@ -603,6 +717,254 @@ class LoadContractHandler(BaseIntentHandler):
                 "toolbar_actions": normalized_toolbar_actions,
             },
             "zones": zones,
+        }
+        native_view = data.get("native_view")
+        if isinstance(native_view, dict):
+            native_view["render_policy"] = capability_profile.get("render_policy")
+
+    def _build_view_capability_profile(
+        self,
+        *,
+        model_name: str,
+        primary_view_type: str,
+        views: dict,
+        fields: dict,
+        permissions: dict,
+        search_semantics: dict,
+        kanban_semantics: dict | None,
+        head: dict,
+        data: dict,
+    ) -> dict:
+        profiles = {}
+        if isinstance(views.get("form"), dict):
+            profiles["form"] = self._classify_form_view_profile(views.get("form") or {}, fields=fields)
+        if isinstance(views.get("tree"), dict):
+            profiles["tree"] = self._classify_tree_view_profile(
+                views.get("tree") or {},
+                search_semantics=search_semantics,
+            )
+        if isinstance(views.get("kanban"), dict):
+            profiles["kanban"] = self._classify_kanban_view_profile(
+                views.get("kanban") or {},
+                kanban_semantics=kanban_semantics,
+            )
+
+        resolved_primary = str(primary_view_type or "").strip()
+        if not resolved_primary or resolved_primary not in profiles:
+            for candidate in ("form", "tree", "kanban"):
+                if candidate in profiles:
+                    resolved_primary = candidate
+                    break
+
+        primary_profile = profiles.get(resolved_primary) or {
+            "view_type": resolved_primary or "unknown",
+            "takeover_class": "native_retained",
+            "support_tier": "native_only",
+            "recommended_runtime": "native",
+            "supported_features": [],
+            "conditional_features": [],
+            "unsupported_features": [],
+            "fallback_triggers": ["missing_view_profile"],
+            "reason_codes": ["VIEW_PROFILE_MISSING"],
+            "notes": ["missing profile for requested primary view"],
+        }
+
+        fallback_action = self._build_open_native_action(
+            model_name=model_name,
+            primary_view_type=resolved_primary or primary_view_type or "",
+            permissions=permissions,
+            head=head,
+            data=data,
+        )
+
+        return {
+            "version": "v1",
+            "policy": "frontend_takeover_scope_v1",
+            "primary_view_type": resolved_primary or primary_view_type or "",
+            "view_profiles": profiles,
+            "render_policy": {
+                "takeover_class": primary_profile.get("takeover_class"),
+                "support_tier": primary_profile.get("support_tier"),
+                "recommended_runtime": primary_profile.get("recommended_runtime"),
+                "reason_codes": primary_profile.get("reason_codes") if isinstance(primary_profile.get("reason_codes"), list) else [],
+                "fallback_action": fallback_action,
+            },
+            "fallback_strategy": {
+                "action_key": "open_native",
+                "fallback_triggers": primary_profile.get("fallback_triggers") if isinstance(primary_profile.get("fallback_triggers"), list) else [],
+                "notes": primary_profile.get("notes") if isinstance(primary_profile.get("notes"), list) else [],
+            },
+        }
+
+    def _classify_form_view_profile(self, form_view: dict, *, fields: dict) -> dict:
+        supported_features = [
+            "field_groups",
+            "notebook_tabs",
+            "header_actions",
+            "stat_buttons",
+            "statusbar_basic",
+            "attachments_chatter",
+            "simple_x2many_display",
+            "save_edit_cycle",
+            "field_modifiers_basic",
+            "field_behavior_map",
+        ]
+        conditional_features = []
+        unsupported_features = [
+            "full_domain_context_options_parity",
+            "lossless_complex_arch_rebuild",
+            "complex_modifier_linkage",
+        ]
+        fallback_triggers = []
+        reason_codes = ["FORM_STANDARD_CHAIN"]
+        notes = ["standard form chain is supported, but not full native parity"]
+
+        subviews = form_view.get("subviews") if isinstance(form_view.get("subviews"), dict) else {}
+        has_inline_edit = False
+        for field_name, subview in subviews.items():
+            if not isinstance(subview, dict):
+                continue
+            policies = subview.get("policies") if isinstance(subview.get("policies"), dict) else {}
+            if bool(policies.get("inline_edit")):
+                has_inline_edit = True
+                conditional_features.append(f"{field_name}:inline_edit")
+
+        if has_inline_edit:
+            unsupported_features.append("complex_one2many_inline_edit")
+            fallback_triggers.append("one2many_inline_edit")
+            reason_codes.append("FORM_INLINE_SUBVIEW_NATIVE_FALLBACK")
+            notes.append("inline editable x2many subviews should fallback to native in v1")
+
+        return {
+            "view_type": "form",
+            "takeover_class": "conditional_takeover" if has_inline_edit else "frontend_takeover",
+            "support_tier": "standard",
+            "recommended_runtime": "native" if has_inline_edit else "frontend",
+            "supported_features": supported_features,
+            "conditional_features": conditional_features,
+            "unsupported_features": unsupported_features,
+            "fallback_triggers": fallback_triggers,
+            "reason_codes": reason_codes,
+            "notes": notes,
+        }
+
+    def _classify_tree_view_profile(self, tree_view: dict, *, search_semantics: dict) -> dict:
+        supported_features = [
+            "column_order",
+            "default_sort",
+            "basic_search",
+            "basic_filters",
+            "grouping",
+            "pagination",
+            "row_open",
+            "multi_select",
+            "basic_batch_actions",
+            "basic_toolbar_actions",
+            "status_badges_basic",
+            "export_current_result",
+        ]
+        conditional_features = []
+        unsupported_features = []
+        fallback_triggers = []
+        reason_codes = ["TREE_STANDARD_CHAIN"]
+        notes = ["standard list chain is supported, but advanced search ecosystem is incomplete"]
+
+        capabilities = tree_view.get("capabilities") if isinstance(tree_view.get("capabilities"), dict) else {}
+        if bool(capabilities.get("inline_edit")):
+            unsupported_features.append("tree_inline_edit")
+            fallback_triggers.append("tree_inline_edit")
+            reason_codes.append("TREE_INLINE_EDIT_NATIVE_FALLBACK")
+            notes.append("editable tree/list should fallback to native in v1")
+
+        if isinstance(search_semantics, dict):
+            search_panel = search_semantics.get("search_panel") if isinstance(search_semantics.get("search_panel"), dict) else {}
+            favorites = search_semantics.get("favorites") if isinstance(search_semantics.get("favorites"), dict) else {}
+            if bool(search_panel.get("enabled")):
+                unsupported_features.append("searchpanel_full_ecosystem")
+                fallback_triggers.append("searchpanel_enabled")
+                reason_codes.append("TREE_SEARCHPANEL_NATIVE_FALLBACK")
+            if bool(favorites.get("enabled")):
+                unsupported_features.append("favorites_full_ecosystem")
+                fallback_triggers.append("favorites_enabled")
+                reason_codes.append("TREE_FAVORITES_NATIVE_FALLBACK")
+
+        return {
+            "view_type": "tree",
+            "takeover_class": "conditional_takeover" if fallback_triggers else "frontend_takeover",
+            "support_tier": "standard",
+            "recommended_runtime": "native" if fallback_triggers else "frontend",
+            "supported_features": supported_features,
+            "conditional_features": conditional_features,
+            "unsupported_features": unsupported_features,
+            "fallback_triggers": fallback_triggers,
+            "reason_codes": reason_codes,
+            "notes": notes,
+        }
+
+    def _classify_kanban_view_profile(self, kanban_view: dict, *, kanban_semantics: dict | None) -> dict:
+        supported_features = [
+            "card_title",
+            "card_summary_fields",
+            "simple_grouping",
+            "quick_actions_basic",
+            "status_semantics_basic",
+            "lightweight_card_grid",
+            "group_by_field",
+        ]
+        unsupported_features = [
+            "drag_drop",
+            "swimlane_fidelity",
+            "badge_tag_progress_hints",
+            "deep_template_consumption",
+        ]
+        reason_codes = ["KANBAN_LIGHTWEIGHT_CHAIN"]
+        notes = ["kanban is supported only as a lightweight card surface in v1"]
+        fallback_triggers = []
+
+        if not isinstance(kanban_semantics, dict) or not str(kanban_semantics.get("title_field") or "").strip():
+            fallback_triggers.append("kanban_semantics_missing")
+            reason_codes.append("KANBAN_SEMANTICS_MISSING")
+            notes.append("missing kanban semantics should fallback to native")
+
+        if not isinstance(kanban_view.get("fields"), list) or not (kanban_view.get("fields") or []):
+            fallback_triggers.append("kanban_fields_missing")
+            reason_codes.append("KANBAN_FIELDS_MISSING")
+
+        return {
+            "view_type": "kanban",
+            "takeover_class": "conditional_takeover",
+            "support_tier": "lightweight",
+            "recommended_runtime": "native" if fallback_triggers else "frontend",
+            "supported_features": supported_features,
+            "conditional_features": [],
+            "unsupported_features": unsupported_features,
+            "fallback_triggers": fallback_triggers,
+            "reason_codes": reason_codes,
+            "notes": notes,
+        }
+
+    def _build_open_native_action(self, *, model_name: str, primary_view_type: str, permissions: dict, head: dict, data: dict) -> dict:
+        allowed = bool((permissions or {}).get("read", False))
+        action_payload = {
+            "model": model_name,
+            "view_type": primary_view_type,
+        }
+        for key in ("menu_id", "action_id", "res_id"):
+            value = data.get(key)
+            if value in (None, "", False):
+                value = head.get(key) if isinstance(head, dict) else None
+            if value not in (None, "", False):
+                action_payload[key] = value
+
+        return {
+            "key": "open_native",
+            "label": "打开原生页面",
+            "type": "intent",
+            "intent": "open_native",
+            "enabled": allowed,
+            "reason_code": "OK" if allowed else "PERMISSION_DENIED",
+            "reason": "" if allowed else "permission denied",
+            "payload": action_payload,
         }
 
     # ---------- 辅助：从 menu_id / action_id 推导 res_model ----------

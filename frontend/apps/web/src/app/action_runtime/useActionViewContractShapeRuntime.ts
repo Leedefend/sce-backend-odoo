@@ -1,5 +1,10 @@
 import { computed, type Ref } from 'vue';
 import { uniqueFields } from '../runtime/actionViewRequestRuntime';
+import {
+  resolveContractKanbanSemantics,
+  resolveContractListSemantics,
+  resolveContractViewRenderPolicy,
+} from '../contractTakeover';
 
 type Dict = Record<string, unknown>;
 
@@ -31,6 +36,15 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   function extractColumnsFromContract(contract: unknown, sceneColumns: string[] = []) {
     if (Array.isArray(sceneColumns) && sceneColumns.length) {
       return sceneColumns;
+    }
+    const listSemantics = resolveContractListSemantics(contract);
+    const semanticColumns = Array.isArray(listSemantics.columns)
+      ? listSemantics.columns
+        .map((item) => String(((item as Dict).name || '')).trim())
+        .filter(Boolean)
+      : [];
+    if (semanticColumns.length) {
+      return semanticColumns;
     }
     const typed = (contract || {}) as Dict;
     const uiContract = ((typed.ui_contract || {}) as Dict);
@@ -70,6 +84,10 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function extractKanbanFields(contract: unknown) {
+    const kanbanSemantics = resolveContractKanbanSemantics(contract);
+    if (Array.isArray(kanbanSemantics.card_fields) && kanbanSemantics.card_fields.length) {
+      return kanbanSemantics.card_fields.map((item) => String(item || '')).filter(Boolean);
+    }
     const typed = (contract || {}) as Dict;
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
@@ -83,6 +101,18 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function extractKanbanProfile(contract: unknown): KanbanProfile {
+    const kanbanSemantics = resolveContractKanbanSemantics(contract);
+    if (kanbanSemantics.title_field || kanbanSemantics.card_fields) {
+      const cardFields = Array.isArray(kanbanSemantics.card_fields)
+        ? kanbanSemantics.card_fields.map((item) => String(item || '').trim()).filter(Boolean)
+        : [];
+      return {
+        titleField: String(kanbanSemantics.title_field || '').trim(),
+        primaryFields: cardFields.slice(0, 2),
+        secondaryFields: cardFields.slice(2, 5),
+        statusFields: [String(kanbanSemantics.group_by_field || kanbanSemantics.stage_field || '').trim()].filter(Boolean),
+      };
+    }
     const typed = (contract || {}) as Dict;
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
@@ -96,6 +126,10 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       secondaryFields: normalize(profile.secondary_fields),
       statusFields: normalize(profile.status_fields),
     };
+  }
+
+  function resolveModeRecommendedRuntime(contract: unknown, mode: string) {
+    return resolveContractViewRenderPolicy(contract, mode).recommendedRuntime;
   }
 
   function extractAdvancedViewFields(contract: unknown, mode: string) {
@@ -215,5 +249,6 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     advancedRowMeta,
     buildGroupKey,
     resolveModelFromContract,
+    resolveModeRecommendedRuntime,
   };
 }
