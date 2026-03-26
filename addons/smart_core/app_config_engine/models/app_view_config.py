@@ -243,21 +243,30 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             ctx_flags = dict(self.env.context or {})
             force_parser = bool(ctx_flags.get('contract_force_parser'))
             force_fallback = bool(ctx_flags.get('contract_force_fallback'))
+            action_specific_view = str(view_data.get('_contract_view_source') or '').strip() == 'action_specific'
 
             parse_service = NativeParseService(self)
             fallback_service = ParseFallbackService(self)
-            parsed_json = parse_service.parse_with_primary_parser(
-                model_name,
-                view_type,
-                force_fallback=force_fallback,
-            )
-            parsed_json = fallback_service.resolve_parsed_contract(
-                model_name=model_name,
-                view_type=view_type,
-                view_data=view_data,
-                parsed_json=parsed_json,
-                force_fallback=force_fallback,
-            )
+            if action_specific_view and not force_parser:
+                _logger.info(
+                    "VIEW_PARSE_DEBUG: action-specific view detected for %s.%s, prefer fallback parser on bound arch",
+                    model_name,
+                    view_type,
+                )
+                parsed_json = self._fallback_parse(model_name, view_type, view_data)
+            else:
+                parsed_json = parse_service.parse_with_primary_parser(
+                    model_name,
+                    view_type,
+                    force_fallback=force_fallback,
+                )
+                parsed_json = fallback_service.resolve_parsed_contract(
+                    model_name=model_name,
+                    view_type=view_type,
+                    view_data=view_data,
+                    parsed_json=parsed_json,
+                    force_fallback=force_fallback,
+                )
 
             # 3) 降级/合并默认排序（tree）
             if view_type == 'tree' and view_data and view_data.get('arch'):
@@ -408,6 +417,23 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             if action_id:
                 act = self.env['ir.actions.act_window'].sudo().browse(int(action_id))
                 if act.exists():
+                    action_context = {}
+                    try:
+                        action_context = safe_eval(act.context) if isinstance(act.context, str) and act.context.strip() else {}
+                    except Exception:
+                        action_context = {}
+                    explicit_view_xmlid = False
+                    if view_type == 'form':
+                        explicit_view_xmlid = action_context.get('form_view_ref')
+                    elif view_type == 'tree':
+                        explicit_view_xmlid = action_context.get('tree_view_ref')
+                    if explicit_view_xmlid:
+                        try:
+                            res = self.env['ir.model.data']._xmlid_to_res_model_res_id(explicit_view_xmlid)
+                            if res and res[0] == 'ir.ui.view':
+                                view_id = res[1]
+                        except Exception as e:
+                            _logger.warning("通过 action context 解析指定视图失败: %s", e)
                     for v in (act.views or []):
                         if v and len(v) >= 2 and v[1] == view_type:
                             view_id = v[0]
@@ -420,6 +446,8 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         'arch': data.get('arch'),
                         'fields': data.get('fields', {}),
                         'toolbar': data.get('toolbar', {}),
+                        '_contract_view_id': view_id,
+                        '_contract_view_source': 'action_specific',
                     }
         except Exception as e:
             _logger.warning("加载指定视图ID失败: %s", e)
@@ -441,6 +469,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                     'arch': data.get('arch'),
                     'fields': data.get('fields', {}),
                     'toolbar': data.get('toolbar', {}),
+                    '_contract_view_source': 'default',
                 }
         except Exception as e:
             _logger.warning("get_view 失败: %s", e)
@@ -448,7 +477,12 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         # c) 回退 fields_view_get（低版本 Odoo 有；若没有则捕获异常返回 None）
         try:
             fv = Model.fields_view_get(view_type=view_type, toolbar=True)
-            return {'arch': fv.get('arch'), 'fields': fv.get('fields', {}), 'toolbar': fv.get('toolbar', {})}
+            return {
+                'arch': fv.get('arch'),
+                'fields': fv.get('fields', {}),
+                'toolbar': fv.get('toolbar', {}),
+                '_contract_view_source': 'fields_view_get',
+            }
         except Exception as e:
             _logger.warning("fields_view_get 失败: %s", e)
             return None

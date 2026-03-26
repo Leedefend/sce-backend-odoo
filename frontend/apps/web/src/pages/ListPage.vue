@@ -7,6 +7,8 @@
       :status-label="statusLabel"
       :loading="loading"
       :on-reload="onReload"
+      :primary-action-label="primaryActionLabel"
+      :on-primary-action="onPrimaryAction || undefined"
       :mode-label="pageModeLabelText"
       :record-count="recordCountSafe"
     />
@@ -303,6 +305,8 @@ const props = defineProps<{
   pageMode?: string;
   sceneKey?: string;
   recordCount?: number;
+  primaryActionLabel?: string;
+  onPrimaryAction?: (() => void) | null;
   listProfile?: SceneListProfile | null;
   columnLabels?: Record<string, string>;
   onFilter: (value: 'all' | 'active' | 'archived') => void;

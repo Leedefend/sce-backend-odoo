@@ -5,6 +5,14 @@
       <p class="subtitle">{{ subtitle }}</p>
     </div>
     <div class="actions">
+      <button
+        v-if="primaryActionLabel"
+        class="primary"
+        :disabled="loading"
+        @click="onPrimaryAction?.()"
+      >
+        {{ primaryActionLabel }}
+      </button>
       <span v-if="modeLabel" class="pill mode">{{ modeLabel }}</span>
       <span v-if="recordCount >= 0" class="pill count">{{ recordCount }} 条</span>
       <span class="pill" :class="status">{{ statusLabel }}</span>
@@ -21,6 +29,8 @@ defineProps<{
   statusLabel: string;
   loading: boolean;
   onReload: () => void;
+  primaryActionLabel?: string;
+  onPrimaryAction?: () => void;
   modeLabel?: string;
   recordCount?: number;
 }>();
@@ -52,6 +62,15 @@ defineProps<{
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.primary {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 0;
+  background: #0f172a;
+  color: #fff;
+  cursor: pointer;
 }
 
 .pill {
@@ -103,6 +122,7 @@ defineProps<{
   cursor: pointer;
 }
 
+.primary:disabled,
 .ghost:disabled {
   opacity: 0.6;
   cursor: not-allowed;

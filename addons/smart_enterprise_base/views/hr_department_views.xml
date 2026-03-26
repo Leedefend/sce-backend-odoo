@@ -20,7 +20,16 @@
             <form>
                 <sheet>
                     <div class="alert alert-info" role="alert">
-                        所有部门都必须归属到公司。创建一级部门后，可继续在当前页面补齐下级部门。
+                        所有部门都必须归属到公司。完成部门结构后，请继续进入“用户设置”，把执行主体挂到公司和部门。
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                                name="action_open_enterprise_users"
+                                class="oe_stat_button"
+                                icon="fa-users"
+                                string="用户设置">
+                            <field name="sc_user_count" widget="statinfo" string="用户数"/>
+                        </button>
                     </div>
                     <group>
                         <field name="name"/>

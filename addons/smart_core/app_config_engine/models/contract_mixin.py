@@ -38,11 +38,39 @@ class ContractSchemaMixin(models.AbstractModel):
         common = self._allowed_keys_common()
         specific = self._allowed_keys_by_view(vt)
         keep = set(common) | set(specific)
+        structural_keys = {
+            'type',
+            'name',
+            'string',
+            'label',
+            'attributes',
+            'children',
+            'tabs',
+            'pages',
+            'items',
+            'nodes',
+            'fieldInfo',
+            'cols',
+            'colspan',
+            'buttonType',
+            'icon',
+            'widget',
+            'field',
+            'states',
+            'enabled',
+            'columns',
+            'tree',
+            'form',
+            'policies',
+            'template_qweb',
+            'quick_create',
+            'stages_field',
+        }
 
         def _prune(obj):
             if isinstance(obj, dict):
                 return {k: _prune(v) for k, v in obj.items()
-                        if (k in keep) or not isinstance(v, (dict, list))}
+                        if (k in keep) or (k in structural_keys) or not isinstance(v, (dict, list))}
             if isinstance(obj, list):
                 return [_prune(x) for x in obj]
             return obj

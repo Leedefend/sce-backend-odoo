@@ -3,12 +3,28 @@
         <field name="name">公司信息</field>
         <field name="res_model">res.company</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_enterprise_base.view_company_tree_enterprise_base"/>
         <field name="search_view_id" ref="smart_enterprise_base.view_company_search_enterprise_base"/>
+        <field name="context">{'form_view_ref': 'smart_enterprise_base.view_company_form_enterprise_base'}</field>
         <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
         <field name="help" type="html">
             <p>从这里统一创建和维护公司信息，后续组织、用户、项目都归属到公司。</p>
             <p>建议先完成公司保存，再点击公司内的“组织架构”进入下一步。</p>
         </field>
+    </record>
+
+    <record id="action_enterprise_company_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="smart_enterprise_base.view_company_tree_enterprise_base"/>
+        <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_company"/>
+    </record>
+
+    <record id="action_enterprise_company_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_enterprise_base.view_company_form_enterprise_base"/>
+        <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_company"/>
     </record>
 
     <record id="action_enterprise_department" model="ir.actions.act_window">
@@ -21,7 +37,21 @@
         <field name="context">{}</field>
         <field name="help" type="html">
             <p>从这里统一维护组织架构，所有部门都必须归属到公司。</p>
-            <p>推荐路径：先创建一级部门，再继续补二级、三级部门。</p>
+            <p>推荐路径：先创建一级部门，再继续补二级、三级部门，最后进入用户设置。</p>
+        </field>
+    </record>
+
+    <record id="action_enterprise_user" model="ir.actions.act_window">
+        <field name="name">用户设置</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_enterprise_base.view_users_tree_enterprise_base"/>
+        <field name="search_view_id" ref="smart_enterprise_base.view_users_search_enterprise_base"/>
+        <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p>从这里统一维护用户主数据，让公司、组织和负责人关系真正落到人。</p>
+            <p>本页只承接基础资料，不替代角色、安全和高级权限原生页面。</p>
         </field>
     </record>
 
@@ -43,5 +73,12 @@
               parent="menu_enterprise_base_root"
               action="action_enterprise_department"
               sequence="20"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_enterprise_user"
+              name="用户设置"
+              parent="menu_enterprise_base_root"
+              action="action_enterprise_user"
+              sequence="30"
               groups="base.group_system"/>
 </odoo>

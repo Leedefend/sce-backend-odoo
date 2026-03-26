@@ -185,6 +185,46 @@ def _sample_kanban_payload():
     }
 
 
+def _sample_company_form_payload():
+    return {
+        "head": {"model": "res.company", "view_type": "tree,form"},
+        "render_profile": "create",
+        "views": {
+            "form": {
+                "layout": [
+                    {"type": "sheet", "children": [
+                        {"type": "field", "name": "name", "fieldInfo": {"label": "Company Name"}},
+                        {"type": "field", "name": "sc_short_name", "fieldInfo": {"label": "Short Name"}},
+                        {"type": "field", "name": "sc_credit_code", "fieldInfo": {"label": "Credit Code"}},
+                        {"type": "field", "name": "sc_contact_phone", "fieldInfo": {"label": "Phone"}},
+                        {"type": "field", "name": "sc_address", "fieldInfo": {"label": "Address"}},
+                        {"type": "field", "name": "sc_is_active", "fieldInfo": {"label": "Active"}},
+                        {"type": "field", "name": "currency_id", "fieldInfo": {"label": "Currency"}},
+                    ]},
+                ]
+            }
+        },
+        "fields": {
+            "name": {"string": "公司名称", "type": "char", "required": True, "readonly": False},
+            "sc_short_name": {"string": "公司简称", "type": "char", "required": False, "readonly": False},
+            "sc_credit_code": {"string": "统一社会信用代码", "type": "char", "required": False, "readonly": False},
+            "sc_contact_phone": {"string": "联系电话", "type": "char", "required": False, "readonly": False},
+            "sc_address": {"string": "地址", "type": "char", "required": False, "readonly": False},
+            "sc_is_active": {"string": "启用", "type": "boolean", "required": False, "readonly": False},
+            "currency_id": {"string": "货币", "type": "many2one", "required": False, "readonly": False},
+        },
+        "toolbar": {
+            "header": [
+                {"key": "open_companies", "label": "Companies", "kind": "open"},
+            ]
+        },
+        "buttons": [
+            {"key": "apply_defaults", "label": "Apply", "kind": "object", "level": "header"},
+            {"key": "inalterability", "label": "Data Inalterability Check", "kind": "object", "level": "header"},
+        ],
+    }
+
+
 class TestProjectFormGovernance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -218,6 +258,40 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("manager_id", visible_fields)
         self.assertIn("budget_total", visible_fields)
         self.assertNotIn("create_uid", visible_fields)
+
+    def test_user_mode_governs_enterprise_company_create_form(self):
+        data = _sample_company_form_payload()
+        out = apply_contract_governance(data, "user")
+
+        self.assertEqual(out.get("visible_fields"), [
+            "name",
+            "sc_short_name",
+            "sc_credit_code",
+            "sc_contact_phone",
+            "sc_address",
+            "sc_is_active",
+        ])
+
+        layout = ((out.get("views") or {}).get("form") or {}).get("layout") or []
+        self.assertEqual(len(layout), 1)
+        sheet = layout[0]
+        self.assertEqual(sheet.get("type"), "sheet")
+        group = (sheet.get("children") or [])[0]
+        self.assertEqual(group.get("string"), "企业基础信息")
+        field_nodes = group.get("children") or []
+        self.assertEqual([node.get("name") for node in field_nodes], [
+            "name",
+            "sc_short_name",
+            "sc_credit_code",
+            "sc_contact_phone",
+            "sc_address",
+            "sc_is_active",
+        ])
+        self.assertEqual(field_nodes[0].get("string"), "公司名称")
+        self.assertEqual(field_nodes[1].get("string"), "公司简称")
+
+        self.assertEqual((out.get("toolbar") or {}).get("header"), [])
+        self.assertEqual(out.get("buttons"), [])
         self.assertNotIn("message_ids", visible_fields)
         form_profile = out.get("form_profile") or {}
         self.assertIsInstance(form_profile, dict)

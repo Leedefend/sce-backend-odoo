@@ -306,6 +306,8 @@
       :search-term="searchTerm"
       :subtitle="vm.page.subtitle"
       :status-label="vm.page.statusLabel"
+      :primary-action-label="listPrimaryActionLabel"
+      :on-primary-action="listPrimaryAction"
       :scene-key="vm.page.sceneKey"
       :page-mode="vm.page.pageMode"
       :record-count="recordCount"
@@ -391,7 +393,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { batchUpdateRecords, exportRecordsCsv, listRecordsRaw } from '../api/data';
 import { executeButton } from '../api/executeButton';
@@ -414,6 +416,7 @@ import { describeSuggestedAction, runSuggestedAction } from '../composables/useS
 import {
   parseContractContextRaw,
   resolveContractAccessPolicy,
+  resolveContractRights,
   resolveContractReadRight,
   resolveContractViewMode,
 } from '../app/contractActionRuntime';
@@ -424,6 +427,7 @@ import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRef
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
+import { pickContractNavQuery } from '../app/navigationContext';
 import { useActionViewActionRuntime } from '../app/action_runtime/useActionViewActionRuntime';
 import { useActionViewBatchRuntime } from '../app/action_runtime/useActionViewBatchRuntime';
 import { useActionViewSelectionRuntime } from '../app/action_runtime/useActionViewSelectionRuntime';
@@ -1010,7 +1014,6 @@ const {
   pageText,
 });
 
-const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
 const contractViewType = ref('');
 const contractReadAllowed = ref(true);
@@ -1018,9 +1021,24 @@ const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
+const model = computed(() => {
+  const actionModel = String(actionMeta.value?.model || '').trim();
+  if (actionModel) return actionModel;
+  const resolvedModel = String(resolvedModelRef.value || '').trim();
+  if (resolvedModel) return resolvedModel;
+  const contractModel = String(actionContract.value?.head?.model || actionContract.value?.model || '').trim();
+  return contractModel;
+});
+const contractRights = computed(() => resolveContractRights(actionContract.value));
+const enterpriseBootstrapCreateLabel = computed(() => {
+  if (vm.value.content.kind !== 'list') return '';
+  if (model.value === 'res.company') return '新建公司';
+  if (model.value === 'hr.department') return '新建部门';
+  if (model.value === 'res.users') return '新建用户';
+  return '';
+});
 const canBatchDelete = computed(() => {
-  const unlinkRight = actionContract.value?.permissions?.effective?.rights?.unlink;
-  return unlinkRight === true && viewMode.value === 'list';
+  return contractRights.value.unlink === true && viewMode.value === 'list';
 });
 const activeGroupByField = ref('');
 const {
@@ -1359,6 +1377,56 @@ const { vm } = useActionPageModel({
       routeFullPath: computed(() => route.fullPath),
     },
   },
+});
+
+const canCreateListRecord = computed(() => {
+  const bootstrapCreate = Boolean(enterpriseBootstrapCreateLabel.value);
+  return vm.value.content.kind === 'list'
+    && nativeFallbackPolicy.value.recommendedRuntime !== 'native'
+    && Boolean(model.value)
+    && (contractRights.value.create === true || bootstrapCreate);
+});
+const listPrimaryActionLabel = computed(() => {
+  if (!canCreateListRecord.value) return '';
+  if (enterpriseBootstrapCreateLabel.value) return enterpriseBootstrapCreateLabel.value;
+  return '新建记录';
+});
+function openListCreateForm() {
+  if (!canCreateListRecord.value || !model.value) return;
+  router.push({
+    name: 'model-form',
+    params: { model: model.value, id: 'new' },
+    query: pickContractNavQuery(route.query as Record<string, unknown>, {
+      action_id: actionId.value || undefined,
+    }),
+  });
+}
+const listPrimaryAction = computed(() => (canCreateListRecord.value ? openListCreateForm : null));
+
+watchEffect(() => {
+  if (typeof window === 'undefined') return;
+  (window as Window & { __scActionDebug?: Record<string, unknown> }).__scActionDebug = {
+    actionId: actionId.value,
+    contractViewType: contractViewType.value,
+    availableViewModes: availableViewModes.value,
+    preferredViewMode: preferredViewMode.value,
+    viewMode: viewMode.value,
+    model: model.value,
+    resolvedModel: resolvedModelRef.value,
+    pageMode: pageMode.value,
+    contentKind: vm.value.content.kind,
+    canCreateListRecord: canCreateListRecord.value,
+    listPrimaryActionLabel: listPrimaryActionLabel.value,
+    nativeFallbackRecommendedRuntime: nativeFallbackPolicy.value.recommendedRuntime,
+    contractCreateRight: contractRights.value.create,
+    contractHeadViewType: actionContract.value?.head?.view_type,
+    contractNestedHeadViewType: (actionContract.value as Record<string, unknown> | null)?.ui_contract
+      && typeof (actionContract.value as Record<string, unknown>).ui_contract === 'object'
+      ? ((actionContract.value as Record<string, unknown>).ui_contract as Record<string, unknown>)?.head && typeof ((actionContract.value as Record<string, unknown>).ui_contract as Record<string, unknown>).head === 'object'
+        ? (((((actionContract.value as Record<string, unknown>).ui_contract as Record<string, unknown>).head as Record<string, unknown>).view_type) || '')
+        : ''
+      : '',
+  };
 });
 
 const {

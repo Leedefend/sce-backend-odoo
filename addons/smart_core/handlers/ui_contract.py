@@ -383,18 +383,21 @@ class UiContractHandler(BaseIntentHandler):
             or render_profile in {"create", "edit", "readonly"}
         )
         if prefer_form_contract:
-            Action = self.env["ir.actions.act_window"].sudo().with_context(ctx)
+            action_ctx = dict(ctx or {})
+            action_ctx.setdefault("contract_action_id", action_id)
+            Action = self.env["ir.actions.act_window"].sudo().with_context(action_ctx)
             action = Action.browse(action_id)
             if action.exists() and action.res_model:
                 p_form = {
                     "subject": "model",
                     "model": action.res_model,
                     "view_type": "form",
+                    "action_id": action_id,
                     "with_data": False,
                 }
                 data, versions = ActionDispatcher(
                     self.env,
-                    api.Environment(self.env.cr, self.env.user.id, ctx),
+                    api.Environment(self.env.cr, self.env.user.id, action_ctx),
                 ).dispatch(p_form)
                 if isinstance(data, dict):
                     data["action_id"] = action_id
@@ -402,6 +405,8 @@ class UiContractHandler(BaseIntentHandler):
                     if isinstance(head, dict):
                         head.setdefault("view_type", "form")
                         head["action_id"] = action_id
+                        if not head.get("context") and action.context:
+                            head["context"] = _safe_eval_or(action.context, {})
                         data["head"] = head
                 cs = ContractService(self.env)
                 fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject": "action.form", "action_id": action_id}})
