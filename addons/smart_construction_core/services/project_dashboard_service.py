@@ -5,6 +5,9 @@ from odoo import fields
 
 from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter import CostTrackingNativeAdapter
 from odoo.addons.smart_construction_core.services.payment_slice_native_adapter import PaymentSliceNativeAdapter
+from odoo.addons.smart_construction_core.services.project_decision_engine_service import ProjectDecisionEngineService
+from odoo.addons.smart_construction_core.services.project_metrics_explain_service import ProjectMetricsExplainService
+from odoo.addons.smart_construction_core.services.project_state_explain_service import ProjectStateExplainService
 
 from .project_dashboard_builders import BUILDERS
 
@@ -28,6 +31,9 @@ class ProjectDashboardService:
         self.env = env
         self._cost_adapter = CostTrackingNativeAdapter(env)
         self._payment_adapter = PaymentSliceNativeAdapter(env)
+        self._decision_engine = ProjectDecisionEngineService(env)
+        self._state_explain_service = ProjectStateExplainService(env)
+        self._metrics_explain_service = ProjectMetricsExplainService(env)
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
 
@@ -279,31 +285,105 @@ class ProjectDashboardService:
         }
 
     def build_state_explain(self, project):
+        state_explain = self._state_explain_service.build(project)
         if not project:
             return {
-                "stage_explain": "当前没有可用项目，无法进入项目驾驶舱。",
+                "stage_label": state_explain.get("stage_label") or "未选择项目",
+                "stage_explain": state_explain.get("stage_explain") or "当前没有可用项目，无法进入项目驾驶舱。",
                 "milestone_explain": "暂无项目里程碑。",
-                "status_explain": "请先选择项目或创建项目。",
+                "status_explain": state_explain.get("status_explain") or "请先选择项目或创建项目。",
             }
-        lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
         milestone = str(getattr(project, "sc_execution_state", "") or "").strip().lower()
-        status = str(getattr(project, "health_state", "") or getattr(project, "state", "") or "").strip()
-        stage_explain_map = {
-            "draft": "项目已创建，当前处于主线启动阶段。",
-            "in_progress": "项目已进入执行主线，当前重点是形成任务、成本与付款事实。",
-            "closing": "项目已进入收口阶段，应优先检查结算前置条件。",
-            "warranty": "项目处于收尾/质保阶段，需持续跟踪尾项与结算状态。",
-            "done": "项目主线已完成，当前以复核经营结果为主。",
-        }
         milestone_explain_map = {
             "ready": "当前执行准备已完成，可以进入执行推进。",
             "in_progress": "当前执行正在推进，建议优先补齐成本与付款事实。",
             "done": "当前执行动作已完成，可继续检查成本、付款与结算结果。",
         }
         return {
-            "stage_explain": stage_explain_map.get(lifecycle_state, "当前项目处于已发布主线中，请按下一步动作推进。"),
+            "stage_label": state_explain.get("stage_label") or "未设置阶段",
+            "stage_explain": state_explain.get("stage_explain") or "当前项目处于已发布主线中，请按下一步动作推进。",
             "milestone_explain": milestone_explain_map.get(milestone, "当前里程碑尚未进入显式执行状态。"),
-            "status_explain": status or "当前项目状态正常。",
+            "status_explain": state_explain.get("status_explain") or "当前项目状态正常。",
+        }
+
+    def build_metrics_explain(self, project):
+        return self._metrics_explain_service.build(self.project_payload(project))
+
+    def build_flow_map(self, project):
+        project_payload = self.project_payload(project)
+        decision = self._decision_engine.decide(project)
+        signals = (decision.get("facts") or {}).get("signals") or {}
+        lifecycle_state = str(project_payload.get("lifecycle_state") or "").strip().lower()
+        facts = decision.get("facts") or {}
+        payment_count = int(facts.get("payment_count") or 0)
+        cost_count = int(facts.get("cost_count") or 0)
+
+        current_stage = "initiation"
+        if lifecycle_state == "draft":
+            current_stage = "initiation"
+        elif lifecycle_state in {"closing", "warranty", "done"}:
+            current_stage = "settlement"
+        elif payment_count > 0:
+            current_stage = "payment"
+        elif cost_count > 0:
+            current_stage = "cost"
+        elif lifecycle_state in {"in_progress"}:
+            current_stage = "execution"
+        elif signals.get("payment_exceeds_cost") or signals.get("ready_for_settlement"):
+            current_stage = "settlement"
+
+        stage_order = ["initiation", "execution", "cost", "payment", "settlement"]
+        stage_labels = {
+            "initiation": "立项",
+            "execution": "执行",
+            "cost": "成本",
+            "payment": "付款",
+            "settlement": "结算",
+        }
+        current_index = stage_order.index(current_stage)
+        items = []
+        for index, key in enumerate(stage_order):
+            status = "done" if index < current_index else "current" if index == current_index else "todo"
+            items.append(
+                {
+                    "key": key,
+                    "label": stage_labels.get(key) or key,
+                    "status": status,
+                }
+            )
+        return {
+            "current_stage": current_stage,
+            "items": items,
+        }
+
+    def build_completion(self, project):
+        decision = self._decision_engine.decide(project)
+        facts = decision.get("facts") or {}
+        signals = facts.get("signals") or {}
+        lifecycle_state = str(facts.get("lifecycle_state") or "").strip().lower()
+        percent = 20
+        next_target = "进入执行"
+        if signals.get("is_draft"):
+            percent = 20
+            next_target = "开始执行"
+        elif lifecycle_state in {"closing", "warranty", "done"}:
+            percent = 90
+            next_target = "完成结算确认"
+        elif signals.get("no_tasks"):
+            percent = 35
+            next_target = "创建任务"
+        elif signals.get("no_cost"):
+            percent = 50
+            next_target = "完成成本录入"
+        elif signals.get("no_payment"):
+            percent = 70
+            next_target = "完成付款记录"
+        elif signals.get("ready_for_settlement") or signals.get("payment_exceeds_cost"):
+            percent = 85
+            next_target = "完成结算检查"
+        return {
+            "percent": percent,
+            "next_target": next_target,
         }
 
     @staticmethod

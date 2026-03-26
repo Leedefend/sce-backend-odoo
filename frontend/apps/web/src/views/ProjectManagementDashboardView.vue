@@ -10,15 +10,25 @@
       <header class="hero-card">
         <div>
           <p class="eyebrow">{{ currentSceneLabel }}</p>
-          <h1>{{ entry?.title || '项目生命周期工作台' }}</h1>
+          <h1>{{ dashboardHeadline.title || '项目生命周期工作台' }}</h1>
           <p class="hero-subtitle">项目 ID {{ entry?.project_id || '-' }}</p>
           <p class="hero-state">{{ currentStateText }}</p>
           <p class="hero-next">{{ nextStepText }}</p>
         </div>
-        <button type="button" class="ghost-button" @click="refreshAllBlocks">刷新区块</button>
+        <div class="hero-actions">
+          <label v-if="isDashboardSurface && projectSwitcherOptions.length" class="project-switcher">
+            <span>切换项目</span>
+            <select :value="String(currentProjectId || 0)" @change="handleProjectSwitch">
+              <option v-for="item in projectSwitcherOptions" :key="item.project_id" :value="String(item.project_id)">
+                {{ item.project_name }} · {{ item.stage_label || '未设阶段' }}
+              </option>
+            </select>
+          </label>
+          <button type="button" class="ghost-button" @click="refreshAllBlocks">刷新区块</button>
+        </div>
       </header>
 
-      <section v-if="currentSceneKey === 'project.dashboard'" class="state-explain-card">
+      <section v-if="isDashboardSurface" class="state-explain-card">
         <article class="state-explain-item">
           <span class="state-explain-label">阶段说明</span>
           <strong>{{ stateExplain.stageExplain }}</strong>
@@ -33,15 +43,40 @@
         </article>
       </section>
 
+      <section v-if="isDashboardSurface" class="flow-map-card">
+        <div class="flow-map-header">
+          <div>
+            <span class="state-explain-label">流程地图</span>
+            <strong>当前主线位置：{{ currentFlowLabel }}</strong>
+          </div>
+          <div class="completion-pill">
+            <strong>{{ completion.percent }}%</strong>
+            <span>下一目标：{{ completion.nextTarget }}</span>
+          </div>
+        </div>
+        <div class="flow-map-track">
+          <div v-for="item in flowMapItems" :key="item.key" class="flow-map-step" :data-status="item.status">
+            <span class="flow-map-dot">{{ item.dot }}</span>
+            <strong>{{ item.label }}</strong>
+          </div>
+        </div>
+      </section>
+
       <section v-if="transitionFeedback" class="feedback-banner" :data-variant="transitionFeedback.variant">
         <strong>{{ transitionFeedback.title }}</strong>
         <p>{{ transitionFeedback.message }}</p>
       </section>
 
       <section class="summary-card">
+        <div v-if="isDashboardSurface" class="summary-item summary-item-highlight">
+          <span class="summary-label">当前项目概览</span>
+          <strong class="summary-value">{{ dashboardHeadline.title }}</strong>
+          <p class="summary-copy">{{ dashboardHeadline.subtitle }}</p>
+        </div>
         <div v-for="item in summaryRows" :key="item.key" class="summary-item">
           <span class="summary-label">{{ item.label }}</span>
           <strong class="summary-value">{{ item.value }}</strong>
+          <p v-if="item.copy" class="summary-copy">{{ item.copy }}</p>
         </div>
       </section>
 
@@ -80,8 +115,14 @@
                 <span>未闭环 {{ riskSummary.openCount }}</span>
               </div>
               <div v-for="item in riskAlerts" :key="item.code" class="risk-alert">
-                <strong>{{ item.title }}</strong>
-                <p>{{ item.description }}</p>
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.description }}</p>
+                  <p class="risk-impact">影响：{{ item.impact }}</p>
+                  <p v-if="item.affectsAction" class="risk-action-copy">关联动作：{{ item.affectsAction }}</p>
+                  <p class="risk-action-copy">建议动作：{{ item.recommendedAction }}</p>
+                </div>
+                <span class="action-state" :data-tone="item.levelTone">{{ item.levelLabel }}</span>
               </div>
             </section>
 
@@ -207,7 +248,28 @@
             </section>
 
             <section v-else-if="descriptor.key === 'next_actions'" class="action-list">
-              <div v-for="item in nextActions" :key="item.key" class="action-card">
+              <div v-if="primaryAction" class="action-card action-card-primary">
+                <div>
+                  <div class="action-title-row">
+                    <strong>{{ primaryAction.label }}</strong>
+                    <span class="recommended-badge">主推荐</span>
+                  </div>
+                  <p>{{ primaryAction.hint }}</p>
+                  <p v-if="primaryAction.reason" class="action-reason">{{ primaryAction.reason }}</p>
+                </div>
+                <div class="action-side">
+                  <span class="action-state" :data-tone="primaryAction.stateTone">{{ primaryAction.stateLabel }}</span>
+                  <button
+                    type="button"
+                    class="primary-button"
+                    :disabled="primaryAction.disabled"
+                    @click="runAction(primaryAction)"
+                  >
+                    {{ primaryAction.buttonLabel }}
+                  </button>
+                </div>
+              </div>
+              <div v-for="item in secondaryActions" :key="item.key" class="action-card">
                 <div>
                   <div class="action-title-row">
                     <strong>{{ item.label }}</strong>
@@ -305,6 +367,7 @@ type ActionCard = {
   label: string;
   hint: string;
   reason: string;
+  advancesToStage: string;
   intent: string;
   params: Record<string, unknown>;
   state: string;
@@ -313,6 +376,23 @@ type ActionCard = {
   buttonLabel: string;
   disabled: boolean;
   recommended: boolean;
+};
+
+type SummaryItem = {
+  key: string;
+  label: string;
+  value: string;
+  copy?: string;
+};
+
+type ProjectSwitchOption = {
+  project_id: number;
+  project_name: string;
+  stage_label: string;
+  milestone_label: string;
+  status: string;
+  active?: boolean;
+  project_context?: Record<string, unknown>;
 };
 
 type DashboardActionRow = Record<string, unknown> & {
@@ -350,6 +430,7 @@ const paymentEntryForm = ref({
   description: '',
 });
 const paymentEntrySubmitting = ref(false);
+const projectSwitcherOptions = ref<ProjectSwitchOption[]>([]);
 
 const SCENE_ENTRY_INTENTS: Record<string, string> = {
   'project.dashboard': 'project.dashboard.enter',
@@ -373,7 +454,58 @@ const currentProjectContext = computed<Record<string, unknown>>(() => {
   return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
 });
 
+const flowMap = computed<Record<string, unknown>>(() => {
+  const raw = entry.value?.flow_map;
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+});
+
+const flowMapItems = computed(() => {
+  const rows = Array.isArray(flowMap.value.items) ? flowMap.value.items : [];
+  return rows.map((item) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const status = asText(row.status || 'todo') || 'todo';
+    return {
+      key: asText(row.key || ''),
+      label: asText(row.label || row.key || ''),
+      status,
+      dot: status === 'done' ? '✔' : status === 'current' ? '●' : '○',
+    };
+  });
+});
+
+const currentFlowLabel = computed(() => {
+  return flowMapItems.value.find((item) => item.status === 'current')?.label || '未识别';
+});
+
+const completion = computed(() => {
+  const raw = entry.value?.completion;
+  const data = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  return {
+    percent: asNumber(data.percent || 0),
+    nextTarget: asText(data.next_target || '') || '继续推进主线',
+  };
+});
+
+const metricsExplainMap = computed<Record<string, { status: string; explain: string }>>(() => {
+  const raw = Array.isArray(entry.value?.metrics_explain) ? entry.value?.metrics_explain : [];
+  return raw.reduce<Record<string, { status: string; explain: string }>>((acc, item) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const key = asText(row.key || '');
+    if (!key) return acc;
+    acc[key] = {
+      status: asText(row.status || 'normal') || 'normal',
+      explain: asText(row.explain || '') || '',
+    };
+    return acc;
+  }, {});
+});
+
 const currentProjectId = computed(() => asNumber(currentProjectContext.value.project_id || entry.value?.project_id || 0));
+const isDashboardSurface = computed(() => {
+  return route.path === '/s/project.management'
+    || currentSceneKey.value === 'project.dashboard'
+    || currentSceneKey.value === 'project.management';
+});
 
 const currentSceneLabel = computed(() => {
   return asText(entry.value?.scene_label || '') || '项目场景';
@@ -381,7 +513,7 @@ const currentSceneLabel = computed(() => {
 
 const blockDescriptors = computed(() => entry.value?.blocks || []);
 
-const summaryRows = computed(() => {
+const summaryRows = computed<SummaryItem[]>(() => {
   const summary = (entry.value?.summary && typeof entry.value.summary === 'object') ? entry.value.summary : {};
   if (currentSceneKey.value === 'cost.tracking') {
     const total = asNumber(summary.cost_total_amount);
@@ -407,15 +539,14 @@ const summaryRows = computed(() => {
       { key: 'draft_payment_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_payment_amount)} ${currency}` : `${asNumber(summary.draft_payment_amount)}` },
     ];
   }
-  if (currentSceneKey.value === 'project.dashboard') {
+  if (isDashboardSurface.value) {
     return [
-      { key: 'project_name', label: '项目名称', value: asText(currentProjectContext.value.project_name || entry.value?.title || '--') || '--' },
-      { key: 'stage_label', label: '当前阶段', value: asText(currentProjectContext.value.stage_label || summary.stage_name || '--') || '--' },
-      { key: 'milestone_label', label: '当前里程碑', value: asText(currentProjectContext.value.milestone_label || '--') || '--' },
-      { key: 'status', label: '当前状态', value: asText(currentProjectContext.value.status || summary.status || '--') || '--' },
-      { key: 'progress_percent', label: '执行进度', value: `${asNumber(summary.progress_percent)}%` },
-      { key: 'cost_total', label: '成本合计', value: `${asNumber(summary.cost_total)}` },
-      { key: 'payment_total', label: '付款合计', value: `${asNumber(summary.payment_total)}` },
+      { key: 'stage_label', label: '当前阶段', value: asText(currentProjectContext.value.stage_label || summary.stage_name || '--') || '--', copy: '主流程位置' },
+      { key: 'milestone_label', label: '当前里程碑', value: asText(currentProjectContext.value.milestone_label || '--') || '--', copy: '执行推进节点' },
+      { key: 'progress_percent', label: '执行进度', value: `${asNumber(summary.progress_percent)}%`, copy: metricsExplainMap.value.progress?.explain || '任务与里程碑综合进度' },
+      { key: 'cost_total', label: '成本合计', value: `${asNumber(summary.cost_total)}`, copy: metricsExplainMap.value.cost?.explain || '当前经营事实' },
+      { key: 'payment_total', label: '付款合计', value: `${asNumber(summary.payment_total)}`, copy: metricsExplainMap.value.payment?.explain || '当前资金事实' },
+      { key: 'status', label: '当前状态', value: asText(currentProjectContext.value.status || summary.status || '--') || '--', copy: '系统综合判断' },
     ];
   }
   return [
@@ -427,6 +558,16 @@ const summaryRows = computed(() => {
     { key: 'date_start', label: '计划开始', value: asText(summary.date_start || '--') || '--' },
     { key: 'date_end', label: '计划结束', value: asText(summary.date_end || '--') || '--' },
   ];
+});
+
+const dashboardHeadline = computed(() => {
+  const projectName = asText(currentProjectContext.value.project_name || entry.value?.title || '--') || '--';
+  const stageLabel = asText(currentProjectContext.value.stage_label || '--') || '--';
+  const milestoneLabel = asText(currentProjectContext.value.milestone_label || '--') || '--';
+  return {
+    title: projectName,
+    subtitle: `当前处于 ${stageLabel} · ${milestoneLabel}，驾驶舱会给出推荐动作与风险提示。`,
+  };
 });
 
 const stateExplain = computed(() => {
@@ -498,12 +639,19 @@ const riskAlerts = computed(() => {
   return alerts.map((item, index) => {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     const hint = asText(row.hint || '');
+    const level = asText(row.level || 'info');
     return {
       code: asText(row.code || `risk_${index + 1}`),
       title: asText(row.title || row.code || '风险提醒'),
       description: hint || `当前值 ${asNumber(row.value)}`,
+      impact: asText(row.impact || '') || '当前问题会影响主线推进，请优先关注。',
+      affectsAction: asText(row.action_key || '') || '',
+      recommendedAction: asText(row.recommended_action || '') || '按驾驶舱推荐动作继续推进。',
+      levelLabel: level === 'danger' ? '阻断' : level === 'warning' ? '预警' : '提示',
+      levelTone: level === 'danger' ? 'warning' : level === 'warning' ? 'info' : 'success',
+      sortWeight: level === 'danger' ? 0 : level === 'warning' ? 1 : 2,
     };
-  });
+  }).sort((left, right) => left.sortWeight - right.sortWeight);
 });
 
 function taskRows(blockKey: string) {
@@ -737,6 +885,7 @@ const nextActions = computed<ActionCard[]>(() => {
       label: asText(row.label || row.key || '下一步动作'),
       hint: actionHint(row),
       reason,
+      advancesToStage: asText(row.advances_to_stage || ''),
       intent,
       params: (row.params && typeof row.params === 'object') ? row.params as Record<string, unknown> : {},
       state,
@@ -750,6 +899,15 @@ const nextActions = computed<ActionCard[]>(() => {
     if (left.recommended !== right.recommended) return left.recommended ? -1 : 1;
     return 0;
   });
+});
+
+const primaryAction = computed<ActionCard | null>(() => {
+  return nextActions.value.find((item) => item.recommended) || nextActions.value[0] || null;
+});
+
+const secondaryActions = computed<ActionCard[]>(() => {
+  const primaryKey = primaryAction.value?.key || '';
+  return nextActions.value.filter((item) => item.key !== primaryKey);
 });
 
 const currentStateText = computed(() => {
@@ -954,6 +1112,9 @@ async function loadEntry(intent: string, params: Record<string, unknown>) {
     resetRuntimeBlocks();
     pageStatus.value = 'ready';
     await refreshAllBlocks();
+    if (isDashboardSurface.value) {
+      await loadProjectSwitcherOptions();
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';
     if (intent === PROJECT_DASHBOARD_ENTRY_INTENT && message.includes('PROJECT_NOT_FOUND')) {
@@ -965,6 +1126,67 @@ async function loadEntry(intent: string, params: Record<string, unknown>) {
     errorTitle.value = '产品生命周期工作台加载失败';
     errorMessage.value = message;
   }
+}
+
+async function loadProjectSwitcherOptions() {
+  const fallbackContext = currentProjectContext.value;
+  const fallbackProjectId = asNumber(fallbackContext.project_id || 0);
+  const fallbackOption = fallbackProjectId > 0
+    ? {
+      project_id: fallbackProjectId,
+      project_name: asText(fallbackContext.project_name || `项目 ${fallbackProjectId}`),
+      stage_label: asText(fallbackContext.stage_label || ''),
+      milestone_label: asText(fallbackContext.milestone_label || ''),
+      status: asText(fallbackContext.status || ''),
+      active: true,
+      project_context: fallbackContext,
+    }
+    : null;
+  try {
+    const result = await intentRequest<{ options?: ProjectSwitchOption[] }>({
+      intent: 'project.entry.context.options',
+      params: {
+        project_context: currentProjectContext.value,
+      },
+      context: {
+        scene_key: currentSceneKey.value,
+        page_key: 'project.management.dashboard',
+        project_id: currentProjectId.value,
+      },
+    });
+    const remoteOptions = Array.isArray(result?.options) ? result.options : [];
+    const merged = new Map<number, ProjectSwitchOption>();
+    for (const item of remoteOptions) {
+      const projectId = asNumber(item?.project_id || 0);
+      if (projectId <= 0) continue;
+      merged.set(projectId, {
+        ...item,
+        active: projectId === currentProjectId.value || Boolean(item?.active),
+      });
+    }
+    if (fallbackOption && !merged.has(fallbackOption.project_id)) {
+      merged.set(fallbackOption.project_id, fallbackOption);
+    }
+    projectSwitcherOptions.value = Array.from(merged.values());
+  } catch {
+    projectSwitcherOptions.value = fallbackOption ? [fallbackOption] : [];
+  }
+}
+
+async function handleProjectSwitch(event: Event) {
+  const target = event.target as HTMLSelectElement | null;
+  const nextProjectId = Number(target?.value || 0);
+  if (nextProjectId <= 0 || nextProjectId === currentProjectId.value) return;
+  const option = projectSwitcherOptions.value.find((item) => Number(item.project_id || 0) === nextProjectId);
+  const nextContext = option?.project_context && typeof option.project_context === 'object'
+    ? option.project_context as Record<string, unknown>
+    : { project_id: nextProjectId };
+  transitionFeedback.value = {
+    variant: 'success',
+    title: '项目已切换',
+    message: `当前已切换到 ${option?.project_name || `项目 ${nextProjectId}` }。`,
+  };
+  await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_context: nextContext });
 }
 
 async function runAction(action: ActionCard) {
@@ -1003,9 +1225,11 @@ async function runAction(action: ActionCard) {
     transitionFeedback.value = {
       variant: blocked ? 'warning' : 'success',
       title: blocked ? '动作执行受阻' : '动作执行完成',
-      message: fromState && toState
-        ? `状态变化：${fromState} → ${toState}。${message || '已返回结果'}`
-        : `执行结果：${message || '已返回结果'}。`,
+      message: action.advancesToStage
+        ? `已推进到${action.advancesToStage}阶段。${message || '请继续按驾驶舱推荐动作推进。'}`
+        : fromState && toState
+          ? `状态变化：${fromState} → ${toState}。${message || '已返回结果'}`
+          : `执行结果：${message || '已返回结果'}。`,
     };
     if (asText(action.intent) === 'project.connection.transition' || asText(result.to_state || '')) {
       await loadEntry(PROJECT_DASHBOARD_ENTRY_INTENT, { project_context: currentProjectContext.value });
@@ -1159,6 +1383,28 @@ watch(
   padding: 20px 22px;
 }
 
+.hero-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.project-switcher {
+  display: grid;
+  gap: 6px;
+  color: #486581;
+  font-size: 12px;
+}
+
+.project-switcher select {
+  min-width: 240px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(22, 55, 89, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: #102a43;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   font-size: 12px;
@@ -1226,6 +1472,59 @@ watch(
   padding: 16px;
 }
 
+.flow-map-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.flow-map-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.completion-pill {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(11, 110, 79, 0.08);
+  color: #0b6e4f;
+}
+
+.flow-map-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.flow-map-step {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 12px 10px;
+  border-radius: 14px;
+  background: rgba(240, 244, 248, 0.72);
+  color: #627d98;
+}
+
+.flow-map-step[data-status='done'] {
+  background: rgba(11, 110, 79, 0.12);
+  color: #0b6e4f;
+}
+
+.flow-map-step[data-status='current'] {
+  background: rgba(24, 144, 255, 0.12);
+  color: #1f4b99;
+}
+
+.flow-map-dot {
+  font-size: 18px;
+  line-height: 1;
+}
+
 .state-explain-item {
   display: grid;
   gap: 6px;
@@ -1244,6 +1543,12 @@ watch(
   gap: 6px;
 }
 
+.summary-item-highlight {
+  grid-column: 1 / -1;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(16, 42, 67, 0.08);
+}
+
 .summary-label {
   font-size: 12px;
   color: #7b8794;
@@ -1251,6 +1556,12 @@ watch(
 
 .summary-value {
   color: #102a43;
+}
+
+.summary-copy {
+  margin: 0;
+  color: #627d98;
+  font-size: 13px;
 }
 
 .blocks-grid {
@@ -1386,11 +1697,23 @@ watch(
   font-size: 13px;
 }
 
+.action-card-primary {
+  border: 1px solid rgba(12, 126, 89, 0.22);
+  background: rgba(240, 255, 248, 0.92);
+}
+
 .risk-summary {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   color: #334e68;
+}
+
+.risk-impact,
+.risk-action-copy {
+  margin: 6px 0 0;
+  color: #486581;
+  font-size: 13px;
 }
 
 .action-side {

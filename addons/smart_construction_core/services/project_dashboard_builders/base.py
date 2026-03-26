@@ -139,6 +139,10 @@ class BaseProjectBlockBuilder:
         source="",
         recommended=False,
         reason="",
+        decision_source="",
+        decision_rule="",
+        advances_to_stage="",
+        priority_score=0,
     ):
         payload = dict(params or {})
         project_context = self._project_context(project)
@@ -160,6 +164,10 @@ class BaseProjectBlockBuilder:
             "source": str(source or ""),
             "recommended": bool(recommended),
             "reason": str(reason or ""),
+            "decision_source": str(decision_source or ""),
+            "decision_rule": str(decision_rule or ""),
+            "advances_to_stage": str(advances_to_stage or ""),
+            "priority_score": int(priority_score or 0),
         }
 
     def _envelope(self, *, state, visibility, data, error_code="", error_message=""):
