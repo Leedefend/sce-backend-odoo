@@ -32,9 +32,12 @@ class PaymentSliceSummaryBuilder(BaseProjectBlockBuilder):
                     "record_count": int(summary.get("request_count") or 0),
                     "draft_record_count": int(summary.get("draft_request_count") or 0),
                     "approved_record_count": int(summary.get("approved_request_count") or 0),
+                    "executed_record_count": int(summary.get("ledger_count") or 0),
+                    "executed_payment_amount": float(summary.get("executed_payment_amount") or 0.0),
                     "currency_name": str(summary.get("currency_name") or ""),
                     "scope": "project_linked_payment_request_only",
                     "latest_request_date": str(summary.get("latest_request_date") or ""),
+                    "latest_paid_at": str(summary.get("latest_paid_at") or ""),
                 }
             },
         )

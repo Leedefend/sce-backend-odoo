@@ -144,6 +144,9 @@ class PaymentSliceService:
             "payment_record_count": int(summary.get("request_count") or 0),
             "payment_total_amount": str(summary.get("total_payment_amount") or 0.0),
             "draft_payment_amount": str(summary.get("draft_payment_amount") or 0.0),
+            "executed_payment_record_count": int(summary.get("ledger_count") or 0),
+            "executed_payment_amount": str(summary.get("executed_payment_amount") or 0.0),
+            "latest_paid_at": _safe_text(summary.get("latest_paid_at") or ""),
             "currency_name": _safe_text(summary.get("currency_name") or ""),
             "today": str(fields.Date.today()),
         }
