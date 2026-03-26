@@ -29,6 +29,9 @@ class SystemInitPayloadBuilder:
         "role_surface_pruned",
         "role_surface_code",
     }
+    MINIMAL_EXT_FACT_KEYS = {
+        "enterprise_enablement",
+    }
 
     @staticmethod
     def _extract_scene_key_from_route(route: str) -> str:
@@ -112,6 +115,16 @@ class SystemInitPayloadBuilder:
         }
 
     @classmethod
+    def _build_minimal_ext_facts(cls, row: dict) -> dict:
+        ext_facts = row.get("ext_facts") if isinstance(row.get("ext_facts"), dict) else {}
+        minimal: dict = {}
+        for key in cls.MINIMAL_EXT_FACT_KEYS:
+            value = ext_facts.get(key)
+            if isinstance(value, dict) and value:
+                minimal[key] = value
+        return minimal
+
+    @classmethod
     def resolve_startup_scene_subset(cls, row: dict, *, params: dict | None = None) -> list[str]:
         init_meta = cls._build_minimal_init_meta(row if isinstance(row, dict) else {}, params=params)
         scene_subset = init_meta.get("scene_subset") if isinstance(init_meta.get("scene_subset"), list) else []
@@ -159,6 +172,9 @@ class SystemInitPayloadBuilder:
             "version": version,
             "init_meta": init_meta,
         }
+        minimal_ext_facts = cls._build_minimal_ext_facts(row)
+        if minimal_ext_facts:
+            minimal["ext_facts"] = minimal_ext_facts
         if isinstance(row.get("delivery_engine_v1"), dict):
             minimal["delivery_engine_v1"] = row.get("delivery_engine_v1")
         if isinstance(row.get("edition_runtime_v1"), dict):
