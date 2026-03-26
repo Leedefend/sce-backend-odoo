@@ -1322,6 +1322,45 @@ verify.payment_fact_consistency.v1: guard.prod.forbid check-compose-project chec
 	@bash scripts/verify/payment_fact_consistency_guard.sh
 	@echo "[OK] verify.payment_fact_consistency.v1 done"
 
+.PHONY: verify.payment_evidence_guard
+verify.payment_evidence_guard: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/payment_evidence_guard.sh
+	@echo "[OK] verify.payment_evidence_guard done"
+
+.PHONY: verify.cost_evidence_guard
+verify.cost_evidence_guard: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/cost_evidence_guard.sh
+	@echo "[OK] verify.cost_evidence_guard done"
+
+.PHONY: verify.settlement_evidence_guard
+verify.settlement_evidence_guard: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/settlement_evidence_guard.sh
+	@echo "[OK] verify.settlement_evidence_guard done"
+
+.PHONY: verify.evidence_chain_project
+verify.evidence_chain_project: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/evidence_chain_project_guard.sh
+	@echo "[OK] verify.evidence_chain_project done"
+
+.PHONY: verify.intent.evidence_trace
+verify.intent.evidence_trace: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/intent_evidence_trace_guard.sh
+	@echo "[OK] verify.intent.evidence_trace done"
+
+.PHONY: verify.project_dashboard_evidence_contract
+verify.project_dashboard_evidence_contract: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/project_dashboard_evidence_contract_guard.sh
+	@echo "[OK] verify.project_dashboard_evidence_contract done"
+
+.PHONY: verify.demo.evidence_completeness
+verify.demo.evidence_completeness: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/demo_evidence_completeness_guard.sh
+	@echo "[OK] verify.demo.evidence_completeness done"
+
+.PHONY: verify.product.evidence_system.v1
+verify.product.evidence_system.v1: guard.prod.forbid verify.payment_evidence_guard verify.cost_evidence_guard verify.settlement_evidence_guard verify.evidence_chain_project verify.intent.evidence_trace verify.project_dashboard_evidence_contract verify.demo.evidence_completeness
+	@echo "[OK] verify.product.evidence_system.v1 done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 
