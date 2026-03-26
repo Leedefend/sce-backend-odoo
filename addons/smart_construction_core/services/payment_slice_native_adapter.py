@@ -44,6 +44,11 @@ class PaymentSliceNativeAdapter:
             return []
         return [self._request_payload(row) for row in rows]
 
+    def ledger_domain(self, project):
+        if not project or not self._has_fields("payment.ledger", ["project_id"]):
+            return [("id", "=", 0)]
+        return [("project_id", "=", int(project.id))]
+
     def summary(self, project):
         summary = {
             "project_id": int(getattr(project, "id", 0) or 0),
@@ -56,13 +61,17 @@ class PaymentSliceNativeAdapter:
             "total_payment_amount": 0.0,
             "draft_payment_amount": 0.0,
             "approved_payment_amount": 0.0,
+            "ledger_count": 0,
+            "executed_payment_amount": 0.0,
             "currency_name": "",
             "latest_request_date": "",
+            "latest_paid_at": "",
             "as_of_date": str(fields.Date.today()),
             "prepared_boundary": "project_payment_request_draft_tracking_only",
         }
         requests = self.recent_requests(project, limit=20)
         PaymentRequest = self._model("payment.request")
+        PaymentLedger = self._model("payment.ledger")
         if PaymentRequest is None or not project:
             summary["recent_requests"] = requests
             return summary
@@ -111,6 +120,29 @@ class PaymentSliceNativeAdapter:
                 "recent_requests": requests,
             }
         )
+        if PaymentLedger is not None and project:
+            PaymentLedger = PaymentLedger.sudo()
+            try:
+                ledgers = PaymentLedger.search(self.ledger_domain(project), order="paid_at desc,id desc")
+            except Exception:
+                ledgers = []
+            if ledgers:
+                executed_amount = 0.0
+                latest_paid_at = ""
+                for ledger in ledgers:
+                    executed_amount += round(float(getattr(ledger, "amount", 0.0) or 0.0), 2)
+                    if not latest_paid_at:
+                        latest_paid_at = str(getattr(ledger, "paid_at", "") or "")
+                    if not currency_name:
+                        currency_name = str(getattr(getattr(ledger, "currency_id", None), "name", "") or "")
+                summary.update(
+                    {
+                        "ledger_count": len(ledgers),
+                        "executed_payment_amount": round(executed_amount, 2),
+                        "latest_paid_at": latest_paid_at,
+                        "currency_name": currency_name,
+                    }
+                )
         return summary
 
     def _request_payload(self, request):

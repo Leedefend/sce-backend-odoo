@@ -546,6 +546,7 @@ const summaryRows = computed<SummaryItem[]>(() => {
       { key: 'progress_percent', label: '执行进度', value: `${asNumber(summary.progress_percent)}%`, copy: metricsExplainMap.value.progress?.explain || '任务与里程碑综合进度' },
       { key: 'cost_total', label: '成本合计', value: `${asNumber(summary.cost_total)}`, copy: metricsExplainMap.value.cost?.explain || '当前经营事实' },
       { key: 'payment_total', label: '付款合计', value: `${asNumber(summary.payment_total)}`, copy: metricsExplainMap.value.payment?.explain || '当前资金事实' },
+      { key: 'payment_executed_total', label: '已支付证据', value: `${asNumber(summary.payment_executed_total)}`, copy: `${asNumber(summary.payment_executed_record_count)} 条 payment.ledger 台账` },
       { key: 'status', label: '当前状态', value: asText(currentProjectContext.value.status || summary.status || '--') || '--', copy: '系统综合判断' },
     ];
   }
@@ -844,6 +845,8 @@ const paymentSummaryRows = computed(() => {
     { key: 'record_count', label: '记录数量', value: `${asNumber(summary.record_count)} 条` },
     { key: 'draft_record_count', label: '草稿记录', value: `${asNumber(summary.draft_record_count)} 条` },
     { key: 'approved_record_count', label: '已完成/批准', value: `${asNumber(summary.approved_record_count)} 条` },
+    { key: 'executed_record_count', label: '已支付台账', value: `${asNumber(summary.executed_record_count)} 条` },
+    { key: 'executed_payment_amount', label: '已支付证据金额', value: currency ? `${asNumber(summary.executed_payment_amount)} ${currency}` : `${asNumber(summary.executed_payment_amount)}` },
   ];
 });
 
@@ -857,13 +860,17 @@ const settlementSummaryRows = computed(() => {
   const delta = asNumber(summary.delta);
   const costCount = asNumber(summary.cost_record_count);
   const paymentCount = asNumber(summary.payment_record_count);
+  const executedPayment = asNumber(summary.executed_payment_amount);
+  const executedPaymentCount = asNumber(summary.executed_payment_record_count);
   const display = (value: number) => currency ? `${value} ${currency}` : `${value}`;
   return [
     { key: 'total_cost', label: '总成本', value: display(totalCost) },
     { key: 'total_payment', label: '总付款', value: display(totalPayment) },
+    { key: 'executed_payment_amount', label: '已支付证据', value: display(executedPayment) },
     { key: 'delta', label: '差额', value: display(delta) },
     { key: 'cost_record_count', label: '成本记录', value: `${costCount} 条` },
     { key: 'payment_record_count', label: '付款记录', value: `${paymentCount} 条` },
+    { key: 'executed_payment_record_count', label: '支付台账', value: `${executedPaymentCount} 条` },
   ];
 });
 

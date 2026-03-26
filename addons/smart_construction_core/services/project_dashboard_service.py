@@ -287,6 +287,8 @@ class ProjectDashboardService:
             "progress_percent": str(progress_percent),
             "cost_total": str(cost_summary.get("total_cost_amount") or 0.0),
             "payment_total": str(payment_summary.get("total_payment_amount") or 0.0),
+            "payment_executed_total": str(payment_summary.get("executed_payment_amount") or 0.0),
+            "payment_executed_record_count": str(payment_summary.get("ledger_count") or 0),
             "status": _safe_text(_safe_field(project, "health_state") or _safe_field(project, "state")),
             "date": str(fields.Date.today()),
         }

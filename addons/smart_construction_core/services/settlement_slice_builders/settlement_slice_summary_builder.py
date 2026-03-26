@@ -31,10 +31,12 @@ class SettlementSliceSummaryBuilder(BaseProjectBlockBuilder):
                     "carrier_models": list(summary.get("carrier_models") or []),
                     "total_cost": float(summary.get("total_cost") or 0.0),
                     "total_payment": float(summary.get("total_payment") or 0.0),
+                    "executed_payment_amount": float(summary.get("executed_payment_amount") or 0.0),
                     "delta": float(summary.get("delta") or 0.0),
                     "currency_name": str(summary.get("currency_name") or ""),
                     "cost_record_count": int(summary.get("cost_record_count") or 0),
                     "payment_record_count": int(summary.get("payment_record_count") or 0),
+                    "executed_payment_record_count": int(summary.get("executed_payment_record_count") or 0),
                     "scope": "project_cost_and_payment_read_only_summary",
                     "as_of_date": str(summary.get("as_of_date") or ""),
                 }
