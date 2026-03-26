@@ -28,6 +28,7 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
         priority_scores = decision.get("priority_scores") or {}
         primary_key = str(decision.get("primary_action_key") or "").strip()
         primary_reason = str(decision.get("reason") or "").strip()
+        primary_action_payload = decision.get("primary_action") or {}
         decision_source = str(decision.get("decision_source") or "rule_engine_v1").strip()
         decision_rule = str(decision.get("decision_rule") or "").strip()
         actions = [
@@ -177,6 +178,8 @@ class ProjectNextActionsBuilder(BaseProjectBlockBuilder):
                 row["reason"] = str(row.get("reason") or "").strip() or "当前项目已经进入主入口，建议先执行这一项以继续推进主线。"
                 row["decision_source"] = decision_source
                 row["decision_rule"] = decision_rule
+                row["risk_codes"] = list(primary_action_payload.get("risk_codes") or [])
+                row["evidence_refs"] = list(primary_action_payload.get("evidence_refs") or [])
         return self._envelope(
             state="ready",
             visibility=visibility,

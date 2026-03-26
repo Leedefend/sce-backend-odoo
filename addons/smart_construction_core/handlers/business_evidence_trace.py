@@ -39,15 +39,27 @@ class BusinessEvidenceTraceHandler(BaseIntentHandler):
                 },
             }
 
-        data = EvidenceChainService(self.env).build_chain(business_model, business_id)
+        evidence_chain = EvidenceChainService(self.env).build_chain(business_model, business_id)
+        timeline = self.env["sc.evidence.timeline.service"].build_timeline(business_model, business_id)
+        evidence_type = str((params or {}).get("evidence_type") or "").strip()
         return {
             "ok": True,
             "data": {
                 "business_model": business_model,
                 "business_id": business_id,
-                "evidence_chain": data.get("groups") or {},
-                "summary": data.get("summary") or {},
-                "evidence_refs": data.get("evidence_refs") or [],
+                "requested_evidence_type": evidence_type,
+                "trace_entry": {
+                    "intent": self.INTENT_TYPE,
+                    "payload": {
+                        "business_model": business_model,
+                        "business_id": business_id,
+                        "evidence_type": evidence_type,
+                    },
+                },
+                "evidence_chain": evidence_chain.get("groups") or {},
+                "summary": evidence_chain.get("summary") or {},
+                "evidence_refs": evidence_chain.get("evidence_refs") or [],
+                "timeline": timeline,
             },
             "meta": {
                 "intent": self.INTENT_TYPE,

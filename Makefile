@@ -1395,6 +1395,36 @@ verify.account_move_evidence_guard: guard.prod.forbid check-compose-project chec
 	@bash scripts/verify/account_move_evidence_guard.sh
 	@echo "[OK] verify.account_move_evidence_guard done"
 
+.PHONY: verify.evidence_trace_entry_contract
+verify.evidence_trace_entry_contract: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=trace_entry bash scripts/verify/evidence_consumption_runtime_guard.sh
+	@echo "[OK] verify.evidence_trace_entry_contract done"
+
+.PHONY: verify.evidence_timeline_contract
+verify.evidence_timeline_contract: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=timeline bash scripts/verify/evidence_consumption_runtime_guard.sh
+	@echo "[OK] verify.evidence_timeline_contract done"
+
+.PHONY: verify.risk_explainability_contract
+verify.risk_explainability_contract: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=risk bash scripts/verify/evidence_consumption_runtime_guard.sh
+	@echo "[OK] verify.risk_explainability_contract done"
+
+.PHONY: verify.next_action_explainability_contract
+verify.next_action_explainability_contract: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=action bash scripts/verify/evidence_consumption_runtime_guard.sh
+	@echo "[OK] verify.next_action_explainability_contract done"
+
+.PHONY: verify.evidence_exception_pipeline
+verify.evidence_exception_pipeline: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=pipeline bash scripts/verify/evidence_exception_runtime_guard.sh
+	@echo "[OK] verify.evidence_exception_pipeline done"
+
+.PHONY: verify.evidence_exception_lifecycle
+verify.evidence_exception_lifecycle: guard.prod.forbid check-compose-project check-compose-env
+	@CHECK_MODE=lifecycle bash scripts/verify/evidence_exception_runtime_guard.sh
+	@echo "[OK] verify.evidence_exception_lifecycle done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 

@@ -54,6 +54,24 @@ class ProjectFinanceBuilder(BaseProjectBlockBuilder):
                 "gap": cash_gap,
                 "net_cash": net_cash,
             },
+            "summary_metrics": [
+                self._trace_metric(
+                    project=project,
+                    key="payment_total",
+                    label="已付款",
+                    value=paid_amount,
+                    unit="元",
+                    evidence_type="payment",
+                ),
+                self._trace_metric(
+                    project=project,
+                    key="settlement_total",
+                    label="已结算",
+                    value=float(evidence_summary.get("settlement_total") or 0.0),
+                    unit="元",
+                    evidence_type="settlement",
+                ),
+            ],
             "empty_message": "当前项目暂无资金申请或合同资金数据，请先补齐资金链路。",
             "quick_actions": [
                 {"key": "open_payment_requests", "label": "查看付款申请", "intent": "ui.contract"},
