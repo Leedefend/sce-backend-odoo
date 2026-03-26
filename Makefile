@@ -1307,6 +1307,21 @@ verify.product.project_dashboard_decision.v1: guard.prod.forbid
 	@bash scripts/verify/project_dashboard_decision_guard.sh
 	@echo "[OK] verify.product.project_dashboard_decision.v1 done"
 
+.PHONY: verify.demo.business_closure.v1
+verify.demo.business_closure.v1: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/demo_business_closure_guard.sh
+	@echo "[OK] verify.demo.business_closure.v1 done"
+
+.PHONY: verify.business_fact_consistency.v1
+verify.business_fact_consistency.v1: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/business_fact_consistency_guard.sh
+	@echo "[OK] verify.business_fact_consistency.v1 done"
+
+.PHONY: verify.payment_fact_consistency.v1
+verify.payment_fact_consistency.v1: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/payment_fact_consistency_guard.sh
+	@echo "[OK] verify.payment_fact_consistency.v1 done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 

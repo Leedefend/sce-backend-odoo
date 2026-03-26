@@ -108,12 +108,12 @@ class SettlementSliceService:
         currency_name = str(payment_summary.get("currency_name") or cost_summary.get("currency_name") or "")
         return {
             "project_id": int(getattr(project, "id", 0) or 0),
-            "carrier_models": ["account.move", "payment.request"],
+            "carrier_models": ["project.cost.ledger", "payment.request"],
             "total_cost": total_cost,
             "total_payment": total_payment,
             "delta": round(total_payment - total_cost, 2),
             "currency_name": currency_name,
-            "cost_record_count": int(cost_summary.get("move_count") or 0),
+            "cost_record_count": int(cost_summary.get("ledger_count") or cost_summary.get("move_count") or 0),
             "payment_record_count": int(payment_summary.get("request_count") or 0),
             "cost_scope": str(cost_summary.get("prepared_boundary") or ""),
             "payment_scope": str(payment_summary.get("prepared_boundary") or ""),

@@ -8,6 +8,9 @@ from odoo.addons.smart_construction_core.services.payment_slice_native_adapter i
 from odoo.addons.smart_construction_core.services.project_decision_engine_service import ProjectDecisionEngineService
 from odoo.addons.smart_construction_core.services.project_metrics_explain_service import ProjectMetricsExplainService
 from odoo.addons.smart_construction_core.services.project_state_explain_service import ProjectStateExplainService
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 from .project_dashboard_builders import BUILDERS
 
@@ -259,7 +262,11 @@ class ProjectDashboardService:
             task_model = self._model("project.task")
             if task_model is not None:
                 total = int(task_model.search_count([("project_id", "=", int(project.id))]))
-                done = int(task_model.search_count([("project_id", "=", int(project.id)), ("stage_id.fold", "=", True)]))
+                done = int(
+                    task_model.search_count(
+                        [("project_id", "=", int(project.id))] + ProjectTaskStateSupport.done_domain()
+                    )
+                )
                 if total > 0:
                     progress_percent = round((done / float(total)) * 100.0, 2)
         except Exception:
@@ -319,6 +326,7 @@ class ProjectDashboardService:
         cost_count = int(facts.get("cost_count") or 0)
 
         current_stage = "initiation"
+        is_completed = bool(signals.get("settlement_completed"))
         if lifecycle_state == "draft":
             current_stage = "initiation"
         elif lifecycle_state in {"closing", "warranty", "done"}:
@@ -343,7 +351,10 @@ class ProjectDashboardService:
         current_index = stage_order.index(current_stage)
         items = []
         for index, key in enumerate(stage_order):
-            status = "done" if index < current_index else "current" if index == current_index else "todo"
+            if is_completed:
+                status = "done"
+            else:
+                status = "done" if index < current_index else "current" if index == current_index else "todo"
             items.append(
                 {
                     "key": key,
@@ -363,7 +374,10 @@ class ProjectDashboardService:
         lifecycle_state = str(facts.get("lifecycle_state") or "").strip().lower()
         percent = 20
         next_target = "进入执行"
-        if signals.get("is_draft"):
+        if signals.get("settlement_completed"):
+            percent = 100
+            next_target = "项目已完成"
+        elif signals.get("is_draft"):
             percent = 20
             next_target = "开始执行"
         elif lifecycle_state in {"closing", "warranty", "done"}:

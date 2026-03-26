@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-26T03:45:00Z
+- blocker_key: `business_fact_consistency_audit_v1`
+- layer_target: `Domain Layer / Demo Seed Layer / Verify Layer`
+- module: `addons/smart_construction_core/services + addons/smart_construction_seed + scripts/verify + docs/ops/audit`
+- reason: `对 task/cost/payment/settlement/lifecycle 的事实源做系统性审计，避免继续用页面点修方式追逐同语义多口径问题`
+- completed_step: `已完成事实源热点扫描，确认 cost 曾存在 ledger/account.move 双口径，task progress 曾存在 sc_state/stage_id.fold 双口径，payment/settlement 仍存在 request/ledger/order 三层事实并存；正在落业务事实源矩阵与 consistency guard`
+- active_commit: `2603614`
+- next_step: `Run business fact consistency guard, then decide whether the next convergence batch should focus on payment fact unification`
+
+### 2026-03-26T05:40:00Z
+- blocker_key: `payment_fact_consistency_v1`
+- layer_target: `Domain Layer / Verify Layer / Demo Seed Layer`
+- module: `addons/smart_construction_core/services + scripts/verify + docs/ops/audit`
+- reason: `冻结 payment.request / payment.ledger / sc.settlement.order 的职责边界，先明确当前用户面“付款”主语义到底指什么，再用 guard 锁住`
+- completed_step: `已完成付款消费面盘点，确认驾驶舱、付款页、结算页当前“付款合计/付款记录数”主语义均基于 payment.request，payment.ledger 仅作为 demo 闭环证据层；正在补付款事实源审计文档与 payment fact consistency guard`
+- active_commit: `2603614`
+- next_step: `Run payment fact consistency guard, then decide whether to keep request-driven payment semantics or introduce a separate executed-payment metric in a new batch`
+
 ### 2026-03-26T08:20:00Z
 - blocker_key: `main_entry_convergence_v1`
 - layer_target: `Frontend Entry Layer / Construction Domain Layer / Product Verification`
@@ -1543,3 +1561,13 @@ Each entry must include:
 - reason: `在产品总体设计、闭环规范和产品化状态审计已经形成的前提下，补一份长期指导后续批次的方向总纲，锁定系统当前唯一正确方向为 Product Connection Layer`
 - completed_step: `产品化迭代方向总纲已落库；已明确当前阶段为 Productization Phase 1；已锁定下一轮唯一任务为 Project Connection Layer v1`
 - next_step: `围绕 released scene、project context、internal carrier、next_actions 四要素，拆出 Project Connection Layer v1 的逐文件执行单`
+
+## 2026-03-26T03:58:00Z Demo Business Closure v1
+
+- branch: `codex/next-round`
+- head: `2603614`
+- layer_target: `Domain Layer / Demo Seed Layer / Verify Layer`
+- module: `addons/smart_construction_demo/models/project_demo_cockpit_seed.py + addons/smart_construction_core/services/project_entry_context_service.py + scripts/verify/demo_business_closure_guard.sh + docs/product/demo_business_closure_matrix_v1.md`
+- reason: `在 cockpit main entry、decision flow 和 project switcher 已成立的前提下，把 showroom demo 项目收口为 3 个官方闭环样板，避免驾驶舱继续被 SCENE-CONTRACT 等运行时噪声项目主导`
+- completed_step: `已锁定执行中/付款中/结算完成三类官方样板；cockpit round2 seed 改为按 profile 补齐/清理成本与付款事实；project entry context 开始优先 sc_demo_showcase_ready 样板；新增 verify.demo.business_closure.v1`
+- next_step: `复核驾驶舱运行态是否已优先展示官方样板，并根据手验结果决定是否继续收口样板口径或直接分类提交`

@@ -134,6 +134,7 @@ class CostTrackingService:
                 "today": str(fields.Date.today()),
             }
         summary = self._adapter.summary(project)
+        record_count = int(summary.get("ledger_count") or summary.get("move_count") or 0)
         return {
             "id": int(project.id),
             "name": _safe_text(_safe_field(project, "name")),
@@ -144,7 +145,7 @@ class CostTrackingService:
             "date_end": str(_safe_field(project, "date") or _safe_field(project, "date_end") or ""),
             "move_count": int(summary.get("move_count") or 0),
             "draft_move_count": int(summary.get("draft_move_count") or 0),
-            "cost_record_count": int(summary.get("move_count") or 0),
+            "cost_record_count": record_count,
             "cost_total_amount": str(summary.get("total_cost_amount") or 0.0),
             "draft_cost_amount": str(summary.get("draft_cost_amount") or 0.0),
             "currency_name": _safe_text(summary.get("currency_name") or ""),
