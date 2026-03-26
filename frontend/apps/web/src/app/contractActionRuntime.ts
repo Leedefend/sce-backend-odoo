@@ -19,13 +19,56 @@ function pickNestedContract(contract: ActionContract | null): ActionContract | n
   return contract;
 }
 
+function normalizeViewMode(raw: unknown): string {
+  const mode = String(raw || '').trim().toLowerCase();
+  if (!mode) return '';
+  if (mode === 'list') return 'tree';
+  return mode;
+}
+
+function pickPrimaryViewMode(raw: unknown): string {
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      const mode = normalizeViewMode(item);
+      if (mode) return mode;
+    }
+    return '';
+  }
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  for (const item of text.split(',')) {
+    const mode = normalizeViewMode(item);
+    if (mode) return mode;
+  }
+  return '';
+}
+
+export function resolveContractRights(contract: ActionContract | null) {
+  const normalized = pickNestedContract(contract);
+  const head = normalized?.head?.permissions;
+  const effective = normalized?.permissions?.effective?.rights;
+  const resolve = (key: 'read' | 'write' | 'create' | 'unlink') => {
+    const headValue = head?.[key];
+    if (typeof headValue === 'boolean') return headValue;
+    const effectiveValue = effective?.[key];
+    if (typeof effectiveValue === 'boolean') return effectiveValue;
+    return true;
+  };
+  return {
+    read: resolve('read'),
+    write: resolve('write'),
+    create: resolve('create'),
+    unlink: resolve('unlink'),
+  };
+}
+
 export function resolveContractViewMode(contract: ActionContract | null, fallback = '') {
   const normalized = pickNestedContract(contract);
-  const headMode = String(normalized?.head?.view_type || '').trim();
+  const headMode = pickPrimaryViewMode(normalized?.head?.view_type);
   if (headMode) return headMode;
-  const rootMode = String(normalized?.view_type || '').trim();
+  const rootMode = pickPrimaryViewMode(normalized?.view_type);
   if (rootMode) return rootMode;
-  return fallback;
+  return pickPrimaryViewMode(fallback);
 }
 
 export function resolveContractAccessPolicy(contract: ActionContract | null): ContractAccessPolicySnapshot {
@@ -42,11 +85,7 @@ export function resolveContractAccessPolicy(contract: ActionContract | null): Co
 export function resolveContractReadRight(contract: ActionContract | null) {
   const policy = resolveContractAccessPolicy(contract);
   if (policy.mode === 'block') return false;
-  const head = contract?.head?.permissions?.read;
-  if (typeof head === 'boolean') return head;
-  const effective = contract?.permissions?.effective?.rights?.read;
-  if (typeof effective === 'boolean') return effective;
-  return true;
+  return resolveContractRights(contract).read;
 }
 
 export function parseContractContextRaw(raw: unknown) {

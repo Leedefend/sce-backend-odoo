@@ -179,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -340,6 +340,7 @@ function resolveWorkspaceContextQuery() {
 }
 
 const status = ref<UiStatus>('loading');
+const loadStage = ref('idle');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: string } | null>(null);
@@ -539,6 +540,8 @@ const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
+  const actionName = String(session.currentAction?.name || '').trim();
+  if (actionName) return actionName;
   return model.value ? `业务表单 · ${model.value}` : '业务表单';
 });
 
@@ -550,6 +553,15 @@ const pageDisplayTitle = computed(() => {
 const pageDisplaySubtitle = computed(() => {
   if (isProjectCreatePage.value) {
     return '填写核心信息即可完成项目立项';
+  }
+  const enterprisePrimaryActionId = Number(session.enterpriseEnablement?.primary_action?.action_id || 0);
+  if (
+    !recordId.value
+    && model.value === 'res.company'
+    && enterprisePrimaryActionId > 0
+    && actionId.value === enterprisePrimaryActionId
+  ) {
+    return '这里只维护企业启用所需的基础信息。保存后请继续进入组织架构。';
   }
   return '';
 });
@@ -1473,6 +1485,7 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
 }
 
 async function loadRelationOptions() {
+  loadStage.value = 'load_relation_options';
   const fields = contract.value?.fields || {};
   const one2manyNames = Object.entries(fields)
     .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
@@ -1952,7 +1965,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   const nodes: LayoutNode[] = [];
   const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
 
-  function pushField(nameRaw: unknown) {
+  function pushField(nameRaw: unknown, viewLabelRaw?: unknown) {
     const name = String(nameRaw || '').trim();
     if (!name || used.has(name)) return;
     const groups = fieldGroups[name]?.groups_xmlids;
@@ -1971,11 +1984,12 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!resolved.visible) return;
     used.add(name);
     const state = runtimeState(name);
+    const viewLabel = String(viewLabelRaw || '').trim();
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
-      label: String(descriptor?.string || name),
+      label: viewLabel || String(descriptor?.string || name),
       readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
       required: Boolean(resolved.required || state.required),
       descriptor,
@@ -2001,7 +2015,10 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       });
     }
     if (kind === 'field') {
-      pushField(node.name);
+      const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
+        ? (node.fieldInfo as Record<string, unknown>)
+        : null;
+      pushField(node.name, node.string || node.label || fieldInfo?.label);
       return;
     }
     containerKeys.forEach((key) => {
@@ -2517,9 +2534,19 @@ function analyzeFormContractReadiness(
     ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
     : '';
   const viewType = String(row.view_type || '').trim().toLowerCase();
+  const normalizeViewModes = (value: string) => value
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  const headViewModes = normalizeViewModes(headViewType);
+  const rootViewModes = normalizeViewModes(viewType);
   if (requirePureFormViewType) {
-    if (headViewType && headViewType !== 'form') issues.push(`head.view_type is ${headViewType}, expected form`);
-    if (viewType && viewType !== 'form') issues.push(`view_type is ${viewType}, expected form`);
+    if (headViewModes.length && !headViewModes.includes('form')) {
+      issues.push(`head.view_type is ${headViewType}, expected form-compatible`);
+    }
+    if (rootViewModes.length && !rootViewModes.includes('form')) {
+      issues.push(`view_type is ${viewType}, expected form-compatible`);
+    }
   }
 
   const visible = Array.isArray(row.visible_fields)
@@ -2597,6 +2624,7 @@ function validateSurfaceMarkers(
 }
 
 async function loadContract() {
+  loadStage.value = 'load_contract';
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
   let response: Awaited<ReturnType<typeof loadActionContractRaw>> | null = null;
@@ -2652,6 +2680,7 @@ async function loadContract() {
 }
 
 async function loadRecord() {
+  loadStage.value = 'load_record';
   const fieldNames = Object.keys(contract.value?.fields || {});
   Object.keys(formData).forEach((key) => {
     delete formData[key];
@@ -2777,6 +2806,7 @@ async function loadRecord() {
 
 async function reload() {
   status.value = 'loading';
+  loadStage.value = 'reload_start';
   errorMessage.value = '';
   validationErrors.value = [];
   showOne2manyErrors.value = false;
@@ -2784,8 +2814,10 @@ async function reload() {
     await loadContract();
     await loadRecord();
     await loadRelationOptions();
+    loadStage.value = 'reload_done';
     status.value = 'ok';
   } catch (err) {
+    loadStage.value = 'reload_error';
     if (err instanceof ContractAccessPolicyError) {
       await router.push({
         name: 'workbench',
@@ -2802,6 +2834,28 @@ async function reload() {
     status.value = 'error';
   }
 }
+
+watchEffect(() => {
+  if (typeof window === 'undefined') return;
+  (window as Window & { __scFormDebug?: Record<string, unknown> }).__scFormDebug = {
+    status: status.value,
+    loadStage: loadStage.value,
+    model: model.value,
+    actionId: actionId.value,
+    recordId: recordId.value,
+    contractLoaded: Boolean(contract.value),
+    contractHeadTitle: String(contract.value?.head?.title || '').trim(),
+    fieldCount: Object.keys(contract.value?.fields || {}).length,
+    layoutNodeCount: layoutNodes.value.length,
+    coreFieldCount: coreFieldNames.value.length,
+    relationFieldCount: Object.entries(contract.value?.fields || {}).filter(([, descriptor]) => {
+      const ttype = fieldType(descriptor as FieldDescriptor | undefined);
+      return ttype === 'many2one' || ttype === 'many2many' || ttype === 'one2many';
+    }).length,
+    relationOptionFieldCount: Object.keys(relationOptions.value || {}).length,
+    errorMessage: errorMessage.value,
+  };
+});
 
 function openFormNativeFallback() {
   if (!formNativeFallbackUrl.value) return;

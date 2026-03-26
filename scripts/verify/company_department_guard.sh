@@ -18,6 +18,7 @@ from pathlib import Path
 
 from odoo.exceptions import ValidationError
 from odoo.addons.smart_enterprise_base.core_extension import smart_core_extend_system_init
+from odoo.tools.safe_eval import safe_eval
 
 OUT_JSON = Path("/mnt/artifacts/backend/company_department_guard.json")
 OUT_MD = Path("/mnt/artifacts/backend/company_department_guard.md")
@@ -28,8 +29,12 @@ User = env["res.users"].sudo()
 
 company_action = env.ref("smart_enterprise_base.action_enterprise_company", raise_if_not_found=False)
 department_action = env.ref("smart_enterprise_base.action_enterprise_department", raise_if_not_found=False)
+user_action = env.ref("smart_enterprise_base.action_enterprise_user", raise_if_not_found=False)
+company_tree_view = env.ref("smart_enterprise_base.view_company_tree_enterprise_base", raise_if_not_found=False)
+company_form_view = env.ref("smart_enterprise_base.view_company_form_enterprise_base", raise_if_not_found=False)
 company_menu = env.ref("smart_enterprise_base.menu_enterprise_company", raise_if_not_found=False)
 department_menu = env.ref("smart_enterprise_base.menu_enterprise_department", raise_if_not_found=False)
+user_menu = env.ref("smart_enterprise_base.menu_enterprise_user", raise_if_not_found=False)
 
 company = Company.create(
     {
@@ -73,6 +78,20 @@ grandchild_dept = Department.create(
     }
 )
 
+user_entry = child_dept.action_open_enterprise_users()
+scoped_user = User.with_context(no_reset_password=True).create(
+    {
+        "name": "Sprint0 启动用户",
+        "login": "sprint0_user_guard@example.com",
+        "phone": "13800000000",
+        "company_id": company.id,
+        "company_ids": [(6, 0, [company.id])],
+        "sc_department_id": child_dept.id,
+        "sc_manager_user_id": env.user.id,
+        "active": True,
+    }
+)
+
 other_company = Company.create({"name": "Sprint0 其他公司"})
 
 manager_user = User.create(
@@ -108,10 +127,25 @@ try:
 except ValidationError:
     manager_company_error = True
 
+user_department_error = False
+try:
+    User.with_context(no_reset_password=True).create(
+        {
+            "name": "Sprint0 跨公司用户",
+            "login": "sprint0_cross_company_user@example.com",
+            "company_id": other_company.id,
+            "company_ids": [(6, 0, [other_company.id])],
+            "sc_department_id": child_dept.id,
+        }
+    )
+except ValidationError:
+    user_department_error = True
+
 payload = {}
 smart_core_extend_system_init(payload, env, env.user)
 mainline = (((payload.get("ext_facts") or {}).get("enterprise_enablement") or {}).get("mainline") or {})
 steps = mainline.get("steps") or []
+company_action_context = safe_eval(company_action.context or "{}") if company_action else {}
 
 report = {
     "status": "PASS",
@@ -121,20 +155,29 @@ report = {
     "department_count": int(Department.search_count([("company_id", "=", company.id)])),
     "extension_modules": str(env["ir.config_parameter"].sudo().get_param("sc.core.extension_modules") or ""),
     "company_action_xmlid": company_action.get_external_id().get(company_action.id, "") if company_action else "",
+    "company_action_view_id": int(company_action.view_id.id or 0) if company_action and company_action.view_id else 0,
+    "company_action_form_view_ref": str((company_action_context or {}).get("form_view_ref") or "") if company_action else "",
     "department_action_xmlid": department_action.get_external_id().get(department_action.id, "") if department_action else "",
+    "user_action_xmlid": user_action.get_external_id().get(user_action.id, "") if user_action else "",
     "company_menu_xmlid": company_menu.get_external_id().get(company_menu.id, "") if company_menu else "",
     "department_menu_xmlid": department_menu.get_external_id().get(department_menu.id, "") if department_menu else "",
+    "user_menu_xmlid": user_menu.get_external_id().get(user_menu.id, "") if user_menu else "",
     "department_entry_name": str(department_entry.get("name") or ""),
+    "user_entry_name": str(user_entry.get("name") or ""),
     "department_entry_domain": department_entry.get("domain") or [],
+    "user_entry_domain": user_entry.get("domain") or [],
     "enablement_phase": str(mainline.get("phase") or ""),
     "enablement_step_count": int(len(steps)),
     "enablement_primary_action_id": int((mainline.get("primary_action") or {}).get("action_id") or 0),
     "parent_company_error": bool(parent_company_error),
     "manager_company_error": bool(manager_company_error),
+    "user_department_error": bool(user_department_error),
     "root_department_id": int(root_dept.id),
     "child_department_id": int(child_dept.id),
     "grandchild_department_id": int(grandchild_dept.id),
     "grandchild_parent_id": int(grandchild_dept.parent_id.id or 0),
+    "scoped_user_id": int(scoped_user.id),
+    "scoped_user_department_id": int(scoped_user.sc_department_id.id or 0),
     "errors": [],
 }
 
@@ -146,18 +189,28 @@ if report["department_count"] < 3:
     report["errors"].append("department tree should contain at least 3 levels")
 if report["company_action_xmlid"] != "smart_enterprise_base.action_enterprise_company":
     report["errors"].append("company action should exist in smart_enterprise_base")
+if int(report["company_action_view_id"]) != int(company_tree_view.id or 0):
+    report["errors"].append("company action should use enterprise company tree view")
+if report["company_action_form_view_ref"] != "smart_enterprise_base.view_company_form_enterprise_base":
+    report["errors"].append("company action should point to enterprise company form view")
 if report["department_action_xmlid"] != "smart_enterprise_base.action_enterprise_department":
     report["errors"].append("department action should exist in smart_enterprise_base")
+if report["user_action_xmlid"] != "smart_enterprise_base.action_enterprise_user":
+    report["errors"].append("user action should exist in smart_enterprise_base")
 if report["company_menu_xmlid"] != "smart_enterprise_base.menu_enterprise_company":
     report["errors"].append("company menu should exist in smart_enterprise_base")
 if report["department_menu_xmlid"] != "smart_enterprise_base.menu_enterprise_department":
     report["errors"].append("department menu should exist in smart_enterprise_base")
+if report["user_menu_xmlid"] != "smart_enterprise_base.menu_enterprise_user":
+    report["errors"].append("user menu should exist in smart_enterprise_base")
 if "smart_enterprise_base" not in [item.strip() for item in str(report["extension_modules"]).split(",") if item.strip()]:
     report["errors"].append("sc.core.extension_modules should include smart_enterprise_base")
 if int((department_entry.get("context") or {}).get("default_company_id") or 0) != int(company.id):
     report["errors"].append("company form should point next step to department entry")
-if report["enablement_phase"] != "sprint0" or report["enablement_step_count"] < 2:
-    report["errors"].append("enablement contract should expose sprint0 company and department steps")
+if int((user_entry.get("context") or {}).get("default_sc_department_id") or 0) != int(child_dept.id):
+    report["errors"].append("department form should point next step to user entry")
+if report["enablement_phase"] != "sprint0" or report["enablement_step_count"] < 3:
+    report["errors"].append("enablement contract should expose company, department, and user steps")
 if report["enablement_primary_action_id"] <= 0:
     report["errors"].append("enablement contract should expose primary frontend action target")
 if not root_dept.company_id or not child_dept.company_id or not grandchild_dept.company_id:
@@ -172,6 +225,10 @@ if not report["parent_company_error"]:
     report["errors"].append("cross-company parent department should be blocked")
 if not report["manager_company_error"]:
     report["errors"].append("department manager outside company should be blocked")
+if int(scoped_user.company_id.id or 0) != int(company.id) or int(scoped_user.sc_department_id.id or 0) != int(child_dept.id):
+    report["errors"].append("user should be assignable to company and department")
+if not report["user_department_error"]:
+    report["errors"].append("user department outside company should be blocked")
 
 if report["errors"]:
     report["status"] = "FAIL"
@@ -185,6 +242,7 @@ OUT_MD.write_text(
     f"- company_id: `{report['company_id']}`\n"
     f"- department_count: `{report['department_count']}`\n"
     f"- department_entry_name: `{report['department_entry_name']}`\n"
+    f"- user_entry_name: `{report['user_entry_name']}`\n"
     f"- enablement_phase: `{report['enablement_phase']}`\n"
     f"- grandchild_parent_id: `{report['grandchild_parent_id']}`\n"
     + ("\n- errors:\n" + "\n".join(f"  - {item}" for item in report["errors"]) if report["errors"] else "\n"),

@@ -1654,3 +1654,23 @@ Each entry must include:
 - reason: `Sprint 0 在 prod-sim 自定义前端验收时暴露出首页主路径存在 / 与 portal.dashboard/workspace.home 的循环导航语义，且统一首页渲染会遮挡企业启用入口，需要先统一首页语义并把企业启用入口提升为管理员首页第一入口`
 - completed_step: `已将 portal.dashboard/workspace.home 归一为 /；已让 enterprise enablement 在管理员首页优先于 unified home renderer 展示；frontend smoke 改为按解析出的主动作目标继续进入公司入口；verify.product.enablement.sprint0 已重新通过`
 - next_step: `在首页主路径稳定后，进入 Sprint 1 用户+角色冲刺拆解，并先写清管理员的新用户创建与登录后的用户可见链路`
+
+## 2026-03-26T13:45:00Z Enterprise Enablement User Step v1
+
+- branch: `codex/next-round`
+- head: `6e5b131`
+- layer_target: `Platform Enablement Layer / Frontend Entry Layer / Verify Layer`
+- module: `addons/smart_enterprise_base/models/res_users.py + addons/smart_enterprise_base/views/res_users_views.xml + addons/smart_enterprise_base/core_extension.py + addons/smart_enterprise_base/views/menu_enterprise_base.xml + addons/smart_enterprise_base/views/hr_department_views.xml + frontend/apps/web/src/views/HomeView.vue + scripts/verify/company_department_guard.sh + scripts/verify/enterprise_enablement_frontend_smoke.mjs`
+- reason: `企业启用主路径此前只停在公司和组织，用户验收无法继续走到“把执行主体挂到人”的下一步；需要在不越界到角色/安全治理的前提下，把用户主数据基础维护接入企业启用卡片和后台统一入口`
+- completed_step: `已在 smart_enterprise_base 新增用户主数据最小承接；组织页可直接进入用户设置；system.init enterprise_enablement mainline 扩展为公司/组织/用户三步；首页企业启用卡片文案同步到三步；后端测试通过；prod-sim 自定义前端 smoke 已通过`
+- next_step: `基于企业启用三步主路径，进入用户+角色阶段时仅承接用户主数据和可见入口，角色与权限深配置继续保留原生兜底`
+
+## 2026-03-26T14:10:00Z Company UX Hardening v1
+
+- branch: `codex/next-round`
+- head: `6e5b131`
+- layer_target: `Platform Enablement Layer / Frontend Layer / Verify Layer`
+- module: `addons/smart_enterprise_base/views/res_company_views.xml + addons/smart_enterprise_base/views/menu_enterprise_base.xml + frontend/apps/web/src/components/page/PageHeader.vue + frontend/apps/web/src/pages/ListPage.vue + frontend/apps/web/src/views/ActionView.vue + addons/smart_enterprise_base/tests/test_enablement_backend.py + scripts/verify/company_department_guard.sh`
+- reason: `037/038 暴露出公司页仍在泄漏原生 company 复杂字段和复杂表单，且列表缺少明确新建动作；需要先把公司页收成真正的基础启用页，才能说 Sprint 0 可用`
+- completed_step: `公司 action 已绑定到独立基础 tree/form，不再复用原生 company 大表单；列表头新增新建主按钮；后端测试和 prod-sim enablement smoke 已通过；本地默认前端环境仍有既有不稳定问题，不作为最终用户验收依据`
+- next_step: `在 prod-sim 实际页面继续人工确认公司列表与基础表单视觉是否满足产品要求，再决定是否进入组织/用户同类 UX hardening`

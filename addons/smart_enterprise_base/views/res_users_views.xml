@@ -1,0 +1,64 @@
+<odoo>
+    <record id="view_users_tree_enterprise_base" model="ir.ui.view">
+        <field name="name">res.users.tree.enterprise.base</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <tree default_order="company_id, sc_department_id, name">
+                <field name="name"/>
+                <field name="login"/>
+                <field name="phone"/>
+                <field name="company_id"/>
+                <field name="sc_department_id"/>
+                <field name="sc_manager_user_id"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_users_form_enterprise_base" model="ir.ui.view">
+        <field name="name">res.users.form.enterprise.base</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <form string="用户设置">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        这里只维护用户主数据。角色、安全策略和高级访问控制继续保留在原生页面。
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="login"/>
+                            <field name="phone"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="company_id" options="{'no_open': True}"/>
+                            <field name="sc_department_id" options="{'no_open': True}"/>
+                            <field name="sc_manager_user_id" options="{'no_open': True}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_users_search_enterprise_base" model="ir.ui.view">
+        <field name="name">res.users.search.enterprise.base</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="login"/>
+                <field name="company_id"/>
+                <field name="sc_department_id"/>
+                <field name="sc_manager_user_id"/>
+                <filter name="sc_user_active_true" string="启用中" domain="[('active', '=', True)]"/>
+                <filter name="sc_user_active_false" string="已停用" domain="[('active', '=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_by_company_id" string="公司" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_by_sc_department_id" string="部门" context="{'group_by': 'sc_department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

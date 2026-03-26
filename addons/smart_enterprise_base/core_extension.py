@@ -36,10 +36,15 @@ def smart_core_extend_system_init(data, env, user):
             "smart_enterprise_base.action_enterprise_department",
             "smart_enterprise_base.menu_enterprise_department",
         )
+        user_target = _resolve_action_target(
+            env,
+            "smart_enterprise_base.action_enterprise_user",
+            "smart_enterprise_base.menu_enterprise_user",
+        )
         enablement["mainline"] = {
             "version": "v1",
             "phase": "sprint0",
-            "theme": "company_department_bootstrap",
+            "theme": "company_department_user_bootstrap",
             "entry_root_xmlid": "smart_enterprise_base.menu_enterprise_base_root",
             "steps": [
                 {
@@ -59,6 +64,15 @@ def smart_core_extend_system_init(data, env, user):
                     "action_xmlid": "smart_enterprise_base.action_enterprise_department",
                     "next_hint": "先创建一级部门，再补齐二级和三级部门",
                     "target": department_target,
+                },
+                {
+                    "key": "user",
+                    "label": "用户设置",
+                    "status": "pending",
+                    "entry_xmlid": "smart_enterprise_base.menu_enterprise_user",
+                    "action_xmlid": "smart_enterprise_base.action_enterprise_user",
+                    "next_hint": "给用户挂公司、部门和直属上级，后续项目与任务才能指派到人",
+                    "target": user_target,
                 },
             ],
             "current_company_id": int(user.company_id.id or 0) if user.company_id else 0,

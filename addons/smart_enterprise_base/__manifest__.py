@@ -16,6 +16,7 @@
         "security/ir.model.access.csv",
         "views/res_company_views.xml",
         "views/hr_department_views.xml",
+        "views/res_users_views.xml",
         "views/menu_enterprise_base.xml",
     ],
     "installable": True,

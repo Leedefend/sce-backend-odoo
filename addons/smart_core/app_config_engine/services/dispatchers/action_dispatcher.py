@@ -5,6 +5,7 @@
 #   - operation：execute/onchange/validate/report 四类网关/校验/报表
 #   - action：解析动作类型 → act_window/client/server/url/report
 import logging
+from odoo import api
 from odoo.addons.smart_core.app_config_engine.services.resolvers.action_resolver import ActionResolver
 from odoo.addons.smart_core.app_config_engine.services.assemblers.page_assembler import PageAssembler
 from odoo.addons.smart_core.app_config_engine.services.assemblers.client_url_report import ClientUrlReportAssembler
@@ -22,6 +23,18 @@ class ActionDispatcher:
             return self.env['app.action.gateway']
         raise ValueError("缺少 app.action.gateway：operation 执行网关未注册")
 
+    def _assemble_page_contract(self, p, action=None):
+        runtime_ctx = dict(self.env.context or {})
+        action_id = p.get("action_id") or (action.get("id") if isinstance(action, dict) else None)
+        menu_id = p.get("menu_id")
+        if action_id:
+            runtime_ctx.setdefault("contract_action_id", action_id)
+        if menu_id:
+            runtime_ctx.setdefault("contract_menu_id", menu_id)
+        run_env = api.Environment(self.env.cr, self.env.user.id, runtime_ctx)
+        run_su_env = api.Environment(self.su_env.cr, self.su_env.uid, runtime_ctx)
+        return PageAssembler(run_env, run_su_env).assemble_page_contract(p, action=action)
+
     def dispatch(self, p):
         subject = p.get('subject')
 
@@ -30,7 +43,7 @@ class ActionDispatcher:
             if not p.get("model"):
                 raise ValueError("model subject 需要提供 model 名")
             p["view_types"] = PageAssembler.normalize_view_types(p.get('view_type') or 'tree,form')
-            return PageAssembler(self.env, self.su_env).assemble_page_contract(p)
+            return self._assemble_page_contract(p)
 
         # ---- 2) operation：execute/onchange/validate/report
         if subject == 'operation':
@@ -75,7 +88,9 @@ class ActionDispatcher:
                 # 把 active_menu_id 放入上下文，利于 domain/context 计算
                 ctx = p.setdefault('context', {})
                 ctx.setdefault('active_menu_id', amid)
-            return PageAssembler(self.env, self.su_env).assemble_page_contract(p, action=info)
+                p.setdefault('menu_id', amid)
+            p.setdefault('action_id', info.get('id'))
+            return self._assemble_page_contract(p, action=info)
 
         # client：不需要模型
         if atype == 'ir.actions.client':
@@ -110,7 +125,8 @@ class ActionDispatcher:
         if atype == 'ir.actions.act_window':
             p['model'] = info.get('res_model') or p.get('model')
             p['view_types'] = PageAssembler.normalize_view_types(info.get('view_mode') or p.get('view_type') or 'tree,form')
-            return PageAssembler(self.env, self.su_env).assemble_page_contract(p, action=info)
+            p.setdefault('action_id', info.get('id'))
+            return self._assemble_page_contract(p, action=info)
         if atype == 'ir.actions.client':
             return ClientUrlReportAssembler(self.env, self.su_env).assemble_client_contract(p, info)
         raise ValueError(f"server 动作返回了不支持的类型：{atype}")

@@ -142,6 +142,22 @@ _PROJECT_FORM_ACTION_DEMOTE_KEYWORDS = {
     "演示",
     "showcase",
 }
+_ENTERPRISE_COMPANY_FORM_FIELDS = [
+    "name",
+    "sc_short_name",
+    "sc_credit_code",
+    "sc_contact_phone",
+    "sc_address",
+    "sc_is_active",
+]
+_ENTERPRISE_COMPANY_FIELD_LABELS = {
+    "name": "公司名称",
+    "sc_short_name": "公司简称",
+    "sc_credit_code": "统一社会信用代码",
+    "sc_contact_phone": "联系电话",
+    "sc_address": "地址",
+    "sc_is_active": "启用",
+}
 _PROJECT_FORM_ACTION_PRIORITIES = (
     "提交",
     "进入下一阶段",
@@ -817,11 +833,31 @@ def _is_project_form_contract(data: dict) -> bool:
     if not view_type and has_form_view:
         view_type = "form"
     primary_model = _governance_primary_model(data)
+    if primary_model != "project.project":
+        return False
     if not primary_model or model != primary_model:
         return False
     if has_form_view:
         return "form" in view_type if view_type else True
     return view_type == "form"
+
+
+def _is_enterprise_company_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == "res.company" and model == "res.company" and "form" in view_type)
 
 
 def _is_project_kanban_contract(data: dict) -> bool:
@@ -1597,6 +1633,17 @@ def _apply_form_field_groups(data: dict) -> None:
     ]
 
 
+def _make_labeled_field_node(name: str, fields_map: dict[str, Any]) -> dict[str, Any]:
+    descriptor = _as_dict(fields_map.get(name))
+    label = _safe_text(_ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
+    if not label:
+        label = _safe_text(descriptor.get("string") if descriptor else "", name)
+    node = {"type": "field", "name": name}
+    if label:
+        node["string"] = label
+    return node
+
+
 def _infer_action_semantic(action: dict) -> str:
     label = _safe_lower(action.get("label"))
     key = _safe_lower(action.get("key"))
@@ -1963,6 +2010,51 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     return policies
 
 
+def _govern_enterprise_company_form_for_user(data: dict) -> None:
+    if not _is_enterprise_company_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _ENTERPRISE_COMPANY_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "企业基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": selected,
+        },
+    ]
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "enterprise_company_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "enterprise_company_core_group",
+                    "string": "企业基础信息",
+                    "children": [_make_labeled_field_node(name, fields_map) for name in selected],
+                }
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
+        toolbar = _as_dict(data.get("toolbar"))
+        if isinstance(toolbar.get("header"), list):
+            toolbar["header"] = []
+        data["toolbar"] = toolbar
+        data["buttons"] = []
+        data["action_groups"] = []
+
+
 def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
     rules: list[dict[str, Any]] = []
     fields_map = _as_dict(data.get("fields"))
@@ -2174,6 +2266,8 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _restructure_project_form_layout(data)
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
+    if contract_mode == "user" and _is_enterprise_company_form_contract(data):
+        _govern_enterprise_company_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
         _govern_project_kanban_contract_for_user(data)
 

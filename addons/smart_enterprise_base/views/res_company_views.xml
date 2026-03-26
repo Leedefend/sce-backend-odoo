@@ -2,45 +2,54 @@
     <record id="view_company_form_enterprise_base" model="ir.ui.view">
         <field name="name">res.company.form.enterprise.base</field>
         <field name="model">res.company</field>
-        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="mode">primary</field>
+        <field name="inherit_id" eval="False"/>
         <field name="arch" type="xml">
-            <xpath expr="//sheet" position="inside">
-                <div class="alert alert-info" role="alert">
-                    先完成公司信息保存，再点击“组织架构”进入下一步。
-                </div>
-            </xpath>
-            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
-                <button type="object"
-                        name="action_open_enterprise_departments"
-                        class="oe_stat_button"
-                        icon="fa-sitemap"
-                        string="组织架构">
-                    <field name="sc_department_count" widget="statinfo" string="部门数"/>
-                </button>
-            </xpath>
-            <xpath expr="//sheet" position="inside">
-                <group string="企业启用信息">
-                    <field name="sc_short_name"/>
-                    <field name="sc_credit_code"/>
-                    <field name="sc_contact_phone"/>
-                    <field name="sc_address"/>
-                    <field name="sc_is_active"/>
-                </group>
-            </xpath>
+            <form string="公司信息">
+                <sheet>
+                    <div class="alert alert-info" role="status">
+                        这里只维护企业启用所需的基础信息。保存后请继续进入“组织架构”。
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                                name="action_open_enterprise_departments"
+                                class="oe_stat_button"
+                                icon="fa-sitemap"
+                                string="组织架构">
+                            <field name="sc_department_count" widget="statinfo" string="部门数"/>
+                        </button>
+                    </div>
+                    <group string="企业基础信息">
+                        <group>
+                            <field name="name" string="公司名称" required="1"/>
+                            <field name="sc_short_name" string="公司简称"/>
+                            <field name="sc_credit_code" string="统一社会信用代码"/>
+                        </group>
+                        <group>
+                            <field name="sc_contact_phone" string="联系电话"/>
+                            <field name="sc_address" string="地址"/>
+                            <field name="sc_is_active" string="启用"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 
     <record id="view_company_tree_enterprise_base" model="ir.ui.view">
         <field name="name">res.company.tree.enterprise.base</field>
         <field name="model">res.company</field>
-        <field name="inherit_id" ref="base.view_company_tree"/>
+        <field name="mode">primary</field>
+        <field name="inherit_id" eval="False"/>
         <field name="arch" type="xml">
-            <xpath expr="//tree" position="inside">
-                <field name="sc_short_name" optional="show"/>
-                <field name="sc_credit_code" optional="show"/>
-                <field name="sc_contact_phone" optional="show"/>
-                <field name="sc_is_active" optional="show"/>
-            </xpath>
+            <tree default_order="name">
+                <field name="name"/>
+                <field name="sc_short_name"/>
+                <field name="sc_credit_code"/>
+                <field name="sc_contact_phone"/>
+                <field name="sc_address"/>
+                <field name="sc_is_active"/>
+            </tree>
         </field>
     </record>
 

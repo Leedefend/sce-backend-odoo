@@ -13,9 +13,9 @@
       <header class="enterprise-enablement-header">
         <div>
           <p class="enterprise-enablement-eyebrow">企业启用</p>
-          <h3>先建立公司，再建立组织架构</h3>
+          <h3>先建立公司、组织，再完成用户设置</h3>
           <p class="enterprise-enablement-lead">
-            当前 Sprint 0 已接入企业启用主路径。先完成公司信息，再继续进入组织架构。
+            当前企业启用主路径已接入公司、组织和用户设置三步。先完成公司信息，再继续补齐组织和执行主体。
           </p>
         </div>
         <button
@@ -115,9 +115,9 @@
       <header class="enterprise-enablement-header">
         <div>
           <p class="enterprise-enablement-eyebrow">企业启用</p>
-          <h3>先建立公司，再建立组织架构</h3>
+          <h3>先建立公司、组织，再完成用户设置</h3>
           <p class="enterprise-enablement-lead">
-            当前 Sprint 0 已接入企业启用主路径。先完成公司信息，再继续进入组织架构。
+            当前企业启用主路径已接入公司、组织和用户设置三步。先完成公司信息，再继续补齐组织和执行主体。
           </p>
         </div>
         <button

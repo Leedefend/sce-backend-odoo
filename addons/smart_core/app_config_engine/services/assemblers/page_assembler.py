@@ -178,6 +178,9 @@ class PageAssembler:
             data["views"][vt] = v_contract
         versions["view"] = ",".join(v_versions) if v_versions else "1"
 
+        if self.env.context.get("contract_action_id"):
+            self._restrict_form_fields_to_layout(data)
+
         # 4) 搜索条件（运行时需要当前用户上下文，因此用 env）
         try:
             scfg = env['app.search.config']._generate_from_search(model)
@@ -287,6 +290,38 @@ class PageAssembler:
         if warnings:
             data["warnings"] = warnings
         return data, versions
+
+    def _restrict_form_fields_to_layout(self, data):
+        if not isinstance(data, dict):
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout = form.get("layout")
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not isinstance(layout, list) or not fields_map:
+            return
+
+        field_order = []
+
+        def collect(nodes):
+            for node in nodes or []:
+                if not isinstance(node, dict):
+                    continue
+                if node.get("type") == "field":
+                    name = str(node.get("name") or "").strip()
+                    if name and name in fields_map and name not in field_order:
+                        field_order.append(name)
+                for key in ("children", "tabs", "pages", "items", "nodes"):
+                    nested = node.get(key)
+                    if isinstance(nested, list):
+                        collect(nested)
+
+        collect(layout)
+        if not field_order:
+            return
+
+        data["fields"] = {name: fields_map.get(name) for name in field_order if name in fields_map}
+        data["visible_fields"] = list(field_order)
 
     def _safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()
