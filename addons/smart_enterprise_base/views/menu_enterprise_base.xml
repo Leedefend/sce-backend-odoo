@@ -48,11 +48,25 @@
         <field name="view_id" ref="smart_enterprise_base.view_users_tree_enterprise_base"/>
         <field name="search_view_id" ref="smart_enterprise_base.view_users_search_enterprise_base"/>
         <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
-        <field name="context">{'active_test': False}</field>
+        <field name="context">{'active_test': False, 'no_reset_password': True, 'form_view_ref': 'smart_enterprise_base.view_users_form_enterprise_base'}</field>
         <field name="help" type="html">
             <p>从这里统一维护用户主数据，让公司、组织和负责人关系真正落到人。</p>
             <p>本页只承接基础资料，不替代角色、安全和高级权限原生页面。</p>
         </field>
+    </record>
+
+    <record id="action_enterprise_user_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="smart_enterprise_base.view_users_tree_enterprise_base"/>
+        <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_user"/>
+    </record>
+
+    <record id="action_enterprise_user_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_enterprise_base.view_users_form_enterprise_base"/>
+        <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_user"/>
     </record>
 
     <menuitem id="menu_enterprise_base_root"

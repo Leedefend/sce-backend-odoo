@@ -17,9 +17,21 @@ const allowLocalFallbackDb = appEnv === 'dev' || appEnv === 'test' || appEnv ===
 // For local dev/test only, fallback to sc_demo when db env is not explicitly set.
 const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
 const pinnedDb = runtimeDb || localBlockedEnvDb || enforcedDb;
+const envApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL ?? '').trim();
+const normalizedEnvApiBaseUrl = envApiBaseUrl.toLowerCase();
+const shouldIgnoreEnvApiBaseUrl =
+  !!envApiBaseUrl
+  && appEnv !== 'dev'
+  && appEnv !== 'local'
+  && (
+    normalizedEnvApiBaseUrl.includes('localhost')
+    || normalizedEnvApiBaseUrl.includes('127.0.0.1:8070')
+    || normalizedEnvApiBaseUrl.includes('sc_delivery_local')
+  );
+const resolvedApiBaseUrl = shouldIgnoreEnvApiBaseUrl ? '' : envApiBaseUrl;
 
 export const config = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  apiBaseUrl: resolvedApiBaseUrl,
   appEnv,
   tenant: import.meta.env.VITE_TENANT ?? 'default',
   featureFlags: (import.meta.env.VITE_FEATURE_FLAGS ?? '')

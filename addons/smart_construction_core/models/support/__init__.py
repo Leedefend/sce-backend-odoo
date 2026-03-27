@@ -29,3 +29,4 @@ from . import portal_execute
 from . import scene_orchestration
 from . import pack_registry
 from . import subscription
+from . import res_users_role_profile

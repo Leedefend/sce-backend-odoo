@@ -435,20 +435,49 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         except Exception as e:
                             _logger.warning("通过 action context 解析指定视图失败: %s", e)
                     for v in (act.views or []):
-                        if v and len(v) >= 2 and v[1] == view_type:
+                        if not (v and len(v) >= 2 and v[1] == view_type):
+                            continue
+                        if v[0]:
                             view_id = v[0]
                             break
+                    if not view_id:
+                        bound_view = self.env['ir.actions.act_window.view'].sudo().search(
+                            [
+                                ('act_window_id', '=', act.id),
+                                ('view_mode', '=', view_type),
+                                ('view_id', '!=', False),
+                            ],
+                            order='sequence asc, id asc',
+                            limit=1,
+                        )
+                        if bound_view and bound_view.view_id:
+                            view_id = bound_view.view_id.id
             if view_id:
                 _logger.info("使用指定视图ID %s 加载 %s.%s 视图", view_id, model_name, view_type)
                 data = Model.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)
                 if isinstance(data, dict) and data.get('arch'):
-                    return {
+                    explicit_data = {
                         'arch': data.get('arch'),
                         'fields': data.get('fields', {}),
                         'toolbar': data.get('toolbar', {}),
                         '_contract_view_id': view_id,
                         '_contract_view_source': 'action_specific',
                     }
+                    try:
+                        fv = Model.fields_view_get(view_id=view_id, view_type=view_type, toolbar=True)
+                        fv_arch = fv.get('arch') if isinstance(fv, dict) else ''
+                        explicit_arch = explicit_data.get('arch') or ''
+                        if fv_arch and len(str(fv_arch)) >= len(str(explicit_arch)):
+                            explicit_data = {
+                                'arch': fv_arch,
+                                'fields': fv.get('fields', {}),
+                                'toolbar': fv.get('toolbar', {}),
+                                '_contract_view_id': view_id,
+                                '_contract_view_source': 'action_specific_fields_view_get',
+                            }
+                    except Exception as e:
+                        _logger.warning("action-specific fields_view_get 失败: %s", e)
+                    return explicit_data
         except Exception as e:
             _logger.warning("加载指定视图ID失败: %s", e)
 

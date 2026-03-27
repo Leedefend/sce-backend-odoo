@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-27T00:35:00Z
+- blocker_key: `sprint1_review_plan_frozen_v1`
+- layer_target: `Governance Layer / Planning Layer`
+- module: `docs/product + docs/ops/assessment + docs/ops/iterations`
+- reason: `Sprint 0 已提交收口，下一步需要在不直接开工实现的前提下，把 Sprint 1 重新收窄成“用户基础 + 角色可见结果”审核版计划，继续遵守先评审、后执行`
+- completed_step: `已更新总冲刺计划中的 Sprint 1 范围，明确角色真源保留 Odoo 原生；新增 Sprint 1 审核版执行计划，固定用户创建、角色可见结果、原生兜底与建议门禁`
+- active_commit: `1dfcd38`
+- next_step: `Review and confirm the Sprint 1 execution plan before any code implementation begins`
+
 ### 2026-03-26T13:35:00Z
 - blocker_key: `frontend_takeover_consumption_alignment_v1`
 - layer_target: `Frontend Layer / Page Orchestration Layer / Verify Layer`
@@ -1674,3 +1683,13 @@ Each entry must include:
 - reason: `037/038 暴露出公司页仍在泄漏原生 company 复杂字段和复杂表单，且列表缺少明确新建动作；需要先把公司页收成真正的基础启用页，才能说 Sprint 0 可用`
 - completed_step: `公司 action 已绑定到独立基础 tree/form，不再复用原生 company 大表单；列表头新增新建主按钮；后端测试和 prod-sim enablement smoke 已通过；本地默认前端环境仍有既有不稳定问题，不作为最终用户验收依据`
 - next_step: `在 prod-sim 实际页面继续人工确认公司列表与基础表单视觉是否满足产品要求，再决定是否进入组织/用户同类 UX hardening`
+
+## 2026-03-27T03:18:00Z Sprint 1 List Pagination And Search Hardening v1
+
+- branch: `codex/next-round`
+- head: `1dfcd38`
+- layer_target: `Frontend Layer / Platform Layer / Verify Layer`
+- module: `frontend/apps/web/src/pages/ListPage.vue + frontend/apps/web/src/views/ActionView.vue + frontend/apps/web/src/app/action_runtime/useActionViewTriggerRuntime.ts + frontend/apps/web/src/app/action_runtime/useActionViewLoadMainPhaseRuntime.ts + frontend/apps/web/src/app/action_runtime/useActionViewLoadRequestDynamicInputRuntime.ts + frontend/apps/web/src/app/runtime/actionViewLoadRequestRuntime.ts + frontend/apps/web/src/app/runtime/actionViewLoadRouteRequestRuntime.ts + frontend/apps/web/src/app/runtime/actionViewLoadDomainContextRequestRuntime.ts + addons/smart_core/handlers/api_data.py`
+- reason: `真实用户反馈企业用户列表页缺少平铺分页，且基础搜索无法覆盖登录账号/手机号等高频字段；需要按“标准 list 前端承接、复杂搜索生态暂不接管”的冻结策略，补齐列表页最小可用闭环`
+- completed_step: `已为平铺列表补最小分页条和页偏移请求链；普通列表请求不再把 offset 固定为 0；搜索从仅 name 扩展到 res.users/res.company/hr.department 的常用业务字段；verify.frontend.build、smart_core 模块升级和 verify.product.enablement.sprint1 已通过`
+- next_step: `由真实用户在 prod-sim 自定义前端复测企业用户列表的翻页与搜索；若通过，再整理本轮 Sprint 1 改动并提交`

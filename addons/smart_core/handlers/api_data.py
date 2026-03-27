@@ -26,6 +26,7 @@ from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 _NOT_NULL_COLUMN_RE = re.compile(r'null value in column "([^"]+)"', re.IGNORECASE)
+_UNIQUE_FIELD_RE = re.compile(r"Key \(([^)]+)\)=\(([^)]*)\) already exists", re.IGNORECASE)
 
 
 def _json(o):
@@ -622,6 +623,34 @@ class ApiDataHandler(BaseIntentHandler):
             return True
         return False
 
+    def _sync_res_users_postprocess(self, recs, safe_vals: Dict[str, Any]):
+        if not recs or getattr(recs, "_name", "") != "res.users":
+            return None
+        try:
+            recs = recs.sudo()
+            company_id = int(safe_vals.get("company_id") or 0)
+            if company_id > 0:
+                allowed_company_ids = {int(cid or 0) for cid in recs.company_ids.ids if int(cid or 0) > 0}
+                allowed_company_ids.add(company_id)
+                recs.write(
+                    {
+                        "company_id": company_id,
+                        "company_ids": [(6, 0, sorted(allowed_company_ids))],
+                    }
+                )
+
+            sync_role_groups = getattr(recs, "_sync_sc_role_profile_groups", None)
+            if callable(sync_role_groups):
+                sync_role_groups()
+
+            password = str(safe_vals.get("password") or "").strip()
+            if password:
+                recs.with_context(no_reset_password=True).write({"password": password})
+        except Exception:
+            _logger.exception("res.users postprocess sync failed ids=%s", getattr(recs, "ids", []))
+            return self._err(500, "用户已保存，但公司范围/角色/密码同步失败，请重试。")
+        return None
+
     # ----------------- 主处理 -----------------
 
     def handle(self, **kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]] | Dict[str, Any]:
@@ -679,6 +708,55 @@ class ApiDataHandler(BaseIntentHandler):
             return {"ok": True, "data": None, "meta": {"op": op, "model": model, "etag": etag}, "code": 304}
         return data, meta_out
 
+    def _standard_search_fields(self, model: str, env_model, fields_safe: List[str]) -> List[str]:
+        model_fields = getattr(env_model, "_fields", {}) or {}
+        candidates: List[str] = []
+        if model == "res.users":
+            candidates.extend(["name", "login", "phone", "mobile", "email"])
+        elif model == "res.company":
+            candidates.extend(["name", "sc_short_name", "sc_credit_code", "sc_contact_phone"])
+        elif model == "hr.department":
+            candidates.extend(["name"])
+        else:
+            candidates.extend(["name"])
+            if "display_name" in model_fields:
+                candidates.append("display_name")
+        for field_name in fields_safe:
+            if field_name in model_fields and field_name not in candidates:
+                field = model_fields[field_name]
+                if getattr(field, "type", "") in {"char", "text", "html"}:
+                    candidates.append(field_name)
+        filtered: List[str] = []
+        seen = set()
+        for field_name in candidates:
+            if field_name in seen or field_name not in model_fields:
+                continue
+            field = model_fields[field_name]
+            if getattr(field, "type", "") not in {"char", "text", "html"}:
+                continue
+            seen.add(field_name)
+            filtered.append(field_name)
+        return filtered
+
+    def _build_standard_search_domain(self, model: str, env_model, fields_safe: List[str], search_term: str):
+        term = str(search_term or "").strip()
+        if not term:
+            return []
+        search_clauses: List[Any] = []
+        try:
+            search_id = int(term)
+        except Exception:
+            search_id = None
+        if search_id is not None and "id" in getattr(env_model, "_fields", {}):
+            search_clauses.append(("id", "=", search_id))
+        for field_name in self._standard_search_fields(model, env_model, fields_safe):
+            search_clauses.append((field_name, "ilike", term))
+        if not search_clauses:
+            return []
+        if len(search_clauses) == 1:
+            return [search_clauses[0]]
+        return (["|"] * (len(search_clauses) - 1)) + search_clauses
+
     # ----------------- 操作实现 -----------------
 
     def _op_list(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -718,16 +796,6 @@ class ApiDataHandler(BaseIntentHandler):
                     # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
                     domain = parsed_domain + domain
 
-        if search_term:
-            try:
-                search_id = int(search_term)
-            except Exception:
-                search_id = None
-            if search_id is not None:
-                domain = domain + ["|", ("name", "ilike", search_term), ("id", "=", search_id)]
-            else:
-                domain = domain + [("name", "ilike", search_term)]
-
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
@@ -738,6 +806,9 @@ class ApiDataHandler(BaseIntentHandler):
 
         # 先按 groups 过滤一遍，避免 AccessError
         fields_safe = self._filter_readable_fields(env_model, fields or ["id", "name"])
+        search_domain = self._build_standard_search_domain(model, env_model, fields_safe, search_term)
+        if search_domain:
+            domain = domain + search_domain
 
         recs = env_model.search(domain or [], order=order or None, limit=limit or None, offset=offset or 0)
         try:
@@ -928,23 +999,35 @@ class ApiDataHandler(BaseIntentHandler):
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
 
+        def _create_with_savepoint(candidate_vals: Dict[str, Any]):
+            with self.env.cr.savepoint():
+                return env_model.create(candidate_vals)
+
         try:
-            rec = env_model.create(safe_vals)
+            rec = _create_with_savepoint(safe_vals)
         except AccessError as ae:
             _logger.warning("create AccessError on %s: %s", model, ae)
             return self._err(403, "无创建权限")
         except Exception as e:
+            unique_field, unique_value = self._extract_unique_field(e)
+            if unique_field:
+                _logger.warning("create unique violation on %s field=%s value=%s", model, unique_field, unique_value)
+                return self._err(409, self._build_unique_violation_message(env_model, unique_field, unique_value))
             column = self._extract_not_null_column(e)
             if column and safe_vals.get(column) in (None, ""):
                 retry_vals = dict(safe_vals)
                 changed = self._fill_not_null_column_fallback(env_model, retry_vals, column)
                 if changed:
                     try:
-                        rec = env_model.create(retry_vals)
+                        rec = _create_with_savepoint(retry_vals)
                         safe_vals = retry_vals
-                    except Exception:
+                    except Exception as retry_exc:
+                        unique_field, unique_value = self._extract_unique_field(retry_exc)
+                        if unique_field:
+                            _logger.warning("create unique violation on %s field=%s value=%s", model, unique_field, unique_value)
+                            return self._err(409, self._build_unique_violation_message(env_model, unique_field, unique_value))
                         _logger.exception("create failed on %s (retry column=%s)", model, column)
-                        return self._err(500, str(e))
+                        return self._err(500, str(retry_exc))
                 else:
                     _logger.exception("create failed on %s (unresolved column=%s)", model, column)
                     return self._err(500, str(e))
@@ -952,9 +1035,36 @@ class ApiDataHandler(BaseIntentHandler):
                 _logger.exception("create failed on %s", model)
                 return self._err(500, str(e))
 
+        if model == "res.users":
+            sync_error = self._sync_res_users_postprocess(rec, safe_vals)
+            if sync_error:
+                return sync_error
+
         data = {"id": rec.id}
         meta = {"op": "create", "model": model, "id": rec.id}
         return data, meta
+
+    def _extract_unique_field(self, exc: Exception) -> Tuple[str, str]:
+        raw = str(exc or "")
+        match = _UNIQUE_FIELD_RE.search(raw)
+        if not match:
+            return "", ""
+        return str(match.group(1) or "").strip(), str(match.group(2) or "").strip()
+
+    def _build_unique_violation_message(self, env_model, field_name: str, field_value: str) -> str:
+        normalized = str(field_name or "").strip()
+        if env_model._name == "res.users" and normalized == "login":
+            return "登录账号已存在，请更换后重试。"
+        field_desc = {}
+        try:
+            field_desc = env_model.fields_get([normalized]).get(normalized) or {}
+        except Exception:
+            field_desc = {}
+        field_label = str(field_desc.get("string") or normalized or "唯一字段").strip()
+        value_text = str(field_value or "").strip()
+        if value_text:
+            return f"{field_label}“{value_text}”已存在，请更换后重试。"
+        return f"{field_label}已存在，请更换后重试。"
 
     def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
         ids = self._get_list(p, "ids", [])
@@ -975,7 +1085,6 @@ class ApiDataHandler(BaseIntentHandler):
         safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
-
         try:
             recs.write(safe_vals)
         except AccessError as ae:
@@ -984,6 +1093,11 @@ class ApiDataHandler(BaseIntentHandler):
         except Exception as e:
             _logger.exception("write failed on %s", model)
             return self._err(500, str(e))
+
+        if model == "res.users":
+            sync_error = self._sync_res_users_postprocess(recs, safe_vals)
+            if sync_error:
+                return sync_error
 
         data = {"ids": recs.ids}
         meta = {"op": "write", "model": model, "count": len(recs)}

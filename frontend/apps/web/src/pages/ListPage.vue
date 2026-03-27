@@ -259,6 +259,31 @@
           </tr>
         </tbody>
       </table>
+      <footer v-if="showFlatPagination" class="table-pagination">
+        <div class="table-pagination-meta">
+          <span>{{ paginationRangeText }}</span>
+          <span>共 {{ paginationTotal }} 条</span>
+        </div>
+        <div class="table-pagination-actions">
+          <button
+            type="button"
+            class="table-page-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            上一页
+          </button>
+          <span>{{ paginationPageText }}</span>
+          <button
+            type="button"
+            class="table-page-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            下一页
+          </button>
+        </div>
+      </footer>
     </section>
   </section>
 </template>
@@ -330,6 +355,10 @@ const props = defineProps<{
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
+  pageOffset?: number;
+  pageLimit?: number;
+  pageTotal?: number | null;
+  onPageChange?: (nextOffset: number) => void;
   groupedRows?: Array<{
     key: string;
     label: string;
@@ -396,6 +425,44 @@ const recordCountSafe = computed(() => {
   if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
   return props.records.length;
 });
+const paginationLimit = computed(() => {
+  const raw = Number(props.pageLimit || 0);
+  if (Number.isFinite(raw) && raw > 0) return Math.trunc(raw);
+  return 0;
+});
+const paginationOffset = computed(() => {
+  const raw = Number(props.pageOffset || 0);
+  if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
+  return 0;
+});
+const paginationTotal = computed(() => {
+  const raw = Number(props.pageTotal);
+  if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
+  return recordCountSafe.value;
+});
+const showPagination = computed(() => {
+  return Boolean(props.onPageChange)
+    && paginationLimit.value > 0
+    && paginationTotal.value > paginationLimit.value;
+});
+const showFlatPagination = computed(() => showPagination.value && !groupedRows.value.length);
+const paginationCurrentPage = computed(() => {
+  if (paginationLimit.value <= 0) return 1;
+  return Math.floor(paginationOffset.value / paginationLimit.value) + 1;
+});
+const paginationTotalPages = computed(() => {
+  if (paginationLimit.value <= 0) return 1;
+  return Math.max(1, Math.ceil(paginationTotal.value / paginationLimit.value));
+});
+const canPagePrev = computed(() => paginationOffset.value > 0);
+const canPageNext = computed(() => paginationOffset.value + paginationLimit.value < paginationTotal.value);
+const paginationRangeText = computed(() => {
+  if (!paginationTotal.value) return '0 - 0';
+  const start = paginationOffset.value + 1;
+  const end = Math.min(paginationTotal.value, paginationOffset.value + Math.max(paginationLimit.value, props.records.length));
+  return `${start} - ${end}`;
+});
+const paginationPageText = computed(() => `${paginationCurrentPage.value} / ${paginationTotalPages.value} 页`);
 const pageModeLabelText = computed(() => pageModeLabel(props.pageMode || 'list'));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
@@ -592,6 +659,18 @@ function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
 }
 
+function pagePrev() {
+  if (!props.onPageChange || !canPagePrev.value) return;
+  const next = Math.max(0, paginationOffset.value - paginationLimit.value);
+  props.onPageChange(next);
+}
+
+function pageNext() {
+  if (!props.onPageChange || !canPageNext.value) return;
+  const next = paginationOffset.value + paginationLimit.value;
+  props.onPageChange(next);
+}
+
 function rowId(row: Record<string, unknown>) {
   const value = row?.id;
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -749,6 +828,38 @@ function columnLabel(col: string) {
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.table-pagination-meta,
+.table-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 12px;
+}
+
+.table-page-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.table-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .summary-strip {

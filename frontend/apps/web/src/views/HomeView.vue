@@ -13,9 +13,9 @@
       <header class="enterprise-enablement-header">
         <div>
           <p class="enterprise-enablement-eyebrow">企业启用</p>
-          <h3>先建立公司、组织，再完成用户设置</h3>
+          <h3>{{ enterpriseEnablementTitle }}</h3>
           <p class="enterprise-enablement-lead">
-            当前企业启用主路径已接入公司、组织和用户设置三步。先完成公司信息，再继续补齐组织和执行主体。
+            {{ enterpriseEnablementLead }}
           </p>
         </div>
         <button
@@ -115,9 +115,9 @@
       <header class="enterprise-enablement-header">
         <div>
           <p class="enterprise-enablement-eyebrow">企业启用</p>
-          <h3>先建立公司、组织，再完成用户设置</h3>
+          <h3>{{ enterpriseEnablementTitle }}</h3>
           <p class="enterprise-enablement-lead">
-            当前企业启用主路径已接入公司、组织和用户设置三步。先完成公司信息，再继续补齐组织和执行主体。
+            {{ enterpriseEnablementLead }}
           </p>
         </div>
         <button
@@ -645,6 +645,20 @@ const heroQuickActions = computed(() => {
   return fallback;
 });
 const enterpriseEnablement = computed(() => session.enterpriseEnablement);
+const enterpriseEnablementTitle = computed(() => {
+  const phase = asText(enterpriseEnablement.value?.phase).toLowerCase();
+  if (phase === 'sprint1') {
+    return '完成用户设置，并验证角色首页入口';
+  }
+  return '先建立公司、组织，再完成用户设置';
+});
+const enterpriseEnablementLead = computed(() => {
+  const phase = asText(enterpriseEnablement.value?.phase).toLowerCase();
+  if (phase === 'sprint1') {
+    return '当前企业启用主路径已进入用户与角色可见结果阶段。请完成用户、部门、产品角色和初始密码设置，再用新账号登录验证首页入口。';
+  }
+  return '当前企业启用主路径已接入公司、组织和用户设置三步。先完成公司信息，再继续补齐组织和执行主体。';
+});
 const enterpriseEnablementSteps = computed(() => enterpriseEnablement.value?.steps || []);
 const enterprisePrimaryAction = computed(() => enterpriseEnablement.value?.primary_action || enterpriseEnablementSteps.value[0]?.target || null);
 const showEnterpriseEnablementCard = computed(() => {
