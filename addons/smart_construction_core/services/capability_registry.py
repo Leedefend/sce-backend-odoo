@@ -137,8 +137,6 @@ def _resolve_role_codes_for_user(user) -> set[str]:
         return {"owner"}
     roles: set[str] = set()
     group_xmlids = set(user.groups_id.get_external_id().values())
-    if user.has_group("base.group_system"):
-        roles.add("executive")
     for xmlid in group_xmlids:
         text = str(xmlid or "").strip()
         if text.startswith(ROLE_GROUP_PREFIX):
@@ -157,12 +155,6 @@ def _resolve_role_codes_for_user(user) -> set[str]:
             "smart_construction_core.group_sc_cap_finance_manager"
         ):
             roles.add("finance")
-        if (
-            user.has_group("smart_construction_core.group_sc_super_admin")
-            or user.has_group("smart_construction_core.group_sc_cap_config_admin")
-            or user.has_group("smart_construction_core.group_sc_business_full")
-        ):
-            roles.add("executive")
     except Exception:
         pass
     if "finance" in roles:

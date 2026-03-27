@@ -1693,3 +1693,83 @@ Each entry must include:
 - reason: `真实用户反馈企业用户列表页缺少平铺分页，且基础搜索无法覆盖登录账号/手机号等高频字段；需要按“标准 list 前端承接、复杂搜索生态暂不接管”的冻结策略，补齐列表页最小可用闭环`
 - completed_step: `已为平铺列表补最小分页条和页偏移请求链；普通列表请求不再把 offset 固定为 0；搜索从仅 name 扩展到 res.users/res.company/hr.department 的常用业务字段；verify.frontend.build、smart_core 模块升级和 verify.product.enablement.sprint1 已通过`
 - next_step: `由真实用户在 prod-sim 自定义前端复测企业用户列表的翻页与搜索；若通过，再整理本轮 Sprint 1 改动并提交`
+
+## 2026-03-27T05:25:00Z Project Delete Policy Freeze v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Platform Layer / Frontend Layer / Product Governance Layer`
+- module: `addons/smart_construction_core/core_extension.py + frontend/apps/web/src/views/ActionView.vue + docs/product/project_delete_policy_v1.md`
+- reason: `真实用户删除项目时暴露出项目被当成普通主数据处理的风险；经代码审计确认 project.project 下游关系同时存在 cascade、默认阻断和投影消失三类行为，当前不具备安全物理删除语义，必须立即撤回项目删除入口并冻结正式策略`
+- completed_step: `已将 project.project 从 api.data.unlink allowlist 移除；前端项目列表不再暴露批量删除；正式冻结 Project Delete Policy v1，明确项目默认只能归档/关闭，未来若需物理销毁必须走依赖扫描+影响清单+显式准入的专门流程`
+- next_step: `升级 smart_construction_core 与前端运行态，确认项目列表回到归档语义，并继续对组织/用户/项目列表做产品化净化`
+
+## 2026-03-27T13:55:00Z Native View Governance Recovery v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Platform Governance Layer / Frontend Contract Consumer Layer / Product Governance Layer`
+- module: `addons/smart_core/utils/contract_governance.py + frontend/apps/web/src/pages/ContractFormPage.vue + docs/product/native_view_governance_enterprise_enablement_v1.md`
+- reason: `企业启用页在交互收口过程中出现过多前端模型级特判，开始削弱“原生视图 -> 后端治理 -> 前端消费”的平台主线，需要把公司/组织/用户三页的动作与表面裁剪回收到后端治理层，并冻结统一架构口径`
+- completed_step: `已在 contract governance 中引入 enterprise_enablement form_governance；公司/组织/用户表单的隐藏 workflow/search/body actions、抑制原始 header actions、下一步动作定义开始由后端输出；前端 ContractFormPage 改为消费 form_governance，不再只按模型名硬编码企业启用按钮逻辑；已落库《原生视图治理下的企业启用页策略 v1》`
+- next_step: `完成前端构建与 prod-sim 运行态验证，确认组织/用户页按钮闭环生效后，再继续清理剩余企业启用前端特判`
+
+## 2026-03-27T14:02:00Z Project Task Governance Bootstrap v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Platform Governance Layer / Backend Contract Layer`
+- module: `addons/smart_core/utils/contract_governance.py + addons/smart_core/tests/test_load_contract_capability_profile.py`
+- reason: `按“原生视图为真源、后端治理做裁剪、前端只消费契约”的新口径，先把高频标准页中的 project.task 表单纳入治理主线，避免后续任务页继续靠前端散点收口`
+- completed_step: `已为 project.task 新增表单字段白名单、中文业务标签、治理后 layout 与 focused backend test；make test MODULE=smart_core TEST_TAGS=load_contract_capability_profile DB_NAME=sc_demo 通过；prod-sim 的 smart_core 模块升级通过`
+- next_step: `重启 prod-sim 运行态后，继续补 project.project / project.task 的标准列表治理，逐步把高频标准页切到统一治理协议`
+
+## 2026-03-27T14:08:00Z Task System Strategy Freeze v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Product Governance Layer / Architecture Alignment Layer`
+- module: `docs/product/task_system_strategy_v1.md`
+- reason: `校准“任务”概念，避免把任务体系错误收缩为手工创建的 project.task；明确项目上的合同、成本、付款、结算、风险处置等业务事项也属于任务域，后续必须纳入统一任务管理视角`
+- completed_step: `已冻结 Task System Strategy v1，明确任务体系 = 显性任务（project.task）+ 系统派生任务；当前阶段继续优先复用 Odoo 原生任务体系，同时允许业务对象先通过任务投影进入统一执行面`
+- next_step: `后续项目/任务产品化将按该策略推进：先治理原生 task 标准页，再把高频业务对象逐步纳入统一任务投影`
+
+## 2026-03-27T14:25:00Z Capability Group Governance Audit v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Platform Permission Governance Layer`
+- module: `addons/smart_construction_custom/security/ir.model.access.csv + addons/smart_construction_custom/security/role_matrix_groups.xml + addons/smart_construction_core/tests/test_user_role_profile_backend.py`
+- reason: `用户要求校准权限模型：权限必须通过能力组获得，不能直接把 ACL 绑到角色组，更不能让组合角色直接吃配置能力；审计后确认 smart_construction_custom 仍存在角色组直绑 ACL，且 executive 直接 implied config_admin 能力组`
+- completed_step: `已将合同/结算/付款 ACL 从角色组回收到能力组；已新增 group_sc_role_config_admin 作为角色面桥接，并让 executive 通过角色面继承配置能力；已补后端测试锁定“ACL 不得直绑角色组”和“executive 不得直接 implied config_admin 能力组”`
+- next_step: `升级 smart_construction_custom 并验证实际角色用户在工作台、合同、结算、付款主链上的权限仍然成立，同时继续审计 legacy sc_role_groups 是否需要后续批次收敛`
+
+## 2026-03-27T14:40:00Z Role Surface Decoupling From System Admin v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Platform Permission Governance Layer`
+- module: `addons/smart_construction_core/core_extension.py + addons/smart_construction_core/services/capability_registry.py + addons/smart_construction_core/tests/test_user_role_profile_backend.py`
+- reason: `运行态审计确认 user_id=2(admin) 被角色表面错误识别为 executive，但实际并未拿到 project_read -> project_stages 能力链，导致产品生命周期工作台读取 project.project.stage_id 时字段级报错；根因是 base.group_system 和 super_admin/config_admin 被直接映射成 executive`
+- completed_step: `已从 role surface explicit 映射中移除 base.group_system/group_sc_super_admin/group_sc_cap_config_admin；capability_registry 不再把 system admin、super admin、config admin、business_full 直接提升为 executive；已补回归测试锁定“base.group_system 不得自动解析为 executive”`
+- next_step: `升级 smart_construction_core 并复测 admin 登录时不再被误判为 executive，同时确认正式 executive 角色用户仍能正常进入管理层工作台`
+
+## 2026-03-27T14:55:00Z System Admin Product Surface Policy Freeze v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Product Governance Layer / Platform Permission Governance Layer`
+- module: `docs/product/system_admin_product_surface_policy_v1.md + addons/smart_construction_core/tests/test_user_role_profile_backend.py`
+- reason: `运行态已经证实系统管理员被误当成业务 executive 会导致入口开放与能力真源脱节，必须正式冻结“系统管理员不自动等于业务角色”的产品入口策略，并修正对应测试实现细节`
+- completed_step: `已落库 System Admin Product Surface Policy v1，明确 base.group_system 只代表系统管理、不自动代表任何施工业务角色；同时修复测试中 group xmlid 读取方式，避免权限治理回归被错误断言噪音掩盖`
+- next_step: `继续清理剩余权限治理测试噪音，并在后续产品化批次中始终按“正式角色/能力链决定业务入口”的口径推进`
+
+## 2026-03-27T15:08:00Z Sprint1 User Role Gate Recovery v1
+
+- branch: `codex/next-round`
+- head: `7861047`
+- layer_target: `Verify Layer / Platform Permission Governance Layer`
+- module: `addons/smart_core/handlers/api_data.py + addons/smart_construction_core/tests/test_user_role_profile_backend.py`
+- reason: `把 sprint1_user_role_backend 从混合噪音恢复成可信门禁；前序失败已确认主要来自 handler 返回结构误判、权限治理测试错误读取 implied 闭包，以及 res.users 密码同步未走 Odoo 原生接口`
+- completed_step: `已将 ApiDataHandler 的 res.users 密码同步切到 Odoo 原生 _change_password；已把 handler 成功返回统一归一到测试可读结构；已将“角色组不得直达能力组”的断言改为审计 XML 直接定义；make test MODULE=smart_construction_core TEST_TAGS=sprint1_user_role_backend DB_NAME=sc_demo 现已通过（0 failed / 0 error）`
+- next_step: `后续可在此可信门禁之上继续提交权限治理与产品入口收敛改动，不再被旧测试噪音误导`
