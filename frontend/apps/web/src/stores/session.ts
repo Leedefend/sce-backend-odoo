@@ -92,6 +92,7 @@ export interface EnterpriseEnablementFacts {
   theme: string;
   entry_root_xmlid: string;
   current_company_id: number;
+  current_company_name: string;
   primary_action: EnterpriseEnablementStepTarget | null;
   steps: EnterpriseEnablementStep[];
 }
@@ -869,6 +870,7 @@ export const useSessionStore = defineStore('session', {
             theme: String(enterpriseMainlineRaw.theme || ''),
             entry_root_xmlid: String(enterpriseMainlineRaw.entry_root_xmlid || ''),
             current_company_id: Number(enterpriseMainlineRaw.current_company_id || 0),
+            current_company_name: String(enterpriseMainlineRaw.current_company_name || ''),
             primary_action: normalizeEnterpriseEnablementTarget(enterpriseMainlineRaw.primary_action),
             steps: Array.isArray(enterpriseMainlineRaw.steps)
               ? enterpriseMainlineRaw.steps

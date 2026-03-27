@@ -95,6 +95,7 @@ def smart_core_extend_system_init(data, env, user):
                 },
             ],
             "current_company_id": company_id,
+            "current_company_name": user.company_id.display_name if user.company_id else (env.company.display_name if env.company else ""),
             "primary_action": primary_action,
         }
         ext_facts["enterprise_enablement"] = enablement
