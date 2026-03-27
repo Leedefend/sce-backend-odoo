@@ -3,12 +3,13 @@
         <field name="name">hr.department.tree.enterprise.base</field>
         <field name="model">hr.department</field>
         <field name="arch" type="xml">
-            <tree default_order="company_id, parent_id, name">
-                <field name="name"/>
-                <field name="parent_id"/>
-                <field name="sc_manager_user_id"/>
-                <field name="company_id"/>
-                <field name="sc_is_active"/>
+            <tree string="组织架构" default_order="company_id, parent_id, name">
+                <field name="name" string="部门名称"/>
+                <field name="parent_id" string="上级部门"/>
+                <field name="sc_manager_user_id" string="部门负责人"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="sc_user_count" string="用户数"/>
+                <field name="sc_is_active" string="启用"/>
             </tree>
         </field>
     </record>
@@ -48,15 +49,16 @@
         <field name="model">hr.department</field>
         <field name="arch" type="xml">
             <search>
-                <field name="name"/>
-                <field name="company_id"/>
-                <field name="parent_id"/>
-                <field name="sc_manager_user_id"/>
+                <field name="name" string="部门名称"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="parent_id" string="上级部门"/>
+                <field name="sc_manager_user_id" string="部门负责人"/>
                 <filter name="sc_department_active_true" string="启用中" domain="[('sc_is_active', '=', True)]"/>
                 <filter name="sc_department_active_false" string="已停用" domain="[('sc_is_active', '=', False)]"/>
                 <group expand="0" string="分组">
-                    <filter name="group_by_company_id" string="公司" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_by_company_id" string="所属公司" context="{'group_by': 'company_id'}"/>
                     <filter name="group_by_parent_id" string="上级部门" context="{'group_by': 'parent_id'}"/>
+                    <filter name="group_by_sc_manager_user_id" string="部门负责人" context="{'group_by': 'sc_manager_user_id'}"/>
                 </group>
             </search>
         </field>

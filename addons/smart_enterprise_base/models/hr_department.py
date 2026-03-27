@@ -20,7 +20,6 @@ class HrDepartment(models.Model):
     sc_is_active = fields.Boolean("启用", default=True)
     sc_user_count = fields.Integer("用户数", compute="_compute_sc_user_count")
 
-    @api.depends_context("active_test")
     def _compute_sc_user_count(self):
         User = self.env["res.users"].sudo()
         grouped = User.read_group(

@@ -30,6 +30,14 @@
         >
           {{ submitButtonLabel }}
         </button>
+        <button
+          v-if="enterpriseNextActionVisible"
+          class="ghost"
+          :disabled="busy || !enterpriseNextActionTarget"
+          @click="openEnterpriseNextAction"
+        >
+          {{ enterpriseNextActionLabel }}
+        </button>
         <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
         <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
         <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy" @click="reload">重新加载</button>
@@ -56,7 +64,7 @@
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
 
-      <section v-if="workflowTransitions.length && !isProjectCreatePage" class="block">
+      <section v-if="workflowTransitions.length && !isProjectCreatePage && !hideWorkflowSection" class="block">
         <h3>流程操作</h3>
         <div class="chips">
           <button
@@ -72,7 +80,7 @@
         </div>
       </section>
 
-      <section v-if="showSearchFilters && searchFilters.length && !isProjectCreatePage" class="block">
+      <section v-if="showSearchFilters && searchFilters.length && !isProjectCreatePage && !hideSearchFiltersSection" class="block">
         <h3>快捷筛选</h3>
         <div class="chips">
           <button
@@ -153,7 +161,7 @@
         </template>
       </PageFooterTemplate>
 
-      <section v-if="bodyActions.length && !isProjectCreatePage" class="block">
+      <section v-if="bodyActions.length && !isProjectCreatePage && !hideBodyActionsSection" class="block">
         <h3>可执行操作</h3>
         <div class="chips">
           <button
@@ -559,17 +567,27 @@ const pageDisplaySubtitle = computed(() => {
   if (isProjectCreatePage.value) {
     return '填写核心信息即可完成项目立项';
   }
-  const enterprisePrimaryActionId = Number(session.enterpriseEnablement?.primary_action?.action_id || 0);
-  if (
-    !recordId.value
-    && model.value === 'res.company'
-    && enterprisePrimaryActionId > 0
-    && actionId.value === enterprisePrimaryActionId
-  ) {
+  if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseCompanyFormPage.value) {
     return '这里只维护企业启用所需的基础信息。保存后请继续进入组织架构。';
+  }
+  if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseDepartmentFormPage.value) {
+    return '先搭建部门层级，再进入用户设置，把执行主体挂到部门下。';
+  }
+  if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseUserFormPage.value) {
+    return '这里只维护用户主数据。角色、安全策略和高级权限治理继续保留在原生页面。';
   }
   return '';
 });
+
+const isEnterpriseCompanyFormPage = computed(() => String(model.value || '').trim() === 'res.company');
+const isEnterpriseDepartmentFormPage = computed(() => String(model.value || '').trim() === 'hr.department');
+const isEnterpriseUserFormPage = computed(() => String(model.value || '').trim() === 'res.users');
+const formGovernance = computed<Record<string, unknown>>(() => {
+  const raw = (contract.value as Record<string, unknown> | null)?.form_governance;
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+});
+const enterpriseFormSurface = computed(() => String(formGovernance.value.surface || '').trim());
+const isEnterpriseBootstrapFormPage = computed(() => enterpriseFormSurface.value === 'enterprise_enablement');
 
 const isEnterpriseUserEnablementCreatePage = computed(() => {
   const enterprisePrimaryActionId = Number(session.enterpriseEnablement?.primary_action?.action_id || 0);
@@ -611,10 +629,47 @@ const normalCreateButtonLabel = computed(() => (busy.value && busyKind.value ===
 
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
+  if (Boolean(formGovernance.value.suppress_contract_header_actions)) return [];
   return headerActions.value;
 });
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
+const enterpriseStepTargets = computed(() => {
+  const steps = Array.isArray(session.enterpriseEnablement?.steps) ? session.enterpriseEnablement?.steps : [];
+  const out: Record<string, { actionId: number; menuId: number; label: string }> = {};
+  steps.forEach((step) => {
+    if (!step || typeof step !== 'object') return;
+    const key = String(step.key || '').trim().toLowerCase();
+    const target = step.target && typeof step.target === 'object' ? step.target : null;
+    const actionId = Number(target?.action_id || 0);
+    const menuId = Number(target?.menu_id || 0);
+    const label = String(step.label || '').trim();
+    if (!key || actionId <= 0) return;
+    out[key] = { actionId, menuId, label };
+  });
+  return out;
+});
+const enterpriseNextActionTarget = computed(() => {
+  const nextAction = formGovernance.value.next_action;
+  const stepKey = nextAction && typeof nextAction === 'object'
+    ? String((nextAction as Record<string, unknown>).step_key || '').trim().toLowerCase()
+    : '';
+  if (stepKey) return enterpriseStepTargets.value[stepKey] || null;
+  return null;
+});
+const enterpriseNextActionLabel = computed(() => {
+  const nextAction = formGovernance.value.next_action;
+  if (!nextAction || typeof nextAction !== 'object') return '';
+  return String((nextAction as Record<string, unknown>).label || '').trim();
+});
+const enterpriseNextActionVisible = computed(() => {
+  if (isProjectCreatePage.value) return false;
+  if (!enterpriseNextActionTarget.value) return false;
+  return Boolean(recordId.value);
+});
+const hideWorkflowSection = computed(() => Boolean(formGovernance.value.hide_workflow));
+const hideSearchFiltersSection = computed(() => Boolean(formGovernance.value.hide_search_filters));
+const hideBodyActionsSection = computed(() => Boolean(formGovernance.value.hide_body_actions));
 
 const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
@@ -3055,6 +3110,19 @@ async function runAction(action: ContractAction) {
       busyKind.value = null;
     }
   }
+}
+
+async function openEnterpriseNextAction() {
+  const target = enterpriseNextActionTarget.value;
+  if (!target) return;
+  await router.push({
+    name: 'action',
+    params: { actionId: String(target.actionId) },
+    query: pickContractNavQuery(route.query as Record<string, unknown>, {
+      action_id: target.actionId,
+      menu_id: target.menuId || undefined,
+    }),
+  });
 }
 
 async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPolicy']) {

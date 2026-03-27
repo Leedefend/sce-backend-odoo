@@ -210,6 +210,8 @@ const rootTitle = computed(() => {
 });
 const userName = computed(() => session.user?.name ?? '访客');
 const enterpriseLabel = computed(() => {
+  const enablementName = String(session.enterpriseEnablement?.current_company_name || '').trim();
+  if (enablementName) return enablementName;
   const user = session.user as Record<string, unknown> | null;
   const company = user?.company;
   if (company && typeof company === 'object' && !Array.isArray(company)) {
