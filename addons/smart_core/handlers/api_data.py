@@ -645,7 +645,9 @@ class ApiDataHandler(BaseIntentHandler):
 
             password = str(safe_vals.get("password") or "").strip()
             if password:
-                recs.with_context(no_reset_password=True).write({"password": password})
+                change_password = getattr(recs.with_context(no_reset_password=True), "_change_password", None)
+                if callable(change_password):
+                    change_password(password)
         except Exception:
             _logger.exception("res.users postprocess sync failed ids=%s", getattr(recs, "ids", []))
             return self._err(500, "用户已保存，但公司范围/角色/密码同步失败，请重试。")

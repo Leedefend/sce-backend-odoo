@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <!-- 项目角色 -->
-        <record id="group_sc_role_project_manager" model="res.groups">
-            <field name="name">SC 角色 - 项目经理</field>
+        <!-- Legacy 角色桥接组：保留旧角色 XMLID，但权限仍通过能力组获得 -->
+        <record id="group_sc_role_bridge_project_manager" model="res.groups">
+            <field name="name">SC 角色桥接 - 项目经理</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_manager')])]"/>
         </record>
 
-        <!-- 物资角色 -->
-        <record id="group_sc_role_material_user" model="res.groups">
-            <field name="name">SC 角色 - 物资员</field>
+        <record id="group_sc_role_bridge_material_user" model="res.groups">
+            <field name="name">SC 角色桥接 - 物资员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
@@ -18,8 +17,8 @@
             ])]"/>
         </record>
 
-        <record id="group_sc_role_material_manager" model="res.groups">
-            <field name="name">SC 角色 - 物资主管</field>
+        <record id="group_sc_role_bridge_material_manager" model="res.groups">
+            <field name="name">SC 角色桥接 - 物资主管</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
@@ -27,9 +26,8 @@
             ])]"/>
         </record>
 
-        <!-- 采购角色 -->
-        <record id="group_sc_role_purchase_user" model="res.groups">
-            <field name="name">SC 角色 - 采购员</field>
+        <record id="group_sc_role_bridge_purchase_user" model="res.groups">
+            <field name="name">SC 角色桥接 - 采购员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
@@ -38,9 +36,8 @@
             ])]"/>
         </record>
 
-        <!-- 财务角色 -->
-        <record id="group_sc_role_finance_user" model="res.groups">
-            <field name="name">SC 角色 - 出纳/经办</field>
+        <record id="group_sc_role_bridge_finance_user" model="res.groups">
+            <field name="name">SC 角色桥接 - 出纳经办</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
@@ -48,8 +45,8 @@
             ])]"/>
         </record>
 
-        <record id="group_sc_role_finance_manager" model="res.groups">
-            <field name="name">SC 角色 - 财务经理</field>
+        <record id="group_sc_role_bridge_finance_manager" model="res.groups">
+            <field name="name">SC 角色桥接 - 财务经理</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
@@ -57,9 +54,8 @@
             ])]"/>
         </record>
 
-        <!-- 合同/成本角色 -->
-        <record id="group_sc_role_contract_admin" model="res.groups">
-            <field name="name">SC 角色 - 合同管理员</field>
+        <record id="group_sc_role_bridge_contract_admin" model="res.groups">
+            <field name="name">SC 角色桥接 - 合同管理员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
@@ -67,13 +63,66 @@
             ])]"/>
         </record>
 
-        <record id="group_sc_role_cost_user" model="res.groups">
-            <field name="name">SC 角色 - 成本员</field>
+        <record id="group_sc_role_bridge_cost_user" model="res.groups">
+            <field name="name">SC 角色桥接 - 成本员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
                 ref('smart_construction_core.group_sc_cap_cost_read')
             ])]"/>
+        </record>
+
+        <!-- 项目角色 -->
+        <record id="group_sc_role_project_manager" model="res.groups">
+            <field name="name">SC 角色 - 项目经理</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_project_manager')])]"/>
+        </record>
+
+        <!-- 物资角色 -->
+        <record id="group_sc_role_material_user" model="res.groups">
+            <field name="name">SC 角色 - 物资员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_material_user')])]"/>
+        </record>
+
+        <record id="group_sc_role_material_manager" model="res.groups">
+            <field name="name">SC 角色 - 物资主管</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_material_manager')])]"/>
+        </record>
+
+        <!-- 采购角色 -->
+        <record id="group_sc_role_purchase_user" model="res.groups">
+            <field name="name">SC 角色 - 采购员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_purchase_user')])]"/>
+        </record>
+
+        <!-- 财务角色 -->
+        <record id="group_sc_role_finance_user" model="res.groups">
+            <field name="name">SC 角色 - 出纳/经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_finance_user')])]"/>
+        </record>
+
+        <record id="group_sc_role_finance_manager" model="res.groups">
+            <field name="name">SC 角色 - 财务经理</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_finance_manager')])]"/>
+        </record>
+
+        <!-- 合同/成本角色 -->
+        <record id="group_sc_role_contract_admin" model="res.groups">
+            <field name="name">SC 角色 - 合同管理员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_contract_admin')])]"/>
+        </record>
+
+        <record id="group_sc_role_cost_user" model="res.groups">
+            <field name="name">SC 角色 - 成本员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_role_bridge_cost_user')])]"/>
         </record>
     </data>
 </odoo>
