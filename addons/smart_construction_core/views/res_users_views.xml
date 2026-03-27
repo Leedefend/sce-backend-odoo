@@ -8,6 +8,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='sc_department_id']" position="after">
                     <field name="sc_role_profile"/>
+                    <field name="sc_role_effective"/>
                 </xpath>
             </field>
         </record>

@@ -53,6 +53,12 @@ type UseActionViewBatchRuntimeOptions = {
   buildIdempotencyKey: (action: string, ids: number[], extra?: Record<string, unknown>) => string;
 
   batchUpdateRecords: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  unlinkRecords: (payload: {
+    model: string;
+    ids: number[];
+    context?: Record<string, unknown>;
+    idempotencyKey?: string;
+  }) => Promise<Record<string, unknown>>;
   exportRecordsCsv: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
 
   buildBatchUpdateRequest: (payload: Record<string, unknown>) => Record<string, unknown>;
@@ -167,22 +173,33 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
           buildIdempotencyKey: options.buildIdempotencyKey,
         });
         const requestContext = options.buildBatchRequestContext();
-        const result = await options.batchUpdateRecords(options.buildBatchUpdateRequest({
+        const result = await options.unlinkRecords({
+          model: targetModel,
+          ids: options.selectedIds.value,
+          idempotencyKey: deleteSeed.idempotencyKey,
+          context: requestContext,
+        });
+        const succeeded = Array.isArray(result.ids) ? result.ids.length : options.selectedIds.value.length;
+        options.batchMessage.value = options.resolveBatchActionResultMessage({
+          action,
+          idempotentReplay: Boolean(result.idempotent_replay),
+          succeeded,
+          failed: 0,
+          text: options.pageText,
+        });
+        options.lastBatchRequest.value = {
           model: targetModel,
           ids: options.selectedIds.value,
           action: deleteSeed.requestAction,
           ifMatchMap: deleteSeed.ifMatchMap,
           idempotencyKey: deleteSeed.idempotencyKey,
           context: requestContext,
-        }));
-        options.batchMessage.value = options.resolveBatchActionResultMessage({
-          action,
-          idempotentReplay: Boolean(result.idempotent_replay),
-          succeeded: Number(result.succeeded || 0),
-          failed: Number(result.failed || 0),
-          text: options.pageText,
-        });
-        options.applyBatchFailureArtifacts(result);
+        };
+        options.batchDetails.value = [];
+        options.failedCsvFileName.value = '';
+        options.failedCsvContentB64.value = '';
+        options.batchFailedOffset.value = 0;
+        options.batchHasMoreFailures.value = false;
         await options.applyBatchSuccessReload();
         return;
       }

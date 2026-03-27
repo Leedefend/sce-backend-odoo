@@ -323,6 +323,8 @@
       :has-more-failures="batchHasMoreFailures"
       :show-assign="hasAssigneeField"
       :show-delete="canBatchDelete"
+      :show-archive="!useDeleteOnlyBatchMode"
+      :show-activate="!useDeleteOnlyBatchMode"
       :assignee-options="assigneeOptions"
       :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
@@ -399,7 +401,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, exportRecordsCsv, listRecordsRaw } from '../api/data';
+import { batchUpdateRecords, exportRecordsCsv, listRecordsRaw, unlinkRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -1043,7 +1045,12 @@ const enterpriseBootstrapCreateLabel = computed(() => {
   return '';
 });
 const canBatchDelete = computed(() => {
+  if (String(model.value || '').trim() === 'project.project') return false;
   return contractRights.value.unlink === true && viewMode.value === 'list';
+});
+const batchDeleteOnlyModels = new Set(['project.task', 'res.company', 'hr.department', 'res.users']);
+const useDeleteOnlyBatchMode = computed(() => {
+  return viewMode.value === 'list' && batchDeleteOnlyModels.has(String(model.value || '').trim());
 });
 const activeGroupByField = ref('');
 const {
@@ -2268,6 +2275,12 @@ const {
   buildIfMatchMap,
   buildIdempotencyKey,
   batchUpdateRecords,
+  unlinkRecords: (payload) => unlinkRecord({
+    model: String(payload.model || ''),
+    ids: Array.isArray(payload.ids) ? payload.ids : [],
+    context: payload.context ?? {},
+    idempotencyKey: String(payload.idempotencyKey || ''),
+  }),
   exportRecordsCsv,
   buildBatchUpdateRequest,
   buildBatchErrorLine,

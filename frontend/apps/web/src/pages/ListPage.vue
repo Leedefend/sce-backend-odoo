@@ -57,8 +57,8 @@
 
     <section v-if="status === 'ok' && showBatchBar" class="batch-bar">
       <span>已选 {{ selectedCount }} 条</span>
-      <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
-      <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
+      <button v-if="showArchive" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
+      <button v-if="showActivate" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
       <button v-if="showDelete" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('delete')">批量删除</button>
       <template v-if="showAssign">
         <select :value="String(selectedAssigneeId || '')" :disabled="loading" @change="onAssigneeSelectChange">
@@ -70,7 +70,6 @@
       <button type="button" :disabled="loading || !selectedCount" @click="callBatchExport('selected')">导出选中 CSV</button>
       <button type="button" :disabled="loading || !records.length" @click="callBatchExport('all')">导出当前页 CSV</button>
       <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
-      <span v-if="showDelete" class="batch-note">当前按归档处理，物理删除能力未开放</span>
       <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
     </section>
 
@@ -341,6 +340,8 @@ const props = defineProps<{
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
   onBatchAction?: (action: 'archive' | 'activate' | 'delete') => void;
   showDelete?: boolean;
+  showArchive?: boolean;
+  showActivate?: boolean;
   onBatchAssign?: (assigneeId: number) => void;
   onBatchExport?: (scope: 'selected' | 'all') => void;
   onAssigneeChange?: (assigneeId: number | null) => void;
@@ -691,6 +692,8 @@ const batchDetails = computed<Array<string | BatchDetailLine>>(() =>
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
 const showBatchBar = computed(() => showSelectionColumn.value);
+const showArchive = computed(() => props.showArchive !== false);
+const showActivate = computed(() => props.showActivate !== false);
 const allSelected = computed(() => {
   const rows = selectableRows.value;
   if (!rows.length) return false;

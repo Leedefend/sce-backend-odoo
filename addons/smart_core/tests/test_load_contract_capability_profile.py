@@ -3,6 +3,7 @@ from odoo.tests.common import TransactionCase, tagged
 
 from ..handlers.load_contract import LoadContractHandler
 from ..app_config_engine.services.assemblers.page_assembler import PageAssembler
+from ..utils.contract_governance import apply_contract_governance
 
 
 @tagged("post_install", "-at_install", "smart_core", "load_contract_capability_profile")
@@ -145,3 +146,102 @@ class TestLoadContractCapabilityProfile(TransactionCase):
         self.assertIn("company_id", data.get("fields") or {})
         self.assertIn("sc_department_id", data.get("fields") or {})
         self.assertIn("login", data.get("fields") or {})
+
+    def test_project_task_form_governance_uses_whitelist_and_labels(self):
+        data = {
+            "governance_primary_model": "project.task",
+            "head": {"model": "project.task", "view_type": "form"},
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "project_id"},
+                                {"type": "field", "name": "stage_id"},
+                                {"type": "field", "name": "sc_state"},
+                                {"type": "field", "name": "user_ids"},
+                                {"type": "field", "name": "date_deadline"},
+                                {"type": "field", "name": "priority"},
+                                {"type": "field", "name": "description"},
+                                {"type": "field", "name": "message_ids"},
+                            ],
+                        }
+                    ],
+                }
+            },
+            "fields": {
+                "name": {"type": "char", "string": "Name"},
+                "project_id": {"type": "many2one", "string": "Project"},
+                "stage_id": {"type": "many2one", "string": "Stage"},
+                "sc_state": {"type": "selection", "string": "SC State"},
+                "user_ids": {"type": "many2many", "string": "Assignees"},
+                "date_deadline": {"type": "date", "string": "Deadline"},
+                "priority": {"type": "selection", "string": "Priority"},
+                "description": {"type": "text", "string": "Description"},
+                "message_ids": {"type": "one2many", "string": "Messages"},
+            },
+        }
+
+        governed = apply_contract_governance(data, "user")
+
+        self.assertEqual(
+            governed.get("visible_fields"),
+            ["name", "project_id", "stage_id", "sc_state", "user_ids", "date_deadline", "priority", "description"],
+        )
+        groups = governed.get("field_groups") or []
+        self.assertEqual(groups[0].get("label"), "任务基础信息")
+        layout = (((governed.get("views") or {}).get("form") or {}).get("layout") or [])
+        first_group = (((layout[0] or {}).get("children") or [])[0] or {})
+        first_fields = first_group.get("children") or []
+        field_names = [row.get("name") for row in first_fields if isinstance(row, dict)]
+        self.assertIn("name", field_names)
+        self.assertIn("project_id", field_names)
+        self.assertNotIn("message_ids", field_names)
+
+    def test_project_and_task_tree_governance_emits_list_profile(self):
+        project_data = {
+            "governance_primary_model": "project.project",
+            "head": {"model": "project.project", "view_type": "tree"},
+            "views": {"tree": {"columns": ["sequence", "name", "message_needaction", "stage_id"]}},
+            "fields": {
+                "name": {"type": "char", "string": "Name"},
+                "user_id": {"type": "many2one", "string": "Manager"},
+                "partner_id": {"type": "many2one", "string": "Customer"},
+                "stage_id": {"type": "many2one", "string": "Stage"},
+                "lifecycle_state": {"type": "selection", "string": "Lifecycle"},
+                "date_start": {"type": "date", "string": "Start"},
+                "date": {"type": "date", "string": "End"},
+                "sequence": {"type": "integer", "string": "Sequence"},
+            },
+        }
+        task_data = {
+            "governance_primary_model": "project.task",
+            "head": {"model": "project.task", "view_type": "tree"},
+            "views": {"tree": {"columns": ["sequence", "name", "stage_id", "message_needaction"]}},
+            "fields": {
+                "name": {"type": "char", "string": "Name"},
+                "project_id": {"type": "many2one", "string": "Project"},
+                "user_ids": {"type": "many2many", "string": "Assignees"},
+                "stage_id": {"type": "many2one", "string": "Stage"},
+                "sc_state": {"type": "selection", "string": "SC State"},
+                "date_deadline": {"type": "date", "string": "Deadline"},
+                "priority": {"type": "selection", "string": "Priority"},
+                "sequence": {"type": "integer", "string": "Sequence"},
+            },
+        }
+
+        project_governed = apply_contract_governance(project_data, "user")
+        task_governed = apply_contract_governance(task_data, "user")
+
+        self.assertEqual(
+            ((project_governed.get("list_profile") or {}).get("columns") or []),
+            ["name", "user_id", "partner_id", "stage_id", "lifecycle_state", "date_start", "date"],
+        )
+        self.assertEqual(
+            ((task_governed.get("list_profile") or {}).get("columns") or []),
+            ["name", "project_id", "user_ids", "stage_id", "sc_state", "date_deadline", "priority"],
+        )
+        task_semantic_columns = (((task_governed.get("semantic_page") or {}).get("list_semantics") or {}).get("columns") or [])
+        self.assertEqual(task_semantic_columns[0].get("label"), "任务名称")
