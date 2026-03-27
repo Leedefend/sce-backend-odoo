@@ -158,6 +158,20 @@ _ENTERPRISE_COMPANY_FIELD_LABELS = {
     "sc_address": "地址",
     "sc_is_active": "启用",
 }
+_ENTERPRISE_DEPARTMENT_FORM_FIELDS = [
+    "name",
+    "parent_id",
+    "sc_manager_user_id",
+    "company_id",
+    "sc_is_active",
+]
+_ENTERPRISE_DEPARTMENT_FIELD_LABELS = {
+    "name": "部门名称",
+    "parent_id": "上级部门",
+    "sc_manager_user_id": "部门负责人",
+    "company_id": "所属公司",
+    "sc_is_active": "启用",
+}
 _ENTERPRISE_USER_FORM_FIELDS = [
     "name",
     "login",
@@ -213,6 +227,62 @@ _PROJECT_KANBAN_STATUS_FIELDS = [
     "lifecycle_state",
     "stage_id",
 ]
+_PROJECT_TASK_FORM_FIELDS = [
+    "name",
+    "project_id",
+    "stage_id",
+    "sc_state",
+    "user_ids",
+    "date_deadline",
+    "priority",
+    "description",
+]
+_PROJECT_TASK_FIELD_LABELS = {
+    "name": "任务名称",
+    "project_id": "所属项目",
+    "stage_id": "当前阶段",
+    "sc_state": "执行状态",
+    "user_ids": "执行人",
+    "date_deadline": "截止日期",
+    "priority": "优先级",
+    "description": "执行说明",
+}
+_PROJECT_LIST_COLUMNS = [
+    "name",
+    "user_id",
+    "partner_id",
+    "stage_id",
+    "lifecycle_state",
+    "date_start",
+    "date",
+]
+_PROJECT_LIST_COLUMN_LABELS = {
+    "name": "项目名称",
+    "user_id": "项目经理",
+    "partner_id": "业主单位",
+    "stage_id": "当前阶段",
+    "lifecycle_state": "项目状态",
+    "date_start": "开始日期",
+    "date": "结束日期",
+}
+_PROJECT_TASK_LIST_COLUMNS = [
+    "name",
+    "project_id",
+    "user_ids",
+    "stage_id",
+    "sc_state",
+    "date_deadline",
+    "priority",
+]
+_PROJECT_TASK_LIST_COLUMN_LABELS = {
+    "name": "任务名称",
+    "project_id": "所属项目",
+    "user_ids": "执行人",
+    "stage_id": "当前阶段",
+    "sc_state": "执行状态",
+    "date_deadline": "截止日期",
+    "priority": "优先级",
+}
 _USER_SURFACE_ACTION_GROUP_LABELS = {
     "basic": "基础操作",
     "workflow": "流程推进",
@@ -258,6 +328,27 @@ _FORM_ACTION_READONLY_KEYWORDS = (
     "open",
     "view",
 )
+
+
+def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "", next_action_label: str = "") -> None:
+    governance = _as_dict(data.get("form_governance"))
+    governance.update(
+        {
+            "surface": "enterprise_enablement",
+            "hide_workflow": True,
+            "hide_search_filters": True,
+            "hide_body_actions": True,
+            "suppress_contract_header_actions": True,
+        }
+    )
+    if _safe_text(next_action_key) and _safe_text(next_action_label):
+        governance["next_action"] = {
+            "step_key": _safe_text(next_action_key),
+            "label": _safe_text(next_action_label),
+        }
+    else:
+        governance.pop("next_action", None)
+    data["form_governance"] = governance
 _FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
 _FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
 
@@ -922,6 +1013,42 @@ def _is_project_kanban_contract(data: dict) -> bool:
     return bool(primary_model and model == primary_model and "kanban" in view_type)
 
 
+def _is_project_task_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == "project.task" and model == "project.task" and "form" in view_type)
+
+
+def _is_model_tree_contract(data: dict, model_name: str) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    tree_view = _as_dict(views.get("tree") or views.get("list"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or tree_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("tree"), dict):
+        view_type = "tree"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == model_name and model == model_name and "tree" in view_type)
+
+
 def _is_form_contract(data: dict) -> bool:
     head = _as_dict(data.get("head"))
     views = _as_dict(data.get("views"))
@@ -1436,6 +1563,113 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     _govern_project_form_search(data)
     _build_project_lifecycle_summary(data)
     _realign_access_policy_with_visible_fields(data)
+
+
+def _govern_project_task_form_for_user(data: dict) -> None:
+    if not _is_project_task_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _PROJECT_TASK_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "任务基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": [name for name in selected if name != "description"],
+        },
+        {
+            "name": "advanced",
+            "label": "任务说明",
+            "priority": 2,
+            "collapsible": True,
+            "fields": [name for name in selected if name == "description"],
+        },
+    ]
+
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "project_task_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "project_task_core_group",
+                    "string": "任务基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _PROJECT_TASK_FIELD_LABELS)
+                        for name in selected
+                        if name != "description"
+                    ],
+                },
+                {
+                    "type": "group",
+                    "name": "project_task_description_group",
+                    "string": "任务说明",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _PROJECT_TASK_FIELD_LABELS)
+                        for name in selected
+                        if name == "description"
+                    ],
+                },
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+
+def _govern_standard_list_for_user(
+    data: dict,
+    *,
+    model_name: str,
+    columns_order: list[str],
+    column_labels: dict[str, str],
+    row_primary: str,
+    row_secondary: str,
+    status_field: str,
+) -> None:
+    if not _is_model_tree_contract(data, model_name):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in columns_order if name in fields_map]
+    if not selected:
+        return
+
+    views = _as_dict(data.get("views"))
+    tree = _as_dict(views.get("tree") or views.get("list"))
+    tree["columns"] = selected
+    views["tree"] = tree
+    data["views"] = views
+
+    list_profile = _as_dict(data.get("list_profile"))
+    list_profile.update(
+        {
+            "columns": selected,
+            "hidden_columns": [],
+            "column_labels": {name: column_labels.get(name, name) for name in selected},
+            "row_primary": row_primary,
+            "row_secondary": row_secondary,
+            "primary_field": row_primary,
+            "status_field": status_field,
+        }
+    )
+    data["list_profile"] = list_profile
+
+    semantic_page = _as_dict(data.get("semantic_page"))
+    list_semantics = _as_dict(semantic_page.get("list_semantics"))
+    list_semantics["columns"] = [
+        {"name": name, "label": column_labels.get(name, name)}
+        for name in selected
+    ]
+    semantic_page["list_semantics"] = list_semantics
+    data["semantic_page"] = semantic_page
 
 
 def _realign_access_policy_with_visible_fields(data: dict) -> None:
@@ -2112,6 +2346,66 @@ def _govern_enterprise_company_form_for_user(data: dict) -> None:
         data["toolbar"] = toolbar
         data["buttons"] = []
         data["action_groups"] = []
+    _inject_enterprise_form_governance(
+        data,
+        next_action_key="department",
+        next_action_label="进入组织架构",
+    )
+
+
+def _govern_enterprise_department_form_for_user(data: dict) -> None:
+    if _governance_primary_model(data) != "hr.department":
+        return
+    if not _is_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _ENTERPRISE_DEPARTMENT_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "组织基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": selected,
+        },
+    ]
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "enterprise_department_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "enterprise_department_core_group",
+                    "string": "组织基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_DEPARTMENT_FIELD_LABELS)
+                        for name in selected
+                    ],
+                }
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
+        toolbar = _as_dict(data.get("toolbar"))
+        if isinstance(toolbar.get("header"), list):
+            toolbar["header"] = []
+        data["toolbar"] = toolbar
+        data["buttons"] = []
+        data["action_groups"] = []
+    _inject_enterprise_form_governance(
+        data,
+        next_action_key="user",
+        next_action_label="进入用户设置",
+    )
 
 
 def _govern_enterprise_user_form_for_user(data: dict) -> None:
@@ -2211,6 +2505,7 @@ def _govern_enterprise_user_form_for_user(data: dict) -> None:
         data["toolbar"] = toolbar
         data["buttons"] = []
         data["action_groups"] = []
+    _inject_enterprise_form_governance(data)
 
 
 def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
@@ -2424,8 +2719,31 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _restructure_project_form_layout(data)
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
+    if contract_mode == "user" and _is_project_task_form_contract(data):
+        _govern_project_task_form_for_user(data)
+    if contract_mode == "user":
+        _govern_standard_list_for_user(
+            data,
+            model_name="project.project",
+            columns_order=_PROJECT_LIST_COLUMNS,
+            column_labels=_PROJECT_LIST_COLUMN_LABELS,
+            row_primary="name",
+            row_secondary="stage_id",
+            status_field="lifecycle_state",
+        )
+        _govern_standard_list_for_user(
+            data,
+            model_name="project.task",
+            columns_order=_PROJECT_TASK_LIST_COLUMNS,
+            column_labels=_PROJECT_TASK_LIST_COLUMN_LABELS,
+            row_primary="name",
+            row_secondary="project_id",
+            status_field="sc_state",
+        )
     if contract_mode == "user" and _is_enterprise_company_form_contract(data):
         _govern_enterprise_company_form_for_user(data)
+    if contract_mode == "user":
+        _govern_enterprise_department_form_for_user(data)
     if contract_mode == "user" and _is_enterprise_user_form_contract(data):
         _govern_enterprise_user_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):

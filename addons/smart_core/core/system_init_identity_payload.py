@@ -12,4 +12,5 @@ class SystemInitIdentityPayload:
             "lang": user.lang,
             "tz": user.tz,
             "company_id": user.company_id.id if user.company_id else None,
+            "company_name": user.company_id.display_name if user.company_id else "",
         }

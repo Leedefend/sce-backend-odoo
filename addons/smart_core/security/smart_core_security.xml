@@ -29,4 +29,8 @@
     <field name="implied_ids" eval="[(4, ref('group_smart_core_data_operator'))]"/>
     <field name="category_id" ref="base.module_category_hidden"/>
   </record>
+
+  <record id="base.group_system" model="res.groups">
+    <field name="implied_ids" eval="[(4, ref('smart_core.group_smart_core_data_operator'))]"/>
+  </record>
 </odoo>

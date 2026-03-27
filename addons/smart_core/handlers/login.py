@@ -57,12 +57,14 @@ def _company_ids(user) -> Dict[str, Any]:
     try:
         allowed = user.company_ids.ids or []
         current = user.company_id.id if user.company_id else None
+        current_name = user.company_id.display_name if user.company_id else ""
         return {
             "company_id": current,
+            "company_name": current_name,
             "allowed_company_ids": allowed,
         }
     except Exception:
-        return {"company_id": None, "allowed_company_ids": []}
+        return {"company_id": None, "company_name": "", "allowed_company_ids": []}
 
 
 def _load_user_profile(db_name: str, user_id: int) -> Dict[str, Any]:
@@ -161,6 +163,7 @@ class LoginHandler(BaseIntentHandler):
             "lang": profile["lang"],
             "tz": profile["tz"],
             "company_id": profile["company_id"],
+            "company_name": profile.get("company_name") or "",
             "allowed_company_ids": profile["allowed_company_ids"],
         }
 
