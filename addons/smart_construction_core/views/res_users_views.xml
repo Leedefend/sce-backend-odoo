@@ -1,21 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <!-- 仅在用户表单中展示 SC 业务能力组 + 用户类型组，隐藏其它原生组 -->
-        <record id="view_users_form_sc_groups_only" model="ir.ui.view">
-            <field name="name">res.users.form.sc.groups.only</field>
+        <record id="view_users_tree_enterprise_role_profile" model="ir.ui.view">
+            <field name="name">res.users.tree.enterprise.role.profile</field>
             <field name="model">res.users</field>
-            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="inherit_id" ref="smart_enterprise_base.view_users_tree_enterprise_base"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='groups_id']" position="attributes">
-                    <attribute name="domain">[
-                        ('category_id', 'in', [
-                            %(smart_construction_core.module_category_smart_construction)d,
-                            %(base.module_category_user_type)d
-                        ])
-                    ]</attribute>
+                <xpath expr="//field[@name='sc_department_id']" position="after">
+                    <field name="sc_role_profile"/>
                 </xpath>
             </field>
+        </record>
+
+        <record id="view_users_form_enterprise_role_profile" model="ir.ui.view">
+            <field name="name">res.users.form.enterprise.role.profile</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="smart_enterprise_base.view_users_form_enterprise_base"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@role='alert']" position="after">
+                    <div class="alert alert-secondary" role="alert">
+                        本页只绑定产品角色语义与初始密码。原生 groups、ACL 和高级权限治理继续保留在 Odoo 后台。
+                    </div>
+                </xpath>
+                <xpath expr="//group/group[1]/field[@name='active']" position="after">
+                    <field name="password" string="初始密码" password="True"/>
+                </xpath>
+                <xpath expr="//group/group[2]/field[@name='sc_manager_user_id']" position="after">
+                    <field name="sc_role_profile"/>
+                    <field name="sc_role_effective" readonly="1"/>
+                    <field name="sc_role_landing_label" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_users_search_enterprise_role_profile" model="ir.ui.view">
+            <field name="name">res.users.search.enterprise.role.profile</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="smart_enterprise_base.view_users_search_enterprise_base"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='sc_manager_user_id']" position="after">
+                    <field name="sc_role_profile"/>
+                </xpath>
+                <xpath expr="//search/group" position="inside">
+                    <filter name="group_by_sc_role_profile" string="产品角色" context="{'group_by': 'sc_role_profile'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="smart_enterprise_base.action_enterprise_user" model="ir.actions.act_window">
+            <field name="view_id" ref="smart_construction_core.view_users_tree_enterprise_role_profile"/>
+            <field name="search_view_id" ref="smart_construction_core.view_users_search_enterprise_role_profile"/>
+            <field name="context">{'active_test': False, 'no_reset_password': True, 'form_view_ref': 'smart_construction_core.view_users_form_enterprise_role_profile'}</field>
+        </record>
+
+        <record id="smart_enterprise_base.action_enterprise_user_tree_view" model="ir.actions.act_window.view">
+            <field name="view_id" ref="smart_construction_core.view_users_tree_enterprise_role_profile"/>
+        </record>
+
+        <record id="smart_enterprise_base.action_enterprise_user_form_view" model="ir.actions.act_window.view">
+            <field name="view_id" ref="smart_construction_core.view_users_form_enterprise_role_profile"/>
         </record>
 
     </data>

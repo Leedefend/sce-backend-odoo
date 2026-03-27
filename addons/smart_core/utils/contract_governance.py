@@ -158,6 +158,32 @@ _ENTERPRISE_COMPANY_FIELD_LABELS = {
     "sc_address": "地址",
     "sc_is_active": "启用",
 }
+_ENTERPRISE_USER_FORM_FIELDS = [
+    "name",
+    "login",
+    "password",
+    "phone",
+    "active",
+    "company_id",
+    "sc_department_id",
+    "sc_manager_user_id",
+    "sc_role_profile",
+    "sc_role_effective",
+    "sc_role_landing_label",
+]
+_ENTERPRISE_USER_FIELD_LABELS = {
+    "name": "姓名",
+    "login": "登录账号",
+    "password": "初始密码",
+    "phone": "手机号",
+    "active": "启用",
+    "company_id": "所属公司",
+    "sc_department_id": "所属部门",
+    "sc_manager_user_id": "直属上级",
+    "sc_role_profile": "产品角色",
+    "sc_role_effective": "当前生效角色",
+    "sc_role_landing_label": "默认首页",
+}
 _PROJECT_FORM_ACTION_PRIORITIES = (
     "提交",
     "进入下一阶段",
@@ -858,6 +884,24 @@ def _is_enterprise_company_form_contract(data: dict) -> bool:
         view_type = "form"
     primary_model = _governance_primary_model(data)
     return bool(primary_model == "res.company" and model == "res.company" and "form" in view_type)
+
+
+def _is_enterprise_user_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == "res.users" and model == "res.users" and "form" in view_type)
 
 
 def _is_project_kanban_contract(data: dict) -> bool:
@@ -1604,6 +1648,12 @@ def _derive_form_core_fields(data: dict) -> list[str]:
 def _apply_form_field_groups(data: dict) -> None:
     if not _is_form_contract(data):
         return
+    existing_groups = data.get("field_groups") if isinstance(data.get("field_groups"), list) else []
+    if existing_groups and (
+        _is_enterprise_company_form_contract(data)
+        or _is_enterprise_user_form_contract(data)
+    ):
+        return
     fields_map = _as_dict(data.get("fields"))
     if not fields_map:
         return
@@ -1633,9 +1683,15 @@ def _apply_form_field_groups(data: dict) -> None:
     ]
 
 
-def _make_labeled_field_node(name: str, fields_map: dict[str, Any]) -> dict[str, Any]:
+def _make_labeled_field_node(
+    name: str,
+    fields_map: dict[str, Any],
+    preferred_labels: dict[str, str] | None = None,
+) -> dict[str, Any]:
     descriptor = _as_dict(fields_map.get(name))
-    label = _safe_text(_ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
+    label = _safe_text((preferred_labels or {}).get(name), "")
+    if not label:
+        label = _safe_text(_ENTERPRISE_USER_FIELD_LABELS.get(name) or _ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
     if not label:
         label = _safe_text(descriptor.get("string") if descriptor else "", name)
     node = {"type": "field", "name": name}
@@ -2038,13 +2094,115 @@ def _govern_enterprise_company_form_for_user(data: dict) -> None:
                     "type": "group",
                     "name": "enterprise_company_core_group",
                     "string": "企业基础信息",
-                    "children": [_make_labeled_field_node(name, fields_map) for name in selected],
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_COMPANY_FIELD_LABELS)
+                        for name in selected
+                    ],
                 }
             ],
         }
     ]
     views["form"] = form
     data["views"] = views
+
+    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
+        toolbar = _as_dict(data.get("toolbar"))
+        if isinstance(toolbar.get("header"), list):
+            toolbar["header"] = []
+        data["toolbar"] = toolbar
+        data["buttons"] = []
+        data["action_groups"] = []
+
+
+def _govern_enterprise_user_form_for_user(data: dict) -> None:
+    if not _is_enterprise_user_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _ENTERPRISE_USER_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "basic",
+            "label": "用户基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": [name for name in selected if name in {"name", "login", "password", "phone", "active"}],
+        },
+        {
+            "name": "assignment",
+            "label": "组织与角色",
+            "priority": 2,
+            "collapsible": False,
+            "fields": [
+                name
+                for name in selected
+                if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
+            ],
+        },
+    ]
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "enterprise_user_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "enterprise_user_basic_group",
+                    "string": "用户基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_USER_FIELD_LABELS)
+                        for name in selected
+                        if name in {"name", "login", "password", "phone", "active"}
+                    ],
+                },
+                {
+                    "type": "group",
+                    "name": "enterprise_user_assignment_group",
+                    "string": "组织与角色",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_USER_FIELD_LABELS)
+                        for name in selected
+                        if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
+                    ],
+                },
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+    field_policies = _as_dict(data.get("field_policies"))
+    basic_fields = {"name", "login", "password", "phone", "active"}
+    readonly_fields = {"sc_role_effective", "sc_role_landing_label"}
+    contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
+    for name in selected:
+        descriptor = _as_dict(fields_map.get(name))
+        readonly = name in readonly_fields or _to_bool(descriptor.get("readonly"), fallback=False)
+        field_policies[name] = {
+            "visible_profiles": [
+                _RENDER_PROFILE_CREATE,
+                _RENDER_PROFILE_EDIT,
+                _RENDER_PROFILE_READONLY,
+            ],
+            "required_profiles": (
+                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+                if name in contract_required_fields and not readonly
+                else []
+            ),
+            "readonly_profiles": (
+                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+                if readonly
+                else [_RENDER_PROFILE_READONLY]
+            ),
+            "source_required": name in contract_required_fields and not readonly,
+            "source_readonly": readonly,
+            "group": "core" if name in basic_fields else "secondary",
+        }
+    data["field_policies"] = field_policies
 
     if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
         toolbar = _as_dict(data.get("toolbar"))
@@ -2268,6 +2426,8 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _govern_project_form_contract_for_user(data)
     if contract_mode == "user" and _is_enterprise_company_form_contract(data):
         _govern_enterprise_company_form_for_user(data)
+    if contract_mode == "user" and _is_enterprise_user_form_contract(data):
+        _govern_enterprise_user_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
         _govern_project_kanban_contract_for_user(data)
 

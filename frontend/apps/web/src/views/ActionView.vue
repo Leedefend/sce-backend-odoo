@@ -311,6 +311,10 @@
       :scene-key="vm.page.sceneKey"
       :page-mode="vm.page.pageMode"
       :record-count="recordCount"
+      :page-offset="listOffset"
+      :page-limit="contractLimit"
+      :page-total="listTotalCount"
+      :on-page-change="handlePageChange"
       :summary-items="vm.content.list?.summaryItems || []"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
@@ -790,6 +794,7 @@ const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const listTotalCount = ref<number | null>(null);
+const listOffset = ref(0);
 const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
 const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
@@ -1402,6 +1407,14 @@ function openListCreateForm() {
   });
 }
 const listPrimaryAction = computed(() => (canCreateListRecord.value ? openListCreateForm : null));
+
+function handlePageChange(nextOffset: number) {
+  const normalized = Math.max(0, Math.trunc(Number(nextOffset || 0)));
+  if (normalized === listOffset.value) return;
+  listOffset.value = normalized;
+  clearSelection();
+  void requestLoad();
+}
 
 watchEffect(() => {
   if (typeof window === 'undefined') return;
@@ -2075,6 +2088,7 @@ const {
     searchTerm: searchTerm.value,
     sortLabel: sortLabel.value,
     activeGroupByField: activeGroupByField.value,
+    listOffset: listOffset.value,
     groupWindowOffset: groupWindowOffset.value,
     groupSampleLimit: groupSampleLimit.value,
     contractLimit: contractLimit.value,
@@ -2187,6 +2201,7 @@ const {
   searchTerm,
   sortValue,
   filterValue,
+  listOffset,
   groupWindowOffset,
   syncRouteListState,
   load: requestLoad,

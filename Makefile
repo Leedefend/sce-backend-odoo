@@ -1431,6 +1431,11 @@ verify.product.enablement.sprint0: guard.prod.forbid check-compose-project check
 	@DB_NAME=$(or $(DB_NAME),sc_demo) E2E_LOGIN=$(or $(E2E_LOGIN),admin) E2E_PASSWORD=$(or $(E2E_PASSWORD),admin) node scripts/verify/enterprise_enablement_frontend_smoke.mjs
 	@echo "[OK] verify.product.enablement.sprint0 done"
 
+.PHONY: verify.product.enablement.sprint1
+verify.product.enablement.sprint1: guard.prod.forbid check-compose-project check-compose-env
+	@DB_NAME=$(or $(DB_NAME),sc_demo) E2E_LOGIN=$(or $(E2E_LOGIN),admin) E2E_PASSWORD=$(or $(E2E_PASSWORD),admin) node scripts/verify/enterprise_user_role_frontend_smoke.mjs
+	@echo "[OK] verify.product.enablement.sprint1 done"
+
 verify.product.phase12c: verify.product.project_initiation.full verify.product.project_flow.initiation_dashboard verify.product.suggested_action_shape_guard verify.product.project_context_chain_guard verify.product.project_dashboard_non_empty_guard
 	@echo "[OK] verify.product.phase12c done"
 

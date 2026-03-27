@@ -320,7 +320,32 @@ class PageAssembler:
         if not field_order:
             return
 
-        data["fields"] = {name: fields_map.get(name) for name in field_order if name in fields_map}
+        # action-open mixed pages often ship tree+form together. Restricting the global
+        # fields map to form-only fields breaks tree.columns self-check and list runtime.
+        keep_names = list(field_order)
+
+        tree = views.get("tree") if isinstance(views.get("tree"), dict) else {}
+        keep_names.extend(self._normalize_field_list(tree.get("columns") if isinstance(tree.get("columns"), list) else []))
+
+        kanban = views.get("kanban") if isinstance(views.get("kanban"), dict) else {}
+        keep_names.extend(self._normalize_field_list(kanban.get("fields") if isinstance(kanban.get("fields"), list) else []))
+
+        search = data.get("search") if isinstance(data.get("search"), dict) else {}
+        keep_names.extend(
+            self._normalize_field_list(
+                item.get("field")
+                for item in (search.get("group_by") if isinstance(search.get("group_by"), list) else [])
+                if isinstance(item, dict)
+            )
+        )
+
+        statusbar = form.get("statusbar") if isinstance(form.get("statusbar"), dict) else {}
+        status_field = str(statusbar.get("field") or "").strip()
+        if status_field:
+            keep_names.append(status_field)
+
+        keep_names = self._normalize_field_list(keep_names)
+        data["fields"] = {name: fields_map.get(name) for name in keep_names if name in fields_map}
         data["visible_fields"] = list(field_order)
 
     def _safe_model_can_read(self, model_name):

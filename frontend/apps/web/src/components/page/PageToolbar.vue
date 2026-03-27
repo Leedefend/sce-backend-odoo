@@ -4,11 +4,21 @@
       <input
         type="search"
         placeholder="搜索关键字"
-        :value="searchTerm"
+        :value="inputValue"
         :disabled="loading"
         @input="onSearchInput"
+        @compositionstart="onCompositionStart"
+        @compositionend="onCompositionEnd"
         @keydown.enter.prevent="submitSearch"
       />
+      <button
+        type="button"
+        class="search-btn"
+        :disabled="loading"
+        @click="submitSearch"
+      >
+        搜索
+      </button>
     </div>
     <div class="filters">
       <button
@@ -58,6 +68,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+
 const props = defineProps<{
   loading: boolean;
   searchTerm: string;
@@ -69,13 +81,35 @@ const props = defineProps<{
   onFilter: (value: 'all' | 'active' | 'archived') => void;
 }>();
 
+const inputValue = ref(props.searchTerm || '');
+const isComposing = ref(false);
+
+watch(
+  () => props.searchTerm,
+  (next) => {
+    if (isComposing.value) return;
+    inputValue.value = next || '';
+  },
+);
+
 function onSearchInput(event: Event) {
   const target = event.target as HTMLInputElement;
-  props.onSearch(target.value);
+  inputValue.value = target.value;
+}
+
+function onCompositionStart() {
+  isComposing.value = true;
+}
+
+function onCompositionEnd(event: CompositionEvent) {
+  const target = event.target as HTMLInputElement | null;
+  inputValue.value = target?.value || inputValue.value;
+  isComposing.value = false;
 }
 
 function submitSearch() {
-  props.onSearch(props.searchTerm || '');
+  if (isComposing.value) return;
+  props.onSearch(inputValue.value || '');
 }
 </script>
 
@@ -97,6 +131,27 @@ function submitSearch() {
   border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   background: #f8fafc;
+}
+
+.search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #111827;
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+.search-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .filters {

@@ -27,6 +27,7 @@ type ExecuteLoadMainPhaseOptions = {
   searchTerm: string;
   sortLabel: string;
   activeGroupByField: string;
+  listOffset: number;
   groupWindowOffset: number;
   groupSampleLimit: number;
   contractLimit: number;
@@ -73,6 +74,7 @@ export function useActionViewLoadMainPhaseRuntime() {
             searchTerm: options.searchTerm,
             sortLabel: options.sortLabel,
             activeGroupByField: options.activeGroupByField,
+            listOffset: options.listOffset,
             groupWindowOffset: options.groupWindowOffset,
             groupSampleLimit: options.groupSampleLimit,
             contractLimit: options.contractLimit,

@@ -482,6 +482,11 @@ const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
 
+const hasExplicitPasswordChange = computed(() => {
+  if (String(model.value || '').trim() !== 'res.users') return false;
+  return String(formData.password || '').trim().length > 0;
+});
+
 const intakeRequiredFields = computed(() => {
   if (!isProjectCreatePage.value) return [];
   return layoutNodes.value
@@ -566,6 +571,28 @@ const pageDisplaySubtitle = computed(() => {
   return '';
 });
 
+const isEnterpriseUserEnablementCreatePage = computed(() => {
+  const enterprisePrimaryActionId = Number(session.enterpriseEnablement?.primary_action?.action_id || 0);
+  if (recordId.value) return false;
+  if (String(model.value || '').trim() !== 'res.users') return false;
+  return enterprisePrimaryActionId > 0 && actionId.value === enterprisePrimaryActionId;
+});
+const enterpriseCurrentCompanyId = computed(() => {
+  const fromEnablement = Number(session.enterpriseEnablement?.current_company_id || 0);
+  if (fromEnablement > 0) return fromEnablement;
+  const userRecord = (session.user && typeof session.user === 'object')
+    ? (session.user as Record<string, unknown>)
+    : {};
+  const fromCompanyId = Number(userRecord.company_id || 0);
+  if (fromCompanyId > 0) return fromCompanyId;
+  const companyRaw = userRecord.company;
+  if (companyRaw && typeof companyRaw === 'object' && !Array.isArray(companyRaw)) {
+    const fromCompanyObject = Number((companyRaw as Record<string, unknown>).id || 0);
+    if (fromCompanyObject > 0) return fromCompanyObject;
+  }
+  return 0;
+});
+
 const intakeCreateButtonLabel = computed(() => {
   if (!isProjectCreatePage.value) return '创建项目';
   return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
@@ -593,6 +620,7 @@ const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
   if (!canSave.value) return true;
   if (isProjectQuickIntakeMode.value) return !quickRequiredReady.value;
+  if (hasExplicitPasswordChange.value) return false;
   return Boolean(recordId.value) && !hasChanges.value;
 });
 const isStandardCreateDisabled = computed(() => {
@@ -2304,10 +2332,15 @@ function setTextField(name: string, value: string) {
   markFieldChanged(name);
 }
 
+function shouldSkipOnchangeForField(name: string) {
+  return String(model.value || '').trim() === 'res.users' && String(name || '').trim() === 'password';
+}
+
 function markFieldChanged(name: string) {
   const key = String(name || '').trim();
   if (!key || applyingOnchangePatch.value) return;
   changedFieldSet.add(key);
+  if (shouldSkipOnchangeForField(key)) return;
   scheduleOnchange();
 }
 
@@ -2380,6 +2413,7 @@ async function runOnchangeRoundtrip() {
       applyingOnchangePatch.value = true;
       Object.entries(patch).forEach(([name, value]) => {
         if (!(name in (contract.value?.fields || {}))) return;
+        if (shouldSkipOnchangeForField(name)) return;
         const ttype = fieldType(contract.value?.fields?.[name]);
         if (ttype === 'many2many' || ttype === 'one2many') {
           formData[name] = Array.isArray(value) ? value : [];
@@ -2677,6 +2711,9 @@ async function loadContract() {
   }
   const hasCore = coreFieldNames.value.length > 0;
   advancedExpanded.value = renderProfile.value !== 'create' || !hasCore;
+  if (isEnterpriseUserEnablementCreatePage.value) {
+    advancedExpanded.value = true;
+  }
 }
 
 async function loadRecord() {
@@ -2747,6 +2784,16 @@ async function loadRecord() {
         formData[name] = incoming;
       }
     });
+    if (
+      isEnterpriseUserEnablementCreatePage.value
+      && !normalizeRelationIds(formData.company_id).length
+      && enterpriseCurrentCompanyId.value > 0
+    ) {
+      formData.company_id = enterpriseCurrentCompanyId.value;
+    }
+    if (isEnterpriseUserEnablementCreatePage.value && formData.active !== true) {
+      formData.active = true;
+    }
     originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
       const value = formData[name];
       if (Array.isArray(value)) {
@@ -2837,6 +2884,33 @@ async function reload() {
 
 watchEffect(() => {
   if (typeof window === 'undefined') return;
+  const collectRawContractLayoutFieldOrder = () => {
+    const out: Array<{ name: string; label: string }> = [];
+    const seen = new Set<string>();
+    const walk = (nodeRaw: unknown) => {
+      if (Array.isArray(nodeRaw)) {
+        nodeRaw.forEach((item) => walk(item));
+        return;
+      }
+      if (!nodeRaw || typeof nodeRaw !== 'object') return;
+      const node = nodeRaw as Record<string, unknown>;
+      const kind = String(node.type || '').trim().toLowerCase();
+      if (kind === 'field') {
+        const name = String(node.name || '').trim();
+        if (name && !seen.has(name)) {
+          seen.add(name);
+          out.push({
+            name,
+            label: String(node.string || node.label || '').trim(),
+          });
+        }
+      }
+      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
+    };
+    walk(contract.value?.views?.form?.layout || []);
+    return out;
+  };
+  const permissionFieldGroups = contract.value?.permissions?.field_groups || {};
   (window as Window & { __scFormDebug?: Record<string, unknown> }).__scFormDebug = {
     status: status.value,
     loadStage: loadStage.value,
@@ -2846,7 +2920,23 @@ watchEffect(() => {
     contractLoaded: Boolean(contract.value),
     contractHeadTitle: String(contract.value?.head?.title || '').trim(),
     fieldCount: Object.keys(contract.value?.fields || {}).length,
+    fieldNames: Object.keys(contract.value?.fields || {}),
+    visibleFields: contractVisibleFields.value,
+    coreFieldNames: coreFieldNames.value,
+    advancedFieldNames: advancedFieldNames.value,
     layoutNodeCount: layoutNodes.value.length,
+    rawLayoutFieldOrder: collectRawContractLayoutFieldOrder(),
+    layoutFieldLabels: layoutNodes.value
+      .filter((node) => node.kind === 'field')
+      .map((node) => ({ name: node.name, label: node.label })),
+    permissionFieldGroups: Object.entries(permissionFieldGroups).reduce<Record<string, unknown>>((acc, [name, raw]) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return acc;
+      const row = raw as Record<string, unknown>;
+      acc[name] = {
+        groups_xmlids: Array.isArray(row.groups_xmlids) ? row.groups_xmlids : [],
+      };
+      return acc;
+    }, {}),
     coreFieldCount: coreFieldNames.value.length,
     relationFieldCount: Object.entries(contract.value?.fields || {}).filter(([, descriptor]) => {
       const ttype = fieldType(descriptor as FieldDescriptor | undefined);
@@ -3071,6 +3161,11 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
         acc[key] = value;
         return acc;
       }
+      if (String(model.value || '').trim() === 'res.users' && key === 'password') {
+        const passwordValue = String(formData.password || '').trim();
+        if (passwordValue) acc[key] = passwordValue;
+        return acc;
+      }
       const ttype = fieldType(contract.value?.fields?.[key]);
       if (ttype === 'many2many' || ttype === 'one2many') {
         if (Array.isArray(value) && value.length) {
@@ -3084,18 +3179,23 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       return acc;
     }, {});
     if (recordId.value && !Object.keys(values).length) {
+      submissionFeedback.value = { kind: 'warn', message: '没有检测到可保存的变更。' };
       busyKind.value = null;
       return;
     }
     if (recordId.value) {
       await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
+      if (String(model.value || '').trim() === 'res.users' && 'password' in formData) {
+        formData.password = '';
+        originalValues.value.password = '';
+      }
       submissionFeedback.value = { kind: 'success', message: '保存成功，已同步最新表单内容。' };
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
     const created = await createRecord({ model: model.value, vals: values });
     if (created?.id) {
-      submissionFeedback.value = { kind: 'success', message: '项目已创建' };
+      submissionFeedback.value = { kind: 'success', message: '保存成功，已创建并进入详情。' };
       clearIntakeAutosave();
       if (model.value === 'project.project') {
         setPendingProjectContext({

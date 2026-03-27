@@ -2,6 +2,7 @@
 from odoo.tests.common import TransactionCase, tagged
 
 from ..handlers.load_contract import LoadContractHandler
+from ..app_config_engine.services.assemblers.page_assembler import PageAssembler
 
 
 @tagged("post_install", "-at_install", "smart_core", "load_contract_capability_profile")
@@ -108,3 +109,39 @@ class TestLoadContractCapabilityProfile(TransactionCase):
         self.assertIn("drag_drop", primary.get("unsupported_features") or [])
         self.assertEqual(kanban_semantics.get("group_by_field"), "stage_id")
         self.assertEqual(kanban_semantics.get("support_tier"), "lightweight")
+
+    def test_form_field_restriction_keeps_tree_columns(self):
+        assembler = PageAssembler.__new__(PageAssembler)
+        data = {
+            "views": {
+                "tree": {
+                    "columns": ["name", "company_id", "sc_department_id"],
+                },
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "login"},
+                                {"type": "field", "name": "active"},
+                            ],
+                        }
+                    ],
+                },
+            },
+            "fields": {
+                "name": {"string": "名称", "type": "char"},
+                "login": {"string": "登录账号", "type": "char"},
+                "active": {"string": "启用", "type": "boolean"},
+                "company_id": {"string": "所属公司", "type": "many2one"},
+                "sc_department_id": {"string": "部门", "type": "many2one"},
+            },
+        }
+
+        assembler._restrict_form_fields_to_layout(data)
+
+        self.assertEqual(data.get("visible_fields"), ["name", "login", "active"])
+        self.assertIn("company_id", data.get("fields") or {})
+        self.assertIn("sc_department_id", data.get("fields") or {})
+        self.assertIn("login", data.get("fields") or {})

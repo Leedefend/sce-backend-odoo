@@ -9,6 +9,7 @@ _logger = logging.getLogger(__name__)
 
 ROLE_SURFACE_OVERRIDES = {
     "owner": {
+        "label": "普通员工",
         "landing_scene_candidates": ["projects.list", "project.initiation", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
@@ -16,6 +17,7 @@ ROLE_SURFACE_OVERRIDES = {
         ],
     },
     "pm": {
+        "label": "项目经理",
         "landing_scene_candidates": ["projects.intake", "projects.list", "projects.ledger", "my_work.workspace"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
@@ -25,6 +27,7 @@ ROLE_SURFACE_OVERRIDES = {
         "menu_blocklist_xmlids": ["smart_construction_core.menu_sc_project_manage"],
     },
     "finance": {
+        "label": "财务人员",
         "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_finance_center",
@@ -33,6 +36,7 @@ ROLE_SURFACE_OVERRIDES = {
         ],
     },
     "executive": {
+        "label": "管理层",
         "landing_scene_candidates": ["portal.dashboard", "project.management", "projects.list", "projects.ledger", "project.initiation", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_root",
