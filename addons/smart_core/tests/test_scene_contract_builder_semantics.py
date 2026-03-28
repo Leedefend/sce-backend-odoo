@@ -31,6 +31,11 @@ bridge_module = _load_module(
     CORE_DIR / "scene_contract_parser_semantic_bridge.py",
 )
 core_pkg.scene_contract_parser_semantic_bridge = bridge_module
+semantic_bridge_module = _load_module(
+    "odoo.addons.smart_core.core.scene_contract_semantic_orchestration_bridge",
+    CORE_DIR / "scene_contract_semantic_orchestration_bridge.py",
+)
+core_pkg.scene_contract_semantic_orchestration_bridge = semantic_bridge_module
 
 target = _load_module(
     "odoo.addons.smart_core.core.scene_contract_builder",
@@ -60,6 +65,7 @@ class TestSceneContractBuilderSemantics(unittest.TestCase):
             (((((payload.get("page") or {}).get("surface") or {}).get("semantic_view") or {}).get("source_view"))),
             "kanban",
         )
+        self.assertEqual(((payload.get("page") or {}).get("layout")), "board")
         self.assertIn("parser_semantic_surface", payload.get("governance") or {})
 
     def test_page_contract_projects_parser_semantics_into_scene_contract(self):
@@ -88,6 +94,7 @@ class TestSceneContractBuilderSemantics(unittest.TestCase):
         )
 
         self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "tree")
+        self.assertEqual(((payload.get("page") or {}).get("layout")), "list")
         self.assertIn("parser_semantic_surface", payload.get("governance") or {})
 
 
