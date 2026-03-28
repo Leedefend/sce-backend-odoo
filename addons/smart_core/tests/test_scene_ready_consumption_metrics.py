@@ -127,6 +127,30 @@ class TestSceneReadyConsumptionMetrics(unittest.TestCase):
         self.assertEqual(scene_bucket["base_fact_hits"]["search"], 0)
         self.assertEqual(scene_bucket["base_fact_hits"]["actions"], 1)
 
+    def test_metrics_count_extended_canonical_base_fact_coverage(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "meta": {
+                        "base_facts": {
+                            "views": {"available": True},
+                            "fields": {"available": True},
+                            "permissions": {"available": False},
+                        }
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["base_fact_hits"]["views"], 1)
+        self.assertEqual(scene_bucket["base_fact_hits"]["fields"], 1)
+        self.assertEqual(scene_bucket["base_fact_hits"]["permissions"], 0)
+        self.assertEqual(scene_bucket["base_fact_consumption_rate"]["views"], 1.0)
+        self.assertEqual(scene_bucket["base_fact_consumption_rate"]["fields"], 1.0)
+        self.assertEqual(scene_bucket["base_fact_consumption_rate"]["permissions"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
