@@ -79,6 +79,21 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                                 "searchpanel": [{"name": "stage_id", "string": "阶段"}],
                                 "mode": "faceted",
                             },
+                            "permission_surface": {
+                                "visible": True,
+                                "allowed": False,
+                                "reason_code": "missing_capability",
+                                "required_capabilities": ["project.write"],
+                            },
+                            "workflow_surface": {
+                                "state_field": "state",
+                                "states": [{"key": "draft"}],
+                                "transitions": [{"key": "submit"}],
+                            },
+                            "validation_surface": {
+                                "required_fields": ["name"],
+                                "field_rules": [{"field": "name", "rule": "required"}],
+                            },
                             "meta": {"target": {"route": "/my-work"}},
                         }
                     ],
@@ -94,6 +109,12 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertIn("parser_semantic_surface", scene)
         self.assertEqual(((scene.get("search_surface") or {}).get("mode")), "faceted")
         self.assertEqual((((scene.get("search_surface") or {}).get("searchpanel") or [])[0].get("name")), "stage_id")
+        self.assertEqual(((scene.get("permission_surface") or {}).get("reason_code")), "missing_capability")
+        self.assertEqual((((scene.get("permission_surface") or {}).get("required_capabilities") or [])[0]), "project.write")
+        self.assertEqual(((scene.get("workflow_surface") or {}).get("state_field")), "state")
+        self.assertEqual((((scene.get("workflow_surface") or {}).get("states") or [])[0].get("key")), "draft")
+        self.assertEqual((((scene.get("validation_surface") or {}).get("required_fields") or [])[0]), "name")
+        self.assertEqual((((scene.get("validation_surface") or {}).get("field_rules") or [])[0].get("field")), "name")
 
 
 if __name__ == "__main__":

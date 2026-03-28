@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-151
+title: Preserve canonical semantic surfaces in system init payload
+type: governance_task
+status: pending
+priority: high
+
+goal: Make the minimal system.init startup payload preserve canonical permission, workflow and validation surface semantics from scene_ready contracts instead of trimming them to near-empty stubs.
+user_visible_outcome:
+  - startup payloads now retain the same canonical permission, workflow and validation semantics that backend orchestration already materializes in scene_ready contracts
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core system_init_payload_builder
+  reason: scene_ready now carries canonical semantic surfaces consistently, but system.init minimal payload still trims permission/workflow/validation semantics much more aggressively than search/action. This iteration aligns startup payload preservation with the semantic contract already produced upstream.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-151.yaml
+    - python3 -m py_compile addons/smart_core/core/system_init_payload_builder.py addons/smart_core/tests/test_system_init_payload_builder_semantics.py
+    - python3 addons/smart_core/tests/test_system_init_payload_builder_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-151.yaml addons/smart_core/core/system_init_payload_builder.py addons/smart_core/tests/test_system_init_payload_builder_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-150
+
+notes: "Batch acceleration: leave scene_ready builder and align the direct downstream startup payload consumer with the newly standardized semantic surfaces."
