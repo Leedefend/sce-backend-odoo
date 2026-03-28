@@ -2183,3 +2183,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `057` before the next helper slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-058）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `21ba16f`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home loader helper`
+- Reason: continue common-shell convergence with pure loader/resolver shell logic
+- `058`: added `addons/smart_core/core/workspace_home_loader_helper.py`
+- `058`: `workspace_home_contract_builder.py` now delegates action-target resolution, data-provider loading, and scene-engine loading to the shared helper
+- `058`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_loader_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `058` before the next helper slice
