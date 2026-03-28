@@ -4,6 +4,7 @@ from ..core.base_handler import BaseIntentHandler
 from ..core.load_contract_entry_context import (
     infer_view_types_from_entry_context,
     normalize_requested_include_parts,
+    normalize_request_flags,
     normalize_requested_view_types,
     resolve_model_from_entry_context,
 )
@@ -127,9 +128,10 @@ class LoadContractHandler(BaseIntentHandler):
             return self._err(400, "include 无效，应为 all 或 model,view,action,permission 组合")
 
         # ---------- 4) 其它参数 ----------
-        force_refresh   = str(p.get("force_refresh","")).lower() in ("1","true","yes")
-        client_version  = (p.get("version") or "").strip()
-        if_none_match   = (p.get("if_none_match") or "").strip().strip('"')
+        request_flags = normalize_request_flags(p)
+        force_refresh = request_flags["force_refresh"]
+        client_version = request_flags["client_version"]
+        if_none_match = request_flags["if_none_match"]
 
         # ---------- 5) 上下文透传（lang/tz/company） ----------
         ctx_user = dict(self.env.context or {})

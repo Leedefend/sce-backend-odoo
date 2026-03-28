@@ -7,7 +7,7 @@
       "user_visible_progress"
     ],
     "status": "PASS",
-    "task_id": "ITER-2026-03-28-042",
+    "task_id": "ITER-2026-03-28-044",
     "triggered_stop_conditions": []
   },
   "risk_scan": {
@@ -16,13 +16,13 @@
       "addons/smart_core/core/load_contract_entry_context.py",
       "addons/smart_core/handlers/load_contract.py",
       "addons/smart_core/tests/test_load_contract_entry_context.py",
-      "agent_ops/tasks/ITER-2026-03-28-042.yaml"
+      "agent_ops/tasks/ITER-2026-03-28-044.yaml"
     ],
     "critical_hits": [],
     "diff_summary": {
       "added_lines": 92,
       "files": 4,
-      "removed_lines": 5
+      "removed_lines": 3
     },
     "high_risk_hits": [],
     "matched_rules": [],
@@ -30,15 +30,15 @@
       "addons/smart_core/core/load_contract_entry_context.py",
       "addons/smart_core/handlers/load_contract.py",
       "addons/smart_core/tests/test_load_contract_entry_context.py",
-      "agent_ops/tasks/ITER-2026-03-28-042.yaml"
+      "agent_ops/tasks/ITER-2026-03-28-044.yaml"
     ],
     "risk_level": "low",
     "sensitive_pattern_hits": [],
     "status": "PASS",
     "stop_required": false
   },
-  "task_id": "ITER-2026-03-28-042",
-  "task_path": "agent_ops/tasks/ITER-2026-03-28-042.yaml",
+  "task_id": "ITER-2026-03-28-044",
+  "task_path": "agent_ops/tasks/ITER-2026-03-28-044.yaml",
   "validate": {
     "errors": [],
     "passed": true
@@ -47,10 +47,10 @@
     "passed": true,
     "results": [
       {
-        "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-042.yaml",
+        "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-044.yaml",
         "exit_code": 0,
         "stderr": "",
-        "stdout": "{\n  \"status\": \"PASS\",\n  \"task\": \"/mnt/e/sc-backend-odoo/agent_ops/tasks/ITER-2026-03-28-042.yaml\",\n  \"task_id\": \"ITER-2026-03-28-042\",\n  \"errors\": []\n}\n"
+        "stdout": "{\n  \"status\": \"PASS\",\n  \"task\": \"/mnt/e/sc-backend-odoo/agent_ops/tasks/ITER-2026-03-28-044.yaml\",\n  \"task_id\": \"ITER-2026-03-28-044\",\n  \"errors\": []\n}\n"
       },
       {
         "command": "python3 -m py_compile addons/smart_core/handlers/load_contract.py addons/smart_core/core/load_contract_entry_context.py addons/smart_core/tests/test_load_contract_entry_context.py",
@@ -61,7 +61,7 @@
       {
         "command": "python3 addons/smart_core/tests/test_load_contract_entry_context.py",
         "exit_code": 0,
-        "stderr": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n",
+        "stderr": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.001s\n\nOK\n",
         "stdout": ""
       }
     ]

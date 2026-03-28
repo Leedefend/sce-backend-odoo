@@ -27,6 +27,7 @@ def _load_target_module():
 TARGET = _load_target_module()
 infer_view_types_from_entry_context = TARGET.infer_view_types_from_entry_context
 normalize_requested_include_parts = TARGET.normalize_requested_include_parts
+normalize_request_flags = TARGET.normalize_request_flags
 normalize_requested_view_types = TARGET.normalize_requested_view_types
 resolve_entry_action = TARGET.resolve_entry_action
 resolve_model_from_entry_context = TARGET.resolve_model_from_entry_context
@@ -142,6 +143,19 @@ class TestLoadContractEntryContext(unittest.TestCase):
             normalize_requested_include_parts("model,view,unknown", valid_include=valid),
             {"model", "view"},
         )
+
+    def test_normalize_request_flags_keeps_force_refresh_and_versions(self):
+        flags = normalize_request_flags(
+            {
+                "force_refresh": "true",
+                "version": " v1 ",
+                "if_none_match": '"etag-123"',
+            }
+        )
+
+        self.assertTrue(flags.get("force_refresh"))
+        self.assertEqual(flags.get("client_version"), "v1")
+        self.assertEqual(flags.get("if_none_match"), "etag-123")
 
 
 if __name__ == "__main__":
