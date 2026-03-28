@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-150
+title: Seed canonical semantic surfaces in scene ready fallback
+type: governance_task
+status: pending
+priority: high
+
+goal: Make scene_ready entry fallback seed canonical search, permission, workflow and validation surfaces from scene payload when compile output leaves them empty.
+user_visible_outcome:
+  - scene ready contracts now preserve canonical semantic surfaces from seeded scene payloads instead of only preserving action_surface
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core scene_ready_contract_builder
+  reason: scene_ready currently has explicit fallback seeding for action_surface but not for the other canonical semantic surfaces. This iteration keeps scene-ready fallback behavior symmetric so compile-stage empties do not silently discard seeded search, permission, workflow or validation semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-150.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_surface_seed_fallback.py
+    - python3 addons/smart_core/tests/test_scene_ready_surface_seed_fallback.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-150.yaml addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_surface_seed_fallback.py
+
+depends_on:
+  - ITER-2026-03-29-149
+
+notes: "Batch acceleration: continue grouped scene_ready alignment by making fallback seeding symmetric across canonical semantic surfaces."
