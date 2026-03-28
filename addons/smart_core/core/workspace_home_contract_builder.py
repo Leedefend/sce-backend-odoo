@@ -21,6 +21,11 @@ from .workspace_home_read_model_helper import (
     extract_business_collections,
     scene_from_route,
 )
+from .workspace_home_loader_helper import (
+    load_workspace_data_provider,
+    load_workspace_scene_engine,
+    resolve_action_target,
+)
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -328,75 +333,29 @@ def _workspace_ops_meta(*, has_business_signal: bool) -> Dict[str, str]:
 
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     global _ACTION_TARGET_RESOLVER
-    if callable(_ACTION_TARGET_RESOLVER):
-        return _ACTION_TARGET_RESOLVER(action_key, page_key)
-    helper_path = Path(__file__).with_name("action_target_schema.py")
-    try:
-        spec = spec_from_file_location("smart_core_action_target_schema_workspace_home", helper_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        resolver = getattr(module, "resolve_action_target", None)
-        if callable(resolver):
-            _ACTION_TARGET_RESOLVER = resolver
-            return resolver(action_key, page_key)
-    except Exception:
-        pass
-    fallback_scene = str(page_key or "").strip().lower() or "workspace.home"
-    return {"kind": "scene.key", "scene_key": fallback_scene}
+    payload, resolver = resolve_action_target(
+        action_key,
+        page_key,
+        cached_resolver=_ACTION_TARGET_RESOLVER,
+        base_path=Path(__file__),
+    )
+    if callable(resolver):
+        _ACTION_TARGET_RESOLVER = resolver
+    return payload
 
 
 def _load_data_provider():
     global _DATA_PROVIDER_MODULE
-    if _DATA_PROVIDER_MODULE is not None:
-        return _DATA_PROVIDER_MODULE
-
-    provider_path = None
-    try:
-        registry_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_provider_registry.py"
-        spec = spec_from_file_location("smart_scene_provider_registry_workspace_home", registry_path)
-        if spec is not None and spec.loader is not None:
-            module = module_from_spec(spec)
-            spec.loader.exec_module(module)
-            resolver = getattr(module, "resolve_scene_provider_path", None)
-            if callable(resolver):
-                provider_path = resolver("workspace.home", Path(__file__))
-    except Exception:
-        provider_path = None
-
-    if provider_path is None:
-        provider_path = Path(__file__).with_name("workspace_home_data_provider.py")
-
-    try:
-        spec = spec_from_file_location("smart_core_workspace_home_data_provider", provider_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _DATA_PROVIDER_MODULE = module
-        return module
-    except Exception:
-        _DATA_PROVIDER_MODULE = False
-        return None
+    module = load_workspace_data_provider(cached_module=_DATA_PROVIDER_MODULE, base_path=Path(__file__))
+    _DATA_PROVIDER_MODULE = module
+    return None if module is False else module
 
 
 def _load_scene_engine_module():
     global _SCENE_ENGINE_MODULE
-    if _SCENE_ENGINE_MODULE is not None:
-        return _SCENE_ENGINE_MODULE
-    engine_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_engine.py"
-    try:
-        spec = spec_from_file_location("smart_scene_core_scene_engine_workspace_home", engine_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _SCENE_ENGINE_MODULE = module
-        return module
-    except Exception:
-        _SCENE_ENGINE_MODULE = False
-        return None
+    module = load_workspace_scene_engine(cached_module=_SCENE_ENGINE_MODULE, base_path=Path(__file__))
+    _SCENE_ENGINE_MODULE = module
+    return None if module is False else module
 
 
 def _to_text(value: Any) -> str:
