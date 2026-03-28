@@ -1,4 +1,4 @@
-from .form_parser import FormViewParser
+from .native_view_parser_registry import get_parser_class, normalize_view_type
 
 
 class ViewDispatcher:
@@ -10,14 +10,9 @@ class ViewDispatcher:
         self.context = context or {}
 
     def parse(self):
-        parser_map = {
-            "form": FormViewParser,
-        }
-            
-
-        parser_cls = parser_map.get(self.view_type)
+        parser_cls = get_parser_class(self.view_type)
         if not parser_cls:
-            raise ValueError(f"不支持的视图类型: {self.view_type}")
+            raise ValueError(f"不支持的视图类型: {normalize_view_type(self.view_type)}")
 
         parser = parser_cls(self.env, self.model, self.view_type, self.view_id, self.context)
         return parser.parse()
