@@ -797,6 +797,7 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
         "field_scope_count": len(field_scope),
         "search_filter_count": len(_as_list(search_surface.get("filters"))),
         "search_group_by_count": len(_as_list(search_surface.get("group_by"))),
+        "search_searchpanel_count": len(_as_list(search_surface.get("searchpanel"))),
         "workflow_transition_count": len(_as_list(workflow_surface.get("transitions"))),
         "validation_required_count": len(_as_list(validation_surface.get("required_fields"))),
         "base_action_candidate_count": len(_as_list(out.get("base_action_candidates"))),
