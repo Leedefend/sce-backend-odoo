@@ -744,3 +744,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `076`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics
+## Round: ITER-2026-03-28-077
+
+- `ITER-2026-03-28-077`: scene delivery file payload shaping and builtin allowlist normalization moved into `addons/smart_core/core/scene_delivery_policy_map_helper.py`
+  - `scene_delivery_policy.py` no longer owns inline file-policy map shaping or builtin allowlist normalization defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_scene_delivery_policy_map_helper.py`
+  - the slice remains inside common navigation/provider territory and does not move policy selection or scene filtering semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-077`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `077`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics

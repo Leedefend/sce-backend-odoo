@@ -12,6 +12,10 @@ from .scene_delivery_policy_file_helper import (
     resolve_policy_file_path as _resolve_policy_file_path_helper,
     surface_policy_default_file as _surface_policy_default_file_helper,
 )
+from .scene_delivery_policy_map_helper import (
+    load_surface_policy_map_from_payload as _load_surface_policy_map_from_payload_helper,
+    resolve_builtin_surface_policy as _resolve_builtin_surface_policy_helper,
+)
 from .scene_delivery_surface_defaults import (
     coerce_surface_input as _coerce_surface_input,
     is_demo_surface as _is_demo_surface,
@@ -129,22 +133,7 @@ def _load_surface_policy_payload_from_file(env=None) -> dict:
 
 def _load_surface_policy_from_file(env=None) -> dict[str, dict[str, set[str]]]:
     payload = _load_surface_policy_payload_from_file(env)
-    surfaces = payload.get("surfaces") if isinstance(payload.get("surfaces"), dict) else {}
-    out = {}
-    for surface_key, policy in surfaces.items():
-        key = _normalize_surface(surface_key)
-        if not key or not isinstance(policy, dict):
-            continue
-        nav_raw = policy.get("nav_allowlist")
-        deep_raw = policy.get("deep_link_allowlist")
-        nav_allowlist = {str(x or "").strip() for x in (nav_raw if isinstance(nav_raw, list) else []) if str(x or "").strip()}
-        deep_link_allowlist = {str(x or "").strip() for x in (deep_raw if isinstance(deep_raw, list) else []) if str(x or "").strip()}
-        if nav_allowlist or deep_link_allowlist:
-            out[key] = {
-                "nav_allowlist": nav_allowlist,
-                "deep_link_allowlist": deep_link_allowlist,
-            }
-    return out
+    return _load_surface_policy_map_from_payload_helper(payload, normalize_surface=_normalize_surface)
 
 
 def _resolve_default_surface_from_file(env=None) -> str:
@@ -170,27 +159,11 @@ def _select_surface_policy(surface: str, env=None) -> dict:
                 "nav_allowlist": nav_allowlist,
                 "deep_link_allowlist": deep_link_allowlist,
             }
-    builtin_nav_allowlist = _builtin_surface_nav_allowlist(env)
-    nav_allowlist = {
-        str(item or "").strip()
-        for item in (builtin_nav_allowlist.get(key) or set())
-        if str(item or "").strip()
-    }
-    builtin_deep_link_allowlist = _builtin_surface_deep_link_allowlist(env)
-    deep_link_allowlist = {
-        str(item or "").strip()
-        for item in (builtin_deep_link_allowlist.get(key) or ())
-        if str(item or "").strip()
-    }
-    if not nav_allowlist and not deep_link_allowlist:
-        return {"name": "", "enabled": False, "source": "none", "nav_allowlist": set(), "deep_link_allowlist": set()}
-    return {
-        "name": key,
-        "enabled": True,
-        "source": "builtin",
-        "nav_allowlist": nav_allowlist,
-        "deep_link_allowlist": deep_link_allowlist,
-    }
+    return _resolve_builtin_surface_policy_helper(
+        key,
+        nav_allowlist_map=_builtin_surface_nav_allowlist(env),
+        deep_link_allowlist_map=_builtin_surface_deep_link_allowlist(env),
+    )
 
 
 def _classify_scene_surface_delivery(code: str, policy: dict) -> str:
