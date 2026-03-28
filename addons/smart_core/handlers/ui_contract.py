@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from odoo import api
 from odoo.tools.safe_eval import safe_eval
 from ..core.base_handler import BaseIntentHandler
+from ..core.native_view_contract_projection import inject_primary_view_projection
 
 # ✅ 直接用你的统一服务与分发器
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
@@ -338,7 +339,9 @@ class UiContractHandler(BaseIntentHandler):
         # finalize（统一化）
         cs = ContractService(self.env)
         fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"model"}})
-        return fixed.get("data", {}), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        fixed_data = fixed.get("data", {}) or {}
+        inject_primary_view_projection(fixed_data, requested_view_type=view_type)
+        return fixed_data, {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
 
     def _op_view(self, p, ctx):
         """前端传 subject:'view' 时，等价于按模型获取视图契约（无数据）"""
@@ -357,7 +360,9 @@ class UiContractHandler(BaseIntentHandler):
 
         cs = ContractService(self.env)
         fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"model"}})
-        return fixed.get("data", {}), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        fixed_data = fixed.get("data", {}) or {}
+        inject_primary_view_projection(fixed_data, requested_view_type=view_type)
+        return fixed_data, {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
 
     def _op_action_open(self, p, ctx):
         raw_act = self._get_param(p, "action_id", "actionId")
@@ -410,7 +415,9 @@ class UiContractHandler(BaseIntentHandler):
                         data["head"] = head
                 cs = ContractService(self.env)
                 fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject": "action.form", "action_id": action_id}})
-                return fixed.get("data", {}), {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
+                fixed_data = fixed.get("data", {}) or {}
+                inject_primary_view_projection(fixed_data, requested_view_type="form")
+                return fixed_data, {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
 
         # 统一服务的 action 分发
         p2 = {"subject":"action","action_id": action_id, "with_data": False}

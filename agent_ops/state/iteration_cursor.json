@@ -1,6 +1,8 @@
 {
-  "last_classification": "PASS",
-  "last_task_id": "ITER-2026-03-28-093",
-  "task_path": "agent_ops/tasks/ITER-2026-03-28-093.yaml",
-  "triggered_stop_conditions": []
+  "last_classification": "PASS_WITH_RISK",
+  "last_task_id": "ITER-2026-03-28-096",
+  "task_path": "agent_ops/tasks/ITER-2026-03-28-096.yaml",
+  "triggered_stop_conditions": [
+    "diff_too_large"
+  ]
 }
