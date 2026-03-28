@@ -1,0 +1,10 @@
+queue_id: platform-core-view-parse-batch-2
+mode: sequential
+tasks:
+  - ITER-2026-03-28-079
+  - ITER-2026-03-28-080
+  - ITER-2026-03-28-081
+  - ITER-2026-03-28-082
+stop_on:
+  - FAIL
+  - PASS_WITH_RISK

@@ -2477,3 +2477,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `078`, then reassess whether remaining residue is still provider-config only; if not, end this cleanup wave and switch to a platform-capability batch
+## 2026-03-28 迭代锚点（ITER-2026-03-28-079）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `5266a36`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view parsing`
+- Reason: stop helper cleanup and switch into a substantive platform capability batch focused on Odoo native view to structured contract parsing
+- `079`: added `docs/architecture/odoo_view_structured_parse_gap_and_batch2_plan_v1.md`
+- `079`: added `agent_ops/queue/platform_core_view_parse_batch_2.yaml`
+- `079`: froze task cards `080/081/082` as the first executable batch-2 chain
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `079`, then execute `080` to inventory the existing native view parser subsystem before code refactor
