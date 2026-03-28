@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, Type
 
 from .form_parser import FormViewParser
+from .kanban_parser import KanbanViewParser
 from .tree_parser import TreeViewParser
 
 
@@ -12,6 +13,7 @@ _DEFAULT_ALIASES = {
 
 _PARSER_REGISTRY: Dict[str, Type] = {
     "form": FormViewParser,
+    "kanban": KanbanViewParser,
     "tree": TreeViewParser,
 }
 
