@@ -679,3 +679,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `071`, then another sibling delivery/provider helper only if it stays clearly decoupled from snapshot and policy-binding logic
+## Round: ITER-2026-03-28-072
+
+- `ITER-2026-03-28-072`: delivery menu defaults moved into `addons/smart_core/core/delivery_menu_defaults.py`
+  - `delivery/menu_service.py` no longer owns inline synthetic menu id generation or menu node shaping defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_delivery_menu_defaults.py`
+  - the slice remains inside sibling delivery/provider-config territory and does not move snapshot, policy-binding, or domain semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-072`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `072`, then another sibling delivery/provider helper only if it stays clearly detached from snapshot and policy-binding logic
