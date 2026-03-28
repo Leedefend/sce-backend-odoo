@@ -44,6 +44,7 @@ from .workspace_home_ranking_helper import (
 )
 from .workspace_home_metric_helper import build_metric_sets
 from .workspace_home_parser_semantic_bridge import apply_workspace_home_parser_semantic_bridge
+from .workspace_home_semantic_orchestration_bridge import apply_workspace_home_semantic_orchestration_bridge
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -2094,4 +2095,5 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "business_visibility": visibility_diagnosis,
         },
     }
-    return apply_workspace_home_parser_semantic_bridge(result, data)
+    result = apply_workspace_home_parser_semantic_bridge(result, data)
+    return apply_workspace_home_semantic_orchestration_bridge(result)
