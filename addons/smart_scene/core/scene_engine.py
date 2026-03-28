@@ -21,7 +21,7 @@ def build_scene_contract_from_specs(
     nav_ref: Dict[str, Any] | None = None,
     semantic_surface: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint)
+    resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint, semantic_surface=semantic_surface or {})
     mapped_specs = map_zone_specs_to_blocks(zone_specs)
     ordered_specs = apply_zone_priority(mapped_specs, zone_order=zone_order)
     diagnostics_payload = dict(diagnostics or {})

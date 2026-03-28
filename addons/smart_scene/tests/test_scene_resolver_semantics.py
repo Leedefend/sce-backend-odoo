@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+import importlib.util
+import unittest
+from pathlib import Path
+
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "core" / "scene_resolver.py"
+
+
+def _load_target_module():
+    spec = importlib.util.spec_from_file_location("scene_resolver_under_test", MODULE_PATH)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module
+
+
+TARGET = _load_target_module()
+
+
+class TestSceneResolverSemantics(unittest.TestCase):
+    def test_resolver_prefers_parser_semantics_for_layout_and_interaction(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.home"},
+            page_hint={"key": "workspace.home", "title": "工作台"},
+            semantic_surface={
+                "parser_contract": {"view_type": "tree"},
+                "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
+                "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
+            },
+        )
+
+        self.assertEqual((resolved.get("scene") or {}).get("layout_mode"), "list_flow")
+        self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "multi_select")
+        self.assertEqual((resolved.get("page") or {}).get("view_type"), "tree")
+
+
+if __name__ == "__main__":
+    unittest.main()

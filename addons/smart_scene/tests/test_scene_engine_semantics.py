@@ -48,6 +48,8 @@ class TestSceneEngineSemantics(unittest.TestCase):
         )
 
         self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "kanban")
+        self.assertEqual((((payload.get("scene") or {}).get("layout_mode"))), "workspace_flow")
+        self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "multi_select")
         self.assertIn("parser_semantic_surface", payload.get("diagnostics") or {})
 
 
