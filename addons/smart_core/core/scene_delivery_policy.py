@@ -6,6 +6,11 @@ import os
 from typing import Any
 
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from .scene_delivery_policy_builtin_helper import (
+    resolve_builtin_surface_deep_link_allowlist as _resolve_builtin_surface_deep_link_allowlist_helper,
+    resolve_builtin_surface_nav_allowlist as _resolve_builtin_surface_nav_allowlist_helper,
+    resolve_surface_policy_default_name as _resolve_surface_policy_default_name_helper,
+)
 from .scene_delivery_policy_file_helper import (
     load_surface_policy_payload_from_file as _load_surface_policy_payload_from_file_helper,
     resolve_default_surface_from_file as _resolve_default_surface_from_file_helper,
@@ -77,23 +82,27 @@ _SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "payload": {
 
 
 def _builtin_surface_nav_allowlist(env=None) -> dict:
-    payload = call_extension_hook_first(env, "smart_core_surface_nav_allowlist", env)
-    if isinstance(payload, dict):
-        return payload
-    return BUILTIN_SURFACE_NAV_ALLOWLIST
+    return _resolve_builtin_surface_nav_allowlist_helper(
+        env,
+        hook=call_extension_hook_first,
+        default_map=BUILTIN_SURFACE_NAV_ALLOWLIST,
+    )
 
 
 def _builtin_surface_deep_link_allowlist(env=None) -> dict:
-    payload = call_extension_hook_first(env, "smart_core_surface_deep_link_allowlist", env)
-    if isinstance(payload, dict):
-        return payload
-    return BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST
+    return _resolve_builtin_surface_deep_link_allowlist_helper(
+        env,
+        hook=call_extension_hook_first,
+        default_map=BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST,
+    )
 
 
 def _surface_policy_default_name(env=None) -> str:
-    payload = call_extension_hook_first(env, "smart_core_surface_policy_default_name", env)
-    value = str(payload or "").strip()
-    return value or SURFACE_POLICY_CONSTRUCTION_PM_V1
+    return _resolve_surface_policy_default_name_helper(
+        env,
+        hook=call_extension_hook_first,
+        default_name=SURFACE_POLICY_CONSTRUCTION_PM_V1,
+    )
 
 
 def _surface_policy_default_file(env=None) -> str:
