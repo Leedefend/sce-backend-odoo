@@ -12,10 +12,23 @@ def _as_dict(value: Any) -> Dict[str, Any]:
     return dict(value) if isinstance(value, dict) else {}
 
 
+def _search_surface_nonempty(surface: Dict[str, Any]) -> bool:
+    payload = _as_dict(surface)
+    return bool(
+        _text(payload.get("default_sort"))
+        or _text(payload.get("mode"))
+        or payload.get("filters")
+        or payload.get("fields")
+        or payload.get("group_by")
+        or payload.get("searchpanel")
+    )
+
+
 def _semantic_layout_mode(surface: Dict[str, Any]) -> str:
     parser_contract = _as_dict(surface.get("parser_contract"))
     view_semantics = _as_dict(surface.get("view_semantics"))
     semantic_page = _as_dict(surface.get("semantic_page"))
+    search_surface = _as_dict(surface.get("search_surface"))
     view_type = _text(parser_contract.get("view_type") or view_semantics.get("source_view"))
     if view_type == "form":
         return "detail_focus"
@@ -29,6 +42,8 @@ def _semantic_layout_mode(surface: Dict[str, Any]) -> str:
         return "workspace_flow"
     if semantic_page.get("list_semantics"):
         return "list_flow"
+    if _search_surface_nonempty(search_surface):
+        return "entry_flow"
     if semantic_page.get("title_node"):
         return "detail_focus"
     return ""
@@ -38,6 +53,7 @@ def _semantic_interaction_mode(surface: Dict[str, Any]) -> str:
     parser_contract = _as_dict(surface.get("parser_contract"))
     view_semantics = _as_dict(surface.get("view_semantics"))
     semantic_page = _as_dict(surface.get("semantic_page"))
+    search_surface = _as_dict(surface.get("search_surface"))
     capability_flags = _as_dict(view_semantics.get("capability_flags"))
     view_type = _text(parser_contract.get("view_type") or view_semantics.get("source_view"))
     if view_type == "form":
@@ -49,6 +65,8 @@ def _semantic_interaction_mode(surface: Dict[str, Any]) -> str:
             return "multi_select"
         return "browse"
     if view_type == "search":
+        return "query"
+    if _search_surface_nonempty(search_surface):
         return "query"
     return ""
 
@@ -77,8 +95,15 @@ def resolve_scene_identity(
 
     parser_contract = _as_dict(parser_surface.get("parser_contract"))
     view_semantics = _as_dict(parser_surface.get("view_semantics"))
+    search_surface = _as_dict(parser_surface.get("search_surface"))
     model_name = _text(page_row.get("model") or fallback.get("model"))
-    view_type = _text(page_row.get("view_type") or parser_contract.get("view_type") or view_semantics.get("source_view") or fallback.get("view_type"))
+    view_type = _text(
+        page_row.get("view_type")
+        or parser_contract.get("view_type")
+        or view_semantics.get("source_view")
+        or ("search" if _search_surface_nonempty(search_surface) else "")
+        or fallback.get("view_type")
+    )
     title_field = _text(page_row.get("title_field") or fallback.get("title_field"))
     page_status = _text(page_row.get("page_status") or fallback.get("page_status"))
     record_id = page_row.get("record_id") if isinstance(page_row, dict) else None

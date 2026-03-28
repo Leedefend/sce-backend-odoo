@@ -34,6 +34,22 @@ class TestSceneResolverSemantics(unittest.TestCase):
         self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "multi_select")
         self.assertEqual((resolved.get("page") or {}).get("view_type"), "tree")
 
+    def test_resolver_uses_search_surface_when_view_type_hints_are_missing(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.search"},
+            page_hint={"key": "workspace.search", "title": "搜索"},
+            semantic_surface={
+                "search_surface": {
+                    "mode": "faceted",
+                    "searchpanel": [{"name": "stage_id"}],
+                }
+            },
+        )
+
+        self.assertEqual((resolved.get("scene") or {}).get("layout_mode"), "entry_flow")
+        self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "query")
+        self.assertEqual((resolved.get("page") or {}).get("view_type"), "search")
+
 
 if __name__ == "__main__":
     unittest.main()

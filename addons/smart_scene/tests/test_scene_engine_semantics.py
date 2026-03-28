@@ -52,6 +52,25 @@ class TestSceneEngineSemantics(unittest.TestCase):
         self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "multi_select")
         self.assertIn("parser_semantic_surface", payload.get("diagnostics") or {})
 
+    def test_build_scene_contract_from_specs_uses_search_surface_without_view_type(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.search"},
+            page_hint={"key": "workspace.search", "title": "搜索"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "search_surface": {
+                    "mode": "faceted",
+                    "searchpanel": [{"name": "stage_id"}],
+                }
+            },
+        )
+
+        self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "search")
+        self.assertEqual((((payload.get("scene") or {}).get("layout_mode"))), "entry_flow")
+        self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "query")
+
 
 if __name__ == "__main__":
     unittest.main()
