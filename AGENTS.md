@@ -3,6 +3,7 @@
 ## Codex Execution Policy
 - Always follow `docs/ops/codex_execution_allowlist.md` for all execution and validation steps.
 - If a requested action falls outside the allowlist, stop and ask for confirmation before proceeding.
+- On allowed branches (`feat/*`, `feature/*`, `codex/*`, `experiment/*`), `git add` and `git commit` are pre-authorized local actions and do not require separate per-action confirmation.
 - Always follow `docs/ops/codex_workspace_execution_rules.md` before any write action.
 - Mandatory preflight before edits: `pwd` + `git rev-parse --show-toplevel` + `git branch --show-current` + `git status --short`.
 
