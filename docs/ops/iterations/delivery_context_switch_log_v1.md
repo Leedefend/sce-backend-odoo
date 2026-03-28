@@ -2729,3 +2729,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `104`, then continue the backend orchestration consumption chain with the next scene/runtime consumer
+## 2026-03-28 迭代锚点（ITER-2026-03-28-105）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ad641ed`
+- Layer Target: `backend orchestration contract consumption`
+- Module: `smart_core scene_contract_builder attach path`
+- Reason: after scene-level contracts consume parser semantics, the runtime attach path is the next backend consumer that must carry that semantic surface back into runtime payloads
+- `105`: added `released_scene_semantic_surface_bridge.py` as the canonical runtime attach projection helper
+- `105`: `attach_release_surface_scene_contract()` now projects released scene semantics back into runtime payloads as `semantic_runtime` and `released_scene_semantic_surface`
+- `105`: direct coverage was added in `test_released_scene_semantic_surface_bridge.py` and `test_scene_contract_attach_semantics.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `105`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
