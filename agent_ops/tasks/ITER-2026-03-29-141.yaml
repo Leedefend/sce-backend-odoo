@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-141
+title: Count compile-level search semantics in scene ready metrics
+type: governance_task
+status: pending
+priority: high
+
+goal: Make scene ready consumption metrics count canonical search mode and default sort as valid search-surface consumption.
+user_visible_outcome:
+  - faceted-only or default-sort-only scenes are no longer undercounted as missing search consumption in scene-ready metrics
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core scene_ready_contract_builder
+  reason: Scene ready normalization already keeps search_surface.default_sort and search_surface.mode, but consumption metrics still undercount search semantics by only checking filters, fields, group_by and searchpanel. This iteration aligns metrics with the canonical search surface.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-141.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_consumption_metrics.py
+    - python3 addons/smart_core/tests/test_scene_ready_consumption_metrics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-141.yaml addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_consumption_metrics.py
+
+depends_on:
+  - ITER-2026-03-29-140
+
+notes: "Batch acceleration: align scene-ready metrics with the already canonicalized search semantic surface instead of continuing to count only legacy search lists."

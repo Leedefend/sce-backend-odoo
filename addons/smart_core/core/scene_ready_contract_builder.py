@@ -196,6 +196,9 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
         action_surface = entry.get("action_surface") if isinstance(entry.get("action_surface"), dict) else {}
 
         if bool(
+            search_surface.get("default_sort")
+            or search_surface.get("mode")
+            or
             search_surface.get("filters")
             or search_surface.get("fields")
             or search_surface.get("group_by")
