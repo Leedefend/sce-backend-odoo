@@ -2533,3 +2533,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `082`, then assess the next parser wave rather than returning to helper cleanup
+## 2026-03-28 迭代锚点（ITER-2026-03-28-083）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `bff8199`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view tree parser`
+- Reason: extend the parser subsystem beyond form so native view parsing starts supporting a second concrete Odoo view type
+- `083`: added `addons/smart_core/view/tree_parser.py`
+- `083`: `native_view_parser_registry.py` now registers `tree`
+- `083`: direct coverage added in `addons/smart_core/tests/test_native_view_tree_parser.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `083`, then choose between kanban registration and deeper form/tree contract normalization

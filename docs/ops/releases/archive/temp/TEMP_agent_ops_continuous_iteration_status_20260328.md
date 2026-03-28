@@ -821,3 +821,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `082`, then assess the next parser wave rather than returning to helper cleanup
+## Round: ITER-2026-03-28-083
+
+- `ITER-2026-03-28-083`: a minimal structured tree parser was added and registered in the native parser registry
+  - the parser subsystem now supports `form + tree`
+  - direct tree-parser coverage added in `addons/smart_core/tests/test_native_view_tree_parser.py`
+  - batch-2 has moved from single-view parser skeleton to multi-view capability
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-083`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `083`, then choose between kanban registration and deeper form/tree contract normalization
