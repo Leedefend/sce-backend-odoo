@@ -601,3 +601,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `065`, then another sibling configuration/helper slice
+## Round: ITER-2026-03-28-066
+
+- `ITER-2026-03-28-066`: page orchestration role defaults moved into `addons/smart_core/core/page_orchestration_role_defaults.py`
+  - `page_orchestration_data_provider.py` no longer owns inline role section policy, zone order, or focus section defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_page_orchestration_role_defaults.py`
+  - the slice remains inside sibling provider-config territory and does not move section semantic or payload assembly logic
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-066`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `066`, then another sibling defaults/config slice if one remains
