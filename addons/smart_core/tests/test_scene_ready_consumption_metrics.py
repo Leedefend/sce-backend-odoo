@@ -189,6 +189,54 @@ class TestSceneReadyConsumptionMetrics(unittest.TestCase):
         self.assertEqual(scene_bucket["surface_nonempty_hits"]["permission"], 0)
         self.assertEqual(scene_bucket["surface_nonempty_rate"]["permission"], 0.0)
 
+    def test_metrics_count_meaningful_workflow_and_validation_surfaces(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "workflow_surface": {
+                        "state_field": "state",
+                        "states": [{"key": "draft"}],
+                        "transitions": [{"key": "submit"}],
+                    },
+                    "validation_surface": {
+                        "required_fields": ["name"],
+                        "field_rules": [{"field": "name", "rule": "required"}],
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["workflow"], 1)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["workflow"], 1.0)
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["validation"], 1)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["validation"], 1.0)
+
+    def test_metrics_do_not_count_empty_workflow_and_validation_surfaces(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "workflow_surface": {
+                        "state_field": "",
+                        "states": [],
+                        "transitions": [],
+                    },
+                    "validation_surface": {
+                        "required_fields": [],
+                        "field_rules": [],
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["workflow"], 0)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["workflow"], 0.0)
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["validation"], 0)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["validation"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
