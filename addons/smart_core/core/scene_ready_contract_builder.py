@@ -195,7 +195,12 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
         validation_surface = entry.get("validation_surface") if isinstance(entry.get("validation_surface"), dict) else {}
         action_surface = entry.get("action_surface") if isinstance(entry.get("action_surface"), dict) else {}
 
-        if bool(search_surface.get("filters") or search_surface.get("fields") or search_surface.get("group_by")):
+        if bool(
+            search_surface.get("filters")
+            or search_surface.get("fields")
+            or search_surface.get("group_by")
+            or search_surface.get("searchpanel")
+        ):
             surface_hits["search"] = int(surface_hits.get("search") or 0) + 1
         if bool(workflow_surface.get("states") or workflow_surface.get("transitions") or workflow_surface.get("state_field")):
             surface_hits["workflow"] = int(surface_hits.get("workflow") or 0) + 1
