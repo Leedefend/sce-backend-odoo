@@ -4,10 +4,14 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from .page_orchestration_defaults import (
-    build_default_page_actions,
+    build_default_page_actions as resolve_default_page_actions,
     build_default_page_audience,
     build_default_page_type,
     to_text,
+)
+from .page_orchestration_action_defaults import (
+    build_default_action_templates,
+    build_default_action_templates_for_page,
 )
 from .page_orchestration_role_defaults import (
     build_default_role_focus_sections,
@@ -98,27 +102,11 @@ def build_semantic_from_section(page_key: str, section_key: str, tag: str) -> Di
 
 
 def build_action_templates(section_key: str) -> list[Dict[str, Any]]:
-    key = _to_text(section_key).lower()
-    if "risk" in key:
-        return [{"key": "open_workspace_overview", "label": "查看重点事项", "intent": "ui.contract"}]
-    if any(token in key for token in ("approval", "todo", "next_actions")):
-        return [{"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"}]
-    if any(token in key for token in ("filter", "group", "slice")):
-        return [{"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"}]
-    if any(token in key for token in ("table", "list", "records")):
-        return [{"key": "open_list", "label": "查看明细", "intent": "ui.contract"}]
-    return []
+    return build_default_action_templates(section_key)
 
 
 def build_action_templates_for_page(page_key: str, section_key: str) -> list[Dict[str, Any]]:
-    page = _to_text(page_key).lower()
-    section = _to_text(section_key).lower()
-    if page == "my_work":
-        if section == "todo_focus":
-            return [{"key": "open_list", "label": "查看全部事项", "intent": "ui.contract"}]
-        if section in {"hero", "retry_panel", "list_main"}:
-            return []
-    return build_action_templates(section_key)
+    return build_default_action_templates_for_page(page_key, section_key)
 
 
 def build_page_type(page_key: str) -> str:
@@ -130,7 +118,7 @@ def build_page_audience(page_key: str) -> list[str]:
 
 
 def build_default_page_actions(page_key: str) -> list[Dict[str, Any]]:
-    return build_default_page_actions(page_key)
+    return resolve_default_page_actions(page_key)
 
 
 def build_role_section_policy(role_code: str) -> Dict[str, Dict[str, list[str]]]:

@@ -627,3 +627,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `067`, then another sibling defaults/config slice only if it remains pure
+## Round: ITER-2026-03-28-068
+
+- `ITER-2026-03-28-068`: page orchestration action defaults moved into `addons/smart_core/core/page_orchestration_action_defaults.py`
+  - `page_orchestration_data_provider.py` no longer owns inline action-template defaults
+  - recursive default-action self-call risk was removed by routing page-action defaults through the imported helper alias
+  - direct unit coverage added in `addons/smart_core/tests/test_page_orchestration_action_defaults.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-068`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `068`, then another sibling defaults/config slice only if it remains pure
