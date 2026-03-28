@@ -250,11 +250,30 @@ class SystemInitPayloadBuilder:
             validation_surface = item.get("validation_surface") if isinstance(item.get("validation_surface"), dict) else {}
             if validation_surface:
                 compact_validation_surface = {}
-                required_fields = validation_surface.get("required_fields")
-                if required_fields not in (None, {}, []):
-                    compact_validation_surface["required_fields"] = required_fields
+                for key in ("required_fields", "field_rules"):
+                    value = validation_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_validation_surface[key] = value
                 if compact_validation_surface:
                     compact["validation_surface"] = compact_validation_surface
+            permission_surface = item.get("permission_surface") if isinstance(item.get("permission_surface"), dict) else {}
+            if permission_surface:
+                compact_permission_surface = {}
+                for key in ("visible", "allowed", "reason_code", "required_capabilities"):
+                    value = permission_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_permission_surface[key] = value
+                if compact_permission_surface:
+                    compact["permission_surface"] = compact_permission_surface
+            workflow_surface = item.get("workflow_surface") if isinstance(item.get("workflow_surface"), dict) else {}
+            if workflow_surface:
+                compact_workflow_surface = {}
+                for key in ("state_field", "states", "transitions", "highlight_states"):
+                    value = workflow_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_workflow_surface[key] = value
+                if compact_workflow_surface:
+                    compact["workflow_surface"] = compact_workflow_surface
             meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
             compact_meta = {}
             for key in ("target", "next_scene", "ui_base_contract_source", "parser_semantic_surface"):
