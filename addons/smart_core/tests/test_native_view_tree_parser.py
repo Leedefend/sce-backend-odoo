@@ -114,6 +114,8 @@ class TestNativeViewTreeParser(unittest.TestCase):
         self.assertEqual(payload["columns"][1]["semantic_meta"]["has_widget"], True)
         self.assertEqual(payload["editable"], "bottom")
         self.assertIn("decoration-danger", payload["decorations"])
+        self.assertEqual(payload["view_semantics"]["capability_flags"]["is_editable"], True)
+        self.assertEqual(payload["view_semantics"]["semantic_meta"]["editable_mode"], "bottom")
 
 
 if __name__ == "__main__":
