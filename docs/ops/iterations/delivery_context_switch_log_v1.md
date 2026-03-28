@@ -2631,3 +2631,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `089`, then continue with deeper normalized metadata for form leaf/container relationships or tree/search advanced attributes
+## 2026-03-28 迭代锚点（ITER-2026-03-28-090）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `224785a`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view advanced semantic metadata`
+- Reason: continue parser semantic normalization by exposing stable advanced metadata flags for common tree, kanban, and search nodes
+- `090`: shared leaf nodes now carry normalized `semantic_meta` in addition to `kind/semantic_role/source_view`
+- `090`: `tree_parser.py`, `kanban_parser.py`, and `search_parser.py` now emit stable advanced flags instead of forcing consumers to infer them from raw attributes
+- `090`: existing direct parser tests were extended to lock advanced metadata semantics
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `090`, then continue with remaining normalized metadata for form leaves or tree/search advanced view-level semantics

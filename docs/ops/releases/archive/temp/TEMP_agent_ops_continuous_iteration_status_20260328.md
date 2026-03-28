@@ -912,3 +912,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `089`, then continue with deeper normalized metadata for form leaf/container relationships or tree/search advanced attributes
+## Round: ITER-2026-03-28-090
+
+- `ITER-2026-03-28-090`: shared parser leaf nodes were enriched with normalized advanced metadata flags
+  - `field/action/filter/group_by/searchpanel` nodes now expose stable `semantic_meta` payloads for common inferred flags
+  - `tree/kanban/search` consumers no longer need to infer common booleans from raw node attributes only
+  - existing direct parser coverage was extended to lock those advanced semantic metadata flags
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-090`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `090`, then continue with remaining normalized metadata for form leaves or tree/search advanced view-level semantics

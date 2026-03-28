@@ -28,6 +28,10 @@ class SearchViewParser(BaseViewParser):
                     filter_domain=node.get("filter_domain"),
                     semantic_role="search_field",
                     source_view="search",
+                    semantic_meta={
+                        "has_operator": bool(node.get("operator")),
+                        "has_filter_domain": bool(node.get("filter_domain")),
+                    },
                 )
             )
         return fields
@@ -43,6 +47,10 @@ class SearchViewParser(BaseViewParser):
                     context=parse_safe_context(node.get("context", "{}")),
                     semantic_role="search_filter",
                     source_view="search",
+                    semantic_meta={
+                        "has_domain": bool(node.get("domain")),
+                        "has_context": bool(node.get("context")),
+                    },
                 )
             )
         return filters
@@ -60,6 +68,9 @@ class SearchViewParser(BaseViewParser):
                         context=context,
                         semantic_role="search_group_by",
                         source_view="search",
+                        semantic_meta={
+                            "context_keys": sorted(context.keys()),
+                        },
                     )
                 )
         return group_bys
@@ -75,6 +86,10 @@ class SearchViewParser(BaseViewParser):
                     icon=node.get("icon"),
                     semantic_role="searchpanel_field",
                     source_view="search",
+                    semantic_meta={
+                        "is_multi": node.get("select") == "multi",
+                        "has_icon": bool(node.get("icon")),
+                    },
                 )
             )
         return sections

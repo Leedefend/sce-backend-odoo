@@ -18,6 +18,7 @@ def build_field_node(
     editable=True,
     semantic_role=None,
     source_view=None,
+    semantic_meta=None,
 ):
     return {
         "kind": "field",
@@ -36,6 +37,7 @@ def build_field_node(
         "editable": editable,
         "semantic_role": semantic_role,
         "source_view": source_view,
+        "semantic_meta": semantic_meta if semantic_meta is not None else {},
     }
 
 
@@ -52,6 +54,7 @@ def build_action_node(
     visible=True,
     semantic_role=None,
     source_view=None,
+    semantic_meta=None,
 ):
     return {
         "kind": "action",
@@ -66,10 +69,11 @@ def build_action_node(
         "visible": visible,
         "semantic_role": semantic_role,
         "source_view": source_view,
+        "semantic_meta": semantic_meta if semantic_meta is not None else {},
     }
 
 
-def build_filter_node(*, name, string=None, domain=None, context=None, semantic_role=None, source_view=None):
+def build_filter_node(*, name, string=None, domain=None, context=None, semantic_role=None, source_view=None, semantic_meta=None):
     return {
         "kind": "filter",
         "name": name,
@@ -78,10 +82,11 @@ def build_filter_node(*, name, string=None, domain=None, context=None, semantic_
         "context": context if context is not None else {},
         "semantic_role": semantic_role,
         "source_view": source_view,
+        "semantic_meta": semantic_meta if semantic_meta is not None else {},
     }
 
 
-def build_group_by_node(*, name, string=None, group_by=None, context=None, semantic_role=None, source_view=None):
+def build_group_by_node(*, name, string=None, group_by=None, context=None, semantic_role=None, source_view=None, semantic_meta=None):
     return {
         "kind": "group_by",
         "name": name,
@@ -90,10 +95,11 @@ def build_group_by_node(*, name, string=None, group_by=None, context=None, seman
         "context": context if context is not None else {},
         "semantic_role": semantic_role,
         "source_view": source_view,
+        "semantic_meta": semantic_meta if semantic_meta is not None else {},
     }
 
 
-def build_searchpanel_node(*, name, string=None, select=None, icon=None, semantic_role=None, source_view=None):
+def build_searchpanel_node(*, name, string=None, select=None, icon=None, semantic_role=None, source_view=None, semantic_meta=None):
     return {
         "kind": "searchpanel",
         "name": name,
@@ -102,6 +108,7 @@ def build_searchpanel_node(*, name, string=None, select=None, icon=None, semanti
         "icon": icon,
         "semantic_role": semantic_role,
         "source_view": source_view,
+        "semantic_meta": semantic_meta if semantic_meta is not None else {},
     }
 
 

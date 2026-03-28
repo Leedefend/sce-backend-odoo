@@ -28,7 +28,7 @@ schema_module = _load_module("odoo.addons.smart_core.view.native_view_node_schem
 
 class TestNativeViewNodeSchema(unittest.TestCase):
     def test_build_field_node_has_stable_keys(self):
-        node = schema_module.build_field_node(name="name", string="Name", widget="char", semantic_role="tree_column", source_view="tree")
+        node = schema_module.build_field_node(name="name", string="Name", widget="char", semantic_role="tree_column", source_view="tree", semantic_meta={"has_widget": True})
         self.assertEqual(node["name"], "name")
         self.assertEqual(node["string"], "Name")
         self.assertEqual(node["kind"], "field")
@@ -37,23 +37,27 @@ class TestNativeViewNodeSchema(unittest.TestCase):
         self.assertIn("options", node)
         self.assertEqual(node["semantic_role"], "tree_column")
         self.assertEqual(node["source_view"], "tree")
+        self.assertEqual(node["semantic_meta"]["has_widget"], True)
 
     def test_build_action_node_has_stable_defaults(self):
-        node = schema_module.build_action_node(name="open_record", action_type="object", semantic_role="kanban_card_action", source_view="kanban")
+        node = schema_module.build_action_node(name="open_record", action_type="object", semantic_role="kanban_card_action", source_view="kanban", semantic_meta={"target_scope": "card"})
         self.assertEqual(node["kind"], "action")
         self.assertEqual(node["type"], "object")
         self.assertEqual(node["context"], {})
         self.assertEqual(node["groups"], [])
         self.assertEqual(node["semantic_role"], "kanban_card_action")
+        self.assertEqual(node["semantic_meta"]["target_scope"], "card")
 
     def test_build_filter_and_group_by_nodes_keep_context(self):
-        filter_node = schema_module.build_filter_node(name="late", context={"default": True}, semantic_role="search_filter", source_view="search")
-        group_node = schema_module.build_group_by_node(name="by_stage", group_by="stage_id", context={"group_by": "stage_id"}, semantic_role="search_group_by", source_view="search")
+        filter_node = schema_module.build_filter_node(name="late", context={"default": True}, semantic_role="search_filter", source_view="search", semantic_meta={"has_context": True})
+        group_node = schema_module.build_group_by_node(name="by_stage", group_by="stage_id", context={"group_by": "stage_id"}, semantic_role="search_group_by", source_view="search", semantic_meta={"context_keys": ["group_by"]})
         self.assertEqual(filter_node["kind"], "filter")
         self.assertEqual(group_node["kind"], "group_by")
         self.assertEqual(filter_node["context"]["default"], True)
         self.assertEqual(group_node["group_by"], "stage_id")
         self.assertEqual(group_node["semantic_role"], "search_group_by")
+        self.assertEqual(filter_node["semantic_meta"]["has_context"], True)
+        self.assertEqual(group_node["semantic_meta"]["context_keys"], ["group_by"])
 
     def test_build_form_container_nodes_have_stable_kinds(self):
         group_node = schema_module.build_group_node(fields=[{"name": "name"}])
