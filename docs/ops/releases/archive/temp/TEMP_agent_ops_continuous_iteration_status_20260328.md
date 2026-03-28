@@ -860,3 +860,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `085`, then decide between parser contract-shape normalization and deeper search/searchpanel enrichment
+## Round: ITER-2026-03-28-086
+
+- `ITER-2026-03-28-086`: a shared native view contract builder was added and wired into the parser pipeline
+  - supported parser payloads now keep the legacy `layout` field while also exposing `contract_version` and `parser_contract`
+  - the parser subsystem now has a stable contract envelope across `form + tree + kanban + search`
+  - direct builder coverage added in `addons/smart_core/tests/test_native_view_contract_builder.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-086`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `086`, then deepen parser semantics on top of the stable contract envelope
