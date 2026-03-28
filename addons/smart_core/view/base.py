@@ -6,6 +6,8 @@ from lxml import etree
 from odoo.tools.safe_eval import safe_eval
 import logging
 
+from .native_view_source_loader import NativeViewSourceLoader
+
 _logger = logging.getLogger(__name__)
 
 
@@ -72,22 +74,19 @@ class BaseViewParser(ABC):
         if not self.model:
             raise UserError("模型名称未指定")
 
-        model_cls = env[self.model]
         view_type = self.view_type or fallback_view_type
-        view_id = self.view_id
-
         try:
-            view_info = model_cls.get_view(
-                view_id=view_id,
+            return NativeViewSourceLoader(
+                env,
+                model=self.model,
                 view_type=view_type,
-                context=self.context
-            )
-            # 确保 arch 是 etree.Element
-            if isinstance(view_info['arch'], str):
-                view_info['arch'] = etree.fromstring(view_info['arch'])
-            return view_info
+                view_id=self.view_id,
+                context=self.context,
+            ).load()
         except Exception as e:
             _logger.error(f"获取视图信息失败: {str(e)}")
+            if isinstance(e, UserError):
+                raise
             raise UserError(f"无法加载 {view_type} 视图: {str(e)}")
 
     def extract_fields(self, arch):

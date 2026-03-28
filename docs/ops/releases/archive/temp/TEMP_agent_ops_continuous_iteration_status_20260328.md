@@ -795,3 +795,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `080`, then implement `081` with parser registry and source loader skeleton
+## Round: ITER-2026-03-28-081
+
+- `ITER-2026-03-28-081`: parser registry and source-loader skeleton were added under `addons/smart_core/view`
+  - `view_dispatcher.py` now resolves parser classes through a registry instead of a hardcoded inline map
+  - `base.py` now delegates native view source loading to a dedicated loader
+  - batch-2 has entered substantive parser subsystem code, rather than continuing helper cleanup
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-081`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `081`, then execute `082` to move form parsing onto the new parser pipeline

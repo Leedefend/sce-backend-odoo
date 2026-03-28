@@ -2504,3 +2504,18 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `080`, then implement `081` with parser registry and source loader skeleton
+## 2026-03-28 迭代锚点（ITER-2026-03-28-081）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c022074`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view parser registry`
+- Reason: introduce the first real parser subsystem skeleton so native-view parsing no longer depends on a hardcoded single-view dispatcher
+- `081`: added `addons/smart_core/view/native_view_parser_registry.py`
+- `081`: added `addons/smart_core/view/native_view_source_loader.py`
+- `081`: `view_dispatcher.py` now uses registry lookup and `base.py` now delegates source loading to the loader
+- `081`: direct skeleton coverage added in `addons/smart_core/tests/test_native_view_parser_skeleton.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `081`, then execute `082` to move form parsing onto the new parser pipeline

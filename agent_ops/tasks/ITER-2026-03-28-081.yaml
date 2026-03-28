@@ -33,6 +33,8 @@ architecture:
 acceptance:
   commands:
     - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-081.yaml
+    - python3 -m py_compile addons/smart_core/view/native_view_parser_registry.py addons/smart_core/view/native_view_source_loader.py addons/smart_core/view/view_dispatcher.py addons/smart_core/view/base.py addons/smart_core/tests/test_native_view_parser_skeleton.py
+    - python3 addons/smart_core/tests/test_native_view_parser_skeleton.py
 risk:
   level: low
   manual_approval_required: false
@@ -44,7 +46,7 @@ stop_conditions:
 deliverables:
   - code
 rollback:
-  - git restore agent_ops/tasks/ITER-2026-03-28-081.yaml
+  - git restore agent_ops/tasks/ITER-2026-03-28-081.yaml addons/smart_core/view/native_view_parser_registry.py addons/smart_core/view/native_view_source_loader.py addons/smart_core/view/view_dispatcher.py addons/smart_core/view/base.py addons/smart_core/tests/test_native_view_parser_skeleton.py
 depends_on:
   - ITER-2026-03-28-080
 notes: "Batch-2 Step 2."
