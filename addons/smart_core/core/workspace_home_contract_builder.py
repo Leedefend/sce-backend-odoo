@@ -10,6 +10,13 @@ from urllib.parse import parse_qs, urlparse
 
 from odoo import fields
 
+from .workspace_home_shell_helper import (
+    build_workspace_scene_aliases,
+    merge_workspace_mapping_overrides,
+    resolve_workspace_keyword_overrides,
+    resolve_workspace_scene,
+)
+
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
     try:
@@ -47,97 +54,31 @@ _SCENE_ENGINE_MODULE = None
 
 
 def _workspace_scene_aliases() -> Dict[str, str]:
-    provider = _load_data_provider()
-    if provider is not None:
-        fn = getattr(provider, "build_scene_aliases", None)
-        if callable(fn):
-            try:
-                payload = fn()
-                if isinstance(payload, dict):
-                    out = {
-                        str(key or "").strip().lower(): str(value or "").strip()
-                        for key, value in payload.items()
-                        if str(key or "").strip() and str(value or "").strip()
-                    }
-                    if out:
-                        return out
-            except Exception:
-                pass
-    return {
-        "default": "workspace.home",
-        "dashboard": "workspace.home",
-        "project_list": "workspace.list",
-        "project_management": "workspace.management",
-        "execution": "workspace.execution",
-        "operation_overview": "workspace.overview",
-        "risk_center": "workspace.risk",
-        "task_center": "workspace.tasks",
-        "cost_center": "workspace.cost",
-        "finance_center": "workspace.finance",
-    }
+    return build_workspace_scene_aliases(_load_data_provider())
 
 
 def _workspace_scene(name: str) -> str:
-    aliases = _workspace_scene_aliases()
-    key = str(name or "").strip().lower()
-    return aliases.get(key) or aliases.get("default") or "workspace.home"
+    return resolve_workspace_scene(name, _workspace_scene_aliases())
 
 
 def _resolve_workspace_keyword_overrides(data: Dict[str, Any]) -> Dict[str, Any]:
-    if not isinstance(data, dict):
-        return {}
-    direct_payload = data.get("workspace_keyword_overrides")
-    if isinstance(direct_payload, dict):
-        return direct_payload
-    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
-    ext_payload = ext_facts.get("workspace_keyword_overrides")
-    if isinstance(ext_payload, dict):
-        return ext_payload
-    return {}
+    return resolve_workspace_keyword_overrides(data)
 
 
 def _workspace_layout_texts(defaults: Dict[str, str]) -> Dict[str, str]:
-    out = dict(defaults or {})
-    provider = _load_data_provider()
-    if provider is None:
-        return out
-    fn = getattr(provider, "build_layout_texts_overrides", None)
-    if not callable(fn):
-        return out
-    try:
-        payload = fn()
-    except Exception:
-        payload = None
-    if not isinstance(payload, dict):
-        return out
-    for key, value in payload.items():
-        k = _to_text(key)
-        v = _to_text(value)
-        if k and v:
-            out[k] = v
-    return out
+    return merge_workspace_mapping_overrides(
+        defaults,
+        _load_data_provider(),
+        override_builder="build_layout_texts_overrides",
+    )
 
 
 def _workspace_layout_actions(defaults: Dict[str, str]) -> Dict[str, str]:
-    out = dict(defaults or {})
-    provider = _load_data_provider()
-    if provider is None:
-        return out
-    fn = getattr(provider, "build_layout_actions_overrides", None)
-    if not callable(fn):
-        return out
-    try:
-        payload = fn()
-    except Exception:
-        payload = None
-    if not isinstance(payload, dict):
-        return out
-    for key, value in payload.items():
-        k = _to_text(key)
-        v = _to_text(value)
-        if k and v:
-            out[k] = v
-    return out
+    return merge_workspace_mapping_overrides(
+        defaults,
+        _load_data_provider(),
+        override_builder="build_layout_actions_overrides",
+    )
 
 
 def _workspace_hero_payload(*, has_business_signal: bool, gap_level: str, updated_at: str, partial_notice: str) -> Dict[str, Any]:
