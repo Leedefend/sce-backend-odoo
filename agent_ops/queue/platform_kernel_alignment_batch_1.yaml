@@ -1,0 +1,13 @@
+queue_id: platform-kernel-alignment-batch-1
+mode: sequential
+tasks:
+  - ITER-2026-03-28-046
+  - ITER-2026-03-28-047
+  - ITER-2026-03-28-048
+  - ITER-2026-03-28-049
+  - ITER-2026-03-28-050
+  - ITER-2026-03-28-051
+  - ITER-2026-03-28-052
+stop_on:
+  - FAIL
+  - PASS_WITH_RISK

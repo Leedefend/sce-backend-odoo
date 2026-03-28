@@ -22,6 +22,7 @@ Before any coding:
 
 2. The agent MUST:
    - Load the task contract
+   - Read and obey `docs/architecture/execution_baseline_v1.md`
    - Respect allowed / forbidden paths
    - Follow change rules
    - Execute acceptance commands
@@ -97,7 +98,15 @@ Must declare:
 
 - Layer Target
 - Module
+- Module Ownership
+- Kernel or Scenario
 - Reason
+
+Must also follow:
+
+- `docs/architecture/execution_baseline_v1.md`
+- `docs/architecture/platform_kernel_boundary_freeze_v1.md`
+- `agent_ops/policies/architecture_reference_policy.yaml`
 
 ---
 
@@ -118,6 +127,7 @@ The agent MUST STOP immediately if:
 4. Contract structure changes (field rename/remove)
 5. Diff exceeds safe size threshold
 6. Task cannot be completed with certainty
+7. Planned kernel alignment would absorb industry-specific semantics
 
 ---
 
@@ -162,11 +172,13 @@ Always prioritize:
 1. User-visible outcome
 2. Read-only extension
 3. Verification completeness
+4. Execution baseline compliance
 
 Avoid:
 
 - premature architecture abstraction
 - cross-module refactor
 - schema change
+- automatic migration of industry semantics into platform kernel
 
 ---

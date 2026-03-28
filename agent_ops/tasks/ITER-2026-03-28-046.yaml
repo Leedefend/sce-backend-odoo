@@ -1,0 +1,57 @@
+task_id: ITER-2026-03-28-046
+title: Build platform kernel current mapping baseline
+type: governance_task
+status: pending
+priority: medium
+
+goal: Map current repository modules and governance assets to the target platform-kernel architecture so subsequent alignment tasks operate against a shared baseline instead of assumptions.
+user_visible_outcome:
+  - the repository has a current-to-target platform-kernel mapping baseline
+  - platform, scenario, scene, frontend, and governance assets are explicitly classified
+
+scope:
+  allowed_paths:
+    - docs/architecture/**
+    - agent_ops/tasks/**
+    - agent_ops/queue/**
+    - agent_ops/policies/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform kernel governance
+  module: current mapping baseline
+  reason: Establish the current repository to target architecture mapping before any broader kernel alignment task proceeds.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-046.yaml
+    - rg -n "smart_core|smart_scene|smart_construction_core|smart_construction_scene|frontend/apps/web|agent_ops" docs/architecture/platform_kernel_current_mapping_v1.md
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore docs/architecture/platform_kernel_current_mapping_v1.md agent_ops/tasks/ITER-2026-03-28-046.yaml agent_ops/queue/platform_kernel_alignment_batch_1.yaml agent_ops/policies/architecture_reference_policy.yaml
+
+depends_on:
+  - ITER-2026-03-28-045
+notes: "Document-only baseline task. No business code changes."

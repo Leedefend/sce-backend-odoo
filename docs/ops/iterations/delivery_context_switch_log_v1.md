@@ -2116,3 +2116,42 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `037/038` before the next code slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-053）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `87fd0d1`
+- Layer Target: `platform kernel governance`
+- Module: `common project kernel candidate map`
+- Reason: open the next code-alignment stage from an explicit common-project capability inventory instead of ad hoc helper extraction
+- `053`: added `docs/architecture/common_project_kernel_candidate_map_v1.md`
+- `053`: froze the first-pass candidate set for common project layer capabilities
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next governed slice should freeze workspace shell versus scenario block ownership
+## 2026-03-28 迭代锚点（ITER-2026-03-28-054）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `87fd0d1`
+- Layer Target: `platform kernel governance`
+- Module: `project workspace shell boundary`
+- Reason: freeze dashboard/workspace shell ownership before code-layer convergence continues into shared runtime helpers
+- `054`: added `docs/architecture/project_workspace_shell_boundary_v1.md`
+- `054`: separated common shell ownership from scenario block ownership and declared mixed regions as deferred
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next governed slice should convert the boundary into a bounded wave-1 implementation plan
+## 2026-03-28 迭代锚点（ITER-2026-03-28-055）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `87fd0d1`
+- Layer Target: `platform kernel governance`
+- Module: `common project code alignment wave-1`
+- Reason: convert the current mapping and boundary-freeze assets into the next low-risk implementation batch
+- `055`: added `docs/architecture/common_project_code_alignment_wave1_plan_v1.md`
+- `055`: fixed the next implementation scope to helper/read-model convergence only
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped validation and submission of batch-1 planning assets before wave-1 code changes
