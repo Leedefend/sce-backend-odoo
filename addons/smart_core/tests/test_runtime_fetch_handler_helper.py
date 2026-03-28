@@ -16,8 +16,10 @@ def _load_target_module():
 
 
 TARGET = _load_target_module()
+build_runtime_fetch_collections_payload = TARGET.build_runtime_fetch_collections_payload
 build_runtime_fetch_error_response = TARGET.build_runtime_fetch_error_response
 build_runtime_fetch_meta = TARGET.build_runtime_fetch_meta
+build_runtime_fetch_page_payload = TARGET.build_runtime_fetch_page_payload
 build_runtime_fetch_success_response = TARGET.build_runtime_fetch_success_response
 parse_runtime_fetch_params = TARGET.parse_runtime_fetch_params
 resolve_runtime_fetch_collection_keys = TARGET.resolve_runtime_fetch_collection_keys
@@ -74,6 +76,18 @@ class TestRuntimeFetchHandlerHelper(unittest.TestCase):
     def test_resolve_runtime_fetch_collection_keys_requires_list(self):
         self.assertEqual(resolve_runtime_fetch_collection_keys({"keys": ["overview", "alerts"]}), ["overview", "alerts"])
         self.assertEqual(resolve_runtime_fetch_collection_keys({"keys": "overview"}), [])
+
+    def test_build_runtime_fetch_page_payload_keeps_standard_shape(self):
+        payload = build_runtime_fetch_page_payload(" My_Work ", {"title": "My Work"})
+
+        self.assertEqual(payload, {"page_key": "my_work", "page_contract": {"title": "My Work"}})
+
+    def test_build_runtime_fetch_collections_payload_keeps_standard_shape(self):
+        payload = build_runtime_fetch_collections_payload({"alerts": [1], "overview": [2]})
+
+        self.assertEqual(payload.get("count"), 2)
+        self.assertEqual(payload.get("keys"), ["alerts", "overview"])
+        self.assertEqual((payload.get("collections") or {}).get("overview"), [2])
 
 
 if __name__ == "__main__":
