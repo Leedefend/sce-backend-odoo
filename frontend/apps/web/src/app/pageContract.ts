@@ -17,14 +17,56 @@ type SectionTag = 'header' | 'section' | 'details' | 'div' | '';
 type SectionConfig = { enabled: boolean; order: number; tag: SectionTag; open: boolean | null };
 type GlobalActionConfig = { key: string; label: string; intent: string };
 
+function contractLooksStale(pageKey: string, contract: unknown): boolean {
+  const normalizedPageKey = asText(pageKey).trim().toLowerCase();
+  const row = contract && typeof contract === 'object' ? contract as Record<string, unknown> : {};
+  const orchestration = row.page_orchestration_v1 && typeof row.page_orchestration_v1 === 'object'
+    ? row.page_orchestration_v1 as Record<string, unknown>
+    : {};
+  const sceneContractV1 = row.scene_contract_v1 && typeof row.scene_contract_v1 === 'object'
+    ? row.scene_contract_v1 as Record<string, unknown>
+    : {};
+  const page = orchestration.page && typeof orchestration.page === 'object'
+    ? orchestration.page as Record<string, unknown>
+    : {};
+  const zones = Array.isArray(orchestration.zones) ? orchestration.zones : [];
+  if (normalizedPageKey !== 'my_work') return false;
+  const title = asText(page.title).trim();
+  const leaked = new Set(['页面头部', '主体内容', '辅助信息', '扩展信息', 'hero', 'todo_focus', 'list_main', 'my_work-primary']);
+  const staleHeroTitles = new Set(['我的工作']);
+  if (!Object.keys(orchestration).length || zones.length === 0) return true;
+  if (leaked.has(title)) return true;
+  for (const zone of zones) {
+    const zoneRow = zone && typeof zone === 'object' ? zone as Record<string, unknown> : {};
+    const zoneTitle = asText(zoneRow.title).trim();
+    const zoneDesc = asText(zoneRow.description).trim();
+    if (leaked.has(zoneTitle) || leaked.has(zoneDesc)) return true;
+    const blocks = Array.isArray(zoneRow.blocks) ? zoneRow.blocks : [];
+    for (const block of blocks) {
+      const blockRow = block && typeof block === 'object' ? block as Record<string, unknown> : {};
+      const blockTitle = asText(blockRow.title).trim();
+      if (leaked.has(blockTitle) || staleHeroTitles.has(blockTitle)) return true;
+    }
+  }
+  const sceneZones = Array.isArray(sceneContractV1.zones) ? sceneContractV1.zones : [];
+  for (const zone of sceneZones) {
+    const zoneRow = zone && typeof zone === 'object' ? zone as Record<string, unknown> : {};
+    const zoneKey = asText(zoneRow.key || zoneRow.zone_key).trim();
+    const zoneTitle = asText(zoneRow.title || zoneRow.label).trim();
+    if (leaked.has(zoneKey) || leaked.has(zoneTitle)) return true;
+  }
+  return false;
+}
+
 export function usePageContract(pageKey: string) {
   const session = useSessionStore();
   const normalizedPageKey = asText(pageKey).trim().toLowerCase();
   watchEffect(() => {
     if (!normalizedPageKey || !session.token) return;
     const cached = session.pageContracts?.[normalizedPageKey];
-    if (cached && Object.keys(cached).length > 0) return;
-    void session.ensurePageContract(normalizedPageKey).catch(() => {});
+    const shouldForceRefresh = contractLooksStale(normalizedPageKey, cached);
+    if (cached && Object.keys(cached).length > 0 && !shouldForceRefresh) return;
+    void session.ensurePageContract(normalizedPageKey, shouldForceRefresh).catch(() => {});
   });
   const contract = computed<PageContract>(() => session.pageContracts?.[normalizedPageKey] || {});
   const sceneContractV1 = computed<Record<string, unknown>>(() => {

@@ -9,12 +9,17 @@ const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
-const LOGIN = process.env.E2E_LOGIN || process.env.SCENE_LOGIN || 'admin';
+const LOGIN =
+  process.env.E2E_LOGIN ||
+  process.env.ROLE_PM_LOGIN ||
+  process.env.SCENE_LOGIN ||
+  'demo_role_project_manager';
 const PASSWORD =
   process.env.E2E_PASSWORD ||
+  process.env.ROLE_PM_PASSWORD ||
   process.env.SCENE_PASSWORD ||
   process.env.ADMIN_PASSWD ||
-  'admin';
+  'demo';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const ALLOW_SKIP_UNKNOWN_INTENT = ['1', 'true', 'yes', 'on'].includes(
@@ -87,6 +92,15 @@ function assertSortedById(items, dir) {
   return true;
 }
 
+function collectSourceModels(items) {
+  const models = new Set();
+  for (const row of items || []) {
+    const model = String((row && row.source_model) || '').trim();
+    if (model) models.add(model);
+  }
+  return Array.from(models).sort();
+}
+
 async function main() {
   if (!DB_NAME) throw new Error('DB_NAME is required');
 
@@ -102,11 +116,38 @@ async function main() {
     );
     writeJson(path.join(outDir, 'login.log'), loginResp);
     assertIntentEnvelope(loginResp, 'login');
-    token = (((loginResp.body || {}).data) || {}).token || '';
+    const loginData = (loginResp.body || {}).data || {};
+    const session = loginData.session || {};
+    token = session.token || loginData.token || '';
     if (!token) throw new Error('login response missing token');
   }
 
   const authHeader = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
+
+  const pageContractResp = await requestJson(
+    intentUrl,
+    { intent: 'page.contract', params: { page_key: 'my_work', scene: 'web', root_xmlid: 'smart_construction_core.menu_sc_root' } },
+    authHeader,
+  );
+  writeJson(path.join(outDir, 'page_contract_my_work.log'), pageContractResp);
+  assertIntentEnvelope(pageContractResp, 'page.contract');
+  const pageContractData = (pageContractResp.body || {}).data || {};
+  const pageContract = pageContractData.page_contract || {};
+  const orchestration = pageContract.page_orchestration_v1 || {};
+  const pageMeta = orchestration.page || {};
+  const zones = Array.isArray(orchestration.zones) ? orchestration.zones : [];
+  const title = String(pageMeta.title || '').trim();
+  if (title !== '我的工作') throw new Error(`page.contract title mismatch: ${title || '-'}`);
+  const forbiddenTitles = new Set(['页面头部', '主体内容', '辅助信息', '扩展信息', 'hero', 'todo_focus', 'list_main']);
+  for (const zone of zones) {
+    const zoneTitle = String((zone && zone.title) || '').trim();
+    if (forbiddenTitles.has(zoneTitle)) throw new Error(`zone title leaked technical label: ${zoneTitle}`);
+    const blocks = Array.isArray(zone && zone.blocks) ? zone.blocks : [];
+    for (const block of blocks) {
+      const blockTitle = String((block && block.title) || '').trim();
+      if (forbiddenTitles.has(blockTitle)) throw new Error(`block title leaked technical label: ${blockTitle}`);
+    }
+  }
 
   const req1 = {
     intent: 'my.work.summary',
@@ -149,6 +190,7 @@ async function main() {
   const data1 = (resp1.body || {}).data || {};
   const filters1 = data1.filters || {};
   const items1 = Array.isArray(data1.items) ? data1.items : [];
+  const sourceModels1 = collectSourceModels(items1);
   if (Number(filters1.page || 0) !== 1) throw new Error('page=1 not reflected');
   const reflectedPageSize = Number(filters1.page_size || 0);
   if (!Number.isFinite(reflectedPageSize) || reflectedPageSize <= 0) {
@@ -182,6 +224,7 @@ async function main() {
   const data2 = (resp2.body || {}).data || {};
   const filters2 = data2.filters || {};
   const items2 = Array.isArray(data2.items) ? data2.items : [];
+  const sourceModels2 = collectSourceModels(items2);
   if (Number(filters2.page || 0) !== targetPage) throw new Error('target page not reflected');
   const filteredCount2 = Number(filters2.filtered_count || 0);
   if (filteredCount2 > 0) {
@@ -195,8 +238,13 @@ async function main() {
   if (items2.length > reflectedPageSize2) throw new Error('items length exceeds page_size on page2');
 
   summary.push(`db: ${DB_NAME}`);
+  summary.push(`login: ${LOGIN}`);
+  summary.push(`page_contract_title: ${title}`);
+  summary.push(`page_contract_zone_titles: ${zones.map((zone) => String(zone.title || '').trim() || '(blank)').join(',') || '-'}`);
   summary.push(`page1_count: ${items1.length}`);
   summary.push(`page2_count: ${items2.length}`);
+  summary.push(`page1_source_models: ${sourceModels1.join(',') || '-'}`);
+  summary.push(`page2_source_models: ${sourceModels2.join(',') || '-'}`);
   summary.push(`page_size_reflected: ${reflectedPageSize}`);
   summary.push(`total_pages: ${totalPages}`);
   summary.push(`sort_check_desc: ok`);

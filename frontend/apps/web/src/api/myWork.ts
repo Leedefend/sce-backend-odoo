@@ -29,7 +29,10 @@ export type MyWorkRecordItem = {
   section?: string;
   section_label?: string;
   source?: string;
+  source_label?: string;
+  project_name?: string;
   action_label?: string;
+  action_summary?: string;
   action_key?: string;
   reason_code?: string;
   priority?: 'high' | 'medium' | 'low' | string;

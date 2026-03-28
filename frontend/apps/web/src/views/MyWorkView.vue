@@ -502,9 +502,14 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const pageSectionStyle = pageContract.sectionStyle;
 
 const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {
+  const pageOrchestration = pageContract.contract.value?.page_orchestration_v1;
+  const pageZones = Array.isArray(pageOrchestration?.zones) ? pageOrchestration.zones : [];
+  if (pageOrchestration && pageZones.length > 0) {
+    return pageOrchestration as PageOrchestrationContract;
+  }
   return resolvePageOrchestrationContractFromSceneV1(
     pageContract.contract.value?.scene_contract_v1,
-    pageContract.contract.value?.page_orchestration_v1,
+    pageOrchestration,
     { pageType: 'workspace', layoutMode: 'workspace' },
   );
 });
@@ -567,6 +572,8 @@ const sourceFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const sectionFilteredFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
+const filteredCount = ref(0);
+const totalBeforeFilter = ref(0);
 const generatedAt = ref('');
 const summaryVisibility = ref<{
   partial_data_hidden?: boolean;
@@ -616,6 +623,17 @@ const summaryCards = computed(() => {
     ...row,
     count: map.has(String(row.key || '')) ? Number(map.get(String(row.key || '')) || 0) : 0,
   }));
+});
+const currentPageHighPriorityCount = computed(() =>
+  items.value.filter((item) => String(item.priority || '').toLowerCase() === 'high').length,
+);
+const currentPageOverdueCount = computed(() => {
+  const today = new Date();
+  const todayText = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  return items.value.filter((item) => {
+    const deadline = String(item.deadline || '').trim();
+    return Boolean(deadline) && deadline < todayText;
+  }).length;
 });
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
 const autoQueryDelayMs = 300;
@@ -736,21 +754,90 @@ const groupedVisibleRetryItems = computed(() => {
   return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
 const headerActions = computed(() => pageGlobalActions.value);
+
+function formatMyWorkSourceLabel(item: MyWorkRecordItem) {
+  return String(item.source_label || item.source || '执行事项').trim() || '执行事项';
+}
+
+function formatMyWorkActionLabel(item: MyWorkRecordItem) {
+  const source = String(item.source || item.model || '').trim();
+  const fallback = String(item.action_label || '').trim() || '进入处理';
+  if (source === 'payment.request') return '查看付款申请';
+  if (source === 'construction.contract') return '查看合同事项';
+  if (source === 'sc.settlement.order') return '查看结算事项';
+  if (source === 'project.task') return '进入任务';
+  if (source === 'mail.activity') return '处理待办';
+  return fallback;
+}
+
+function formatMyWorkCardTitle(item: MyWorkRecordItem) {
+  const source = String(item.source || item.model || '').trim();
+  const rawTitle = String(item.title || '').trim();
+  if (source === 'payment.request') return rawTitle ? `处理付款申请 · ${rawTitle}` : '处理付款申请';
+  if (source === 'construction.contract') return rawTitle ? `处理合同事项 · ${rawTitle}` : '处理合同事项';
+  if (source === 'sc.settlement.order') return rawTitle ? `处理结算事项 · ${rawTitle}` : '处理结算事项';
+  if (source === 'project.task') return rawTitle || '处理项目任务';
+  return rawTitle || '处理执行事项';
+}
+
+function formatMyWorkDescription(item: MyWorkRecordItem) {
+  const parts: string[] = [];
+  const projectName = String(item.project_name || '').trim();
+  const sourceLabel = formatMyWorkSourceLabel(item);
+  const actionSummary = String(item.action_summary || formatMyWorkActionLabel(item)).trim();
+  const deadline = String(item.deadline || '').trim();
+  if (sourceLabel) parts.push(`来源：${sourceLabel}`);
+  if (projectName) parts.push(`项目：${projectName}`);
+  if (actionSummary) parts.push(`动作：${actionSummary}`);
+  if (deadline) parts.push(`截止：${deadline}`);
+  return parts.join(' · ');
+}
+
 const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
-  const summaryMetrics = summaryCards.value.map((item) => ({
-    key: String(item.key || ''),
-    label: String(item.label || item.key || ''),
-    value: Number(item.count || 0),
-    tone: item.key === activeSection.value ? 'info' : 'neutral',
-  }));
+  const todoSummary = Number(summary.value.find((item) => item.key === 'todo')?.count || 0);
+  const ownedSummary = Number(summary.value.find((item) => item.key === 'owned')?.count || 0);
+  const summaryMetrics = [
+    {
+      key: 'todo',
+      label: '待我处理',
+      value: todoSummary,
+      hint: filteredCount.value > 0 && totalBeforeFilter.value > 0
+        ? `筛选后 ${filteredCount.value} / 总计 ${totalBeforeFilter.value}`
+        : '需要你直接推进的事项',
+      tone: activeSection.value === 'todo' ? 'info' : 'neutral',
+    },
+    {
+      key: 'owned',
+      label: '我负责',
+      value: ownedSummary,
+      hint: '你是责任人的事项',
+      tone: activeSection.value === 'owned' ? 'info' : 'neutral',
+    },
+    {
+      key: 'high_priority',
+      label: '高优先',
+      value: currentPageHighPriorityCount.value,
+      hint: '当前页需要优先处理',
+      tone: currentPageHighPriorityCount.value > 0 ? 'warning' : 'neutral',
+    },
+    {
+      key: 'overdue',
+      label: '已逾期',
+      value: currentPageOverdueCount.value,
+      hint: '当前页已超过截止日',
+      tone: currentPageOverdueCount.value > 0 ? 'danger' : 'neutral',
+    },
+  ];
   const todoRows = displayItems.value.slice(0, 20).map((item) => ({
     id: item.id,
-    title: String(item.title || '-'),
-    description: `${String(item.source || '-')}${item.deadline ? ` · ${item.deadline}` : ''}`,
+    title: formatMyWorkCardTitle(item),
+    description: formatMyWorkDescription(item),
+    source_label: formatMyWorkSourceLabel(item),
     tone: item.reason_code ? 'warning' : 'info',
     action_key: 'open_item',
     entry_id: item.id,
     scene_key: item.scene_key,
+    action_label: formatMyWorkActionLabel(item),
   }));
   const sectionEntries = sections.value.map((sec) => ({
     id: String(sec.key || ''),
@@ -853,6 +940,8 @@ async function load() {
     generatedAt.value = String(data.generated_at || '');
     summaryStatus.value = data.status || null;
     summaryVisibility.value = data.visibility || null;
+    filteredCount.value = Number(data.filters?.filtered_count || 0);
+    totalBeforeFilter.value = Number(data.filters?.total_before_filter || 0);
     page.value = Math.max(1, Number(data.filters?.page || page.value || 1));
     pageSize.value = Math.max(1, Number(data.filters?.page_size || pageSize.value || 20));
     totalPages.value = Math.max(1, Number(data.filters?.total_pages || 1));

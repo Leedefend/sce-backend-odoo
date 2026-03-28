@@ -69,7 +69,7 @@ const items = computed(() => {
       pendingCount: Number(row.count || row.pending_count || 0),
       status: String(row.status || '').toLowerCase(),
       source: String(row.source || ''),
-      sourceLabel: String(row.source || '').toLowerCase() === 'business' ? '业务' : '兜底',
+      sourceLabel: String(row.source_label || row.sourceLabel || row.source || '').trim() || '执行事项',
       tone: String(row.tone || 'warning').toLowerCase(),
       buttonText: String(row.action_label || row.button_label || '进入处理'),
       actionKey: String(row.action_key || ''),
