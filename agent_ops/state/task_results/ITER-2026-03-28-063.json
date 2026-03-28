@@ -1,0 +1,9 @@
+{
+  "task_id": "ITER-2026-03-28-063",
+  "classification": "PASS",
+  "risk_level": "low",
+  "stop_required": false,
+  "matched_rules": [],
+  "triggered_stop_conditions": [],
+  "next_suggestion": "Submit 063 now, then continue on another sibling common-shell/read-model file or reassess whether workspace_home_data_provider still has pure helper residue."
+}
