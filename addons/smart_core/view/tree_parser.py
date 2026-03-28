@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .base import BaseViewParser
-from .native_view_node_schema import build_field_node
+from .native_view_node_schema import build_field_node, build_view_semantics
 
 
 class TreeViewParser(BaseViewParser):
@@ -32,6 +32,18 @@ class TreeViewParser(BaseViewParser):
             "editable": arch.get("editable"),
             "create": arch.get("create"),
             "delete": arch.get("delete"),
+            "view_semantics": build_view_semantics(
+                source_view="tree",
+                capability_flags={
+                    "can_create": arch.get("create") not in ("0", "false", "False"),
+                    "can_delete": arch.get("delete") not in ("0", "false", "False"),
+                    "is_editable": bool(arch.get("editable")),
+                },
+                semantic_meta={
+                    "editable_mode": arch.get("editable"),
+                    "decoration_keys": sorted(self._parse_decorations(arch).keys()),
+                },
+            ),
         }
 
     def _parse_decorations(self, arch):

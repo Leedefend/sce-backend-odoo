@@ -157,6 +157,8 @@ class TestNativeViewKanbanParser(unittest.TestCase):
         self.assertEqual(payload["actions"][0]["semantic_role"], "kanban_card_action")
         self.assertEqual(payload["actions"][0]["semantic_meta"]["target_scope"], "card")
         self.assertEqual(payload["color_field"], "color")
+        self.assertEqual(payload["view_semantics"]["capability_flags"]["has_menu"], False)
+        self.assertEqual(payload["view_semantics"]["semantic_meta"]["has_quick_create_view"], True)
 
 
 if __name__ == "__main__":

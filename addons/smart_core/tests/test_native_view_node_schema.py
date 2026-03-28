@@ -73,6 +73,16 @@ class TestNativeViewNodeSchema(unittest.TestCase):
         self.assertEqual(ribbon_node["kind"], "ribbon")
         self.assertEqual(chatter_node["kind"], "chatter")
 
+    def test_build_view_semantics_has_stable_shape(self):
+        node = schema_module.build_view_semantics(
+            source_view="tree",
+            capability_flags={"can_create": True},
+            semantic_meta={"editable_mode": "bottom"},
+        )
+        self.assertEqual(node["kind"], "view_semantics")
+        self.assertEqual(node["source_view"], "tree")
+        self.assertEqual(node["capability_flags"]["can_create"], True)
+
 
 if __name__ == "__main__":
     unittest.main()

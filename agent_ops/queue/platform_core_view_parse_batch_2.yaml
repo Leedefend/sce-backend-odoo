@@ -14,6 +14,7 @@ tasks:
   - ITER-2026-03-28-089
   - ITER-2026-03-28-090
   - ITER-2026-03-28-091
+  - ITER-2026-03-28-092
 stop_on:
   - FAIL
   - PASS_WITH_RISK

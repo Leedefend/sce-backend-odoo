@@ -2659,3 +2659,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `091`, then continue with remaining advanced semantics for full base-view coverage
+## 2026-03-28 迭代锚点（ITER-2026-03-28-092）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `abaee8b`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core base view semantics`
+- Reason: continue semantic completion by making common base-view capabilities explicit at the view level for tree, kanban, and search outputs
+- `092`: `native_view_node_schema.py` now includes a shared `view_semantics` builder
+- `092`: `tree_parser.py`, `kanban_parser.py`, and `search_parser.py` now emit additive normalized `view_semantics`
+- `092`: existing direct parser tests were extended to lock view-level semantic flags and metadata
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `092`, then continue the remaining view-level semantics needed for complete base-view coverage

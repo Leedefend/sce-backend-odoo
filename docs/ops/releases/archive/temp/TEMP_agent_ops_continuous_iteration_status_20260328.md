@@ -938,3 +938,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `091`, then continue with remaining advanced semantics for full base-view coverage
+## Round: ITER-2026-03-28-092
+
+- `ITER-2026-03-28-092`: additive normalized `view_semantics` were added for base tree, kanban, and search outputs
+  - base-view capability flags and top-level semantic metadata are now explicit instead of inferred from scattered raw attributes
+  - parser consumers can now read common top-level semantics from a stable shape
+  - existing direct parser coverage was extended to lock those view-level semantic flags
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-092`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `092`, then continue the remaining view-level semantics needed for complete base-view coverage

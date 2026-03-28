@@ -168,3 +168,12 @@ def build_chatter_node(*, followers=None, activities=None, messages=None, semant
         "source_view": source_view,
         "semantic_meta": semantic_meta if semantic_meta is not None else {},
     }
+
+
+def build_view_semantics(*, source_view, capability_flags=None, semantic_meta=None):
+    return {
+        "kind": "view_semantics",
+        "source_view": source_view,
+        "capability_flags": capability_flags if capability_flags is not None else {},
+        "semantic_meta": semantic_meta if semantic_meta is not None else {},
+    }

@@ -1,6 +1,6 @@
 from .base import BaseViewParser
 from .base import parse_safe_context
-from .native_view_node_schema import build_action_node, build_field_node
+from .native_view_node_schema import build_action_node, build_field_node, build_view_semantics
 
 
 class KanbanViewParser(BaseViewParser):
@@ -23,6 +23,19 @@ class KanbanViewParser(BaseViewParser):
             "create": kanban_node.get("create"),
             "delete": kanban_node.get("delete"),
             "raw_fields": sorted(self.extract_fields(arch)),
+            "view_semantics": build_view_semantics(
+                source_view="kanban",
+                capability_flags={
+                    "can_create": kanban_node.get("create") not in ("0", "false", "False"),
+                    "can_delete": kanban_node.get("delete") not in ("0", "false", "False"),
+                    "has_menu": bool(self._parse_menu(arch).get("items")),
+                },
+                semantic_meta={
+                    "group_by": kanban_node.get("default_group_by") or kanban_node.get("group_by"),
+                    "on_create": kanban_node.get("on_create"),
+                    "has_quick_create_view": bool(kanban_node.get("quick_create_view")),
+                },
+            ),
         }
 
     def _parse_card_fields(self, arch):

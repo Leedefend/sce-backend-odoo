@@ -135,6 +135,8 @@ class TestNativeViewSearchParser(unittest.TestCase):
         self.assertEqual(payload["searchpanel"][0]["name"], "stage_id")
         self.assertEqual(payload["searchpanel"][0]["semantic_role"], "searchpanel_field")
         self.assertEqual(payload["searchpanel"][0]["semantic_meta"]["is_multi"], True)
+        self.assertEqual(payload["view_semantics"]["capability_flags"]["has_searchpanel"], True)
+        self.assertEqual(payload["view_semantics"]["semantic_meta"]["group_by_count"], 1)
 
 
 if __name__ == "__main__":
