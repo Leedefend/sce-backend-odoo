@@ -19,6 +19,10 @@ class TreeViewParser(BaseViewParser):
                     optional=node.get("optional"),
                     semantic_role="tree_column",
                     source_view="tree",
+                    semantic_meta={
+                        "has_widget": bool(node.get("widget")),
+                        "is_optional": node.get("optional") is not None,
+                    },
                 )
             )
 

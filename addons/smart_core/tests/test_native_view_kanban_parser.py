@@ -152,8 +152,10 @@ class TestNativeViewKanbanParser(unittest.TestCase):
         self.assertEqual(payload["group_by"], "stage_id")
         self.assertEqual(payload["cards"][0]["name"], "name")
         self.assertEqual(payload["cards"][0]["semantic_role"], "kanban_card_field")
+        self.assertEqual(payload["cards"][1]["semantic_meta"]["has_widget"], True)
         self.assertEqual(payload["actions"][0]["name"], "open_record")
         self.assertEqual(payload["actions"][0]["semantic_role"], "kanban_card_action")
+        self.assertEqual(payload["actions"][0]["semantic_meta"]["target_scope"], "card")
         self.assertEqual(payload["color_field"], "color")
 
 

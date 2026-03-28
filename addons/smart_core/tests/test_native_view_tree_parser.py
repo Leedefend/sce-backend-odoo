@@ -111,6 +111,7 @@ class TestNativeViewTreeParser(unittest.TestCase):
         self.assertEqual(payload["columns"][0]["name"], "name")
         self.assertEqual(payload["columns"][0]["kind"], "field")
         self.assertEqual(payload["columns"][0]["semantic_role"], "tree_column")
+        self.assertEqual(payload["columns"][1]["semantic_meta"]["has_widget"], True)
         self.assertEqual(payload["editable"], "bottom")
         self.assertIn("decoration-danger", payload["decorations"])
 

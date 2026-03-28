@@ -125,12 +125,16 @@ class TestNativeViewSearchParser(unittest.TestCase):
         payload = parser.parse()
         self.assertEqual(payload["fields"][0]["name"], "name")
         self.assertEqual(payload["fields"][0]["semantic_role"], "search_field")
+        self.assertEqual(payload["fields"][1]["semantic_meta"]["has_operator"], True)
         self.assertEqual(payload["filters"][0]["name"], "late")
         self.assertEqual(payload["filters"][0]["semantic_role"], "search_filter")
+        self.assertEqual(payload["filters"][1]["semantic_meta"]["has_context"], True)
         self.assertEqual(payload["group_bys"][0]["group_by"], "stage_id")
         self.assertEqual(payload["group_bys"][0]["semantic_role"], "search_group_by")
+        self.assertEqual(payload["group_bys"][0]["semantic_meta"]["context_keys"], ["group_by"])
         self.assertEqual(payload["searchpanel"][0]["name"], "stage_id")
         self.assertEqual(payload["searchpanel"][0]["semantic_role"], "searchpanel_field")
+        self.assertEqual(payload["searchpanel"][0]["semantic_meta"]["is_multi"], True)
 
 
 if __name__ == "__main__":
