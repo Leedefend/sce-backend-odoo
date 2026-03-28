@@ -428,3 +428,22 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed slice can still continue without governance recovery, but cumulative local delta is approaching the diff threshold
+## Round: ITER-2026-03-28-037
+
+- `ITER-2026-03-28-037`: request key normalization moved into `addons/smart_core/core/runtime_fetch_handler_helper.py`
+  - page.contract now resolves `page_key` through the shared helper
+  - workspace.collections now resolves requested collection keys through the shared helper
+  - helper unit coverage expanded to 5 checks
+
+## Round: ITER-2026-03-28-038
+
+- `ITER-2026-03-28-038`: runtime_fetch response envelope assembly moved into `addons/smart_core/core/runtime_fetch_handler_helper.py`
+  - handlers now delegate success and error response construction to shared helper functions
+  - helper unit coverage expanded to 7 checks
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-038`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- current local delta remains bounded enough for one grouped submission before the next code slice
