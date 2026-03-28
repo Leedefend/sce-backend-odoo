@@ -73,6 +73,7 @@ class TestPageContractsBuilderSemanticConsumption(unittest.TestCase):
         self.assertEqual((home.get("render_hints") or {}).get("semantic_page_type"), "list")
         self.assertEqual((home.get("render_hints") or {}).get("preferred_columns"), 2)
         self.assertEqual((page.get("filters") or [])[0]["kind"], "filter")
+        self.assertEqual([row.get("key") for row in (page.get("global_actions") or [])], ["apply_filters", "reset_filters"])
 
 
 if __name__ == "__main__":
