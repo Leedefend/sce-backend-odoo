@@ -1,5 +1,11 @@
 # 施工企业管理系统产品设计文档 v2（可实施版）
 
+> 架构阅读入口：
+> - 目标架构：`docs/architecture/enterprise_pm_paas_target_architecture_v1.md`
+> - 实施基线：`docs/architecture/enterprise_pm_paas_implementation_mapping_v1.md`
+>
+> 本文档是产品蓝图与业务闭环主文档，不替代上述两份架构文档中的实施边界、模块映射与重构顺序定义。
+
 ## 1. 产品目标与定位
 
 ### 1.1 产品目标
