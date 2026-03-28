@@ -10,6 +10,7 @@ from . import portal_dashboard_service
 from . import portal_execute_button_service
 from . import contract_governance_overrides
 from . import my_work_aggregate_service
+from . import project_execution_item_projection_service
 from . import project_dashboard_builders
 from . import project_dashboard_service
 from . import evidence_chain_service

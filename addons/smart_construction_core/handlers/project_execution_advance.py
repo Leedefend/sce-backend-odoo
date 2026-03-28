@@ -48,7 +48,10 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
 
     @staticmethod
     def _resolve_target_state(params: Dict[str, Any]) -> str:
-        return ProjectExecutionStateMachine.normalize_state((params or {}).get("target_state"))
+        raw = (params or {}).get("target_state")
+        if not str(raw or "").strip():
+            return ""
+        return ProjectExecutionStateMachine.normalize_state(raw)
 
     @staticmethod
     def _build_suggested_action(project_id: int, reason_code: str) -> dict:
