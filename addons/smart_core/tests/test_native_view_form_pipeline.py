@@ -79,6 +79,9 @@ class TestNativeViewFormPipeline(unittest.TestCase):
         )
         self.assertEqual(payload["layout"]["titleField"], "name")
         self.assertEqual(payload["model"], "x.demo")
+        self.assertEqual(payload["contract_version"], "native_view.v1")
+        self.assertEqual(payload["parser_contract"]["view_type"], "form")
+        self.assertEqual(payload["parser_contract"]["layout"]["kind"], "form")
 
     def test_universal_parser_uses_pipeline_payload_builder(self):
         parser = universal_module.UniversalViewSemanticParser.__new__(universal_module.UniversalViewSemanticParser)
@@ -114,6 +117,7 @@ class TestNativeViewFormPipeline(unittest.TestCase):
         self.assertEqual(payload["layout"]["titleField"], "name")
         self.assertEqual(payload["model"], "x.demo")
         self.assertEqual(payload["view_id"], 9)
+        self.assertEqual(payload["parser_contract"]["layout"]["kind"], "form")
 
 
 if __name__ == "__main__":

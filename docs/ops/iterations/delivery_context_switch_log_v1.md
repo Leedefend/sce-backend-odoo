@@ -2575,3 +2575,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `085`, then decide between contract-shape normalization and deeper search/searchpanel enrichment
+## 2026-03-28 迭代锚点（ITER-2026-03-28-086）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c645581`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view contract builder`
+- Reason: standardize the parser subsystem output shape across supported native view types before deeper semantic enrichment
+- `086`: added `addons/smart_core/view/native_view_contract_builder.py`
+- `086`: `native_view_pipeline.py` now delegates payload shaping to the shared contract builder
+- `086`: direct coverage added in `addons/smart_core/tests/test_native_view_contract_builder.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `086`, then deepen parser semantics on top of the stable contract envelope
