@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-139
+title: Normalize provider search defaults in scene merge
+type: governance_task
+status: pending
+priority: high
+
+goal: Make scene merge resolver treat provider-level search default_sort as a first-class canonical search semantic during provider merge.
+user_visible_outcome:
+  - provider-driven default sort no longer silently overrides merged search semantics without conflict tracking
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core scene_merge_resolver
+  reason: Scene merge resolver already tracks provider overrides for filters, group_by, fields, searchpanel and mode, but still leaves default_sort outside the canonical provider-merge conflict set. This iteration completes that remaining search default gap.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-139.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_merge_resolver.py addons/smart_core/tests/test_scene_merge_resolver_search_provider_defaults.py
+    - python3 addons/smart_core/tests/test_scene_merge_resolver_search_provider_defaults.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-139.yaml addons/smart_core/core/scene_merge_resolver.py addons/smart_core/tests/test_scene_merge_resolver_search_provider_defaults.py
+
+depends_on:
+  - ITER-2026-03-29-138
+
+notes: "Batch acceleration: complete the remaining canonical search default gap inside scene_merge_resolver provider merge instead of splitting another micro-step."
