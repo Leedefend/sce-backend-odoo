@@ -462,11 +462,16 @@ def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
     missing: List[str] = []
     surface = _as_dict(compiled.get("surface"))
     intent = _as_dict(surface.get("intent"))
+    meta = _as_dict(compiled.get("meta"))
+    base_facts = _as_dict(meta.get("base_facts"))
     view_modes = _as_list(compiled.get("view_modes"))
     sections = _as_dict(compiled.get("sections"))
     action_surface = _as_dict(compiled.get("action_surface"))
     action_counts = _as_dict(action_surface.get("counts"))
     search_surface = _as_dict(compiled.get("search_surface"))
+    permission_surface = _as_dict(compiled.get("permission_surface"))
+    workflow_surface = _as_dict(compiled.get("workflow_surface"))
+    validation_surface = _as_dict(compiled.get("validation_surface"))
     projection = _as_dict(compiled.get("projection"))
     group_summary = _as_dict(projection.get("group_summary"))
 
@@ -503,6 +508,12 @@ def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
         or _as_list(search_surface.get("searchpanel"))
     ):
         missing.append("search_surface")
+    if _fact_available(base_facts.get("permissions")) and not _permission_surface_nonempty(permission_surface):
+        missing.append("permission_surface")
+    if _fact_available(base_facts.get("workflow")) and not _workflow_surface_nonempty(workflow_surface):
+        missing.append("workflow_surface")
+    if _fact_available(base_facts.get("validator")) and not _validation_surface_nonempty(validation_surface):
+        missing.append("validation_surface")
     if not isinstance(projection.get("summary_items"), list):
         missing.append("projection.summary_items")
     if not isinstance(projection.get("overview_strip"), list):
