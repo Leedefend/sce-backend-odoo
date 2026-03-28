@@ -89,6 +89,25 @@ class TestSceneReadyConsumptionMetrics(unittest.TestCase):
         self.assertEqual(scene_bucket["surface_nonempty_hits"]["search"], 1)
         self.assertEqual(scene_bucket["surface_nonempty_rate"]["search"], 1.0)
 
+    def test_metrics_count_action_surface_without_counts(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "meta": {"base_facts": {"actions": {"available": True}}},
+                    "action_surface": {
+                        "primary_actions": ["open", "export"],
+                        "groups": [{"key": "list_actions", "actions": ["open", "export"]}],
+                        "selection_mode": "multi",
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["action_surface"], 1)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["action_surface"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

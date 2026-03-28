@@ -210,7 +210,12 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
         if bool(validation_surface.get("required_fields") or validation_surface.get("field_rules")):
             surface_hits["validation"] = int(surface_hits.get("validation") or 0) + 1
         action_counts = action_surface.get("counts") if isinstance(action_surface.get("counts"), dict) else {}
-        if int(action_counts.get("total") or 0) > 0:
+        if bool(
+            int(action_counts.get("total") or 0) > 0
+            or _as_list(action_surface.get("primary_actions"))
+            or _as_list(action_surface.get("groups"))
+            or _text(action_surface.get("selection_mode"))
+        ):
             surface_hits["action_surface"] = int(surface_hits.get("action_surface") or 0) + 1
         row["surface_nonempty_hits"] = surface_hits
 
