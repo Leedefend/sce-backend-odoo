@@ -2830,3 +2830,31 @@ Each entry must include:
   - latest classification: `PASS_WITH_RISK`
   - repo risk is `high` because `diff_too_large` triggered
   - next efficient action is submit `110/111` together, then continue the semantic-driven backend orchestration chain
+## 2026-03-29 迭代锚点（ITER-2026-03-29-112）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `77d9c08`
+- Layer Target: `scene-ready orchestration semantic consumption`
+- Module: `smart_core scene_ready_contract_builder`
+- Reason: after view modes and page typing start consuming parser semantics, search surface composition must also use parser search semantics rather than keeping those details only inside native view payloads
+- `112`: added `scene_ready_search_semantic_bridge.py` as the canonical search-surface semantic backfill helper
+- `112`: `scene_ready_contract_builder.py` now derives `search_surface.fields`, `filters`, `group_by`, and `searchpanel` from parsed search semantics
+- `112`: direct consumption coverage was added in `test_scene_ready_search_semantic_bridge.py` and `test_scene_ready_search_surface_semantic_consumption.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue semantic-driven orchestration consumption in scene-ready action grouping
+## 2026-03-29 迭代锚点（ITER-2026-03-29-113）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `77d9c08`
+- Layer Target: `scene-ready orchestration semantic consumption`
+- Module: `smart_core scene_ready_contract_builder`
+- Reason: after search surface composition begins consuming parser semantics, action grouping must also derive orchestration structure from parser semantics instead of a single legacy workflow grouping rule
+- `113`: added `scene_ready_action_semantic_bridge.py` as the canonical action-grouping semantic decision helper
+- `113`: `scene_ready_contract_builder.py` now derives `action_surface.groups` and `primary_actions` from parser semantic view type
+- `113`: direct consumption coverage was added in `test_scene_ready_action_semantic_bridge.py` and `test_scene_ready_action_surface_semantic_consumption.py`
+- state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - repo risk is `high` because `diff_too_large` triggered
+  - next efficient action is submit `112/113` together, then continue the semantic-driven backend orchestration chain

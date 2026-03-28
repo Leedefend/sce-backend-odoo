@@ -1099,3 +1099,30 @@
 - effective continuation classification: `PASS_WITH_RISK`
 - repo risk: `high` via `diff_too_large`
 - next governed step is submit `110/111` together, then continue the semantic-driven backend orchestration chain
+## Round: ITER-2026-03-29-112
+
+- `ITER-2026-03-29-112`: scene-ready search surface now consumes parser search semantics
+  - `scene_ready_search_semantic_bridge.py` was added as the canonical search-surface backfill helper
+  - `scene_ready_contract_builder.py` now derives `search_surface.fields`, `filters`, `group_by`, and `searchpanel` from parsed search view semantics instead of leaving them only in `native_view`
+  - direct consumption coverage was added in `addons/smart_core/tests/test_scene_ready_search_semantic_bridge.py` and `addons/smart_core/tests/test_scene_ready_search_surface_semantic_consumption.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-112`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is continue semantic-driven orchestration consumption in scene-ready action grouping
+## Round: ITER-2026-03-29-113
+
+- `ITER-2026-03-29-113`: scene-ready action grouping now consumes parser semantics
+  - `scene_ready_action_semantic_bridge.py` was added as the canonical action-grouping semantic decision helper
+  - `scene_ready_contract_builder.py` now derives `action_surface.groups` and `primary_actions` from parser semantic view type instead of defaulting to a single workflow bucket
+  - direct consumption coverage was added in `addons/smart_core/tests/test_scene_ready_action_semantic_bridge.py` and `addons/smart_core/tests/test_scene_ready_action_surface_semantic_consumption.py`
+  - this round verified cleanly but was classified `PASS_WITH_RISK` because repo-level diff size crossed the current guard threshold
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-113`
+- effective continuation classification: `PASS_WITH_RISK`
+- repo risk: `high` via `diff_too_large`
+- next governed step is submit `112/113` together, then continue the semantic-driven backend orchestration chain
