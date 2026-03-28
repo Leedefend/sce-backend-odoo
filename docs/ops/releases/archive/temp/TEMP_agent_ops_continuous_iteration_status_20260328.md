@@ -990,3 +990,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `103`, then continue the backend orchestration consumption chain with the next runtime/scene-level consumer
+## Round: ITER-2026-03-28-104
+
+- `ITER-2026-03-28-104`: released scene contracts now explicitly consume parser semantic surfaces
+  - `scene_contract_builder` no longer emits scene-level contracts as route/layout-only payloads
+  - `scene_contract_parser_semantic_bridge` now projects parser semantics into `page.surface` and `governance.parser_semantic_surface`
+  - direct coverage was added in `addons/smart_core/tests/test_scene_contract_parser_semantic_bridge.py` and `addons/smart_core/tests/test_scene_contract_builder_semantics.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-104`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `104`, then continue the backend orchestration consumption chain with the next scene/runtime consumer

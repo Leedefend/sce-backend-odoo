@@ -4,6 +4,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from odoo.addons.smart_core.core.scene_contract_parser_semantic_bridge import (
+    apply_scene_contract_parser_semantic_bridge,
+)
+
 
 SCENE_CONTRACT_STANDARD_VERSION = "scene_contract_standard_v1"
 
@@ -258,7 +262,7 @@ def build_release_surface_scene_contract_from_runtime_entry(
         scene_key=_text(row.get("scene_key")),
     )
     next_action = row.get("suggested_action") if isinstance(row.get("suggested_action"), dict) else {}
-    return build_release_surface_scene_contract(
+    contract = build_release_surface_scene_contract(
         scene_key=_text(row.get("scene_key")),
         title=title,
         product_key=product_key,
@@ -278,6 +282,7 @@ def build_release_surface_scene_contract_from_runtime_entry(
         released=True,
         diagnostics_ref=diagnostics_ref,
     )
+    return apply_scene_contract_parser_semantic_bridge(contract, row)
 
 
 def build_release_surface_scene_contract_from_page_contract(
@@ -332,7 +337,7 @@ def build_release_surface_scene_contract_from_page_contract(
         product_key=product_key,
         scene_key=scene_key,
     )
-    return build_release_surface_scene_contract(
+    contract = build_release_surface_scene_contract(
         scene_key=scene_key,
         title=normalized_title,
         product_key=product_key,
@@ -352,6 +357,9 @@ def build_release_surface_scene_contract_from_page_contract(
         released=True,
         diagnostics_ref=diagnostics_ref,
     )
+    surface_source = _dict(orchestration.get("meta")).get("parser_semantic_surface")
+    source_payload = surface_source if isinstance(surface_source, dict) else page_row
+    return apply_scene_contract_parser_semantic_bridge(contract, source_payload)
 
 
 def attach_release_surface_scene_contract(

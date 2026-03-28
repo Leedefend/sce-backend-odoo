@@ -2715,3 +2715,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `103`, then continue the backend orchestration consumption chain with the next runtime/scene-level consumer
+## 2026-03-28 迭代锚点（ITER-2026-03-28-104）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `e594999`
+- Layer Target: `backend orchestration contract consumption`
+- Module: `smart_core scene_contract_builder`
+- Reason: after runtime page aggregation, released scene contracts are the next backend orchestration consumer that must explicitly carry parser semantics into scene-level contracts
+- `104`: added `scene_contract_parser_semantic_bridge.py` as the canonical scene-contract semantic projection helper
+- `104`: `scene_contract_builder.py` now projects parser semantics into `page.surface` and `governance.parser_semantic_surface` for both runtime-entry and page-contract release flows
+- `104`: direct coverage was added in `test_scene_contract_parser_semantic_bridge.py` and `test_scene_contract_builder_semantics.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `104`, then continue the backend orchestration consumption chain with the next scene/runtime consumer
