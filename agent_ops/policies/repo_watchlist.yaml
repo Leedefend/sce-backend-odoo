@@ -1,0 +1,16 @@
+critical_paths:
+  - security/**
+  - addons/**/models/**/payment*
+  - addons/**/models/**/account*
+  - addons/**/models/**/settlement*
+  - addons/**/__manifest__.py
+  - addons/**/security/**
+  - migrations/**
+
+sensitive_patterns:
+  - "fields\\."
+  - "Many2one"
+  - "One2many"
+  - "api.depends"
+  - "write\\("
+  - "create\\("

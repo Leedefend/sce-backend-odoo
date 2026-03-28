@@ -1,0 +1,15 @@
+result_types:
+  PASS:
+    require:
+      - all_acceptance_passed
+      - no_high_risk_change
+      - user_visible_progress
+  PASS_WITH_RISK:
+    require:
+      - all_acceptance_passed
+      - high_risk_or_uncertainty_detected
+  FAIL:
+    require:
+      - any_acceptance_failed
+      - forbidden_change_detected
+      - incomplete_delivery

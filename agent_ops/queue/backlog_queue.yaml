@@ -1,0 +1,6 @@
+queue_id: backlog-main
+mode: sequential
+tasks: []
+stop_on:
+  - FAIL
+  - PASS_WITH_RISK

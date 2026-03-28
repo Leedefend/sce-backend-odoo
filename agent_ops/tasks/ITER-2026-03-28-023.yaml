@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-28-023
+title: Exclude run_iteration lock from runtime artifact risk inputs
+type: bugfix_task
+status: pending
+priority: low
+
+goal: Treat the repository-scoped run_iteration lock as a runtime artifact so repo-level risk scan and baseline candidate generation do not count it as a meaningful change.
+user_visible_outcome:
+  - run_iteration.lock no longer appears in repo risk changed_files
+  - baseline candidate generation ignores the execution lock artifact
+  - continuous queue evidence focuses on real code and governance changes
+
+scope:
+  allowed_paths:
+    - agent_ops/scripts/**
+    - agent_ops/tasks/**
+    - agent_ops/queue/**
+    - docs/ops/iterations/**
+    - docs/ops/releases/archive/temp/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: Governance/Tooling
+  module: agent_ops runtime artifact filtering
+  reason: Keep repo guard and baseline governance focused on real source changes by excluding the execution lock file introduced for serialized run_iteration control.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-023.yaml
+    - python3 -m py_compile agent_ops/scripts/risk_scan.py agent_ops/scripts/generate_dirty_baseline_candidate.py
+    - python3 agent_ops/scripts/risk_scan.py
+    - python3 agent_ops/scripts/generate_dirty_baseline_candidate.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore agent_ops/scripts/risk_scan.py agent_ops/scripts/generate_dirty_baseline_candidate.py agent_ops/tasks/ITER-2026-03-28-023.yaml agent_ops/queue/platform_kernel_refactor_prep_queue.yaml docs/ops/iterations/delivery_context_switch_log_v1.md docs/ops/releases/archive/temp/TEMP_agent_ops_continuous_iteration_status_20260328.md
+
+depends_on:
+  - ITER-2026-03-28-022
+notes: "Runtime artifact filtering follow-up after introducing serialized run_iteration lock."

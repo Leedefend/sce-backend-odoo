@@ -1,0 +1,39 @@
+{
+  "blocked": [],
+  "completed": [
+    "ITER-2026-03-28-007",
+    "ITER-2026-03-28-009",
+    "ITER-2026-03-28-008",
+    "ITER-2026-03-28-010"
+  ],
+  "history": [
+    {
+      "classification": "PASS",
+      "exit_code": 0,
+      "task_id": "ITER-2026-03-28-007",
+      "triggered_stop_conditions": []
+    },
+    {
+      "classification": "PASS",
+      "exit_code": 0,
+      "task_id": "ITER-2026-03-28-009",
+      "triggered_stop_conditions": []
+    },
+    {
+      "classification": "PASS",
+      "exit_code": 0,
+      "task_id": "ITER-2026-03-28-008",
+      "triggered_stop_conditions": []
+    },
+    {
+      "classification": "PASS",
+      "exit_code": 0,
+      "task_id": "ITER-2026-03-28-010",
+      "triggered_stop_conditions": []
+    }
+  ],
+  "last_event": {
+    "type": "queue_already_completed"
+  },
+  "queue_status": "completed"
+}

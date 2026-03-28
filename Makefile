@@ -4221,3 +4221,45 @@ verify.native_view.samples.compare: guard.prod.forbid verify.native_view.semanti
 .PHONY: verify.native_view.ecosystem.readiness
 verify.native_view.ecosystem.readiness: guard.prod.forbid
 	@python3 scripts/verify/native_view_ecosystem_readiness_report.py
+
+VERIFY_CMDS ?=
+
+.PHONY: agent.task.validate agent.risk.scan agent.classify agent.report agent.verify agent.iteration agent.queue.pick agent.queue.run agent.queue.normalize agent.baseline.candidate
+
+agent.task.validate:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@python3 agent_ops/scripts/validate_task.py "$(TASK)"
+
+agent.risk.scan:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@python3 agent_ops/scripts/risk_scan.py "$(TASK)"
+
+agent.classify:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@python3 agent_ops/scripts/classify_result.py "$(TASK)"
+
+agent.report:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@python3 agent_ops/scripts/build_report.py "$(TASK)"
+
+agent.verify:
+	@test -n "$(VERIFY_CMDS)" || (echo "VERIFY_CMDS is required" && exit 2)
+	@bash -lc 'set -e; $(VERIFY_CMDS)'
+
+agent.iteration:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@bash agent_ops/scripts/run_iteration.sh "$(TASK)"
+
+agent.queue.pick:
+	@python3 agent_ops/scripts/pick_next_task.py
+
+agent.queue.run:
+	@python3 agent_ops/scripts/run_queue.py
+
+agent.queue.normalize:
+	@test -n "$(QUEUE)" || (echo "QUEUE is required" && exit 2)
+	@test -n "$(STATE)" || (echo "STATE is required" && exit 2)
+	@python3 agent_ops/scripts/normalize_queue_state.py "$(QUEUE)" --state "$(STATE)"
+
+agent.baseline.candidate:
+	@python3 agent_ops/scripts/generate_dirty_baseline_candidate.py $(if $(OUT),--output "$(OUT)",)

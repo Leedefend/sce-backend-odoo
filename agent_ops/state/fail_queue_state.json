@@ -1,0 +1,33 @@
+{
+  "blocked": [
+    "ITER-2026-03-28-004"
+  ],
+  "completed": [
+    "ITER-2026-03-28-001"
+  ],
+  "history": [
+    {
+      "classification": "PASS",
+      "exit_code": 0,
+      "task_id": "ITER-2026-03-28-001",
+      "triggered_stop_conditions": []
+    },
+    {
+      "classification": "FAIL",
+      "exit_code": 1,
+      "task_id": "ITER-2026-03-28-004",
+      "triggered_stop_conditions": [
+        "verify_failed"
+      ]
+    }
+  ],
+  "last_event": {
+    "classification": "FAIL",
+    "task_id": "ITER-2026-03-28-004",
+    "triggered_stop_conditions": [
+      "verify_failed"
+    ],
+    "type": "queue_stopped"
+  },
+  "queue_status": "stopped"
+}

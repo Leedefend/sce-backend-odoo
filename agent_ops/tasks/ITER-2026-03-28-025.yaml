@@ -1,0 +1,66 @@
+task_id: ITER-2026-03-28-025
+title: Converge load_view compatibility proxy onto shared load_contract payload builder
+type: refactor_task
+status: pending
+priority: medium
+
+goal: Reduce compatibility drift between load_view and load_contract by moving legacy proxy payload shaping into a shared core helper, making the handler use the framework-standard handle() entrypoint, and fixing standard-model existence detection in the canonical load_contract path.
+user_visible_outcome:
+  - load_view continues to return the same compatibility envelope for existing frontend callers
+  - requested view_id is still preserved as a context hint when proxying to load_contract
+  - the load_view container smoke remains aligned with the current login token envelope
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/load_view.py
+    - addons/smart_core/handlers/load_contract.py
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/queue/**
+    - docs/ops/iterations/**
+    - docs/ops/releases/archive/temp/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core load_view/load_contract compatibility path
+  reason: Converge the legacy load_view proxy onto a shared payload builder and remove the canonical load_contract false-negative model existence check so compatibility verification reflects the real mainline path.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-025.yaml
+    - python3 -m py_compile addons/smart_core/handlers/load_view.py addons/smart_core/handlers/load_contract.py addons/smart_core/core/load_contract_proxy_payload.py addons/smart_core/tests/test_load_view_handler.py
+    - make verify.portal.load_view_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore addons/smart_core/handlers/load_view.py addons/smart_core/handlers/load_contract.py addons/smart_core/core/load_contract_proxy_payload.py scripts/verify/fe_load_view_smoke.js addons/smart_core/tests/test_load_view_handler.py agent_ops/tasks/ITER-2026-03-28-025.yaml agent_ops/queue/platform_kernel_refactor_prep_queue.yaml docs/ops/iterations/delivery_context_switch_log_v1.md docs/ops/releases/archive/temp/TEMP_agent_ops_continuous_iteration_status_20260328.md
+
+depends_on:
+  - ITER-2026-03-28-024
+notes: "Narrow compatibility cleanup before touching load_contract mainline semantics."

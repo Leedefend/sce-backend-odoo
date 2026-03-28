@@ -1,0 +1,8 @@
+queue_id: active-main
+mode: sequential
+tasks:
+  - ITER-2026-03-28-001
+  - ITER-2026-03-28-002
+stop_on:
+  - FAIL
+  - PASS_WITH_RISK
