@@ -377,3 +377,29 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed slice can return to platform/runtime implementation work instead of governance cleanup
+## Round: ITER-2026-03-28-031
+
+- `ITER-2026-03-28-031`: `load_contract` entry context inference extracted into platform helper `addons/smart_core/core/load_contract_entry_context.py`
+  - `load_contract` now delegates menu/action based model resolution to the shared helper
+  - `load_contract` now delegates default view-mode inference to the shared helper
+  - lightweight direct unit coverage added in `addons/smart_core/tests/test_load_contract_entry_context.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-031`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed slice can continue on `load_contract` or `runtime_fetch` mainline cleanup without governance recovery first
+## Round: ITER-2026-03-28-032
+
+- `ITER-2026-03-28-032`: `load_contract` view-type normalization moved into `addons/smart_core/core/load_contract_entry_context.py`
+  - shared helper now normalizes string/list/fallback view-type inputs
+  - direct unit coverage expanded from 4 to 6 checks
+  - handler inline request-shaping logic reduced again
+
+## Current Stop Point
+
+- latest in-flight task: `ITER-2026-03-28-032`
+- observed classification: `PASS_WITH_RISK`
+- stop reason: `diff_too_large`
+- note: code and tests are green; stop is caused by cumulative local delta size, not by forbidden-path or verification failure

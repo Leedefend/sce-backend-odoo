@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/load_contract.py
 from ..core.base_handler import BaseIntentHandler
+from ..core.load_contract_entry_context import (
+    infer_view_types_from_entry_context,
+    normalize_requested_view_types,
+    resolve_model_from_entry_context,
+)
 from ..app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from ..utils.extension_hooks import call_extension_hook_first
 from odoo import api, SUPERUSER_ID
-import json, re, hashlib
+import json, hashlib
 
 VALID_VIEWS   = {'form','tree','kanban','search','pivot','graph','calendar','gantt','activity','dashboard'}
 VALID_INCLUDE = {'model','view','action','permission'}
@@ -97,26 +102,16 @@ class LoadContractHandler(BaseIntentHandler):
         view_type_raw = p.get("view_type", None)  # 改：不立刻默认 "form"
         view_types: list[str] = []
 
-        if isinstance(view_type_raw, (list, tuple)):
-            parts = [str(v).strip().lower() for v in view_type_raw]
-        elif isinstance(view_type_raw, str) and view_type_raw.strip():
-            parts = re.split(r'[,\s]+', view_type_raw.strip())
-        else:
-            # 前端没传：尝试从菜单/动作推断
-            parts = self._infer_view_types(menu_id=menu_id, action_id=action_id)
-            if not parts:
-                parts = ["tree"]  # 仍然兜底 tree
-
-        # 过滤到白名单并保序去重
-        seen = set()
-        for v in parts:
-            if not v:
-                continue
-            if v not in VALID_VIEWS:
-                return self._err(400, f"不支持的 view_type: {v}")
-            if v not in seen:
-                seen.add(v)
-                view_types.append(v)
+        try:
+            view_types = normalize_requested_view_types(
+                view_type_raw,
+                inferred_view_types=self._infer_view_types(menu_id=menu_id, action_id=action_id),
+                valid_views=VALID_VIEWS,
+                default_view_type="tree",
+            )
+        except ValueError as exc:
+            invalid_view = str(exc).split(":", 1)[-1].strip() or "unknown"
+            return self._err(400, f"不支持的 view_type: {invalid_view}")
 
         # 最终形式：多个用列表，单个用字符串
         view_type_final = view_types if len(view_types) > 1 else (view_types[0] if view_types else "form")
@@ -1035,30 +1030,12 @@ class LoadContractHandler(BaseIntentHandler):
 
     # ---------- 辅助：从 menu_id / action_id 推导 res_model ----------
     def _resolve_model_from_context(self, menu_id=None, action_id=None) -> str | None:
-        su_env = self.su_env or api.Environment(self.env.cr, SUPERUSER_ID, dict(self.env.context or {}))
-        try:
-            if menu_id:
-                m = su_env["ir.ui.menu"].browse(int(menu_id))
-                act = m.action if m.exists() else None
-                if act:
-                    # 统一从 action 取 res_model
-                    res_model = getattr(act, "res_model", None)
-                    if not res_model and act._name == "ir.actions.act_window":
-                        res_model = act.res_model
-                    if res_model:
-                        return str(res_model)
-            if action_id and not menu_id:
-                act = su_env["ir.actions.actions"].browse(int(action_id))
-                if act and act.exists():
-                    res_model = getattr(act, "res_model", None)
-                    if not res_model and act._name == "ir.actions.act_window":
-                        res_model = act.res_model
-                    if res_model:
-                        return str(res_model)
-        except Exception:
-            # 静默失败，交由上层报“缺少 model”
-            return None
-        return None
+        return resolve_model_from_entry_context(
+            self.env,
+            su_env=self.su_env,
+            menu_id=menu_id,
+            action_id=action_id,
+        )
 
     # 统一错误
     def _err(self, code, msg):
@@ -1067,28 +1044,10 @@ class LoadContractHandler(BaseIntentHandler):
     # 放在类里（LoadContractHandler）作为私有方法
     def _infer_view_types(self, menu_id=None, action_id=None):
         """从菜单/动作推断默认 view_types（返回列表），失败返回 []"""
-        su_env = self.su_env or api.Environment(self.env.cr, SUPERUSER_ID, dict(self.env.context or {}))
-        try:
-            act = None
-            if menu_id:
-                m = su_env["ir.ui.menu"].browse(int(menu_id))
-                act = m.action if m.exists() else None
-            if (not act) and action_id:
-                act = su_env["ir.actions.actions"].browse(int(action_id))
-            if not act or not act.exists():
-                return []
-            # 仅 act_window 有 view_mode 概念
-            if act._name == "ir.actions.act_window":
-                raw = (getattr(act, "view_mode", None) or "").strip()
-                if not raw:
-                    return []
-                parts = [v.strip().lower() for v in raw.split(",") if v.strip()]
-                # 交叉到白名单 & 去重保序
-                seen, out = set(), []
-                for v in parts:
-                    if v in VALID_VIEWS and v not in seen:
-                        seen.add(v); out.append(v)
-                return out
-            return []
-        except Exception:
-            return []
+        return infer_view_types_from_entry_context(
+            self.env,
+            su_env=self.su_env,
+            menu_id=menu_id,
+            action_id=action_id,
+            valid_views=VALID_VIEWS,
+        )
