@@ -1,0 +1,80 @@
+feature:
+  allowed:
+    - frontend/**
+    - addons/**/services/**
+    - addons/**/orchestration/**
+    - scripts/verify/**
+    - docs/**
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - ops/production/**
+
+bugfix:
+  allowed:
+    - frontend/**
+    - addons/**
+    - scripts/**
+    - docs/**
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+
+refactor:
+  allowed:
+    - frontend/**
+    - addons/**/services/**
+    - addons/**/orchestration/**
+    - docs/**
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+
+feature_readonly_ui:
+  allowed:
+    - frontend/**
+    - docs/**
+    - scripts/verify/**
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**
+
+adapter_extension:
+  allowed:
+    - addons/**/services/**
+    - addons/**/orchestration/**
+    - scripts/verify/**
+    - docs/**
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+verification_asset:
+  allowed:
+    - scripts/**
+    - docs/**
+    - agent_ops/**
+    - Makefile
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+
+governance_task:
+  allowed:
+    - agent_ops/**
+    - docs/ops/**
+    - Makefile
+    - scripts/**
+  forbidden:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**

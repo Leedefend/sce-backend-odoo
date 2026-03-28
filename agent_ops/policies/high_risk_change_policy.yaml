@@ -1,0 +1,16 @@
+manual_stop_patterns:
+  - "**/security/**"
+  - "**/record_rules/**"
+  - "**/ir.model.access.csv"
+  - "**/__manifest__.py"
+  - "**/*payment*"
+  - "**/*settlement*"
+  - "**/*account*"
+  - "migrations/**"
+
+manual_stop_reasons:
+  security: "Security-related files touched"
+  access: "ACL or record rule touched"
+  financial: "Financial / payment / settlement files touched"
+  manifest: "Manifest changed"
+  migration: "Migration path changed"

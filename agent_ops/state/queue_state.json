@@ -1,0 +1,35 @@
+{
+  "blocked": [
+    "ITER-2026-03-28-002"
+  ],
+  "completed": [
+    "ITER-2026-03-28-001"
+  ],
+  "history": [
+    {
+      "classification": "PASS",
+      "exit_code": 0,
+      "task_id": "ITER-2026-03-28-001",
+      "triggered_stop_conditions": []
+    },
+    {
+      "classification": "PASS_WITH_RISK",
+      "exit_code": 1,
+      "task_id": "ITER-2026-03-28-002",
+      "triggered_stop_conditions": [
+        "too_many_files_changed",
+        "diff_too_large"
+      ]
+    }
+  ],
+  "last_event": {
+    "classification": "PASS_WITH_RISK",
+    "task_id": "ITER-2026-03-28-002",
+    "triggered_stop_conditions": [
+      "too_many_files_changed",
+      "diff_too_large"
+    ],
+    "type": "queue_stopped"
+  },
+  "queue_status": "stopped"
+}

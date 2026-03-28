@@ -1,0 +1,24 @@
+stop_conditions:
+  - id: forbidden_path_touched
+    description: "Forbidden path modified"
+  - id: high_risk_pattern_matched
+    description: "High risk change matched"
+  - id: verify_failed
+    description: "Acceptance verify failed"
+  - id: contract_breaking_change
+    description: "Contract field removed or renamed"
+  - id: diff_too_large
+    description: "Diff size exceeds threshold"
+  - id: too_many_files_changed
+    description: "Changed files exceed threshold"
+  - id: uncertain_business_decision
+    description: "Business intent unclear"
+  - id: no_user_visible_progress
+    description: "No user-visible progress in current iteration"
+  - id: scope_overreach
+    description: "Change detected outside declared allowed paths"
+
+thresholds:
+  max_changed_files: 12
+  max_added_lines: 400
+  max_removed_lines: 200

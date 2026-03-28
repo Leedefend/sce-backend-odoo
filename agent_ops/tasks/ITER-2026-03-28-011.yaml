@@ -1,0 +1,68 @@
+task_id: ITER-2026-03-28-011
+title: Promote approved refactor-prep planning artifacts into dirty baseline
+type: governance_task
+status: pending
+priority: high
+
+goal: Canonicalize the approved runtime-mainline and refactor-prep planning artifacts into the dirty baseline so the next continuous planning queue can proceed without replaying accepted doc growth as repo-level risk.
+user_visible_outcome:
+  - canonical baseline includes approved refactor-prep planning artifacts
+  - baseline review summary records the approved planning delta
+  - runtime-mainline planning can move to the next task without repeating PASS_WITH_RISK on already accepted docs
+
+scope:
+  allowed_paths:
+    - agent_ops/policies/**
+    - agent_ops/tasks/**
+    - agent_ops/scripts/**
+    - docs/ops/releases/archive/temp/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: Governance/Tooling
+  module: baseline governance for refactor-prep planning artifacts
+  reason: Respect stop-on-risk semantics by moving accepted planning growth into a dedicated reviewed baseline update before continuing the platform-kernel planning queue.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-011.yaml
+    - test -f docs/ops/releases/archive/temp/TEMP_refactor_prep_baseline_review_20260328.md
+    - rg -n "approved_paths|runtime_mainline_convergence_plan_v1.md|platform_kernel_inventory_baseline_v1.md" docs/ops/releases/archive/temp/TEMP_refactor_prep_baseline_review_20260328.md
+    - rg -n "docs/architecture/runtime_mainline_convergence_plan_v1.md" agent_ops/policies/repo_dirty_baseline.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore agent_ops/policies/repo_dirty_baseline.yaml agent_ops/scripts/risk_scan.py agent_ops/tasks/ITER-2026-03-28-011.yaml docs/ops/releases/archive/temp/TEMP_refactor_prep_baseline_review_20260328.md docs/ops/iterations/delivery_context_switch_log_v1.md docs/ops/releases/archive/temp/TEMP_agent_ops_continuous_iteration_status_20260328.md
+
+depends_on:
+  - ITER-2026-03-28-010
+notes: "Dedicated baseline governance follow-up for PASS_WITH_RISK planning artifacts."
+
+baseline_governance:
+  candidate_required: true
+  review_summary_required: true
+  canonical_update_requires_dedicated_task: true

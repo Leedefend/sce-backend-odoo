@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-28-018
+title: Realign system_init live guards to active startup contract
+type: bugfix_task
+status: pending
+priority: high
+
+goal: Update the live system_init verification guards so they validate the active startup contract shape instead of retired hud/scene_diagnostics assumptions and timing-volatile fields.
+user_visible_outcome:
+  - system_init snapshot equivalence ignores timing-only drift
+  - system_init runtime context guard validates the active startup contract fields
+  - the first system_init refactor batch can be closed with live verification instead of outdated guard failures
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/queue/**
+    - docs/ops/iterations/**
+    - docs/ops/releases/archive/temp/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: Verification Governance
+  module: scripts/verify system_init live contract guards
+  reason: Align the live system_init guards with the active startup contract so the runtime-mainline refactor is evaluated against current semantics rather than retired hud-only assertions.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-018.yaml
+    - python3 -m py_compile scripts/verify/system_init_snapshot_equivalence.py scripts/verify/system_init_runtime_context_stability.py
+    - make verify.system_init.snapshot_equivalence
+    - make verify.system_init.runtime_context.stability
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore scripts/verify/system_init_snapshot_equivalence.py scripts/verify/system_init_runtime_context_stability.py agent_ops/tasks/ITER-2026-03-28-018.yaml agent_ops/queue/platform_kernel_refactor_prep_queue.yaml docs/ops/iterations/delivery_context_switch_log_v1.md docs/ops/releases/archive/temp/TEMP_agent_ops_continuous_iteration_status_20260328.md
+
+depends_on:
+  - ITER-2026-03-28-017
+notes: "Live verify realignment follow-up after detecting retired hud assertions and timing-only snapshot drift."

@@ -16,6 +16,195 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-28T11:55:00Z
+- blocker_key: `platform_kernel_refactor_prep_queue_bootstrap_v1`
+- layer_target: `Governance/Tooling + Platform Layer Planning`
+- module: `agent_ops queue/tasks + baseline governance + docs/architecture planning`
+- reason: `将上一轮已接受但尚未入 baseline 的架构文档与治理工件正规化，并以 dedicated baseline task + platform inventory task 的双步队列启动连续迭代模式`
+- completed_step: `已冻结首个连续迭代队列范围：ITER-2026-03-28-007 只处理 baseline 治理，ITER-2026-03-28-008 只处理 smart_core/smart_scene 平台资产盘点；不进入 addons 代码改造`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-007 to stabilize the repo dirty baseline, then continue the queue with ITER-2026-03-28-008`
+
+### 2026-03-28T12:15:00Z
+- blocker_key: `repo_risk_scan_empty_diff_false_positive_fix_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops/scripts + platform_kernel_refactor_prep_queue`
+- reason: `ITER-2026-03-28-007 暴露出 repo-level 风险扫描的空 effective diff 误判：所有脏文件已被 baseline 覆盖时，diff_parser 仍回退到全仓统计，导致 false diff_too_large`
+- completed_step: `已冻结修复范围为 risk_scan/diff_parser 的 empty-list 语义修正，并将平台准备队列调整为 007 -> 009 -> 008，先修守卫再继续平台资产盘点`
+- active_commit: `9864012`
+- next_step: `Implement ITER-2026-03-28-009, verify zero-volume risk output on baseline-covered changes, then continue the refactor-prep queue`
+
+### 2026-03-28T13:25:00Z
+- blocker_key: `runtime_mainline_convergence_plan_v1`
+- layer_target: `Platform Layer`
+- module: `docs/architecture runtime-mainline planning + agent_ops queue/tasks`
+- reason: `在 platform inventory baseline 已完成后，把 runtime_mainline_convergence 从概念清单推进到可执行计划，作为平台内核重构的第一条正式 planning 主线`
+- completed_step: `已冻结本轮范围为新增 runtime mainline convergence plan 文档、追加 ITER-2026-03-28-010 任务卡并挂入 refactor-prep queue；不进入 addons 代码层实现`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-010 and use the resulting plan to open runtime entrypoint inventory as the next execution batch`
+
+### 2026-03-28T14:05:00Z
+- blocker_key: `refactor_prep_baseline_governance_followup_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops baseline governance + runtime risk policy`
+- reason: `ITER-2026-03-28-010 内容通过但因累计规划增量触发 PASS_WITH_RISK，需要按制度走 dedicated baseline task，把已审 planning artifacts 正规化后再继续连续队列`
+- completed_step: `已冻结本轮范围为 runtime artifact 风险排除补强、新增 ITER-2026-03-28-011 baseline 任务卡、补 planning-delta review 文档并更新 canonical baseline；不进入 addons 代码改造`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-011 to normalize approved planning artifacts, then refresh the queue state before opening the next runtime-entrypoint inventory task`
+
+### 2026-03-28T14:35:00Z
+- blocker_key: `runtime_entrypoint_inventory_v1`
+- layer_target: `Platform Layer`
+- module: `docs/architecture runtime entrypoint inventory + agent_ops queue/tasks`
+- reason: `runtime mainline plan 已冻结后，需要把具体入口按 mainline/transitional/violating 分类，才能选择第一条代表性代码收敛切片`
+- completed_step: `已冻结本轮范围为新增 runtime entrypoint inventory 文档和 ITER-2026-03-28-012 任务卡，并将其接入 refactor-prep queue；不进入 addons 代码实现`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-012 and use the inventory to open representative_slice_selection as the next low-risk batch`
+
+### 2026-03-28T15:00:00Z
+- blocker_key: `runtime_representative_slice_selection_v1`
+- layer_target: `Platform Layer`
+- module: `docs/architecture representative slice decision + agent_ops queue/tasks`
+- reason: `runtime entrypoint inventory 已完成后，需要冻结第一条真正进入代码收敛的代表性切片，避免下一批再次回到“到底先改哪条主线”的讨论`
+- completed_step: `已冻结本轮范围为新增 representative slice selection 文档和 ITER-2026-03-28-013 任务卡，并将其接入 refactor-prep queue；不进入 addons 代码层实现`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-013 and open system_init_runtime_trace_inventory as the next implementation-prep task`
+
+### 2026-03-28T15:20:00Z
+- blocker_key: `system_init_runtime_trace_inventory_v1`
+- layer_target: `Platform Layer`
+- module: `docs/architecture system.init runtime trace inventory + agent_ops queue/tasks`
+- reason: `既然 representative slice 已冻结为 system.init，下一步就需要把 handoff points、base facts boundary、scene assembly boundary 和 fallback zones 盘清，给第一条代码收敛批次划边界`
+- completed_step: `已冻结本轮范围为新增 system_init runtime trace inventory 文档和 ITER-2026-03-28-014 任务卡，并将其接入 refactor-prep queue；不进入 addons 代码实现`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-014 and use the trace inventory to open system_init_handoff_authority_cleanup as the first code convergence batch`
+
+### 2026-03-28T15:45:00Z
+- blocker_key: `refactor_prep_baseline_governance_round2_v1`
+- layer_target: `Governance/Tooling`
+- module: `baseline governance for second-wave runtime planning artifacts`
+- reason: `ITER-2026-03-28-014 内容通过但继续被累计 planning 增量抬成 PASS_WITH_RISK，需要第二轮 dedicated baseline task 才能让连续 planning 继续合规前进`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-28-015 baseline 任务卡、补 round2 review 文档并更新 canonical baseline；不进入 addons 代码实现`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-015, then refresh ITER-2026-03-28-014 under the normalized baseline before opening the first code-oriented batch`
+
+### 2026-03-28T16:10:00Z
+- blocker_key: `system_init_handoff_authority_cleanup_v1`
+- layer_target: `Platform Layer`
+- module: `addons/smart_core/handlers/system_init.py + addons/smart_core/core`
+- reason: `把 system.init 中 scene-ready/nav-contract 组装 authority 从 handler 内联逻辑收口到独立 core builder，作为第一条真正的 runtime-mainline 代码收敛切片`
+- completed_step: `已冻结本轮范围为新增 scene runtime surface context/builder，并让 system_init handler 只保留 orchestration entry；不触碰 load_contract、行业模块和 ACL/schema`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-016 with py_compile and system_init verify gates, then decide whether the next slice should continue system_init or move to load_contract`
+
+### 2026-03-28T16:35:00Z
+- blocker_key: `system_init_verify_login_contract_alignment_v1`
+- layer_target: `Verification Governance`
+- module: `scripts/verify system_init live guards + agent_ops queue/tasks`
+- reason: `ITER-2026-03-28-016 的 live verify 失败不是 system.init 代码回归，而是 verify 仍按旧登录契约读取 data.token，而当前环境已返回 data.session.token`
+- completed_step: `已冻结本轮范围为修正两条 system_init verify 的 login token 读取逻辑，并追加 ITER-2026-03-28-017 任务卡；不触碰业务代码与平台内核结构`
+- active_commit: `9864012`
+- next_step: `Run ITER-2026-03-28-017, then rerun ITER-2026-03-28-016 under the aligned live verifies`
+
+### 2026-03-28T11:25:00Z
+- blocker_key: `enterprise_pm_architecture_dual_doc_alignment_v1`
+- layer_target: `Platform Layer + Documentation Governance`
+- module: `docs/architecture + docs/product + docs/ops/iterations`
+- reason: `将理想型企业级项目管理 PaaS 架构蓝图与当前仓库 smart_core/smart_scene/scene-contract-runtime 现实对齐，落成“目标架构总纲 + 实施架构映射”双文档，为后续后端平台级内核重构提供统一基线`
+- completed_step: `已冻结本轮范围为文档治理：新增目标架构文档、新增实施映射文档，并把现有产品设计文档改为引用这两份架构入口；不触碰业务模块与平台代码`
+- active_commit: `9864012`
+- next_step: `Validate the docs task, run the docs iteration report, and use the new dual-doc baseline as the planning input for platform-kernel refactor batches`
+
+### 2026-03-28T08:42:52Z
+- blocker_key: `agent_ops_continuous_iteration_bootstrap_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops + Makefile + docs/ops/iterations`
+- reason: `把 Codex 连续协作从规则讨论推进到可执行骨架，先建立任务合同、队列、风险守卫、报告脚本和统一入口，再为后续连续迭代提供固定落点`
+- completed_step: `已冻结 Batch-A/B/C 的首轮范围：仅允许新增 agent_ops 骨架、治理策略、样例任务、最小脚本和 Makefile 入口，不触碰业务模块`
+- active_commit: `9864012`
+- next_step: `Implement the first runnable agent_ops skeleton, then execute the sample task through the single-iteration flow`
+
+### 2026-03-28T09:05:00Z
+- blocker_key: `agent_ops_stop_guard_hardening_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops scripts + policies + Makefile + docs/ops/iterations`
+- reason: `把第一版 agent_ops 从“能跑”推进到“会记录 stop condition、会写恢复点、会给出队列停机状态”，避免连续运行时只有结果没有刹车证据`
+- completed_step: `已冻结本轮范围为 stop condition 执行、queue state 补强与 iteration cursor 收口；不扩展业务任务类型与业务模块实现`
+- active_commit: `9864012`
+- next_step: `Implement stop-condition propagation into classify/report/queue state, then rerun the sample iteration and queue`
+
+### 2026-03-28T09:20:00Z
+- blocker_key: `agent_ops_pass_with_risk_sample_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops tasks + queue + reports + docs/ops/iterations`
+- reason: `为 Phase 4 增加一张故意触发风险阈值的样例任务，验证 PASS_WITH_RISK 能否在单轮与队列层都正确停机并落证据`
+- completed_step: `已冻结本轮范围为新增风险样例任务卡、队列追加与证据回归；不进入业务模块，也不扩展脚本功能边界`
+- active_commit: `9864012`
+- next_step: `Run the risk sample iteration and queue, then confirm stop-on-risk evidence is persisted in report, task_result, queue_state, and iteration_cursor`
+
+### 2026-03-28T09:35:00Z
+- blocker_key: `agent_ops_fail_sample_and_temp_summary_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops tasks + queue + state + docs/ops/releases/archive/temp`
+- reason: `补齐 FAIL 分支验证，并把截至当前的 agent_ops 建设状态、验证证据、风险和后续计划完整汇总到临时文档`
+- completed_step: `已冻结本轮范围为新增 FAIL 样例任务、专用 fail queue 和一份 temp 总结文档；不改业务模块、不改主产品逻辑`
+- active_commit: `9864012`
+- next_step: `Run the FAIL sample iteration and dedicated fail queue, then finalize the temporary status document with artifact paths and residual risks`
+
+### 2026-03-28T09:48:00Z
+- blocker_key: `agent_ops_fail_queue_fresh_task_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops tasks + queue + docs/ops/releases/archive/temp`
+- reason: `由于 queue 会从既有 task_results 同步 blocked 状态，已失败过的样例任务无法再次进入 fail queue，需要一张 fresh task 验证真正的 queue-stopped-on-fail 分支`
+- completed_step: `已冻结本轮范围为新增 fresh FAIL 任务卡 ITER-2026-03-28-004，并把 fail_validation_queue 切到该任务；不修改业务模块和核心执行脚本语义`
+- active_commit: `9864012`
+- next_step: `Run the dedicated fail queue against ITER-2026-03-28-004, then update the temporary status document with final fail-queue evidence`
+
+### 2026-03-28T10:02:00Z
+- blocker_key: `agent_ops_queue_state_normalization_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops/scripts + agent_ops/state + docs/ops/releases/archive/temp`
+- reason: `把 queue state 从探索期累计日志收口为可由 canonical task_results 重建的规范状态，消除 history/completed/blocked 中的旧噪音`
+- completed_step: `已新增 normalize_queue_state.py，并对 active_queue 与 fail_validation_queue 完成重建；queue_state/fail_queue_state 现在只保留当前队列定义下可解释的 canonical history`
+- active_commit: `9864012`
+- next_step: `Decide whether normalized queue state files should stay versioned or move to runtime-only artifacts before opening the next governance batch`
+
+### 2026-03-28T10:20:00Z
+- blocker_key: `agent_ops_repo_level_guard_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops/scripts + agent_ops/policies + docs/ops/releases/archive/temp`
+- reason: `把风险扫描从 task-scope 提升到 repo-level，确保连续运行时的风险判断来自实际 git working tree，而不是任务卡自报范围`
+- completed_step: `已新增 repo_watchlist.yaml、diff_parser.py、pattern_matcher.py、risk_rules_loader.py，并重写 risk_scan.py；classify_result/run_iteration 已接入 repo-level risk stop，当前 dirty worktree 会把原本 PASS 的任务重新判为 PASS_WITH_RISK 并打印 STOP: risk triggered`
+- active_commit: `9864012`
+- next_step: `Decide whether the repo-level guard should learn a repository dirtiness baseline before the next autonomous queue batch`
+
+### 2026-03-28T10:38:00Z
+- blocker_key: `agent_ops_repo_dirty_baseline_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops/policies + agent_ops/scripts + docs/ops/releases/archive/temp`
+- reason: `当前仓库存在较大的已知 dirty worktree，若不建立 baseline，repo-level guard 会持续把所有任务拦成 PASS_WITH_RISK，无法进入可用的连续运行状态`
+- completed_step: `已新增 repo_dirty_baseline.yaml，并让 risk_scan 输出 raw_changed_files/baseline_hits/changed_files 三段结构；当前基线已覆盖既有脏文件，repo-level guard 重新收敛到只对新增非基线变化报警`
+- active_commit: `9864012`
+- next_step: `Define the governance rule for how repo_dirty_baseline.yaml can be updated before enabling unattended queue runs`
+
+### 2026-03-28T10:50:00Z
+- blocker_key: `agent_ops_dirty_baseline_candidate_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops/scripts + Makefile + docs/ops/releases/archive/temp`
+- reason: `把“工具生成、人工审核入库”的 baseline 维护策略落成实际入口，避免后续只能手工编辑正式 baseline 或让脚本直接改正式基线`
+- completed_step: `已新增 generate_dirty_baseline_candidate.py 和 make agent.baseline.candidate；候选输出与正式 baseline 分离，只提供 delta 供人工审核`
+- active_commit: `9864012`
+- next_step: `Generate the first baseline candidate and review whether any candidate-only paths should remain outside the canonical baseline`
+
+### 2026-03-28T10:58:00Z
+- blocker_key: `agent_ops_baseline_update_governance_v1`
+- layer_target: `Governance/Tooling`
+- module: `agent_ops/contracts + agent_ops/prompts + docs/ops/releases/archive/temp`
+- reason: `把“正式 baseline 更新必须走单独任务卡并附 candidate delta 审核结论”的口径写进合同模板和审计提示，避免后续 baseline 被当成普通文件顺手修改`
+- completed_step: `已在任务合同、reviewer prompt 和临时总结文档中固化 baseline 更新治理规则，明确 candidate 可以自动生成，但 canonical baseline 不可自动覆盖`
+- active_commit: `9864012`
+- next_step: `Open the first dedicated baseline-update task only when a reviewed candidate delta is ready`
+
 ### 2026-03-27T00:35:00Z
 - blocker_key: `sprint1_review_plan_frozen_v1`
 - layer_target: `Governance Layer / Planning Layer`
@@ -1773,3 +1962,52 @@ Each entry must include:
 - reason: `把 sprint1_user_role_backend 从混合噪音恢复成可信门禁；前序失败已确认主要来自 handler 返回结构误判、权限治理测试错误读取 implied 闭包，以及 res.users 密码同步未走 Odoo 原生接口`
 - completed_step: `已将 ApiDataHandler 的 res.users 密码同步切到 Odoo 原生 _change_password；已把 handler 成功返回统一归一到测试可读结构；已将“角色组不得直达能力组”的断言改为审计 XML 直接定义；make test MODULE=smart_construction_core TEST_TAGS=sprint1_user_role_backend DB_NAME=sc_demo 现已通过（0 failed / 0 error）`
 - next_step: `后续可在此可信门禁之上继续提交权限治理与产品入口收敛改动，不再被旧测试噪音误导`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-016 ~ ITER-2026-03-28-019）
+
+- `016`: `system.init` scene-runtime surface assembly extracted into dedicated core builder/context pair
+- `017`: live verify login parsing aligned to `data.session.token`
+- `018`: system_init live guards realigned to active startup contract (`init_meta`, `scene_ready_contract_v1`, `nav`, `role_surface`)
+- `019`: duplicated extension fact merge logic extracted into `system_init_extension_fact_merger.py` and reused by `system.init` + `runtime_fetch_context_builder`
+- live gates:
+  - `make verify.system_init.snapshot_equivalence` PASS
+  - `make verify.system_init.runtime_context.stability` PASS
+- current stop status:
+  - last task: `ITER-2026-03-28-019`
+  - classification: `PASS_WITH_RISK`
+  - stop reason: `diff_too_large`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-020 ~ ITER-2026-03-28-021）
+
+- `020`: canonical dirty baseline updated for approved `016` to `019` system.init refactor artifacts
+- `021`: `run_iteration.sh` hardened with repository-scoped lock file `agent_ops/state/run_iteration.lock`
+- queue state after `020/021`:
+  - previous `diff_too_large` stop cleared by baseline governance
+  - latest classification restored to `PASS`
+  - continuous queue can continue from a low-risk state
+## 2026-03-28 迭代锚点（ITER-2026-03-28-022）
+
+- `022`: `runtime_fetch` workspace collection extraction moved into `addons/smart_core/core/runtime_workspace_collection_helper.py`
+- regression gates:
+  - `make verify.system_init.snapshot_equivalence` PASS
+  - `make verify.system_init.runtime_context.stability` PASS
+- queue state:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-023 ~ ITER-2026-03-28-024）
+
+- `023`: repo guard and baseline candidate now exclude `agent_ops/state/run_iteration.lock`
+- `024`: `load_view_access_contract_guard.py` login parsing aligned to `data.session.token`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next entrypoint candidate remains `load_contract/load_view`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-025）
+
+- `025`: `load_view` compatibility proxy converged onto shared payload builder `addons/smart_core/core/load_contract_proxy_payload.py`
+- `025`: `load_contract` now falls back to `ActionDispatcher(subject=model)` when `app.contract.service` is absent at runtime
+- `025`: legacy `load_view` top-level compatibility surface restored for `layout/model/view_type/fields/permissions`
+- live gate:
+  - `make verify.portal.load_view_smoke.container` PASS
+- stop state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - stop reason: `too_many_files_changed`
+  - next required task: `baseline governance for approved 020-025 artifacts`

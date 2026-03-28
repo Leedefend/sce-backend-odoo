@@ -1,0 +1,62 @@
+task_id: ITER-2026-03-28-012
+title: Build runtime entrypoint inventory baseline
+type: governance_task
+status: pending
+priority: high
+
+goal: Inventory current runtime entrypoints and classify them by mainline, transitional, or violating so the first runtime-mainline code slice can be selected without ambiguity.
+user_visible_outcome:
+  - a runtime entrypoint inventory document exists
+  - entrypoints are classified by runtime ownership and convergence status
+  - the next representative-slice selection task has concrete candidates
+
+scope:
+  allowed_paths:
+    - docs/architecture/**
+    - agent_ops/tasks/**
+    - agent_ops/queue/**
+    - docs/ops/iterations/**
+    - docs/ops/releases/archive/temp/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: Platform Layer
+  module: docs/architecture runtime entrypoint inventory
+  reason: Turn the runtime-mainline convergence plan into a concrete list of current entrypoints and convergence status before selecting a representative refactor slice.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-012.yaml
+    - test -f docs/architecture/runtime_entrypoint_inventory_v1.md
+    - rg -n "mainline|transitional|violating|system.init|load_contract|ui.contract|frontend_api" docs/architecture/runtime_entrypoint_inventory_v1.md
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore docs/architecture/runtime_entrypoint_inventory_v1.md agent_ops/tasks/ITER-2026-03-28-012.yaml agent_ops/queue/platform_kernel_refactor_prep_queue.yaml docs/ops/iterations/delivery_context_switch_log_v1.md docs/ops/releases/archive/temp/TEMP_agent_ops_continuous_iteration_status_20260328.md
+
+depends_on:
+  - ITER-2026-03-28-010
+notes: "First runtime-mainline execution-prep artifact after the planning baseline."
