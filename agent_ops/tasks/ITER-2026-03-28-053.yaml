@@ -1,0 +1,61 @@
+task_id: ITER-2026-03-28-053
+title: Build common project kernel candidate map baseline
+type: governance_task
+status: pending
+priority: medium
+
+goal: Identify which capabilities inside current platform and construction modules should later become a common-project layer, without triggering immediate module moves or high-risk semantic changes.
+user_visible_outcome:
+  - the repository has a common-project kernel candidate map baseline
+  - later code-layer convergence can target explicit low-risk common capabilities instead of ad hoc extraction
+
+scope:
+  allowed_paths:
+    - docs/architecture/**
+    - agent_ops/tasks/**
+    - agent_ops/queue/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform kernel governance
+  module: common project kernel candidate map
+  reason: Open the next code-alignment stage from an explicit common-project capability inventory instead of jumping directly into platform/industry code moves.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-053.yaml
+    - rg -n "候选能力|暂不迁移|低风险优先" docs/architecture/common_project_kernel_candidate_map_v1.md
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore docs/architecture/common_project_kernel_candidate_map_v1.md agent_ops/tasks/ITER-2026-03-28-053.yaml agent_ops/queue/platform_kernel_code_alignment_batch_1.yaml
+
+depends_on:
+  - ITER-2026-03-28-052
+notes: "This is the entry task for code-layer platform-kernel convergence. Document-only, no module movement yet."

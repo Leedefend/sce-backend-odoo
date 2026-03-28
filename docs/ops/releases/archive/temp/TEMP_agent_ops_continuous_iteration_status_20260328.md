@@ -447,3 +447,27 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - current local delta remains bounded enough for one grouped submission before the next code slice
+## Round: ITER-2026-03-28-053
+
+- `ITER-2026-03-28-053`: common project layer candidate map was added in `docs/architecture/common_project_kernel_candidate_map_v1.md`
+  - froze the first explicit candidate set for project/task/stage/milestone, workspace shell, and read-model utility convergence
+  - explicitly excluded payment / settlement / account semantics from the next code-layer batch
+
+## Round: ITER-2026-03-28-054
+
+- `ITER-2026-03-28-054`: workspace shell versus scenario block boundary was frozen in `docs/architecture/project_workspace_shell_boundary_v1.md`
+  - common shell ownership is now separated from scenario block ownership
+  - mixed dashboard files are explicitly marked as deferred rather than forced into kernel/common-project migration
+
+## Round: ITER-2026-03-28-055
+
+- `ITER-2026-03-28-055`: wave-1 plan added in `docs/architecture/common_project_code_alignment_wave1_plan_v1.md`
+  - next implementation batch is explicitly limited to low-risk helper/read-model convergence
+  - `do not touch` set now includes payment, settlement, account, ACL/security, manifest, migration, and scenario-specific block payload logic
+
+## Current Continuation Point
+
+- latest architecture planning task: `ITER-2026-03-28-055`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped validation and bounded submission of platform-kernel alignment plus common-project planning assets before wave-1 code convergence begins

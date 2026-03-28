@@ -4224,7 +4224,7 @@ verify.native_view.ecosystem.readiness: guard.prod.forbid
 
 VERIFY_CMDS ?=
 
-.PHONY: agent.task.validate agent.risk.scan agent.classify agent.report agent.verify agent.iteration agent.queue.pick agent.queue.run agent.queue.normalize agent.baseline.candidate
+.PHONY: agent.task.validate agent.risk.scan agent.classify agent.report agent.verify agent.iteration agent.queue.pick agent.queue.run agent.queue.normalize agent.baseline.candidate verify.architecture.platform_kernel_alignment
 
 agent.task.validate:
 	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
@@ -4263,3 +4263,6 @@ agent.queue.normalize:
 
 agent.baseline.candidate:
 	@python3 agent_ops/scripts/generate_dirty_baseline_candidate.py $(if $(OUT),--output "$(OUT)",)
+
+verify.architecture.platform_kernel_alignment: guard.prod.forbid
+	@python3 scripts/verify/platform_kernel_alignment_guard.py

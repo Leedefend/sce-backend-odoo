@@ -1,0 +1,57 @@
+task_id: ITER-2026-03-28-050
+title: Bind execution baseline into AGENTS and agent prompts
+type: governance_task
+status: pending
+priority: medium
+
+goal: Bind AGENTS and agent_ops prompts to the execution baseline so continuous iteration decisions stay inside the frozen platform-kernel alignment rules.
+user_visible_outcome:
+  - AGENTS explicitly references the execution baseline
+  - planner and implementer prompts require kernel-or-scenario ownership declaration
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - agent_ops/prompts/**
+    - agent_ops/policies/**
+    - agent_ops/tasks/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: governance layer
+  module: agent baseline binding
+  reason: Ensure future continuous-iteration batches read the execution baseline and platform-kernel boundary freeze before acting.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-050.yaml
+    - rg -n "execution_baseline_v1.md|Kernel or Scenario|Module Ownership" AGENTS.md agent_ops/prompts/planner.md agent_ops/prompts/implementer.md
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore AGENTS.md agent_ops/prompts/planner.md agent_ops/prompts/implementer.md agent_ops/policies/architecture_reference_policy.yaml agent_ops/tasks/ITER-2026-03-28-050.yaml
+
+depends_on:
+  - ITER-2026-03-28-049
+notes: "Governance-only task. No business code or runtime behavior changes."
