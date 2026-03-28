@@ -4,6 +4,7 @@ from typing import Dict, Type
 
 from .form_parser import FormViewParser
 from .kanban_parser import KanbanViewParser
+from .search_parser import SearchViewParser
 from .tree_parser import TreeViewParser
 
 
@@ -14,6 +15,7 @@ _DEFAULT_ALIASES = {
 _PARSER_REGISTRY: Dict[str, Type] = {
     "form": FormViewParser,
     "kanban": KanbanViewParser,
+    "search": SearchViewParser,
     "tree": TreeViewParser,
 }
 
