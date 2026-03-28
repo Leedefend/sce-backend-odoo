@@ -97,7 +97,7 @@ def _normalize_search(payload: dict) -> dict:
     search = _as_dict(payload.get("search"))
     out = {
         "filters": _as_list(search.get("filters")),
-        "group_by": _as_list(search.get("group_by")),
+        "group_by": _as_list(search.get("group_by") or search.get("group_bys")),
         "fields": _as_list(search.get("fields")),
     }
     for key, value in search.items():
@@ -166,4 +166,3 @@ def canonicalize_ui_base_contract(payload: dict | None) -> dict:
     }
     canonical["base_fact_coverage"] = coverage
     return canonical
-

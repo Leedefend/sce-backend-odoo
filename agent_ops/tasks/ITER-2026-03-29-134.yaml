@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-134
+title: Normalize group_bys alias in ui base canonicalizer
+type: governance_task
+status: pending
+priority: high
+
+goal: Make ui base contract canonicalizer normalize parser-style group_bys into canonical search.group_by.
+user_visible_outcome:
+  - canonicalized ui base contracts now preserve group-by semantics even when upstream payload still uses group_bys naming
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core ui_base_contract_canonicalizer
+  reason: Ui base canonicalizer still expects canonical group_by only, while parser-aligned payloads often expose group_bys. This iteration normalizes the alias at canonicalization time.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-134.yaml
+    - python3 -m py_compile addons/smart_core/core/ui_base_contract_canonicalizer.py addons/smart_core/tests/test_ui_base_contract_canonicalizer.py
+    - python3 addons/smart_core/tests/test_ui_base_contract_canonicalizer.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-134.yaml addons/smart_core/core/ui_base_contract_canonicalizer.py addons/smart_core/tests/test_ui_base_contract_canonicalizer.py
+
+depends_on:
+  - ITER-2026-03-29-133
+
+notes: "Batch-3 continuation: canonicalizer should normalize group_bys alias before adapter and orchestration consume search facts."
