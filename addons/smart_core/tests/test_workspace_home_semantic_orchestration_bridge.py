@@ -51,6 +51,7 @@ class TestWorkspaceHomeSemanticOrchestrationBridge(unittest.TestCase):
         render_hints = (payload.get("page_orchestration_v1") or {}).get("render_hints") or {}
 
         self.assertEqual(page.get("layout_mode"), "list_flow")
+        self.assertEqual(page.get("priority_model"), "task_first")
         self.assertEqual(render_hints.get("preferred_columns"), 2)
         self.assertEqual(render_hints.get("semantic_page_type"), "list")
         self.assertEqual([row.get("key") for row in (page.get("global_actions") or [])], ["apply_filters", "reset_filters", "refresh"])

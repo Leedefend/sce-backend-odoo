@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-125
+title: Make runtime page consume searchpanel semantics
+type: governance_task
+status: pending
+priority: high
+
+goal: Make runtime page orchestration consume parser searchpanel semantics instead of only handling filters and group_bys.
+user_visible_outcome:
+  - runtime page contracts now expose searchpanel entries and search-driven actions when parser semantics only provide faceted search metadata
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core runtime_page_contract_builder
+  reason: Runtime page orchestration already consumes parser filters and group_bys, but it still ignores parsed searchpanel semantics. This iteration makes runtime page search orchestration faceted-search aware.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-125.yaml
+    - python3 -m py_compile addons/smart_core/core/runtime_page_semantic_orchestration_bridge.py addons/smart_core/tests/test_runtime_page_semantic_orchestration_bridge.py addons/smart_core/tests/test_runtime_page_contract_builder_semantics.py
+    - python3 addons/smart_core/tests/test_runtime_page_semantic_orchestration_bridge.py
+    - python3 addons/smart_core/tests/test_runtime_page_contract_builder_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-125.yaml addons/smart_core/core/runtime_page_semantic_orchestration_bridge.py addons/smart_core/tests/test_runtime_page_semantic_orchestration_bridge.py addons/smart_core/tests/test_runtime_page_contract_builder_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-123
+
+notes: "Batch-3 continuation: runtime page search orchestration should consume searchpanel semantics, not only classic filters/group_bys."

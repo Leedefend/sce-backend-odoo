@@ -28,6 +28,10 @@ def _search_filters_from_surface(surface: Dict[str, Any]) -> list[Dict[str, Any]
         if not isinstance(row, dict):
             continue
         filters.append({"kind": "group_by", "key": row.get("group_by") or row.get("name"), "label": row.get("string") or row.get("name")})
+    for row in _as_list(search_view.get("searchpanel")):
+        if not isinstance(row, dict):
+            continue
+        filters.append({"kind": "searchpanel", "key": row.get("name"), "label": row.get("string") or row.get("name")})
     return [row for row in filters if row.get("key")]
 
 
@@ -36,7 +40,8 @@ def _search_actions_from_surface(surface: Dict[str, Any]) -> list[Dict[str, Any]
     search_view = _as_dict(_as_dict(native_view.get("views")).get("search"))
     has_filters = bool(search_view.get("filters"))
     has_group_bys = bool(search_view.get("group_bys"))
-    if not (has_filters or has_group_bys):
+    has_searchpanel = bool(search_view.get("searchpanel"))
+    if not (has_filters or has_group_bys or has_searchpanel):
         return []
     actions: list[Dict[str, Any]] = [
         {"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"},
