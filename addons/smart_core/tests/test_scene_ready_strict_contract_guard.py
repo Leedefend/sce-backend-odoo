@@ -76,6 +76,26 @@ class TestSceneReadyStrictContractGuard(unittest.TestCase):
 
         self.assertIn("search_surface", missing)
 
+    def test_strict_guard_marks_missing_action_counts(self):
+        compiled = {
+            "surface": {"kind": "workspace", "intent": {"title": "T", "summary": "S"}},
+            "view_modes": [{"key": "tree"}],
+            "sections": {"quick_actions": {}, "group_summary": {}},
+            "search_surface": {"default_sort": "priority desc"},
+            "action_surface": {
+                "primary_actions": ["open"],
+                "groups": [{"key": "list_actions", "actions": ["open"]}],
+                "selection_mode": "multi",
+            },
+            "projection": {"summary_items": [], "overview_strip": [], "group_summary": {"items": []}},
+        }
+
+        missing = target._strict_contract_missing_paths(compiled)
+
+        self.assertIn("action_surface.counts.total", missing)
+        self.assertIn("action_surface.counts.primary", missing)
+        self.assertIn("action_surface.counts.groups", missing)
+
 
 if __name__ == "__main__":
     unittest.main()
