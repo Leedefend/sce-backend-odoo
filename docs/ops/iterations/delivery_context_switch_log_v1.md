@@ -2253,3 +2253,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `062` and then a reassessment of whether pure helper residue still remains
+## 2026-03-28 迭代锚点（ITER-2026-03-28-063）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `acc800a`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home provider defaults helper`
+- Reason: continue common-shell convergence on a sibling file after builder residue reached page/payload boundaries
+- `063`: added `addons/smart_core/core/workspace_home_provider_defaults.py`
+- `063`: `workspace_home_data_provider.py` now delegates default role focus, focus map, page profile, data source, and state schema builders to the shared defaults helper
+- `063`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_provider_defaults.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `063` and then another sibling common-shell/read-model slice
