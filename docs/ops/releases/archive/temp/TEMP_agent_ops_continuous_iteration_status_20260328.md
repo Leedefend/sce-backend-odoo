@@ -808,3 +808,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `081`, then execute `082` to move form parsing onto the new parser pipeline
+## Round: ITER-2026-03-28-082
+
+- `ITER-2026-03-28-082`: form parsing output assembly moved onto `addons/smart_core/view/native_view_pipeline.py`
+  - `universal_parser.py` no longer assembles the final payload inline
+  - batch-2 now has a real shared pipeline payload layer for native view parsing
+  - direct pipeline coverage added in `addons/smart_core/tests/test_native_view_form_pipeline.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-082`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `082`, then assess the next parser wave rather than returning to helper cleanup

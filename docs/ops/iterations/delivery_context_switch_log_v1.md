@@ -2519,3 +2519,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `081`, then execute `082` to move form parsing onto the new parser pipeline
+## 2026-03-28 迭代锚点（ITER-2026-03-28-082）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `5d6ca1d`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view form parser pipeline`
+- Reason: move form parsing output assembly onto the new parser pipeline so batch-2 yields a substantive parser capability increment
+- `082`: added `addons/smart_core/view/native_view_pipeline.py`
+- `082`: `universal_parser.py` now emits a shared pipeline payload instead of assembling the final envelope inline
+- `082`: direct pipeline coverage added in `addons/smart_core/tests/test_native_view_form_pipeline.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `082`, then assess the next parser wave rather than returning to helper cleanup
