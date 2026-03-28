@@ -2020,3 +2020,8 @@ Each entry must include:
   - `18d7263` `refactor(smart-core): converge runtime mainline surfaces`
   - `f2de849` `docs(architecture): align target and implementation baselines`
 - `027`: `.gitignore` now excludes `agent_ops/state/run_iteration.lock`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-028）
+
+- `028`: `.gitignore` now also excludes `CURRENT_COMPLETION_SUMMARY_2026-03-23.md`
+- `028`: `.gitignore` now also excludes `SANDBOX_SETUP_INSTRUCTIONS.md`
+- `028`: both scratch docs were removed from the working tree after explicit cleanup approval
