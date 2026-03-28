@@ -114,6 +114,11 @@ def apply_policy(compiled_ast: Dict[str, Any], policies: Dict[str, Any], runtime
         if _as_list(search_surface.get("group_by")):
             _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.group_by", from_layer="base")
         search_surface["group_by"] = default_group_by
+    default_searchpanel = _as_list(search_policy.get("default_searchpanel"))
+    if default_searchpanel:
+        if _as_list(search_surface.get("searchpanel")):
+            _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.searchpanel", from_layer="base")
+        search_surface["searchpanel"] = default_searchpanel
     out["search_surface"] = search_surface
 
     workflow_surface = _as_dict(out.get("workflow_surface"))
@@ -169,7 +174,7 @@ def apply_provider_merge(compiled_ast: Dict[str, Any], providers: List[Dict[str,
 
         search_surface = _as_dict(out.get("search_surface"))
         resolved_search = _as_dict(resolved.get("search_surface"))
-        for field in ("filters", "group_by", "fields"):
+        for field in ("filters", "group_by", "fields", "searchpanel"):
             if field in resolved_search and field in search_surface and search_surface.get(field) != resolved_search.get(field):
                 _record_conflict(_as_dict(out.get("meta")), layer="provider", field=f"search_surface.{field}", from_layer="policy")
         search_surface.update(resolved_search)
