@@ -2035,3 +2035,30 @@ Each entry must include:
 - `030`: post-normalization clean-state check completed
 - `030`: `git status --short` empty, baseline candidate empty, repo risk low
 - `030`: continuous iteration restored to a clean `PASS` continuation point
+## 2026-03-28 迭代锚点（ITER-2026-03-28-031）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `1ea6e3d`
+- Layer Target: `Platform Layer`
+- Module: `smart_core load_contract mainline entry context`
+- Reason: move transitional menu/action parsing out of `load_contract` handler into a reusable platform helper
+- `031`: added `addons/smart_core/core/load_contract_entry_context.py`
+- `031`: `load_contract` now delegates model inference and default view-mode inference to the shared helper
+- `031`: direct unit coverage added in `addons/smart_core/tests/test_load_contract_entry_context.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next entrypoint candidate remains `load_contract` or `runtime_fetch` mainline cleanup
+## 2026-03-28 迭代锚点（ITER-2026-03-28-032）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `1ea6e3d`
+- Layer Target: `Platform Layer`
+- Module: `smart_core load_contract view_type normalization`
+- Reason: move remaining request view-type normalization out of `load_contract` handler into the shared entry helper
+- `032`: `addons/smart_core/core/load_contract_entry_context.py` now normalizes requested and inferred `view_type`
+- `032`: direct unit coverage expanded to six checks in `addons/smart_core/tests/test_load_contract_entry_context.py`
+- stop state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - stop reason: `diff_too_large`
+  - code and acceptance are green; cumulative local delta exceeded the repo guard threshold
