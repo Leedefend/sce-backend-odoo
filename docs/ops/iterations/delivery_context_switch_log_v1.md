@@ -2435,3 +2435,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `075`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics
+## 2026-03-28 迭代锚点（ITER-2026-03-28-076）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `fab7b6c`
+- Layer Target: `common project wave-1`
+- Module: `smart_core scene delivery policy file helper`
+- Reason: continue module-level convergence on common scene delivery policy file-loading defaults while staying outside policy selection and scene filtering semantics
+- `076`: added `addons/smart_core/core/scene_delivery_policy_file_helper.py`
+- `076`: `scene_delivery_policy.py` now delegates policy file path resolution, cached payload loading, and default surface resolution to the shared helper
+- `076`: direct unit coverage added in `addons/smart_core/tests/test_scene_delivery_policy_file_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `076`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics
