@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-28-101
+title: Make page orchestration explicitly consume parser semantics
+type: governance_task
+status: pending
+priority: high
+
+goal: Extend page_contracts_builder so backend page orchestration explicitly consumes parser_contract, view_semantics, native_view, and semantic_page instead of staying layout-only.
+user_visible_outcome:
+  - page orchestration contracts now preserve parser semantics in page context, render hints, and orchestration metadata
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration contract consumption
+  module: smart_core page_contracts_builder
+  reason: After scene-ready consumption, the next architecture-correct step is making the shared page orchestration layer explicitly consume parser semantics before any frontend work.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-101.yaml
+    - python3 -m py_compile addons/smart_core/core/page_contract_parser_semantic_bridge.py addons/smart_core/core/page_contracts_builder.py addons/smart_core/tests/test_page_contract_parser_semantic_bridge.py addons/smart_core/tests/test_page_contracts_builder_semantics.py
+    - python3 addons/smart_core/tests/test_page_contract_parser_semantic_bridge.py
+    - python3 addons/smart_core/tests/test_page_contracts_builder_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-28-101.yaml addons/smart_core/core/page_contract_parser_semantic_bridge.py addons/smart_core/core/page_contracts_builder.py addons/smart_core/tests/test_page_contract_parser_semantic_bridge.py addons/smart_core/tests/test_page_contracts_builder_semantics.py
+
+depends_on:
+  - ITER-2026-03-28-100
+notes: "Batch-3 second implementation: shared page orchestration consumes parser semantics."

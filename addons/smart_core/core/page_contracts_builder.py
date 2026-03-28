@@ -5,6 +5,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import re
 from typing import Any, Dict
+from odoo.addons.smart_core.core.page_contract_parser_semantic_bridge import apply_page_contract_parser_semantic_bridge
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -1524,11 +1525,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             continue
         if isinstance(page.get("page_orchestration_v1"), dict):
             continue
-        page["page_orchestration_v1"] = _build_page_orchestration_v1(
+        page_orchestration = _build_page_orchestration_v1(
             str(key),
             page,
             role_code,
             role_source_code=role_source_code,
             profile_overrides=profile_overrides,
         )
+        page["page_orchestration_v1"] = apply_page_contract_parser_semantic_bridge(page_orchestration, safe_data)
     return payload
