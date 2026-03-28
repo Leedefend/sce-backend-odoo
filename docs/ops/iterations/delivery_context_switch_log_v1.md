@@ -2463,3 +2463,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `077`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics
+## 2026-03-28 迭代锚点（ITER-2026-03-28-078）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d0b63a0`
+- Layer Target: `common project wave-1`
+- Module: `smart_core scene delivery policy builtin helper`
+- Reason: continue module-level convergence on common scene delivery builtin policy defaults while staying outside policy selection and scene filtering semantics
+- `078`: added `addons/smart_core/core/scene_delivery_policy_builtin_helper.py`
+- `078`: `scene_delivery_policy.py` now delegates builtin allowlist/default-name hook resolution to the shared helper
+- `078`: direct unit coverage added in `addons/smart_core/tests/test_scene_delivery_policy_builtin_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `078`, then reassess whether remaining residue is still provider-config only; if not, end this cleanup wave and switch to a platform-capability batch

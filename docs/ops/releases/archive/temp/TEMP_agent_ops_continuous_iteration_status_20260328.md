@@ -757,3 +757,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `077`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics
+## Round: ITER-2026-03-28-078
+
+- `ITER-2026-03-28-078`: scene delivery builtin allowlist/default-name hook resolution moved into `addons/smart_core/core/scene_delivery_policy_builtin_helper.py`
+  - `scene_delivery_policy.py` no longer owns inline builtin allowlist/default-name hook resolution defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_scene_delivery_policy_builtin_helper.py`
+  - the slice remains inside common navigation/provider territory and does not move policy selection or scene filtering semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-078`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `078`, then reassess whether remaining residue is still provider-config only; if not, end this cleanup wave and switch to a platform-capability batch
