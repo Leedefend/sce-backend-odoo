@@ -951,3 +951,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `092`, then continue the remaining view-level semantics needed for complete base-view coverage
+## Round: ITER-2026-03-28-093
+
+- `ITER-2026-03-28-093`: additive normalized `view_semantics` were added for form outputs
+  - form is now aligned with tree, kanban, and search at the top-level semantic shape
+  - base view outputs now share both node-level and view-level semantic normalization
+  - direct form semantic coverage was extended to lock those top-level semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-093`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `093`, then treat batch-2 as a coherent parser-semantic milestone and choose the next subsystem-level integration step

@@ -181,6 +181,28 @@ class TestNativeViewFormParserSemantics(unittest.TestCase):
         self.assertEqual(chatter["semantic_role"], "form_chatter")
         self.assertEqual(chatter["semantic_meta"]["has_messages"], True)
 
+    def test_form_parser_outputs_view_level_semantics(self):
+        parser = form_module.FormViewParser.__new__(form_module.FormViewParser)
+        parser._parse_title_field = lambda arch: "name"
+        parser._parse_title_node = lambda arch: {"kind": "field", "name": "name"}
+        parser._parse_header_buttons = lambda arch: [{"kind": "action", "name": "action_confirm"}]
+        parser._parse_stat_buttons = lambda arch: [{"kind": "action", "name": "action_stats"}]
+        parser._parse_ribbon = lambda arch: {"kind": "ribbon", "title": "Archived"}
+        parser._parse_groups = lambda nodes: [{"kind": "group"}]
+        parser._parse_notebooks = lambda arch: [{"kind": "notebook"}]
+        parser._parse_chatter = lambda arch: {"kind": "chatter", "messages": "message_ids"}
+
+        class _Arch:
+            def xpath(self, expr):
+                return []
+
+        parser.get_view_info = lambda fallback_view_type="form": {"arch": _Arch()}
+        payload = parser.parse()
+        self.assertEqual(payload["view_semantics"]["kind"], "view_semantics")
+        self.assertEqual(payload["view_semantics"]["source_view"], "form")
+        self.assertEqual(payload["view_semantics"]["capability_flags"]["has_title"], True)
+        self.assertEqual(payload["view_semantics"]["semantic_meta"]["header_button_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
