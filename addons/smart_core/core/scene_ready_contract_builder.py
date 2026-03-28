@@ -38,6 +38,14 @@ def _as_list(value: Any) -> List[Any]:
     return list(value) if isinstance(value, list) else []
 
 
+def _fact_available(value: Any) -> bool:
+    if isinstance(value, dict):
+        if "available" in value:
+            return bool(value.get("available"))
+        return bool(value)
+    return bool(value)
+
+
 def _scene_key_matches(scene_key: str, *candidates: str) -> bool:
     normalized = _text(scene_key).lower()
     if not normalized:
@@ -185,7 +193,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
 
         fact_hits = row.get("base_fact_hits") if isinstance(row.get("base_fact_hits"), dict) else {}
         for key in ("search", "workflow", "validator", "actions"):
-            if bool(base_facts.get(key)):
+            if _fact_available(base_facts.get(key)):
                 fact_hits[key] = int(fact_hits.get(key) or 0) + 1
         row["base_fact_hits"] = fact_hits
 
