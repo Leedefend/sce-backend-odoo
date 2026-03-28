@@ -84,3 +84,28 @@ def build_searchpanel_node(*, name, string=None, select=None, icon=None):
         "select": select,
         "icon": icon,
     }
+
+
+def build_group_node(*, fields=None, sub_groups=None, attributes=None):
+    return {
+        "kind": "group",
+        "fields": fields if fields is not None else [],
+        "sub_groups": sub_groups if sub_groups is not None else [],
+        "attributes": attributes if attributes is not None else {},
+    }
+
+
+def build_page_node(*, title=None, groups=None, visible=True):
+    return {
+        "kind": "page",
+        "title": title,
+        "groups": groups if groups is not None else [],
+        "visible": visible,
+    }
+
+
+def build_notebook_node(*, pages=None):
+    return {
+        "kind": "notebook",
+        "pages": pages if pages is not None else [],
+    }

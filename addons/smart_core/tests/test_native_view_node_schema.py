@@ -47,6 +47,14 @@ class TestNativeViewNodeSchema(unittest.TestCase):
         self.assertEqual(filter_node["context"]["default"], True)
         self.assertEqual(group_node["group_by"], "stage_id")
 
+    def test_build_form_container_nodes_have_stable_kinds(self):
+        group_node = schema_module.build_group_node(fields=[{"name": "name"}])
+        page_node = schema_module.build_page_node(title="Details")
+        notebook_node = schema_module.build_notebook_node(pages=[page_node])
+        self.assertEqual(group_node["kind"], "group")
+        self.assertEqual(page_node["kind"], "page")
+        self.assertEqual(notebook_node["kind"], "notebook")
+
 
 if __name__ == "__main__":
     unittest.main()
