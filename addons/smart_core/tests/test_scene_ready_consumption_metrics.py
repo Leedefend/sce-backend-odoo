@@ -151,6 +151,44 @@ class TestSceneReadyConsumptionMetrics(unittest.TestCase):
         self.assertEqual(scene_bucket["base_fact_consumption_rate"]["fields"], 1.0)
         self.assertEqual(scene_bucket["base_fact_consumption_rate"]["permissions"], 0.0)
 
+    def test_metrics_count_meaningful_permission_surface(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "permission_surface": {
+                        "visible": True,
+                        "allowed": False,
+                        "reason_code": "missing_capability",
+                        "required_capabilities": ["project.approve"],
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["permission"], 1)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["permission"], 1.0)
+
+    def test_metrics_do_not_count_default_permission_surface(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "permission_surface": {
+                        "visible": True,
+                        "allowed": True,
+                        "reason_code": "",
+                        "required_capabilities": [],
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["surface_nonempty_hits"]["permission"], 0)
+        self.assertEqual(scene_bucket["surface_nonempty_rate"]["permission"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

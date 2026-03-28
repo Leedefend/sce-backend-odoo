@@ -46,6 +46,21 @@ def _fact_available(value: Any) -> bool:
     return bool(value)
 
 
+def _permission_surface_nonempty(value: Any) -> bool:
+    payload = _as_dict(value)
+    if not payload:
+        return False
+    if _as_list(payload.get("required_capabilities")):
+        return True
+    if _text(payload.get("reason_code")):
+        return True
+    if "visible" in payload and not bool(payload.get("visible", True)):
+        return True
+    if "allowed" in payload and not bool(payload.get("allowed", True)):
+        return True
+    return False
+
+
 def _scene_key_matches(scene_key: str, *candidates: str) -> bool:
     normalized = _text(scene_key).lower()
     if not normalized:
@@ -186,6 +201,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
                 },
                 "surface_nonempty_hits": {
                     "search": 0,
+                    "permission": 0,
                     "workflow": 0,
                     "validation": 0,
                     "action_surface": 0,
@@ -202,6 +218,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
 
         surface_hits = row.get("surface_nonempty_hits") if isinstance(row.get("surface_nonempty_hits"), dict) else {}
         search_surface = entry.get("search_surface") if isinstance(entry.get("search_surface"), dict) else {}
+        permission_surface = entry.get("permission_surface") if isinstance(entry.get("permission_surface"), dict) else {}
         workflow_surface = entry.get("workflow_surface") if isinstance(entry.get("workflow_surface"), dict) else {}
         validation_surface = entry.get("validation_surface") if isinstance(entry.get("validation_surface"), dict) else {}
         action_surface = entry.get("action_surface") if isinstance(entry.get("action_surface"), dict) else {}
@@ -216,6 +233,8 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
             or search_surface.get("searchpanel")
         ):
             surface_hits["search"] = int(surface_hits.get("search") or 0) + 1
+        if _permission_surface_nonempty(permission_surface):
+            surface_hits["permission"] = int(surface_hits.get("permission") or 0) + 1
         if bool(workflow_surface.get("states") or workflow_surface.get("transitions") or workflow_surface.get("state_field")):
             surface_hits["workflow"] = int(surface_hits.get("workflow") or 0) + 1
         if bool(validation_surface.get("required_fields") or validation_surface.get("field_rules")):
@@ -254,6 +273,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
             "surface_nonempty_hits": surface_hits,
             "surface_nonempty_rate": {
                 "search": _ratio(int(surface_hits.get("search") or 0)),
+                "permission": _ratio(int(surface_hits.get("permission") or 0)),
                 "workflow": _ratio(int(surface_hits.get("workflow") or 0)),
                 "validation": _ratio(int(surface_hits.get("validation") or 0)),
                 "action_surface": _ratio(int(surface_hits.get("action_surface") or 0)),
