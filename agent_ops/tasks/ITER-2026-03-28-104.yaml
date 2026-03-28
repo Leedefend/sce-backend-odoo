@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-28-104
+title: Make released scene contracts explicitly consume parser semantics
+type: governance_task
+status: pending
+priority: high
+
+goal: Extend scene_contract_builder so released scene contracts explicitly consume parser_contract, view_semantics, native_view, and semantic_page instead of staying route/layout-only.
+user_visible_outcome:
+  - released scene contracts now preserve parser semantics in page surface and governance semantic surface
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration contract consumption
+  module: smart_core scene_contract_builder
+  reason: After runtime page aggregation, released scene contracts are the next backend orchestration consumer that must explicitly carry parser semantics into scene-level contracts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-104.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_contract_parser_semantic_bridge.py addons/smart_core/core/scene_contract_builder.py addons/smart_core/tests/test_scene_contract_parser_semantic_bridge.py addons/smart_core/tests/test_scene_contract_builder_semantics.py
+    - python3 addons/smart_core/tests/test_scene_contract_parser_semantic_bridge.py
+    - python3 addons/smart_core/tests/test_scene_contract_builder_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-28-104.yaml addons/smart_core/core/scene_contract_parser_semantic_bridge.py addons/smart_core/core/scene_contract_builder.py addons/smart_core/tests/test_scene_contract_parser_semantic_bridge.py addons/smart_core/tests/test_scene_contract_builder_semantics.py
+
+depends_on:
+  - ITER-2026-03-28-103
+notes: "Batch-3 fifth implementation: released scene contracts consume parser semantics."
