@@ -64,6 +64,14 @@ class _FieldNode:
         return self._attrs.get(key, default)
 
 
+class _ButtonNode(_FieldNode):
+    pass
+
+
+class _WidgetNode(_FieldNode):
+    pass
+
+
 class _GroupNode:
     def __init__(self):
         self._field = _FieldNode(name="name", string="Name")
@@ -105,12 +113,26 @@ class _NotebookNode:
 
 
 class TestNativeViewFormParserSemantics(unittest.TestCase):
+    def test_title_and_field_nodes_use_semantic_metadata(self):
+        parser = form_module.FormViewParser.__new__(form_module.FormViewParser)
+
+        class _Arch:
+            def xpath(self, expr):
+                if expr == ".//div[contains(@class, 'oe_title')]//field":
+                    return [_FieldNode(name="name", string="Name")]
+                return []
+
+        title_node = parser._parse_title_node(_Arch())
+        self.assertEqual(title_node["semantic_role"], "form_title_field")
+        self.assertEqual(title_node["semantic_meta"]["is_title"], True)
+
     def test_group_node_uses_stable_shape(self):
         parser = form_module.FormViewParser.__new__(form_module.FormViewParser)
         group = parser._parse_group_recursive(_GroupNode())
         self.assertEqual(group["kind"], "group")
         self.assertEqual(group["fields"][0]["name"], "name")
         self.assertIn("attributes", group)
+        self.assertEqual(group["semantic_role"], "form_group")
 
     def test_notebook_page_nodes_use_stable_shape(self):
         parser = form_module.FormViewParser.__new__(form_module.FormViewParser)
@@ -123,8 +145,41 @@ class TestNativeViewFormParserSemantics(unittest.TestCase):
 
         notebooks = parser._parse_notebooks(_Arch())
         self.assertEqual(notebooks[0]["kind"], "notebook")
+        self.assertEqual(notebooks[0]["semantic_role"], "form_notebook")
         self.assertEqual(notebooks[0]["pages"][0]["kind"], "page")
+        self.assertEqual(notebooks[0]["pages"][0]["semantic_role"], "form_page")
         self.assertEqual(notebooks[0]["pages"][0]["title"], "Details")
+
+    def test_button_ribbon_and_chatter_nodes_use_semantic_metadata(self):
+        parser = form_module.FormViewParser.__new__(form_module.FormViewParser)
+        button = parser._parse_button(_ButtonNode(name="action_confirm", type="object", context="{}", **{"data-hotkey": "c"}))
+        self.assertEqual(button["semantic_role"], "form_button")
+        self.assertEqual(button["semantic_meta"]["has_hotkey"], True)
+
+        class _RibbonArch:
+            def xpath(self, expr):
+                if expr == ".//widget[@name='web_ribbon']":
+                    return [_WidgetNode(title="Archived", bg_color="bg-danger")]
+                return []
+
+        ribbon = parser._parse_ribbon(_RibbonArch())
+        self.assertEqual(ribbon["kind"], "ribbon")
+        self.assertEqual(ribbon["semantic_role"], "form_ribbon")
+
+        class _ChatterArch:
+            def xpath(self, expr):
+                if expr == ".//div[contains(@class,'oe_chatter')]//field":
+                    return [
+                        _FieldNode(name="message_follower_ids"),
+                        _FieldNode(name="activity_ids"),
+                        _FieldNode(name="message_ids"),
+                    ]
+                return []
+
+        chatter = parser._parse_chatter(_ChatterArch())
+        self.assertEqual(chatter["kind"], "chatter")
+        self.assertEqual(chatter["semantic_role"], "form_chatter")
+        self.assertEqual(chatter["semantic_meta"]["has_messages"], True)
 
 
 if __name__ == "__main__":

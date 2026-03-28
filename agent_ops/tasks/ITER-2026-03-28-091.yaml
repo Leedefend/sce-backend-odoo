@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-28-091
+title: Enrich form base semantic nodes
+type: governance_task
+status: pending
+priority: high
+
+goal: Add structured semantic nodes for form title, buttons, ribbon, chatter, and form field/container metadata while preserving the current parser contract fields.
+user_visible_outcome:
+  - form parser now exposes additive structured semantic nodes for its base elements
+
+scope:
+  allowed_paths:
+    - addons/smart_core/view/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform kernel convergence batch-2
+  module: smart_core form semantic nodes
+  reason: Continue parser semantic completion by adding additive structured semantic nodes for the base form view building blocks.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-091.yaml
+    - python3 -m py_compile addons/smart_core/view/native_view_node_schema.py addons/smart_core/view/form_parser.py addons/smart_core/tests/test_native_view_form_parser_semantics.py addons/smart_core/tests/test_native_view_node_schema.py
+    - python3 addons/smart_core/tests/test_native_view_node_schema.py
+    - python3 addons/smart_core/tests/test_native_view_form_parser_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-28-091.yaml addons/smart_core/view/native_view_node_schema.py addons/smart_core/view/form_parser.py addons/smart_core/tests/test_native_view_form_parser_semantics.py addons/smart_core/tests/test_native_view_node_schema.py
+
+depends_on:
+  - ITER-2026-03-28-090
+notes: "Batch-2 next wave: additive structured semantic nodes for form base elements."

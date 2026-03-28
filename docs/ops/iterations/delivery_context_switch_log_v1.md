@@ -2645,3 +2645,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `090`, then continue with remaining normalized metadata for form leaves or tree/search advanced view-level semantics
+## 2026-03-28 迭代锚点（ITER-2026-03-28-091）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `2db103e`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core form semantic nodes`
+- Reason: continue parser semantic completion by adding additive structured semantic nodes for the base form view building blocks
+- `091`: `native_view_node_schema.py` now includes shared builders for `ribbon` and `chatter`, and shared container builders now carry semantic metadata
+- `091`: `form_parser.py` now emits additive `titleNode` plus structured semantic metadata for form fields, buttons, ribbon, chatter, groups, pages, and notebooks
+- `091`: direct form semantic coverage was extended in `addons/smart_core/tests/test_native_view_form_parser_semantics.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `091`, then continue with remaining advanced semantics for full base-view coverage
