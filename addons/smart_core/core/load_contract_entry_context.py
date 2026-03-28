@@ -120,3 +120,12 @@ def normalize_requested_include_parts(
 
     resolved = {part.strip() for part in text.split(",") if part.strip()}
     return resolved & allowed
+
+
+def normalize_request_flags(payload: dict[str, Any] | None) -> dict[str, Any]:
+    row = payload if isinstance(payload, dict) else {}
+    return {
+        "force_refresh": str(row.get("force_refresh", "")).lower() in ("1", "true", "yes"),
+        "client_version": str(row.get("version") or "").strip(),
+        "if_none_match": str(row.get("if_none_match") or "").strip().strip('"'),
+    }
