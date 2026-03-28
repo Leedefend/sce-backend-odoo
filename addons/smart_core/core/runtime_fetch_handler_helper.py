@@ -59,3 +59,19 @@ def resolve_runtime_fetch_collection_keys(params: dict[str, Any] | None) -> list
     row = params if isinstance(params, dict) else {}
     raw_keys = row.get("keys")
     return raw_keys if isinstance(raw_keys, list) else []
+
+
+def build_runtime_fetch_page_payload(page_key: str, page_contract: Any) -> dict[str, Any]:
+    return {
+        "page_key": str(page_key or "").strip().lower(),
+        "page_contract": page_contract,
+    }
+
+
+def build_runtime_fetch_collections_payload(collections: dict[str, Any] | None) -> dict[str, Any]:
+    rows = collections if isinstance(collections, dict) else {}
+    return {
+        "collections": rows,
+        "keys": sorted(list(rows.keys())),
+        "count": len(rows),
+    }

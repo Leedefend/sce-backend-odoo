@@ -7,6 +7,8 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.runtime_fetch_context_builder import build_runtime_fetch_context
 from odoo.addons.smart_core.core.runtime_fetch_handler_helper import (
     build_runtime_fetch_error_response,
+    build_runtime_fetch_collections_payload,
+    build_runtime_fetch_page_payload,
     build_runtime_fetch_success_response,
     parse_runtime_fetch_params,
     resolve_runtime_fetch_collection_keys,
@@ -50,10 +52,7 @@ class PageContractHandler(BaseIntentHandler):
         return build_runtime_fetch_success_response(
             intent=self.INTENT_TYPE,
             context=self.context,
-            data={
-                "page_key": page_key,
-                "page_contract": contract,
-            },
+            data=build_runtime_fetch_page_payload(page_key, contract),
         )
 
 
@@ -72,9 +71,5 @@ class WorkspaceCollectionsHandler(BaseIntentHandler):
         return build_runtime_fetch_success_response(
             intent=self.INTENT_TYPE,
             context=self.context,
-            data={
-                "collections": collections,
-                "keys": sorted(list(collections.keys())),
-                "count": len(collections),
-            },
+            data=build_runtime_fetch_collections_payload(collections),
         )
