@@ -26,6 +26,14 @@ def _project_group_by(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
+def _search_mode(search_view: Dict[str, Any]) -> str:
+    if _as_list(search_view.get("searchpanel")):
+        return "faceted"
+    if _as_list(search_view.get("filters")) or _as_list(search_view.get("group_bys")):
+        return "filter_bar"
+    return ""
+
+
 def apply_scene_ready_search_semantic_bridge(
     payload: Dict[str, Any] | None,
 ) -> Dict[str, Any]:
@@ -50,6 +58,9 @@ def apply_scene_ready_search_semantic_bridge(
         search_surface["group_by"] = _project_group_by(_as_list(search_view.get("group_bys")))
     if not _as_list(search_surface.get("searchpanel")):
         search_surface["searchpanel"] = _as_list(search_view.get("searchpanel"))
+    mode = _search_mode(search_view)
+    if mode:
+        search_surface["mode"] = mode
     if search_surface:
         out["search_surface"] = search_surface
     return out
