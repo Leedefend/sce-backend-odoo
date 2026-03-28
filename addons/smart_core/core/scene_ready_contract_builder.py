@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 from odoo.addons.smart_core.core.scene_dsl_compiler import scene_compile
 from odoo.addons.smart_core.core.ui_base_contract_adapter import adapt_ui_base_contract
+from odoo.addons.smart_core.core.scene_ready_parser_semantic_bridge import apply_scene_ready_parser_semantic_bridge
 
 
 def _text(value: Any) -> str:
@@ -690,6 +691,7 @@ def _scene_ready_entry(
     if orchestrator_input:
         meta_payload["ui_base_orchestrator_input"] = orchestrator_input
     compiled["meta"] = meta_payload
+    compiled = apply_scene_ready_parser_semantic_bridge(compiled, ui_base_contract)
     compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
     return compiled
 
