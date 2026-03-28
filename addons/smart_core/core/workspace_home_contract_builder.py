@@ -31,6 +31,12 @@ from .workspace_home_capability_helper import (
     is_urgent_capability,
     metric_level,
 )
+from .workspace_home_source_routing_helper import (
+    is_risk_semantic_action,
+    parse_deadline,
+    provider_token_set,
+    route_scene_by_source,
+)
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -405,28 +411,12 @@ def _provider_token_set(
     defaults: Iterable[str],
     keyword_overrides: Dict[str, Any] | None = None,
 ) -> Tuple[str, ...]:
-    base = tuple(_to_text(item).lower() for item in (defaults or []) if _to_text(item))
-    override_bucket = keyword_overrides.get("token_sets") if isinstance(keyword_overrides, dict) else {}
-    if isinstance(override_bucket, dict):
-        override_tokens = override_bucket.get(hook_name)
-        if isinstance(override_tokens, (list, tuple, set)):
-            normalized_override = tuple(_to_text(item).lower() for item in override_tokens if _to_text(item))
-            if normalized_override:
-                return normalized_override
-    provider = _load_data_provider()
-    if provider is None:
-        return base
-    fn = getattr(provider, hook_name, None)
-    if not callable(fn):
-        return base
-    try:
-        payload = fn()
-    except Exception:
-        payload = None
-    if not isinstance(payload, (list, tuple, set)):
-        return base
-    normalized = tuple(_to_text(item).lower() for item in payload if _to_text(item))
-    return normalized or base
+    return provider_token_set(
+        hook_name,
+        defaults,
+        keyword_overrides=keyword_overrides,
+        provider=_load_data_provider(),
+    )
 
 
 def _is_risk_semantic_action(
@@ -435,87 +425,26 @@ def _is_risk_semantic_action(
     action: Dict[str, Any],
     keyword_overrides: Dict[str, Any] | None = None,
 ) -> bool:
-    source_text = _to_text(source_key).lower()
-    status_text = _to_text(action.get("status") or row.get("status") or row.get("state") or row.get("severity") or row.get("level")).lower()
-    title_text = _to_text(action.get("title") or row.get("title") or row.get("name") or row.get("label")).lower()
-    desc_text = _to_text(action.get("description") or row.get("description") or row.get("summary")).lower()
-    scene_text = _to_text(action.get("scene_key") or row.get("scene_key") or row.get("scene")).lower()
-    route_text = _to_text(action.get("route") or row.get("route")).lower()
-    merged = " ".join([source_text, status_text, title_text, desc_text, scene_text, route_text])
-
-    risk_tokens = _provider_token_set("build_risk_semantic_tokens", (
-        "risk",
-        "alert",
-        "warning",
-        "exception",
-        "overdue",
-        "blocked",
-        "critical",
-        "urgent",
-        "payment",
-        "cost",
-        "contract",
-        "delay",
-        "风险",
-        "预警",
-        "异常",
-        "逾期",
-        "阻塞",
-        "严重",
-        "紧急",
-        "付款",
-        "成本",
-        "合同",
-        "延期",
-    ), keyword_overrides=keyword_overrides)
-    return any(token in merged for token in risk_tokens)
+    return is_risk_semantic_action(
+        source_key,
+        row,
+        action,
+        keyword_overrides=keyword_overrides,
+        provider=_load_data_provider(),
+    )
 
 
 def _route_scene_by_source(source_key: str, keyword_overrides: Dict[str, Any] | None = None) -> str:
-    text = _to_text(source_key).lower()
-    override_routes = keyword_overrides.get("source_scene_routes") if isinstance(keyword_overrides, dict) else {}
-    if isinstance(override_routes, dict):
-        for token, target in override_routes.items():
-            token_text = _to_text(token).lower()
-            target_text = _to_text(target)
-            if not token_text or not target_text:
-                continue
-            if token_text in text:
-                return _workspace_scene(target_text)
-    provider = _load_data_provider()
-    if provider is not None:
-        fn = getattr(provider, "resolve_scene_by_source", None)
-        if callable(fn):
-            try:
-                resolved = str(fn(source_key) or "").strip()
-                if resolved:
-                    return resolved
-            except Exception:
-                pass
-    if "risk" in text or "风险" in text:
-        return _workspace_scene("risk_center")
-    if "task" in text or "任务" in text:
-        return _workspace_scene("task_center")
-    if "cost" in text or "boq" in text or "成本" in text:
-        return _workspace_scene("cost_center")
-    if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
-        return _workspace_scene("default")
-    if "project" in text or "项目" in text:
-        return _workspace_scene("project_list")
-    return _workspace_scene("default")
+    return route_scene_by_source(
+        source_key,
+        workspace_scene_resolver=_workspace_scene,
+        keyword_overrides=keyword_overrides,
+        provider=_load_data_provider(),
+    )
 
 
 def _parse_deadline(value: Any) -> datetime | None:
-    text = _to_text(value)
-    if not text:
-        return None
-    normalized = text.replace("Z", "+00:00")
-    for candidate in (normalized, normalized.split(" ")[0]):
-        try:
-            return datetime.fromisoformat(candidate)
-        except Exception:
-            continue
-    return None
+    return parse_deadline(value)
 
 
 def _role_ranking_profile(role_code: str) -> Dict[str, int]:
