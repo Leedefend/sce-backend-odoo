@@ -50,6 +50,56 @@ def build_zone_from_tag(tag: str) -> Dict[str, str]:
     return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
 
 
+def build_zone_for_section(page_key: str, section_key: str, tag: str) -> Dict[str, str]:
+    page = _to_text(page_key).lower()
+    section = _to_text(section_key).lower()
+    if page == "my_work":
+        if section == "hero":
+            return {"key": "hero", "title": "", "description": "", "zone_type": "hero", "display_mode": "stack"}
+        if section == "todo_focus":
+            return {
+                "key": "primary",
+                "title": "待处理事项",
+                "description": "优先处理需要你推进的任务和执行事项。",
+                "zone_type": "primary",
+                "display_mode": "stack",
+            }
+        if section == "retry_panel":
+            return {
+                "key": "supporting",
+                "title": "失败处理",
+                "description": "仅在批量处理失败时显示，便于重试和定位问题。",
+                "zone_type": "supporting",
+                "display_mode": "accordion",
+            }
+        if section == "list_main":
+            return {
+                "key": "secondary",
+                "title": "事项清单",
+                "description": "按筛选条件查看全部待处理任务和执行事项。",
+                "zone_type": "secondary",
+                "display_mode": "stack",
+            }
+    payload = build_zone_from_tag(tag)
+    payload["description"] = ""
+    return payload
+
+
+def build_block_title(page_key: str, section_key: str) -> str:
+    page = _to_text(page_key).lower()
+    section = _to_text(section_key).lower()
+    if page == "my_work":
+        mapping = {
+            "hero": "",
+            "todo_focus": "待处理事项",
+            "retry_panel": "失败处理",
+            "list_main": "事项清单",
+        }
+        if section in mapping:
+            return mapping[section]
+    return _to_text(section_key)
+
+
 def build_semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[str, Any]:
     key = _to_text(section_key).lower()
     page = _to_text(page_key).lower()
@@ -92,6 +142,17 @@ def build_action_templates(section_key: str) -> list[Dict[str, Any]]:
     return []
 
 
+def build_action_templates_for_page(page_key: str, section_key: str) -> list[Dict[str, Any]]:
+    page = _to_text(page_key).lower()
+    section = _to_text(section_key).lower()
+    if page == "my_work":
+        if section == "todo_focus":
+            return [{"key": "open_list", "label": "查看全部事项", "intent": "ui.contract"}]
+        if section in {"hero", "retry_panel", "list_main"}:
+            return []
+    return build_action_templates(section_key)
+
+
 def build_page_type(page_key: str) -> str:
     key = _to_text(page_key).lower()
     if key in {"home", "workbench"}:
@@ -126,11 +187,7 @@ def build_default_page_actions(page_key: str) -> list[Dict[str, Any]]:
             {"key": "open_usage_analytics", "label": "使用分析", "intent": "ui.contract"},
         ]
     if key == "my_work":
-        return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
-            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
-            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
-        ]
+        return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]
     if key == "workbench":
         return [
             {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},

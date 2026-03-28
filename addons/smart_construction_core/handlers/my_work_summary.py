@@ -21,6 +21,9 @@ from odoo.addons.smart_core.utils.reason_codes import (
 )
 from odoo.addons.smart_construction_core.services.my_work_aggregate_service import WorkItemAggregateService
 from odoo.exceptions import AccessError
+from odoo.addons.smart_construction_core.services.project_execution_item_projection_service import (
+    ProjectExecutionItemProjectionService,
+)
 
 
 class MyWorkSummaryHandler(BaseIntentHandler):
@@ -39,6 +42,17 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     STATUS_EMPTY = "EMPTY"
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
     SORT_FIELDS = WorkItemAggregateService.SORT_FIELDS
+    SOURCE_LABELS = {
+        "mail.activity": "待办提醒",
+        "tier.review": "审批复核",
+        "sc.workflow.workitem": "流程待办",
+        "project.task": "项目任务",
+        "project.risk": "项目风险",
+        "project.project": "负责项目",
+        "construction.contract": "合同执行事项",
+        "payment.request": "付款执行事项",
+        "sc.settlement.order": "结算执行事项",
+    }
 
     def _get_model(self, model_name, *, sudo=False):
         try:
@@ -78,6 +92,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             "project.project": "projects.list",
             "project.task": "projects.list",
             "payment.request": "finance.payment_requests",
+            "construction.contract": "contracts.list",
+            "sc.settlement.order": "settlement",
             "sc.workflow.instance": "projects.list",
             "sale.order": "contracts.list",
             "account.move": "finance.vouchers.list",
@@ -134,7 +150,44 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             if menu_id > 0:
                 target["menu_id"] = menu_id
             row["target"] = target
+            row.setdefault("source_label", self._source_label(row))
+            row.setdefault("project_name", self._row_project_name(model, record_id, row))
+            row.setdefault("action_summary", self._action_summary(row))
         return attached
+
+    def _source_label(self, row):
+        source = str(row.get("source") or "").strip()
+        model = str(row.get("model") or "").strip()
+        return self.SOURCE_LABELS.get(source) or self.SOURCE_LABELS.get(model) or source or model or "执行事项"
+
+    def _row_project_name(self, model_name, record_id, row):
+        existing = str(row.get("project_name") or "").strip()
+        if existing:
+            return existing
+        model = str(model_name or "").strip()
+        rid = int(record_id or 0)
+        if not model or not rid:
+            return ""
+        Model = self._get_model(model, sudo=True)
+        if Model is None:
+            return ""
+        try:
+            rec = Model.browse(rid).exists()
+            if not rec:
+                return ""
+            project = getattr(rec, "project_id", False)
+            return str(getattr(project, "display_name", "") or getattr(project, "name", "") or "").strip()
+        except Exception:
+            return ""
+
+    def _action_summary(self, row):
+        label = str(row.get("action_label") or "").strip()
+        if label:
+            return label
+        reason = str(row.get("reason_code") or "").strip()
+        if reason:
+            return reason
+        return "进入处理"
 
     def _coerce_record_id(self, raw):
         value = raw
@@ -411,6 +464,14 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             return []
         return self._attach_targets(rows)
 
+    def _load_project_execution_items(self, user, limit):
+        try:
+            service = ProjectExecutionItemProjectionService(self.env)
+            rows = service.user_items(user, limit=limit)
+        except Exception:
+            rows = []
+        return self._attach_targets(rows)
+
     def _project_risk_domain_for_user(self, user):
         Project = self._get_model("project.project", sudo=True)
         if Project is None:
@@ -590,12 +651,20 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             self._task_domain_for_user(user) or [("id", "=", -1)],
             ["id"],
         )
+        projected_execution_count = len(self._load_project_execution_items(user, limit_each))
         risk_todo_count = self._safe_count(
             "project.project",
             self._project_risk_domain_for_user(user) or [("id", "=", -1)],
             ["health_state"],
         )
-        todo_count = int(mail_todo_count + tier_review_count + workflow_todo_count + task_todo_count + risk_todo_count)
+        todo_count = int(
+            mail_todo_count
+            + tier_review_count
+            + workflow_todo_count
+            + task_todo_count
+            + projected_execution_count
+            + risk_todo_count
+        )
         project_responsible_domain = self._project_responsible_domain(user)
         responsible_count = self._safe_count(
             "project.project",
@@ -610,6 +679,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "todo", self._load_tier_review_items(user, limit_each))
         self._append_items(items, "todo", self._load_workflow_todo_items(user, limit_each))
         self._append_items(items, "todo", self._load_task_items(user, limit_each))
+        self._append_items(items, "todo", self._load_project_execution_items(user, limit_each))
         self._append_items(items, "todo", self._load_project_risk_items(user, limit_each))
         self._append_items(items, "owned", self._load_owned_items(user, limit_each))
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
@@ -642,6 +712,9 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             "sc.workflow.workitem",
             "project.task",
             "project.project",
+            "construction.contract",
+            "payment.request",
+            "sc.settlement.order",
             "mail.message",
             "mail.followers",
         )

@@ -311,6 +311,19 @@ def _zone_from_tag(tag: str) -> Dict[str, str]:
     return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
 
 
+def _zone_for_section(page_key: str, section_key: str, tag: str) -> Dict[str, str]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_zone_for_section", None)
+        if callable(fn):
+            payload = fn(page_key, section_key, tag)
+            if isinstance(payload, dict) and payload:
+                return payload
+    payload = _zone_from_tag(tag)
+    payload["description"] = ""
+    return payload
+
+
 def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[str, Any]:
     provider = _load_data_provider()
     if provider:
@@ -365,6 +378,28 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
     if any(token in key for token in ("table", "list", "records")):
         return [{"key": "open_list", "label": "查看明细", "intent": "ui.contract"}]
     return []
+
+
+def _action_templates_for_page(page_key: str, section_key: str) -> list[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_action_templates_for_page", None)
+        if callable(fn):
+            payload = fn(page_key, section_key)
+            if isinstance(payload, list):
+                return payload
+    return _action_templates(section_key)
+
+
+def _block_title(page_key: str, section_key: str) -> str:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_block_title", None)
+        if callable(fn):
+            value = str(fn(page_key, section_key) or "").strip()
+            if value:
+                return value
+    return str(section_key or "").strip()
 
 
 def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
@@ -426,7 +461,7 @@ def _default_page_actions(page_key: str, profile_overrides: Dict[str, Any] | Non
         fn = getattr(provider, "build_default_page_actions", None)
         if callable(fn):
             payload = fn(page_key)
-            if isinstance(payload, list) and payload:
+            if isinstance(payload, list):
                 return payload
     key = str(page_key or "").strip().lower()
     if key == "home":
@@ -496,14 +531,14 @@ def _build_page_orchestration_v1(
         enabled = bool(section.get("enabled") is True)
         order_raw = section.get("order")
         order = int(order_raw) if isinstance(order_raw, int) and order_raw > 0 else idx + 1
-        zone_cfg = _zone_from_tag(tag)
+        zone_cfg = _zone_for_section(page_key, section_key, tag)
         zone_key = zone_cfg["key"]
         zone = zone_buckets.get(zone_key)
         if zone is None:
             zone = {
                 "key": zone_key,
-                "title": zone_cfg["title"],
-                "description": f"{page_key}::{zone_key}",
+                "title": zone_cfg.get("title", ""),
+                "description": zone_cfg.get("description", ""),
                 "zone_type": zone_cfg["zone_type"],
                 "display_mode": zone_cfg["display_mode"],
                 "priority": 100 - (len(zone_buckets) * 10),
@@ -519,7 +554,7 @@ def _build_page_orchestration_v1(
             {
                 "key": f"{page_key}.{section_key}",
                 "block_type": semantic["block_type"],
-                "title": section_key,
+                "title": _block_title(page_key, section_key),
                 "priority": max(1, 100 - order),
                 "importance": semantic["importance"],
                 "tone": semantic["tone"],
@@ -530,7 +565,7 @@ def _build_page_orchestration_v1(
                 "refreshable": True,
                 "collapsible": bool(tag == "details"),
                 "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                "actions": _action_templates(section_key),
+                "actions": _action_templates_for_page(page_key, section_key),
                 "payload": {"tag": tag, "enabled": enabled, "open": bool(section.get("open") is True)},
             }
         )
