@@ -2337,3 +2337,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `068` and then another sibling defaults/config slice only if it remains pure
+## 2026-03-28 迭代锚点（ITER-2026-03-28-069）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `4059d6f`
+- Layer Target: `common project wave-1`
+- Module: `smart_core page orchestration data-source defaults helper`
+- Reason: finish extracting pure data-source defaults from the page orchestration provider
+- `069`: added `addons/smart_core/core/page_orchestration_data_source_defaults.py`
+- `069`: `page_orchestration_data_provider.py` now delegates section data-source key generation, base data sources, and section data-source defaults to the shared helper
+- `069`: direct unit coverage added in `addons/smart_core/tests/test_page_orchestration_data_source_defaults.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `069` and then a switch away from payload-adjacent residue unless a clearly pure helper remains
