@@ -8,6 +8,7 @@ from ..core.load_contract_entry_context import (
     normalize_requested_view_types,
     resolve_model_from_entry_context,
 )
+from ..core.native_view_contract_projection import inject_primary_view_projection
 from ..app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from ..utils.extension_hooks import call_extension_hook_first
 from odoo import api, SUPERUSER_ID
@@ -784,6 +785,8 @@ class LoadContractHandler(BaseIntentHandler):
         native_view = data.get("native_view")
         if isinstance(native_view, dict):
             native_view["render_policy"] = capability_profile.get("render_policy")
+
+        inject_primary_view_projection(data, requested_view_type=(head.get("view_type") if isinstance(head, dict) else None))
 
     def _build_view_capability_profile(
         self,
