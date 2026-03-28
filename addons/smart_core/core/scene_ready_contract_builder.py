@@ -5,6 +5,9 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any, Dict, List
 from odoo.addons.smart_core.core.scene_dsl_compiler import scene_compile
+from odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge import (
+    apply_scene_ready_semantic_orchestration_bridge,
+)
 from odoo.addons.smart_core.core.ui_base_contract_adapter import adapt_ui_base_contract
 from odoo.addons.smart_core.core.scene_ready_entry_semantic_bridge import apply_scene_ready_entry_semantic_bridge
 from odoo.addons.smart_core.core.scene_ready_parser_semantic_bridge import apply_scene_ready_parser_semantic_bridge
@@ -694,6 +697,7 @@ def _scene_ready_entry(
     compiled["meta"] = meta_payload
     compiled = apply_scene_ready_parser_semantic_bridge(compiled, ui_base_contract)
     compiled = apply_scene_ready_entry_semantic_bridge(compiled)
+    compiled = apply_scene_ready_semantic_orchestration_bridge(compiled)
     compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
     return compiled
 

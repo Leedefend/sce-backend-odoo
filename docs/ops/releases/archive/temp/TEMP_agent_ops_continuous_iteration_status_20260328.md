@@ -1072,3 +1072,30 @@
 - effective continuation classification: `PASS_WITH_RISK`
 - repo risk: `high` via `diff_too_large`
 - next governed step is submit `109` to restore low-risk continuation before advancing to the next backend runtime/scene consumer
+## Round: ITER-2026-03-29-110
+
+- `ITER-2026-03-29-110`: scene-ready orchestration now consumes parser semantics for real decisions
+  - `scene_ready_semantic_orchestration_bridge.py` was added as the canonical semantic-driven orchestration helper
+  - `scene_ready_contract_builder.py` now derives `view_modes` and `action_surface.selection_mode` from `parser_contract / view_semantics / semantic_page` instead of relying only on `layout.kind`
+  - direct consumption coverage was added in `addons/smart_core/tests/test_scene_ready_semantic_orchestration_bridge.py` and `addons/smart_core/tests/test_scene_ready_contract_builder_semantic_consumption.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-110`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is continue semantic-driven orchestration consumption in `page_contracts_builder`
+## Round: ITER-2026-03-29-111
+
+- `ITER-2026-03-29-111`: page orchestration now consumes parser semantics for page typing and layout strategy
+  - `page_contract_semantic_orchestration_bridge.py` was added as the canonical page typing projection helper
+  - `page_contracts_builder.py` now derives `page.page_type`, `page.layout_mode`, `page.priority_model`, and `render_hints.semantic_page_type` from parser semantics instead of only from page-key heuristics
+  - direct consumption coverage was added in `addons/smart_core/tests/test_page_contract_semantic_orchestration_bridge.py` and `addons/smart_core/tests/test_page_contracts_builder_semantic_consumption.py`
+  - this round verified cleanly but was classified `PASS_WITH_RISK` because repo-level diff size crossed the current guard threshold
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-111`
+- effective continuation classification: `PASS_WITH_RISK`
+- repo risk: `high` via `diff_too_large`
+- next governed step is submit `110/111` together, then continue the semantic-driven backend orchestration chain

@@ -88,6 +88,8 @@ class TestSceneRuntimeContractChain(TransactionCase):
         self.assertTrue((row.get("permission_surface") or {}).get("allowed"))
         self.assertTrue((row.get("action_surface") or {}).get("counts"))
         self.assertTrue(((row.get("meta") or {}).get("ui_base_orchestrator_input") or {}).get("view_fact"))
+        self.assertEqual(((row.get("view_modes") or [])[0] or {}).get("key"), "tree")
+        self.assertEqual(((row.get("action_surface") or {}).get("selection_mode")), "multi")
 
     def test_scene_ready_form_runtime_chain(self):
         contract = build_scene_ready_contract_v1(
@@ -109,6 +111,8 @@ class TestSceneRuntimeContractChain(TransactionCase):
         workflow_surface = row.get("workflow_surface") or {}
         self.assertIn("name", validation_surface.get("required_fields") or [])
         self.assertEqual(workflow_surface.get("state_field"), "state")
+        self.assertEqual(((row.get("view_modes") or [])[0] or {}).get("key"), "form")
+        self.assertEqual(((row.get("action_surface") or {}).get("selection_mode")), "single")
         self.assertEqual(row.get("next_scene"), "project.management")
         self.assertEqual(row.get("next_scene_route"), "/s/project.management")
 
