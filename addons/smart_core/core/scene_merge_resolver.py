@@ -119,6 +119,11 @@ def apply_policy(compiled_ast: Dict[str, Any], policies: Dict[str, Any], runtime
         if _as_list(search_surface.get("searchpanel")):
             _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.searchpanel", from_layer="base")
         search_surface["searchpanel"] = default_searchpanel
+    default_mode = _text(search_policy.get("default_mode"))
+    if default_mode:
+        if _text(search_surface.get("mode")):
+            _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.mode", from_layer="base")
+        search_surface["mode"] = default_mode
     out["search_surface"] = search_surface
 
     workflow_surface = _as_dict(out.get("workflow_surface"))
