@@ -2351,3 +2351,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `069` and then a switch away from payload-adjacent residue unless a clearly pure helper remains
+## 2026-03-28 迭代锚点（ITER-2026-03-28-070）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ff9393c`
+- Layer Target: `common project wave-1`
+- Module: `smart_core capability grouping defaults helper`
+- Reason: continue sibling provider/config convergence on capability grouping defaults
+- `070`: added `addons/smart_core/core/capability_group_defaults.py`
+- `070`: `capability_provider.py` now delegates default group metadata, group-key inference, and default ordering map to the shared helper
+- `070`: direct unit coverage added in `addons/smart_core/tests/test_capability_group_defaults.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `070` and then another sibling provider/config slice only if it stays decoupled from domain semantics

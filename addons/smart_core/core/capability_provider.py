@@ -4,34 +4,20 @@ from __future__ import annotations
 from typing import List
 
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
-
-
-DEFAULT_CAPABILITY_GROUPS = [
-    {"key": "workspace", "label": "工作台", "icon": "layout-grid"},
-    {"key": "governance", "label": "治理配置", "icon": "shield"},
-    {"key": "analytics", "label": "经营分析", "icon": "chart"},
-    {"key": "others", "label": "其他能力", "icon": "grid"},
-]
+from .capability_group_defaults import (
+    DEFAULT_CAPABILITY_GROUPS,
+    default_group_meta,
+    default_group_order_map,
+    infer_group_key,
+)
 
 
 def _default_group_meta(group_key: str) -> dict:
-    for item in DEFAULT_CAPABILITY_GROUPS:
-        if item["key"] == group_key:
-            return dict(item)
-    return {"key": group_key, "label": group_key, "icon": ""}
+    return default_group_meta(group_key)
 
 
 def _infer_group_key(capability_key: str) -> str:
-    key = str(capability_key or "").strip().lower()
-    if not key:
-        return "others"
-    if key.startswith(("workspace.", "my.", "app.")):
-        return "workspace"
-    if key.startswith(("usage.", "report.", "dashboard.", "analytics.")):
-        return "analytics"
-    if key.startswith(("scene.", "portal.", "config.", "permission.", "subscription.", "pack.")):
-        return "governance"
-    return "others"
+    return infer_group_key(capability_key)
 
 
 def build_capability_groups(capabilities: List[dict]) -> List[dict]:
@@ -78,7 +64,7 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
                 int(bucket["capability_state_counts"].get(capability_state) or 0) + 1
             )
 
-    order_map = {item["key"]: index for index, item in enumerate(DEFAULT_CAPABILITY_GROUPS, start=1)}
+    order_map = default_group_order_map(DEFAULT_CAPABILITY_GROUPS)
     result = list(grouped.values())
     result.sort(
         key=lambda item: (
