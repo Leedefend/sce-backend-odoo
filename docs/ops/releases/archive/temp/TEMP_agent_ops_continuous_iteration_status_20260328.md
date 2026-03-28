@@ -575,3 +575,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `063`, then another sibling common-shell/read-model slice
+## Round: ITER-2026-03-28-064
+
+- `ITER-2026-03-28-064`: advice default configuration moved into `addons/smart_core/core/workspace_home_provider_defaults.py`
+  - `workspace_home_data_provider.py` no longer owns inline default advice payload
+  - direct unit coverage in `addons/smart_core/tests/test_workspace_home_provider_defaults.py` now includes advice defaults
+  - the slice remains inside sibling common-shell default/config territory and does not move scenario payload semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-064`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `064`, then another sibling default/config slice if one remains

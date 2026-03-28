@@ -2267,3 +2267,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `063` and then another sibling common-shell/read-model slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-064）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `4347657`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home provider advice defaults helper`
+- Reason: continue sibling common-shell convergence with default advice configuration only
+- `064`: `workspace_home_provider_defaults.py` now owns default advice-item configuration
+- `064`: `workspace_home_data_provider.py` no longer owns inline advice default payload
+- `064`: direct unit coverage in `addons/smart_core/tests/test_workspace_home_provider_defaults.py` expanded to cover advice defaults
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `064` and then another sibling defaults/config slice if one remains
