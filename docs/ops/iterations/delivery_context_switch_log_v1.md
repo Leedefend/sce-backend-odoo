@@ -2787,3 +2787,18 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `108`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## 2026-03-29 迭代锚点（ITER-2026-03-29-109）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `5017d76`
+- Layer Target: `system.init runtime contract consumption`
+- Module: `smart_core system_init scene runtime surface`
+- Reason: after parser semantics reach scene-ready, runtime page, and scene contracts, system.init startup/runtime assembly must preserve that semantic surface instead of dropping it at startup payload shaping time
+- `109`: added `system_init_scene_runtime_semantic_bridge.py` as the canonical startup/runtime semantic projection helper
+- `109`: `system_init_scene_runtime_surface_builder.py` now projects `semantic_runtime` and `released_scene_semantic_surface` from `scene_ready_contract_v1`
+- `109`: `system_init_payload_builder.py` now preserves startup semantic surfaces and semantic nav hints in minimal payload mode
+- `109`: direct coverage was added in `test_system_init_scene_runtime_semantics.py` and `test_system_init_payload_builder_semantics.py`
+- state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - repo risk is `high` because `diff_too_large` triggered
+  - next efficient action is submit `109`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer

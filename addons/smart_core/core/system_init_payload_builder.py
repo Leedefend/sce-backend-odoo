@@ -19,6 +19,8 @@ class SystemInitPayloadBuilder:
         "intents",
         "feature_flags",
         "role_surface",
+        "semantic_runtime",
+        "released_scene_semantic_surface",
         "version",
         "init_meta",
     }
@@ -28,6 +30,9 @@ class SystemInitPayloadBuilder:
         "platform_minimum_reason",
         "role_surface_pruned",
         "role_surface_code",
+        "semantic_scene_key",
+        "semantic_source_view",
+        "semantic_view_type",
     }
     MINIMAL_EXT_FACT_KEYS = {
         "enterprise_enablement",
@@ -181,6 +186,10 @@ class SystemInitPayloadBuilder:
             minimal["edition_runtime_v1"] = row.get("edition_runtime_v1")
         if isinstance(row.get("release_navigation_v1"), dict):
             minimal["release_navigation_v1"] = row.get("release_navigation_v1")
+        if isinstance(row.get("semantic_runtime"), dict):
+            minimal["semantic_runtime"] = row.get("semantic_runtime")
+        if isinstance(row.get("released_scene_semantic_surface"), dict):
+            minimal["released_scene_semantic_surface"] = row.get("released_scene_semantic_surface")
         if isinstance(row.get("scene_ready_contract_v1"), dict):
             if bool(params.get("with_preload", False)):
                 minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
@@ -207,6 +216,10 @@ class SystemInitPayloadBuilder:
             for key in (
                 "scene",
                 "page",
+                "parser_semantic_surface",
+                "semantic_view",
+                "semantic_page",
+                "view_type",
                 "permission_surface",
                 "workflow_surface",
                 "actions",
@@ -244,7 +257,7 @@ class SystemInitPayloadBuilder:
                     compact["validation_surface"] = compact_validation_surface
             meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
             compact_meta = {}
-            for key in ("target", "next_scene", "ui_base_contract_source"):
+            for key in ("target", "next_scene", "ui_base_contract_source", "parser_semantic_surface"):
                 value = meta.get(key)
                 if value not in (None, {}, []):
                     compact_meta[key] = value

@@ -1057,3 +1057,18 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `108`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## Round: ITER-2026-03-29-109
+
+- `ITER-2026-03-29-109`: system.init runtime surface now explicitly preserves parser semantics
+  - `system_init_scene_runtime_surface_builder` now projects `scene_ready_contract_v1` parser semantics into top-level `semantic_runtime` and `released_scene_semantic_surface`
+  - `system_init_payload_builder` now preserves those semantic surfaces in minimal startup payload mode instead of trimming them away
+  - `nav_meta` now carries startup semantic hints: `semantic_scene_key`, `semantic_source_view`, and `semantic_view_type`
+  - direct coverage was added in `addons/smart_core/tests/test_system_init_scene_runtime_semantics.py` and `addons/smart_core/tests/test_system_init_payload_builder_semantics.py`
+  - this round verified cleanly but was classified `PASS_WITH_RISK` because repo-level diff size crossed the current guard threshold
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-109`
+- effective continuation classification: `PASS_WITH_RISK`
+- repo risk: `high` via `diff_too_large`
+- next governed step is submit `109` to restore low-risk continuation before advancing to the next backend runtime/scene consumer

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.system_init_scene_runtime_semantic_bridge import (
+    apply_system_init_scene_runtime_semantic_bridge,
+)
+
 
 class SystemInitSceneRuntimeSurfaceBuilder:
     @staticmethod
@@ -58,6 +62,11 @@ class SystemInitSceneRuntimeSurfaceBuilder:
                 "company_id": env.company.id if env.company else None,
             },
         )
+        default_route = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}
+        active_scene_key = str(
+            default_route.get("scene_key") or role_surface.get("landing_scene_key") or ""
+        ).strip()
+        data = apply_system_init_scene_runtime_semantic_bridge(data, active_scene_key=active_scene_key)
 
         scene_nav_contract = surface_ctx.build_scene_nav_contract_fn(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
