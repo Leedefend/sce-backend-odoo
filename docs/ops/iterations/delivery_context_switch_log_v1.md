@@ -2011,3 +2011,12 @@ Each entry must include:
   - latest classification: `PASS_WITH_RISK`
   - stop reason: `too_many_files_changed`
   - next required task: `baseline governance for approved 020-025 artifacts`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-026 ~ ITER-2026-03-28-027）
+
+- branch: `codex/next-round`
+- short sha anchor before lock cleanup: `9864012`
+- grouped local submissions completed:
+  - `ad29f0d` `feat(agent-ops): add continuous iteration governance baseline`
+  - `18d7263` `refactor(smart-core): converge runtime mainline surfaces`
+  - `f2de849` `docs(architecture): align target and implementation baselines`
+- `027`: `.gitignore` now excludes `agent_ops/state/run_iteration.lock`

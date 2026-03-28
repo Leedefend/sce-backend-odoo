@@ -324,3 +324,18 @@
 - repo risk: `high`
 - stop reason: `too_many_files_changed`
 - required next task: `baseline governance for approved 020-025 runtime/mainline refactor artifacts`
+## Round: ITER-2026-03-28-026 ~ ITER-2026-03-28-027
+
+- `ITER-2026-03-28-026`: grouped local submissions completed
+  - `ad29f0d` `feat(agent-ops): add continuous iteration governance baseline`
+  - `18d7263` `refactor(smart-core): converge runtime mainline surfaces`
+  - `f2de849` `docs(architecture): align target and implementation baselines`
+- `ITER-2026-03-28-027`: governance cleanup in progress
+  - added `.gitignore` exclusion for `agent_ops/state/run_iteration.lock`
+  - transient execution lock no longer appears as untracked repo noise after grouped submissions
+
+## Current Continuation Point
+
+- latest reviewed code commits: `ad29f0d`, `18d7263`, `f2de849`
+- remaining untracked local files are limited to user/scratch docs outside the governed submission set
+- next required governed slice remains `baseline governance for approved 020-025 runtime/mainline refactor artifacts`
