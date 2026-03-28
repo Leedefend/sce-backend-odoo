@@ -52,10 +52,29 @@ def inject_primary_view_projection(data: Dict[str, Any] | None, requested_view_t
 
     if "layout" not in data and primary_view.get("layout") is not None:
         data["layout"] = primary_view.get("layout")
-    if "parser_contract" not in data and isinstance(primary_view.get("parser_contract"), dict):
-        data["parser_contract"] = primary_view.get("parser_contract")
-    if "view_semantics" not in data and isinstance(primary_view.get("view_semantics"), dict):
-        data["view_semantics"] = primary_view.get("view_semantics")
+    parser_contract = primary_view.get("parser_contract") if isinstance(primary_view.get("parser_contract"), dict) else None
+    if "parser_contract" not in data:
+        if parser_contract:
+            data["parser_contract"] = parser_contract
+        elif primary_view.get("layout") is not None:
+            data["parser_contract"] = {
+                "contract_version": str(data.get("contract_version") or "native_view.v1"),
+                "view_type": primary_view_type,
+                "layout": {"kind": primary_view_type},
+                "projection_source": "legacy_primary_view_fallback",
+            }
+
+    view_semantics = primary_view.get("view_semantics") if isinstance(primary_view.get("view_semantics"), dict) else None
+    if "view_semantics" not in data:
+        if view_semantics:
+            data["view_semantics"] = view_semantics
+        elif primary_view.get("layout") is not None:
+            data["view_semantics"] = {
+                "kind": "view_semantics",
+                "source_view": primary_view_type,
+                "capability_flags": {"has_layout": True},
+                "semantic_meta": {"projection_source": "legacy_primary_view_fallback"},
+            }
     if "model" not in data and head.get("model"):
         data["model"] = head.get("model")
     if "view_type" not in data and primary_view_type:

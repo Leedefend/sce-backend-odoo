@@ -1746,6 +1746,29 @@ def _realign_access_policy_with_visible_fields(data: dict) -> None:
         data.pop("warnings", None)
 
 
+def _normalize_native_view_contract_surface(data: dict) -> None:
+    parser_contract = _as_dict(data.get("parser_contract"))
+    if parser_contract:
+        parser_contract.setdefault("layout", _as_dict(parser_contract.get("layout")))
+        contract_version = _safe_text(data.get("contract_version")) or "native_view.v1"
+        parser_contract.setdefault("contract_version", contract_version)
+        data["parser_contract"] = parser_contract
+
+    view_semantics = _as_dict(data.get("view_semantics"))
+    if view_semantics:
+        view_semantics.setdefault("kind", "view_semantics")
+        view_semantics["capability_flags"] = _as_dict(view_semantics.get("capability_flags"))
+        view_semantics["semantic_meta"] = _as_dict(view_semantics.get("semantic_meta"))
+        data["view_semantics"] = view_semantics
+
+    native_view = _as_dict(data.get("native_view"))
+    if native_view:
+        native_view["views"] = _as_dict(native_view.get("views"))
+        native_view["search"] = _as_dict(native_view.get("search"))
+        native_view["toolbar"] = _as_dict(native_view.get("toolbar"))
+        data["native_view"] = native_view
+
+
 def _to_bool(value: Any, fallback: bool = False) -> bool:
     if isinstance(value, bool):
         return value
@@ -2951,6 +2974,8 @@ def apply_contract_governance(
             source_mode=source_mode,
             inject_contract_mode=False,
         )
+
+    _normalize_native_view_contract_surface(data)
 
     effective_mode = contract_mode
     if normalized_surface == "native":
