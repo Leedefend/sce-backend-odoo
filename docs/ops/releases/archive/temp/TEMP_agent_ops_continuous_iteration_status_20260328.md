@@ -925,3 +925,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `090`, then continue with remaining normalized metadata for form leaves or tree/search advanced view-level semantics
+## Round: ITER-2026-03-28-091
+
+- `ITER-2026-03-28-091`: additive structured semantic nodes were added for the base form view building blocks
+  - form parser now exposes `titleNode` plus normalized semantic metadata for buttons, ribbon, chatter, groups, pages, and notebooks
+  - base form semantics are no longer limited to raw legacy keys like `titleField` and ad-hoc node dicts only
+  - direct form semantic coverage was extended in `addons/smart_core/tests/test_native_view_form_parser_semantics.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-091`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `091`, then continue with remaining advanced semantics for full base-view coverage

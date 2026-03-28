@@ -1,10 +1,12 @@
 from .base import BaseViewParser
 from .native_view_node_schema import (
     build_action_node,
+    build_chatter_node,
     build_field_node,
     build_group_node,
     build_notebook_node,
     build_page_node,
+    build_ribbon_node,
 )
 
 import ast
@@ -17,6 +19,7 @@ class FormViewParser(BaseViewParser):
 
         return {
             "titleField": self._parse_title_field(arch),
+            "titleNode": self._parse_title_node(arch),
             "headerButtons": self._parse_header_buttons(arch),
             "statButtons": self._parse_stat_buttons(arch),
             "ribbon": self._parse_ribbon(arch),
@@ -32,6 +35,29 @@ class FormViewParser(BaseViewParser):
             if node.get("widget") != "boolean_favorite":
                 return node.get("name")
         return nodes[0].get("name") if nodes else None
+
+    def _parse_title_node(self, arch):
+        nodes = arch.xpath(".//div[contains(@class, 'oe_title')]//field")
+        target = None
+        for node in nodes:
+            if node.get("widget") != "boolean_favorite":
+                target = node
+                break
+        if target is None and nodes:
+            target = nodes[0]
+        if target is None:
+            return None
+        return build_field_node(
+            name=target.get("name"),
+            string=target.get("string"),
+            widget=target.get("widget"),
+            semantic_role="form_title_field",
+            source_view="form",
+            semantic_meta={
+                "is_title": True,
+                "is_favorite_widget": target.get("widget") == "boolean_favorite",
+            },
+        )
 
     # ---------- header 按钮 ----------
     def _parse_header_buttons(self, arch):
@@ -53,11 +79,17 @@ class FormViewParser(BaseViewParser):
         ribbon = arch.xpath(".//widget[@name='web_ribbon']")
         if ribbon:
             node = ribbon[0]
-            return {
-                "title": node.get("title"),
-                "bg_color": node.get("bg_color"),
-                "invisible": self._parse_condition(node.get("invisible"))
-            }
+            return build_ribbon_node(
+                title=node.get("title"),
+                bg_color=node.get("bg_color"),
+                invisible=self._parse_condition(node.get("invisible")),
+                semantic_role="form_ribbon",
+                source_view="form",
+                semantic_meta={
+                    "has_bg_color": bool(node.get("bg_color")),
+                    "has_visibility_rule": node.get("invisible") is not None,
+                },
+            )
         return None
 
     # ---------- group 递归解析 ----------
@@ -86,6 +118,12 @@ class FormViewParser(BaseViewParser):
             fields=fields,
             sub_groups=sub_groups,
             attributes=self._parse_common_attrs(group_node),
+            semantic_role="form_group",
+            source_view="form",
+            semantic_meta={
+                "has_sub_groups": bool(sub_groups),
+                "field_count": len(fields),
+            },
         )
 
     def _parse_field_node(self, node):
@@ -99,6 +137,12 @@ class FormViewParser(BaseViewParser):
             placeholder=node.get("placeholder"),
             visible=True,
             editable=True,
+            semantic_role="form_field",
+            source_view="form",
+            semantic_meta={
+                "has_placeholder": bool(node.get("placeholder")),
+                "has_widget": bool(node.get("widget")),
+            },
         )
 
     # ---------- notebook ----------
@@ -112,19 +156,41 @@ class FormViewParser(BaseViewParser):
                         title=page.get("string"),
                         groups=self._parse_groups([page]),
                         visible=True,
+                        semantic_role="form_page",
+                        source_view="form",
+                        semantic_meta={
+                            "group_count": len(self._parse_groups([page])),
+                        },
                     )
                 )
-            notebooks.append(build_notebook_node(pages=pages))
+            notebooks.append(
+                build_notebook_node(
+                    pages=pages,
+                    semantic_role="form_notebook",
+                    source_view="form",
+                    semantic_meta={"page_count": len(pages)},
+                )
+            )
         return notebooks
 
     # ---------- chatter ----------
     def _parse_chatter(self, arch):
         chatter_fields = arch.xpath(".//div[contains(@class,'oe_chatter')]//field")
-        return {
-            "followers": next((f.get("name") for f in chatter_fields if "follower" in f.get("name", "")), None),
-            "activities": next((f.get("name") for f in chatter_fields if "activity" in f.get("name", "")), None),
-            "messages": next((f.get("name") for f in chatter_fields if "message" in f.get("name", "")), None)
-        }
+        followers = next((f.get("name") for f in chatter_fields if "follower" in f.get("name", "")), None)
+        activities = next((f.get("name") for f in chatter_fields if "activity" in f.get("name", "")), None)
+        messages = next((f.get("name") for f in chatter_fields if "message" in f.get("name", "")), None)
+        return build_chatter_node(
+            followers=followers,
+            activities=activities,
+            messages=messages,
+            semantic_role="form_chatter",
+            source_view="form",
+            semantic_meta={
+                "has_followers": bool(followers),
+                "has_activities": bool(activities),
+                "has_messages": bool(messages),
+            },
+        )
 
     # ---------- 按钮解析 ----------
     def _parse_button(self, node):
@@ -138,6 +204,13 @@ class FormViewParser(BaseViewParser):
             hotkey=node.get("data-hotkey"),
             invisible=self._parse_condition(node.get("invisible")),
             visible=True,
+            semantic_role="form_button",
+            source_view="form",
+            semantic_meta={
+                "has_context": bool(node.get("context")),
+                "has_hotkey": bool(node.get("data-hotkey")),
+                "has_groups": bool(node.get("groups")),
+            },
         )
         button["class"] = node.get("class")
         return button

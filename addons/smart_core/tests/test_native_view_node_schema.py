@@ -67,6 +67,12 @@ class TestNativeViewNodeSchema(unittest.TestCase):
         self.assertEqual(page_node["kind"], "page")
         self.assertEqual(notebook_node["kind"], "notebook")
 
+    def test_build_form_semantic_nodes_have_stable_kinds(self):
+        ribbon_node = schema_module.build_ribbon_node(title="Archived")
+        chatter_node = schema_module.build_chatter_node(followers="message_follower_ids")
+        self.assertEqual(ribbon_node["kind"], "ribbon")
+        self.assertEqual(chatter_node["kind"], "chatter")
+
 
 if __name__ == "__main__":
     unittest.main()
