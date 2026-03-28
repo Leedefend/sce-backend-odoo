@@ -57,11 +57,36 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                     "semantic_view": {"source_view": "kanban"},
                     "semantic_page": {"kanban_semantics": {"lane_count": 3}},
                     "parser_semantic_surface": {"parser_contract": {"view_type": "kanban"}},
+                    "search_surface": {
+                        "filters": [{"name": "mine", "string": "我的"}],
+                        "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                        "mode": "faceted",
+                    },
+                    "permission_surface": {
+                        "visible": True,
+                        "allowed": False,
+                        "reason_code": "missing_capability",
+                        "required_capabilities": ["project.write"],
+                    },
+                    "workflow_surface": {
+                        "state_field": "state",
+                        "states": [{"key": "draft"}],
+                    },
+                    "validation_surface": {
+                        "required_fields": ["name"],
+                        "field_rules": [{"field": "name", "rule": "required"}],
+                    },
+                    "debug_blob": {"drop_me": True},
                 },
                 "released_scene_semantic_surface": {
                     "scene_key": "workspace.home",
                     "page_surface": {"view_type": "kanban", "semantic_view": {"source_view": "kanban"}},
                     "parser_semantic_surface": {"parser_contract": {"view_type": "kanban"}},
+                    "search_surface": {"mode": "faceted", "searchpanel": [{"name": "stage_id", "string": "阶段"}]},
+                    "permission_surface": {"allowed": False, "reason_code": "missing_capability"},
+                    "workflow_surface": {"state_field": "state"},
+                    "validation_surface": {"required_fields": ["name"]},
+                    "debug_blob": {"drop_me": True},
                 },
                 "scene_ready_contract_v1": {
                     "contract_version": "v1",
@@ -103,7 +128,15 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         )
 
         self.assertEqual((payload.get("semantic_runtime") or {}).get("view_type"), "kanban")
+        self.assertEqual(((payload.get("semantic_runtime") or {}).get("search_surface") or {}).get("mode"), "faceted")
+        self.assertEqual(((payload.get("semantic_runtime") or {}).get("permission_surface") or {}).get("reason_code"), "missing_capability")
+        self.assertEqual(((payload.get("semantic_runtime") or {}).get("workflow_surface") or {}).get("state_field"), "state")
+        self.assertEqual((((payload.get("semantic_runtime") or {}).get("validation_surface") or {}).get("required_fields") or [])[0], "name")
+        self.assertNotIn("debug_blob", payload.get("semantic_runtime") or {})
         self.assertEqual(((payload.get("nav_meta") or {}).get("semantic_source_view")), "kanban")
+        self.assertEqual(((payload.get("released_scene_semantic_surface") or {}).get("search_surface") or {}).get("mode"), "faceted")
+        self.assertEqual(((payload.get("released_scene_semantic_surface") or {}).get("permission_surface") or {}).get("reason_code"), "missing_capability")
+        self.assertNotIn("debug_blob", payload.get("released_scene_semantic_surface") or {})
         scene = ((payload.get("scene_ready_contract_v1") or {}).get("scenes") or [])[0]
         self.assertEqual(scene.get("view_type"), "kanban")
         self.assertIn("parser_semantic_surface", scene)

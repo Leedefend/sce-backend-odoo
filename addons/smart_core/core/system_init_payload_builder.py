@@ -187,9 +187,13 @@ class SystemInitPayloadBuilder:
         if isinstance(row.get("release_navigation_v1"), dict):
             minimal["release_navigation_v1"] = row.get("release_navigation_v1")
         if isinstance(row.get("semantic_runtime"), dict):
-            minimal["semantic_runtime"] = row.get("semantic_runtime")
+            minimal["semantic_runtime"] = cls._build_minimal_semantic_runtime(
+                row.get("semantic_runtime")
+            )
         if isinstance(row.get("released_scene_semantic_surface"), dict):
-            minimal["released_scene_semantic_surface"] = row.get("released_scene_semantic_surface")
+            minimal["released_scene_semantic_surface"] = cls._build_minimal_released_scene_semantic_surface(
+                row.get("released_scene_semantic_surface")
+            )
         if isinstance(row.get("scene_ready_contract_v1"), dict):
             if bool(params.get("with_preload", False)):
                 minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
@@ -229,15 +233,9 @@ class SystemInitPayloadBuilder:
                 value = item.get(key)
                 if value not in (None, {}, []):
                     compact[key] = value
-            search_surface = item.get("search_surface") if isinstance(item.get("search_surface"), dict) else {}
-            if search_surface:
-                compact_search = {}
-                for key in ("default_sort", "filters", "fields", "group_by", "searchpanel", "mode"):
-                    value = search_surface.get(key)
-                    if value not in (None, {}, []):
-                        compact_search[key] = value
-                if compact_search:
-                    compact["search_surface"] = compact_search
+            compact_search = cls._compact_search_surface(item.get("search_surface"))
+            if compact_search:
+                compact["search_surface"] = compact_search
             action_surface = item.get("action_surface") if isinstance(item.get("action_surface"), dict) else {}
             if action_surface:
                 compact_action_surface = {}
@@ -247,33 +245,15 @@ class SystemInitPayloadBuilder:
                         compact_action_surface[key] = value
                 if compact_action_surface:
                     compact["action_surface"] = compact_action_surface
-            validation_surface = item.get("validation_surface") if isinstance(item.get("validation_surface"), dict) else {}
-            if validation_surface:
-                compact_validation_surface = {}
-                for key in ("required_fields", "field_rules"):
-                    value = validation_surface.get(key)
-                    if value not in (None, {}, []):
-                        compact_validation_surface[key] = value
-                if compact_validation_surface:
-                    compact["validation_surface"] = compact_validation_surface
-            permission_surface = item.get("permission_surface") if isinstance(item.get("permission_surface"), dict) else {}
-            if permission_surface:
-                compact_permission_surface = {}
-                for key in ("visible", "allowed", "reason_code", "required_capabilities"):
-                    value = permission_surface.get(key)
-                    if value not in (None, {}, []):
-                        compact_permission_surface[key] = value
-                if compact_permission_surface:
-                    compact["permission_surface"] = compact_permission_surface
-            workflow_surface = item.get("workflow_surface") if isinstance(item.get("workflow_surface"), dict) else {}
-            if workflow_surface:
-                compact_workflow_surface = {}
-                for key in ("state_field", "states", "transitions", "highlight_states"):
-                    value = workflow_surface.get(key)
-                    if value not in (None, {}, []):
-                        compact_workflow_surface[key] = value
-                if compact_workflow_surface:
-                    compact["workflow_surface"] = compact_workflow_surface
+            compact_validation_surface = cls._compact_validation_surface(item.get("validation_surface"))
+            if compact_validation_surface:
+                compact["validation_surface"] = compact_validation_surface
+            compact_permission_surface = cls._compact_permission_surface(item.get("permission_surface"))
+            if compact_permission_surface:
+                compact["permission_surface"] = compact_permission_surface
+            compact_workflow_surface = cls._compact_workflow_surface(item.get("workflow_surface"))
+            if compact_workflow_surface:
+                compact["workflow_surface"] = compact_workflow_surface
             meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
             compact_meta = {}
             for key in ("target", "next_scene", "ui_base_contract_source", "parser_semantic_surface"):
@@ -301,6 +281,90 @@ class SystemInitPayloadBuilder:
             "scenes": compact_scenes,
             "meta": compact_meta,
         }
+
+    @staticmethod
+    def _compact_search_surface(payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        compact = {}
+        for key in ("default_sort", "filters", "fields", "group_by", "searchpanel", "mode"):
+            value = raw.get(key)
+            if value not in (None, {}, []):
+                compact[key] = value
+        return compact
+
+    @staticmethod
+    def _compact_permission_surface(payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        compact = {}
+        for key in ("visible", "allowed", "reason_code", "required_capabilities"):
+            value = raw.get(key)
+            if value not in (None, {}, []):
+                compact[key] = value
+        return compact
+
+    @staticmethod
+    def _compact_workflow_surface(payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        compact = {}
+        for key in ("state_field", "states", "transitions", "highlight_states"):
+            value = raw.get(key)
+            if value not in (None, {}, []):
+                compact[key] = value
+        return compact
+
+    @staticmethod
+    def _compact_validation_surface(payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        compact = {}
+        for key in ("required_fields", "field_rules"):
+            value = raw.get(key)
+            if value not in (None, {}, []):
+                compact[key] = value
+        return compact
+
+    @classmethod
+    def _build_minimal_semantic_runtime(cls, payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        compact = {}
+        for key in ("scene_key", "view_type", "semantic_view", "semantic_page", "parser_semantic_surface"):
+            value = raw.get(key)
+            if value not in (None, {}, []):
+                compact[key] = value
+        compact_search = cls._compact_search_surface(raw.get("search_surface"))
+        if compact_search:
+            compact["search_surface"] = compact_search
+        compact_permission = cls._compact_permission_surface(raw.get("permission_surface"))
+        if compact_permission:
+            compact["permission_surface"] = compact_permission
+        compact_workflow = cls._compact_workflow_surface(raw.get("workflow_surface"))
+        if compact_workflow:
+            compact["workflow_surface"] = compact_workflow
+        compact_validation = cls._compact_validation_surface(raw.get("validation_surface"))
+        if compact_validation:
+            compact["validation_surface"] = compact_validation
+        return compact
+
+    @classmethod
+    def _build_minimal_released_scene_semantic_surface(cls, payload: dict | None) -> dict:
+        raw = payload if isinstance(payload, dict) else {}
+        compact = {}
+        for key in ("scene_key", "parser_semantic_surface", "page_surface"):
+            value = raw.get(key)
+            if value not in (None, {}, []):
+                compact[key] = value
+        compact_search = cls._compact_search_surface(raw.get("search_surface"))
+        if compact_search:
+            compact["search_surface"] = compact_search
+        compact_permission = cls._compact_permission_surface(raw.get("permission_surface"))
+        if compact_permission:
+            compact["permission_surface"] = compact_permission
+        compact_workflow = cls._compact_workflow_surface(raw.get("workflow_surface"))
+        if compact_workflow:
+            compact["workflow_surface"] = compact_workflow
+        compact_validation = cls._compact_validation_surface(raw.get("validation_surface"))
+        if compact_validation:
+            compact["validation_surface"] = compact_validation
+        return compact
 
     @classmethod
     def slim_to_minimal_surface(cls, data: dict, *, params: dict | None = None) -> dict:
