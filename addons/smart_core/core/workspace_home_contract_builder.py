@@ -37,6 +37,11 @@ from .workspace_home_source_routing_helper import (
     provider_token_set,
     route_scene_by_source,
 )
+from .workspace_home_ranking_helper import (
+    impact_score,
+    urgency_score,
+    workspace_v1_copy,
+)
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -562,57 +567,11 @@ def _workspace_v1_focus_map(role_code: str) -> List[str]:
 
 
 def _workspace_v1_copy(defaults: Dict[str, str]) -> Dict[str, str]:
-    out = dict(defaults or {})
-    provider = _load_data_provider()
-    if provider is None:
-        return out
-    fn = getattr(provider, "build_v1_copy_overrides", None)
-    if not callable(fn):
-        return out
-    try:
-        payload = fn()
-    except Exception:
-        payload = None
-    if not isinstance(payload, dict):
-        return out
-    for key, value in payload.items():
-        k = _to_text(key)
-        v = _to_text(value)
-        if k and v:
-            out[k] = v
-    return out
+    return workspace_v1_copy(defaults, _load_data_provider())
 
 
 def _impact_score(row: Dict[str, Any]) -> int:
-    amount_raw = (
-        row.get("amount")
-        or row.get("amount_total")
-        or row.get("contract_amount")
-        or row.get("budget")
-        or row.get("value")
-        or 0
-    )
-    try:
-        amount = float(amount_raw)
-    except Exception:
-        amount = 0.0
-    project_count = _to_int(row.get("project_count") or row.get("affected_projects") or row.get("scope_count") or 0)
-    score = 0
-    if amount >= 100000000:
-        score += 30
-    elif amount >= 10000000:
-        score += 22
-    elif amount >= 1000000:
-        score += 14
-    elif amount > 0:
-        score += 8
-    if project_count >= 5:
-        score += 12
-    elif project_count >= 2:
-        score += 8
-    elif project_count >= 1:
-        score += 4
-    return min(40, score)
+    return impact_score(row)
 
 
 def _urgency_score(
@@ -624,55 +583,23 @@ def _urgency_score(
     source_kind: str = "business",
     keyword_overrides: Dict[str, Any] | None = None,
 ) -> int:
-    profile = _role_ranking_profile(role_code)
-    severity_weight = _to_int(profile.get("severity_weight") or 0)
-    deadline_weight = _to_int(profile.get("deadline_weight") or 0)
-    pending_weight = _to_int(profile.get("pending_weight") or 0)
-    source_weight = _to_int(profile.get("source_weight") or 0)
-    impact_weight = _to_int(profile.get("impact_weight") or 0)
-
-    score = 0
-    merged = f"{status_text} {title} {_to_text(source_key)}".lower()
-    critical_tokens = _provider_token_set(
-        "build_critical_status_tokens",
-        ("critical", "urgent", "overdue", "严重", "紧急", "逾期", "高"),
+    return urgency_score(
+        row=row,
+        title=title,
+        source_key=source_key,
+        status_text=status_text,
+        role_code=role_code,
+        source_kind=source_kind,
         keyword_overrides=keyword_overrides,
+        ranking_profile_builder=_role_ranking_profile,
+        provider_token_set_builder=lambda hook_name, defaults, overrides=None: _provider_token_set(
+            hook_name,
+            defaults,
+            keyword_overrides=overrides,
+        ),
+        urgent_capability_checker=_is_urgent_capability,
+        deadline_parser=_parse_deadline,
     )
-    warning_tokens = _provider_token_set(
-        "build_warning_status_tokens",
-        ("warning", "high", "关注", "预警", "待处理"),
-        keyword_overrides=keyword_overrides,
-    )
-    if any(token in merged for token in critical_tokens):
-        score += severity_weight
-    elif any(token in merged for token in warning_tokens):
-        score += max(20, int(severity_weight * 0.58))
-    if _is_urgent_capability(title, source_key):
-        score += max(8, int(severity_weight * 0.33))
-
-    deadline = (
-        _parse_deadline(row.get("due_date"))
-        or _parse_deadline(row.get("deadline"))
-        or _parse_deadline(row.get("planned_date"))
-        or _parse_deadline(row.get("date_deadline"))
-    )
-    if deadline is not None:
-        now_dt = datetime.now(deadline.tzinfo) if deadline.tzinfo else datetime.now()
-        days = (deadline - now_dt).total_seconds() / 86400
-        if days < 0:
-            score += deadline_weight
-        elif days <= 1:
-            score += max(18, int(deadline_weight * 0.72))
-        elif days <= 3:
-            score += max(12, int(deadline_weight * 0.45))
-        elif days <= 7:
-            score += max(6, int(deadline_weight * 0.22))
-
-    score += min(pending_weight, _to_int(row.get("count") or row.get("pending_count")))
-    score += min(impact_weight, _impact_score(row))
-    if _to_text(source_kind) == "business":
-        score += source_weight
-    return score
 
 
 def _to_business_action(

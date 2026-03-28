@@ -536,3 +536,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `060`, then another narrow workspace utility slice only if pure helper residue remains
+## Round: ITER-2026-03-28-061
+
+- `ITER-2026-03-28-061`: workspace ranking helper extracted into `addons/smart_core/core/workspace_home_ranking_helper.py`
+  - `workspace_home_contract_builder.py` no longer owns inline v1 copy override merge, impact score, or urgency score helper logic
+  - direct unit coverage added in `addons/smart_core/tests/test_workspace_home_ranking_helper.py`
+  - the slice remains inside common shell ranking utility territory and does not move scenario payload semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-061`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `061`, then a reassessment of whether pure helper residue still remains in `workspace_home_contract_builder.py`

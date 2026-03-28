@@ -2225,3 +2225,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `060` before the next utility slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-061）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `3a8203f`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home ranking helper`
+- Reason: continue common-shell convergence with copy-override, impact-score, and urgency-score utilities
+- `061`: added `addons/smart_core/core/workspace_home_ranking_helper.py`
+- `061`: `workspace_home_contract_builder.py` now delegates v1 copy override merge, impact scoring, and urgency scoring to the shared helper
+- `061`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_ranking_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `061` and then a reassessment of remaining pure helper residue
