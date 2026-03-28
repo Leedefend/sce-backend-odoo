@@ -26,6 +26,11 @@ from .workspace_home_loader_helper import (
     load_workspace_scene_engine,
     resolve_action_target,
 )
+from .workspace_home_capability_helper import (
+    capability_state,
+    is_urgent_capability,
+    metric_level,
+)
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -372,17 +377,7 @@ def _to_int(value: Any) -> int:
 
 
 def _capability_state(cap: Dict[str, Any]) -> str:
-    state = _to_text(cap.get("state")).upper()
-    if state in {"READY", "LOCKED", "PREVIEW"}:
-        return state
-    capability_state = _to_text(cap.get("capability_state")).lower()
-    if capability_state in {"allow", "readonly"}:
-        return "READY"
-    if capability_state in {"deny"}:
-        return "LOCKED"
-    if capability_state in {"pending", "coming_soon"}:
-        return "PREVIEW"
-    return "READY"
+    return capability_state(cap)
 
 
 def _scene_from_route(route: str) -> str:
@@ -390,17 +385,11 @@ def _scene_from_route(route: str) -> str:
 
 
 def _metric_level(value: int, amber: int, red: int) -> str:
-    if value >= red:
-        return "red"
-    if value >= amber:
-        return "amber"
-    return "green"
+    return metric_level(value, amber, red)
 
 
 def _is_urgent_capability(title: str, key: str) -> bool:
-    merged = f"{_to_text(title)} {_to_text(key)}".lower()
-    keywords = ("risk", "approval", "payment", "settlement", "风险", "审批", "付款", "结算")
-    return any(keyword in merged for keyword in keywords)
+    return is_urgent_capability(title, key)
 
 
 def _as_record_list(payload: Any) -> List[Dict[str, Any]]:
