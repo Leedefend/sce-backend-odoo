@@ -30,6 +30,10 @@ class TestReleasedSceneSemanticSurfaceBridge(unittest.TestCase):
                     "semantic_page": {"kanban_semantics": {"lane_count": 3}},
                 }
             },
+            "search_surface": {"mode": "faceted", "searchpanel": [{"name": "stage_id"}]},
+            "permission_surface": {"allowed": False, "reason_code": "missing_capability"},
+            "workflow_surface": {"state_field": "state", "states": [{"key": "draft"}]},
+            "validation_surface": {"required_fields": ["name"]},
             "governance": {
                 "parser_semantic_surface": {
                     "parser_contract": {"view_type": "kanban"},
@@ -45,6 +49,10 @@ class TestReleasedSceneSemanticSurfaceBridge(unittest.TestCase):
             (((bridged.get("semantic_runtime") or {}).get("semantic_view") or {}).get("source_view")),
             "kanban",
         )
+        self.assertEqual(((bridged.get("semantic_runtime") or {}).get("search_surface") or {}).get("mode"), "faceted")
+        self.assertEqual(((bridged.get("semantic_runtime") or {}).get("permission_surface") or {}).get("reason_code"), "missing_capability")
+        self.assertEqual(((bridged.get("semantic_runtime") or {}).get("workflow_surface") or {}).get("state_field"), "state")
+        self.assertEqual((((bridged.get("semantic_runtime") or {}).get("validation_surface") or {}).get("required_fields") or [])[0], "name")
         self.assertIn("released_scene_semantic_surface", bridged)
 
 

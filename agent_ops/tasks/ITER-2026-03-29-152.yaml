@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-152
+title: Project canonical semantic surfaces into released runtime bridges
+type: governance_task
+status: pending
+priority: high
+
+goal: Make released-scene and system-init runtime semantic bridges carry the canonical search, permission, workflow and validation surfaces instead of only projecting view-level semantics.
+user_visible_outcome:
+  - released runtime semantic payloads now expose the same canonical semantic surfaces already present in scene_ready contracts
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core released_scene_semantic_surface_bridge + system_init_scene_runtime_semantic_bridge
+  reason: the downstream released/runtime semantic bridges still only carry parser and page-level semantic data. This iteration aligns them with the canonical scene_ready surface model so semantic surfaces survive past scene_ready into runtime-facing payloads.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-152.yaml
+    - python3 -m py_compile addons/smart_core/core/released_scene_semantic_surface_bridge.py addons/smart_core/core/system_init_scene_runtime_semantic_bridge.py addons/smart_core/tests/test_released_scene_semantic_surface_bridge.py addons/smart_core/tests/test_system_init_scene_runtime_semantics.py
+    - python3 addons/smart_core/tests/test_released_scene_semantic_surface_bridge.py
+    - python3 addons/smart_core/tests/test_system_init_scene_runtime_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-152.yaml addons/smart_core/core/released_scene_semantic_surface_bridge.py addons/smart_core/core/system_init_scene_runtime_semantic_bridge.py addons/smart_core/tests/test_released_scene_semantic_surface_bridge.py addons/smart_core/tests/test_system_init_scene_runtime_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-151
+
+notes: "Batch acceleration: align the two direct downstream semantic bridges with the canonical scene_ready surface model in one iteration."

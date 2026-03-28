@@ -65,6 +65,10 @@ def apply_system_init_scene_runtime_semantic_bridge(
     parser_surface = _as_dict(row.get("parser_semantic_surface"))
     semantic_view = _as_dict(row.get("semantic_view"))
     semantic_page = _as_dict(row.get("semantic_page"))
+    search_surface = _as_dict(row.get("search_surface"))
+    permission_surface = _as_dict(row.get("permission_surface"))
+    workflow_surface = _as_dict(row.get("workflow_surface"))
+    validation_surface = _as_dict(row.get("validation_surface"))
     view_type = _text(
         row.get("view_type")
         or _as_dict(_as_dict(parser_surface).get("parser_contract")).get("view_type")
@@ -72,7 +76,16 @@ def apply_system_init_scene_runtime_semantic_bridge(
     )
     scene_key = _resolve_scene_key(row)
 
-    if not (parser_surface or semantic_view or semantic_page or view_type):
+    if not (
+        parser_surface
+        or semantic_view
+        or semantic_page
+        or view_type
+        or search_surface
+        or permission_surface
+        or workflow_surface
+        or validation_surface
+    ):
         return out
 
     out["semantic_runtime"] = {
@@ -81,6 +94,10 @@ def apply_system_init_scene_runtime_semantic_bridge(
         "semantic_view": semantic_view,
         "semantic_page": semantic_page,
         "parser_semantic_surface": parser_surface,
+        "search_surface": search_surface,
+        "permission_surface": permission_surface,
+        "workflow_surface": workflow_surface,
+        "validation_surface": validation_surface,
     }
     out["released_scene_semantic_surface"] = {
         "scene_key": scene_key,
@@ -90,6 +107,10 @@ def apply_system_init_scene_runtime_semantic_bridge(
             "semantic_view": semantic_view,
             "semantic_page": semantic_page,
         },
+        "search_surface": search_surface,
+        "permission_surface": permission_surface,
+        "workflow_surface": workflow_surface,
+        "validation_surface": validation_surface,
     }
 
     nav_meta = _as_dict(out.get("nav_meta"))
