@@ -767,6 +767,8 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
             search_surface["group_by"] = _as_list(base_search.get("group_by"))
         if not search_surface.get("searchpanel") and base_search:
             search_surface["searchpanel"] = _as_list(base_search.get("searchpanel"))
+        if not search_surface.get("mode") and base_search.get("mode"):
+            search_surface["mode"] = base_search.get("mode")
         if not permission_surface and base_permissions:
             permission_surface = dict(base_permissions)
         if not workflow_surface and base_workflow:

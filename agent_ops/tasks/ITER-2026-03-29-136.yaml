@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-136
+title: Preserve search mode in scene dsl compile fallback
+type: governance_task
+status: pending
+priority: high
+
+goal: Make scene dsl compiler preserve canonical search_surface.mode from ui base search facts during early surface fallback.
+user_visible_outcome:
+  - compiled scene contracts retain faceted/filter_bar search mode before later scene-ready bridges run
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core scene_dsl_compiler
+  reason: Scene dsl compiler already preserves fields, filters, group_by and searchpanel from canonical ui base search facts, but still drops search mode. This iteration keeps faceted/filter_bar semantics at compile time.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-136.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_dsl_compiler.py addons/smart_core/tests/test_scene_dsl_compiler_search_mode_fallback.py
+    - python3 addons/smart_core/tests/test_scene_dsl_compiler_search_mode_fallback.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-136.yaml addons/smart_core/core/scene_dsl_compiler.py addons/smart_core/tests/test_scene_dsl_compiler_search_mode_fallback.py
+
+depends_on:
+  - ITER-2026-03-29-135
+
+notes: "Batch-3 continuation: compile-time search surfaces should preserve canonical mode once ui base facts already expose faceted/filter_bar."
