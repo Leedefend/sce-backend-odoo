@@ -640,3 +640,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `068`, then another sibling defaults/config slice only if it remains pure
+## Round: ITER-2026-03-28-069
+
+- `ITER-2026-03-28-069`: page orchestration data-source defaults moved into `addons/smart_core/core/page_orchestration_data_source_defaults.py`
+  - `page_orchestration_data_provider.py` no longer owns inline section data-source key generation or default section/base data-source builders
+  - direct unit coverage added in `addons/smart_core/tests/test_page_orchestration_data_source_defaults.py`
+  - the slice remains inside sibling provider-config territory and avoids section semantic inference logic
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-069`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `069`, then a switch away from payload-adjacent residue unless a clearly pure helper remains

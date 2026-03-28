@@ -9,6 +9,11 @@ from .page_orchestration_defaults import (
     build_default_page_type,
     to_text,
 )
+from .page_orchestration_data_source_defaults import (
+    build_base_data_sources as resolve_base_data_sources,
+    build_section_data_source as resolve_section_data_source,
+    build_section_data_source_key as resolve_section_data_source_key,
+)
 from .page_orchestration_action_defaults import (
     build_default_action_templates,
     build_default_action_templates_for_page,
@@ -30,34 +35,19 @@ def _to_text(value: Any) -> str:
 
 
 def _data_source_key(section_key: str) -> str:
-    import re
-
-    token = re.sub(r"[^a-z0-9_]+", "_", _to_text(section_key).lower())
-    token = re.sub(r"_+", "_", token).strip("_")
-    if not token:
-        token = "section"
-    return f"ds_section_{token}"
+    return resolve_section_data_source_key(section_key)
 
 
 def build_base_data_sources() -> Dict[str, Dict[str, Any]]:
-    return {
-        "ds_sections": {"source_type": "static", "provider": "page_contract.sections", "section_keys": ["_all"]},
-    }
+    return resolve_base_data_sources()
 
 
 def build_section_data_source(page_key: str, section_key: str, section_tag: str) -> Dict[str, Any]:
-    return {
-        "source_type": "scene_context",
-        "provider": "page_contract.section",
-        "page_key": _to_text(page_key),
-        "section_key": _to_text(section_key),
-        "section_tag": _to_text(section_tag).lower() or "section",
-        "section_keys": [_to_text(section_key)],
-    }
+    return resolve_section_data_source(page_key, section_key, section_tag)
 
 
 def build_section_data_source_key(section_key: str) -> str:
-    return _data_source_key(section_key)
+    return resolve_section_data_source_key(section_key)
 
 
 def build_zone_from_tag(tag: str) -> Dict[str, str]:
