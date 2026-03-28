@@ -770,3 +770,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `078`, then reassess whether remaining residue is still provider-config only; if not, end this cleanup wave and switch to a platform-capability batch
+## Round: ITER-2026-03-28-079
+
+- `ITER-2026-03-28-079`: helper-cleanup wave was formally closed and batch-2 was switched to native view structured parsing
+  - added `docs/architecture/odoo_view_structured_parse_gap_and_batch2_plan_v1.md`
+  - added `agent_ops/queue/platform_core_view_parse_batch_2.yaml`
+  - froze `080/081/082` as the first parser-capability chain
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-079`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `079`, then execute `080` to inventory the existing native view parser subsystem before code refactor

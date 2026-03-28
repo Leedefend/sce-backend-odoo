@@ -1,0 +1,49 @@
+task_id: ITER-2026-03-28-080
+title: Inventory native view parsing subsystem
+type: governance_task
+status: pending
+priority: high
+goal: Produce a parser inventory and target subsystem responsibility split for native view structured parsing.
+user_visible_outcome:
+  - parser subsystem inventory is explicit
+scope:
+  allowed_paths:
+    - docs/architecture/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+architecture:
+  layer_target: platform kernel convergence batch-2
+  module: smart_core native view parsing inventory
+  reason: Create the first executable artifact for substantive parser capability upgrade.
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-080.yaml
+risk:
+  level: low
+  manual_approval_required: false
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+deliverables:
+  - docs
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-28-080.yaml
+depends_on:
+  - ITER-2026-03-28-079
+notes: "Batch-2 Step 1."
