@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-113
+title: Make scene-ready action grouping consume parser semantics
+type: governance_task
+status: pending
+priority: high
+
+goal: Make scene_ready action surface grouping derive group identity and primary-action slicing from parser semantics rather than a single legacy workflow bucket.
+user_visible_outcome:
+  - scene_ready action groups now reflect parser semantic view type instead of using one fixed workflow group
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene-ready orchestration semantic consumption
+  module: smart_core scene_ready_contract_builder
+  reason: After view modes, selection mode, and search surface begin consuming parser semantics, action grouping must also derive orchestration structure from parser semantics instead of a single legacy workflow grouping heuristic.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-113.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_ready_action_semantic_bridge.py addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_action_semantic_bridge.py addons/smart_core/tests/test_scene_ready_action_surface_semantic_consumption.py
+    - python3 addons/smart_core/tests/test_scene_ready_action_semantic_bridge.py
+    - python3 addons/smart_core/tests/test_scene_ready_action_surface_semantic_consumption.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-113.yaml addons/smart_core/core/scene_ready_action_semantic_bridge.py addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_action_semantic_bridge.py addons/smart_core/tests/test_scene_ready_action_surface_semantic_consumption.py
+
+depends_on:
+  - ITER-2026-03-29-112
+
+notes: "Batch-3 continuation: scene_ready action grouping should consume parser semantics."
