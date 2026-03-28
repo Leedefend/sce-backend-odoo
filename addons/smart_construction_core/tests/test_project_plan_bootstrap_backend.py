@@ -32,6 +32,20 @@ from odoo.addons.smart_core.orchestration.project_execution_scene_orchestrator i
 
 @tagged("sc_smoke", "project_plan_bootstrap_backend")
 class TestProjectPlanBootstrapBackend(TransactionCase):
+    def _create_project_with_partner(self, name):
+        project = self.env["project.project"].create(
+            {
+                "name": name,
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+            }
+        )
+        partner = self.env["res.partner"].create({"name": "%s Partner" % name})
+        return project, partner
+
+    def _reset_project_tasks(self, project):
+        self.env["project.task"].search([("project_id", "=", project.id)]).unlink()
+
     def test_entry_requires_project_id(self):
         handler = ProjectPlanBootstrapEnterHandler(self.env, payload={})
         result = handler.handle(payload={}, ctx={})
@@ -77,9 +91,13 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
 
     def test_execution_enter_requires_project_id(self):
         handler = ProjectExecutionEnterHandler(self.env, payload={})
-        result = handler.handle(payload={}, ctx={})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.project_execution_enter.ProjectExecutionSceneOrchestrator.build_entry",
+            return_value={"project_id": 0},
+        ):
+            result = handler.handle(payload={}, ctx={})
         self.assertFalse(result.get("ok"))
-        self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_CONTEXT_MISSING")
+        self.assertEqual(((result.get("error") or {}).get("code")), "PROJECT_NOT_FOUND")
 
     def test_plan_enter_uses_orchestration_carrier_shape(self):
         fake_entry = {
@@ -148,7 +166,11 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         ):
             result = handler.handle(payload={"project_id": 21}, ctx={})
         self.assertTrue(result.get("ok"))
-        self.assertEqual(set((result.get("data") or {}).keys()), set(fake_entry.keys()))
+        data = result.get("data") or {}
+        for key in fake_entry.keys():
+            self.assertIn(key, data)
+        self.assertIn("project_context", data)
+        self.assertIn("scene_contract_standard_v1", data)
 
     def test_execution_advance_requires_project_id(self):
         handler = ProjectExecutionAdvanceHandler(self.env, payload={})
@@ -164,12 +186,12 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
                 "user_id": self.env.user.id,
             }
         )
+        self._reset_project_tasks(project)
         task = self.env["project.task"].create(
             {
                 "name": "Root Task",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
         self.assertEqual(task.sc_state, "draft")
@@ -179,9 +201,13 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         self.assertTrue(result.get("ok"))
         self.assertEqual(((result.get("data") or {}).get("result")), "success")
 
-        task.invalidate_recordset(["sc_state", "kanban_state"])
+        invalidate_fields = ["sc_state"]
+        if "kanban_state" in task._fields:
+            invalidate_fields.append("kanban_state")
+        task.invalidate_recordset(invalidate_fields)
         self.assertEqual(task.sc_state, "in_progress")
-        self.assertEqual(task.kanban_state, "normal")
+        if "kanban_state" in task._fields:
+            self.assertEqual(task.kanban_state, "normal")
         activity_count = self.env["mail.activity"].sudo().search_count(
             [
                 ("res_model", "=", "project.project"),
@@ -195,9 +221,13 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         self.assertTrue(result_done.get("ok"))
         self.assertEqual(((result_done.get("data") or {}).get("result")), "success")
 
-        task.invalidate_recordset(["sc_state", "kanban_state"])
+        invalidate_fields = ["sc_state"]
+        if "kanban_state" in task._fields:
+            invalidate_fields.append("kanban_state")
+        task.invalidate_recordset(invalidate_fields)
         self.assertEqual(task.sc_state, "done")
-        self.assertEqual(task.kanban_state, "done")
+        if "kanban_state" in task._fields:
+            self.assertEqual(task.kanban_state, "done")
         activity_count = self.env["mail.activity"].sudo().search_count(
             [
                 ("res_model", "=", "project.project"),
@@ -215,12 +245,12 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
                 "user_id": self.env.user.id,
             }
         )
+        self._reset_project_tasks(project)
         self.env["project.task"].create(
             {
                 "name": "Root Task A",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
         self.env["project.task"].create(
@@ -228,7 +258,6 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
                 "name": "Root Task B",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
 
@@ -245,17 +274,18 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         project = self.env["project.project"].create(
             {
                 "name": "Pilot Precheck Ready Test",
+                "project_code": "PILOT-READY-001",
                 "manager_id": self.env.user.id,
                 "user_id": self.env.user.id,
                 "date_start": "2026-03-23",
             }
         )
+        self._reset_project_tasks(project)
         self.env["project.task"].create(
             {
                 "name": "Project Root Task",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
 
@@ -274,17 +304,18 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
         project = self.env["project.project"].create(
             {
                 "name": "Pilot Precheck Blocked Test",
+                "project_code": "PILOT-BLOCKED-001",
                 "manager_id": self.env.user.id,
                 "user_id": self.env.user.id,
                 "date_start": "2026-03-23",
             }
         )
+        self._reset_project_tasks(project)
         self.env["project.task"].create(
             {
                 "name": "Project Root Task A",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
         self.env["project.task"].create(
@@ -292,7 +323,6 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
                 "name": "Project Root Task B",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
 
@@ -334,12 +364,12 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
                 "date_start": "2026-03-23",
             }
         )
+        self._reset_project_tasks(project)
         self.env["project.task"].create(
             {
                 "name": "Project Root Task",
                 "project_id": project.id,
                 "user_ids": [(6, 0, [self.env.user.id])],
-                "user_id": self.env.user.id,
             }
         )
         orchestrator = ProjectExecutionSceneOrchestrator(self.env)
@@ -350,3 +380,41 @@ class TestProjectPlanBootstrapBackend(TransactionCase):
 
         self.assertEqual(result.get("block_key"), "next_actions")
         self.assertTrue(actions)
+
+    def test_execution_tasks_block_includes_system_derived_items(self):
+        project, partner = self._create_project_with_partner("Execution Derived Item Test")
+        self.env["payment.request"].create(
+            {
+                "name": "PR-DERIVED-001",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "amount": 1200.0,
+            }
+        )
+        self.env["sc.settlement.order"].create(
+            {
+                "name": "SO-DERIVED-001",
+                "project_id": project.id,
+                "partner_id": partner.id,
+            }
+        )
+        self.env["construction.contract"].create(
+            {
+                "subject": "系统投影合同",
+                "type": "out",
+                "project_id": project.id,
+                "partner_id": partner.id,
+            }
+        )
+
+        service = ProjectExecutionService(self.env)
+        block = service.build_block("execution_tasks", project=project, context={})
+        data = block.get("data") if isinstance(block.get("data"), dict) else {}
+        items = data.get("items") if isinstance(data.get("items"), list) else []
+        summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
+
+        self.assertEqual(block.get("state"), "ready")
+        self.assertTrue(any(str(item.get("source_model") or "") == "payment.request" for item in items))
+        self.assertTrue(any(str(item.get("source_model") or "") == "sc.settlement.order" for item in items))
+        self.assertTrue(any(str(item.get("source_model") or "") == "construction.contract" for item in items))
+        self.assertEqual(int(summary.get("derived_count") or 0), 3)

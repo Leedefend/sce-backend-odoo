@@ -4,6 +4,9 @@ from __future__ import annotations
 from odoo import fields
 
 from odoo.addons.smart_construction_core.services.project_dashboard_builders.base import BaseProjectBlockBuilder
+from odoo.addons.smart_construction_core.services.project_execution_item_projection_service import (
+    ProjectExecutionItemProjectionService,
+)
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
@@ -17,6 +20,7 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
 
     def build(self, project=None, context=None):
         visibility = self._visibility()
+        projection_service = ProjectExecutionItemProjectionService(self.env)
         empty_data = {
             "items": [],
             "summary": {
@@ -24,9 +28,12 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
                 "open_count": 0,
                 "blocked_count": 0,
                 "overdue_count": 0,
-                "source_model": "project.task",
+                "in_progress_count": 0,
+                "explicit_count": 0,
+                "derived_count": 0,
+                "source_model": "project.task+derived",
                 "state_field": "sc_state",
-                "empty_hint": "当前项目还没有执行任务，请先在 Odoo 项目任务中创建或准备任务。",
+                "empty_hint": "当前项目还没有执行事项，系统会自动纳入合同、付款、结算等事项，也支持补充显性任务。",
             },
         }
         if not visibility.get("allowed"):
@@ -50,7 +57,9 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
         blocked_count = 0
         overdue_count = 0
         in_progress_count = 0
+        explicit_count = 0
         for task in rows:
+            explicit_count += 1
             task_state = ProjectTaskStateSupport.normalize(getattr(task, "sc_state", "draft"))
             if not ProjectTaskStateSupport.is_done(task_state):
                 open_count += 1
@@ -65,6 +74,9 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
             items.append(
                 {
                     "task_id": int(task.id),
+                    "task_kind": "explicit",
+                    "source_model": "project.task",
+                    "source_id": int(task.id),
                     "name": str(getattr(task, "name", "") or ""),
                     "assignee_name": str(getattr(getattr(task, "user_ids", False)[:1], "display_name", "") or ""),
                     "stage_name": str(getattr(getattr(task, "stage_id", None), "display_name", "") or ""),
@@ -72,6 +84,15 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
                     "state": task_state,
                 }
             )
+
+        derived_items = projection_service.project_items(project, limit=max(0, 6 - len(items)))
+        derived_summary = projection_service.project_summary(project)
+        items.extend(derived_items)
+        open_count += int(derived_summary.get("open_count") or 0)
+        blocked_count += int(derived_summary.get("blocked_count") or 0)
+        overdue_count += int(derived_summary.get("overdue_count") or 0)
+        in_progress_count += int(derived_summary.get("in_progress_count") or 0)
+        derived_count = int(derived_summary.get("count") or 0)
 
         return self._envelope(
             state="ready" if items else "empty",
@@ -84,9 +105,11 @@ class ProjectExecutionTasksBuilder(BaseProjectBlockBuilder):
                     "blocked_count": blocked_count,
                     "in_progress_count": in_progress_count,
                     "overdue_count": overdue_count,
-                    "source_model": "project.task",
+                    "explicit_count": explicit_count,
+                    "derived_count": derived_count,
+                    "source_model": "project.task+derived",
                     "state_field": "sc_state",
-                    "empty_hint": "当前项目还没有执行任务，请先在 Odoo 项目任务中创建或准备任务。",
+                    "empty_hint": "当前项目还没有执行事项，系统会自动纳入合同、付款、结算等事项，也支持补充显性任务。",
                 },
             },
         )

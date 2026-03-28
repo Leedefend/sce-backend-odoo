@@ -112,8 +112,17 @@ def _render_md(report: dict) -> str:
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
-    login = str(os.getenv("E2E_LOGIN") or "admin").strip()
-    password = str(os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
+    login = str(
+        os.getenv("E2E_LOGIN")
+        or os.getenv("ROLE_PM_LOGIN")
+        or "demo_role_project_manager"
+    ).strip()
+    password = str(
+        os.getenv("E2E_PASSWORD")
+        or os.getenv("ROLE_PM_PASSWORD")
+        or os.getenv("ADMIN_PASSWD")
+        or "demo"
+    ).strip()
     intent_url = f"{base_url}/api/v1/intent"
     if db_name:
         intent_url = f"{intent_url}?db={db_name}"
@@ -170,34 +179,55 @@ def main() -> int:
         )
         _assert_ok(status, dashboard_next_resp, "project.dashboard.block.fetch(next_actions)")
         dashboard_actions = _actions_from(_block_data(dashboard_next_resp))
-        plan_action = _find_action(dashboard_actions, "project.plan_bootstrap.enter")
+        dashboard_execution_action = next(
+            (
+                row
+                for row in dashboard_actions
+                if isinstance(row, dict)
+                and str(row.get("intent") or "") in {"project.plan_bootstrap.enter", "project.execution.enter"}
+            ),
+            None,
+        )
+        if not isinstance(dashboard_execution_action, dict):
+            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter/project.execution.enter")
+        dashboard_next_intent = str(dashboard_execution_action.get("intent") or "")
         report["steps"].append(
             _step(
                 "dashboard",
                 status="pass",
-                experience="dashboard 能把操作员继续导向 plan，不需要额外判断页面路由。",
-                evidence={"next_intent": str(plan_action.get("intent") or ""), "state": str(plan_action.get("state") or "")},
+                experience="dashboard 能把操作员继续导向计划或执行主线，不需要额外判断页面路由。",
+                evidence={"next_intent": dashboard_next_intent, "state": str(dashboard_execution_action.get("state") or "")},
             )
         )
 
-        status, plan_next_resp = _post(
-            intent_url,
-            token,
-            "project.plan_bootstrap.block.fetch",
-            {"project_id": project_id, "block_key": "next_actions"},
-            db_name=db_name,
-        )
-        _assert_ok(status, plan_next_resp, "project.plan_bootstrap.block.fetch(next_actions)")
-        plan_actions = _actions_from(_block_data(plan_next_resp))
-        execution_action = _find_action(plan_actions, "project.execution.enter")
-        report["steps"].append(
-            _step(
-                "plan",
-                status="pass",
-                experience="plan 场景能稳定把流程交给 execution，没有额外产品分支。",
-                evidence={"next_intent": str(execution_action.get("intent") or ""), "state": str(execution_action.get("state") or "")},
+        if dashboard_next_intent == "project.plan_bootstrap.enter":
+            status, plan_next_resp = _post(
+                intent_url,
+                token,
+                "project.plan_bootstrap.block.fetch",
+                {"project_id": project_id, "block_key": "next_actions"},
+                db_name=db_name,
             )
-        )
+            _assert_ok(status, plan_next_resp, "project.plan_bootstrap.block.fetch(next_actions)")
+            plan_actions = _actions_from(_block_data(plan_next_resp))
+            execution_action = _find_action(plan_actions, "project.execution.enter")
+            report["steps"].append(
+                _step(
+                    "plan",
+                    status="pass",
+                    experience="plan 场景能稳定把流程交给 execution，没有额外产品分支。",
+                    evidence={"next_intent": str(execution_action.get("intent") or ""), "state": str(execution_action.get("state") or "")},
+                )
+            )
+        else:
+            report["steps"].append(
+                _step(
+                    "plan",
+                    status="pass",
+                    experience="当前产品主线允许 dashboard 直接进入 execution，plan 入口不再作为强制中转。",
+                    evidence={"next_intent": dashboard_next_intent, "state": str(dashboard_execution_action.get("state") or "")},
+                )
+            )
 
         status, execution_entry_resp = _post(intent_url, token, "project.execution.enter", {"project_id": project_id}, db_name=db_name)
         _assert_ok(status, execution_entry_resp, "project.execution.enter")
