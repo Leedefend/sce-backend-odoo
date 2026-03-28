@@ -46,6 +46,15 @@ class TestPageContractSemanticOrchestrationBridge(unittest.TestCase):
                 "parser_semantic_surface": {
                     "parser_contract": {"view_type": "tree"},
                     "view_semantics": {"source_view": "tree"},
+                    "native_view": {
+                        "views": {
+                            "search": {
+                                "filters": [{"name": "mine", "string": "我的"}],
+                                "group_bys": [{"name": "by_stage", "string": "按阶段", "group_by": "stage_id"}],
+                                "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                            }
+                        }
+                    },
                     "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
                 }
             },
@@ -56,6 +65,8 @@ class TestPageContractSemanticOrchestrationBridge(unittest.TestCase):
         self.assertEqual((bridged.get("page") or {}).get("page_type"), "list")
         self.assertEqual((bridged.get("page") or {}).get("layout_mode"), "list_flow")
         self.assertEqual((bridged.get("page") or {}).get("priority_model"), "task_first")
+        self.assertEqual((bridged.get("render_hints") or {}).get("preferred_columns"), 2)
+        self.assertEqual(((bridged.get("page") or {}).get("filters") or [])[0]["kind"], "filter")
 
 
 if __name__ == "__main__":

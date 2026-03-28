@@ -10,6 +10,9 @@ from odoo.addons.smart_core.core.scene_contract_parser_semantic_bridge import (
 from odoo.addons.smart_core.core.released_scene_semantic_surface_bridge import (
     apply_released_scene_semantic_surface_bridge,
 )
+from odoo.addons.smart_core.core.scene_contract_semantic_orchestration_bridge import (
+    apply_scene_contract_semantic_orchestration_bridge,
+)
 
 
 SCENE_CONTRACT_STANDARD_VERSION = "scene_contract_standard_v1"
@@ -285,7 +288,8 @@ def build_release_surface_scene_contract_from_runtime_entry(
         released=True,
         diagnostics_ref=diagnostics_ref,
     )
-    return apply_scene_contract_parser_semantic_bridge(contract, row)
+    contract = apply_scene_contract_parser_semantic_bridge(contract, row)
+    return apply_scene_contract_semantic_orchestration_bridge(contract)
 
 
 def build_release_surface_scene_contract_from_page_contract(
@@ -362,7 +366,8 @@ def build_release_surface_scene_contract_from_page_contract(
     )
     surface_source = _dict(orchestration.get("meta")).get("parser_semantic_surface")
     source_payload = surface_source if isinstance(surface_source, dict) else page_row
-    return apply_scene_contract_parser_semantic_bridge(contract, source_payload)
+    contract = apply_scene_contract_parser_semantic_bridge(contract, source_payload)
+    return apply_scene_contract_semantic_orchestration_bridge(contract)
 
 
 def attach_release_surface_scene_contract(

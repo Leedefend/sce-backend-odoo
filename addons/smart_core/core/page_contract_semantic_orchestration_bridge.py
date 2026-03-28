@@ -35,6 +35,44 @@ def _resolve_semantic_page_type(surface: Dict[str, Any]) -> str:
     return ""
 
 
+def _search_filters_from_surface(surface: Dict[str, Any]) -> list[Dict[str, Any]]:
+    native_view = _as_dict(surface.get("native_view"))
+    search_view = _as_dict(_as_dict(native_view.get("views")).get("search"))
+    filters: list[Dict[str, Any]] = []
+
+    for row in search_view.get("filters") or []:
+        if not isinstance(row, dict):
+            continue
+        filters.append(
+            {
+                "kind": "filter",
+                "key": row.get("name"),
+                "label": row.get("string") or row.get("name"),
+            }
+        )
+    for row in search_view.get("group_bys") or []:
+        if not isinstance(row, dict):
+            continue
+        filters.append(
+            {
+                "kind": "group_by",
+                "key": row.get("group_by") or row.get("name"),
+                "label": row.get("string") or row.get("name"),
+            }
+        )
+    for row in search_view.get("searchpanel") or []:
+        if not isinstance(row, dict):
+            continue
+        filters.append(
+            {
+                "kind": "searchpanel",
+                "key": row.get("name"),
+                "label": row.get("string") or row.get("name"),
+            }
+        )
+    return [row for row in filters if row.get("key")]
+
+
 def apply_page_contract_semantic_orchestration_bridge(
     orchestration: Dict[str, Any] | None,
 ) -> Dict[str, Any]:
@@ -62,10 +100,20 @@ def apply_page_contract_semantic_orchestration_bridge(
     elif semantic_page_type == "entry_hub":
         page["layout_mode"] = "entry_flow"
         page["priority_model"] = "role_first"
+    if not isinstance(page.get("filters"), list) or not page.get("filters"):
+        page["filters"] = _search_filters_from_surface(surface)
     out["page"] = page
 
     render_hints = _as_dict(out.get("render_hints"))
     render_hints["semantic_profile"] = semantic_page_type
     render_hints["semantic_page_type"] = semantic_page_type
+    if semantic_page_type == "workspace":
+        render_hints["preferred_columns"] = 2
+    elif semantic_page_type == "detail":
+        render_hints["preferred_columns"] = 1
+    elif semantic_page_type == "list":
+        render_hints["preferred_columns"] = 2
+    elif semantic_page_type == "entry_hub":
+        render_hints["preferred_columns"] = 1
     out["render_hints"] = render_hints
     return out

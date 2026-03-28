@@ -31,6 +31,11 @@ bridge_module = _load_module(
     CORE_DIR / "runtime_page_parser_semantic_bridge.py",
 )
 core_pkg.runtime_page_parser_semantic_bridge = bridge_module
+semantic_bridge_module = _load_module(
+    "odoo.addons.smart_core.core.runtime_page_semantic_orchestration_bridge",
+    CORE_DIR / "runtime_page_semantic_orchestration_bridge.py",
+)
+core_pkg.runtime_page_semantic_orchestration_bridge = semantic_bridge_module
 
 page_contracts_builder = types.ModuleType("odoo.addons.smart_core.core.page_contracts_builder")
 
@@ -44,12 +49,20 @@ def _build_page_contracts(_data):
                     "render_hints": {},
                     "meta": {
                         "parser_semantic_surface": {
-                            "parser_contract": {"view_type": "tree"},
-                            "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
-                            "native_view": {"views": {"tree": {"layout": []}}},
-                            "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
-                        }
-                    },
+                        "parser_contract": {"view_type": "tree"},
+                        "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
+                        "native_view": {
+                            "views": {
+                                "tree": {"layout": []},
+                                "search": {
+                                    "filters": [{"name": "mine", "string": "我的"}],
+                                    "group_bys": [{"name": "by_stage", "string": "按阶段", "group_by": "stage_id"}],
+                                },
+                            }
+                        },
+                        "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
+                    }
+                },
                 }
             }
         }
@@ -82,6 +95,9 @@ class TestRuntimePageContractBuilderSemantics(unittest.TestCase):
         self.assertTrue(
             ((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_semantic_view") or {}).get("capability_flags") or {}).get("is_editable")
         )
+        self.assertEqual((home.get("runtime_context") or {}).get("runtime_mode"), "list_focus")
+        self.assertEqual((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_preferred_columns")), 2)
+        self.assertEqual(((((home.get("page_orchestration_v1") or {}).get("page") or {}).get("filters")) or [])[0]["kind"], "filter")
 
 
 if __name__ == "__main__":

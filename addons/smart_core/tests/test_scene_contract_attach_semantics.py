@@ -31,6 +31,11 @@ scene_bridge = _load_module(
     CORE_DIR / "scene_contract_parser_semantic_bridge.py",
 )
 core_pkg.scene_contract_parser_semantic_bridge = scene_bridge
+semantic_bridge = _load_module(
+    "odoo.addons.smart_core.core.scene_contract_semantic_orchestration_bridge",
+    CORE_DIR / "scene_contract_semantic_orchestration_bridge.py",
+)
+core_pkg.scene_contract_semantic_orchestration_bridge = semantic_bridge
 released_bridge = _load_module(
     "odoo.addons.smart_core.core.released_scene_semantic_surface_bridge",
     CORE_DIR / "released_scene_semantic_surface_bridge.py",
@@ -62,6 +67,7 @@ class TestSceneContractAttachSemantics(unittest.TestCase):
         self.assertIn("scene_contract_standard_v1", payload)
         self.assertEqual((payload.get("semantic_runtime") or {}).get("view_type"), "form")
         self.assertIn("released_scene_semantic_surface", payload)
+        self.assertEqual((((payload.get("scene_contract_standard_v1") or {}).get("page") or {}).get("layout")), "detail")
 
 
 if __name__ == "__main__":

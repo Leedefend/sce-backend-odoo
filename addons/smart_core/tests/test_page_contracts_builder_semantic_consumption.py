@@ -48,9 +48,18 @@ class TestPageContractsBuilderSemanticConsumption(unittest.TestCase):
         payload = target.build_page_contracts(
             {
                 "role_surface": {"role_code": "owner"},
-                "parser_contract": {"view_type": "form"},
-                "view_semantics": {"source_view": "form", "capability_flags": {"is_editable": True}},
-                "native_view": {"views": {"form": {"layout": []}}},
+                "parser_contract": {"view_type": "tree"},
+                "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
+                "native_view": {
+                    "views": {
+                        "tree": {"layout": []},
+                        "search": {
+                            "filters": [{"name": "mine", "string": "我的"}],
+                            "group_bys": [{"name": "by_stage", "string": "按阶段", "group_by": "stage_id"}],
+                            "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                        },
+                    }
+                },
                 "semantic_page": {"title_node": {"text": "工作台"}},
             }
         )
@@ -58,10 +67,12 @@ class TestPageContractsBuilderSemanticConsumption(unittest.TestCase):
         home = (((payload.get("pages") or {}).get("home") or {}).get("page_orchestration_v1") or {})
         page = home.get("page") or {}
 
-        self.assertEqual(page.get("page_type"), "detail")
-        self.assertEqual(page.get("layout_mode"), "detail_focus")
-        self.assertEqual(page.get("priority_model"), "record_first")
-        self.assertEqual((home.get("render_hints") or {}).get("semantic_page_type"), "detail")
+        self.assertEqual(page.get("page_type"), "list")
+        self.assertEqual(page.get("layout_mode"), "list_flow")
+        self.assertEqual(page.get("priority_model"), "task_first")
+        self.assertEqual((home.get("render_hints") or {}).get("semantic_page_type"), "list")
+        self.assertEqual((home.get("render_hints") or {}).get("preferred_columns"), 2)
+        self.assertEqual((page.get("filters") or [])[0]["kind"], "filter")
 
 
 if __name__ == "__main__":
