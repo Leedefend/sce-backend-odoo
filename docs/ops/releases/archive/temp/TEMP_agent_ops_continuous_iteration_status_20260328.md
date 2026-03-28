@@ -403,3 +403,28 @@
 - observed classification: `PASS_WITH_RISK`
 - stop reason: `diff_too_large`
 - note: code and tests are green; stop is caused by cumulative local delta size, not by forbidden-path or verification failure
+## Round: ITER-2026-03-28-034
+
+- `ITER-2026-03-28-034`: runtime_fetch bootstrap and surface-apply sequence extracted into `addons/smart_core/core/runtime_fetch_bootstrap_helper.py`
+  - runtime_fetch context builder now delegates extension hook execution, extension fact merge, and surface apply sequencing to the shared helper
+  - direct unit coverage added in `addons/smart_core/tests/test_runtime_fetch_bootstrap_helper.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-034`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed slice can continue with another narrow runtime_fetch or load_contract cleanup without governance recovery first
+## Round: ITER-2026-03-28-035
+
+- `ITER-2026-03-28-035`: runtime_fetch handler plumbing extracted into `addons/smart_core/core/runtime_fetch_handler_helper.py`
+  - runtime_fetch handlers now delegate nested-param parsing to the shared helper
+  - runtime_fetch handlers now delegate trace/id meta shaping to the shared helper
+  - direct unit coverage added in `addons/smart_core/tests/test_runtime_fetch_handler_helper.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-035`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed slice can still continue without governance recovery, but cumulative local delta is approaching the diff threshold

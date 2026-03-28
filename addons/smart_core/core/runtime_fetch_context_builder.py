@@ -8,6 +8,7 @@ from odoo.addons.smart_core.core.capability_provider import (
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
 from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
+from odoo.addons.smart_core.core.runtime_fetch_bootstrap_helper import build_runtime_fetch_bootstrap_surface
 from odoo.addons.smart_core.core.system_init_components_factory import SystemInitComponentsFactory
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
 from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
@@ -52,19 +53,19 @@ def build_runtime_fetch_context(env, params: dict[str, Any] | None = None) -> di
         contract_version="1.0.0",
     )
     data.update({"contract_mode": contract_mode})
-    run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
-    merge_extension_facts(data)
-    surface_ctx = SystemInitSurfaceContext(
+    return build_runtime_fetch_bootstrap_surface(
         data=data,
+        env=env,
+        user=user,
         contract_mode=contract_mode,
-        scene_diagnostics={},
-        capability_surface_engine=components["capability_surface_engine"],
+        components=components,
         identity_resolver=identity_resolver,
         user_groups_xmlids=user_groups_xmlids,
-        nav_tree=[],
-        scene_diagnostics_builder=SceneDiagnosticsBuilder,
         build_capability_groups_fn=provider_build_capability_groups,
         apply_contract_governance_fn=apply_contract_governance,
+        scene_diagnostics_builder=SceneDiagnosticsBuilder,
+        run_extension_hooks_fn=run_extension_hooks,
+        merge_extension_facts_fn=merge_extension_facts,
+        surface_context_cls=SystemInitSurfaceContext,
+        surface_builder=SystemInitSurfaceBuilder,
     )
-    data, _ = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
-    return data
