@@ -101,6 +101,7 @@ class TestRuntimePageContractBuilderSemantics(unittest.TestCase):
         self.assertEqual((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_preferred_columns")), 2)
         self.assertEqual((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_search_profile")), "faceted")
         self.assertEqual(((((home.get("page_orchestration_v1") or {}).get("page") or {}).get("filters")) or [])[0]["kind"], "filter")
+        self.assertEqual(((((home.get("page_orchestration_v1") or {}).get("page") or {}).get("filters")) or [])[2]["kind"], "searchpanel")
         self.assertEqual(
             [row.get("key") for row in (((home.get("page_orchestration_v1") or {}).get("page") or {}).get("global_actions") or [])],
             ["apply_filters", "reset_filters"],

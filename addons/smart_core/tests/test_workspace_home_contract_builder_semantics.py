@@ -87,6 +87,7 @@ class TestWorkspaceHomeContractBuilderSemantics(unittest.TestCase):
         view_type = page_context.get("view_type")
         self.assertEqual(view_type, "tree")
         self.assertEqual(page.get("layout_mode"), "list_flow")
+        self.assertEqual(page.get("priority_model"), "task_first")
         self.assertEqual([row.get("key") for row in (page.get("global_actions") or [])], ["apply_filters", "reset_filters", "refresh"])
         self.assertEqual((((payload.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("preferred_columns")), 2)
         self.assertIn("parser_semantic_surface", payload.get("diagnostics") or {})

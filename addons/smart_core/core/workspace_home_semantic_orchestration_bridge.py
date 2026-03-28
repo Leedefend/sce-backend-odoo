@@ -70,15 +70,19 @@ def apply_workspace_home_semantic_orchestration_bridge(
 
     if semantic_page_type == "workspace":
         page["layout_mode"] = "workspace_flow"
+        page["priority_model"] = "role_first"
         render_hints["preferred_columns"] = 2
     elif semantic_page_type == "detail":
         page["layout_mode"] = "detail_focus"
+        page["priority_model"] = "record_first"
         render_hints["preferred_columns"] = 1
     elif semantic_page_type == "list":
         page["layout_mode"] = "list_flow"
+        page["priority_model"] = "task_first"
         render_hints["preferred_columns"] = 2
     elif semantic_page_type == "entry_hub":
         page["layout_mode"] = "entry_flow"
+        page["priority_model"] = "role_first"
         render_hints["preferred_columns"] = 1
 
     semantic_actions = _search_actions(surface)
