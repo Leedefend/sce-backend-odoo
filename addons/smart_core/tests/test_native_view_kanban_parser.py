@@ -151,7 +151,9 @@ class TestNativeViewKanbanParser(unittest.TestCase):
         payload = parser.parse()
         self.assertEqual(payload["group_by"], "stage_id")
         self.assertEqual(payload["cards"][0]["name"], "name")
+        self.assertEqual(payload["cards"][0]["semantic_role"], "kanban_card_field")
         self.assertEqual(payload["actions"][0]["name"], "open_record")
+        self.assertEqual(payload["actions"][0]["semantic_role"], "kanban_card_action")
         self.assertEqual(payload["color_field"], "color")
 
 

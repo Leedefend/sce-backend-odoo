@@ -16,8 +16,11 @@ def build_field_node(
     placeholder=None,
     visible=True,
     editable=True,
+    semantic_role=None,
+    source_view=None,
 ):
     return {
+        "kind": "field",
         "name": name,
         "string": string,
         "widget": widget,
@@ -31,6 +34,8 @@ def build_field_node(
         "placeholder": placeholder,
         "visible": visible,
         "editable": editable,
+        "semantic_role": semantic_role,
+        "source_view": source_view,
     }
 
 
@@ -45,8 +50,11 @@ def build_action_node(
     hotkey=None,
     invisible=None,
     visible=True,
+    semantic_role=None,
+    source_view=None,
 ):
     return {
+        "kind": "action",
         "name": name,
         "string": string,
         "type": action_type,
@@ -56,33 +64,44 @@ def build_action_node(
         "hotkey": hotkey,
         "invisible": invisible,
         "visible": visible,
+        "semantic_role": semantic_role,
+        "source_view": source_view,
     }
 
 
-def build_filter_node(*, name, string=None, domain=None, context=None):
+def build_filter_node(*, name, string=None, domain=None, context=None, semantic_role=None, source_view=None):
     return {
+        "kind": "filter",
         "name": name,
         "string": string,
         "domain": domain,
         "context": context if context is not None else {},
+        "semantic_role": semantic_role,
+        "source_view": source_view,
     }
 
 
-def build_group_by_node(*, name, string=None, group_by=None, context=None):
+def build_group_by_node(*, name, string=None, group_by=None, context=None, semantic_role=None, source_view=None):
     return {
+        "kind": "group_by",
         "name": name,
         "string": string,
         "group_by": group_by,
         "context": context if context is not None else {},
+        "semantic_role": semantic_role,
+        "source_view": source_view,
     }
 
 
-def build_searchpanel_node(*, name, string=None, select=None, icon=None):
+def build_searchpanel_node(*, name, string=None, select=None, icon=None, semantic_role=None, source_view=None):
     return {
+        "kind": "searchpanel",
         "name": name,
         "string": string,
         "select": select,
         "icon": icon,
+        "semantic_role": semantic_role,
+        "source_view": source_view,
     }
 
 
