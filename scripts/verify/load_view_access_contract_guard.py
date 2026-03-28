@@ -51,6 +51,8 @@ def _intent_login(intent_url: str, db_name: str, login: str, password: str) -> s
     require_ok(status, payload, f"login({login})")
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     token = str(data.get("token") or "").strip()
+    if not token and isinstance(data.get("session"), dict):
+        token = str((data.get("session") or {}).get("token") or "").strip()
     if not token:
         raise RuntimeError(f"login({login}) missing token")
     return token

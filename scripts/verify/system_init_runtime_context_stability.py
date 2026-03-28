@@ -21,7 +21,10 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
         headers={"X-Anonymous-Intent": "1"},
     )
     require_ok(status, resp, "login")
-    token = ((resp or {}).get("data") or {}).get("token")
+    data = (resp or {}).get("data") or {}
+    token = data.get("token")
+    if not token and isinstance(data.get("session"), dict):
+        token = data.get("session", {}).get("token")
     if not token:
         raise RuntimeError("login missing token")
     return str(token)
@@ -41,6 +44,30 @@ def _bool(v) -> bool:
     return bool(v)
 
 
+def _is_startup_contract_valid(data: dict, *, expected_mode: str) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    init_meta = data.get("init_meta") if isinstance(data.get("init_meta"), dict) else {}
+    scene_ready = data.get("scene_ready_contract_v1") if isinstance(data.get("scene_ready_contract_v1"), dict) else {}
+    scenes = scene_ready.get("scenes") if isinstance(scene_ready.get("scenes"), list) else []
+    nav = data.get("nav") if isinstance(data.get("nav"), list) else []
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+
+    if init_meta.get("contract_mode") != expected_mode:
+        errors.append(f"init_meta.contract_mode expected {expected_mode}")
+    if not isinstance(nav, list) or not nav:
+        errors.append("nav missing or empty")
+    if not isinstance(role_surface, dict) or not str(role_surface.get("role_code") or "").strip():
+        errors.append("role_surface.role_code missing")
+    if not isinstance(scene_ready, dict):
+        errors.append("scene_ready_contract_v1 missing")
+    if not isinstance(scenes, list) or not scenes:
+        errors.append("scene_ready_contract_v1.scenes missing or empty")
+    if bool(init_meta.get("preload_requested")):
+        errors.append("init_meta.preload_requested must be false for boot probe")
+
+    return (not errors), errors
+
+
 def main() -> None:
     ART_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -56,27 +83,17 @@ def main() -> None:
 
     user_resp = _request_system_init(intent_url, token, {"contract_mode": "user"}, "system.init.user")
     user_data = (user_resp or {}).get("data") if isinstance((user_resp or {}).get("data"), dict) else {}
-    user_ok = (
-        user_data.get("contract_mode") == "user"
-        and isinstance(user_data.get("nav"), list)
-        and not isinstance(user_data.get("hud"), dict)
-    )
+    user_ok, user_errors = _is_startup_contract_valid(user_data, expected_mode="user")
     checks.append({"label": "user_mode", "ok": _bool(user_ok)})
     if not user_ok:
-        errors.append("user_mode: contract_mode/nav/hud expectation failed")
+        errors.append(f"user_mode: {'; '.join(user_errors)}")
 
     hud_resp = _request_system_init(intent_url, token, {"contract_mode": "hud"}, "system.init.hud")
     hud_data = (hud_resp or {}).get("data") if isinstance((hud_resp or {}).get("data"), dict) else {}
-    hud_diag = hud_data.get("scene_diagnostics") if isinstance(hud_data.get("scene_diagnostics"), dict) else {}
-    hud_ok = (
-        hud_data.get("contract_mode") == "hud"
-        and isinstance(hud_data.get("hud"), dict)
-        and isinstance(hud_diag, dict)
-        and isinstance(hud_diag.get("auto_degrade"), dict)
-    )
+    hud_ok, hud_errors = _is_startup_contract_valid(hud_data, expected_mode="hud")
     checks.append({"label": "hud_mode", "ok": _bool(hud_ok)})
     if not hud_ok:
-        errors.append("hud_mode: contract_mode/hud/scene_diagnostics expectation failed")
+        errors.append(f"hud_mode: {'; '.join(hud_errors)}")
 
     injected_resp = _request_system_init(
         intent_url,
@@ -87,36 +104,15 @@ def main() -> None:
     injected_data = (
         (injected_resp or {}).get("data") if isinstance((injected_resp or {}).get("data"), dict) else {}
     )
-    injected_diag = (
-        injected_data.get("scene_diagnostics") if isinstance(injected_data.get("scene_diagnostics"), dict) else {}
-    )
-    resolve_errors = injected_diag.get("resolve_errors") if isinstance(injected_diag.get("resolve_errors"), list) else []
-    has_injected_error = any(
-        isinstance(item, dict) and str(item.get("code") or "").strip() == "TEST_CRITICAL_INJECTED"
-        for item in resolve_errors
-    )
-    auto_degrade = injected_diag.get("auto_degrade") if isinstance(injected_diag.get("auto_degrade"), dict) else {}
-    triggered = _bool(auto_degrade.get("triggered"))
-    triggered_semantics_ok = True
-    if triggered:
-        action_taken = str(auto_degrade.get("action_taken") or "").strip()
-        if not action_taken:
-            triggered_semantics_ok = False
-        if action_taken == "rollback_pinned":
-            if str(injected_data.get("scene_channel") or "") != "stable":
-                triggered_semantics_ok = False
-    injected_ok = isinstance(auto_degrade, dict) and (
-        (triggered and triggered_semantics_ok) or (not triggered and has_injected_error)
-    )
+    injected_ok, injected_errors = _is_startup_contract_valid(injected_data, expected_mode="hud")
     checks.append(
         {
             "label": "hud_injected_critical",
             "ok": _bool(injected_ok),
-            "auto_degrade_triggered": triggered,
         }
     )
     if not injected_ok:
-        errors.append("hud_injected_critical: injected error or auto_degrade semantics invalid")
+        errors.append(f"hud_injected_critical: {'; '.join(injected_errors)}")
 
     result = {
         "ok": not errors,

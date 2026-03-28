@@ -14,6 +14,7 @@ from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemIn
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
+from odoo.addons.smart_core.core.system_init_extension_fact_merger import merge_extension_facts
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
 from odoo.addons.smart_core.utils.contract_governance import (
@@ -21,36 +22,6 @@ from odoo.addons.smart_core.utils.contract_governance import (
     normalize_capabilities,
     resolve_contract_mode,
 )
-
-
-def _merge_extension_facts(data: dict[str, Any]) -> None:
-    ext_facts = data.get("ext_facts")
-    if not isinstance(ext_facts, dict):
-        return
-    for _, module_facts in ext_facts.items():
-        if not isinstance(module_facts, dict):
-            continue
-        for key in ("entitlements", "usage"):
-            if key in module_facts and key not in data:
-                data[key] = module_facts.get(key)
-        workspace_collections = module_facts.get("workspace_collections")
-        if isinstance(workspace_collections, dict):
-            for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
-                rows = workspace_collections.get(key)
-                if key not in data and isinstance(rows, list):
-                    data[key] = rows
-        provider_payload = module_facts.get("role_surface_override_provider")
-        if isinstance(provider_payload, dict):
-            provider_key = str(provider_payload.get("key") or "").strip()
-            if not provider_key:
-                continue
-            providers = data.get("role_surface_override_providers")
-            if not isinstance(providers, dict):
-                providers = {}
-            merged = dict(provider_payload)
-            merged.pop("key", None)
-            providers[provider_key] = merged
-            data["role_surface_override_providers"] = providers
 
 
 def build_runtime_fetch_context(env, params: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -82,7 +53,7 @@ def build_runtime_fetch_context(env, params: dict[str, Any] | None = None) -> di
     )
     data.update({"contract_mode": contract_mode})
     run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
-    _merge_extension_facts(data)
+    merge_extension_facts(data)
     surface_ctx = SystemInitSurfaceContext(
         data=data,
         contract_mode=contract_mode,

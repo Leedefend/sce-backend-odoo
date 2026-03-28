@@ -32,6 +32,15 @@ function writeSummary(lines) {
   fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
 }
 
+function formatIntentError(resp) {
+  if (!resp || !resp.body || typeof resp.body !== 'object') return '';
+  const error = resp.body.error && typeof resp.body.error === 'object' ? resp.body.error : {};
+  const code = String(error.code || '');
+  const message = String(error.message || '');
+  if (!code && !message) return '';
+  return ` error_code=${code || '-'} error_message=${message || '-'}`;
+}
+
 function requestJson(url, payload, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -84,7 +93,9 @@ async function main() {
     writeJson(path.join(outDir, 'login.log'), loginResp);
     throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
-  const token = (loginResp.body.data || {}).token;
+  const loginData = loginResp.body.data || {};
+  const session = typeof loginData.session === 'object' && loginData.session ? loginData.session : {};
+  const token = loginData.token || session.token || '';
   if (!token) {
     throw new Error('login response missing token');
   }
@@ -97,6 +108,7 @@ async function main() {
   const candidateModels = Array.from(new Set([MODEL, 'res.partner']));
   let modelUsed = '';
   let viewResp = null;
+  const viewErrors = [];
 
   log('load_view');
   for (const candidate of candidateModels) {
@@ -108,12 +120,14 @@ async function main() {
       viewResp = resp;
       modelUsed = candidate;
       break;
-    } catch (_err) {
-      // keep trying fallbacks; final failure will be thrown below
+    } catch (err) {
+      viewErrors.push(`${candidate}: ${err.message}${formatIntentError(resp)}`);
     }
   }
   if (!viewResp) {
-    throw new Error(`load_view failed for all models: ${candidateModels.join(',')}`);
+    throw new Error(
+      `load_view failed for all models: ${candidateModels.join(',')} details=${viewErrors.join(' | ')}`
+    );
   }
   writeJson(path.join(outDir, 'load_view.log'), viewResp);
   const viewData = viewResp.body.data || {};
@@ -136,7 +150,7 @@ async function main() {
   writeSummary(summary);
 
   if (!layoutOk || !recordOk) {
-    throw new Error('layout/read assertions failed');
+    throw new Error(`layout/read assertions failed model_used=${modelUsed} layout_ok=${layoutOk} record_ok=${recordOk}`);
   }
 
   log('PASS layout_ok=true record_ok=true');

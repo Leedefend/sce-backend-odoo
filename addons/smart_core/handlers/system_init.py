@@ -38,18 +38,21 @@ from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeO
 from odoo.addons.smart_core.core.system_init_runtime_context import SystemInitRuntimeContext
 from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
+from odoo.addons.smart_core.core.system_init_extension_fact_merger import merge_extension_facts
+from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context import SystemInitSceneRuntimeSurfaceContext
+from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_workspace_home_role_context
-from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
 from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
-from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
 from odoo.addons.smart_core.core.release_navigation_contract_builder import build_release_navigation_contract
-from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
 )
+from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
+from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
 from odoo.addons.smart_core.delivery.release_audit_trail_service import ReleaseAuditTrailService
@@ -163,37 +166,6 @@ def _build_platform_minimum_nav_contract() -> dict:
             "policy_applied": False,
         },
     }
-
-
-def _merge_extension_facts(data: dict) -> None:
-    ext_facts = data.get("ext_facts")
-    if not isinstance(ext_facts, dict):
-        return
-    # Transitional compatibility: keep top-level reads stable while enforcing
-    # extension hooks to write facts into a namespaced container only.
-    for ext_module, module_facts in ext_facts.items():
-        if not isinstance(module_facts, dict):
-            continue
-        for key in ("entitlements", "usage"):
-            if key in module_facts and key not in data:
-                data[key] = module_facts.get(key)
-        workspace_collections = module_facts.get("workspace_collections")
-        if isinstance(workspace_collections, dict):
-            for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
-                rows = workspace_collections.get(key)
-                if key not in data and isinstance(rows, list):
-                    data[key] = rows
-        provider_payload = module_facts.get("role_surface_override_provider")
-        if isinstance(provider_payload, dict):
-            provider_key = str(provider_payload.get("key") or "").strip() or str(ext_module or "").strip()
-            if provider_key:
-                providers = data.get("role_surface_override_providers")
-                if not isinstance(providers, dict):
-                    providers = {}
-                merged = dict(provider_payload)
-                merged.pop("key", None)
-                providers[provider_key] = merged
-                data["role_surface_override_providers"] = providers
 
 
 def _normalize_scene_validation_recovery_strategy(payload) -> dict:
@@ -542,7 +514,7 @@ class SystemInitHandler(BaseIntentHandler):
 
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
-        _merge_extension_facts(data)
+        merge_extension_facts(data)
         data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
         data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
         stage_ts = _mark("prepare_runtime_context", stage_ts)
@@ -609,69 +581,31 @@ class SystemInitHandler(BaseIntentHandler):
                 data["nav_meta"]["role_surface_code"] = role_surface.get("role_code")
         stage_ts = _mark("prune_nav_for_role", stage_ts)
 
-        delivery_runtime = resolve_delivery_policy_runtime(env, params)
-        delivery_result = filter_delivery_scenes(
-            data.get("scenes") if isinstance(data, dict) else [],
-            surface=delivery_runtime.get("surface") or "default",
+        platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
+        scene_runtime_surface_ctx = SystemInitSceneRuntimeSurfaceContext(
+            env=env,
+            params=params,
+            data=data,
             role_surface=role_surface if isinstance(role_surface, dict) else {},
             contract_mode=contract_mode,
-            runtime_env=delivery_runtime.get("runtime_env") or "dev",
-            enabled=bool(delivery_runtime.get("enabled")),
-            env=env,
-        )
-        if isinstance(data.get("nav_meta"), dict):
-            data["nav_meta"]["delivery_policy"] = delivery_result.get("meta") or {}
-        startup_scene_subset = SystemInitPayloadBuilder.resolve_startup_scene_subset(data, params=params)
-        preload_scenes = _filter_startup_scenes_for_preload(
-            delivery_result.get("delivery_scenes") if isinstance(delivery_result, dict) else [],
-            startup_scene_subset,
-        )
-
-        # Scene-first nav contract (v1): sidebar nav source switches from native menu facts
-        # to scene orchestration contract. Keep legacy nav for rollback/diagnostics.
-        nav_contract_input = dict(data)
-        nav_contract_input["scenes"] = preload_scenes
-        nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
-        role_code = ""
-        if isinstance(role_surface, dict):
-            role_code = str(role_surface.get("role_code") or "").strip()
-        bind_result = bind_scene_assets(
-            env,
-            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
-            role_code=role_code or None,
-            company_id=env.company.id if env.company else None,
-        )
-        if isinstance(bind_result, dict) and bind_result:
-            nav_contract_input["scenes"] = bind_result.get("scenes") or nav_contract_input.get("scenes") or []
-        data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
-            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
-            role_surface=role_surface if isinstance(role_surface, dict) else {},
-            scene_version=data.get("scene_version"),
-            schema_version=data.get("schema_version"),
             scene_channel=scene_channel,
-            action_surface_strategy=data.get("scene_action_surface_strategy") if isinstance(data.get("scene_action_surface_strategy"), dict) else {},
-            runtime_context={
-                "role_code": role_code,
-                "company_id": env.company.id if env.company else None,
-            },
+            nav_tree=nav_tree,
+            platform_minimum_surface_mode=platform_minimum_surface_mode,
+            build_platform_minimum_nav_contract_fn=_build_platform_minimum_nav_contract,
+            resolve_delivery_policy_runtime_fn=resolve_delivery_policy_runtime,
+            filter_delivery_scenes_fn=filter_delivery_scenes,
+            startup_scene_subset_resolver_fn=SystemInitPayloadBuilder.resolve_startup_scene_subset,
+            filter_startup_scenes_for_preload_fn=_filter_startup_scenes_for_preload,
+            bind_scene_assets_fn=bind_scene_assets,
+            build_scene_ready_contract_fn=build_scene_ready_contract_v1,
+            build_scene_nav_contract_fn=build_scene_nav_contract,
         )
+        scene_runtime_surface_result = SystemInitSceneRuntimeSurfaceBuilder.apply(surface_ctx=scene_runtime_surface_ctx)
+        data = scene_runtime_surface_result["data"]
+        delivery_result = scene_runtime_surface_result["delivery_result"]
+        scene_nav_contract = scene_runtime_surface_result["scene_nav_contract"]
+        bind_result = scene_runtime_surface_result["bind_result"]
         stage_ts = _mark("build_scene_runtime_surface", stage_ts)
-        scene_nav_contract = build_scene_nav_contract(nav_contract_input)
-        if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
-            data["nav_legacy"] = data.get("nav") or []
-            data["nav_contract"] = scene_nav_contract
-            data["nav"] = scene_nav_contract.get("nav") or []
-            data["default_route"] = scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
-            if isinstance(data.get("nav_meta"), dict):
-                data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
-                data["nav_meta"]["scene_ready_contract_v1"] = bool(
-                    isinstance(data.get("scene_ready_contract_v1"), dict)
-                    and ((data.get("scene_ready_contract_v1") or {}).get("scenes"))
-                )
-                contract_meta = scene_nav_contract.get("meta")
-                if isinstance(contract_meta, dict):
-                    data["nav_meta"]["scene_nav_meta"] = contract_meta
-        stage_ts = _mark("build_scene_nav_contract", stage_ts)
         legacy_release_navigation = build_release_navigation_contract(data if isinstance(data, dict) else {})
         delivery_engine = DeliveryEngine(env)
         delivery_edition_key = str(((params or {}).get("edition_key") or "standard")).strip() or "standard"
@@ -736,29 +670,6 @@ class SystemInitHandler(BaseIntentHandler):
                 "legacy_builder_contract_version": str(legacy_release_navigation.get("contract_version") or ""),
             },
         }
-
-        platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
-        if platform_minimum_surface_mode:
-            minimum_nav_contract = _build_platform_minimum_nav_contract()
-            data["nav_legacy"] = data.get("nav") or []
-            data["nav_contract"] = minimum_nav_contract
-            data["nav"] = minimum_nav_contract.get("nav") or []
-            minimum_default_route = {
-                "menu_id": None,
-                "scene_key": "workspace.home",
-                "route": "/",
-                "reason": "platform_minimum_surface",
-            }
-            data["default_route"] = minimum_default_route
-            if isinstance(minimum_nav_contract, dict):
-                minimum_nav_contract["default_route"] = dict(minimum_default_route)
-                nav_contract_meta = minimum_nav_contract.get("meta")
-                if isinstance(nav_contract_meta, dict):
-                    nav_contract_meta["platform_minimum_surface"] = True
-            if isinstance(data.get("nav_meta"), dict):
-                data["nav_meta"]["platform_minimum_surface"] = True
-                data["nav_meta"]["platform_minimum_reason"] = "industry_modules_absent"
-                data["nav_meta"]["nav_source"] = "platform_minimum_surface"
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}
         landing_scene_key = str(default_route_payload.get("scene_key") or "").strip()
