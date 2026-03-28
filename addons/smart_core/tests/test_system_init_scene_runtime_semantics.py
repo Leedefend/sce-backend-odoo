@@ -99,6 +99,10 @@ class _SurfaceCtx:
                     "semantic_view": {"source_view": "kanban", "capability_flags": {"can_create": True}},
                     "semantic_page": {"kanban_semantics": {"lane_count": 3}},
                     "view_type": "kanban",
+                    "search_surface": {"mode": "faceted", "searchpanel": [{"name": "stage_id"}]},
+                    "permission_surface": {"allowed": False, "reason_code": "missing_capability"},
+                    "workflow_surface": {"state_field": "state", "states": [{"key": "draft"}]},
+                    "validation_surface": {"required_fields": ["name"]},
                 }
             ],
         }
@@ -116,6 +120,10 @@ class TestSystemInitSceneRuntimeSemantics(unittest.TestCase):
         self.assertEqual((data.get("semantic_runtime") or {}).get("view_type"), "kanban")
         self.assertEqual((((data.get("semantic_runtime") or {}).get("semantic_view") or {}).get("source_view")), "kanban")
         self.assertEqual((((data.get("released_scene_semantic_surface") or {}).get("page_surface") or {}).get("view_type")), "kanban")
+        self.assertEqual(((data.get("semantic_runtime") or {}).get("search_surface") or {}).get("mode"), "faceted")
+        self.assertEqual(((data.get("semantic_runtime") or {}).get("permission_surface") or {}).get("reason_code"), "missing_capability")
+        self.assertEqual(((data.get("semantic_runtime") or {}).get("workflow_surface") or {}).get("state_field"), "state")
+        self.assertEqual((((data.get("semantic_runtime") or {}).get("validation_surface") or {}).get("required_fields") or [])[0], "name")
         self.assertEqual(((data.get("nav_meta") or {}).get("semantic_scene_key")), "workspace.home")
 
 
