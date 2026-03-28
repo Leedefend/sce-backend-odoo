@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from odoo.addons.smart_scene.core.nav_policy_registry import resolve_nav_group_policy
+from .scene_nav_grouping_helper import build_scene_nav_grouped_nodes
 from .scene_nav_node_defaults import (
     build_scene_nav_group_node,
     build_scene_nav_leaf,
     build_scene_nav_root,
-    synthetic_scene_nav_menu_id,
 )
 
 NAV_POLICY_KEY = "scene_nav_v1"
@@ -166,44 +166,6 @@ def _resolve_nav_policy() -> dict:
     return resolve_nav_group_policy(NAV_POLICY_KEY, base_dir=Path(__file__).resolve())
 
 
-def _group_key(scene_key: str, aliases: Dict[str, str] | None = None) -> str:
-    key = str(scene_key or "").strip().lower()
-    if not key:
-        return "others"
-    raw_group = key.split(".", 1)[0]
-    alias_map = aliases if isinstance(aliases, dict) else {}
-    return alias_map.get(raw_group, raw_group)
-
-
-def _build_group_nodes(
-    leaves: List[dict],
-    *,
-    group_labels: Dict[str, str] | None = None,
-    group_order: Dict[str, int] | None = None,
-    group_aliases: Dict[str, str] | None = None,
-) -> List[dict]:
-    labels = group_labels if isinstance(group_labels, dict) else {}
-    order_map = group_order if isinstance(group_order, dict) else {}
-    aliases = group_aliases if isinstance(group_aliases, dict) else {}
-    configured_groups = set(labels.keys()) | set(order_map.keys()) | {"others"}
-    grouped: Dict[str, List[dict]] = {}
-    for leaf in leaves:
-        group = _group_key(leaf.get("scene_key") or "", aliases=aliases)
-        if group not in configured_groups:
-            group = "others"
-        grouped.setdefault(group, []).append(leaf)
-
-    out: List[Tuple[int, str, dict]] = []
-    for group, items in grouped.items():
-        items_sorted = sorted(items, key=lambda x: str(x.get("label") or ""))
-        label = str(labels.get(group) or "其他场景")
-        order = int(order_map.get(group) or 999)
-        node = build_scene_nav_group_node(group, label, items_sorted)
-        out.append((order, label, node))
-    out.sort(key=lambda x: (x[0], x[1]))
-    return [item[2] for item in out]
-
-
 def build_scene_nav_contract(data: dict) -> dict:
     nav_policy = _resolve_nav_policy()
     policy_labels = nav_policy.get("group_labels") if isinstance(nav_policy.get("group_labels"), dict) else {}
@@ -232,7 +194,7 @@ def build_scene_nav_contract(data: dict) -> dict:
     candidate_leaves = [build_scene_nav_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
     remaining = [v for k, v in scene_map.items() if k not in set(role_candidates)]
     remaining_leaves = [build_scene_nav_leaf(v) for v in remaining]
-    grouped = _build_group_nodes(
+    grouped = build_scene_nav_grouped_nodes(
         remaining_leaves,
         group_labels=policy_labels,
         group_order=policy_order,

@@ -705,3 +705,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `073`, then continue on another sibling common-navigation helper only if it stays detached from scene resolve and delivery policy semantics
+## Round: ITER-2026-03-28-074
+
+- `ITER-2026-03-28-074`: scene nav grouping and alias resolution moved into `addons/smart_core/core/scene_nav_grouping_helper.py`
+  - `scene_nav_contract_builder.py` no longer owns inline group-key alias resolution or grouped node assembly defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_scene_nav_grouping_helper.py`
+  - the slice remains inside common navigation/provider territory and does not move scene resolve, access gate, or delivery policy semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-074`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `074`, then continue on another sibling common-navigation helper only if it stays detached from scene resolve and delivery policy semantics

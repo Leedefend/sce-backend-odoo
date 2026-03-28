@@ -2407,3 +2407,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `073`, then continue on another sibling navigation/provider helper only if it stays detached from scene resolve and delivery policy semantics
+## 2026-03-28 迭代锚点（ITER-2026-03-28-074）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `42ac901`
+- Layer Target: `common project wave-1`
+- Module: `smart_core scene nav grouping helper`
+- Reason: continue module-level convergence on common navigation grouping defaults while staying outside scene resolve, access gate, and delivery policy semantics
+- `074`: added `addons/smart_core/core/scene_nav_grouping_helper.py`
+- `074`: `scene_nav_contract_builder.py` now delegates scene nav alias resolution and grouped node assembly to the shared helper
+- `074`: direct unit coverage added in `addons/smart_core/tests/test_scene_nav_grouping_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `074`, then continue on another sibling navigation/provider helper only if it stays detached from scene resolve and delivery policy semantics
