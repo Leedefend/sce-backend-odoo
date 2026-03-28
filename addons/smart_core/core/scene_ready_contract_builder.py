@@ -176,7 +176,10 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
             row = {
                 "scene_count": 0,
                 "base_fact_hits": {
+                    "views": 0,
+                    "fields": 0,
                     "search": 0,
+                    "permissions": 0,
                     "workflow": 0,
                     "validator": 0,
                     "actions": 0,
@@ -192,7 +195,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
         row["scene_count"] = int(row.get("scene_count") or 0) + 1
 
         fact_hits = row.get("base_fact_hits") if isinstance(row.get("base_fact_hits"), dict) else {}
-        for key in ("search", "workflow", "validator", "actions"):
+        for key in ("views", "fields", "search", "permissions", "workflow", "validator", "actions"):
             if _fact_available(base_facts.get(key)):
                 fact_hits[key] = int(fact_hits.get(key) or 0) + 1
         row["base_fact_hits"] = fact_hits
@@ -240,7 +243,10 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
             "scene_count": scene_count,
             "base_fact_hits": fact_hits,
             "base_fact_consumption_rate": {
+                "views": _ratio(int(fact_hits.get("views") or 0)),
+                "fields": _ratio(int(fact_hits.get("fields") or 0)),
                 "search": _ratio(int(fact_hits.get("search") or 0)),
+                "permissions": _ratio(int(fact_hits.get("permissions") or 0)),
                 "workflow": _ratio(int(fact_hits.get("workflow") or 0)),
                 "validator": _ratio(int(fact_hits.get("validator") or 0)),
                 "actions": _ratio(int(fact_hits.get("actions") or 0)),
