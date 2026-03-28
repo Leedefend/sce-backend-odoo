@@ -847,3 +847,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `084`, then choose between parser contract-shape normalization and the next native view type
+## Round: ITER-2026-03-28-085
+
+- `ITER-2026-03-28-085`: a minimal structured search parser was added and registered in the native parser registry
+  - the parser subsystem now supports `form + tree + kanban + search`
+  - search field/filter/group-by/searchpanel extraction now has a dedicated parser entrypoint
+  - direct search-parser coverage added in `addons/smart_core/tests/test_native_view_search_parser.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-085`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `085`, then decide between parser contract-shape normalization and deeper search/searchpanel enrichment

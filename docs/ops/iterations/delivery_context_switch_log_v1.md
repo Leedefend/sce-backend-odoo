@@ -2561,3 +2561,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `084`, then either standardize `form/tree/kanban` output shape or continue with the next parser type
+## 2026-03-28 迭代锚点（ITER-2026-03-28-085）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `54f2bea`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view search parser`
+- Reason: extend the native parser subsystem to include search views so the parser registry covers another common Odoo native view type
+- `085`: added `addons/smart_core/view/search_parser.py`
+- `085`: `native_view_parser_registry.py` now registers `search`
+- `085`: direct coverage added in `addons/smart_core/tests/test_native_view_search_parser.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `085`, then decide between contract-shape normalization and deeper search/searchpanel enrichment
