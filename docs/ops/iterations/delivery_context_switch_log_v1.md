@@ -2687,3 +2687,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `093`, then treat batch-2 as a coherent parser-semantic milestone and choose the next subsystem-level integration step
+## 2026-03-28 迭代锚点（ITER-2026-03-28-102）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d4fba49`
+- Layer Target: `backend orchestration contract consumption`
+- Module: `smart_core workspace_home_contract_builder`
+- Reason: after scene-ready and page orchestration consumption, workspace home is the next backend orchestration consumer that must explicitly project parser semantics before any frontend work
+- `102`: added `workspace_home_parser_semantic_bridge.py` as the canonical workspace-home semantic projection helper
+- `102`: `workspace_home_contract_builder.py` now projects `parser_contract`, `view_semantics`, `native_view`, and `semantic_page` into layout, orchestration context, render hints, and diagnostics
+- `102`: direct coverage was added in `test_workspace_home_parser_semantic_bridge.py` and `test_workspace_home_contract_builder_semantics.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `102`, then continue the backend orchestration consumption chain with the next direct contract consumer

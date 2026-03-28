@@ -964,3 +964,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `093`, then treat batch-2 as a coherent parser-semantic milestone and choose the next subsystem-level integration step
+## Round: ITER-2026-03-28-102
+
+- `ITER-2026-03-28-102`: workspace home orchestration now explicitly consumes parser semantic surfaces
+  - `workspace_home_contract_builder` now returns through `workspace_home_parser_semantic_bridge`, instead of leaving parser semantics stranded at the lower contract layer
+  - workspace home layout, orchestration context, render hints, and diagnostics now preserve `parser_contract`, `view_semantics`, `native_view`, and `semantic_page`
+  - direct coverage was added in `addons/smart_core/tests/test_workspace_home_parser_semantic_bridge.py` and `addons/smart_core/tests/test_workspace_home_contract_builder_semantics.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-102`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `102`, then continue the backend orchestration consumption chain with the next direct contract consumer
