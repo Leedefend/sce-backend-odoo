@@ -1847,6 +1847,12 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 built_zones=built_zones,
                 record={"hero": {"title": "工作台"}},
                 diagnostics={"source": "workspace_home_contract_builder"},
+                semantic_surface={
+                    "parser_contract": dict(data.get("parser_contract") or {}) if isinstance(data.get("parser_contract"), dict) else {},
+                    "view_semantics": dict(data.get("view_semantics") or {}) if isinstance(data.get("view_semantics"), dict) else {},
+                    "native_view": dict(data.get("native_view") or {}) if isinstance(data.get("native_view"), dict) else {},
+                    "semantic_page": dict(data.get("semantic_page") or {}) if isinstance(data.get("semantic_page"), dict) else {},
+                },
             )
             if isinstance(contract, dict) and contract:
                 scene_contract_core = {
