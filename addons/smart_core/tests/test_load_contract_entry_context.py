@@ -26,6 +26,7 @@ def _load_target_module():
 
 TARGET = _load_target_module()
 infer_view_types_from_entry_context = TARGET.infer_view_types_from_entry_context
+normalize_requested_include_parts = TARGET.normalize_requested_include_parts
 normalize_requested_view_types = TARGET.normalize_requested_view_types
 resolve_entry_action = TARGET.resolve_entry_action
 resolve_model_from_entry_context = TARGET.resolve_model_from_entry_context
@@ -133,6 +134,14 @@ class TestLoadContractEntryContext(unittest.TestCase):
                 valid_views={"tree", "form", "kanban"},
                 default_view_type="tree",
             )
+
+    def test_normalize_requested_include_parts_supports_all_and_subset(self):
+        valid = {"model", "view", "action", "permission"}
+        self.assertEqual(normalize_requested_include_parts("all", valid_include=valid), valid)
+        self.assertEqual(
+            normalize_requested_include_parts("model,view,unknown", valid_include=valid),
+            {"model", "view"},
+        )
 
 
 if __name__ == "__main__":
