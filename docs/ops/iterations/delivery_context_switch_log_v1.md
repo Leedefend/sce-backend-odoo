@@ -2030,3 +2030,8 @@ Each entry must include:
 - `029`: canonical dirty baseline collapsed from historical stale paths to `known_dirty_paths: []`
 - `029`: candidate regeneration now reports only the active governance-task delta
 - `029`: stop condition hit is `diff_too_large`, caused by the one-time baseline reset diff
+## 2026-03-28 迭代锚点（ITER-2026-03-28-030）
+
+- `030`: post-normalization clean-state check completed
+- `030`: `git status --short` empty, baseline candidate empty, repo risk low
+- `030`: continuous iteration restored to a clean `PASS` continuation point

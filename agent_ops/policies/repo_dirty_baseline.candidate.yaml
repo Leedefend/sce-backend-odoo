@@ -1,5 +1,5 @@
 known_dirty_paths:
 - agent_ops/policies/repo_dirty_baseline.candidate.yaml
-- agent_ops/policies/repo_dirty_baseline.yaml
-- agent_ops/tasks/ITER-2026-03-28-029.yaml
-- docs/ops/releases/archive/temp/TEMP_post_submission_baseline_review_20260328.md
+- agent_ops/tasks/ITER-2026-03-28-030.yaml
+- docs/ops/iterations/delivery_context_switch_log_v1.md
+- docs/ops/releases/archive/temp/TEMP_agent_ops_continuous_iteration_status_20260328.md
