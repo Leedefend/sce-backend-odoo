@@ -23,7 +23,11 @@ class TestUiBaseContractAdapter(unittest.TestCase):
         payload = {
             "model": "project.project",
             "views": {"form": {"layout": []}},
-            "search": {"searchpanel": [{"name": "stage_id", "string": "阶段"}], "mode": "faceted"},
+            "search": {
+                "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                "group_bys": [{"name": "by_stage", "string": "按阶段", "group_by": "stage_id"}],
+                "mode": "faceted",
+            },
             "parser_contract": {"view_type": "form", "layout": {"kind": "form"}},
             "view_semantics": {"source_view": "form", "capability_flags": {"has_title": True}},
             "native_view": {"views": {"form": {"layout": []}}},
@@ -39,6 +43,7 @@ class TestUiBaseContractAdapter(unittest.TestCase):
         self.assertEqual(parser_fact["view_semantics"]["source_view"], "form")
         self.assertIn("form", parser_fact["native_view"]["views"])
         self.assertEqual((adapted["orchestrator_input"]["search_fact"]["searchpanel"] or [])[0]["name"], "stage_id")
+        self.assertEqual((adapted["orchestrator_input"]["search_fact"]["group_by"] or [])[0]["group_by"], "stage_id")
         self.assertEqual(adapted["orchestrator_input"]["search_fact"]["mode"], "faceted")
         self.assertIn("semantic_page", normalized)
         self.assertEqual(normalized["parser_contract"]["view_type"], "form")
