@@ -4,6 +4,9 @@ from __future__ import annotations
 from typing import Any
 
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
+from odoo.addons.smart_core.core.runtime_page_parser_semantic_bridge import (
+    apply_runtime_page_parser_semantic_bridge,
+)
 from odoo.addons.smart_core.core.scene_contract_builder import (
     build_release_surface_scene_contract_from_page_contract,
 )
@@ -58,6 +61,7 @@ def build_runtime_page_contracts(data: dict[str, Any]) -> dict[str, Any]:
         meta["role_source_code"] = role_code
         orchestration["meta"] = meta
         page["page_orchestration_v1"] = orchestration
+        page = apply_runtime_page_parser_semantic_bridge(page, page_key=page_key)
         if page_key == "my_work":
             page["scene_contract_standard_v1"] = build_release_surface_scene_contract_from_page_contract(
                 page,
