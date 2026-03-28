@@ -834,3 +834,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `083`, then choose between kanban registration and deeper form/tree contract normalization
+## Round: ITER-2026-03-28-084
+
+- `ITER-2026-03-28-084`: a minimal structured kanban parser was added and registered in the native parser registry
+  - the parser subsystem now supports `form + tree + kanban`
+  - `kanban_parser.py` no longer drags the old permission-heavy implementation into batch-2
+  - direct kanban-parser coverage added in `addons/smart_core/tests/test_native_view_kanban_parser.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-084`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `084`, then choose between parser contract-shape normalization and the next native view type
