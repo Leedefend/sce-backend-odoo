@@ -2759,3 +2759,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `106`, then continue the backend orchestration consumption chain with the next remaining scene/runtime consumer
+## 2026-03-29 迭代锚点（ITER-2026-03-29-107）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `fed652f`
+- Layer Target: `backend contract governance`
+- Module: `smart_core contract_governance`
+- Reason: after scene and runtime layers start carrying parser semantics, governance must normalize and preserve those surfaces or the backend chain will still lose them during contract processing
+- `107`: `contract_governance.py` now normalizes scene semantic surfaces for `scene_contract_standard_v1`, `scene_contract_v1`, `semantic_runtime`, and `released_scene_semantic_surface`
+- `107`: scene/runtime semantic surfaces are now stable both before and after governance normalization
+- `107`: direct coverage was added in `test_scene_semantic_contract_governance.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `107`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer

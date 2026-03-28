@@ -1031,3 +1031,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `106`, then continue the backend orchestration consumption chain with the next remaining scene/runtime consumer
+## Round: ITER-2026-03-29-107
+
+- `ITER-2026-03-29-107`: contract governance now explicitly preserves scene semantic surfaces
+  - `contract_governance.py` now normalizes and preserves `scene_contract_standard_v1`, `scene_contract_v1`, `semantic_runtime`, and `released_scene_semantic_surface`
+  - scene/runtime semantic surfaces are no longer only correct before governance and fragile after governance
+  - direct coverage was added in `addons/smart_core/tests/test_scene_semantic_contract_governance.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-107`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `107`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer

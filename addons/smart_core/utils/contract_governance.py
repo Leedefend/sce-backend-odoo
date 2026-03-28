@@ -1769,6 +1769,83 @@ def _normalize_native_view_contract_surface(data: dict) -> None:
         data["native_view"] = native_view
 
 
+def _normalize_scene_semantic_surface(data: dict) -> None:
+    def _normalize_page_surface(page_payload: dict) -> dict:
+        page = _as_dict(page_payload)
+        surface = _as_dict(page.get("surface"))
+        if surface:
+            surface["semantic_view"] = _as_dict(surface.get("semantic_view"))
+            surface["semantic_page"] = _as_dict(surface.get("semantic_page"))
+            page["surface"] = surface
+        return page
+
+    def _normalize_parser_semantic_surface(surface_payload: dict) -> dict:
+        surface = _as_dict(surface_payload)
+        if not surface:
+            return {}
+        parser_contract = _as_dict(surface.get("parser_contract"))
+        if parser_contract:
+            parser_contract.setdefault("layout", _as_dict(parser_contract.get("layout")))
+            parser_contract.setdefault(
+                "contract_version",
+                _safe_text(data.get("contract_version")) or "native_view.v1",
+            )
+            surface["parser_contract"] = parser_contract
+        view_semantics = _as_dict(surface.get("view_semantics"))
+        if view_semantics:
+            view_semantics.setdefault("kind", "view_semantics")
+            view_semantics["capability_flags"] = _as_dict(view_semantics.get("capability_flags"))
+            view_semantics["semantic_meta"] = _as_dict(view_semantics.get("semantic_meta"))
+            surface["view_semantics"] = view_semantics
+        native_view = _as_dict(surface.get("native_view"))
+        if native_view:
+            native_view["views"] = _as_dict(native_view.get("views"))
+            native_view["search"] = _as_dict(native_view.get("search"))
+            native_view["toolbar"] = _as_dict(native_view.get("toolbar"))
+            surface["native_view"] = native_view
+        semantic_page = _as_dict(surface.get("semantic_page"))
+        if semantic_page:
+            surface["semantic_page"] = semantic_page
+        return surface
+
+    scene_contract_standard = _as_dict(data.get("scene_contract_standard_v1"))
+    if scene_contract_standard:
+        scene_contract_standard["page"] = _normalize_page_surface(scene_contract_standard.get("page"))
+        governance = _as_dict(scene_contract_standard.get("governance"))
+        parser_surface = _normalize_parser_semantic_surface(governance.get("parser_semantic_surface"))
+        if parser_surface:
+            governance["parser_semantic_surface"] = parser_surface
+        scene_contract_standard["governance"] = governance
+        data["scene_contract_standard_v1"] = scene_contract_standard
+
+    scene_contract_v1 = _as_dict(data.get("scene_contract_v1"))
+    if scene_contract_v1:
+        scene_contract_v1["page"] = _normalize_page_surface(scene_contract_v1.get("page"))
+        diagnostics = _as_dict(scene_contract_v1.get("diagnostics"))
+        parser_surface = _normalize_parser_semantic_surface(diagnostics.get("parser_semantic_surface"))
+        if parser_surface:
+            diagnostics["parser_semantic_surface"] = parser_surface
+        scene_contract_v1["diagnostics"] = diagnostics
+        data["scene_contract_v1"] = scene_contract_v1
+
+    semantic_runtime = _as_dict(data.get("semantic_runtime"))
+    if semantic_runtime:
+        semantic_runtime["semantic_view"] = _as_dict(semantic_runtime.get("semantic_view"))
+        semantic_runtime["semantic_page"] = _as_dict(semantic_runtime.get("semantic_page"))
+        parser_surface = _normalize_parser_semantic_surface(semantic_runtime.get("parser_semantic_surface"))
+        if parser_surface:
+            semantic_runtime["parser_semantic_surface"] = parser_surface
+        data["semantic_runtime"] = semantic_runtime
+
+    released_scene_surface = _as_dict(data.get("released_scene_semantic_surface"))
+    if released_scene_surface:
+        released_scene_surface["page_surface"] = _normalize_page_surface({"surface": released_scene_surface.get("page_surface")}).get("surface") or {}
+        parser_surface = _normalize_parser_semantic_surface(released_scene_surface.get("parser_semantic_surface"))
+        if parser_surface:
+            released_scene_surface["parser_semantic_surface"] = parser_surface
+        data["released_scene_semantic_surface"] = released_scene_surface
+
+
 def _to_bool(value: Any, fallback: bool = False) -> bool:
     if isinstance(value, bool):
         return value
@@ -2976,6 +3053,7 @@ def apply_contract_governance(
         )
 
     _normalize_native_view_contract_surface(data)
+    _normalize_scene_semantic_surface(data)
 
     effective_mode = contract_mode
     if normalized_surface == "native":
