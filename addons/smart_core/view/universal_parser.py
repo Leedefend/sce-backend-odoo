@@ -1,5 +1,6 @@
 from odoo.exceptions import AccessError
 
+from .native_view_pipeline import build_native_view_pipeline_payload
 from .view_dispatcher import ViewDispatcher
 
 class UniversalViewSemanticParser:
@@ -42,16 +43,16 @@ class UniversalViewSemanticParser:
         # 7. 动态覆盖
         final_layout = self._apply_dynamic_overrides(raw_layout)
 
-        return {
-            "model": self.model,
-            "view_type": self.view_type,
-            "view_id": self.view_id,
-            "permissions": model_permissions,
-            "layout": final_layout,
-            "fields": fields,
-            "menus": menus,
-            "actions": actions
-        }
+        return build_native_view_pipeline_payload(
+            raw_layout=final_layout,
+            model=self.model,
+            view_type=self.view_type,
+            view_id=self.view_id,
+            permissions=model_permissions,
+            fields=fields,
+            menus=menus,
+            actions=actions,
+        )
 
     # ---------------- 模型权限 ----------------
     def _parse_model_permissions(self):
