@@ -1,5 +1,6 @@
 from .base import BaseViewParser
 from .base import parse_safe_context
+from .native_view_node_schema import build_action_node, build_field_node
 
 
 class KanbanViewParser(BaseViewParser):
@@ -29,11 +30,11 @@ class KanbanViewParser(BaseViewParser):
         for template in arch.xpath(".//t[@t-name='kanban-box']"):
             for field_node in template.xpath(".//field[@name]"):
                 cards.append(
-                    {
-                        "name": field_node.get("name"),
-                        "widget": field_node.get("widget"),
-                        "options": parse_safe_context(field_node.get("options", "{}")),
-                    }
+                    build_field_node(
+                        name=field_node.get("name"),
+                        widget=field_node.get("widget"),
+                        options=parse_safe_context(field_node.get("options", "{}")),
+                    )
                 )
         return cards
 
@@ -41,11 +42,11 @@ class KanbanViewParser(BaseViewParser):
         actions = []
         for action_node in arch.xpath(".//a[@name]"):
             actions.append(
-                {
-                    "name": action_node.get("name"),
-                    "type": action_node.get("type"),
-                    "context": parse_safe_context(action_node.get("t-attf-context", "{}")),
-                }
+                build_action_node(
+                    name=action_node.get("name"),
+                    action_type=action_node.get("type"),
+                    context=parse_safe_context(action_node.get("t-attf-context", "{}")),
+                )
             )
         return actions
 
@@ -57,11 +58,11 @@ class KanbanViewParser(BaseViewParser):
         items = []
         for item in menu_template[0].xpath(".//a[@name]"):
             items.append(
-                {
-                    "name": item.get("name"),
-                    "type": item.get("type"),
-                    "context": parse_safe_context(item.get("t-attf-context", "{}")),
-                }
+                build_action_node(
+                    name=item.get("name"),
+                    action_type=item.get("type"),
+                    context=parse_safe_context(item.get("t-attf-context", "{}")),
+                )
             )
         return {"items": items}
 

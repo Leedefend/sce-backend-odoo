@@ -873,3 +873,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `086`, then deepen parser semantics on top of the stable contract envelope
+## Round: ITER-2026-03-28-087
+
+- `ITER-2026-03-28-087`: a shared native view node schema helper was added and wired into supported parsers
+  - common field/action/filter/group-by/searchpanel nodes now share stable keys and defaults
+  - `form/tree/kanban/search` are no longer building those common node dicts ad hoc
+  - direct node-schema coverage added in `addons/smart_core/tests/test_native_view_node_schema.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-087`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `087`, then deepen parser semantics with richer normalized node metadata

@@ -2589,3 +2589,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `086`, then deepen parser semantics on top of the stable contract envelope
+## 2026-03-28 迭代锚点（ITER-2026-03-28-087）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `455dd38`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view node schema`
+- Reason: standardize common parser node shapes across supported view types before deeper semantic enrichment
+- `087`: added `addons/smart_core/view/native_view_node_schema.py`
+- `087`: `tree_parser.py`, `kanban_parser.py`, `search_parser.py`, and `form_parser.py` now use shared node builders for common node types
+- `087`: direct coverage added in `addons/smart_core/tests/test_native_view_node_schema.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `087`, then deepen parser semantics with richer normalized node metadata rather than ad-hoc dicts

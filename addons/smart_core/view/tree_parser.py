@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .base import BaseViewParser
+from .native_view_node_schema import build_field_node
 
 
 class TreeViewParser(BaseViewParser):
@@ -11,12 +12,12 @@ class TreeViewParser(BaseViewParser):
         fields = []
         for node in arch.xpath(".//field[@name]"):
             fields.append(
-                {
-                    "name": node.get("name"),
-                    "string": node.get("string"),
-                    "widget": node.get("widget"),
-                    "optional": node.get("optional"),
-                }
+                build_field_node(
+                    name=node.get("name"),
+                    string=node.get("string"),
+                    widget=node.get("widget"),
+                    optional=node.get("optional"),
+                )
             )
 
         return {
