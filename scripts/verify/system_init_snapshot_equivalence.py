@@ -20,6 +20,8 @@ VOLATILE_KEYS = {
     "trace_id",
     "etag",
     "timings",
+    "timings_ms",
+    "total_ms",
 }
 
 
@@ -30,7 +32,10 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
         headers={"X-Anonymous-Intent": "1"},
     )
     require_ok(status, resp, "login")
-    token = ((resp or {}).get("data") or {}).get("token")
+    data = (resp or {}).get("data") or {}
+    token = data.get("token")
+    if not token and isinstance(data.get("session"), dict):
+        token = data.get("session", {}).get("token")
     if not token:
         raise RuntimeError("login missing token")
     return str(token)

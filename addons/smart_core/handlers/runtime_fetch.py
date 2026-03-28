@@ -6,6 +6,7 @@ from typing import Any
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.runtime_fetch_context_builder import build_runtime_fetch_context
 from odoo.addons.smart_core.core.runtime_page_contract_builder import build_runtime_page_contract
+from odoo.addons.smart_core.core.runtime_workspace_collection_helper import collect_workspace_collections
 
 
 def _trace_id(context: dict[str, Any] | None) -> str:
@@ -17,20 +18,6 @@ def _parse_params(payload, params) -> dict[str, Any]:
     if isinstance(row, dict) and isinstance(row.get("params"), dict):
         return row.get("params") or {}
     return row if isinstance(row, dict) else {}
-
-
-def _collect_workspace_collections(data: dict[str, Any], keys: list[str] | None = None) -> dict[str, list[dict[str, Any]]]:
-    requested = {str(item or "").strip() for item in (keys or []) if str(item or "").strip()}
-    allowed = ("task_items", "payment_requests", "risk_actions", "project_actions")
-    collections: dict[str, list[dict[str, Any]]] = {}
-    for key in allowed:
-        if requested and key not in requested:
-            continue
-        rows = data.get(key)
-        if isinstance(rows, list):
-            collections[key] = [row for row in rows if isinstance(row, dict)]
-    return collections
-
 
 class PageContractHandler(BaseIntentHandler):
     INTENT_TYPE = "page.contract"
@@ -90,7 +77,7 @@ class WorkspaceCollectionsHandler(BaseIntentHandler):
         raw_keys = params.get("keys")
         keys = raw_keys if isinstance(raw_keys, list) else []
         data = build_runtime_fetch_context(self.env, params=params)
-        collections = _collect_workspace_collections(data, keys=keys)
+        collections = collect_workspace_collections(data, keys=keys)
         return {
             "ok": True,
             "data": {

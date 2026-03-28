@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/load_contract.py
 from ..core.base_handler import BaseIntentHandler
+from ..app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from ..utils.extension_hooks import call_extension_hook_first
 from odoo import api, SUPERUSER_ID
 import json, re, hashlib
@@ -74,7 +75,7 @@ class LoadContractHandler(BaseIntentHandler):
         model_name = code
 
         # 模型存在性
-        if not self.env.get(model_name):
+        if not self._model_exists(model_name):
             # 在 return 404 前追加：
             try:
                 mod = self.env["ir.module.module"].sudo().search([("name","=","project")], limit=1)
@@ -144,16 +145,15 @@ class LoadContractHandler(BaseIntentHandler):
             except Exception: pass
 
         # ---------- 6) 生成契约（按当前用户权限，不 sudo） ----------
-        svc = self.env["app.contract.service"].with_context(ctx_user)
-        result = svc.generate_contract(
+        result = self._generate_contract(
             model_name=model_name,
             view_type=view_type_final,
             include_parts=include_parts,
             force_refresh=force_refresh,
             client_version=client_version,
-            # 可选：把 menu_id/action_id 也传入，便于服务侧做面包屑/默认动作
             menu_id=menu_id,
             action_id=action_id,
+            ctx_user=ctx_user,
         ) or {}
 
         status = result.get("status","success")
@@ -183,6 +183,72 @@ class LoadContractHandler(BaseIntentHandler):
 
         meta_out = dict(meta); meta_out["etag"] = etag
         return {"status": status, "code": 200, "data": data, "meta": meta_out}
+
+    def _model_exists(self, model_name: str) -> bool:
+        name = str(model_name or "").strip()
+        if not name:
+            return False
+        registry = getattr(self.env, "registry", None)
+        try:
+            if registry is not None and getattr(registry, "get", None):
+                if registry.get(name):
+                    return True
+        except Exception:
+            pass
+        try:
+            self.env[name]
+            return True
+        except Exception:
+            return False
+
+    def _generate_contract(
+        self,
+        *,
+        model_name: str,
+        view_type,
+        include_parts,
+        force_refresh: bool,
+        client_version: str,
+        menu_id,
+        action_id,
+        ctx_user: dict,
+    ) -> dict:
+        try:
+            svc = self.env["app.contract.service"].with_context(ctx_user)
+        except KeyError:
+            svc = None
+
+        if svc is not None and hasattr(svc, "generate_contract"):
+            return svc.generate_contract(
+                model_name=model_name,
+                view_type=view_type,
+                include_parts=include_parts,
+                force_refresh=force_refresh,
+                client_version=client_version,
+                menu_id=menu_id,
+                action_id=action_id,
+            ) or {}
+
+        runtime_env = api.Environment(self.env.cr, self.env.uid, dict(ctx_user or {}))
+        runtime_su_env = api.Environment(runtime_env.cr, SUPERUSER_ID, dict(runtime_env.context or {}))
+        dispatcher = ActionDispatcher(runtime_env, runtime_su_env)
+        data, versions = dispatcher.dispatch(
+            {
+                "subject": "model",
+                "model": model_name,
+                "view_type": view_type,
+                "menu_id": menu_id,
+                "action_id": action_id,
+                "include": ",".join(sorted(include_parts)) if isinstance(include_parts, set) else include_parts,
+                "force_refresh": force_refresh,
+                "version": client_version,
+            }
+        )
+        return {
+            "status": "success",
+            "data": data or {},
+            "meta": versions or {},
+        }
 
     def _inject_semantic_contract(self, data: dict):
         if not isinstance(data, dict):
