@@ -2379,3 +2379,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `071` and then another sibling delivery/provider helper only if it stays decoupled from snapshot logic
+## 2026-03-28 迭代锚点（ITER-2026-03-28-072）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `783f528`
+- Layer Target: `common project wave-1`
+- Module: `smart_core delivery menu defaults helper`
+- Reason: continue sibling delivery/provider-config convergence on menu node defaults only
+- `072`: added `addons/smart_core/core/delivery_menu_defaults.py`
+- `072`: `delivery/menu_service.py` now delegates synthetic menu id generation and menu node shaping to the shared helper
+- `072`: direct unit coverage added in `addons/smart_core/tests/test_delivery_menu_defaults.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `072` and then another sibling delivery/provider slice only if it stays detached from snapshot semantics
