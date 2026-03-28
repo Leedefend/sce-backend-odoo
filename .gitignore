@@ -112,3 +112,6 @@ docs/audit/*.csv
 # local image artifacts
 *.tar.gz
 *.tar.gz.sha256
+
+# agent_ops runtime lock
+agent_ops/state/run_iteration.lock
