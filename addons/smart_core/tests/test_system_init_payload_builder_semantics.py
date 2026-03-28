@@ -74,6 +74,11 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                             "semantic_view": {"source_view": "kanban"},
                             "semantic_page": {"kanban_semantics": {"lane_count": 3}},
                             "view_type": "kanban",
+                            "search_surface": {
+                                "filters": [{"name": "mine", "string": "我的"}],
+                                "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                                "mode": "faceted",
+                            },
                             "meta": {"target": {"route": "/my-work"}},
                         }
                     ],
@@ -87,6 +92,8 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         scene = ((payload.get("scene_ready_contract_v1") or {}).get("scenes") or [])[0]
         self.assertEqual(scene.get("view_type"), "kanban")
         self.assertIn("parser_semantic_surface", scene)
+        self.assertEqual(((scene.get("search_surface") or {}).get("mode")), "faceted")
+        self.assertEqual((((scene.get("search_surface") or {}).get("searchpanel") or [])[0].get("name")), "stage_id")
 
 
 if __name__ == "__main__":

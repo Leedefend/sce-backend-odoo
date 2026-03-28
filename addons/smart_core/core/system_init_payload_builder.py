@@ -232,7 +232,7 @@ class SystemInitPayloadBuilder:
             search_surface = item.get("search_surface") if isinstance(item.get("search_surface"), dict) else {}
             if search_surface:
                 compact_search = {}
-                for key in ("default_sort", "filters", "fields", "group_by"):
+                for key in ("default_sort", "filters", "fields", "group_by", "searchpanel", "mode"):
                     value = search_surface.get(key)
                     if value not in (None, {}, []):
                         compact_search[key] = value
