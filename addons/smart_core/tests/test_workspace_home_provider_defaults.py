@@ -16,6 +16,7 @@ def _load_target_module():
 
 
 TARGET = _load_target_module()
+build_default_advice_items = TARGET.build_default_advice_items
 build_default_role_focus_config = TARGET.build_default_role_focus_config
 build_default_v1_data_sources = TARGET.build_default_v1_data_sources
 build_default_v1_focus_map = TARGET.build_default_v1_focus_map
@@ -41,6 +42,10 @@ class TestWorkspaceHomeProviderDefaults(unittest.TestCase):
     def test_build_default_v1_data_sources_and_state_schema(self):
         self.assertIn("ds_hero", build_default_v1_data_sources())
         self.assertIn("pending", build_default_v1_state_schema())
+
+    def test_build_default_advice_items(self):
+        payload = build_default_advice_items()
+        self.assertEqual(payload[0]["id"], "stable")
 
 
 if __name__ == "__main__":

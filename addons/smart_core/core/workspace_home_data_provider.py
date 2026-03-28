@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
 from .workspace_home_provider_defaults import (
+    build_default_advice_items,
     build_default_role_focus_config,
     build_default_v1_data_sources,
     build_default_v1_focus_map,
@@ -61,15 +62,7 @@ def build_today_actions(ready_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, 
 
 
 def build_advice_items(locked_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    default = [{
-        "id": "stable",
-        "level": "green",
-        "tone": "success",
-        "progress": "completed",
-        "title": "当前整体运行稳定",
-        "description": "能力面运行正常，建议优先处理今日关键动作。",
-        "action_label": "",
-    }]
+    default = build_default_advice_items()
     return _call_provider("build_advice_items", default, locked_caps)
 
 

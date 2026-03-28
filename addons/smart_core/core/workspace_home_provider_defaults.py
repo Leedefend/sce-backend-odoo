@@ -54,3 +54,15 @@ def build_default_v1_state_schema() -> Dict[str, Dict[str, str]]:
         "completed": {"tone": "success", "label": "已完成"},
         "overdue": {"tone": "danger", "label": "已逾期"},
     }
+
+
+def build_default_advice_items() -> List[Dict[str, Any]]:
+    return [{
+        "id": "stable",
+        "level": "green",
+        "tone": "success",
+        "progress": "completed",
+        "title": "当前整体运行稳定",
+        "description": "能力面运行正常，建议优先处理今日关键动作。",
+        "action_label": "",
+    }]
