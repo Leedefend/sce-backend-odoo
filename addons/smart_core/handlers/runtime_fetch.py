@@ -5,19 +5,12 @@ from typing import Any
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.runtime_fetch_context_builder import build_runtime_fetch_context
+from odoo.addons.smart_core.core.runtime_fetch_handler_helper import (
+    build_runtime_fetch_meta,
+    parse_runtime_fetch_params,
+)
 from odoo.addons.smart_core.core.runtime_page_contract_builder import build_runtime_page_contract
 from odoo.addons.smart_core.core.runtime_workspace_collection_helper import collect_workspace_collections
-
-
-def _trace_id(context: dict[str, Any] | None) -> str:
-    return str((context or {}).get("trace_id") or "")
-
-
-def _parse_params(payload, params) -> dict[str, Any]:
-    row = payload or params or {}
-    if isinstance(row, dict) and isinstance(row.get("params"), dict):
-        return row.get("params") or {}
-    return row if isinstance(row, dict) else {}
 
 class PageContractHandler(BaseIntentHandler):
     INTENT_TYPE = "page.contract"
@@ -31,7 +24,7 @@ class PageContractHandler(BaseIntentHandler):
         return ["scene.page_contract"]
 
     def handle(self, payload=None, ctx=None):
-        params = _parse_params(payload, self.params)
+        params = parse_runtime_fetch_params(payload, self.params)
         page_key = str(params.get("page_key") or params.get("key") or "").strip().lower()
         if not page_key:
             return {
@@ -41,7 +34,7 @@ class PageContractHandler(BaseIntentHandler):
                     "message": "缺少参数：page_key",
                     "suggested_action": "fix_input",
                 },
-                "meta": {"intent": self.INTENT_TYPE, "trace_id": _trace_id(self.context)},
+                "meta": build_runtime_fetch_meta(self.INTENT_TYPE, self.context),
             }
         data = build_runtime_fetch_context(self.env, params=params)
         contract = build_runtime_page_contract(page_key, data)
@@ -53,7 +46,7 @@ class PageContractHandler(BaseIntentHandler):
                     "message": f"page contract not found: {page_key}",
                     "suggested_action": "open_workspace_overview",
                 },
-                "meta": {"intent": self.INTENT_TYPE, "trace_id": _trace_id(self.context)},
+                "meta": build_runtime_fetch_meta(self.INTENT_TYPE, self.context),
             }
         return {
             "ok": True,
@@ -61,7 +54,7 @@ class PageContractHandler(BaseIntentHandler):
                 "page_key": page_key,
                 "page_contract": contract,
             },
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": _trace_id(self.context)},
+            "meta": build_runtime_fetch_meta(self.INTENT_TYPE, self.context),
         }
 
 
@@ -73,7 +66,7 @@ class WorkspaceCollectionsHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["base.group_user"]
 
     def handle(self, payload=None, ctx=None):
-        params = _parse_params(payload, self.params)
+        params = parse_runtime_fetch_params(payload, self.params)
         raw_keys = params.get("keys")
         keys = raw_keys if isinstance(raw_keys, list) else []
         data = build_runtime_fetch_context(self.env, params=params)
@@ -85,5 +78,5 @@ class WorkspaceCollectionsHandler(BaseIntentHandler):
                 "keys": sorted(list(collections.keys())),
                 "count": len(collections),
             },
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": _trace_id(self.context)},
+            "meta": build_runtime_fetch_meta(self.INTENT_TYPE, self.context),
         }

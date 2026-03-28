@@ -2062,3 +2062,31 @@ Each entry must include:
   - latest classification: `PASS_WITH_RISK`
   - stop reason: `diff_too_large`
   - code and acceptance are green; cumulative local delta exceeded the repo guard threshold
+## 2026-03-28 迭代锚点（ITER-2026-03-28-034）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b26154f`
+- Layer Target: `Platform Layer`
+- Module: `smart_core runtime_fetch bootstrap assembly`
+- Reason: isolate runtime_fetch bootstrap and surface assembly sequencing into a reusable helper before wider system_init alignment
+- `034`: added `addons/smart_core/core/runtime_fetch_bootstrap_helper.py`
+- `034`: `runtime_fetch_context_builder` now delegates extension hook execution, extension fact merge, and surface apply sequencing
+- `034`: direct unit coverage added in `addons/smart_core/tests/test_runtime_fetch_bootstrap_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next entrypoint candidate remains narrow runtime_fetch cleanup or another load_contract slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-035）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b26154f`
+- Layer Target: `Platform Layer`
+- Module: `smart_core runtime_fetch handler plumbing`
+- Reason: extract generic request parsing and trace meta shaping out of runtime_fetch handlers
+- `035`: added `addons/smart_core/core/runtime_fetch_handler_helper.py`
+- `035`: `runtime_fetch` handlers now delegate payload param parsing and response meta shaping
+- `035`: direct unit coverage added in `addons/smart_core/tests/test_runtime_fetch_handler_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - cumulative local delta is still below stop threshold
