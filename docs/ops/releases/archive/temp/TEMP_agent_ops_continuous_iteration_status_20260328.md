@@ -510,3 +510,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `058`, then another narrow wave-1 shell utility slice if needed
+## Round: ITER-2026-03-28-059
+
+- `ITER-2026-03-28-059`: workspace capability helper extracted into `addons/smart_core/core/workspace_home_capability_helper.py`
+  - `workspace_home_contract_builder.py` no longer owns inline capability-state, metric-level, or urgency utility logic
+  - direct unit coverage added in `addons/smart_core/tests/test_workspace_home_capability_helper.py`
+  - the slice remains inside common shell capability utility territory and does not move scenario payload semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-059`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `059`, then another narrow workspace utility slice

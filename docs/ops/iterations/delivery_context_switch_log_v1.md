@@ -2197,3 +2197,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `058` before the next helper slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-059）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `0314ef6`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home capability helper`
+- Reason: continue common-shell convergence with generic capability state and urgency utilities
+- `059`: added `addons/smart_core/core/workspace_home_capability_helper.py`
+- `059`: `workspace_home_contract_builder.py` now delegates capability-state, metric-level, and urgency decisions to the shared helper
+- `059`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_capability_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `059` before the next utility slice

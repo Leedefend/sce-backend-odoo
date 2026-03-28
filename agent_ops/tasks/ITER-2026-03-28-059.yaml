@@ -1,0 +1,66 @@
+task_id: ITER-2026-03-28-059
+title: Extract workspace home capability helper
+type: governance_task
+status: pending
+priority: medium
+
+goal: Extract low-risk workspace capability state and urgency utilities out of workspace_home_contract_builder so wave-1 continues with bounded common-shell helper convergence.
+user_visible_outcome:
+  - workspace capability helper ownership is explicit in smart_core
+  - workspace contract builder is narrower and easier to audit
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: common project wave-1
+  module: smart_core workspace home capability helper
+  reason: Continue wave-1 with generic capability-state and urgency utilities that stay inside common shell semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-059.yaml
+    - python3 -m py_compile addons/smart_core/core/workspace_home_capability_helper.py addons/smart_core/core/workspace_home_contract_builder.py addons/smart_core/tests/test_workspace_home_capability_helper.py
+    - python3 addons/smart_core/tests/test_workspace_home_capability_helper.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore addons/smart_core/core/workspace_home_capability_helper.py addons/smart_core/core/workspace_home_contract_builder.py addons/smart_core/tests/test_workspace_home_capability_helper.py agent_ops/tasks/ITER-2026-03-28-059.yaml
+
+depends_on:
+  - ITER-2026-03-28-058
+notes: "Fourth narrow wave-1 slice. Only capability state, metric level, and urgency utility logic."
