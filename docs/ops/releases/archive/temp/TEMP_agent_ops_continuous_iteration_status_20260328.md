@@ -351,3 +351,16 @@
 - governed worktree noise has been cleared
 - local scratch docs are now ignored
 - repository can resume from a clean governed state after this cleanup commit
+## Round: ITER-2026-03-28-029
+
+- `ITER-2026-03-28-029`: canonical dirty baseline normalized to the current clean post-submission state
+  - `repo_dirty_baseline.yaml` reduced to `known_dirty_paths: []`
+  - candidate regeneration now shows only the current governance-task delta instead of historical stale paths
+  - governance review captured in `TEMP_post_submission_baseline_review_20260328.md`
+
+## Current Stop Point
+
+- latest in-flight task: `ITER-2026-03-28-029`
+- observed classification: `PASS_WITH_RISK`
+- stop reason: `diff_too_large`
+- note: risk is caused by the one-time baseline file collapse, not by forbidden paths or runtime regressions
