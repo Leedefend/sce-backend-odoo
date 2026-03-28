@@ -106,3 +106,17 @@ def normalize_requested_view_types(
         seen.add(view_type)
         resolved.append(view_type)
     return resolved
+
+
+def normalize_requested_include_parts(
+    include_raw: Any,
+    *,
+    valid_include: Iterable[str] | None = None,
+) -> set[str]:
+    allowed = set(valid_include or [])
+    text = str(include_raw if include_raw not in (None, False) else "all").strip().lower()
+    if text == "all":
+        return set(allowed)
+
+    resolved = {part.strip() for part in text.split(",") if part.strip()}
+    return resolved & allowed

@@ -3,6 +3,7 @@
 from ..core.base_handler import BaseIntentHandler
 from ..core.load_contract_entry_context import (
     infer_view_types_from_entry_context,
+    normalize_requested_include_parts,
     normalize_requested_view_types,
     resolve_model_from_entry_context,
 )
@@ -118,11 +119,10 @@ class LoadContractHandler(BaseIntentHandler):
 
 
         # ---------- 3) include ----------
-        include_raw = str(p.get("include", "all")).strip().lower()
-        if include_raw == "all":
-            include_parts = set(VALID_INCLUDE)
-        else:
-            include_parts = set(x.strip() for x in include_raw.split(",")) & VALID_INCLUDE
+        include_parts = normalize_requested_include_parts(
+            p.get("include", "all"),
+            valid_include=VALID_INCLUDE,
+        )
         if not include_parts:
             return self._err(400, "include 无效，应为 all 或 model,view,action,permission 组合")
 
