@@ -40,7 +40,12 @@ class TestPageContractSemanticOrchestrationBridge(unittest.TestCase):
 
     def test_bridge_projects_tree_semantics_into_list_page_type(self):
         payload = {
-            "page": {"page_type": "workspace", "layout_mode": "single_flow", "priority_model": "role_first"},
+            "page": {
+                "page_type": "workspace",
+                "layout_mode": "single_flow",
+                "priority_model": "role_first",
+                "global_actions": [{"key": "open_default", "label": "默认动作", "intent": "ui.contract"}],
+            },
             "render_hints": {},
             "meta": {
                 "parser_semantic_surface": {
@@ -67,6 +72,7 @@ class TestPageContractSemanticOrchestrationBridge(unittest.TestCase):
         self.assertEqual((bridged.get("page") or {}).get("priority_model"), "task_first")
         self.assertEqual((bridged.get("render_hints") or {}).get("preferred_columns"), 2)
         self.assertEqual(((bridged.get("page") or {}).get("filters") or [])[0]["kind"], "filter")
+        self.assertEqual([row.get("key") for row in ((bridged.get("page") or {}).get("global_actions") or [])], ["apply_filters", "reset_filters"])
 
 
 if __name__ == "__main__":

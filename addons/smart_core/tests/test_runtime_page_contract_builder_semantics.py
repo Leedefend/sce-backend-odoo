@@ -57,6 +57,7 @@ def _build_page_contracts(_data):
                                 "search": {
                                     "filters": [{"name": "mine", "string": "我的"}],
                                     "group_bys": [{"name": "by_stage", "string": "按阶段", "group_by": "stage_id"}],
+                                    "searchpanel": [{"name": "stage_id", "string": "阶段"}],
                                 },
                             }
                         },
@@ -96,8 +97,14 @@ class TestRuntimePageContractBuilderSemantics(unittest.TestCase):
             ((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_semantic_view") or {}).get("capability_flags") or {}).get("is_editable")
         )
         self.assertEqual((home.get("runtime_context") or {}).get("runtime_mode"), "list_focus")
+        self.assertEqual((home.get("runtime_context") or {}).get("search_mode"), "faceted")
         self.assertEqual((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_preferred_columns")), 2)
+        self.assertEqual((((home.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_search_profile")), "faceted")
         self.assertEqual(((((home.get("page_orchestration_v1") or {}).get("page") or {}).get("filters")) or [])[0]["kind"], "filter")
+        self.assertEqual(
+            [row.get("key") for row in (((home.get("page_orchestration_v1") or {}).get("page") or {}).get("global_actions") or [])],
+            ["apply_filters", "reset_filters"],
+        )
 
 
 if __name__ == "__main__":

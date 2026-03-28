@@ -73,6 +73,24 @@ def _search_filters_from_surface(surface: Dict[str, Any]) -> list[Dict[str, Any]
     return [row for row in filters if row.get("key")]
 
 
+def _search_actions_from_surface(surface: Dict[str, Any]) -> list[Dict[str, Any]]:
+    native_view = _as_dict(surface.get("native_view"))
+    search_view = _as_dict(_as_dict(native_view.get("views")).get("search"))
+
+    has_filters = bool(search_view.get("filters"))
+    has_group_bys = bool(search_view.get("group_bys"))
+    has_searchpanel = bool(search_view.get("searchpanel"))
+    if not (has_filters or has_group_bys or has_searchpanel):
+        return []
+
+    actions: list[Dict[str, Any]] = [
+        {"key": "apply_filters", "label": "应用筛选", "intent": "ui.contract"},
+    ]
+    if has_filters or has_group_bys or has_searchpanel:
+        actions.append({"key": "reset_filters", "label": "重置筛选", "intent": "ui.contract"})
+    return actions
+
+
 def apply_page_contract_semantic_orchestration_bridge(
     orchestration: Dict[str, Any] | None,
 ) -> Dict[str, Any]:
@@ -102,6 +120,9 @@ def apply_page_contract_semantic_orchestration_bridge(
         page["priority_model"] = "role_first"
     if not isinstance(page.get("filters"), list) or not page.get("filters"):
         page["filters"] = _search_filters_from_surface(surface)
+    semantic_actions = _search_actions_from_surface(surface)
+    if semantic_actions:
+        page["global_actions"] = semantic_actions
     out["page"] = page
 
     render_hints = _as_dict(out.get("render_hints"))

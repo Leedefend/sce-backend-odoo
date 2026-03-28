@@ -30,6 +30,7 @@ class TestRuntimePageSemanticOrchestrationBridge(unittest.TestCase):
                         "search": {
                             "filters": [{"name": "mine", "string": "我的"}],
                             "group_bys": [{"name": "by_stage", "string": "按阶段", "group_by": "stage_id"}],
+                            "searchpanel": [{"name": "stage_id", "string": "阶段"}],
                         }
                     }
                 },
@@ -41,7 +42,9 @@ class TestRuntimePageSemanticOrchestrationBridge(unittest.TestCase):
         bridged = bridge_module.apply_runtime_page_semantic_orchestration_bridge(payload)
 
         self.assertEqual((bridged.get("runtime_context") or {}).get("runtime_mode"), "list_focus")
+        self.assertEqual((bridged.get("runtime_context") or {}).get("search_mode"), "faceted")
         self.assertEqual((((bridged.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_preferred_columns")), 2)
+        self.assertEqual((((bridged.get("page_orchestration_v1") or {}).get("render_hints") or {}).get("runtime_search_profile")), "faceted")
         self.assertEqual(((((bridged.get("page_orchestration_v1") or {}).get("page") or {}).get("filters")) or [])[0]["kind"], "filter")
 
 
