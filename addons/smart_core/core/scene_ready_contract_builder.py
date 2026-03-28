@@ -134,6 +134,10 @@ def _normalize_search_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "default_sort": _text(item.get("default_sort")),
         "filters": list(item.get("filters") or []),
+        "fields": list(item.get("fields") or []),
+        "group_by": list(item.get("group_by") or []),
+        "searchpanel": list(item.get("searchpanel") or []),
+        "mode": _text(item.get("mode")),
         "columns": list(list_profile.get("columns") or []),
         "hidden_columns": list(list_profile.get("hidden_columns") or []),
     }
