@@ -484,3 +484,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed slice may continue with one more narrow wave-1 helper extraction before grouped submission
+## Round: ITER-2026-03-28-057
+
+- `ITER-2026-03-28-057`: workspace read-model utility helper extracted into `addons/smart_core/core/workspace_home_read_model_helper.py`
+  - `workspace_home_contract_builder.py` no longer owns route parsing or business collection extraction inline
+  - direct unit coverage added in `addons/smart_core/tests/test_workspace_home_read_model_helper.py`
+  - the slice remains inside common shell/read-model territory and does not absorb scenario block semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-057`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `057`, then another narrow wave-1 helper or read-model slice

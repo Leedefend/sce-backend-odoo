@@ -16,6 +16,11 @@ from .workspace_home_shell_helper import (
     resolve_workspace_keyword_overrides,
     resolve_workspace_scene,
 )
+from .workspace_home_read_model_helper import (
+    as_record_list,
+    extract_business_collections,
+    scene_from_route,
+)
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -422,19 +427,7 @@ def _capability_state(cap: Dict[str, Any]) -> str:
 
 
 def _scene_from_route(route: str) -> str:
-    route = _to_text(route)
-    if not route:
-        return ""
-    parsed = urlparse(route)
-    if parsed.path == "/s" and parsed.query:
-        return _to_text(parsed.query)
-    if parsed.path.startswith("/s/"):
-        return _to_text(parsed.path.split("/s/", 1)[1])
-    query = parse_qs(parsed.query or "")
-    value = query.get("scene")
-    if value and value[0]:
-        return _to_text(value[0])
-    return ""
+    return scene_from_route(route)
 
 
 def _metric_level(value: int, amber: int, red: int) -> str:
@@ -452,48 +445,11 @@ def _is_urgent_capability(title: str, key: str) -> bool:
 
 
 def _as_record_list(payload: Any) -> List[Dict[str, Any]]:
-    if isinstance(payload, list):
-        return [row for row in payload if isinstance(row, dict)]
-    if isinstance(payload, dict):
-        for key in ("items", "records", "rows", "data", "actions", "tasks"):
-            value = payload.get(key)
-            if isinstance(value, list):
-                return [row for row in value if isinstance(row, dict)]
-    return []
+    return as_record_list(payload)
 
 
 def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
-    ignored_top_keys = {
-        "capabilities",
-        "scenes",
-        "nav",
-        "nav_legacy",
-        "nav_meta",
-        "nav_contract",
-        "default_route",
-        "intents",
-        "intents_meta",
-        "feature_flags",
-        "capability_groups",
-        "capability_surface_summary",
-        "preload",
-        "page_contracts",
-        "workspace_home",
-        "role_surface",
-        "role_surface_map",
-        "surface_mapping",
-        "surface_policies",
-        "ext_facts",
-        "user",
-    }
-    collections: Dict[str, List[Dict[str, Any]]] = {}
-    for key, value in data.items():
-        if key in ignored_top_keys:
-            continue
-        rows = _as_record_list(value)
-        if rows:
-            collections[str(key)] = rows
-    return collections
+    return extract_business_collections(data)
 
 
 def _provider_token_set(
