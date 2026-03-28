@@ -85,6 +85,20 @@ def _validation_surface_nonempty(value: Any) -> bool:
     return False
 
 
+def _search_surface_nonempty(value: Any) -> bool:
+    payload = _as_dict(value)
+    if not payload:
+        return False
+    return bool(
+        _text(payload.get("default_sort"))
+        or _text(payload.get("mode"))
+        or _as_list(payload.get("filters"))
+        or _as_list(payload.get("fields"))
+        or _as_list(payload.get("group_by"))
+        or _as_list(payload.get("searchpanel"))
+    )
+
+
 def _scene_key_matches(scene_key: str, *candidates: str) -> bool:
     normalized = _text(scene_key).lower()
     if not normalized:
@@ -192,11 +206,12 @@ def _normalize_search_surface(item: Dict[str, Any]) -> Dict[str, Any]:
 
 def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     access = item.get("access") if isinstance(item.get("access"), dict) else {}
-    required = access.get("required_capabilities")
+    payload = access or _as_dict(item)
+    required = payload.get("required_capabilities")
     return {
-        "visible": bool(access.get("visible", True)),
-        "allowed": bool(access.get("allowed", True)),
-        "reason_code": _text(access.get("reason_code")),
+        "visible": bool(payload.get("visible", True)),
+        "allowed": bool(payload.get("allowed", True)),
+        "reason_code": _text(payload.get("reason_code")),
         "required_capabilities": list(required) if isinstance(required, list) else [],
     }
 
@@ -247,15 +262,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
         validation_surface = entry.get("validation_surface") if isinstance(entry.get("validation_surface"), dict) else {}
         action_surface = entry.get("action_surface") if isinstance(entry.get("action_surface"), dict) else {}
 
-        if bool(
-            search_surface.get("default_sort")
-            or search_surface.get("mode")
-            or
-            search_surface.get("filters")
-            or search_surface.get("fields")
-            or search_surface.get("group_by")
-            or search_surface.get("searchpanel")
-        ):
+        if _search_surface_nonempty(search_surface):
             surface_hits["search"] = int(surface_hits.get("search") or 0) + 1
         if _permission_surface_nonempty(permission_surface):
             surface_hits["permission"] = int(surface_hits.get("permission") or 0) + 1
@@ -499,14 +506,7 @@ def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
         missing.append("action_surface.counts.primary")
     if not isinstance(action_counts.get("groups"), int):
         missing.append("action_surface.counts.groups")
-    if not bool(
-        _text(search_surface.get("default_sort"))
-        or _text(search_surface.get("mode"))
-        or _as_list(search_surface.get("filters"))
-        or _as_list(search_surface.get("fields"))
-        or _as_list(search_surface.get("group_by"))
-        or _as_list(search_surface.get("searchpanel"))
-    ):
+    if not _search_surface_nonempty(search_surface):
         missing.append("search_surface")
     if _fact_available(base_facts.get("permissions")) and not _permission_surface_nonempty(permission_surface):
         missing.append("permission_surface")
@@ -698,6 +698,22 @@ def _scene_ready_entry(
             compiled_action_surface["selection_mode"] = _text(seeded_action_surface.get("selection_mode"))
     if compiled_action_surface:
         compiled["action_surface"] = compiled_action_surface
+    compiled_search_surface = _normalize_search_surface(_as_dict(compiled.get("search_surface")))
+    seeded_search_surface = _normalize_search_surface(_as_dict(scene_payload.get("search_surface")))
+    if not _search_surface_nonempty(compiled_search_surface) and _search_surface_nonempty(seeded_search_surface):
+        compiled["search_surface"] = seeded_search_surface
+    compiled_permission_surface = _normalize_permission_surface(_as_dict(compiled.get("permission_surface")))
+    seeded_permission_surface = _normalize_permission_surface(_as_dict(scene_payload.get("permission_surface")))
+    if not _permission_surface_nonempty(compiled_permission_surface) and _permission_surface_nonempty(seeded_permission_surface):
+        compiled["permission_surface"] = seeded_permission_surface
+    compiled_workflow_surface = _as_dict(compiled.get("workflow_surface"))
+    seeded_workflow_surface = _as_dict(scene_payload.get("workflow_surface"))
+    if not _workflow_surface_nonempty(compiled_workflow_surface) and _workflow_surface_nonempty(seeded_workflow_surface):
+        compiled["workflow_surface"] = dict(seeded_workflow_surface)
+    compiled_validation_surface = _as_dict(compiled.get("validation_surface"))
+    seeded_validation_surface = _as_dict(scene_payload.get("validation_surface"))
+    if not _validation_surface_nonempty(compiled_validation_surface) and _validation_surface_nonempty(seeded_validation_surface):
+        compiled["validation_surface"] = dict(seeded_validation_surface)
     page = dict(compiled.get("page") or {})
     zones = page.get("zones") if isinstance(page.get("zones"), list) else []
     if not zones:
