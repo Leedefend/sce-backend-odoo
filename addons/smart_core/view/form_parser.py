@@ -7,6 +7,7 @@ from .native_view_node_schema import (
     build_notebook_node,
     build_page_node,
     build_ribbon_node,
+    build_view_semantics,
 )
 
 import ast
@@ -17,15 +18,41 @@ class FormViewParser(BaseViewParser):
         view_info = self.get_view_info(fallback_view_type="form")
         arch = view_info["arch"]
 
+        title_field = self._parse_title_field(arch)
+        title_node = self._parse_title_node(arch)
+        header_buttons = self._parse_header_buttons(arch)
+        stat_buttons = self._parse_stat_buttons(arch)
+        ribbon = self._parse_ribbon(arch)
+        groups = self._parse_groups(arch.xpath(".//sheet"))  # 支持多层解析
+        notebooks = self._parse_notebooks(arch)
+        chatter = self._parse_chatter(arch)
+
         return {
-            "titleField": self._parse_title_field(arch),
-            "titleNode": self._parse_title_node(arch),
-            "headerButtons": self._parse_header_buttons(arch),
-            "statButtons": self._parse_stat_buttons(arch),
-            "ribbon": self._parse_ribbon(arch),
-            "groups": self._parse_groups(arch.xpath(".//sheet")),  # 支持多层解析
-            "notebooks": self._parse_notebooks(arch),
-            "chatter": self._parse_chatter(arch)
+            "titleField": title_field,
+            "titleNode": title_node,
+            "headerButtons": header_buttons,
+            "statButtons": stat_buttons,
+            "ribbon": ribbon,
+            "groups": groups,
+            "notebooks": notebooks,
+            "chatter": chatter,
+            "view_semantics": build_view_semantics(
+                source_view="form",
+                capability_flags={
+                    "has_title": bool(title_node),
+                    "has_header_buttons": bool(header_buttons),
+                    "has_stat_buttons": bool(stat_buttons),
+                    "has_ribbon": bool(ribbon),
+                    "has_chatter": bool(chatter and (chatter.get("followers") or chatter.get("activities") or chatter.get("messages"))),
+                    "has_notebooks": bool(notebooks),
+                },
+                semantic_meta={
+                    "group_count": len(groups),
+                    "notebook_count": len(notebooks),
+                    "header_button_count": len(header_buttons),
+                    "stat_button_count": len(stat_buttons),
+                },
+            ),
         }
 
     # ---------- 标题 ----------

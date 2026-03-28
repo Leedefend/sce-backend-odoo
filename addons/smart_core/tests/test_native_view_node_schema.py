@@ -82,6 +82,7 @@ class TestNativeViewNodeSchema(unittest.TestCase):
         self.assertEqual(node["kind"], "view_semantics")
         self.assertEqual(node["source_view"], "tree")
         self.assertEqual(node["capability_flags"]["can_create"], True)
+        self.assertEqual(node["semantic_meta"]["editable_mode"], "bottom")
 
 
 if __name__ == "__main__":

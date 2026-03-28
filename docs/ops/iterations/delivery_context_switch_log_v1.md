@@ -2673,3 +2673,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `092`, then continue the remaining view-level semantics needed for complete base-view coverage
+## 2026-03-28 迭代锚点（ITER-2026-03-28-093）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `9d96187`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core form view semantics`
+- Reason: close the remaining base-view semantic gap by aligning form with the normalized top-level semantics already added to tree, kanban, and search
+- `093`: `form_parser.py` now emits additive normalized `view_semantics`
+- `093`: form output now exposes top-level capability flags and semantic counts in the same shape as other base views
+- `093`: direct form semantic coverage was extended to lock the new top-level semantics
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `093`, then treat batch-2 as a coherent parser-semantic milestone and choose the next subsystem-level integration step
