@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-148
+title: Normalize workflow and validation hit rules in scene ready metrics
+type: governance_task
+status: pending
+priority: high
+
+goal: Make scene ready consumption metrics evaluate workflow_surface and validation_surface with explicit canonical hit rules instead of relying on ad-hoc field truthiness.
+user_visible_outcome:
+  - scene ready metrics now apply stable semantic hit rules to workflow and validation surfaces, matching the canonical treatment already used for search, action and permission surfaces
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: backend orchestration
+  module: smart_core scene_ready_contract_builder
+  reason: workflow and validation hit counting still uses older ad-hoc nonempty checks. This iteration aligns them with the explicit canonical helper-based semantics already introduced for other scene_ready surfaces.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-148.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_consumption_metrics.py
+    - python3 addons/smart_core/tests/test_scene_ready_consumption_metrics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-148.yaml addons/smart_core/core/scene_ready_contract_builder.py addons/smart_core/tests/test_scene_ready_consumption_metrics.py
+
+depends_on:
+  - ITER-2026-03-29-147
+
+notes: "Batch acceleration: continue grouped scene_ready metrics cleanup by normalizing workflow and validation hit rules in the same builder."
