@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-154
+title: Drive smart_scene identity from canonical search surface
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene scene identity resolution consume canonical search_surface when parser/view-type hints are absent, instead of falling back to generic defaults.
+user_visible_outcome:
+  - runtime scene identity can now infer search-oriented page/view behavior directly from canonical search semantics, even when parser_contract or view_type is missing
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_resolver
+  reason: scene_resolver still mainly derives identity from view_type/source_view. This iteration lets it consume canonical search_surface semantics as a real decision input when explicit parser hints are absent.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-154.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_resolver.py addons/smart_scene/tests/test_scene_resolver_semantics.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_resolver_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-154.yaml addons/smart_scene/core/scene_resolver.py addons/smart_scene/tests/test_scene_resolver_semantics.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-153
+
+notes: "Batch acceleration: move the direct downstream work into smart_scene and make canonical search_surface a first-class scene identity driver."
