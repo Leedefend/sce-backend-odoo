@@ -56,6 +56,10 @@ def adapt_ui_base_contract(payload: Dict[str, Any] | None, *, scene_key: str = "
     permissions = _as_dict(base.get("permissions"))
     workflow = _as_dict(base.get("workflow"))
     validation = _as_dict(base.get("validator") or base.get("validation"))
+    parser_contract = _as_dict(base.get("parser_contract"))
+    view_semantics = _as_dict(base.get("view_semantics"))
+    native_view = _as_dict(base.get("native_view"))
+    semantic_page = _as_dict(base.get("semantic_page"))
     actions = _extract_actions(base)
 
     view_fact = {
@@ -79,6 +83,12 @@ def adapt_ui_base_contract(payload: Dict[str, Any] | None, *, scene_key: str = "
     action_fact = {
         "items": actions,
     }
+    parser_fact = {
+        "parser_contract": parser_contract,
+        "view_semantics": view_semantics,
+        "native_view": native_view,
+        "semantic_page": semantic_page,
+    }
     permission_fact = permissions
     workflow_fact = workflow
     validation_fact = validation
@@ -90,6 +100,7 @@ def adapt_ui_base_contract(payload: Dict[str, Any] | None, *, scene_key: str = "
         "field_fact": field_fact,
         "search_fact": search_fact,
         "action_fact": action_fact,
+        "parser_fact": parser_fact,
         "permission_fact": permission_fact,
         "workflow_fact": workflow_fact,
         "validation_fact": validation_fact,
@@ -105,10 +116,13 @@ def adapt_ui_base_contract(payload: Dict[str, Any] | None, *, scene_key: str = "
         "validation": validation_fact,
         "validator": validation_fact,
         "actions": {"items": actions},
+        "parser_contract": parser_contract,
+        "view_semantics": view_semantics,
+        "native_view": native_view,
+        "semantic_page": semantic_page,
     }
 
     return {
         "orchestrator_input": orchestrator_input,
         "normalized_contract": normalized_contract,
     }
-
