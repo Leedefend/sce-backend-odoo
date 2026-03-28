@@ -109,6 +109,11 @@ def apply_policy(compiled_ast: Dict[str, Any], policies: Dict[str, Any], runtime
         if _as_list(search_surface.get("filters")):
             _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.filters", from_layer="base")
         search_surface["filters"] = default_filters
+    default_sort = _text(search_policy.get("default_sort"))
+    if default_sort:
+        if _text(search_surface.get("default_sort")):
+            _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.default_sort", from_layer="base")
+        search_surface["default_sort"] = default_sort
     default_group_by = _as_list(search_policy.get("default_group_by"))
     if default_group_by:
         if _as_list(search_surface.get("group_by")):
