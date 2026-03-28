@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import zlib
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 from odoo.addons.smart_scene.core.nav_policy_registry import resolve_nav_group_policy
+from .scene_nav_node_defaults import (
+    build_scene_nav_group_node,
+    build_scene_nav_leaf,
+    build_scene_nav_root,
+    synthetic_scene_nav_menu_id,
+)
 
 NAV_POLICY_KEY = "scene_nav_v1"
 
@@ -69,11 +74,6 @@ def _delivery_gate_reason(scene: dict, code: str, target: dict) -> str | None:
     if any(marker in target_text for marker in _demo_target_markers()):
         return EXCLUDED_REASON_DEMO_TARGET
     return None
-
-
-def _synthetic_menu_id(key: str, base: int = 700_000_000, span: int = 200_000_000) -> int:
-    raw = zlib.crc32(str(key or "").encode("utf-8")) & 0xFFFFFFFF
-    return int(base + (raw % span))
 
 
 def _scene_allowed(scene: dict) -> bool:
@@ -175,26 +175,6 @@ def _group_key(scene_key: str, aliases: Dict[str, str] | None = None) -> str:
     return alias_map.get(raw_group, raw_group)
 
 
-def _to_leaf(scene: dict) -> dict:
-    scene_key = str(scene.get("code") or scene.get("key") or "").strip()
-    scene_name = str(scene.get("name") or scene_key).strip() or scene_key
-    menu_id = _synthetic_menu_id(f"scene:{scene_key}")
-    return {
-        "key": f"scene:{scene_key}",
-        "label": scene_name,
-        "title": scene_name,
-        "menu_id": menu_id,
-        "children": [],
-        "scene_key": scene_key,
-        "meta": {
-            "scene_key": scene_key,
-            "action_type": "scene.contract",
-            "menu_xmlid": f"scene.contract.{scene_key.replace('.', '_')}",
-            "scene_source": "scene_contract",
-        },
-    }
-
-
 def _build_group_nodes(
     leaves: List[dict],
     *,
@@ -218,17 +198,7 @@ def _build_group_nodes(
         items_sorted = sorted(items, key=lambda x: str(x.get("label") or ""))
         label = str(labels.get(group) or "其他场景")
         order = int(order_map.get(group) or 999)
-        node = {
-            "key": f"group:{group}",
-            "label": label,
-            "title": label,
-            "menu_id": _synthetic_menu_id(f"group:{group}", base=640_000_000, span=40_000_000),
-            "children": items_sorted,
-            "meta": {
-                "scene_source": "scene_contract",
-                "group_key": group,
-            },
-        }
+        node = build_scene_nav_group_node(group, label, items_sorted)
         out.append((order, label, node))
     out.sort(key=lambda x: (x[0], x[1]))
     return [item[2] for item in out]
@@ -259,9 +229,9 @@ def build_scene_nav_contract(data: dict) -> dict:
         if code and code in ready_codes:
             scene_map[code] = item
 
-    candidate_leaves = [_to_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
+    candidate_leaves = [build_scene_nav_leaf(scene_map[key]) for key in role_candidates if key in scene_map]
     remaining = [v for k, v in scene_map.items() if k not in set(role_candidates)]
-    remaining_leaves = [_to_leaf(v) for v in remaining]
+    remaining_leaves = [build_scene_nav_leaf(v) for v in remaining]
     grouped = _build_group_nodes(
         remaining_leaves,
         group_labels=policy_labels,
@@ -271,32 +241,12 @@ def build_scene_nav_contract(data: dict) -> dict:
 
     primary_children = []
     if candidate_leaves:
-        primary_children.append({
-            "key": "group:role_primary",
-            "label": "我的场景",
-            "title": "我的场景",
-            "menu_id": _synthetic_menu_id("group:role_primary", base=640_000_000, span=40_000_000),
-            "children": candidate_leaves,
-            "meta": {
-                "scene_source": "scene_contract",
-                "group_key": "role_primary",
-            },
-        })
+        primary_children.append(build_scene_nav_group_node("role_primary", "我的场景", candidate_leaves))
     include_remaining = bool(data.get("include_remaining_nav_scenes"))
     if include_remaining or not candidate_leaves:
         primary_children.extend(grouped)
 
-    root = {
-        "key": "root:scene_contract",
-        "label": "场景导航",
-        "title": "场景导航",
-        "menu_id": _synthetic_menu_id("root:scene_contract", base=600_000_000, span=20_000_000),
-        "children": primary_children,
-        "meta": {
-            "scene_source": "scene_contract",
-            "menu_xmlid": "scene.contract.root",
-        },
-    }
+    root = build_scene_nav_root(primary_children)
 
     first_leaf = None
     for group in primary_children:

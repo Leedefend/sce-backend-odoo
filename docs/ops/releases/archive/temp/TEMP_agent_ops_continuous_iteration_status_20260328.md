@@ -692,3 +692,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `072`, then another sibling delivery/provider helper only if it stays clearly detached from snapshot and policy-binding logic
+## Round: ITER-2026-03-28-073
+
+- `ITER-2026-03-28-073`: scene nav leaf/group/root node shaping moved into `addons/smart_core/core/scene_nav_node_defaults.py`
+  - `scene_nav_contract_builder.py` no longer owns inline synthetic node shaping for scene leaves, grouped nav nodes, or nav root defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_scene_nav_node_defaults.py`
+  - the slice remains inside common navigation/provider territory and does not move scene resolve, DSL compile, or delivery policy semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-073`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `073`, then continue on another sibling common-navigation helper only if it stays detached from scene resolve and delivery policy semantics
