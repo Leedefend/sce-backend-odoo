@@ -415,6 +415,7 @@ def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
     view_modes = _as_list(compiled.get("view_modes"))
     sections = _as_dict(compiled.get("sections"))
     action_surface = _as_dict(compiled.get("action_surface"))
+    search_surface = _as_dict(compiled.get("search_surface"))
     projection = _as_dict(compiled.get("projection"))
     group_summary = _as_dict(projection.get("group_summary"))
 
@@ -436,6 +437,15 @@ def _strict_contract_missing_paths(compiled: Dict[str, Any]) -> List[str]:
         missing.append("action_surface.groups")
     if not _text(action_surface.get("selection_mode")):
         missing.append("action_surface.selection_mode")
+    if not bool(
+        _text(search_surface.get("default_sort"))
+        or _text(search_surface.get("mode"))
+        or _as_list(search_surface.get("filters"))
+        or _as_list(search_surface.get("fields"))
+        or _as_list(search_surface.get("group_by"))
+        or _as_list(search_surface.get("searchpanel"))
+    ):
+        missing.append("search_surface")
     if not isinstance(projection.get("summary_items"), list):
         missing.append("projection.summary_items")
     if not isinstance(projection.get("overview_strip"), list):
