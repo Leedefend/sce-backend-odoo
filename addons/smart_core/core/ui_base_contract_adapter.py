@@ -77,7 +77,7 @@ def adapt_ui_base_contract(payload: Dict[str, Any] | None, *, scene_key: str = "
     search_fact = {
         "default_sort": _text(search.get("default_sort") or base.get("default_sort")),
         "filters": _as_list(search.get("filters")),
-        "group_by": _as_list(search.get("group_by")),
+        "group_by": _as_list(search.get("group_by") or search.get("group_bys")),
         "fields": _as_list(search.get("fields")),
         "searchpanel": _as_list(search.get("searchpanel")),
         "mode": _text(search.get("mode")),
