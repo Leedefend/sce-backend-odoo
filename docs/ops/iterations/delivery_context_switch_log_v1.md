@@ -2169,3 +2169,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is one more narrow wave-1 helper extraction or grouped submission of `056`
+## 2026-03-28 迭代锚点（ITER-2026-03-28-057）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c49bc9b`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home read model helper`
+- Reason: continue common-shell convergence with generic route parsing and business collection extraction helpers
+- `057`: added `addons/smart_core/core/workspace_home_read_model_helper.py`
+- `057`: `workspace_home_contract_builder.py` now delegates route parsing and business collection extraction to the shared read-model helper
+- `057`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_read_model_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `057` before the next helper slice
