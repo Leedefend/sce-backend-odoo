@@ -718,3 +718,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `074`, then continue on another sibling common-navigation helper only if it stays detached from scene resolve and delivery policy semantics
+## Round: ITER-2026-03-28-075
+
+- `ITER-2026-03-28-075`: scene delivery bool/coercion/surface normalization moved into `addons/smart_core/core/scene_delivery_surface_defaults.py`
+  - `scene_delivery_policy.py` no longer owns inline surface bool coercion, surface normalization, or internal/demo surface classification defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_scene_delivery_surface_defaults.py`
+  - the slice remains inside common navigation/provider territory and does not move policy selection or scene filtering semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-075`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `075`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics

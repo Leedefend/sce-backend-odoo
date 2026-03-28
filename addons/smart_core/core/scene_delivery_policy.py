@@ -6,6 +6,14 @@ import os
 from typing import Any
 
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from .scene_delivery_surface_defaults import (
+    coerce_surface_input as _coerce_surface_input,
+    is_demo_surface as _is_demo_surface,
+    is_internal_surface as _is_internal_surface,
+    normalize_surface as _normalize_surface,
+    normalize_surfaces as _normalize_surfaces,
+    to_bool as _to_bool,
+)
 
 REASON_SCENE_INVALID = "SCENE_INVALID"
 REASON_SCENE_UNPUBLISHED = "SCENE_UNPUBLISHED"
@@ -84,40 +92,6 @@ def _surface_policy_default_file(env=None) -> str:
     return value or SURFACE_POLICY_FILE_DEFAULT
 
 
-def _to_bool(value: Any, default: bool = False) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        text = value.strip().lower()
-        if text in {"1", "true", "yes", "on"}:
-            return True
-        if text in {"0", "false", "no", "off"}:
-            return False
-    return default
-
-
-def _normalize_surface(value: Any) -> str:
-    text = str(value or "").strip().lower()
-    return text or "default"
-
-
-def _coerce_surface_input(value: Any) -> str:
-    text = str(value or "").strip().lower()
-    if text in {"", "false", "none", "null", "0"}:
-        return ""
-    return text
-
-
-def _is_internal_surface(surface: str) -> bool:
-    value = _normalize_surface(surface)
-    return value in {"internal", "internal_ops", "ops_internal", "debug"}
-
-
-def _is_demo_surface(surface: str) -> bool:
-    value = _normalize_surface(surface)
-    return value in {"demo", "showcase"}
-
-
 def _has_resolvable_target(scene: dict) -> bool:
     target = scene.get("target")
     if not isinstance(target, dict):
@@ -131,20 +105,6 @@ def _has_resolvable_target(scene: dict) -> bool:
         if raw not in (None, 0, "", False):
             return True
     return False
-
-
-def _normalize_surfaces(raw: Any) -> list[str]:
-    if not isinstance(raw, list):
-        return []
-    out = []
-    seen = set()
-    for item in raw:
-        key = _normalize_surface(item)
-        if not key or key in seen:
-            continue
-        seen.add(key)
-        out.append(key)
-    return out
 
 
 def _resolve_policy_file_path(env=None) -> str | None:

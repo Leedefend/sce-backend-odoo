@@ -2421,3 +2421,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `074`, then continue on another sibling navigation/provider helper only if it stays detached from scene resolve and delivery policy semantics
+## 2026-03-28 迭代锚点（ITER-2026-03-28-075）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `0ed5249`
+- Layer Target: `common project wave-1`
+- Module: `smart_core scene delivery surface defaults helper`
+- Reason: continue module-level convergence on common scene delivery surface normalization while staying outside policy selection and scene filtering semantics
+- `075`: added `addons/smart_core/core/scene_delivery_surface_defaults.py`
+- `075`: `scene_delivery_policy.py` now delegates bool coercion, surface normalization, and internal/demo surface classification to the shared helper
+- `075`: direct unit coverage added in `addons/smart_core/tests/test_scene_delivery_surface_defaults.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `075`, then continue on another sibling navigation/provider helper only if it stays detached from policy selection and scene filtering semantics
