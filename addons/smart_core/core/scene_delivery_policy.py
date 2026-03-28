@@ -6,6 +6,12 @@ import os
 from typing import Any
 
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from .scene_delivery_policy_file_helper import (
+    load_surface_policy_payload_from_file as _load_surface_policy_payload_from_file_helper,
+    resolve_default_surface_from_file as _resolve_default_surface_from_file_helper,
+    resolve_policy_file_path as _resolve_policy_file_path_helper,
+    surface_policy_default_file as _surface_policy_default_file_helper,
+)
 from .scene_delivery_surface_defaults import (
     coerce_surface_input as _coerce_surface_input,
     is_demo_surface as _is_demo_surface,
@@ -87,9 +93,11 @@ def _surface_policy_default_name(env=None) -> str:
 
 
 def _surface_policy_default_file(env=None) -> str:
-    payload = call_extension_hook_first(env, "smart_core_surface_policy_file_default", env)
-    value = str(payload or "").strip()
-    return value or SURFACE_POLICY_FILE_DEFAULT
+    return _surface_policy_default_file_helper(
+        env,
+        hook=call_extension_hook_first,
+        default_file=SURFACE_POLICY_FILE_DEFAULT,
+    )
 
 
 def _has_resolvable_target(scene: dict) -> bool:
@@ -108,44 +116,15 @@ def _has_resolvable_target(scene: dict) -> bool:
 
 
 def _resolve_policy_file_path(env=None) -> str | None:
-    explicit = str(os.environ.get("SCENE_DELIVERY_POLICY_FILE") or "").strip()
-    rel_path = explicit or _surface_policy_default_file(env)
-    candidates = [
-        rel_path,
-        os.path.join("/mnt/e/sc-backend-odoo", rel_path),
-        os.path.join("/mnt/extra-addons", rel_path),
-        os.path.join("/mnt/addons_external", rel_path),
-        os.path.join("/mnt/odoo", rel_path),
-        os.path.join("/mnt", rel_path),
-    ]
-    for item in candidates:
-        if item and os.path.isfile(item):
-            return item
-    return None
+    return _resolve_policy_file_path_helper(env, default_file_resolver=_surface_policy_default_file)
 
 
 def _load_surface_policy_payload_from_file(env=None) -> dict:
-    path = _resolve_policy_file_path(env)
-    if not path:
-        return {}
-    try:
-        mtime = float(os.path.getmtime(path))
-    except Exception:
-        mtime = -1.0
-    cached_path = str(_SURFACE_POLICY_CACHE.get("path") or "")
-    cached_mtime = float(_SURFACE_POLICY_CACHE.get("mtime") or -1.0)
-    if cached_path == path and cached_mtime == mtime:
-        cached_payload = _SURFACE_POLICY_CACHE.get("payload")
-        return cached_payload if isinstance(cached_payload, dict) else {}
-    try:
-        payload = json.loads(open(path, "r", encoding="utf-8").read() or "{}")
-    except Exception:
-        return {}
-    normalized = payload if isinstance(payload, dict) else {}
-    _SURFACE_POLICY_CACHE["path"] = path
-    _SURFACE_POLICY_CACHE["mtime"] = mtime
-    _SURFACE_POLICY_CACHE["payload"] = normalized
-    return normalized
+    return _load_surface_policy_payload_from_file_helper(
+        env,
+        cache=_SURFACE_POLICY_CACHE,
+        default_file_resolver=_surface_policy_default_file,
+    )
 
 
 def _load_surface_policy_from_file(env=None) -> dict[str, dict[str, set[str]]]:
@@ -169,10 +148,11 @@ def _load_surface_policy_from_file(env=None) -> dict[str, dict[str, set[str]]]:
 
 
 def _resolve_default_surface_from_file(env=None) -> str:
-    payload = _load_surface_policy_payload_from_file(env)
-    raw = payload.get("default_surface") if isinstance(payload, dict) else ""
-    value = _normalize_surface(raw)
-    return value if value and value != "default" else ""
+    return _resolve_default_surface_from_file_helper(
+        env,
+        payload_loader=_load_surface_policy_payload_from_file,
+        normalize_surface=_normalize_surface,
+    )
 
 
 def _select_surface_policy(surface: str, env=None) -> dict:
