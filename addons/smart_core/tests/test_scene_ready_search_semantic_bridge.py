@@ -42,6 +42,7 @@ class TestSceneReadySearchSemanticBridge(unittest.TestCase):
         self.assertEqual(((bridged.get("search_surface") or {}).get("filters") or [])[0]["name"], "mine")
         self.assertEqual(((bridged.get("search_surface") or {}).get("group_by") or [])[0]["field"], "stage_id")
         self.assertEqual(((bridged.get("search_surface") or {}).get("searchpanel") or [])[0]["name"], "stage_id")
+        self.assertEqual(((bridged.get("search_surface") or {}).get("mode")), "faceted")
 
 
 if __name__ == "__main__":

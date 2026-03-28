@@ -99,6 +99,7 @@ class TestSceneReadySearchSurfaceSemanticConsumption(unittest.TestCase):
         self.assertEqual((search_surface.get("filters") or [])[0]["name"], "mine")
         self.assertEqual((search_surface.get("group_by") or [])[0]["field"], "stage_id")
         self.assertEqual((search_surface.get("searchpanel") or [])[0]["name"], "stage_id")
+        self.assertEqual(search_surface.get("mode"), "faceted")
 
 
 if __name__ == "__main__":
