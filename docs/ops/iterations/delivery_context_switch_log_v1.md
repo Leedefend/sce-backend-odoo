@@ -2491,3 +2491,16 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `079`, then execute `080` to inventory the existing native view parser subsystem before code refactor
+## 2026-03-28 迭代锚点（ITER-2026-03-28-080）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `711947c`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view parsing inventory`
+- Reason: turn the batch-2 plan into an executable parser inventory baseline before code-level parser refactor
+- `080`: added `docs/architecture/native_view_parser_inventory_v1.md`
+- `080`: froze current entry chain, mixed responsibilities, and target subsystem split for native view parsing
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `080`, then implement `081` with parser registry and source loader skeleton

@@ -783,3 +783,15 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `079`, then execute `080` to inventory the existing native view parser subsystem before code refactor
+## Round: ITER-2026-03-28-080
+
+- `ITER-2026-03-28-080`: native view parser inventory was added in `docs/architecture/native_view_parser_inventory_v1.md`
+  - current parser chain, mixed responsibilities, and target subsystem split are now explicit
+  - batch-2 can move into code-level parser registry/source-loader work without returning to helper cleanup
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-080`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `080`, then implement `081` with parser registry and source loader skeleton
