@@ -763,6 +763,8 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
             search_surface["fields"] = _as_list(base_search.get("fields"))
         if not search_surface.get("filters") and base_search:
             search_surface["filters"] = _as_list(base_search.get("filters"))
+        if not search_surface.get("default_sort") and base_search.get("default_sort"):
+            search_surface["default_sort"] = _text(base_search.get("default_sort"))
         if not search_surface.get("group_by") and base_search:
             search_surface["group_by"] = _as_list(base_search.get("group_by"))
         if not search_surface.get("searchpanel") and base_search:
@@ -798,8 +800,10 @@ def generate_surfaces(bound_ast: Dict[str, Any], ctx: CompileContext) -> Dict[st
         "scene_type": scene_type,
         "field_scope_count": len(field_scope),
         "search_filter_count": len(_as_list(search_surface.get("filters"))),
+        "search_has_default_sort": bool(_text(search_surface.get("default_sort"))),
         "search_group_by_count": len(_as_list(search_surface.get("group_by"))),
         "search_searchpanel_count": len(_as_list(search_surface.get("searchpanel"))),
+        "search_mode": _text(search_surface.get("mode")) or None,
         "workflow_transition_count": len(_as_list(workflow_surface.get("transitions"))),
         "validation_required_count": len(_as_list(validation_surface.get("required_fields"))),
         "base_action_candidate_count": len(_as_list(out.get("base_action_candidates"))),
