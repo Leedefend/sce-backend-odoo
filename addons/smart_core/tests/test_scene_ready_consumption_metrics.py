@@ -108,6 +108,25 @@ class TestSceneReadyConsumptionMetrics(unittest.TestCase):
         self.assertEqual(scene_bucket["surface_nonempty_hits"]["action_surface"], 1)
         self.assertEqual(scene_bucket["surface_nonempty_rate"]["action_surface"], 1.0)
 
+    def test_metrics_do_not_overcount_unavailable_rich_base_facts(self):
+        metrics = target._scene_type_consumption_metrics(
+            [
+                {
+                    "scene": {"type": "workspace"},
+                    "meta": {
+                        "base_facts": {
+                            "search": {"available": False},
+                            "actions": {"available": True},
+                        }
+                    },
+                }
+            ]
+        )
+
+        scene_bucket = metrics["list"]
+        self.assertEqual(scene_bucket["base_fact_hits"]["search"], 0)
+        self.assertEqual(scene_bucket["base_fact_hits"]["actions"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
