@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-28-099
+title: Backfill canonical parser semantics from legacy primary view blocks
+type: governance_task
+status: pending
+priority: high
+
+goal: Bridge the live contract gap by synthesizing minimal parser_contract and view_semantics from legacy primary view blocks when the dispatcher path has not yet migrated to the native parser pipeline.
+user_visible_outcome:
+  - real load_view responses expose canonical parser semantics even on legacy-backed view assembly paths
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - scripts/verify/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform core contract integration
+  module: smart_core native view contract projection fallback
+  reason: Live load_view smoke proved the real endpoint still receives legacy view blocks; the platform needs a canonical semantic fallback until the dispatcher path fully migrates.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-099.yaml
+    - python3 -m py_compile addons/smart_core/core/native_view_contract_projection.py addons/smart_core/tests/test_native_view_contract_projection.py
+    - python3 addons/smart_core/tests/test_native_view_contract_projection.py
+    - make verify.portal.load_view_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-28-099.yaml addons/smart_core/core/native_view_contract_projection.py addons/smart_core/tests/test_native_view_contract_projection.py scripts/verify/fe_load_view_smoke.js
+
+depends_on:
+  - ITER-2026-03-28-098
+notes: "Fallback bridge after live semantic smoke exposed legacy-backed view assembly."

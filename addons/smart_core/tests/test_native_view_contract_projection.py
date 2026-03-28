@@ -50,6 +50,23 @@ class TestNativeViewContractProjection(unittest.TestCase):
         self.assertTrue(payload["permissions"]["write"])
         self.assertIn("native_view", payload)
 
+    def test_inject_primary_view_projection_backfills_semantics_from_legacy_layout(self):
+        payload = {
+            "head": {"model": "project.project", "view_type": "form"},
+            "views": {
+                "form": {
+                    "layout": [{"name": "name", "type": "field"}],
+                }
+            },
+        }
+
+        projection_module.inject_primary_view_projection(payload)
+
+        self.assertEqual(payload["parser_contract"]["view_type"], "form")
+        self.assertEqual(payload["parser_contract"]["projection_source"], "legacy_primary_view_fallback")
+        self.assertEqual(payload["view_semantics"]["source_view"], "form")
+        self.assertEqual(payload["view_semantics"]["semantic_meta"]["projection_source"], "legacy_primary_view_fallback")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -132,8 +132,21 @@ async function main() {
   writeJson(path.join(outDir, 'load_view.log'), viewResp);
   const viewData = viewResp.body.data || {};
   const layoutOk = Boolean(viewData.layout);
+  const parserContract = viewData.parser_contract && typeof viewData.parser_contract === 'object' ? viewData.parser_contract : {};
+  const viewSemantics = viewData.view_semantics && typeof viewData.view_semantics === 'object' ? viewData.view_semantics : {};
+  const nativeView = viewData.native_view && typeof viewData.native_view === 'object' ? viewData.native_view : {};
+  const nativeViews = nativeView.views && typeof nativeView.views === 'object' ? nativeView.views : {};
+  const semanticOk = Boolean(
+    parserContract.view_type &&
+      viewSemantics.source_view &&
+      Object.keys(nativeViews).length > 0
+  );
   summary.push(`model_used: ${modelUsed}`);
   summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
+  summary.push(`semantic_ok: ${semanticOk ? 'true' : 'false'}`);
+  summary.push(`parser_view_type: ${String(parserContract.view_type || '-')}`);
+  summary.push(`semantic_source_view: ${String(viewSemantics.source_view || '-')}`);
+  summary.push(`native_view_keys: ${Object.keys(nativeViews).join(',') || '-'}`);
 
   log('api.data.list');
   const readPayload = {
@@ -149,11 +162,13 @@ async function main() {
 
   writeSummary(summary);
 
-  if (!layoutOk || !recordOk) {
-    throw new Error(`layout/read assertions failed model_used=${modelUsed} layout_ok=${layoutOk} record_ok=${recordOk}`);
+  if (!layoutOk || !recordOk || !semanticOk) {
+    throw new Error(
+      `layout/read/semantic assertions failed model_used=${modelUsed} layout_ok=${layoutOk} record_ok=${recordOk} semantic_ok=${semanticOk}`
+    );
   }
 
-  log('PASS layout_ok=true record_ok=true');
+  log('PASS layout_ok=true record_ok=true semantic_ok=true');
   log(`artifacts: ${outDir}`);
 }
 
