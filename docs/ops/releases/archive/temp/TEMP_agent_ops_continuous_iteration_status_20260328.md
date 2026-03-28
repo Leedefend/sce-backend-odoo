@@ -549,3 +549,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `061`, then a reassessment of whether pure helper residue still remains in `workspace_home_contract_builder.py`
+## Round: ITER-2026-03-28-062
+
+- `ITER-2026-03-28-062`: workspace metric helper extracted into `addons/smart_core/core/workspace_home_metric_helper.py`
+  - `workspace_home_contract_builder.py` no longer owns inline metric-set helper construction
+  - direct unit coverage added in `addons/smart_core/tests/test_workspace_home_metric_helper.py`
+  - the slice remains inside display-metric utility territory and does not move scenario payload semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-062`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `062`, then a reassessment of whether the next residue is still pure helper logic

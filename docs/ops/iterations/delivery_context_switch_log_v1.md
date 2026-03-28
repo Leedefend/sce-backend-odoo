@@ -2239,3 +2239,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `061` and then a reassessment of remaining pure helper residue
+## 2026-03-28 迭代锚点（ITER-2026-03-28-062）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `28cadab`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home metric helper`
+- Reason: continue common-shell convergence with display-metric helper extraction while leaving payload assembly in place
+- `062`: added `addons/smart_core/core/workspace_home_metric_helper.py`
+- `062`: `workspace_home_contract_builder.py` now delegates metric-set construction to the shared helper
+- `062`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_metric_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `062` and then a reassessment of whether pure helper residue still remains
