@@ -2773,3 +2773,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `107`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## 2026-03-29 迭代锚点（ITER-2026-03-29-108）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a7756da`
+- Layer Target: `scene-ready contract consumption`
+- Module: `smart_core scene_ready_contract_builder`
+- Reason: after parser semantics reach scene-ready orchestration internals, scene-ready entries themselves must explicitly expose that surface for downstream runtime/backend consumers
+- `108`: added `scene_ready_entry_semantic_bridge.py` as the canonical scene-ready entry projection helper
+- `108`: `scene_ready_contract_builder.py` now projects `parser_semantic_surface`, `semantic_view`, `semantic_page`, and `view_type` directly onto scene-ready entries
+- `108`: direct coverage was added in `test_scene_ready_entry_semantic_bridge.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `108`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer

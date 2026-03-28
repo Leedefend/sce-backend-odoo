@@ -1044,3 +1044,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `107`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## Round: ITER-2026-03-29-108
+
+- `ITER-2026-03-29-108`: scene-ready entries now explicitly expose parser semantics
+  - `scene_ready_contract_builder` no longer keeps parser semantics only in internal `meta/surface/render_hints`
+  - `scene_ready_entry_semantic_bridge` now projects `parser_semantic_surface`, `semantic_view`, `semantic_page`, and `view_type` directly onto each scene-ready entry
+  - direct coverage was added in `addons/smart_core/tests/test_scene_ready_entry_semantic_bridge.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-29-108`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `108`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
