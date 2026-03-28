@@ -80,6 +80,7 @@ def adapt_ui_base_contract(payload: Dict[str, Any] | None, *, scene_key: str = "
         "group_by": _as_list(search.get("group_by")),
         "fields": _as_list(search.get("fields")),
         "searchpanel": _as_list(search.get("searchpanel")),
+        "mode": _text(search.get("mode")),
     }
     action_fact = {
         "items": actions,
