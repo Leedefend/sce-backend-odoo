@@ -7,6 +7,9 @@ from typing import Any
 from odoo.addons.smart_core.core.scene_contract_parser_semantic_bridge import (
     apply_scene_contract_parser_semantic_bridge,
 )
+from odoo.addons.smart_core.core.released_scene_semantic_surface_bridge import (
+    apply_released_scene_semantic_surface_bridge,
+)
 
 
 SCENE_CONTRACT_STANDARD_VERSION = "scene_contract_standard_v1"
@@ -373,7 +376,7 @@ def attach_release_surface_scene_contract(
 ) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return payload
-    payload["scene_contract_standard_v1"] = build_release_surface_scene_contract_from_runtime_entry(
+    scene_contract = build_release_surface_scene_contract_from_runtime_entry(
         payload,
         product_key=product_key,
         capability=capability,
@@ -381,4 +384,5 @@ def attach_release_surface_scene_contract(
         diagnostics_ref=diagnostics_ref,
         trace_id=trace_id,
     )
-    return payload
+    payload["scene_contract_standard_v1"] = scene_contract
+    return apply_released_scene_semantic_surface_bridge(payload, scene_contract)

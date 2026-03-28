@@ -1003,3 +1003,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `104`, then continue the backend orchestration consumption chain with the next scene/runtime consumer
+## Round: ITER-2026-03-28-105
+
+- `ITER-2026-03-28-105`: runtime scene attach path now explicitly consumes released scene semantic surfaces
+  - `attach_release_surface_scene_contract` no longer stops at attaching `scene_contract_standard_v1` as a sidecar
+  - `released_scene_semantic_surface_bridge` now projects scene-level semantic surfaces back into runtime payloads as `semantic_runtime` and `released_scene_semantic_surface`
+  - direct coverage was added in `addons/smart_core/tests/test_released_scene_semantic_surface_bridge.py` and `addons/smart_core/tests/test_scene_contract_attach_semantics.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-105`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `105`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
