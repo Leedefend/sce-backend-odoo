@@ -2743,3 +2743,19 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `105`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## 2026-03-28 迭代锚点（ITER-2026-03-28-106）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `6c66f2f`
+- Layer Target: `scene contract consumption`
+- Module: `smart_scene scene_engine and scene_contract_builder`
+- Reason: after smart_core orchestration layers consume parser semantics, the smart_scene contract engine is the next backend layer that must preserve that surface instead of dropping it at the caller boundary
+- `106`: added `addons/smart_scene/core/scene_parser_semantic_bridge.py` as the canonical scene-layer semantic projection helper
+- `106`: `smart_scene.core.scene_engine` now accepts `semantic_surface`, and `smart_scene.core.scene_contract_builder` now projects it into page surface and diagnostics
+- `106`: `workspace_home_contract_builder.py` now passes parser semantic surface into `build_scene_contract_from_specs(...)`
+- `106`: direct coverage was added in `test_scene_parser_semantic_bridge.py` and `test_scene_engine_semantics.py`
+- note: report output for this iteration was written under `agent_ops/reports/2026-03-29/`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `106`, then continue the backend orchestration consumption chain with the next remaining scene/runtime consumer

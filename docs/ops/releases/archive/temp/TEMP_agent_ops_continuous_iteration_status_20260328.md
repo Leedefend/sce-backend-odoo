@@ -1016,3 +1016,18 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `105`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## Round: ITER-2026-03-28-106
+
+- `ITER-2026-03-28-106`: smart_scene contract engine now explicitly consumes parser semantic surfaces
+  - `smart_scene.core.scene_engine` now accepts `semantic_surface` and forwards it into scene contract construction
+  - `smart_scene.core.scene_contract_builder` now applies `scene_parser_semantic_bridge`, so scene-layer contracts preserve semantic view/page data instead of dropping it at the smart_core caller boundary
+  - `workspace_home_contract_builder` now passes parser semantic surface into the scene engine path, making this a live chain instead of a dormant capability
+  - direct coverage was added in `addons/smart_scene/tests/test_scene_parser_semantic_bridge.py` and `addons/smart_scene/tests/test_scene_engine_semantics.py`
+  - note: this iteration report was emitted under `agent_ops/reports/2026-03-29/`, while task id remains `ITER-2026-03-28-106`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-106`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `106`, then continue the backend orchestration consumption chain with the next remaining scene/runtime consumer

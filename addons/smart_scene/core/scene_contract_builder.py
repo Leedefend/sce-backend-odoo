@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from .scene_parser_semantic_bridge import apply_scene_parser_semantic_bridge
+
 
 REQUIRED_TOP_LEVEL_KEYS = (
     "contract_version",
@@ -156,6 +158,7 @@ def build_scene_contract(
     actions: Dict[str, Any] | None = None,
     extensions: Dict[str, Any] | None = None,
     diagnostics: Dict[str, Any] | None = None,
+    semantic_surface: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     zone_rows, block_rows = _normalize_zones_and_blocks(dict(zones or {}))
     normalized_scene = dict(scene or {})
@@ -193,6 +196,7 @@ def build_scene_contract(
         "extensions": dict(contract["extensions"]),
         "diagnostics": dict(contract["diagnostics"]),
     }
+    contract = apply_scene_parser_semantic_bridge(contract, semantic_surface)
     verdict = validate_scene_contract_shape(contract)
     contract["diagnostics"]["scene_contract_shape"] = verdict
     return contract
