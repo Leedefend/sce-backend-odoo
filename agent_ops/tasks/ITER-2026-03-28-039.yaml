@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-28-039
+title: Classify and submit runtime fetch cleanup slices 037 and 038
+type: governance_task
+status: pending
+priority: medium
+
+goal: Reduce repo-level diff pressure by grouping the reviewed runtime_fetch cleanup slices 037 and 038 into a bounded local commit with audit evidence, restoring a clean continuation point for the next runtime-mainline batch.
+user_visible_outcome:
+  - runtime_fetch cleanup for slices 037 and 038 is preserved in a single bounded commit
+  - task reports and iteration state for 037 and 038 remain auditable after submission
+  - the branch can continue from a clean worktree instead of carrying the same reviewed runtime_fetch delta forward
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/handlers/runtime_fetch.py
+    - addons/smart_core/tests/**
+    - agent_ops/reports/**
+    - agent_ops/state/**
+    - agent_ops/tasks/**
+    - docs/ops/iterations/**
+    - docs/ops/releases/archive/temp/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: Governance Layer
+  module: runtime_fetch cleanup submission
+  reason: Commit the reviewed 037 and 038 runtime_fetch cleanup slices so the repo guard does not keep counting the same accepted delta as in-flight work.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-039.yaml
+    - git status --short
+    - git log --oneline -n 3
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git revert --no-edit HEAD
+
+depends_on:
+  - ITER-2026-03-28-038
+notes: "Commit only the reviewed 037/038 runtime_fetch cleanup artifacts and their audit trail."

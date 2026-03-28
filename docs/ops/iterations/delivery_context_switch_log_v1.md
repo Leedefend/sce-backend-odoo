@@ -2090,3 +2090,29 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - cumulative local delta is still below stop threshold
+## 2026-03-28 迭代锚点（ITER-2026-03-28-037）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `3428687`
+- Layer Target: `Platform Layer`
+- Module: `smart_core runtime_fetch request normalization`
+- Reason: move page and collection key normalization out of runtime_fetch handlers
+- `037`: runtime_fetch request key normalization moved into `runtime_fetch_handler_helper.py`
+- `037`: helper unit coverage expanded to 5 checks
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - runtime_fetch cleanup continues as narrow helper extraction
+## 2026-03-28 迭代锚点（ITER-2026-03-28-038）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `3428687`
+- Layer Target: `Platform Layer`
+- Module: `smart_core runtime_fetch response plumbing`
+- Reason: move repeated runtime_fetch response envelope assembly out of handlers
+- `038`: runtime_fetch success and error response construction moved into `runtime_fetch_handler_helper.py`
+- `038`: helper unit coverage expanded to 7 checks
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `037/038` before the next code slice
