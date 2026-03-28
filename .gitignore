@@ -115,3 +115,7 @@ docs/audit/*.csv
 
 # agent_ops runtime lock
 agent_ops/state/run_iteration.lock
+
+# local scratch docs
+CURRENT_COMPLETION_SUMMARY_2026-03-23.md
+SANDBOX_SETUP_INSTRUCTIONS.md

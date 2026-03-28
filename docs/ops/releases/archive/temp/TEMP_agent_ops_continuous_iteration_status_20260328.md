@@ -339,3 +339,15 @@
 - latest reviewed code commits: `ad29f0d`, `18d7263`, `f2de849`
 - remaining untracked local files are limited to user/scratch docs outside the governed submission set
 - next required governed slice remains `baseline governance for approved 020-025 runtime/mainline refactor artifacts`
+## Round: ITER-2026-03-28-028
+
+- `ITER-2026-03-28-028`: local scratch cleanup completed
+  - added `.gitignore` entries for `CURRENT_COMPLETION_SUMMARY_2026-03-23.md`
+  - added `.gitignore` entries for `SANDBOX_SETUP_INSTRUCTIONS.md`
+  - removed both scratch documents from the working tree
+
+## Current Repository Hygiene
+
+- governed worktree noise has been cleared
+- local scratch docs are now ignored
+- repository can resume from a clean governed state after this cleanup commit
