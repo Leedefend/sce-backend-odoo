@@ -96,6 +96,62 @@ class TestSceneReadyStrictContractGuard(unittest.TestCase):
         self.assertIn("action_surface.counts.primary", missing)
         self.assertIn("action_surface.counts.groups", missing)
 
+    def test_strict_guard_marks_missing_permission_workflow_validation_surfaces(self):
+        compiled = {
+            "surface": {"kind": "workspace", "intent": {"title": "T", "summary": "S"}},
+            "view_modes": [{"key": "tree"}],
+            "sections": {"quick_actions": {}, "group_summary": {}},
+            "search_surface": {"default_sort": "priority desc"},
+            "action_surface": {
+                "primary_actions": ["open"],
+                "groups": [{"key": "list_actions", "actions": ["open"]}],
+                "selection_mode": "multi",
+                "counts": {"total": 1, "primary": 1, "groups": 1},
+            },
+            "meta": {
+                "base_facts": {
+                    "permissions": {"available": True},
+                    "workflow": {"available": True},
+                    "validator": {"available": True},
+                }
+            },
+            "projection": {"summary_items": [], "overview_strip": [], "group_summary": {"items": []}},
+        }
+
+        missing = target._strict_contract_missing_paths(compiled)
+
+        self.assertIn("permission_surface", missing)
+        self.assertIn("workflow_surface", missing)
+        self.assertIn("validation_surface", missing)
+
+    def test_strict_guard_skips_optional_semantic_surfaces_without_base_facts(self):
+        compiled = {
+            "surface": {"kind": "workspace", "intent": {"title": "T", "summary": "S"}},
+            "view_modes": [{"key": "tree"}],
+            "sections": {"quick_actions": {}, "group_summary": {}},
+            "search_surface": {"default_sort": "priority desc"},
+            "action_surface": {
+                "primary_actions": ["open"],
+                "groups": [{"key": "list_actions", "actions": ["open"]}],
+                "selection_mode": "multi",
+                "counts": {"total": 1, "primary": 1, "groups": 1},
+            },
+            "meta": {
+                "base_facts": {
+                    "permissions": {"available": False},
+                    "workflow": {"available": False},
+                    "validator": {"available": False},
+                }
+            },
+            "projection": {"summary_items": [], "overview_strip": [], "group_summary": {"items": []}},
+        }
+
+        missing = target._strict_contract_missing_paths(compiled)
+
+        self.assertNotIn("permission_surface", missing)
+        self.assertNotIn("workflow_surface", missing)
+        self.assertNotIn("validation_surface", missing)
+
 
 if __name__ == "__main__":
     unittest.main()
