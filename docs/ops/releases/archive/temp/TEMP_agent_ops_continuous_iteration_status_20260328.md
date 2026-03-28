@@ -471,3 +471,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped validation and bounded submission of platform-kernel alignment plus common-project planning assets before wave-1 code convergence begins
+## Round: ITER-2026-03-28-056
+
+- `ITER-2026-03-28-056`: workspace shell normalization helper extracted into `addons/smart_core/core/workspace_home_shell_helper.py`
+  - `workspace_home_contract_builder.py` no longer owns scene alias normalization, keyword override resolution, or layout override merge inline
+  - direct unit coverage added in `addons/smart_core/tests/test_workspace_home_shell_helper.py`
+  - the slice stays inside `smart_core` common shell logic and does not move scenario block payload semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-056`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed slice may continue with one more narrow wave-1 helper extraction before grouped submission

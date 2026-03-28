@@ -2155,3 +2155,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped validation and submission of batch-1 planning assets before wave-1 code changes
+## 2026-03-28 迭代锚点（ITER-2026-03-28-056）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `1f5bbc3`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home shell helper`
+- Reason: start code-layer convergence with low-risk workspace shell normalization helpers instead of scenario-bound dashboard block semantics
+- `056`: added `addons/smart_core/core/workspace_home_shell_helper.py`
+- `056`: `workspace_home_contract_builder.py` now delegates scene alias resolution, keyword override resolution, and layout override merge to the shared shell helper
+- `056`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_shell_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is one more narrow wave-1 helper extraction or grouped submission of `056`

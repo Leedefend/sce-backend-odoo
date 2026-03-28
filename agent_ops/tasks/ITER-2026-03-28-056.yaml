@@ -1,0 +1,66 @@
+task_id: ITER-2026-03-28-056
+title: Extract workspace home shell helper baseline
+type: governance_task
+status: pending
+priority: medium
+
+goal: Extract low-risk workspace shell helper logic out of workspace_home_contract_builder so wave-1 begins with common shell normalization utilities instead of scenario-bound block semantics.
+user_visible_outcome:
+  - workspace shell helper ownership is explicit in smart_core
+  - workspace contract builder is narrower and easier to converge in later wave-1 tasks
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/tests/**
+    - docs/ops/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: common project wave-1
+  module: smart_core workspace home shell helper
+  reason: Begin code-layer convergence with low-risk shell utilities that normalize aliases and provider overrides without touching industry block payloads.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-28-056.yaml
+    - python3 -m py_compile addons/smart_core/core/workspace_home_shell_helper.py addons/smart_core/core/workspace_home_contract_builder.py addons/smart_core/tests/test_workspace_home_shell_helper.py
+    - python3 addons/smart_core/tests/test_workspace_home_shell_helper.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+  - report
+
+rollback:
+  - git restore addons/smart_core/core/workspace_home_shell_helper.py addons/smart_core/core/workspace_home_contract_builder.py addons/smart_core/tests/test_workspace_home_shell_helper.py agent_ops/tasks/ITER-2026-03-28-056.yaml
+
+depends_on:
+  - ITER-2026-03-28-055
+notes: "Low-risk wave-1 starter. Only shared workspace shell helper logic, no scenario block payload movement."
