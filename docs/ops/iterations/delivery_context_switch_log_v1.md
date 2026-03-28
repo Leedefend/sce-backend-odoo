@@ -2603,3 +2603,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `087`, then deepen parser semantics with richer normalized node metadata rather than ad-hoc dicts
+## 2026-03-28 迭代锚点（ITER-2026-03-28-088）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d5cece0`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core form container node schema`
+- Reason: deepen parser semantics by standardizing form container nodes on top of the shared node schema layer
+- `088`: `native_view_node_schema.py` now includes shared builders for `group/page/notebook`
+- `088`: `form_parser.py` now emits shared container-node shapes instead of ad-hoc dicts for groups and notebooks
+- `088`: direct coverage added in `addons/smart_core/tests/test_native_view_form_parser_semantics.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `088`, then continue with richer semantic metadata for form/tree/search nodes

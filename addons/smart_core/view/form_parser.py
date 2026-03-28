@@ -1,5 +1,11 @@
 from .base import BaseViewParser
-from .native_view_node_schema import build_action_node, build_field_node
+from .native_view_node_schema import (
+    build_action_node,
+    build_field_node,
+    build_group_node,
+    build_notebook_node,
+    build_page_node,
+)
 
 import ast
 
@@ -76,11 +82,11 @@ class FormViewParser(BaseViewParser):
         for sub_group in group_node.xpath("./group"):
             sub_groups.append(self._parse_group_recursive(sub_group))
 
-        return {
-            "fields": fields,
-            "sub_groups": sub_groups,
-            "attributes": self._parse_common_attrs(group_node)
-        }
+        return build_group_node(
+            fields=fields,
+            sub_groups=sub_groups,
+            attributes=self._parse_common_attrs(group_node),
+        )
 
     def _parse_field_node(self, node):
         return build_field_node(
@@ -101,12 +107,14 @@ class FormViewParser(BaseViewParser):
         for notebook in arch.xpath(".//notebook"):
             pages = []
             for page in notebook.xpath("./page"):
-                pages.append({
-                    "title": page.get("string"),
-                    "groups": self._parse_groups([page]),
-                    "visible": True
-                })
-            notebooks.append({"pages": pages})
+                pages.append(
+                    build_page_node(
+                        title=page.get("string"),
+                        groups=self._parse_groups([page]),
+                        visible=True,
+                    )
+                )
+            notebooks.append(build_notebook_node(pages=pages))
         return notebooks
 
     # ---------- chatter ----------

@@ -886,3 +886,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `087`, then deepen parser semantics with richer normalized node metadata
+## Round: ITER-2026-03-28-088
+
+- `ITER-2026-03-28-088`: shared form container node builders were added and wired into `form_parser.py`
+  - `group/page/notebook` nodes now use stable shared shapes instead of local ad-hoc dicts
+  - form parser semantics now cover both common leaf nodes and common container nodes through shared schema helpers
+  - direct form-container coverage added in `addons/smart_core/tests/test_native_view_form_parser_semantics.py`
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-088`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `088`, then continue with richer semantic metadata for form/tree/search nodes
