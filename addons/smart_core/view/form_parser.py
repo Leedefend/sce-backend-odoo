@@ -1,4 +1,5 @@
 from .base import BaseViewParser
+from .native_view_node_schema import build_action_node, build_field_node
 
 import ast
 
@@ -82,17 +83,17 @@ class FormViewParser(BaseViewParser):
         }
 
     def _parse_field_node(self, node):
-        return {
-            "name": node.get("name"),
-            "string": node.get("string"),
-            "widget": node.get("widget"),
-            "invisible": self._parse_condition(node.get("invisible")),
-            "required": self._parse_condition(node.get("required")),
-            "readonly": self._parse_condition(node.get("readonly")),
-            "placeholder": node.get("placeholder"),
-            "visible": True,
-            "editable": True
-        }
+        return build_field_node(
+            name=node.get("name"),
+            string=node.get("string"),
+            widget=node.get("widget"),
+            invisible=self._parse_condition(node.get("invisible")),
+            required=self._parse_condition(node.get("required")),
+            readonly=self._parse_condition(node.get("readonly")),
+            placeholder=node.get("placeholder"),
+            visible=True,
+            editable=True,
+        )
 
     # ---------- notebook ----------
     def _parse_notebooks(self, arch):
@@ -119,18 +120,19 @@ class FormViewParser(BaseViewParser):
 
     # ---------- 按钮解析 ----------
     def _parse_button(self, node):
-        return {
-            "name": node.get("name"),
-            "string": node.get("string"),
-            "type": node.get("type"),
-            "class": node.get("class"),
-            "context": self._parse_context(node.get("context")),
-            "invisible": self._parse_condition(node.get("invisible")),
-            "icon": node.get("icon"),
-            "groups": self._parse_groups_attr(node.get("groups")),
-            "hotkey": node.get("data-hotkey"),
-            "visible": True
-        }
+        button = build_action_node(
+            name=node.get("name"),
+            string=node.get("string"),
+            action_type=node.get("type"),
+            context=self._parse_context(node.get("context")),
+            icon=node.get("icon"),
+            groups=self._parse_groups_attr(node.get("groups")),
+            hotkey=node.get("data-hotkey"),
+            invisible=self._parse_condition(node.get("invisible")),
+            visible=True,
+        )
+        button["class"] = node.get("class")
+        return button
 
     # ---------- 工具方法 ----------
     def _parse_context(self, ctx):

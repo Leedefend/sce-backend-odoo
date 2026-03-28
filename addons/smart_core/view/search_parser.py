@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .base import BaseViewParser
 from .base import parse_safe_context
+from .native_view_node_schema import build_field_node, build_filter_node, build_group_by_node, build_searchpanel_node
 
 
 class SearchViewParser(BaseViewParser):
@@ -20,12 +21,12 @@ class SearchViewParser(BaseViewParser):
         fields = []
         for node in arch.xpath(".//field[@name]"):
             fields.append(
-                {
-                    "name": node.get("name"),
-                    "string": node.get("string"),
-                    "operator": node.get("operator"),
-                    "filter_domain": node.get("filter_domain"),
-                }
+                build_field_node(
+                    name=node.get("name"),
+                    string=node.get("string"),
+                    operator=node.get("operator"),
+                    filter_domain=node.get("filter_domain"),
+                )
             )
         return fields
 
@@ -33,12 +34,12 @@ class SearchViewParser(BaseViewParser):
         filters = []
         for node in arch.xpath(".//filter[@name]"):
             filters.append(
-                {
-                    "name": node.get("name"),
-                    "string": node.get("string"),
-                    "domain": node.get("domain"),
-                    "context": parse_safe_context(node.get("context", "{}")),
-                }
+                build_filter_node(
+                    name=node.get("name"),
+                    string=node.get("string"),
+                    domain=node.get("domain"),
+                    context=parse_safe_context(node.get("context", "{}")),
+                )
             )
         return filters
 
@@ -48,11 +49,12 @@ class SearchViewParser(BaseViewParser):
             context = parse_safe_context(node.get("context", "{}"))
             if isinstance(context, dict) and context.get("group_by"):
                 group_bys.append(
-                    {
-                        "name": node.get("name"),
-                        "string": node.get("string"),
-                        "group_by": context.get("group_by"),
-                    }
+                    build_group_by_node(
+                        name=node.get("name"),
+                        string=node.get("string"),
+                        group_by=context.get("group_by"),
+                        context=context,
+                    )
                 )
         return group_bys
 
@@ -60,11 +62,11 @@ class SearchViewParser(BaseViewParser):
         sections = []
         for node in arch.xpath(".//searchpanel/field[@name]"):
             sections.append(
-                {
-                    "name": node.get("name"),
-                    "string": node.get("string"),
-                    "select": node.get("select"),
-                    "icon": node.get("icon"),
-                }
+                build_searchpanel_node(
+                    name=node.get("name"),
+                    string=node.get("string"),
+                    select=node.get("select"),
+                    icon=node.get("icon"),
+                )
             )
         return sections
