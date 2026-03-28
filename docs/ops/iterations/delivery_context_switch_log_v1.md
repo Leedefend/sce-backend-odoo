@@ -2025,3 +2025,8 @@ Each entry must include:
 - `028`: `.gitignore` now also excludes `CURRENT_COMPLETION_SUMMARY_2026-03-23.md`
 - `028`: `.gitignore` now also excludes `SANDBOX_SETUP_INSTRUCTIONS.md`
 - `028`: both scratch docs were removed from the working tree after explicit cleanup approval
+## 2026-03-28 迭代锚点（ITER-2026-03-28-029）
+
+- `029`: canonical dirty baseline collapsed from historical stale paths to `known_dirty_paths: []`
+- `029`: candidate regeneration now reports only the active governance-task delta
+- `029`: stop condition hit is `diff_too_large`, caused by the one-time baseline reset diff
