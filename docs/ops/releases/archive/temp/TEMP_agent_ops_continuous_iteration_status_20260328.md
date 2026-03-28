@@ -666,3 +666,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `070`, then another sibling provider/config slice only if it stays clearly decoupled from domain semantics
+## Round: ITER-2026-03-28-071
+
+- `ITER-2026-03-28-071`: delivery capability entry defaults moved into `addons/smart_core/core/delivery_capability_entry_defaults.py`
+  - `delivery/capability_service.py` no longer owns inline capability entry default shaping
+  - direct unit coverage added in `addons/smart_core/tests/test_delivery_capability_entry_defaults.py`
+  - the slice remains inside sibling delivery/provider-config territory and does not move snapshot, binding, or policy semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-071`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `071`, then another sibling delivery/provider helper only if it stays clearly decoupled from snapshot and policy-binding logic

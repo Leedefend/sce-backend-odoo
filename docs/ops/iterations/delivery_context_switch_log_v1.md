@@ -2365,3 +2365,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `070` and then another sibling provider/config slice only if it stays decoupled from domain semantics
+## 2026-03-28 迭代锚点（ITER-2026-03-28-071）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `cee065a`
+- Layer Target: `common project wave-1`
+- Module: `smart_core delivery capability entry defaults helper`
+- Reason: continue sibling provider/config convergence on delivery capability entry default resolution
+- `071`: added `addons/smart_core/core/delivery_capability_entry_defaults.py`
+- `071`: `delivery/capability_service.py` now delegates capability entry default shaping to the shared helper
+- `071`: direct unit coverage added in `addons/smart_core/tests/test_delivery_capability_entry_defaults.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `071` and then another sibling delivery/provider helper only if it stays decoupled from snapshot logic
