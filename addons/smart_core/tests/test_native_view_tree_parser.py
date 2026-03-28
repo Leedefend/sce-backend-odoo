@@ -109,6 +109,8 @@ class TestNativeViewTreeParser(unittest.TestCase):
         parser = tree_module.TreeViewParser(env, "x.demo", "tree", 3, {})
         payload = parser.parse()
         self.assertEqual(payload["columns"][0]["name"], "name")
+        self.assertEqual(payload["columns"][0]["kind"], "field")
+        self.assertEqual(payload["columns"][0]["semantic_role"], "tree_column")
         self.assertEqual(payload["editable"], "bottom")
         self.assertIn("decoration-danger", payload["decorations"])
 

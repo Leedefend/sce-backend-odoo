@@ -26,6 +26,8 @@ class SearchViewParser(BaseViewParser):
                     string=node.get("string"),
                     operator=node.get("operator"),
                     filter_domain=node.get("filter_domain"),
+                    semantic_role="search_field",
+                    source_view="search",
                 )
             )
         return fields
@@ -39,6 +41,8 @@ class SearchViewParser(BaseViewParser):
                     string=node.get("string"),
                     domain=node.get("domain"),
                     context=parse_safe_context(node.get("context", "{}")),
+                    semantic_role="search_filter",
+                    source_view="search",
                 )
             )
         return filters
@@ -54,6 +58,8 @@ class SearchViewParser(BaseViewParser):
                         string=node.get("string"),
                         group_by=context.get("group_by"),
                         context=context,
+                        semantic_role="search_group_by",
+                        source_view="search",
                     )
                 )
         return group_bys
@@ -67,6 +73,8 @@ class SearchViewParser(BaseViewParser):
                     string=node.get("string"),
                     select=node.get("select"),
                     icon=node.get("icon"),
+                    semantic_role="searchpanel_field",
+                    source_view="search",
                 )
             )
         return sections

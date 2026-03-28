@@ -2617,3 +2617,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is submit `088`, then continue with richer semantic metadata for form/tree/search nodes
+## 2026-03-28 迭代锚点（ITER-2026-03-28-089）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `7315dd3`
+- Layer Target: `platform kernel convergence batch-2`
+- Module: `smart_core native view semantic metadata`
+- Reason: deepen parser semantics by giving shared nodes explicit semantic-role metadata across tree, kanban, and search views
+- `089`: `native_view_node_schema.py` now includes `kind/semantic_role/source_view` metadata on shared leaf nodes
+- `089`: `tree_parser.py`, `kanban_parser.py`, and `search_parser.py` now emit explicit semantic-role metadata instead of relying on implicit placement only
+- `089`: existing parser direct tests were extended to lock the new semantic metadata
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is submit `089`, then continue with deeper normalized metadata for form leaf/container relationships or tree/search advanced attributes

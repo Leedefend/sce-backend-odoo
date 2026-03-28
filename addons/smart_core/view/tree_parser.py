@@ -17,6 +17,8 @@ class TreeViewParser(BaseViewParser):
                     string=node.get("string"),
                     widget=node.get("widget"),
                     optional=node.get("optional"),
+                    semantic_role="tree_column",
+                    source_view="tree",
                 )
             )
 

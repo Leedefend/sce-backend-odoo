@@ -899,3 +899,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is submit `088`, then continue with richer semantic metadata for form/tree/search nodes
+## Round: ITER-2026-03-28-089
+
+- `ITER-2026-03-28-089`: shared parser leaf nodes were enriched with explicit semantic metadata
+  - `field/action/filter/group_by/searchpanel` nodes now expose `kind`, `semantic_role`, and `source_view`
+  - `tree/kanban/search` parser outputs no longer rely only on position to express node intent
+  - existing parser direct coverage was extended to lock the new semantic-role metadata
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-089`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is submit `089`, then continue with deeper normalized metadata for form leaf/container relationships or tree/search advanced attributes

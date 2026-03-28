@@ -34,6 +34,8 @@ class KanbanViewParser(BaseViewParser):
                         name=field_node.get("name"),
                         widget=field_node.get("widget"),
                         options=parse_safe_context(field_node.get("options", "{}")),
+                        semantic_role="kanban_card_field",
+                        source_view="kanban",
                     )
                 )
         return cards
@@ -46,6 +48,8 @@ class KanbanViewParser(BaseViewParser):
                     name=action_node.get("name"),
                     action_type=action_node.get("type"),
                     context=parse_safe_context(action_node.get("t-attf-context", "{}")),
+                    semantic_role="kanban_card_action",
+                    source_view="kanban",
                 )
             )
         return actions
@@ -62,6 +66,8 @@ class KanbanViewParser(BaseViewParser):
                     name=item.get("name"),
                     action_type=item.get("type"),
                     context=parse_safe_context(item.get("t-attf-context", "{}")),
+                    semantic_role="kanban_menu_action",
+                    source_view="kanban",
                 )
             )
         return {"items": items}
