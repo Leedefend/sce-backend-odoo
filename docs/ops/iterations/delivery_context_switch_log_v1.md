@@ -2802,3 +2802,31 @@ Each entry must include:
   - latest classification: `PASS_WITH_RISK`
   - repo risk is `high` because `diff_too_large` triggered
   - next efficient action is submit `109`, then continue the backend orchestration consumption chain with the next remaining runtime/scene consumer
+## 2026-03-29 迭代锚点（ITER-2026-03-29-110）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `22d414b`
+- Layer Target: `scene-ready orchestration semantic consumption`
+- Module: `smart_core scene_ready_contract_builder`
+- Reason: after parser semantics have been propagated through backend contracts, scene-ready orchestration must start using them for real contract decisions instead of only carrying them forward
+- `110`: added `scene_ready_semantic_orchestration_bridge.py` as the canonical semantic-driven view-mode and selection-mode decision helper
+- `110`: `scene_ready_contract_builder.py` now derives `view_modes` and `action_surface.selection_mode` from parser semantics rather than only from `layout.kind`
+- `110`: direct consumption coverage was added in `test_scene_ready_semantic_orchestration_bridge.py` and `test_scene_ready_contract_builder_semantic_consumption.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue semantic-driven orchestration consumption in `page_contracts_builder`
+## 2026-03-29 迭代锚点（ITER-2026-03-29-111）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `22d414b`
+- Layer Target: `page orchestration semantic consumption`
+- Module: `smart_core page_contracts_builder`
+- Reason: after scene-ready orchestration begins using parser semantics for real decisions, page orchestration must also derive page typing and layout strategy from parser semantics rather than page-key heuristics
+- `111`: added `page_contract_semantic_orchestration_bridge.py` as the canonical page-typing semantic decision helper
+- `111`: `page_contracts_builder.py` now derives `page_type`, `layout_mode`, `priority_model`, and `render_hints.semantic_page_type` from parser semantics
+- `111`: direct consumption coverage was added in `test_page_contract_semantic_orchestration_bridge.py` and `test_page_contracts_builder_semantic_consumption.py`
+- state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - repo risk is `high` because `diff_too_large` triggered
+  - next efficient action is submit `110/111` together, then continue the semantic-driven backend orchestration chain

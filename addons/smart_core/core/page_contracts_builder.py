@@ -5,6 +5,9 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import re
 from typing import Any, Dict
+from odoo.addons.smart_core.core.page_contract_semantic_orchestration_bridge import (
+    apply_page_contract_semantic_orchestration_bridge,
+)
 from odoo.addons.smart_core.core.page_contract_parser_semantic_bridge import apply_page_contract_parser_semantic_bridge
 
 def _load_semantics_registry() -> Dict[str, Any]:
@@ -1532,5 +1535,6 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             role_source_code=role_source_code,
             profile_overrides=profile_overrides,
         )
-        page["page_orchestration_v1"] = apply_page_contract_parser_semantic_bridge(page_orchestration, safe_data)
+        page_orchestration = apply_page_contract_parser_semantic_bridge(page_orchestration, safe_data)
+        page["page_orchestration_v1"] = apply_page_contract_semantic_orchestration_bridge(page_orchestration)
     return payload
