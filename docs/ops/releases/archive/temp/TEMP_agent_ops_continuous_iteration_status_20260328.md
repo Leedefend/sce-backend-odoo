@@ -523,3 +523,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `059`, then another narrow workspace utility slice
+## Round: ITER-2026-03-28-060
+
+- `ITER-2026-03-28-060`: workspace source routing helper extracted into `addons/smart_core/core/workspace_home_source_routing_helper.py`
+  - `workspace_home_contract_builder.py` no longer owns inline provider-token resolution, source scene routing, risk-semantic detection, or deadline parsing helpers
+  - direct unit coverage added in `addons/smart_core/tests/test_workspace_home_source_routing_helper.py`
+  - the slice remains inside common shell routing utility territory and does not move scenario payload semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-060`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `060`, then another narrow workspace utility slice only if pure helper residue remains

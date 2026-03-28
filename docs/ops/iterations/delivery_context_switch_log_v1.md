@@ -2211,3 +2211,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is grouped submission of `059` before the next utility slice
+## 2026-03-28 迭代锚点（ITER-2026-03-28-060）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c716021`
+- Layer Target: `common project wave-1`
+- Module: `smart_core workspace home source routing helper`
+- Reason: continue common-shell convergence with source routing and deadline parse utilities
+- `060`: added `addons/smart_core/core/workspace_home_source_routing_helper.py`
+- `060`: `workspace_home_contract_builder.py` now delegates provider token resolution, source scene routing, risk-semantic detection, and deadline parsing to the shared helper
+- `060`: direct unit coverage added in `addons/smart_core/tests/test_workspace_home_source_routing_helper.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is grouped submission of `060` before the next utility slice
