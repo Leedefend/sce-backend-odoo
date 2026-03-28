@@ -653,3 +653,16 @@
 - effective continuation classification: `PASS`
 - repo risk: `low`
 - next governed step is grouped submission of `069`, then a switch away from payload-adjacent residue unless a clearly pure helper remains
+## Round: ITER-2026-03-28-070
+
+- `ITER-2026-03-28-070`: capability grouping defaults moved into `addons/smart_core/core/capability_group_defaults.py`
+  - `capability_provider.py` no longer owns inline default group metadata, group-key inference, or order-map defaults
+  - direct unit coverage added in `addons/smart_core/tests/test_capability_group_defaults.py`
+  - the slice remains inside sibling provider/config territory and does not move domain semantics
+
+## Current Continuation Point
+
+- latest implementation task: `ITER-2026-03-28-070`
+- effective continuation classification: `PASS`
+- repo risk: `low`
+- next governed step is grouped submission of `070`, then another sibling provider/config slice only if it stays clearly decoupled from domain semantics
