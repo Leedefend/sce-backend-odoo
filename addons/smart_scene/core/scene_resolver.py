@@ -12,6 +12,17 @@ def _as_dict(value: Any) -> Dict[str, Any]:
     return dict(value) if isinstance(value, dict) else {}
 
 
+def _permission_surface_restricted(surface: Dict[str, Any]) -> bool:
+    payload = _as_dict(surface)
+    if not payload:
+        return False
+    if "visible" in payload and not bool(payload.get("visible", True)):
+        return True
+    if "allowed" in payload and not bool(payload.get("allowed", True)):
+        return True
+    return False
+
+
 def _search_surface_nonempty(surface: Dict[str, Any]) -> bool:
     payload = _as_dict(surface)
     return bool(
@@ -96,6 +107,7 @@ def resolve_scene_identity(
     parser_contract = _as_dict(parser_surface.get("parser_contract"))
     view_semantics = _as_dict(parser_surface.get("view_semantics"))
     search_surface = _as_dict(parser_surface.get("search_surface"))
+    permission_surface = _as_dict(parser_surface.get("permission_surface"))
     model_name = _text(page_row.get("model") or fallback.get("model"))
     view_type = _text(
         page_row.get("view_type")
@@ -105,7 +117,11 @@ def resolve_scene_identity(
         or fallback.get("view_type")
     )
     title_field = _text(page_row.get("title_field") or fallback.get("title_field"))
-    page_status = _text(page_row.get("page_status") or fallback.get("page_status"))
+    page_status = _text(
+        page_row.get("page_status")
+        or ("restricted" if _permission_surface_restricted(permission_surface) else "")
+        or fallback.get("page_status")
+    )
     record_id = page_row.get("record_id") if isinstance(page_row, dict) else None
 
     return {

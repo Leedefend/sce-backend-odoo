@@ -50,6 +50,21 @@ class TestSceneResolverSemantics(unittest.TestCase):
         self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "query")
         self.assertEqual((resolved.get("page") or {}).get("view_type"), "search")
 
+    def test_resolver_marks_page_restricted_from_permission_surface(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.home"},
+            page_hint={"key": "workspace.home", "title": "工作台"},
+            semantic_surface={
+                "permission_surface": {
+                    "visible": True,
+                    "allowed": False,
+                    "reason_code": "missing_capability",
+                }
+            },
+        )
+
+        self.assertEqual((resolved.get("page") or {}).get("page_status"), "restricted")
+
 
 if __name__ == "__main__":
     unittest.main()
