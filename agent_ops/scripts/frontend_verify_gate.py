@@ -26,15 +26,18 @@ def main() -> int:
     parser.add_argument("--frontend-dir", default="frontend/apps/web", help="Frontend app directory.")
     parser.add_argument("--timeout-seconds", type=int, default=120, help="Timeout for the lint phase.")
     parser.add_argument("--expect-status", choices=["PASS", "BLOCKED", "FAIL"], help="Assert expected final status.")
+    parser.add_argument("--expect-route", help="Assert expected selected route from the preflight/gate payload.")
     parser.add_argument("targets", nargs="*", help="Optional eslint targets to verify after preflight passes.")
     args = parser.parse_args()
 
     frontend_dir = Path(args.frontend_dir).resolve()
     preflight = evaluate_frontend_eslint_env(frontend_dir)
+    route = dict(preflight.get("route") or {})
     payload: dict[str, object] = {
         "frontend_dir": str(frontend_dir),
         "status": str(preflight.get("status") or "FAIL"),
         "preflight": preflight,
+        "route": route,
         "verify": None,
     }
 
@@ -50,6 +53,9 @@ def main() -> int:
                 "stderr": stderr,
             }
             payload["status"] = "PASS" if exit_code == 0 else "FAIL"
+            payload["route"]["selected"] = "local_frontend_verify"
+            payload["route"]["verify_mode"] = "local"
+            payload["route"]["next_step"] = "inspect_verify_result"
         except subprocess.TimeoutExpired:
             payload["verify"] = {
                 "command": cmd,
@@ -58,10 +64,15 @@ def main() -> int:
                 "stderr": f"eslint timed out after {args.timeout_seconds}s",
             }
             payload["status"] = "FAIL"
+            payload["route"]["selected"] = "local_frontend_verify_failed"
+            payload["route"]["verify_mode"] = "local"
+            payload["route"]["next_step"] = "inspect_timeout_and_fix_runtime"
 
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
     if args.expect_status and payload["status"] != args.expect_status:
+        return 1
+    if args.expect_route and str((payload.get("route") or {}).get("selected") or "") != args.expect_route:
         return 1
     return 0
 
