@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T18:30:00Z
+- blocker_key: `live_list_detail_gap_matrix_v1`
+- layer_target: `backend fact audit + frontend consumer audit`
+- module: `list/detail contract gap matrix`
+- reason: `在继续页面实现前，需要先确认真实后端 facts 与当前前端消费的结构缺口；snapshot 已经证明会产生漂移，因此必须切到 live matrix`
+- completed_step: `已冻结本轮范围为新增 live list_detail_gap_audit.py，并对 project.project 的 list/detail 进行后端事实与前端消费对账；不改产品代码`
+- active_commit: `9a55e71`
+- next_step: `Run ITER-2026-03-29-229, use the live matrix to decide whether to pause detail work and whether list saved_filters warrants a backend fact batch`
+
 ### 2026-03-29T18:10:00Z
 - blocker_key: `generic_detail_layout_mapper_extraction_v1`
 - layer_target: `frontend contract consumer`
