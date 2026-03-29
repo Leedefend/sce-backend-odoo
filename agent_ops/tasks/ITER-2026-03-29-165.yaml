@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-165
+title: Drive smart_scene action gates from semantic page actions
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene consume semantic_page.actions enabled/reason_code as action-level disabled decisions in final scene permissions.
+user_visible_outcome:
+  - scene contracts now project disabled header/record/toolbar actions from semantic page action semantics
+  - scene permissions now preserve parser-level action disable reasons alongside permission/workflow/validation gates
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_engine
+  reason: smart_scene already consumes permission, workflow, validation, and closed-state semantics, but semantic_page.actions still contains action-level enabled/reason_code decisions that are not projected into final scene permissions. This iteration converts those action semantics into disabled_actions entries.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-165.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-165.yaml addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-164
+
+notes: "Batch acceleration: consume semantic_page action enabled/reason_code into smart_scene disabled_actions."
