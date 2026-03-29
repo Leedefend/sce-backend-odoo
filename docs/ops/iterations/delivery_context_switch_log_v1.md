@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T16:45:00Z
+- blocker_key: `generic_detail_shell_native_first_v1`
+- layer_target: `frontend contract consumer`
+- module: `generic detail shell`
+- reason: `列表页已经按事实层收敛到原生可用核心，下一步需要让详情页也在后端 form facts 足够时优先表现 statusbar/actions/sectioned fields，而不是继续被通用平台辅助块覆盖主结构`
+- completed_step: `已冻结本轮范围为 ContractFormPage 的通用 detail-surface 收敛：当 live form contract 可用时压掉 overview/warning/filter/body-action 等非必要块，并降低 section shell 噪音；不进入后端和场景编排改造`
+- active_commit: `d3f41ec`
+- next_step: `Run ITER-2026-03-29-223, verify generic detail-shell tightening passes typecheck, then refresh the project detail sample and decide whether the next batch should move to kanban parity or continue detail-field interaction alignment`
+
 ### 2026-03-29T16:10:00Z
 - blocker_key: `frontend_action_gating_behavior_consistency_audit_v1`
 - layer_target: `frontend layer`

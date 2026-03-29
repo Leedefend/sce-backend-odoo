@@ -43,7 +43,7 @@
     </section>
 
     <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
-      <section v-if="pageOverviewItems.length" class="page-overview-strip">
+      <section v-if="showPageOverviewStrip" class="page-overview-strip">
         <div v-for="item in pageOverviewItems" :key="item.label" class="page-overview-pill">
           <span class="page-overview-pill__label">{{ item.label }}</span>
           <strong class="page-overview-pill__value">{{ item.value }}</strong>
@@ -77,19 +77,19 @@
         :hint="sceneRuntimeStatusPanel.hint"
         variant="info"
       />
-      <section v-if="warnings.length && !isProjectCreatePage" class="block warn">
+      <section v-if="showContractWarnings" class="block warn">
         <h3>提示信息</h3>
         <ul>
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
-      <section v-if="strictContractMissingSummary && !isProjectCreatePage" class="block contract-missing-block">
+      <section v-if="showStrictContractGuard" class="block contract-missing-block">
         <h3>契约缺口提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
 
-      <section v-if="workflowTransitions.length && !isProjectCreatePage && !hideWorkflowSection" class="block">
+      <section v-if="showWorkflowTransitions" class="block">
         <h3>流程操作</h3>
         <div class="chips">
           <button
@@ -105,7 +105,7 @@
         </div>
       </section>
 
-      <section v-if="showSearchFilters && searchFilters.length && !isProjectCreatePage && !hideSearchFiltersSection" class="block">
+      <section v-if="showInlineSearchFilters" class="block">
         <h3>快捷筛选</h3>
         <div class="chips">
           <button
@@ -194,7 +194,7 @@
         </template>
       </PageFooterTemplate>
 
-      <section v-if="bodyActions.length && !isProjectCreatePage && !hideBodyActionsSection" class="block">
+      <section v-if="showBodyActionStrip" class="block">
         <h3>可执行操作</h3>
         <div class="chips">
           <button
@@ -817,6 +817,15 @@ const pageOverviewItems = computed(() => {
   if (statusLabel) items.push({ label: '项目状态', value: statusLabel });
   return items.slice(0, 6);
 });
+const preferNativeFormSurface = computed(() => {
+  if (isProjectCreatePage.value) return false;
+  if (!recordId.value) return false;
+  if (showFormNativeFallback.value) return false;
+  const viewType = String(contract.value?.head?.view_type || contract.value?.view_type || '').trim().toLowerCase();
+  if (viewType && viewType !== 'form') return false;
+  return contractReadiness.value.usable && layoutNodes.value.some((node) => node.kind === 'field');
+});
+const showPageOverviewStrip = computed(() => pageOverviewItems.value.length > 0 && !preferNativeFormSurface.value);
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
 const enterpriseStepTargets = computed(() => {
@@ -855,6 +864,11 @@ const enterpriseNextActionVisible = computed(() => {
 const hideWorkflowSection = computed(() => Boolean(formGovernance.value.hide_workflow));
 const hideSearchFiltersSection = computed(() => Boolean(formGovernance.value.hide_search_filters));
 const hideBodyActionsSection = computed(() => Boolean(formGovernance.value.hide_body_actions));
+const showContractWarnings = computed(() => warnings.value.length > 0 && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
+const showStrictContractGuard = computed(() => Boolean(strictContractMissingSummary.value) && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
+const showWorkflowTransitions = computed(() => workflowTransitions.value.length > 0 && !isProjectCreatePage.value && !hideWorkflowSection.value && !preferNativeFormSurface.value);
+const showInlineSearchFilters = computed(() => showSearchFilters.value && searchFilters.value.length > 0 && !isProjectCreatePage.value && !hideSearchFiltersSection.value && !preferNativeFormSurface.value);
+const showBodyActionStrip = computed(() => bodyActions.value.length > 0 && !isProjectCreatePage.value && !hideBodyActionsSection.value && !preferNativeFormSurface.value);
 
 const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
@@ -2386,6 +2400,12 @@ function resolveSectionShellClass(section: LayoutSection) {
 }
 
 function resolveSectionEyebrow(section: LayoutSection) {
+  if (preferNativeFormSurface.value) {
+    if (section.kind === 'group') return '分组';
+    if (section.kind === 'page') return '页签';
+    if (section.kind === 'notebook') return '页签容器';
+    return '';
+  }
   if (section.kind === 'sheet') return '主体';
   if (section.kind === 'group') return '分组';
   if (section.kind === 'page') return '页签';
@@ -2394,6 +2414,7 @@ function resolveSectionEyebrow(section: LayoutSection) {
 }
 
 function resolveSectionSummary(section: LayoutSection) {
+  if (preferNativeFormSurface.value) return '';
   const count = visibleSectionFields(section).length;
   if (count <= 0) return '';
   return `${count} 个字段`;
