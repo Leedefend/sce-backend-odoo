@@ -90,6 +90,58 @@ ACTION_VIEW_SPEC: dict[str, tuple[str, ...]] = {
     ),
 }
 
+GENERIC_VIEW_CONSISTENCY_SPECS: dict[str, tuple[str, ...]] = {
+    "src/views/SceneView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/WorkbenchView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/PlaceholderView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/HomeView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/MyWorkView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/LoginView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/MenuView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/SceneHealthView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/ScenePackagesView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/RecordView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/UsageAnalyticsView.vue": (
+        ":title=\"action.disabledReason || ''\"",
+        "if (matched?.disabled) {",
+    ),
+    "src/views/ActionView.vue": (
+        ":title=\"action.hint || ''\"",
+        "onHeaderActionBlocked:",
+        "batchMessage.value = matched?.hint || pageText('error_fallback', '操作暂不可用');",
+    ),
+}
+
 
 def _check_file(root: Path, relative_path: str, tokens: tuple[str, ...]) -> dict[str, object]:
     path = root / relative_path
@@ -138,15 +190,38 @@ def evaluate_action_gating_coverage(frontend_dir: Path) -> dict[str, object]:
     return payload
 
 
+def evaluate_action_gating_consistency(frontend_dir: Path) -> dict[str, object]:
+    targets = [_check_file(frontend_dir, relative_path, tokens) for relative_path, tokens in GENERIC_VIEW_CONSISTENCY_SPECS.items()]
+    consistent = [item for item in targets if item["covered"]]
+    inconsistent = [item for item in targets if not item["covered"]]
+    return {
+        "frontend_dir": str(frontend_dir),
+        "mode": "consistency",
+        "status": "PASS" if not inconsistent else "FAIL",
+        "summary": {
+            "targets": len(targets),
+            "consistent_targets": len(consistent),
+        },
+        "targets": targets,
+        "inconsistent_targets": inconsistent,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit frontend contract action-gating coverage.")
     parser.add_argument("--frontend-dir", default="frontend/apps/web", help="Frontend app directory.")
+    parser.add_argument("--mode", choices=["coverage", "consistency"], default="coverage", help="Audit mode.")
     parser.add_argument("--expect-status", choices=["PASS", "FAIL"], help="Assert expected audit status.")
     parser.add_argument("--expect-covered-count", type=int, help="Assert expected covered view count.")
+    parser.add_argument("--expect-consistent-count", type=int, help="Assert expected consistent target count.")
     args = parser.parse_args()
 
     frontend_dir = Path(args.frontend_dir).resolve()
-    payload = evaluate_action_gating_coverage(frontend_dir)
+    payload = (
+        evaluate_action_gating_consistency(frontend_dir)
+        if args.mode == "consistency"
+        else evaluate_action_gating_coverage(frontend_dir)
+    )
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
     if args.expect_status and payload["status"] != args.expect_status:
@@ -154,6 +229,10 @@ def main() -> int:
     if args.expect_covered_count is not None:
         actual = int(((payload.get("summary") or {}).get("covered_views")) or 0)
         if actual != args.expect_covered_count:
+            return 1
+    if args.expect_consistent_count is not None:
+        actual = int(((payload.get("summary") or {}).get("consistent_targets")) or 0)
+        if actual != args.expect_consistent_count:
             return 1
     return 0
 
