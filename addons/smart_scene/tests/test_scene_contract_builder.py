@@ -58,6 +58,11 @@ class TestSceneContractBuilder(unittest.TestCase):
             (((payload.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("semantic_runtime_assertions") or {}).get("page_status_aligned"),
             True,
         )
+        runtime_view = ((((payload.get("diagnostics") or {}).get("consumer_semantics")) or {}).get("runtime")) or {}
+        self.assertEqual(runtime_view.get("page_status"), "ready")
+        self.assertEqual(runtime_view.get("runtime_page_status"), "ready")
+        self.assertEqual(runtime_view.get("current_state"), "draft")
+        self.assertEqual((runtime_view.get("alignment") or {}).get("page_status_aligned"), True)
 
     def test_build_scene_contract_flags_misaligned_runtime_assertions(self):
         payload = target.build_scene_contract(
@@ -82,6 +87,10 @@ class TestSceneContractBuilder(unittest.TestCase):
         self.assertFalse(assertions.get("page_status_aligned"))
         self.assertFalse(assertions.get("record_state_summary_aligned"))
         self.assertFalse(assertions.get("current_state_projected"))
+        runtime_view = ((((payload.get("diagnostics") or {}).get("consumer_semantics")) or {}).get("runtime")) or {}
+        self.assertEqual(runtime_view.get("page_status"), "readonly")
+        self.assertEqual(runtime_view.get("runtime_page_status"), "ready")
+        self.assertEqual((runtime_view.get("alignment") or {}).get("record_state_summary_aligned"), False)
 
 
 if __name__ == "__main__":

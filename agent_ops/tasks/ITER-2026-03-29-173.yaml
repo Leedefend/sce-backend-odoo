@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-173
+title: Project consumer runtime diagnostics in smart_scene contracts
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene contract diagnostics expose a stable consumer-facing runtime diagnostics substructure derived from semantic runtime state and alignment assertions.
+user_visible_outcome:
+  - scene contracts now expose `diagnostics.consumer_semantics.runtime` as a stable consumer-facing runtime diagnostics path
+  - downstream consumers can read page status, current state, transition/missing-field counts, and alignment flags from one place
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_contract_builder
+  reason: smart_scene contract diagnostics already preserve semantic runtime state and alignment assertions, but downstream consumers still need to know multiple internal fields to consume them. This iteration projects a stable consumer-facing runtime diagnostics substructure.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-173.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_contract_builder.py addons/smart_scene/tests/test_scene_contract_builder.py
+    - python3 addons/smart_scene/tests/test_scene_contract_builder.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-173.yaml addons/smart_scene/core/scene_contract_builder.py addons/smart_scene/tests/test_scene_contract_builder.py
+
+depends_on:
+  - ITER-2026-03-29-172
+
+notes: "Batch acceleration: project stable consumer-facing runtime diagnostics from semantic runtime state."
