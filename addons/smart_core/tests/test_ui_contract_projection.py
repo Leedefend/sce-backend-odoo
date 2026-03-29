@@ -23,6 +23,7 @@ def _load_module(module_name: str, path: Path):
 sys.modules.setdefault("odoo", types.ModuleType("odoo"))
 odoo_module = sys.modules["odoo"]
 odoo_module.api = types.SimpleNamespace(Environment=lambda cr, uid, ctx: types.SimpleNamespace(cr=cr, uid=uid, context=ctx))
+odoo_module.SUPERUSER_ID = 1
 odoo_tools = types.ModuleType("odoo.tools")
 odoo_safe_eval = types.ModuleType("odoo.tools.safe_eval")
 odoo_safe_eval.safe_eval = lambda expr, *args, **kwargs: expr
@@ -85,11 +86,61 @@ contract_service_module = types.ModuleType("odoo.addons.smart_core.app_config_en
 
 
 class ContractService:
+    last_shape_handler_delivery_call = None
+
     def __init__(self, env):
         self.env = env
 
     def finalize_contract(self, contract):
         return contract
+
+    def finalize_data(self, data, *, subject=None, meta=None):
+        return data
+
+    @staticmethod
+    def inject_render_hints(data, payload):
+        return data
+
+    def govern_data(
+        self,
+        data,
+        *,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        return data
+
+    def apply_delivery_surface_governance(
+        self,
+        data,
+        *,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        return data
+
+    def shape_handler_delivery_data(
+        self,
+        data,
+        *,
+        payload=None,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        type(self).last_shape_handler_delivery_call = {
+            "payload": payload,
+            "contract_mode": contract_mode,
+            "contract_surface": contract_surface,
+            "source_mode": source_mode,
+            "inject_contract_mode": inject_contract_mode,
+        }
+        return data
 
 
 contract_service_module.ContractService = ContractService
@@ -152,6 +203,9 @@ class _FakeEnv(dict):
 
 
 class TestUiContractProjection(unittest.TestCase):
+    def setUp(self):
+        ContractService.last_shape_handler_delivery_call = None
+
     def test_op_model_promotes_parser_contract_and_semantics(self):
         handler = ui_contract_module.UiContractHandler(
             env=_FakeEnv(),
@@ -167,6 +221,21 @@ class TestUiContractProjection(unittest.TestCase):
         self.assertEqual(data["layout"], [{"kind": "group"}])
         self.assertEqual(data["view_type"], "form")
         self.assertEqual(meta["schema_version"], "view-contract-1")
+
+    def test_handle_uses_canonical_handler_delivery_helper(self):
+        handler = ui_contract_module.UiContractHandler(
+            env=_FakeEnv(),
+            su_env=_FakeEnv(),
+            context={},
+            payload={"op": "model", "model": "project.project", "view_type": "form"},
+        )
+
+        response = handler.handle({"op": "model", "model": "project.project", "view_type": "form"}, {})
+
+        self.assertTrue(response["ok"])
+        self.assertIsNotNone(ContractService.last_shape_handler_delivery_call)
+        self.assertEqual(ContractService.last_shape_handler_delivery_call["contract_mode"], "native")
+        self.assertEqual(ContractService.last_shape_handler_delivery_call["contract_surface"], "native")
 
 
 if __name__ == "__main__":

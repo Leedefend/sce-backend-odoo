@@ -44,6 +44,33 @@ def _load_page_assembler():
         vu_mod.normalize_cols_safely = lambda *args, **kwargs: []
         sys.modules[view_utils_name] = vu_mod
 
+    policy_name = "addons.smart_core.app_config_engine.services.page_policy_service"
+    if policy_name not in sys.modules:
+        policy_mod = types.ModuleType(policy_name)
+
+        class PagePolicyService:
+            def __init__(self, env, system_relation_degrade_models=None):
+                self.env = env
+
+            @staticmethod
+            def normalize_field_list(values):
+                return [str(item).strip() for item in (values or []) if str(item).strip()]
+
+            def restrict_form_fields_to_layout(self, data):
+                return None
+
+            def safe_model_can_read(self, model_name):
+                return True
+
+            def extract_core_field_names(self, data):
+                return []
+
+            def apply_access_policy(self, data, model_name=""):
+                return None
+
+        policy_mod.PagePolicyService = PagePolicyService
+        sys.modules[policy_name] = policy_mod
+
     spec = importlib.util.spec_from_file_location(package_root + ".page_assembler", module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None

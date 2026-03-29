@@ -20,14 +20,11 @@ class SystemInitPreloadBuilder:
             try:
                 p_home = {"subject": "action", "action_id": default_home_action, "with_data": False}
                 home_data, home_versions = ActionDispatcher(env, su_env).dispatch(p_home)
-                fixed = contract_service.finalize_contract(
-                    {
-                        "ok": True,
-                        "data": home_data,
-                        "meta": {"subject": "action", "version": format_versions(home_versions)},
-                    }
+                home_contract = contract_service.finalize_data(
+                    home_data,
+                    subject="action",
+                    meta={"version": format_versions(home_versions)},
                 )
-                home_contract = fixed.get("data")
                 parts_version["home"] = format_versions(home_versions)
                 etags["home"] = stable_etag(home_contract)
             except Exception as exc:
@@ -40,14 +37,11 @@ class SystemInitPreloadBuilder:
                 try:
                     p_pre = {"subject": "action", "action_id": act, "with_data": False}
                     pre_data, pre_versions = ActionDispatcher(env, su_env).dispatch(p_pre)
-                    fixed = contract_service.finalize_contract(
-                        {
-                            "ok": True,
-                            "data": pre_data,
-                            "meta": {"subject": "action", "version": format_versions(pre_versions)},
-                        }
+                    contract = contract_service.finalize_data(
+                        pre_data,
+                        subject="action",
+                        meta={"version": format_versions(pre_versions)},
                     )
-                    contract = fixed.get("data")
                     etag = stable_etag(contract)
                     preload_items.append({"key": act, "etag": etag})
                     parts_version[act] = format_versions(pre_versions)

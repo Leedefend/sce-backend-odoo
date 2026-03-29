@@ -518,6 +518,183 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
 
     # ====================== 内部：降级解析（无 parser 也可用） ======================
 
+    def _fallback_extract_header_buttons(self, root):
+        btns = []
+        if root is None:
+            return btns
+        header = root.find('.//header')
+        if header is None:
+            return btns
+        for button in header.findall('.//button'):
+            item = {
+                'name': button.get('name'),
+                'string': button.get('string') or button.get('title') or '',
+                'type': button.get('type') or 'object',
+                'class': button.get('class') or '',
+                'confirm': button.get('confirm') or '',
+                'context': button.get('context') or '',
+                'groups_xmlids': (button.get('groups') or '').split(',') if button.get('groups') else [],
+            }
+            if button.get('states'):
+                item['states'] = [s.strip() for s in button.get('states').split(',') if s.strip()]
+            btns.append(item)
+        return btns
+
+    def _fallback_extract_button_box(self, root):
+        stats = []
+        if root is None:
+            return stats
+        for div in root.findall('.//div'):
+            klass = div.get('class') or ''
+            if 'oe_button_box' not in klass:
+                continue
+            for button in div.findall('.//button'):
+                if 'oe_stat_button' not in (button.get('class') or ''):
+                    continue
+                stats.append({
+                    'string': button.get('string') or '',
+                    'icon': button.get('icon') or '',
+                    'type': button.get('type') or 'object',
+                    'name': button.get('name'),
+                    'help': button.get('help') or '',
+                    'groups_xmlids': (button.get('groups') or '').split(',') if button.get('groups') else [],
+                })
+        return stats
+
+    def _fallback_extract_form_layout(self, root):
+        def field_node(field):
+            return {'type': 'field', 'name': field.get('name')}
+
+        def group_node(group):
+            children = []
+            for node in list(group or []):
+                if getattr(node, 'tag', None) == 'field' and node.get('name'):
+                    children.append(field_node(node))
+            return {'type': 'group', 'children': children, 'label': group.get('string') if group is not None else None}
+
+        def page_node(page):
+            groups = [group_node(group) for group in (page.findall('.//group') if page is not None else [])]
+            return {'type': 'page', 'string': page.get('string') if page is not None else '', 'children': groups}
+
+        def sheet_node(sheet):
+            if sheet is None:
+                return {'type': 'sheet', 'children': []}
+            notebook = sheet.find('.//notebook')
+            if notebook is not None:
+                pages = [page_node(page) for page in notebook.findall('./page')]
+                return {'type': 'sheet', 'children': [{'type': 'notebook', 'children': pages}]}
+            groups = [group_node(group) for group in sheet.findall('.//group')]
+            if groups:
+                return {'type': 'sheet', 'children': groups}
+            field = sheet.find('.//field[@name]') if sheet is not None else None
+            return {'type': 'sheet', 'children': [{'type': 'group', 'children': [field_node(field)]}] if field is not None else []}
+
+        form = root if (root is not None and root.tag == 'form') else (root.find('.//form') if root is not None else None)
+        if form is None:
+            return [{'type': 'sheet', 'children': []}]
+        sheet = None
+        for child in form:
+            if getattr(child, 'tag', None) == 'sheet':
+                sheet = child
+                break
+        if sheet is None:
+            sheet = form
+        return [sheet_node(sheet)]
+
+    def _fallback_collect_field_modifiers(self, fields_meta):
+        out = {}
+        for fname, meta in (fields_meta or {}).items():
+            mods = meta.get('modifiers') or {}
+            row = {}
+            for key in ('readonly', 'required', 'invisible', 'column_invisible'):
+                if key in mods:
+                    row[key] = mods[key]
+            for key in ('widget', 'domain', 'context', 'groups'):
+                if key in meta:
+                    row[key] = meta[key]
+            if row:
+                out[fname] = row
+        return out
+
+    def _fallback_detect_chatter_and_attachments(self, root):
+        info = {'chatter': {'enabled': False}, 'attachments': {'enabled': False}}
+        if root is None:
+            return info
+        has_chatter = any(
+            (el.get('widget') == 'mail_thread') or ('oe_chatter' in (el.get('class') or ''))
+            for el in root.iter()
+        )
+        if has_chatter:
+            info['chatter'] = {'enabled': True, 'features': {'message': True, 'activity': True}}
+        has_attach = any(
+            (el.get('widget') == 'many2many_binary') or ('oe_attachment_box' in (el.get('class') or ''))
+            for el in root.iter()
+        )
+        if has_attach:
+            info['attachments'] = {'enabled': True}
+        return info
+
+    def _fallback_relation_fields(self, relation_fields_cache, relation_model):
+        model = str(relation_model or '').strip()
+        if not model:
+            return {}
+        if model in relation_fields_cache:
+            return relation_fields_cache[model]
+        try:
+            env_model = self.env[model]
+            fields_map = env_model.fields_get()
+        except Exception:
+            fields_map = {}
+        relation_fields_cache[model] = fields_map if isinstance(fields_map, dict) else {}
+        return relation_fields_cache[model]
+
+    def _fallback_infer_tree_columns(self, meta, relation_meta):
+        preferred = ['name', 'display_name', 'code', 'state', 'type']
+        available = [k for k, v in (relation_meta or {}).items() if isinstance(v, dict)]
+        picked = []
+        for col in preferred:
+            if col in available and col not in picked:
+                picked.append(col)
+        if not picked:
+            for col in available:
+                ftype = str((relation_meta.get(col) or {}).get('type') or '').strip().lower()
+                if ftype in ('one2many', 'many2many', 'binary', 'html'):
+                    continue
+                picked.append(col)
+                if len(picked) >= 4:
+                    break
+        if not picked:
+            picked = ['display_name']
+
+        out = []
+        for col in picked[:6]:
+            fmeta = relation_meta.get(col) or {}
+            selection = fmeta.get('selection')
+            out.append({
+                'name': col,
+                'label': fmeta.get('string') or col,
+                'ttype': str(fmeta.get('type') or 'char'),
+                'required': bool(fmeta.get('required')),
+                'readonly': bool(fmeta.get('readonly')),
+                'selection': selection if isinstance(selection, list) else [],
+            })
+        return out
+
+    def _fallback_infer_x2many_subviews(self, fields_meta, relation_fields_cache):
+        sub = {}
+        for fname, meta in (fields_meta or {}).items():
+            ttype = meta.get('type')
+            if ttype not in ('one2many', 'many2many'):
+                continue
+            relation = str(meta.get('relation') or '').strip()
+            rel_fields = self._fallback_relation_fields(relation_fields_cache, relation)
+            sub[fname] = {
+                'tree': {'columns': self._fallback_infer_tree_columns(meta, rel_fields)},
+                'fields': rel_fields,
+                'policies': {'inline_edit': True, 'can_create': True, 'can_unlink': True},
+            }
+        return sub
+
     def _fallback_parse(self, model_name, view_type, view_data):
         """
         生成“最小但可用”的标准结构：
@@ -614,194 +791,6 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             base.update({'kanban': kb})
             return base
 
-        # ======== FORM：新增强逻辑 ========
-        # 小工具：抽取 header 按钮
-        def _extract_header_buttons(root):
-            btns = []
-            if root is None:
-                return btns
-            header = root.find('.//header')
-            if header is None:
-                return btns
-            for b in header.findall('.//button'):
-                item = {
-                    'name': b.get('name'),
-                    'string': b.get('string') or b.get('title') or '',
-                    'type': b.get('type') or 'object',
-                    'class': b.get('class') or '',
-                    'confirm': b.get('confirm') or '',
-                    'context': b.get('context') or '',
-                    'groups_xmlids': (b.get('groups') or '').split(',') if b.get('groups') else [],
-                }
-                # workflow-like
-                if b.get('states'):
-                    item['states'] = [s.strip() for s in b.get('states').split(',') if s.strip()]
-                btns.append(item)
-            return btns
-
-        # 小工具：抽取 oe_button_box / stat_buttons
-        def _extract_button_box(root):
-            stats = []
-            if root is None:
-                return stats
-            # 常见写法：<div class="oe_button_box"> <button class="oe_stat_button" ...>
-            for div in root.findall('.//div'):
-                klass = (div.get('class') or '')
-                if 'oe_button_box' not in klass:
-                    continue
-                for b in div.findall('.//button'):
-                    if 'oe_stat_button' not in (b.get('class') or ''):
-                        continue
-                    stats.append({
-                        'string': b.get('string') or '',
-                        'icon': b.get('icon') or '',
-                        'type': b.get('type') or 'object',
-                        'name': b.get('name'),
-                        'help': b.get('help') or '',
-                        'groups_xmlids': (b.get('groups') or '').split(',') if b.get('groups') else [],
-                    })
-            return stats
-
-        # 小工具：把 arch 的 notebook/page/group/field 变成 layout 结构
-        def _extract_layout(root):
-            def field_node(f):
-                return {'type': 'field', 'name': f.get('name')}
-
-            def group_node(g):
-                children = []
-                for n in list(g or []):
-                    if getattr(n, 'tag', None) == 'field' and n.get('name'):
-                        children.append(field_node(n))
-                return {'type': 'group', 'children': children, 'label': g.get('string') if g is not None else None}
-
-            def page_node(p):
-                groups = [group_node(g) for g in (p.findall('.//group') if p is not None else [])]
-                return {'type': 'page', 'string': p.get('string') if p is not None else '', 'children': groups}
-
-            def sheet_node(s):
-                if s is None:
-                    return {'type': 'sheet', 'children': []}
-                notebook = s.find('.//notebook')
-                if notebook is not None:
-                    pages = [page_node(pg) for pg in notebook.findall('./page')]
-                    return {'type': 'sheet', 'children': [{'type': 'notebook', 'children': pages}]}
-                groups = [group_node(g) for g in s.findall('.//group')]
-                if groups:
-                    return {'type': 'sheet', 'children': groups}
-                f = s.find('.//field[@name]') if s is not None else None
-                return {'type': 'sheet', 'children': [{'type': 'group', 'children': [field_node(f)]}] if f is not None else []}
-
-            form = root if (root is not None and root.tag == 'form') else (root.find('.//form') if root is not None else None)
-            if form is None:
-                return [{'type': 'sheet', 'children': []}]
-            sheet = None
-            for d in form:
-                if getattr(d, 'tag', None) == 'sheet':
-                    sheet = d
-                    break
-            if sheet is None:
-                sheet = form
-            return [sheet_node(sheet)]
-
-        # 小工具：聚合字段级 modifiers（来自 fields_view_get）
-        def _collect_field_modifiers(fields_meta):
-            out = {}
-            for fname, meta in (fields_meta or {}).items():
-                mods = meta.get('modifiers') or {}
-                x = {}
-                for k in ('readonly', 'required', 'invisible', 'column_invisible'):
-                    if k in mods:
-                        x[k] = mods[k]
-                for k in ('widget', 'domain', 'context', 'groups'):
-                    if k in meta:
-                        x[k] = meta[k]
-                if x:
-                    out[fname] = x
-            return out
-
-        # 小工具：识别 chatter / attachments （避免 contains()，改为遍历判断）
-        def _detect_chatter_and_attachments(root):
-            info = {'chatter': {'enabled': False}, 'attachments': {'enabled': False}}
-            if root is None:
-                return info
-            has_chatter = any(
-                (el.get('widget') == 'mail_thread') or ('oe_chatter' in (el.get('class') or ''))
-                for el in root.iter()
-            )
-            if has_chatter:
-                info['chatter'] = {'enabled': True, 'features': {'message': True, 'activity': True}}
-            has_attach = any(
-                (el.get('widget') == 'many2many_binary') or ('oe_attachment_box' in (el.get('class') or ''))
-                for el in root.iter()
-            )
-            if has_attach:
-                info['attachments'] = {'enabled': True}
-            return info
-
-        relation_fields_cache = {}
-
-        def _relation_fields(relation_model):
-            model = str(relation_model or '').strip()
-            if not model:
-                return {}
-            if model in relation_fields_cache:
-                return relation_fields_cache[model]
-            try:
-                env_model = self.env[model]
-                fields_map = env_model.fields_get()
-            except Exception:
-                fields_map = {}
-            relation_fields_cache[model] = fields_map if isinstance(fields_map, dict) else {}
-            return relation_fields_cache[model]
-
-        def _infer_tree_columns(meta, relation_meta):
-            # 优先 name/display_name，补充可读的轻量列
-            preferred = ['name', 'display_name', 'code', 'state', 'type']
-            available = [k for k, v in (relation_meta or {}).items() if isinstance(v, dict)]
-            picked = []
-            for col in preferred:
-                if col in available and col not in picked:
-                    picked.append(col)
-            if not picked:
-                for col in available:
-                    ftype = str((relation_meta.get(col) or {}).get('type') or '').strip().lower()
-                    if ftype in ('one2many', 'many2many', 'binary', 'html'):
-                        continue
-                    picked.append(col)
-                    if len(picked) >= 4:
-                        break
-            if not picked:
-                picked = ['display_name']
-
-            out = []
-            for col in picked[:6]:
-                fmeta = relation_meta.get(col) or {}
-                selection = fmeta.get('selection')
-                out.append({
-                    'name': col,
-                    'label': fmeta.get('string') or col,
-                    'ttype': str(fmeta.get('type') or 'char'),
-                    'required': bool(fmeta.get('required')),
-                    'readonly': bool(fmeta.get('readonly')),
-                    'selection': selection if isinstance(selection, list) else [],
-                })
-            return out
-
-        # 小工具：识别 x2many 并构造最小子视图（结构化列契约）
-        def _infer_x2many_subviews(fields_meta):
-            sub = {}
-            for fname, meta in (fields_meta or {}).items():
-                t = meta.get('type')
-                if t in ('one2many', 'many2many'):
-                    relation = str(meta.get('relation') or '').strip()
-                    rel_fields = _relation_fields(relation)
-                    sub[fname] = {
-                        'tree': {'columns': _infer_tree_columns(meta, rel_fields)},
-                        'fields': rel_fields,
-                        'policies': {'inline_edit': True, 'can_create': True, 'can_unlink': True},
-                    }
-            return sub
-
         # 开始解析 FORM
         if arch:
             try:
@@ -812,15 +801,17 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         else:
             root = None
 
-        layout = _extract_layout(root) if root is not None else [{
+        relation_fields_cache = {}
+
+        layout = self._fallback_extract_form_layout(root) if root is not None else [{
             'type': 'sheet',
             'children': [{'type': 'group', 'children': [{'type': 'field', 'name': 'name'}]}],
         }]
-        header_buttons = _extract_header_buttons(root)
-        stat_buttons = _extract_button_box(root)
-        fm = _collect_field_modifiers((view_data or {}).get('fields') or {})
-        ca = _detect_chatter_and_attachments(root)
-        subviews = _infer_x2many_subviews((view_data or {}).get('fields') or {})
+        header_buttons = self._fallback_extract_header_buttons(root)
+        stat_buttons = self._fallback_extract_button_box(root)
+        fm = self._fallback_collect_field_modifiers((view_data or {}).get('fields') or {})
+        ca = self._fallback_detect_chatter_and_attachments(root)
+        subviews = self._fallback_infer_x2many_subviews((view_data or {}).get('fields') or {}, relation_fields_cache)
 
         base.update({
             'layout': layout,
@@ -937,8 +928,8 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     # ====================== 内部：运行态过滤（按用户组/ACL） ======================
 
     def _runtime_filter(self, parsed, model_name, check_model_acl=False):
-        """Compatibility adapter: governance filtering moved to service layer."""
-        return ContractGovernanceFilterService(self).apply_runtime_filter(
+        """Compatibility adapter for view-level runtime filtering."""
+        return ContractGovernanceFilterService(self).apply_view_runtime_filter(
             parsed,
             model_name,
             check_model_acl=check_model_acl,
