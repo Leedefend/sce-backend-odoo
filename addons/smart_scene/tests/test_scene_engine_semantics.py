@@ -395,6 +395,43 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "execute_denied",
         )
 
+    def test_build_scene_contract_from_specs_projects_action_semantics_into_disabled_actions(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "semantic_page": {
+                    "actions": {
+                        "header_actions": [
+                            {"key": "refresh", "label": "刷新", "enabled": False, "reason_code": "header_busy"}
+                        ],
+                        "record_actions": [
+                            {"key": "approve", "label": "批准", "enabled": False, "reason_code": "workflow_blocked"}
+                        ],
+                        "toolbar_actions": [
+                            {"key": "export", "label": "导出", "enabled": False, "reason_code": "toolbar_disabled"}
+                        ],
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("refresh"),
+            "header_busy",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("approve"),
+            "workflow_blocked",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("export"),
+            "toolbar_disabled",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

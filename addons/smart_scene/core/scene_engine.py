@@ -152,6 +152,24 @@ def _apply_permission_verdicts(
     }
 
 
+def _apply_action_semantics(
+    *,
+    semantic_page: Dict[str, Any],
+    disabled_actions: Dict[str, Any],
+) -> None:
+    actions = _as_dict(semantic_page.get("actions"))
+    for group_key in ("header_actions", "record_actions", "toolbar_actions"):
+        for row in _as_list(actions.get(group_key)):
+            item = _as_dict(row)
+            action_key = _text(item.get("key"))
+            if not action_key:
+                continue
+            enabled = bool(item.get("enabled", True))
+            reason_code = _text(item.get("reason_code"))
+            if not enabled and reason_code:
+                disabled_actions.setdefault(action_key, reason_code)
+
+
 def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) -> Dict[str, Any]:
     payload = _as_dict(surface)
     permission_surface = _as_dict(payload.get("permission_surface"))
@@ -207,6 +225,7 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
         visible=visible,
         disabled_actions=disabled_actions,
     )
+    _apply_action_semantics(semantic_page=semantic_page, disabled_actions=disabled_actions)
     return {
         "can_read": flags["can_read"],
         "can_edit": flags["can_edit"],
