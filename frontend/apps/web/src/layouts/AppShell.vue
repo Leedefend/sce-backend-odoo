@@ -356,6 +356,16 @@ function resolveActionBusinessTitle(action: unknown) {
 }
 
 const pageTitle = computed(() => {
+  const routeName = String(route.name || '').trim();
+  const routeModel = asText(route.params.model);
+  if (routeName === 'record') {
+    if (routeModel === 'project.project') {
+      return '项目详情';
+    }
+    if (routeModel) {
+      return `${routeModel} 详情`;
+    }
+  }
   const sceneKey = routeSceneKey.value;
   if (sceneKey) {
     const scene = getSceneByKey(sceneKey);
@@ -684,7 +694,11 @@ const breadcrumb = computed(() => {
     crumbs.push({ label });
   }
   if (route.name === 'record') {
-    const recordLabel = `记录 ${route.params.id ?? ''}`.trim();
+    const recordModel = asText(route.params.model);
+    const recordId = String(route.params.id ?? '').trim();
+    const recordLabel = recordModel === 'project.project'
+      ? '项目详情'
+      : `记录 ${recordId}`.trim();
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
