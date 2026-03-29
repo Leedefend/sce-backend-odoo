@@ -5,6 +5,8 @@
         v-for="action in headerActions"
         :key="`placeholder-header-${action.key}`"
         class="ghost"
+        :disabled="action.disabled"
+        :title="action.disabledReason || ''"
         @click="executeHeaderAction(action.key)"
       >
         {{ action.label || action.key }}
@@ -41,6 +43,10 @@ const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
 
 async function executeHeaderAction(actionKey: string) {
+  const matched = headerActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   const handled = await executePageContractAction({
     actionKey,
     router,

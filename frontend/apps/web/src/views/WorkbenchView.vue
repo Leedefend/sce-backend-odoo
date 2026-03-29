@@ -22,6 +22,8 @@
           v-for="action in headerActions"
           :key="action.key"
           class="ghost"
+          :disabled="action.disabled"
+          :title="action.disabledReason || ''"
           @click="executeWorkbenchAction(action.key)"
         >
           {{ action.label }}
@@ -379,6 +381,10 @@ async function openFirstReachableMenu() {
 }
 
 async function executeWorkbenchAction(actionKey: string) {
+  const matched = headerActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   const handled = await executePageContractAction({
     actionKey,
     router,
