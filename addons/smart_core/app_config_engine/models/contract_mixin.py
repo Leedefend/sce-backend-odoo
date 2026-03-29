@@ -16,7 +16,7 @@ class ContractSchemaMixin(models.AbstractModel):
     def _allowed_keys_by_view(self, vt):
         table = {
             'tree': {'columns', 'row_actions', 'page_size', 'row_classes'},
-            'form': {'layout', 'statusbar'},
+            'form': {'layout', 'statusbar', 'field_modifiers'},
             'kanban': {'kanban'},
             'pivot': {'pivot'},
             'graph': {'graph'},
@@ -38,6 +38,7 @@ class ContractSchemaMixin(models.AbstractModel):
         common = self._allowed_keys_common()
         specific = self._allowed_keys_by_view(vt)
         keep = set(common) | set(specific)
+        passthrough_subtrees = {'field_modifiers'}
         structural_keys = {
             'type',
             'name',
@@ -69,8 +70,14 @@ class ContractSchemaMixin(models.AbstractModel):
 
         def _prune(obj):
             if isinstance(obj, dict):
-                return {k: _prune(v) for k, v in obj.items()
-                        if (k in keep) or (k in structural_keys) or not isinstance(v, (dict, list))}
+                cleaned = {}
+                for k, v in obj.items():
+                    if k in passthrough_subtrees:
+                        cleaned[k] = self.json_clone(v)
+                        continue
+                    if (k in keep) or (k in structural_keys) or not isinstance(v, (dict, list)):
+                        cleaned[k] = _prune(v)
+                return cleaned
             if isinstance(obj, list):
                 return [_prune(x) for x in obj]
             return obj
