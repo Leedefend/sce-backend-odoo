@@ -47,12 +47,18 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
   }
 
   function handleRowClick(row: Dict) {
+    const targetModel = options.resolvedModelRef.value || options.modelRef.value;
+    const carryQuery = resolveCarryQuery();
+    if (targetModel === 'project.project') {
+      delete carryQuery.scene;
+      delete carryQuery.scene_key;
+    }
     const routeTarget = buildActionViewRowClickTarget({
-      targetModel: options.resolvedModelRef.value || options.modelRef.value,
+      targetModel,
       rawId: row.id,
       menuId: options.menuId.value,
       actionId: options.actionId.value,
-      carryQuery: resolveCarryQuery(),
+      carryQuery,
     });
     const rowClickState = resolveRowClickPushState({ routeTarget });
     if (!rowClickState.shouldNavigate) return;
@@ -66,4 +72,3 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
     handleRowClick,
   };
 }
-
