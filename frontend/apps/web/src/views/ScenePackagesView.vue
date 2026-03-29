@@ -9,7 +9,8 @@
         v-for="action in headerActions"
         :key="action.key"
         class="secondary"
-        :disabled="busy"
+        :disabled="busy || action.disabled"
+        :title="action.disabledReason || ''"
         @click="executeHeaderAction(action.key)"
       >
         {{ action.label }}
@@ -253,6 +254,10 @@ async function runExport() {
 onMounted(loadPackages);
 
 async function executeHeaderAction(actionKey: string) {
+  const matched = headerActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   const handled = await executePageContractAction({
     actionKey,
     router,
