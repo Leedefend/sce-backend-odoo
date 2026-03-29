@@ -115,6 +115,40 @@ class TestSceneEngineSemantics(unittest.TestCase):
         self.assertFalse((((payload.get("permissions") or {}).get("can_read"))))
         self.assertFalse((((payload.get("permissions") or {}).get("can_edit"))))
 
+    def test_build_scene_contract_from_specs_projects_workflow_and_validation_surfaces_into_permissions(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.home"},
+            page_hint={"key": "workspace.home", "title": "工作台"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                    "highlight_states": ["approved"],
+                },
+                "validation_surface": {
+                    "required_fields": ["name"],
+                    "field_rules": [{"field": "name", "rule": "required"}],
+                },
+            },
+        )
+
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("submit"),
+            "validation_required",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("state_field"),
+            "state",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("states"),
+            ["draft", "approved"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
