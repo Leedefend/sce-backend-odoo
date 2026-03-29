@@ -113,6 +113,40 @@ class TestSceneResolverSemantics(unittest.TestCase):
         self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "record_focus")
         self.assertEqual((resolved.get("page") or {}).get("view_type"), "form")
 
+    def test_resolver_marks_page_empty_when_validation_required_fields_missing_on_empty_record(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.form"},
+            page_hint={"key": "workspace.form", "title": "表单"},
+            semantic_surface={
+                "record": {},
+                "validation_surface": {
+                    "required_fields": ["name"],
+                    "field_rules": [{"field": "name", "rule": "required"}],
+                }
+            },
+        )
+
+        self.assertEqual((resolved.get("page") or {}).get("page_status"), "empty")
+
+    def test_resolver_marks_page_ready_when_workflow_and_validation_are_satisfied(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            semantic_surface={
+                "record": {"state": "draft", "name": "ready"},
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                },
+                "validation_surface": {
+                    "required_fields": ["name"],
+                },
+            },
+        )
+
+        self.assertEqual((resolved.get("page") or {}).get("page_status"), "ready")
+
 
 if __name__ == "__main__":
     unittest.main()

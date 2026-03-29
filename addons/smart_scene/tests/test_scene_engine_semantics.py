@@ -275,6 +275,46 @@ class TestSceneEngineSemantics(unittest.TestCase):
             0,
         )
 
+    def test_build_scene_contract_from_specs_marks_page_empty_for_empty_validation_record(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.form"},
+            page_hint={"key": "workspace.form", "title": "表单"},
+            zone_specs=[],
+            built_zones={},
+            record={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "validation_surface": {
+                    "required_fields": ["name"],
+                    "field_rules": [{"field": "name", "rule": "required"}],
+                }
+            },
+        )
+
+        self.assertEqual((((payload.get("page") or {}).get("page_status"))), "empty")
+
+    def test_build_scene_contract_from_specs_marks_page_ready_for_satisfied_record(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            record={"state": "draft", "name": "ready"},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                },
+                "validation_surface": {
+                    "required_fields": ["name"],
+                },
+            },
+        )
+
+        self.assertEqual((((payload.get("page") or {}).get("page_status"))), "ready")
+
 
 if __name__ == "__main__":
     unittest.main()

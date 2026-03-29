@@ -12,6 +12,10 @@ def _as_dict(value: Any) -> Dict[str, Any]:
     return dict(value) if isinstance(value, dict) else {}
 
 
+def _as_list(value: Any) -> list[Any]:
+    return list(value) if isinstance(value, list) else []
+
+
 def _permission_surface_restricted(surface: Dict[str, Any]) -> bool:
     payload = _as_dict(surface)
     if not payload:
@@ -54,6 +58,44 @@ def _workflow_surface_nonempty(surface: Dict[str, Any]) -> bool:
 def _validation_surface_nonempty(surface: Dict[str, Any]) -> bool:
     payload = _as_dict(surface)
     return bool(payload.get("required_fields") or payload.get("field_rules"))
+
+
+def _empty_value(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, tuple, dict, set)):
+        return len(value) == 0
+    return False
+
+
+def _semantic_page_status(surface: Dict[str, Any], fallback_status: str = "") -> str:
+    permission_surface = _as_dict(surface.get("permission_surface"))
+    status = _permission_surface_page_status(permission_surface)
+    if status:
+        return status
+
+    record = _as_dict(surface.get("record"))
+    workflow_surface = _as_dict(surface.get("workflow_surface"))
+    validation_surface = _as_dict(surface.get("validation_surface"))
+    required_fields = [field for field in _as_list(validation_surface.get("required_fields")) if _text(field)]
+    missing_required_fields = [field for field in required_fields if _empty_value(record.get(field))]
+    transitions = _as_list(workflow_surface.get("transitions"))
+    state_field = _text(workflow_surface.get("state_field"))
+    current_state = _text(record.get(state_field)) if state_field else ""
+    active_transitions = [
+        row
+        for row in transitions
+        if isinstance(row, dict) and (not _text(row.get("from")) or _text(row.get("from")) == current_state)
+    ]
+
+    if missing_required_fields and not record:
+        return "empty"
+    if (_workflow_surface_nonempty(workflow_surface) or _validation_surface_nonempty(validation_surface)) and not missing_required_fields:
+        if active_transitions or required_fields or _as_list(workflow_surface.get("states")):
+            return "ready"
+    return fallback_status
 
 
 def _semantic_layout_mode(surface: Dict[str, Any]) -> str:
@@ -139,6 +181,7 @@ def resolve_scene_identity(
     workflow_surface = _as_dict(parser_surface.get("workflow_surface"))
     validation_surface = _as_dict(parser_surface.get("validation_surface"))
     permission_surface = _as_dict(parser_surface.get("permission_surface"))
+    record_surface = _as_dict(parser_surface.get("record"))
     model_name = _text(page_row.get("model") or fallback.get("model"))
     view_type = _text(
         page_row.get("view_type")
@@ -151,8 +194,15 @@ def resolve_scene_identity(
     title_field = _text(page_row.get("title_field") or fallback.get("title_field"))
     page_status = _text(
         page_row.get("page_status")
-        or _permission_surface_page_status(permission_surface)
-        or fallback.get("page_status")
+        or _semantic_page_status(
+            {
+                "permission_surface": permission_surface,
+                "workflow_surface": workflow_surface,
+                "validation_surface": validation_surface,
+                "record": record_surface,
+            },
+            _text(fallback.get("page_status")),
+        )
     )
     record_id = page_row.get("record_id") if isinstance(page_row, dict) else None
 
