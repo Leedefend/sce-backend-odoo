@@ -80,6 +80,39 @@ class TestSceneResolverSemantics(unittest.TestCase):
 
         self.assertEqual((resolved.get("page") or {}).get("page_status"), "restricted")
 
+    def test_resolver_uses_workflow_surface_when_view_type_hints_are_missing(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                }
+            },
+        )
+
+        self.assertEqual((resolved.get("scene") or {}).get("layout_mode"), "detail_focus")
+        self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "record_focus")
+        self.assertEqual((resolved.get("page") or {}).get("view_type"), "form")
+
+    def test_resolver_uses_validation_surface_when_view_type_hints_are_missing(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.form"},
+            page_hint={"key": "workspace.form", "title": "表单"},
+            semantic_surface={
+                "validation_surface": {
+                    "required_fields": ["name"],
+                    "field_rules": [{"field": "name", "rule": "required"}],
+                }
+            },
+        )
+
+        self.assertEqual((resolved.get("scene") or {}).get("layout_mode"), "detail_focus")
+        self.assertEqual((resolved.get("scene") or {}).get("interaction_mode"), "record_focus")
+        self.assertEqual((resolved.get("page") or {}).get("view_type"), "form")
+
 
 if __name__ == "__main__":
     unittest.main()

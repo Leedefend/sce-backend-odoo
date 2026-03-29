@@ -216,6 +216,26 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "permission_workflow_gate",
         )
 
+    def test_build_scene_contract_from_specs_uses_workflow_surface_for_form_identity_without_view_type(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                }
+            },
+        )
+
+        self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "form")
+        self.assertEqual((((payload.get("scene") or {}).get("layout_mode"))), "detail_focus")
+        self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "record_focus")
+
 
 if __name__ == "__main__":
     unittest.main()

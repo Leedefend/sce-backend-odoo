@@ -46,11 +46,23 @@ def _search_surface_nonempty(surface: Dict[str, Any]) -> bool:
     )
 
 
+def _workflow_surface_nonempty(surface: Dict[str, Any]) -> bool:
+    payload = _as_dict(surface)
+    return bool(_text(payload.get("state_field")) or payload.get("states") or payload.get("transitions"))
+
+
+def _validation_surface_nonempty(surface: Dict[str, Any]) -> bool:
+    payload = _as_dict(surface)
+    return bool(payload.get("required_fields") or payload.get("field_rules"))
+
+
 def _semantic_layout_mode(surface: Dict[str, Any]) -> str:
     parser_contract = _as_dict(surface.get("parser_contract"))
     view_semantics = _as_dict(surface.get("view_semantics"))
     semantic_page = _as_dict(surface.get("semantic_page"))
     search_surface = _as_dict(surface.get("search_surface"))
+    workflow_surface = _as_dict(surface.get("workflow_surface"))
+    validation_surface = _as_dict(surface.get("validation_surface"))
     view_type = _text(parser_contract.get("view_type") or view_semantics.get("source_view"))
     if view_type == "form":
         return "detail_focus"
@@ -66,6 +78,8 @@ def _semantic_layout_mode(surface: Dict[str, Any]) -> str:
         return "list_flow"
     if _search_surface_nonempty(search_surface):
         return "entry_flow"
+    if _workflow_surface_nonempty(workflow_surface) or _validation_surface_nonempty(validation_surface):
+        return "detail_focus"
     if semantic_page.get("title_node"):
         return "detail_focus"
     return ""
@@ -76,6 +90,8 @@ def _semantic_interaction_mode(surface: Dict[str, Any]) -> str:
     view_semantics = _as_dict(surface.get("view_semantics"))
     semantic_page = _as_dict(surface.get("semantic_page"))
     search_surface = _as_dict(surface.get("search_surface"))
+    workflow_surface = _as_dict(surface.get("workflow_surface"))
+    validation_surface = _as_dict(surface.get("validation_surface"))
     capability_flags = _as_dict(view_semantics.get("capability_flags"))
     view_type = _text(parser_contract.get("view_type") or view_semantics.get("source_view"))
     if view_type == "form":
@@ -90,6 +106,8 @@ def _semantic_interaction_mode(surface: Dict[str, Any]) -> str:
         return "query"
     if _search_surface_nonempty(search_surface):
         return "query"
+    if _workflow_surface_nonempty(workflow_surface) or _validation_surface_nonempty(validation_surface):
+        return "record_focus"
     return ""
 
 
@@ -118,6 +136,8 @@ def resolve_scene_identity(
     parser_contract = _as_dict(parser_surface.get("parser_contract"))
     view_semantics = _as_dict(parser_surface.get("view_semantics"))
     search_surface = _as_dict(parser_surface.get("search_surface"))
+    workflow_surface = _as_dict(parser_surface.get("workflow_surface"))
+    validation_surface = _as_dict(parser_surface.get("validation_surface"))
     permission_surface = _as_dict(parser_surface.get("permission_surface"))
     model_name = _text(page_row.get("model") or fallback.get("model"))
     view_type = _text(
@@ -125,6 +145,7 @@ def resolve_scene_identity(
         or parser_contract.get("view_type")
         or view_semantics.get("source_view")
         or ("search" if _search_surface_nonempty(search_surface) else "")
+        or ("form" if (_workflow_surface_nonempty(workflow_surface) or _validation_surface_nonempty(validation_surface)) else "")
         or fallback.get("view_type")
     )
     title_field = _text(page_row.get("title_field") or fallback.get("title_field"))
