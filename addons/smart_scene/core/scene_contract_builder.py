@@ -159,6 +159,7 @@ def _build_semantic_runtime_assertions(*, page: Dict[str, Any], permissions: Dic
 def _build_consumer_semantics(*, page: Dict[str, Any], permissions: Dict[str, Any], diagnostics: Dict[str, Any]) -> Dict[str, Any]:
     runtime_state = dict(diagnostics.get("semantic_runtime_state") or {})
     assertions = dict(diagnostics.get("semantic_runtime_assertions") or {})
+    bridge_assertions = dict(diagnostics.get("consumer_runtime_assertions") or {})
     summary = dict(permissions.get("record_state_summary") or {})
     return {
         "runtime": {
@@ -172,6 +173,12 @@ def _build_consumer_semantics(*, page: Dict[str, Any], permissions: Dict[str, An
                 "page_status_aligned": bool(assertions.get("page_status_aligned")),
                 "record_state_summary_aligned": bool(assertions.get("record_state_summary_aligned")),
                 "current_state_projected": bool(assertions.get("current_state_projected")),
+            },
+            "bridge_alignment": {
+                "consumer_runtime_present": bool(bridge_assertions.get("consumer_runtime_present")),
+                "semantic_runtime_state_present": bool(bridge_assertions.get("semantic_runtime_state_present")),
+                "page_status_aligned": bool(bridge_assertions.get("page_status_aligned")),
+                "current_state_aligned": bool(bridge_assertions.get("current_state_aligned")),
             },
         }
     }
@@ -265,6 +272,14 @@ def build_scene_contract(
         "diagnostics": dict(contract["diagnostics"]),
     }
     contract = apply_scene_parser_semantic_bridge(contract, semantic_surface)
+    contract["diagnostics"]["consumer_semantics"] = _build_consumer_semantics(
+        page=contract["page"],
+        permissions=contract["permissions"],
+        diagnostics=contract["diagnostics"],
+    )
+    contract["diagnostics"]["consumer_runtime"] = _build_consumer_runtime_alias(diagnostics=contract["diagnostics"])
+    if isinstance(contract.get("scene_contract_v1"), dict):
+        contract["scene_contract_v1"]["diagnostics"] = dict(contract["diagnostics"])
     verdict = validate_scene_contract_shape(contract)
     contract["diagnostics"]["scene_contract_shape"] = verdict
     return contract

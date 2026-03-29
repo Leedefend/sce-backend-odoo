@@ -98,6 +98,40 @@ class TestSceneContractBuilder(unittest.TestCase):
         self.assertEqual(runtime_alias.get("runtime_page_status"), "ready")
         self.assertEqual((runtime_alias.get("alignment") or {}).get("page_status_aligned"), False)
 
+    def test_build_scene_contract_refreshes_consumer_diagnostics_after_bridge(self):
+        payload = target.build_scene_contract(
+            scene={"key": "workspace.record", "scene_key": "workspace.record"},
+            page={"key": "workspace.record", "page_status": "readonly"},
+            zones={},
+            permissions={
+                "record_state_summary": {
+                    "page_status": "readonly",
+                    "current_state": "done",
+                }
+            },
+            diagnostics={},
+            semantic_surface={
+                "semantic_runtime_state": {
+                    "page_status": "readonly",
+                    "current_state": "done",
+                },
+                "consumer_runtime": {
+                    "page_status": "readonly",
+                    "runtime_page_status": "readonly",
+                    "current_state": "done",
+                },
+            },
+        )
+
+        runtime_view = ((((payload.get("diagnostics") or {}).get("consumer_semantics")) or {}).get("runtime")) or {}
+        self.assertEqual(runtime_view.get("runtime_page_status"), "readonly")
+        self.assertEqual((runtime_view.get("bridge_alignment") or {}).get("consumer_runtime_present"), True)
+        self.assertEqual((runtime_view.get("bridge_alignment") or {}).get("current_state_aligned"), True)
+        runtime_alias = (((payload.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime")) or {}
+        self.assertEqual(runtime_alias.get("current_state"), "done")
+        bridge_assertions = (((payload.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime_assertions")) or {}
+        self.assertEqual(bridge_assertions.get("page_status_aligned"), True)
+
 
 if __name__ == "__main__":
     unittest.main()
