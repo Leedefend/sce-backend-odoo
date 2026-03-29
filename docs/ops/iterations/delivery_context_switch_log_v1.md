@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T17:35:00Z
+- blocker_key: `generic_detail_command_bar_v1`
+- layer_target: `frontend contract consumer`
+- module: `generic detail command bar`
+- reason: `详情页主体层级已经出现后，顶部交互区仍像分裂的状态条和动作条；当前最低风险且可见收益最大的批次是把它们并成一个 native-first command bar`
+- completed_step: `已冻结本轮范围为 ContractFormPage 的顶部命令带收口：把 statusbar 和 contract actions 合成统一 command bar；不进入后端和列表/看板改造`
+- active_commit: `c5541e2`
+- next_step: `Run ITER-2026-03-29-226, verify typecheck passes, then refresh the project detail sample and decide whether to continue detail interaction parity or move to the next page type`
+
 ### 2026-03-29T17:20:00Z
 - blocker_key: `generic_detail_hierarchy_presentation_v1`
 - layer_target: `frontend contract consumer`
