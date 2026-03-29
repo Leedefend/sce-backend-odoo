@@ -177,6 +177,12 @@ def _build_consumer_semantics(*, page: Dict[str, Any], permissions: Dict[str, An
     }
 
 
+def _build_consumer_runtime_alias(*, diagnostics: Dict[str, Any]) -> Dict[str, Any]:
+    consumer_semantics = dict(diagnostics.get("consumer_semantics") or {})
+    runtime = dict(consumer_semantics.get("runtime") or {})
+    return runtime
+
+
 def validate_scene_contract_shape(contract: Dict[str, Any]) -> Dict[str, Any]:
     issues = []
     if not isinstance(contract, dict):
@@ -240,6 +246,7 @@ def build_scene_contract(
         permissions=contract["permissions"],
         diagnostics=contract["diagnostics"],
     )
+    contract["diagnostics"]["consumer_runtime"] = _build_consumer_runtime_alias(diagnostics=contract["diagnostics"])
     contract["scene_contract_v1"] = {
         "contract_version": "v1",
         "scene": dict(contract["scene"]),
