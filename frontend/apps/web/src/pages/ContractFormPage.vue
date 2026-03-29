@@ -415,6 +415,7 @@ let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
 const applyingOnchangePatch = ref(false);
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
+const isProjectFormPage = computed(() => String(model.value || '').trim() === 'project.project');
 const actionId = computed(() => {
   return resolveActionIdFromContext({
     routeQuery: route.query as Record<string, unknown>,
@@ -663,11 +664,11 @@ const intakeMissingSummary = computed(() => {
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
-  if (String(model.value || '').trim() === 'project.project') {
+  if (isProjectFormPage.value) {
     const recordName = String(formData.name || '').trim();
     if (recordName) return recordName;
-    if (recordId.value) return `项目 #${recordId.value}`;
-    return '项目表单';
+    if (recordId.value) return `项目详情 #${recordId.value}`;
+    return '项目详情';
   }
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
@@ -685,9 +686,9 @@ const pageDisplaySubtitle = computed(() => {
   if (isProjectCreatePage.value) {
     return '填写核心信息即可完成项目立项';
   }
-  if (String(model.value || '').trim() === 'project.project') {
+  if (isProjectFormPage.value) {
     const statusLabel = activeStatusbarLabel.value;
-    return statusLabel ? `项目业务表单 · 当前阶段：${statusLabel}` : '项目业务表单';
+    return statusLabel ? `项目详情页 · 当前阶段：${statusLabel}` : '项目详情页';
   }
   if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseCompanyFormPage.value) {
     return '这里只维护企业启用所需的基础信息。保存后请继续进入组织架构。';
@@ -754,7 +755,20 @@ const headerActionsVisible = computed(() => {
   if (Boolean(formGovernance.value.suppress_contract_header_actions)) return [];
   return headerActions.value;
 });
-const contractActionStrip = computed(() => headerActionsVisible.value);
+const contractActionStrip = computed(() => {
+  const source = headerActionsVisible.value;
+  if (!isProjectFormPage.value) return source;
+  const score = (action: ContractAction) => {
+    let total = 0;
+    if (action.semantic === 'primary_action') total += 100;
+    if (action.enabled) total += 10;
+    if (action.level === 'header') total += 5;
+    return total;
+  };
+  return [...source]
+    .sort((a, b) => score(b) - score(a) || a.label.localeCompare(b.label, 'zh-CN'))
+    .slice(0, 3);
+});
 const statusbarFieldName = computed(() => String(contract.value?.views?.form?.statusbar?.field || '').trim());
 const statusbarSteps = computed<StatusbarStep[]>(() => {
   const fieldName = statusbarFieldName.value;
