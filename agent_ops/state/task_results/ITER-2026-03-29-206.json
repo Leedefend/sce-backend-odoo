@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-03-29-206",
+  "status": "PASS",
+  "summary": "Added frontend support for simple expression-style field modifiers so project form runtime can consume contract values such as `readonly: \"not active\"`.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-29-206.yaml",
+    "frontend/apps/web/src/app/modifierEngine.ts",
+    "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-206.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-206.yaml",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status PASS'",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore agent_ops/tasks/ITER-2026-03-29-206.yaml frontend/apps/web/src/app/modifierEngine.ts agent_ops/reports/2026-03-29/report.ITER-2026-03-29-206.md agent_ops/state/task_results/ITER-2026-03-29-206.json",
+  "next_suggestion": "Verify on an inactive project record that `user_id` becomes readonly from contract runtime, then continue with the next project form parity gaps."
+}

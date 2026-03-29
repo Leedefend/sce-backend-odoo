@@ -6,6 +6,22 @@ export type FieldRuntimeState = {
 
 type DomainLeaf = [string, string, unknown];
 
+function isTruthyValue(value: unknown): boolean {
+  const scalar = toScalar(value);
+  if (scalar === null || scalar === undefined) return false;
+  if (typeof scalar === 'boolean') return scalar;
+  if (typeof scalar === 'number') return scalar !== 0;
+  if (typeof scalar === 'string') {
+    const normalized = scalar.trim().toLowerCase();
+    if (!normalized) return false;
+    if (['0', 'false', 'no', 'n', 'off', 'none', 'null'].includes(normalized)) return false;
+    return true;
+  }
+  if (Array.isArray(scalar)) return scalar.length > 0;
+  if (typeof scalar === 'object') return Object.keys(scalar as Record<string, unknown>).length > 0;
+  return Boolean(scalar);
+}
+
 function coerceModifierBoolean(value: unknown): boolean | undefined {
   const scalar = toScalar(value);
   if (typeof scalar === 'boolean') return scalar;
@@ -16,6 +32,26 @@ function coerceModifierBoolean(value: unknown): boolean | undefined {
     if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) return true;
     if (['0', 'false', 'no', 'n', 'off', 'none', 'null'].includes(normalized)) return false;
   }
+  return undefined;
+}
+
+function evalModifierExpression(expr: string, values: Record<string, unknown>): boolean | undefined {
+  const normalized = expr.trim().replace(/\s+/g, ' ');
+  if (!normalized) return false;
+  const primitive = coerceModifierBoolean(normalized);
+  if (primitive !== undefined) return primitive;
+
+  const lower = normalized.toLowerCase();
+  if (lower.startsWith('not ')) {
+    const field = normalized.slice(4).trim();
+    if (!field || /\s/.test(field)) return undefined;
+    return !isTruthyValue(values[field]);
+  }
+
+  if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(normalized)) {
+    return isTruthyValue(values[normalized]);
+  }
+
   return undefined;
 }
 
@@ -85,6 +121,10 @@ function evalDomain(expr: unknown, values: Record<string, unknown>): boolean {
 function evalModifierBucket(bucket: unknown, values: Record<string, unknown>): boolean {
   const primitive = coerceModifierBoolean(bucket);
   if (primitive !== undefined) return primitive;
+  if (typeof bucket === 'string') {
+    const expression = evalModifierExpression(bucket, values);
+    if (expression !== undefined) return expression;
+  }
   if (!bucket) return false;
 
   if (!Array.isArray(bucket)) {
