@@ -1,0 +1,71 @@
+{
+  "classification": {
+    "classification": "PASS",
+    "reasons": [
+      "all_acceptance_passed",
+      "action_gating_coverage_frozen",
+      "productization_line_auditable"
+    ],
+    "status": "PASS",
+    "task_id": "ITER-2026-03-29-192",
+    "triggered_stop_conditions": []
+  },
+  "risk_scan": {
+    "baseline_hits": [],
+    "changed_files": [
+      "agent_ops/tasks/ITER-2026-03-29-192.yaml",
+      "agent_ops/scripts/frontend_action_gating_audit.py",
+      "docs/ops/iterations/delivery_context_switch_log_v1.md",
+      "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-192.md",
+      "agent_ops/state/task_results/ITER-2026-03-29-192.json"
+    ],
+    "critical_hits": [],
+    "diff_summary": {
+      "added_lines": 300,
+      "files": 5,
+      "removed_lines": 0
+    },
+    "high_risk_hits": [],
+    "matched_rules": [],
+    "raw_changed_files": [
+      "agent_ops/tasks/ITER-2026-03-29-192.yaml",
+      "agent_ops/scripts/frontend_action_gating_audit.py",
+      "docs/ops/iterations/delivery_context_switch_log_v1.md",
+      "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-192.md",
+      "agent_ops/state/task_results/ITER-2026-03-29-192.json"
+    ],
+    "risk_level": "low",
+    "sensitive_pattern_hits": [],
+    "status": "PASS",
+    "stop_required": false
+  },
+  "task_id": "ITER-2026-03-29-192",
+  "task_path": "agent_ops/tasks/ITER-2026-03-29-192.yaml",
+  "validate": {
+    "errors": [],
+    "passed": true
+  },
+  "verify": {
+    "passed": true,
+    "results": [
+      {
+        "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-192.yaml",
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "{\n  \"status\": \"PASS\",\n  \"task\": \"/mnt/e/sc-backend-odoo/agent_ops/tasks/ITER-2026-03-29-192.yaml\",\n  \"task_id\": \"ITER-2026-03-29-192\",\n  \"errors\": []\n}\n"
+      },
+      {
+        "command": "python3 -m py_compile agent_ops/scripts/frontend_action_gating_audit.py",
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      {
+        "command": "python3 agent_ops/scripts/frontend_action_gating_audit.py --frontend-dir frontend/apps/web --expect-status PASS --expect-covered-count 12",
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "{\n  \"frontend_dir\": \"/mnt/e/sc-backend-odoo/frontend/apps/web\",\n  \"status\": \"PASS\",\n  \"summary\": {\n    \"view_targets\": 12,\n    \"covered_views\": 12,\n    \"supporting_targets\": 1,\n    \"covered_targets\": 13\n  },\n  \"targets\": [\n    {\n      \"path\": \"src/views/SceneView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/WorkbenchView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/PlaceholderView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/HomeView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/MyWorkView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/LoginView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/MenuView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/SceneHealthView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/ScenePackagesView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/RecordView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/UsageAnalyticsView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/views/ActionView.vue\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    },\n    {\n      \"path\": \"src/app/action_runtime/useActionViewHeaderRuntime.ts\",\n      \"exists\": true,\n      \"covered\": true,\n      \"missing_tokens\": []\n    }\n  ],\n  \"uncovered_targets\": []\n}\n"
+      }
+    ]
+  }
+}

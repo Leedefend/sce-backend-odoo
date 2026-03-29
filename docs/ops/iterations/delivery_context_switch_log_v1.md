@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T15:30:00Z
+- blocker_key: `frontend_action_gating_coverage_audit_v1`
+- layer_target: `frontend layer`
+- module: `agent_ops/scripts frontend action-gating coverage audit`
+- reason: `SceneView 与高频页面的 contract-based action gating 已基本落地后，需要把覆盖范围固化成可回归审计入口，避免后续页面在产品化迭代中掉出 contract gate 而无人察觉`
+- completed_step: `已冻结本轮范围为新增 frontend_action_gating_audit.py、记录当前 action-gating 消费覆盖，并用独立治理批次验证 major consumers 全部受审计覆盖；不进入前端页面行为改造`
+- active_commit: `86245a9`
+- next_step: `Run ITER-2026-03-29-192, validate the audit script against frontend/apps/web, then decide whether to close the productization line or open only the remaining uncovered surface if any audit gap appears`
+
 ### 2026-03-28T11:55:00Z
 - blocker_key: `platform_kernel_refactor_prep_queue_bootstrap_v1`
 - layer_target: `Governance/Tooling + Platform Layer Planning`
