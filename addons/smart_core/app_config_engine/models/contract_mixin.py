@@ -16,7 +16,18 @@ class ContractSchemaMixin(models.AbstractModel):
     def _allowed_keys_by_view(self, vt):
         table = {
             'tree': {'columns', 'row_actions', 'page_size', 'row_classes'},
-            'form': {'layout', 'statusbar', 'field_modifiers'},
+            'form': {
+                'layout',
+                'statusbar',
+                'header_buttons',
+                'button_box',
+                'stat_buttons',
+                'field_modifiers',
+                'subviews',
+                'chatter',
+                'attachments',
+                'widgets',
+            },
             'kanban': {'kanban'},
             'pivot': {'pivot'},
             'graph': {'graph'},
@@ -38,7 +49,16 @@ class ContractSchemaMixin(models.AbstractModel):
         common = self._allowed_keys_common()
         specific = self._allowed_keys_by_view(vt)
         keep = set(common) | set(specific)
-        passthrough_subtrees = {'field_modifiers'}
+        passthrough_subtrees = {
+            'field_modifiers',
+            'header_buttons',
+            'button_box',
+            'stat_buttons',
+            'subviews',
+            'chatter',
+            'attachments',
+            'widgets',
+        }
         structural_keys = {
             'type',
             'name',
