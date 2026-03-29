@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T17:55:00Z
+- blocker_key: `generic_detail_renderer_refactor_v1`
+- layer_target: `frontend contract consumer`
+- module: `generic detail renderer`
+- reason: `小步收口已经把详情页拉到可见状态，但 ContractFormPage 本身已经堆叠过多实现职责；下一步要继续高效迭代，必须先把命令带和布局容器拆成独立组件`
+- completed_step: `已冻结本轮范围为重构抽取：新增 DetailCommandBar、DetailShellLayout 和共享类型，把 ContractFormPage 收回 orchestration；不新增项目特例、不改后端 facts`
+- active_commit: `b94c709`
+- next_step: `Run ITER-2026-03-29-227, verify typecheck passes, then refresh the project detail sample and continue the detail track on smaller reusable components`
+
 ### 2026-03-29T17:35:00Z
 - blocker_key: `generic_detail_command_bar_v1`
 - layer_target: `frontend contract consumer`

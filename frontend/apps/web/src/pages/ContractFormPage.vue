@@ -49,29 +49,13 @@
           <strong class="page-overview-pill__value">{{ item.value }}</strong>
         </div>
       </section>
-      <section v-if="showCommandBar" class="page-command-bar">
-        <section v-if="statusbarSteps.length" class="page-statusbar-strip">
-          <span
-            v-for="step in statusbarSteps"
-            :key="step.key"
-            :class="['page-statusbar-chip', { 'page-statusbar-chip--active': step.active }]"
-          >
-            {{ step.label }}
-          </span>
-        </section>
-        <section v-if="contractActionStrip.length" class="page-action-strip">
-          <button
-            v-for="action in contractActionStrip"
-            :key="`strip-${action.key}`"
-            :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
-            :disabled="busy || !action.enabled"
-            :title="action.hint"
-            @click="runAction(action)"
-          >
-            {{ action.label }}
-          </button>
-        </section>
-      </section>
+      <DetailCommandBar
+        v-if="showCommandBar"
+        :steps="statusbarSteps"
+        :actions="contractActionStrip"
+        :busy="busy"
+        @run-action="runAction"
+      />
       <StatusPanel
         v-if="sceneRuntimeStatusPanel"
         :title="sceneRuntimeStatusPanel.title"
@@ -149,51 +133,15 @@
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
-        <section
-          v-for="shell in detailShells"
-          :key="shell.key"
-          :class="['contract-detail-shell', shell.shellClass]"
-        >
-          <div v-if="shell.title || shell.eyebrow || shell.summary" class="contract-detail-shell__head">
-            <div class="contract-detail-shell__title-wrap">
-              <span v-if="shell.eyebrow" class="contract-detail-shell__eyebrow">{{ shell.eyebrow }}</span>
-              <h3 v-if="shell.title" class="contract-detail-shell__title">{{ shell.title }}</h3>
-            </div>
-            <span v-if="shell.summary" class="contract-detail-shell__summary">{{ shell.summary }}</span>
-          </div>
-          <div :class="['contract-detail-shell__body', { 'contract-detail-shell__body--stacked': shell.sections.length <= 1 }]">
-            <section
-              v-for="section in shell.sections"
-              :key="section.key"
-              :class="['contract-form-shell', section.shellClass, { 'contract-form-shell--nested': shell.sections.length > 1 }]"
-            >
-              <div v-if="section.eyebrow || section.summary" class="contract-form-shell__meta">
-                <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
-                <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
-              </div>
-              <FormSectionTemplate
-                :title="section.title"
-                :hint="section.hint"
-                :tone="section.tone"
-                :columns="2"
-                :fields="section.fields"
-                @field-change="onTemplateFieldChange"
-              >
-                <template v-if="isProjectCreatePage && section.isAdvanced" #action>
-                  <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
-                    {{ advancedExpanded ? '收起' : '展开' }}
-                  </button>
-                </template>
-                <template #readonly="{ field }">
-                  <FieldValue :value="field.value" :field="field.descriptor" />
-                </template>
-                <template #fallback="{ field }">
-                  <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
-                </template>
-              </FormSectionTemplate>
-            </section>
-          </div>
-        </section>
+        <DetailShellLayout
+          :shells="detailShells"
+          :busy="busy"
+          :is-project-create-page="isProjectCreatePage"
+          :advanced-expanded="advancedExpanded"
+          :relation-fallback-adapter="relationFallbackAdapter"
+          @field-change="onTemplateFieldChange"
+          @toggle-advanced="advancedExpanded = !advancedExpanded"
+        />
         <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -244,11 +192,12 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
-import FormSectionTemplate from '../components/template/FormSection.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
-import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
+import DetailCommandBar from '../components/template/DetailCommandBar.vue';
+import DetailShellLayout from '../components/template/DetailShellLayout.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
 import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
+import type { DetailShellView, DetailStatusbarStep, DetailSectionView } from '../components/template/detailLayout.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
 import { resolveTemplateSectionPresentation } from '../components/template/sectionPresentation.mapper';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
@@ -323,12 +272,6 @@ type ContractAction = {
   };
 };
 
-type StatusbarStep = {
-  key: string;
-  label: string;
-  active: boolean;
-};
-
 type LayoutNode = {
   key: string;
   kind: 'header' | 'sheet' | 'group' | 'notebook' | 'page' | 'field';
@@ -344,28 +287,6 @@ type LayoutSection = {
   title: string;
   kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
   fields: LayoutNode[];
-};
-
-type TemplateSectionView = {
-  key: string;
-  title: string;
-  hint: string;
-  tone: 'core' | 'advanced';
-  isAdvanced: boolean;
-  shellClass: string;
-  eyebrow: string;
-  summary: string;
-  fields: FormSectionFieldSchema[];
-};
-
-type DetailShellView = {
-  key: string;
-  title: string;
-  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
-  shellClass: string;
-  eyebrow: string;
-  summary: string;
-  sections: TemplateSectionView[];
 };
 
 type RelationOption = {
@@ -808,7 +729,7 @@ const contractActionStrip = computed(() => {
     .slice(0, 3);
 });
 const statusbarFieldName = computed(() => String(contract.value?.views?.form?.statusbar?.field || '').trim());
-const statusbarSteps = computed<StatusbarStep[]>(() => {
+const statusbarSteps = computed<DetailStatusbarStep[]>(() => {
   const fieldName = statusbarFieldName.value;
   if (!fieldName) return [];
   const descriptor = contract.value?.fields?.[fieldName];
@@ -826,7 +747,7 @@ const statusbarSteps = computed<StatusbarStep[]>(() => {
         active: key === current,
       };
     })
-    .filter((item): item is StatusbarStep => Boolean(item));
+    .filter((item): item is DetailStatusbarStep => Boolean(item));
 });
 const activeStatusbarLabel = computed(() => statusbarSteps.value.find((item) => item.active)?.label || '');
 const pageOverviewItems = computed(() => {
@@ -2467,7 +2388,7 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
 });
 
-const templateSections = computed<TemplateSectionView[]>(() => layoutSections.value.map((section) => {
+const templateSections = computed<DetailSectionView[]>(() => layoutSections.value.map((section) => {
   const presentation = resolveTemplateSectionPresentation(section, {
     projectCreateMode: isProjectCreatePage.value,
   });
@@ -3853,26 +3774,11 @@ watch(
   font-size: 12px;
 }
 
-.page-overview-strip,
-.page-statusbar-strip,
-.page-action-strip {
+.page-overview-strip {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 12px;
-}
-
-.page-command-bar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .page-overview-strip {
@@ -3901,28 +3807,6 @@ watch(
   font-size: 13px;
   color: #0f172a;
   line-height: 1.3;
-}
-
-.page-statusbar-chip {
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #475569;
-}
-
-.page-statusbar-chip--active {
-  border-color: #111827;
-  background: #111827;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-}
-
-.page-action-strip {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  justify-content: flex-end;
 }
 
 .chips {
@@ -4034,148 +3918,8 @@ watch(
   margin-top: 2px;
 }
 
-.contract-form-shell {
-  grid-column: 1 / -1;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #fff;
-  padding: 14px 16px 12px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-}
-
-.contract-detail-shell {
-  grid-column: 1 / -1;
-  border: 1px solid #d9e2ee;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  padding: 18px 20px;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
-}
-
-.contract-detail-shell--sheet {
-  border-color: #cfe0fb;
-  background:
-    linear-gradient(180deg, rgba(219, 234, 254, 0.22) 0%, rgba(255, 255, 255, 0) 72px),
-    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-}
-
-.contract-detail-shell--page {
-  border-color: #ddd6fe;
-  background:
-    linear-gradient(180deg, rgba(237, 233, 254, 0.28) 0%, rgba(255, 255, 255, 0) 72px),
-    linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
-}
-
-.contract-detail-shell__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.contract-detail-shell__title-wrap {
-  display: grid;
-  gap: 2px;
-}
-
-.contract-detail-shell__eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-
-.contract-detail-shell__title {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.25;
-  color: #0f172a;
-}
-
-.contract-detail-shell__summary {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.contract-detail-shell__body {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.contract-detail-shell__body--stacked {
-  grid-template-columns: 1fr;
-}
-
-.contract-form-shell--sheet {
-  border-color: #dbeafe;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-}
-
-.contract-form-shell--group {
-  border-color: #e2e8f0;
-}
-
-.contract-form-shell--page {
-  border-color: #ddd6fe;
-  background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
-}
-
-.contract-form-shell--nested {
-  grid-column: auto;
-  border-radius: 16px;
-  border-color: #edf2f7;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-  padding: 12px 14px 10px;
-}
-
-.contract-form-shell__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.contract-form-shell__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #475569;
-}
-
-.contract-form-shell__summary {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.contract-form-shell--nested :deep(.template-form-section) {
-  border-top-color: #edf2f7;
-}
-
-.contract-form-shell--nested :deep(.template-form-section--core) {
-  border-top: 0;
-}
-
-.contract-form-shell--nested :deep(.template-form-section-title) {
-  font-size: 13px;
-  color: #1f2937;
-}
-
 @media (max-width: 860px) {
   .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .contract-detail-shell__body {
     grid-template-columns: 1fr;
   }
 }
