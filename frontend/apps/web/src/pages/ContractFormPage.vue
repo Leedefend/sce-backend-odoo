@@ -26,6 +26,7 @@
           v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
           class="primary"
           :disabled="isQuickSubmitDisabled"
+          :title="sceneWriteDisabledReason"
           @click="saveRecord"
         >
           {{ submitButtonLabel }}
@@ -52,6 +53,13 @@
     </section>
 
     <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
+      <StatusPanel
+        v-if="sceneRuntimeStatusPanel"
+        :title="sceneRuntimeStatusPanel.title"
+        :message="sceneRuntimeStatusPanel.message"
+        :hint="sceneRuntimeStatusPanel.hint"
+        variant="info"
+      />
       <section v-if="warnings.length && !isProjectCreatePage" class="block warn">
         <h3>提示信息</h3>
         <ul>
@@ -155,7 +163,7 @@
       <PageFooterTemplate v-if="isProjectCreatePage" hint="填写完成后点击“创建项目”">
         <template #default>
           <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
-          <button class="primary" :disabled="isIntakeCreateDisabled" @click="saveRecord">
+          <button class="primary" :disabled="isIntakeCreateDisabled" :title="sceneWriteDisabledReason" @click="saveRecord">
             {{ intakeCreateButtonLabel }}
           </button>
         </template>
@@ -343,6 +351,16 @@ const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 }
@@ -409,6 +427,68 @@ const showFormNativeFallback = computed(() => formRenderPolicy.value.recommended
 const formNativeFallbackMessage = computed(() => (
   formRenderPolicy.value.notes[0] || '当前表单命中了原生兜底条件，请使用原生页面完成操作。'
 ));
+const sceneContractV1 = computed<Record<string, unknown>>(() => asRecord((contract.value as Record<string, unknown> | null)?.scene_contract_v1));
+const sceneContractPermissions = computed<Record<string, unknown>>(() => asRecord(sceneContractV1.value.permissions));
+const sceneConsumerRuntime = computed<Record<string, unknown>>(() => {
+  const diagnostics = asRecord(sceneContractV1.value.diagnostics);
+  return asRecord(diagnostics.consumer_runtime);
+});
+const sceneDisabledActions = computed<Record<string, string>>(() => {
+  const out: Record<string, string> = {};
+  Object.entries(asRecord(sceneContractPermissions.value.disabled_actions)).forEach(([key, value]) => {
+    const reason = asText(value);
+    if (!key || !reason) return;
+    out[key] = reason;
+  });
+  return out;
+});
+const sceneRuntimePageStatus = computed(() => (
+  asText(sceneConsumerRuntime.value.runtime_page_status) || asText(sceneConsumerRuntime.value.page_status)
+));
+const sceneWriteDisabledReason = computed(() => {
+  const disabled = sceneDisabledActions.value;
+  const statusKey = sceneRuntimePageStatus.value;
+  const currentState = asText(sceneConsumerRuntime.value.current_state);
+  if (recordId.value) {
+    if (disabled.edit) return disabled.edit;
+    if (disabled.submit) return disabled.submit;
+    if (sceneContractPermissions.value.can_edit === false) {
+      return currentState
+        ? `当前记录状态 ${currentState} 不允许编辑`
+        : (statusKey === 'readonly' ? '当前页面为只读状态' : '当前页面不允许编辑');
+    }
+  } else {
+    if (disabled.create) return disabled.create;
+    if (disabled.submit) return disabled.submit;
+    if (sceneContractPermissions.value.can_create === false) {
+      return statusKey === 'restricted' ? '当前页面不允许新建' : '当前页面暂不可创建';
+    }
+  }
+  if (statusKey === 'restricted') return '当前页面访问受限';
+  return '';
+});
+const sceneRuntimeStatusPanel = computed(() => {
+  const statusKey = sceneRuntimePageStatus.value;
+  const reason = sceneWriteDisabledReason.value;
+  if (!statusKey && !reason) return null;
+  const currentState = asText(sceneConsumerRuntime.value.current_state);
+  const missingRequiredCount = Number(sceneConsumerRuntime.value.missing_required_count || 0);
+  const activeTransitionCount = Number(sceneConsumerRuntime.value.active_transition_count || 0);
+  const parts: string[] = [];
+  if (reason) parts.push(reason);
+  if (currentState) parts.push(`当前状态：${currentState}`);
+  if (missingRequiredCount > 0) parts.push(`缺失必填项：${missingRequiredCount}`);
+  if (activeTransitionCount > 0) parts.push(`可用流转数：${activeTransitionCount}`);
+  return {
+    title: statusKey === 'readonly'
+      ? '当前表单为只读状态'
+      : statusKey === 'restricted'
+        ? '当前表单访问受限'
+        : '当前表单运行态提示',
+    message: parts.join('；') || '当前页面的可写能力受 scene contract runtime 限制。',
+    hint: '当前交互状态来自后端 scene contract runtime。',
+  };
+});
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
   const profile = String(contract.value?.render_profile || '').trim().toLowerCase();
@@ -437,7 +517,16 @@ const rights = computed(() => {
   };
 });
 
-const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create));
+const canPersistBySceneRuntime = computed(() => {
+  if (recordId.value) {
+    if (sceneContractPermissions.value.can_edit === false) return false;
+  } else if (sceneContractPermissions.value.can_create === false) {
+    return false;
+  }
+  if (sceneRuntimePageStatus.value === 'restricted') return false;
+  return true;
+});
+const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create) && canPersistBySceneRuntime.value);
 const isProjectQuickIntakeMode = computed(() => {
   if (String(model.value || '').trim() !== 'project.project') return false;
   if (recordId.value) return false;
@@ -2073,7 +2162,12 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       kind: 'field',
       name,
       label: viewLabel || String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      readonly: Boolean(
+        resolved.readonly
+        || state.readonly
+        || (recordId.value ? !rights.value.write : !rights.value.create)
+        || !canPersistBySceneRuntime.value
+      ),
       required: Boolean(resolved.required || state.required),
       descriptor,
     });

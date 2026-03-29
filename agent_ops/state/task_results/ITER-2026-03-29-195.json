@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-03-29-195",
+  "status": "PASS",
+  "summary": "Projected backend scene runtime permissions into ContractFormPage so readonly/restricted states visibly disable persistence and explain why.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-29-195.yaml",
+    "frontend/apps/web/src/pages/ContractFormPage.vue",
+    "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-195.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-195.yaml",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status PASS'",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore agent_ops/tasks/ITER-2026-03-29-195.yaml frontend/apps/web/src/pages/ContractFormPage.vue agent_ops/reports/2026-03-29/report.ITER-2026-03-29-195.md agent_ops/state/task_results/ITER-2026-03-29-195.json",
+  "next_suggestion": "Continue page-contract parity on the main form flow by projecting more block/action visibility semantics from scene contract."
+}
