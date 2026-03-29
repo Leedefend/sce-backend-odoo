@@ -432,6 +432,70 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "toolbar_disabled",
         )
 
+    def test_build_scene_contract_from_specs_projects_enabled_semantic_actions_into_contract_groups(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "semantic_page": {
+                    "actions": {
+                        "header_actions": [
+                            {"key": "refresh", "label": "刷新", "enabled": True},
+                            {"key": "sync", "label": "同步", "enabled": False, "reason_code": "header_busy"},
+                        ],
+                        "record_actions": [
+                            {"key": "approve", "label": "批准", "enabled": True},
+                            {"key": "reject", "label": "拒绝", "enabled": False, "reason_code": "workflow_blocked"},
+                        ],
+                        "toolbar_actions": [
+                            {"key": "export", "label": "导出", "enabled": True},
+                            {"key": "archive", "label": "归档", "enabled": False, "reason_code": "toolbar_disabled"},
+                        ],
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("primary_actions") or [])],
+            ["refresh"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("contextual_actions") or [])],
+            ["approve"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("secondary_actions") or [])],
+            ["export"],
+        )
+        self.assertNotIn(
+            "sync",
+            [row.get("key") for row in ((payload.get("actions") or {}).get("primary_actions") or [])],
+        )
+        self.assertNotIn(
+            "reject",
+            [row.get("key") for row in ((payload.get("actions") or {}).get("contextual_actions") or [])],
+        )
+        self.assertNotIn(
+            "archive",
+            [row.get("key") for row in ((payload.get("actions") or {}).get("secondary_actions") or [])],
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("sync"),
+            "header_busy",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("reject"),
+            "workflow_blocked",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("archive"),
+            "toolbar_disabled",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

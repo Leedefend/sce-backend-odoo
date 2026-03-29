@@ -170,6 +170,36 @@ def _apply_action_semantics(
                 disabled_actions.setdefault(action_key, reason_code)
 
 
+def _derive_actions_from_semantic_page(
+    *,
+    semantic_page: Dict[str, Any],
+    disabled_actions: Dict[str, Any],
+) -> Dict[str, Any]:
+    actions = _as_dict(semantic_page.get("actions"))
+
+    def _collect(group_key: str) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        for row in _as_list(actions.get(group_key)):
+            item = _as_dict(row)
+            action_key = _text(item.get("key"))
+            if not action_key:
+                continue
+            if action_key in disabled_actions:
+                continue
+            if not bool(item.get("enabled", True)):
+                continue
+            rows.append(dict(item))
+        return rows
+
+    return {
+        "primary_actions": _collect("header_actions"),
+        "secondary_actions": _collect("toolbar_actions"),
+        "contextual_actions": _collect("record_actions"),
+        "danger_actions": [],
+        "recommended_actions": [],
+    }
+
+
 def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) -> Dict[str, Any]:
     payload = _as_dict(surface)
     permission_surface = _as_dict(payload.get("permission_surface"))
@@ -257,6 +287,10 @@ def build_scene_contract_from_specs(
     diagnostics_payload.setdefault("scene_engine", "smart_scene.core.scene_engine")
     diagnostics_payload.setdefault("zone_specs_mapped", ordered_specs)
     derived_permissions = _derive_permissions_from_semantic_surface(semantic_payload)
+    derived_actions = _derive_actions_from_semantic_page(
+        semantic_page=_as_dict(semantic_payload.get("semantic_page")),
+        disabled_actions=_as_dict((derived_permissions or {}).get("disabled_actions")),
+    )
     return build_scene_contract(
         scene=resolved.get("scene") or {},
         page=resolved.get("page") or {},
@@ -267,6 +301,7 @@ def build_scene_contract_from_specs(
             "active_menu_id": page_hint.get("menu_id") if isinstance(page_hint, dict) else None,
         },
         permissions=derived_permissions,
+        actions=derived_actions,
         diagnostics=diagnostics_payload,
         semantic_surface=semantic_payload,
     )
