@@ -49,7 +49,8 @@ def walk_layout(nodes, type_counter, field_names):
         fname = str(node.get("name") or "").strip()
         if ntype == "field" and fname:
             field_names.add(fname)
-        walk_layout(node.get("children") or [], type_counter, field_names)
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            walk_layout(node.get(key) or [], type_counter, field_names)
 
 
 def key_of(row):
@@ -282,7 +283,9 @@ def walk_layout(nodes: list[dict], type_counter: dict[str, int], field_names: se
         fname = str(node.get("name") or "").strip()
         if ntype == "field" and fname:
             field_names.add(fname)
-        walk_layout(node.get("children") if isinstance(node.get("children"), list) else [], type_counter, field_names)
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            child_nodes = node.get(key)
+            walk_layout(child_nodes if isinstance(child_nodes, list) else [], type_counter, field_names)
 
 
 def key_of(row: dict) -> str:

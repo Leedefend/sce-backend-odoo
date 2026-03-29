@@ -2952,3 +2952,17 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is a backend parser/projection batch before any more frontend detail-structure work
+## 2026-03-29 迭代锚点（ITER-2026-03-29-231）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `46f0370`
+- Layer Target: `Platform Layer`
+- Module: `smart_core governed form contract`
+- Reason: native-vs-parser audit showed a real backend gap in governed form projection, and follow-up parser inspection proved the earlier `page/group` alarm was partly an audit traversal artifact rather than a parser loss
+- `231`: widened governed form sanitize in `contract_mixin.py` to preserve `header_buttons/button_box/stat_buttons/subviews/chatter/attachments/widgets`
+- `231`: corrected `project_form_native_gap_audit.py` to traverse `tabs/pages` so notebook/page facts are measured accurately
+- `231`: added regression coverage in `test_app_view_config_form_structure.py`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is return to frontend detail rendering, because backend parser/projection is no longer the blocking gap for project form structure
