@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T17:20:00Z
+- blocker_key: `generic_detail_hierarchy_presentation_v1`
+- layer_target: `frontend contract consumer`
+- module: `generic detail hierarchy presentation`
+- reason: `容器层已经出现，但 detail body 还缺少足够的实施层主次关系；当前最小有效批次是强化外层主体容器、弱化内层 group 卡片，让页面更像原生 form body`
+- completed_step: `已冻结本轮范围为 ContractFormPage 的纯表现层 polish：增强 detail shell 的主体感，降低 nested group shell 的独立卡片感；不改后端 facts 和交互逻辑`
+- active_commit: `a7efcdd`
+- next_step: `Run ITER-2026-03-29-225, verify typecheck passes, then refresh the project detail sample and decide whether the next batch should move to notebook/page tabs or continue list/detail interaction parity`
+
 ### 2026-03-29T17:05:00Z
 - blocker_key: `generic_detail_layout_containers_v1`
 - layer_target: `frontend contract consumer`
