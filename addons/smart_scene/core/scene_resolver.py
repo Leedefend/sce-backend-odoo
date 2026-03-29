@@ -70,11 +70,31 @@ def _empty_value(value: Any) -> bool:
     return False
 
 
+def _semantic_page_closed_state(surface: Dict[str, Any]) -> tuple[bool, str]:
+    semantic_page = _as_dict(surface.get("semantic_page"))
+    action_gating = _as_dict(semantic_page.get("action_gating"))
+    record = _as_dict(surface.get("record"))
+    record_state = _as_dict(action_gating.get("record_state"))
+    policy = _as_dict(action_gating.get("policy"))
+    verdict = _as_dict(action_gating.get("verdict"))
+    closed_states = {_text(value) for value in _as_list(policy.get("closed_states")) if _text(value)}
+    state_field = _text(record_state.get("field"))
+    current_state = _text(record.get(state_field)) if state_field else _text(record_state.get("value"))
+    if verdict.get("is_closed_state") is True:
+        return True, _text(verdict.get("reason_code"))
+    if current_state and current_state in closed_states:
+        return True, _text(verdict.get("reason_code"))
+    return False, _text(verdict.get("reason_code"))
+
+
 def _semantic_page_status(surface: Dict[str, Any], fallback_status: str = "") -> str:
     permission_surface = _as_dict(surface.get("permission_surface"))
     status = _permission_surface_page_status(permission_surface)
     if status:
         return status
+    is_closed_state, _ = _semantic_page_closed_state(surface)
+    if is_closed_state:
+        return "readonly"
 
     record = _as_dict(surface.get("record"))
     workflow_surface = _as_dict(surface.get("workflow_surface"))
@@ -176,6 +196,7 @@ def resolve_scene_identity(
     scene_version = _text(scene_row.get("scene_version") or fallback.get("scene_version"))
 
     parser_contract = _as_dict(parser_surface.get("parser_contract"))
+    semantic_page = _as_dict(parser_surface.get("semantic_page"))
     view_semantics = _as_dict(parser_surface.get("view_semantics"))
     search_surface = _as_dict(parser_surface.get("search_surface"))
     workflow_surface = _as_dict(parser_surface.get("workflow_surface"))
@@ -197,6 +218,7 @@ def resolve_scene_identity(
         or _semantic_page_status(
             {
                 "permission_surface": permission_surface,
+                "semantic_page": semantic_page,
                 "workflow_surface": workflow_surface,
                 "validation_surface": validation_surface,
                 "record": record_surface,

@@ -147,6 +147,24 @@ class TestSceneResolverSemantics(unittest.TestCase):
 
         self.assertEqual((resolved.get("page") or {}).get("page_status"), "ready")
 
+    def test_resolver_marks_page_readonly_from_semantic_page_closed_state(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            semantic_surface={
+                "record": {"state": "done"},
+                "semantic_page": {
+                    "action_gating": {
+                        "record_state": {"field": "state", "value": "done", "source": "record"},
+                        "policy": {"closed_states": ["done"]},
+                        "verdict": {"is_closed_state": True, "reason_code": "closed_state"},
+                    }
+                },
+            },
+        )
+
+        self.assertEqual((resolved.get("page") or {}).get("page_status"), "readonly")
+
 
 if __name__ == "__main__":
     unittest.main()
