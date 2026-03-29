@@ -164,10 +164,54 @@ def _apply_action_semantics(
             action_key = _text(item.get("key"))
             if not action_key:
                 continue
-            enabled = bool(item.get("enabled", True))
-            reason_code = _text(item.get("reason_code"))
-            if not enabled and reason_code:
+            reason_code = _infer_action_reason(item=item, disabled_actions=disabled_actions)
+            if reason_code:
                 disabled_actions.setdefault(action_key, reason_code)
+
+
+def _infer_action_operation(action_key: str) -> str:
+    lowered = _text(action_key).lower()
+    if any(token in lowered for token in ("create", "new", "add")):
+        return "create"
+    if any(token in lowered for token in ("delete", "unlink", "remove")):
+        return "delete"
+    if any(token in lowered for token in ("workflow", "approve", "reject", "transition")):
+        return "workflow"
+    if any(token in lowered for token in ("submit", "confirm")):
+        return "submit"
+    if any(token in lowered for token in ("edit", "write", "archive", "save")):
+        return "edit"
+    return ""
+
+
+def _infer_action_reason(
+    *,
+    item: Dict[str, Any],
+    disabled_actions: Dict[str, Any],
+) -> str:
+    action_key = _text(item.get("key"))
+    if not action_key:
+        return ""
+    if _text(disabled_actions.get(action_key)):
+        return _text(disabled_actions.get(action_key))
+
+    enabled = bool(item.get("enabled", True))
+    reason_code = _text(item.get("reason_code"))
+    if not enabled and reason_code:
+        return reason_code
+
+    gate = _as_dict(item.get("gate"))
+    if gate and not bool(gate.get("allowed", True)) and _text(gate.get("reason_code")):
+        return _text(gate.get("reason_code"))
+
+    inferred_operation = _infer_action_operation(action_key)
+    if inferred_operation and _text(disabled_actions.get(inferred_operation)):
+        return _text(disabled_actions.get(inferred_operation))
+    if bool(gate.get("requires_write")) and _text(disabled_actions.get("edit")):
+        return _text(disabled_actions.get("edit"))
+    if _text(disabled_actions.get("execute")):
+        return _text(disabled_actions.get("execute"))
+    return ""
 
 
 def _derive_actions_from_semantic_page(
@@ -184,9 +228,7 @@ def _derive_actions_from_semantic_page(
             action_key = _text(item.get("key"))
             if not action_key:
                 continue
-            if action_key in disabled_actions:
-                continue
-            if not bool(item.get("enabled", True)):
+            if _infer_action_reason(item=item, disabled_actions=disabled_actions):
                 continue
             rows.append(dict(item))
         return rows

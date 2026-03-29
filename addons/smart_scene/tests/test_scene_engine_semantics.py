@@ -546,6 +546,72 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "closed_state",
         )
 
+    def test_build_scene_contract_from_specs_jointly_applies_action_gates_and_permission_verdicts(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "permission_surface": {
+                    "visible": True,
+                    "allowed": True,
+                },
+                "semantic_page": {
+                    "permission_verdicts": {
+                        "read": {"allowed": True, "reason_code": ""},
+                        "create": {"allowed": True, "reason_code": ""},
+                        "write": {"allowed": False, "reason_code": "write_denied"},
+                        "unlink": {"allowed": True, "reason_code": ""},
+                        "execute": {"allowed": False, "reason_code": "execute_denied"},
+                    },
+                    "actions": {
+                        "header_actions": [
+                            {
+                                "key": "archive",
+                                "label": "归档",
+                                "enabled": True,
+                                "gate": {"allowed": True, "requires_write": True, "reason_code": "OK"},
+                            }
+                        ],
+                        "record_actions": [
+                            {
+                                "key": "approve",
+                                "label": "批准",
+                                "enabled": True,
+                                "gate": {"allowed": False, "requires_write": True, "reason_code": "STATE_BLOCKED"},
+                            }
+                        ],
+                        "toolbar_actions": [
+                            {
+                                "key": "sync",
+                                "label": "同步",
+                                "enabled": True,
+                                "gate": {"allowed": True, "requires_write": False, "reason_code": "OK"},
+                            }
+                        ],
+                    },
+                },
+            },
+        )
+
+        self.assertEqual(((payload.get("actions") or {}).get("primary_actions") or []), [])
+        self.assertEqual(((payload.get("actions") or {}).get("contextual_actions") or []), [])
+        self.assertEqual(((payload.get("actions") or {}).get("secondary_actions") or []), [])
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("archive"),
+            "write_denied",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("approve"),
+            "STATE_BLOCKED",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("sync"),
+            "execute_denied",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
