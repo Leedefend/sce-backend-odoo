@@ -20,9 +20,16 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
         return {}
     visible = bool(permission_surface.get("visible", True))
     allowed = bool(permission_surface.get("allowed", True))
+    reason_code = str(permission_surface.get("reason_code") or "").strip()
+    disabled_actions: Dict[str, Any] = {}
+    if visible and not allowed:
+        disabled_actions["edit"] = reason_code or "readonly"
+        disabled_actions["create"] = reason_code or "readonly"
+        disabled_actions["delete"] = reason_code or "readonly"
     return {
-        "can_read": visible and allowed,
+        "can_read": visible,
         "can_edit": allowed,
+        "disabled_actions": disabled_actions,
     }
 
 

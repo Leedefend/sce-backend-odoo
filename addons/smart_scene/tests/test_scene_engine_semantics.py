@@ -71,7 +71,7 @@ class TestSceneEngineSemantics(unittest.TestCase):
         self.assertEqual((((payload.get("scene") or {}).get("layout_mode"))), "entry_flow")
         self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "query")
 
-    def test_build_scene_contract_from_specs_projects_permission_surface_into_permissions(self):
+    def test_build_scene_contract_from_specs_projects_readonly_permission_surface_into_permissions(self):
         payload = target.build_scene_contract_from_specs(
             scene_hint={"key": "workspace.home"},
             page_hint={"key": "workspace.home", "title": "工作台"},
@@ -83,6 +83,30 @@ class TestSceneEngineSemantics(unittest.TestCase):
                     "visible": True,
                     "allowed": False,
                     "reason_code": "missing_capability",
+                }
+            },
+        )
+
+        self.assertEqual((((payload.get("page") or {}).get("page_status"))), "readonly")
+        self.assertTrue((((payload.get("permissions") or {}).get("can_read"))))
+        self.assertFalse((((payload.get("permissions") or {}).get("can_edit"))))
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("edit"),
+            "missing_capability",
+        )
+
+    def test_build_scene_contract_from_specs_projects_hidden_permission_surface_into_permissions(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.home"},
+            page_hint={"key": "workspace.home", "title": "工作台"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "permission_surface": {
+                    "visible": False,
+                    "allowed": False,
+                    "reason_code": "hidden_by_policy",
                 }
             },
         )
