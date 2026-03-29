@@ -42,11 +42,14 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
     visible = bool(permission_surface.get("visible", True))
     allowed = bool(permission_surface.get("allowed", True))
     reason_code = _text(permission_surface.get("reason_code"))
+    transitions = _as_list(workflow_surface.get("transitions"))
     disabled_actions: Dict[str, Any] = {}
     if visible and not allowed:
         disabled_actions["edit"] = reason_code or "readonly"
         disabled_actions["create"] = reason_code or "readonly"
         disabled_actions["delete"] = reason_code or "readonly"
+        if _workflow_surface_nonempty(workflow_surface):
+            disabled_actions["workflow"] = "permission_workflow_gate"
     if visible and allowed and _validation_surface_nonempty(validation_surface):
         disabled_actions["submit"] = "validation_required"
 
@@ -55,9 +58,12 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
         record_state_summary = {
             "state_field": _text(workflow_surface.get("state_field")),
             "states": _as_list(workflow_surface.get("states")),
-            "transitions": _as_list(workflow_surface.get("transitions")),
+            "transitions": transitions,
             "highlight_states": _as_list(workflow_surface.get("highlight_states")),
+            "workflow_transition_count": len(transitions),
         }
+        if visible and allowed and not transitions:
+            disabled_actions["workflow"] = "action_permission_workflow_gate"
     return {
         "can_read": visible,
         "can_edit": allowed,

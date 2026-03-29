@@ -148,6 +148,61 @@ class TestSceneEngineSemantics(unittest.TestCase):
             (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("states"),
             ["draft", "approved"],
         )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("workflow_transition_count"),
+            1,
+        )
+
+    def test_build_scene_contract_from_specs_projects_workflow_gate_when_transitions_missing(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.home"},
+            page_hint={"key": "workspace.home", "title": "工作台"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "highlight_states": ["approved"],
+                }
+            },
+        )
+
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("workflow"),
+            "action_permission_workflow_gate",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("workflow_transition_count"),
+            0,
+        )
+
+    def test_build_scene_contract_from_specs_projects_workflow_gate_when_permission_denied(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.home"},
+            page_hint={"key": "workspace.home", "title": "工作台"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "permission_surface": {
+                    "visible": True,
+                    "allowed": False,
+                    "reason_code": "missing_capability",
+                },
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                }
+            },
+        )
+
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("workflow"),
+            "permission_workflow_gate",
+        )
 
 
 if __name__ == "__main__":
