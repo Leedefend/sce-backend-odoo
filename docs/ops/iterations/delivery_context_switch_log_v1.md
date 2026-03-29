@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T18:10:00Z
+- blocker_key: `generic_detail_layout_mapper_extraction_v1`
+- layer_target: `frontend contract consumer`
+- module: `generic detail layout mappers`
+- reason: `详情渲染组件已经拆开后，下一步的重构收益来自把纯 layout 组装逻辑移出页面文件，避免后续继续在 ContractFormPage 内堆 mapper`
+- completed_step: `已冻结本轮范围为新增 detailLayoutRuntime.ts，并把 templateSections/detailShells 的组装迁出 ContractFormPage；不改页面行为和后端 facts`
+- active_commit: `4506780`
+- next_step: `Run ITER-2026-03-29-228, verify typecheck passes, then refresh the project detail sample and continue extracting field-state and action mapping logic`
+
 ### 2026-03-29T17:55:00Z
 - blocker_key: `generic_detail_renderer_refactor_v1`
 - layer_target: `frontend contract consumer`
