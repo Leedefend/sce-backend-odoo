@@ -13,16 +13,6 @@
       </template>
       <template #actions>
         <button
-          v-for="action in headerActionsVisible"
-          :key="`hdr-${action.key}`"
-          :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
-          :disabled="busy || !action.enabled"
-          :title="action.hint"
-          @click="runAction(action)"
-        >
-          {{ action.label }}
-        </button>
-        <button
           v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
           class="primary"
           :disabled="isQuickSubmitDisabled"
@@ -53,6 +43,33 @@
     </section>
 
     <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
+      <section v-if="pageOverviewItems.length" class="page-overview-strip">
+        <div v-for="item in pageOverviewItems" :key="item.label" class="page-overview-pill">
+          <span class="page-overview-pill__label">{{ item.label }}</span>
+          <strong class="page-overview-pill__value">{{ item.value }}</strong>
+        </div>
+      </section>
+      <section v-if="statusbarSteps.length" class="page-statusbar-strip">
+        <span
+          v-for="step in statusbarSteps"
+          :key="step.key"
+          :class="['page-statusbar-chip', { 'page-statusbar-chip--active': step.active }]"
+        >
+          {{ step.label }}
+        </span>
+      </section>
+      <section v-if="contractActionStrip.length" class="page-action-strip">
+        <button
+          v-for="action in contractActionStrip"
+          :key="`strip-${action.key}`"
+          :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
+          :disabled="busy || !action.enabled"
+          :title="action.hint"
+          @click="runAction(action)"
+        >
+          {{ action.label }}
+        </button>
+      </section>
       <StatusPanel
         v-if="sceneRuntimeStatusPanel"
         :title="sceneRuntimeStatusPanel.title"
@@ -279,6 +296,12 @@ type ContractAction = {
     scope?: string;
     debounce_ms?: number;
   };
+};
+
+type StatusbarStep = {
+  key: string;
+  label: string;
+  active: boolean;
 };
 
 type LayoutNode = {
@@ -640,6 +663,12 @@ const intakeMissingSummary = computed(() => {
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
+  if (String(model.value || '').trim() === 'project.project') {
+    const recordName = String(formData.name || '').trim();
+    if (recordName) return recordName;
+    if (recordId.value) return `项目 #${recordId.value}`;
+    return '项目表单';
+  }
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
   const actionName = String(session.currentAction?.name || '').trim();
@@ -655,6 +684,10 @@ const pageDisplayTitle = computed(() => {
 const pageDisplaySubtitle = computed(() => {
   if (isProjectCreatePage.value) {
     return '填写核心信息即可完成项目立项';
+  }
+  if (String(model.value || '').trim() === 'project.project') {
+    const statusLabel = activeStatusbarLabel.value;
+    return statusLabel ? `项目业务表单 · 当前阶段：${statusLabel}` : '项目业务表单';
   }
   if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseCompanyFormPage.value) {
     return '这里只维护企业启用所需的基础信息。保存后请继续进入组织架构。';
@@ -720,6 +753,44 @@ const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
   if (Boolean(formGovernance.value.suppress_contract_header_actions)) return [];
   return headerActions.value;
+});
+const contractActionStrip = computed(() => headerActionsVisible.value);
+const statusbarFieldName = computed(() => String(contract.value?.views?.form?.statusbar?.field || '').trim());
+const statusbarSteps = computed<StatusbarStep[]>(() => {
+  const fieldName = statusbarFieldName.value;
+  if (!fieldName) return [];
+  const descriptor = contract.value?.fields?.[fieldName];
+  const rows = Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+  const current = String(formData[fieldName] || '').trim();
+  return rows
+    .map((item) => {
+      const tuple = Array.isArray(item) ? item : [];
+      const key = String(tuple[0] || '').trim();
+      const label = String(tuple[1] || tuple[0] || '').trim();
+      if (!key || !label) return null;
+      return {
+        key,
+        label,
+        active: key === current,
+      };
+    })
+    .filter((item): item is StatusbarStep => Boolean(item));
+});
+const activeStatusbarLabel = computed(() => statusbarSteps.value.find((item) => item.active)?.label || '');
+const pageOverviewItems = computed(() => {
+  const items: Array<{ label: string; value: string }> = [];
+  if (recordId.value) items.push({ label: '记录ID', value: String(recordId.value) });
+  const manager = many2oneLabel('manager_id');
+  if (manager) items.push({ label: '项目经理', value: manager });
+  const owner = many2oneLabel('owner_id');
+  if (owner) items.push({ label: '业主单位', value: owner });
+  const startDate = String(formData.start_date || '').trim();
+  if (startDate) items.push({ label: '开工日期', value: startDate });
+  const contractNo = String(formData.contract_no || '').trim();
+  if (contractNo) items.push({ label: '项目编号', value: contractNo });
+  const statusLabel = activeStatusbarLabel.value;
+  if (statusLabel) items.push({ label: '项目状态', value: statusLabel });
+  return items.slice(0, 6);
 });
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
@@ -1024,6 +1095,14 @@ function relationIds(name: string): number[] {
 function many2oneValue(name: string) {
   const ids = relationIds(name);
   return ids.length ? String(ids[0]) : '';
+}
+
+function many2oneLabel(name: string) {
+  const ids = relationIds(name);
+  if (!ids.length) return '';
+  const matched = relationOptionsForField(name).find((item) => item.id === ids[0]);
+  if (matched?.label) return matched.label;
+  return relationKeyword(name) || `#${ids[0]}`;
 }
 
 function relationOptionsForField(name: string) {
@@ -3617,6 +3696,63 @@ watch(
 .block h3 {
   margin: 0 0 8px;
   font-size: 12px;
+}
+
+.page-overview-strip,
+.page-statusbar-strip,
+.page-action-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.page-overview-strip {
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.page-overview-pill {
+  min-width: 132px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  display: grid;
+  gap: 2px;
+}
+
+.page-overview-pill__label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.page-overview-pill__value {
+  font-size: 13px;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.page-statusbar-chip {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+.page-statusbar-chip--active {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.page-action-strip {
+  padding-bottom: 2px;
 }
 
 .chips {
