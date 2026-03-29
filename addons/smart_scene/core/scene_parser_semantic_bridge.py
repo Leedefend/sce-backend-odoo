@@ -39,6 +39,24 @@ def _coalesce_consumer_runtime(
     return {}
 
 
+def _build_consumer_runtime_assertions(
+    *,
+    consumer_runtime: Dict[str, Any],
+    semantic_runtime_state: Dict[str, Any],
+) -> Dict[str, Any]:
+    runtime_page_status = _text(semantic_runtime_state.get("page_status"))
+    consumer_page_status = _text(consumer_runtime.get("runtime_page_status") or consumer_runtime.get("page_status"))
+    runtime_current_state = _text(semantic_runtime_state.get("current_state"))
+    consumer_current_state = _text(consumer_runtime.get("current_state"))
+
+    return {
+        "consumer_runtime_present": bool(consumer_runtime),
+        "semantic_runtime_state_present": bool(semantic_runtime_state),
+        "page_status_aligned": (not runtime_page_status) or runtime_page_status == consumer_page_status,
+        "current_state_aligned": (not runtime_current_state) or runtime_current_state == consumer_current_state,
+    }
+
+
 def apply_scene_parser_semantic_bridge(
     contract: Dict[str, Any] | None,
     semantic_surface: Dict[str, Any] | None,
@@ -64,6 +82,10 @@ def apply_scene_parser_semantic_bridge(
         surface=surface,
         diagnostics=diagnostics,
         contract_v1=contract_v1,
+    )
+    consumer_runtime_assertions = _build_consumer_runtime_assertions(
+        consumer_runtime=consumer_runtime,
+        semantic_runtime_state=semantic_runtime_state,
     )
     if not (
         parser_contract
@@ -108,11 +130,13 @@ def apply_scene_parser_semantic_bridge(
         "validation_surface": validation_surface,
         "semantic_runtime_state": semantic_runtime_state,
         "consumer_runtime": consumer_runtime,
+        "consumer_runtime_assertions": consumer_runtime_assertions,
     }
     if semantic_runtime_state:
         diagnostics["semantic_runtime_state"] = semantic_runtime_state
     if consumer_runtime:
         diagnostics["consumer_runtime"] = consumer_runtime
+    diagnostics["consumer_runtime_assertions"] = consumer_runtime_assertions
     out["diagnostics"] = diagnostics
 
     if contract_v1:

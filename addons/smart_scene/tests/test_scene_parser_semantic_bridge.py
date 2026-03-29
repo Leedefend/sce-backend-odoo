@@ -76,6 +76,14 @@ class TestSceneParserSemanticBridge(unittest.TestCase):
             (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime") or {}).get("page_status"),
             "ready",
         )
+        self.assertEqual(
+            (((bridged.get("diagnostics") or {}).get("consumer_runtime_assertions")) or {}).get("page_status_aligned"),
+            True,
+        )
+        self.assertEqual(
+            ((((bridged.get("diagnostics") or {}).get("parser_semantic_surface")) or {}).get("consumer_runtime_assertions") or {}).get("current_state_aligned"),
+            False,
+        )
 
     def test_bridge_backfills_consumer_runtime_from_contract_diagnostics(self):
         contract = {
@@ -113,6 +121,14 @@ class TestSceneParserSemanticBridge(unittest.TestCase):
         self.assertEqual(
             (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime") or {}).get("page_status"),
             "readonly",
+        )
+        self.assertEqual(
+            (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime_assertions") or {}).get("page_status_aligned"),
+            True,
+        )
+        self.assertEqual(
+            ((((bridged.get("diagnostics") or {}).get("parser_semantic_surface")) or {}).get("consumer_runtime_assertions") or {}).get("consumer_runtime_present"),
+            True,
         )
 
 
