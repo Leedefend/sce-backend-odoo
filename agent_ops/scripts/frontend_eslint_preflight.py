@@ -24,8 +24,22 @@ def _parse_major(version_text: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def _load_preferred_node_major(frontend_dir: Path) -> int | None:
+    nvmrc = frontend_dir.parent / ".nvmrc"
+    if nvmrc.exists():
+        return _parse_major(nvmrc.read_text(encoding="utf-8").strip())
+
+    package_json = frontend_dir / "package.json"
+    if package_json.exists():
+        package = json.loads(package_json.read_text(encoding="utf-8"))
+        engines = package.get("engines") or {}
+        return _parse_major(str(engines.get("node") or ""))
+    return None
+
+
 def evaluate_frontend_eslint_env(frontend_dir: Path) -> dict[str, object]:
     package_json = frontend_dir / "package.json"
+    preferred_node_major = _load_preferred_node_major(frontend_dir)
     payload: dict[str, object] = {
         "frontend_dir": str(frontend_dir),
         "status": "PASS",
@@ -33,6 +47,9 @@ def evaluate_frontend_eslint_env(frontend_dir: Path) -> dict[str, object]:
         "reason_code": "",
         "node": {},
         "eslint": {},
+        "preferred_runtime": {
+            "node_major": preferred_node_major,
+        },
         "notes": [],
     }
 
@@ -80,8 +97,9 @@ def evaluate_frontend_eslint_env(frontend_dir: Path) -> dict[str, object]:
             "verify_mode": "blocked",
             "recommended_gate": "python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status BLOCKED --expect-route toolchain_alignment_required",
             "next_step": "align_frontend_runtime_or_eslint",
+            "preferred_node_major": preferred_node_major,
             "candidate_actions": [
-                "pin frontend verification to a Node 20/22 runtime",
+                f"use the pinned frontend Node {preferred_node_major} runtime before rerunning local verify" if preferred_node_major else "pin frontend verification to a supported Node runtime",
                 "or upgrade frontend eslint stack to a Node 24-safe path before product batches resume local frontend verify",
             ],
         }
@@ -93,6 +111,7 @@ def evaluate_frontend_eslint_env(frontend_dir: Path) -> dict[str, object]:
         "verify_mode": "local",
         "recommended_gate": "make verify.frontend.typecheck.strict",
         "next_step": "run_frontend_verify_targets",
+        "preferred_node_major": preferred_node_major,
         "candidate_actions": [
             "make verify.frontend.typecheck.strict",
             "make verify.frontend.build",
