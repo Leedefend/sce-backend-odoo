@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T21:20:00Z
+- blocker_key: `detail_cleanup_after_hierarchy_restore_v1`
+- layer_target: `frontend detail renderer`
+- module: `detailLayoutRuntime + DetailShellLayout`
+- reason: `结构已经基本达标，当前只剩空 group 壳和重复泛化标题这类低风险噪音；最后一轮只做收尾，不回头动后端或样式体系`
+- completed_step: `已冻结本轮范围为 frontend-only 收尾：新增 ITER-2026-03-29-245，仅移除空结构壳并压掉重复通用标签`
+- active_commit: `7b7cf0d`
+- next_step: `Implement ITER-2026-03-29-245 by filtering empty group shells and suppressing repeated generic labels, then run typecheck`
+
+### 2026-03-29T21:05:00Z
+- blocker_key: `nested_notebook_tab_shell_v1`
+- layer_target: `frontend detail renderer`
+- module: `detailLayoutRuntime`
+- reason: `树形消费链已经接上，但当前只会把根级 notebook 渲成 tabs，sheet 内嵌 notebook 仍被压成连续 sections；需要把嵌套 notebook 提升成独立 tab shell`
+- completed_step: `已冻结本轮范围为 frontend-only 小批次：新增 ITER-2026-03-29-244，只修 nested notebook -> tab shell，不动样式和后端契约`
+- active_commit: `7b7cf0d`
+- next_step: `Implement ITER-2026-03-29-244 by extracting nested notebook shells during detail tree rendering, then run typecheck`
+
+### 2026-03-29T20:35:00Z
+- blocker_key: `detail_renderer_hierarchy_preservation_v1`
+- layer_target: `frontend detail renderer`
+- module: `ContractFormPage + detailLayoutRuntime`
+- reason: `后端 governed form 已恢复 notebook/page/group 结构，但前端仍先压平 layout tree，导致 tabs 与 group 归属错位；下一步必须改成树形消费`
+- completed_step: `已冻结本轮范围为 frontend-only 结构修复：新增 ITER-2026-03-29-243，仅修详情页 layout tree 消费，不动样式和后端契约`
+- active_commit: `7b7cf0d`
+- next_step: `Implement ITER-2026-03-29-243 by replacing linear layoutSections assembly with hierarchy-preserving detail shell assembly, then run typecheck`
+
 ### 2026-03-29T18:30:00Z
 - blocker_key: `live_list_detail_gap_matrix_v1`
 - layer_target: `backend fact audit + frontend consumer audit`

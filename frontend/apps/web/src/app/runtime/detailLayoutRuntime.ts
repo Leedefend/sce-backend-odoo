@@ -20,6 +20,14 @@ export type LayoutSectionView = {
   fields: LayoutNodeView[];
 };
 
+export type LayoutTreeSectionView = {
+  key: string;
+  title: string;
+  kind: LayoutKind;
+  fields: LayoutNodeView[];
+  children: LayoutTreeSectionView[];
+};
+
 function resolveSectionShellClass(section: LayoutSectionView) {
   if (section.kind === 'sheet') return 'contract-form-shell--sheet';
   if (section.kind === 'group') return 'contract-form-shell--group';
@@ -102,16 +110,61 @@ export function buildDetailShellViews(options: {
   const { layoutSections, templateSections } = options;
   const shells: DetailShellView[] = [];
   let current: DetailShellView | null = null;
+  let notebookShell: DetailShellView | null = null;
+  let activeNotebookTab: DetailShellView['tabs'][number] | null = null;
 
   const pushShell = () => {
     if (current && current.sections.length) shells.push(current);
     current = null;
   };
+  const pushNotebookShell = () => {
+    if (notebookShell && notebookShell.tabs?.length) shells.push(notebookShell);
+    notebookShell = null;
+    activeNotebookTab = null;
+  };
+
+  const nestedSection = (section: DetailSectionView, kind: LayoutKind, shell: DetailShellView | null): DetailSectionView => ({
+    ...section,
+    eyebrow: kind === 'group' ? section.eyebrow : '',
+    summary: shell && shell.sections.length > 0 ? section.summary : '',
+    title: kind === 'sheet' && shell && shell.sections.length === 0 && shell.title ? '' : section.title,
+  });
 
   for (let index = 0; index < templateSections.length; index += 1) {
     const section = templateSections[index];
     const layout = layoutSections[index];
     const kind = layout?.kind || 'default';
+    if (kind === 'notebook') {
+      pushShell();
+      pushNotebookShell();
+      notebookShell = {
+        key: `detail_shell_${section.key}`,
+        title: section.title,
+        kind,
+        shellClass: resolveDetailShellClass(kind),
+        eyebrow: resolveDetailShellEyebrow(kind),
+        summary: '',
+        sections: [],
+        tabs: [],
+      };
+      activeNotebookTab = null;
+      continue;
+    }
+    if (kind === 'page' && notebookShell) {
+      activeNotebookTab = {
+        key: section.key,
+        label: section.title,
+        summary: section.summary,
+        sections: [{ ...section, title: '' }],
+      };
+      notebookShell.tabs?.push(activeNotebookTab);
+      continue;
+    }
+    if (notebookShell && activeNotebookTab) {
+      activeNotebookTab.sections.push(nestedSection(section, kind, null));
+      continue;
+    }
+    pushNotebookShell();
     const startsContainer = kind === 'sheet' || kind === 'page' || kind === 'notebook' || kind === 'default';
     if (!current || startsContainer) {
       pushShell();
@@ -125,14 +178,235 @@ export function buildDetailShellViews(options: {
         sections: [],
       };
     }
-    current.sections.push({
-      ...section,
-      eyebrow: kind === 'group' ? section.eyebrow : '',
-      summary: current.sections.length > 0 ? section.summary : '',
-      title: kind === 'sheet' && current.sections.length === 0 && current.title ? '' : section.title,
-    });
+    current.sections.push(nestedSection(section, kind, current));
   }
 
   pushShell();
+  pushNotebookShell();
+  return shells;
+}
+
+function createDetailSectionView(options: {
+  section: LayoutTreeSectionView;
+  visibleSectionFieldCount: (section: LayoutTreeSectionView) => number;
+  buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
+  preferNativeFormSurface: boolean;
+  projectCreateMode: boolean;
+  titleOverride?: string;
+}): DetailSectionView {
+  const {
+    section,
+    visibleSectionFieldCount,
+    buildSectionFields,
+    preferNativeFormSurface,
+    projectCreateMode,
+    titleOverride,
+  } = options;
+  const presentation = resolveTemplateSectionPresentation(section, { projectCreateMode });
+  return {
+    key: section.key,
+    title: titleOverride ?? presentation.title,
+    hint: presentation.hint,
+    tone: presentation.tone,
+    isAdvanced: presentation.isAdvanced,
+    shellClass: resolveSectionShellClass(section),
+    eyebrow: resolveSectionEyebrow(section, preferNativeFormSurface),
+    summary: resolveSectionSummary(section, visibleSectionFieldCount(section), preferNativeFormSurface),
+    fields: buildSectionFields(section),
+  };
+}
+
+function buildNestedSections(options: {
+  nodes: LayoutTreeSectionView[];
+  visibleSectionFieldCount: (section: LayoutTreeSectionView) => number;
+  buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
+  preferNativeFormSurface: boolean;
+  projectCreateMode: boolean;
+}): DetailSectionView[] {
+  const {
+    nodes,
+    visibleSectionFieldCount,
+    buildSectionFields,
+    preferNativeFormSurface,
+    projectCreateMode,
+  } = options;
+  const sections: DetailSectionView[] = [];
+  const hasRenderableChildren = (node: LayoutTreeSectionView): boolean => node.children.some(
+    (child) => child.kind !== 'notebook' && (child.fields.length > 0 || hasRenderableChildren(child)),
+  );
+  for (const node of nodes) {
+    if (node.kind === 'notebook') continue;
+    const includeSelf = node.fields.length > 0 || (node.kind === 'group' && hasRenderableChildren(node));
+    if (includeSelf) {
+      sections.push(createDetailSectionView({
+        section: node,
+        visibleSectionFieldCount,
+        buildSectionFields,
+        preferNativeFormSurface,
+        projectCreateMode,
+      }));
+    }
+    if (node.children.length) {
+      sections.push(...buildNestedSections({
+        nodes: node.children,
+        visibleSectionFieldCount,
+        buildSectionFields,
+        preferNativeFormSurface,
+        projectCreateMode,
+      }));
+    }
+  }
+  return sections;
+}
+
+function buildNotebookShell(node: LayoutTreeSectionView, options: {
+  visibleSectionFieldCount: (section: LayoutTreeSectionView) => number;
+  buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
+  preferNativeFormSurface: boolean;
+  projectCreateMode: boolean;
+}): DetailShellView | null {
+  const {
+    visibleSectionFieldCount,
+    buildSectionFields,
+    preferNativeFormSurface,
+    projectCreateMode,
+  } = options;
+  const tabs = node.children
+    .filter((child) => child.kind === 'page')
+    .map((page) => ({
+      key: page.key,
+      label: page.title,
+      summary: '',
+      sections: buildContainerSections({
+        container: page,
+        visibleSectionFieldCount,
+        buildSectionFields,
+        preferNativeFormSurface,
+        projectCreateMode,
+      }),
+    }))
+    .filter((tab) => tab.sections.length > 0);
+  if (!tabs.length) return null;
+  return {
+    key: `detail_shell_${node.key}`,
+    title: node.title,
+    kind: node.kind,
+    shellClass: resolveDetailShellClass(node.kind),
+    eyebrow: resolveDetailShellEyebrow(node.kind),
+    summary: '',
+    sections: [],
+    tabs,
+  };
+}
+
+function collectNestedNotebookShells(nodes: LayoutTreeSectionView[], options: {
+  visibleSectionFieldCount: (section: LayoutTreeSectionView) => number;
+  buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
+  preferNativeFormSurface: boolean;
+  projectCreateMode: boolean;
+}): DetailShellView[] {
+  const shells: DetailShellView[] = [];
+  for (const node of nodes) {
+    if (node.kind === 'notebook') {
+      const shell = buildNotebookShell(node, options);
+      if (shell) shells.push(shell);
+      continue;
+    }
+    if (node.children.length) {
+      shells.push(...collectNestedNotebookShells(node.children, options));
+    }
+  }
+  return shells;
+}
+
+function buildContainerSections(options: {
+  container: LayoutTreeSectionView;
+  visibleSectionFieldCount: (section: LayoutTreeSectionView) => number;
+  buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
+  preferNativeFormSurface: boolean;
+  projectCreateMode: boolean;
+}): DetailSectionView[] {
+  const {
+    container,
+    visibleSectionFieldCount,
+    buildSectionFields,
+    preferNativeFormSurface,
+    projectCreateMode,
+  } = options;
+  const sections: DetailSectionView[] = [];
+  if (container.fields.length > 0) {
+    sections.push(createDetailSectionView({
+      section: container,
+      visibleSectionFieldCount,
+      buildSectionFields,
+      preferNativeFormSurface,
+      projectCreateMode,
+      titleOverride: container.kind === 'page' || container.kind === 'sheet' || container.kind === 'header' ? '' : undefined,
+    }));
+  }
+  if (container.children.length) {
+    sections.push(...buildNestedSections({
+      nodes: container.children,
+      visibleSectionFieldCount,
+      buildSectionFields,
+      preferNativeFormSurface,
+      projectCreateMode,
+    }));
+  }
+  return sections;
+}
+
+export function buildDetailShellViewsFromTree(options: {
+  layoutTrees: LayoutTreeSectionView[];
+  visibleSectionFieldCount: (section: LayoutTreeSectionView) => number;
+  buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
+  preferNativeFormSurface: boolean;
+  projectCreateMode: boolean;
+}): DetailShellView[] {
+  const {
+    layoutTrees,
+    visibleSectionFieldCount,
+    buildSectionFields,
+    preferNativeFormSurface,
+    projectCreateMode,
+  } = options;
+  const shells: DetailShellView[] = [];
+  const shellOptions = {
+    visibleSectionFieldCount,
+    buildSectionFields,
+    preferNativeFormSurface,
+    projectCreateMode,
+  };
+
+  for (const node of layoutTrees) {
+    if (node.kind === 'notebook') {
+      const shell = buildNotebookShell(node, shellOptions);
+      if (!shell) continue;
+      shells.push(shell);
+      continue;
+    }
+
+    const sections = buildContainerSections({
+      container: node,
+      visibleSectionFieldCount,
+      buildSectionFields,
+      preferNativeFormSurface,
+      projectCreateMode,
+    });
+    if (!sections.length) continue;
+    shells.push({
+      key: `detail_shell_${node.key}`,
+      title: node.kind === 'default' ? '' : node.title,
+      kind: node.kind,
+      shellClass: resolveDetailShellClass(node.kind),
+      eyebrow: resolveDetailShellEyebrow(node.kind),
+      summary: '',
+      sections,
+    });
+    if (node.children.length) {
+      shells.push(...collectNestedNotebookShells(node.children, shellOptions));
+    }
+  }
+
   return shells;
 }
