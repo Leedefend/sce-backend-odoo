@@ -1,0 +1,59 @@
+task_id: ITER-2026-03-29-207
+title: Audit project form button parity chain
+type: product_task
+status: pending
+priority: high
+
+goal: Audit the full project form button parity chain so the next batch can reduce frontend button noise based on backend contract facts instead of ad-hoc UI trimming.
+user_visible_outcome:
+  - the next button cleanup batch can align project form actions with backend contract truth
+  - noisy or misplaced buttons are traced to a specific source layer before any frontend reduction work
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: frontend contract consumer
+  module: project form action parity audit
+  reason: The project form currently shows too many actions, and the likely mismatch is in the full contract-to-frontend button merge path rather than a single UI component.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-207.yaml
+    - python3 -m py_compile agent_ops/scripts/project_form_button_parity_audit.py
+    - bash -lc 'export E2E_BASE_URL=http://127.0.0.1:8070; python3 agent_ops/scripts/project_form_button_parity_audit.py --db sc_demo --login sc_fx_pm --password prod_like --expect-status PASS'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-207.yaml agent_ops/scripts/project_form_button_parity_audit.py agent_ops/reports/2026-03-29/report.ITER-2026-03-29-207.md agent_ops/state/task_results/ITER-2026-03-29-207.json
+
+depends_on:
+  - ITER-2026-03-29-206
+
+notes: "Audit-first batch: inspect live project form button sources and the current frontend merge path before changing action presentation."
