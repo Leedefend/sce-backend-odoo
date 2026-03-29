@@ -350,6 +350,51 @@ class TestSceneEngineSemantics(unittest.TestCase):
             True,
         )
 
+    def test_build_scene_contract_from_specs_projects_permission_verdicts_into_flags_and_reasons(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "permission_surface": {
+                    "visible": True,
+                    "allowed": True,
+                },
+                "semantic_page": {
+                    "permission_verdicts": {
+                        "read": {"allowed": True, "reason_code": ""},
+                        "create": {"allowed": False, "reason_code": "create_denied"},
+                        "write": {"allowed": False, "reason_code": "write_denied"},
+                        "unlink": {"allowed": False, "reason_code": "unlink_denied"},
+                        "execute": {"allowed": False, "reason_code": "execute_denied"},
+                    }
+                },
+            },
+        )
+
+        self.assertTrue((((payload.get("permissions") or {}).get("can_read"))))
+        self.assertFalse((((payload.get("permissions") or {}).get("can_edit"))))
+        self.assertFalse((((payload.get("permissions") or {}).get("can_create"))))
+        self.assertFalse((((payload.get("permissions") or {}).get("can_delete"))))
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("create"),
+            "create_denied",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("edit"),
+            "write_denied",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("delete"),
+            "unlink_denied",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("execute"),
+            "execute_denied",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

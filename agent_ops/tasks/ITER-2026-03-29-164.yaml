@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-164
+title: Drive smart_scene permissions from semantic page verdicts
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene consume semantic_page.permission_verdicts as fine-grained scene permission decisions instead of relying only on coarse permission_surface flags.
+user_visible_outcome:
+  - scene contracts now derive can_create and can_delete from semantic page verdicts
+  - scene contracts now expose action-specific disabled reasons from semantic page verdicts
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_engine
+  reason: smart_scene already consumes permission_surface, but semantic_page.permission_verdicts still contains finer-grained read/create/write/unlink/execute decisions that are not projected into final scene permissions. This iteration converts those verdicts into existing permission flags and disabled action reasons.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-164.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-164.yaml addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-163
+
+notes: "Batch acceleration: consume semantic_page permission verdicts as fine-grained scene permissions."

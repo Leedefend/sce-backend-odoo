@@ -116,6 +116,42 @@ def _semantic_page_closed_state(semantic_page: Dict[str, Any], record: Dict[str,
     return False, _text(verdict.get("reason_code"))
 
 
+def _apply_permission_verdicts(
+    *,
+    semantic_page: Dict[str, Any],
+    allowed: bool,
+    visible: bool,
+    disabled_actions: Dict[str, Any],
+) -> Dict[str, Any]:
+    verdicts = _as_dict(semantic_page.get("permission_verdicts"))
+    read_verdict = _as_dict(verdicts.get("read"))
+    create_verdict = _as_dict(verdicts.get("create"))
+    write_verdict = _as_dict(verdicts.get("write"))
+    unlink_verdict = _as_dict(verdicts.get("unlink"))
+    execute_verdict = _as_dict(verdicts.get("execute"))
+
+    can_read = visible and bool(read_verdict.get("allowed", True))
+    can_edit = allowed and bool(write_verdict.get("allowed", allowed))
+    can_create = allowed and bool(create_verdict.get("allowed", False))
+    can_delete = allowed and bool(unlink_verdict.get("allowed", False))
+
+    if not can_create and _text(create_verdict.get("reason_code")):
+        disabled_actions.setdefault("create", _text(create_verdict.get("reason_code")))
+    if not can_edit and _text(write_verdict.get("reason_code")):
+        disabled_actions.setdefault("edit", _text(write_verdict.get("reason_code")))
+    if not can_delete and _text(unlink_verdict.get("reason_code")):
+        disabled_actions.setdefault("delete", _text(unlink_verdict.get("reason_code")))
+    if not bool(execute_verdict.get("allowed", True)) and _text(execute_verdict.get("reason_code")):
+        disabled_actions.setdefault("execute", _text(execute_verdict.get("reason_code")))
+
+    return {
+        "can_read": can_read,
+        "can_edit": can_edit,
+        "can_create": can_create,
+        "can_delete": can_delete,
+    }
+
+
 def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) -> Dict[str, Any]:
     payload = _as_dict(surface)
     permission_surface = _as_dict(payload.get("permission_surface"))
@@ -165,9 +201,17 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
     if _workflow_surface_nonempty(workflow_surface):
         if visible and allowed and not active_transitions:
             disabled_actions["workflow"] = "action_permission_workflow_gate"
+    flags = _apply_permission_verdicts(
+        semantic_page=semantic_page,
+        allowed=allowed,
+        visible=visible,
+        disabled_actions=disabled_actions,
+    )
     return {
-        "can_read": visible,
-        "can_edit": allowed,
+        "can_read": flags["can_read"],
+        "can_edit": flags["can_edit"],
+        "can_create": flags["can_create"],
+        "can_delete": flags["can_delete"],
         "disabled_actions": disabled_actions,
         "record_state_summary": record_state_summary,
     }
