@@ -147,14 +147,14 @@ def build_scene_contract_from_specs(
     nav_ref: Dict[str, Any] | None = None,
     semantic_surface: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint, semantic_surface=semantic_surface or {})
+    semantic_payload = dict(semantic_surface or {})
+    semantic_payload["record"] = dict(record or {})
+    resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint, semantic_surface=semantic_payload)
     mapped_specs = map_zone_specs_to_blocks(zone_specs)
     ordered_specs = apply_zone_priority(mapped_specs, zone_order=zone_order)
     diagnostics_payload = dict(diagnostics or {})
     diagnostics_payload.setdefault("scene_engine", "smart_scene.core.scene_engine")
     diagnostics_payload.setdefault("zone_specs_mapped", ordered_specs)
-    semantic_payload = dict(semantic_surface or {})
-    semantic_payload["record"] = dict(record or {})
     derived_permissions = _derive_permissions_from_semantic_surface(semantic_payload)
     return build_scene_contract(
         scene=resolved.get("scene") or {},
