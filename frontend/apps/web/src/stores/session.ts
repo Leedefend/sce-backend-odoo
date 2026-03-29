@@ -419,11 +419,8 @@ export const useSessionStore = defineStore('session', {
           this.pageContracts = parsed.pageContracts ?? {};
           this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
           this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
-          if (this.sceneReadyContractV1?.scenes?.length) {
-            setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
-          } else if (this.scenes.length) {
-            setSceneRegistry(this.scenes);
-          }
+          // Only hydrate the runtime registry from fresh startup responses.
+          // Cached scene contracts can lag behind the current frontend validator.
           this.lastTraceId = parsed.lastTraceId ?? '';
           this.lastIntent = parsed.lastIntent ?? '';
           this.lastLatencyMs = parsed.lastLatencyMs ?? null;
@@ -722,7 +719,8 @@ export const useSessionStore = defineStore('session', {
             console.log('   菜单数量:', result.nav.length);
             console.log('   前3个菜单:');
             result.nav.slice(0, 3).forEach((item, index) => {
-              console.log(`     [${index}] name: "${item.name}", xmlid: "${item.xmlid || 'N/A'}", id: ${item.id || 'N/A'}`);
+              const displayName = String(item.name || item.title || item.label || item.key || 'Unnamed');
+              console.log(`     [${index}] name: "${displayName}", xmlid: "${item.xmlid || 'N/A'}", id: ${item.id || 'N/A'}`);
             });
           }
         } else {
@@ -1187,7 +1185,17 @@ function isUnifiedHomePath(path: string): boolean {
 function addKeys(node: NavNode, index = 0): NavNode {
   const key = (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id || index}`;
   const children = node.children?.map((child, idx) => addKeys(child, idx)) ?? [];
-  return { ...node, key, children };
+  const title = String(node.title || node.label || node.name || key);
+  const label = String(node.label || node.title || node.name || key);
+  const name = String(node.name || node.title || node.label || key);
+  return {
+    ...node,
+    key,
+    title,
+    label,
+    name,
+    children,
+  };
 }
 
 function filterExpandedKeys(tree: NavNode[], keys: string[]): string[] {

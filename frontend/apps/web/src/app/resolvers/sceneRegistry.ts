@@ -70,8 +70,10 @@ export const DEFAULT_SCENE_LAYOUT: SceneLayout = {
   sidebar: 'fixed',
   header: 'full',
 };
+const SCENE_REGISTRY_RUNTIME_VERSION = '2026-03-29-restore-cutoff';
 
 let sceneRegistry: Scene[] = [];
+let sceneAliases: Record<string, string> = {};
 let errors: Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }> = [];
 
 const SCENE_ROUTE_OVERRIDES: Record<string, string> = {
@@ -79,6 +81,8 @@ const SCENE_ROUTE_OVERRIDES: Record<string, string> = {
 };
 
 const NATIVE_UI_CONTRACT_ROUTE_PREFIXES = ['/a/', '/f/', '/r/'];
+const UNIFIED_HOME_SCENE_KEYS = new Set(['workspace.home', 'portal.dashboard', 'my_work.workspace']);
+const UNIFIED_HOME_ROUTES = new Set(['/', '/my-work', '/s/workspace.home', '/s/portal.dashboard']);
 
 function resolveSceneRoute(code: string, route: string): string {
   const override = SCENE_ROUTE_OVERRIDES[code];
@@ -107,6 +111,55 @@ function normalizeSceneLayout(layout?: Partial<SceneLayout> | null): SceneLayout
   };
 }
 
+function isUnifiedHomeSceneKey(sceneKey: string): boolean {
+  return UNIFIED_HOME_SCENE_KEYS.has(String(sceneKey || '').trim().toLowerCase());
+}
+
+function isUnifiedHomeRoute(route: string): boolean {
+  return UNIFIED_HOME_ROUTES.has(String(route || '').trim().toLowerCase());
+}
+
+function choosePreferredScene(existing: Scene, incoming: Scene): Scene {
+  if (existing.key === 'workspace.home' || incoming.key !== 'workspace.home') {
+    return existing;
+  }
+  return incoming;
+}
+
+function dedupeSceneAliases(source: Scene[]): { scenes: Scene[]; aliases: Record<string, string> } {
+  const aliases: Record<string, string> = {};
+  const deduped: Scene[] = [];
+  const routeIndex = new Map<string, number>();
+
+  source.forEach((scene) => {
+    const route = String(scene.route || '').trim().toLowerCase();
+    const existingIndex = routeIndex.get(route);
+    if (existingIndex === undefined) {
+      deduped.push(scene);
+      routeIndex.set(route, deduped.length - 1);
+      return;
+    }
+
+    const existing = deduped[existingIndex];
+    const homeAliasCollision =
+      isUnifiedHomeRoute(route)
+      || isUnifiedHomeSceneKey(existing.key)
+      || isUnifiedHomeSceneKey(scene.key);
+
+    if (!homeAliasCollision) {
+      deduped.push(scene);
+      return;
+    }
+
+    const preferred = choosePreferredScene(existing, scene);
+    const dropped = preferred.key === existing.key ? scene : existing;
+    deduped[existingIndex] = preferred;
+    aliases[dropped.key] = preferred.key;
+  });
+
+  return { scenes: deduped, aliases };
+}
+
 function coerceSceneSource(source: Scene[]) {
   return source
     .map((scene) => {
@@ -116,6 +169,8 @@ function coerceSceneSource(source: Scene[]) {
       const raw = scene as unknown as {
         code?: string;
         name?: string;
+        title?: string;
+        label?: string;
         route?: string;
         target?: SceneTarget;
         layout?: Partial<SceneLayout>;
@@ -143,7 +198,7 @@ function coerceSceneSource(source: Scene[]) {
             : { route };
         return {
           key: raw.code,
-          label: raw.name || raw.code,
+          label: raw.name || raw.title || raw.label || raw.code,
           icon: raw.icon,
           route,
           target,
@@ -163,12 +218,24 @@ function coerceSceneSource(source: Scene[]) {
 
 function buildSceneRegistry(source: Scene[]) {
   const normalized = coerceSceneSource(source);
-  const validation = validateSceneRegistry(normalized as Scene[]);
+  const deduped = dedupeSceneAliases(normalized as Scene[]);
+  const validation = validateSceneRegistry(deduped.scenes as Scene[]);
   const nextErrors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
   if (nextErrors.length && import.meta.env.DEV) {
+    const flattened = nextErrors.map((item) => ({
+      index: item.index,
+      key: item.key ?? null,
+      route: item.route ?? null,
+      issues: [...item.issues],
+    }));
     // eslint-disable-next-line no-console
-    console.warn('[scene-registry] invalid scenes detected', nextErrors);
+    console.warn('[scene-registry] invalid scenes detected', {
+      version: SCENE_REGISTRY_RUNTIME_VERSION,
+      count: flattened.length,
+      issues: flattened,
+    });
   }
+  sceneAliases = deduped.aliases;
   errors = nextErrors;
   sceneRegistry = validation.validScenes as Scene[];
   return sceneRegistry;
@@ -212,12 +279,14 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
     : [];
 
   const sceneKey = asText(sceneRow.key || pageRow.scene_key);
-  if (!sceneKey) {
+  const fallbackSceneKey = asText(sceneRow.scene_key || pageRow.key || metaRow.scene_key);
+  const resolvedSceneKey = sceneKey || fallbackSceneKey;
+  if (!resolvedSceneKey) {
     return null;
   }
-  const defaultRoute = `/s/${sceneKey}`;
-  const resolvedRoute = resolveSceneRoute(sceneKey, asText(pageRow.route) || asText(targetRow.route) || defaultRoute);
-  const route = normalizeDeliverySceneRoute(sceneKey, resolvedRoute);
+  const defaultRoute = `/s/${resolvedSceneKey}`;
+  const resolvedRoute = resolveSceneRoute(resolvedSceneKey, asText(pageRow.route) || asText(targetRow.route) || defaultRoute);
+  const route = normalizeDeliverySceneRoute(resolvedSceneKey, resolvedRoute);
   const actionId = Number(targetRow.action_id || 0);
   const menuId = Number(targetRow.menu_id || 0);
   const requiredCapabilities = Array.isArray(permissionRow.required_capabilities)
@@ -250,8 +319,8 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
   };
 
   return {
-    key: sceneKey,
-    label: asText(sceneRow.title) || sceneKey,
+    key: resolvedSceneKey,
+    label: asText(sceneRow.title || sceneRow.label || pageRow.title || pageRow.label || metaRow.label) || resolvedSceneKey,
     route,
     target,
     validation_surface: validationRow,
@@ -296,7 +365,9 @@ export function setSceneRegistryFromSceneReadyContract(contract?: { scenes?: unk
 }
 
 export function getSceneByKey(key: string) {
-  return sceneRegistry.find((scene) => scene.key === key) || null;
+  const normalizedKey = String(key || '').trim();
+  const resolvedKey = sceneAliases[normalizedKey] || normalizedKey;
+  return sceneRegistry.find((scene) => scene.key === resolvedKey) || null;
 }
 
 export function getSceneRegistry() {

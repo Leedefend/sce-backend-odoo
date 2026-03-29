@@ -145,8 +145,9 @@ onMounted(() => {
     if (props.nodes.length > 0) {
       console.info('[MenuTree] First node:', {
         key: props.nodes[0].key,
-        name: props.nodes[0].name,
+        name: props.nodes[0].name || props.nodes[0].title || props.nodes[0].label,
         label: props.nodes[0].label,
+        title: props.nodes[0].title,
         menu_id: props.nodes[0].menu_id,
         children: props.nodes[0].children?.length || 0,
         meta: props.nodes[0].meta
