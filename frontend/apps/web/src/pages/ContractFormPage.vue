@@ -232,10 +232,9 @@ import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sce
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import {
-  buildDetailSectionViews,
-  buildDetailShellViews,
-  type LayoutSectionView,
+  buildDetailShellViewsFromTree,
   type LayoutNodeView,
+  type LayoutTreeSectionView,
 } from '../app/runtime/detailLayoutRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
@@ -281,7 +280,7 @@ type LayoutNode = LayoutNodeView & {
   descriptor?: FieldDescriptor;
 };
 
-type LayoutSection = LayoutSectionView;
+type LayoutTreeSection = LayoutTreeSectionView;
 
 type RelationOption = {
   id: number;
@@ -2295,44 +2294,141 @@ function dividerDefaultLabel(kind: LayoutNode['kind']) {
   return '基础信息';
 }
 
-const layoutSections = computed<LayoutSection[]>(() => {
-  const sections: LayoutSection[] = [];
-  let index = 0;
-  const createSection = (title: string, kind: LayoutSection['kind']) => ({
-    key: `section_${kind}_${index++}`,
-    title,
-    kind,
+const layoutTrees = computed<LayoutTreeSection[]>(() => {
+  const fieldMap = contract.value?.fields || {};
+  const order = contract.value?.views?.form?.layout || [];
+  const fieldGroups = contract.value?.permissions?.field_groups || {};
+  const used = new Set<string>();
+  const roots: LayoutTreeSection[] = [];
+  const rootDefault: LayoutTreeSection = {
+    key: 'layout_root_default',
+    title: coreFieldsLabel.value || '核心信息',
+    kind: 'default',
     fields: [],
-  });
-  let current = createSection(coreFieldsLabel.value || '核心信息', 'default');
+    children: [],
+  };
+  const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
+  const structuralKinds = new Set<LayoutTreeSection['kind']>(['header', 'sheet', 'group', 'notebook', 'page']);
 
-  for (const node of layoutNodes.value) {
-    if (node.kind === 'field') {
-      current.fields.push(node);
-      continue;
-    }
-    if (current.fields.length) {
-      sections.push(current);
-    }
-    const title = String(node.label || '').trim() || dividerDefaultLabel(node.kind);
-    current = createSection(title, node.kind);
+  function buildFieldNode(nameRaw: unknown, viewLabelRaw?: unknown): LayoutNode | null {
+    const name = String(nameRaw || '').trim();
+    if (!name || used.has(name)) return null;
+    const groups = fieldGroups[name]?.groups_xmlids;
+    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return null;
+    const descriptor = fieldMap[name];
+    if (!descriptor) return null;
+    const resolved = evaluateFieldPolicy(
+      contract.value,
+      name,
+      {
+        required: Boolean(descriptor?.required),
+        readonly: Boolean(descriptor?.readonly),
+      },
+      policyContext.value,
+    );
+    if (!resolved.visible) return null;
+    used.add(name);
+    const state = runtimeState(name);
+    const viewLabel = String(viewLabelRaw || '').trim();
+    return {
+      key: `tree_field_${name}`,
+      kind: 'field',
+      name,
+      label: viewLabel || String(descriptor?.string || name),
+      readonly: Boolean(
+        resolved.readonly
+        || state.readonly
+        || (recordId.value ? !rights.value.write : !rights.value.create)
+        || !canPersistBySceneRuntime.value
+      ),
+      required: Boolean(resolved.required || state.required),
+      descriptor,
+    };
   }
 
-  if (current.fields.length) {
-    sections.push(current);
+  function appendField(parent: LayoutTreeSection | null, field: LayoutNode | null) {
+    if (!field) return;
+    if (parent) {
+      parent.fields.push(field);
+      return;
+    }
+    rootDefault.fields.push(field);
   }
 
-  const visible = sections.filter((section) => section.fields.some((node) => isFieldVisible(node.name)));
-  if (visible.length) return visible;
-  return sections.filter((section) => section.fields.length);
+  function walk(nodeRaw: unknown, parent: LayoutTreeSection | null, parentKey: string) {
+    if (!nodeRaw || typeof nodeRaw !== 'object') return;
+    const node = nodeRaw as Record<string, unknown>;
+    const kind = String(node.type || '').trim().toLowerCase();
+    if (!kind) return;
+    const label = String(node.string || node.label || '').trim();
+    const nodeKey = `${parentKey}_${kind}_${String(node.name || label || roots.length)}`;
+    if (kind === 'field') {
+      const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
+        ? (node.fieldInfo as Record<string, unknown>)
+        : null;
+      appendField(parent, buildFieldNode(node.name, node.string || node.label || fieldInfo?.label));
+      return;
+    }
+    const nextParent = structuralKinds.has(kind as LayoutTreeSection['kind'])
+      ? {
+        key: `tree_${nodeKey}`,
+        title: label || dividerDefaultLabel(kind as LayoutNode['kind']),
+        kind: kind as LayoutTreeSection['kind'],
+        fields: [],
+        children: [],
+      }
+      : parent;
+    if (nextParent && nextParent !== parent) {
+      if (parent) parent.children.push(nextParent);
+      else roots.push(nextParent);
+    }
+    containerKeys.forEach((key) => {
+      const children = node[key];
+      if (!Array.isArray(children)) return;
+      children.forEach((child, index) => walk(child, nextParent, `${nodeKey}_${key}_${index}`));
+    });
+  }
+
+  if (Array.isArray(order)) {
+    order.forEach((item, index) => walk(item, null, `root_${index}`));
+  }
+
+  const hasVisibleField = (nodes: LayoutTreeSection[]): boolean => nodes.some(
+    (node) => node.fields.length > 0 || hasVisibleField(node.children),
+  );
+
+  if (!hasVisibleField(roots) && rootDefault.fields.length === 0) {
+    const fallback = contractVisibleFields.value.length
+      ? contractVisibleFields.value
+      : [...coreFieldNames.value, ...advancedFieldNames.value];
+    const fallbackFields = fallback.length ? fallback : Object.keys(fieldMap).slice(0, 16);
+    fallbackFields.forEach((name) => appendField(null, buildFieldNode(name)));
+  }
+
+  if (rootDefault.fields.length > 0) roots.unshift(rootDefault);
+
+  const prune = (section: LayoutTreeSection): LayoutTreeSection | null => {
+    const children = section.children
+      .map((child) => prune(child))
+      .filter((child): child is LayoutTreeSection => Boolean(child));
+    if (!section.fields.length && !children.length && section.kind === 'group') return null;
+    return {
+      ...section,
+      children,
+    };
+  };
+
+  return roots
+    .map((section) => prune(section))
+    .filter((section): section is LayoutTreeSection => Boolean(section));
 });
 
-function visibleSectionFields(section: LayoutSection) {
+function visibleTreeSectionFields(section: LayoutTreeSection) {
   return section.fields.filter((node) => isFieldVisible(node.name));
 }
 
-function sectionTemplateFields(section: LayoutSection): FormSectionFieldSchema[] {
-  return buildSectionFieldSchemas(visibleSectionFields(section));
+function treeSectionTemplateFields(section: LayoutTreeSection): FormSectionFieldSchema[] {
+  return buildSectionFieldSchemas(visibleTreeSectionFields(section));
 }
 
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
@@ -2354,17 +2450,12 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
 });
 
-const templateSections = computed<DetailSectionView[]>(() => buildDetailSectionViews({
-  layoutSections: layoutSections.value,
-  visibleSectionFieldCount: (section) => visibleSectionFields(section).length,
-  buildSectionFields: sectionTemplateFields,
+const detailShells = computed<DetailShellView[]>(() => buildDetailShellViewsFromTree({
+  layoutTrees: layoutTrees.value,
+  visibleSectionFieldCount: (section) => visibleTreeSectionFields(section).length,
+  buildSectionFields: treeSectionTemplateFields,
   preferNativeFormSurface: preferNativeFormSurface.value,
   projectCreateMode: isProjectCreatePage.value,
-}));
-
-const detailShells = computed<DetailShellView[]>(() => buildDetailShellViews({
-  layoutSections: layoutSections.value,
-  templateSections: templateSections.value,
 }));
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {

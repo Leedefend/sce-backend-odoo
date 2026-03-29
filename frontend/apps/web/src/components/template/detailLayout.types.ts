@@ -34,4 +34,10 @@ export type DetailShellView = {
   eyebrow: string;
   summary: string;
   sections: DetailSectionView[];
+  tabs?: Array<{
+    key: string;
+    label: string;
+    summary: string;
+    sections: DetailSectionView[];
+  }>;
 };

@@ -8,7 +8,51 @@
         </div>
         <span v-if="shell.summary" class="contract-detail-shell__summary">{{ shell.summary }}</span>
       </div>
-      <div :class="['contract-detail-shell__body', { 'contract-detail-shell__body--stacked': shell.sections.length <= 1 }]">
+      <div
+        v-if="shell.tabs?.length"
+        class="contract-detail-tabs"
+      >
+        <div class="contract-detail-tabs__rail">
+          <button
+            v-for="tab in shell.tabs"
+            :key="tab.key"
+            class="contract-detail-tabs__tab"
+            :class="{ 'contract-detail-tabs__tab--active': activeTabKey(shell) === tab.key }"
+            type="button"
+            @click="setActiveTab(shell.key, tab.key)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+        <div class="contract-detail-tabs__panel">
+          <section
+            v-for="section in activeTabSections(shell)"
+            :key="section.key"
+            :class="['contract-form-shell', section.shellClass]"
+          >
+            <div v-if="showTabSectionMeta(shell, section)" class="contract-form-shell__meta">
+              <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
+              <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
+            </div>
+            <FormSectionTemplate
+              :title="tabSectionTitle(shell, section)"
+              :hint="tabSectionHint(shell, section)"
+              :tone="section.tone"
+              :columns="2"
+              :fields="section.fields"
+              @field-change="$emit('field-change', $event)"
+            >
+              <template #readonly="{ field }">
+                <FieldValue :value="field.value" :field="field.descriptor" />
+              </template>
+              <template #fallback="{ field }">
+                <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
+              </template>
+            </FormSectionTemplate>
+          </section>
+        </div>
+      </div>
+      <div v-else :class="['contract-detail-shell__body', { 'contract-detail-shell__body--stacked': shell.sections.length <= 1 }]">
         <section
           v-for="section in shell.sections"
           :key="section.key"
@@ -45,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import { reactive } from 'vue';
 import FieldValue from '../FieldValue.vue';
 import FormSectionTemplate from './FormSection.vue';
 import RelationFallbackRenderer from './RelationFallbackRenderer.vue';
@@ -65,8 +110,52 @@ defineEmits<{
   (e: 'toggle-advanced'): void;
 }>();
 
+const tabState = reactive<Record<string, string>>({});
+
 function showAdvancedToggle(section: DetailSectionView) {
   return props.isProjectCreatePage && section.isAdvanced;
+}
+
+function activeTabKey(shell: DetailShellView) {
+  const fallback = shell.tabs?.[0]?.key || '';
+  return tabState[shell.key] || fallback;
+}
+
+function setActiveTab(shellKey: string, tabKey: string) {
+  tabState[shellKey] = tabKey;
+}
+
+function activeTabSections(shell: DetailShellView) {
+  const activeKey = activeTabKey(shell);
+  return shell.tabs?.find((tab) => tab.key === activeKey)?.sections || shell.tabs?.[0]?.sections || [];
+}
+
+function activeTabLabel(shell: DetailShellView) {
+  const activeKey = activeTabKey(shell);
+  return shell.tabs?.find((tab) => tab.key === activeKey)?.label || shell.tabs?.[0]?.label || '';
+}
+
+function tabSectionTitle(shell: DetailShellView, section: DetailSectionView) {
+  const title = String(section.title || '').trim();
+  if (!title) return '';
+  if (title === activeTabLabel(shell)) return '';
+  if (title === '信息分组') return '';
+  if (title === '分组') return '';
+  if (section.fields.length <= 2 && section.fields[0]?.label === title) return '';
+  return title;
+}
+
+function tabSectionHint(shell: DetailShellView, section: DetailSectionView) {
+  const hint = String(section.hint || '').trim();
+  if (!hint) return '';
+  const title = tabSectionTitle(shell, section);
+  if (!title) return '';
+  if (hint.toLowerCase() === title.toLowerCase()) return '';
+  return hint;
+}
+
+function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) {
+  return Boolean(tabSectionTitle(shell, section) && (section.eyebrow || section.summary));
 }
 </script>
 
@@ -137,6 +226,41 @@ function showAdvancedToggle(section: DetailSectionView) {
 
 .contract-detail-shell__body--stacked {
   grid-template-columns: 1fr;
+}
+
+.contract-detail-tabs {
+  display: grid;
+  gap: 14px;
+}
+
+.contract-detail-tabs__rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.contract-detail-tabs__tab {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contract-detail-tabs__tab--active {
+  border-color: #0f172a;
+  background: #0f172a;
+  color: #fff;
+}
+
+.contract-detail-tabs__panel {
+  display: grid;
+  gap: 12px;
 }
 
 .contract-form-shell {
