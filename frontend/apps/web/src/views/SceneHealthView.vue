@@ -19,6 +19,8 @@
           v-for="action in headerActions"
           :key="action.key"
           class="secondary"
+          :disabled="action.disabled"
+          :title="action.disabledReason || ''"
           @click="executeHeaderAction(action.key)"
         >
           {{ action.label }}
@@ -194,7 +196,13 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'health request failed')));
 const headerActions = computed(() => {
   if (pageGlobalActions.value.length) return pageGlobalActions.value;
-  return [{ key: 'refresh_page', label: pageActionText('refresh_page', 'Refresh'), intent: 'api.data' }];
+  return [{
+    key: 'refresh_page',
+    label: pageActionText('refresh_page', 'Refresh'),
+    intent: 'api.data',
+    disabled: false,
+    disabledReason: '',
+  }];
 });
 
 const autoDegradeLabel = computed(() => {
@@ -328,6 +336,10 @@ async function loadHealth() {
 }
 
 async function executeHeaderAction(actionKey: string) {
+  const matched = headerActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   const handled = await executePageContractAction({
     actionKey,
     router,

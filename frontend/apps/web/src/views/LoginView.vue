@@ -28,7 +28,8 @@
             v-for="action in headerActions"
             :key="`login-header-${action.key}`"
             class="ghost"
-            :disabled="loading"
+            :disabled="loading || action.disabled"
+            :title="action.disabledReason || ''"
             @click="executeHeaderAction(action.key)"
           >
             {{ action.label || action.key }}
@@ -196,6 +197,10 @@ async function onSubmit() {
 }
 
 async function executeHeaderAction(actionKey: string) {
+  const matched = headerActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   const handled = await executePageContractAction({
     actionKey,
     router,
