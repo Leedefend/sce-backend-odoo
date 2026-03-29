@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-168
+title: Jointly adjudicate smart_scene action gates and permission verdicts
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene derive final action availability from action row gate metadata, permission verdicts, and existing disabled action reasons in one pass.
+user_visible_outcome:
+  - enabled semantic actions are now filtered out of final scene action groups when action gate metadata or permission verdicts block them
+  - scene permissions now preserve concrete action-level disable reasons even when the action row itself remains enabled=true
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_engine
+  reason: smart_scene already projects explicit disabled actions and semantic overlay groups, but it still under-consumes action row gate metadata and permission verdicts when action rows stay enabled=true. This iteration performs a unified action availability adjudication across direct action reasons, action gate metadata, and scene-level permission verdicts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-168.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-168.yaml addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-167
+
+notes: "Batch acceleration: unify action row gate metadata and permission verdicts into final smart_scene action availability."
