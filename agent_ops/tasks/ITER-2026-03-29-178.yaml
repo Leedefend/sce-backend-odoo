@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-178
+title: Refresh consumer diagnostics after smart_scene parser bridge
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene contract builder refresh consumer-facing runtime diagnostics after parser bridge so bridge assertions flow into export diagnostics.
+user_visible_outcome:
+  - consumer_semantics.runtime now reflects bridge-level consumer runtime assertions
+  - consumer_runtime alias is refreshed after parser bridge projection rather than remaining a pre-bridge snapshot
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_contract_builder
+  reason: parser bridge now emits consumer runtime assertions, but consumer-facing diagnostics are still computed before bridge projection. This iteration refreshes consumer diagnostics after bridge so export-side diagnostics stay aligned with bridge output.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-178.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_contract_builder.py addons/smart_scene/tests/test_scene_contract_builder.py
+    - python3 addons/smart_scene/tests/test_scene_contract_builder.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-178.yaml addons/smart_scene/core/scene_contract_builder.py addons/smart_scene/tests/test_scene_contract_builder.py
+
+depends_on:
+  - ITER-2026-03-29-177
+
+notes: "Batch acceleration: refresh consumer-facing diagnostics after parser bridge projection."
