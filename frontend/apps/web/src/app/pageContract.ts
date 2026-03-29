@@ -15,7 +15,13 @@ function asTextList(value: unknown): string[] {
 
 type SectionTag = 'header' | 'section' | 'details' | 'div' | '';
 type SectionConfig = { enabled: boolean; order: number; tag: SectionTag; open: boolean | null };
-type GlobalActionConfig = { key: string; label: string; intent: string };
+type GlobalActionConfig = {
+  key: string;
+  label: string;
+  intent: string;
+  disabled: boolean;
+  disabledReason: string;
+};
 
 function contractLooksStale(pageKey: string, contract: unknown): boolean {
   const normalizedPageKey = asText(pageKey).trim().toLowerCase();
@@ -198,6 +204,17 @@ export function usePageContract(pageKey: string) {
     });
     return map;
   });
+  const sceneDisabledActions = computed<Record<string, string>>(() => {
+    const permissions = asRecord(sceneContractV1.value.permissions);
+    const disabled = asRecord(permissions.disabled_actions);
+    const map: Record<string, string> = {};
+    Object.entries(disabled).forEach(([key, value]) => {
+      const reason = asText(value);
+      if (!key || !reason) return;
+      map[key] = reason;
+    });
+    return map;
+  });
   const orchestrationActions = computed<Record<string, unknown>>(() => {
     const raw = contract.value?.page_orchestration_v1?.action_schema;
     if (!raw || typeof raw !== 'object') return {};
@@ -232,7 +249,13 @@ export function usePageContract(pageKey: string) {
         if (!actionVisible(key)) return;
         const label = asText(row.label) || actionText(key, key);
         const intent = asText(row.intent) || actionIntent(key, 'ui.contract');
-        result.push({ key, label, intent });
+        result.push({
+          key,
+          label,
+          intent,
+          disabled: Boolean(sceneDisabledActions.value[key]),
+          disabledReason: sceneDisabledActions.value[key] || '',
+        });
       });
       return result;
     }
@@ -248,6 +271,8 @@ export function usePageContract(pageKey: string) {
           key,
           label: asText(row.label) || actionText(key, key),
           intent: asText(row.intent) || actionIntent(key, 'ui.contract'),
+          disabled: Boolean(sceneDisabledActions.value[key]),
+          disabledReason: sceneDisabledActions.value[key] || '',
         });
       });
     });
