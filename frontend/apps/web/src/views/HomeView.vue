@@ -72,6 +72,8 @@
               v-for="action in heroQuickActions"
               :key="`hero-action-${action.key}`"
               class="my-work-btn"
+              :disabled="action.disabled"
+              :title="action.disabledReason || ''"
               @click="executeHeroAction(action.key)"
             >
               {{ action.label }}
@@ -1939,6 +1941,10 @@ function openEnterpriseEnablementTarget(target: { action_id?: number; menu_id?: 
 }
 
 async function executeHeroAction(actionKey: string) {
+  const matched = heroQuickActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   void trackUsageEvent('workspace.nav_click', {
     target: actionKey,
     from: 'workspace.home',
