@@ -14,7 +14,6 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatche
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.menu_dispatcher import MenuDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.utils.contract_governance import (
-    apply_contract_governance,
     resolve_contract_mode,
     resolve_contract_surface,
 )
@@ -175,10 +174,10 @@ class UiContractHandler(BaseIntentHandler):
             return res
 
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
-        data = self._inject_render_hints(data or {}, p)
-        data = apply_contract_governance(
+        data = ContractService(self.env).shape_handler_delivery_data(
             data or {},
-            contract_mode,
+            payload=p,
+            contract_mode=contract_mode,
             contract_surface=contract_surface,
             source_mode=source_mode,
             inject_contract_mode=False,
@@ -223,39 +222,37 @@ class UiContractHandler(BaseIntentHandler):
             return False
         return self.request is not None
 
-    def _inject_render_hints(self, data: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
-        if not isinstance(data, dict):
-            return data
-        form_view = (
-            str((data.get("head") or {}).get("view_type") or data.get("view_type") or "").strip().lower() == "form"
-            or isinstance(((data.get("views") or {}).get("form")), dict)
-        )
-        if not form_view:
-            return data
-        render_profile = str(self._get_param(payload, "render_profile") or "").strip().lower()
-        if render_profile in {"create", "edit", "readonly"}:
-            data["render_profile"] = render_profile
-            return data
-        raw_record = self._get_param(payload, "record_id", "recordId", "res_id", "resId")
-        record_id = None
-        try:
-            if raw_record is not None and str(raw_record).strip():
-                record_id = int(raw_record)
-        except Exception:
-            record_id = None
-        if record_id and record_id > 0:
-            data["res_id"] = record_id
-            head = data.get("head")
-            if isinstance(head, dict) and not head.get("res_id"):
-                head["res_id"] = record_id
-                data["head"] = head
-        return data
-
     def _build_dispatcher(self, ctx):
         runtime_ctx = dict(ctx or {})
         runtime_env = api.Environment(self.env.cr, self.env.user.id, runtime_ctx)
         runtime_su_env = api.Environment(self.env.cr, SUPERUSER_ID, runtime_ctx)
         return ActionDispatcher(runtime_env, runtime_su_env)
+
+    def _dispatch_model_contract(self, *, model, view_type, ctx, view_id=None, action_id=None):
+        payload = {
+            "subject": "model",
+            "model": model,
+            "view_type": _VIEW_INV.get(view_type, view_type),
+            "view_id": view_id,
+            "with_data": False,
+        }
+        if action_id:
+            payload["action_id"] = action_id
+        return self._build_dispatcher(ctx).dispatch(payload)
+
+    def _finalize_projected_contract(
+        self,
+        *,
+        data,
+        view_type,
+        versions,
+        subject,
+        meta=None,
+    ):
+        cs = ContractService(self.env)
+        fixed_data = cs.finalize_data(data, subject=subject, meta=meta)
+        inject_primary_view_projection(fixed_data, requested_view_type=view_type)
+        return fixed_data, {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
 
     # ---------------- op 实现 ----------------
     def _op_nav(self, ctx):
@@ -264,10 +261,9 @@ class UiContractHandler(BaseIntentHandler):
             "root_xmlid": self._get_param(self.params, "root_xmlid", "rootXmlid"),
             "root_menu_id": self._get_param(self.params, "root_menu_id", "rootMenuId"),
         })
-        # 统一服务 finalize（轻量清洗）
         cs = ContractService(self.env)
-        fixed = cs.finalize_contract({"ok": True, "data": {"nav": data.get("nav")}, "meta": {"subject": "nav", "version": format_versions_safe(versions)}})
-        return fixed.get("data") or {"nav": data.get("nav")}, {"schema_version": "nav-1"}
+        fixed_data = cs.finalize_data({"nav": data.get("nav")}, subject="nav", meta={"version": format_versions_safe(versions)})
+        return fixed_data or {"nav": data.get("nav")}, {"schema_version": "nav-1"}
 
     def _op_menu(self, p, ctx):
         raw_menu = self._get_param(p, "menu_id", "menuId", "id")
@@ -338,16 +334,13 @@ class UiContractHandler(BaseIntentHandler):
         view_type = (self._get_param(p, "view_type", "viewType") or "form").strip().lower()
         view_id = self._get_param(p, "view_id", "viewId")
 
-        # ✅ 统一服务分发：subject 固定为 'model'
-        p2 = {"subject":"model","model":model,"view_type":_VIEW_INV.get(view_type, view_type),"view_id":view_id,"with_data":False}
-        data, versions = self._build_dispatcher(ctx).dispatch(p2)
-
-        # finalize（统一化）
-        cs = ContractService(self.env)
-        fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"model"}})
-        fixed_data = fixed.get("data", {}) or {}
-        inject_primary_view_projection(fixed_data, requested_view_type=view_type)
-        return fixed_data, {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        data, versions = self._dispatch_model_contract(model=model, view_type=view_type, view_id=view_id, ctx=ctx)
+        return self._finalize_projected_contract(
+            data=data,
+            view_type=view_type,
+            versions=versions,
+            subject="model",
+        )
 
     def _op_view(self, p, ctx):
         """前端传 subject:'view' 时，等价于按模型获取视图契约（无数据）"""
@@ -360,15 +353,13 @@ class UiContractHandler(BaseIntentHandler):
         view_type = (self._get_param(p, "view_type", "viewType") or "form").strip().lower()
         view_id = self._get_param(p, "view_id", "viewId")
 
-        # ✅ 映射到统一服务的 'model' subject
-        p2 = {"subject":"model","model":model,"view_type":_VIEW_INV.get(view_type, view_type),"view_id":view_id,"with_data":False}
-        data, versions = self._build_dispatcher(ctx).dispatch(p2)
-
-        cs = ContractService(self.env)
-        fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"model"}})
-        fixed_data = fixed.get("data", {}) or {}
-        inject_primary_view_projection(fixed_data, requested_view_type=view_type)
-        return fixed_data, {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        data, versions = self._dispatch_model_contract(model=model, view_type=view_type, view_id=view_id, ctx=ctx)
+        return self._finalize_projected_contract(
+            data=data,
+            view_type=view_type,
+            versions=versions,
+            subject="model",
+        )
 
     def _op_action_open(self, p, ctx):
         raw_act = self._get_param(p, "action_id", "actionId")
@@ -399,14 +390,12 @@ class UiContractHandler(BaseIntentHandler):
             Action = self.env["ir.actions.act_window"].sudo().with_context(action_ctx)
             action = Action.browse(action_id)
             if action.exists() and action.res_model:
-                p_form = {
-                    "subject": "model",
-                    "model": action.res_model,
-                    "view_type": "form",
-                    "action_id": action_id,
-                    "with_data": False,
-                }
-                data, versions = self._build_dispatcher(action_ctx).dispatch(p_form)
+                data, versions = self._dispatch_model_contract(
+                    model=action.res_model,
+                    view_type="form",
+                    action_id=action_id,
+                    ctx=action_ctx,
+                )
                 if isinstance(data, dict):
                     data["action_id"] = action_id
                     head = data.get("head")
@@ -416,19 +405,20 @@ class UiContractHandler(BaseIntentHandler):
                         if not head.get("context") and action.context:
                             head["context"] = _safe_eval_or(action.context, {})
                         data["head"] = head
-                cs = ContractService(self.env)
-                fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject": "action.form", "action_id": action_id}})
-                fixed_data = fixed.get("data", {}) or {}
-                inject_primary_view_projection(fixed_data, requested_view_type="form")
-                return fixed_data, {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
+                return self._finalize_projected_contract(
+                    data=data,
+                    view_type="form",
+                    versions=versions,
+                    subject="action.form",
+                    meta={"action_id": action_id},
+                )
 
         # 统一服务的 action 分发
         p2 = {"subject":"action","action_id": action_id, "with_data": False}
         data, versions = self._build_dispatcher(ctx).dispatch(p2)
 
         cs = ContractService(self.env)
-        fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"action"}})
-        return fixed.get("data", {}), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        return cs.finalize_data(data, subject="action"), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
 
     # ---------------- 工具 ----------------
     def _read_if_none_match(self, p) -> str:

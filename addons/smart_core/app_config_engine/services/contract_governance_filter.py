@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Governance-time runtime filter service.
+"""View-runtime filter service.
 
-This service performs user/ACL filtering on governed contracts. It must not
-parse XML nor assemble parser-native structures.
+This service performs view-level runtime filtering on already parsed/governed
+view contracts. It is distinct from delivery-surface governance in
+``utils.contract_governance`` and must not parse XML, assemble page contracts,
+or decide delivery surfaces.
 """
 
 from __future__ import annotations
@@ -11,12 +13,16 @@ import json
 
 
 class ContractGovernanceFilterService:
-    """Apply runtime governance filtering to already parsed contracts."""
+    """Apply view-level runtime filtering to already parsed contracts."""
 
     def __init__(self, owner):
         self.owner = owner
 
     def apply_runtime_filter(self, parsed, model_name, check_model_acl=False):
+        """Backward-compatible alias for view-level runtime filtering."""
+        return self.apply_view_runtime_filter(parsed, model_name, check_model_acl=check_model_acl)
+
+    def apply_view_runtime_filter(self, parsed, model_name, check_model_acl=False):
         user_groups = set(self.owner.env.user.groups_id.ids)
 
         # Contract-level group guard.
@@ -99,4 +105,3 @@ class ContractGovernanceFilterService:
             except Exception:
                 pass
         return vp
-

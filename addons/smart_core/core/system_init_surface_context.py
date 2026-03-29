@@ -17,3 +17,7 @@ class SystemInitSurfaceContext:
     scene_diagnostics_builder: Any
     build_capability_groups_fn: Callable
     apply_contract_governance_fn: Callable
+
+    @property
+    def apply_delivery_surface_governance_fn(self) -> Callable:
+        return self.apply_contract_governance_fn

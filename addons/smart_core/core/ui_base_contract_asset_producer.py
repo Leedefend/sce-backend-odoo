@@ -78,14 +78,11 @@ def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
         }
     )
     contract_service = ContractService(env)
-    finalized = contract_service.finalize_contract(
-        {
-            "ok": True,
-            "data": _as_dict(payload),
-            "meta": {"subject": "asset.ui_base", "action_id": int(action_id)},
-        }
+    data = contract_service.finalize_data(
+        _as_dict(payload),
+        subject="asset.ui_base",
+        meta={"action_id": int(action_id)},
     )
-    data = finalized.get("data") if isinstance(finalized, dict) else {}
     return canonicalize_ui_base_contract(_as_dict(data))
 
 

@@ -28,6 +28,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
 def build_runtime_fetch_context(env, params: dict[str, Any] | None = None) -> dict[str, Any]:
     params = params if isinstance(params, dict) else {}
     contract_mode = resolve_contract_mode(params)
+    delivery_surface_governance_fn = apply_contract_governance
     user = env.user
     identity_resolver = IdentityResolver(env)
     user_groups_xmlids = identity_resolver.user_group_xmlids(user)
@@ -62,7 +63,7 @@ def build_runtime_fetch_context(env, params: dict[str, Any] | None = None) -> di
         identity_resolver=identity_resolver,
         user_groups_xmlids=user_groups_xmlids,
         build_capability_groups_fn=provider_build_capability_groups,
-        apply_contract_governance_fn=apply_contract_governance,
+        apply_contract_governance_fn=delivery_surface_governance_fn,
         scene_diagnostics_builder=SceneDiagnosticsBuilder,
         run_extension_hooks_fn=run_extension_hooks,
         merge_extension_facts_fn=merge_extension_facts,

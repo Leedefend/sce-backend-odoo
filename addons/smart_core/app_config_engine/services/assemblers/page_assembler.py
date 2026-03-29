@@ -9,6 +9,7 @@ import re
 from odoo.http import request
 from ...utils.misc import safe_eval
 from ...utils.view_utils import extract_tree_columns_strict, normalize_cols_safely
+from ..page_policy_service import PagePolicyService
 
 _logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class PageAssembler:
                 self.su_env = request.env.sudo()
             except Exception:
                 self.su_env = env['ir.model'].sudo().env
+        self.policy_service = PagePolicyService(env, self._SYSTEM_RELATION_DEGRADE_MODELS)
     @staticmethod
     def normalize_view_types(vt):
         """字符串/数组 → 统一成 ['tree','form'] 形式"""
@@ -375,214 +377,20 @@ class PageAssembler:
         return data, versions
 
     def _restrict_form_fields_to_layout(self, data):
-        if not isinstance(data, dict):
-            return
-        views = data.get("views") if isinstance(data.get("views"), dict) else {}
-        form = views.get("form") if isinstance(views.get("form"), dict) else {}
-        layout = form.get("layout")
-        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
-        if not isinstance(layout, list) or not fields_map:
-            return
-
-        field_order = []
-
-        def collect(nodes):
-            for node in nodes or []:
-                if not isinstance(node, dict):
-                    continue
-                if node.get("type") == "field":
-                    name = str(node.get("name") or "").strip()
-                    if name and name in fields_map and name not in field_order:
-                        field_order.append(name)
-                for key in ("children", "tabs", "pages", "items", "nodes"):
-                    nested = node.get(key)
-                    if isinstance(nested, list):
-                        collect(nested)
-
-        collect(layout)
-        if not field_order:
-            return
-
-        # action-open mixed pages often ship tree+form together. Restricting the global
-        # fields map to form-only fields breaks tree.columns self-check and list runtime.
-        keep_names = list(field_order)
-
-        tree = views.get("tree") if isinstance(views.get("tree"), dict) else {}
-        keep_names.extend(self._normalize_field_list(tree.get("columns") if isinstance(tree.get("columns"), list) else []))
-
-        kanban = views.get("kanban") if isinstance(views.get("kanban"), dict) else {}
-        keep_names.extend(self._normalize_field_list(kanban.get("fields") if isinstance(kanban.get("fields"), list) else []))
-
-        search = data.get("search") if isinstance(data.get("search"), dict) else {}
-        keep_names.extend(
-            self._normalize_field_list(
-                item.get("field")
-                for item in (search.get("group_by") if isinstance(search.get("group_by"), list) else [])
-                if isinstance(item, dict)
-            )
-        )
-
-        statusbar = form.get("statusbar") if isinstance(form.get("statusbar"), dict) else {}
-        status_field = str(statusbar.get("field") or "").strip()
-        if status_field:
-            keep_names.append(status_field)
-
-        keep_names = self._normalize_field_list(keep_names)
-        data["fields"] = {name: fields_map.get(name) for name in keep_names if name in fields_map}
-        data["visible_fields"] = list(field_order)
+        self.policy_service.restrict_form_fields_to_layout(data)
 
     def _safe_model_can_read(self, model_name):
-        name = str(model_name or "").strip()
-        if not name:
-            return True
-        try:
-            return bool(self.env[name].check_access_rights("read", raise_exception=False))
-        except Exception:
-            return True
+        return self.policy_service.safe_model_can_read(model_name)
 
     @staticmethod
     def _normalize_field_list(values):
-        out = []
-        for item in values or []:
-            name = str(item or "").strip()
-            if name and name not in out:
-                out.append(name)
-        return out
+        return PagePolicyService.normalize_field_list(values)
 
     def _extract_core_field_names(self, data):
-        if not isinstance(data, dict):
-            return []
-        fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
-
-        # Priority 1: explicit field_groups.core
-        groups = data.get("field_groups")
-        if isinstance(groups, list):
-            for item in groups:
-                if not isinstance(item, dict):
-                    continue
-                if str(item.get("name") or "").strip().lower() != "core":
-                    continue
-                rows = self._normalize_field_list(item.get("fields") if isinstance(item.get("fields"), list) else [])
-                if rows:
-                    return rows
-
-        # Priority 2: form profile core_fields
-        form_view = (data.get("views") or {}).get("form") if isinstance(data.get("views"), dict) else {}
-        form_profile = form_view.get("form_profile") if isinstance(form_view, dict) else {}
-        if not isinstance(form_profile, dict):
-            form_profile = data.get("form_profile") if isinstance(data.get("form_profile"), dict) else {}
-        if isinstance(form_profile, dict):
-            rows = self._normalize_field_list(
-                form_profile.get("core_fields") if isinstance(form_profile.get("core_fields"), list) else []
-            )
-            if rows:
-                return rows
-
-        # Priority 3: semantic surface_role=core
-        semantic_core = []
-        for name, desc in fields.items():
-            if not isinstance(desc, dict):
-                continue
-            role = str(desc.get("surface_role") or "").strip().lower()
-            if role == "core":
-                semantic_core.append(str(name or "").strip())
-        semantic_core = self._normalize_field_list(semantic_core)
-        if semantic_core:
-            return semantic_core
-
-        # Priority 4: fallback to required relation fields
-        required_relation = []
-        for name, desc in fields.items():
-            if not isinstance(desc, dict):
-                continue
-            ttype = str(desc.get("type") or desc.get("ttype") or "").strip().lower()
-            relation = str(desc.get("relation") or "").strip()
-            if ttype in {"many2one", "many2many", "one2many"} and relation and bool(desc.get("required")):
-                required_relation.append(str(name or "").strip())
-        return self._normalize_field_list(required_relation)
+        return self.policy_service.extract_core_field_names(data)
 
     def _apply_access_policy(self, data, model_name=""):
-        if not isinstance(data, dict):
-            return
-        fields = data.get("fields")
-        if not isinstance(fields, dict):
-            fields = {}
-
-        blocked_fields = []
-        degraded_fields = []
-        policy_source = "none"
-
-        model = str(model_name or "").strip()
-        if model and not self._safe_model_can_read(model):
-            blocked_fields.append(
-                {
-                    "field": "__model__",
-                    "model": model,
-                    "reason_code": "MODEL_READ_FORBIDDEN",
-                }
-            )
-            policy_source = "model_acl"
-        else:
-            core_fields = set(self._extract_core_field_names(data))
-            if core_fields:
-                policy_source = "core_fields"
-            for field_name, desc in fields.items():
-                if not isinstance(desc, dict):
-                    continue
-                relation_entry = desc.get("relation_entry")
-                if not isinstance(relation_entry, dict):
-                    continue
-                can_read = relation_entry.get("can_read")
-                if can_read is not False:
-                    continue
-                relation = str(desc.get("relation") or relation_entry.get("model") or "").strip()
-                row = {
-                    "field": str(field_name or "").strip(),
-                    "model": relation,
-                    "reason_code": str(relation_entry.get("reason_code") or "RELATION_READ_FORBIDDEN"),
-                }
-                relation_model = str(relation or "").strip().lower()
-                if (
-                    str(field_name or "").strip() in core_fields
-                    and relation_model not in self._SYSTEM_RELATION_DEGRADE_MODELS
-                ):
-                    blocked_fields.append(row)
-                else:
-                    degraded_fields.append(row)
-
-        mode = "allow"
-        reason_code = ""
-        message = ""
-        if blocked_fields:
-            mode = "block"
-            first = blocked_fields[0]
-            reason_code = str(first.get("reason_code") or "RELATION_READ_FORBIDDEN_CORE")
-            if reason_code == "RELATION_READ_FORBIDDEN":
-                reason_code = "RELATION_READ_FORBIDDEN_CORE"
-            label = str(first.get("field") or first.get("model") or "unknown")
-            message = f"core field access blocked: {label}"
-        elif degraded_fields:
-            mode = "degrade"
-            first = degraded_fields[0]
-            reason_code = str(first.get("reason_code") or "RELATION_READ_FORBIDDEN")
-            label = str(first.get("field") or first.get("model") or "unknown")
-            message = f"relation access degraded: {label}"
-
-        data["access_policy"] = {
-            "mode": mode,
-            "reason_code": reason_code,
-            "message": message,
-            "policy_source": policy_source,
-            "blocked_fields": blocked_fields,
-            "degraded_fields": degraded_fields,
-        }
-
-        if mode in {"block", "degrade"}:
-            warnings = data.get("warnings") if isinstance(data.get("warnings"), list) else []
-            marker = f"access_policy:{mode}:{reason_code or 'UNKNOWN'}"
-            if marker not in warnings:
-                warnings.append(marker)
-            data["warnings"] = warnings
+        self.policy_service.apply_access_policy(data, model_name=model_name)
 
     def _coerce_view_contract_semantics(self, view_type, contract):
         """标准化高级视图关键语义键，避免前端消费时出现结构漂移。"""

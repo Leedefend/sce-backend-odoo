@@ -139,13 +139,13 @@ class SystemInitSurfaceBuilder:
         nav_tree = surface_ctx.nav_tree
         scene_diagnostics_builder = surface_ctx.scene_diagnostics_builder
         build_capability_groups_fn = surface_ctx.build_capability_groups_fn
-        apply_contract_governance_fn = surface_ctx.apply_contract_governance_fn
+        apply_delivery_surface_governance_fn = surface_ctx.apply_delivery_surface_governance_fn
 
         pre_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
         pre_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
         )
-        data = apply_contract_governance_fn(data, contract_mode)
+        data = apply_delivery_surface_governance_fn(data, contract_mode)
         data["capability_groups"] = build_capability_groups_fn(data.get("capabilities") or [])
         data["capability_surface_summary"] = capability_surface_engine.build_summary(
             data.get("capabilities") or [],

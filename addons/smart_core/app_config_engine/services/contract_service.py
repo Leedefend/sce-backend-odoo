@@ -110,11 +110,13 @@ class ContractService:
         # 统一化会在 data 下修正 views/buttons/search/workflow/permissions 等。
         # 若开启了自检（_self_check_strict），发现问题会抛 AssertionError。
         try:
-            _contract_min = {"ok": True, "data": data, "meta": {"subject": subject, "version": format_versions(versions)}}
-            _contract_fixed = self.finalize_contract(_contract_min)
-            # 用修复后的 data 覆盖
-            data = _contract_fixed.get("data", data)
-            data = apply_contract_governance(data, contract_mode, inject_contract_mode=False)
+            data = self.finalize_and_govern_data(
+                data,
+                subject=subject,
+                meta={"version": format_versions(versions)},
+                contract_mode=contract_mode,
+                inject_contract_mode=False,
+            )
         except AssertionError as ae:
             # 统一化自检失败：返回 422，方便开发期快速定位脏数据/不一致
             _logger.exception("contract finalize self-check failed")
@@ -190,6 +192,149 @@ class ContractService:
         self._self_check_strict(data)
 
         return data
+
+    def finalize_data(self, data, *, subject=None, meta=None):
+        meta_out = dict(meta or {})
+        if subject and "subject" not in meta_out:
+            meta_out["subject"] = subject
+        fixed = self.finalize_contract({"ok": True, "data": data, "meta": meta_out})
+        return fixed.get("data", data) or {}
+
+    def govern_data(
+        self,
+        data,
+        *,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        return apply_contract_governance(
+            data or {},
+            contract_mode,
+            contract_surface=contract_surface,
+            source_mode=source_mode,
+            inject_contract_mode=inject_contract_mode,
+        )
+
+    def apply_delivery_surface_governance(
+        self,
+        data,
+        *,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        """Canonical name for the final delivery-surface governance step."""
+        return self.govern_data(
+            data,
+            contract_mode=contract_mode,
+            contract_surface=contract_surface,
+            source_mode=source_mode,
+            inject_contract_mode=inject_contract_mode,
+        )
+
+    @staticmethod
+    def inject_render_hints(data, payload):
+        if not isinstance(data, dict):
+            return data
+
+        def _collect_layers(source):
+            layers = []
+            if isinstance(source, dict):
+                layers.append(source)
+                for key in ("payload", "params", "data", "args"):
+                    value = source.get(key)
+                    if isinstance(value, dict):
+                        layers.append(value)
+            return layers
+
+        def _get_param(source, *keys):
+            for layer in _collect_layers(source):
+                for key in keys:
+                    if key not in layer:
+                        continue
+                    value = layer.get(key)
+                    if isinstance(value, str) and not value.strip():
+                        continue
+                    if value is not None:
+                        return value
+            return None
+
+        form_view = (
+            str((data.get("head") or {}).get("view_type") or data.get("view_type") or "").strip().lower() == "form"
+            or isinstance(((data.get("views") or {}).get("form")), dict)
+        )
+        if not form_view:
+            return data
+        render_profile = str(_get_param(payload, "render_profile", "renderProfile") or "").strip().lower()
+        if render_profile in {"create", "edit", "readonly"}:
+            data["render_profile"] = render_profile
+            return data
+        raw_record = _get_param(payload, "record_id", "recordId", "res_id", "resId")
+        record_id = None
+        try:
+            if raw_record is not None and str(raw_record).strip():
+                record_id = int(raw_record)
+        except Exception:
+            record_id = None
+        if record_id and record_id > 0:
+            data["res_id"] = record_id
+            head = data.get("head")
+            if isinstance(head, dict) and not head.get("res_id"):
+                head["res_id"] = record_id
+                data["head"] = head
+        return data
+
+    def finalize_and_govern_data(
+        self,
+        data,
+        *,
+        subject=None,
+        meta=None,
+        payload=None,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        """Canonical post-dispatch pipeline: finalize -> render hints -> delivery governance."""
+        finalized = self.finalize_data(data, subject=subject, meta=meta)
+        hinted = self.inject_render_hints(finalized, payload or {})
+        return self.apply_delivery_surface_governance(
+            hinted,
+            contract_mode=contract_mode,
+            contract_surface=contract_surface,
+            source_mode=source_mode,
+            inject_contract_mode=inject_contract_mode,
+        )
+
+    def shape_handler_delivery_data(
+        self,
+        data,
+        *,
+        payload=None,
+        contract_mode="user",
+        contract_surface="user",
+        source_mode="",
+        inject_contract_mode=False,
+    ):
+        """Canonical handler-side post-dispatch shaping helper.
+
+        UiContractHandler receives already-dispatched data and only needs the
+        final handler-side sequence:
+        1. inject render hints
+        2. apply delivery-surface governance
+        """
+        hinted = self.inject_render_hints(data or {}, payload or {})
+        return self.apply_delivery_surface_governance(
+            hinted,
+            contract_mode=contract_mode,
+            contract_surface=contract_surface,
+            source_mode=source_mode,
+            inject_contract_mode=inject_contract_mode,
+        )
 
     # =========================
     # 具体修复实现
