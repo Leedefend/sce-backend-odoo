@@ -24,12 +24,7 @@ def _parse_major(version_text: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Fail-fast preflight for frontend eslint environment.")
-    parser.add_argument("--frontend-dir", default="frontend/apps/web", help="Frontend app directory.")
-    args = parser.parse_args()
-
-    frontend_dir = Path(args.frontend_dir).resolve()
+def evaluate_frontend_eslint_env(frontend_dir: Path) -> dict[str, object]:
     package_json = frontend_dir / "package.json"
     payload: dict[str, object] = {
         "frontend_dir": str(frontend_dir),
@@ -45,8 +40,7 @@ def main() -> int:
         payload["status"] = "FAIL"
         payload["blocked"] = True
         payload["reason_code"] = "FRONTEND_PACKAGE_JSON_MISSING"
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-        return 0
+        return payload
 
     package = json.loads(package_json.read_text(encoding="utf-8"))
     eslint_version = str(((package.get("devDependencies") or {}).get("eslint")) or "")
@@ -70,8 +64,7 @@ def main() -> int:
         payload["status"] = "FAIL"
         payload["blocked"] = True
         payload["reason_code"] = "NODE_RUNTIME_UNAVAILABLE"
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-        return 0
+        return payload
 
     if node_major is not None and eslint_major is not None and node_major >= 24 and eslint_major <= 8:
         payload["status"] = "BLOCKED"
@@ -82,10 +75,19 @@ def main() -> int:
             "Recent probes show eslint CLI startup can hang before printing env info.",
             "Choose an alternate verification path or align the frontend runtime/toolchain first.",
         ]
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-        return 0
+        return payload
 
     payload["notes"] = ["No known fail-fast blocker detected for frontend eslint startup."]
+    return payload
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Fail-fast preflight for frontend eslint environment.")
+    parser.add_argument("--frontend-dir", default="frontend/apps/web", help="Frontend app directory.")
+    args = parser.parse_args()
+
+    frontend_dir = Path(args.frontend_dir).resolve()
+    payload = evaluate_frontend_eslint_env(frontend_dir)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
