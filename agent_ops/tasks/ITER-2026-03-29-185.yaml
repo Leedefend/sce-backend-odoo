@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-185
+title: Consume scene runtime diagnostics in SceneView
+type: product_task
+status: pending
+priority: high
+
+goal: Wire consumer-facing runtime diagnostics from scene contracts into the frontend scene page contract chain and show them in SceneView, so the product path starts consuming the new contract surface instead of leaving it unused.
+user_visible_outcome:
+  - SceneView shows contract-provided runtime status and alignment diagnostics
+  - frontend consumes consumer_runtime and bridge_alignment through pageContract accessors instead of reading raw contract fields in the page
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: frontend layer
+  module: scene contract consumer chain
+  reason: runtime diagnostics are already productized on the backend contract side, and frontend SceneView must start consuming them through schema -> pageContract -> page flow.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-185.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status PASS'
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-185.yaml frontend/apps/web/src/stores/session.ts frontend/apps/web/src/app/pageContract.ts frontend/apps/web/src/views/SceneView.vue
+
+depends_on:
+  - ITER-2026-03-29-184
+
+notes: "Productization batch: consume backend consumer_runtime diagnostics through the frontend contract chain."

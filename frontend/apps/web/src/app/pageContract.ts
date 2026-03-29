@@ -1,5 +1,5 @@
 import { computed, watchEffect } from 'vue';
-import { useSessionStore, type PageContract } from '../stores/session';
+import { useSessionStore, type PageContract, type SceneConsumerRuntime } from '../stores/session';
 
 function asText(value: unknown): string {
   return typeof value === 'string' ? value : '';
@@ -174,6 +174,12 @@ export function usePageContract(pageKey: string) {
     const raw = contract.value?.actions;
     return raw && typeof raw === 'object' ? raw : {};
   });
+  const consumerRuntime = computed<SceneConsumerRuntime>(() => {
+    const diagnostics = contract.value?.scene_contract_v1?.diagnostics;
+    if (!diagnostics || typeof diagnostics !== 'object') return {};
+    const runtime = (diagnostics as Record<string, unknown>).consumer_runtime;
+    return runtime && typeof runtime === 'object' ? runtime as SceneConsumerRuntime : {};
+  });
   const sceneActionSchema = computed<Record<string, Record<string, unknown>>>(() => {
     const rawActions = asRecord(sceneContractV1.value.actions);
     const map: Record<string, Record<string, unknown>> = {};
@@ -338,6 +344,16 @@ export function usePageContract(pageKey: string) {
     return Object.keys(dataSourceSpec(key)).length > 0;
   }
 
+  function consumerRuntimeStatus(): string {
+    return asText(consumerRuntime.value.runtime_page_status) || asText(consumerRuntime.value.page_status);
+  }
+
+  function consumerRuntimeBridgeAligned(): boolean {
+    const bridge = asRecord(consumerRuntime.value.bridge_alignment);
+    if (!Object.keys(bridge).length) return true;
+    return Object.values(bridge).every((value) => value !== false);
+  }
+
   return {
     contract,
     text,
@@ -353,5 +369,8 @@ export function usePageContract(pageKey: string) {
     dataSourceType,
     hasDataSource,
     globalActions,
+    consumerRuntime,
+    consumerRuntimeStatus,
+    consumerRuntimeBridgeAligned,
   };
 }
