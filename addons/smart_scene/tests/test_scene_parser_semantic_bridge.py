@@ -44,7 +44,11 @@ class TestSceneParserSemanticBridge(unittest.TestCase):
                 "semantic_runtime_state": {
                     "page_status": "ready",
                     "current_state": "draft",
-                }
+                },
+                "consumer_runtime": {
+                    "page_status": "ready",
+                    "runtime_page_status": "ready",
+                },
             },
         )
 
@@ -59,6 +63,56 @@ class TestSceneParserSemanticBridge(unittest.TestCase):
         self.assertEqual(
             (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("semantic_runtime_state") or {}).get("page_status"),
             "ready",
+        )
+        self.assertEqual(
+            (((bridged.get("diagnostics") or {}).get("consumer_runtime")) or {}).get("runtime_page_status"),
+            "ready",
+        )
+        self.assertEqual(
+            ((((bridged.get("diagnostics") or {}).get("parser_semantic_surface")) or {}).get("consumer_runtime") or {}).get("page_status"),
+            "ready",
+        )
+        self.assertEqual(
+            (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime") or {}).get("page_status"),
+            "ready",
+        )
+
+    def test_bridge_backfills_consumer_runtime_from_contract_diagnostics(self):
+        contract = {
+            "page": {},
+            "diagnostics": {
+                "consumer_semantics": {
+                    "runtime": {
+                        "page_status": "readonly",
+                        "runtime_page_status": "readonly",
+                        "current_state": "done",
+                        "alignment": {"page_status_aligned": True},
+                    }
+                }
+            },
+            "scene_contract_v1": {"page": {}, "diagnostics": {}},
+        }
+        bridged = bridge_module.apply_scene_parser_semantic_bridge(
+            contract,
+            {
+                "semantic_runtime_state": {
+                    "page_status": "readonly",
+                    "current_state": "done",
+                },
+            },
+        )
+
+        self.assertEqual(
+            (((bridged.get("diagnostics") or {}).get("consumer_runtime")) or {}).get("runtime_page_status"),
+            "readonly",
+        )
+        self.assertEqual(
+            ((((bridged.get("diagnostics") or {}).get("parser_semantic_surface")) or {}).get("consumer_runtime") or {}).get("current_state"),
+            "done",
+        )
+        self.assertEqual(
+            (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("consumer_runtime") or {}).get("page_status"),
+            "readonly",
         )
 
 
