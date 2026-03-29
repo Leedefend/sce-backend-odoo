@@ -32,14 +32,14 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
+    <section v-if="!preferNativeListSurface && isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
         <span v-if="vm.filters.routePreset?.source">（{{ t('route_preset_source_prefix', '来源：') }}{{ vm.filters.routePreset?.source }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ t('route_preset_clear', '清除推荐') }}</button>
     </section>
-    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: pageSectionEnabled('focus_strip', true), tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
+    <section v-if="!preferNativeListSurface && isSectionVisible('focus_strip', { defaultEnabled: pageSectionEnabled('focus_strip', true), tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
       <div>
         <p class="focus-intent">{{ vm.focus.title }}</p>
         <p class="focus-summary">{{ vm.focus.summary }}</p>
@@ -50,7 +50,7 @@
         </button>
       </div>
     </section>
-    <section v-if="vm.sections.strictAlert && vm.strictAlert" class="contract-missing-alert">
+    <section v-if="!preferNativeListSurface && vm.sections.strictAlert && vm.strictAlert" class="contract-missing-alert">
       <p class="contract-missing-title">{{ vm.strictAlert.title }}</p>
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
@@ -59,7 +59,7 @@
       <StatusPanel title="当前页面建议使用原生页面" :message="nativeFallbackMessage" variant="info" />
       <button class="contract-chip" @click="openNativeFallback">打开原生页面</button>
     </section>
-    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="!preferNativeListSurface && isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -106,7 +106,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="!preferNativeListSurface && isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -153,7 +153,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
+    <section v-if="!preferNativeListSurface && isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
       <p class="contract-label">{{ t('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -201,7 +201,7 @@
       </div>
     </section>
     <GroupSummaryBar
-      v-if="isSectionVisible('group_summary', { defaultEnabled: pageSectionEnabled('group_summary', true), tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
+      v-if="!preferNativeListSurface && isSectionVisible('group_summary', { defaultEnabled: pageSectionEnabled('group_summary', true), tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
       :style="getSectionStyle('group_summary')"
       :items="vm.groupSummary?.items || []"
       :group-by-label="activeGroupByLabel"
@@ -218,7 +218,7 @@
       :on-prev-window="handleGroupWindowPrev"
       :on-next-window="handleGroupWindowNext"
     />
-    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: pageSectionEnabled('quick_actions', true), tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
+    <section v-if="!preferNativeListSurface && isSectionVisible('quick_actions', { defaultEnabled: pageSectionEnabled('quick_actions', true), tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
       <p class="contract-label">{{ t('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
@@ -861,6 +861,7 @@ const {
 } = groupRuntimeState;
 const headerActions = computed(() => pageGlobalActions.value);
 const displayHeaderActions = computed(() => {
+  if (preferNativeListSurface.value) return [];
   const disabledMap = new Map(
     headerActions.value.map((item) => [item.key, { disabled: Boolean(item.disabled), reason: item.disabledReason || '' }]),
   );
@@ -875,6 +876,7 @@ const displayHeaderActions = computed(() => {
     };
   });
 });
+const preferNativeListSurface = computed(() => vm.value.content.kind === 'list');
 const advancedFields = ref<string[]>([]);
 const {
   isUiBusy,
