@@ -66,4 +66,6 @@ def check_top_level_shape(payload: dict) -> Tuple[bool, Dict[str, object]]:
     diagnostics = payload.get("diagnostics") if isinstance(payload.get("diagnostics"), dict) else {}
     if "semantic_runtime_state" in diagnostics and not isinstance(diagnostics.get("semantic_runtime_state"), dict):
         return False, {"code": "invalid_diagnostics_semantic_runtime_state"}
+    if "consumer_runtime" in diagnostics and not isinstance(diagnostics.get("consumer_runtime"), dict):
+        return False, {"code": "invalid_diagnostics_consumer_runtime"}
     return True, {"code": "ok"}
