@@ -79,7 +79,8 @@
           v-for="action in headerActions"
           :key="action.key"
           class="secondary"
-          :disabled="loading"
+          :disabled="loading || action.disabled"
+          :title="action.disabledReason || ''"
           @click="executeHeaderAction(action.key)"
         >
           {{ action.label }}
@@ -461,6 +462,10 @@ async function load() {
 }
 
 async function executeHeaderAction(actionKey: string) {
+  const matched = headerActions.value.find((item) => item.key === actionKey);
+  if (matched?.disabled) {
+    return;
+  }
   const handled = await executePageContractAction({
     actionKey,
     router,
