@@ -116,6 +116,7 @@ def _normalize_permissions(permissions: Dict[str, Any] | None) -> Dict[str, Any]
         "can_create": bool(payload.get("can_create", False)),
         "can_delete": bool(payload.get("can_delete", False)),
         "disabled_actions": dict(payload.get("disabled_actions") or {}),
+        "record_state_summary": dict(payload.get("record_state_summary") or {}),
     }
 
 
