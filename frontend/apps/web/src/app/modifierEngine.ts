@@ -6,6 +6,27 @@ export type FieldRuntimeState = {
 
 type DomainLeaf = [string, string, unknown];
 
+function coerceModifierBoolean(value: unknown): boolean | undefined {
+  const scalar = toScalar(value);
+  if (typeof scalar === 'boolean') return scalar;
+  if (typeof scalar === 'number') return scalar !== 0;
+  if (typeof scalar === 'string') {
+    const normalized = scalar.trim().toLowerCase();
+    if (!normalized) return false;
+    if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'n', 'off', 'none', 'null'].includes(normalized)) return false;
+  }
+  return undefined;
+}
+
+function looksLikeDomainExpr(expr: unknown): boolean {
+  if (!Array.isArray(expr) || !expr.length) return false;
+  const head = expr[0];
+  if (head === '|' || head === '&' || head === '!') return true;
+  if (Array.isArray(head)) return true;
+  return expr.length >= 3 && typeof expr[0] === 'string' && typeof expr[1] === 'string';
+}
+
 function toScalar(value: unknown) {
   if (Array.isArray(value) && value.length && typeof value[0] === 'number') {
     return value[0];
@@ -62,17 +83,30 @@ function evalDomain(expr: unknown, values: Record<string, unknown>): boolean {
 }
 
 function evalModifierBucket(bucket: unknown, values: Record<string, unknown>): boolean {
-  if (typeof bucket === 'boolean') return bucket;
-  if (!Array.isArray(bucket)) return false;
+  const primitive = coerceModifierBoolean(bucket);
+  if (primitive !== undefined) return primitive;
+  if (!bucket) return false;
+
+  if (!Array.isArray(bucket)) {
+    if (typeof bucket !== 'object') return false;
+    const row = bucket as Record<string, unknown>;
+    if (row.parsed !== undefined) return evalModifierBucket(row.parsed, values);
+    if (row.raw !== undefined) return evalModifierBucket(row.raw, values);
+    if (row.value !== undefined) return evalModifierBucket(row.value, values);
+    return false;
+  }
+
   if (!bucket.length) return false;
+  if (looksLikeDomainExpr(bucket)) return evalDomain(bucket, values);
 
   return bucket.some((entry) => {
-    if (typeof entry === 'boolean') return entry;
+    const entryPrimitive = coerceModifierBoolean(entry);
+    if (entryPrimitive !== undefined) return entryPrimitive;
     if (!entry || typeof entry !== 'object') return evalDomain(entry, values);
     const row = entry as Record<string, unknown>;
-    if (typeof row.parsed === 'boolean') return row.parsed;
-    if (row.parsed !== undefined) return evalDomain(row.parsed, values);
-    if (row.raw !== undefined) return evalDomain(row.raw, values);
+    if (row.parsed !== undefined) return evalModifierBucket(row.parsed, values);
+    if (row.raw !== undefined) return evalModifierBucket(row.raw, values);
+    if (row.value !== undefined) return evalModifierBucket(row.value, values);
     return evalDomain(entry, values);
   });
 }

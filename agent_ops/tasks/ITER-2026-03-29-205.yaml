@@ -1,0 +1,59 @@
+task_id: ITER-2026-03-29-205
+title: Consume form field modifiers on project form page
+type: product_task
+status: pending
+priority: high
+
+goal: Make the frontend project form consume live `views.form.field_modifiers` so field-level readonly/required/invisible behavior follows the backend contract instead of staying partially inert.
+user_visible_outcome:
+  - project form fields react to backend readonly/required/invisible modifiers
+  - the page becomes more faithful to backend contract semantics without adding frontend-only heuristics
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: frontend contract consumer
+  module: project form field modifiers consumption
+  reason: Live backend contract now exposes form field_modifiers, so the next step is to make ContractFormPage consume those modifiers as the field behavior source of truth.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-205.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status PASS'
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-205.yaml frontend/packages/schema/src/index.ts frontend/apps/web/src/app/modifierEngine.ts frontend/apps/web/src/pages/ContractFormPage.vue agent_ops/reports/2026-03-29/report.ITER-2026-03-29-205.md agent_ops/state/task_results/ITER-2026-03-29-205.json
+
+depends_on:
+  - ITER-2026-03-29-204
+
+notes: "Frontend-only contract consumer batch: no backend changes, no new page heuristics, only make project form obey live field_modifiers."

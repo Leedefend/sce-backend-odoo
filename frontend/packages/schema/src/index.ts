@@ -576,6 +576,7 @@ export interface ActionContract {
       model?: string;
       view_type?: string;
       layout?: Array<{ type?: string; name?: string }>;
+      field_modifiers?: Record<string, Record<string, unknown>>;
       fields?: string[];
       order?: string;
       chatter?: unknown;
