@@ -1,0 +1,67 @@
+task_id: ITER-2026-03-29-201
+title: Audit live project form field modifiers completeness
+type: audit_task
+status: pending
+priority: high
+
+goal: Confirm whether the live `ui.contract` runtime for `project.project` form truly lacks `views.form.field_modifiers`, so the next batch can choose between backend parsing work and snapshot/runtime alignment work.
+user_visible_outcome:
+  - the project form parity line has a single confirmed backend completeness verdict
+  - next iteration can implement against a verified gap instead of guessing
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+    - docs/contract/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: governance/backend completeness audit
+  module: project form live contract field modifiers
+  reason: The parity audit now leaves only one backend completeness gap, `views.form.field_modifiers`, so this batch verifies the live runtime before any backend implementation batch is opened.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-201.yaml
+    - python3 agent_ops/scripts/frontend_contract_parity_audit.py --snapshot docs/contract/snapshots/project_form_pm.json --frontend-file frontend/apps/web/src/pages/ContractFormPage.vue --expect-status PASS
+    - python3 -m py_compile agent_ops/scripts/project_form_live_contract_audit.py
+    - bash -lc 'export E2E_BASE_URL=http://127.0.0.1:8070; python3 agent_ops/scripts/project_form_live_contract_audit.py --db sc_demo --login sc_fx_pm --password prod_like --expect-field-modifiers missing'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - audit_report
+  - task_result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-201.yaml agent_ops/reports/2026-03-29/report.ITER-2026-03-29-201.md agent_ops/state/task_results/ITER-2026-03-29-201.json
+
+depends_on:
+  - ITER-2026-03-29-199
+  - ITER-2026-03-29-200
+
+notes: "Audit-only batch: determine whether live runtime truly omits `views.form.field_modifiers` for project form before opening any backend parsing completeness implementation."
