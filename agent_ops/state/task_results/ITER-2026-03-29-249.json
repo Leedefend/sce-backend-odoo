@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-03-29-249",
+  "status": "PASS",
+  "summary": {
+    "kind": "low_risk_backend_refactor",
+    "scope": [
+      "UiContractHandler"
+    ],
+    "helpers_added": [
+      "_dispatch_model_contract",
+      "_finalize_projected_contract"
+    ],
+    "architecture_changed": false
+  },
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-249.md",
+    "task_contract": "agent_ops/tasks/ITER-2026-03-29-249.yaml"
+  },
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-249.yaml",
+    "python3 -m py_compile addons/smart_core/handlers/ui_contract.py addons/smart_core/tests/test_ui_contract_projection.py",
+    "python3 addons/smart_core/tests/test_ui_contract_projection.py",
+    "make verify.smart_core"
+  ],
+  "next_iteration": {
+    "type": "low_risk_backend_refactor",
+    "targets": [
+      "PageAssembler policy helper extraction",
+      "clear assembly vs policy boundary",
+      "preserve contract output"
+    ]
+  }
+}

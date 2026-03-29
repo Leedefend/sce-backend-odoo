@@ -1,0 +1,66 @@
+task_id: ITER-2026-03-29-253
+title: Align system init and runtime fetch governance naming
+type: refactor_task
+status: in_progress
+priority: high
+
+goal: Align system_init and runtime_fetch helper naming with the clarified delivery-surface governance terminology, while preserving behavior and overall architecture.
+user_visible_outcome:
+  - backend auxiliary bootstrap entrypoints use clearer governance naming
+  - delivery-surface governance is explicit across system_init and runtime_fetch helpers
+  - naming drift is reduced without changing outputs
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+change_rules:
+  - additive_or_refactor_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+  - preserve_contract_output
+
+architecture:
+  layer_target: platform layer
+  module: system_init and runtime_fetch bootstrap helpers
+  reason: after canonical delivery naming was introduced in the main contract chain, auxiliary bootstrap helpers still used the old governance callback name and should be aligned.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-253.yaml
+    - make verify.smart_core
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - output_contract_changed_unintentionally
+
+deliverables:
+  - system_init_runtime_fetch_naming_alignment
+  - clearer_delivery_surface_governance_callback_names
+  - regression_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-253.yaml docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore addons/smart_core/core/system_init_surface_context.py addons/smart_core/core/runtime_fetch_bootstrap_helper.py addons/smart_core/core/system_init_surface_builder.py addons/smart_core/core/runtime_fetch_context_builder.py
+
+depends_on:
+  - ITER-2026-03-29-252
+
+notes: "Rename callback plumbing only. Keep behavior unchanged."

@@ -1,0 +1,70 @@
+task_id: ITER-2026-03-29-248
+title: Refactor canonical post-dispatch contract pipeline
+type: refactor_task
+status: in_progress
+priority: high
+
+goal: Extract a shared low-risk post-dispatch contract pipeline so UiContractHandler and ContractService stop hand-rolling overlapping finalize and governance steps, while keeping the overall backend architecture and contract outputs unchanged.
+user_visible_outcome:
+  - backend delivery chain boundaries become clearer without endpoint or schema changes
+  - duplicated finalize and governance wrapper logic is reduced
+  - future backend cleanup can target thinner handlers and clearer service boundaries
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/**
+    - addons/smart_core/app_config_engine/services/**
+    - addons/smart_core/tests/**
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+change_rules:
+  - additive_or_refactor_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+  - preserve_endpoint_behavior
+
+architecture:
+  layer_target: platform layer
+  module: ui contract handler and contract service post-dispatch delivery path
+  reason: The previous audit proved that request protocol, dispatch, finalize, and governance boundaries are blurred mainly at the post-dispatch stage. This batch extracts a canonical low-risk pipeline without changing the overall architecture.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-248.yaml
+    - python3 addons/smart_core/tests/test_ui_contract_projection.py
+    - make verify.smart_core
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - output_contract_changed_unintentionally
+  - refactor_scope_expands_beyond_post_dispatch
+
+deliverables:
+  - shared_post_dispatch_helper
+  - handler_service_duplication_reduction
+  - regression_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-248.yaml docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore addons/smart_core/handlers/ui_contract.py addons/smart_core/app_config_engine/services/contract_service.py addons/smart_core/tests/test_ui_contract_projection.py
+
+depends_on:
+  - ITER-2026-03-29-247
+
+notes: "Keep architecture unchanged. Only thin duplicated post-dispatch finalize/govern wrappers."
