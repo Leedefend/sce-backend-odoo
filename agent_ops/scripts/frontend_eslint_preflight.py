@@ -75,9 +75,29 @@ def evaluate_frontend_eslint_env(frontend_dir: Path) -> dict[str, object]:
             "Recent probes show eslint CLI startup can hang before printing env info.",
             "Choose an alternate verification path or align the frontend runtime/toolchain first.",
         ]
+        payload["route"] = {
+            "selected": "toolchain_alignment_required",
+            "verify_mode": "blocked",
+            "recommended_gate": "python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status BLOCKED --expect-route toolchain_alignment_required",
+            "next_step": "align_frontend_runtime_or_eslint",
+            "candidate_actions": [
+                "pin frontend verification to a Node 20/22 runtime",
+                "or upgrade frontend eslint stack to a Node 24-safe path before product batches resume local frontend verify",
+            ],
+        }
         return payload
 
     payload["notes"] = ["No known fail-fast blocker detected for frontend eslint startup."]
+    payload["route"] = {
+        "selected": "local_frontend_verify",
+        "verify_mode": "local",
+        "recommended_gate": "make verify.frontend.typecheck.strict",
+        "next_step": "run_frontend_verify_targets",
+        "candidate_actions": [
+            "make verify.frontend.typecheck.strict",
+            "make verify.frontend.build",
+        ],
+    }
     return payload
 
 
