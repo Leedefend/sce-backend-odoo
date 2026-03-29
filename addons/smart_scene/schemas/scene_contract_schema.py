@@ -35,6 +35,8 @@ def check_top_level_shape(payload: dict) -> Tuple[bool, Dict[str, object]]:
         return False, {"code": "extensions_not_object"}
     if not isinstance(payload.get("nav_ref"), dict):
         return False, {"code": "nav_ref_not_object"}
+    if not isinstance(payload.get("diagnostics"), dict):
+        return False, {"code": "diagnostics_not_object"}
 
     actions = payload.get("actions") if isinstance(payload.get("actions"), dict) else {}
     action_groups = ("primary_actions", "secondary_actions", "contextual_actions", "danger_actions", "recommended_actions")
@@ -60,4 +62,8 @@ def check_top_level_shape(payload: dict) -> Tuple[bool, Dict[str, object]]:
     active_menu_id = nav_ref.get("active_menu_id")
     if active_menu_id is not None and not isinstance(active_menu_id, int):
         return False, {"code": "invalid_nav_ref_active_menu_id"}
+
+    diagnostics = payload.get("diagnostics") if isinstance(payload.get("diagnostics"), dict) else {}
+    if "semantic_runtime_state" in diagnostics and not isinstance(diagnostics.get("semantic_runtime_state"), dict):
+        return False, {"code": "invalid_diagnostics_semantic_runtime_state"}
     return True, {"code": "ok"}
