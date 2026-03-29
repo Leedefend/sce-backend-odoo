@@ -135,6 +135,7 @@ def _normalize_diagnostics(diagnostics: Dict[str, Any] | None) -> Dict[str, Any]
     payload.setdefault("source_versions", {})
     payload.setdefault("build_pipeline", ["scene_resolver", "structure_mapper", "layout_orchestrator", "scene_contract_builder"])
     payload.setdefault("warnings", [])
+    payload.setdefault("semantic_runtime_state", {})
     return payload
 
 

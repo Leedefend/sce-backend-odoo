@@ -29,6 +29,7 @@ def apply_scene_parser_semantic_bridge(
     permission_surface = _as_dict(surface.get("permission_surface"))
     workflow_surface = _as_dict(surface.get("workflow_surface"))
     validation_surface = _as_dict(surface.get("validation_surface"))
+    semantic_runtime_state = _as_dict(surface.get("semantic_runtime_state"))
     if not (
         parser_contract
         or view_semantics
@@ -38,6 +39,7 @@ def apply_scene_parser_semantic_bridge(
         or permission_surface
         or workflow_surface
         or validation_surface
+        or semantic_runtime_state
     ):
         return out
 
@@ -69,7 +71,10 @@ def apply_scene_parser_semantic_bridge(
         "permission_surface": permission_surface,
         "workflow_surface": workflow_surface,
         "validation_surface": validation_surface,
+        "semantic_runtime_state": semantic_runtime_state,
     }
+    if semantic_runtime_state:
+        diagnostics["semantic_runtime_state"] = semantic_runtime_state
     out["diagnostics"] = diagnostics
 
     contract_v1 = _as_dict(out.get("scene_contract_v1"))

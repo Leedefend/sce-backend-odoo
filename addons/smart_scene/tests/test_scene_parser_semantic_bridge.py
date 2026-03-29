@@ -36,6 +36,31 @@ class TestSceneParserSemanticBridge(unittest.TestCase):
         view_type = (((bridged.get("scene_contract_v1") or {}).get("page") or {}).get("surface") or {}).get("view_type")
         self.assertEqual(view_type, "form")
 
+    def test_bridge_projects_runtime_state_into_diagnostics(self):
+        contract = {"page": {}, "diagnostics": {}, "scene_contract_v1": {"page": {}, "diagnostics": {}}}
+        bridged = bridge_module.apply_scene_parser_semantic_bridge(
+            contract,
+            {
+                "semantic_runtime_state": {
+                    "page_status": "ready",
+                    "current_state": "draft",
+                }
+            },
+        )
+
+        self.assertEqual(
+            (((bridged.get("diagnostics") or {}).get("semantic_runtime_state")) or {}).get("page_status"),
+            "ready",
+        )
+        self.assertEqual(
+            ((((bridged.get("diagnostics") or {}).get("parser_semantic_surface")) or {}).get("semantic_runtime_state") or {}).get("current_state"),
+            "draft",
+        )
+        self.assertEqual(
+            (((bridged.get("scene_contract_v1") or {}).get("diagnostics") or {}).get("semantic_runtime_state") or {}).get("page_status"),
+            "ready",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
