@@ -77,6 +77,15 @@ class TestSceneContractSchema(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual(detail.get("code"), "invalid_diagnostics_semantic_runtime_state")
 
+    def test_schema_rejects_non_object_consumer_runtime(self):
+        payload = _base_contract()
+        payload["diagnostics"] = {"consumer_runtime": "ready"}
+
+        ok, detail = schema_module.check_top_level_shape(payload)
+
+        self.assertFalse(ok)
+        self.assertEqual(detail.get("code"), "invalid_diagnostics_consumer_runtime")
+
     def test_builder_shape_validator_rejects_non_object_semantic_runtime_state(self):
         payload = _base_contract()
         payload["diagnostics"] = {"semantic_runtime_state": "ready"}
@@ -86,6 +95,18 @@ class TestSceneContractSchema(unittest.TestCase):
         self.assertFalse(verdict.get("ok"))
         self.assertIn(
             {"code": "invalid_diagnostics_semantic_runtime_state"},
+            verdict.get("issues") or [],
+        )
+
+    def test_builder_shape_validator_rejects_non_object_consumer_runtime(self):
+        payload = _base_contract()
+        payload["diagnostics"] = {"consumer_runtime": "ready"}
+
+        verdict = builder_module.validate_scene_contract_shape(payload)
+
+        self.assertFalse(verdict.get("ok"))
+        self.assertIn(
+            {"code": "invalid_diagnostics_consumer_runtime"},
             verdict.get("issues") or [],
         )
 

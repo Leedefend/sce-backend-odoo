@@ -197,6 +197,10 @@ def validate_scene_contract_shape(contract: Dict[str, Any]) -> Dict[str, Any]:
         diagnostics.get("semantic_runtime_state"), dict
     ):
         issues.append({"code": "invalid_diagnostics_semantic_runtime_state"})
+    elif isinstance(diagnostics, dict) and "consumer_runtime" in diagnostics and not isinstance(
+        diagnostics.get("consumer_runtime"), dict
+    ):
+        issues.append({"code": "invalid_diagnostics_consumer_runtime"})
     return {"ok": len(issues) == 0, "issues": issues}
 
 
