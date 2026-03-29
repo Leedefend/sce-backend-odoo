@@ -2,7 +2,6 @@ export function validateSceneRegistry(scenes) {
   const errors = [];
   const validScenes = [];
   const seenKeys = new Set();
-  const seenRoutes = new Set();
 
   if (!Array.isArray(scenes)) {
     return { validScenes: [], errors: [{ index: -1, issues: ['scenes must be an array'] }] };
@@ -31,8 +30,6 @@ export function validateSceneRegistry(scenes) {
 
     if (!route || typeof route !== 'string') {
       issues.push('route is required');
-    } else if (seenRoutes.has(route)) {
-      issues.push('duplicate route');
     }
 
     if (!target || typeof target !== 'object') {
@@ -62,7 +59,6 @@ export function validateSceneRegistry(scenes) {
     }
 
     seenKeys.add(key);
-    seenRoutes.add(route);
     validScenes.push(scene);
   });
 
