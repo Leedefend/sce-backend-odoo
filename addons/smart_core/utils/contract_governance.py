@@ -119,6 +119,16 @@ _PROJECT_FORM_PRIMARY_FIELDS = [
     "budget_total",
     "location",
 ]
+_PROJECT_FORM_PAGE_PRESERVE_FIELDS = {
+    "access_instruction_message",
+    "alias_id",
+    "alias_email",
+    "alias_name",
+    "alias_domain_id",
+    "alias_contact",
+    "task_ids",
+    "collaborator_ids",
+}
 _PROJECT_FORM_CREATE_HIDDEN_FIELDS = {
     "project_code",
     "code",
@@ -1062,6 +1072,8 @@ def _is_technical_field(name: str, descriptor: dict) -> bool:
     low = _safe_lower(name)
     if not low:
         return True
+    if low in _PROJECT_FORM_PAGE_PRESERVE_FIELDS:
+        return False
     if low in {"id", "__last_update", "display_name"}:
         return True
     if low.startswith(("create_", "write_", "message_", "activity_", "access_", "alias_", "website_")):
@@ -1088,10 +1100,41 @@ def _pick_project_form_fields(data: dict) -> list[str]:
         return []
     ordered_fields = _iter_field_order(data)
 
+    def _collect_page_fields(nodes: list, current_page: str = "", out: list[str] | None = None) -> list[str]:
+        collected = out or []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = _safe_lower(node.get("type") or node.get("kind"))
+            page_name = current_page
+            if node_type == "page":
+                page_name = _safe_text(node.get("name") or node.get("label") or node.get("string"))
+            if node_type == "field" and page_name:
+                name = _safe_text(node.get("name"))
+                descriptor = _as_dict(fields_map.get(name))
+                if name and descriptor and not _is_technical_field(name, descriptor) and name not in collected:
+                    collected.append(name)
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                candidate = node.get(key)
+                if isinstance(candidate, list):
+                    _collect_page_fields(candidate, page_name, collected)
+        return collected
+
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    page_fields = _collect_page_fields(layout if isinstance(layout, list) else [])
+
     selected: list[str] = []
     for name in _PROJECT_FORM_PRIMARY_FIELDS:
         descriptor = _as_dict(fields_map.get(name))
         if descriptor and not _is_technical_field(name, descriptor) and name not in selected:
+            selected.append(name)
+
+    for name in page_fields:
+        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+            break
+        if name not in selected:
             selected.append(name)
 
     for name in ordered_fields:
@@ -1196,58 +1239,10 @@ def _restructure_project_form_layout(data: dict) -> None:
     layout = form.get("layout")
     if not isinstance(layout, list):
         return
-
-    fields_map = _as_dict(data.get("fields"))
-    field_names = [name for name in fields_map.keys() if _safe_text(name)]
-    visible_fields = data.get("visible_fields") if isinstance(data.get("visible_fields"), list) else []
-    ordered = [str(name).strip() for name in visible_fields if str(name).strip() in fields_map]
-    if not ordered:
-        ordered = field_names
-
-    profile = _as_dict(data.get("form_profile"))
-    core_raw = profile.get("core_fields") if isinstance(profile.get("core_fields"), list) else []
-    advanced_raw = profile.get("advanced_fields") if isinstance(profile.get("advanced_fields"), list) else []
-    core_fields = [str(name).strip() for name in core_raw if str(name).strip() in ordered]
-    advanced_fields = [str(name).strip() for name in advanced_raw if str(name).strip() in ordered]
-    if not core_fields:
-        core_fields = ordered[: min(8, len(ordered))]
-    if not advanced_fields:
-        advanced_fields = [name for name in ordered if name not in set(core_fields)]
-
-    header_nodes = [
-        node
-        for node in layout
-        if isinstance(node, dict) and _safe_lower(node.get("type")) == "header"
-    ]
-    groups = []
-    if core_fields:
-        groups.append(
-            {
-                "type": "group",
-                "name": "core_group",
-                "string": "核心信息",
-                "children": [{"type": "field", "name": name} for name in core_fields],
-            }
-        )
-    if advanced_fields:
-        groups.append(
-            {
-                "type": "group",
-                "name": "advanced_group",
-                "string": "高级信息",
-                "children": [{"type": "field", "name": name} for name in advanced_fields],
-            }
-        )
-    if not groups:
-        return
-
-    form["layout"] = header_nodes + [
-        {
-            "type": "sheet",
-            "name": "project_form_sheet",
-            "children": groups,
-        }
-    ]
+    # Keep parser-native container hierarchy intact. Downstream user governance will
+    # prune fields from this tree, but it should not replace notebook/page/group with
+    # synthetic buckets because frontend detail rendering depends on the native shape.
+    form["layout"] = layout
     views["form"] = form
     data["views"] = views
 
@@ -1291,14 +1286,19 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
                     cleaned.append(node)
                 continue
             copied = dict(node)
-            keep_node = True
+            structured_children_present = False
             for key in ("children", "tabs", "pages", "nodes", "items"):
                 raw_children = node.get(key)
                 if not isinstance(raw_children, list):
                     continue
                 pruned_children = _prune_layout(raw_children, allowed)
                 copied[key] = pruned_children
-                if node_type in {"group", "page", "notebook", "sheet", "header"} and not pruned_children and key in {"children", "tabs", "pages"}:
+                if key in {"children", "tabs", "pages"} and pruned_children:
+                    structured_children_present = True
+            keep_node = True
+            if node_type in {"group", "page", "notebook", "sheet", "header"}:
+                has_structured_key = any(isinstance(node.get(key), list) for key in ("children", "tabs", "pages"))
+                if has_structured_key and not structured_children_present:
                     keep_node = False
             if keep_node:
                 cleaned.append(copied)
@@ -1322,59 +1322,7 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     missing_selected = [name for name in selected_order if name and name not in existing_set]
     for name in missing_selected:
         filtered_layout.append({"type": "field", "name": name})
-    form_profile = _as_dict(data.get("form_profile"))
-    core_raw = form_profile.get("core_fields")
-    advanced_raw = form_profile.get("advanced_fields")
-    core_fields = [
-        _safe_text(name)
-        for name in (core_raw if isinstance(core_raw, list) else [])
-        if _safe_text(name) in selected_set
-    ]
-    advanced_fields = [
-        _safe_text(name)
-        for name in (advanced_raw if isinstance(advanced_raw, list) else [])
-        if _safe_text(name) in selected_set
-    ]
-    field_order = [name for name in selected_order if name in selected_set]
-    if not core_fields and field_order:
-        core_fields = field_order[: min(8, len(field_order))]
-    if not advanced_fields:
-        advanced_fields = [name for name in field_order if name not in set(core_fields)]
-
-    header_nodes: list[dict] = []
-    for node in filtered_layout:
-        if isinstance(node, dict) and _safe_lower(node.get("type")) == "header":
-            header_nodes.append(node)
-
-    grouped_children: list[dict] = []
-    if core_fields:
-        grouped_children.append(
-            {
-                "type": "group",
-                "name": "core_group",
-                "string": "核心信息",
-                "children": [{"type": "field", "name": name} for name in core_fields],
-            }
-        )
-    if advanced_fields:
-        grouped_children.append(
-            {
-                "type": "group",
-                "name": "advanced_group",
-                "string": "高级信息",
-                "children": [{"type": "field", "name": name} for name in advanced_fields],
-            }
-        )
-
-    if grouped_children:
-        sheet_node = {
-            "type": "sheet",
-            "name": "project_form_sheet",
-            "children": grouped_children,
-        }
-        form["layout"] = header_nodes + [sheet_node]
-    else:
-        form["layout"] = filtered_layout
+    form["layout"] = filtered_layout
     views["form"] = form
     data["views"] = views
 

@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T21:55:00Z
+- blocker_key: `backend_residual_cleanup_v1`
+- layer_target: `governance cleanup`
+- module: `smart_core form governance residuals + agent_ops stale artifacts`
+- reason: `前端结构主线已经提交完成，但仓库仍残留未提交的后端治理修复和一批历史 agent 草稿；下一步要先把真实修复收口，再清掉无效残留，恢复干净工作树`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-246，只允许提交 project form governance 残余修复与相关审计工件，并删除 stale agent/temp 文件`
+- active_commit: `37d135e`
+- next_step: `Implement ITER-2026-03-29-246 by committing the remaining backend governance fixes and deleting stale untracked agent artifacts, then rerun verify.smart_core`
+
 ### 2026-03-29T21:20:00Z
 - blocker_key: `detail_cleanup_after_hierarchy_restore_v1`
 - layer_target: `frontend detail renderer`

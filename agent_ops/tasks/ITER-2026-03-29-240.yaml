@@ -1,0 +1,60 @@
+task_id: ITER-2026-03-29-240
+title: Audit project form layout-field mismatch
+type: implementation_task
+status: pending
+priority: high
+
+goal: Pinpoint which project.project form page fields exist in finalized native layout but are absent from the governed user contract field set, causing notebook/page nodes to be pruned.
+user_visible_outcome:
+  - the remaining project detail structure loss is reduced to a concrete field-set mismatch
+  - the next backend fix can target the exact missing fields instead of guessing at layout pruning
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - frontend/**
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive_or_minimal_fix_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform diagnostics
+  module: smart_core project form field-set audit
+  reason: The governed form layout still loses notebook/page structure after field selection, so the exact finalized-layout-versus-fields mismatch must be audited before another backend fix.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-240.yaml
+    - python3 -m py_compile agent_ops/scripts/project_form_layout_field_gap_audit.py
+    - bash -lc 'export E2E_BASE_URL=http://127.0.0.1:8070; python3 agent_ops/scripts/project_form_layout_field_gap_audit.py --db sc_demo --login sc_fx_pm --password prod_like --container sc-backend-odoo-dev-odoo-1 --action-id 449 --record-id 3'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - uncertain_runtime_state
+
+deliverables:
+  - diagnostic_script
+  - audit_report
+  - task_result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-240.yaml agent_ops/scripts/project_form_layout_field_gap_audit.py agent_ops/reports/2026-03-29/report.ITER-2026-03-29-240.md agent_ops/state/task_results/ITER-2026-03-29-240.json docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-29-239
+
+notes: "Diagnostic batch: compare finalized layout field names with finalized/governed field maps for project detail action_open."
