@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-29T17:05:00Z
+- blocker_key: `generic_detail_layout_containers_v1`
+- layer_target: `frontend contract consumer`
+- module: `generic detail layout containers`
+- reason: `详情页在压掉通用噪音后，主要差距已经收缩到实施层容器层级不足；当前 live sample 以 sheet/group 为主，所以优先让 group 嵌入上层 detail shell，而不是继续平铺 section`
+- completed_step: `已冻结本轮范围为 ContractFormPage 的通用容器层落地：新增 detail shell，把 sheet/page/default 容器与 group sections 组合成嵌套结构；不改后端 facts、不引入项目特供实现`
+- active_commit: `3e4dd16`
+- next_step: `Run ITER-2026-03-29-224, verify typecheck passes, then refresh the project detail sample and decide whether the next batch should map notebook/page containers to tabs or continue detail interaction alignment`
+
 ### 2026-03-29T16:45:00Z
 - blocker_key: `generic_detail_shell_native_first_v1`
 - layer_target: `frontend contract consumer`

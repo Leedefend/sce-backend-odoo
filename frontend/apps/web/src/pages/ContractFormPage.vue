@@ -148,34 +148,49 @@
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
         <section
-          v-for="section in templateSections"
-          :key="section.key"
-          :class="['contract-form-shell', section.shellClass]"
+          v-for="shell in detailShells"
+          :key="shell.key"
+          :class="['contract-detail-shell', shell.shellClass]"
         >
-          <div v-if="section.eyebrow || section.summary" class="contract-form-shell__meta">
-            <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
-            <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
+          <div v-if="shell.title || shell.eyebrow || shell.summary" class="contract-detail-shell__head">
+            <div class="contract-detail-shell__title-wrap">
+              <span v-if="shell.eyebrow" class="contract-detail-shell__eyebrow">{{ shell.eyebrow }}</span>
+              <h3 v-if="shell.title" class="contract-detail-shell__title">{{ shell.title }}</h3>
+            </div>
+            <span v-if="shell.summary" class="contract-detail-shell__summary">{{ shell.summary }}</span>
           </div>
-          <FormSectionTemplate
-            :title="section.title"
-            :hint="section.hint"
-            :tone="section.tone"
-            :columns="2"
-            :fields="section.fields"
-            @field-change="onTemplateFieldChange"
-          >
-            <template v-if="isProjectCreatePage && section.isAdvanced" #action>
-              <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
-                {{ advancedExpanded ? '收起' : '展开' }}
-              </button>
-            </template>
-            <template #readonly="{ field }">
-              <FieldValue :value="field.value" :field="field.descriptor" />
-            </template>
-            <template #fallback="{ field }">
-              <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
-            </template>
-          </FormSectionTemplate>
+          <div :class="['contract-detail-shell__body', { 'contract-detail-shell__body--stacked': shell.sections.length <= 1 }]">
+            <section
+              v-for="section in shell.sections"
+              :key="section.key"
+              :class="['contract-form-shell', section.shellClass, { 'contract-form-shell--nested': shell.sections.length > 1 }]"
+            >
+              <div v-if="section.eyebrow || section.summary" class="contract-form-shell__meta">
+                <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
+                <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
+              </div>
+              <FormSectionTemplate
+                :title="section.title"
+                :hint="section.hint"
+                :tone="section.tone"
+                :columns="2"
+                :fields="section.fields"
+                @field-change="onTemplateFieldChange"
+              >
+                <template v-if="isProjectCreatePage && section.isAdvanced" #action>
+                  <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
+                    {{ advancedExpanded ? '收起' : '展开' }}
+                  </button>
+                </template>
+                <template #readonly="{ field }">
+                  <FieldValue :value="field.value" :field="field.descriptor" />
+                </template>
+                <template #fallback="{ field }">
+                  <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
+                </template>
+              </FormSectionTemplate>
+            </section>
+          </div>
         </section>
         <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
@@ -339,6 +354,16 @@ type TemplateSectionView = {
   eyebrow: string;
   summary: string;
   fields: FormSectionFieldSchema[];
+};
+
+type DetailShellView = {
+  key: string;
+  title: string;
+  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
+  shellClass: string;
+  eyebrow: string;
+  summary: string;
+  sections: TemplateSectionView[];
 };
 
 type RelationOption = {
@@ -2456,6 +2481,57 @@ const templateSections = computed<TemplateSectionView[]>(() => layoutSections.va
   };
 }));
 
+function resolveDetailShellClass(kind: LayoutSection['kind']) {
+  if (kind === 'sheet') return 'contract-detail-shell--sheet';
+  if (kind === 'page' || kind === 'notebook') return 'contract-detail-shell--page';
+  return 'contract-detail-shell--default';
+}
+
+function resolveDetailShellEyebrow(kind: LayoutSection['kind']) {
+  if (kind === 'sheet') return '主体';
+  if (kind === 'page') return '页签';
+  if (kind === 'notebook') return '页签容器';
+  return '';
+}
+
+const detailShells = computed<DetailShellView[]>(() => {
+  const shells: DetailShellView[] = [];
+  let current: DetailShellView | null = null;
+
+  const pushShell = () => {
+    if (current && current.sections.length) shells.push(current);
+    current = null;
+  };
+
+  for (let index = 0; index < templateSections.value.length; index += 1) {
+    const section = templateSections.value[index];
+    const layout = layoutSections.value[index];
+    const kind = layout?.kind || 'default';
+    const startsContainer = kind === 'sheet' || kind === 'page' || kind === 'notebook' || kind === 'default';
+    if (!current || startsContainer) {
+      pushShell();
+      current = {
+        key: `detail_shell_${section.key}`,
+        title: kind === 'default' ? '' : section.title,
+        kind,
+        shellClass: resolveDetailShellClass(kind),
+        eyebrow: resolveDetailShellEyebrow(kind),
+        summary: '',
+        sections: [],
+      };
+    }
+    current.sections.push({
+      ...section,
+      eyebrow: kind === 'group' ? section.eyebrow : '',
+      summary: current.sections.length > 0 ? section.summary : '',
+      title: kind === 'sheet' && current.sections.length === 0 && current.title ? '' : section.title,
+    });
+  }
+
+  pushShell();
+  return shells;
+});
+
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
   dispatchTemplateFieldChange(payload, {
     onBoolean: (name, value) => setBooleanField(name, value),
@@ -3949,6 +4025,68 @@ watch(
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
+.contract-detail-shell {
+  grid-column: 1 / -1;
+  border: 1px solid #dbe3ee;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+}
+
+.contract-detail-shell--sheet {
+  border-color: #d8e6fb;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.contract-detail-shell--page {
+  border-color: #ddd6fe;
+  background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+}
+
+.contract-detail-shell__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.contract-detail-shell__title-wrap {
+  display: grid;
+  gap: 2px;
+}
+
+.contract-detail-shell__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.contract-detail-shell__title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.contract-detail-shell__summary {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.contract-detail-shell__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.contract-detail-shell__body--stacked {
+  grid-template-columns: 1fr;
+}
+
 .contract-form-shell--sheet {
   border-color: #dbeafe;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
@@ -3961,6 +4099,12 @@ watch(
 .contract-form-shell--page {
   border-color: #ddd6fe;
   background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+}
+
+.contract-form-shell--nested {
+  grid-column: auto;
+  border-radius: 14px;
+  box-shadow: none;
 }
 
 .contract-form-shell__meta {
@@ -3988,6 +4132,10 @@ watch(
 
 @media (max-width: 860px) {
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-detail-shell__body {
     grid-template-columns: 1fr;
   }
 }
