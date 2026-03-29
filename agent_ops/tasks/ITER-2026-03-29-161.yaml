@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-161
+title: Drive smart_scene workflow and validation gates from record state
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene evaluate workflow and validation gates from the current record state instead of only from surface presence.
+user_visible_outcome:
+  - scene contracts now disable submit only when required fields are actually missing
+  - scene contracts now summarize available workflow transitions for the current record state instead of counting all transitions blindly
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_engine
+  reason: smart_scene already consumes workflow and validation surfaces, but still gates them only by surface presence. This iteration turns those semantic surfaces into record-aware runtime decisions using the current record payload.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-161.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-161.yaml addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-160
+
+notes: "Batch acceleration: make workflow and validation gating record-aware in smart_scene."

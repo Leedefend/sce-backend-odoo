@@ -121,6 +121,7 @@ class TestSceneEngineSemantics(unittest.TestCase):
             page_hint={"key": "workspace.home", "title": "工作台"},
             zone_specs=[],
             built_zones={},
+            record={"state": "draft", "name": ""},
             diagnostics={"source": "test"},
             semantic_surface={
                 "workflow_surface": {
@@ -162,6 +163,22 @@ class TestSceneEngineSemantics(unittest.TestCase):
         )
         self.assertEqual(
             (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("validation_rule_count"),
+            1,
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("current_state"),
+            "draft",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("active_transition_count"),
+            1,
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("missing_required_fields"),
+            ["name"],
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("missing_required_count"),
             1,
         )
 
@@ -235,6 +252,28 @@ class TestSceneEngineSemantics(unittest.TestCase):
         self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "form")
         self.assertEqual((((payload.get("scene") or {}).get("layout_mode"))), "detail_focus")
         self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "record_focus")
+
+    def test_build_scene_contract_from_specs_does_not_disable_submit_when_required_fields_present(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.form"},
+            page_hint={"key": "workspace.form", "title": "表单"},
+            zone_specs=[],
+            built_zones={},
+            record={"name": "ready"},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "validation_surface": {
+                    "required_fields": ["name"],
+                    "field_rules": [{"field": "name", "rule": "required"}],
+                }
+            },
+        )
+
+        self.assertIsNone((((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("submit"))
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("missing_required_count"),
+            0,
+        )
 
 
 if __name__ == "__main__":
