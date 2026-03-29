@@ -1,0 +1,60 @@
+task_id: ITER-2026-03-29-210
+title: Audit suspicious project form button fact source
+type: audit_task
+status: pending
+priority: high
+
+goal: Extract the full fact payload for the suspicious `obj_action_view_tasks_Create project` button across parser-derived and dispatcher-derived stages so the next fix can target the real source semantics.
+user_visible_outcome:
+  - the next cleanup batch will know whether to fix raw button labeling, dispatcher normalization, or governance filtering
+  - project form button cleanup can be based on concrete source rows instead of keyword guesses
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - frontend/**
+    - addons/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: governance/backend root-cause audit
+  module: suspicious project button fact source
+  reason: The noisy button is confirmed to survive governance, so the next step is to inspect its full source row and action metadata before choosing a cleanup strategy.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-210.yaml
+    - python3 -m py_compile agent_ops/scripts/project_form_suspicious_button_audit.py
+    - python3 agent_ops/scripts/project_form_suspicious_button_audit.py --db sc_demo --login sc_fx_pm --container sc-backend-odoo-dev-odoo-1
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - audit_report
+  - task_result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-210.yaml agent_ops/scripts/project_form_suspicious_button_audit.py agent_ops/reports/2026-03-29/report.ITER-2026-03-29-210.md agent_ops/state/task_results/ITER-2026-03-29-210.json
+
+depends_on:
+  - ITER-2026-03-29-209
+
+notes: "Diagnosis-only batch: inspect the suspicious project-form button row itself, including parser row details, dispatcher row details, and resolved action metadata."

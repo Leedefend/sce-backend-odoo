@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-03-29-210",
+  "status": "PASS",
+  "summary": "Audited the suspicious project-form button facts and confirmed that one parser-level `action_view_tasks` source is expanded by dispatcher normalization into multiple mislabeled rows, including `Create project`.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-29-210.yaml",
+    "agent_ops/scripts/project_form_suspicious_button_audit.py",
+    "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-210.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-210.yaml",
+    "python3 -m py_compile agent_ops/scripts/project_form_suspicious_button_audit.py",
+    "python3 agent_ops/scripts/project_form_suspicious_button_audit.py --db sc_demo --login sc_fx_pm --container sc-backend-odoo-dev-odoo-1"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore agent_ops/tasks/ITER-2026-03-29-210.yaml agent_ops/scripts/project_form_suspicious_button_audit.py agent_ops/reports/2026-03-29/report.ITER-2026-03-29-210.md agent_ops/state/task_results/ITER-2026-03-29-210.json",
+  "next_suggestion": "Open the next backend implementation batch to clean dispatcher/action normalization for `action_view_tasks` so project-form contracts no longer emit duplicated mislabeled rows."
+}
