@@ -54,6 +54,84 @@ class PageAssembler:
             return [str(x).strip() for x in vt if str(x).strip()]
         return ['tree', 'form']
 
+    @staticmethod
+    def _form_action_identity(row):
+        row = row or {}
+        payload = row.get("payload") or {}
+        method = payload.get("method")
+        if method:
+            return "method:%s" % method
+        ref = payload.get("ref")
+        if ref:
+            return "ref:%s" % ref
+        action_id = payload.get("action_id")
+        if action_id not in (None, ""):
+            return "action_id:%s" % action_id
+        key = row.get("key")
+        if key:
+            return "key:%s" % key
+        return None
+
+    @staticmethod
+    def _collect_form_view_action_rows(form_view):
+        form_view = form_view or {}
+        rows = []
+        for key in ("header_buttons", "button_box", "stat_buttons"):
+            bucket = form_view.get(key)
+            if isinstance(bucket, list):
+                rows.extend([row for row in bucket if isinstance(row, dict)])
+        return rows
+
+    def _extract_form_action_rows_from_view_config(self, view_cfg):
+        parsed = getattr(view_cfg, "arch_parsed", None)
+        if not isinstance(parsed, dict):
+            return []
+        return self._collect_form_view_action_rows(parsed)
+
+    def _filter_form_actions_to_source_rows(self, buttons_data, source_rows):
+        buttons_data = list(buttons_data or [])
+        source_rows = [row for row in (source_rows or []) if isinstance(row, dict)]
+        if not source_rows:
+            return buttons_data
+
+        source_by_identity = {}
+        source_order = []
+        for row in source_rows:
+            identity = self._form_action_identity(row)
+            if not identity or identity in source_by_identity:
+                continue
+            source_by_identity[identity] = row
+            source_order.append(identity)
+
+        if not source_by_identity:
+            return buttons_data
+
+        candidate_by_identity = {}
+        for row in buttons_data:
+            identity = self._form_action_identity(row)
+            if not identity or identity not in source_by_identity or identity in candidate_by_identity:
+                continue
+            merged = dict(row)
+            source = source_by_identity[identity]
+            for key in ("label", "level", "selection"):
+                if source.get(key) not in (None, ""):
+                    merged[key] = source.get(key)
+            candidate_by_identity[identity] = merged
+
+        filtered = []
+        seen = set()
+        for identity in source_order:
+            row = candidate_by_identity.get(identity)
+            if not row:
+                continue
+            dedupe_key = (row.get("kind"), identity, row.get("level"))
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            filtered.append(row)
+
+        return filtered or buttons_data
+
     def assemble_page_contract(self, p, action=None):
         """
         页面契约主装配：
@@ -142,9 +220,12 @@ class PageAssembler:
 
         # 3) 视图契约（多视图）——视图元信息用 su_env 获取，运行时修剪在各自组装器里完成
         v_versions = []
+        form_action_source_rows = []
         for vt in view_types:
             try:
                 vcfg = su['app.view.config']._generate_from_fields_view_get(model, vt)
+                if vt == 'form':
+                    form_action_source_rows = self._extract_form_action_rows_from_view_config(vcfg)
                 v_contract = vcfg.get_contract_api(filter_runtime=True, check_model_acl=True)
                 v_versions.append(str(vcfg.version))
             except KeyError:
@@ -219,6 +300,8 @@ class PageAssembler:
             _logger.warning("app.action.config missing; fallback empty actions for model=%s", model)
             buttons_data = []
             versions["actions"] = 0
+        if "form" in view_types:
+            buttons_data = self._filter_form_actions_to_source_rows(buttons_data, form_action_source_rows)
         data["buttons"] = buttons_data
         toolbar = {
             "header": [a for a in buttons_data if a.get('level') == 'toolbar'],

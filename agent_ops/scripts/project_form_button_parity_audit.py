@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db", required=True)
     parser.add_argument("--login", required=True)
     parser.add_argument("--password", required=True)
+    parser.add_argument("--forbid-label", action="append", default=[])
     parser.add_argument("--expect-status", choices=["PASS"], default="PASS")
     return parser.parse_args()
 
@@ -68,6 +69,12 @@ def row_level(row: object) -> str:
     return str(row.get("level") or "").strip().lower()
 
 
+def row_label(row: object) -> str:
+    if not isinstance(row, dict):
+        return ""
+    return str(row.get("label") or "").strip()
+
+
 def main() -> int:
     args = parse_args()
     base_url = get_base_url()
@@ -107,6 +114,18 @@ def main() -> int:
         for row in dedup
         if row_level(row) not in {"header", "toolbar"}
     ]
+    rows = [
+        {
+            "key": row_key(row),
+            "label": row_label(row),
+            "level": row_level(row),
+        }
+        for row in dedup
+    ]
+    forbidden = {str(item or "").strip() for item in args.forbid_label if str(item or "").strip()}
+    present_forbidden = sorted({row["label"] for row in rows if row["label"] in forbidden})
+    if present_forbidden:
+        raise RuntimeError("forbidden labels still present: %s" % ", ".join(present_forbidden))
 
     payload = {
         "status": "PASS",
@@ -133,6 +152,7 @@ def main() -> int:
             "header_like_keys": header_like[:20],
             "body_like_keys": body_like[:20],
         },
+        "rows": rows,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
