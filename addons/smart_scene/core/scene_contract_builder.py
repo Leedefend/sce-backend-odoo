@@ -137,6 +137,7 @@ def _normalize_diagnostics(diagnostics: Dict[str, Any] | None) -> Dict[str, Any]
     payload.setdefault("warnings", [])
     payload.setdefault("semantic_runtime_state", {})
     payload.setdefault("semantic_runtime_assertions", {})
+    payload.setdefault("consumer_semantics", {})
     return payload
 
 
@@ -152,6 +153,27 @@ def _build_semantic_runtime_assertions(*, page: Dict[str, Any], permissions: Dic
         "page_status_aligned": (not runtime_page_status) or runtime_page_status == page_status,
         "record_state_summary_aligned": (not summary_page_status) or summary_page_status == page_status,
         "current_state_projected": (not runtime_state.get("current_state")) or runtime_state.get("current_state") == summary.get("current_state"),
+    }
+
+
+def _build_consumer_semantics(*, page: Dict[str, Any], permissions: Dict[str, Any], diagnostics: Dict[str, Any]) -> Dict[str, Any]:
+    runtime_state = dict(diagnostics.get("semantic_runtime_state") or {})
+    assertions = dict(diagnostics.get("semantic_runtime_assertions") or {})
+    summary = dict(permissions.get("record_state_summary") or {})
+    return {
+        "runtime": {
+            "page_status": str(page.get("page_status") or ""),
+            "runtime_page_status": str(runtime_state.get("page_status") or ""),
+            "current_state": str(runtime_state.get("current_state") or summary.get("current_state") or ""),
+            "missing_required_count": int(runtime_state.get("missing_required_count") or summary.get("missing_required_count") or 0),
+            "active_transition_count": int(runtime_state.get("active_transition_count") or summary.get("active_transition_count") or 0),
+            "alignment": {
+                "runtime_state_present": bool(assertions.get("runtime_state_present")),
+                "page_status_aligned": bool(assertions.get("page_status_aligned")),
+                "record_state_summary_aligned": bool(assertions.get("record_state_summary_aligned")),
+                "current_state_projected": bool(assertions.get("current_state_projected")),
+            },
+        }
     }
 
 
@@ -209,6 +231,11 @@ def build_scene_contract(
         "diagnostics": _normalize_diagnostics(diagnostics),
     }
     contract["diagnostics"]["semantic_runtime_assertions"] = _build_semantic_runtime_assertions(
+        page=contract["page"],
+        permissions=contract["permissions"],
+        diagnostics=contract["diagnostics"],
+    )
+    contract["diagnostics"]["consumer_semantics"] = _build_consumer_semantics(
         page=contract["page"],
         permissions=contract["permissions"],
         diagnostics=contract["diagnostics"],
