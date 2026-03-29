@@ -165,6 +165,23 @@ class TestSceneResolverSemantics(unittest.TestCase):
 
         self.assertEqual((resolved.get("page") or {}).get("page_status"), "readonly")
 
+    def test_resolver_prefers_engine_runtime_state_for_page_status(self):
+        resolved = TARGET.resolve_scene_identity(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            semantic_surface={
+                "semantic_runtime_state": {
+                    "page_status": "empty",
+                },
+                "record": {"name": "ready"},
+                "validation_surface": {
+                    "required_fields": ["name"],
+                },
+            },
+        )
+
+        self.assertEqual((resolved.get("page") or {}).get("page_status"), "empty")
+
 
 if __name__ == "__main__":
     unittest.main()

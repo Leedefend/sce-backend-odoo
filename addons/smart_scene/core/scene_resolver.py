@@ -88,6 +88,10 @@ def _semantic_page_closed_state(surface: Dict[str, Any]) -> tuple[bool, str]:
 
 
 def _semantic_page_status(surface: Dict[str, Any], fallback_status: str = "") -> str:
+    runtime_state = _as_dict(surface.get("semantic_runtime_state"))
+    runtime_status = _text(runtime_state.get("page_status"))
+    if runtime_status:
+        return runtime_status
     permission_surface = _as_dict(surface.get("permission_surface"))
     status = _permission_surface_page_status(permission_surface)
     if status:
@@ -217,6 +221,7 @@ def resolve_scene_identity(
         page_row.get("page_status")
         or _semantic_page_status(
             {
+                "semantic_runtime_state": _as_dict(parser_surface.get("semantic_runtime_state")),
                 "permission_surface": permission_surface,
                 "semantic_page": semantic_page,
                 "workflow_surface": workflow_surface,
