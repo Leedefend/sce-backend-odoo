@@ -53,6 +53,12 @@
       :message="validationHint"
       variant="info"
     />
+    <StatusPanel
+      v-if="status === 'idle' && runtimeDiagnosticMessage"
+      :title="runtimeDiagnosticTitle"
+      :message="runtimeDiagnosticMessage"
+      variant="info"
+    />
     <ContractFormPage v-if="status === 'idle' && embeddedRecordActionId > 0" />
     <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
   </section>
@@ -89,6 +95,9 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
+const pageConsumerRuntime = pageContract.consumerRuntime;
+const pageConsumerRuntimeStatus = pageContract.consumerRuntimeStatus;
+const pageConsumerRuntimeBridgeAligned = pageContract.consumerRuntimeBridgeAligned;
 const headerActions = computed(() => pageGlobalActions.value);
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
@@ -110,6 +119,42 @@ const idleDiagnosticMessage = computed(() => {
     '请检查 scene registry target/action 映射，或确认该场景是否已切换到 scene-ready 渲染路径。',
   );
   return `${pageText('status_idle_diag_scene_prefix', '场景')}：${sceneKey || '-'}；${hint}`;
+});
+
+const runtimeDiagnosticTitle = computed(() => {
+  const statusKey = String(pageConsumerRuntimeStatus() || '').trim();
+  if (statusKey === 'readonly') return pageText('runtime_diag_title_readonly', '场景当前为只读状态');
+  if (statusKey === 'empty') return pageText('runtime_diag_title_empty', '场景当前为空态');
+  if (statusKey === 'restricted') return pageText('runtime_diag_title_restricted', '场景访问受限');
+  return pageText('runtime_diag_title_default', '场景运行态提示');
+});
+
+const runtimeDiagnosticMessage = computed(() => {
+  const runtime = pageConsumerRuntime.value || {};
+  const statusKey = String(pageConsumerRuntimeStatus() || '').trim();
+  const currentState = String(runtime.current_state || '').trim();
+  const missingRequiredCount = Number(runtime.missing_required_count || 0);
+  const activeTransitionCount = Number(runtime.active_transition_count || 0);
+  const bridgeAligned = pageConsumerRuntimeBridgeAligned();
+  const parts: string[] = [];
+
+  if (statusKey && statusKey !== 'ready') {
+    parts.push(`${pageText('runtime_diag_status_prefix', '运行态状态')}：${statusKey}`);
+  }
+  if (currentState) {
+    parts.push(`${pageText('runtime_diag_state_prefix', '当前记录状态')}：${currentState}`);
+  }
+  if (missingRequiredCount > 0) {
+    parts.push(`${pageText('runtime_diag_missing_required_prefix', '缺失必填项')}：${missingRequiredCount}`);
+  }
+  if (activeTransitionCount > 0) {
+    parts.push(`${pageText('runtime_diag_transition_prefix', '可用流转数')}：${activeTransitionCount}`);
+  }
+  if (!bridgeAligned) {
+    parts.push(pageText('runtime_diag_alignment_mismatch', '前端消费状态与桥接断言存在未对齐项，请优先检查 contract diagnostics。'));
+  }
+
+  return parts.join('；');
 });
 
 function resolveWorkspaceContextQuery() {

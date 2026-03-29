@@ -157,7 +157,7 @@ export interface WorkspaceHomeContract {
     permissions?: Record<string, unknown>;
     record?: Record<string, unknown>;
     extensions?: Record<string, unknown>;
-    diagnostics?: Record<string, unknown>;
+    diagnostics?: SceneContractDiagnostics;
   };
   scene_contract_standard_v1?: Record<string, unknown>;
   role_variant?: {
@@ -171,6 +171,33 @@ export interface WorkspaceHomeContract {
   risk?: Record<string, unknown>;
   ops?: Record<string, unknown>;
   advice?: unknown[];
+}
+
+export interface SceneConsumerRuntimeAlignment {
+  runtime_state_present?: boolean;
+  page_status_aligned?: boolean;
+  record_state_summary_aligned?: boolean;
+  current_state_projected?: boolean;
+  consumer_runtime_present?: boolean;
+  current_state_aligned?: boolean;
+}
+
+export interface SceneConsumerRuntime {
+  page_status?: string;
+  runtime_page_status?: string;
+  current_state?: string;
+  missing_required_count?: number;
+  active_transition_count?: number;
+  alignment?: SceneConsumerRuntimeAlignment;
+  bridge_alignment?: SceneConsumerRuntimeAlignment;
+}
+
+export interface SceneContractDiagnostics {
+  consumer_runtime?: SceneConsumerRuntime;
+  consumer_runtime_assertions?: Record<string, unknown>;
+  semantic_runtime_state?: Record<string, unknown>;
+  semantic_runtime_assertions?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface PageContract {
@@ -199,7 +226,7 @@ export interface PageContract {
     permissions?: Record<string, unknown>;
     record?: Record<string, unknown>;
     extensions?: Record<string, unknown>;
-    diagnostics?: Record<string, unknown>;
+    diagnostics?: SceneContractDiagnostics;
   };
   scene_contract_standard_v1?: Record<string, unknown>;
   actions?: Record<string, unknown>;
