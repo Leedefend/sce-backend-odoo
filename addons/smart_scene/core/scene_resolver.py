@@ -23,6 +23,17 @@ def _permission_surface_restricted(surface: Dict[str, Any]) -> bool:
     return False
 
 
+def _permission_surface_page_status(surface: Dict[str, Any]) -> str:
+    payload = _as_dict(surface)
+    if not payload:
+        return ""
+    if "visible" in payload and not bool(payload.get("visible", True)):
+        return "restricted"
+    if "allowed" in payload and not bool(payload.get("allowed", True)):
+        return "readonly"
+    return ""
+
+
 def _search_surface_nonempty(surface: Dict[str, Any]) -> bool:
     payload = _as_dict(surface)
     return bool(
@@ -119,7 +130,7 @@ def resolve_scene_identity(
     title_field = _text(page_row.get("title_field") or fallback.get("title_field"))
     page_status = _text(
         page_row.get("page_status")
-        or ("restricted" if _permission_surface_restricted(permission_surface) else "")
+        or _permission_surface_page_status(permission_surface)
         or fallback.get("page_status")
     )
     record_id = page_row.get("record_id") if isinstance(page_row, dict) else None
