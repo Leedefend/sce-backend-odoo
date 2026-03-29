@@ -152,6 +152,18 @@ class TestSceneEngineSemantics(unittest.TestCase):
             (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("workflow_transition_count"),
             1,
         )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("validation_required_count"),
+            1,
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("validation_required_fields"),
+            ["name"],
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("validation_rule_count"),
+            1,
+        )
 
     def test_build_scene_contract_from_specs_projects_workflow_gate_when_transitions_missing(self):
         payload = target.build_scene_contract_from_specs(

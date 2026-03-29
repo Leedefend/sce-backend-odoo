@@ -31,6 +31,34 @@ def _validation_surface_nonempty(surface: Dict[str, Any]) -> bool:
     return bool(_as_list(payload.get("required_fields")) or _as_list(payload.get("field_rules")))
 
 
+def _derive_record_state_summary(
+    workflow_surface: Dict[str, Any],
+    validation_surface: Dict[str, Any],
+) -> Dict[str, Any]:
+    summary: Dict[str, Any] = {}
+    if _workflow_surface_nonempty(workflow_surface):
+        transitions = _as_list(workflow_surface.get("transitions"))
+        summary.update(
+            {
+                "state_field": _text(workflow_surface.get("state_field")),
+                "states": _as_list(workflow_surface.get("states")),
+                "transitions": transitions,
+                "highlight_states": _as_list(workflow_surface.get("highlight_states")),
+                "workflow_transition_count": len(transitions),
+            }
+        )
+    if _validation_surface_nonempty(validation_surface):
+        required_fields = _as_list(validation_surface.get("required_fields"))
+        summary.update(
+            {
+                "validation_required_fields": required_fields,
+                "validation_required_count": len(required_fields),
+                "validation_rule_count": len(_as_list(validation_surface.get("field_rules"))),
+            }
+        )
+    return summary
+
+
 def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) -> Dict[str, Any]:
     payload = _as_dict(surface)
     permission_surface = _as_dict(payload.get("permission_surface"))
@@ -53,15 +81,8 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
     if visible and allowed and _validation_surface_nonempty(validation_surface):
         disabled_actions["submit"] = "validation_required"
 
-    record_state_summary: Dict[str, Any] = {}
+    record_state_summary = _derive_record_state_summary(workflow_surface, validation_surface)
     if _workflow_surface_nonempty(workflow_surface):
-        record_state_summary = {
-            "state_field": _text(workflow_surface.get("state_field")),
-            "states": _as_list(workflow_surface.get("states")),
-            "transitions": transitions,
-            "highlight_states": _as_list(workflow_surface.get("highlight_states")),
-            "workflow_transition_count": len(transitions),
-        }
         if visible and allowed and not transitions:
             disabled_actions["workflow"] = "action_permission_workflow_gate"
     return {
