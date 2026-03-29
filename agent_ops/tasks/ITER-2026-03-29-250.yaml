@@ -1,0 +1,68 @@
+task_id: ITER-2026-03-29-250
+title: Extract PageAssembler policy helpers
+type: refactor_task
+status: in_progress
+priority: high
+
+goal: Separate PageAssembler policy-style helpers from page aggregation flow so assembly and policy boundaries are clearer, while preserving current contract output and overall architecture.
+user_visible_outcome:
+  - backend page assembly path becomes easier to audit
+  - assembly responsibilities and policy responsibilities are less interleaved
+  - future cleanup can target policy rules without reopening aggregation logic
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/services/**
+    - addons/smart_core/tests/**
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+change_rules:
+  - additive_or_refactor_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+  - preserve_contract_output
+
+architecture:
+  layer_target: platform layer
+  module: page assembler
+  reason: After thinning the handler path, the next backend boundary blur is inside PageAssembler where aggregation and policy helpers are mixed together.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-250.yaml
+    - make verify.smart_core
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - output_contract_changed_unintentionally
+  - policy_extraction_requires_schema_change
+
+deliverables:
+  - page_assembler_policy_service
+  - assembly_policy_boundary_reduction
+  - regression_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-250.yaml docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore addons/smart_core/app_config_engine/services/assemblers/page_assembler.py addons/smart_core/app_config_engine/services/page_policy_service.py
+
+depends_on:
+  - ITER-2026-03-29-249
+
+notes: "Keep parser, governance rules, and frontend untouched. Only extract PageAssembler helper logic."

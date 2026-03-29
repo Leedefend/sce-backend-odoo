@@ -1,0 +1,68 @@
+task_id: ITER-2026-03-29-257
+title: Extract AppViewConfig fallback form helper families
+type: refactor_task
+status: completed
+priority: high
+
+goal: Reduce the lifecycle density of AppViewConfig by extracting the fallback form helper families out of `_fallback_parse(...)` while preserving parse behavior and keeping fetch, hash, persistence, and runtime-filter sequencing unchanged.
+user_visible_outcome:
+  - AppViewConfig fallback parse path is easier to read and reason about
+  - form fallback helper responsibilities become explicit
+  - backend cleanup line ends on a narrowly scoped, behavior-stable refactor
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/models/app_view_config.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - addons/**/ir.model.access.csv
+
+change_rules:
+  - local_refactor_only
+  - no_parse_behavior_change
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+  - keep_fetch_persist_filter_order_unchanged
+
+architecture:
+  layer_target: platform layer
+  module: AppViewConfig fallback parse helpers
+  reason: The AppViewConfig lifecycle audit marked fallback-form helper extraction as the only remaining cleanup that is still reasonably low-risk without changing architecture or behavior.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-257.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/models/app_view_config.py
+    - make verify.smart_core
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - parse_output_drift_detected
+  - verification_failed
+
+deliverables:
+  - fallback_form_helper_extraction
+  - iteration_report
+
+rollback:
+  - git restore addons/smart_core/app_config_engine/models/app_view_config.py
+  - git restore agent_ops/tasks/ITER-2026-03-29-257.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-29-256
+
+notes: "Limit the change to helper extraction inside AppViewConfig. Do not alter fetch, versioning, hashing, fragment, variant, or runtime-filter behavior."

@@ -16,6 +16,105 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-30T01:10:00Z
+- blocker_key: `app_view_config_fallback_helper_extraction_v1`
+- layer_target: `platform layer`
+- module: `AppViewConfig fallback form helper families`
+- reason: `256 已确认继续实现时唯一仍算低风险的点，就是把 _fallback_parse(...) 里的 form helper 家族抽出来；本轮不碰 fetch、持久化、hash、runtime filter 顺序`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-257，只允许重构 AppViewConfig 的 fallback form helper 家族、更新报告并通过 smart_core 门禁`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-257 by extracting fallback form helper families from _fallback_parse(...) while preserving behavior, then rerun smart_core verification`
+
+### 2026-03-30T00:55:00Z
+- blocker_key: `app_view_config_lifecycle_audit_v1`
+- layer_target: `platform layer audit`
+- module: `AppViewConfig parse plus projection lifecycle`
+- reason: `handler、contract service、page assembler、bootstrap helper 的低风险清理已经基本完成；当前剩余最密集的职责叠加点是 AppViewConfig，这一轮先做只读边界审计，不直接进中风险重构`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-256，只允许输出 AppViewConfig 生命周期责任图、安全抽取缝和 stop-or-continue 建议，不改产品代码`
+- active_commit: `ba90e50`
+- next_step: `Run ITER-2026-03-29-256 by re-reading AppViewConfig with its parse and filter collaborators, then write the lifecycle audit and extraction-seams matrix`
+
+### 2026-03-30T00:35:00Z
+- blocker_key: `handler_post_dispatch_helper_alignment_v1`
+- layer_target: `platform layer`
+- module: `UiContractHandler + ContractService post-dispatch sequencing`
+- reason: `254 已把当前真实后端链路图刷新完成；剩余最低风险重复点是 handler 末端仍手工串接 render-hint 与 delivery governance，这一轮只收敛到单一 helper，不改输出`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-255，只允许重构 UiContractHandler 末端 post-dispatch helper 调用、更新回归测试与报告，不碰 parser/assembler/frontend`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-255 by introducing a single handler-side post-dispatch helper in ContractService, then rerun smart_core verification`
+
+### 2026-03-30T00:10:00Z
+- blocker_key: `backend_chain_refresh_audit_v1`
+- layer_target: `platform layer audit`
+- module: `backend contract delivery chain after helper alignment`
+- reason: `连续低风险清理已经显著改变了真实边界分布；需要基于当前代码刷新链路图和剩余待办，避免继续按旧审计结果推进`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-254，只做当前代码状态下的 backend chain refresh audit，不改产品代码`
+- active_commit: `ba90e50`
+- next_step: `Run ITER-2026-03-29-254 by re-reading the latest handler/service/assembler/bootstrap chain, then output a refreshed chain map and residual-risk matrix`
+
+### 2026-03-29T23:55:00Z
+- blocker_key: `system_init_runtime_fetch_naming_alignment_v1`
+- layer_target: `platform layer`
+- module: `system_init + runtime_fetch bootstrap helper naming`
+- reason: `主链和 auxiliary entrypoint 已经基本对齐，当前剩余的是 bootstrap helper 上的旧 governance callback 名称；这一轮只做命名对齐，不改行为`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-253，只允许重命名 system_init/runtime_fetch 的 delivery governance callback plumbing，并更新报告`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-253 by renaming bootstrap governance callback plumbing to explicit delivery-surface terminology, then rerun smart_core verification`
+
+### 2026-03-29T23:40:00Z
+- blocker_key: `entrypoint_finalize_alignment_v1`
+- layer_target: `platform layer`
+- module: `system_init_preload_builder + ui_base_contract_asset_producer`
+- reason: `当前主链已经有 canonical finalize helper，但 preload 和 asset 入口还在手工包 finalize_contract；这轮只做入口对齐，不改行为`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-252，只允许把辅助入口改为 finalize_data helper 用法，并更新报告`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-252 by replacing ad hoc finalize_contract wrappers in preload and asset entrypoints with finalize_data, then rerun smart_core verification`
+
+### 2026-03-29T23:25:00Z
+- blocker_key: `governance_boundary_naming_v1`
+- layer_target: `platform layer`
+- module: `view-runtime filter vs delivery-surface governance naming and sequencing`
+- reason: `handler、assembler 两侧的重复已经收薄后，当前最模糊的是 governance 的两层命名和 finalize 到 delivery 的顺序表达；这一轮只做非行为性澄清`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-251，只允许补充显式命名、别名 helper、文档化调用顺序，不改输出和前端`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-251 by adding explicit naming for view-runtime filtering and delivery-surface governance, then rerun smart_core verification`
+
+### 2026-03-29T23:10:00Z
+- blocker_key: `page_assembler_policy_extraction_v1`
+- layer_target: `platform layer`
+- module: `PageAssembler assembly vs policy helpers`
+- reason: `handler 内部重复已经收薄后，当前最明显的边界混叠点是 PageAssembler 同时承担聚合与 policy decision；下一轮以低风险方式拆 helper，不动输出`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-250，只允许抽取 PageAssembler policy helper、更新测试与报告，不碰 parser/governance/frontend`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-250 by extracting PageAssembler policy helpers into a dedicated service and rerun smart_core verification`
+
+### 2026-03-29T22:55:00Z
+- blocker_key: `ui_contract_handler_thin_dispatch_v1`
+- layer_target: `platform layer`
+- module: `UiContractHandler internal model/view/action-form dispatch helpers`
+- reason: `共享 post-dispatch helper 已经抽出后，handler 内仍有重复的 model/view/action-form 包装路径；下一轮继续抽公共 helper，减少协议层内部重复，不改行为`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-249，只允许重构 UiContractHandler 内部 helper、更新测试与报告，不碰 parser/governance/frontend`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-249 by extracting shared model/view contract dispatch helpers from UiContractHandler, then rerun smart_core verification`
+
+### 2026-03-29T22:40:00Z
+- blocker_key: `canonical_post_dispatch_pipeline_v1`
+- layer_target: `platform layer`
+- module: `UiContractHandler + ContractService post-dispatch delivery path`
+- reason: `边界审计已经确认重复和模糊点主要集中在 post-dispatch shaping；下一轮先以低风险方式抽共享后处理链，减少重复 finalize/govern 包装，不改变总体架构`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-248，只允许重构共享 post-dispatch helper、更新回归测试与报告，不改 endpoint/schema/前端`
+- active_commit: `ba90e50`
+- next_step: `Implement ITER-2026-03-29-248 by extracting shared finalize/govern helpers and wiring UiContractHandler and ContractService to them, then run smart_core verification`
+
+### 2026-03-29T22:10:00Z
+- blocker_key: `backend_chain_boundary_audit_v1`
+- layer_target: `platform layer audit`
+- module: `intent handler -> dispatcher -> parser -> contract assembly`
+- reason: `在继续新的连续迭代链路前，需要先把 backend 请求链完整打通，明确各模块边界，并找出重复和模糊职责，后续才能按低风险批次逐段清理`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-247，只做后端链路边界审计与后续批次规划，不改产品代码`
+- active_commit: `ba90e50`
+- next_step: `Run ITER-2026-03-29-247 by tracing ui.contract intent handling through dispatch, parsing, and contract assembly, then output a boundary gap matrix and next-batch sequence`
+
 ### 2026-03-29T21:55:00Z
 - blocker_key: `backend_residual_cleanup_v1`
 - layer_target: `governance cleanup`

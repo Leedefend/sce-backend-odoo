@@ -1,0 +1,37 @@
+{
+  "task_id": "ITER-2026-03-29-247",
+  "status": "PASS",
+  "summary": {
+    "kind": "boundary_audit",
+    "scope": [
+      "intent",
+      "ui_contract_handler",
+      "dispatcher",
+      "resolver",
+      "parse",
+      "view_contract_api",
+      "page_assembler",
+      "finalize_contract",
+      "delivery_governance"
+    ],
+    "primary_fuzzy_boundary": "UiContractHandler.handle",
+    "primary_duplication_risk": "post-dispatch shaping duplicated across handler/service entrypoints"
+  },
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-247.md",
+    "boundary_doc": "docs/architecture/backend_intent_dispatch_parse_assembly_boundaries.md",
+    "task_contract": "agent_ops/tasks/ITER-2026-03-29-247.yaml"
+  },
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-247.yaml"
+  ],
+  "next_iteration": {
+    "type": "low_risk_backend_refactor_plan",
+    "targets": [
+      "canonical post-dispatch pipeline",
+      "thin UiContractHandler",
+      "separate governance levels",
+      "extract PageAssembler policy helpers"
+    ]
+  }
+}
