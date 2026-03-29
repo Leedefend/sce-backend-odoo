@@ -4027,21 +4027,25 @@ watch(
 
 .contract-detail-shell {
   grid-column: 1 / -1;
-  border: 1px solid #dbe3ee;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-  padding: 16px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  border: 1px solid #d9e2ee;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: 18px 20px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
 }
 
 .contract-detail-shell--sheet {
-  border-color: #d8e6fb;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  border-color: #cfe0fb;
+  background:
+    linear-gradient(180deg, rgba(219, 234, 254, 0.22) 0%, rgba(255, 255, 255, 0) 72px),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .contract-detail-shell--page {
   border-color: #ddd6fe;
-  background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+  background:
+    linear-gradient(180deg, rgba(237, 233, 254, 0.28) 0%, rgba(255, 255, 255, 0) 72px),
+    linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
 }
 
 .contract-detail-shell__head {
@@ -4049,7 +4053,9 @@ watch(
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 .contract-detail-shell__title-wrap {
@@ -4067,7 +4073,7 @@ watch(
 
 .contract-detail-shell__title {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.25;
   color: #0f172a;
 }
@@ -4080,7 +4086,7 @@ watch(
 .contract-detail-shell__body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .contract-detail-shell__body--stacked {
@@ -4103,8 +4109,11 @@ watch(
 
 .contract-form-shell--nested {
   grid-column: auto;
-  border-radius: 14px;
-  box-shadow: none;
+  border-radius: 16px;
+  border-color: #edf2f7;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  padding: 12px 14px 10px;
 }
 
 .contract-form-shell__meta {
@@ -4128,6 +4137,19 @@ watch(
 .contract-form-shell__summary {
   font-size: 12px;
   color: #64748b;
+}
+
+.contract-form-shell--nested :deep(.template-form-section) {
+  border-top-color: #edf2f7;
+}
+
+.contract-form-shell--nested :deep(.template-form-section--core) {
+  border-top: 0;
+}
+
+.contract-form-shell--nested :deep(.template-form-section-title) {
+  font-size: 13px;
+  color: #1f2937;
 }
 
 @media (max-width: 860px) {
