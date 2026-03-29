@@ -146,6 +146,13 @@ def validate_scene_contract_shape(contract: Dict[str, Any]) -> Dict[str, Any]:
     for key in REQUIRED_TOP_LEVEL_KEYS:
         if key not in contract:
             issues.append({"code": "missing_key", "key": key})
+    diagnostics = contract.get("diagnostics")
+    if "diagnostics" in contract and not isinstance(diagnostics, dict):
+        issues.append({"code": "diagnostics_not_dict"})
+    elif isinstance(diagnostics, dict) and "semantic_runtime_state" in diagnostics and not isinstance(
+        diagnostics.get("semantic_runtime_state"), dict
+    ):
+        issues.append({"code": "invalid_diagnostics_semantic_runtime_state"})
     return {"ok": len(issues) == 0, "issues": issues}
 
 
