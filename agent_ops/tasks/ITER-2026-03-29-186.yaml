@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-186
+title: Apply scene disabled action diagnostics to SceneView header actions
+type: product_task
+status: pending
+priority: high
+
+goal: Consume contract-provided disabled action diagnostics in SceneView header actions, so the scene page not only shows runtime diagnostics but also enforces action gating from the same contract surface.
+user_visible_outcome:
+  - SceneView header actions are disabled when scene contract permissions mark them unavailable
+  - disabled actions surface contract reason codes as hover hints instead of failing only after click
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: frontend layer
+  module: scene contract consumer chain
+  reason: SceneView already consumes runtime diagnostics; it now needs to consume disabled_actions from the same contract to complete the interaction loop.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-186.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status PASS'
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-186.yaml frontend/apps/web/src/app/pageContract.ts frontend/apps/web/src/views/SceneView.vue
+
+depends_on:
+  - ITER-2026-03-29-185
+
+notes: "Productization batch: close the SceneView action loop with disabled_actions contract consumption."
