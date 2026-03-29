@@ -49,26 +49,28 @@
           <strong class="page-overview-pill__value">{{ item.value }}</strong>
         </div>
       </section>
-      <section v-if="statusbarSteps.length" class="page-statusbar-strip">
-        <span
-          v-for="step in statusbarSteps"
-          :key="step.key"
-          :class="['page-statusbar-chip', { 'page-statusbar-chip--active': step.active }]"
-        >
-          {{ step.label }}
-        </span>
-      </section>
-      <section v-if="contractActionStrip.length" class="page-action-strip">
-        <button
-          v-for="action in contractActionStrip"
-          :key="`strip-${action.key}`"
-          :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
-          :disabled="busy || !action.enabled"
-          :title="action.hint"
-          @click="runAction(action)"
-        >
-          {{ action.label }}
-        </button>
+      <section v-if="showCommandBar" class="page-command-bar">
+        <section v-if="statusbarSteps.length" class="page-statusbar-strip">
+          <span
+            v-for="step in statusbarSteps"
+            :key="step.key"
+            :class="['page-statusbar-chip', { 'page-statusbar-chip--active': step.active }]"
+          >
+            {{ step.label }}
+          </span>
+        </section>
+        <section v-if="contractActionStrip.length" class="page-action-strip">
+          <button
+            v-for="action in contractActionStrip"
+            :key="`strip-${action.key}`"
+            :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
+            :disabled="busy || !action.enabled"
+            :title="action.hint"
+            @click="runAction(action)"
+          >
+            {{ action.label }}
+          </button>
+        </section>
       </section>
       <StatusPanel
         v-if="sceneRuntimeStatusPanel"
@@ -851,6 +853,7 @@ const preferNativeFormSurface = computed(() => {
   return contractReadiness.value.usable && layoutNodes.value.some((node) => node.kind === 'field');
 });
 const showPageOverviewStrip = computed(() => pageOverviewItems.value.length > 0 && !preferNativeFormSurface.value);
+const showCommandBar = computed(() => statusbarSteps.value.length > 0 || contractActionStrip.value.length > 0);
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
 const enterpriseStepTargets = computed(() => {
@@ -3859,6 +3862,19 @@ watch(
   margin-bottom: 12px;
 }
 
+.page-command-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
 .page-overview-strip {
   padding: 12px 14px;
   border: 1px solid #e2e8f0;
@@ -3904,7 +3920,9 @@ watch(
 }
 
 .page-action-strip {
-  padding-bottom: 2px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  justify-content: flex-end;
 }
 
 .chips {
