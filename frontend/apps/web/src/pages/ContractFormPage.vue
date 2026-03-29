@@ -147,28 +147,36 @@
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
-        <FormSectionTemplate
+        <section
           v-for="section in templateSections"
           :key="section.key"
-          :title="section.title"
-          :hint="section.hint"
-          :tone="section.tone"
-          :columns="2"
-          :fields="section.fields"
-          @field-change="onTemplateFieldChange"
+          :class="['contract-form-shell', section.shellClass]"
         >
-          <template v-if="isProjectCreatePage && section.isAdvanced" #action>
-            <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
-              {{ advancedExpanded ? '收起' : '展开' }}
-            </button>
-          </template>
-          <template #readonly="{ field }">
-            <FieldValue :value="field.value" :field="field.descriptor" />
-          </template>
-          <template #fallback="{ field }">
-            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
-          </template>
-        </FormSectionTemplate>
+          <div v-if="section.eyebrow || section.summary" class="contract-form-shell__meta">
+            <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
+            <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
+          </div>
+          <FormSectionTemplate
+            :title="section.title"
+            :hint="section.hint"
+            :tone="section.tone"
+            :columns="2"
+            :fields="section.fields"
+            @field-change="onTemplateFieldChange"
+          >
+            <template v-if="isProjectCreatePage && section.isAdvanced" #action>
+              <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
+                {{ advancedExpanded ? '收起' : '展开' }}
+              </button>
+            </template>
+            <template #readonly="{ field }">
+              <FieldValue :value="field.value" :field="field.descriptor" />
+            </template>
+            <template #fallback="{ field }">
+              <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
+            </template>
+          </FormSectionTemplate>
+        </section>
         <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -327,6 +335,9 @@ type TemplateSectionView = {
   hint: string;
   tone: 'core' | 'advanced';
   isAdvanced: boolean;
+  shellClass: string;
+  eyebrow: string;
+  summary: string;
   fields: FormSectionFieldSchema[];
 };
 
@@ -2361,6 +2372,27 @@ function sectionTemplateFields(section: LayoutSection): FormSectionFieldSchema[]
   return buildSectionFieldSchemas(visibleSectionFields(section));
 }
 
+function resolveSectionShellClass(section: LayoutSection) {
+  if (section.kind === 'sheet') return 'contract-form-shell--sheet';
+  if (section.kind === 'group') return 'contract-form-shell--group';
+  if (section.kind === 'page' || section.kind === 'notebook') return 'contract-form-shell--page';
+  return 'contract-form-shell--default';
+}
+
+function resolveSectionEyebrow(section: LayoutSection) {
+  if (section.kind === 'sheet') return '主体';
+  if (section.kind === 'group') return '分组';
+  if (section.kind === 'page') return '页签';
+  if (section.kind === 'notebook') return '页签容器';
+  return '表单';
+}
+
+function resolveSectionSummary(section: LayoutSection) {
+  const count = visibleSectionFields(section).length;
+  if (count <= 0) return '';
+  return `${count} 个字段`;
+}
+
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveFieldType: (descriptor) => fieldType(descriptor) || 'char',
   resolveRequired: (field) => shouldShowRequiredMark(field as LayoutNode),
@@ -2390,6 +2422,9 @@ const templateSections = computed<TemplateSectionView[]>(() => layoutSections.va
     hint: presentation.hint,
     tone: presentation.tone,
     isAdvanced: presentation.isAdvanced,
+    shellClass: resolveSectionShellClass(section),
+    eyebrow: resolveSectionEyebrow(section),
+    summary: resolveSectionSummary(section),
     fields: sectionTemplateFields(section),
   };
 }));
@@ -3876,6 +3911,52 @@ watch(
   border-bottom: 0;
   padding-bottom: 0;
   margin-top: 2px;
+}
+
+.contract-form-shell {
+  grid-column: 1 / -1;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 16px 12px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.contract-form-shell--sheet {
+  border-color: #dbeafe;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.contract-form-shell--group {
+  border-color: #e2e8f0;
+}
+
+.contract-form-shell--page {
+  border-color: #ddd6fe;
+  background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+}
+
+.contract-form-shell__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.contract-form-shell__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.contract-form-shell__summary {
+  font-size: 12px;
+  color: #64748b;
 }
 
 @media (max-width: 860px) {
