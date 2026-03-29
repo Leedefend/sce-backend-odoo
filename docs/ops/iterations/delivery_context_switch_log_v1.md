@@ -2939,3 +2939,16 @@ Each entry must include:
   - latest classification: `PASS_WITH_RISK`
   - repo risk is `high` because `diff_too_large` triggered
   - next efficient action is submit `112/113` together, then continue the semantic-driven backend orchestration chain
+## 2026-03-29 迭代锚点（ITER-2026-03-29-230）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `501dbe6`
+- Layer Target: `Platform Layer`
+- Module: `smart_core native form fact audit`
+- Reason: after frontend structure drift remained disputed, compare native `project.project` form XML truth against parser/internal contract output directly to confirm whether backend parsing still has structural gaps
+- `230`: added `project_form_native_gap_audit.py` to compare `_safe_get_view_data()` native form facts with `app.view.parser` and `app.view.config.get_contract_api()` output
+- `230`: runtime evidence confirmed parser/projection gaps remain on native detail structure, especially `page`, deeper `group`, and internal contract `header_buttons/button_box`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is a backend parser/projection batch before any more frontend detail-structure work
