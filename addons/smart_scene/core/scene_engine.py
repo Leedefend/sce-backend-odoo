@@ -45,6 +45,7 @@ def _derive_record_state_summary(
     workflow_surface: Dict[str, Any],
     validation_surface: Dict[str, Any],
     record: Dict[str, Any],
+    semantic_page: Dict[str, Any],
 ) -> Dict[str, Any]:
     summary: Dict[str, Any] = {}
     if _workflow_surface_nonempty(workflow_surface):
@@ -85,7 +86,34 @@ def _derive_record_state_summary(
                 "missing_required_count": len(missing_required_fields),
             }
         )
+    action_gating = _as_dict(semantic_page.get("action_gating"))
+    policy = _as_dict(action_gating.get("policy"))
+    verdict = _as_dict(action_gating.get("verdict"))
+    closed_states = [state for state in _as_list(policy.get("closed_states")) if _text(state)]
+    if closed_states or verdict:
+        summary.update(
+            {
+                "closed_states": closed_states,
+                "is_closed_state": bool(verdict.get("is_closed_state")),
+                "closed_state_reason_code": _text(verdict.get("reason_code")),
+            }
+        )
     return summary
+
+
+def _semantic_page_closed_state(semantic_page: Dict[str, Any], record: Dict[str, Any]) -> tuple[bool, str]:
+    action_gating = _as_dict(semantic_page.get("action_gating"))
+    record_state = _as_dict(action_gating.get("record_state"))
+    policy = _as_dict(action_gating.get("policy"))
+    verdict = _as_dict(action_gating.get("verdict"))
+    closed_states = {_text(value) for value in _as_list(policy.get("closed_states")) if _text(value)}
+    state_field = _text(record_state.get("field"))
+    current_state = _text(record.get(state_field)) if state_field else _text(record_state.get("value"))
+    if verdict.get("is_closed_state") is True:
+        return True, _text(verdict.get("reason_code"))
+    if current_state and current_state in closed_states:
+        return True, _text(verdict.get("reason_code"))
+    return False, _text(verdict.get("reason_code"))
 
 
 def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) -> Dict[str, Any]:
@@ -93,13 +121,16 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
     permission_surface = _as_dict(payload.get("permission_surface"))
     workflow_surface = _as_dict(payload.get("workflow_surface"))
     validation_surface = _as_dict(payload.get("validation_surface"))
+    semantic_page = _as_dict(payload.get("semantic_page"))
     if not permission_surface and not _workflow_surface_nonempty(workflow_surface) and not _validation_surface_nonempty(validation_surface):
-        return {}
+        if not semantic_page:
+            return {}
 
     visible = bool(permission_surface.get("visible", True))
     allowed = bool(permission_surface.get("allowed", True))
     reason_code = _text(permission_surface.get("reason_code"))
     record = _as_dict(payload.get("record"))
+    is_closed_state, closed_reason = _semantic_page_closed_state(semantic_page, record)
     state_field = _text(workflow_surface.get("state_field"))
     current_state = _text(record.get(state_field)) if state_field else ""
     transitions = _as_list(workflow_surface.get("transitions"))
@@ -120,10 +151,17 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
         disabled_actions["delete"] = reason_code or "readonly"
         if _workflow_surface_nonempty(workflow_surface):
             disabled_actions["workflow"] = "permission_workflow_gate"
+    if is_closed_state:
+        allowed = False
+        disabled_actions["edit"] = closed_reason or "closed_state"
+        disabled_actions["delete"] = closed_reason or "closed_state"
+        disabled_actions["submit"] = closed_reason or "closed_state"
+        if _workflow_surface_nonempty(workflow_surface):
+            disabled_actions["workflow"] = closed_reason or "closed_state"
     if visible and allowed and missing_required_fields:
         disabled_actions["submit"] = "validation_required"
 
-    record_state_summary = _derive_record_state_summary(workflow_surface, validation_surface, record)
+    record_state_summary = _derive_record_state_summary(workflow_surface, validation_surface, record, semantic_page)
     if _workflow_surface_nonempty(workflow_surface):
         if visible and allowed and not active_transitions:
             disabled_actions["workflow"] = "action_permission_workflow_gate"

@@ -315,6 +315,41 @@ class TestSceneEngineSemantics(unittest.TestCase):
 
         self.assertEqual((((payload.get("page") or {}).get("page_status"))), "ready")
 
+    def test_build_scene_contract_from_specs_blocks_closed_state_from_semantic_page_gating(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            record={"state": "done", "name": "ready"},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "done"],
+                    "transitions": [{"from": "draft", "to": "done"}],
+                },
+                "semantic_page": {
+                    "action_gating": {
+                        "record_state": {"field": "state", "value": "done", "source": "record"},
+                        "policy": {"closed_states": ["done"]},
+                        "verdict": {"is_closed_state": True, "reason_code": "closed_state"},
+                    }
+                },
+            },
+        )
+
+        self.assertEqual((((payload.get("page") or {}).get("page_status"))), "readonly")
+        self.assertFalse((((payload.get("permissions") or {}).get("can_edit"))))
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("workflow"),
+            "closed_state",
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("is_closed_state"),
+            True,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
