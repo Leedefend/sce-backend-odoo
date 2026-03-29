@@ -199,7 +199,6 @@ import type { FormSectionFieldSchema, FormSectionFieldChange } from '../componen
 import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
 import type { DetailShellView, DetailStatusbarStep, DetailSectionView } from '../components/template/detailLayout.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
-import { resolveTemplateSectionPresentation } from '../components/template/sectionPresentation.mapper';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
 import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
 import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
@@ -232,6 +231,12 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import {
+  buildDetailSectionViews,
+  buildDetailShellViews,
+  type LayoutSectionView,
+  type LayoutNodeView,
+} from '../app/runtime/detailLayoutRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
@@ -272,22 +277,11 @@ type ContractAction = {
   };
 };
 
-type LayoutNode = {
-  key: string;
-  kind: 'header' | 'sheet' | 'group' | 'notebook' | 'page' | 'field';
-  name: string;
-  label: string;
-  readonly: boolean;
-  required: boolean;
+type LayoutNode = LayoutNodeView & {
   descriptor?: FieldDescriptor;
 };
 
-type LayoutSection = {
-  key: string;
-  title: string;
-  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
-  fields: LayoutNode[];
-};
+type LayoutSection = LayoutSectionView;
 
 type RelationOption = {
   id: number;
@@ -2341,34 +2335,6 @@ function sectionTemplateFields(section: LayoutSection): FormSectionFieldSchema[]
   return buildSectionFieldSchemas(visibleSectionFields(section));
 }
 
-function resolveSectionShellClass(section: LayoutSection) {
-  if (section.kind === 'sheet') return 'contract-form-shell--sheet';
-  if (section.kind === 'group') return 'contract-form-shell--group';
-  if (section.kind === 'page' || section.kind === 'notebook') return 'contract-form-shell--page';
-  return 'contract-form-shell--default';
-}
-
-function resolveSectionEyebrow(section: LayoutSection) {
-  if (preferNativeFormSurface.value) {
-    if (section.kind === 'group') return '分组';
-    if (section.kind === 'page') return '页签';
-    if (section.kind === 'notebook') return '页签容器';
-    return '';
-  }
-  if (section.kind === 'sheet') return '主体';
-  if (section.kind === 'group') return '分组';
-  if (section.kind === 'page') return '页签';
-  if (section.kind === 'notebook') return '页签容器';
-  return '表单';
-}
-
-function resolveSectionSummary(section: LayoutSection) {
-  if (preferNativeFormSurface.value) return '';
-  const count = visibleSectionFields(section).length;
-  if (count <= 0) return '';
-  return `${count} 个字段`;
-}
-
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveFieldType: (descriptor) => fieldType(descriptor) || 'char',
   resolveRequired: (field) => shouldShowRequiredMark(field as LayoutNode),
@@ -2388,73 +2354,18 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
 });
 
-const templateSections = computed<DetailSectionView[]>(() => layoutSections.value.map((section) => {
-  const presentation = resolveTemplateSectionPresentation(section, {
-    projectCreateMode: isProjectCreatePage.value,
-  });
-  return {
-    key: section.key,
-    title: presentation.title,
-    hint: presentation.hint,
-    tone: presentation.tone,
-    isAdvanced: presentation.isAdvanced,
-    shellClass: resolveSectionShellClass(section),
-    eyebrow: resolveSectionEyebrow(section),
-    summary: resolveSectionSummary(section),
-    fields: sectionTemplateFields(section),
-  };
+const templateSections = computed<DetailSectionView[]>(() => buildDetailSectionViews({
+  layoutSections: layoutSections.value,
+  visibleSectionFieldCount: (section) => visibleSectionFields(section).length,
+  buildSectionFields: sectionTemplateFields,
+  preferNativeFormSurface: preferNativeFormSurface.value,
+  projectCreateMode: isProjectCreatePage.value,
 }));
 
-function resolveDetailShellClass(kind: LayoutSection['kind']) {
-  if (kind === 'sheet') return 'contract-detail-shell--sheet';
-  if (kind === 'page' || kind === 'notebook') return 'contract-detail-shell--page';
-  return 'contract-detail-shell--default';
-}
-
-function resolveDetailShellEyebrow(kind: LayoutSection['kind']) {
-  if (kind === 'sheet') return '主体';
-  if (kind === 'page') return '页签';
-  if (kind === 'notebook') return '页签容器';
-  return '';
-}
-
-const detailShells = computed<DetailShellView[]>(() => {
-  const shells: DetailShellView[] = [];
-  let current: DetailShellView | null = null;
-
-  const pushShell = () => {
-    if (current && current.sections.length) shells.push(current);
-    current = null;
-  };
-
-  for (let index = 0; index < templateSections.value.length; index += 1) {
-    const section = templateSections.value[index];
-    const layout = layoutSections.value[index];
-    const kind = layout?.kind || 'default';
-    const startsContainer = kind === 'sheet' || kind === 'page' || kind === 'notebook' || kind === 'default';
-    if (!current || startsContainer) {
-      pushShell();
-      current = {
-        key: `detail_shell_${section.key}`,
-        title: kind === 'default' ? '' : section.title,
-        kind,
-        shellClass: resolveDetailShellClass(kind),
-        eyebrow: resolveDetailShellEyebrow(kind),
-        summary: '',
-        sections: [],
-      };
-    }
-    current.sections.push({
-      ...section,
-      eyebrow: kind === 'group' ? section.eyebrow : '',
-      summary: current.sections.length > 0 ? section.summary : '',
-      title: kind === 'sheet' && current.sections.length === 0 && current.title ? '' : section.title,
-    });
-  }
-
-  pushShell();
-  return shells;
-});
+const detailShells = computed<DetailShellView[]>(() => buildDetailShellViews({
+  layoutSections: layoutSections.value,
+  templateSections: templateSections.value,
+}));
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
   dispatchTemplateFieldChange(payload, {
