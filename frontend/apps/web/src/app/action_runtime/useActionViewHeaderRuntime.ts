@@ -21,6 +21,8 @@ type UseActionViewHeaderRuntimeOptions = {
   router: unknown;
   pageActionIntent: Ref<unknown>;
   pageActionTarget: Ref<unknown>;
+  isHeaderActionDisabled?: (actionKey: string) => boolean;
+  onHeaderActionBlocked?: (actionKey: string) => void;
 };
 
 export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOptions) {
@@ -39,6 +41,10 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
   }
 
   async function executeHeaderAction(actionKey: string) {
+    if (options.isHeaderActionDisabled?.(actionKey)) {
+      options.onHeaderActionBlocked?.(actionKey);
+      return;
+    }
     const handled = await options.executePageContractAction({
       actionKey,
       router: options.router,
