@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-166
+title: Derive smart_scene action groups from semantic page actions
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene project enabled semantic_page actions into final scene contract action groups while preserving disabled reasons in permissions.
+user_visible_outcome:
+  - scene contracts now expose enabled header, toolbar, and record semantic actions through canonical action groups
+  - disabled semantic actions stay filtered out of action groups and remain visible in permissions.disabled_actions
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_engine
+  reason: smart_scene already projects semantic action disable reasons into permissions, but semantic_page enabled actions still do not drive the final scene contract action groups. This iteration turns semantic page actions into canonical primary, secondary, and contextual actions with disabled-item filtering.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-166.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-166.yaml addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-165
+
+notes: "Batch acceleration: project semantic_page actions into final scene action groups and preserve disabled-action filtering."
