@@ -1,0 +1,66 @@
+task_id: ITER-2026-03-29-246
+title: Normalize residual backend form-governance artifacts and clean stale agent files
+type: implementation_task
+status: done
+priority: high
+
+goal: Commit the remaining backend project-form governance fixes and their relevant audit artifacts, then remove stale untracked agent-generated files so the repository returns to a clean state.
+user_visible_outcome:
+  - backend project form governance fixes are committed instead of lingering in the worktree
+  - stale agent task/report/result drafts and temp frontend artifacts no longer pollute git status
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/ui_contract.py
+    - addons/smart_core/tests/test_contract_governance_project_form.py
+    - addons/smart_core/utils/contract_governance.py
+    - agent_ops/**
+    - docs/**
+    - frontend/apps/web/vite.config.ts.timestamp-*.mjs
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - frontend/apps/web/src/**
+
+change_rules:
+  - minimal_cleanup_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+  - delete_only_stale_agent_generated_files
+
+architecture:
+  layer_target: governance cleanup
+  module: smart_core form governance residuals and agent_ops artifact hygiene
+  reason: The frontend structure work is already committed, but unfinished backend fixes and stale agent-generated artifacts still dirty the repository and should be normalized now.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-246.yaml
+    - python3 -m py_compile addons/smart_core/handlers/ui_contract.py addons/smart_core/tests/test_contract_governance_project_form.py addons/smart_core/utils/contract_governance.py agent_ops/scripts/project_form_delivery_gap_audit.py agent_ops/scripts/project_form_layout_field_gap_audit.py
+    - make verify.smart_core
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - cleanup_scope_uncertain
+
+deliverables:
+  - backend_residual_fix_commit
+  - stale_agent_artifact_cleanup
+  - task_report
+  - task_result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-246.yaml addons/smart_core/handlers/ui_contract.py addons/smart_core/tests/test_contract_governance_project_form.py addons/smart_core/utils/contract_governance.py agent_ops/scripts/project_form_delivery_gap_audit.py agent_ops/scripts/project_form_layout_field_gap_audit.py docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-29-242
+
+notes: "Cleanup batch: preserve real backend fixes, remove stale agent drafts, keep the repo clean."

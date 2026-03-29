@@ -3,7 +3,7 @@
 import json, re, hashlib, time, logging
 from collections.abc import Mapping
 from typing import Any, Dict, Optional
-from odoo import api
+from odoo import api, SUPERUSER_ID
 from odoo.tools.safe_eval import safe_eval
 from ..core.base_handler import BaseIntentHandler
 from ..core.native_view_contract_projection import inject_primary_view_projection
@@ -251,6 +251,12 @@ class UiContractHandler(BaseIntentHandler):
                 data["head"] = head
         return data
 
+    def _build_dispatcher(self, ctx):
+        runtime_ctx = dict(ctx or {})
+        runtime_env = api.Environment(self.env.cr, self.env.user.id, runtime_ctx)
+        runtime_su_env = api.Environment(self.env.cr, SUPERUSER_ID, runtime_ctx)
+        return ActionDispatcher(runtime_env, runtime_su_env)
+
     # ---------------- op 实现 ----------------
     def _op_nav(self, ctx):
         data, versions = NavDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).build_nav({
@@ -334,7 +340,7 @@ class UiContractHandler(BaseIntentHandler):
 
         # ✅ 统一服务分发：subject 固定为 'model'
         p2 = {"subject":"model","model":model,"view_type":_VIEW_INV.get(view_type, view_type),"view_id":view_id,"with_data":False}
-        data, versions = ActionDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).dispatch(p2)
+        data, versions = self._build_dispatcher(ctx).dispatch(p2)
 
         # finalize（统一化）
         cs = ContractService(self.env)
@@ -356,7 +362,7 @@ class UiContractHandler(BaseIntentHandler):
 
         # ✅ 映射到统一服务的 'model' subject
         p2 = {"subject":"model","model":model,"view_type":_VIEW_INV.get(view_type, view_type),"view_id":view_id,"with_data":False}
-        data, versions = ActionDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).dispatch(p2)
+        data, versions = self._build_dispatcher(ctx).dispatch(p2)
 
         cs = ContractService(self.env)
         fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"model"}})
@@ -400,10 +406,7 @@ class UiContractHandler(BaseIntentHandler):
                     "action_id": action_id,
                     "with_data": False,
                 }
-                data, versions = ActionDispatcher(
-                    self.env,
-                    api.Environment(self.env.cr, self.env.user.id, action_ctx),
-                ).dispatch(p_form)
+                data, versions = self._build_dispatcher(action_ctx).dispatch(p_form)
                 if isinstance(data, dict):
                     data["action_id"] = action_id
                     head = data.get("head")
@@ -421,7 +424,7 @@ class UiContractHandler(BaseIntentHandler):
 
         # 统一服务的 action 分发
         p2 = {"subject":"action","action_id": action_id, "with_data": False}
-        data, versions = ActionDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).dispatch(p2)
+        data, versions = self._build_dispatcher(ctx).dispatch(p2)
 
         cs = ContractService(self.env)
         fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject":"action"}})

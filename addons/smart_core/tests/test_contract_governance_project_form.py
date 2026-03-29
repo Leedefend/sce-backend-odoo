@@ -225,6 +225,65 @@ def _sample_company_form_payload():
     }
 
 
+def _sample_nested_project_form_payload():
+    payload = _sample_payload()
+    payload["views"]["form"]["layout"] = [
+        {"type": "header"},
+        {
+            "type": "sheet",
+            "name": "project_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "project_head",
+                    "children": [
+                        {"type": "field", "name": "name"},
+                        {"type": "field", "name": "project_type_id"},
+                    ],
+                },
+                {
+                    "type": "notebook",
+                    "name": "project_notebook",
+                    "children": [
+                        {
+                            "type": "page",
+                            "name": "description",
+                            "string": "描述",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "description_group",
+                                    "children": [
+                                        {"type": "field", "name": "privacy_visibility"},
+                                        {"type": "field", "name": "rating_status"},
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "page",
+                            "name": "settings",
+                            "string": "设置",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "settings_group",
+                                    "children": [
+                                        {"type": "field", "name": "manager_id"},
+                                        {"type": "field", "name": "company_id"},
+                                        {"type": "field", "name": "analytic_account_id"},
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
+    return payload
+
+
 class TestProjectFormGovernance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -258,6 +317,33 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("manager_id", visible_fields)
         self.assertIn("budget_total", visible_fields)
         self.assertNotIn("create_uid", visible_fields)
+
+    def test_user_mode_preserves_native_project_form_layout_hierarchy(self):
+        data = _sample_nested_project_form_payload()
+        out = apply_contract_governance(data, "user")
+
+        layout = ((out.get("views") or {}).get("form") or {}).get("layout") or []
+        self.assertEqual(layout[0].get("type"), "header")
+        self.assertEqual(layout[1].get("type"), "sheet")
+
+        sheet_children = layout[1].get("children") or []
+        notebook = next((node for node in sheet_children if isinstance(node, dict) and node.get("type") == "notebook"), {})
+        self.assertEqual(notebook.get("name"), "project_notebook")
+
+        pages = notebook.get("children") or []
+        page_names = [node.get("name") for node in pages if isinstance(node, dict)]
+        self.assertEqual(page_names, ["description", "settings"])
+
+        description_page = next((node for node in pages if isinstance(node, dict) and node.get("name") == "description"), {})
+        settings_page = next((node for node in pages if isinstance(node, dict) and node.get("name") == "settings"), {})
+        description_group = (description_page.get("children") or [])[0]
+        settings_group = (settings_page.get("children") or [])[0]
+
+        description_fields = [node.get("name") for node in (description_group.get("children") or []) if isinstance(node, dict)]
+        settings_fields = [node.get("name") for node in (settings_group.get("children") or []) if isinstance(node, dict)]
+
+        self.assertEqual(description_fields, ["privacy_visibility", "rating_status"])
+        self.assertEqual(settings_fields, ["manager_id", "company_id", "analytic_account_id"])
 
     def test_user_mode_governs_enterprise_company_create_form(self):
         data = _sample_company_form_payload()

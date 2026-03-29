@@ -1,0 +1,60 @@
+task_id: ITER-2026-03-29-237
+title: Audit project detail action-open contract path
+type: implementation_task
+status: done
+priority: high
+
+goal: Audit the real project detail contract request path used by frontend, using ui.contract(action_open) with record context, to pinpoint where the delivered structure diverges from native/internal facts.
+user_visible_outcome:
+  - project detail investigation matches the actual page request path instead of a simplified model probe
+  - next backend fix can target the exact live contract path used by the detail page
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - frontend/**
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive_or_minimal_fix_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform layer
+  module: smart_core live detail contract diagnostics
+  reason: Frontend detail page loads action_open with record context, so model-only audits are insufficient to explain the observed structure drift.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-237.yaml
+    - python3 -m py_compile agent_ops/scripts/project_form_delivery_gap_audit.py
+    - bash -lc 'export E2E_BASE_URL=http://127.0.0.1:8070; python3 agent_ops/scripts/project_form_delivery_gap_audit.py --db sc_demo --login sc_fx_pm --password prod_like --container sc-backend-odoo-dev-odoo-1 --action-id 449 --record-id 3'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - uncertain_runtime_state
+
+deliverables:
+  - diagnostic_script_update
+  - audit_report
+  - task_result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-237.yaml agent_ops/scripts/project_form_delivery_gap_audit.py agent_ops/reports/2026-03-29/report.ITER-2026-03-29-237.md agent_ops/state/task_results/ITER-2026-03-29-237.json docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-29-235
+
+notes: "Diagnostic batch: reproduce the exact detail page contract path used by frontend."

@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-03-29-242",
+  "status": "PASS",
+  "summary": "Preserved project form notebook/page containers during governed layout pruning and restored live page fields for description/settings/sc_system.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-242.yaml",
+    "python3 -m py_compile addons/smart_core/utils/contract_governance.py agent_ops/scripts/project_form_layout_field_gap_audit.py",
+    "make verify.smart_core",
+    "make restart",
+    "bash -lc 'export E2E_BASE_URL=http://127.0.0.1:8070; python3 agent_ops/scripts/project_form_layout_field_gap_audit.py --db sc_demo --login sc_fx_pm --password prod_like --container sc-backend-odoo-dev-odoo-1 --action-id 449 --record-id 3'"
+  ],
+  "risk": "medium-low",
+  "next": "Refresh frontend and verify detail tabs render from live contract; if gaps remain, focus on frontend renderer hierarchy consumption."
+}

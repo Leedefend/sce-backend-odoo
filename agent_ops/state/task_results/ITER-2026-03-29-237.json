@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-03-29-237",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Corrected the delivery audit to replay the exact frontend action_open payload and confirmed the live HTTP ui.contract response still drops project detail groups from 11 to 9.",
+  "artifacts": {
+    "task": "agent_ops/tasks/ITER-2026-03-29-237.yaml",
+    "report": "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-237.md"
+  },
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-237.yaml",
+    "python3 -m py_compile agent_ops/scripts/project_form_delivery_gap_audit.py",
+    "bash -lc 'export E2E_BASE_URL=http://127.0.0.1:8070; python3 agent_ops/scripts/project_form_delivery_gap_audit.py --db sc_demo --login sc_fx_pm --password prod_like --container sc-backend-odoo-dev-odoo-1 --action-id 449 --record-id 3'"
+  ],
+  "next": "Inspect the final live HTTP delivery step after UiContractHandler.handle() returns, because the exact frontend payload still yields group=9 over HTTP while the in-process handler returns group=11."
+}
