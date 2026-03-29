@@ -1033,6 +1033,7 @@ const workflowTransitions = computed(() => {
   if (!Array.isArray(rows)) return [];
   // Create profile only keeps primary create action in header; hide workflow transitions to avoid duplicated semantics.
   if (renderProfile.value === 'create') return [];
+  if (isProjectFormPage.value) return [];
   const headerActionKeys = new Set(
     contractActions.value
       .filter((item) => item.level === 'header' || item.level === 'toolbar')
@@ -1080,6 +1081,7 @@ const searchFilters = computed(() => {
 
 const showSearchFilters = computed(() => {
   if (!contract.value) return true;
+  if (isProjectFormPage.value) return false;
   if (renderProfile.value !== 'create') return true;
   return !contract.value.hide_filters_on_create;
 });
@@ -1883,8 +1885,9 @@ const contractActions = computed<ContractAction[]>(() => {
   const sceneReadyActions = Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
+  const preferSceneReadyActions = sceneReadyActions.length > 0 && !isProjectFormPage.value;
   const merged: Array<Record<string, unknown>> = [];
-  if (sceneReadyActions.length) {
+  if (preferSceneReadyActions) {
     merged.push(...sceneReadyActions);
   } else {
     if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
@@ -1896,7 +1899,7 @@ const contractActions = computed<ContractAction[]>(() => {
   const dedup = new Set<string>();
   const out: ContractAction[] = [];
   for (const row of merged) {
-    if (sceneReadyActions.length) {
+    if (preferSceneReadyActions) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
       dedup.add(mapped.key);
@@ -1954,7 +1957,10 @@ const contractActions = computed<ContractAction[]>(() => {
 });
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
-const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
+const bodyActions = computed(() => {
+  if (isProjectFormPage.value) return [];
+  return contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar');
+});
 
 type SemanticFieldGroup = {
   name: string;
