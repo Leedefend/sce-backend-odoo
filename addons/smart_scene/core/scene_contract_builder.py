@@ -136,7 +136,23 @@ def _normalize_diagnostics(diagnostics: Dict[str, Any] | None) -> Dict[str, Any]
     payload.setdefault("build_pipeline", ["scene_resolver", "structure_mapper", "layout_orchestrator", "scene_contract_builder"])
     payload.setdefault("warnings", [])
     payload.setdefault("semantic_runtime_state", {})
+    payload.setdefault("semantic_runtime_assertions", {})
     return payload
+
+
+def _build_semantic_runtime_assertions(*, page: Dict[str, Any], permissions: Dict[str, Any], diagnostics: Dict[str, Any]) -> Dict[str, Any]:
+    runtime_state = dict(diagnostics.get("semantic_runtime_state") or {})
+    summary = dict(permissions.get("record_state_summary") or {})
+    page_status = str(page.get("page_status") or "").strip()
+    runtime_page_status = str(runtime_state.get("page_status") or "").strip()
+    summary_page_status = str(summary.get("page_status") or "").strip()
+
+    return {
+        "runtime_state_present": bool(runtime_state),
+        "page_status_aligned": (not runtime_page_status) or runtime_page_status == page_status,
+        "record_state_summary_aligned": (not summary_page_status) or summary_page_status == page_status,
+        "current_state_projected": (not runtime_state.get("current_state")) or runtime_state.get("current_state") == summary.get("current_state"),
+    }
 
 
 def validate_scene_contract_shape(contract: Dict[str, Any]) -> Dict[str, Any]:
@@ -192,6 +208,11 @@ def build_scene_contract(
         "extensions": _normalize_extensions(extensions),
         "diagnostics": _normalize_diagnostics(diagnostics),
     }
+    contract["diagnostics"]["semantic_runtime_assertions"] = _build_semantic_runtime_assertions(
+        page=contract["page"],
+        permissions=contract["permissions"],
+        diagnostics=contract["diagnostics"],
+    )
     contract["scene_contract_v1"] = {
         "contract_version": "v1",
         "scene": dict(contract["scene"]),
