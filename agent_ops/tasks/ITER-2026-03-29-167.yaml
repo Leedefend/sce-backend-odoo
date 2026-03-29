@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-29-167
+title: Derive smart_scene danger and recommended actions from semantic actions
+type: governance_task
+status: pending
+priority: high
+
+goal: Make smart_scene classify enabled semantic actions into canonical danger and recommended action groups without breaking existing primary, secondary, and contextual action projection.
+user_visible_outcome:
+  - scene contracts now expose semantic primary actions through recommended_actions
+  - scene contracts now expose semantic danger actions through danger_actions while keeping disabled danger items gated in permissions
+
+scope:
+  allowed_paths:
+    - addons/smart_scene/core/**
+    - addons/smart_scene/tests/**
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: scene layer
+  module: smart_scene scene_engine
+  reason: smart_scene already projects enabled semantic actions into primary, secondary, and contextual groups, but the canonical danger_actions and recommended_actions groups remain empty even when upstream semantic actions already carry primary_action or danger semantics. This iteration consumes those existing semantics into final scene contract action overlays.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-167.yaml
+    - python3 -m py_compile addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+    - python3 addons/smart_scene/tests/test_scene_engine_semantics.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-167.yaml addons/smart_scene/core/scene_engine.py addons/smart_scene/tests/test_scene_engine_semantics.py
+
+depends_on:
+  - ITER-2026-03-29-166
+
+notes: "Batch acceleration: classify semantic primary and danger actions into canonical overlay action groups."

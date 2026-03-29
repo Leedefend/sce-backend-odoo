@@ -496,6 +496,56 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "toolbar_disabled",
         )
 
+    def test_build_scene_contract_from_specs_projects_semantic_action_classification_into_overlay_groups(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "semantic_page": {
+                    "actions": {
+                        "header_actions": [
+                            {"key": "submit", "label": "提交", "semantic": "primary_action", "enabled": True},
+                        ],
+                        "record_actions": [
+                            {"key": "delete", "label": "删除", "semantic": "danger", "enabled": True},
+                            {"key": "cancel", "label": "作废", "semantic": "danger", "enabled": False, "reason_code": "closed_state"},
+                        ],
+                        "toolbar_actions": [
+                            {"key": "refresh", "label": "刷新", "semantic": "secondary", "enabled": True},
+                        ],
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("primary_actions") or [])],
+            ["submit"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("secondary_actions") or [])],
+            ["refresh"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("contextual_actions") or [])],
+            ["delete"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("recommended_actions") or [])],
+            ["submit"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("danger_actions") or [])],
+            ["delete"],
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("cancel"),
+            "closed_state",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

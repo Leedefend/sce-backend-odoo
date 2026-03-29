@@ -191,12 +191,26 @@ def _derive_actions_from_semantic_page(
             rows.append(dict(item))
         return rows
 
+    def _collect_semantic(*semantic_values: str) -> List[Dict[str, Any]]:
+        matched: List[Dict[str, Any]] = []
+        seen = set()
+        semantic_set = {value.strip().lower() for value in semantic_values if value.strip()}
+        for group_key in ("header_actions", "toolbar_actions", "record_actions"):
+            for item in _collect(group_key):
+                action_key = _text(item.get("key"))
+                semantic = _text(item.get("semantic")).lower()
+                if action_key in seen or semantic not in semantic_set:
+                    continue
+                matched.append(item)
+                seen.add(action_key)
+        return matched
+
     return {
         "primary_actions": _collect("header_actions"),
         "secondary_actions": _collect("toolbar_actions"),
         "contextual_actions": _collect("record_actions"),
-        "danger_actions": [],
-        "recommended_actions": [],
+        "danger_actions": _collect_semantic("danger", "destructive"),
+        "recommended_actions": _collect_semantic("primary_action", "primary", "recommended"),
     }
 
 
