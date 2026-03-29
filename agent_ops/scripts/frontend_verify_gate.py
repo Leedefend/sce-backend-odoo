@@ -27,6 +27,7 @@ def main() -> int:
     parser.add_argument("--timeout-seconds", type=int, default=120, help="Timeout for the lint phase.")
     parser.add_argument("--expect-status", choices=["PASS", "BLOCKED", "FAIL"], help="Assert expected final status.")
     parser.add_argument("--expect-route", help="Assert expected selected route from the preflight/gate payload.")
+    parser.add_argument("--expect-preferred-node-major", type=int, help="Assert expected preferred Node major in route metadata.")
     parser.add_argument("targets", nargs="*", help="Optional eslint targets to verify after preflight passes.")
     args = parser.parse_args()
 
@@ -74,6 +75,10 @@ def main() -> int:
         return 1
     if args.expect_route and str((payload.get("route") or {}).get("selected") or "") != args.expect_route:
         return 1
+    if args.expect_preferred_node_major is not None:
+        actual_major = (payload.get("route") or {}).get("preferred_node_major")
+        if actual_major != args.expect_preferred_node_major:
+            return 1
     return 0
 
 

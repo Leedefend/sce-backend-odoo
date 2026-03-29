@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-29-184
+title: Pin frontend runtime expectation for verify gate
+type: governance_task
+status: pending
+priority: high
+
+goal: Make the frontend runtime expectation explicit in repository metadata and surface that preferred runtime through the frontend verify gate, so later productization batches can align the toolchain without manual inference.
+user_visible_outcome:
+  - frontend verification output includes the preferred Node runtime major directly
+  - frontend workspace records an explicit runtime expectation instead of relying on tribal knowledge
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: governance layer
+  module: frontend toolchain alignment routing
+  reason: productization work is blocked by local Node 24 and ESLint 8 mismatch, so the repository needs an explicit preferred runtime and the verify gate must expose it.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-184.yaml
+    - python3 -m py_compile agent_ops/scripts/frontend_eslint_preflight.py agent_ops/scripts/frontend_verify_gate.py
+    - python3 agent_ops/scripts/frontend_verify_gate.py --frontend-dir frontend/apps/web --expect-status BLOCKED --expect-route toolchain_alignment_required --expect-preferred-node-major 20
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_breaking_change
+  - uncertain_business_decision
+
+deliverables:
+  - code
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-184.yaml agent_ops/scripts/frontend_eslint_preflight.py agent_ops/scripts/frontend_verify_gate.py frontend/.nvmrc frontend/package.json frontend/apps/web/package.json
+
+depends_on:
+  - ITER-2026-03-29-183
+
+notes: "Governance acceleration batch: pin preferred frontend runtime and expose it through the reusable verify gate."
