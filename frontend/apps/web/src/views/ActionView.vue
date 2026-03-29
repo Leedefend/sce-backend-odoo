@@ -1,8 +1,15 @@
 <template>
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
-    <section v-if="vm.header.actions.length" class="page-actions">
-      <button v-for="action in vm.header.actions" :key="`header-${action.key}`" class="contract-chip ghost" @click="executeHeaderAction(action.key)">
+    <section v-if="displayHeaderActions.length" class="page-actions">
+      <button
+        v-for="action in displayHeaderActions"
+        :key="`header-${action.key}`"
+        class="contract-chip ghost"
+        :disabled="action.enabled === false"
+        :title="action.hint || ''"
+        @click="executeHeaderAction(action.key)"
+      >
         {{ action.label || action.key }}
       </button>
     </section>
@@ -853,6 +860,21 @@ const {
   showMoreGroupBy,
 } = groupRuntimeState;
 const headerActions = computed(() => pageGlobalActions.value);
+const displayHeaderActions = computed(() => {
+  const disabledMap = new Map(
+    headerActions.value.map((item) => [item.key, { disabled: Boolean(item.disabled), reason: item.disabledReason || '' }]),
+  );
+  return vm.value.header.actions.map((item) => {
+    const mapped = disabledMap.get(item.key);
+    if (!mapped) return item;
+    if (!mapped.disabled) return item;
+    return {
+      ...item,
+      enabled: false,
+      hint: mapped.reason || item.hint,
+    };
+  });
+});
 const advancedFields = ref<string[]>([]);
 const {
   isUiBusy,
@@ -1637,6 +1659,14 @@ const {
   router,
   pageActionIntent,
   pageActionTarget,
+  isHeaderActionDisabled: (actionKey) => {
+    const matched = displayHeaderActions.value.find((item) => item.key === actionKey);
+    return matched?.enabled === false;
+  },
+  onHeaderActionBlocked: (actionKey) => {
+    const matched = displayHeaderActions.value.find((item) => item.key === actionKey);
+    batchMessage.value = matched?.hint || pageText('error_fallback', '操作暂不可用');
+  },
 });
 
 function openNativeFallback() {
