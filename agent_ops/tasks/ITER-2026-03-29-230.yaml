@@ -1,0 +1,60 @@
+task_id: ITER-2026-03-29-230
+title: Audit native form facts versus parsed contract facts
+type: audit_task
+status: pending
+priority: high
+
+goal: Compare the native Odoo project form structure against the parsed live contract for project.project so we can identify concrete backend parsing gaps before further frontend structure work.
+user_visible_outcome:
+  - the team gets a fact-based gap list between native project form structure and parsed contract output
+  - the next backend/parser batch can target explicit missing form facts instead of frontend symptoms
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - frontend/**
+    - addons/**
+
+change_rules:
+  - additive_only
+  - no_schema_change
+  - no_acl_change
+  - no_record_rule_change
+
+architecture:
+  layer_target: platform fact audit
+  module: native form fact parity matrix
+  reason: The user wants a direct comparison between native project detail structure and parsed contract facts to determine whether backend parsing still has structural gaps.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-230.yaml
+    - python3 -m py_compile agent_ops/scripts/project_form_native_gap_audit.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - uncertain_runtime_state
+
+deliverables:
+  - audit_report
+  - task_result
+  - reusable_audit_script
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-29-230.yaml agent_ops/scripts/project_form_native_gap_audit.py agent_ops/reports/2026-03-29/report.ITER-2026-03-29-230.md agent_ops/state/task_results/ITER-2026-03-29-230.json docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-29-222
+  - ITER-2026-03-29-229
+
+notes: "Diagnosis-only batch: inspect project.project native form structure truth against parsed live contract facts before any further frontend page-structure work."

@@ -1,0 +1,45 @@
+{
+  "task_id": "ITER-2026-03-29-230",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Native project form audit confirms backend structural parsing/projection gaps remain before frontend consumption.",
+  "artifacts": {
+    "task": "agent_ops/tasks/ITER-2026-03-29-230.yaml",
+    "report": "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-230.md",
+    "script": "agent_ops/scripts/project_form_native_gap_audit.py"
+  },
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-230.yaml",
+    "python3 -m py_compile agent_ops/scripts/project_form_native_gap_audit.py",
+    "python3 agent_ops/scripts/project_form_native_gap_audit.py --db sc_demo --login sc_fx_pm --container sc-backend-odoo-dev-odoo-1"
+  ],
+  "findings": {
+    "native": {
+      "header_buttons_count": 4,
+      "button_box_count": 2,
+      "notebook_count": 1,
+      "page_count": 3,
+      "group_count": 11,
+      "statusbar_field": "lifecycle_state"
+    },
+    "primary_parser": {
+      "header_buttons_count": 4,
+      "button_box_count": 4,
+      "notebook_count": 1,
+      "page_count": 0,
+      "group_count": 3,
+      "statusbar_field": "lifecycle_state",
+      "field_modifiers_count": 47
+    },
+    "internal_contract": {
+      "header_buttons_count": 0,
+      "button_box_count": 0,
+      "notebook_count": 1,
+      "page_count": 0,
+      "group_count": 3,
+      "statusbar_field": "lifecycle_state",
+      "field_modifiers_count": 47
+    }
+  },
+  "next": "Implement a backend parser/projection batch that preserves native page/group hierarchy and stops dropping form header/button-box actions in the internal contract."
+}
