@@ -46,56 +46,43 @@ def _derive_record_state_summary(
     validation_surface: Dict[str, Any],
     record: Dict[str, Any],
     semantic_page: Dict[str, Any],
+    runtime_state: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     summary: Dict[str, Any] = {}
+    state = _as_dict(runtime_state)
     if _workflow_surface_nonempty(workflow_surface):
-        state_field = _text(workflow_surface.get("state_field"))
-        current_state = _text(record.get(state_field)) if state_field else ""
-        transitions = _as_list(workflow_surface.get("transitions"))
-        active_transitions = [
-            row
-            for row in transitions
-            if isinstance(row, dict) and (not _text(row.get("from")) or _text(row.get("from")) == current_state)
-        ]
         summary.update(
             {
-                "state_field": state_field,
-                "current_state": current_state,
-                "states": _as_list(workflow_surface.get("states")),
-                "transitions": transitions,
-                "active_transitions": active_transitions,
+                "state_field": _text(state.get("state_field") or workflow_surface.get("state_field")),
+                "current_state": _text(state.get("current_state")),
+                "states": _as_list(state.get("states") or workflow_surface.get("states")),
+                "transitions": _as_list(state.get("transitions") or workflow_surface.get("transitions")),
+                "active_transitions": _as_list(state.get("active_transitions")),
                 "active_transition_targets": [
-                    _text(row.get("to")) for row in active_transitions if _text(row.get("to"))
+                    _text(row.get("to")) for row in _as_list(state.get("active_transitions")) if _text(row.get("to"))
                 ],
-                "highlight_states": _as_list(workflow_surface.get("highlight_states")),
-                "workflow_transition_count": len(transitions),
-                "active_transition_count": len(active_transitions),
+                "highlight_states": _as_list(state.get("highlight_states") or workflow_surface.get("highlight_states")),
+                "workflow_transition_count": int(state.get("workflow_transition_count") or 0),
+                "active_transition_count": int(state.get("active_transition_count") or 0),
             }
         )
     if _validation_surface_nonempty(validation_surface):
-        required_fields = _as_list(validation_surface.get("required_fields"))
-        missing_required_fields = [
-            field for field in required_fields if _text(field) and _empty_value(record.get(_text(field)))
-        ]
         summary.update(
             {
-                "validation_required_fields": required_fields,
-                "validation_required_count": len(required_fields),
-                "validation_rule_count": len(_as_list(validation_surface.get("field_rules"))),
-                "missing_required_fields": missing_required_fields,
-                "missing_required_count": len(missing_required_fields),
+                "validation_required_fields": _as_list(state.get("validation_required_fields") or validation_surface.get("required_fields")),
+                "validation_required_count": int(state.get("validation_required_count") or 0),
+                "validation_rule_count": int(state.get("validation_rule_count") or 0),
+                "missing_required_fields": _as_list(state.get("missing_required_fields")),
+                "missing_required_count": int(state.get("missing_required_count") or 0),
             }
         )
-    action_gating = _as_dict(semantic_page.get("action_gating"))
-    policy = _as_dict(action_gating.get("policy"))
-    verdict = _as_dict(action_gating.get("verdict"))
-    closed_states = [state for state in _as_list(policy.get("closed_states")) if _text(state)]
-    if closed_states or verdict:
+    if _as_list(state.get("closed_states")) or _text(state.get("closed_state_reason_code")):
         summary.update(
             {
-                "closed_states": closed_states,
-                "is_closed_state": bool(verdict.get("is_closed_state")),
-                "closed_state_reason_code": _text(verdict.get("reason_code")),
+                "closed_states": _as_list(state.get("closed_states")),
+                "is_closed_state": bool(state.get("is_closed_state")),
+                "closed_state_reason_code": _text(state.get("closed_state_reason_code")),
+                "page_status": _text(state.get("page_status")),
             }
         )
     return summary
@@ -114,6 +101,60 @@ def _semantic_page_closed_state(semantic_page: Dict[str, Any], record: Dict[str,
     if current_state and current_state in closed_states:
         return True, _text(verdict.get("reason_code"))
     return False, _text(verdict.get("reason_code"))
+
+
+def _derive_semantic_runtime_state(
+    *,
+    permission_surface: Dict[str, Any],
+    workflow_surface: Dict[str, Any],
+    validation_surface: Dict[str, Any],
+    semantic_page: Dict[str, Any],
+    record: Dict[str, Any],
+) -> Dict[str, Any]:
+    visible = bool(permission_surface.get("visible", True))
+    allowed = bool(permission_surface.get("allowed", True))
+    state_field = _text(workflow_surface.get("state_field"))
+    current_state = _text(record.get(state_field)) if state_field else ""
+    transitions = _as_list(workflow_surface.get("transitions"))
+    active_transitions = [
+        row
+        for row in transitions
+        if isinstance(row, dict) and (not _text(row.get("from")) or _text(row.get("from")) == current_state)
+    ]
+    required_fields = [field for field in _as_list(validation_surface.get("required_fields")) if _text(field)]
+    missing_required_fields = [field for field in required_fields if _empty_value(record.get(_text(field)))]
+    is_closed_state, closed_reason = _semantic_page_closed_state(semantic_page, record)
+
+    page_status = ""
+    if not visible:
+        page_status = "restricted"
+    elif not allowed or is_closed_state:
+        page_status = "readonly"
+    elif missing_required_fields and not record:
+        page_status = "empty"
+    elif (_workflow_surface_nonempty(workflow_surface) or _validation_surface_nonempty(validation_surface)) and not missing_required_fields:
+        if active_transitions or required_fields or _as_list(workflow_surface.get("states")):
+            page_status = "ready"
+
+    return {
+        "state_field": state_field,
+        "current_state": current_state,
+        "states": _as_list(workflow_surface.get("states")),
+        "transitions": transitions,
+        "active_transitions": active_transitions,
+        "highlight_states": _as_list(workflow_surface.get("highlight_states")),
+        "workflow_transition_count": len(transitions),
+        "active_transition_count": len(active_transitions),
+        "validation_required_fields": required_fields,
+        "validation_required_count": len(required_fields),
+        "validation_rule_count": len(_as_list(validation_surface.get("field_rules"))),
+        "missing_required_fields": missing_required_fields,
+        "missing_required_count": len(missing_required_fields),
+        "closed_states": [state for state in _as_list(_as_dict(_as_dict(semantic_page.get("action_gating")).get("policy")).get("closed_states")) if _text(state)],
+        "is_closed_state": is_closed_state,
+        "closed_state_reason_code": closed_reason,
+        "page_status": page_status,
+    }
 
 
 def _apply_permission_verdicts(
@@ -270,20 +311,17 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
     allowed = bool(permission_surface.get("allowed", True))
     reason_code = _text(permission_surface.get("reason_code"))
     record = _as_dict(payload.get("record"))
-    is_closed_state, closed_reason = _semantic_page_closed_state(semantic_page, record)
-    state_field = _text(workflow_surface.get("state_field"))
-    current_state = _text(record.get(state_field)) if state_field else ""
-    transitions = _as_list(workflow_surface.get("transitions"))
-    active_transitions = [
-        row
-        for row in transitions
-        if isinstance(row, dict) and (not _text(row.get("from")) or _text(row.get("from")) == current_state)
-    ]
-    missing_required_fields = [
-        field
-        for field in _as_list(validation_surface.get("required_fields"))
-        if _text(field) and _empty_value(record.get(_text(field)))
-    ]
+    runtime_state = _derive_semantic_runtime_state(
+        permission_surface=permission_surface,
+        workflow_surface=workflow_surface,
+        validation_surface=validation_surface,
+        semantic_page=semantic_page,
+        record=record,
+    )
+    is_closed_state = bool(runtime_state.get("is_closed_state"))
+    closed_reason = _text(runtime_state.get("closed_state_reason_code"))
+    active_transitions = _as_list(runtime_state.get("active_transitions"))
+    missing_required_fields = _as_list(runtime_state.get("missing_required_fields"))
     disabled_actions: Dict[str, Any] = {}
     if visible and not allowed:
         disabled_actions["edit"] = reason_code or "readonly"
@@ -301,7 +339,13 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
     if visible and allowed and missing_required_fields:
         disabled_actions["submit"] = "validation_required"
 
-    record_state_summary = _derive_record_state_summary(workflow_surface, validation_surface, record, semantic_page)
+    record_state_summary = _derive_record_state_summary(
+        workflow_surface,
+        validation_surface,
+        record,
+        semantic_page,
+        runtime_state=runtime_state,
+    )
     if _workflow_surface_nonempty(workflow_surface):
         if visible and allowed and not active_transitions:
             disabled_actions["workflow"] = "action_permission_workflow_gate"
@@ -319,6 +363,7 @@ def _derive_permissions_from_semantic_surface(surface: Dict[str, Any] | None) ->
         "can_delete": flags["can_delete"],
         "disabled_actions": disabled_actions,
         "record_state_summary": record_state_summary,
+        "semantic_runtime_state": runtime_state,
     }
 
 
@@ -336,13 +381,14 @@ def build_scene_contract_from_specs(
 ) -> Dict[str, Any]:
     semantic_payload = dict(semantic_surface or {})
     semantic_payload["record"] = dict(record or {})
-    resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint, semantic_surface=semantic_payload)
     mapped_specs = map_zone_specs_to_blocks(zone_specs)
     ordered_specs = apply_zone_priority(mapped_specs, zone_order=zone_order)
     diagnostics_payload = dict(diagnostics or {})
     diagnostics_payload.setdefault("scene_engine", "smart_scene.core.scene_engine")
     diagnostics_payload.setdefault("zone_specs_mapped", ordered_specs)
     derived_permissions = _derive_permissions_from_semantic_surface(semantic_payload)
+    semantic_payload["semantic_runtime_state"] = _as_dict((derived_permissions or {}).get("semantic_runtime_state"))
+    resolved = resolve_scene_identity(scene_hint=scene_hint, page_hint=page_hint, semantic_surface=semantic_payload)
     derived_actions = _derive_actions_from_semantic_page(
         semantic_page=_as_dict(semantic_payload.get("semantic_page")),
         disabled_actions=_as_dict((derived_permissions or {}).get("disabled_actions")),

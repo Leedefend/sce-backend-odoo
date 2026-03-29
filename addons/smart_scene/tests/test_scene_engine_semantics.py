@@ -612,6 +612,43 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "execute_denied",
         )
 
+    def test_build_scene_contract_from_specs_projects_runtime_state_consistently(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            record={"state": "draft", "name": "ready"},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                    "highlight_states": ["approved"],
+                },
+                "validation_surface": {
+                    "required_fields": ["name"],
+                    "field_rules": [{"field": "name", "rule": "required"}],
+                },
+                "semantic_page": {
+                    "action_gating": {
+                        "record_state": {"field": "state", "value": "draft", "source": "record"},
+                        "policy": {"closed_states": ["done"]},
+                        "verdict": {"is_closed_state": False, "reason_code": "OK"},
+                    }
+                },
+            },
+        )
+
+        summary = ((payload.get("permissions") or {}).get("record_state_summary")) or {}
+        self.assertEqual((payload.get("page") or {}).get("page_status"), "ready")
+        self.assertEqual(summary.get("page_status"), "ready")
+        self.assertEqual(summary.get("current_state"), "draft")
+        self.assertEqual(summary.get("active_transition_count"), 1)
+        self.assertEqual(summary.get("missing_required_fields"), [])
+        self.assertEqual(summary.get("closed_states"), ["done"])
+
 
 if __name__ == "__main__":
     unittest.main()
