@@ -823,7 +823,7 @@
         "readonly": false,
         "relation": "res.company",
         "relation_entry": {
-          "action_id": 52,
+          "action_id": 246,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -833,7 +833,7 @@
           "model": "res.company",
           "reason_code": "PAGE_ENTRY_READY",
           "source": "backend_contract",
-          "view_mode": "tree,kanban,form",
+          "view_mode": "tree,form",
           "view_type": "form"
         },
         "required": false,
@@ -859,7 +859,7 @@
         "readonly": true,
         "relation": "res.users",
         "relation_entry": {
-          "action_id": 71,
+          "action_id": 248,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -869,7 +869,7 @@
           "model": "res.users",
           "reason_code": "PAGE_ENTRY_READY",
           "source": "backend_contract",
-          "view_mode": "form",
+          "view_mode": "tree,form",
           "view_type": "form"
         },
         "required": false,
@@ -1167,7 +1167,7 @@
         "readonly": true,
         "relation": "res.users",
         "relation_entry": {
-          "action_id": 71,
+          "action_id": 248,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -1177,7 +1177,7 @@
           "model": "res.users",
           "reason_code": "PAGE_ENTRY_READY",
           "source": "backend_contract",
-          "view_mode": "form",
+          "view_mode": "tree,form",
           "view_type": "form"
         },
         "required": false,
@@ -1209,17 +1209,29 @@
           2,
           3,
           4,
-          37,
-          69,
           7,
           8,
           9,
-          36,
-          98,
-          18,
+          15,
           21,
-          90,
-          63
+          22,
+          24,
+          29,
+          30,
+          33,
+          35,
+          40,
+          41,
+          42,
+          48,
+          51,
+          52,
+          65,
+          66,
+          68,
+          74,
+          95,
+          103
         ],
         "rights": {
           "create": true,
@@ -1404,7 +1416,7 @@
       }
     },
     "render_mode": "governed",
-    "render_profile": "create",
+    "render_profile": "edit",
     "reports": [],
     "search": {
       "defaults": {
@@ -1530,7 +1542,7 @@
       ],
       "model": "ir.attachment",
       "saved_filters": [],
-      "version": 2
+      "version": 1
     },
     "source_mode": "governance_pipeline",
     "surface_mapping": {
@@ -1997,8 +2009,9 @@
         "sql_checks": [],
         "unique": []
       },
-      "version": 2
+      "version": 1
     },
+    "view_type": "list",
     "views": {
       "form": {},
       "tree": {
@@ -2014,7 +2027,10 @@
         ],
         "meta": {},
         "model": "ir.attachment",
-        "modifiers": {},
+        "modifiers": {
+          "name": {},
+          "type": {}
+        },
         "order": "id desc",
         "page_size": 50,
         "row_actions": [

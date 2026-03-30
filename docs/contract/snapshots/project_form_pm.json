@@ -224,6 +224,10 @@
         [
           "followers",
           "Followers only"
+        ],
+        [
+          "employees",
+          "Authenticated Employees"
         ]
       ],
       "string": "Alias Contact Security",
@@ -2029,6 +2033,34 @@
     },
     {
       "domain": null,
+      "help": "Phase 13-C 最小执行状态机：仅承载执行推进场景的 ready/in_progress/blocked/done。",
+      "name": "sc_execution_state",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "ready",
+          "执行就绪"
+        ],
+        [
+          "in_progress",
+          "执行中"
+        ],
+        [
+          "blocked",
+          "执行阻塞"
+        ],
+        [
+          "done",
+          "执行完成"
+        ]
+      ],
+      "string": "执行状态",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
       "help": null,
       "name": "sc_overview_contract_count",
       "readonly": true,
@@ -2415,135 +2447,763 @@
     "chatter": {
       "enabled": false
     },
-    "headerButtons": [],
+    "headerButtons": [
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "icon": "",
+        "intent": "open",
+        "kind": "open",
+        "label": "Share Read-only",
+        "level": "header",
+        "name": "329",
+        "payload": {
+          "confirm": "",
+          "context_raw": "{'default_access_mode': 'read', 'dialog_size': 'medium'}",
+          "groups_xmlids": [],
+          "ref": "329",
+          "type": "action",
+          "url": ""
+        },
+        "selection": "none",
+        "visible": {
+          "attrs": {},
+          "domain": [],
+          "states": []
+        }
+      },
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "icon": "",
+        "intent": "open",
+        "kind": "open",
+        "label": "Share Editable",
+        "level": "header",
+        "name": "329",
+        "payload": {
+          "confirm": "",
+          "context_raw": "{'default_access_mode': 'edit', 'dialog_size': 'medium'}",
+          "groups_xmlids": [],
+          "ref": "329",
+          "type": "action",
+          "url": ""
+        },
+        "selection": "none",
+        "visible": {
+          "attrs": {},
+          "domain": [],
+          "states": []
+        }
+      },
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "icon": "",
+        "intent": "execute",
+        "kind": "server",
+        "label": "提交立项",
+        "level": "header",
+        "name": "action_sc_submit",
+        "payload": {
+          "confirm": "",
+          "groups_xmlids": [],
+          "method": "action_sc_submit",
+          "type": "object",
+          "url": ""
+        },
+        "selection": "single",
+        "visible": {
+          "attrs": {},
+          "domain": [],
+          "states": []
+        }
+      },
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "icon": "",
+        "intent": "open",
+        "kind": "open",
+        "label": "Invite Collaborators",
+        "level": "row",
+        "name": "329",
+        "payload": {
+          "confirm": "",
+          "context_raw": "{'default_access_mode': 'edit', 'default_project_id': context.get('active_id')}",
+          "groups_xmlids": [],
+          "ref": "329",
+          "type": "action",
+          "url": ""
+        },
+        "selection": "none",
+        "visible": {
+          "attrs": {},
+          "domain": [],
+          "states": []
+        }
+      }
+    ],
     "model": "project.project",
     "ribbon": null,
     "sheet": [
       {
+        "fieldInfo": {
+          "colspan": 1,
+          "help": "",
+          "invisible": false,
+          "label": "company_id",
+          "modifiers": {
+            "invisible": 1
+          },
+          "name": "company_id",
+          "readonly": false,
+          "required": false,
+          "type": "char",
+          "widget": "char"
+        },
+        "name": "company_id",
+        "type": "field"
+      },
+      {
+        "fieldInfo": {
+          "colspan": 1,
+          "help": "",
+          "invisible": false,
+          "label": "analytic_account_id",
+          "modifiers": {
+            "invisible": 1
+          },
+          "name": "analytic_account_id",
+          "readonly": false,
+          "required": false,
+          "type": "char",
+          "widget": "char"
+        },
+        "name": "analytic_account_id",
+        "type": "field"
+      },
+      {
+        "attributes": {},
+        "children": [
+          {
+            "buttonType": "action",
+            "label": "Share Read-only",
+            "name": "329",
+            "type": "button"
+          },
+          {
+            "buttonType": "action",
+            "label": "Share Editable",
+            "name": "329",
+            "type": "button"
+          },
+          {
+            "fieldInfo": {
+              "colspan": 1,
+              "help": "",
+              "invisible": false,
+              "label": "lifecycle_state",
+              "name": "lifecycle_state",
+              "readonly": false,
+              "required": false,
+              "type": "char",
+              "widget": "statusbar"
+            },
+            "name": "lifecycle_state",
+            "type": "field"
+          },
+          {
+            "buttonType": "object",
+            "label": "提交立项",
+            "name": "action_sc_submit",
+            "type": "button"
+          }
+        ],
         "type": "header"
       },
       {
+        "attributes": {
+          "string": "Project"
+        },
         "children": [
           {
+            "attributes": {
+              "class": "alert alert-info",
+              "invisible": "lifecycle_state != 'draft'",
+              "modifiers": {
+                "invisible": "lifecycle_state != 'draft'"
+              },
+              "role": "alert"
+            },
+            "children": [],
+            "type": "container"
+          },
+          {
+            "attributes": {
+              "class": "oe_button_box",
+              "name": "button_box"
+            },
             "children": [
               {
-                "name": "name",
-                "type": "field"
+                "buttonType": "object",
+                "label": "任务",
+                "name": "action_view_tasks",
+                "type": "button"
               },
               {
-                "name": "project_type_id",
-                "type": "field"
-              },
-              {
-                "name": "project_category_id",
-                "type": "field"
-              },
-              {
-                "name": "lifecycle_state",
-                "type": "field"
-              },
-              {
-                "name": "stage_id",
-                "type": "field"
-              },
-              {
-                "name": "manager_id",
-                "type": "field"
-              },
-              {
-                "name": "user_id",
-                "type": "field"
-              },
-              {
-                "name": "owner_id",
-                "type": "field"
+                "buttonType": "object",
+                "label": "",
+                "name": "project_update_all_action",
+                "type": "button"
               }
             ],
-            "name": "core_group",
-            "string": "核心信息",
+            "type": "container"
+          },
+          {
+            "attributes": {
+              "invisible": "lifecycle_state == 'draft'",
+              "name": "sc_insight_banner",
+              "options": "{'scene': 'project.entry'}"
+            },
+            "children": [],
+            "type": "widget"
+          },
+          {
+            "attributes": {
+              "bg_color": "text-bg-danger",
+              "invisible": "active",
+              "name": "web_ribbon",
+              "title": "Archived"
+            },
+            "children": [],
+            "type": "widget"
+          },
+          {
+            "attributes": {
+              "class": "oe_title"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "class": "d-flex flex-row"
+                },
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "is_favorite",
+                      "name": "is_favorite",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "boolean_favorite"
+                    },
+                    "name": "is_favorite",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "name",
+                      "name": "name",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "text"
+                    },
+                    "name": "name",
+                    "type": "field"
+                  }
+                ],
+                "type": "h1"
+              }
+            ],
+            "type": "container"
+          },
+          {
+            "attributes": {},
+            "children": [
+              {
+                "attributes": {},
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "Name of the Tasks",
+                      "name": "label_tasks",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "label_tasks",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "partner_id",
+                      "name": "partner_id",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "res_partner_many2one"
+                    },
+                    "name": "partner_id",
+                    "type": "field"
+                  }
+                ],
+                "cols": 2,
+                "label": "",
+                "name": "",
+                "type": "group"
+              },
+              {
+                "attributes": {},
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "active",
+                      "modifiers": {
+                        "invisible": 1
+                      },
+                      "name": "active",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "active",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "Project Manager",
+                      "modifiers": {
+                        "readonly": "not active"
+                      },
+                      "name": "user_id",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "many2one_avatar_user"
+                    },
+                    "name": "user_id",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "Planned Date",
+                      "modifiers": {
+                        "required": "date_start or date"
+                      },
+                      "name": "date_start",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "daterange"
+                    },
+                    "name": "date_start",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "date",
+                      "modifiers": {
+                        "invisible": 1,
+                        "required": "date_start"
+                      },
+                      "name": "date",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "date",
+                    "type": "field"
+                  }
+                ],
+                "cols": 2,
+                "label": "",
+                "name": "",
+                "type": "group"
+              }
+            ],
+            "cols": 2,
+            "label": "",
+            "name": "",
             "type": "group"
           },
           {
-            "children": [
+            "attributes": {},
+            "children": [],
+            "label": "",
+            "name": "",
+            "tabs": [
               {
-                "name": "company_id",
-                "type": "field"
+                "attributes": {
+                  "name": "description",
+                  "string": "Description"
+                },
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "description",
+                      "name": "description",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "description",
+                    "type": "field"
+                  }
+                ],
+                "label": "Description",
+                "name": "description",
+                "type": "page"
               },
               {
-                "name": "start_date",
-                "type": "field"
+                "attributes": {
+                  "name": "settings",
+                  "string": "Settings"
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "fieldInfo": {
+                              "colspan": 1,
+                              "help": "",
+                              "invisible": false,
+                              "label": "privacy_visibility",
+                              "name": "privacy_visibility",
+                              "readonly": false,
+                              "required": false,
+                              "type": "char",
+                              "widget": "radio"
+                            },
+                            "name": "privacy_visibility",
+                            "type": "field"
+                          },
+                          {
+                            "attributes": {
+                              "class": "text-muted o_row ps-1",
+                              "colspan": "2",
+                              "invisible": "access_instruction_message == ''"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "class": "fa fa-lightbulb-o"
+                                },
+                                "children": [],
+                                "type": "i"
+                              },
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "access_instruction_message",
+                                  "name": "access_instruction_message",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "char"
+                                },
+                                "name": "access_instruction_message",
+                                "type": "field"
+                              }
+                            ],
+                            "type": "span"
+                          },
+                          {
+                            "attributes": {
+                              "class": "text-muted o_row ps-1",
+                              "colspan": "2",
+                              "invisible": "privacy_visibility_warning == ''"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "class": "fa fa-warning"
+                                },
+                                "children": [],
+                                "type": "i"
+                              },
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "privacy_visibility_warning",
+                                  "name": "privacy_visibility_warning",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "char"
+                                },
+                                "name": "privacy_visibility_warning",
+                                "type": "field"
+                              }
+                            ],
+                            "type": "span"
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      },
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "attributes": {
+                              "class": "pb-2",
+                              "colspan": "2",
+                              "name": "alias_def"
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": []
+                              },
+                              {
+                                "attributes": {},
+                                "children": []
+                              },
+                              {
+                                "attributes": {
+                                  "class": "fw-bold o_form_label",
+                                  "for": "alias_name",
+                                  "string": "Create tasks by sending an email to"
+                                },
+                                "children": [],
+                                "type": "label"
+                              },
+                              {
+                                "attributes": {
+                                  "class": "oe_edit_only o_row"
+                                },
+                                "children": [],
+                                "type": "span"
+                              }
+                            ],
+                            "type": "container"
+                          },
+                          {
+                            "attributes": {},
+                            "children": []
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  },
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "attributes": {
+                          "class": "row mt16 o_settings_container",
+                          "col": "1",
+                          "invisible": "not allow_rating",
+                          "modifiers": {
+                            "invisible": "not allow_rating"
+                          },
+                          "name": "group_documents_analytics",
+                          "string": "Analytics"
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [],
+                            "type": "container"
+                          }
+                        ],
+                        "cols": 1,
+                        "label": "Analytics",
+                        "name": "group_documents_analytics",
+                        "type": "group"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  }
+                ],
+                "label": "Settings",
+                "name": "settings",
+                "type": "page"
               },
               {
-                "name": "end_date",
-                "type": "field"
-              },
-              {
-                "name": "contract_no",
-                "type": "field"
-              },
-              {
-                "name": "budget_total",
-                "type": "field"
-              },
-              {
-                "name": "location",
-                "type": "field"
-              },
-              {
-                "name": "active",
-                "type": "field"
-              },
-              {
-                "name": "actual_percent",
-                "type": "field"
-              },
-              {
-                "name": "allow_milestones",
-                "type": "field"
-              },
-              {
-                "name": "allow_rating",
-                "type": "field"
-              },
-              {
-                "name": "allow_task_dependencies",
-                "type": "field"
-              },
-              {
-                "name": "analytic_account_balance",
-                "type": "field"
-              },
-              {
-                "name": "analytic_account_id",
-                "type": "field"
-              },
-              {
-                "name": "boq_amount_building",
-                "type": "field"
-              },
-              {
-                "name": "boq_amount_installation",
-                "type": "field"
-              },
-              {
-                "name": "boq_amount_leaf_total",
-                "type": "field"
-              },
-              {
-                "name": "boq_amount_total",
-                "type": "field"
+                "attributes": {
+                  "name": "sc_system",
+                  "string": "协作 / 系统"
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "analytic_account_id",
+                          "name": "analytic_account_id",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "analytic_account_id",
+                        "type": "field"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  }
+                ],
+                "label": "协作 / 系统",
+                "name": "sc_system",
+                "type": "page"
               }
             ],
-            "name": "advanced_group",
-            "string": "高级信息",
-            "type": "group"
+            "type": "notebook"
           }
         ],
-        "name": "project_form_sheet",
         "type": "sheet"
+      },
+      {
+        "name": "project_type_id",
+        "type": "field"
+      },
+      {
+        "name": "project_category_id",
+        "type": "field"
+      },
+      {
+        "name": "stage_id",
+        "type": "field"
+      },
+      {
+        "name": "manager_id",
+        "type": "field"
+      },
+      {
+        "name": "owner_id",
+        "type": "field"
+      },
+      {
+        "name": "start_date",
+        "type": "field"
+      },
+      {
+        "name": "end_date",
+        "type": "field"
+      },
+      {
+        "name": "contract_no",
+        "type": "field"
+      },
+      {
+        "name": "budget_total",
+        "type": "field"
+      },
+      {
+        "name": "location",
+        "type": "field"
       }
     ],
-    "statButtons": [],
+    "statButtons": [
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "icon": "",
+        "intent": "execute",
+        "kind": "server",
+        "label": "任务",
+        "level": "smart",
+        "name": "action_view_tasks",
+        "payload": {
+          "confirm": "",
+          "groups_xmlids": [],
+          "method": "action_view_tasks",
+          "type": "object",
+          "url": ""
+        },
+        "selection": "single",
+        "visible": {
+          "attrs": {},
+          "domain": [],
+          "states": []
+        }
+      },
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "icon": "",
+        "intent": "execute",
+        "kind": "server",
+        "label": "project_update_all_action",
+        "level": "smart",
+        "name": "project_update_all_action",
+        "payload": {
+          "confirm": "",
+          "groups_xmlids": [],
+          "method": "project_update_all_action",
+          "type": "object",
+          "url": ""
+        },
+        "selection": "single",
+        "visible": {
+          "attrs": {},
+          "domain": [],
+          "states": []
+        }
+      }
+    ],
     "titleField": "name",
     "view_type": "form"
   },
@@ -2574,9 +3234,9 @@
             "groups": [],
             "groups_xmlids": [],
             "intent": "execute",
-            "key": "obj_action_sc_submit_进入下一阶段",
+            "key": "obj_action_sc_submit_提交立项",
             "kind": "object",
-            "label": "进入下一阶段",
+            "label": "提交立项",
             "level": "header",
             "model": "project.project",
             "params": {
@@ -2585,11 +3245,11 @@
             "payload": {
               "context_raw": null,
               "method": "action_sc_submit",
-              "view_id": 1336,
+              "view_id": 1394,
               "view_xmlid": null
             },
             "selection": "single",
-            "semantic": "secondary",
+            "semantic": "primary_action",
             "target_model": "project.project",
             "visible": {
               "domain": [],
@@ -2612,49 +3272,10 @@
             "groups": [],
             "groups_xmlids": [],
             "intent": "execute",
-            "key": "obj_action_view_my_tasks_查看任务",
-            "kind": "object",
-            "label": "查看任务",
-            "level": "header",
-            "model": "project.project",
-            "params": {
-              "confirm": false
-            },
-            "payload": {
-              "context_raw": null,
-              "method": "action_view_my_tasks",
-              "view_id": 1336,
-              "view_xmlid": null
-            },
-            "selection": "single",
-            "semantic": "secondary",
-            "target_model": "project.project",
-            "visible": {
-              "domain": [],
-              "states": []
-            },
-            "visible_profiles": [
-              "create",
-              "edit",
-              "readonly"
-            ]
-          }
-        ],
-        "key": "drilldown",
-        "label": "业务查看",
-        "overflow_actions": [],
-        "overflow_count": 0
-      },
-      {
-        "actions": [
-          {
-            "groups": [],
-            "groups_xmlids": [],
-            "intent": "execute",
             "key": "obj_action_view_tasks_Create project",
             "kind": "object",
-            "label": "Create project",
-            "level": "header",
+            "label": "任务",
+            "level": "smart",
             "model": "project.project",
             "params": {
               "confirm": false
@@ -2662,11 +3283,11 @@
             "payload": {
               "context_raw": null,
               "method": "action_view_tasks",
-              "view_id": 840,
+              "view_id": 930,
               "view_xmlid": null
             },
             "selection": "single",
-            "semantic": "primary_action",
+            "semantic": "secondary",
             "target_model": "project.project",
             "visible": {
               "domain": [],
@@ -2685,132 +3306,7 @@
       }
     ],
     "action_policies": {
-      "act_295_Share Read-only": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          },
-          "required_groups": [
-            "project.group_project_manager"
-          ]
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit"
-        ]
-      },
-      "act_298_Set a Rating Email Template on Stages": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          }
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit"
-        ]
-      },
-      "act_455_查看成本": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          }
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit",
-          "readonly"
-        ]
-      },
-      "act_472_去补齐资料": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          }
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit"
-        ]
-      },
-      "act_486_查看合同": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          }
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit",
-          "readonly"
-        ]
-      },
-      "obj_action_sc_submit_进入下一阶段": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          }
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit"
-        ]
-      },
-      "obj_action_view_my_tasks_查看任务": {
-        "disabled_reason": "当前生命周期状态不允许该操作",
-        "enabled_when": {
-          "lifecycle": {
-            "disallow_states": [
-              "done",
-              "closed"
-            ],
-            "field": "lifecycle_state"
-          }
-        },
-        "semantic": "secondary",
-        "visible_profiles": [
-          "create",
-          "edit",
-          "readonly"
-        ]
-      },
-      "obj_action_view_tasks_Create project": {
+      "obj_action_sc_submit_提交立项": {
         "disabled_reason": "请先完成必填字段后再执行主操作",
         "enabled_when": {
           "condition_expr": {
@@ -2866,6 +3362,23 @@
           "create",
           "edit"
         ]
+      },
+      "obj_action_view_tasks_Create project": {
+        "disabled_reason": "当前生命周期状态不允许该操作",
+        "enabled_when": {
+          "lifecycle": {
+            "disallow_states": [
+              "done",
+              "closed"
+            ],
+            "field": "lifecycle_state"
+          }
+        },
+        "semantic": "secondary",
+        "visible_profiles": [
+          "create",
+          "edit"
+        ]
       }
     },
     "buttons": [
@@ -2873,9 +3386,9 @@
         "groups": [],
         "groups_xmlids": [],
         "intent": "execute",
-        "key": "obj_action_sc_submit_进入下一阶段",
+        "key": "obj_action_sc_submit_提交立项",
         "kind": "object",
-        "label": "进入下一阶段",
+        "label": "提交立项",
         "level": "header",
         "model": "project.project",
         "params": {
@@ -2884,11 +3397,11 @@
         "payload": {
           "context_raw": null,
           "method": "action_sc_submit",
-          "view_id": 1336,
+          "view_id": 1394,
           "view_xmlid": null
         },
         "selection": "single",
-        "semantic": "secondary",
+        "semantic": "primary_action",
         "target_model": "project.project",
         "visible": {
           "domain": [],
@@ -2903,41 +3416,10 @@
         "groups": [],
         "groups_xmlids": [],
         "intent": "execute",
-        "key": "obj_action_view_my_tasks_查看任务",
-        "kind": "object",
-        "label": "查看任务",
-        "level": "header",
-        "model": "project.project",
-        "params": {
-          "confirm": false
-        },
-        "payload": {
-          "context_raw": null,
-          "method": "action_view_my_tasks",
-          "view_id": 1336,
-          "view_xmlid": null
-        },
-        "selection": "single",
-        "semantic": "secondary",
-        "target_model": "project.project",
-        "visible": {
-          "domain": [],
-          "states": []
-        },
-        "visible_profiles": [
-          "create",
-          "edit",
-          "readonly"
-        ]
-      },
-      {
-        "groups": [],
-        "groups_xmlids": [],
-        "intent": "execute",
         "key": "obj_action_view_tasks_Create project",
         "kind": "object",
-        "label": "Create project",
-        "level": "header",
+        "label": "任务",
+        "level": "smart",
         "model": "project.project",
         "params": {
           "confirm": false
@@ -2945,11 +3427,11 @@
         "payload": {
           "context_raw": null,
           "method": "action_view_tasks",
-          "view_id": 840,
+          "view_id": 930,
           "view_xmlid": null
         },
         "selection": "single",
-        "semantic": "primary_action",
+        "semantic": "secondary",
         "target_model": "project.project",
         "visible": {
           "domain": [],
@@ -2986,11 +3468,29 @@
         "fields": [
           "company_id",
           "analytic_account_id",
+          "lifecycle_state",
+          "is_favorite",
+          "label_tasks",
+          "partner_id",
+          "tag_ids",
+          "active",
+          "date_start",
+          "date",
+          "description",
+          "privacy_visibility",
           "access_instruction_message",
+          "privacy_visibility_warning",
+          "alias_id",
+          "alias_email",
+          "alias_name",
+          "alias_domain_id",
+          "alias_contact",
+          "allow_rating",
+          "task_ids",
+          "collaborator_ids",
           "access_token",
           "access_url",
           "access_warning",
-          "active",
           "activity_date_deadline",
           "activity_exception_decoration",
           "activity_exception_icon",
@@ -3002,22 +3502,16 @@
           "activity_user_id",
           "actual_percent",
           "alias_bounced_content",
-          "alias_contact",
           "alias_defaults",
           "alias_domain",
-          "alias_domain_id",
-          "alias_email",
           "alias_force_thread_id",
           "alias_full_name",
-          "alias_id",
           "alias_incoming_local",
           "alias_model_id",
-          "alias_name",
           "alias_parent_model_id",
           "alias_parent_thread_id",
           "alias_status",
           "allow_milestones",
-          "allow_rating",
           "allow_task_dependencies",
           "analytic_account_balance",
           "boq_amount_building",
@@ -3038,7 +3532,6 @@
           "closed_task_count",
           "code",
           "collaborator_count",
-          "collaborator_ids",
           "color",
           "company_currency_id",
           "contract_amount",
@@ -3071,9 +3564,6 @@
           "dashboard_profit_actual",
           "dashboard_progress_rate",
           "dashboard_revenue_actual",
-          "date",
-          "date_start",
-          "description",
           "display_name",
           "doc_count",
           "doc_manager_id",
@@ -3091,13 +3581,10 @@
           "has_message",
           "health_state",
           "id",
-          "is_favorite",
           "is_milestone_exceeded",
-          "label_tasks",
           "last_update_color",
           "last_update_id",
           "last_update_status",
-          "lifecycle_state",
           "location",
           "message_attachment_count",
           "message_follower_ids",
@@ -3115,7 +3602,6 @@
           "my_activity_date_deadline",
           "open_task_count",
           "owner_contact",
-          "partner_id",
           "pay_contract_total",
           "pay_paid_total",
           "pay_settlement_total",
@@ -3123,8 +3609,6 @@
           "payment_request_ids",
           "phase_key",
           "plan_percent",
-          "privacy_visibility",
-          "privacy_visibility_warning",
           "progress_entry_count",
           "progress_entry_ids",
           "progress_rate_latest",
@@ -3145,6 +3629,7 @@
           "sc_demo_showcase_ready",
           "sc_draft_autosave_uid",
           "sc_draft_autosaved_at",
+          "sc_execution_state",
           "sc_overview_contract_count",
           "sc_overview_cost_count",
           "sc_overview_payment_count",
@@ -3159,9 +3644,7 @@
           "stage_id",
           "structure_ids",
           "subcontract_amount",
-          "tag_ids",
           "task_count",
-          "task_ids",
           "task_properties_definition",
           "tasks",
           "tender_bid_ids",
@@ -5725,6 +6208,20 @@
           "readonly"
         ]
       },
+      "sc_execution_state": {
+        "group": "advanced",
+        "readonly_profiles": [
+          "readonly"
+        ],
+        "required_profiles": [],
+        "source_readonly": false,
+        "source_required": false,
+        "visible_profiles": [
+          "create",
+          "edit",
+          "readonly"
+        ]
+      },
       "sc_overview_contract_count": {
         "group": "advanced",
         "readonly_profiles": [
@@ -6208,58 +6705,18 @@
       }
     },
     "field_semantics": {
+      "access_instruction_message": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
       "active": {
         "semantic_type": "system",
         "surface_role": "advanced",
         "technical": false
       },
-      "actual_percent": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "allow_milestones": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "allow_rating": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "allow_task_dependencies": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "analytic_account_balance": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
       "analytic_account_id": {
         "semantic_type": "relation",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "boq_amount_building": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "boq_amount_installation": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "boq_amount_leaf_total": {
-        "semantic_type": "business",
-        "surface_role": "advanced",
-        "technical": false
-      },
-      "boq_amount_total": {
-        "semantic_type": "business",
         "surface_role": "advanced",
         "technical": false
       },
@@ -6278,9 +6735,34 @@
         "surface_role": "advanced",
         "technical": false
       },
+      "date": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "date_start": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "description": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
       "end_date": {
         "semantic_type": "business",
         "surface_role": "core",
+        "technical": false
+      },
+      "is_favorite": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "label_tasks": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
         "technical": false
       },
       "lifecycle_state": {
@@ -6306,6 +6788,21 @@
       "owner_id": {
         "semantic_type": "relation",
         "surface_role": "core",
+        "technical": false
+      },
+      "partner_id": {
+        "semantic_type": "relation",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "privacy_visibility": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
+        "technical": false
+      },
+      "privacy_visibility_warning": {
+        "semantic_type": "business",
+        "surface_role": "advanced",
         "technical": false
       },
       "project_category_id": {
@@ -6335,6 +6832,16 @@
       }
     },
     "fields": {
+      "access_instruction_message": {
+        "name": "access_instruction_message",
+        "readonly": true,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Access Instruction Message",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "char"
+      },
       "active": {
         "name": "active",
         "readonly": false,
@@ -6345,63 +6852,13 @@
         "technical": false,
         "type": "boolean"
       },
-      "actual_percent": {
-        "name": "actual_percent",
-        "readonly": false,
-        "required": false,
-        "semantic_type": "business",
-        "string": "实际完成率(%)",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "float"
-      },
-      "allow_milestones": {
-        "name": "allow_milestones",
-        "readonly": false,
-        "required": false,
-        "semantic_type": "business",
-        "string": "Milestones",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "boolean"
-      },
-      "allow_rating": {
-        "name": "allow_rating",
-        "readonly": true,
-        "required": false,
-        "semantic_type": "business",
-        "string": "Allow Customer Ratings",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "boolean"
-      },
-      "allow_task_dependencies": {
-        "name": "allow_task_dependencies",
-        "readonly": false,
-        "required": false,
-        "semantic_type": "business",
-        "string": "Task Dependencies",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "boolean"
-      },
-      "analytic_account_balance": {
-        "name": "analytic_account_balance",
-        "readonly": true,
-        "required": false,
-        "semantic_type": "business",
-        "string": "Balance",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "monetary"
-      },
       "analytic_account_id": {
         "domain": "['|', ('company_id', '=', False), ('company_id', '=?', company_id)]",
         "name": "analytic_account_id",
         "readonly": false,
         "relation": "account.analytic.account",
         "relation_entry": {
-          "action_id": 144,
+          "action_id": 145,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -6421,46 +6878,6 @@
         "technical": false,
         "type": "many2one"
       },
-      "boq_amount_building": {
-        "name": "boq_amount_building",
-        "readonly": true,
-        "required": false,
-        "semantic_type": "business",
-        "string": "建筑工程额",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "monetary"
-      },
-      "boq_amount_installation": {
-        "name": "boq_amount_installation",
-        "readonly": true,
-        "required": false,
-        "semantic_type": "business",
-        "string": "安装工程额",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "monetary"
-      },
-      "boq_amount_leaf_total": {
-        "name": "boq_amount_leaf_total",
-        "readonly": true,
-        "required": false,
-        "semantic_type": "business",
-        "string": "清单合价(叶子)",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "monetary"
-      },
-      "boq_amount_total": {
-        "name": "boq_amount_total",
-        "readonly": true,
-        "required": false,
-        "semantic_type": "business",
-        "string": "清单总额",
-        "surface_role": "advanced",
-        "technical": false,
-        "type": "monetary"
-      },
       "budget_total": {
         "name": "budget_total",
         "readonly": false,
@@ -6477,7 +6894,7 @@
         "readonly": false,
         "relation": "res.company",
         "relation_entry": {
-          "action_id": 52,
+          "action_id": 246,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -6487,7 +6904,7 @@
           "model": "res.company",
           "reason_code": "PAGE_ENTRY_READY",
           "source": "backend_contract",
-          "view_mode": "tree,kanban,form",
+          "view_mode": "tree,form",
           "view_type": "form"
         },
         "required": false,
@@ -6507,6 +6924,36 @@
         "technical": false,
         "type": "char"
       },
+      "date": {
+        "name": "date",
+        "readonly": false,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Expiration Date",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "date"
+      },
+      "date_start": {
+        "name": "date_start",
+        "readonly": false,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Start Date",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "date"
+      },
+      "description": {
+        "name": "description",
+        "readonly": false,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Description",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "html"
+      },
       "end_date": {
         "name": "end_date",
         "readonly": false,
@@ -6516,6 +6963,26 @@
         "surface_role": "core",
         "technical": false,
         "type": "date"
+      },
+      "is_favorite": {
+        "name": "is_favorite",
+        "readonly": false,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Show Project on Dashboard",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "boolean"
+      },
+      "label_tasks": {
+        "name": "label_tasks",
+        "readonly": false,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Use Tasks as",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "char"
       },
       "lifecycle_state": {
         "name": "lifecycle_state",
@@ -6573,7 +7040,7 @@
         "readonly": false,
         "relation": "res.users",
         "relation_entry": {
-          "action_id": 71,
+          "action_id": 248,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -6583,7 +7050,7 @@
           "model": "res.users",
           "reason_code": "PAGE_ENTRY_READY",
           "source": "backend_contract",
-          "view_mode": "form",
+          "view_mode": "tree,form",
           "view_type": "form"
         },
         "required": false,
@@ -6609,7 +7076,7 @@
         "readonly": false,
         "relation": "res.partner",
         "relation_entry": {
-          "action_id": 282,
+          "action_id": 316,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -6628,6 +7095,66 @@
         "surface_role": "core",
         "technical": false,
         "type": "many2one"
+      },
+      "partner_id": {
+        "domain": "['|', ('company_id', '=?', company_id), ('company_id', '=', False)]",
+        "name": "partner_id",
+        "readonly": false,
+        "relation": "res.partner",
+        "relation_entry": {
+          "action_id": 316,
+          "can_create": true,
+          "can_read": true,
+          "create_mode": "page",
+          "default_vals": {},
+          "field": "partner_id",
+          "menu_id": null,
+          "model": "res.partner",
+          "reason_code": "PAGE_ENTRY_READY",
+          "source": "backend_contract",
+          "view_mode": "kanban,tree,form",
+          "view_type": "form"
+        },
+        "required": false,
+        "semantic_type": "relation",
+        "string": "Customer",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "many2one"
+      },
+      "privacy_visibility": {
+        "name": "privacy_visibility",
+        "readonly": false,
+        "required": true,
+        "selection": [
+          [
+            "followers",
+            "Invited internal users (private)"
+          ],
+          [
+            "employees",
+            "All internal users"
+          ],
+          [
+            "portal",
+            "Invited portal users and all internal users (public)"
+          ]
+        ],
+        "semantic_type": "business",
+        "string": "Visibility",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "selection"
+      },
+      "privacy_visibility_warning": {
+        "name": "privacy_visibility_warning",
+        "readonly": true,
+        "required": false,
+        "semantic_type": "business",
+        "string": "Privacy Visibility Warning",
+        "surface_role": "advanced",
+        "technical": false,
+        "type": "char"
       },
       "project_category_id": {
         "domain": [
@@ -6703,7 +7230,7 @@
         "readonly": false,
         "relation": "project.project.stage",
         "relation_entry": {
-          "action_id": 293,
+          "action_id": 327,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -6739,7 +7266,7 @@
         "readonly": false,
         "relation": "res.users",
         "relation_entry": {
-          "action_id": 71,
+          "action_id": 248,
           "can_create": true,
           "can_read": true,
           "create_mode": "page",
@@ -6749,7 +7276,7 @@
           "model": "res.users",
           "reason_code": "PAGE_ENTRY_READY",
           "source": "backend_contract",
-          "view_mode": "form",
+          "view_mode": "tree,form",
           "view_type": "form"
         },
         "required": false,
@@ -6768,17 +7295,17 @@
         "contract_no",
         "budget_total",
         "location",
-        "active",
-        "actual_percent",
-        "allow_milestones",
-        "allow_rating",
-        "allow_task_dependencies",
-        "analytic_account_balance",
         "analytic_account_id",
-        "boq_amount_building",
-        "boq_amount_installation",
-        "boq_amount_leaf_total",
-        "boq_amount_total"
+        "is_favorite",
+        "label_tasks",
+        "partner_id",
+        "active",
+        "date_start",
+        "date",
+        "description",
+        "privacy_visibility",
+        "access_instruction_message",
+        "privacy_visibility_warning"
       ],
       "core_fields": [
         "name",
@@ -6890,6 +7417,753 @@
       }
     },
     "hide_filters_on_create": true,
+    "layout": [
+      {
+        "fieldInfo": {
+          "colspan": 1,
+          "help": "",
+          "invisible": false,
+          "label": "company_id",
+          "modifiers": {
+            "invisible": 1
+          },
+          "name": "company_id",
+          "readonly": false,
+          "required": false,
+          "type": "char",
+          "widget": "char"
+        },
+        "name": "company_id",
+        "type": "field"
+      },
+      {
+        "fieldInfo": {
+          "colspan": 1,
+          "help": "",
+          "invisible": false,
+          "label": "analytic_account_id",
+          "modifiers": {
+            "invisible": 1
+          },
+          "name": "analytic_account_id",
+          "readonly": false,
+          "required": false,
+          "type": "char",
+          "widget": "char"
+        },
+        "name": "analytic_account_id",
+        "type": "field"
+      },
+      {
+        "attributes": {},
+        "children": [
+          {
+            "buttonType": "action",
+            "label": "Share Read-only",
+            "name": "329",
+            "type": "button"
+          },
+          {
+            "buttonType": "action",
+            "label": "Share Editable",
+            "name": "329",
+            "type": "button"
+          },
+          {
+            "fieldInfo": {
+              "colspan": 1,
+              "help": "",
+              "invisible": false,
+              "label": "lifecycle_state",
+              "name": "lifecycle_state",
+              "readonly": false,
+              "required": false,
+              "type": "char",
+              "widget": "statusbar"
+            },
+            "name": "lifecycle_state",
+            "type": "field"
+          },
+          {
+            "buttonType": "object",
+            "label": "提交立项",
+            "name": "action_sc_submit",
+            "type": "button"
+          }
+        ],
+        "type": "header"
+      },
+      {
+        "attributes": {
+          "string": "Project"
+        },
+        "children": [
+          {
+            "attributes": {
+              "class": "alert alert-info",
+              "invisible": "lifecycle_state != 'draft'",
+              "modifiers": {
+                "invisible": "lifecycle_state != 'draft'"
+              },
+              "role": "alert"
+            },
+            "children": [],
+            "type": "container"
+          },
+          {
+            "attributes": {
+              "class": "oe_button_box",
+              "name": "button_box"
+            },
+            "children": [
+              {
+                "buttonType": "object",
+                "label": "任务",
+                "name": "action_view_tasks",
+                "type": "button"
+              },
+              {
+                "buttonType": "object",
+                "label": "",
+                "name": "project_update_all_action",
+                "type": "button"
+              }
+            ],
+            "type": "container"
+          },
+          {
+            "attributes": {
+              "invisible": "lifecycle_state == 'draft'",
+              "name": "sc_insight_banner",
+              "options": "{'scene': 'project.entry'}"
+            },
+            "children": [],
+            "type": "widget"
+          },
+          {
+            "attributes": {
+              "bg_color": "text-bg-danger",
+              "invisible": "active",
+              "name": "web_ribbon",
+              "title": "Archived"
+            },
+            "children": [],
+            "type": "widget"
+          },
+          {
+            "attributes": {
+              "class": "oe_title"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "class": "d-flex flex-row"
+                },
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "is_favorite",
+                      "name": "is_favorite",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "boolean_favorite"
+                    },
+                    "name": "is_favorite",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "name",
+                      "name": "name",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "text"
+                    },
+                    "name": "name",
+                    "type": "field"
+                  }
+                ],
+                "type": "h1"
+              }
+            ],
+            "type": "container"
+          },
+          {
+            "attributes": {},
+            "children": [
+              {
+                "attributes": {},
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "Name of the Tasks",
+                      "name": "label_tasks",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "label_tasks",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "partner_id",
+                      "name": "partner_id",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "res_partner_many2one"
+                    },
+                    "name": "partner_id",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "tag_ids",
+                      "name": "tag_ids",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "many2many_tags"
+                    },
+                    "name": "tag_ids",
+                    "type": "field"
+                  }
+                ],
+                "cols": 2,
+                "label": "",
+                "name": "",
+                "type": "group"
+              },
+              {
+                "attributes": {},
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "active",
+                      "modifiers": {
+                        "invisible": 1
+                      },
+                      "name": "active",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "active",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "Project Manager",
+                      "modifiers": {
+                        "readonly": "not active"
+                      },
+                      "name": "user_id",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "many2one_avatar_user"
+                    },
+                    "name": "user_id",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "Planned Date",
+                      "modifiers": {
+                        "required": "date_start or date"
+                      },
+                      "name": "date_start",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "daterange"
+                    },
+                    "name": "date_start",
+                    "type": "field"
+                  },
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "date",
+                      "modifiers": {
+                        "invisible": 1,
+                        "required": "date_start"
+                      },
+                      "name": "date",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "date",
+                    "type": "field"
+                  }
+                ],
+                "cols": 2,
+                "label": "",
+                "name": "",
+                "type": "group"
+              }
+            ],
+            "cols": 2,
+            "label": "",
+            "name": "",
+            "type": "group"
+          },
+          {
+            "attributes": {},
+            "children": [],
+            "label": "",
+            "name": "",
+            "tabs": [
+              {
+                "attributes": {
+                  "name": "description",
+                  "string": "Description"
+                },
+                "children": [
+                  {
+                    "fieldInfo": {
+                      "colspan": 1,
+                      "help": "",
+                      "invisible": false,
+                      "label": "description",
+                      "name": "description",
+                      "readonly": false,
+                      "required": false,
+                      "type": "char",
+                      "widget": "char"
+                    },
+                    "name": "description",
+                    "type": "field"
+                  }
+                ],
+                "label": "Description",
+                "name": "description",
+                "type": "page"
+              },
+              {
+                "attributes": {
+                  "name": "settings",
+                  "string": "Settings"
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "fieldInfo": {
+                              "colspan": 1,
+                              "help": "",
+                              "invisible": false,
+                              "label": "privacy_visibility",
+                              "name": "privacy_visibility",
+                              "readonly": false,
+                              "required": false,
+                              "type": "char",
+                              "widget": "radio"
+                            },
+                            "name": "privacy_visibility",
+                            "type": "field"
+                          },
+                          {
+                            "attributes": {
+                              "class": "text-muted o_row ps-1",
+                              "colspan": "2",
+                              "invisible": "access_instruction_message == ''"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "class": "fa fa-lightbulb-o"
+                                },
+                                "children": [],
+                                "type": "i"
+                              },
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "access_instruction_message",
+                                  "name": "access_instruction_message",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "char"
+                                },
+                                "name": "access_instruction_message",
+                                "type": "field"
+                              }
+                            ],
+                            "type": "span"
+                          },
+                          {
+                            "attributes": {
+                              "class": "text-muted o_row ps-1",
+                              "colspan": "2",
+                              "invisible": "privacy_visibility_warning == ''"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "class": "fa fa-warning"
+                                },
+                                "children": [],
+                                "type": "i"
+                              },
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "privacy_visibility_warning",
+                                  "name": "privacy_visibility_warning",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "char"
+                                },
+                                "name": "privacy_visibility_warning",
+                                "type": "field"
+                              }
+                            ],
+                            "type": "span"
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      },
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "attributes": {
+                              "class": "pb-2",
+                              "colspan": "2",
+                              "name": "alias_def"
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": []
+                              },
+                              {
+                                "attributes": {},
+                                "children": []
+                              },
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "alias_id",
+                                  "modifiers": {
+                                    "invisible": 1
+                                  },
+                                  "name": "alias_id",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "char"
+                                },
+                                "name": "alias_id",
+                                "type": "field"
+                              },
+                              {
+                                "attributes": {
+                                  "class": "fw-bold o_form_label",
+                                  "for": "alias_name",
+                                  "string": "Create tasks by sending an email to"
+                                },
+                                "children": [],
+                                "type": "label"
+                              },
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "alias_email",
+                                  "modifiers": {
+                                    "invisible": "not alias_name",
+                                    "readonly": 1
+                                  },
+                                  "name": "alias_email",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "email"
+                                },
+                                "name": "alias_email",
+                                "type": "field"
+                              },
+                              {
+                                "attributes": {
+                                  "class": "oe_edit_only o_row"
+                                },
+                                "children": [
+                                  {
+                                    "fieldInfo": {
+                                      "colspan": 1,
+                                      "help": "",
+                                      "invisible": false,
+                                      "label": "alias_name",
+                                      "name": "alias_name",
+                                      "readonly": false,
+                                      "required": false,
+                                      "type": "char",
+                                      "widget": "char"
+                                    },
+                                    "name": "alias_name",
+                                    "type": "field"
+                                  },
+                                  {
+                                    "fieldInfo": {
+                                      "colspan": 1,
+                                      "help": "",
+                                      "invisible": false,
+                                      "label": "alias_domain_id",
+                                      "name": "alias_domain_id",
+                                      "readonly": false,
+                                      "required": false,
+                                      "type": "char",
+                                      "widget": "char"
+                                    },
+                                    "name": "alias_domain_id",
+                                    "type": "field"
+                                  }
+                                ],
+                                "type": "span"
+                              }
+                            ],
+                            "type": "container"
+                          },
+                          {
+                            "attributes": {},
+                            "children": []
+                          },
+                          {
+                            "fieldInfo": {
+                              "colspan": 1,
+                              "help": "",
+                              "invisible": false,
+                              "label": "Accept Emails From",
+                              "modifiers": {
+                                "invisible": "not alias_email"
+                              },
+                              "name": "alias_contact",
+                              "readonly": false,
+                              "required": false,
+                              "type": "char",
+                              "widget": "char"
+                            },
+                            "name": "alias_contact",
+                            "type": "field"
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      },
+                      {
+                        "attributes": {
+                          "name": "extra_settings"
+                        },
+                        "children": [],
+                        "cols": 2,
+                        "label": "",
+                        "name": "extra_settings",
+                        "type": "group"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  },
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "attributes": {
+                          "class": "row mt16 o_settings_container",
+                          "col": "1",
+                          "invisible": "1",
+                          "modifiers": {
+                            "invisible": 1
+                          },
+                          "name": "group_time_managment",
+                          "string": "Time Management"
+                        },
+                        "children": [],
+                        "cols": 1,
+                        "label": "Time Management",
+                        "name": "group_time_managment",
+                        "type": "group"
+                      },
+                      {
+                        "attributes": {
+                          "class": "row mt16 o_settings_container",
+                          "col": "1",
+                          "invisible": "not allow_rating",
+                          "modifiers": {
+                            "invisible": "not allow_rating"
+                          },
+                          "name": "group_documents_analytics",
+                          "string": "Analytics"
+                        },
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "allow_rating",
+                                  "modifiers": {
+                                    "invisible": 1
+                                  },
+                                  "name": "allow_rating",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "char"
+                                },
+                                "name": "allow_rating",
+                                "type": "field"
+                              }
+                            ],
+                            "type": "container"
+                          }
+                        ],
+                        "cols": 1,
+                        "label": "Analytics",
+                        "name": "group_documents_analytics",
+                        "type": "group"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  }
+                ],
+                "label": "Settings",
+                "name": "settings",
+                "type": "page"
+              },
+              {
+                "attributes": {
+                  "name": "sc_system",
+                  "string": "协作 / 系统"
+                },
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "task_ids",
+                          "name": "task_ids",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "task_ids",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "collaborator_ids",
+                          "name": "collaborator_ids",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "collaborator_ids",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "analytic_account_id",
+                          "name": "analytic_account_id",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "analytic_account_id",
+                        "type": "field"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  }
+                ],
+                "label": "协作 / 系统",
+                "name": "sc_system",
+                "type": "page"
+              }
+            ],
+            "type": "notebook"
+          }
+        ],
+        "type": "sheet"
+      }
+    ],
     "lifecycle": {
       "allowed_transitions": [
         {
@@ -6929,6 +8203,14 @@
       ]
     },
     "missing_models": [],
+    "parser_contract": {
+      "contract_version": "native_view.v1",
+      "layout": {
+        "kind": "form"
+      },
+      "projection_source": "legacy_primary_view_fallback",
+      "view_type": "form"
+    },
     "permissions": {
       "domain_default": [],
       "effective": {
@@ -6937,17 +8219,29 @@
           2,
           3,
           4,
-          37,
-          69,
           7,
           8,
           9,
-          36,
-          98,
-          18,
+          15,
           21,
-          90,
-          63
+          22,
+          24,
+          29,
+          30,
+          33,
+          35,
+          40,
+          41,
+          42,
+          48,
+          51,
+          52,
+          65,
+          66,
+          68,
+          74,
+          95,
+          103
         ],
         "rights": {
           "create": true,
@@ -6963,7 +8257,7 @@
                 "domain_raw": "[('company_id', 'in', company_ids + [False])]",
                 "global": true,
                 "groups_xmlids": [],
-                "id": 108,
+                "id": 124,
                 "name": "Project: multi-company"
               },
               {
@@ -6979,7 +8273,7 @@
                 "groups_xmlids": [
                   "project.group_project_manager"
                 ],
-                "id": 110,
+                "id": 126,
                 "name": "Project: project manager: see all"
               },
               {
@@ -6989,7 +8283,7 @@
                 "groups_xmlids": [
                   "base.group_user"
                 ],
-                "id": 111,
+                "id": 127,
                 "name": "Project: employees: following required for follower-only projects"
               }
             ],
@@ -7002,7 +8296,7 @@
                 "domain_raw": "[('company_id', 'in', company_ids + [False])]",
                 "global": true,
                 "groups_xmlids": [],
-                "id": 108,
+                "id": 124,
                 "name": "Project: multi-company"
               },
               {
@@ -7018,7 +8312,7 @@
                 "groups_xmlids": [
                   "project.group_project_manager"
                 ],
-                "id": 110,
+                "id": 126,
                 "name": "Project: project manager: see all"
               },
               {
@@ -7028,7 +8322,7 @@
                 "groups_xmlids": [
                   "base.group_user"
                 ],
-                "id": 111,
+                "id": 127,
                 "name": "Project: employees: following required for follower-only projects"
               }
             ],
@@ -7041,7 +8335,7 @@
                 "domain_raw": "[('company_id', 'in', company_ids + [False])]",
                 "global": true,
                 "groups_xmlids": [],
-                "id": 108,
+                "id": 124,
                 "name": "Project: multi-company"
               },
               {
@@ -7057,7 +8351,7 @@
                 "groups_xmlids": [
                   "project.group_project_manager"
                 ],
-                "id": 110,
+                "id": 126,
                 "name": "Project: project manager: see all"
               },
               {
@@ -7067,7 +8361,7 @@
                 "groups_xmlids": [
                   "base.group_user"
                 ],
-                "id": 111,
+                "id": 127,
                 "name": "Project: employees: following required for follower-only projects"
               }
             ],
@@ -7080,7 +8374,7 @@
                 "domain_raw": "[('company_id', 'in', company_ids + [False])]",
                 "global": true,
                 "groups_xmlids": [],
-                "id": 108,
+                "id": 124,
                 "name": "Project: multi-company"
               },
               {
@@ -7096,7 +8390,7 @@
                 "groups_xmlids": [
                   "project.group_project_manager"
                 ],
-                "id": 110,
+                "id": 126,
                 "name": "Project: project manager: see all"
               },
               {
@@ -7106,7 +8400,7 @@
                 "groups_xmlids": [
                   "base.group_user"
                 ],
-                "id": 111,
+                "id": 127,
                 "name": "Project: employees: following required for follower-only projects"
               }
             ],
@@ -7115,47 +8409,15 @@
         }
       },
       "field_groups": {
+        "access_instruction_message": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
         "active": {
           "groups_ids": [],
           "groups_xmlids": []
         },
-        "actual_percent": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "allow_milestones": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "allow_rating": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "allow_task_dependencies": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "analytic_account_balance": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
         "analytic_account_id": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "boq_amount_building": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "boq_amount_installation": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "boq_amount_leaf_total": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "boq_amount_total": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -7171,7 +8433,27 @@
           "groups_ids": [],
           "groups_xmlids": []
         },
+        "date": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "date_start": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "description": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
         "end_date": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "is_favorite": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "label_tasks": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -7192,6 +8474,18 @@
           "groups_xmlids": []
         },
         "owner_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "partner_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "privacy_visibility": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "privacy_visibility_warning": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -7260,6 +8554,12 @@
           "read": true,
           "unlink": false,
           "write": true
+        },
+        "smart_construction_core.group_sc_super_admin": {
+          "create": true,
+          "read": true,
+          "unlink": true,
+          "write": true
         }
       },
       "rules": {
@@ -7272,7 +8572,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 108,
+              "id": 124,
               "name": "Project: multi-company"
             },
             {
@@ -7288,7 +8588,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 110,
+              "id": 126,
               "name": "Project: project manager: see all"
             },
             {
@@ -7299,7 +8599,7 @@
                 "base.group_user",
                 "project.group_project_manager"
               ],
-              "id": 111,
+              "id": 127,
               "name": "Project: employees: following required for follower-only projects"
             },
             {
@@ -7310,7 +8610,7 @@
                 "base.group_portal",
                 "project.group_project_manager"
               ],
-              "id": 121,
+              "id": 137,
               "name": "Project: portal users: portal and following"
             },
             {
@@ -7327,7 +8627,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_super_admin"
               ],
-              "id": 170,
+              "id": 186,
               "name": "SC Super Admin - project.project ALL"
             },
             {
@@ -7338,7 +8638,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_user"
               ],
-              "id": 173,
+              "id": 189,
               "name": "SC Project User - project.project member only"
             },
             {
@@ -7355,7 +8655,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_manager"
               ],
-              "id": 174,
+              "id": 190,
               "name": "SC Project Manager - project.project ALL"
             }
           ],
@@ -7370,7 +8670,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 108,
+              "id": 124,
               "name": "Project: multi-company"
             },
             {
@@ -7386,7 +8686,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 110,
+              "id": 126,
               "name": "Project: project manager: see all"
             },
             {
@@ -7397,7 +8697,7 @@
                 "base.group_user",
                 "project.group_project_manager"
               ],
-              "id": 111,
+              "id": 127,
               "name": "Project: employees: following required for follower-only projects"
             },
             {
@@ -7408,7 +8708,7 @@
                 "base.group_portal",
                 "project.group_project_manager"
               ],
-              "id": 121,
+              "id": 137,
               "name": "Project: portal users: portal and following"
             },
             {
@@ -7425,7 +8725,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_super_admin"
               ],
-              "id": 170,
+              "id": 186,
               "name": "SC Super Admin - project.project ALL"
             },
             {
@@ -7436,7 +8736,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_read"
               ],
-              "id": 172,
+              "id": 188,
               "name": "SC Project Read - project.project member only"
             },
             {
@@ -7447,7 +8747,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_user"
               ],
-              "id": 173,
+              "id": 189,
               "name": "SC Project User - project.project member only"
             },
             {
@@ -7464,7 +8764,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_manager"
               ],
-              "id": 174,
+              "id": 190,
               "name": "SC Project Manager - project.project ALL"
             }
           ],
@@ -7479,7 +8779,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 108,
+              "id": 124,
               "name": "Project: multi-company"
             },
             {
@@ -7495,7 +8795,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 110,
+              "id": 126,
               "name": "Project: project manager: see all"
             },
             {
@@ -7506,7 +8806,7 @@
                 "base.group_user",
                 "project.group_project_manager"
               ],
-              "id": 111,
+              "id": 127,
               "name": "Project: employees: following required for follower-only projects"
             },
             {
@@ -7517,7 +8817,7 @@
                 "base.group_portal",
                 "project.group_project_manager"
               ],
-              "id": 121,
+              "id": 137,
               "name": "Project: portal users: portal and following"
             },
             {
@@ -7534,7 +8834,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_super_admin"
               ],
-              "id": 170,
+              "id": 186,
               "name": "SC Super Admin - project.project ALL"
             },
             {
@@ -7551,7 +8851,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_manager"
               ],
-              "id": 174,
+              "id": 190,
               "name": "SC Project Manager - project.project ALL"
             }
           ],
@@ -7566,7 +8866,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 108,
+              "id": 124,
               "name": "Project: multi-company"
             },
             {
@@ -7582,7 +8882,7 @@
               "groups_xmlids": [
                 "project.group_project_manager"
               ],
-              "id": 110,
+              "id": 126,
               "name": "Project: project manager: see all"
             },
             {
@@ -7593,7 +8893,7 @@
                 "base.group_user",
                 "project.group_project_manager"
               ],
-              "id": 111,
+              "id": 127,
               "name": "Project: employees: following required for follower-only projects"
             },
             {
@@ -7604,7 +8904,7 @@
                 "base.group_portal",
                 "project.group_project_manager"
               ],
-              "id": 121,
+              "id": 137,
               "name": "Project: portal users: portal and following"
             },
             {
@@ -7621,7 +8921,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_super_admin"
               ],
-              "id": 170,
+              "id": 186,
               "name": "SC Super Admin - project.project ALL"
             },
             {
@@ -7632,7 +8932,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_read"
               ],
-              "id": 172,
+              "id": 188,
               "name": "SC Project Read - project.project member only"
             },
             {
@@ -7643,7 +8943,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_user"
               ],
-              "id": 173,
+              "id": 189,
               "name": "SC Project User - project.project member only"
             },
             {
@@ -7660,7 +8960,7 @@
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_project_manager"
               ],
-              "id": 174,
+              "id": 190,
               "name": "SC Project Manager - project.project ALL"
             }
           ],
@@ -8070,6 +9370,12 @@
         },
         {
           "default": false,
+          "field": "sc_execution_state",
+          "label": "执行状态",
+          "type": "selection"
+        },
+        {
+          "default": false,
           "field": "boq_imported",
           "label": "清单已导入",
           "type": "boolean"
@@ -8167,46 +9473,36 @@
       ],
       "model": "project.project",
       "saved_filters": [],
-      "version": 7
+      "version": 5
     },
     "source_mode": "governance_pipeline",
     "surface_mapping": {
       "native_to_governed": {
         "buttons": {
           "added": [],
-          "governed_count": 3,
-          "native_count": 17,
+          "governed_count": 2,
+          "native_count": 7,
           "removed": [
-            "act_295_Share Read-only",
-            "act_296",
-            "act_298_Set a Rating Email Template on Stages",
-            "act_455_查看成本",
-            "act_472_去补齐资料",
-            "act_486_查看合同",
-            "act_494_查看财务",
-            "act_533_快速创建项目",
-            "obj_action_view_stage_requirements_查看阶段要求",
-            "obj_action_view_tasks_View Tasks",
-            "obj_action_view_tasks_任务",
+            "329",
+            "action_sc_submit",
+            "action_view_tasks",
             "obj_project_update_all_action",
-            "project.ir_cron_rating_project_ir_actions_server",
-            "smart_construction_demo.action_project_dashboard_showcase"
+            "project_update_all_action"
           ],
           "reordered": false
         },
         "field_modifiers": {
           "added": [],
-          "governed_count": 0,
-          "native_count": 0,
+          "governed_count": 47,
+          "native_count": 47,
           "removed": [],
           "reordered": false
         },
         "fields": {
           "added": [],
           "governed_count": 25,
-          "native_count": 200,
+          "native_count": 201,
           "removed": [
-            "access_instruction_message",
             "access_token",
             "access_url",
             "access_warning",
@@ -8219,6 +9515,7 @@
             "activity_type_icon",
             "activity_type_id",
             "activity_user_id",
+            "actual_percent",
             "alias_bounced_content",
             "alias_contact",
             "alias_defaults",
@@ -8234,6 +9531,14 @@
             "alias_parent_model_id",
             "alias_parent_thread_id",
             "alias_status",
+            "allow_milestones",
+            "allow_rating",
+            "allow_task_dependencies",
+            "analytic_account_balance",
+            "boq_amount_building",
+            "boq_amount_installation",
+            "boq_amount_leaf_total",
+            "boq_amount_total",
             "boq_imported",
             "boq_line_count",
             "boq_line_ids",
@@ -8279,9 +9584,6 @@
             "dashboard_profit_actual",
             "dashboard_progress_rate",
             "dashboard_revenue_actual",
-            "date",
-            "date_start",
-            "description",
             "display_name",
             "doc_count",
             "doc_manager_id",
@@ -8299,9 +9601,7 @@
             "has_message",
             "health_state",
             "id",
-            "is_favorite",
             "is_milestone_exceeded",
-            "label_tasks",
             "last_update_color",
             "last_update_id",
             "last_update_status",
@@ -8321,7 +9621,6 @@
             "my_activity_date_deadline",
             "open_task_count",
             "owner_contact",
-            "partner_id",
             "pay_contract_total",
             "pay_paid_total",
             "pay_settlement_total",
@@ -8329,8 +9628,6 @@
             "payment_request_ids",
             "phase_key",
             "plan_percent",
-            "privacy_visibility",
-            "privacy_visibility_warning",
             "progress_entry_count",
             "progress_entry_ids",
             "progress_rate_latest",
@@ -8351,6 +9648,7 @@
             "sc_demo_showcase_ready",
             "sc_draft_autosave_uid",
             "sc_draft_autosaved_at",
+            "sc_execution_state",
             "sc_overview_contract_count",
             "sc_overview_cost_count",
             "sc_overview_payment_count",
@@ -8386,82 +9684,73 @@
         },
         "header_buttons": {
           "added": [],
-          "governed_count": 0,
-          "native_count": 0,
+          "governed_count": 2,
+          "native_count": 2,
           "removed": [],
           "reordered": false
         },
         "layout_fields": {
           "added": [
-            "active",
-            "actual_percent",
-            "allow_milestones",
-            "allow_rating",
-            "allow_task_dependencies",
-            "analytic_account_balance",
-            "boq_amount_building",
-            "boq_amount_installation",
-            "boq_amount_leaf_total",
-            "boq_amount_total",
             "budget_total",
             "contract_no",
             "end_date",
-            "lifecycle_state",
             "location",
             "manager_id",
-            "name",
             "owner_id",
             "project_category_id",
             "project_type_id",
             "stage_id",
-            "start_date",
-            "user_id"
+            "start_date"
           ],
           "governed_count": 25,
-          "native_count": 2,
-          "removed": [],
+          "native_count": 24,
+          "removed": [
+            "alias_contact",
+            "alias_domain_id",
+            "alias_email",
+            "alias_id",
+            "alias_name",
+            "allow_rating",
+            "collaborator_ids",
+            "tag_ids",
+            "task_ids"
+          ],
           "reordered": false
         },
         "layout_nodes": {
           "added": [
-            "field:active",
-            "field:actual_percent",
-            "field:allow_milestones",
-            "field:allow_rating",
-            "field:allow_task_dependencies",
-            "field:analytic_account_balance",
-            "field:boq_amount_building",
-            "field:boq_amount_installation",
-            "field:boq_amount_leaf_total",
-            "field:boq_amount_total",
             "field:budget_total",
             "field:contract_no",
             "field:end_date",
-            "field:lifecycle_state",
             "field:location",
             "field:manager_id",
-            "field:name",
             "field:owner_id",
             "field:project_category_id",
             "field:project_type_id",
             "field:stage_id",
-            "field:start_date",
-            "field:user_id",
-            "group:advanced_group",
-            "group:core_group",
-            "sheet:project_form_sheet"
+            "field:start_date"
           ],
-          "governed_count": 29,
-          "native_count": 4,
+          "governed_count": 63,
+          "native_count": 64,
           "removed": [
-            "sheet:"
+            "field:alias_contact",
+            "field:alias_domain_id",
+            "field:alias_email",
+            "field:alias_id",
+            "field:alias_name",
+            "field:allow_rating",
+            "field:collaborator_ids",
+            "field:tag_ids",
+            "field:task_ids",
+            "group:extra_settings",
+            "group:group_time_managment"
           ],
           "reordered": false
         },
         "stat_buttons": {
           "added": [],
-          "governed_count": 0,
-          "native_count": 0,
+          "governed_count": 2,
+          "native_count": 2,
           "removed": [],
           "reordered": false
         }
@@ -8469,9 +9758,9 @@
     },
     "surface_policies": {
       "actions_max": 8,
-      "actions_primary_max": 4,
+      "actions_primary_max": 3,
       "filters_max": 8,
-      "filters_primary_max": 5
+      "filters_primary_max": 0
     },
     "toolbar": {
       "footer": [],
@@ -8514,6 +9803,7 @@
         "rating_status_period": "dynamic",
         "sc_demo_showcase": false,
         "sc_demo_showcase_ready": false,
+        "sc_execution_state": "dynamic",
         "sequence": "dynamic",
         "stage_id": "dynamic",
         "user_id": "dynamic"
@@ -8735,6 +10025,10 @@
             [
               "followers",
               "Followers only"
+            ],
+            [
+              "employees",
+              "Authenticated Employees"
             ]
           ],
           "size": null,
@@ -10572,6 +11866,34 @@
           "string": "草稿自动保存时间",
           "type": "datetime"
         },
+        "sc_execution_state": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "Phase 13-C 最小执行状态机：仅承载执行推进场景的 ready/in_progress/blocked/done。",
+          "relation": null,
+          "required": false,
+          "selection": [
+            [
+              "ready",
+              "执行就绪"
+            ],
+            [
+              "in_progress",
+              "执行中"
+            ],
+            [
+              "blocked",
+              "执行阻塞"
+            ],
+            [
+              "done",
+              "执行完成"
+            ]
+          ],
+          "size": null,
+          "string": "执行状态",
+          "type": "selection"
+        },
         "sc_overview_contract_count": {
           "digits": null,
           "domain_raw": null,
@@ -10766,10 +12088,10 @@
               "state",
               "in",
               [
-                "01_in_progress",
                 "04_waiting_normal",
-                "02_changes_requested",
-                "03_approved"
+                "01_in_progress",
+                "03_approved",
+                "02_changes_requested"
               ]
             ]
           ],
@@ -10971,18 +12293,214 @@
           }
         ]
       },
-      "version": 18
+      "version": 37
     },
+    "view_semantics": {
+      "capability_flags": {
+        "has_layout": true
+      },
+      "kind": "view_semantics",
+      "semantic_meta": {
+        "projection_source": "legacy_primary_view_fallback"
+      },
+      "source_view": "form"
+    },
+    "view_type": "form",
     "views": {
       "form": {
         "attachments": {
           "enabled": false
         },
-        "button_box": [],
+        "button_box": [
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "execute",
+            "kind": "server",
+            "label": "任务",
+            "level": "smart",
+            "name": "action_view_tasks",
+            "payload": {
+              "confirm": "",
+              "groups_xmlids": [],
+              "method": "action_view_tasks",
+              "type": "object",
+              "url": ""
+            },
+            "selection": "single",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          },
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "execute",
+            "kind": "server",
+            "label": "project_update_all_action",
+            "level": "smart",
+            "name": "project_update_all_action",
+            "payload": {
+              "confirm": "",
+              "groups_xmlids": [],
+              "method": "project_update_all_action",
+              "type": "object",
+              "url": ""
+            },
+            "selection": "single",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          }
+        ],
         "chatter": {
           "enabled": false
         },
-        "field_modifiers": {},
+        "field_modifiers": {
+          "access_instruction_message": {},
+          "active": {
+            "invisible": 1
+          },
+          "activity_ids": {
+            "widget": "list_activity"
+          },
+          "alias_contact": {
+            "invisible": "not alias_email"
+          },
+          "alias_domain_id": {},
+          "alias_email": {
+            "invisible": "not alias_name",
+            "readonly": 1,
+            "widget": "email"
+          },
+          "alias_id": {
+            "invisible": 1
+          },
+          "alias_name": {},
+          "allow_milestones": {
+            "column_invisible": true
+          },
+          "allow_rating": {
+            "invisible": 1
+          },
+          "analytic_account_id": {
+            "invisible": 1
+          },
+          "closed_subtask_count": {
+            "column_invisible": true
+          },
+          "collaborator_ids": {},
+          "company_id": {
+            "column_invisible": true,
+            "invisible": 1
+          },
+          "date": {
+            "invisible": 1,
+            "required": "date_start"
+          },
+          "date_deadline": {
+            "invisible": "state in ['1_done', '1_canceled']",
+            "widget": "remaining_days"
+          },
+          "date_last_stage_update": {},
+          "date_start": {
+            "required": "date_start or date",
+            "widget": "daterange"
+          },
+          "description": {},
+          "id": {},
+          "is_favorite": {
+            "widget": "boolean_favorite"
+          },
+          "label_tasks": {},
+          "last_update_color": {
+            "invisible": 1
+          },
+          "last_update_status": {
+            "readonly": 1,
+            "widget": "status_with_color"
+          },
+          "lifecycle_state": {
+            "widget": "statusbar"
+          },
+          "my_activity_date_deadline": {
+            "widget": "remaining_days"
+          },
+          "name": {
+            "widget": "name_with_subtask_count"
+          },
+          "open_task_count": {
+            "widget": "statinfo"
+          },
+          "partner_email": {},
+          "partner_id": {
+            "context": {
+              "res_partner_search_mode": "customer"
+            },
+            "invisible": "not project_id",
+            "widget": "res_partner_many2one"
+          },
+          "personal_stage_type_id": {},
+          "priority": {
+            "widget": "priority"
+          },
+          "privacy_visibility": {
+            "widget": "radio"
+          },
+          "privacy_visibility_warning": {},
+          "project_id": {
+            "column_invisible": "context.get('default_project_id')",
+            "readonly": 1,
+            "widget": "project"
+          },
+          "rating_active": {
+            "column_invisible": true
+          },
+          "recurrence_id": {
+            "column_invisible": true
+          },
+          "sc_state": {},
+          "sequence": {
+            "column_invisible": true,
+            "readonly": 1
+          },
+          "stage_id": {
+            "column_invisible": "context.get('set_visible', False)",
+            "context": "{'default_project_id': project_id}"
+          },
+          "state": {
+            "widget": "project_task_state_selection"
+          },
+          "subtask_count": {
+            "column_invisible": true
+          },
+          "tag_ids": {
+            "context": "{'project_id': project_id}",
+            "widget": "many2many_tags"
+          },
+          "task_ids": {},
+          "task_properties": {},
+          "user_id": {
+            "domain": [
+              [
+                "share",
+                "=",
+                false
+              ]
+            ],
+            "readonly": "not active",
+            "widget": "many2one_avatar_user"
+          },
+          "user_ids": {
+            "widget": "many2many_avatar_user"
+          }
+        },
         "form_profile": {
           "advanced_fields": [
             "company_id",
@@ -10991,17 +12509,17 @@
             "contract_no",
             "budget_total",
             "location",
-            "active",
-            "actual_percent",
-            "allow_milestones",
-            "allow_rating",
-            "allow_task_dependencies",
-            "analytic_account_balance",
             "analytic_account_id",
-            "boq_amount_building",
-            "boq_amount_installation",
-            "boq_amount_leaf_total",
-            "boq_amount_total"
+            "is_favorite",
+            "label_tasks",
+            "partner_id",
+            "active",
+            "date_start",
+            "date",
+            "description",
+            "privacy_visibility",
+            "access_instruction_message",
+            "privacy_visibility_warning"
           ],
           "core_fields": [
             "name",
@@ -11015,140 +12533,771 @@
           ],
           "max_fields": 25
         },
-        "header_buttons": [],
+        "header_buttons": [
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "open",
+            "kind": "open",
+            "label": "Share Read-only",
+            "level": "header",
+            "name": "329",
+            "payload": {
+              "confirm": "",
+              "context_raw": "{'default_access_mode': 'read', 'dialog_size': 'medium'}",
+              "groups_xmlids": [],
+              "ref": "329",
+              "type": "action",
+              "url": ""
+            },
+            "selection": "none",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          },
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "open",
+            "kind": "open",
+            "label": "Share Editable",
+            "level": "header",
+            "name": "329",
+            "payload": {
+              "confirm": "",
+              "context_raw": "{'default_access_mode': 'edit', 'dialog_size': 'medium'}",
+              "groups_xmlids": [],
+              "ref": "329",
+              "type": "action",
+              "url": ""
+            },
+            "selection": "none",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          },
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "execute",
+            "kind": "server",
+            "label": "提交立项",
+            "level": "header",
+            "name": "action_sc_submit",
+            "payload": {
+              "confirm": "",
+              "groups_xmlids": [],
+              "method": "action_sc_submit",
+              "type": "object",
+              "url": ""
+            },
+            "selection": "single",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          },
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "open",
+            "kind": "open",
+            "label": "Invite Collaborators",
+            "level": "row",
+            "name": "329",
+            "payload": {
+              "confirm": "",
+              "context_raw": "{'default_access_mode': 'edit', 'default_project_id': context.get('active_id')}",
+              "groups_xmlids": [],
+              "ref": "329",
+              "type": "action",
+              "url": ""
+            },
+            "selection": "none",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          }
+        ],
         "layout": [
           {
+            "fieldInfo": {
+              "colspan": 1,
+              "help": "",
+              "invisible": false,
+              "label": "company_id",
+              "modifiers": {
+                "invisible": 1
+              },
+              "name": "company_id",
+              "readonly": false,
+              "required": false,
+              "type": "char",
+              "widget": "char"
+            },
+            "name": "company_id",
+            "type": "field"
+          },
+          {
+            "fieldInfo": {
+              "colspan": 1,
+              "help": "",
+              "invisible": false,
+              "label": "analytic_account_id",
+              "modifiers": {
+                "invisible": 1
+              },
+              "name": "analytic_account_id",
+              "readonly": false,
+              "required": false,
+              "type": "char",
+              "widget": "char"
+            },
+            "name": "analytic_account_id",
+            "type": "field"
+          },
+          {
+            "attributes": {},
+            "children": [
+              {
+                "buttonType": "action",
+                "label": "Share Read-only",
+                "name": "329",
+                "type": "button"
+              },
+              {
+                "buttonType": "action",
+                "label": "Share Editable",
+                "name": "329",
+                "type": "button"
+              },
+              {
+                "fieldInfo": {
+                  "colspan": 1,
+                  "help": "",
+                  "invisible": false,
+                  "label": "lifecycle_state",
+                  "name": "lifecycle_state",
+                  "readonly": false,
+                  "required": false,
+                  "type": "char",
+                  "widget": "statusbar"
+                },
+                "name": "lifecycle_state",
+                "type": "field"
+              },
+              {
+                "buttonType": "object",
+                "label": "提交立项",
+                "name": "action_sc_submit",
+                "type": "button"
+              }
+            ],
             "type": "header"
           },
           {
+            "attributes": {
+              "string": "Project"
+            },
             "children": [
               {
+                "attributes": {
+                  "class": "alert alert-info",
+                  "invisible": "lifecycle_state != 'draft'",
+                  "modifiers": {
+                    "invisible": "lifecycle_state != 'draft'"
+                  },
+                  "role": "alert"
+                },
+                "children": [],
+                "type": "container"
+              },
+              {
+                "attributes": {
+                  "class": "oe_button_box",
+                  "name": "button_box"
+                },
                 "children": [
                   {
-                    "name": "name",
-                    "type": "field"
+                    "buttonType": "object",
+                    "label": "任务",
+                    "name": "action_view_tasks",
+                    "type": "button"
                   },
                   {
-                    "name": "project_type_id",
-                    "type": "field"
-                  },
-                  {
-                    "name": "project_category_id",
-                    "type": "field"
-                  },
-                  {
-                    "name": "lifecycle_state",
-                    "type": "field"
-                  },
-                  {
-                    "name": "stage_id",
-                    "type": "field"
-                  },
-                  {
-                    "name": "manager_id",
-                    "type": "field"
-                  },
-                  {
-                    "name": "user_id",
-                    "type": "field"
-                  },
-                  {
-                    "name": "owner_id",
-                    "type": "field"
+                    "buttonType": "object",
+                    "label": "",
+                    "name": "project_update_all_action",
+                    "type": "button"
                   }
                 ],
-                "name": "core_group",
-                "string": "核心信息",
+                "type": "container"
+              },
+              {
+                "attributes": {
+                  "invisible": "lifecycle_state == 'draft'",
+                  "name": "sc_insight_banner",
+                  "options": "{'scene': 'project.entry'}"
+                },
+                "children": [],
+                "type": "widget"
+              },
+              {
+                "attributes": {
+                  "bg_color": "text-bg-danger",
+                  "invisible": "active",
+                  "name": "web_ribbon",
+                  "title": "Archived"
+                },
+                "children": [],
+                "type": "widget"
+              },
+              {
+                "attributes": {
+                  "class": "oe_title"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "class": "d-flex flex-row"
+                    },
+                    "children": [
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "is_favorite",
+                          "name": "is_favorite",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "boolean_favorite"
+                        },
+                        "name": "is_favorite",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "name",
+                          "name": "name",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "text"
+                        },
+                        "name": "name",
+                        "type": "field"
+                      }
+                    ],
+                    "type": "h1"
+                  }
+                ],
+                "type": "container"
+              },
+              {
+                "attributes": {},
+                "children": [
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "Name of the Tasks",
+                          "name": "label_tasks",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "label_tasks",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "partner_id",
+                          "name": "partner_id",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "res_partner_many2one"
+                        },
+                        "name": "partner_id",
+                        "type": "field"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  },
+                  {
+                    "attributes": {},
+                    "children": [
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "active",
+                          "modifiers": {
+                            "invisible": 1
+                          },
+                          "name": "active",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "active",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "Project Manager",
+                          "modifiers": {
+                            "readonly": "not active"
+                          },
+                          "name": "user_id",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "many2one_avatar_user"
+                        },
+                        "name": "user_id",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "Planned Date",
+                          "modifiers": {
+                            "required": "date_start or date"
+                          },
+                          "name": "date_start",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "daterange"
+                        },
+                        "name": "date_start",
+                        "type": "field"
+                      },
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "date",
+                          "modifiers": {
+                            "invisible": 1,
+                            "required": "date_start"
+                          },
+                          "name": "date",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "date",
+                        "type": "field"
+                      }
+                    ],
+                    "cols": 2,
+                    "label": "",
+                    "name": "",
+                    "type": "group"
+                  }
+                ],
+                "cols": 2,
+                "label": "",
+                "name": "",
                 "type": "group"
               },
               {
-                "children": [
+                "attributes": {},
+                "children": [],
+                "label": "",
+                "name": "",
+                "tabs": [
                   {
-                    "name": "company_id",
-                    "type": "field"
+                    "attributes": {
+                      "name": "description",
+                      "string": "Description"
+                    },
+                    "children": [
+                      {
+                        "fieldInfo": {
+                          "colspan": 1,
+                          "help": "",
+                          "invisible": false,
+                          "label": "description",
+                          "name": "description",
+                          "readonly": false,
+                          "required": false,
+                          "type": "char",
+                          "widget": "char"
+                        },
+                        "name": "description",
+                        "type": "field"
+                      }
+                    ],
+                    "label": "Description",
+                    "name": "description",
+                    "type": "page"
                   },
                   {
-                    "name": "start_date",
-                    "type": "field"
+                    "attributes": {
+                      "name": "settings",
+                      "string": "Settings"
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "attributes": {},
+                            "children": [
+                              {
+                                "fieldInfo": {
+                                  "colspan": 1,
+                                  "help": "",
+                                  "invisible": false,
+                                  "label": "privacy_visibility",
+                                  "name": "privacy_visibility",
+                                  "readonly": false,
+                                  "required": false,
+                                  "type": "char",
+                                  "widget": "radio"
+                                },
+                                "name": "privacy_visibility",
+                                "type": "field"
+                              },
+                              {
+                                "attributes": {
+                                  "class": "text-muted o_row ps-1",
+                                  "colspan": "2",
+                                  "invisible": "access_instruction_message == ''"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "class": "fa fa-lightbulb-o"
+                                    },
+                                    "children": [],
+                                    "type": "i"
+                                  },
+                                  {
+                                    "fieldInfo": {
+                                      "colspan": 1,
+                                      "help": "",
+                                      "invisible": false,
+                                      "label": "access_instruction_message",
+                                      "name": "access_instruction_message",
+                                      "readonly": false,
+                                      "required": false,
+                                      "type": "char",
+                                      "widget": "char"
+                                    },
+                                    "name": "access_instruction_message",
+                                    "type": "field"
+                                  }
+                                ],
+                                "type": "span"
+                              },
+                              {
+                                "attributes": {
+                                  "class": "text-muted o_row ps-1",
+                                  "colspan": "2",
+                                  "invisible": "privacy_visibility_warning == ''"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "class": "fa fa-warning"
+                                    },
+                                    "children": [],
+                                    "type": "i"
+                                  },
+                                  {
+                                    "fieldInfo": {
+                                      "colspan": 1,
+                                      "help": "",
+                                      "invisible": false,
+                                      "label": "privacy_visibility_warning",
+                                      "name": "privacy_visibility_warning",
+                                      "readonly": false,
+                                      "required": false,
+                                      "type": "char",
+                                      "widget": "char"
+                                    },
+                                    "name": "privacy_visibility_warning",
+                                    "type": "field"
+                                  }
+                                ],
+                                "type": "span"
+                              }
+                            ],
+                            "cols": 2,
+                            "label": "",
+                            "name": "",
+                            "type": "group"
+                          },
+                          {
+                            "attributes": {},
+                            "children": [
+                              {
+                                "attributes": {
+                                  "class": "pb-2",
+                                  "colspan": "2",
+                                  "name": "alias_def"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {},
+                                    "children": []
+                                  },
+                                  {
+                                    "attributes": {},
+                                    "children": []
+                                  },
+                                  {
+                                    "attributes": {
+                                      "class": "fw-bold o_form_label",
+                                      "for": "alias_name",
+                                      "string": "Create tasks by sending an email to"
+                                    },
+                                    "children": [],
+                                    "type": "label"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "class": "oe_edit_only o_row"
+                                    },
+                                    "children": [],
+                                    "type": "span"
+                                  }
+                                ],
+                                "type": "container"
+                              },
+                              {
+                                "attributes": {},
+                                "children": []
+                              }
+                            ],
+                            "cols": 2,
+                            "label": "",
+                            "name": "",
+                            "type": "group"
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      },
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "attributes": {
+                              "class": "row mt16 o_settings_container",
+                              "col": "1",
+                              "invisible": "not allow_rating",
+                              "modifiers": {
+                                "invisible": "not allow_rating"
+                              },
+                              "name": "group_documents_analytics",
+                              "string": "Analytics"
+                            },
+                            "children": [
+                              {
+                                "attributes": {},
+                                "children": [],
+                                "type": "container"
+                              }
+                            ],
+                            "cols": 1,
+                            "label": "Analytics",
+                            "name": "group_documents_analytics",
+                            "type": "group"
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      }
+                    ],
+                    "label": "Settings",
+                    "name": "settings",
+                    "type": "page"
                   },
                   {
-                    "name": "end_date",
-                    "type": "field"
-                  },
-                  {
-                    "name": "contract_no",
-                    "type": "field"
-                  },
-                  {
-                    "name": "budget_total",
-                    "type": "field"
-                  },
-                  {
-                    "name": "location",
-                    "type": "field"
-                  },
-                  {
-                    "name": "active",
-                    "type": "field"
-                  },
-                  {
-                    "name": "actual_percent",
-                    "type": "field"
-                  },
-                  {
-                    "name": "allow_milestones",
-                    "type": "field"
-                  },
-                  {
-                    "name": "allow_rating",
-                    "type": "field"
-                  },
-                  {
-                    "name": "allow_task_dependencies",
-                    "type": "field"
-                  },
-                  {
-                    "name": "analytic_account_balance",
-                    "type": "field"
-                  },
-                  {
-                    "name": "analytic_account_id",
-                    "type": "field"
-                  },
-                  {
-                    "name": "boq_amount_building",
-                    "type": "field"
-                  },
-                  {
-                    "name": "boq_amount_installation",
-                    "type": "field"
-                  },
-                  {
-                    "name": "boq_amount_leaf_total",
-                    "type": "field"
-                  },
-                  {
-                    "name": "boq_amount_total",
-                    "type": "field"
+                    "attributes": {
+                      "name": "sc_system",
+                      "string": "协作 / 系统"
+                    },
+                    "children": [
+                      {
+                        "attributes": {},
+                        "children": [
+                          {
+                            "fieldInfo": {
+                              "colspan": 1,
+                              "help": "",
+                              "invisible": false,
+                              "label": "analytic_account_id",
+                              "name": "analytic_account_id",
+                              "readonly": false,
+                              "required": false,
+                              "type": "char",
+                              "widget": "char"
+                            },
+                            "name": "analytic_account_id",
+                            "type": "field"
+                          }
+                        ],
+                        "cols": 2,
+                        "label": "",
+                        "name": "",
+                        "type": "group"
+                      }
+                    ],
+                    "label": "协作 / 系统",
+                    "name": "sc_system",
+                    "type": "page"
                   }
                 ],
-                "name": "advanced_group",
-                "string": "高级信息",
-                "type": "group"
+                "type": "notebook"
               }
             ],
-            "name": "project_form_sheet",
             "type": "sheet"
+          },
+          {
+            "name": "project_type_id",
+            "type": "field"
+          },
+          {
+            "name": "project_category_id",
+            "type": "field"
+          },
+          {
+            "name": "stage_id",
+            "type": "field"
+          },
+          {
+            "name": "manager_id",
+            "type": "field"
+          },
+          {
+            "name": "owner_id",
+            "type": "field"
+          },
+          {
+            "name": "start_date",
+            "type": "field"
+          },
+          {
+            "name": "end_date",
+            "type": "field"
+          },
+          {
+            "name": "contract_no",
+            "type": "field"
+          },
+          {
+            "name": "budget_total",
+            "type": "field"
+          },
+          {
+            "name": "location",
+            "type": "field"
           }
         ],
         "meta": {},
         "model": "project.project",
-        "modifiers": {},
+        "modifiers": {
+          "name": {}
+        },
         "order": "sequence, name, id",
         "search": {},
-        "stat_buttons": [],
+        "stat_buttons": [
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "execute",
+            "kind": "server",
+            "label": "任务",
+            "level": "smart",
+            "name": "action_view_tasks",
+            "payload": {
+              "confirm": "",
+              "groups_xmlids": [],
+              "method": "action_view_tasks",
+              "type": "object",
+              "url": ""
+            },
+            "selection": "single",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          },
+          {
+            "groups": [],
+            "groups_xmlids": [],
+            "icon": "",
+            "intent": "execute",
+            "kind": "server",
+            "label": "project_update_all_action",
+            "level": "smart",
+            "name": "project_update_all_action",
+            "payload": {
+              "confirm": "",
+              "groups_xmlids": [],
+              "method": "project_update_all_action",
+              "type": "object",
+              "url": ""
+            },
+            "selection": "single",
+            "visible": {
+              "attrs": {},
+              "domain": [],
+              "states": []
+            }
+          }
+        ],
         "statusbar": {
-          "field": "lifecycle_state"
+          "field": "lifecycle_state",
+          "states": []
         },
         "subviews": {},
         "toolbar": {
@@ -11156,7 +13305,7 @@
           "header": [],
           "sidebar": []
         },
-        "version": 8,
+        "version": 9,
         "view_type": "form"
       }
     },
@@ -11175,17 +13324,17 @@
       "contract_no",
       "budget_total",
       "location",
-      "active",
-      "actual_percent",
-      "allow_milestones",
-      "allow_rating",
-      "allow_task_dependencies",
-      "analytic_account_balance",
       "analytic_account_id",
-      "boq_amount_building",
-      "boq_amount_installation",
-      "boq_amount_leaf_total",
-      "boq_amount_total"
+      "is_favorite",
+      "label_tasks",
+      "partner_id",
+      "active",
+      "date_start",
+      "date",
+      "description",
+      "privacy_visibility",
+      "access_instruction_message",
+      "privacy_visibility_warning"
     ],
     "warnings": [
       "access_policy:degrade:RELATION_READ_FORBIDDEN"
@@ -11266,7 +13415,7 @@
           "trigger": {
             "kind": "open",
             "label": "Share Read-only",
-            "name": "295"
+            "name": "329"
           }
         },
         {
@@ -11284,7 +13433,7 @@
           "trigger": {
             "kind": "open",
             "label": "Share Editable",
-            "name": "295"
+            "name": "329"
           }
         },
         {
@@ -11356,7 +13505,7 @@
           "trigger": {
             "kind": "open",
             "label": "Invite Collaborators",
-            "name": "295"
+            "name": "329"
           }
         }
       ]

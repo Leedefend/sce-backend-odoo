@@ -24,7 +24,7 @@
         "label": "Discuss",
         "menu_id": 76,
         "meta": {
-          "action_id": 119,
+          "action_id": 120,
           "action_type": "ir.actions.client",
           "action_xmlid": "mail.action_discuss",
           "groups_xmlids": [
@@ -40,14 +40,14 @@
       {
         "children": [],
         "icon": "project_todo,static/description/icon.png",
-        "key": "menu:243",
+        "key": "menu:273",
         "label": "To-do",
-        "menu_id": 243,
+        "menu_id": 273,
         "meta": {
-          "action_id": 421,
+          "action_id": 455,
           "action_type": "ir.actions.server",
           "action_xmlid": "project_todo.project_task_preload_action_todo",
-          "menu_id": 243,
+          "menu_id": 273,
           "menu_xmlid": "project_todo.menu_todo_todos",
           "scene": "web",
           "sequence": 10
@@ -58,14 +58,14 @@
           {
             "children": [],
             "icon": null,
-            "key": "menu:191",
+            "key": "menu:221",
             "label": "Dashboards",
-            "menu_id": 191,
+            "menu_id": 221,
             "meta": {
-              "action_id": 329,
+              "action_id": 363,
               "action_type": "ir.actions.client",
               "action_xmlid": "spreadsheet_dashboard.ir_actions_dashboard_action",
-              "menu_id": 191,
+              "menu_id": 221,
               "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_dashboard",
               "model": false,
               "scene": "web",
@@ -77,13 +77,13 @@
               {
                 "children": [],
                 "icon": null,
-                "key": "menu:193",
+                "key": "menu:223",
                 "label": "Dashboards",
-                "menu_id": 193,
+                "menu_id": 223,
                 "meta": {
-                  "action_id": 330,
+                  "action_id": 364,
                   "action_type": "ir.actions.act_window",
-                  "menu_id": 193,
+                  "menu_id": 223,
                   "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_configuration_dashboards",
                   "model": "spreadsheet.dashboard.group",
                   "scene": "web",
@@ -92,11 +92,11 @@
               }
             ],
             "icon": null,
-            "key": "menu:192",
+            "key": "menu:222",
             "label": "Configuration",
-            "menu_id": 192,
+            "menu_id": 222,
             "meta": {
-              "menu_id": 192,
+              "menu_id": 222,
               "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_configuration",
               "scene": "web",
               "sequence": 150
@@ -104,18 +104,96 @@
           }
         ],
         "icon": "spreadsheet_dashboard,static/description/icon.png",
-        "key": "menu:190",
+        "key": "menu:220",
         "label": "Dashboards",
-        "menu_id": 190,
+        "menu_id": 220,
         "meta": {
-          "action_id": 329,
+          "action_id": 363,
           "action_type": "ir.actions.client",
           "action_xmlid": "spreadsheet_dashboard.ir_actions_dashboard_action",
-          "menu_id": 190,
+          "menu_id": 220,
           "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_root",
           "model": false,
           "scene": "web",
           "sequence": 37
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:113",
+            "label": "Human Resources",
+            "menu_id": 113,
+            "meta": {
+              "menu_id": 113,
+              "menu_xmlid": "hr.menu_hr_main",
+              "scene": "web",
+              "sequence": 0
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:116",
+            "label": "Directory",
+            "menu_id": 116,
+            "meta": {
+              "action_id": 196,
+              "action_type": "ir.actions.act_window",
+              "menu_id": 116,
+              "menu_xmlid": "hr.menu_hr_employee",
+              "model": "hr.employee.public",
+              "scene": "web",
+              "sequence": 4
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:142",
+                "label": "Skills",
+                "menu_id": 142,
+                "meta": {
+                  "action_id": 237,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 142,
+                  "menu_xmlid": "hr_skills.hr_employee_skill_report_menu",
+                  "model": "hr.employee.skill.report",
+                  "scene": "web",
+                  "sequence": 15
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:117",
+            "label": "Reporting",
+            "menu_id": 117,
+            "meta": {
+              "menu_id": 117,
+              "menu_xmlid": "hr.hr_menu_hr_reports",
+              "scene": "web",
+              "sequence": 95
+            }
+          }
+        ],
+        "icon": "hr,static/description/icon.png",
+        "key": "menu:112",
+        "label": "Employees",
+        "menu_id": 112,
+        "meta": {
+          "groups_xmlids": [
+            30,
+            1,
+            29
+          ],
+          "menu_id": 112,
+          "menu_xmlid": "hr.menu_hr_root",
+          "scene": "web",
+          "sequence": 185
         }
       },
       {
@@ -312,6 +390,27 @@
               {
                 "children": [],
                 "icon": null,
+                "key": "menu:59",
+                "label": "Groups",
+                "menu_id": 59,
+                "meta": {
+                  "action_id": 68,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    99,
+                    102,
+                    7
+                  ],
+                  "menu_id": 59,
+                  "menu_xmlid": "base.menu_action_res_groups",
+                  "model": "res.groups",
+                  "scene": "web",
+                  "sequence": 3
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
                 "key": "menu:57",
                 "label": "Companies",
                 "menu_id": 57,
@@ -449,6 +548,80 @@
             }
           },
           {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:144",
+                "label": "公司管理",
+                "menu_id": 144,
+                "meta": {
+                  "action_id": 246,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    4
+                  ],
+                  "menu_id": 144,
+                  "menu_xmlid": "smart_enterprise_base.menu_enterprise_company",
+                  "model": "res.company",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:145",
+                "label": "组织架构",
+                "menu_id": 145,
+                "meta": {
+                  "action_id": 247,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    4
+                  ],
+                  "menu_id": 145,
+                  "menu_xmlid": "smart_enterprise_base.menu_enterprise_department",
+                  "model": "hr.department",
+                  "scene": "web",
+                  "sequence": 20
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:146",
+                "label": "用户设置",
+                "menu_id": 146,
+                "meta": {
+                  "action_id": 248,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    4
+                  ],
+                  "menu_id": 146,
+                  "menu_xmlid": "smart_enterprise_base.menu_enterprise_user",
+                  "model": "res.users",
+                  "scene": "web",
+                  "sequence": 30
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:143",
+            "label": "企业启用",
+            "menu_id": 143,
+            "meta": {
+              "groups_xmlids": [
+                4
+              ],
+              "menu_id": 143,
+              "menu_xmlid": "smart_enterprise_base.menu_enterprise_base_root",
+              "scene": "web",
+              "sequence": 35
+            }
+          },
+          {
             "children": [],
             "icon": null,
             "key": "menu:2",
@@ -472,7 +645,7 @@
                     "label": "Messages",
                     "menu_id": 86,
                     "meta": {
-                      "action_id": 108,
+                      "action_id": 109,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 86,
                       "menu_xmlid": "mail.menu_mail_message",
@@ -488,7 +661,7 @@
                     "label": "Scheduled Messages",
                     "menu_id": 87,
                     "meta": {
-                      "action_id": 109,
+                      "action_id": 110,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 87,
                       "menu_xmlid": "mail.mail_message_schedule_menu",
@@ -504,7 +677,7 @@
                     "label": "Subtypes",
                     "menu_id": 88,
                     "meta": {
-                      "action_id": 105,
+                      "action_id": 106,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 88,
                       "menu_xmlid": "mail.menu_message_subtype",
@@ -520,7 +693,7 @@
                     "label": "Tracking Values",
                     "menu_id": 89,
                     "meta": {
-                      "action_id": 106,
+                      "action_id": 107,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 89,
                       "menu_xmlid": "mail.menu_mail_tracking_value",
@@ -536,7 +709,7 @@
                     "label": "Activity Types",
                     "menu_id": 90,
                     "meta": {
-                      "action_id": 121,
+                      "action_id": 122,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 90,
                       "menu_xmlid": "mail.menu_mail_activity_type",
@@ -552,7 +725,7 @@
                     "label": "Activities",
                     "menu_id": 91,
                     "meta": {
-                      "action_id": 122,
+                      "action_id": 123,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 91,
                       "menu_xmlid": "mail.menu_mail_activities",
@@ -568,7 +741,7 @@
                     "label": "Activity Plans",
                     "menu_id": 92,
                     "meta": {
-                      "action_id": 124,
+                      "action_id": 125,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 92,
                       "menu_xmlid": "mail.menu_mail_activity_plan",
@@ -584,7 +757,7 @@
                     "label": "Notifications",
                     "menu_id": 93,
                     "meta": {
-                      "action_id": 107,
+                      "action_id": 108,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -603,7 +776,7 @@
                     "label": "Followers",
                     "menu_id": 94,
                     "meta": {
-                      "action_id": 112,
+                      "action_id": 113,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -622,7 +795,7 @@
                     "label": "Email Blacklist",
                     "menu_id": 95,
                     "meta": {
-                      "action_id": 140,
+                      "action_id": 141,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 95,
                       "menu_xmlid": "mail.mail_blacklist_menu",
@@ -638,7 +811,7 @@
                     "label": "Ratings",
                     "menu_id": 111,
                     "meta": {
-                      "action_id": 186,
+                      "action_id": 187,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 111,
                       "menu_xmlid": "rating.rating_rating_menu_technical",
@@ -654,7 +827,7 @@
                     "label": "User Settings",
                     "menu_id": 96,
                     "meta": {
-                      "action_id": 137,
+                      "action_id": 138,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 96,
                       "menu_xmlid": "mail.res_users_settings_menu",
@@ -670,7 +843,7 @@
                     "label": "Guests",
                     "menu_id": 97,
                     "meta": {
-                      "action_id": 135,
+                      "action_id": 136,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 97,
                       "menu_xmlid": "mail.mail_guest_menu",
@@ -686,7 +859,7 @@
                     "label": "RTC sessions",
                     "menu_id": 98,
                     "meta": {
-                      "action_id": 115,
+                      "action_id": 116,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 98,
                       "menu_xmlid": "mail.discuss_channel_rtc_session_menu",
@@ -702,7 +875,7 @@
                     "label": "ICE servers",
                     "menu_id": 99,
                     "meta": {
-                      "action_id": 113,
+                      "action_id": 114,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 99,
                       "menu_xmlid": "mail.ice_servers_menu",
@@ -718,7 +891,7 @@
                     "label": "Message Reactions",
                     "menu_id": 100,
                     "meta": {
-                      "action_id": 136,
+                      "action_id": 137,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 100,
                       "menu_xmlid": "mail.mail_message_reaction_menu",
@@ -734,7 +907,7 @@
                     "label": "Link Previews",
                     "menu_id": 101,
                     "meta": {
-                      "action_id": 116,
+                      "action_id": 117,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 101,
                       "menu_xmlid": "mail.mail_link_preview_menu",
@@ -750,7 +923,7 @@
                     "label": "GIF favorite",
                     "menu_id": 102,
                     "meta": {
-                      "action_id": 117,
+                      "action_id": 118,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 102,
                       "menu_xmlid": "mail.discuss_gif_favorite_menu",
@@ -780,7 +953,7 @@
                     "label": "Emails",
                     "menu_id": 77,
                     "meta": {
-                      "action_id": 110,
+                      "action_id": 111,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 77,
                       "menu_xmlid": "mail.menu_mail_mail",
@@ -815,7 +988,7 @@
                     "label": "Incoming Mail Servers",
                     "menu_id": 80,
                     "meta": {
-                      "action_id": 104,
+                      "action_id": 105,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -834,7 +1007,7 @@
                     "label": "Email Templates",
                     "menu_id": 81,
                     "meta": {
-                      "action_id": 138,
+                      "action_id": 139,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 81,
                       "menu_xmlid": "mail.menu_email_templates",
@@ -850,7 +1023,7 @@
                     "label": "Aliases",
                     "menu_id": 78,
                     "meta": {
-                      "action_id": 133,
+                      "action_id": 134,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -869,7 +1042,7 @@
                     "label": "Alias Domains",
                     "menu_id": 79,
                     "meta": {
-                      "action_id": 132,
+                      "action_id": 133,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -888,7 +1061,7 @@
                     "label": "Channels",
                     "menu_id": 82,
                     "meta": {
-                      "action_id": 118,
+                      "action_id": 119,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -907,7 +1080,7 @@
                     "label": "Channels/Members",
                     "menu_id": 83,
                     "meta": {
-                      "action_id": 114,
+                      "action_id": 115,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -926,7 +1099,7 @@
                     "label": "Mail Gateway Allowed",
                     "menu_id": 84,
                     "meta": {
-                      "action_id": 134,
+                      "action_id": 135,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         7
@@ -941,13 +1114,13 @@
                   {
                     "children": [],
                     "icon": null,
-                    "key": "menu:114",
+                    "key": "menu:135",
                     "label": "Snailmail Letters",
-                    "menu_id": 114,
+                    "menu_id": 135,
                     "meta": {
-                      "action_id": 203,
+                      "action_id": 224,
                       "action_type": "ir.actions.act_window",
-                      "menu_id": 114,
+                      "menu_id": 135,
                       "menu_xmlid": "snailmail.menu_snailmail_letters",
                       "model": "snailmail.letter",
                       "scene": "web",
@@ -957,16 +1130,16 @@
                   {
                     "children": [],
                     "icon": null,
-                    "key": "menu:115",
+                    "key": "menu:136",
                     "label": "Digest Emails",
-                    "menu_id": 115,
+                    "menu_id": 136,
                     "meta": {
-                      "action_id": 207,
+                      "action_id": 228,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         2
                       ],
-                      "menu_id": 115,
+                      "menu_id": 136,
                       "menu_xmlid": "digest.digest_menu",
                       "model": "digest.digest",
                       "scene": "web",
@@ -976,16 +1149,16 @@
                   {
                     "children": [],
                     "icon": null,
-                    "key": "menu:116",
+                    "key": "menu:137",
                     "label": "Digest Tips",
-                    "menu_id": 116,
+                    "menu_id": 137,
                     "meta": {
-                      "action_id": 208,
+                      "action_id": 229,
                       "action_type": "ir.actions.act_window",
                       "groups_xmlids": [
                         2
                       ],
-                      "menu_id": 116,
+                      "menu_id": 137,
                       "menu_xmlid": "digest.digest_tip_menu",
                       "model": "digest.tip",
                       "scene": "web",
@@ -1009,13 +1182,13 @@
                   {
                     "children": [],
                     "icon": null,
-                    "key": "menu:112",
+                    "key": "menu:133",
                     "label": "SMS",
-                    "menu_id": 112,
+                    "menu_id": 133,
                     "meta": {
-                      "action_id": 199,
+                      "action_id": 220,
                       "action_type": "ir.actions.act_window",
-                      "menu_id": 112,
+                      "menu_id": 133,
                       "menu_xmlid": "sms.sms_sms_menu",
                       "model": "sms.sms",
                       "scene": "web",
@@ -1025,13 +1198,13 @@
                   {
                     "children": [],
                     "icon": null,
-                    "key": "menu:113",
+                    "key": "menu:134",
                     "label": "SMS Templates",
-                    "menu_id": 113,
+                    "menu_id": 134,
                     "meta": {
-                      "action_id": 201,
+                      "action_id": 222,
                       "action_type": "ir.actions.act_window",
-                      "menu_id": 113,
+                      "menu_id": 134,
                       "menu_xmlid": "sms.sms_template_menu",
                       "model": "sms.template",
                       "scene": "web",
@@ -1045,7 +1218,7 @@
                     "label": "Phone Blacklist",
                     "menu_id": 108,
                     "meta": {
-                      "action_id": 155,
+                      "action_id": 156,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 108,
                       "menu_xmlid": "phone_validation.phone_blacklist_menu",
@@ -1457,7 +1630,7 @@
                     "label": "Tier Definition",
                     "menu_id": 105,
                     "meta": {
-                      "action_id": 153,
+                      "action_id": 154,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 105,
                       "menu_xmlid": "base_tier_validation.menu_tier_definition",
@@ -1473,7 +1646,7 @@
                     "label": "Tier Validation Exception",
                     "menu_id": 106,
                     "meta": {
-                      "action_id": 154,
+                      "action_id": 155,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 106,
                       "menu_xmlid": "base_tier_validation.menu_tier_validation_exception",
@@ -1828,7 +2001,7 @@
                     "label": "Privacy Logs",
                     "menu_id": 110,
                     "meta": {
-                      "action_id": 160,
+                      "action_id": 161,
                       "action_type": "ir.actions.act_window",
                       "menu_id": 110,
                       "menu_xmlid": "privacy_lookup.pricacy_log_menu",
@@ -1933,6 +2106,7 @@
         "menu_id": 1,
         "meta": {
           "groups_xmlids": [
+            2,
             4
           ],
           "menu_id": 1,
