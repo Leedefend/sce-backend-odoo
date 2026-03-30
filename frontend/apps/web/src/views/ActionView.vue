@@ -330,6 +330,7 @@
       :route-preset-label="listRoutePresetDisplayLabel"
       :route-preset-source="vm.filters.routePreset?.source || ''"
       :search-mode-label="listSearchModeLabel"
+      :optimization-composition="listOptimizationComposition"
       :active-contract-filter-key="activeContractFilterKey || ''"
       :active-saved-filter-key="activeSavedFilterKey || ''"
       :active-group-by-field="activeGroupByField || ''"
@@ -464,7 +465,7 @@ import {
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { findSceneReadyEntry, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { findSceneReadyEntryByTarget, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
@@ -1056,10 +1057,15 @@ const listProfile = computed<SceneListProfile | null>(() => {
   return (scene.value?.list_profile as SceneListProfile) || null;
 });
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
-  if (!sceneKey.value) return null;
-  return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
+  return findSceneReadyEntryByTarget(session.sceneReadyContractV1, {
+    sceneKey: sceneKey.value,
+    actionId: actionId.value,
+    menuId: menuId.value,
+    route: String(route.path || ''),
+  });
 });
 const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
+const listOptimizationRefreshAttempted = ref(false);
 function applyDefaultMarkerLabel<T extends { label?: string; isDefault?: boolean }>(rows: T[]): Array<T & { label: string }> {
   return rows.map((row) => {
     const baseLabel = String(row.label || '').trim();
@@ -1197,6 +1203,83 @@ const listRoutePresetDisplayLabel = computed(() => {
   }
   return rawLabel;
 });
+const listOptimizationComposition = computed(() => {
+  const raw = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
+    ? ((sceneReadyEntry.value as Record<string, unknown>).optimization_composition as Record<string, unknown> | undefined)
+    : undefined;
+  if (!raw || typeof raw !== 'object') return null;
+  const toolbarSectionsRaw = Array.isArray(raw.toolbar_sections) ? raw.toolbar_sections : [];
+  return {
+    toolbarSections: toolbarSectionsRaw
+      .map((row) => {
+        const payload = (row && typeof row === 'object') ? row as Record<string, unknown> : {};
+        const key = String(payload.key || '').trim();
+        if (!key) return null;
+        return {
+          key,
+          kind: String(payload.kind || key).trim() || key,
+          priority: Number(payload.priority || 0),
+          visible: payload.visible !== false,
+          collapsible: Boolean(payload.collapsible),
+          defaultOpen: payload.default_open !== false,
+        };
+      })
+      .filter(Boolean),
+    activeConditions: (raw.active_conditions && typeof raw.active_conditions === 'object')
+      ? {
+          visible: (raw.active_conditions as Record<string, unknown>).visible !== false,
+          include: Array.isArray((raw.active_conditions as Record<string, unknown>).include)
+            ? ((raw.active_conditions as Record<string, unknown>).include as unknown[]).map((item) => String(item || '').trim()).filter(Boolean)
+            : [],
+          mergeRules: ((raw.active_conditions as Record<string, unknown>).merge_rules && typeof (raw.active_conditions as Record<string, unknown>).merge_rules === 'object')
+            ? (raw.active_conditions as Record<string, unknown>).merge_rules as Record<string, unknown>
+            : {},
+        }
+      : null,
+    highFrequencyFilters: Array.isArray(raw.high_frequency_filters)
+      ? raw.high_frequency_filters
+          .map((row) => {
+            const payload = (row && typeof row === 'object') ? row as Record<string, unknown> : {};
+            const key = String(payload.key || payload.name || '').trim();
+            return key ? { key } : null;
+          })
+          .filter(Boolean)
+      : [],
+    advancedFilters: (raw.advanced_filters && typeof raw.advanced_filters === 'object')
+      ? {
+          visible: (raw.advanced_filters as Record<string, unknown>).visible !== false,
+          collapsible: (raw.advanced_filters as Record<string, unknown>).collapsible !== false,
+          defaultOpen: Boolean((raw.advanced_filters as Record<string, unknown>).default_open),
+          source: ((raw.advanced_filters as Record<string, unknown>).source && typeof (raw.advanced_filters as Record<string, unknown>).source === 'object')
+            ? (raw.advanced_filters as Record<string, unknown>).source as Record<string, unknown>
+            : {},
+        }
+      : null,
+  };
+});
+const shouldRefreshListOptimizationComposition = computed(() => {
+  if (listOptimizationRefreshAttempted.value) return false;
+  if (!sceneKey.value) return false;
+  if (!sceneReadyEntry.value) return false;
+  const hasListTruth =
+    sceneReadyListSurface.value.columns.length > 0
+    || sceneReadyListSurface.value.filters.length > 0
+    || sceneReadyListSurface.value.groupBy.length > 0
+    || sceneReadyListSurface.value.searchPanel.length > 0
+    || sceneReadyListSurface.value.searchableFields.length > 0;
+  if (!hasListTruth) return false;
+  return !listOptimizationComposition.value;
+});
+
+async function refreshListOptimizationCompositionOnce() {
+  if (!shouldRefreshListOptimizationComposition.value) return;
+  listOptimizationRefreshAttempted.value = true;
+  try {
+    await session.loadAppInit();
+  } catch (error) {
+    console.warn('[ActionView] failed to refresh scene-ready optimization composition', error);
+  }
+}
 const {
   strictContractMode,
   strictSurfaceContract,
@@ -2603,6 +2686,16 @@ watch(
       void requestLoad();
     }
   },
+);
+
+watch(
+  shouldRefreshListOptimizationComposition,
+  (shouldRefresh) => {
+    if (shouldRefresh) {
+      void refreshListOptimizationCompositionOnce();
+    }
+  },
+  { immediate: true },
 );
 </script>
 

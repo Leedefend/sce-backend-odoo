@@ -35,6 +35,45 @@ export function findSceneReadyEntry(contract: { scenes?: unknown[] } | null | un
   return null;
 }
 
+export function findSceneReadyEntryByTarget(
+  contract: { scenes?: unknown[] } | null | undefined,
+  target: {
+    sceneKey?: unknown;
+    actionId?: unknown;
+    menuId?: unknown;
+    route?: unknown;
+  },
+) {
+  const rows = Array.isArray(contract?.scenes) ? contract?.scenes : [];
+  const sceneKey = asText(target.sceneKey);
+  const actionId = Number(target.actionId || 0);
+  const menuId = Number(target.menuId || 0);
+  const route = asText(target.route);
+
+  if (sceneKey) {
+    const matched = findSceneReadyEntry(contract, sceneKey);
+    if (matched) return matched;
+  }
+
+  for (const item of rows) {
+    const row = asDict(item);
+    const meta = asDict(row.meta);
+    const targetMeta = asDict(meta.target);
+    const scene = asDict(row.scene);
+    const page = asDict(row.page);
+    const candidateSceneKey = asText(scene.key || page.scene_key);
+    const candidateActionId = Number(targetMeta.action_id || 0);
+    const candidateMenuId = Number(targetMeta.menu_id || 0);
+    const candidateRoute = asText(targetMeta.route || page.route);
+
+    if (actionId > 0 && candidateActionId === actionId) return row;
+    if (menuId > 0 && candidateMenuId === menuId) return row;
+    if (route && candidateRoute && candidateRoute === route) return row;
+    if (sceneKey && candidateSceneKey && candidateSceneKey === sceneKey) return row;
+  }
+  return null;
+}
+
 export function resolveListSceneReady(entry: SceneReadyEntry | null) {
   const row = asDict(entry);
   const searchSurface = asDict(row.search_surface);

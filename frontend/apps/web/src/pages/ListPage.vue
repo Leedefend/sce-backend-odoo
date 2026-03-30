@@ -38,6 +38,7 @@
       :route-preset-label="routePresetLabel || ''"
       :route-preset-source="routePresetSource || ''"
       :search-mode-label="searchModeLabel || ''"
+      :optimization-composition="optimizationComposition"
       :active-contract-filter-key="activeContractFilterKey || ''"
       :active-saved-filter-key="activeSavedFilterKey || ''"
       :active-group-by-field="activeGroupByField || ''"
@@ -334,6 +335,31 @@ type ToolbarChip = {
   label: string;
 };
 
+type ToolbarSection = {
+  key: string;
+  kind: string;
+  priority: number;
+  visible: boolean;
+  collapsible: boolean;
+  defaultOpen: boolean;
+};
+
+type OptimizationComposition = {
+  toolbarSections?: ToolbarSection[];
+  activeConditions?: {
+    visible?: boolean;
+    include?: string[];
+    mergeRules?: Record<string, unknown>;
+  };
+  highFrequencyFilters?: Array<{ key: string }>;
+  advancedFilters?: {
+    visible?: boolean;
+    collapsible?: boolean;
+    defaultOpen?: boolean;
+    source?: Record<string, unknown>;
+  };
+};
+
 const props = defineProps<{
   title: string;
   model: string;
@@ -370,6 +396,7 @@ const props = defineProps<{
   routePresetLabel?: string;
   routePresetSource?: string;
   searchModeLabel?: string;
+  optimizationComposition?: OptimizationComposition | null;
   activeContractFilterKey?: string;
   activeSavedFilterKey?: string;
   activeGroupByField?: string;
@@ -482,6 +509,10 @@ const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.sa
 const groupByOptions = computed(() => Array.isArray(props.groupByOptions) ? props.groupByOptions : []);
 const searchPanelOptions = computed(() => Array.isArray(props.searchPanelOptions) ? props.searchPanelOptions : []);
 const searchableFieldOptions = computed(() => Array.isArray(props.searchableFieldOptions) ? props.searchableFieldOptions : []);
+const optimizationComposition = computed(() => {
+  const raw = props.optimizationComposition;
+  return raw && typeof raw === 'object' ? raw : null;
+});
 const recordCountSafe = computed(() => {
   const raw = Number(props.recordCount);
   if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
