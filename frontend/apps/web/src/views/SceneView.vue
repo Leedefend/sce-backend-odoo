@@ -12,6 +12,21 @@
         {{ action.label || action.key }}
       </button>
     </section>
+    <section v-if="sceneViewSwitchOptions.length > 1" class="scene-view-switch">
+      <p class="scene-view-switch__label">{{ pageText('scene_view_switch_label', '视图切换') }}</p>
+      <div class="scene-view-switch__chips">
+        <button
+          v-for="item in sceneViewSwitchOptions"
+          :key="`scene-view-switch-${item.key}`"
+          class="scene-view-switch__chip"
+          :class="{ active: item.active }"
+          :disabled="item.active || status === 'loading'"
+          @click="openSiblingScene(item.key)"
+        >
+          {{ item.label }}
+        </button>
+      </div>
+    </section>
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && status === 'loading'"
       :title="pageText('loading_title', '正在加载场景...')"
@@ -112,6 +127,16 @@ const forbiddenCopy = ref({
 const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
+const PROJECT_SCENE_SWITCH_MAP: Record<string, Array<{ key: string; label: string }>> = {
+  'projects.list': [
+    { key: 'projects.list', label: '列表' },
+    { key: 'projects.ledger', label: '看板' },
+  ],
+  'projects.ledger': [
+    { key: 'projects.list', label: '列表' },
+    { key: 'projects.ledger', label: '看板' },
+  ],
+};
 
 const idleDiagnosticMessage = computed(() => {
   const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '').trim();
@@ -160,6 +185,57 @@ const runtimeDiagnosticMessage = computed(() => {
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+}
+
+function resolveSceneSwitchQuery(scene: Scene) {
+  const next: Record<string, unknown> = {
+    ...resolveWorkspaceContextQuery(),
+  };
+  const releaseProduct = String(route.query.release_product || '').trim();
+  if (releaseProduct) {
+    next.release_product = releaseProduct;
+  }
+  if (scene.target.menu_id) {
+    next.menu_id = scene.target.menu_id;
+  }
+  return next;
+}
+
+function resolveSceneSwitchFallbackQuery() {
+  const next: Record<string, unknown> = {
+    ...resolveWorkspaceContextQuery(),
+  };
+  const releaseProduct = String(route.query.release_product || '').trim();
+  if (releaseProduct) {
+    next.release_product = releaseProduct;
+  }
+  return next;
+}
+
+const sceneViewSwitchOptions = computed(() => {
+  const currentSceneKey = String(route.params.sceneKey || route.meta?.sceneKey || '').trim();
+  const group = PROJECT_SCENE_SWITCH_MAP[currentSceneKey] || [];
+  if (!group.length) return [];
+  return group
+    .map((item) => {
+      const scene = getSceneByKey(item.key);
+      return {
+        key: item.key,
+        label: item.label,
+        route: scene?.route || `/s/${item.key}`,
+        active: item.key === currentSceneKey,
+        menuId: Number(scene?.target?.menu_id || 0) || undefined,
+      };
+    })
+    .filter((item) => Boolean(item.key && item.route));
+});
+
+function openSiblingScene(sceneKey: string) {
+  const target = getSceneByKey(sceneKey);
+  router.replace({
+    path: target?.route || `/s/${sceneKey}`,
+    query: target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery(),
+  }).catch(() => {});
 }
 
 function sanitizeWorkspaceContextForLayout(
@@ -643,5 +719,46 @@ watch(
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.scene-view-switch {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scene-view-switch__label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.scene-view-switch__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scene-view-switch__chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scene-view-switch__chip.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
+.scene-view-switch__chip:disabled {
+  cursor: default;
+  opacity: 0.75;
 }
 </style>

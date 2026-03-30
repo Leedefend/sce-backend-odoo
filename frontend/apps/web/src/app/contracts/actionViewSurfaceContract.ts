@@ -48,6 +48,20 @@ function parseViewModes(raw: unknown): string[] {
   return out;
 }
 
+function parseMetaViews(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  raw.forEach((entry) => {
+    if (!Array.isArray(entry) || entry.length < 2) return;
+    const mode = normalizeActionViewMode(entry[1]);
+    if (!mode || seen.has(mode) || mode === 'form') return;
+    seen.add(mode);
+    out.push(mode);
+  });
+  return out;
+}
+
 function collectContractViewModes(contract: Dict | null): string[] {
   if (!contract) return [];
   const out: string[] = [];
@@ -93,6 +107,7 @@ export function normalizeActionViewMode(raw: unknown): string {
 export function resolveActionViewAvailableModes(options: {
   contractViewTypeRaw: unknown;
   metaViewModesRaw: unknown;
+  metaViewsRaw?: unknown;
   contract: Dict | null;
 }): string[] {
   const out: string[] = [];
@@ -108,6 +123,7 @@ export function resolveActionViewAvailableModes(options: {
   };
   addModes(options.contractViewTypeRaw);
   addModes(options.metaViewModesRaw);
+  parseMetaViews(options.metaViewsRaw).forEach((mode) => addMode(mode));
   collectContractViewModes(options.contract).forEach((mode) => addMode(mode));
   return out;
 }

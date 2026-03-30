@@ -1,0 +1,29 @@
+{
+  "task_id": "ITER-2026-03-29-258",
+  "status": "PASS",
+  "summary": {
+    "kind": "generic_frontend_kanban_consumer_update",
+    "scope": [
+      "generic kanban grouping",
+      "contract-driven column rendering"
+    ],
+    "model_specific_hardcode": false,
+    "backend_changed": false
+  },
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-29/report.ITER-2026-03-29-258.md",
+    "task_contract": "agent_ops/tasks/ITER-2026-03-29-258.yaml"
+  },
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-29-258.yaml",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'"
+  ],
+  "next_iteration": {
+    "type": "frontend_product_usability",
+    "targets": [
+      "refresh frontend and validate kanban column rendering",
+      "tighten generic kanban hierarchy if needed",
+      "keep project.project as sample only"
+    ]
+  }
+}

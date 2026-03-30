@@ -19,6 +19,25 @@ function splitViewModes(raw: unknown): string[] {
     .filter(Boolean);
 }
 
+function collectViewModesFromViewsBlock(raw: unknown): string[] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return [];
+  }
+  const views = raw as Record<string, unknown>;
+  const supported = ['tree', 'list', 'kanban', 'pivot', 'graph', 'calendar', 'gantt', 'activity', 'dashboard'];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  supported.forEach((key) => {
+    const block = views[key];
+    if (!block) return;
+    const normalized = key === 'list' ? 'tree' : key;
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    out.push(normalized);
+  });
+  return out;
+}
+
 function resolveNestedContract(contract: unknown): Record<string, unknown> {
   if (!contract || typeof contract !== 'object' || Array.isArray(contract)) return {};
   const row = contract as Record<string, unknown>;
@@ -55,6 +74,7 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
       || '',
   ).trim();
   const viewModes = splitViewModes(head.view_type || normalized.view_type || '');
+  const derivedViewModes = viewModes.length ? viewModes : collectViewModesFromViewsBlock(views);
   const name = String(head.title || normalized.name || '').trim();
   const actionType = String(normalized.action_type || head.action_type || 'ir.actions.act_window').trim();
   const out: NavMeta = {
@@ -63,7 +83,10 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
   };
   if (model) out.model = model;
   if (name) out.name = name;
-  if (viewModes.length) out.view_modes = viewModes;
+  if (derivedViewModes.length) {
+    out.view_modes = derivedViewModes;
+    out.views = derivedViewModes.map((mode) => [0, mode]) as Array<[number, string]>;
+  }
   return out;
 }
 
@@ -80,6 +103,11 @@ function mergeMeta(base: NavMeta | null, fallback: NavMeta): NavMeta {
     merged.view_modes = baseModes;
   } else if (fallback.view_modes?.length) {
     merged.view_modes = fallback.view_modes;
+  }
+  if (Array.isArray(base?.views) && base.views.length) {
+    merged.views = base.views;
+  } else if (Array.isArray(fallback.views) && fallback.views.length) {
+    merged.views = fallback.views;
   }
   return merged;
 }
