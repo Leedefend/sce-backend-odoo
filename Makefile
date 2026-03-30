@@ -1917,7 +1917,7 @@ fe.install:
 	@pnpm -C frontend install
 
 fe.dev:
-	@pnpm -C frontend dev
+	@bash -lc 'source $$HOME/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend dev'
 
 fe.dev.reset: guard.prod.forbid
 	@bash scripts/dev/frontend_dev_reset.sh
