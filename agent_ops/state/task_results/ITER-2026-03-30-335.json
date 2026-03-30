@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-30-335",
+  "status": "PASS",
+  "summary": "Removed temporary list contract debug panels while keeping the optimized toolbar behavior and appearance unchanged.",
+  "changed_files": [
+    "frontend/apps/web/src/views/ActionView.vue",
+    "frontend/apps/web/src/components/page/PageToolbar.vue"
+  ],
+  "verification": {
+    "validate_task": "PASS",
+    "typecheck:strict": "PASS"
+  },
+  "risk_summary": [
+    "Frontend-only cleanup batch",
+    "No contract behavior changes",
+    "No regression to legacy fallback layout"
+  ],
+  "next_suggestion": "Hard-refresh the list page once to confirm the temporary debug panels are gone and the optimized toolbar still renders normally."
+}

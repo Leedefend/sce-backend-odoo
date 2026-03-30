@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-30-333",
+  "status": "PASS",
+  "summary": "Fixed list scene-ready lookup on action routes by matching scene-ready entries via scene_key or target metadata, and kept the one-shot refresh guard for stale optimization composition data.",
+  "changed_files": [
+    "frontend/apps/web/src/app/resolvers/sceneReadyResolver.ts",
+    "frontend/apps/web/src/views/ActionView.vue"
+  ],
+  "verification": {
+    "validate_task": "PASS",
+    "typecheck:strict": "PASS"
+  },
+  "risk_summary": [
+    "Frontend-only additive batch",
+    "No backend contract changes",
+    "One-shot guarded refresh prevents repeated reload loops",
+    "Fallback scene-ready match only uses backend target metadata: action_id/menu_id/route"
+  ],
+  "next_suggestion": "Hard-refresh the current list page and verify backend-driven toolbar sections render instead of the fallback layout; if confirmed, trim obsolete toolbar fallback heuristics next."
+}

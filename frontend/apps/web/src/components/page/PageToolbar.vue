@@ -1,5 +1,5 @@
 <template>
-  <section class="toolbar">
+  <section v-if="showPrimaryToolbar" class="toolbar">
     <div class="search">
       <input
         type="search"
@@ -69,7 +69,176 @@
       </div>
     </div>
   </section>
-  <section v-if="hasContractControls" class="contract-toolbar">
+
+  <section v-if="hasContractControls && usesOptimizationComposition" class="contract-toolbar contract-toolbar--optimized">
+    <div
+      v-for="section in renderedSections"
+      :key="`section-${section.key}`"
+      class="contract-group"
+      :class="`contract-group--${section.key}`"
+    >
+      <template v-if="section.key === 'active_conditions' && visibleActiveStateChips.length">
+        <span class="contract-group__label">当前条件（{{ visibleActiveStateChips.length }}）</span>
+        <div class="contract-group__chips">
+          <span
+            v-for="chip in visibleActiveStateChips"
+            :key="`active-${chip.key}`"
+            class="contract-chip static active-summary"
+          >
+            {{ chip.label }}
+          </span>
+          <button
+            type="button"
+            class="contract-chip ghost"
+            :disabled="loading"
+            @click="resetActiveConditions"
+          >
+            重置条件
+          </button>
+        </div>
+      </template>
+
+      <template v-else-if="section.key === 'quick_filters' && prioritizedQuickFilters.length">
+        <span class="contract-group__label">高频筛选（{{ prioritizedQuickFilters.length }}）</span>
+        <span class="contract-group__caption">优先展示后端标记的高频条件</span>
+        <div class="contract-group__chips">
+          <button
+            v-for="chip in prioritizedQuickFilters"
+            :key="`quick-priority-${chip.key}`"
+            type="button"
+            class="contract-chip"
+            :class="{ active: activeContractFilterKey === chip.key }"
+            :disabled="loading"
+            @click="onApplyContractFilter?.(chip.key)"
+          >
+            {{ chip.label }}
+          </button>
+          <button
+            v-if="activeContractFilterKey"
+            type="button"
+            class="contract-chip ghost"
+            :disabled="loading"
+            @click="onClearContractFilter?.()"
+          >
+            清除
+          </button>
+        </div>
+      </template>
+
+      <template v-else-if="section.key === 'advanced_filters' && showAdvancedFiltersSection">
+        <span class="contract-group__label">高级筛选</span>
+        <span class="contract-group__caption">承接其余筛选项，默认折叠</span>
+        <div class="contract-group__chips">
+          <button
+            v-if="advancedFiltersCollapsible"
+            type="button"
+            class="contract-chip ghost"
+            :disabled="loading"
+            @click="toggleAdvancedFilters"
+          >
+            {{ showAdvancedFilters ? '收起高级筛选' : `展开高级筛选（${advancedFilterCountText}）` }}
+          </button>
+        </div>
+        <div v-if="showAdvancedFilters" class="contract-advanced">
+          <div v-if="advancedQuickFilters.length" class="contract-advanced__group">
+            <span class="contract-advanced__label">剩余筛选</span>
+            <div class="contract-group__chips">
+              <button
+                v-for="chip in advancedQuickFilters"
+                :key="`advanced-quick-${chip.key}`"
+                type="button"
+                class="contract-chip"
+                :class="{ active: activeContractFilterKey === chip.key }"
+                :disabled="loading"
+                @click="onApplyContractFilter?.(chip.key)"
+              >
+                {{ chip.label }}
+              </button>
+            </div>
+          </div>
+          <div v-if="advancedSavedFilters.length" class="contract-advanced__group">
+            <span class="contract-advanced__label">已保存筛选</span>
+            <div class="contract-group__chips">
+              <button
+                v-for="chip in advancedSavedFilters"
+                :key="`advanced-saved-${chip.key}`"
+                type="button"
+                class="contract-chip"
+                :class="{ active: activeSavedFilterKey === chip.key }"
+                :disabled="loading"
+                @click="onApplySavedFilter?.(chip.key)"
+              >
+                {{ chip.label }}
+              </button>
+            </div>
+          </div>
+          <div v-if="advancedSearchPanelOptions.length" class="contract-advanced__group">
+            <span class="contract-advanced__label">分面维度</span>
+            <div class="contract-group__chips">
+              <span
+                v-for="chip in advancedSearchPanelOptions"
+                :key="`advanced-searchpanel-${chip.key}`"
+                class="contract-chip static"
+              >
+                {{ chip.label }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template v-else-if="section.key === 'grouping' && groupByOptions.length">
+        <span class="contract-group__label">分组策略（{{ groupByCountText }}）</span>
+        <span class="contract-group__caption">按场景契约开放的分组维度查看列表</span>
+        <div class="contract-group__chips">
+          <button
+            v-for="chip in groupByOptions"
+            :key="`group-${chip.key}`"
+            type="button"
+            class="contract-chip"
+            :class="{ active: activeGroupByField === chip.key }"
+            :disabled="loading"
+            @click="onApplyGroupBy?.(chip.key)"
+          >
+            {{ chip.label }}
+          </button>
+          <button
+            v-if="activeGroupByField"
+            type="button"
+            class="contract-chip ghost"
+            :disabled="loading"
+            @click="onClearGroupBy?.()"
+          >
+            清除
+          </button>
+        </div>
+      </template>
+
+      <template v-else-if="section.key === 'secondary_metadata' && showSecondaryMetadataSection">
+        <span class="contract-group__label">辅助信息</span>
+        <span class="contract-group__caption">补充说明当前搜索模式与可读元数据</span>
+        <div class="contract-group__chips">
+          <span v-if="searchModeLabelText" class="contract-chip static">{{ searchModeLabelText }}</span>
+          <span
+            v-for="chip in searchableFieldOptions"
+            :key="`searchable-${chip.key}`"
+            class="contract-chip static"
+          >
+            {{ chip.label }}
+          </span>
+          <span
+            v-for="chip in secondarySearchPanelOptions"
+            :key="`secondary-searchpanel-${chip.key}`"
+            class="contract-chip static"
+          >
+            {{ chip.label }}
+          </span>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section v-else-if="hasContractControls" class="contract-toolbar">
     <div v-if="activeStateChips.length" class="contract-group">
       <span class="contract-group__label">当前条件（{{ activeStateChips.length }}）</span>
       <div class="contract-group__chips">
@@ -216,6 +385,14 @@
 import { computed, ref, watch } from 'vue';
 
 type ToolbarChip = { key: string; label: string };
+type ToolbarSection = {
+  key: string;
+  kind: string;
+  priority: number;
+  visible: boolean;
+  collapsible: boolean;
+  defaultOpen: boolean;
+};
 
 const props = defineProps<{
   loading: boolean;
@@ -242,6 +419,21 @@ const props = defineProps<{
   routePresetLabel?: string;
   routePresetSource?: string;
   searchModeLabel?: string;
+  optimizationComposition?: {
+    toolbarSections?: ToolbarSection[];
+    activeConditions?: {
+      visible?: boolean;
+      include?: string[];
+      mergeRules?: Record<string, unknown>;
+    };
+    highFrequencyFilters?: Array<{ key: string }>;
+    advancedFilters?: {
+      visible?: boolean;
+      collapsible?: boolean;
+      defaultOpen?: boolean;
+      source?: Record<string, unknown>;
+    };
+  } | null;
   activeContractFilterKey?: string;
   activeSavedFilterKey?: string;
   activeGroupByField?: string;
@@ -256,12 +448,28 @@ const props = defineProps<{
 
 const inputValue = ref(props.searchTerm || '');
 const isComposing = ref(false);
+const showAdvancedFilters = ref(false);
 const sortOptions = computed(() => Array.isArray(props.sortOptions) ? props.sortOptions : []);
 const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.quickFilters : []);
 const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.savedFilters : []);
 const groupByOptions = computed(() => Array.isArray(props.groupByOptions) ? props.groupByOptions : []);
 const searchPanelOptions = computed(() => Array.isArray(props.searchPanelOptions) ? props.searchPanelOptions : []);
 const searchableFieldOptions = computed(() => Array.isArray(props.searchableFieldOptions) ? props.searchableFieldOptions : []);
+const optimizationComposition = computed(() => {
+  const raw = props.optimizationComposition;
+  return raw && typeof raw === 'object' ? raw : null;
+});
+const optimizationToolbarSections = computed(() =>
+  Array.isArray(optimizationComposition.value?.toolbarSections)
+    ? optimizationComposition.value?.toolbarSections || []
+    : [],
+);
+const renderedSections = computed(() =>
+  optimizationToolbarSections.value
+    .filter((item) => item && item.visible !== false)
+    .sort((a, b) => Number(a.priority || 0) - Number(b.priority || 0)),
+);
+const usesOptimizationComposition = computed(() => renderedSections.value.length > 0);
 const routePresetLabelText = computed(() => String(props.routePresetLabel || '').trim());
 const routePresetSourceText = computed(() => {
   const raw = String(props.routePresetSource || '').trim().toLowerCase();
@@ -287,13 +495,54 @@ const searchableFieldCountText = computed(() => {
   return String(searchableFieldOptions.value.length);
 });
 const searchModeLabelText = computed(() => String(props.searchModeLabel || '').trim());
+const activeConditionsConfig = computed(() => {
+  const payload = optimizationComposition.value?.activeConditions;
+  return payload && typeof payload === 'object' ? payload : null;
+});
+const activeConditionInclude = computed(() => {
+  const rows = Array.isArray(activeConditionsConfig.value?.include) ? activeConditionsConfig.value?.include : [];
+  return rows.map((item) => String(item || '').trim()).filter(Boolean);
+});
+const routePresetOverridesSearchTerm = computed(() => Boolean(activeConditionsConfig.value?.mergeRules?.route_preset_overrides_search_term));
+const prioritizedQuickFilterKeys = computed(() => {
+  const rows = Array.isArray(optimizationComposition.value?.highFrequencyFilters) ? optimizationComposition.value?.highFrequencyFilters : [];
+  return rows.map((item) => String(item?.key || '').trim()).filter(Boolean);
+});
+const prioritizedQuickFilters = computed(() => {
+  if (!prioritizedQuickFilterKeys.value.length) return quickFilters.value;
+  const allowed = new Set(prioritizedQuickFilterKeys.value);
+  return quickFilters.value.filter((chip) => allowed.has(String(chip.key || '').trim()));
+});
+const advancedQuickFilters = computed(() => {
+  if (!prioritizedQuickFilterKeys.value.length) return [];
+  const allowed = new Set(prioritizedQuickFilterKeys.value);
+  return quickFilters.value.filter((chip) => !allowed.has(String(chip.key || '').trim()));
+});
+const advancedFiltersConfig = computed(() => {
+  const payload = optimizationComposition.value?.advancedFilters;
+  return payload && typeof payload === 'object' ? payload : null;
+});
+const advancedFiltersSource = computed(() => {
+  const payload = advancedFiltersConfig.value?.source;
+  return payload && typeof payload === 'object' ? payload : {};
+});
+const advancedFiltersCollapsible = computed(() => advancedFiltersConfig.value?.collapsible !== false);
+const advancedSavedFilters = computed(() =>
+  advancedFiltersSource.value.includeSavedFilters ? savedFilters.value : [],
+);
+const advancedSearchPanelOptions = computed(() =>
+  advancedFiltersSource.value.includeSearchpanel ? searchPanelOptions.value : [],
+);
+const secondarySearchPanelOptions = computed(() =>
+  advancedFiltersSource.value.includeSearchpanel ? [] : searchPanelOptions.value,
+);
 const activeStateChips = computed(() => {
   const chips: ToolbarChip[] = [];
   if (routePresetLabelText.value) {
     chips.push({ key: `preset:${routePresetLabelText.value}`, label: `推荐筛选：${routePresetChipLabel.value}` });
   }
   const searchText = String(props.searchTerm || '').trim();
-  if (searchText) {
+  if (searchText && !(routePresetOverridesSearchTerm.value && routePresetLabelText.value)) {
     chips.push({ key: `search:${searchText}`, label: `搜索：${searchText}` });
   }
   const activeQuick = quickFilters.value.find((item) => item.key === String(props.activeContractFilterKey || '').trim());
@@ -316,6 +565,19 @@ const activeStateChips = computed(() => {
   }
   return chips;
 });
+const visibleActiveStateChips = computed(() => {
+  if (!activeConditionInclude.value.length) return activeStateChips.value;
+  const allowed = new Set(activeConditionInclude.value);
+  return activeStateChips.value.filter((chip) => {
+    if (chip.key.startsWith('preset:')) return allowed.has('route_preset');
+    if (chip.key.startsWith('search:')) return allowed.has('search_term');
+    if (chip.key.startsWith('quick:')) return allowed.has('quick_filter');
+    if (chip.key.startsWith('saved:')) return allowed.has('saved_filter');
+    if (chip.key.startsWith('group:')) return allowed.has('group_by');
+    if (chip.key.startsWith('sort:')) return allowed.has('sort');
+    return true;
+  });
+});
 const showSortControls = computed(() => sortOptions.value.length > 0);
 const sortLabelText = computed(() => String(props.sortLabel || '').trim() || '默认');
 const sortSourceLabelText = computed(() => String(props.sortSourceLabel || '').trim());
@@ -330,6 +592,22 @@ const hasContractControls = computed(() =>
   || Boolean(searchModeLabelText.value),
 );
 const showLegacyStatusFilters = computed(() => !hasContractControls.value);
+const showPrimaryToolbar = computed(() => {
+  if (!usesOptimizationComposition.value) return true;
+  const searchSection = renderedSections.value.find((item) => item.key === 'search');
+  return Boolean(searchSection?.visible !== false);
+});
+const showAdvancedFiltersSection = computed(() =>
+  Boolean(advancedFiltersConfig.value?.visible !== false)
+  && Boolean(advancedQuickFilters.value.length || advancedSavedFilters.value.length || advancedSearchPanelOptions.value.length),
+);
+const showSecondaryMetadataSection = computed(() =>
+  Boolean(searchModeLabelText.value || searchableFieldOptions.value.length || secondarySearchPanelOptions.value.length),
+);
+const advancedFilterCountText = computed(() => {
+  const total = advancedQuickFilters.value.length + advancedSavedFilters.value.length + advancedSearchPanelOptions.value.length;
+  return String(total);
+});
 
 watch(
   () => props.searchTerm,
@@ -337,6 +615,14 @@ watch(
     if (isComposing.value) return;
     inputValue.value = next || '';
   },
+);
+
+watch(
+  advancedFiltersConfig,
+  (next) => {
+    showAdvancedFilters.value = Boolean(next?.defaultOpen);
+  },
+  { immediate: true },
 );
 
 function onSearchInput(event: Event) {
@@ -367,6 +653,10 @@ function resetActiveConditions() {
   props.onClearContractFilter?.();
   props.onClearSavedFilter?.();
   props.onClearGroupBy?.();
+}
+
+function toggleAdvancedFilters() {
+  showAdvancedFilters.value = !showAdvancedFilters.value;
 }
 </script>
 
@@ -493,9 +783,25 @@ function resetActiveConditions() {
   box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
 }
 
+.contract-toolbar--optimized {
+  border: 1px solid rgba(14, 116, 144, 0.14);
+  background:
+    linear-gradient(180deg, rgba(240, 249, 255, 0.9), rgba(255, 255, 255, 0.98));
+}
+
 .contract-group {
   display: grid;
   gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.contract-group--quick_filters,
+.contract-group--advanced_filters,
+.contract-group--grouping {
+  border-color: rgba(14, 116, 144, 0.18);
 }
 
 .contract-group__label {
@@ -504,10 +810,30 @@ function resetActiveConditions() {
   color: #475569;
 }
 
+.contract-group__caption {
+  font-size: 12px;
+  color: #64748b;
+}
+
 .contract-group__chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.contract-advanced {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-advanced__group {
+  display: grid;
+  gap: 6px;
+}
+
+.contract-advanced__label {
+  font-size: 12px;
+  color: #64748b;
 }
 
 .contract-chip {

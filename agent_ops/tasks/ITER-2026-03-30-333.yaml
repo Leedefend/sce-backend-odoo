@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-30-333
+title: Refresh stale scene-ready contract when list optimization composition is missing
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Recover from stale in-memory or cached scene-ready data on list action routes
+  by triggering a single fresh system.init load when the backend-backed
+  optimization_composition is missing for a known list scene.
+
+user_visible_outcome:
+  - list page switches to backend-driven toolbar sections after backend contract rollout
+  - stale scene-ready cache no longer leaves list pages stuck on old fallback layout
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - no backend contract changes
+  - no new page composition semantics
+  - one-time runtime refresh only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 03bd2ef
+
+architecture:
+  layer_target: Frontend Layer
+  module: action view scene-ready refresh guard
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    Backend now emits optimization_composition for projects.list, but active
+    browser sessions can retain stale scene-ready data and stay on the old list
+    toolbar fallback. The frontend should re-fetch system.init once in this
+    specific stale-contract condition.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-333.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - refresh_loop_or_repeated_system_init
+
+deliverables:
+  - one-shot scene-ready refresh guard on list action pages
+  - updated report and task result artifacts
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-333.yaml
+  - git restore frontend/apps/web/src/views/ActionView.vue
+
+depends_on:
+  - ITER-2026-03-30-332
+
+notes: >
+  This batch is a runtime recovery guard only. It must not add new toolbar
+  semantics or move responsibility away from backend contracts.
