@@ -1,0 +1,74 @@
+task_id: ITER-2026-03-30-267
+title: Degrade ui.contract action_open when target model is unavailable
+type: bugfix
+status: in_progress
+priority: high
+
+goal: Prevent `ui.contract(action_open)` from crashing with INTERNAL_ERROR when an act_window targets a model that is not installed in the current database.
+user_visible_outcome:
+  - ui.contract(action_open) no longer returns 500 for missing target models
+  - callers receive a diagnostic/degraded contract instead of an unhandled exception
+  - behavior is generic and does not depend on demo-only modules being installed
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - addons/smart_core/handlers/**
+    - addons/smart_core/app_config_engine/services/**
+    - addons/smart_core/app_config_engine/models/**
+    - addons/smart_core/tests/**
+  forbidden_paths:
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+change_rules:
+  - additive_only
+  - no_contract_field_rename_or_remove
+  - kernel_generic_fix_only
+  - no_demo_specific_hardcode
+
+architecture:
+  layer_target: platform layer
+  module: smart_core ui.contract action dispatch and page assembly fallback
+  module_ownership: smart_core
+  kernel_or_scenario: kernel
+  reason: Missing target models should degrade to diagnostic contracts at the page assembly boundary instead of bubbling as unhandled runtime errors.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-267.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/services/assemblers/page_assembler.py addons/smart_core/tests/test_action_dispatcher_server_mapping.py
+    - make verify.smart_core
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - contract_structure_changed
+  - model_missing_path_uncertain
+
+deliverables:
+  - missing_model_diagnostic_fallback
+  - regression_tests
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-267.yaml
+  - git restore addons/smart_core/app_config_engine/services/assemblers/page_assembler.py
+  - git restore addons/smart_core/tests/test_action_dispatcher_server_mapping.py
+
+depends_on:
+  - ITER-2026-03-30-264
+
+notes: "Only fix the missing-model crash path for ui.contract(action_open). Keep behavior generic and return a diagnostic contract instead of raising."

@@ -147,6 +147,18 @@ class PageAssembler:
             from .client_url_report import ClientUrlReportAssembler
             _logger.warning("Action %s has no res_model, returning diagnostic contract", action.get('id') if action else 'unknown')
             return ClientUrlReportAssembler(self.env).assemble_diagnostic_contract(p, action, issue="动作未配置模型 (res_model)")
+        if model not in self.env:
+            from .client_url_report import ClientUrlReportAssembler
+            _logger.warning(
+                "Action %s targets unavailable model %s; returning diagnostic contract",
+                action.get('id') if isinstance(action, dict) else 'unknown',
+                model,
+            )
+            return ClientUrlReportAssembler(self.env).assemble_diagnostic_contract(
+                p,
+                action,
+                issue="动作目标模型不可用或未安装: %s" % model,
+            )
 
         view_types = p["view_types"]
         env = self.env

@@ -79,6 +79,60 @@ class TestActionDispatcherServerMapping(TransactionCase):
         mocked_materialize.assert_called_once_with(server_info, payload)
         mocked_dispatch.assert_called_once_with(materialized, payload)
 
+    def test_action_open_missing_model_returns_diagnostic_contract(self):
+        dispatcher = ActionDispatcher(self.env, self.env)
+        payload = {"subject": "action", "action_id": 999}
+        missing_model_info = {
+            "type": "ir.actions.act_window",
+            "_name": "ir.actions.act_window",
+            "id": 999,
+            "name": "Missing demo model",
+            "xml_id": "x_missing.action_missing_demo_model",
+            "res_model": "project.project",
+            "view_mode": "tree,kanban,form",
+            "exists": True,
+        }
+
+        with (
+            patch.object(dispatcher.resolver, "resolve_action", return_value=object()),
+            patch.object(dispatcher.resolver, "as_action_info", return_value=missing_model_info),
+        ):
+            data, versions = dispatcher.dispatch(payload)
+
+        body = data.get("data") if isinstance(data, dict) else {}
+        info = body.get("info") if isinstance(body, dict) else {}
+        self.assertEqual(body.get("type"), "diagnostic", data)
+        self.assertIn("模型不可用", str(info.get("issue") or ""))
+        self.assertEqual(info.get("action_id"), 999)
+        self.assertTrue(versions.get("diagnostic"))
+
+    def test_ui_contract_action_open_missing_model_does_not_raise_500(self):
+        handler = UiContractHandler(self.env)
+        dispatcher = ActionDispatcher(self.env, self.env)
+        missing_model_info = {
+            "type": "ir.actions.act_window",
+            "_name": "ir.actions.act_window",
+            "id": 999,
+            "name": "Missing demo model",
+            "xml_id": "x_missing.action_missing_demo_model",
+            "res_model": "project.project",
+            "view_mode": "tree,kanban,form",
+            "exists": True,
+        }
+
+        with (
+            patch.object(handler, "_build_dispatcher", return_value=dispatcher),
+            patch.object(dispatcher.resolver, "resolve_action", return_value=object()),
+            patch.object(dispatcher.resolver, "as_action_info", return_value=missing_model_info),
+        ):
+            result = handler.handle(payload={"params": {"op": "action_open", "action_id": 999}})
+
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") if isinstance(result, dict) else {}
+        body = data.get("data") if isinstance(data, dict) else {}
+        self.assertEqual(body.get("type"), "diagnostic", result)
+        self.assertIn("模型不可用", str(body.get("info", {}).get("issue") or ""))
+
     def test_ui_contract_action_open_exec_structure_returns_page_contract(self):
         action = self.env.ref("smart_construction_core.action_exec_structure_entry", raise_if_not_found=False)
         if not action:
