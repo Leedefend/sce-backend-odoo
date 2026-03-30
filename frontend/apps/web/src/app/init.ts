@@ -1,4 +1,5 @@
 import { useSessionStore } from '../stores/session';
+import { ApiError } from '../api/client';
 
 const EXTENSION_NOISE_PATTERNS = [
   'chrome-extension://',
@@ -52,7 +53,20 @@ export async function bootstrapApp() {
   }
   try {
     await session.loadAppInit();
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      (error.status === 401
+        || String(error.reasonCode || '').trim().toUpperCase() === 'AUTH_REQUIRED'
+        || String(error.reasonCode || '').trim().toUpperCase() === 'AUTH_401')
+    ) {
+      session.clearSession();
+      const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.replace(`/login?redirect=${redirect}`);
+      }
+      return;
+    }
     // initStatus handled in store; avoid unhandled promise
   }
 }
