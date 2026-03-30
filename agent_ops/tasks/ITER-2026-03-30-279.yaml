@@ -1,0 +1,74 @@
+task_id: ITER-2026-03-30-279
+title: Forbid terminal close-out during active continuous iteration
+type: governance
+status: in_progress
+priority: high
+
+goal: >
+  Prevent continuous iteration from being operationally interrupted by terminal-style
+  close-out behavior when no real stop condition has been triggered.
+
+user_visible_outcome:
+  - active continuous iteration no longer ends with a terminal-feeling close-out
+  - only real stop conditions may produce a true stop/final state
+  - progress updates stay in working mode while execution continues
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance only
+  - no product code changes
+  - no weakening of stop conditions
+  - make the reporting-channel rule explicit
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Governance Layer
+  module: codex execution/reporting policy
+  module_owner: repo governance
+  kernel_or_scenario: kernel
+  reason: >
+    The previous rule improved wording but still allowed terminal-feeling behavior.
+    We need an explicit rule that active continuous iteration cannot emit a final
+    close-out unless a real stop condition is present.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-279.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - reporting_channel_rule_conflicts_with_stop_logic
+  - acceptance_failed
+
+deliverables:
+  - stronger_continuous_iteration_reporting_guard
+  - iteration_report
+
+rollback:
+  - git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md
+  - git restore agent_ops/tasks/ITER-2026-03-30-279.yaml
+
+depends_on:
+  - ITER-2026-03-30-278
+
+notes: >
+  The new rule must distinguish between real stop/final conditions and normal PASS
+  checkpoints, so continuous iteration cannot look stopped while it is still active.

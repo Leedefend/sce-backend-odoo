@@ -1,0 +1,64 @@
+task_id: ITER-2026-03-30-270
+title: Restore native list search shell from Odoo metadata
+type: implementation_task
+status: in_progress
+priority: high
+
+goal: Continue the Odoo-native metadata usability line by restoring a usable list-page search shell that consumes native search/view metadata instead of hardcoded frontend filters.
+user_visible_outcome:
+  - list pages expose native-style search inputs and group/sort affordances when contract metadata is present
+  - users can operate the project list through contract-driven controls instead of fixed frontend assumptions
+  - implementation remains generic and reusable across list actions
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - frontend/**/package.json
+
+change_rules:
+  - frontend_contract_consumer_only
+  - no_backend_contract_change
+  - no_model_specific_hardcode
+  - native_metadata_first
+
+architecture:
+  layer_target: frontend layer
+  module: generic list search shell and view metadata consumer
+  module_ownership: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: The next low-risk user-visible gain is to consume Odoo native list/search metadata more directly so list pages become operational without custom per-model wiring.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-270.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - contract_fact_uncertain
+  - typecheck_failed
+  - consumer_boundary_uncertain
+
+deliverables:
+  - generic_list_search_shell_update
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-270.yaml
+  - git restore frontend/apps/web
+
+depends_on:
+  - 65d6932
+
+notes: "Prioritize contract-driven list search controls. Do not patch backend semantics in this batch."

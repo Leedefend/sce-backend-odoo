@@ -1,0 +1,78 @@
+task_id: ITER-2026-03-30-293
+title: Close timeout-recovery loopholes in continuous iteration policy
+type: governance
+status: in_progress
+priority: high
+
+goal: >
+  Close the remaining loopholes in the five-second auto-recovery rule by
+  defining the recovery trigger point and making the first post-timeout action
+  a concrete batch-start rather than an explanation.
+
+user_visible_outcome:
+  - timeout recovery has a precise trigger point
+  - the first action after timeout is resumed execution, not analysis-only commentary
+  - continuous iteration no longer depends on user re-prompt semantics after a non-blocking pause
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance only
+  - no product code changes
+  - do not weaken stop conditions or approvals
+  - define trigger semantics and mandatory first action for timeout recovery
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Governance Layer
+  module: codex continuous-iteration execution policy
+  module_owner: repo governance
+  kernel_or_scenario: kernel
+  reason: >
+    The prior rule defined a 5-second timeout but did not specify the exact
+    recovery trigger point or require the first post-timeout action to be
+    concrete execution. That gap still allows explanation-first pauses.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-293.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - governance_rule_conflicts_with_existing_stop_logic
+  - acceptance_failed
+
+deliverables:
+  - timeout_recovery_trigger_rule
+  - mandatory_resume_first_action_rule
+  - iteration_report
+
+rollback:
+  - git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/tasks/ITER-2026-03-30-293.yaml
+
+depends_on:
+  - ITER-2026-03-30-291
+
+notes: >
+  The new rule should make the next available execution opportunity the recovery
+  trigger, and require the agent to launch the next low-risk batch before
+  emitting analysis-only commentary.

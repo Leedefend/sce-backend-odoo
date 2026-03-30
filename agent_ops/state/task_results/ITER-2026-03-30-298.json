@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-03-30-298",
+  "status": "PASS",
+  "summary": "Active continuous iteration now requires working-mode user update channel selection and reserves terminal close-out channel usage for true stop/completion states only.",
+  "changed_files": [
+    "AGENTS.md",
+    "docs/ops/codex_workspace_execution_rules.md",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/tasks/ITER-2026-03-30-298.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-298.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-298.yaml"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-03-30-298.yaml"
+}

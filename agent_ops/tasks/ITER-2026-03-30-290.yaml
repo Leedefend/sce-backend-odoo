@@ -1,0 +1,74 @@
+task_id: ITER-2026-03-30-290
+title: Add reset-all control for active native list conditions
+type: frontend
+status: in_progress
+priority: medium
+
+goal: >
+  Add a single reset control for the currently active list search/filter/group
+  conditions by reusing the existing search and clear callbacks, without
+  inventing any new backend or filter semantics.
+
+user_visible_outcome:
+  - list pages expose one clear entrypoint for active conditions
+  - users can quickly return to the neutral list state
+  - the reset behavior only reuses already-supported callbacks
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - reuse existing callbacks only
+  - no backend changes
+  - no invented filter semantics
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The active-state summary now makes current conditions visible. The next
+    lowest-risk usability step is a single reset control that clears the same
+    conditions via the existing search/filter/group callbacks.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-290.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - reset_logic_requires_new_backend_semantics
+
+deliverables:
+  - reset_all_list_conditions_control
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-290.yaml
+
+depends_on:
+  - ITER-2026-03-30-289
+
+notes: >
+  The reset control should clear searchTerm, active contract filter, active
+  saved filter, and active group-by by calling existing callbacks only.

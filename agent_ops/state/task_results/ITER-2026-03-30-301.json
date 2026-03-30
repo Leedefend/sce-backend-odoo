@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-03-30-301",
+  "status": "PASS",
+  "summary": "User stop-callout messages now trigger immediate recovery and require concrete execution before explanation-only commentary.",
+  "changed_files": [
+    "AGENTS.md",
+    "docs/ops/codex_workspace_execution_rules.md",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/tasks/ITER-2026-03-30-301.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-301.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-301.yaml"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-03-30-301.yaml"
+}

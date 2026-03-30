@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-30-272
+title: Prefer native contract filters over fixed list status toggles
+type: implementation_task
+status: in_progress
+priority: high
+
+goal: Continue the Odoo-native metadata usability line by de-emphasizing fixed frontend list filters whenever contract-driven quick/saved/group controls are available.
+user_visible_outcome:
+  - list pages rely more directly on Odoo-native metadata controls instead of hardcoded frontend status toggles
+  - users see a cleaner list toolbar when contract filters are present
+  - generic list behavior becomes closer to native view semantics
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - frontend/**/package.json
+
+change_rules:
+  - frontend_contract_consumer_only
+  - no_backend_contract_change
+  - no_model_specific_hardcode
+  - native_metadata_preferred_over_fixed_assumptions
+
+architecture:
+  layer_target: frontend layer
+  module: list toolbar metadata-first behavior
+  module_ownership: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: After exposing contract-driven controls on the native list surface, the next low-risk step is to stop presenting fixed frontend status toggles as the primary filter affordance when native metadata is already available.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-272.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - toolbar_behavior_uncertain
+  - typecheck_failed
+
+deliverables:
+  - metadata_first_list_toolbar_update
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-272.yaml
+  - git restore frontend/apps/web
+
+depends_on:
+  - ITER-2026-03-30-271
+
+notes: "Prefer native metadata controls when present, but keep legacy fallback when contract filters are absent."

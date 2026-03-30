@@ -1,0 +1,73 @@
+task_id: ITER-2026-03-30-276
+title: Align list toolbar sorting with native metadata
+type: feature
+status: in_progress
+priority: medium
+
+goal: >
+  Remove frontend-invented list sorting controls and keep the list toolbar aligned
+  with native Odoo metadata by showing only real sort state unless explicit sort
+  options are provided by contract in the future.
+
+user_visible_outcome:
+  - list pages stop showing frontend-assumed sort option buttons
+  - current sort state remains visible as passive metadata
+  - list toolbar stays aligned with native search surface facts
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - no backend contract changes
+  - no route changes
+  - prefer subtractive cleanup over new interaction invention
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: list metadata consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The current list toolbar still exposes hardcoded sort choices that are not backed
+    by Odoo native search metadata. This weakens the contract-first list surface.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-276.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - list_sort_state_unclear
+
+deliverables:
+  - aligned_list_sort_surface
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-276.yaml
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/app/action_runtime/useActionViewDisplayComputedRuntime.ts
+
+depends_on:
+  - ITER-2026-03-30-274
+
+notes: >
+  Keep current sort label visible, but do not present interactive sort choices unless
+  they are backed by contract metadata.

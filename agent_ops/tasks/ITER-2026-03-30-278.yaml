@@ -1,0 +1,73 @@
+task_id: ITER-2026-03-30-278
+title: Prevent close-out style pauses during continuous iteration
+type: governance
+status: in_progress
+priority: high
+
+goal: >
+  Prevent continuous-iteration batches from being presented with stop-like or close-out
+  messaging when no stop condition has actually been triggered.
+
+user_visible_outcome:
+  - continuous iteration progress updates no longer read like artificial pauses
+  - PASS summaries do not imply work has stopped unless a real stop condition exists
+  - execution behavior and reporting semantics stay aligned
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance and reporting rules only
+  - no product code changes
+  - do not weaken stop conditions
+  - clarify reporting semantics during continuous iteration
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Governance Layer
+  module: codex execution/reporting policy
+  module_owner: repo governance
+  kernel_or_scenario: kernel
+  reason: >
+    Continuous iteration lost efficiency because PASS progress updates were phrased like
+    end-of-turn close-outs, causing perceived pauses without a real stop condition.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-278.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - reporting_rule_conflicts_with_stop_logic
+  - acceptance_failed
+
+deliverables:
+  - updated_continuous_iteration_reporting_rules
+  - iteration_report
+
+rollback:
+  - git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md
+  - git restore agent_ops/tasks/ITER-2026-03-30-278.yaml
+
+depends_on:
+  - ITER-2026-03-30-275
+
+notes: >
+  The rule change must distinguish between real stop conditions and mere progress
+  reporting, so the agent does not signal a pause when it is supposed to continue.

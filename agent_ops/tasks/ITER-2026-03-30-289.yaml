@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-30-289
+title: Surface active native list filter state in toolbar
+type: frontend
+status: in_progress
+priority: medium
+
+goal: >
+  Make the list toolbar explicitly show which native-metadata-driven search,
+  filter, saved filter, and group-by conditions are currently active, so the
+  list surface is easier to understand without inventing new behavior.
+
+user_visible_outcome:
+  - list pages show a clear "当前条件" summary
+  - active search/filter/group state is visible without guessing from button highlights alone
+  - the toolbar remains contract-driven and read-only for state display
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - frontend/apps/web/src/pages/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - consume existing contract/runtime state only
+  - no backend changes
+  - no invented filter semantics
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The list surface already consumes native search metadata, but users still
+    cannot quickly tell which search/filter/group conditions are active. A
+    read-only active-state summary improves usability without adding fake logic.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-289.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - runtime_state_mapping_requires_semantic_guessing
+
+deliverables:
+  - active_list_state_summary
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-289.yaml
+
+depends_on:
+  - ITER-2026-03-30-287
+
+notes: >
+  The active state summary must be derived from existing searchTerm,
+  activeContractFilterKey, activeSavedFilterKey, activeGroupByField, and current
+  option labels only.

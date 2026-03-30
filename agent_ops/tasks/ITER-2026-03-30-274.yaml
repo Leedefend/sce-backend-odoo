@@ -1,0 +1,66 @@
+task_id: ITER-2026-03-30-274
+title: Stabilize frontend HMR so changes apply without restart
+type: bugfix
+status: in_progress
+priority: high
+
+goal: Ensure the frontend development runtime applies code changes through normal Vite hot-reload or refresh behavior without requiring a dev-server restart.
+user_visible_outcome:
+  - frontend changes become visible without restarting the dev server
+  - Vite HMR path is reliable on the current 127.0.0.1:5174 dev entry
+  - development iteration speed is no longer blocked by repeated manual restarts
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+    - Makefile
+    - scripts/dev/**
+    - frontend/apps/web/**
+    - frontend/package.json
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend_dev_runtime_only
+  - no_backend_business_change
+  - no_model_specific_logic
+  - hmr_reliability_first
+
+architecture:
+  layer_target: frontend layer + dev runtime
+  module: vite dev runtime and HMR path
+  module_ownership: frontend/apps/web and scripts/dev
+  kernel_or_scenario: kernel
+  reason: Continuous iteration efficiency is degraded because frontend changes only become visible after server restarts, which indicates the current HMR/dev-runtime chain is not reliable.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-274.yaml
+    - bash -n scripts/dev/frontend_dev_reset.sh
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - hmr_root_cause_uncertain
+  - acceptance_failed
+
+deliverables:
+  - reliable_hmr_runtime
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-274.yaml
+  - git restore Makefile scripts/dev/frontend_dev_reset.sh frontend/apps/web/vite.config.ts frontend/package.json
+
+depends_on:
+  - ITER-2026-03-30-273
+
+notes: "Do not accept restart-only visibility as success. Fix the dev runtime/HMR chain itself."

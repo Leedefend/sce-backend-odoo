@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-03-30-273",
+  "status": "PASS",
+  "summary": "Removed duplicated outer filter/group blocks on list surfaces so the native list toolbar owns contract-driven controls.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-30-273.yaml",
+    "frontend/apps/web/src/views/ActionView.vue",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-273.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-273.yaml",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore frontend/apps/web/src/views/ActionView.vue"
+}

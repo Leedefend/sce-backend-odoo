@@ -16,6 +16,240 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-30T15:30:00Z
+- blocker_key: `native_list_readable_sort_label_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页最后一个 raw UX 泄漏是原生默认排序仍显示 write_date desc；本轮只把排序文本映射成字段标签 + 升降序文案，不改任何排序行为`
+- completed_step: `已完成 ITER-2026-03-30-312，在 useActionViewSurfaceDisplayRuntime 中使用 contract column labels 将 raw sort token 映射成用户可读排序文本；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Rebuild the frontend and visually verify the readable default-sort wording on the project list page`
+
+### 2026-03-30T15:15:00Z
+- blocker_key: `native_list_route_preset_closeout_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页最后的展示缺口是 route preset 的 raw key 和与搜索词重复表达；本轮只做前端状态消费收口，不改任何后端语义`
+- completed_step: `已完成 ITER-2026-03-30-311，去掉 preset_filter 到 searchTerm 的泄漏，并把 route preset 优先映射为快速筛选/保存筛选/分组的用户可读标签；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Rebuild the frontend and visually verify the route-preset closeout on the project list page`
+
+### 2026-03-30T14:45:00Z
+- blocker_key: `native_list_route_preset_surface_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页已有 filters/search/group/searchpanel/searchable fields/sort 的 contract 消费，但 route preset 仍只停留在 ActionView 外层；本轮把它并入 list toolbar 和当前条件汇总，完成现有交互闭环`
+- completed_step: `已完成 ITER-2026-03-30-310，在 ActionView/ListPage/PageToolbar 间透传并消费 route preset label/source/clear callback，使推荐筛选进入列表工具栏、当前条件汇总和重置条件链；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Rebuild the frontend and verify the list page interaction loop end-to-end`
+
+### 2026-03-30T14:30:00Z
+- blocker_key: `native_list_route_preset_surface_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页已有 filters/search/group/searchpanel/searchable fields/sort 的 contract 消费，但 route preset 仍只停留在 ActionView 外层；本轮把它并入 list toolbar 和当前条件汇总`
+- completed_step: `已完成 ITER-2026-03-30-310，在 ActionView/ListPage/PageToolbar 间透传并消费 route preset label/source/clear callback，使推荐筛选进入列表工具栏、当前条件汇总和重置条件链；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Rebuild the frontend once and visually verify the list page as a whole`
+
+### 2026-03-30T14:15:00Z
+- blocker_key: `native_list_toolbar_header_enrichment_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表工具栏已消费原生 metadata，但 section header 仍缺默认态与分面构成等摘要；本轮只增强标签信息，不改任何交互`
+- completed_step: `已完成 ITER-2026-03-30-309，在 saved filters、group by、searchpanel 的 header label 中补默认数量和单选/多选构成信息；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Continue the native-metadata list usability line with the next batch of low-risk toolbar or header consistency improvements`
+
+### 2026-03-30T14:00:00Z
+- blocker_key: `native_list_searchable_metadata_alignment_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `搜索占位词、可搜索字段预览和总数字段此前来自不同 slice，容易出现口径不一致；本轮只统一前端消费来源，不改任何搜索行为`
+- completed_step: `已完成 ITER-2026-03-30-308，在 ActionView 中引入 canonical searchable-field metadata，并对齐 placeholder/preview/count label 的口径；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Continue the native-metadata list usability line with the next low-risk metadata consistency or summary enhancement`
+
+### 2026-03-30T13:45:00Z
+- blocker_key: `native_list_searchable_total_count_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `可搜索字段区块当前把预览芯片数量误当成总数；本轮只修正标签总数来源，保持预览截断策略不变`
+- completed_step: `已完成 ITER-2026-03-30-307，在 ActionView/ListPage/PageToolbar 间补 searchable-field total count 透传，使“可搜索字段（N）”反映原生总量；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Continue the native-metadata list usability line with the next low-risk summary enhancement grounded in existing runtime state`
+
+### 2026-03-30T13:30:00Z
+- blocker_key: `native_list_search_placeholder_count_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `当前搜索占位词只预览前三个原生 searchable fields，容易低估搜索覆盖面；本轮只在占位词里补总字段数提示，不改任何搜索行为`
+- completed_step: `已完成 ITER-2026-03-30-306，在 ActionView 中将搜索占位词升级为“前三个字段 + 总项数”提示；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Continue the native-metadata list usability line with the next low-risk hint or summary improvement grounded in existing runtime state`
+
+### 2026-03-30T13:15:00Z
+- blocker_key: `native_list_active_condition_order_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `当前条件汇总已经完整，但展示顺序仍然不够自然；本轮只重排现有条件芯片的阅读顺序，不改任何交互或语义`
+- completed_step: `已完成 ITER-2026-03-30-305，在 PageToolbar 中把当前条件芯片顺序调整为搜索、快速筛选、已保存筛选、分组、排序；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `57f41c7`
+- next_step: `Continue the native-metadata list usability line with the next low-risk display improvement grounded in existing runtime state`
+
+### 2026-03-30T13:00:00Z
+- blocker_key: `native_list_active_sort_summary_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `当前条件汇总已经覆盖搜索、筛选、分组，但还缺当前排序；本轮只把现有排序状态并入只读汇总，不改任何排序行为`
+- completed_step: `已完成 ITER-2026-03-30-304，在 PageToolbar 的当前条件汇总中加入当前排序状态，使用现有 sortLabel/sortSourceLabel；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk enhancement grounded in existing metadata and callbacks`
+
+### 2026-03-30T12:45:00Z
+- blocker_key: `native_list_default_markers_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `saved filters / group by 的 runtime 已经携带原生 default 元数据，但工具栏仍未显式展示；本轮只把默认标记接到标签层，不改选择行为`
+- completed_step: `已完成 ITER-2026-03-30-303，在 ActionView -> ListPage -> PageToolbar 链路里为默认 saved filter 和默认 group-by 标签追加“· 默认”；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk enhancement grounded in existing metadata and current callbacks`
+
+### 2026-03-30T12:30:00Z
+- blocker_key: `native_list_search_mode_label_alignment_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `工具栏中搜索模式区块已经显示原生语义，但标签样式仍与其他 metadata 区块不一致；本轮只做标签一致性收口，不改行为`
+- completed_step: `已完成 ITER-2026-03-30-302，在 PageToolbar 将搜索模式标签收为“搜索模式（原生）”；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk toolbar/list enhancement inside existing metadata surfaces`
+
+### 2026-03-30T12:20:00Z
+- blocker_key: `continuous_iteration_user_stop_callout_recovery_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration recovery policy`
+- reason: `用户指出事实层面仍然是“你停了”；本轮把用户的 stop-callout 直接绑定成恢复触发点，要求该消息后的首动作必须是 concrete execution，而不能先解释`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-301，仅补治理规则与 delivery log，规定用户 stop-callout 会直接触发恢复，且恢复回合必须先起批再解释`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-301 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then continue the active native-metadata list usability line`
+
+### 2026-03-30T12:10:00Z
+- blocker_key: `continuous_iteration_role_split_model_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration operating model`
+- reason: `用户指出如果不分角色，规则很容易落空；本轮把连续迭代机制显式拆成 executor / reporter / stop-guard 三角色顺序模型，确保执行、汇报、判停不再互相覆盖`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-300，仅补治理规则与 delivery log，规定连续迭代必须按 stop-guard -> executor -> reporter 顺序运行，且终局式 close-out 只归 stop-guard`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-300 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then continue the active native-metadata list usability line under the role-split model`
+
+### 2026-03-30T12:00:00Z
+- blocker_key: `native_list_active_condition_count_label_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `工具栏中其他 metadata 区块已经都有数量提示，当前条件区仍缺这一层扫描提示；本轮只做标签一致性收口，不改行为`
+- completed_step: `已完成 ITER-2026-03-30-299，在 PageToolbar 为当前条件标签加入 activeStateChips 数量提示；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk enhancement inside toolbar/list surfaces`
+
+### 2026-03-30T11:50:00Z
+- blocker_key: `continuous_iteration_update_channel_binding_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration communication mechanism`
+- reason: `用户指出机制层面仍未闭环；即使规则禁止终局式语义，只要普通 checkpoint 仍走终局式 close-out 通道，外部感知仍然是停机；本轮把通道选择本身绑定进连续迭代规则`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-298，仅补治理规则与 delivery log，规定活跃连续迭代链中的普通更新必须走工作态进度更新通道，终局式 close-out 通道只保留给真实 stop condition 或真实完成`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-298 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then continue the active native-metadata list usability line`
+
+### 2026-03-30T11:40:00Z
+- blocker_key: `native_list_contract_group_count_labels_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `PageToolbar 已经为可搜索字段和分面维度展示数量提示；本轮延续同一只读增强策略，把快速筛选、已保存筛选、分组查看也补上数量提示，统一扫描体验`
+- completed_step: `已完成 ITER-2026-03-30-297，在 PageToolbar 为快速筛选、已保存筛选、分组查看标签加入数量提示；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk metadata-derived enhancement inside the current toolbar/list surfaces`
+
+### 2026-03-30T11:30:00Z
+- blocker_key: `native_list_metadata_count_labels_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表工具栏已经显式消费原生 metadata，但扫描成本仍偏高；本轮只补“可搜索字段 / 分面维度”的数量提示，让用户更快理解元数据规模，不改交互`
+- completed_step: `已完成 ITER-2026-03-30-296，在 PageToolbar 为可搜索字段和分面维度标签加入数量提示；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk read-only enhancement that stays inside existing metadata and callbacks`
+
+### 2026-03-30T11:20:00Z
+- blocker_key: `continuous_iteration_visible_reply_mode_gap_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration communication semantics`
+- reason: `用户指出即使内部规则要求继续，只要对用户的可见回复仍然像终局式 final，就会被感知成停机；本轮把用户可见回复模式也绑定进连续执行规则`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-295，仅修改治理规则与 delivery log，规定连续迭代中非 stop condition 下的用户可见回复必须保持工作态进度更新，不得使用终局式 final 作为普通 checkpoint`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-295 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then continue the active native-metadata list usability line in working-mode updates`
+
+### 2026-03-30T11:10:00Z
+- blocker_key: `native_list_subtitle_sort_source_v1`
+- layer_target: `frontend layer`
+- module: `action view display runtime`
+- reason: `工具栏已经能区分原生默认排序和当前排序，但页头 subtitle 仍然用泛化排序文案；本轮只在 display runtime 层把来源语义对齐，不动页面结构`
+- completed_step: `已完成 ITER-2026-03-30-294，在 useActionViewDisplayComputedRuntime 中接入 sortSourceLabel，使列表页 subtitle 与工具栏保持一致；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next low-risk metadata-derived enhancement`
+
+### 2026-03-30T11:00:00Z
+- blocker_key: `continuous_iteration_timeout_trigger_gap_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration timeout recovery semantics`
+- reason: `用户指出 5 秒超时恢复规则仍未真正闭环；漏洞在于没有定义恢复触发点，也没有要求恢复后的首动作必须是启动执行批次而非先解释`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-293，仅补治理规则与 delivery log，规定下一次可执行机会就是恢复触发点，且首动作必须先启动下一张低风险批次`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-293 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then resume the active native-metadata list usability line with a concrete batch start`
+
+### 2026-03-30T10:50:00Z
+- blocker_key: `native_list_sort_source_label_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页虽然已经展示排序摘要，但用户仍无法判断它来自原生默认排序还是当前运行态排序；本轮只补只读来源标签，不引入排序交互`
+- completed_step: `已完成 ITER-2026-03-30-292，在 ActionView -> ListPage -> PageToolbar 链路接入排序来源标签，当当前排序命中原生默认排序时展示“原生默认排序”，否则展示“当前排序”；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line with the next safe read-only enhancement grounded in existing metadata and callbacks`
+
+### 2026-03-30T10:40:00Z
+- blocker_key: `continuous_iteration_wait_timeout_recovery_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration execution policy`
+- reason: `用户指出即使规则禁止非阻断暂停，只要执行体现实中仍停住，效率就会继续受损；本轮补“5 秒超时自动恢复”硬规则，确保任何误入的非阻断等待态都会被主动拉回连续迭代`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-291，仅修改治理规则与 delivery log，要求连续迭代中若无真实 stop condition 而等待超过 5 秒，必须自动触发一次恢复动作并继续下一张低风险批次`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-291 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then resume the active native-metadata list usability line without waiting`
+
+### 2026-03-30T10:30:00Z
+- blocker_key: `native_list_reset_conditions_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页已经开始显式展示当前条件，下一条低风险可用性增强是提供单一“重置条件”入口，但必须只复用现有搜索/筛选/分组清理回调，不发明新语义`
+- completed_step: `已完成 ITER-2026-03-30-290，在 PageToolbar 的当前条件区加入重置条件按钮，会复用现有 onSearch/onClearContractFilter/onClearSavedFilter/onClearGroupBy；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line by finding the next safe enhancement that stays within existing metadata and callback semantics`
+
+### 2026-03-30T10:20:00Z
+- blocker_key: `native_list_active_state_summary_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `列表页已经开始消费 Odoo 原生 search metadata，但用户仍不容易快速判断当前哪些搜索/筛选/分组条件已经生效；本轮只补只读的“当前条件”汇总，不造新交互`
+- completed_step: `已完成 ITER-2026-03-30-289，在 PageToolbar 增加当前条件汇总，显式展示搜索词、激活的快速筛选、已保存筛选和分组字段；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `65d6932`
+- next_step: `Continue the native-metadata list usability line by identifying the next safe read-only or existing-filter-backed enhancement instead of inventing raw searchpanel interaction`
+
+### 2026-03-30T10:05:00Z
+- blocker_key: `continuous_iteration_nonblocking_question_rule_v1`
+- layer_target: `governance layer`
+- module: `continuous iteration execution/reporting rules`
+- reason: `用户指出即使措辞不像停机，只要 Codex 在中间提问或判断后进入等待态，连续迭代就仍然被打断；本轮只补“非阻塞提问不得形成暂停点，且必须自驱解析下一步”的硬规则`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-288，仅修改治理规则与 delivery log，要求连续迭代中的非阻塞提问/判断不构成等待态，且必须从任务合同、执行规则和 delivery log 自动推出下一步继续执行`
+- active_commit: `65d6932`
+- next_step: `Implement ITER-2026-03-30-288 by tightening AGENTS.md and codex_workspace_execution_rules.md, validate the task contract, then immediately resume the active native-metadata list usability line`
+
 ### 2026-03-30T02:27:00Z
 - blocker_key: `project_list_action_install_ref_v1`
 - layer_target: `domain layer delivery assets`
@@ -3146,3 +3380,55 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is return to frontend detail rendering, because backend parser/projection is no longer the blocking gap for project form structure
+- ## 2026-03-30 迭代锚点（ITER-2026-03-30-305）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `57f41c7`
+- Layer Target: `Frontend Layer`
+- Module: `native metadata list toolbar consumer`
+- Reason: after the active-condition summary became complete, reorder its chips into a more natural scan order without changing any interaction or semantics
+- `305`: reordered active-condition chips in `PageToolbar.vue` to read as search, quick filter, saved filter, group-by, then sort
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue low-risk list usability improvements that only consume existing Odoo metadata/runtime state
+## 2026-03-30 迭代锚点（ITER-2026-03-30-314）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `57f41c7`
+- Layer Target: `Frontend Layer`
+- Module: `action view list sort runtime`
+- Reason: readable sort wording had leaked into `api.data` requests as localized order tokens like `id 升序`, causing backend INTERNAL_ERROR on the list page
+- `314`: split raw sort order from display sort label in list runtimes so request/build/group/export paths keep valid Odoo order syntax
+- `314`: updated `ActionView.vue` wiring so subtitle and toolbar use display text while request phases keep the raw order token
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is rebuild the frontend and verify the project list loads without localized sort text entering the backend payload
+## 2026-03-30 迭代锚点（ITER-2026-03-30-315）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `57f41c7`
+- Layer Target: `Frontend Layer`
+- Module: `list page metadata presentation`
+- Reason: after the list-page contract consumer was largely complete, a few fallback labels still exposed technical metadata tokens instead of business-facing wording
+- `315`: normalized search mode wording into user-facing labels such as `分面搜索` and `关键字搜索`
+- `315`: changed search-panel fallback labels to prefer contract column labels over raw field keys
+- `315`: hid internal route/query preset source markers and downgraded unmatched technical preset keys to a neutral business label
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is rebuild the frontend and visually verify the remaining list-toolbar wording
+## 2026-03-30 迭代锚点（ITER-2026-03-30-316）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `57f41c7`
+- Layer Target: `Frontend Layer`
+- Module: `list sort label presentation`
+- Reason: some default-sort fields are Odoo system fields not present in visible list columns, so the UI still fell back to raw field keys such as `write_date`
+- `316`: added a frontend fallback label map for common Odoo system fields including `write_date`, `create_date`, `id`, and user fields
+- `316`: kept raw order tokens unchanged while making the list-page sort wording business-readable
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is rebuild the frontend and verify that default sort now shows `更新时间 降序`

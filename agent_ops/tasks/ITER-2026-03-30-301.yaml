@@ -1,0 +1,77 @@
+task_id: ITER-2026-03-30-301
+title: Treat user stop-callout as mandatory recovery trigger in continuous iteration
+type: governance
+status: in_progress
+priority: high
+
+goal: >
+  Close the final loophole by treating any user callout that the agent has
+  effectively paused as an immediate recovery trigger, requiring the next action
+  to be a concrete batch-start rather than explanation-only text.
+
+user_visible_outcome:
+  - when the user says the agent has stopped, the next turn immediately resumes execution
+  - stop-callout messages no longer turn into explanation-only loops
+  - continuous iteration visibly restarts with a concrete batch action
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance only
+  - no product code changes
+  - do not weaken stop conditions or approvals
+  - bind user stop-callout handling to concrete resume behavior
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Governance Layer
+  module: codex continuous-iteration recovery policy
+  module_owner: repo governance
+  kernel_or_scenario: kernel
+  reason: >
+    Even after timeout and channel rules, the system still allows a user
+    stop-callout to produce analysis-first behavior. That callout itself must
+    become a mandatory recovery trigger with resume-first semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-301.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - governance_rule_conflicts_with_existing_stop_logic
+  - acceptance_failed
+
+deliverables:
+  - user_stop_callout_recovery_rule
+  - iteration_report
+
+rollback:
+  - git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/tasks/ITER-2026-03-30-301.yaml
+
+depends_on:
+  - ITER-2026-03-30-300
+
+notes: >
+  The rule should require that if the user explicitly says the agent has
+  stopped or paused during continuous iteration, that message becomes an
+  immediate recovery trigger and the next action must be concrete execution.

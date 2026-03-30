@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-03-30-312",
+  "status": "PASS",
+  "summary": "Native sort labels now render in user-readable form using contract column labels and direction text.",
+  "changed_files": [
+    "frontend/apps/web/src/app/action_runtime/useActionViewSurfaceDisplayRuntime.ts",
+    "frontend/apps/web/src/views/ActionView.vue",
+    "agent_ops/tasks/ITER-2026-03-30-312.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-312.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-312.yaml",
+    "pnpm -C frontend/apps/web typecheck:strict"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore frontend/apps/web/src/app/action_runtime/useActionViewSurfaceDisplayRuntime.ts frontend/apps/web/src/views/ActionView.vue agent_ops/tasks/ITER-2026-03-30-312.yaml docs/ops/iterations/delivery_context_switch_log_v1.md"
+}

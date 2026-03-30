@@ -1,0 +1,77 @@
+task_id: ITER-2026-03-30-291
+title: Add five-second auto-recovery trigger for invalid continuous-iteration waits
+type: governance
+status: in_progress
+priority: high
+
+goal: >
+  Ensure that if the agent ever slips into a non-blocking wait during
+  continuous iteration, the wait is automatically broken after 5 seconds and
+  execution resumes from repo rules and task-chain context.
+
+user_visible_outcome:
+  - invalid non-blocking pauses no longer persist silently
+  - continuous iteration self-recovers after short wait drift
+  - the next low-risk step is resumed without requiring a new user nudge
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance only
+  - no product code changes
+  - do not weaken stop conditions or approvals
+  - express timeout recovery as mandatory execution behavior
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Governance Layer
+  module: codex continuous-iteration execution policy
+  module_owner: repo governance
+  kernel_or_scenario: kernel
+  reason: >
+    Existing rules prohibit non-blocking waits but do not define an explicit
+    timeout-based recovery trigger. A short mandatory auto-recovery window is
+    needed to keep continuous iteration closed-loop.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-291.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - governance_rule_conflicts_with_existing_stop_logic
+  - acceptance_failed
+
+deliverables:
+  - five_second_auto_recovery_rule
+  - delivery_log_entry
+  - iteration_report
+
+rollback:
+  - git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/tasks/ITER-2026-03-30-291.yaml
+
+depends_on:
+  - ITER-2026-03-30-288
+
+notes: >
+  This rule must only apply to invalid non-blocking waits. Genuine stop
+  conditions from AGENTS Section 6 remain higher priority.
