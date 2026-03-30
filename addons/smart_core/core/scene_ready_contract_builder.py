@@ -96,6 +96,20 @@ def _search_surface_nonempty(value: Any) -> bool:
         or _as_list(payload.get("fields"))
         or _as_list(payload.get("group_by"))
         or _as_list(payload.get("searchpanel"))
+        or _as_dict(payload.get("default_state"))
+    )
+
+
+def _list_surface_nonempty(value: Any) -> bool:
+    payload = _as_dict(value)
+    if not payload:
+        return False
+    return bool(
+        _as_list(payload.get("columns"))
+        or _as_list(payload.get("hidden_columns"))
+        or _as_dict(payload.get("default_sort"))
+        or _as_list(payload.get("available_view_modes"))
+        or _text(payload.get("default_mode"))
     )
 
 
@@ -192,15 +206,141 @@ def _normalize_actions(item: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def _normalize_search_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     list_profile = item.get("list_profile") if isinstance(item.get("list_profile"), dict) else {}
+    default_state = item.get("default_state") if isinstance(item.get("default_state"), dict) else {}
     return {
         "default_sort": _text(item.get("default_sort")),
         "filters": list(item.get("filters") or []),
         "fields": list(item.get("fields") or []),
         "group_by": list(item.get("group_by") or []),
         "searchpanel": list(item.get("searchpanel") or []),
+        "default_state": {
+            "filters": list(default_state.get("filters") or []),
+            "group_by": list(default_state.get("group_by") or []),
+            "searchpanel": list(default_state.get("searchpanel") or []),
+        } if default_state else {},
         "mode": _text(item.get("mode")),
         "columns": list(list_profile.get("columns") or []),
         "hidden_columns": list(list_profile.get("hidden_columns") or []),
+    }
+
+
+def _friendly_field_label(field_name: str, fallback: str = "") -> str:
+    token = _text(field_name)
+    fallback_text = _text(fallback)
+    if fallback_text:
+        return fallback_text
+    if not token:
+        return fallback_text
+    defaults = {
+        "write_date": "更新时间",
+        "create_date": "创建时间",
+        "date": "日期",
+        "date_start": "开始日期",
+        "id": "编号",
+        "name": "名称",
+        "display_name": "名称",
+        "user_id": "负责人",
+        "partner_id": "客户",
+        "company_id": "公司",
+        "stage_id": "阶段",
+        "state": "状态",
+        "active": "启用",
+    }
+    return defaults.get(token, token)
+
+
+def _normalize_sort_payload(raw_sort: Any, *, columns: List[Dict[str, Any]] | None = None) -> Dict[str, Any]:
+    raw = _text(raw_sort)
+    if not raw:
+        return {}
+    first = raw.split(",")[0].strip()
+    parts = [part for part in first.split() if part]
+    field = _text(parts[0] if parts else "")
+    direction = _text(parts[1] if len(parts) > 1 else "asc").lower() or "asc"
+    label = ""
+    for row in columns or []:
+        payload = _as_dict(row)
+        if _text(payload.get("field") or payload.get("name")) == field:
+            label = _text(payload.get("label") or payload.get("string"))
+            break
+    label = _friendly_field_label(field, label)
+    direction_label = "降序" if direction == "desc" else "升序"
+    return {
+        "raw": raw,
+        "field": field,
+        "direction": direction,
+        "display_label": f"{label} {direction_label}".strip() if label else raw,
+    }
+
+
+def _normalize_list_columns(item: Dict[str, Any]) -> List[Dict[str, Any]]:
+    semantic_page = _as_dict(item.get("semantic_page"))
+    list_semantics = _as_dict(semantic_page.get("list_semantics"))
+    if not list_semantics:
+        parser_surface = _as_dict(item.get("parser_semantic_surface"))
+        if not parser_surface:
+            parser_surface = _as_dict(_as_dict(item.get("meta")).get("parser_semantic_surface"))
+        parser_semantic_page = _as_dict(parser_surface.get("semantic_page"))
+        list_semantics = _as_dict(parser_semantic_page.get("list_semantics"))
+    rows = _as_list(list_semantics.get("columns"))
+    if not rows:
+        rows = _as_list(item.get("columns"))
+    if not rows:
+        rows = _as_list(_as_dict(item.get("search_surface")).get("columns"))
+    out: List[Dict[str, Any]] = []
+    for row in rows:
+        if isinstance(row, str):
+            field = _text(row)
+            if not field:
+                continue
+            out.append({"field": field, "label": _friendly_field_label(field), "key": field})
+            continue
+        payload = _as_dict(row)
+        field = _text(payload.get("field") or payload.get("name") or payload.get("key"))
+        if not field:
+            continue
+        out.append(
+            {
+                "field": field,
+                "label": _friendly_field_label(field, _text(payload.get("label") or payload.get("string"))),
+                "key": field,
+                "widget": _text(payload.get("widget")),
+                "sortable": bool(payload.get("sortable", True)),
+                "semantic_role": _text(payload.get("semantic_role")),
+            }
+        )
+    return out
+
+
+def _normalize_available_view_modes(item: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = _as_list(item.get("view_modes"))
+    out: List[Dict[str, Any]] = []
+    for row in rows:
+        payload = _as_dict(row)
+        key = _text(payload.get("key") or payload.get("mode") or row)
+        if not key:
+            continue
+        out.append({"key": key, "label": _text(payload.get("label") or key), "enabled": bool(payload.get("enabled", True))})
+    return out
+
+
+def _normalize_list_surface(item: Dict[str, Any]) -> Dict[str, Any]:
+    columns = _normalize_list_columns(item)
+    hidden_columns = _as_list(item.get("hidden_columns"))
+    if not hidden_columns:
+        hidden_columns = _as_list(_as_dict(item.get("search_surface")).get("hidden_columns"))
+    available_view_modes = _normalize_available_view_modes(item)
+    default_mode = _text(_as_dict(available_view_modes[0]).get("key")) if available_view_modes else ""
+    default_sort = _normalize_sort_payload(
+        _text(item.get("default_sort")) or _text(_as_dict(item.get("search_surface")).get("default_sort")),
+        columns=columns,
+    )
+    return {
+        "columns": columns,
+        "hidden_columns": hidden_columns,
+        "default_sort": default_sort,
+        "available_view_modes": available_view_modes,
+        "default_mode": default_mode,
     }
 
 
@@ -276,6 +416,7 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
             or _as_list(action_surface.get("primary_actions"))
             or _as_list(action_surface.get("groups"))
             or _text(action_surface.get("selection_mode"))
+            or _as_dict(action_surface.get("batch_capabilities"))
         ):
             surface_hits["action_surface"] = int(surface_hits.get("action_surface") or 0) + 1
         row["surface_nonempty_hits"] = surface_hits
@@ -825,6 +966,12 @@ def _scene_ready_entry(
     compiled = apply_scene_ready_search_semantic_bridge(compiled)
     compiled = apply_scene_ready_semantic_orchestration_bridge(compiled)
     compiled = apply_scene_ready_action_semantic_bridge(compiled)
+    compiled_list_surface = _normalize_list_surface(compiled)
+    seeded_list_surface = _normalize_list_surface(scene_payload)
+    if _list_surface_nonempty(compiled_list_surface):
+        compiled["list_surface"] = compiled_list_surface
+    elif _list_surface_nonempty(seeded_list_surface):
+        compiled["list_surface"] = seeded_list_surface
     compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
     return compiled
 

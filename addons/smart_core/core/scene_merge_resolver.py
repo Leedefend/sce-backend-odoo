@@ -17,6 +17,25 @@ def _as_list(value: Any) -> List[Any]:
     return list(value) if isinstance(value, list) else []
 
 
+def _merge_search_default_state(
+    search_surface: Dict[str, Any],
+    *,
+    default_filters: List[Any] | None = None,
+    default_group_by: List[Any] | None = None,
+    default_searchpanel: List[Any] | None = None,
+) -> None:
+    state = _as_dict(search_surface.get("default_state"))
+    out = dict(state)
+    if isinstance(default_filters, list) and default_filters:
+        out["filters"] = list(default_filters)
+    if isinstance(default_group_by, list) and default_group_by:
+        out["group_by"] = list(default_group_by)
+    if isinstance(default_searchpanel, list) and default_searchpanel:
+        out["searchpanel"] = list(default_searchpanel)
+    if out:
+        search_surface["default_state"] = out
+
+
 @dataclass
 class MergeContext:
     scene_key: str
@@ -124,6 +143,12 @@ def apply_policy(compiled_ast: Dict[str, Any], policies: Dict[str, Any], runtime
         if _as_list(search_surface.get("searchpanel")):
             _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.searchpanel", from_layer="base")
         search_surface["searchpanel"] = default_searchpanel
+    _merge_search_default_state(
+        search_surface,
+        default_filters=default_filters,
+        default_group_by=default_group_by,
+        default_searchpanel=default_searchpanel,
+    )
     default_mode = _text(search_policy.get("default_mode"))
     if default_mode:
         if _text(search_surface.get("mode")):

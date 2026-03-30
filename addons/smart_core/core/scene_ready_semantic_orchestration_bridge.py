@@ -79,8 +79,7 @@ def apply_scene_ready_semantic_orchestration_bridge(
         ]
 
     action_surface = _as_dict(out.get("action_surface"))
-    if action_surface:
-        action_surface["selection_mode"] = _selection_mode_from_semantics(parser_surface)
-        out["action_surface"] = action_surface
+    action_surface["selection_mode"] = _selection_mode_from_semantics(parser_surface)
+    out["action_surface"] = action_surface
 
     return out

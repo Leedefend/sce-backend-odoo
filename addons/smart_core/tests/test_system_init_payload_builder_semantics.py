@@ -60,6 +60,9 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                     "search_surface": {
                         "filters": [{"name": "mine", "string": "我的"}],
                         "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                        "default_state": {
+                            "filters": [{"key": "mine", "label": "我的", "kind": "filter"}],
+                        },
                         "mode": "faceted",
                     },
                     "permission_surface": {
@@ -102,7 +105,29 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                             "search_surface": {
                                 "filters": [{"name": "mine", "string": "我的"}],
                                 "searchpanel": [{"name": "stage_id", "string": "阶段"}],
+                                "default_state": {
+                                    "filters": [{"key": "mine", "label": "我的", "kind": "filter"}],
+                                },
                                 "mode": "faceted",
+                            },
+                            "list_surface": {
+                                "columns": [{"field": "name", "label": "项目名称"}],
+                                "default_sort": {"raw": "write_date desc", "display_label": "更新时间 降序"},
+                                "available_view_modes": [{"key": "tree", "label": "列表"}],
+                                "default_mode": "tree",
+                            },
+                            "action_surface": {
+                                "primary_actions": ["open"],
+                                "groups": [{"key": "list_actions", "actions": ["open"]}],
+                                "selection_mode": "multi",
+                                "counts": {"total": 1, "primary": 1, "groups": 1},
+                                "batch_capabilities": {
+                                    "can_delete": True,
+                                    "can_archive": True,
+                                    "can_activate": True,
+                                    "selection_required": True,
+                                    "native_basis": {"has_active_field": True},
+                                },
                             },
                             "permission_surface": {
                                 "visible": True,
@@ -129,6 +154,7 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
 
         self.assertEqual((payload.get("semantic_runtime") or {}).get("view_type"), "kanban")
         self.assertEqual(((payload.get("semantic_runtime") or {}).get("search_surface") or {}).get("mode"), "faceted")
+        self.assertEqual(((((payload.get("semantic_runtime") or {}).get("search_surface") or {}).get("default_state") or {}).get("filters") or [])[0].get("key"), "mine")
         self.assertEqual(((payload.get("semantic_runtime") or {}).get("permission_surface") or {}).get("reason_code"), "missing_capability")
         self.assertEqual(((payload.get("semantic_runtime") or {}).get("workflow_surface") or {}).get("state_field"), "state")
         self.assertEqual((((payload.get("semantic_runtime") or {}).get("validation_surface") or {}).get("required_fields") or [])[0], "name")
@@ -142,6 +168,12 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertIn("parser_semantic_surface", scene)
         self.assertEqual(((scene.get("search_surface") or {}).get("mode")), "faceted")
         self.assertEqual((((scene.get("search_surface") or {}).get("searchpanel") or [])[0].get("name")), "stage_id")
+        self.assertEqual(((((scene.get("search_surface") or {}).get("default_state") or {}).get("filters") or [])[0].get("key")), "mine")
+        self.assertEqual((((scene.get("list_surface") or {}).get("columns") or [])[0].get("field")), "name")
+        self.assertEqual((((scene.get("list_surface") or {}).get("default_sort") or {}).get("display_label")), "更新时间 降序")
+        self.assertEqual((((scene.get("list_surface") or {}).get("available_view_modes") or [])[0].get("key")), "tree")
+        self.assertTrue((((scene.get("action_surface") or {}).get("batch_capabilities") or {}).get("can_archive")))
+        self.assertTrue((((scene.get("action_surface") or {}).get("batch_capabilities") or {}).get("selection_required")))
         self.assertEqual(((scene.get("permission_surface") or {}).get("reason_code")), "missing_capability")
         self.assertEqual((((scene.get("permission_surface") or {}).get("required_capabilities") or [])[0]), "project.write")
         self.assertEqual(((scene.get("workflow_surface") or {}).get("state_field")), "state")

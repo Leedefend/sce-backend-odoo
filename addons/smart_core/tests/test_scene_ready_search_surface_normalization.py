@@ -77,6 +77,31 @@ class TestSceneReadySearchSurfaceNormalization(unittest.TestCase):
         self.assertEqual(normalized["searchpanel"][0]["name"], "stage_id")
         self.assertEqual(normalized["mode"], "faceted")
 
+    def test_normalize_list_surface_preserves_columns_sort_and_modes(self):
+        normalized = target._normalize_list_surface(
+            {
+                "default_sort": "write_date desc",
+                "view_modes": [{"key": "tree", "label": "列表"}, {"key": "kanban", "label": "看板"}],
+                "semantic_page": {
+                    "list_semantics": {
+                        "columns": [
+                            {"name": "name", "label": "项目名称"},
+                            {"name": "write_date"},
+                        ]
+                    }
+                },
+                "hidden_columns": ["message_needaction"],
+            }
+        )
+
+        self.assertEqual((normalized["columns"] or [])[0]["field"], "name")
+        self.assertEqual((normalized["columns"] or [])[0]["label"], "项目名称")
+        self.assertEqual((normalized["columns"] or [])[1]["label"], "更新时间")
+        self.assertEqual((normalized["default_sort"] or {}).get("raw"), "write_date desc")
+        self.assertEqual((normalized["default_sort"] or {}).get("display_label"), "更新时间 降序")
+        self.assertEqual((normalized["available_view_modes"] or [])[0]["key"], "tree")
+        self.assertEqual(normalized["default_mode"], "tree")
+
 
 if __name__ == "__main__":
     unittest.main()
