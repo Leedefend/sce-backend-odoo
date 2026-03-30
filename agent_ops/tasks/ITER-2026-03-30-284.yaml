@@ -1,0 +1,73 @@
+task_id: ITER-2026-03-30-284
+title: Surface searchable fields on list toolbar
+type: feature
+status: in_progress
+priority: medium
+
+goal: >
+  Expose native searchable field metadata as read-only toolbar hints so list pages
+  make searchable business dimensions explicit instead of hiding them only inside the
+  placeholder text.
+
+user_visible_outcome:
+  - list toolbar shows which business fields are searchable
+  - searchable dimensions are visible without guessing from placeholder wording
+  - metadata-driven list usability improves without inventing unsupported behavior
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend contract changes
+  - no fake search-field click behavior
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: list metadata consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    Searchable field facts already exist in the native search surface, but users only
+    see them indirectly through the placeholder. The toolbar should surface them
+    explicitly.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-284.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - searchable_field_shape_unclear
+
+deliverables:
+  - searchable_field_toolbar_hints
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-284.yaml
+  - git restore frontend/apps/web/src/views/ActionView.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/components/page/PageToolbar.vue
+
+depends_on:
+  - ITER-2026-03-30-282
+
+notes: >
+  Keep this batch read-only. Search execution remains unchanged.

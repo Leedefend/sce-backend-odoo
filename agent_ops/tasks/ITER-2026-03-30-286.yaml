@@ -1,0 +1,71 @@
+task_id: ITER-2026-03-30-286
+title: Clarify searchpanel display semantics as facet dimensions
+type: feature
+status: in_progress
+priority: medium
+
+goal: >
+  Align the read-only searchpanel display wording with its actual semantics so users
+  see it as native facet dimensions rather than mistakenly reading it as already
+  interactive filtering.
+
+user_visible_outcome:
+  - searchpanel labels read as facet dimensions instead of clickable filters
+  - list toolbar semantics become more accurate and less misleading
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - wording and display semantics only
+  - no interaction changes
+  - no backend contract changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: list metadata consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The current searchpanel block is display-only, so its label should not imply a
+    fully interactive filter sidebar that does not exist yet.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-286.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - clearer_searchpanel_display_semantics
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-286.yaml
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+
+depends_on:
+  - ITER-2026-03-30-285
+
+notes: >
+  Keep the block passive and semantically accurate while the first real facet
+  interaction is still unimplemented.

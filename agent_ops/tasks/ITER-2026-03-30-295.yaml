@@ -1,0 +1,78 @@
+task_id: ITER-2026-03-30-295
+title: Bind user-visible reply mode to continuous iteration execution semantics
+type: governance
+status: in_progress
+priority: high
+
+goal: >
+  Prevent continuous iteration from appearing paused by making user-visible reply
+  mode follow the same non-terminal execution semantics as the underlying batch
+  loop.
+
+user_visible_outcome:
+  - ordinary progress checkpoints no longer look like terminal stop messages
+  - user-visible replies stay in working mode while the active chain continues
+  - continuous execution semantics and visible communication mode stay aligned
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance only
+  - no product code changes
+  - do not weaken stop conditions or approvals
+  - bind visible reply mode to continuous-iteration behavior
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Governance Layer
+  module: codex continuous-iteration communication policy
+  module_owner: repo governance
+  kernel_or_scenario: kernel
+  reason: >
+    The remaining pause perception comes from user-visible reply mode. Even if
+    execution continues internally, a terminal-style final reply makes the chain
+    look stopped. The visible reply channel must follow the same working-mode
+    rule set.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-295.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - governance_rule_conflicts_with_existing_stop_logic
+  - acceptance_failed
+
+deliverables:
+  - user_visible_reply_mode_rule
+  - iteration_report
+
+rollback:
+  - git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/tasks/ITER-2026-03-30-295.yaml
+
+depends_on:
+  - ITER-2026-03-30-293
+
+notes: >
+  The rule should reserve terminal-style user-visible final replies for real
+  stop conditions only, and require working-mode checkpoint replies while the
+  chain continues.

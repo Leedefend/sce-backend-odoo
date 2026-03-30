@@ -1,0 +1,73 @@
+task_id: ITER-2026-03-30-296
+title: Show native metadata counts in list toolbar labels
+type: frontend
+status: in_progress
+priority: medium
+
+goal: >
+  Make list toolbar metadata sections easier to scan by surfacing the number of
+  native searchable fields and facet dimensions directly in their labels.
+
+user_visible_outcome:
+  - users can quickly tell how many searchable fields are available
+  - users can quickly tell how many facet dimensions are present
+  - the toolbar remains read-only and metadata-driven
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/**
+    - frontend/apps/web/src/pages/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend changes
+  - no new interactions
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The toolbar already exposes native metadata sections. A small count hint in
+    section labels improves scanability without changing behavior.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-296.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - metadata_count_display_requires_cross_component_refactor
+
+deliverables:
+  - metadata_count_labels
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-296.yaml
+
+depends_on:
+  - ITER-2026-03-30-294
+
+notes: >
+  Keep the change inside PageToolbar and derive counts only from existing props.

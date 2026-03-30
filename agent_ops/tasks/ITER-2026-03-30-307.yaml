@@ -1,0 +1,78 @@
+task_id: ITER-2026-03-30-307
+title: Show total searchable-field count instead of preview count
+type: frontend
+status: in_progress
+priority: medium
+
+goal: >
+  Correct the searchable-field section count so it reflects the total native
+  searchable field count rather than only the truncated preview chip count.
+
+user_visible_outcome:
+  - users can see the true searchable-field count from native metadata
+  - the preview chip list stays truncated for readability without undercounting
+  - no search behavior or backend semantics change
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - frontend/apps/web/src/pages/**
+    - frontend/apps/web/src/views/**
+    - agent_ops/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend changes
+  - no new interactions
+
+context:
+  branch: codex/next-round
+  baseline_sha: 57f41c7
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The searchable-field preview intentionally truncates chips for readability,
+    but the section count should still reflect the total native metadata count.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-307.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - total_count_requires_behavior_change
+
+deliverables:
+  - searchable_field_total_count_label
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore frontend/apps/web/src/views/ActionView.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-307.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-30-306
+
+notes: >
+  Keep the chip preview truncation. Only fix the count label to reflect total
+  searchable-field metadata.

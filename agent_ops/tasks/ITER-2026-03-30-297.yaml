@@ -1,0 +1,75 @@
+task_id: ITER-2026-03-30-297
+title: Show native control counts for list toolbar contract groups
+type: frontend
+status: in_progress
+priority: medium
+
+goal: >
+  Improve toolbar scanability by surfacing the number of native quick filters,
+  saved filters, and group-by controls in their section labels.
+
+user_visible_outcome:
+  - users can quickly tell how many quick filters are available
+  - users can quickly tell how many saved filters and group-by entries are present
+  - the toolbar remains read-only in terms of metadata section labeling
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/**
+    - frontend/apps/web/src/pages/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend changes
+  - no new interactions
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The toolbar already shows counts for searchable fields and facet
+    dimensions. Extending the same scanability cue to quick filters, saved
+    filters, and group-by keeps the metadata presentation consistent.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-297.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - metadata_count_display_requires_behavior_change
+
+deliverables:
+  - contract_group_count_labels
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-297.yaml
+
+depends_on:
+  - ITER-2026-03-30-296
+
+notes: >
+  Keep the change inside PageToolbar and derive counts directly from existing
+  quickFilters, savedFilters, and groupByOptions props.

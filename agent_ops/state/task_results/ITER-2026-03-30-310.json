@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-30-310",
+  "status": "PASS",
+  "summary": "The native list surface now consumes route-preset contract state inside the list toolbar and active-condition summary.",
+  "changed_files": [
+    "frontend/apps/web/src/components/page/PageToolbar.vue",
+    "frontend/apps/web/src/pages/ListPage.vue",
+    "frontend/apps/web/src/views/ActionView.vue",
+    "agent_ops/tasks/ITER-2026-03-30-310.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-310.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-310.yaml",
+    "pnpm -C frontend/apps/web typecheck:strict"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore frontend/apps/web/src/components/page/PageToolbar.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/views/ActionView.vue agent_ops/tasks/ITER-2026-03-30-310.yaml docs/ops/iterations/delivery_context_switch_log_v1.md"
+}

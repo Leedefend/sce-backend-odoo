@@ -1,0 +1,69 @@
+task_id: ITER-2026-03-30-282
+title: Surface list search mode semantics from native metadata
+type: feature
+status: in_progress
+priority: medium
+
+goal: >
+  Expose the native search-surface mode on list pages so users can understand whether
+  the current list is driven by a faceted search model or a plain search model.
+
+user_visible_outcome:
+  - list toolbar shows native search mode semantics when available
+  - faceted search surfaces become more understandable alongside searchpanel hints
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend contract changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: list metadata consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The list surface now exposes searchpanel hints, but users still cannot see the
+    underlying native search mode semantics carried by the contract.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-282.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - search_mode_shape_unclear
+
+deliverables:
+  - list_search_mode_semantics
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-282.yaml
+  - git restore frontend/apps/web/src/app/resolvers/sceneReadyResolver.ts frontend/apps/web/src/views/ActionView.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/components/page/PageToolbar.vue
+
+depends_on:
+  - ITER-2026-03-30-281
+
+notes: >
+  Keep the search mode display passive and descriptive only.

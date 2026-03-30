@@ -1,0 +1,73 @@
+task_id: ITER-2026-03-30-280
+title: Surface native searchpanel metadata on list pages
+type: feature
+status: in_progress
+priority: medium
+
+goal: >
+  Expose native searchpanel metadata on the list toolbar as read-only faceted hints,
+  so users can see available Odoo search dimensions even before interactive support
+  is added.
+
+user_visible_outcome:
+  - list pages display native faceted search dimensions from searchpanel metadata
+  - users can see available search facets without relying on generic assumptions
+  - no fake interaction is introduced before execution logic is implemented
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - read-only display only
+  - no backend contract changes
+  - no fake click behavior for searchpanel facets
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: list metadata consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    Native searchpanel facts are already delivered by the contract chain, but the
+    current list surface does not show them at all.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-280.yaml
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - searchpanel_shape_unclear
+
+deliverables:
+  - read_only_searchpanel_surface
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-280.yaml
+  - git restore frontend/apps/web/src/app/resolvers/sceneReadyResolver.ts frontend/apps/web/src/views/ActionView.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/components/page/PageToolbar.vue
+
+depends_on:
+  - ITER-2026-03-30-277
+
+notes: >
+  This batch must remain display-only. Searchpanel execution semantics can be added in
+  a later batch after the metadata surface is visible and verified.

@@ -1,0 +1,63 @@
+task_id: ITER-2026-03-30-271
+title: Strengthen continuous-iteration default in execution rules
+type: governance
+status: in_progress
+priority: high
+
+goal: Encode the default behavior for continuous iteration into repository execution rules so Codex keeps moving automatically whenever stop conditions are not triggered.
+user_visible_outcome:
+  - continuous iteration becomes an explicit repository rule instead of an implicit preference
+  - Codex defaults to continuing low-risk PASS batches without pausing for re-approval
+  - stop conditions remain authoritative and unchanged
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance_docs_only
+  - no_product_code_change
+  - stop_conditions_must_remain_authoritative
+
+architecture:
+  layer_target: governance layer
+  module: iteration execution rules and workspace execution policy
+  module_ownership: repository governance docs
+  kernel_or_scenario: kernel
+  reason: The user requested that continuous iteration remain active by default whenever stop conditions are not triggered, and that this be codified into repository rules to improve execution efficiency.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-271.yaml
+    - git diff -- AGENTS.md docs/ops/codex_workspace_execution_rules.md
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - stop_rule_becomes_ambiguous
+  - governance_scope_uncertain
+
+deliverables:
+  - updated_continuous_iteration_rule
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-271.yaml
+  - git restore AGENTS.md
+  - git restore docs/ops/codex_workspace_execution_rules.md
+
+depends_on:
+  - ITER-2026-03-30-270
+
+notes: "Strengthen the default-continue rule, but do not weaken any stop gate or risk boundary."

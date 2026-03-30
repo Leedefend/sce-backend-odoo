@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-03-30-279",
+  "status": "PASS",
+  "summary": "Continuous iteration now explicitly forbids terminal close-out behavior unless a real stop condition, user pause, or genuine task-line completion exists.",
+  "changed_files": [
+    "AGENTS.md",
+    "docs/ops/codex_workspace_execution_rules.md",
+    "agent_ops/tasks/ITER-2026-03-30-279.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-279.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-279.yaml"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore AGENTS.md docs/ops/codex_workspace_execution_rules.md agent_ops/tasks/ITER-2026-03-30-279.yaml"
+}

@@ -1,0 +1,74 @@
+task_id: ITER-2026-03-30-313
+title: Fix list page startup regression from sort-label initialization order
+type: frontend
+status: in_progress
+priority: high
+
+goal: >
+  Fix the startup regression introduced by readable sort labels by restoring a
+  valid initialization order in ActionView setup.
+
+user_visible_outcome:
+  - the list page no longer crashes on load
+  - readable sort labels remain enabled
+  - no behavior or backend semantics change
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/**
+    - agent_ops/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - initialization-order fix only
+  - no backend changes
+  - keep readable sort labels behavior intact
+
+context:
+  branch: codex/next-round
+  baseline_sha: 57f41c7
+
+architecture:
+  layer_target: Frontend Layer
+  module: action view list surface startup chain
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    The readable sort-label batch referenced contractColumnLabels before it was
+    initialized. This batch repairs setup ordering without changing any runtime
+    contract semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-313.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - initialization_fix_requires_behavior_change
+
+deliverables:
+  - actionview_startup_fix
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/views/ActionView.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-313.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-30-312
+
+notes: >
+  Only repair definition order. Do not alter the sort-label mapping logic.

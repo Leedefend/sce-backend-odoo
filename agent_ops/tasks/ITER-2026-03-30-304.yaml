@@ -1,0 +1,75 @@
+task_id: ITER-2026-03-30-304
+title: Include active sort state in list toolbar active-condition summary
+type: frontend
+status: in_progress
+priority: medium
+
+goal: >
+  Complete the read-only active-state summary by including the current sort
+  state alongside search, filters, and group-by.
+
+user_visible_outcome:
+  - users can see all active list conditions in one place
+  - current sort is no longer visually isolated from other active conditions
+  - no new interactions or backend semantics are introduced
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - agent_ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/**
+    - frontend/apps/web/src/pages/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend changes
+  - no new interactions
+
+context:
+  branch: codex/next-round
+  baseline_sha: 65d6932
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The active-state summary already covers search, quick filters, saved
+    filters, and group-by. Adding current sort makes the summary complete using
+    existing runtime state only.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-304.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - sort_summary_display_requires_behavior_change
+
+deliverables:
+  - active_sort_summary_chip
+  - iteration_report
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-304.yaml
+
+depends_on:
+  - ITER-2026-03-30-303
+
+notes: >
+  Derive the active sort chip only from existing sortLabel and sortSourceLabel
+  props.

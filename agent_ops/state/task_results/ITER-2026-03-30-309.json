@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-30-309",
+  "status": "PASS",
+  "summary": "Saved-filter, group-by, and facet section headers now expose richer native metadata summaries without changing behavior.",
+  "changed_files": [
+    "frontend/apps/web/src/views/ActionView.vue",
+    "frontend/apps/web/src/pages/ListPage.vue",
+    "frontend/apps/web/src/components/page/PageToolbar.vue",
+    "agent_ops/tasks/ITER-2026-03-30-309.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-309.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-309.yaml",
+    "pnpm -C frontend/apps/web typecheck:strict"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore frontend/apps/web/src/views/ActionView.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/components/page/PageToolbar.vue agent_ops/tasks/ITER-2026-03-30-309.yaml docs/ops/iterations/delivery_context_switch_log_v1.md"
+}
