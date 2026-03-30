@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-03-30-268",
+  "status": "PASS",
+  "summary": "Frontend startup now clears stale auth state and redirects to login when system.init fails with auth-required responses.",
+  "changed_files": [
+    "frontend/apps/web/src/stores/session.ts",
+    "frontend/apps/web/src/app/init.ts",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-268.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-268.yaml",
+    "bash -n scripts/dev/frontend_dev_reset.sh",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore frontend/apps/web/src/stores/session.ts frontend/apps/web/src/app/init.ts"
+}

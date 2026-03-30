@@ -1,0 +1,74 @@
+task_id: ITER-2026-03-30-268
+title: Stabilize dev startup chain for frontend hot reload and system.init reachability
+type: bugfix
+status: in_progress
+priority: high
+
+goal: Restore a reliable local dev startup chain so frontend hot reload remains alive and the app can consistently reach system.init through the intended dev path.
+user_visible_outcome:
+  - frontend dev server stays alive after startup instead of reporting false-ready
+  - local dev entrypoint is consistently reachable
+  - system.init no longer fails due to broken local startup/proxy chain
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+    - Makefile
+    - scripts/dev/**
+    - frontend/apps/web/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+change_rules:
+  - frontend_and_dev_runtime_only
+  - no_backend_business_semantic_change
+  - no_contract_field_rename_or_remove
+  - prefer_make_driven_entrypoints
+
+architecture:
+  layer_target: frontend layer
+  module: frontend dev startup and proxy chain
+  module_ownership: frontend/apps/web and scripts/dev
+  kernel_or_scenario: kernel
+  reason: The current dev startup reports ready while the frontend process exits or becomes unreachable, breaking system.init verification and masking real product issues.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-268.yaml
+    - bash -n scripts/dev/frontend_dev_reset.sh
+    - bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - startup_chain_root_cause_uncertain
+
+deliverables:
+  - stable_frontend_dev_entry
+  - iteration_report
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-268.yaml
+  - git restore Makefile
+  - git restore scripts/dev/frontend_dev_reset.sh
+  - git restore frontend/apps/web/vite.config.ts
+
+depends_on:
+  - ITER-2026-03-30-267
+
+notes: "Do not change backend business behavior. Only stabilize the frontend dev startup and reachability chain used for local development."

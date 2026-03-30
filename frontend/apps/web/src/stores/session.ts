@@ -687,6 +687,13 @@ export const useSessionStore = defineStore('session', {
           throw err;
         }
         if (err instanceof ApiError) {
+          if (
+            err.status === 401 ||
+            String(err.reasonCode || '').trim().toUpperCase() === 'AUTH_REQUIRED' ||
+            String(err.reasonCode || '').trim().toUpperCase() === 'AUTH_401'
+          ) {
+            this.clearSession();
+          }
           this.initError = err.message;
           this.initTraceId = err.traceId ?? null;
         } else {
