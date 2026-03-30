@@ -1,0 +1,75 @@
+task_id: ITER-2026-03-30-322
+title: Analyze feasibility of fully extracting page composition from Odoo native information
+type: docs
+status: in_progress
+priority: high
+
+goal: >
+  Record a feasibility analysis that answers whether complete page composition
+  can be extracted from Odoo native actions/views/search metadata alone,
+  separating fully-extractable native composition, partially-extractable
+  interaction semantics, and non-extractable product-level optimization
+  composition.
+
+user_visible_outcome:
+  - repository contains a temporary feasibility analysis document
+  - the document answers whether full page composition is derivable from native Odoo metadata
+  - the document defines the boundary between native extraction completeness and optimization-layer composition
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - docs/tmp/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - docs only
+  - analysis only
+  - no product code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: a99fe49
+
+architecture:
+  layer_target: Documentation Layer
+  module: Odoo native composition feasibility analysis
+  module_owner: docs/tmp
+  kernel_or_scenario: scenario
+  reason: >
+    Before adding more backend composition contracts, we need a precise answer
+    to whether page composition can be fully extracted from native Odoo
+    information, instead of only analyzing the current extraction
+    implementation.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-322.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - task_contract_invalid
+
+deliverables:
+  - native_full_composition_feasibility_doc
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-322.yaml
+  - git restore docs/tmp/odoo_native_full_composition_extraction_feasibility_2026-03-30.md
+
+depends_on:
+  - ITER-2026-03-30-321
+
+notes: >
+  This batch reframes the question from "what our current parser extracts" to
+  "whether native Odoo information is sufficient for full page composition
+  extraction in principle".

@@ -1,0 +1,71 @@
+task_id: ITER-2026-03-30-317
+title: Record list-page backend-vs-frontend responsibility analysis in temp doc
+type: docs
+status: in_progress
+priority: medium
+
+goal: >
+  Persist the latest analysis of whether the current list-page problems come
+  from missing backend contracts or incomplete frontend consumption into a
+  temporary repository document for follow-up implementation work.
+
+user_visible_outcome:
+  - repository contains a temporary analysis document
+  - the document states backend-vs-frontend responsibility per problem
+  - the document provides a direct next-step implementation recommendation
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - docs/tmp/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - docs only
+  - no product code changes
+  - temporary document only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 6e26cf1
+
+architecture:
+  layer_target: Documentation Layer
+  module: list page responsibility analysis
+  module_owner: docs/tmp
+  kernel_or_scenario: scenario
+  reason: >
+    The user requested that the current analysis be written into a temporary
+    repository document so the upcoming list-page restructure can work from an
+    explicit responsibility baseline.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-317.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - task_contract_invalid
+
+deliverables:
+  - temporary_analysis_doc
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-317.yaml
+  - git restore docs/tmp/list_page_backend_vs_frontend_analysis_2026-03-30.md
+
+depends_on:
+  - ITER-2026-03-30-316
+
+notes: >
+  This batch only records analysis. It does not implement the recommended list
+  page restructure yet.
