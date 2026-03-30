@@ -3,32 +3,22 @@ import { computed, type Ref } from 'vue';
 type UseActionViewDisplayComputedRuntimeOptions = {
   surfaceKind: Ref<string>;
   records: Ref<Array<Record<string, unknown>>>;
-  sortLabel: Ref<string>;
+  sortDisplayLabel: Ref<string>;
+  sortSourceLabel: Ref<string>;
   status: Ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>;
   listTotalCount: Ref<number | null>;
   pageText: (key: string, fallback: string) => string;
 };
 
 export function useActionViewDisplayComputedRuntime(options: UseActionViewDisplayComputedRuntimeOptions) {
-  const sortOptions = computed(() => {
-    if (options.surfaceKind.value === 'risk' || options.surfaceKind.value === 'cost') {
-      return [
-        { label: options.pageText('sort_option_priority_deadline', '优先级↓ / 截止日↑'), value: 'priority desc,deadline asc,write_date desc' },
-        { label: options.pageText('sort_option_deadline_updated', '截止日↑ / 更新时间↓'), value: 'deadline asc,write_date desc' },
-        { label: options.pageText('sort_option_updated_id', '更新时间↓ / ID↓'), value: 'write_date desc,id desc' },
-      ];
-    }
-    return [
-      { label: options.pageText('sort_option_updated_name_asc', '更新时间↓ / 名称↑'), value: 'write_date desc,name asc' },
-      { label: options.pageText('sort_option_updated_asc_name_asc', '更新时间↑ / 名称↑'), value: 'write_date asc,name asc' },
-      { label: options.pageText('sort_option_name_updated', '名称↑ / 更新时间↓'), value: 'name asc,write_date desc' },
-      { label: options.pageText('sort_option_name_desc_updated', '名称↓ / 更新时间↓'), value: 'name desc,write_date desc' },
-    ];
-  });
+  const sortOptions = computed(() => []);
 
   const subtitle = computed(
-    () =>
-      `${options.records.value.length}${options.pageText('subtitle_records_suffix', ' 条记录')} · ${options.pageText('subtitle_sort_prefix', '排序：')}${options.sortLabel.value}`,
+    () => {
+      const sortSource = String(options.sortSourceLabel.value || '').trim();
+      const sortPrefix = sortSource ? `${sortSource}：` : options.pageText('subtitle_sort_prefix', '排序：');
+      return `${options.records.value.length}${options.pageText('subtitle_records_suffix', ' 条记录')} · ${sortPrefix}${options.sortDisplayLabel.value}`;
+    },
   );
 
   const statusLabel = computed(() => {
@@ -57,4 +47,3 @@ export function useActionViewDisplayComputedRuntime(options: UseActionViewDispla
     recordCount,
   };
 }
-
