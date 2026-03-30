@@ -13,8 +13,19 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "count": 0,
-    "items": []
+    "count": 1,
+    "items": [
+      {
+        "active": true,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-03-30T09:58:56Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": null,
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      }
+    ]
   },
   "user": "admin",
   "user_fallback": null,

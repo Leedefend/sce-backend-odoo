@@ -1,0 +1,83 @@
+task_id: ITER-2026-03-30-327
+title: Complete backend native form detail structure truth for scene-ready contracts
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Complete backend-native form/detail structure truth by exposing stable
+  form_surface facts in scene-ready contracts and compact system.init payloads,
+  without introducing optimization composition or frontend changes.
+
+user_visible_outcome:
+  - scene-ready payload includes additive form_surface native truth
+  - form_surface contains layout, header_actions, stat_actions, relation_fields, field_behavior_map, and native flags
+  - system.init preserves additive form_surface truth in compact scene rows
+
+scope:
+  allowed_paths:
+    - addons/smart_core/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/__manifest__.py
+
+change_rules:
+  - backend only
+  - native structure truth only
+  - no optimization composition
+  - no frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 03bd2ef
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core form and detail native extraction
+  module_owner: addons/smart_core
+  kernel_or_scenario: kernel
+  reason: >
+    After search, list, and batch capability truths are complete, backend must
+    expose stable native form/detail structure truth so frontend can consume
+    layout and detail capability facts without local composition.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-327.yaml
+    - python3 addons/smart_core/tests/test_scene_ready_parser_semantic_bridge.py
+    - python3 addons/smart_core/tests/test_scene_ready_contract_builder_semantic_consumption.py
+    - python3 addons/smart_core/tests/test_system_init_payload_builder_semantics.py
+    - make verify.smart_core
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - contract_structure_breaks_existing_scene_ready_keys
+
+deliverables:
+  - backend form_surface native truth implementation
+  - updated tests covering form_surface preservation
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-327.yaml
+  - git restore addons/smart_core/core/scene_ready_contract_builder.py
+  - git restore addons/smart_core/core/system_init_payload_builder.py
+  - git restore addons/smart_core/tests/test_scene_ready_contract_builder_semantic_consumption.py
+  - git restore addons/smart_core/tests/test_system_init_payload_builder_semantics.py
+
+depends_on:
+  - ITER-2026-03-30-326
+
+notes: >
+  This batch only fills native form/detail structure truth. It must not add
+  toolbar grouping, guidance, or page optimization composition.

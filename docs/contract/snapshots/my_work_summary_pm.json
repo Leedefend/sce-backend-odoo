@@ -89,9 +89,20 @@
       }
     ],
     "visibility": {
-      "message": "",
-      "partial_data_hidden": false,
-      "restricted_sources": []
+      "message": "部分数据未显示",
+      "partial_data_hidden": true,
+      "restricted_sources": [
+        {
+          "model": "construction.contract",
+          "readable": false,
+          "reason": "READ_ACCESS_DENIED"
+        },
+        {
+          "model": "payment.request",
+          "readable": false,
+          "reason": "READ_ACCESS_DENIED"
+        }
+      ]
     }
   },
   "user": "pm",
