@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-03-30-263",
+  "status": "FAIL",
+  "summary": "Fixed the duplicate sc.core.extension_modules install-time write and added a Makefile-driven frontend dev reset entrypoint, but full dev.rebuild.full still fails later on a missing action view external id.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-30-263.yaml",
+    "addons/smart_construction_core/data/sc_extension_params.xml",
+    "scripts/dev/frontend_dev_reset.sh",
+    "Makefile",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-263.md"
+  ],
+  "verification": {
+    "task_validate": "PASS",
+    "frontend_dev_script_syntax": "PASS",
+    "frontend_typecheck_strict": "PASS",
+    "dev_rebuild_full": "FAIL"
+  },
+  "risk": {
+    "level": "medium",
+    "reason": "A new independent install-time blocker remains in smart_construction_core action/view references."
+  },
+  "next_step": "Create a follow-up iteration that fixes smart_construction_core/actions/project_list_actions.xml install-time dependency on smart_construction_core.view_project_my_list_tree."
+}

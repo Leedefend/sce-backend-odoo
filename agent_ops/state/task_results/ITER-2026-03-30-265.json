@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-03-30-265",
+  "status": "PASS",
+  "summary": "Cleaned non-current local runtimes and preserved only the active development environment.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-30-265.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-265.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-265.yaml",
+    "docker ps --format '{{.Names}}'"
+  ],
+  "risk_level": "medium",
+  "rollback": "Rerun the relevant make up target for any removed runtime."
+}
