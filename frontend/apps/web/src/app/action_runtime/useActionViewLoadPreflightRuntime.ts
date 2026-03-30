@@ -131,6 +131,7 @@ export function useActionViewLoadPreflightRuntime() {
     const preferredViewMode = options.resolvePreferredActionViewMode({
       contractViewTypeRaw: contractViewType,
       metaViewModesRaw: (nextMeta as { view_modes?: unknown } | null)?.view_modes,
+      metaViewsRaw: (nextMeta as { views?: unknown } | null)?.views,
       contract: typedContract,
       routeViewModeRaw: options.routeViewModeRaw,
       currentPreferredViewModeRaw: options.currentPreferredViewModeRaw,

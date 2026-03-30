@@ -32,6 +32,10 @@
         </button>
       </div>
     </section>
+    <section v-if="showViewSwitchDebug" class="contract-block">
+      <p class="contract-label">view switch debug</p>
+      <pre class="debug-json">{{ JSON.stringify(viewSwitchDebugState, null, 2) }}</pre>
+    </section>
     <section v-if="!preferNativeListSurface && isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
@@ -1103,6 +1107,7 @@ const availableViewModes = computed(() =>
   resolveActionViewAvailableModes({
     contractViewTypeRaw: contractViewType.value,
     metaViewModesRaw: (actionMeta.value as { view_modes?: unknown } | null)?.view_modes,
+    metaViewsRaw: (actionMeta.value as { views?: unknown } | null)?.views,
     contract: (actionContract.value as Record<string, unknown> | null),
   }),
 );
@@ -1310,9 +1315,28 @@ const {
 });
 const actionableViewModes = computed(() => {
   const modes = availableViewModes.value;
-  const filtered = modes.filter((mode) => resolveModeRecommendedRuntime(actionContract.value, mode) !== 'native');
+  const hasKanban = modes.includes('kanban');
+  const filtered = modes.filter((mode) => {
+    if (mode === 'kanban') return true;
+    if (mode === 'tree' && hasKanban) return true;
+    return resolveModeRecommendedRuntime(actionContract.value, mode) !== 'native';
+  });
   return filtered.length ? filtered : modes;
 });
+const showViewSwitchDebug = computed(() => String(route.query.debug_view_switch || '').trim() === '1');
+const viewSwitchDebugState = computed(() => ({
+  routePath: route.fullPath,
+  actionId: Number(route.params.actionId || 0),
+  contractViewType: contractViewType.value,
+  actionMetaViewModes: (actionMeta.value as { view_modes?: unknown } | null)?.view_modes ?? null,
+  actionMetaViews: (actionMeta.value as { views?: unknown } | null)?.views ?? null,
+  availableViewModes: availableViewModes.value,
+  actionableViewModes: actionableViewModes.value,
+  vmAvailableViewModes: vm.value.page.availableViewModes,
+  currentViewMode: viewMode.value,
+  preferNativeListSurface: preferNativeListSurface.value,
+  nativeRecommendedRuntime: nativeFallbackPolicy.value.recommendedRuntime,
+}));
 const nativeFallbackPolicy = computed(() => resolveContractViewRenderPolicy(actionContract.value, viewMode.value || contractViewType.value));
 const nativeFallbackUrl = computed(() => {
   const action = nativeFallbackPolicy.value.fallbackAction;

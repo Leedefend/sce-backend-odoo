@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-03-30-262",
+  "status": "PASS",
+  "summary": "Adjusted ActionView filtering so tree and kanban remain jointly available on the real action-route path.",
+  "changed_files": [
+    "frontend/apps/web/src/views/ActionView.vue",
+    "agent_ops/tasks/ITER-2026-03-30-262.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-262.md"
+  ],
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-262.yaml",
+    "bash -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 20 >/dev/null && pnpm -C frontend/apps/web typecheck:strict'"
+  ],
+  "risk_level": "low",
+  "rollback": "git restore frontend/apps/web/src/views/ActionView.vue"
+}

@@ -35,6 +35,50 @@
       :on-retry="onReload"
     />
 
+    <section v-else-if="groupColumns.length" class="kanban-columns">
+      <article
+        v-for="column in groupColumns"
+        :key="column.key"
+        class="kanban-column"
+      >
+        <header class="kanban-column-header">
+          <div>
+            <p class="kanban-column-label">{{ column.label }}</p>
+            <p v-if="groupFieldLabel" class="kanban-column-field">{{ groupFieldLabel }}</p>
+          </div>
+          <span class="kanban-column-count">{{ column.records.length }}</span>
+        </header>
+        <section class="kanban-column-body">
+          <article
+            v-for="(row, index) in column.records"
+            :key="String(row.id ?? `${column.key}-${index}`)"
+            class="card"
+            :class="`tone-${rowTone(row)}`"
+            @click="handleCard(row)"
+          >
+            <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
+            <div v-if="statusMetaFields.length" class="status-chips">
+              <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
+                {{ fieldLabel(field) }}: {{ semanticCell(field, row[field]).text }}
+              </span>
+            </div>
+            <dl v-if="primaryMetaFields.length" class="card-meta primary">
+              <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
+                <dt>{{ fieldLabel(field) }}</dt>
+                <dd>{{ semanticCell(field, row[field]).text }}</dd>
+              </div>
+            </dl>
+            <dl class="card-meta">
+              <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
+                <dt>{{ fieldLabel(field) }}</dt>
+                <dd>{{ semanticCell(field, row[field]).text }}</dd>
+              </div>
+            </dl>
+          </article>
+        </section>
+      </article>
+    </section>
+
     <section v-else class="grid">
       <article
         v-for="(row, index) in records"
@@ -132,6 +176,33 @@ const secondaryMetaFields = computed(() => {
     .slice(0, 3);
 });
 
+const groupField = computed(() => {
+  const preferred = (props.statusFields || []).find((field) => field && field !== props.titleField);
+  return preferred || '';
+});
+
+const groupFieldLabel = computed(() => {
+  if (!groupField.value) return '';
+  return fieldLabel(groupField.value);
+});
+
+const groupColumns = computed(() => {
+  if (!groupField.value) return [];
+  const buckets = new Map<string, { key: string; label: string; records: Array<Record<string, unknown>> }>();
+  for (const row of props.records) {
+    const rawValue = row[groupField.value];
+    const label = semanticCell(groupField.value, rawValue).text || formatValue(rawValue) || '未分组';
+    const key = normalizeGroupKey(rawValue, label);
+    const bucket = buckets.get(key);
+    if (bucket) {
+      bucket.records.push(row);
+      continue;
+    }
+    buckets.set(key, { key, label, records: [row] });
+  }
+  return Array.from(buckets.values());
+});
+
 const modeLabelText = computed(() => pageModeLabel(props.pageMode || 'workspace'));
 
 function semanticCell(field: string, value: unknown) {
@@ -150,6 +221,20 @@ function fieldLabel(name: string) {
 
 function handleCard(row: Record<string, unknown>) {
   props.onCardClick(row);
+}
+
+function normalizeGroupKey(value: unknown, fallback: string) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item ?? '')).join(':') || fallback;
+  }
+  if (value && typeof value === 'object') {
+    const named = formatValue(value);
+    return named || fallback;
+  }
+  if (value === null || value === undefined || String(value).trim() === '') {
+    return fallback;
+  }
+  return String(value);
 }
 
 function formatValue(value: unknown) {
@@ -187,6 +272,60 @@ function formatValue(value: unknown) {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.kanban-columns {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
+}
+
+.kanban-column {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid #dbe4f0;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kanban-column-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.kanban-column-field {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.kanban-column-count {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.kanban-column-body {
+  display: grid;
+  gap: 12px;
 }
 
 .card {
