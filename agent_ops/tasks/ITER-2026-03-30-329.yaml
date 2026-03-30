@@ -1,0 +1,81 @@
+task_id: ITER-2026-03-30-329
+title: Audit frontend over-composition against completed native truths
+type: analysis
+status: in_progress
+priority: high
+
+goal: >
+  Audit frontend list/detail consumers and identify where they still derive,
+  regroup, or hardcode page composition that is already expressible by backend
+  native truths, so the next implementation batch can retract frontend-owned
+  composition cleanly.
+
+user_visible_outcome:
+  - repository contains a concrete frontend over-composition audit
+  - each frontend-owned behavior is mapped back to native truths or to genuine optimization needs
+  - next implementation can safely retract frontend composition without guesswork
+
+scope:
+  allowed_paths:
+    - docs/tmp/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - analysis and documentation only
+  - no backend code changes
+  - no frontend code changes
+  - no contract schema changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 03bd2ef
+
+architecture:
+  layer_target: Frontend Layer
+  module: action and list consumer boundary audit
+  module_owner: frontend/apps/web planning
+  kernel_or_scenario: scenario
+  reason: >
+    Backend native truths are now present. Before implementing retraction, the
+    frontend must be audited for remaining self-owned page composition so that
+    the next batches remove only duplicated composition and preserve legitimate
+    rendering responsibilities.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-329.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - analysis_claims_frontend_overreach_without_source_reference
+
+deliverables:
+  - docs/tmp/frontend_native_truth_consumer_boundary_audit_2026-03-30.md
+  - report and task result artifacts for ITER-2026-03-30-329
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-329.yaml
+  - git restore docs/tmp/frontend_native_truth_consumer_boundary_audit_2026-03-30.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-329.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-329.json
+
+depends_on:
+  - ITER-2026-03-30-328
+
+notes: >
+  This batch does not retract frontend composition yet. It only audits where
+  frontend still performs native-truth regrouping, aggregation, or hardcoded
+  page composition.

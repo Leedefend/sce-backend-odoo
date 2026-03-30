@@ -1,0 +1,84 @@
+task_id: ITER-2026-03-30-328
+title: Audit remaining page composition requirements against completed native truths
+type: analysis
+status: in_progress
+priority: high
+
+goal: >
+  After completing backend native truths for search, list, action, and form
+  surfaces, audit remaining page composition requirements and determine which
+  are already expressible from native Odoo truths, which are only partially
+  expressible, and which genuinely require a later optimization composition
+  contract.
+
+user_visible_outcome:
+  - repository contains a clear native-truth coverage audit for remaining page requirements
+  - backend next-step planning is based on native extractability instead of frontend assumptions
+  - optimization composition scope is reduced to only non-native requirements
+
+scope:
+  allowed_paths:
+    - docs/tmp/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - analysis and documentation only
+  - no backend code changes
+  - no frontend changes
+  - no contract schema changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 03bd2ef
+
+architecture:
+  layer_target: Platform Layer
+  module: native composition coverage audit
+  module_owner: docs and smart_core planning
+  kernel_or_scenario: kernel
+  reason: >
+    Native truths are now available in four backend surfaces. Before creating
+    any optimization composition contract, the remaining page requirements must
+    be mapped against these truths so that only genuinely non-native needs are
+    promoted into backend optimization design.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-328.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - analysis_contradicts_native_truth_without_source_basis
+
+deliverables:
+  - docs/tmp/native_truth_page_requirement_coverage_audit_2026-03-30.md
+  - report and task result artifacts for ITER-2026-03-30-328
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-328.yaml
+  - git restore docs/tmp/native_truth_page_requirement_coverage_audit_2026-03-30.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-328.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-328.json
+
+depends_on:
+  - ITER-2026-03-30-324
+  - ITER-2026-03-30-325
+  - ITER-2026-03-30-326
+  - ITER-2026-03-30-327
+
+notes: >
+  This batch does not design optimization composition. It only audits coverage
+  of remaining page requirements against completed backend native truths.
