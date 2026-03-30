@@ -1,0 +1,72 @@
+task_id: ITER-2026-03-30-321
+title: Analyze which page composition signals can be extracted from Odoo native metadata
+type: docs
+status: in_progress
+priority: high
+
+goal: >
+  Record a precise analysis of which list-page composition signals can already
+  be extracted from Odoo native actions/views/search metadata, and which
+  optimization-level composition signals still require an explicit higher-level
+  contract.
+
+user_visible_outcome:
+  - repository contains a temporary extraction analysis document
+  - the document separates native-extractable composition facts from non-native optimization composition
+  - the document defines the correct layered model for future implementation
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - docs/tmp/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - docs only
+  - analysis only
+  - no product code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 6e26cf1
+
+architecture:
+  layer_target: Documentation Layer
+  module: native composition extraction analysis
+  module_owner: docs/tmp
+  kernel_or_scenario: scenario
+  reason: >
+    Before implementing composition contracts, we need to define the exact
+    boundary between what can be extracted from Odoo native metadata and what
+    belongs to a higher-level optimization composition layer.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-321.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - task_contract_invalid
+
+deliverables:
+  - native_composition_extraction_doc
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-321.yaml
+  - git restore docs/tmp/odoo_native_composition_extraction_analysis_2026-03-30.md
+
+depends_on:
+  - ITER-2026-03-30-320
+
+notes: >
+  This batch only captures the extraction-layer analysis. It does not modify
+  contracts or frontend behavior.
