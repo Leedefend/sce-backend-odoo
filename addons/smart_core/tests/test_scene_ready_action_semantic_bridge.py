@@ -57,6 +57,66 @@ class TestSceneReadyActionSemanticBridge(unittest.TestCase):
         self.assertEqual(((bridged.get("action_surface") or {}).get("groups") or [])[0]["key"], "list_actions")
         self.assertEqual(len((bridged.get("action_surface") or {}).get("primary_actions") or []), 3)
 
+    def test_bridge_derives_batch_capabilities_from_native_truth(self):
+        payload = {
+            "actions": [{"key": "open"}],
+            "action_surface": {"selection_mode": "multi"},
+            "permission_surface": {"allowed": True},
+            "meta": {
+                "ui_base_orchestrator_input": {
+                    "field_fact": {"fields": {"active": {"type": "boolean"}}},
+                    "permission_fact": {"write": True, "unlink": True},
+                }
+            },
+            "parser_semantic_surface": {
+                "parser_contract": {"view_type": "tree"},
+                "view_semantics": {
+                    "source_view": "tree",
+                    "capability_flags": {"can_delete": True},
+                },
+                "semantic_page": {
+                    "list_semantics": {
+                        "editable": {"can_delete": True},
+                    }
+                },
+            },
+        }
+
+        bridged = bridge_module.apply_scene_ready_action_semantic_bridge(payload)
+        batch_capabilities = ((bridged.get("action_surface") or {}).get("batch_capabilities") or {})
+
+        self.assertTrue(batch_capabilities.get("selection_required"))
+        self.assertTrue(batch_capabilities.get("can_delete"))
+        self.assertTrue(batch_capabilities.get("can_archive"))
+        self.assertTrue(batch_capabilities.get("can_activate"))
+        self.assertTrue(((batch_capabilities.get("native_basis") or {}).get("has_active_field")))
+
+    def test_bridge_preserves_batch_capabilities_without_action_items(self):
+        payload = {
+            "action_surface": {"selection_mode": "multi"},
+            "meta": {
+                "ui_base_orchestrator_input": {
+                    "field_fact": {"fields": {"active": {"type": "boolean"}}},
+                    "permission_fact": {"write": True, "unlink": False},
+                }
+            },
+            "parser_semantic_surface": {
+                "parser_contract": {"view_type": "tree"},
+                "view_semantics": {
+                    "source_view": "tree",
+                    "capability_flags": {"can_delete": False},
+                },
+            },
+        }
+
+        bridged = bridge_module.apply_scene_ready_action_semantic_bridge(payload)
+        batch_capabilities = ((bridged.get("action_surface") or {}).get("batch_capabilities") or {})
+
+        self.assertEqual((bridged.get("action_surface") or {}).get("primary_actions"), None)
+        self.assertTrue(batch_capabilities.get("selection_required"))
+        self.assertFalse(batch_capabilities.get("can_delete"))
+        self.assertTrue(batch_capabilities.get("can_archive"))
+
 
 if __name__ == "__main__":
     unittest.main()

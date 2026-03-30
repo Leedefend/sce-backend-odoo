@@ -94,12 +94,17 @@ class TestSceneReadySearchSurfaceSemanticConsumption(unittest.TestCase):
         )
         row = (contract.get("scenes") or [])[0]
         search_surface = row.get("search_surface") or {}
+        list_surface = row.get("list_surface") or {}
 
         self.assertEqual((search_surface.get("fields") or [])[0]["name"], "name")
         self.assertEqual((search_surface.get("filters") or [])[0]["name"], "mine")
         self.assertEqual((search_surface.get("group_by") or [])[0]["field"], "stage_id")
         self.assertEqual((search_surface.get("searchpanel") or [])[0]["name"], "stage_id")
         self.assertEqual(search_surface.get("mode"), "faceted")
+        self.assertEqual((list_surface.get("columns") or [])[0]["field"], "name")
+        self.assertEqual((list_surface.get("default_sort") or {}).get("raw"), "write_date desc")
+        self.assertEqual((list_surface.get("default_sort") or {}).get("display_label"), "更新时间 降序")
+        self.assertEqual((list_surface.get("available_view_modes") or [])[0]["key"], "tree")
 
 
 if __name__ == "__main__":

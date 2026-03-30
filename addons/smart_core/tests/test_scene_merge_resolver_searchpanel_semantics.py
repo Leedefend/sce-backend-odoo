@@ -35,6 +35,7 @@ class TestSceneMergeResolverSearchpanelSemantics(unittest.TestCase):
         out = resolver_module.apply_policy(compiled, policies, {"role_code": "pm"})
 
         self.assertEqual(((out.get("search_surface") or {}).get("searchpanel") or [])[0]["name"], "stage_id")
+        self.assertEqual((((out.get("search_surface") or {}).get("default_state") or {}).get("searchpanel") or [])[0]["name"], "stage_id")
 
     def test_provider_conflict_tracks_searchpanel_override(self):
         compiled = {

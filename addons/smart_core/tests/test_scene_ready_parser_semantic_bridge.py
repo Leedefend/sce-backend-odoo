@@ -25,6 +25,7 @@ class TestSceneReadyParserSemanticBridge(unittest.TestCase):
             "parser_contract": {"view_type": "tree"},
             "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
             "native_view": {"views": {"tree": {"layout": []}, "search": {"layout": []}}},
+            "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
         }
 
         bridged = bridge_module.apply_scene_ready_parser_semantic_bridge(compiled, contract)
@@ -33,6 +34,7 @@ class TestSceneReadyParserSemanticBridge(unittest.TestCase):
         self.assertEqual(bridged["surface"]["semantic_view"]["source_view"], "tree")
         self.assertTrue(bridged["surface"]["semantic_view"]["capability_flags"]["is_editable"])
         self.assertIn("parser_semantic_surface", bridged["meta"])
+        self.assertEqual(((((bridged["meta"]["parser_semantic_surface"]).get("semantic_page") or {}).get("list_semantics") or {}).get("columns") or [])[0]["name"], "name")
 
 
 if __name__ == "__main__":

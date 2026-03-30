@@ -41,8 +41,9 @@ def apply_scene_ready_parser_semantic_bridge(
     parser_contract = _as_dict(contract.get("parser_contract"))
     view_semantics = _as_dict(contract.get("view_semantics"))
     native_view = _as_dict(contract.get("native_view"))
+    semantic_page = _as_dict(contract.get("semantic_page"))
 
-    if not (parser_contract or view_semantics or native_view):
+    if not (parser_contract or view_semantics or native_view or semantic_page):
         return payload
 
     meta = _as_dict(payload.get("meta"))
@@ -50,6 +51,7 @@ def apply_scene_ready_parser_semantic_bridge(
         "parser_contract": parser_contract,
         "view_semantics": view_semantics,
         "native_view": native_view,
+        "semantic_page": semantic_page,
     }
     payload["meta"] = meta
 

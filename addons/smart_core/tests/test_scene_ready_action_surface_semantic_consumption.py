@@ -43,7 +43,11 @@ core_pkg.scene_dsl_compiler = scene_dsl_compiler
 ui_base_contract_adapter = types.ModuleType("odoo.addons.smart_core.core.ui_base_contract_adapter")
 ui_base_contract_adapter.adapt_ui_base_contract = lambda payload, **_kwargs: {
     "normalized_contract": dict(payload or {}),
-    "orchestrator_input": {"action_fact": True},
+    "orchestrator_input": {
+        "action_fact": {"items": list((payload or {}).get("actions", {}).get("items", []))},
+        "field_fact": {"fields": dict((payload or {}).get("fields") or {})},
+        "permission_fact": dict((payload or {}).get("permissions") or {}),
+    },
 }
 sys.modules["odoo.addons.smart_core.core.ui_base_contract_adapter"] = ui_base_contract_adapter
 core_pkg.ui_base_contract_adapter = ui_base_contract_adapter
@@ -77,6 +81,8 @@ class TestSceneReadyActionSurfaceSemanticConsumption(unittest.TestCase):
                     "ui_base_contract": {
                         "parser_contract": {"view_type": "tree"},
                         "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
+                        "fields": {"active": {"type": "boolean"}},
+                        "permissions": {"write": True, "unlink": True},
                         "native_view": {"views": {"tree": {"layout": []}}},
                         "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
                     },
@@ -89,6 +95,8 @@ class TestSceneReadyActionSurfaceSemanticConsumption(unittest.TestCase):
 
         self.assertEqual((action_surface.get("groups") or [])[0]["key"], "list_actions")
         self.assertEqual((action_surface.get("primary_actions") or [0, 0, 0])[:3], ["open", "bulk_approve", "export"])
+        self.assertTrue(((action_surface.get("batch_capabilities") or {}).get("can_archive")))
+        self.assertTrue(((action_surface.get("batch_capabilities") or {}).get("selection_required")))
 
 
 if __name__ == "__main__":

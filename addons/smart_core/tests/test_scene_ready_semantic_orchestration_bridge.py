@@ -52,6 +52,20 @@ class TestSceneReadySemanticOrchestrationBridge(unittest.TestCase):
         self.assertEqual((bridged.get("view_modes") or [])[0]["key"], "tree")
         self.assertEqual(((bridged.get("action_surface") or {}).get("selection_mode")), "multi")
 
+    def test_bridge_materializes_action_surface_when_missing(self):
+        payload = {
+            "parser_semantic_surface": {
+                "parser_contract": {"view_type": "tree"},
+                "view_semantics": {"source_view": "tree", "capability_flags": {"is_editable": True}},
+                "native_view": {"views": {"tree": {"layout": []}}},
+                "semantic_page": {"list_semantics": {"columns": [{"name": "name"}]}},
+            },
+        }
+
+        bridged = bridge_module.apply_scene_ready_semantic_orchestration_bridge(payload)
+
+        self.assertEqual(((bridged.get("action_surface") or {}).get("selection_mode")), "multi")
+
 
 if __name__ == "__main__":
     unittest.main()

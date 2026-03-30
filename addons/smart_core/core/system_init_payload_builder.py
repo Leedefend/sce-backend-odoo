@@ -236,10 +236,19 @@ class SystemInitPayloadBuilder:
             compact_search = cls._compact_search_surface(item.get("search_surface"))
             if compact_search:
                 compact["search_surface"] = compact_search
+            list_surface = item.get("list_surface") if isinstance(item.get("list_surface"), dict) else {}
+            if list_surface:
+                compact_list_surface = {}
+                for key in ("columns", "hidden_columns", "default_sort", "available_view_modes", "default_mode"):
+                    value = list_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_list_surface[key] = value
+                if compact_list_surface:
+                    compact["list_surface"] = compact_list_surface
             action_surface = item.get("action_surface") if isinstance(item.get("action_surface"), dict) else {}
             if action_surface:
                 compact_action_surface = {}
-                for key in ("primary_actions", "groups", "selection_mode", "counts"):
+                for key in ("primary_actions", "groups", "selection_mode", "counts", "batch_capabilities"):
                     value = action_surface.get(key)
                     if value not in (None, {}, []):
                         compact_action_surface[key] = value
@@ -286,7 +295,7 @@ class SystemInitPayloadBuilder:
     def _compact_search_surface(payload: dict | None) -> dict:
         raw = payload if isinstance(payload, dict) else {}
         compact = {}
-        for key in ("default_sort", "filters", "fields", "group_by", "searchpanel", "mode"):
+        for key in ("default_sort", "filters", "fields", "group_by", "searchpanel", "default_state", "mode"):
             value = raw.get(key)
             if value not in (None, {}, []):
                 compact[key] = value
