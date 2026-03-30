@@ -16,6 +16,51 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-30T02:27:00Z
+- blocker_key: `project_list_action_install_ref_v1`
+- layer_target: `domain layer delivery assets`
+- module: `smart_construction_core project list action xml`
+- reason: `263 已修掉 extension parameter duplicate-key，但 demo.reset 继续暴露出 action_sc_project_list 在安装期引用尚未加载的 tree/search view；本轮只做安装期安全修复，不动 manifest`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-30-264，去掉 project_list_actions.xml 中安装顺序敏感的 view/search refs；实测 make demo.reset 与 make dev.rebuild.full 已全部通过，并把前端热更新稳定拉起到 5174`
+- active_commit: `7468e72`
+- next_step: `Return to product usability work on the rebuilt dev environment, using http://127.0.0.1:5174/ as the stable frontend hot-reload entry`
+
+### 2026-03-30T02:15:00Z
+- blocker_key: `dev_rebuild_frontend_hot_reload_v1`
+- layer_target: `platform layer + frontend dev runtime`
+- module: `smart_construction_core demo reset bootstrap path + Makefile frontend dev reset`
+- reason: `用户要求用 Makefile 从后端到前端完整重构开发环境，并把前端热更新收成稳定入口；本轮先修 demo.reset 的重复 extension parameter 写入，再补 Makefile 管理的 frontend dev reset`
+- completed_step: `已新增 ITER-2026-03-30-263，修复 sc.core.extension_modules 重复写入；make dev.rebuild.full 已跨过原 duplicate-key 阻塞点，并新增 fe.dev.reset/frontend_dev_reset.sh 稳定前端热更新入口`
+- active_commit: `7468e72`
+- next_step: `Open a new low-risk task to fix smart_construction_core/actions/project_list_actions.xml install-time reference to missing smart_construction_core.view_project_my_list_tree so demo.reset can complete end-to-end`
+
+### 2026-03-30T02:25:00Z
+- blocker_key: `project_action_list_kanban_switch_v1`
+- layer_target: `frontend layer`
+- module: `action view mode exposure for list/kanban switching`
+- reason: `259 已确认侧边栏不是多视图入口层；当前最小正确修法是在同一 action 页内恢复列表/看板切换，并直接消费原生 action meta.views 事实`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-260，只允许前端接通 meta.views -> availableViewModes/preferredViewMode，不动侧边栏和后端契约`
+- active_commit: `7468e72`
+- next_step: `Implement ITER-2026-03-29-260 by wiring native action meta.views into view-mode resolution, then rerun frontend typecheck and verify the list/kanban switch appears inside the action page`
+
+### 2026-03-30T01:55:00Z
+- blocker_key: `project_kanban_sidebar_exposure_audit_v1`
+- layer_target: `frontend layer audit`
+- module: `scene-driven sidebar/menu exposure chain for project kanban`
+- reason: `kanban 页面消费者已经具备分栏能力，但用户当前感知的缺口转移到了侧边栏导航暴露层；这一轮先审计入口消失发生在 menu/scene facts 还是前端菜单消费过滤`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-259，只允许审计 project kanban 入口暴露链，不改后端契约和菜单行为`
+- active_commit: `7468e72`
+- next_step: `Run ITER-2026-03-29-259 by tracing available view modes, sidebar/menu contract facts, and frontend sidebar filtering, then localize the missing-entry gap`
+
+### 2026-03-30T01:35:00Z
+- blocker_key: `generic_kanban_baseline_v1`
+- layer_target: `frontend layer`
+- module: `generic contract-driven kanban consumer`
+- reason: `仓库已经回到干净基线，并切回产品可用性主线；列表和详情已有基础可用面，下一张按既定顺序切到 kanban，用 project.project 作为样板但不做模型特供`
+- completed_step: `已冻结本轮范围为新增 ITER-2026-03-29-258，只允许前端 generic kanban consumer 收敛、更新报告，不碰后端契约`
+- active_commit: `7468e72`
+- next_step: `Run ITER-2026-03-29-258 by auditing the current kanban consumer against project.project contract facts, then implement the smallest generic rendering tightening that passes typecheck`
+
 ### 2026-03-30T01:10:00Z
 - blocker_key: `app_view_config_fallback_helper_extraction_v1`
 - layer_target: `platform layer`
