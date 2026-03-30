@@ -113,6 +113,32 @@ def _list_surface_nonempty(value: Any) -> bool:
     )
 
 
+def _form_surface_nonempty(value: Any) -> bool:
+    payload = _as_dict(value)
+    if not payload:
+        return False
+    return bool(
+        _as_list(payload.get("layout"))
+        or _as_list(payload.get("header_actions"))
+        or _as_list(payload.get("stat_actions"))
+        or _as_list(payload.get("relation_fields"))
+        or _as_dict(payload.get("field_behavior_map"))
+        or _as_dict(payload.get("flags"))
+    )
+
+
+def _optimization_composition_nonempty(value: Any) -> bool:
+    payload = _as_dict(value)
+    if not payload:
+        return False
+    return bool(
+        _as_list(payload.get("toolbar_sections"))
+        or _as_dict(payload.get("active_conditions"))
+        or _as_list(payload.get("high_frequency_filters"))
+        or _as_dict(payload.get("advanced_filters"))
+    )
+
+
 def _scene_key_matches(scene_key: str, *candidates: str) -> bool:
     normalized = _text(scene_key).lower()
     if not normalized:
@@ -344,6 +370,247 @@ def _normalize_list_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _normalize_form_surface(item: Dict[str, Any]) -> Dict[str, Any]:
+    semantic_page = _as_dict(item.get("semantic_page"))
+    form_semantics = _as_dict(semantic_page.get("form_semantics"))
+    if not form_semantics:
+        parser_surface = _as_dict(item.get("parser_semantic_surface"))
+        if not parser_surface:
+            parser_surface = _as_dict(_as_dict(item.get("meta")).get("parser_semantic_surface"))
+        parser_semantic_page = _as_dict(parser_surface.get("semantic_page"))
+        form_semantics = _as_dict(parser_semantic_page.get("form_semantics"))
+
+    ui_base_contract = _as_dict(item.get("ui_base_contract"))
+    views = _as_dict(ui_base_contract.get("views"))
+    form_view = _as_dict(views.get("form"))
+    layout = _as_list(form_view.get("layout"))
+    header_actions = _as_list(form_view.get("header_buttons"))
+    stat_actions = _as_list(form_view.get("button_box")) + _as_list(form_view.get("stat_buttons"))
+
+    flags = {
+        "layout_section_count": int(form_semantics.get("layout_section_count") or len(layout) or 0),
+        "has_statusbar": bool(form_semantics.get("has_statusbar")),
+        "has_notebook": bool(form_semantics.get("has_notebook")),
+        "has_chatter": bool(form_semantics.get("has_chatter")),
+        "has_attachments": bool(form_semantics.get("has_attachments")),
+    }
+
+    return {
+        "layout": layout,
+        "header_actions": header_actions,
+        "stat_actions": stat_actions,
+        "relation_fields": _as_list(form_semantics.get("relation_fields")),
+        "field_behavior_map": _as_dict(form_semantics.get("field_behavior_map")),
+        "flags": flags,
+    }
+
+
+def _merge_form_surface(primary: Dict[str, Any], fallback: Dict[str, Any]) -> Dict[str, Any]:
+    merged = dict(fallback or {})
+    merged.update(primary or {})
+    for key in ("layout", "header_actions", "stat_actions", "relation_fields"):
+        primary_rows = _as_list(_as_dict(primary).get(key))
+        fallback_rows = _as_list(_as_dict(fallback).get(key))
+        merged[key] = primary_rows or fallback_rows
+    merged["field_behavior_map"] = _as_dict(_as_dict(primary).get("field_behavior_map")) or _as_dict(_as_dict(fallback).get("field_behavior_map"))
+    flags = _as_dict(_as_dict(fallback).get("flags"))
+    flags.update(_as_dict(_as_dict(primary).get("flags")))
+    merged["flags"] = flags
+    return merged
+
+
+def _normalize_toolbar_sections(
+    raw_rows: Any,
+    *,
+    search_surface: Dict[str, Any],
+    list_surface: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    rows = _as_list(raw_rows)
+    if rows:
+        for row in rows:
+            payload = _as_dict(row)
+            key = _text(payload.get("key"))
+            if not key:
+                continue
+            normalized.append(
+                {
+                    "key": key,
+                    "kind": _text(payload.get("kind") or key),
+                    "priority": _to_int(payload.get("priority")),
+                    "visible": bool(payload.get("visible", True)),
+                    "collapsible": bool(payload.get("collapsible", False)),
+                    "default_open": bool(payload.get("default_open", True)),
+                }
+            )
+        normalized.sort(key=lambda item: (_to_int(item.get("priority")), _text(item.get("key"))))
+        return normalized
+
+    filters = _as_list(search_surface.get("filters"))
+    group_by = _as_list(search_surface.get("group_by"))
+    searchpanel = _as_list(search_surface.get("searchpanel"))
+    fields = _as_list(search_surface.get("fields"))
+    default_sort = _as_dict(list_surface.get("default_sort"))
+
+    return [
+        {
+            "key": "search",
+            "kind": "search",
+            "priority": 10,
+            "visible": bool(fields or filters or searchpanel or group_by),
+            "collapsible": False,
+            "default_open": True,
+        },
+        {
+            "key": "active_conditions",
+            "kind": "active_conditions",
+            "priority": 20,
+            "visible": bool(_as_dict(search_surface.get("default_state")) or default_sort),
+            "collapsible": False,
+            "default_open": True,
+        },
+        {
+            "key": "quick_filters",
+            "kind": "filter_collection",
+            "priority": 30,
+            "visible": bool(filters),
+            "collapsible": False,
+            "default_open": True,
+        },
+        {
+            "key": "advanced_filters",
+            "kind": "filter_collection",
+            "priority": 40,
+            "visible": bool(searchpanel or len(filters) > 5),
+            "collapsible": True,
+            "default_open": False,
+        },
+        {
+            "key": "grouping",
+            "kind": "grouping",
+            "priority": 50,
+            "visible": bool(group_by),
+            "collapsible": False,
+            "default_open": True,
+        },
+        {
+            "key": "secondary_metadata",
+            "kind": "metadata",
+            "priority": 60,
+            "visible": bool(searchpanel or fields or default_sort),
+            "collapsible": False,
+            "default_open": True,
+        },
+    ]
+
+
+def _normalize_active_conditions(raw_payload: Any) -> Dict[str, Any]:
+    payload = _as_dict(raw_payload)
+    include_rows = _as_list(payload.get("include"))
+    include = [_text(row) for row in include_rows if _text(row)]
+    if not include:
+        include = [
+            "route_preset",
+            "search_term",
+            "quick_filter",
+            "saved_filter",
+            "group_by",
+            "sort",
+        ]
+    merge_rules = _as_dict(payload.get("merge_rules"))
+    if not merge_rules:
+        merge_rules = {"route_preset_overrides_search_term": True}
+    return {
+        "visible": bool(payload.get("visible", True)),
+        "include": include,
+        "merge_rules": merge_rules,
+    }
+
+
+def _normalize_high_frequency_filters(
+    raw_rows: Any,
+    *,
+    search_surface: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    rows = _as_list(raw_rows)
+    normalized: List[Dict[str, Any]] = []
+    if rows:
+        for row in rows:
+            payload = _as_dict(row)
+            key = _text(payload.get("key") or payload.get("name"))
+            if not key:
+                continue
+            normalized.append({"key": key})
+        return normalized
+
+    seen: List[str] = []
+    defaults = _as_dict(search_surface.get("default_state"))
+    for row in _as_list(defaults.get("filters")):
+        payload = _as_dict(row)
+        key = _text(payload.get("key") or payload.get("name"))
+        if key and key not in seen:
+            seen.append(key)
+    for row in _as_list(search_surface.get("filters")):
+        payload = _as_dict(row)
+        key = _text(payload.get("key") or payload.get("name"))
+        if key and key not in seen:
+            seen.append(key)
+        if len(seen) >= 5:
+            break
+    return [{"key": key} for key in seen[:5]]
+
+
+def _normalize_advanced_filters(
+    raw_payload: Any,
+    *,
+    search_surface: Dict[str, Any],
+    high_frequency_filters: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    payload = _as_dict(raw_payload)
+    searchpanel = _as_list(search_surface.get("searchpanel"))
+    filters = _as_list(search_surface.get("filters"))
+    high_frequency_keys = {_text(row.get("key")) for row in high_frequency_filters if isinstance(row, dict)}
+    remaining_filters = [
+        row for row in filters
+        if _text(_as_dict(row).get("key") or _as_dict(row).get("name")) not in high_frequency_keys
+    ]
+    source_payload = _as_dict(payload.get("source"))
+    return {
+        "visible": bool(payload.get("visible", bool(remaining_filters or searchpanel))),
+        "collapsible": bool(payload.get("collapsible", True)),
+        "default_open": bool(payload.get("default_open", False)),
+        "source": {
+            "include_remaining_filters": bool(source_payload.get("include_remaining_filters", True)),
+            "include_searchpanel": bool(source_payload.get("include_searchpanel", bool(searchpanel))),
+            "include_saved_filters": bool(source_payload.get("include_saved_filters", False)),
+        },
+    }
+
+
+def _normalize_optimization_composition(item: Dict[str, Any]) -> Dict[str, Any]:
+    raw = _as_dict(item.get("optimization_composition"))
+    search_surface = _as_dict(item.get("search_surface"))
+    list_surface = _as_dict(item.get("list_surface"))
+    high_frequency_filters = _normalize_high_frequency_filters(
+        raw.get("high_frequency_filters"),
+        search_surface=search_surface,
+    )
+    return {
+        "toolbar_sections": _normalize_toolbar_sections(
+            raw.get("toolbar_sections"),
+            search_surface=search_surface,
+            list_surface=list_surface,
+        ),
+        "active_conditions": _normalize_active_conditions(raw.get("active_conditions")),
+        "high_frequency_filters": high_frequency_filters,
+        "advanced_filters": _normalize_advanced_filters(
+            raw.get("advanced_filters"),
+            search_surface=search_surface,
+            high_frequency_filters=high_frequency_filters,
+        ),
+    }
+
+
 def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
     access = item.get("access") if isinstance(item.get("access"), dict) else {}
     payload = access or _as_dict(item)
@@ -382,10 +649,12 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
                     "search": 0,
                     "permission": 0,
                     "workflow": 0,
-                    "validation": 0,
-                    "action_surface": 0,
-                },
-            }
+                "validation": 0,
+                "action_surface": 0,
+                "form_surface": 0,
+                "optimization_composition": 0,
+            },
+        }
             buckets[scene_type] = row
         row["scene_count"] = int(row.get("scene_count") or 0) + 1
 
@@ -401,6 +670,8 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
         workflow_surface = entry.get("workflow_surface") if isinstance(entry.get("workflow_surface"), dict) else {}
         validation_surface = entry.get("validation_surface") if isinstance(entry.get("validation_surface"), dict) else {}
         action_surface = entry.get("action_surface") if isinstance(entry.get("action_surface"), dict) else {}
+        form_surface = entry.get("form_surface") if isinstance(entry.get("form_surface"), dict) else {}
+        optimization_composition = entry.get("optimization_composition") if isinstance(entry.get("optimization_composition"), dict) else {}
 
         if _search_surface_nonempty(search_surface):
             surface_hits["search"] = int(surface_hits.get("search") or 0) + 1
@@ -410,6 +681,10 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
             surface_hits["workflow"] = int(surface_hits.get("workflow") or 0) + 1
         if _validation_surface_nonempty(validation_surface):
             surface_hits["validation"] = int(surface_hits.get("validation") or 0) + 1
+        if _form_surface_nonempty(form_surface):
+            surface_hits["form_surface"] = int(surface_hits.get("form_surface") or 0) + 1
+        if _optimization_composition_nonempty(optimization_composition):
+            surface_hits["optimization_composition"] = int(surface_hits.get("optimization_composition") or 0) + 1
         action_counts = action_surface.get("counts") if isinstance(action_surface.get("counts"), dict) else {}
         if bool(
             int(action_counts.get("total") or 0) > 0
@@ -449,6 +724,8 @@ def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, 
                 "workflow": _ratio(int(surface_hits.get("workflow") or 0)),
                 "validation": _ratio(int(surface_hits.get("validation") or 0)),
                 "action_surface": _ratio(int(surface_hits.get("action_surface") or 0)),
+                "form_surface": _ratio(int(surface_hits.get("form_surface") or 0)),
+                "optimization_composition": _ratio(int(surface_hits.get("optimization_composition") or 0)),
             },
         }
     return metrics
@@ -972,6 +1249,16 @@ def _scene_ready_entry(
         compiled["list_surface"] = compiled_list_surface
     elif _list_surface_nonempty(seeded_list_surface):
         compiled["list_surface"] = seeded_list_surface
+    compiled_form_surface = _normalize_form_surface(compiled)
+    seeded_form_surface = _normalize_form_surface(scene_payload)
+    merged_form_surface = _merge_form_surface(compiled_form_surface, seeded_form_surface)
+    if _form_surface_nonempty(merged_form_surface):
+        compiled["form_surface"] = merged_form_surface
+    elif _form_surface_nonempty(seeded_form_surface):
+        compiled["form_surface"] = seeded_form_surface
+    optimization_composition = _normalize_optimization_composition(compiled)
+    if _optimization_composition_nonempty(optimization_composition):
+        compiled["optimization_composition"] = optimization_composition
     compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
     return compiled
 

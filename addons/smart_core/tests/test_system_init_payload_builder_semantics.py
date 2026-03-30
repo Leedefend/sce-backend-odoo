@@ -116,6 +116,37 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                                 "available_view_modes": [{"key": "tree", "label": "列表"}],
                                 "default_mode": "tree",
                             },
+                            "form_surface": {
+                                "layout": [{"type": "sheet", "children": [{"type": "field", "name": "name"}]}],
+                                "header_actions": [{"key": "save", "label": "保存"}],
+                                "stat_actions": [{"key": "stat_tasks", "label": "任务"}],
+                                "relation_fields": [{"field": "task_ids", "takeover_hint": "frontend"}],
+                                "field_behavior_map": {"name": {"readonly": False}},
+                                "flags": {"has_statusbar": True, "layout_section_count": 1}
+                            },
+                            "optimization_composition": {
+                                "toolbar_sections": [
+                                    {"key": "search", "kind": "search", "priority": 10, "visible": True}
+                                ],
+                                "active_conditions": {
+                                    "visible": True,
+                                    "include": ["route_preset", "search_term", "sort"],
+                                    "merge_rules": {"route_preset_overrides_search_term": True}
+                                },
+                                "high_frequency_filters": [
+                                    {"key": "mine"}
+                                ],
+                                "advanced_filters": {
+                                    "visible": True,
+                                    "collapsible": True,
+                                    "default_open": False,
+                                    "source": {
+                                        "include_remaining_filters": True,
+                                        "include_searchpanel": True,
+                                        "include_saved_filters": False
+                                    }
+                                }
+                            },
                             "action_surface": {
                                 "primary_actions": ["open"],
                                 "groups": [{"key": "list_actions", "actions": ["open"]}],
@@ -172,6 +203,11 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertEqual((((scene.get("list_surface") or {}).get("columns") or [])[0].get("field")), "name")
         self.assertEqual((((scene.get("list_surface") or {}).get("default_sort") or {}).get("display_label")), "更新时间 降序")
         self.assertEqual((((scene.get("list_surface") or {}).get("available_view_modes") or [])[0].get("key")), "tree")
+        self.assertEqual((((scene.get("form_surface") or {}).get("header_actions") or [])[0].get("key")), "save")
+        self.assertTrue(((scene.get("form_surface") or {}).get("flags") or {}).get("has_statusbar"))
+        self.assertEqual((((scene.get("optimization_composition") or {}).get("toolbar_sections") or [])[0].get("key")), "search")
+        self.assertEqual(((((scene.get("optimization_composition") or {}).get("high_frequency_filters") or [])[0]).get("key")), "mine")
+        self.assertTrue((((scene.get("optimization_composition") or {}).get("advanced_filters") or {}).get("collapsible")))
         self.assertTrue((((scene.get("action_surface") or {}).get("batch_capabilities") or {}).get("can_archive")))
         self.assertTrue((((scene.get("action_surface") or {}).get("batch_capabilities") or {}).get("selection_required")))
         self.assertEqual(((scene.get("permission_surface") or {}).get("reason_code")), "missing_capability")

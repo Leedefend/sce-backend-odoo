@@ -93,6 +93,90 @@ class TestSceneReadyContractBuilderSemanticConsumption(unittest.TestCase):
         self.assertEqual(((row.get("view_modes") or [])[0] or {}).get("key"), "form")
         self.assertEqual(((row.get("action_surface") or {}).get("selection_mode")), "single")
 
+    def test_form_scene_ready_emits_form_surface_native_truth(self):
+        contract = target.build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "projects.detail",
+                    "name": "项目详情",
+                    "layout": {"kind": "detail"},
+                    "target": {"route": "/r/project.project/3"},
+                    "ui_base_contract": {
+                        "parser_contract": {"view_type": "form"},
+                        "view_semantics": {"source_view": "form", "capability_flags": {"is_editable": True}},
+                        "views": {
+                            "form": {
+                                "layout": [{"type": "sheet", "children": [{"type": "field", "name": "name"}]}],
+                                "header_buttons": [{"key": "save", "label": "保存"}],
+                                "button_box": [{"key": "stat_tasks", "label": "任务"}],
+                                "stat_buttons": [{"key": "stat_docs", "label": "文档"}],
+                            }
+                        },
+                        "semantic_page": {
+                            "form_semantics": {
+                                "layout_section_count": 1,
+                                "has_statusbar": True,
+                                "has_notebook": False,
+                                "has_chatter": True,
+                                "has_attachments": False,
+                                "relation_fields": [{"field": "task_ids", "takeover_hint": "frontend"}],
+                                "field_behavior_map": {"name": {"readonly": False}},
+                            }
+                        },
+                    },
+                }
+            ],
+            role_surface={"landing_scene_key": "projects.detail"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        form_surface = row.get("form_surface") or {}
+
+        self.assertEqual((((form_surface.get("layout") or [])[0]).get("type")), "sheet")
+        self.assertEqual((((form_surface.get("header_actions") or [])[0]).get("key")), "save")
+        self.assertEqual(len(form_surface.get("stat_actions") or []), 2)
+        self.assertEqual((((form_surface.get("relation_fields") or [])[0]).get("field")), "task_ids")
+        self.assertTrue(((form_surface.get("flags") or {}).get("has_statusbar")))
+
+    def test_list_scene_ready_emits_optimization_composition_batch1(self):
+        contract = target.build_scene_ready_contract_v1(
+            scenes=[
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "layout": {"kind": "list"},
+                    "target": {"route": "/a/449"},
+                    "search_surface": {
+                        "fields": [{"name": "name", "string": "名称"}],
+                        "filters": [
+                            {"key": "activities_today", "label": "今日活动", "kind": "filter"},
+                            {"key": "mine", "label": "我的项目", "kind": "filter"},
+                            {"key": "unassigned", "label": "未分派", "kind": "filter"},
+                        ],
+                        "group_by": [{"key": "stage_id", "label": "阶段", "field": "stage_id", "kind": "group_by"}],
+                        "searchpanel": [{"name": "stage_id", "string": "阶段", "multi": True}],
+                        "default_state": {
+                            "filters": [{"key": "activities_today", "label": "今日活动", "kind": "filter"}],
+                        },
+                    },
+                    "list_surface": {
+                        "columns": [{"field": "name", "label": "名称"}],
+                        "default_sort": {"raw": "write_date desc", "display_label": "更新时间 降序"},
+                        "available_view_modes": [{"key": "tree", "label": "列表"}],
+                        "default_mode": "tree",
+                    },
+                }
+            ],
+            role_surface={"landing_scene_key": "projects.list"},
+        )
+        row = (contract.get("scenes") or [])[0]
+        optimization = row.get("optimization_composition") or {}
+
+        self.assertEqual((((optimization.get("toolbar_sections") or [])[0]).get("key")), "search")
+        self.assertEqual((((optimization.get("toolbar_sections") or [])[1]).get("key")), "active_conditions")
+        self.assertTrue(((optimization.get("active_conditions") or {}).get("visible")))
+        self.assertEqual((((optimization.get("high_frequency_filters") or [])[0]).get("key")), "activities_today")
+        self.assertTrue(((optimization.get("advanced_filters") or {}).get("collapsible")))
+
 
 if __name__ == "__main__":
     unittest.main()
