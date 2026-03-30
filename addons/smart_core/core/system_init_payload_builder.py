@@ -245,6 +245,24 @@ class SystemInitPayloadBuilder:
                         compact_list_surface[key] = value
                 if compact_list_surface:
                     compact["list_surface"] = compact_list_surface
+            form_surface = item.get("form_surface") if isinstance(item.get("form_surface"), dict) else {}
+            if form_surface:
+                compact_form_surface = {}
+                for key in ("layout", "header_actions", "stat_actions", "relation_fields", "field_behavior_map", "flags"):
+                    value = form_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_form_surface[key] = value
+                if compact_form_surface:
+                    compact["form_surface"] = compact_form_surface
+            optimization_composition = item.get("optimization_composition") if isinstance(item.get("optimization_composition"), dict) else {}
+            if optimization_composition:
+                compact_optimization_composition = {}
+                for key in ("toolbar_sections", "active_conditions", "high_frequency_filters", "advanced_filters"):
+                    value = optimization_composition.get(key)
+                    if value not in (None, {}, []):
+                        compact_optimization_composition[key] = value
+                if compact_optimization_composition:
+                    compact["optimization_composition"] = compact_optimization_composition
             action_surface = item.get("action_surface") if isinstance(item.get("action_surface"), dict) else {}
             if action_surface:
                 compact_action_surface = {}
