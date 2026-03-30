@@ -60,8 +60,10 @@ export function resolveListSceneReady(entry: SceneReadyEntry | null) {
   return {
     columns,
     defaultSort: asText(searchSurface.default_sort),
+    mode: asText(searchSurface.mode),
     filters: Array.isArray(searchSurface.filters) ? searchSurface.filters : [],
     groupBy: Array.isArray(searchSurface.group_by) ? searchSurface.group_by : [],
+    searchPanel: Array.isArray(searchSurface.searchpanel) ? searchSurface.searchpanel : [],
     searchableFields: Array.isArray(searchSurface.fields) ? searchSurface.fields : [],
     actions,
     actionSurface,

@@ -63,7 +63,7 @@
       <StatusPanel title="当前页面建议使用原生页面" :message="nativeFallbackMessage" variant="info" />
       <button class="contract-chip" @click="openNativeFallback">打开原生页面</button>
     </section>
-    <section v-if="!preferNativeListSurface && isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="vm.content.kind !== 'list' && !preferNativeListSurface && isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -110,7 +110,7 @@
         </button>
       </div>
     </section>
-    <section v-if="!preferNativeListSurface && isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="vm.content.kind !== 'list' && !preferNativeListSurface && isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -157,7 +157,7 @@
         </button>
       </div>
     </section>
-    <section v-if="!preferNativeListSurface && isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
+    <section v-if="vm.content.kind !== 'list' && !preferNativeListSurface && isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
       <p class="contract-label">{{ t('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -310,11 +310,29 @@
       :columns="columns"
       :records="records"
       :column-labels="contractColumnLabels"
-      :sort-label="sortLabel"
+      :sort-label="sortDisplayLabel"
       :sort-options="sortOptions"
       :sort-value="sortValue"
+      :sort-source-label="sortSourceLabel"
+      :search-placeholder="listSearchPlaceholder"
       :filter-value="filterValue"
       :search-term="searchTerm"
+      :quick-filters="[...vm.filters.quickFilters.primary, ...vm.filters.quickFilters.overflow]"
+      :saved-filters="listSavedFilterOptions"
+      :group-by-options="listGroupByOptions"
+      :search-panel-options="listSearchPanelOptions"
+      :searchable-field-options="listSearchableFieldOptions"
+      :searchable-field-total-count="listSearchableFieldTotalCount"
+      :searchable-field-count-label="listSearchableFieldCountLabel"
+      :saved-filter-count-label="listSavedFilterCountLabel"
+      :group-by-count-label="listGroupByCountLabel"
+      :search-panel-count-label="listSearchPanelCountLabel"
+      :route-preset-label="listRoutePresetDisplayLabel"
+      :route-preset-source="vm.filters.routePreset?.source || ''"
+      :search-mode-label="listSearchModeLabel"
+      :active-contract-filter-key="activeContractFilterKey || ''"
+      :active-saved-filter-key="activeSavedFilterKey || ''"
+      :active-group-by-field="activeGroupByField || ''"
       :subtitle="vm.page.subtitle"
       :status-label="vm.page.statusLabel"
       :primary-action-label="listPrimaryActionLabel"
@@ -352,6 +370,13 @@
       :on-search="handleSearch"
       :on-sort="handleSort"
       :on-filter="handleFilter"
+      :on-apply-contract-filter="applyContractFilter"
+      :on-clear-contract-filter="clearContractFilter"
+      :on-apply-saved-filter="applySavedFilter"
+      :on-clear-saved-filter="clearSavedFilter"
+      :on-apply-group-by="applyGroupBy"
+      :on-clear-group-by="clearGroupBy"
+      :on-clear-route-preset="clearRoutePreset"
       :on-toggle-selection="handleToggleSelection"
       :on-toggle-selection-all="handleToggleSelectionAll"
       :on-batch-action="handleBatchAction"
@@ -1035,6 +1060,143 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
 });
 const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
+function applyDefaultMarkerLabel<T extends { label?: string; isDefault?: boolean }>(rows: T[]): Array<T & { label: string }> {
+  return rows.map((row) => {
+    const baseLabel = String(row.label || '').trim();
+    return {
+      ...row,
+      label: row.isDefault && baseLabel ? `${baseLabel} · 默认` : baseLabel,
+    };
+  });
+}
+function normalizeMetadataModeLabel(mode: string): string {
+  const raw = String(mode || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'faceted' || raw === 'facet' || raw === 'searchpanel' || raw === 'panel') return '分面搜索';
+  if (raw === 'search' || raw === 'keyword' || raw === 'fulltext') return '关键字搜索';
+  if (raw === 'advanced') return '高级搜索';
+  return raw.replace(/[_-]+/g, ' ');
+}
+const nativeDefaultSortLabel = computed(() => {
+  const sceneReadyDefault = String(sceneReadyListSurface.value.defaultSort || '').trim();
+  if (sceneReadyDefault) return sceneReadyDefault;
+  return String(scene.value?.default_sort || '').trim();
+});
+const listSearchPlaceholder = computed(() => {
+  const labels = listSearchableFieldMetadata.value
+    .map((item) => String(item.label || '').trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!labels.length) return '搜索关键字';
+  if (listSearchableFieldMetadata.value.length <= labels.length) return `搜索 ${labels.join(' / ')}`;
+  return `搜索 ${labels.join(' / ')} 等 ${listSearchableFieldMetadata.value.length} 项`;
+});
+const listSearchableFieldMetadata = computed(() => {
+  const searchPanelKeys = new Set(
+    listSearchPanelOptions.value
+      .map((item) => String(item.key || '').trim())
+      .filter(Boolean),
+  );
+  const searchPanelLabels = new Set(
+    listSearchPanelOptions.value
+      .map((item) => String(item.label || '').trim())
+      .filter(Boolean),
+  );
+  const rawFields = Array.isArray(sceneReadyListSurface.value.searchableFields) ? sceneReadyListSurface.value.searchableFields : [];
+  return rawFields
+    .map((field) => String(field || '').trim())
+    .filter(Boolean)
+    .map((field) => ({ key: field, label: String(contractColumnLabels.value[field] || field).trim() || field }))
+    .filter((item) => !searchPanelKeys.has(item.key) && !searchPanelLabels.has(item.label))
+    .filter((item, index, rows) => rows.findIndex((row) => row.key === item.key) === index);
+});
+const listSearchableFieldOptions = computed(() =>
+  listSearchableFieldMetadata.value.slice(0, 6),
+);
+const listSearchableFieldPreviewCount = computed(() => listSearchableFieldOptions.value.length);
+const listSearchableFieldTotalCount = computed(() => listSearchableFieldMetadata.value.length);
+const listSearchableFieldCountLabel = computed(() => {
+  const preview = listSearchableFieldPreviewCount.value;
+  const total = listSearchableFieldTotalCount.value;
+  if (!total) return '0';
+  if (!preview || preview >= total) return String(total);
+  return `预览 ${preview} / 共 ${total}`;
+});
+const listSearchPanelOptions = computed(() => {
+  const rows = Array.isArray(sceneReadyListSurface.value.searchPanel) ? sceneReadyListSurface.value.searchPanel : [];
+  return rows
+    .map((row) => {
+      const raw = (row && typeof row === 'object') ? row as Record<string, unknown> : {};
+      const key = String(raw.name || raw.field || '').trim();
+      const fallbackLabel = String(contractColumnLabels.value[key] || key).trim() || key;
+      const baseLabel = String(raw.string || raw.label || fallbackLabel).trim();
+      const select = String(raw.select || '').trim().toLowerCase();
+      const selectLabel = select === 'multi' ? '多选' : select ? '单选' : '';
+      const label = selectLabel ? `${baseLabel} · ${selectLabel}` : baseLabel;
+      if (!key || !label) return null;
+      return { key, label };
+    })
+    .filter(Boolean) as Array<{ key: string; label: string }>;
+});
+const listSearchPanelCountLabel = computed(() => {
+  const total = listSearchPanelOptions.value.length;
+  if (!total) return '0';
+  const multiCount = listSearchPanelOptions.value.filter((item) => item.label.includes('· 多选')).length;
+  if (!multiCount) return String(total);
+  const singleCount = total - multiCount;
+  return `共 ${total}（单选 ${singleCount} / 多选 ${multiCount}）`;
+});
+const listSearchModeLabel = computed(() => {
+  const mode = String(sceneReadyListSurface.value.mode || '').trim().toLowerCase();
+  return normalizeMetadataModeLabel(mode);
+});
+const listSavedFilterOptions = computed(() =>
+  applyDefaultMarkerLabel([
+    ...savedFilterPrimaryChips.value,
+    ...savedFilterOverflowChips.value,
+  ]),
+);
+const listSavedFilterCountLabel = computed(() => {
+  const total = contractSavedFilterChips.value.length;
+  if (!total) return '0';
+  const defaultCount = contractSavedFilterChips.value.filter((chip) => Boolean((chip as { isDefault?: boolean }).isDefault)).length;
+  return defaultCount > 0 ? `${total}，默认 ${defaultCount}` : String(total);
+});
+const listGroupByOptions = computed(() =>
+  applyDefaultMarkerLabel([
+    ...groupByPrimaryChips.value,
+    ...groupByOverflowChips.value,
+  ]),
+);
+const listGroupByCountLabel = computed(() => {
+  const total = contractGroupByChips.value.length;
+  if (!total) return '0';
+  const defaultCount = contractGroupByChips.value.filter((chip) => Boolean((chip as { isDefault?: boolean }).isDefault)).length;
+  return defaultCount > 0 ? `${total}，默认 ${defaultCount}` : String(total);
+});
+const listRoutePresetDisplayLabel = computed(() => {
+  const rawLabel = String(appliedPresetLabel.value || '').trim();
+  if (!rawLabel) return '';
+  const presetFilterKey = String(route.query.preset_filter || '').trim();
+  if (presetFilterKey) {
+    const matchedQuick = contractFilterChips.value.find((chip) => String((chip as { key?: string }).key || '') === presetFilterKey) as { label?: string } | undefined;
+    if (matchedQuick?.label) return `快速筛选：${matchedQuick.label}`;
+  }
+  const savedFilterKey = String(route.query.saved_filter || '').trim();
+  if (savedFilterKey) {
+    const matchedSaved = listSavedFilterOptions.value.find((chip) => chip.key === savedFilterKey);
+    if (matchedSaved?.label) return `已保存筛选：${matchedSaved.label}`;
+  }
+  const groupByFieldKey = String(route.query.group_by || '').trim();
+  if (groupByFieldKey) {
+    const matchedGroup = listGroupByOptions.value.find((chip) => chip.key === groupByFieldKey);
+    if (matchedGroup?.label) return `分组：${matchedGroup.label}`;
+  }
+  if (/^[a-z0-9_:-]+$/i.test(rawLabel) && rawLabel.includes('_')) {
+    return '推荐预设';
+  }
+  return rawLabel;
+});
 const {
   strictContractMode,
   strictSurfaceContract,
@@ -1142,10 +1304,32 @@ const sceneContractV1 = computed<Record<string, unknown>>(() => {
   return raw as Record<string, unknown>;
 });
 const {
+  contractColumnLabels,
+  extractColumnsFromContract,
+  convergeColumnsForSurface,
+  extractKanbanFields,
+  extractKanbanProfile,
+  extractAdvancedViewFields,
+  advancedRowTitle,
+  advancedRowMeta,
+  buildGroupKey,
+  resolveModelFromContract,
+  resolveModeRecommendedRuntime,
+} = useActionViewContractShapeRuntime({
+  pageText,
+  actionContract,
+  advancedFields,
+  activeGroupByField,
+});
+const {
   sortLabel,
+  sortDisplayLabel,
+  sortSourceLabel,
   surfaceKind,
 } = useActionViewSurfaceDisplayRuntime({
   sortValue,
+  nativeDefaultSort: nativeDefaultSortLabel,
+  contractColumnLabels,
   sceneContractV1,
   strictContractMode,
   strictSurfaceContract,
@@ -1161,7 +1345,8 @@ const {
 } = useActionViewDisplayComputedRuntime({
   surfaceKind,
   records,
-  sortLabel,
+  sortDisplayLabel,
+  sortSourceLabel,
   status,
   listTotalCount,
   pageText,
@@ -1295,24 +1480,6 @@ const {
   pageText,
 });
 
-const {
-  contractColumnLabels,
-  extractColumnsFromContract,
-  convergeColumnsForSurface,
-  extractKanbanFields,
-  extractKanbanProfile,
-  extractAdvancedViewFields,
-  advancedRowTitle,
-  advancedRowMeta,
-  buildGroupKey,
-  resolveModelFromContract,
-  resolveModeRecommendedRuntime,
-} = useActionViewContractShapeRuntime({
-  pageText,
-  actionContract,
-  advancedFields,
-  activeGroupByField,
-});
 const actionableViewModes = computed(() => {
   const modes = availableViewModes.value;
   const hasKanban = modes.includes('kanban');

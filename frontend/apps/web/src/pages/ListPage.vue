@@ -16,12 +16,38 @@
     <PageToolbar
       :loading="loading"
       :search-term="searchTerm || ''"
+      :search-placeholder="searchPlaceholder || ''"
       :sort-options="sortOptions || []"
       :sort-value="sortValue || ''"
+      :sort-label="sortLabel || ''"
+      :sort-source-label="sortSourceLabel || ''"
       :filter-value="filterValue || 'all'"
       :on-search="onSearch"
       :on-sort="onSort"
       :on-filter="onFilter"
+      :quick-filters="quickFilters"
+      :saved-filters="savedFilters"
+      :group-by-options="groupByOptions"
+      :search-panel-options="searchPanelOptions"
+      :searchable-field-options="searchableFieldOptions"
+      :searchable-field-total-count="searchableFieldTotalCount || 0"
+      :searchable-field-count-label="searchableFieldCountLabel || ''"
+      :saved-filter-count-label="savedFilterCountLabel || ''"
+      :group-by-count-label="groupByCountLabel || ''"
+      :search-panel-count-label="searchPanelCountLabel || ''"
+      :route-preset-label="routePresetLabel || ''"
+      :route-preset-source="routePresetSource || ''"
+      :search-mode-label="searchModeLabel || ''"
+      :active-contract-filter-key="activeContractFilterKey || ''"
+      :active-saved-filter-key="activeSavedFilterKey || ''"
+      :active-group-by-field="activeGroupByField || ''"
+      :on-apply-contract-filter="onApplyContractFilter"
+      :on-clear-contract-filter="onClearContractFilter"
+      :on-apply-saved-filter="onApplySavedFilter"
+      :on-clear-saved-filter="onClearSavedFilter"
+      :on-apply-group-by="onApplyGroupBy"
+      :on-clear-group-by="onClearGroupBy"
+      :on-clear-route-preset="onClearRoutePreset"
     />
 
     <section v-if="summaryItems.length" class="summary-strip">
@@ -303,6 +329,11 @@ type BatchDetailLine = {
   actionLabel?: string;
 };
 
+type ToolbarChip = {
+  key: string;
+  label: string;
+};
+
 const props = defineProps<{
   title: string;
   model: string;
@@ -320,10 +351,28 @@ const props = defineProps<{
   onSearch: (value: string) => void;
   onSort: (value: string) => void;
   sortLabel?: string;
+  sortSourceLabel?: string;
   searchTerm?: string;
+  searchPlaceholder?: string;
   sortOptions?: Array<{ label: string; value: string }>;
   sortValue?: string;
   filterValue?: 'all' | 'active' | 'archived';
+  quickFilters?: ToolbarChip[];
+  savedFilters?: ToolbarChip[];
+  groupByOptions?: ToolbarChip[];
+  searchPanelOptions?: ToolbarChip[];
+  searchableFieldOptions?: ToolbarChip[];
+  searchableFieldTotalCount?: number;
+  searchableFieldCountLabel?: string;
+  savedFilterCountLabel?: string;
+  groupByCountLabel?: string;
+  searchPanelCountLabel?: string;
+  routePresetLabel?: string;
+  routePresetSource?: string;
+  searchModeLabel?: string;
+  activeContractFilterKey?: string;
+  activeSavedFilterKey?: string;
+  activeGroupByField?: string;
   subtitle: string;
   statusLabel: string;
   pageMode?: string;
@@ -334,6 +383,13 @@ const props = defineProps<{
   listProfile?: SceneListProfile | null;
   columnLabels?: Record<string, string>;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
+  onApplyContractFilter?: (key: string) => void;
+  onClearContractFilter?: () => void;
+  onApplySavedFilter?: (key: string) => void;
+  onClearSavedFilter?: () => void;
+  onApplyGroupBy?: (key: string) => void;
+  onClearGroupBy?: () => void;
+  onClearRoutePreset?: () => void;
   summaryItems?: Array<{ key: string; label: string; value: string; tone?: string }>;
   selectedIds?: number[];
   onToggleSelection?: (id: number, selected: boolean) => void;
@@ -421,6 +477,11 @@ const sortedGroupedRows = computed(() => {
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
+const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.quickFilters : []);
+const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.savedFilters : []);
+const groupByOptions = computed(() => Array.isArray(props.groupByOptions) ? props.groupByOptions : []);
+const searchPanelOptions = computed(() => Array.isArray(props.searchPanelOptions) ? props.searchPanelOptions : []);
+const searchableFieldOptions = computed(() => Array.isArray(props.searchableFieldOptions) ? props.searchableFieldOptions : []);
 const recordCountSafe = computed(() => {
   const raw = Number(props.recordCount);
   if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
