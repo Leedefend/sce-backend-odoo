@@ -25,6 +25,7 @@ type UseActionViewActionMetaRuntimeOptions = {
   resolvePortalSelfRedirectState: (input: {
     menuId: number | null;
     actionId: number | null;
+    url?: string;
     buildPathRouteTargetFn: (path: string, query?: Record<string, unknown>) => unknown;
     resolveCarryQueryFn: (extra?: Record<string, unknown>) => Record<string, unknown>;
   }) => { target: unknown };
@@ -137,6 +138,7 @@ export function useActionViewActionMetaRuntime(options: UseActionViewActionMetaR
       const portalSelfState = options.resolvePortalSelfRedirectState({
         menuId: options.menuId.value,
         actionId: options.actionId.value,
+        url,
         buildPathRouteTargetFn: options.buildPathRouteTarget,
         resolveCarryQueryFn: options.resolveCarryQuery,
       });

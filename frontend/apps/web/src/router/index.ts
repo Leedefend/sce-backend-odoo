@@ -15,6 +15,7 @@ import MyWorkView from '../views/MyWorkView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
 import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
+import CapabilityMatrixView from '../views/CapabilityMatrixView.vue';
 import { ApiError } from '../api/client';
 import { normalizeEditionQuery, parseEditionKeyFromQuery } from '../app/routeQuery';
 
@@ -36,6 +37,8 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'scene-health': '场景健康',
     'scene-packages': '场景发布包',
     'usage-analytics': '使用分析',
+    'capability-matrix': '能力矩阵',
+    'scene-capability-matrix': '能力矩阵',
     'model-form': '业务表单',
     record: '业务记录',
   };
@@ -52,10 +55,13 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView },
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
     { path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } },
+    { path: '/capability-matrix', name: 'capability-matrix', component: CapabilityMatrixView, meta: { layout: 'shell' } },
+    { path: '/portal/capability-matrix', redirect: '/s/portal.capability_matrix', meta: { layout: 'shell' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
     { path: '/s/project.management', name: 'scene-project-management', component: ProjectManagementDashboardView, meta: { layout: 'shell' } },
     { path: '/s/projects.intake', name: 'scene-projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell' } },
     { path: '/s/project.initiation', redirect: '/s/projects.intake', meta: { layout: 'shell' } },
+    { path: '/s/portal.capability_matrix', name: 'scene-capability-matrix', component: CapabilityMatrixView, meta: { layout: 'shell' } },
     { path: '/release/:productKey', name: 'release-product-entry', component: ReleaseProductEntryView, meta: { layout: 'shell' } },
     { path: '/release/operator', name: 'release-operator', component: ReleaseOperatorView, meta: { layout: 'shell' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },

@@ -41,11 +41,22 @@
           <input v-model="query" type="search" placeholder="搜索菜单..." />
         </div>
 
+        <div v-if="showReleaseSummary" class="release-summary">
+          <span class="release-summary__chip release-summary__chip--stable">
+            正式发布 {{ stableGroupCount }} 组 / {{ stableLeafCount }} 项
+          </span>
+          <span class="release-summary__chip release-summary__chip--preview">
+            原生预发布 {{ nativePreviewGroupCount }} 组 / {{ nativePreviewLeafCount }} 项
+          </span>
+        </div>
+
         <div class="menu">
           <MenuTree
             :nodes="filteredMenu"
             :active-menu-id="activeMenuId"
             :capabilities="capabilities"
+            :native-preview-group-key="nativePreviewGroupKey"
+            :release-metadata-mode="hasReleaseNavigation"
             @select="handleSelect"
           />
         </div>
@@ -198,12 +209,21 @@ const query = ref('');
 
 const menuTree = computed(() => session.menuTree);
 const releaseNavigationTree = computed(() => session.releaseNavigationTree);
+const releaseNavigationMeta = computed(() => asDict(session.deliveryEngineV1?.meta));
 const roleSurface = computed(() => session.roleSurface);
 const hasReleaseNavigation = computed(() => releaseNavigationTree.value.length > 0);
 const navigationTree = computed(() => hasReleaseNavigation.value ? releaseNavigationTree.value : menuTree.value);
 const rootNode = computed(() => (navigationTree.value.length === 1 ? navigationTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? navigationTree.value);
 const menuCount = computed(() => menuNodes.value.length);
+const nativePreviewGroupKey = computed(() => asText(releaseNavigationMeta.value?.native_preview_group_key) || '');
+const stableGroupCount = computed(() => asInteger(releaseNavigationMeta.value?.stable_group_count) || 0);
+const nativePreviewGroupCount = computed(() => asInteger(releaseNavigationMeta.value?.native_preview_group_count) || 0);
+const stableLeafCount = computed(() => asInteger(releaseNavigationMeta.value?.stable_leaf_count) || 0);
+const nativePreviewLeafCount = computed(() => asInteger(releaseNavigationMeta.value?.native_preview_leaf_count) || 0);
+const showReleaseSummary = computed(() =>
+  hasReleaseNavigation.value && (stableGroupCount.value > 0 || nativePreviewGroupCount.value > 0)
+);
 const rootTitle = computed(() => {
   const root = rootNode.value;
   return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
@@ -928,10 +948,35 @@ async function logout() {
   background: transparent;
   padding: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 6px;
   min-height: 0;
   overflow: hidden;
+}
+
+.release-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.release-summary__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.release-summary__chip--stable {
+  background: #e8f1ff;
+  color: #2454a6;
+}
+
+.release-summary__chip--preview {
+  background: #fff2d8;
+  color: #9a5a00;
 }
 
 .search input {

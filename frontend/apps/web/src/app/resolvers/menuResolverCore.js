@@ -12,6 +12,9 @@ export function resolveMenuActionCore(menuTree, menuId) {
       target: {
         menu_id: ownMenuId,
         scene_key: ownSceneKey,
+        action_id: node.meta?.action_id,
+        route: node.meta?.route,
+        meta: node.meta,
         node,
       },
     };
@@ -71,12 +74,15 @@ function findMenuNode(nodes, menuId) {
   if (!Array.isArray(nodes)) {
     return null;
   }
+  const expected = Number(menuId || 0);
   for (const node of nodes) {
-    if (node && (node.menu_id === menuId || node.id === menuId)) {
+    const nodeMenuId = Number(node?.menu_id || 0);
+    const nodeId = Number(node?.id || 0);
+    if (node && ((expected > 0 && nodeMenuId === expected) || (expected > 0 && nodeId === expected))) {
       return node;
     }
     if (node && Array.isArray(node.children) && node.children.length) {
-      const found = findMenuNode(node.children, menuId);
+      const found = findMenuNode(node.children, expected);
       if (found) {
         return found;
       }
