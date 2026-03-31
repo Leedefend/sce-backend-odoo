@@ -16,6 +16,96 @@ Each entry must include:
 
 ## Entries
 
+### 2026-03-30T12:50:00Z
+- blocker_key: `preview_release_navigation_openability_v1`
+- layer_target: `platform + frontend layer`
+- module: `native preview route fallback`
+- reason: `demo PM 的 21 项预发布菜单已经全部发布，但 /m/:menu_id 冷启动解析、scene-only 菜单 route 缺口和 smoke 假阳性一度阻断了真实可用性；本轮把 active release nav 解析、scene-only route fallback 和可重复 smoke 一起收口`
+- completed_step: `已完成 ITER-2026-03-30-345 与 ITER-2026-03-30-346：MenuView 先按 releaseNavigationTree 解析并在 system.init 后重试，preview smoke 改为真实失败判定；smart_core preview 投影新增 native route / policy scene route 透传，最终 demo_pm 的 21 项预发布菜单 smoke 全部 PASS`
+- active_commit: `ddcc2e6`
+- next_step: `Start a semantic alignment batch for preview menu labels whose landing pages are now reachable but still not perfectly aligned with the published label meaning`
+
+### 2026-03-30T13:06:00Z
+- blocker_key: `preview_business_fact_audit_v1`
+- layer_target: `domain layer governance`
+- module: `business fact audit for preview menus`
+- reason: `主线从平台壳现象切回行业业务事实层，先确认 21 项预发布菜单背后的模型、原生 action、原生视图、菜单组与 ACL 事实，再决定真正的修复优先级`
+- completed_step: `已完成 ITER-2026-03-30-347，新增 preview_menu_fact_audit 脚本并生成事实矩阵；结果显示 21 项菜单中 16 项为 act_window、3 项为 act_url、1 项为 actions.server、1 项为纯 scene_route_only，且 demo PM 未出现直接 menu-group/ACL 缺口`
+- active_commit: `ddcc2e6`
+- next_step: `Audit the non-act_window preview set first, especially act_url/actions.server/scene_route_only items, then trace their minimum data prerequisites and business meaning`
+
+### 2026-03-30T13:35:00Z
+- blocker_key: `preview_publication_policy_split_v1`
+- layer_target: `domain layer governance`
+- module: `preview publication policy`
+- reason: `业务边界已经明确：事实层只负责原生 model/menu/action 数据，portal 一类 act_url 只是原生发布锚点，真正用户可用面由自定义前端补位，不能再把 native portal frontend 当作验收目标`
+- completed_step: `已完成 ITER-2026-03-30-348 的事实审计收口：scene_route_only 与 actions.server 继续归原生业务事实可用性，三个 /portal/* act_url 明确归为“自定义前端补位层”，不再视为原生前端可用性阻塞项`
+- active_commit: `ddcc2e6`
+- next_step: `Formalize the preview publication policy into native-fact and custom-frontend lanes, then hand off the next implementation batch to the custom frontend fulfillment line`
+
+### 2026-03-30T13:45:00Z
+- blocker_key: `preview_publication_policy_split_v1`
+- layer_target: `domain layer governance`
+- module: `preview publication policy`
+- reason: `在产品边界澄清后，需要把“原生事实层提供 truth、自定义前端提供 portal-style 用户可用面”写成正式策略，避免后续继续把 native portal frontend 当作目标系统`
+- completed_step: `已完成 ITER-2026-03-30-349：正式将预发布发布策略拆成 native business-fact lane 与 custom-frontend supplement lane；当前预发布集里，项目驾驶舱/执行结构仍归原生事实链，工作台/生命周期驾驶舱/能力矩阵改由自定义前端承接`
+- active_commit: `ddcc2e6`
+- next_step: `Start the next low-risk implementation batch on the custom frontend fulfillment line for the portal-style preview entries, using native menu/action facts as the source anchors`
+
+### 2026-03-30T13:55:00Z
+- blocker_key: `custom_frontend_capability_gap_register_v1`
+- layer_target: `domain layer governance`
+- module: `custom frontend capability gap register`
+- reason: `用户要求先把边界切清楚，再把自定义前端还缺的能力登记下来；因此 portal-style 入口的实现线先冻结，先做缺口清单与实现顺序，而不是直接动前端`
+- completed_step: `已冻结 ITER-2026-03-30-350 为后续实现线，当前转入 ITER-2026-03-30-351：先登记工作台/生命周期驾驶舱/能力矩阵的自定义前端目标落点、当前缺口和后续交付顺序`
+- active_commit: `ddcc2e6`
+- next_step: `Record the exact custom frontend capability gaps and the deferred implementation order for the three portal-style preview entries`
+
+### 2026-03-30T14:05:00Z
+- blocker_key: `fact_scene_boundary_correction_v1`
+- layer_target: `scene layer governance`
+- module: `fact-vs-scene semantic boundary`
+- reason: `进一步纠偏：原生业务事实不应携带场景、类别或实验编排语义；这部分应由我们的场景编排层负责，否则业务事实层会被过程实验数据污染`
+- completed_step: `已冻结当前回合为 ITER-2026-03-30-352：只修正治理口径，明确 native facts 只提供 model/menu/action/view truth，而 scene key、class/grouping、实验路由语义归 scene orchestration layer`
+- active_commit: `ddcc2e6`
+- next_step: `Record the corrected fact-vs-scene ownership statement and use it as the boundary for all later implementation batches`
+
+### 2026-03-30T14:20:00Z
+- blocker_key: `industry_fact_scene_seed_cleanup_v1`
+- layer_target: `domain layer cleanup`
+- module: `smart_construction_core fact data`
+- reason: `行业事实层里最直接的场景污染是 smart_construction_core/data/sc_scene_seed.xml 直接落了 sc.scene / sc.scene.tile；scene 模块已具备接管记录，因此先做这一块的安全清理`
+- completed_step: `已启动 ITER-2026-03-30-353，当前范围只移除 smart_construction_core 的直接 scene seed 记录，保留 capability facts，不动 manifest 与仍在运行链中的 core_extension scene map`
+- active_commit: `ddcc2e6`
+- next_step: `Remove direct sc.scene and sc.scene.tile records from smart_construction_core/data/sc_scene_seed.xml and verify the file only retains capability facts`
+
+### 2026-03-30T14:45:00Z
+- blocker_key: `industry_runtime_scene_hook_migration_v1`
+- layer_target: `scene layer migration`
+- module: `runtime scene hook ownership`
+- reason: `直接 scene seed 已从行业事实文件移除后，剩余边界污染来自 smart_construction_core/core_extension.py 里仍在运行的 scene hook；这部分必须迁到 scene 模块，不能继续留在行业核心模块`
+- completed_step: `已完成 ITER-2026-03-30-354：新增 smart_construction_scene/core_extension.py 接管 identity/nav/surface/critical scene hooks 与 scene-oriented role surface ext facts；更新 sc.core.extension_modules 顺序，并从 smart_construction_core/core_extension.py 与 __init__.py 移除对应 active scene hook owner`
+- active_commit: `ddcc2e6`
+- next_step: `Continue scanning smart_construction_core for remaining inert scene metadata, then resume scene/publication work on the corrected boundary`
+
+### 2026-03-30T15:05:00Z
+- blocker_key: `workspace_business_row_scene_cleanup_v1`
+- layer_target: `scene layer migration`
+- module: `workspace action fact cleanup`
+- reason: `hook owner 迁移完成后，行业核心模块的 workspace business rows 里还混着 scene_key/route；这些字段属于 scene 解析语义，不该继续附着在业务事实行上`
+- completed_step: `已完成 ITER-2026-03-30-355：从 smart_construction_core/core_extension.py 的 task_items/payment_requests/risk_actions/project_actions 业务行里移除 direct scene_key/route，并在 smart_construction_scene/profiles/workspace_home_scene_content.py 中新增精确 source-key -> scene 映射接管`
+- active_commit: `ddcc2e6`
+- next_step: `Run a residual scan across smart_construction_core for any remaining scene-oriented payload fields still embedded in business facts or ext facts`
+
+### 2026-03-30T15:20:00Z
+- blocker_key: `residual_fact_scene_audit_v1`
+- layer_target: `domain layer governance`
+- module: `residual fact-layer scene audit`
+- reason: `经过 seed 清理、hook 迁移和 workspace row 清理后，需要把 smart_construction_core 剩余 scene 污染收成明确尾项，避免后续继续靠猜`
+- completed_step: `已完成 ITER-2026-03-30-356：残留项已收敛为四类，优先级最高的是 enter handlers 里仍直接发出 /s/... route 与 scene target；其次是 my-work 聚合与 capability/projection 服务里的 scene_key payload，遥后是 telemetry-only scene 维度`
+- active_commit: `ddcc2e6`
+- next_step: `Start a focused cleanup batch on direct scene route emission in smart_construction_core enter handlers`
+
 ### 2026-03-30T15:30:00Z
 - blocker_key: `native_list_readable_sort_label_v1`
 - layer_target: `frontend layer`
@@ -3432,3 +3522,616 @@ Each entry must include:
   - latest classification: `PASS`
   - repo risk remains `low`
   - next efficient action is rebuild the frontend and verify that default sort now shows `更新时间 降序`
+## 2026-03-30 迭代锚点（ITER-2026-03-30-340）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Platform Layer`
+- Module: `smart_core delivery / release navigation runtime`
+- Reason: current release navigation only publishes a small stable menu set; to accelerate productization, user-reachable native scene menus need to be projected into release navigation as pre-release entries without changing permissions or stable policy semantics
+- `340`: extended `delivery_engine` menu assembly to accept role-pruned native scene navigation as an additive source
+- `340`: projected unreleased native scene leaves into a new `原生菜单（预发布）` group with preview metadata while preserving existing stable groups
+- `340`: added focused tests to verify stable groups stay intact and native preview projection respects the already-pruned native nav input
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is wire frontend sidebar presentation to distinguish stable release groups from the new native preview group and then run a live system.init contract check
+## 2026-03-30 迭代锚点（ITER-2026-03-30-341）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Platform Layer`
+- Module: `smart_core delivery metadata surface`
+- Reason: after native preview publication was added, sidebar consumers still lacked an explicit machine-readable way to distinguish stable release groups from native preview groups
+- `341`: added `describe_nav` metadata summarization in `menu_service` so release navigation output can report stable and native-preview counts explicitly
+- `341`: extended `delivery_engine_v1.meta` with `stable_group_count`, `native_preview_group_count`, leaf counts, and `native_preview_group_key`
+- `341`: expanded focused tests to cover metadata semantics in addition to preview publication behavior
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is let the frontend sidebar consume these explicit metadata fields and visually separate stable release menus from native preview menus
+## 2026-03-30 迭代锚点（ITER-2026-03-30-342）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Frontend Layer`
+- Module: `release navigation sidebar consumer`
+- Reason: backend already exposes explicit stable/native-preview metadata, but the sidebar still rendered release navigation without consuming that distinction
+- `342`: extended frontend schema typing for `delivery_engine_v1.meta` stable/native-preview fields
+- `342`: updated `AppShell` to show a release summary chip row driven by backend stable/native-preview counts
+- `342`: updated `MenuTree` to consume `native_preview_group_key` and render `正式 / 预发布` badges and styles without label heuristics
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is refresh the live sidebar and verify the new native preview group is visually distinct under release navigation for the PM account
+## 2026-03-30 迭代锚点（ITER-2026-03-30-357）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scene Layer Migration`
+- Module: `enter handler scene-route cleanup`
+- Reason: the residual audit showed the highest-value remaining fact-layer pollution was direct `/s/...` route emission inside smart_construction_core enter handlers and quick-create redirect logic
+- `357`: added `smart_construction_scene.services.project_management_entry_target` so the project-management entry route is resolved from scene-layer registry data rather than hardcoded in industry handlers
+- `357`: replaced direct `/s/project.management` route emission in `project_quick_create_wizard` and the project dashboard / execution / plan bootstrap / cost / payment / settlement enter handlers with scene-layer target resolution
+- `357`: kept the visible entry behavior stable while removing the route literal from the industry handlers themselves
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue the residual cleanup on `my_work` summary and aggregate payload `scene_key` ownership
+## 2026-03-30 迭代锚点（ITER-2026-03-30-358）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scene Layer Migration`
+- Module: `my_work scene-key cleanup`
+- Reason: after enter-handler route cleanup passed, the next residual scene pollution slice was `my_work` summary and aggregate payloads still embedding scene-key defaults inside `smart_construction_core`
+- `358`: added `smart_construction_scene.services.my_work_scene_targets` to own item/section/summary scene-key resolution and target composition for `my_work`
+- `358`: updated `my_work_aggregate_service` to resolve scene keys through the scene layer instead of defaulting inside the core service
+- `358`: removed direct scene-key assignment from `my_work_summary` business row builders while preserving output compatibility by continuing to expose `scene_key` and `target.scene_key`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue the residual cleanup on capability/projection services that still bake `scene_key` into business payloads
+## 2026-03-30 迭代锚点（ITER-2026-03-30-359）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scene Layer Migration`
+- Module: `capability and projection scene-key cleanup`
+- Reason: after the enter-handler and my_work slices passed, capability/projection services were the next residual area still baking scene semantics into business-facing payloads
+- `359`: added `smart_construction_scene.services.capability_scene_targets` to own capability-key and execution-source-model scene bindings
+- `359`: updated `capability_registry` to resolve entry targets and default payloads from scene-layer bindings instead of core-owned scene resolution helpers
+- `359`: removed execution projection `scene_key` config from `SOURCE_CONFIG`, resolving it through the scene layer while preserving emitted rows
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is remove the leftover definition-time scene placeholder parameter from capability_registry
+## 2026-03-30 迭代锚点（ITER-2026-03-30-360）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scene Layer Migration`
+- Module: `capability definition cleanup`
+- Reason: after scene binding ownership moved into `smart_construction_scene`, `capability_registry` still retained a leftover definition-time scene placeholder parameter
+- `360`: removed the placeholder parameter from `_cap` and cleaned the capability definition table so it now carries business fields only
+- `360`: preserved emitted capability payload shape by keeping runtime scene binding resolution entirely in `smart_construction_scene.services.capability_scene_targets`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is audit the telemetry-only `scene_key` dimensions and decide which remain acceptable analytics metadata
+## 2026-03-30 迭代锚点（ITER-2026-03-30-361）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `telemetry scene dimension audit`
+- Reason: after all user-facing payload scene ownership was moved out of `smart_construction_core`, the remaining `scene_key` usages were concentrated in telemetry handlers and needed an explicit classification decision
+- `361`: audited `usage_track` and `usage_report` scene-key usage and confirmed it only exists in analytics counters, prefix filters, rankings, and daily usage series
+- `361`: confirmed these telemetry dimensions do not flow back into business payloads, menu targets, capability targets, or work-item targets
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is close the current payload-cleanup line and, if desired, open a separate governance line for telemetry naming normalization
+## 2026-03-30 迭代锚点（ITER-2026-03-30-362）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `industry business fact-chain usability audit`
+- Reason: after the scene-pollution cleanup line passed, the next low-risk step was to re-anchor on real industry business usability through model/menu/action/view/permission/data-prerequisite facts instead of continuing semantic cleanup
+- `362`: classified the current `21` published preview menus into `16` native-usable entries, `1` data/context-dependent native entry, and `4` custom-frontend-required anchors
+- `362`: locked the interpretation that the remaining narrow native-fact usability gap is `执行结构`, while the portal-style and scene-route anchors stay in the custom-frontend fulfillment lane
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open a focused repair batch for the execution-structure context bridge and first-success path
+## 2026-03-30 迭代锚点（ITER-2026-03-30-363）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scenario Product Layer`
+- Module: `execution structure entry usability bridge`
+- Reason: the fact-chain audit reduced the native usability gap to a single narrow issue, where the `执行结构` preview menu still depended on manual project recovery after a generic warning
+- `363`: updated `action_exec_structure_entry` so a single reachable project opens WBS directly instead of always warning and bouncing through a broad project list
+- `363`: kept the warning path for multi-project users, but now redirects them to the lifecycle project list with the `我的项目` filter preloaded
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue the native-fact usability line on the remaining act_window pages by checking value/data readiness instead of raw reachability
+## 2026-03-30 迭代锚点（ITER-2026-03-30-364）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `native act-window value readiness audit`
+- Reason: after the execution-structure bridge fix, the next low-risk step was to separate pages that merely open from pages that already provide usable demo PM business value
+- `364`: classified the remaining `16` native act-window pages into `9` ready-with-value pages, `5` ready-but-data-thin pages, and `2` ready-but-config/admin-oriented pages
+- `364`: narrowed the next high-value native repair target to the PM-visible data-thin trio `投标管理 / 工程资料 / 工程结构`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open a focused native data-readiness batch for tender/documents/work-breakdown
+## 2026-03-30 迭代锚点（ITER-2026-03-30-365）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scenario Product Layer`
+- Module: `demo fact seeding for PM-visible native pages`
+- Reason: the native value-readiness audit narrowed the next repair target to `投标管理 / 工程资料 / 工程结构`, where the lowest-risk correction was to seed minimal business facts in the existing demo dataset
+- `365`: extended the already loaded `s60_project_cockpit/10_cockpit_business_facts.xml` file with one tender bid, a minimal WBS chain, and two engineering documents tied to the seeded WBS node
+- `365`: upgraded `smart_construction_demo` in `sc_demo` and re-ran `verify.smart_core` successfully after the seed was applied
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is re-audit the repaired PM trio for default/filter quality and then decide whether to move the native value line to treasury/payment-ledger pages
+## 2026-03-30 迭代锚点（ITER-2026-03-30-366）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `repaired PM trio quality re-audit`
+- Reason: after seeding minimal demo facts for tender/documents/work-breakdown, the next low-risk step was to verify whether those pages were now good enough or still needed only small first-screen polish
+- `366`: confirmed that `投标管理` and `工程资料` are now good enough for demo PM first-screen value
+- `366`: reduced the residual native PM tail to a single small polish target on `工程结构`, where the remaining issue is default focus rather than missing data
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open one small native polish batch on `action_work_breakdown` first-screen defaults
+## 2026-03-30 迭代锚点（ITER-2026-03-30-367）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scenario Product Layer`
+- Module: `work-breakdown landing polish`
+- Reason: after the repaired PM trio re-audit, the residual native PM gap was reduced to a single small first-screen issue on `工程结构`
+- `367`: updated `action_work_breakdown` to preload `按项目` grouping instead of opening as a flat undifferentiated tree
+- `367`: added a native help block so PM users understand the intended project-first reading path on first entry
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is close the native PM trio line and open a read-only audit on the finance-generated native pages `资金台账 / 付款记录`
+## 2026-03-30 迭代锚点（ITER-2026-03-30-368）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `finance-generated native value readiness audit`
+- Reason: after the native PM trio line closed, the next low-risk step was to judge whether the remaining finance-generated native pages already provide first-screen value instead of only raw reachability
+- `368`: confirmed with live `sc_demo` table facts that `付款记录` already has `2` usable rows and is good enough for demo PM first-screen value
+- `368`: confirmed that `资金台账` remains structurally reachable but empty, so the residual native finance gap is now narrowed to treasury-ledger generation or seeding
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open one more read-only audit on treasury-ledger generation prerequisites before choosing any corrective batch
+## 2026-03-30 迭代锚点（ITER-2026-03-30-369）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `treasury-ledger prerequisite audit`
+- Reason: after `368` reduced the residual finance-native gap to a single empty page, the next low-risk step was to decide whether that gap came from missing demo facts or a deeper business-trigger absence
+- `369`: confirmed with live `sc_demo` facts that the database already contains substantial payment/settlement business records, while `sc_treasury_ledger` still has zero rows
+- `369`: confirmed that the remaining gap is best treated as a treasury-ledger trigger-gap or intentionally unfulfilled native flow, not a simple seed omission
+- state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - repo risk moves to `guarded`
+  - next efficient action is stop the low-risk native audit line and open a dedicated finance-governed batch before any corrective change
+## 2026-03-30 迭代锚点（ITER-2026-03-30-370）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `treasury-ledger ownership audit`
+- Reason: after `369` identified a treasury trigger-gap, the next low-risk step was to decide whether production and tests agree on who owns treasury-ledger generation
+- `370`: confirmed that production explicitly owns `payment.ledger` generation through `payment.request`, but does not expose an equivalent treasury-ledger generation helper or hook
+- `370`: confirmed that existing treasury tests only create rows manually to verify ACL/aggregate behavior after the fact, rather than proving a production trigger chain
+- state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - repo risk remains `guarded`
+  - next efficient action is open a finance-governed batch that explicitly chooses treasury-ledger ownership before any implementation
+## 2026-03-30 迭代锚点（ITER-2026-03-30-371）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Domain Layer`
+- Module: `demo fact source cleanup`
+- Reason: the industry-core boundary discussion identified one clear misplaced file, where dormant demo business facts were still parked under `smart_construction_core/data`
+- `371`: merged `cost_domain_demo.xml` business-fact records into `smart_construction_demo/data/base/cost_demo.xml`
+- `371`: removed the orphan demo facts file from `smart_construction_core` without touching any manifest
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is audit the remaining `smart_construction_core/data` files and classify which are true runtime baseline/config versus any still-misplaced demo facts
+## 2026-03-30 迭代锚点（ITER-2026-03-30-372）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `core data ownership classification`
+- Reason: after the dormant demo facts file was removed from core, the next low-risk step was to classify the remaining core data assets precisely instead of assuming every `data` file should move to demo
+- `372`: confirmed that no further obvious demo business-fact files remain under `smart_construction_core/data`
+- `372`: narrowed the remaining issue to ownership of non-demo seeds, especially orchestration/capability/bootstrap records that may belong in scene/platform-aligned modules rather than demo
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is audit which remaining non-demo seed files should stay in core and which should move to scene/platform ownership
+## 2026-03-30 迭代锚点（ITER-2026-03-30-373）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `non-demo seed ownership classification`
+- Reason: after demo facts were cleaned out and the remaining core data files were classified, the next low-risk step was to determine which remaining seed files are really domain baselines and which are closer to scene/platform ownership
+- `373`: confirmed that domain workflow/sequence/runtime baseline files should stay in `smart_construction_core`
+- `373`: narrowed the next move candidates to orchestration/bootstrap-oriented seeds, especially `sc_scene_seed.xml` and `sc_capability_group_seed.xml`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open one focused migration batch for scene/capability seeds while keeping domain runtime baselines in core
+## 2026-03-30 迭代锚点（ITER-2026-03-30-374）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scene Layer`
+- Module: `capability and scene seed ownership migration`
+- Reason: after the ownership audit narrowed the move candidates, the next low-risk step was to migrate orchestration-oriented seeds away from active core ownership without changing manifests
+- `374`: moved capability-group and capability seed definitions into `smart_construction_scene/data/sc_scene_orchestration.xml` using prefixed XMLIDs for compatibility
+- `374`: converted the old core seed files into compatibility shims so the existing core manifest can still load safely
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is audit the remaining bootstrap-style files and decide whether they should stay in core or move to platform/governance ownership
+## 2026-03-30 迭代锚点（ITER-2026-03-30-375）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `bootstrap-style data ownership`
+- Reason: after the scene/capability seed migration, the remaining ownership question was concentrated on bootstrap-style non-demo data files
+- `375`: confirmed that `sc_extension_params.xml` and `sc_extension_runtime_sync.xml` are the next clean move candidates because they belong to enterprise/platform runtime bootstrap
+- `375`: confirmed that `sc_cap_config_admin_user.xml` should stay in core for now, and `sc_subscription_default.xml` belongs to a separate governance/subscription cleanup line
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open one focused migration batch for the two extension bootstrap files
+## 2026-03-30 迭代锚点（ITER-2026-03-30-376）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Platform Runtime Bootstrap`
+- Module: `extension bootstrap ownership migration`
+- Reason: after the ownership audit isolated the two extension bootstrap files, the next low-risk step was to move their active ownership to enterprise runtime bootstrap without manifest changes
+- `376`: moved the active `sc.core.extension_modules` bootstrap parameter into `smart_enterprise_base/data/runtime_params.xml`
+- `376`: converted `sc_extension_params.xml` and `sc_extension_runtime_sync.xml` in `smart_construction_core` into compatibility shims so the core manifest can keep loading safely
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is audit the remaining bootstrap/governance data files, especially `sc_subscription_default.xml` and `sc_cap_config_admin_user.xml`, before any further ownership migration
+## 2026-03-30 迭代锚点（ITER-2026-03-30-377）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `remaining bootstrap and governance data ownership`
+- Reason: after the extension-bootstrap migration, the ownership question narrowed to the two final non-demo bootstrap/governance files still under `smart_construction_core/data`
+- `377`: confirmed that `sc_cap_config_admin_user.xml` should stay in core for now because it is tightly coupled to the core-owned `group_sc_cap_config_admin`
+- `377`: confirmed that `sc_subscription_default.xml` is not demo or scene/runtime bootstrap data, but a separate subscription-governance seed line that should only move under its own dedicated objective
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is stop this ownership-migration chain and reopen only under a dedicated subscription-governance objective if needed later
+## 2026-03-30 迭代锚点（ITER-2026-03-30-378）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `subscription governance ownership`
+- Reason: after the generic core-data ownership cleanup line ended, the remaining subscription-governance assets needed an explicit isolated ownership decision instead of being half-migrated by inertia
+- `378`: confirmed that `sc.subscription.plan` is part of a core-local subsystem with its own models, ACLs, admin views/menus, default data, and ops-controller/runtime usage
+- `378`: confirmed that `sc_subscription_default.xml` should stay in `smart_construction_core` for now and should only move under a dedicated subscription-governance design objective
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is stop the ownership-migration chain here and only reopen subscription governance as a dedicated standalone objective
+## 2026-03-30 迭代锚点（ITER-2026-03-30-379）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `business fact usability prioritization`
+- Reason: after the core data ownership cleanup line ended, the active objective needed to return to product-facing usability confirmation without accidentally crossing into the already-guarded finance trigger gap
+- `379`: re-anchored the resumed low-risk lane on native business-fact usability rather than ownership cleanup
+- `379`: explicitly fenced `资金台账` out of the low-risk continuation lane because its remaining gap is a finance-governed trigger/ownership issue, not a simple first-screen polish issue
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is resume low-risk usability auditing on the remaining non-finance native business surfaces
+## 2026-03-30 迭代锚点（ITER-2026-03-30-380）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `project-centric native business usability`
+- Reason: after re-anchoring the product objective on business-fact usability, the next low-risk step was to confirm whether the main project-centric native pages already delivered real first-screen value for demo PM users
+- `380`: confirmed that `项目台账（试点）`, `项目驾驶舱`, `项目指标`, and `项目列表（演示）` are all already supported by credible default views and demo business facts
+- `380`: confirmed that this project-centric quartet does not require another low-risk repair batch right now
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue the low-risk usability line on the remaining non-finance native surfaces, while keeping treasury-ledger work fenced behind finance governance
+## 2026-03-30 迭代锚点（ITER-2026-03-30-381）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `config-oriented native page usability boundary`
+- Reason: after confirming the project-centric operational quartet, the remaining low-risk native pages needed an explicit decision on whether they still belonged to the PM business-fact usability objective
+- `381`: confirmed that `阶段要求配置` and `业务字典` are usable but configuration-oriented, not PM operational fact surfaces
+- `381`: moved those pages out of the active business-fact usability goal and into a separate admin/configuration lane
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is continue only on remaining operational native surfaces or switch to the custom-frontend fulfillment lane
+## 2026-03-30 迭代锚点（ITER-2026-03-30-382）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `operational usability lane closure`
+- Reason: after confirming project-centric native pages and excluding config-oriented pages, the remaining question was whether the native operational PM lane still had any low-risk unresolved surface
+- `382`: confirmed that the native operational PM lane is effectively complete for the current objective
+- `382`: handed the next eligible execution lane to the custom frontend supplement surfaces `工作台 / 生命周期驾驶舱 / 能力矩阵`, while keeping `资金台账` fenced behind finance governance
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is start the custom frontend supplement lane from `工作台`
+## 2026-03-30 迭代锚点（ITER-2026-03-30-383）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `workbench supplement viability`
+- Reason: the next active lane started with `工作台`, but the repository already appeared to contain a unified custom home/work surface and needed a formal viability decision before any redundant implementation
+- `383`: confirmed that `工作台` already has a viable minimal custom frontend replacement through the unified home lane (`HomeView`) plus the execution continuation lane (`MyWorkView`)
+- `383`: closed the previously recorded workbench supplement ambiguity and moved the next supplement priority to `生命周期驾驶舱`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is start the custom frontend supplement batch for `生命周期驾驶舱`
+## 2026-03-30 迭代锚点（ITER-2026-03-30-384）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `lifecycle dashboard supplement viability`
+- Reason: after confirming that the workbench supplement lane already had a viable custom frontend replacement, the next active supplement question was whether lifecycle already had the same status
+- `384`: confirmed that `生命周期驾驶舱` already has a viable minimal custom frontend replacement through `ProjectManagementDashboardView` at `/s/project.management`
+- `384`: closed the previously recorded lifecycle supplement ambiguity and moved the next supplement priority to `能力矩阵`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is start the supplement batch for `能力矩阵`
+## 2026-03-30 迭代锚点（ITER-2026-03-30-385）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `capability matrix supplement viability`
+- Reason: after confirming viable minimal custom replacements for workbench and lifecycle dashboard, the final supplement question was whether capability matrix already had an equivalent replacement or remained the last real missing surface
+- `385`: confirmed that `能力矩阵` does not yet have a viable minimal custom frontend replacement in the current codebase
+- `385`: reduced the supplement line to one explicit remaining real gap: `能力矩阵`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open the focused definition/implementation batch for `能力矩阵`
+## 2026-03-30 迭代锚点（ITER-2026-03-30-386）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Frontend Layer`
+- Module: `capability matrix custom supplement`
+- Reason: after the audit chain confirmed that `能力矩阵` was the only remaining missing custom supplement surface, the next low-risk batch was to implement a minimal SPA-owned replacement and normalize the abandoned portal anchor into it
+- `386`: added a dedicated custom frontend page for `能力矩阵` that consumes the existing `/api/contract/capability_matrix` contract and renders grouped read-only capability cards
+- `386`: normalized `/portal/capability-matrix` and the corresponding self-target act_url flow into the platform-owned route `/s/portal.capability_matrix`
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is run a focused supplement-closure audit for `能力矩阵` and confirm that the custom frontend supplement line is now fully closed
+## 2026-03-30 迭代锚点（ITER-2026-03-30-387）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `capability matrix supplement closure`
+- Reason: after implementing the minimal capability-matrix custom page, the next low-risk batch was to verify whether the supplement lane was now fully closed and no longer depended on native portal frontend behavior
+- `387`: confirmed that `CapabilityMatrixView` plus `/s/portal.capability_matrix` now provide the required custom surface
+- `387`: confirmed that the native portal act_url anchor `/portal/capability-matrix` is now bridged into the SPA route and no longer blocks the active product objective
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is stop this supplement-gap chain and switch to the next independent product objective
+## 2026-03-31 迭代锚点（ITER-2026-03-31-388）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `fact to custom frontend consistency`
+- Reason: after confirming that the custom supplement surfaces existed and were usable, the next objective was to verify whether they still matched the underlying business-fact layer and publication semantics
+- `388`: confirmed that `生命周期驾驶舱` remains materially fact-aligned through intent/runtime block loading
+- `388`: confirmed that `工作台` has drifted from the original native dashboard fact anchor and now behaves as a broader product orchestration surface
+- `388`: confirmed that `能力矩阵` is fact-backed but still has scene-target drift because backend scene publication metadata points to `/s/project.management` while the SPA owns `/s/portal.capability_matrix`
+- state after this round:
+  - latest classification: `PASS_WITH_RISK`
+  - repo risk is now `medium`
+  - next efficient action is stop this chain and open a dedicated consistency-repair objective before further product-facing claims of alignment
+## 2026-03-31 迭代锚点（ITER-2026-03-31-389）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Scene Layer`
+- Module: `portal capability matrix publication target`
+- Reason: after the consistency audit identified explicit route drift for `portal.capability_matrix`, the next low-risk repair batch was to align backend scene publication metadata with the SPA-owned route
+- `389`: updated the scene layout publication target for `portal.capability_matrix` from `/s/project.management` to `/s/portal.capability_matrix`
+- `389`: updated the scene registry profile so the same scene key resolves to the same SPA-owned route in runtime scene facts
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk returns to `low`
+  - next efficient action is run a focused post-repair audit and confirm that capability-matrix consistency drift is now closed
+## 2026-03-31 迭代锚点（ITER-2026-03-31-390）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `capability matrix post-repair consistency`
+- Reason: after the scene-target repair, the next low-risk step was to confirm whether the explicit capability-matrix consistency drift had actually been closed
+- `390`: confirmed that scene facts, router ownership, and the custom capability-matrix page now all agree on `/s/portal.capability_matrix`
+- `390`: removed capability matrix from the active consistency-risk list and reduced the remaining question to the separate `工作台` classification issue
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open a governance batch for `工作台` classification and ownership semantics
+## 2026-03-31 迭代锚点（ITER-2026-03-31-391）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `workbench classification`
+- Reason: after closing the explicit capability-matrix drift, the only remaining question was whether the current `工作台` should be repaired back toward the native portal-dashboard fact anchor or formally reclassified as a product orchestration surface
+- `391`: confirmed that the native `portal.dashboard` fact anchor still exists as a narrow five-entry registry and scene-backed dashboard fact surface
+- `391`: confirmed that the current custom `工作台` is now driven by orchestration contracts, scene/session state, and capability grouping, so it should be formally classified as a product orchestration surface
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is close the fact-to-custom consistency line and switch to the next independent product or governance objective
+## 2026-03-31 迭代锚点（ITER-2026-03-31-392）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `business fact vs custom frontend transactability`
+- Reason: after closing the earlier consistency and ownership questions, the next product question was whether the custom frontend surfaces merely looked aligned or could actually complete business handling flows
+- `392`: confirmed that `工作台` is a navigation/orchestration surface rather than a business-handling page
+- `392`: confirmed that `我的工作` already supports real todo handling through `my.work.complete` and `my.work.complete_batch`
+- `392`: confirmed that `生命周期驾驶舱` already supports real non-finance handling loops through intent-driven action execution and cost-entry submission
+- `392`: confirmed that `能力矩阵` is fact-aligned but intentionally read-only and governance-oriented
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open a focused follow-up only for surfaces that still need stronger actionable handling, rather than treating all custom frontend surfaces as the same class
+## 2026-03-31 迭代锚点（ITER-2026-03-31-393）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `native to custom capability alignment`
+- Reason: the next question was whether native menu/action/view capabilities still survived the parsing and custom-delivery chain without semantic reinterpretation
+- `393`: confirmed that `我的工作` still faithfully handles native work-item capability through the same summary/complete intent chain
+- `393`: confirmed that `生命周期驾驶舱` still faithfully handles the audited non-finance project-management capability through entry, block, and action intent flows
+- `393`: confirmed that `能力矩阵` still faithfully renders native capability visibility and target-opening semantics
+- `393`: confirmed that `工作台` is the main semantically shifted surface because its custom delivery has expanded beyond the native five-entry dashboard capability
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open a focused follow-up only for `工作台` if stricter native-capability fidelity is still required
+## 2026-03-31 迭代锚点（ITER-2026-03-31-394）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `workbench native fidelity gaps`
+- Reason: after `393` reduced the native-to-custom alignment issue to workbench only, the next low-risk step was to decompose its exact fidelity gaps before deciding whether any repair was justified
+- `394`: confirmed that workbench diverges from native `portal.dashboard` in entry fidelity because the custom entry set is broader than the native fixed five-entry registry
+- `394`: confirmed that workbench diverges in render fidelity because it renders a larger workspace composition rather than the native compact dashboard-entry fact shape
+- `394`: confirmed that workbench diverges in delivery fidelity because it adds higher-level routing, recommendation, risk, and enablement logic beyond native target opening
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is accept workbench as product behavior unless the owner explicitly opens a strict native-fidelity repair objective
+## 2026-03-31 迭代锚点（ITER-2026-03-31-395）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `PM surface ownership baseline`
+- Reason: after the owner accepted the custom workbench as intentional product behavior, the next low-risk step was to freeze a stable PM-facing ownership baseline for future implementation work
+- `395`: froze `工作台` as an accepted custom product surface rather than a native-fidelity handling anchor
+- `395`: froze `我的工作` and `生命周期驾驶舱` as the faithful PM handling anchors for future execution work
+- `395`: froze `能力矩阵` as the faithful governance/read-only anchor for future visibility work
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is choose the next independent objective by ownership class instead of reopening cross-class alignment debates
+## 2026-03-31 迭代锚点（ITER-2026-03-31-396）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `custom business flow pages vs business facts`
+- Reason: the next active objective was to directly verify whether custom business flow pages still matched business facts in page structure, business fields, and delivery logic
+- `396`: confirmed that `我的工作` remains strongest on fields and delivery alignment, despite a richer fallback structure
+- `396`: confirmed that `生命周期驾驶舱` remains structurally aligned and delivery-aligned on the audited non-finance subset
+- `396`: confirmed that `项目立项` is the current strongest gap because the custom page acts mainly as a routing shell instead of directly rendering the fact-layer form structure and field surface
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open the next focused batch only if the owner wants to address the `项目立项` structure/field drift
+## 2026-03-31 迭代锚点（ITER-2026-03-31-397）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `source of flow-page mixing`
+- Reason: after `396` identified visible drift and mixing, the next low-risk step was to determine whether those problems came from backend contract/runtime outputs or from frontend realization choices
+- `397`: proved that `projects.intake` backend contract is still a clean form surface, while the custom page is the layer that turns it into a two-card routing shell
+- `397`: proved that `project.management` backend exposes adjacent slice capabilities, but the visible mixed experience mainly comes from the frontend dashboard component unifying multiple scene entries and block types into one page
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is open a focused repair batch only if the owner wants to reduce the confirmed frontend-originated drift, starting with `projects.intake`
+## 2026-03-31 迭代锚点（ITER-2026-03-31-398）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Frontend Layer`
+- Module: `projects.intake scene handoff`
+- Reason: after `397` proved that the strongest current drift was frontend-originated in `projects.intake`, the next low-risk repair was to stop rendering a custom routing shell and hand the scene route directly to the existing form surface
+- `398`: removed the two-card custom intake shell from `ProjectsIntakeView.vue`
+- `398`: changed `/s/projects.intake` to hand off directly to `/f/project.project/new` while preserving `scene_key` and workspace context
+- `398`: kept only a minimal fallback card so the page still has a recovery path if auto-navigation does not complete
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is re-audit `projects.intake` against business facts before deciding whether any further scene-native rendering work is still justified
+## 2026-03-31 迭代锚点（ITER-2026-03-31-399）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `ddcc2e6`
+- Layer Target: `Governance Audit`
+- Module: `projects.intake post-repair alignment`
+- Reason: after `398` replaced the custom intake shell with a direct form handoff, the next low-risk step was to verify whether the major business-fact drift had actually been removed
+- `399`: confirmed that `projects.intake` no longer defines its own business split page and now hands off directly to the existing form surface
+- `399`: reduced the remaining gap to a narrow residual structural difference, because the scene route still delegates rather than rendering a richer scene-native shell itself
+- state after this round:
+  - latest classification: `PASS`
+  - repo risk remains `low`
+  - next efficient action is move to the next active business-fact alignment target unless the owner explicitly wants a richer scene-native intake shell
