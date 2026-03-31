@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-03-31-396",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the custom business flow pages and found mixed alignment: my-work and lifecycle dashboard remain mostly aligned, while project intake is the main page whose structure and field surface have shifted away from the business-fact form definition.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-396.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-396.md"
+  },
+  "classification_counts": {
+    "aligned_structure": 1,
+    "partially_aligned_structure": 1,
+    "shifted_structure": 1,
+    "aligned_delivery": 2,
+    "partially_aligned_delivery": 1
+  },
+  "next_suggestion": "If the next batch is implementation-oriented, focus on project intake because it shows the strongest structure and field drift from business facts."
+}

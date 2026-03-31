@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-30-370",
+  "status": "PASS_WITH_RISK",
+  "classification": "PASS_WITH_RISK",
+  "summary": "Determined that production implements payment-ledger generation but not treasury-ledger generation, while tests only seed treasury rows manually for read/ACL coverage.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-370.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-370.md"
+  },
+  "classification_counts": {
+    "ownership_gap_confirmed": 1
+  },
+  "next_suggestion": "Open a finance-governed batch that explicitly decides treasury-ledger ownership before any corrective implementation."
+}

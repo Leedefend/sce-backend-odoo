@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-30-368",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the finance-generated native pages and found that payment ledger is already demo-usable, while treasury ledger remains reachable but empty in live sc_demo data.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-368.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-368.md"
+  },
+  "classification_counts": {
+    "good_enough_now": 1,
+    "reachable_but_data_thin": 1
+  },
+  "next_suggestion": "Open one more read-only audit on treasury-ledger generation prerequisites before choosing a low-risk corrective batch."
+}

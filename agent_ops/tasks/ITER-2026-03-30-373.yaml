@@ -1,0 +1,78 @@
+task_id: ITER-2026-03-30-373
+title: Audit remaining non-demo seed ownership beyond smart_construction_core
+type: audit
+status: in_progress
+priority: medium
+
+goal: >
+  Audit the remaining non-demo seed files in `smart_construction_core/data` and
+  determine which should stay in domain core versus which are better owned by
+  scene/platform-aligned modules.
+
+user_visible_outcome:
+  - clear ownership judgment for the remaining non-demo seed files
+  - narrowed migration candidates beyond the already completed demo-fact cleanup
+  - a low-risk next cleanup recommendation if any file is clearly misplaced
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit only
+  - do not change code or data in this batch
+  - focus on ownership boundaries, not implementation details
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Governance Audit
+  module: non-demo seed ownership classification
+  module_owner: agent_ops
+  kernel_or_scenario: scenario
+  reason: >
+    After demo facts were cleaned out and the remaining core data files were
+    classified, the next low-risk step is to decide whether some of those
+    non-demo seed files should move to scene/platform ownership instead of
+    staying in the industry core module.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-373.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - audit_scope_spills_into_code_changes
+
+deliverables:
+  - ownership audit report for remaining non-demo seed files
+  - task result artifact for ITER-2026-03-30-373
+  - delivery log checkpoint with the next cleanup recommendation
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-373.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-373.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-373.json
+
+depends_on:
+  - ITER-2026-03-30-372

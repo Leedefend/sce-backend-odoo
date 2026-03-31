@@ -1,0 +1,38 @@
+{
+  "task_id": "ITER-2026-03-30-351",
+  "status": "PASS",
+  "layer_target": "Domain Layer Governance",
+  "module": "custom frontend capability gap register",
+  "kernel_or_scenario": "scenario",
+  "summary": [
+    "Deferred the portal-style custom frontend implementation line",
+    "Recorded the custom frontend capability gaps for 工作台、生命周期驾驶舱、能力矩阵",
+    "Fixed the deferred implementation order so later batches start from 工作台 first"
+  ],
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-30-351.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-351.md"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-351.yaml",
+      "result": "PASS"
+    }
+  ],
+  "risk": {
+    "level": "low",
+    "notes": [
+      "Governance-only batch",
+      "No implementation or behavior change",
+      "Reduces future frontend drift by fixing target surfaces and delivery order"
+    ]
+  },
+  "rollback": [
+    "git restore agent_ops/tasks/ITER-2026-03-30-351.yaml",
+    "git restore docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-351.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-351.json"
+  ],
+  "next_suggestion": "Start the next frontend implementation batch with 工作台 only, using the native menu/action anchor as the source truth."
+}

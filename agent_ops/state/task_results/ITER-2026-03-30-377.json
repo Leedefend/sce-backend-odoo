@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-30-377",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the remaining bootstrap/governance data files and confirmed that sc_cap_config_admin_user.xml should stay in core while sc_subscription_default.xml belongs to a separate subscription-governance line.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-377.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-377.md"
+  },
+  "classification_counts": {
+    "stay_in_core_for_now": 1,
+    "separate_subscription_governance_line": 1
+  },
+  "next_suggestion": "Stop the current ownership-migration line here and only reopen it if subscription governance becomes an active dedicated objective."
+}

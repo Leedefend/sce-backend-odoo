@@ -1,0 +1,78 @@
+task_id: ITER-2026-03-30-372
+title: Classify remaining smart_construction_core data files by ownership
+type: audit
+status: in_progress
+priority: medium
+
+goal: >
+  Classify the remaining `smart_construction_core/data/*.xml` files into
+  runtime baseline/config, domain taxonomy, or still-misplaced demo facts, so
+  future cleanup batches stay precise instead of treating all data files as the
+  same kind of asset.
+
+user_visible_outcome:
+  - explicit ownership classification for the remaining core data files
+  - clear identification of any additional misplaced demo facts
+  - a narrowed next cleanup batch if any further migration target remains
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit only
+  - do not modify code or data in this batch
+  - classify by ownership and runtime role, not by filename alone
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Governance Audit
+  module: core data ownership classification
+  module_owner: agent_ops
+  kernel_or_scenario: scenario
+  reason: >
+    After removing one clear misplaced dormant demo file, the next low-risk step
+    is to classify the remaining core data assets precisely before any further
+    migrations.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-372.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - audit_scope_spills_into_code_changes
+
+deliverables:
+  - ownership classification report for remaining core data files
+  - task result artifact for ITER-2026-03-30-372
+  - delivery log checkpoint with the next cleanup recommendation
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-372.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-372.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-372.json
+
+depends_on:
+  - ITER-2026-03-30-371

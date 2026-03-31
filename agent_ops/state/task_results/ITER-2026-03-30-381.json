@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-30-381",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the remaining config-oriented native pages and excluded them from the active PM business-fact usability goal as separate admin/configuration surfaces.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-381.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-381.md"
+  },
+  "classification_counts": {
+    "out_of_scope_config_surfaces": 2
+  },
+  "next_suggestion": "Continue the active usability objective only on operational native surfaces or on the separate custom-frontend fulfillment lane."
+}

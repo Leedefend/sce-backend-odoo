@@ -1,0 +1,48 @@
+{
+  "task_id": "ITER-2026-03-30-341",
+  "status": "PASS",
+  "layer_target": "Platform Layer",
+  "module": "smart_core delivery metadata surface",
+  "kernel_or_scenario": "kernel",
+  "summary": [
+    "Added explicit stable versus native-preview navigation metadata",
+    "Kept additive native preview publication unchanged",
+    "Expanded focused tests to cover metadata semantics"
+  ],
+  "changed_files": [
+    "addons/smart_core/delivery/menu_service.py",
+    "addons/smart_core/delivery/delivery_engine.py",
+    "addons/smart_core/tests/test_delivery_menu_service_native_preview.py",
+    "agent_ops/tasks/ITER-2026-03-30-341.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-341.md"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-341.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m unittest discover -s addons/smart_core/tests -p 'test_delivery_menu_service_native_preview.py'",
+      "result": "PASS"
+    }
+  ],
+  "risk": {
+    "level": "low",
+    "notes": [
+      "Metadata-only additive change",
+      "No ACL or business semantic change",
+      "Native preview publication behavior preserved from ITER-2026-03-30-340"
+    ]
+  },
+  "rollback": [
+    "git restore agent_ops/tasks/ITER-2026-03-30-341.yaml",
+    "git restore addons/smart_core/delivery/menu_service.py",
+    "git restore addons/smart_core/delivery/delivery_engine.py",
+    "git restore addons/smart_core/tests/test_delivery_menu_service_native_preview.py",
+    "git restore docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-341.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-341.json"
+  ],
+  "next_suggestion": "Consume explicit stable/native-preview metadata in the frontend sidebar and validate against a live PM system.init payload."
+}

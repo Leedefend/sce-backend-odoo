@@ -1,0 +1,85 @@
+task_id: ITER-2026-03-30-351
+title: Record custom frontend capability gaps for portal-style preview entries
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Before implementing the custom frontend fulfillment line, record the exact
+  capability gaps, target surfaces, and execution order for the portal-style
+  preview entries so the boundary stays stable and the later implementation
+  batches do not drift back into native portal semantics.
+
+user_visible_outcome:
+  - the custom frontend gap list for 工作台、生命周期驾驶舱、能力矩阵 is explicit
+  - unsupported capabilities are recorded instead of being silently assumed
+  - later implementation can proceed in a controlled product order
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - addons/**
+    - frontend/**
+    - scripts/verify/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance and reporting only
+  - no frontend implementation in this batch
+  - no business-model or ACL change in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Domain Layer Governance
+  module: custom frontend capability gap register
+  module_owner: agent_ops + docs
+  kernel_or_scenario: scenario
+  reason: >
+    The publication boundary is already clear. The next low-risk step is to
+    freeze the missing custom frontend capabilities and their delivery order
+    before any portal-style fulfillment implementation starts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-351.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - capability_gap_order_cannot_be_stated_clearly
+
+deliverables:
+  - explicit custom frontend capability gap register for the three portal-style entries
+  - report and task result artifacts for ITER-2026-03-30-351
+  - delivery log checkpoint with the deferred implementation order
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-351.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-351.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-351.json
+
+depends_on:
+  - ITER-2026-03-30-349
+
+notes: >
+  Target entries:
+  `smart_construction_portal.action_sc_portal_dashboard`,
+  `smart_construction_portal.action_sc_portal_lifecycle`,
+  `smart_construction_portal.action_sc_portal_capability_matrix`.

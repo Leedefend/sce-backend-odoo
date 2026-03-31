@@ -1,0 +1,94 @@
+task_id: ITER-2026-03-30-343
+title: Project full raw native nav tree into preview release navigation
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Correct the native preview sidebar logic by projecting the raw permission-
+  filtered Odoo navigation tree into release navigation, instead of only using
+  the scene-ready nav subset, so all reachable native menus appear as preview
+  entries.
+
+user_visible_outcome:
+  - native preview release navigation includes all reachable raw native menu leaves
+  - native preview items no longer require scene_key-based scene routes
+  - stable release groups remain intact while native preview becomes truly full-volume
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/**
+    - addons/smart_core/delivery/**
+    - addons/smart_core/handlers/**
+    - addons/smart_core/tests/**
+    - docs/ops/iterations/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - backend release-navigation publication only
+  - reuse raw NavDispatcher output after permission filtering
+  - no ACL change
+  - no financial semantic changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core delivery native preview projection
+  module_owner: addons/smart_core/delivery addons/smart_core/handlers
+  kernel_or_scenario: kernel
+  reason: >
+    The previous native preview projection incorrectly consumed scene-contract
+    navigation, which only exposed a small scene subset. Full usable-first
+    productization requires using the raw permission-filtered Odoo nav tree as
+    the pre-release source of truth.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-343.yaml
+    - python3 -m unittest discover -s addons/smart_core/tests -p 'test_delivery_menu_service_native_preview.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - native_preview_still_uses_scene_subset_only
+
+deliverables:
+  - raw-nav based native preview projection
+  - updated tests covering raw menu leaves without scene keys
+  - report and task result artifacts for ITER-2026-03-30-343
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-343.yaml
+  - git restore addons/smart_core/core/delivery_menu_defaults.py
+  - git restore addons/smart_core/delivery/menu_service.py
+  - git restore addons/smart_core/delivery/delivery_engine.py
+  - git restore addons/smart_core/handlers/system_init.py
+  - git restore addons/smart_core/tests/test_delivery_menu_service_native_preview.py
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-343.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-343.json
+
+depends_on:
+  - ITER-2026-03-30-342
+
+notes: >
+  Raw native menu leaves may only have menu_id/action metadata and no scene_key.
+  Preview projection must preserve those native targets instead of forcing scene routes.

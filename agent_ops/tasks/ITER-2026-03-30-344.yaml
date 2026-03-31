@@ -1,0 +1,82 @@
+task_id: ITER-2026-03-30-344
+title: Verify preview release-navigation menu usability for demo PM
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Establish an auditable usability verification loop for the newly published
+  preview release-navigation menus by automatically traversing all preview leaf
+  entries for the demo PM user in the frontend shell and recording pass/fail
+  results before targeted fixes.
+
+user_visible_outcome:
+  - all preview release-navigation menu leaves get a repeatable usability check
+  - failures are recorded with concrete menu labels and routes
+  - follow-up fixes can target real broken menus instead of manual guesses
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - verification tooling only
+  - no backend or frontend contract changes in this batch
+  - browser smoke must use real login and real system.init
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Governance Layer
+  module: preview release-navigation usability smoke
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  reason: >
+    Twenty-one preview menus are now published. Before fixing failures, the
+    repository needs a repeatable smoke runner that enumerates those preview
+    entries and captures which ones are actually usable in the frontend shell.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-344.yaml
+    - node scripts/verify/release_navigation_preview_menu_usability_smoke.mjs
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - preview_menu_list_not_captured
+
+deliverables:
+  - repeatable preview menu usability smoke script
+  - artifacts listing pass/fail by preview menu
+  - report and task result artifacts for ITER-2026-03-30-344
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-344.yaml
+  - git restore scripts/verify/release_navigation_preview_menu_usability_smoke.mjs
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-344.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-344.json
+
+depends_on:
+  - ITER-2026-03-30-343
+
+notes: >
+  The smoke must read the actual preview leaf list from the runtime sidebar
+  state, not from a hard-coded expected menu label list.

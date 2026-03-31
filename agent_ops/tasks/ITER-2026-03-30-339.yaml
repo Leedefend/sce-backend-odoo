@@ -1,0 +1,82 @@
+task_id: ITER-2026-03-30-339
+title: Publish pre-release workspace.home entries through native target fallback
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Accelerate productization without breaking architecture by allowing
+  workspace.home to publish PREVIEW-state entries as pre-release usable
+  functions whenever they already have a concrete native route/action/record
+  target, while keeping truly locked entries blocked.
+
+user_visible_outcome:
+  - workspace.home can open more usable functions in pre-release mode
+  - preview entries with native targets show a clear pre-release enter action
+  - permission-locked entries remain blocked
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/components/**
+    - frontend/apps/web/src/app/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - workspace.home entry release policy only
+  - no backend contract changes
+  - no permission model changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Frontend Layer
+  module: workspace.home entry release policy
+  module_owner: frontend/apps/web/src/views/HomeView.vue
+  kernel_or_scenario: scenario
+  reason: >
+    The repository already carries native route/action targets for many
+    functions. To accelerate usability productization, workspace.home should
+    treat those native-backed preview entries as pre-release usable instead of
+    hiding them behind a strict front-end readiness gate.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-339.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - locked_entries_become_enterable
+
+deliverables:
+  - pre-release entry gating in HomeView
+  - report and task result artifacts for ITER-2026-03-30-339
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-339.yaml
+  - git restore frontend/apps/web/src/views/HomeView.vue
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-339.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-339.json
+
+depends_on:
+  - ITER-2026-03-30-338
+
+notes: >
+  PREVIEW entries are only releasable when they already have a concrete native
+  navigation target. LOCKED entries must stay blocked.

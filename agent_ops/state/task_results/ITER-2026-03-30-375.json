@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-03-30-375",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the remaining bootstrap-style files and narrowed the next real move candidates to sc_extension_params.xml and sc_extension_runtime_sync.xml.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-375.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-375.md"
+  },
+  "classification_counts": {
+    "platform_runtime_bootstrap_candidates": 2,
+    "stay_in_core_for_now": 1,
+    "separate_governance_line": 1
+  },
+  "next_suggestion": "Open one focused migration batch for sc_extension_params.xml and sc_extension_runtime_sync.xml, leaving the remaining bootstrap files for later dedicated cleanup."
+}

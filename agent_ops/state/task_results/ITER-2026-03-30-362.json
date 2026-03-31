@@ -1,0 +1,22 @@
+{
+  "task_id": "ITER-2026-03-30-362",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the 21 published preview menus by real industry business fact chain and classified them into native usable, data/context dependent, and custom-frontend-required lanes.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-362.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-362.md"
+  },
+  "fact_matrix": {
+    "preview_menu_count": 21,
+    "native_usable": 16,
+    "data_or_context_dependent": 1,
+    "custom_frontend_required": 4
+  },
+  "next_suggestion": "Open the next low-risk repair batch on the execution-structure context bridge and keep portal/scene anchors in the custom-frontend fulfillment backlog."
+}

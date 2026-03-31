@@ -1,0 +1,81 @@
+task_id: ITER-2026-03-31-392
+title: Audit business-fact alignment and transactability of custom frontend surfaces
+type: audit
+status: completed
+priority: high
+
+goal: >
+  Verify whether the current custom frontend surfaces remain aligned with the
+  underlying business fact layer (`model / view / action`) and whether those
+  custom surfaces can actually complete the corresponding business handling
+  flows instead of only providing read-only or navigation-only shells.
+
+user_visible_outcome:
+  - "明确自定义前端和原生业务事实层是否一致"
+  - "明确自定义前端当前是否真的能办理业务，而不是只可查看或跳转"
+  - "输出按模块拆分的可办理 / 仅查看 / 仍缺闭环结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit only; no code changes
+  - compare native fact anchors and current custom frontend surfaces side by side
+  - classify each audited surface as one of: aligned_and_transactable, aligned_but_readonly, navigation_only, drifted
+  - keep finance-governed high-risk domains out of the transactability claim set
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Governance Audit
+  module: business fact vs custom frontend transactability
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    After closing the earlier consistency and classification questions, the next
+    product-risk question is whether the custom frontend still matches native
+    business facts and can actually complete business handling flows instead of
+    acting as read-only or navigation-only shells.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-392.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - transactability_scope_unclear
+  - audited_surface_requires_high_risk_finance_claim
+
+deliverables:
+  - module-by-module transactability classification for key custom frontend surfaces
+  - explicit distinction between view-only, navigation-only, and true business-handling support
+  - report and task result artifacts for ITER-2026-03-31-392
+  - delivery log checkpoint with the next active line
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-392.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-392.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-392.json
+
+depends_on:
+  - ITER-2026-03-31-391

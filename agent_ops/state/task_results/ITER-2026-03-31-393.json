@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-03-31-393",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited native-to-custom capability alignment and confirmed a mixed result: my-work and lifecycle remain faithfully handled, capability matrix remains faithfully rendered, and workbench is the main semantically shifted surface.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-393.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-393.md"
+  },
+  "classification_counts": {
+    "faithfully_rendered": 1,
+    "faithfully_handled": 2,
+    "semantically_shifted": 1
+  },
+  "next_suggestion": "Open a focused governance or repair batch only for workbench native-capability alignment if stricter native fidelity is required."
+}

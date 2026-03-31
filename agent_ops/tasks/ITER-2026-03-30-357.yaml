@@ -1,0 +1,84 @@
+task_id: ITER-2026-03-30-357
+title: Remove direct scene route emission from smart_construction_core enter handlers
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Start the highest-priority residual cleanup slice by removing direct scene
+  route and scene-target emission from smart_construction_core enter handlers,
+  moving those navigation semantics behind the scene layer or a shared scene
+  resolution seam instead of leaving them inside industry handlers.
+
+user_visible_outcome:
+  - enter handlers in smart_construction_core stop hardcoding `/s/...` scene routes where a scene-layer seam can own them
+  - the fact-layer cleanup line advances on the highest-value residual set first
+  - user entry behavior remains coherent during the migration
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/**
+    - addons/smart_construction_core/wizard/**
+    - addons/smart_construction_scene/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - migrate direct scene route emission instead of deleting entry behavior
+  - preserve current user-facing enter flows
+  - no ACL or financial domain changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Scene Layer Migration
+  module: enter handler scene-route cleanup
+  module_owner: addons/smart_construction_core + addons/smart_construction_scene
+  kernel_or_scenario: scenario
+  reason: >
+    The residual audit shows the next highest-value cleanup target is direct
+    `/s/...` route and scene-target emission still embedded in
+    smart_construction_core enter handlers.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-357.yaml
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - scene_layer_seam_cannot_replace_enter_handler_routes_safely
+  - entry_behavior_regresses
+
+deliverables:
+  - first cleanup slice for enter-handler scene-route emission
+  - report and task result artifacts for ITER-2026-03-30-357
+  - delivery log checkpoint for the next residual cleanup batch
+
+rollback:
+  - git restore addons/smart_construction_core/handlers
+  - git restore addons/smart_construction_core/wizard
+  - git restore addons/smart_construction_scene
+  - git restore agent_ops/tasks/ITER-2026-03-30-357.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-357.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-357.json
+
+depends_on:
+  - ITER-2026-03-30-356

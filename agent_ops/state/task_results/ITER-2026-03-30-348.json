@@ -1,0 +1,38 @@
+{
+  "task_id": "ITER-2026-03-30-348",
+  "status": "PASS",
+  "layer_target": "Domain Layer Governance",
+  "module": "non-act_window preview menu fact audit",
+  "kernel_or_scenario": "scenario",
+  "summary": [
+    "Audited the five non-act_window preview menus against their real business targets and prerequisites",
+    "Separated native business-fact entries from portal-style entries that should be rendered by the custom frontend",
+    "Confirmed that portal act_url menus are publication anchors, not native-frontend usability obligations"
+  ],
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-03-30-348.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-348.md"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-348.yaml",
+      "result": "PASS"
+    }
+  ],
+  "risk": {
+    "level": "low",
+    "notes": [
+      "Evidence-only governance batch",
+      "No business semantic, ACL, or frontend behavior change",
+      "The main follow-up is publication-policy alignment, not bug repair in native portal pages"
+    ]
+  },
+  "rollback": [
+    "git restore agent_ops/tasks/ITER-2026-03-30-348.yaml",
+    "git restore docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-348.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-348.json"
+  ],
+  "next_suggestion": "Create a follow-up governance batch that codifies preview publication into a native business-fact lane and a custom-frontend supplement lane."
+}

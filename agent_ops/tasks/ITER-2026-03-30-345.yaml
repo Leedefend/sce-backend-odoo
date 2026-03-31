@@ -1,0 +1,88 @@
+task_id: ITER-2026-03-30-345
+title: Restore preview menu route usability in frontend shell
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Make the newly published preview release-navigation menus actually usable in
+  the frontend shell by resolving /m/:menu_id against the active release
+  navigation tree and tightening the usability smoke so route-level resolve
+  failures are recorded as real failures.
+
+user_visible_outcome:
+  - preview sidebar menus open through the frontend shell instead of landing on menu not found
+  - the preview menu usability smoke reports real PASS/FAIL results
+  - demo PM can enter published preview menus through the same /m/:menu_id route used by the sidebar
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/**
+    - frontend/apps/web/src/app/resolvers/**
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend shell routing fix only
+  - no backend contract changes in this batch
+  - smoke must fail on menu resolve errors regardless of casing
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Frontend Layer
+  module: preview release-navigation menu resolver
+  module_owner: frontend shell + verify tooling
+  kernel_or_scenario: scenario
+  reason: >
+    Preview menus are now published in release_navigation_v1, but /m/:menu_id
+    still resolves only against the legacy menuTree, so clicking preview menus
+    lands on Menu resolve failed/menu not found. The verification smoke also
+    false-passes those failures today.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-345.yaml
+    - node scripts/verify/release_navigation_preview_menu_usability_smoke.mjs
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - preview_menu_route_still_broken
+
+deliverables:
+  - frontend route resolver that supports preview release-navigation menu ids
+  - corrected smoke assertions for route-level menu resolve failures
+  - report and task result artifacts for ITER-2026-03-30-345
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-345.yaml
+  - git restore frontend/apps/web/src/views/MenuView.vue
+  - git restore scripts/verify/release_navigation_preview_menu_usability_smoke.mjs
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-345.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-345.json
+
+depends_on:
+  - ITER-2026-03-30-343
+  - ITER-2026-03-30-344
+
+notes: >
+  The frontend must resolve /m/:menu_id against the active navigation tree that
+  the sidebar is actually rendering, preferring releaseNavigationTree when
+  present and falling back to menuTree otherwise.

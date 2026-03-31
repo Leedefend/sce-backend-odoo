@@ -1,0 +1,87 @@
+task_id: ITER-2026-03-30-348
+title: Audit non-act_window preview menus for data prerequisites and business meaning
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Continue the business-fact audit line by focusing on the five preview menus
+  that are not backed by a standard act_window, tracing their data
+  prerequisites, actual business target, and semantic alignment with the
+  published menu labels.
+
+user_visible_outcome:
+  - the highest-risk preview menus have explicit fact-level diagnosis
+  - non-act_window menus are classified by true business target and prerequisite data
+  - the next fix batch can target real industry-semantic mismatches instead of generic usability symptoms
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit and verification only
+  - no business-model semantics changed in this batch
+  - findings must be grounded in source actions, controllers, and minimum runtime prerequisites
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Domain Layer Governance
+  module: non-act_window preview menu fact audit
+  module_owner: scripts/verify + agent_ops
+  kernel_or_scenario: scenario
+  reason: >
+    The first fact-layer audit showed that permissions are not the leading risk.
+    The real semantic uncertainty is concentrated in three act_url menus, one
+    actions.server menu, and one pure scene-route menu.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-348.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - prerequisite_chain_cannot_be_proven
+  - source_fact_missing
+
+deliverables:
+  - focused fact audit for non-act_window preview menus
+  - prerequisite classification for each high-risk preview menu
+  - report and task result artifacts for ITER-2026-03-30-348
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-348.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-348.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-348.json
+
+depends_on:
+  - ITER-2026-03-30-347
+
+notes: >
+  The target set for this batch is:
+  `smart_construction_core.menu_sc_project_management_scene`,
+  `smart_construction_core.action_exec_structure_entry`,
+  `smart_construction_portal.action_sc_portal_dashboard`,
+  `smart_construction_portal.action_sc_portal_lifecycle`,
+  `smart_construction_portal.action_sc_portal_capability_matrix`.

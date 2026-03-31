@@ -1,0 +1,83 @@
+task_id: ITER-2026-03-30-362
+title: Audit industry business fact-chain usability after scene cleanup
+type: audit
+status: in_progress
+priority: high
+
+goal: >
+  Re-anchor the active line on industry business facts instead of scene cleanup
+  by auditing the currently published preview menus against their real
+  model/menu/action/view/permission/data-prerequisite chains, so the next
+  implementation slices can fix concrete usability gaps rather than continue
+  semantic boundary work.
+
+user_visible_outcome:
+  - the 21 published preview menus are classified by real business usability rather than by frontend behavior
+  - the team gets an executable matrix for which entries are already usable, which depend on seed/demo data, and which require custom frontend takeover
+  - the next implementation batch can fix the highest-value fact-chain gaps first
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+    - artifacts/codex/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit existing facts first; do not mutate business models or runtime behavior in this batch
+  - classify each preview menu by real fact-chain readiness: native usable, data-dependent, or custom-frontend-required
+  - preserve the corrected architecture boundary: scene semantics stay out of the industry fact layer
+  - no ACL, manifest, security, financial semantic, or frontend edits in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Governance Audit
+  module: industry business fact-chain usability audit
+  module_owner: addons/smart_construction_core
+  kernel_or_scenario: scenario
+  reason: >
+    The scene-pollution cleanup line has passed, so the next low-risk step is to
+    audit real industry business usability through models, menus, actions,
+    views, permissions, and data prerequisites before any further implementation
+    batches are selected.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-362.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - fact_chain_cannot_be_classified_with_confidence
+  - audit_requires_runtime_or_schema_mutation_to_continue
+
+deliverables:
+  - industry business fact-chain usability matrix for the currently published preview menus
+  - explicit classification of native-usable versus data-dependent versus custom-frontend-required entries
+  - report and task result artifacts for ITER-2026-03-30-362
+  - delivery log checkpoint with the next fact-driven repair target
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-362.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-362.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-362.json
+
+depends_on:
+  - ITER-2026-03-30-361
