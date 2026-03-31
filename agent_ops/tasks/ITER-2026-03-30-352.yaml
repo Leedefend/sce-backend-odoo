@@ -1,0 +1,83 @@
+task_id: ITER-2026-03-30-352
+title: Correct boundary between native business facts and scene orchestration semantics
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Correct the architectural boundary by explicitly stating that native business
+  facts only provide concrete model/menu/action/view facts, while scene keys,
+  category/class grouping, and experiment-oriented routing semantics belong to
+  the scene orchestration layer rather than the business fact layer.
+
+user_visible_outcome:
+  - the fact-layer boundary is corrected in governance artifacts
+  - scene/class semantics are explicitly owned by the scene orchestration layer
+  - later implementation batches cannot justify pushing orchestration semantics into native business facts
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - addons/**
+    - frontend/**
+    - scripts/verify/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance and reporting only
+  - no business-model or frontend implementation change in this batch
+  - no reclassification of source facts inside addon code in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Scene Layer Governance
+  module: fact-vs-scene semantic boundary
+  module_owner: agent_ops + docs
+  kernel_or_scenario: scenario
+  reason: >
+    Native business facts should not absorb scene semantics. Scene keys,
+    classes, grouping, and experimental routing semantics are orchestration
+    concerns and must stay in the scene layer.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-352.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - boundary_statement_cannot_be_made_consistent_with_architecture
+
+deliverables:
+  - corrected governance statement for native-fact versus scene-layer ownership
+  - report and task result artifacts for ITER-2026-03-30-352
+  - delivery log checkpoint for the boundary correction
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-352.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-352.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-352.json
+
+depends_on:
+  - ITER-2026-03-30-351
+
+notes: >
+  This batch only corrects governance language. Implementation changes, if any,
+  must come later in separate low-risk tasks.

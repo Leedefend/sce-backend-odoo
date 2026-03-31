@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-31-391",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited workbench ownership and confirmed that the current 工作台 should be formally classified as a product orchestration surface rather than as a direct rendering of the native portal-dashboard fact anchor.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-391.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-391.md"
+  },
+  "classification_counts": {
+    "formal_reclassifications": 1,
+    "remaining_consistency_topics": 0
+  },
+  "next_suggestion": "Close the current fact-to-custom consistency line and, if needed, reopen follow-up work as a governance wording or ownership objective rather than a repair batch."
+}

@@ -1,0 +1,49 @@
+{
+  "task_id": "ITER-2026-03-30-360",
+  "status": "PASS",
+  "layer_target": "Scene Layer Migration",
+  "module": "capability definition cleanup",
+  "kernel_or_scenario": "scenario",
+  "summary": [
+    "Removed the leftover capability definition scene placeholder parameter",
+    "Left scene binding ownership only in smart_construction_scene.services.capability_scene_targets",
+    "Preserved emitted capability payload behavior and ordering"
+  ],
+  "changed_files": [
+    "addons/smart_construction_core/services/capability_registry.py",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-360.md",
+    "agent_ops/state/task_results/ITER-2026-03-30-360.json",
+    "agent_ops/tasks/ITER-2026-03-30-361.yaml"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-360.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_construction_core/services/capability_registry.py addons/smart_construction_scene/services/capability_scene_targets.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "risk": {
+    "level": "low",
+    "notes": [
+      "Mechanical cleanup after runtime ownership had already moved",
+      "Capability payload shape stayed stable",
+      "Remaining residual topic is telemetry-only scene dimensions rather than user-facing payload pollution"
+    ]
+  },
+  "rollback": [
+    "git restore addons/smart_construction_core/services/capability_registry.py",
+    "git restore docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-360.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-360.json",
+    "git restore agent_ops/tasks/ITER-2026-03-30-361.yaml"
+  ],
+  "next_suggestion": "Audit the telemetry-only scene_key dimensions and decide which remain acceptable analytics-only usage."
+}

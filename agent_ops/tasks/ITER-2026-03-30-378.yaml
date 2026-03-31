@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-30-378
+title: Audit subscription governance ownership and boundary
+type: audit
+status: in_progress
+priority: medium
+
+goal: >
+  Audit the ownership, runtime usage, ACL scope, and bootstrap dependency chain
+  of the subscription-governance assets centered on `sc.subscription.plan`, and
+  decide whether they should remain in `smart_construction_core` or move under a
+  dedicated ownership line later.
+
+user_visible_outcome:
+  - subscription governance assets have an explicit ownership decision
+  - future migration, if any, is separated from the core data cleanup line
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit only; do not migrate code or data in this batch
+  - determine ownership from model, menu, action, ACL, controller, and data usage
+  - keep conclusions explicit about stay/move/defer
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Governance Audit
+  module: subscription governance ownership
+  module_owner: smart_construction_core
+  kernel_or_scenario: kernel
+  reason: >
+    After the core data ownership cleanup line finished, subscription plan data
+    remained as an intentionally separate governance line and now needs its own
+    explicit ownership decision.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-378.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - subscription_ownership_scope_unclear
+
+deliverables:
+  - ownership decision for subscription governance assets
+  - report and task result artifacts for ITER-2026-03-30-378
+  - delivery log checkpoint for the next governance line
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-378.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-378.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-378.json
+
+depends_on:
+  - ITER-2026-03-30-377

@@ -1,0 +1,91 @@
+task_id: ITER-2026-03-30-386
+title: Implement minimal custom frontend supplement for capability matrix
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Add a minimal read-only custom frontend surface for `能力矩阵`, and normalize
+  the native portal act_url / scene anchors so demo PM users reach the custom
+  page instead of the abandoned native portal frontend.
+
+user_visible_outcome:
+  - "预发布侧边栏中的 `能力矩阵` 可在自定义前端中正常打开"
+  - "能力矩阵首屏展示最小只读能力分组、入口状态和跳转入口"
+  - "原生 `/portal/capability-matrix` 锚点被平台路由承接，不再落回原生 portal 页面"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/router/**
+    - frontend/apps/web/src/views/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/app/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - addons/smart_construction_core/**
+    - addons/smart_construction_scene/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - keep the implementation frontend-only; consume existing `/api/contract/capability_matrix`
+  - do not reintroduce native portal frontend dependencies
+  - keep the first slice read-only and preview-safe
+  - normalize portal capability-matrix anchor into platform-controlled route resolution
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Frontend Layer
+  module: capability matrix custom supplement
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    The audit chain confirmed that `能力矩阵` is the only remaining missing
+    custom supplement surface. This batch fills that gap by consuming the
+    existing backend capability-matrix contract through the platform frontend.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-386.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - capability_matrix_contract_shape_unclear
+  - frontend_typecheck_failed
+
+deliverables:
+  - capability matrix custom frontend page
+  - portal/self and scene-route normalization into the new page
+  - report and task result artifacts for ITER-2026-03-30-386
+  - delivery log checkpoint with the next active step
+
+rollback:
+  - git restore frontend/apps/web/src/router/index.ts
+  - git restore frontend/apps/web/src/views/ActionView.vue
+  - git restore frontend/apps/web/src/app/action_runtime/useActionViewActionMetaRuntime.ts
+  - git restore frontend/apps/web/src/views/MenuView.vue
+  - git restore frontend/apps/web/src/api/capabilityMatrix.ts
+  - git restore frontend/apps/web/src/views/CapabilityMatrixView.vue
+  - git restore agent_ops/tasks/ITER-2026-03-30-386.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-386.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-386.json
+
+depends_on:
+  - ITER-2026-03-30-385

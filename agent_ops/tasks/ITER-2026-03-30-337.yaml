@@ -1,0 +1,82 @@
+task_id: ITER-2026-03-30-337
+title: Remove technical filter panels from workspace.home user view
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Bring workspace.home back onto the usability productization mainline by
+  removing technical filter and result-summary panels from the user-facing home
+  view, while preserving the action-first workbench flow and existing scene
+  entry behavior.
+
+user_visible_outcome:
+  - workspace.home first screen focuses on action, reminder, status, and common entry blocks
+  - normal users no longer see result_summary or active_filters style technical panels on home
+  - workbench naming stays product-facing instead of diagnostic
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - frontend/apps/web/src/components/page/**
+    - frontend/apps/web/src/app/**
+
+change_rules:
+  - frontend only
+  - workspace.home user-facing cleanup only
+  - no backend contract changes
+  - no route or permission changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Frontend Layer
+  module: workspace.home productized home view
+  module_owner: frontend/apps/web/src/views/HomeView.vue
+  kernel_or_scenario: scenario
+  reason: >
+    The usability productization mainline requires the workbench home page to
+    read as an action-first product surface rather than a diagnostic capability
+    browser. This batch removes technical filter/result panels from the user
+    view while keeping the existing workbench data and entry flow intact.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-337.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - workbench_home_entry_flow_regressed
+
+deliverables:
+  - cleaned workspace.home user-facing section structure in HomeView
+  - report and task result artifacts for ITER-2026-03-30-337
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-337.yaml
+  - git restore frontend/apps/web/src/views/HomeView.vue
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-337.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-337.json
+
+depends_on:
+  - ITER-2026-03-30-336
+
+notes: >
+  This batch only cleans the user-facing workspace.home structure. Keep the
+  existing action handlers, analytics hooks, and scene entry routing unchanged.

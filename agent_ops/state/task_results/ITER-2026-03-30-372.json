@@ -1,0 +1,22 @@
+{
+  "task_id": "ITER-2026-03-30-372",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Classified the remaining smart_construction_core data files and confirmed that no further obvious demo business-facts files remain there after the dormant demo cleanup.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-372.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-372.md"
+  },
+  "classification_counts": {
+    "runtime_baseline_or_core_config": 8,
+    "governance_extension_admin_bootstrap": 4,
+    "orchestration_capability_seeds": 2,
+    "remaining_demo_fact_files": 0
+  },
+  "next_suggestion": "Audit which remaining non-demo seed files should stay in smart_construction_core and which should move to smart_construction_scene or another platform-aligned module."
+}

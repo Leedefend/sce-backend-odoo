@@ -1,0 +1,91 @@
+task_id: ITER-2026-03-30-342
+title: Consume release-nav stable and native-preview metadata in sidebar
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Continue the sidebar navigation productization line by consuming the explicit
+  backend release-navigation metadata in the frontend shell, so stable release
+  groups and native preview groups are presented distinctly without relying on
+  label heuristics.
+
+user_visible_outcome:
+  - sidebar clearly distinguishes formal release groups from native preview groups
+  - sidebar summary reflects backend stable and native-preview counts
+  - release-nav rendering no longer infers preview semantics from group text
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/layouts/**
+    - frontend/apps/web/src/components/**
+    - frontend/apps/web/src/stores/**
+    - frontend/packages/schema/**
+    - docs/ops/iterations/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/HomeView.vue
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend sidebar consumer only
+  - consume backend metadata directly
+  - no backend contract changes
+  - no permission model changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Frontend Layer
+  module: release navigation sidebar consumer
+  module_owner: frontend/apps/web/src/layouts frontend/apps/web/src/components frontend/apps/web/src/stores
+  kernel_or_scenario: scenario
+  reason: >
+    The backend now publishes additive native preview navigation and explicit
+    metadata describing stable versus preview groups. The frontend sidebar
+    should consume those fields directly so the productized navigation surface
+    is visually distinct and contract-driven.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-342.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_command_failed
+  - release_navigation_metadata_ignored
+
+deliverables:
+  - sidebar consumer for release navigation stable/native-preview metadata
+  - visual distinction for native preview groups in MenuTree/AppShell
+  - report and task result artifacts for ITER-2026-03-30-342
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-342.yaml
+  - git restore frontend/apps/web/src/layouts/AppShell.vue
+  - git restore frontend/apps/web/src/components/MenuTree.vue
+  - git restore frontend/apps/web/src/stores/session.ts
+  - git restore frontend/packages/schema/src/index.ts
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-342.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-342.json
+
+depends_on:
+  - ITER-2026-03-30-341
+
+notes: >
+  Sidebar release-nav rendering must consume explicit backend metadata fields
+  such as native_preview_group_key and group/leaf counts, instead of inferring
+  release semantics from localized labels.

@@ -1,0 +1,84 @@
+task_id: ITER-2026-03-30-358
+title: Move my_work scene-key payload ownership behind smart_construction_scene
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Continue the residual fact-layer cleanup by removing scene-key ownership from
+  my_work summary and aggregate payloads in smart_construction_core, letting the
+  scene layer interpret or attach scene targets while core keeps only business
+  counters, rows, and source facts.
+
+user_visible_outcome:
+  - my_work business payloads stop embedding scene semantics directly in smart_construction_core where a scene-layer seam can own them
+  - workspace/home style aggregations keep current business counts and labels
+  - the next highest-value residual scene pollution slice advances without touching ACL or financial semantics
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/**
+    - addons/smart_construction_core/services/**
+    - addons/smart_construction_scene/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - preserve current my_work business counts and section labels
+  - move scene ownership behind scene-layer or shared scene resolution seams
+  - no ACL, financial, or manifest changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Scene Layer Migration
+  module: my_work scene-key cleanup
+  module_owner: addons/smart_construction_core + addons/smart_construction_scene
+  kernel_or_scenario: scenario
+  reason: >
+    After the enter-handler route slice passed, the next residual pollution area
+    is my_work summary and aggregate payloads still embedding scene_key values
+    inside the industry module.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-358.yaml
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - my_work payload semantics cannot be migrated without user-visible regression
+  - verification_failure
+
+deliverables:
+  - first my_work scene-key ownership cleanup slice
+  - report and task result artifacts for ITER-2026-03-30-358
+  - delivery log checkpoint for the next residual cleanup batch
+
+rollback:
+  - git restore addons/smart_construction_core/handlers
+  - git restore addons/smart_construction_core/services
+  - git restore addons/smart_construction_scene
+  - git restore agent_ops/tasks/ITER-2026-03-30-358.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-358.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-358.json
+
+depends_on:
+  - ITER-2026-03-30-357

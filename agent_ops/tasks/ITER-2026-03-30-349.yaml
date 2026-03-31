@@ -1,0 +1,84 @@
+task_id: ITER-2026-03-30-349
+title: Formalize preview publication policy into native-fact and custom-frontend lanes
+type: code
+status: in_progress
+priority: high
+
+goal: >
+  Convert the clarified product boundary into an explicit governance contract:
+  the business fact layer only needs concrete model/menu/action facts, while
+  portal-like and special-rendering entries are fulfilled by the custom
+  frontend instead of the abandoned native frontend.
+
+user_visible_outcome:
+  - preview publication policy is explicit instead of implicit
+  - native business-fact entries and custom-frontend supplement entries are no longer mixed in one usability target
+  - the next implementation batch can focus on the custom frontend without re-litigating native portal semantics
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - addons/**
+    - frontend/**
+    - scripts/verify/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance and reporting only
+  - no business-model semantics changed in this batch
+  - no portal/frontend implementation change in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ddcc2e6
+
+architecture:
+  layer_target: Domain Layer Governance
+  module: preview publication policy
+  module_owner: agent_ops + docs
+  kernel_or_scenario: scenario
+  reason: >
+    The product boundary has been clarified: original business facts continue to
+    provide model/menu/action truth, while portal-style entries must be
+    fulfilled by the custom frontend rather than the abandoned native frontend.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-349.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - governance_boundary_cannot_be_stated_clearly
+
+deliverables:
+  - explicit publication-policy checkpoint in the delivery context log
+  - task/result/report artifacts for ITER-2026-03-30-349
+  - next-step handoff focused on custom frontend fulfillment of portal-style entries
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-30-349.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-349.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-30-349.json
+
+depends_on:
+  - ITER-2026-03-30-348
+
+notes: >
+  This batch records the rule that original portal actions remain valid native
+  publication anchors, but the user-facing surface is now owned by the custom
+  frontend layer.

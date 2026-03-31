@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-03-30-371",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Moved the dormant cost-domain demo facts out of smart_construction_core and into smart_construction_demo without changing manifests.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-371.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_demo DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-371.md"
+  },
+  "classification_counts": {
+    "moved_dormant_demo_files": 1
+  },
+  "next_suggestion": "Audit the remaining smart_construction_core data files and classify them into runtime baseline/config, domain taxonomy, or still-misplaced demo facts."
+}

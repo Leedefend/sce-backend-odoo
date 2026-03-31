@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-30-363",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Improved the execution-structure preview menu first-success path by direct-opening WBS for a single reachable project and redirecting multiple-project users to a filtered lifecycle project list.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-363.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-363.md"
+  },
+  "next_suggestion": "Continue the native-fact usability line with focused value/data checks on the remaining act_window pages, while keeping portal/scene anchors in the custom-frontend backlog."
+}

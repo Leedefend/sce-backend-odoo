@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-03-31-389",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Aligned the portal capability-matrix scene publication target with the SPA-owned route and removed the explicit route drift identified in ITER-2026-03-31-388.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-389.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_scene DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-389.md"
+  },
+  "classification_counts": {
+    "repaired_scene_target_drifts": 1
+  },
+  "next_suggestion": "Open the next low-risk audit to confirm capability-matrix consistency closure and isolate the remaining workbench classification issue."
+}

@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-03-31-388",
+  "status": "PASS_WITH_RISK",
+  "classification": "PASS_WITH_RISK",
+  "summary": "Audited fact-to-custom-frontend consistency and found real semantic drift in workbench and capability-matrix ownership, while lifecycle remains materially aligned.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-388.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-388.md"
+  },
+  "classification_counts": {
+    "aligned_surfaces": 1,
+    "partial_drift_surfaces": 1,
+    "explicit_drift_surfaces": 1
+  },
+  "next_suggestion": "Stop the current chain and open a dedicated consistency-repair objective for workbench and portal.capability_matrix publication semantics."
+}

@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-03-30-339",
+  "status": "PASS",
+  "summary": "Allowed workspace.home to publish native-target preview entries as pre-release usable functions while keeping locked entries blocked.",
+  "changed_files": [
+    "frontend/apps/web/src/views/HomeView.vue",
+    "agent_ops/tasks/ITER-2026-03-30-339.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-339.md",
+    "agent_ops/state/task_results/ITER-2026-03-30-339.json"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-339.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm -C frontend/apps/web typecheck:strict",
+      "result": "PASS"
+    }
+  ],
+  "risk_summary": [
+    "Frontend-only entry gating change",
+    "No backend contract changes",
+    "Locked entries still remain blocked"
+  ],
+  "rollback": [
+    "git restore agent_ops/tasks/ITER-2026-03-30-339.yaml",
+    "git restore frontend/apps/web/src/views/HomeView.vue",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-339.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-339.json"
+  ],
+  "next_suggestion": "Continue the pre-release publication path by making grouped home entries explain native-backed preview state more clearly."
+}

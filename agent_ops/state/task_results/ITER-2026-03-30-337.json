@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-03-30-337",
+  "status": "PASS",
+  "summary": "Removed technical filter panels from the normal workspace.home user view and aligned the remaining home sections with product-facing workbench wording.",
+  "changed_files": [
+    "frontend/apps/web/src/views/HomeView.vue",
+    "agent_ops/tasks/ITER-2026-03-30-337.yaml",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-337.md",
+    "agent_ops/state/task_results/ITER-2026-03-30-337.json"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-337.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm -C frontend/apps/web typecheck:strict",
+      "result": "PASS"
+    }
+  ],
+  "risk_summary": [
+    "Frontend-only HomeView cleanup",
+    "No backend contract changes",
+    "No route or permission behavior changes"
+  ],
+  "rollback": [
+    "git restore agent_ops/tasks/ITER-2026-03-30-337.yaml",
+    "git restore frontend/apps/web/src/views/HomeView.vue",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-337.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-337.json"
+  ],
+  "next_suggestion": "Continue workspace.home productization by shrinking the lower capability-browser area and tightening the common-entry area into a smaller action deck."
+}

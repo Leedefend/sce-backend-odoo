@@ -1,0 +1,48 @@
+{
+  "task_id": "ITER-2026-03-30-342",
+  "status": "PASS",
+  "layer_target": "Frontend Layer",
+  "module": "release navigation sidebar consumer",
+  "kernel_or_scenario": "scenario",
+  "summary": [
+    "Consumed backend stable/native-preview metadata in the sidebar",
+    "Added release summary chips for stable versus native preview counts",
+    "Added contract-driven preview/stable badges in MenuTree"
+  ],
+  "changed_files": [
+    "frontend/packages/schema/src/index.ts",
+    "frontend/apps/web/src/layouts/AppShell.vue",
+    "frontend/apps/web/src/components/MenuTree.vue",
+    "agent_ops/tasks/ITER-2026-03-30-342.yaml",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-342.md"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-342.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm -C frontend/apps/web typecheck:strict",
+      "result": "PASS"
+    }
+  ],
+  "risk": {
+    "level": "low",
+    "notes": [
+      "Frontend-only metadata consumption",
+      "No backend contract mutation in this batch",
+      "Preview/stable semantics now derived from backend metadata instead of labels"
+    ]
+  },
+  "rollback": [
+    "git restore agent_ops/tasks/ITER-2026-03-30-342.yaml",
+    "git restore frontend/packages/schema/src/index.ts",
+    "git restore frontend/apps/web/src/layouts/AppShell.vue",
+    "git restore frontend/apps/web/src/components/MenuTree.vue",
+    "git restore docs/ops/iterations/delivery_context_switch_log_v1.md",
+    "git restore agent_ops/reports/2026-03-30/report.ITER-2026-03-30-342.md",
+    "git restore agent_ops/state/task_results/ITER-2026-03-30-342.json"
+  ],
+  "next_suggestion": "Refresh the live PM sidebar to confirm the native preview group and badges render as expected under release navigation."
+}

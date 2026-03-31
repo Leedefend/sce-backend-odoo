@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-30-379",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Re-anchored the active objective back to business-fact usability and separated the low-risk native usability lane from the finance-governed treasury gap.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-379.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-379.md"
+  },
+  "classification_counts": {
+    "low_risk_continuation_lanes": 1,
+    "finance_governed_gaps": 1
+  },
+  "next_suggestion": "Resume the business-fact usability line on non-finance native surfaces and keep treasury-ledger work fenced behind a dedicated finance-governed objective."
+}

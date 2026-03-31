@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-30-385",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Audited the capability matrix supplement lane and confirmed that it is the only remaining real missing custom frontend supplement surface.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-30-385.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-30/report.ITER-2026-03-30-385.md"
+  },
+  "classification_counts": {
+    "remaining_missing_supplement_surfaces": 1
+  },
+  "next_suggestion": "Open the next focused batch for 能力矩阵 and define its minimal custom entry surface, preview-safe subset, and interaction boundary."
+}
