@@ -1,53 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="0">
-        <record id="sc_cap_group_project_management" model="sc.capability.group">
-            <field name="sequence">10</field>
-            <field name="key">project_management</field>
-            <field name="label">项目管理</field>
-            <field name="icon">briefcase</field>
-        </record>
-        <record id="sc_cap_group_contract_management" model="sc.capability.group">
-            <field name="sequence">20</field>
-            <field name="key">contract_management</field>
-            <field name="label">合同管理</field>
-            <field name="icon">file-text</field>
-        </record>
-        <record id="sc_cap_group_cost_management" model="sc.capability.group">
-            <field name="sequence">30</field>
-            <field name="key">cost_management</field>
-            <field name="label">成本管理</field>
-            <field name="icon">calculator</field>
-        </record>
-        <record id="sc_cap_group_finance_management" model="sc.capability.group">
-            <field name="sequence">40</field>
-            <field name="key">finance_management</field>
-            <field name="label">财务管理</field>
-            <field name="icon">wallet</field>
-        </record>
-        <record id="sc_cap_group_material_management" model="sc.capability.group">
-            <field name="sequence">50</field>
-            <field name="key">material_management</field>
-            <field name="label">物资管理</field>
-            <field name="icon">boxes</field>
-        </record>
-        <record id="sc_cap_group_governance" model="sc.capability.group">
-            <field name="sequence">60</field>
-            <field name="key">governance</field>
-            <field name="label">治理配置</field>
-            <field name="icon">shield</field>
-        </record>
-        <record id="sc_cap_group_analytics" model="sc.capability.group">
-            <field name="sequence">70</field>
-            <field name="key">analytics</field>
-            <field name="label">经营分析</field>
-            <field name="icon">chart</field>
-        </record>
-        <record id="sc_cap_group_others" model="sc.capability.group">
-            <field name="sequence">80</field>
-            <field name="key">others</field>
-            <field name="label">其他能力</field>
-            <field name="icon">grid</field>
-        </record>
+        <!-- Moved to smart_construction_scene/data/sc_scene_orchestration.xml.
+             Keep file as compatibility shim because core manifest still loads it. -->
     </data>
 </odoo>

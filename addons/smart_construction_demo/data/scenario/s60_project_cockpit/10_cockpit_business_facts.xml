@@ -1,4 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="0">
     <function model="project.project" name="sc_demo_seed_cockpit_round2"/>
+
+    <record id="sc_demo_tender_060_001" model="tender.bid">
+        <field name="tender_name">德阳智能制造产教融合项目一期投标包</field>
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="owner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+        <field name="tender_round">1</field>
+        <field name="bid_amount">1280000</field>
+        <field name="deadline">2026-04-20 10:00:00</field>
+        <field name="open_date">2026-04-20 14:00:00</field>
+        <field name="state">submitted</field>
+    </record>
+
+    <record id="sc_demo_wbs_060_unit_001" model="construction.work.breakdown">
+        <field name="name">1# 产教融合主楼</field>
+        <field name="code">U01</field>
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="level_type">unit</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="sc_demo_wbs_060_sub_001" model="construction.work.breakdown">
+        <field name="name">基础及主体结构</field>
+        <field name="code">U01-01</field>
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="parent_id" ref="smart_construction_demo.sc_demo_wbs_060_unit_001"/>
+        <field name="level_type">sub_section</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="sc_demo_document_060_001" model="sc.project.document">
+        <field name="name">施工图会审纪要</field>
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="wbs_id" ref="smart_construction_demo.sc_demo_wbs_060_sub_001"/>
+        <field name="doc_type_id" ref="smart_construction_demo.sc_dict_doc_type_drawing"/>
+        <field name="date_doc">2026-03-15</field>
+        <field name="version">A1</field>
+        <field name="is_mandatory">True</field>
+        <field name="state">done</field>
+        <field name="note">用于演示工程资料中心与 WBS 关联查看。</field>
+    </record>
+
+    <record id="sc_demo_document_060_002" model="sc.project.document">
+        <field name="name">专项施工方案技术交底</field>
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="wbs_id" ref="smart_construction_demo.sc_demo_wbs_060_sub_001"/>
+        <field name="doc_type_id" ref="smart_construction_demo.sc_dict_doc_type_tech"/>
+        <field name="date_doc">2026-03-18</field>
+        <field name="version">B2</field>
+        <field name="state">review</field>
+        <field name="note">用于演示工程资料列表中的状态差异与基础筛选。</field>
+    </record>
 </odoo>

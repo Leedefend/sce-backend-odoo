@@ -614,6 +614,7 @@ class SystemInitHandler(BaseIntentHandler):
             product_key=f"construction.{delivery_edition_key}",
             edition_key=delivery_edition_key,
             base_product_key="construction",
+            native_nav=nav_tree,
         )
         release_snapshot_service = EditionReleaseSnapshotService(env)
         release_audit_service = ReleaseAuditTrailService(env)

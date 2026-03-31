@@ -24,6 +24,11 @@ from odoo.exceptions import AccessError
 from odoo.addons.smart_construction_core.services.project_execution_item_projection_service import (
     ProjectExecutionItemProjectionService,
 )
+from odoo.addons.smart_construction_scene.services.my_work_scene_targets import (
+    build_my_work_section_rows,
+    build_my_work_summary_rows,
+    build_my_work_target,
+)
 
 
 class MyWorkSummaryHandler(BaseIntentHandler):
@@ -87,19 +92,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         except Exception:
             return {"model": model_name, "readable": False, "reason": "ACCESS_CHECK_FAILED"}
 
-    def _scene_for_model(self, model_name):
-        mapping = {
-            "project.project": "projects.list",
-            "project.task": "projects.list",
-            "payment.request": "finance.payment_requests",
-            "construction.contract": "contracts.list",
-            "sc.settlement.order": "settlement",
-            "sc.workflow.instance": "projects.list",
-            "sale.order": "contracts.list",
-            "account.move": "finance.vouchers.list",
-        }
-        return mapping.get(model_name, "projects.list")
-
     def _resolve_action_context_for_model(self, model_name):
         model = str(model_name or "").strip()
         if not model:
@@ -133,22 +125,19 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         for row in attached:
             model = str(row.get("model") or "").strip()
             record_id = self._coerce_record_id(row.get("record_id"))
-            scene_key = str(row.get("scene_key") or self._scene_for_model(model)).strip() or "projects.list"
-            target = {
-                "kind": "record" if model and record_id else "scene",
-                "scene_key": scene_key,
-            }
-            if model:
-                target["model"] = model
-            if record_id:
-                target["record_id"] = record_id
             action_ctx = self._resolve_action_context_for_model(model)
             action_id = int(action_ctx.get("action_id") or 0)
             menu_id = int(action_ctx.get("menu_id") or 0)
-            if action_id > 0:
-                target["action_id"] = action_id
-            if menu_id > 0:
-                target["menu_id"] = menu_id
+            target = build_my_work_target(
+                model_name=model,
+                record_id=record_id,
+                action_id=action_id,
+                menu_id=menu_id,
+                explicit_scene_key=str(row.get("scene_key") or ""),
+                source_key=str(row.get("source") or ""),
+                section_key=str(row.get("section") or ""),
+            )
+            row["scene_key"] = str(target.get("scene_key") or "")
             row["target"] = target
             row.setdefault("source_label", self._source_label(row))
             row.setdefault("project_name", self._row_project_name(model, record_id, row))
@@ -318,7 +307,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": rec.res_model,
                     "record_id": rec.res_id,
                     "deadline": fields.Date.to_string(rec.date_deadline) if rec.date_deadline else "",
-                    "scene_key": self._scene_for_model(rec.res_model),
                     "source": "mail.activity",
                     "action_label": followup.get("action_label") or "",
                     "action_key": followup.get("action_key") or "",
@@ -368,7 +356,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "tier.review",
                     "action_label": "审批处理",
                     "action_key": "tier.review.approve",
@@ -416,7 +403,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "sc.workflow.workitem",
                     "action_label": node_name or "流程处理",
                     "action_key": "sc.workflow.approve",
@@ -453,7 +439,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": "project.task",
                     "record_id": rec.id,
                     "deadline": fields.Date.to_string(rec.date_deadline) if getattr(rec, "date_deadline", False) else "",
-                    "scene_key": self._scene_for_model("project.task"),
                     "source": "project.task",
                     "action_label": "任务处理",
                     "action_key": "project.task.open",
@@ -515,7 +500,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": "project.project",
                     "record_id": rec.id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model("project.project"),
                     "source": "project.risk",
                     "action_label": "风险处理",
                     "action_key": "project.risk.resolve",
@@ -558,7 +542,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": "project.project",
                     "record_id": rec.id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model("project.project"),
                     "source": "project.project",
                     "reason_code": REASON_RESPONSIBLE_OWNER,
                     "priority": "medium",
@@ -586,7 +569,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "mail.message",
                     "reason_code": REASON_MENTIONED,
                     "priority": "low",
@@ -613,7 +595,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "mail.followers",
                     "reason_code": REASON_FOLLOWING,
                     "priority": "low",
@@ -734,18 +715,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
 
         data = {
             "generated_at": fields.Datetime.now(),
-            "sections": [
-                {"key": "todo", "label": self.SECTION_LABELS["todo"], "scene_key": "projects.list"},
-                {"key": "owned", "label": self.SECTION_LABELS["owned"], "scene_key": "projects.list"},
-                {"key": "mentions", "label": self.SECTION_LABELS["mentions"], "scene_key": "projects.list"},
-                {"key": "following", "label": self.SECTION_LABELS["following"], "scene_key": "projects.list"},
-            ],
-            "summary": [
-                {"key": "todo", "label": "待我处理", "count": todo_count, "scene_key": "projects.list"},
-                {"key": "owned", "label": "我负责", "count": responsible_count, "scene_key": "projects.list"},
-                {"key": "mentions", "label": "@我的", "count": mentioned_count, "scene_key": "projects.list"},
-                {"key": "following", "label": "我关注的", "count": following_count, "scene_key": "projects.list"},
-            ],
+            "sections": build_my_work_section_rows(self.SECTION_LABELS),
+            "summary": build_my_work_summary_rows(
+                [
+                    {"key": "todo", "label": "待我处理", "count": todo_count},
+                    {"key": "owned", "label": "我负责", "count": responsible_count},
+                    {"key": "mentions", "label": "@我的", "count": mentioned_count},
+                    {"key": "following", "label": "我关注的", "count": following_count},
+                ]
+            ),
             "items": items,
             "facets": facets,
             "filters": {

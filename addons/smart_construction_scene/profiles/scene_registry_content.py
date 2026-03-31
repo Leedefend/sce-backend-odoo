@@ -282,7 +282,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
         {
             "code": "portal.capability_matrix",
             "name": "能力矩阵",
-            "target": {"route": "/s/project.management"},
+            "target": {"route": "/s/portal.capability_matrix"},
         },
         {
             "code": "portal.dashboard",
