@@ -125,7 +125,15 @@ export interface AppInitResponse {
     }>;
     capabilities?: Array<Record<string, unknown>>;
     product_policy?: Record<string, unknown>;
-    meta?: Record<string, unknown>;
+    meta?: Record<string, unknown> & {
+      group_count?: number;
+      stable_group_count?: number;
+      native_preview_group_count?: number;
+      stable_leaf_count?: number;
+      native_preview_leaf_count?: number;
+      native_preview_group_key?: string;
+      nav_group_keys?: string[];
+    };
   };
   edition_runtime_v1?: {
     contract_version?: string;

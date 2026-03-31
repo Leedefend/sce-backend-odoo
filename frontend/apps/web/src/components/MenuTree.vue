@@ -15,11 +15,17 @@
         <span v-else class="toggle-spacer" aria-hidden="true"></span>
         <button
           class="label"
+          :class="{
+            'label--group-stable': isReleaseGroup(node) && !isPreviewGroup(node),
+            'label--group-preview': isPreviewGroup(node),
+            'label--leaf-preview': isPreviewLeaf(node),
+          }"
           :disabled="isBlocked(node)"
           :title="blockedTitle(node)"
           @click="onSelect(node)"
         >
-          {{ nodeLabel(node) }}
+          <span>{{ nodeLabel(node) }}</span>
+          <span v-if="nodeBadge(node)" class="badge" :class="badgeClass(node)">{{ nodeBadge(node) }}</span>
         </button>
       </div>
       <transition name="expand">
@@ -28,7 +34,10 @@
           v-show="expanded.has(nodeKey(node))"
           :nodes="node.children"
           :active-menu-id="activeMenuId"
+          :capabilities="capabilities"
           :level="level + 1"
+          :native-preview-group-key="nativePreviewGroupKey"
+          :release-metadata-mode="releaseMetadataMode"
           @select="emit('select', $event)"
         />
       </transition>
@@ -42,10 +51,19 @@ import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useSessionStore } from '../stores/session';
 
-const props = withDefaults(defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[]; level?: number }>(), {
+const props = withDefaults(defineProps<{
+  nodes: NavNode[];
+  activeMenuId?: number;
+  capabilities?: string[];
+  level?: number;
+  nativePreviewGroupKey?: string;
+  releaseMetadataMode?: boolean;
+}>(), {
   activeMenuId: undefined,
   capabilities: () => [],
   level: 0,
+  nativePreviewGroupKey: '',
+  releaseMetadataMode: false,
 });
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 
@@ -91,6 +109,33 @@ function nodeLabel(node: NavNode) {
     .replace(/^admin$/i, '系统管理员')
     .replace(/^workbench$/i, '工作台')
     .replace(/^dashboard$/i, '看板');
+}
+
+function groupKey(node: NavNode) {
+  return String(node.meta?.group_key || '');
+}
+
+function isReleaseGroup(node: NavNode) {
+  return Boolean(props.releaseMetadataMode && node.children?.length && groupKey(node));
+}
+
+function isPreviewGroup(node: NavNode) {
+  return Boolean(props.releaseMetadataMode && groupKey(node) && groupKey(node) === props.nativePreviewGroupKey);
+}
+
+function isPreviewLeaf(node: NavNode) {
+  return Boolean(props.releaseMetadataMode && node.meta?.release_state === 'preview');
+}
+
+function nodeBadge(node: NavNode) {
+  if (!props.releaseMetadataMode) return '';
+  if (isPreviewGroup(node) || isPreviewLeaf(node)) return '预发布';
+  if (isReleaseGroup(node)) return '正式';
+  return '';
+}
+
+function badgeClass(node: NavNode) {
+  return isPreviewGroup(node) || isPreviewLeaf(node) ? 'badge--preview' : 'badge--stable';
 }
 
 function onSelect(node: NavNode) {
@@ -221,10 +266,47 @@ onMounted(() => {
   font-weight: 500;
   line-height: 1.35;
   transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .label:hover {
   background-color: #f3f4f6;
+}
+
+.label--group-stable {
+  color: #1e3a5f;
+}
+
+.label--group-preview {
+  color: #8a4b00;
+}
+
+.label--leaf-preview {
+  color: #7c4a03;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.badge--stable {
+  background: #e8f1ff;
+  color: #2454a6;
+}
+
+.badge--preview {
+  background: #fff2d8;
+  color: #9a5a00;
 }
 
 .expand-enter-active,

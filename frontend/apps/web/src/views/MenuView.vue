@@ -65,6 +65,20 @@ const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
+const activeMenuTree = computed(() => {
+  return session.releaseNavigationTree.length ? session.releaseNavigationTree : session.menuTree;
+});
+
+function resolveMenuAcrossNavigationTrees(menuId: number) {
+  const primary = resolveMenuAction(activeMenuTree.value, menuId);
+  if (primary.kind !== 'broken' || !session.releaseNavigationTree.length) {
+    return primary;
+  }
+  if (primary.reason && primary.reason !== 'menu not found') {
+    return primary;
+  }
+  return resolveMenuAction(session.menuTree, menuId);
+}
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
@@ -96,7 +110,7 @@ async function resolve() {
     if (!menuId) {
       throw new Error(pageText('error_invalid_menu_id', 'invalid menu id'));
     }
-    const result = resolveMenuAction(session.menuTree, menuId);
+    const result = resolveMenuAcrossNavigationTrees(menuId);
     if (result.kind === 'leaf') {
       if (isProjectIntakeMenuNode(result.node)) {
         await router.replace({
@@ -130,6 +144,45 @@ async function resolve() {
       const targetSceneKey = normalizeMenuSceneKey(result.target.scene_key);
       if (targetSceneKey) {
         if (!getSceneByKey(targetSceneKey)) {
+          if (result.target.action_id) {
+            const policy = evaluateCapabilityPolicy({ source: result.target.meta, available: session.capabilities });
+            if (policy.state !== 'enabled') {
+              await router.replace({
+                name: 'workbench',
+                query: {
+                  menu_id: result.target.menu_id,
+                  action_id: result.target.action_id,
+                  reason: ErrorCodes.CAPABILITY_MISSING,
+                  missing: policy.missing.join(','),
+                },
+              });
+              return;
+            }
+            if (result.target.meta) {
+              session.setActionMeta(result.target.meta);
+            }
+            await router.replace({
+              name: 'action',
+              params: { actionId: result.target.action_id },
+              query: resolveCarryQuery({
+                menu_id: result.target.menu_id,
+                action_id: result.target.action_id,
+                scene_key: targetSceneKey,
+              }),
+            });
+            return;
+          }
+          const targetRoute = String(result.target.route || '').trim();
+          if (targetRoute) {
+            await router.replace({
+              path: targetRoute,
+              query: resolveCarryQuery({
+                menu_id: result.target.menu_id,
+                scene_key: targetSceneKey,
+              }),
+            });
+            return;
+          }
           await router.replace(
             buildSceneRegistryFallbackPath({
               sceneKey: targetSceneKey,
@@ -216,7 +269,12 @@ async function executeHeaderAction(actionKey: string) {
 }
 
 watch(
-  () => route.params.menuId,
+  () => [
+    route.params.menuId,
+    session.initStatus,
+    session.releaseNavigationTree.length,
+    session.menuTree.length,
+  ],
   () => {
     resolve();
   },

@@ -6,7 +6,7 @@ export type MenuResolveResult =
   | {
       kind: 'redirect';
       node: NavNode;
-      target: { menu_id: number; action_id?: number; scene_key?: string; meta?: NavMeta; node?: NavNode };
+      target: { menu_id: number; action_id?: number; scene_key?: string; route?: string; meta?: NavMeta; node?: NavNode };
     }
   | { kind: 'group'; node: NavNode }
   | { kind: 'broken'; node: NavNode | null; reason: string };

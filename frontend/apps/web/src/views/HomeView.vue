@@ -179,11 +179,11 @@
         </div>
       </section>
 
-      <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :class="homeSectionClass('risk')" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
+    <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :class="homeSectionClass('risk')" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '系统提醒区')">
         <header class="risk-header">
           <div>
-            <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
-            <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
+            <h3>{{ homeLayoutText('risk.title', '系统提醒') }}</h3>
+            <p>{{ homeLayoutText('risk.subtitle', '优先处理系统当前提醒你的关键事项。') }}</p>
           </div>
           <button class="today-view-all" @click="openRiskCenter">进入风险中心</button>
         </header>
@@ -250,8 +250,8 @@
     </section>
 
     <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :class="homeSectionClass('ops')" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
-      <summary>{{ homeLayoutText('ops.title', '项目经营概览') }}</summary>
-      <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目经营概览区')">
+      <summary>{{ homeLayoutText('ops.title', '项目总体状态') }}</summary>
+      <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目总体状态区')">
         <div class="ops-grid">
           <article class="ops-card">
             <p>{{ homeLayoutText('ops.compare.title', '合同额 vs 累计产值') }}</p>
@@ -267,12 +267,12 @@
             </div>
           </article>
           <article class="ops-card">
-            <p>{{ homeLayoutText('ops.kpi.cost_rate', '成本执行率') }}</p>
+            <p>{{ homeLayoutText('ops.kpi.cost_rate', '成本控制率') }}</p>
             <h4>{{ opsKpi.costRate }}%</h4>
             <small>{{ trendText(opsKpi.costRateDelta) }}</small>
           </article>
           <article class="ops-card">
-            <p>{{ homeLayoutText('ops.kpi.payment_rate', '资金支付比例') }}</p>
+            <p>{{ homeLayoutText('ops.kpi.payment_rate', '资金支付率') }}</p>
             <h4>{{ opsKpi.paymentRate }}%</h4>
             <small>{{ trendText(opsKpi.paymentRateDelta) }}</small>
           </article>
@@ -286,8 +286,8 @@
     </details>
 
     <details v-if="isHomeSectionEnabled('advice') && isHomeSectionTag('advice', 'details')" class="secondary-panel" :class="homeSectionClass('advice')" :style="homeSectionStyle('advice')" :open="isHomeSectionOpenDefault('advice')">
-      <summary>{{ homeLayoutText('advice.title', '系统建议关注事项') }}</summary>
-      <section class="advice-section" :aria-label="homeLayoutText('advice.aria_label', '系统建议关注事项')">
+      <summary>{{ homeLayoutText('advice.title', '补充提醒') }}</summary>
+      <section class="advice-section" :aria-label="homeLayoutText('advice.aria_label', '补充提醒区')">
         <div class="advice-list">
           <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
             <p class="advice-title">{{ item.title }}</p>
@@ -298,10 +298,10 @@
       </section>
     </details>
 
-    <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :class="homeSectionClass('group_overview')" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
+    <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :class="homeSectionClass('group_overview')" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '常用功能区')">
       <header class="group-overview-header">
-        <h3>{{ homeLayoutText('group_overview.title', '辅助入口') }}</h3>
-        <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
+        <h3>{{ homeLayoutText('group_overview.title', '常用功能') }}</h3>
+        <p>{{ homeLayoutText('group_overview.subtitle', '按业务域快速进入当前最常用的场景。') }}</p>
       </header>
       <div class="group-overview-grid">
         <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card module" @click="openGroupCard(group.key)">
@@ -312,7 +312,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('filters') && isHomeSectionTag('filters', 'section')" class="filters" :class="homeSectionClass('filters')" :style="homeSectionStyle('filters')">
+    <section v-if="isHudEnabled && isHomeSectionEnabled('filters') && isHomeSectionTag('filters', 'section')" class="filters" :class="homeSectionClass('filters')" :style="homeSectionStyle('filters')">
       <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
         <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
@@ -443,6 +443,45 @@
         </p>
       </template>
     </div>
+
+    <section
+      v-else-if="!isHudEnabled && isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div') && compactHomeActionDeck.length"
+      class="home-action-deck"
+      :class="homeSectionClass('scene_groups')"
+      :style="homeSectionStyle('scene_groups')"
+    >
+      <header class="home-action-deck-header">
+        <div>
+          <h3>{{ pageText('home_action_deck_title', '继续处理常用事项') }}</h3>
+          <p>{{ pageText('home_action_deck_subtitle', '保留最常用的入口；更多功能统一进入“我的工作”查看。') }}</p>
+        </div>
+        <button class="today-view-all" @click="goToMyWork">{{ pageText('home_action_deck_view_all', '进入我的工作') }}</button>
+      </header>
+      <div class="home-action-deck-grid">
+        <article
+          v-for="entry in compactHomeActionDeck"
+          :key="`deck-${entry.id}`"
+          class="home-action-card"
+          :class="`state-${entry.state.toLowerCase()}`"
+        >
+          <div class="home-action-card-main">
+            <p class="home-action-eyebrow">{{ entry.sceneTitle }}</p>
+            <p class="home-action-title">{{ entry.title }}</p>
+            <p class="home-action-subtitle" :title="entry.reason || entry.subtitle">
+              {{ entry.subtitle || pageText('entry_subtitle_empty', '无说明') }}
+            </p>
+          </div>
+          <button
+            class="open-btn"
+            :disabled="!canEnter(entry)"
+            :title="entry.reason || ''"
+            @click="openScene(entry)"
+          >
+            {{ actionLabel(entry) }}
+          </button>
+        </article>
+      </div>
+    </section>
 
     <div v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div')" class="scene-groups" :class="homeSectionClass('scene_groups')" :style="homeSectionStyle('scene_groups')">
       <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
@@ -1621,6 +1660,22 @@ const groupedEntries = computed(() => {
   if (!recentItems.length) return grouped;
   return [{ sceneKey: '__recent__', sceneTitle: pageText('recent_group_title', '最近使用'), sceneSummary: '', items: recentItems }, ...grouped];
 });
+
+const compactHomeActionDeck = computed<CapabilityEntry[]>(() => {
+  if (isHudEnabled.value) return [];
+  const picked = new Set<string>();
+  const deck: CapabilityEntry[] = [];
+  for (const entry of filteredEntries.value) {
+    if (!canEnter(entry)) continue;
+    const bucket = entry.groupKey || entry.sceneKey || entry.key;
+    if (picked.has(bucket)) continue;
+    picked.add(bucket);
+    deck.push(entry);
+    if (deck.length >= 6) break;
+  }
+  return deck;
+});
+
 const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
 const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   const readyEntries = entries.value
@@ -1693,10 +1748,12 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
     ds_scene_groups: readyEntries,
     ds_capability_groups: capabilityEntries,
     ds_advice: systemAdvice.value,
-    ds_filters: {
-      result_summary: resultSummaryText.value,
-      active_filters: activeFilterChips.value,
-    },
+    ds_filters: isHudEnabled.value
+      ? {
+          result_summary: resultSummaryText.value,
+          active_filters: activeFilterChips.value,
+        }
+      : {},
   };
 });
 
@@ -1767,12 +1824,27 @@ function stateLabel(state: EntryState) {
   return pageText('state_preview', '即将开放');
 }
 
+function hasNativeEntryTarget(entry: CapabilityEntry) {
+  return Boolean(
+    entry.route
+    || entry.targetActionId
+    || (entry.targetModel && entry.targetRecordId),
+  );
+}
+
+function isPreReleaseEnterable(entry: CapabilityEntry) {
+  return entry.state === 'PREVIEW' && hasNativeEntryTarget(entry);
+}
+
 function canEnter(entry: CapabilityEntry) {
-  return entry.state === 'READY';
+  if (entry.state === 'READY') return true;
+  if (entry.state === 'LOCKED') return false;
+  return isPreReleaseEnterable(entry);
 }
 
 function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return pageText('action_enter_disabled', '暂不可用');
+  if (isPreReleaseEnterable(entry)) return pageText('action_enter_prerelease', '预发布进入');
   if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
   if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
   if (entry.actionLabel) return entry.actionLabel;
@@ -3437,6 +3509,77 @@ function highlightParts(raw: string) {
 .scene-groups {
   display: grid;
   gap: 12px;
+}
+
+.home-action-deck {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #d9e4f7;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+}
+
+.home-action-deck-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-action-deck-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #18253d;
+}
+
+.home-action-deck-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #667799;
+}
+
+.home-action-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.home-action-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 148px;
+  padding: 16px;
+  border: 1px solid #dde6f6;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.home-action-card-main {
+  display: grid;
+  gap: 6px;
+}
+
+.home-action-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  color: #7183a6;
+}
+
+.home-action-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #18253d;
+}
+
+.home-action-subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5a6a88;
 }
 
 .scene-group {
