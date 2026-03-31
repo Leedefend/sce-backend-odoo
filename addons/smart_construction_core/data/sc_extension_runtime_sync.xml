@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="0">
-        <function model="smart.enterprise.base.runtime" name="ensure_extension_module_registration"/>
+        <!-- Moved to smart_enterprise_base/data/runtime_params.xml.
+             Keep file as compatibility shim because core manifest still loads it. -->
     </data>
 </odoo>

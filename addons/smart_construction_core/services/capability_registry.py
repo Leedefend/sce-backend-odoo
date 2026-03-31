@@ -5,8 +5,12 @@ import re
 from typing import Any
 
 from odoo import _
-
 from odoo.addons.smart_construction_scene import scene_registry
+from odoo.addons.smart_construction_scene.services.capability_scene_targets import (
+    build_capability_entry_target,
+    resolve_capability_entry_scene_key,
+    resolve_capability_entry_target_payload,
+)
 
 CAPABILITY_KEY_REGEX = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
@@ -39,7 +43,6 @@ def _cap(
     label: str,
     hint: str,
     group_key: str,
-    scene_key: str,
     *,
     required_roles: list[str] | None = None,
     required_groups: list[str] | None = None,
@@ -50,7 +53,6 @@ def _cap(
         "label": label,
         "hint": hint,
         "group_key": group_key,
-        "entry_target": {"scene_key": scene_key},
         "required_roles": list(required_roles or []),
         "required_groups": list(required_groups or []),
         "status": status,
@@ -59,59 +61,59 @@ def _cap(
 
 
 _CAPABILITIES: list[dict[str, Any]] = [
-    _cap("project.initiation.enter", "项目立项", "创建并发起项目立项流程", "project_management", "project.initiation", required_roles=["pm", "executive"]),
-    _cap("project.list.open", "项目列表", "查看项目列表与筛选", "project_management", "projects.list", required_roles=["owner", "pm", "finance", "executive"]),
-    _cap("project.board.open", "项目看板", "查看项目看板与状态分布", "project_management", "projects.ledger", required_roles=["owner", "pm", "executive"]),
-    _cap("project.dashboard.enter", "项目驾驶舱", "进入项目驾驶舱最小入口", "project_management", "project.dashboard", required_roles=["pm", "executive"]),
-    _cap("project.dashboard.open", "项目驾驶舱（兼容）", "兼容旧入口，转发到项目驾驶舱最小入口", "project_management", "project.dashboard", required_roles=["pm", "executive"], status="deprecated"),
-    _cap("project.plan_bootstrap.enter", "计划编排入口", "进入项目计划编排最小入口", "project_management", "project.plan_bootstrap", required_roles=["pm", "executive"]),
-    _cap("project.execution.enter", "项目执行入口", "进入项目执行最小入口", "project_management", "project.execution", required_roles=["pm", "executive"]),
-    _cap("project.execution.advance", "推进执行", "执行最小推进动作", "project_management", "project.execution", required_roles=["pm", "executive"]),
-    _cap("project.lifecycle.open", "生命周期视图", "查看项目生命周期与阻塞项", "project_management", "portal.lifecycle", required_roles=["pm", "executive"]),
-    _cap("project.task.list", "任务列表", "查看项目任务与待办", "project_management", "projects.ledger", required_roles=["owner", "pm", "executive"]),
-    _cap("project.task.board", "任务看板", "按状态查看任务推进", "project_management", "projects.ledger", required_roles=["pm", "executive"]),
-    _cap("project.document.open", "项目文档", "进入项目文档视图", "project_management", "projects.ledger", required_roles=["pm", "executive"]),
-    _cap("project.structure.manage", "执行结构", "进入执行结构与WBS能力", "project_management", "cost.project_boq", required_roles=["pm", "executive"]),
-    _cap("project.risk.list", "风险清单", "查看项目风险清单", "project_management", "projects.ledger", required_roles=["pm", "executive"]),
-    _cap("project.weekly_report.open", "周报入口", "进入项目周报与周度复盘", "project_management", "projects.ledger", required_roles=["pm", "executive"]),
-    _cap("project.lifecycle.transition", "生命周期流转", "执行项目生命周期流转动作", "project_management", "portal.lifecycle", required_roles=["pm", "executive"]),
+    _cap("project.initiation.enter", "项目立项", "创建并发起项目立项流程", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.list.open", "项目列表", "查看项目列表与筛选", "project_management", required_roles=["owner", "pm", "finance", "executive"]),
+    _cap("project.board.open", "项目看板", "查看项目看板与状态分布", "project_management", required_roles=["owner", "pm", "executive"]),
+    _cap("project.dashboard.enter", "项目驾驶舱", "进入项目驾驶舱最小入口", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.dashboard.open", "项目驾驶舱（兼容）", "兼容旧入口，转发到项目驾驶舱最小入口", "project_management", required_roles=["pm", "executive"], status="deprecated"),
+    _cap("project.plan_bootstrap.enter", "计划编排入口", "进入项目计划编排最小入口", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.execution.enter", "项目执行入口", "进入项目执行最小入口", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.execution.advance", "推进执行", "执行最小推进动作", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.lifecycle.open", "生命周期视图", "查看项目生命周期与阻塞项", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.task.list", "任务列表", "查看项目任务与待办", "project_management", required_roles=["owner", "pm", "executive"]),
+    _cap("project.task.board", "任务看板", "按状态查看任务推进", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.document.open", "项目文档", "进入项目文档视图", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.structure.manage", "执行结构", "进入执行结构与WBS能力", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.risk.list", "风险清单", "查看项目风险清单", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.weekly_report.open", "周报入口", "进入项目周报与周度复盘", "project_management", required_roles=["pm", "executive"]),
+    _cap("project.lifecycle.transition", "生命周期流转", "执行项目生命周期流转动作", "project_management", required_roles=["pm", "executive"]),
 
-    _cap("finance.payment_request.list", "付款申请列表", "查看付款申请列表", "finance_management", "finance.payment_requests", required_roles=["finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_finance_read"]),
-    _cap("finance.payment_request.form", "付款申请表单", "进入付款申请详情与编辑", "finance_management", "finance.payment_requests", required_roles=["finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_finance_read"]),
-    _cap("finance.approval.center", "审批中心入口", "进入财务审批工作台", "finance_management", "finance.center", required_roles=["finance", "executive"]),
-    _cap("finance.ledger.payment", "收付款台账", "查看收付款台账", "finance_management", "finance.payment_ledger", required_roles=["finance", "executive"]),
-    _cap("finance.ledger.treasury", "资金台账", "查看资金余额与流水", "finance_management", "finance.treasury_ledger", required_roles=["finance", "executive"]),
-    _cap("finance.settlement.order", "结算单", "查看结算单流程", "finance_management", "finance.settlement_orders", required_roles=["finance", "executive"]),
-    _cap("finance.invoice.list", "发票列表", "进入发票相关清单", "finance_management", "finance.center", required_roles=["finance", "executive"]),
-    _cap("finance.plan.funding", "资金计划", "查看资金计划与安排", "finance_management", "finance.center", required_roles=["finance", "executive"]),
-    _cap("finance.metrics.operating", "经营指标", "查看经营指标看板", "finance_management", "finance.operating_metrics", required_roles=["finance", "executive"]),
-    _cap("finance.exception.monitor", "财务异常", "查看财务异常清单", "finance_management", "finance.operating_metrics", required_roles=["finance", "executive"]),
+    _cap("finance.payment_request.list", "付款申请列表", "查看付款申请列表", "finance_management", required_roles=["finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_finance_read"]),
+    _cap("finance.payment_request.form", "付款申请表单", "进入付款申请详情与编辑", "finance_management", required_roles=["finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_finance_read"]),
+    _cap("finance.approval.center", "审批中心入口", "进入财务审批工作台", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.ledger.payment", "收付款台账", "查看收付款台账", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.ledger.treasury", "资金台账", "查看资金余额与流水", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.settlement.order", "结算单", "查看结算单流程", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.invoice.list", "发票列表", "进入发票相关清单", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.plan.funding", "资金计划", "查看资金计划与安排", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.metrics.operating", "经营指标", "查看经营指标看板", "finance_management", required_roles=["finance", "executive"]),
+    _cap("finance.exception.monitor", "财务异常", "查看财务异常清单", "finance_management", required_roles=["finance", "executive"]),
 
-    _cap("cost.ledger.open", "成本台账", "进入成本台账", "cost_management", "cost.project_cost_ledger", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_cost_read"]),
-    _cap("cost.budget.manage", "预算管理", "进入预算与控制能力", "cost_management", "cost.project_budget", required_roles=["pm", "finance", "executive"]),
-    _cap("cost.boq.manage", "工程量清单", "进入工程量清单能力", "cost_management", "cost.project_boq", required_roles=["pm", "executive"]),
-    _cap("cost.progress.report", "进度填报", "进入进度填报与对比", "cost_management", "cost.project_progress", required_roles=["pm", "executive"]),
-    _cap("cost.profit.compare", "盈亏对比", "查看盈亏对比分析", "cost_management", "cost.profit_compare", required_roles=["finance", "executive"]),
+    _cap("cost.ledger.open", "成本台账", "进入成本台账", "cost_management", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_cost_read"]),
+    _cap("cost.budget.manage", "预算管理", "进入预算与控制能力", "cost_management", required_roles=["pm", "finance", "executive"]),
+    _cap("cost.boq.manage", "工程量清单", "进入工程量清单能力", "cost_management", required_roles=["pm", "executive"]),
+    _cap("cost.progress.report", "进度填报", "进入进度填报与对比", "cost_management", required_roles=["pm", "executive"]),
+    _cap("cost.profit.compare", "盈亏对比", "查看盈亏对比分析", "cost_management", required_roles=["finance", "executive"]),
 
-    _cap("contract.center.open", "合同中心", "进入合同中心", "contract_management", "projects.ledger", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
-    _cap("contract.income.track", "收入合同", "查看收入合同进展", "contract_management", "projects.ledger", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
-    _cap("contract.expense.track", "支出合同", "查看支出合同与付款", "contract_management", "projects.ledger", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
-    _cap("contract.settlement.audit", "结算审核", "查看结算审核视图", "contract_management", "finance.settlement_orders", required_roles=["finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
+    _cap("contract.center.open", "合同中心", "进入合同中心", "contract_management", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
+    _cap("contract.income.track", "收入合同", "查看收入合同进展", "contract_management", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
+    _cap("contract.expense.track", "支出合同", "查看支出合同与付款", "contract_management", required_roles=["pm", "finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
+    _cap("contract.settlement.audit", "结算审核", "查看结算审核视图", "contract_management", required_roles=["finance", "executive"], required_groups=["smart_construction_core.group_sc_cap_contract_read"]),
 
-    _cap("analytics.dashboard.executive", "经营驾驶舱", "高层经营看板", "analytics", "projects.dashboard", required_roles=["executive"]),
-    _cap("analytics.lifecycle.monitor", "生命周期监控", "监控生命周期推进效率", "analytics", "portal.lifecycle", required_roles=["pm", "executive"]),
-    _cap("analytics.exception.list", "异常列表", "查看经营与执行异常", "analytics", "finance.operating_metrics", required_roles=["executive"]),
-    _cap("analytics.project.focus", "我关注的项目", "查看重点关注项目", "analytics", "projects.list", required_roles=["executive"]),
+    _cap("analytics.dashboard.executive", "经营驾驶舱", "高层经营看板", "analytics", required_roles=["executive"]),
+    _cap("analytics.lifecycle.monitor", "生命周期监控", "监控生命周期推进效率", "analytics", required_roles=["pm", "executive"]),
+    _cap("analytics.exception.list", "异常列表", "查看经营与执行异常", "analytics", required_roles=["executive"]),
+    _cap("analytics.project.focus", "我关注的项目", "查看重点关注项目", "analytics", required_roles=["executive"]),
 
-    _cap("governance.capability.matrix", "能力矩阵", "查看角色能力覆盖", "governance", "portal.capability_matrix", required_roles=["pm", "finance", "executive"]),
-    _cap("governance.scene.openability", "场景可打开性", "查看场景可打开性状态", "governance", "portal.capability_matrix", required_roles=["executive"]),
-    _cap("governance.runtime.audit", "运行态审计", "查看运行态治理审计", "governance", "portal.dashboard", required_roles=["executive"]),
+    _cap("governance.capability.matrix", "能力矩阵", "查看角色能力覆盖", "governance", required_roles=["pm", "finance", "executive"]),
+    _cap("governance.scene.openability", "场景可打开性", "查看场景可打开性状态", "governance", required_roles=["executive"]),
+    _cap("governance.runtime.audit", "运行态审计", "查看运行态治理审计", "governance", required_roles=["executive"]),
 
-    _cap("material.catalog.open", "物资目录", "查看物资目录与分类", "material_management", "projects.ledger", required_roles=["pm", "finance", "executive"]),
-    _cap("material.procurement.list", "采购清单", "查看采购与供应入口", "material_management", "projects.ledger", required_roles=["pm", "finance", "executive"]),
+    _cap("material.catalog.open", "物资目录", "查看物资目录与分类", "material_management", required_roles=["pm", "finance", "executive"]),
+    _cap("material.procurement.list", "采购清单", "查看采购与供应入口", "material_management", required_roles=["pm", "finance", "executive"]),
 
-    _cap("workspace.today.focus", "今日关键动作", "今日关键动作工作台", "others", "portal.dashboard", required_roles=["owner", "pm", "finance", "executive"]),
-    _cap("workspace.project.watch", "我关注的项目", "从工作台进入关注项目", "others", "projects.list", required_roles=["owner", "pm", "finance", "executive"]),
+    _cap("workspace.today.focus", "今日关键动作", "今日关键动作工作台", "others", required_roles=["owner", "pm", "finance", "executive"]),
+    _cap("workspace.project.watch", "我关注的项目", "从工作台进入关注项目", "others", required_roles=["owner", "pm", "finance", "executive"]),
 ]
 
 
@@ -187,59 +189,6 @@ def _normalize_bool(value: Any) -> bool:
     return False
 
 
-def _resolve_scene_map(env) -> dict[str, dict[str, Any]]:
-    scenes = scene_registry.load_scene_configs(env)
-    out: dict[str, dict[str, Any]] = {}
-    for scene in scenes or []:
-        if not isinstance(scene, dict):
-            continue
-        key = str(scene.get("code") or scene.get("key") or "").strip()
-        if not key:
-            continue
-        out[key] = dict(scene)
-    return out
-
-
-def _resolve_ref_id(env, xmlid: str) -> int | None:
-    value = str(xmlid or "").strip()
-    if not value:
-        return None
-    rec = env.ref(value, raise_if_not_found=False)
-    if not rec:
-        return None
-    return int(rec.id)
-
-
-def _resolve_entry_target_payload(env, entry_target: dict[str, Any], scene_map: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    target = dict(entry_target or {})
-    scene_key = str(target.get("scene_key") or "").strip()
-    payload: dict[str, Any] = {}
-    if scene_key:
-        payload["scene_key"] = scene_key
-        payload["route"] = f"/workbench?scene={scene_key}"
-        scene = scene_map.get(scene_key) or {}
-        scene_target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
-        for key in ("route", "model", "view_type", "view_mode", "record_id"):
-            if key in scene_target and scene_target.get(key) not in (None, ""):
-                payload[key] = scene_target.get(key)
-        action_xmlid = str(scene_target.get("action_xmlid") or "").strip()
-        menu_xmlid = str(scene_target.get("menu_xmlid") or "").strip()
-        action_id = scene_target.get("action_id")
-        menu_id = scene_target.get("menu_id")
-        if action_xmlid and not action_id:
-            action_id = _resolve_ref_id(env, action_xmlid)
-        if menu_xmlid and not menu_id:
-            menu_id = _resolve_ref_id(env, menu_xmlid)
-        if action_id:
-            payload["action_id"] = int(action_id)
-        if menu_id:
-            payload["menu_id"] = int(menu_id)
-    for key in ("route", "model", "view_type", "view_mode", "record_id", "action_id", "menu_id"):
-        if key in target and target.get(key) not in (None, ""):
-            payload[key] = target.get(key)
-    return payload
-
-
 def _is_group_member(user, group_xmlid: str) -> bool:
     text = str(group_xmlid or "").strip()
     if not text:
@@ -279,7 +228,6 @@ def _capability_state(defn: dict[str, Any], allowed: bool) -> tuple[str, str]:
 def list_capabilities_for_user(env, user) -> list[dict[str, Any]]:
     group_meta = _group_meta_map()
     role_codes = _resolve_role_codes_for_user(user)
-    scene_map = _resolve_scene_map(env)
 
     out: list[dict[str, Any]] = []
     for idx, defn in enumerate(capability_definitions(), start=1):
@@ -295,9 +243,11 @@ def list_capabilities_for_user(env, user) -> list[dict[str, Any]]:
         if cap_state == "deny":
             state = "LOCKED"
 
-        payload = _resolve_entry_target_payload(env, defn.get("entry_target") or {}, scene_map)
+        capability_key = str(defn.get("key") or "").strip()
+        entry_target = build_capability_entry_target(capability_key, explicit_target=defn.get("entry_target") or {})
+        payload = resolve_capability_entry_target_payload(env, capability_key, explicit_target=defn.get("entry_target") or {})
         item = {
-            "key": str(defn.get("key") or "").strip(),
+            "key": capability_key,
             "name": str(defn.get("label") or defn.get("key") or "").strip(),
             "ui_label": str(defn.get("label") or defn.get("key") or "").strip(),
             "ui_hint": str(defn.get("hint") or "").strip(),
@@ -316,7 +266,7 @@ def list_capabilities_for_user(env, user) -> list[dict[str, Any]]:
             "default_payload": payload,
             "required_roles": [str(x).strip() for x in (defn.get("required_roles") or []) if str(x).strip()],
             "required_groups": [str(x).strip() for x in (defn.get("required_groups") or []) if str(x).strip()],
-            "entry_target": dict(defn.get("entry_target") or {}),
+            "entry_target": entry_target,
             "sequence": int(defn.get("sequence") or idx * 10),
             "tags": [group_key, "registry"],
         }
@@ -388,8 +338,7 @@ def lint_registry(env=None) -> list[dict[str, Any]]:
         elif group_key not in group_keys:
             issues.append({"code": "GROUP_KEY_UNKNOWN", "capability_key": key, "group_key": group_key})
 
-        entry_target = item.get("entry_target") if isinstance(item.get("entry_target"), dict) else {}
-        scene_key = str(entry_target.get("scene_key") or "").strip()
+        scene_key = resolve_capability_entry_scene_key(key)
         if not scene_key:
             issues.append({"code": "ENTRY_TARGET_SCENE_REQUIRED", "capability_key": key})
 
@@ -397,12 +346,15 @@ def lint_registry(env=None) -> list[dict[str, Any]]:
         issues.append({"code": "CAPABILITY_COUNT_TOO_LOW", "count": len(capability_definitions()), "min": 30})
 
     if env is not None:
-        scene_map = _resolve_scene_map(env)
+        scene_keys = {
+            str(row.get("code") or row.get("key") or "").strip()
+            for row in (scene_registry.load_scene_configs(env) or [])
+            if isinstance(row, dict) and str(row.get("code") or row.get("key") or "").strip()
+        }
         for item in capability_definitions():
             key = str(item.get("key") or "").strip()
-            entry_target = item.get("entry_target") if isinstance(item.get("entry_target"), dict) else {}
-            scene_key = str(entry_target.get("scene_key") or "").strip()
-            if scene_key and scene_key not in scene_map:
+            scene_key = resolve_capability_entry_scene_key(key)
+            if scene_key and scene_key not in scene_keys:
                 issues.append({"code": "ENTRY_TARGET_SCENE_NOT_FOUND", "capability_key": key, "scene_key": scene_key})
 
     return issues

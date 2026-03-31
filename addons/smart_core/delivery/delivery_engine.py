@@ -22,6 +22,7 @@ class DeliveryEngine:
         product_key: str | None = None,
         edition_key: str | None = None,
         base_product_key: str | None = None,
+        native_nav: list[dict] | None = None,
     ) -> dict:
         runtime = data if isinstance(data, dict) else {}
         role_surface = runtime.get("role_surface") if isinstance(runtime.get("role_surface"), dict) else {}
@@ -33,9 +34,14 @@ class DeliveryEngine:
             enforce_release=True,
             enforce_access=True,
         )
-        nav = self.menu_service.build_nav(policy=policy, role_surface=role_surface)
+        nav = self.menu_service.build_nav(
+            policy=policy,
+            role_surface=role_surface,
+            native_nav=native_nav if isinstance(native_nav, list) else [],
+        )
         scenes = self.scene_service.build_entries(policy=policy, scenes=runtime.get("scenes") or [])
         capabilities = self.capability_service.build_entries(policy=policy, capabilities=runtime.get("capabilities") or [])
+        nav_meta = self.menu_service.describe_nav(nav)
         return {
             "contract_version": "v1",
             "source": "delivery_engine_v1",
@@ -77,7 +83,13 @@ class DeliveryEngine:
                 "nav_root_count": len(nav),
                 "scene_count": len(scenes),
                 "capability_count": len(capabilities),
-                "group_count": len((nav[0].get("children") if nav else []) or []),
+                "group_count": int(nav_meta.get("group_count") or 0),
+                "stable_group_count": int(nav_meta.get("stable_group_count") or 0),
+                "native_preview_group_count": int(nav_meta.get("native_preview_group_count") or 0),
+                "stable_leaf_count": int(nav_meta.get("stable_leaf_count") or 0),
+                "native_preview_leaf_count": int(nav_meta.get("native_preview_leaf_count") or 0),
+                "native_preview_group_key": str(nav_meta.get("native_preview_group_key") or ""),
+                "nav_group_keys": nav_meta.get("group_keys") if isinstance(nav_meta.get("group_keys"), list) else [],
                 "edition_diagnostics": policy.get("edition_diagnostics") if isinstance(policy.get("edition_diagnostics"), dict) else {},
             },
         }

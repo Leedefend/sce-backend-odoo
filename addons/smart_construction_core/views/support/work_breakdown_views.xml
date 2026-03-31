@@ -101,8 +101,15 @@
         <field name="res_model">construction.work.breakdown</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_work_breakdown_search"/>
-        <!-- 使用空 context，避免菜单进入时报 active_id 未定义；项目按钮会覆写 context -->
-        <field name="context">{}</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                从项目维度查看工程结构
+            </p>
+            <p>
+                默认按项目分组展示，进入后可以继续按层级或上级节点筛选。
+            </p>
+        </field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
     </record>
 </odoo>

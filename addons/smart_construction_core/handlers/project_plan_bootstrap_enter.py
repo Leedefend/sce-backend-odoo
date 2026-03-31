@@ -9,6 +9,9 @@ from odoo.addons.smart_core.core.scene_contract_builder import attach_release_su
 from odoo.addons.smart_core.orchestration.project_plan_bootstrap_scene_orchestrator import (
     ProjectPlanBootstrapSceneOrchestrator,
 )
+from odoo.addons.smart_construction_scene.services.project_management_entry_target import (
+    resolve_project_management_entry_target,
+)
 
 
 class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
@@ -66,11 +69,12 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
 
         orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
+        target = resolve_project_management_entry_target(self.env)
         data = attach_release_surface_scene_contract(
             data,
             product_key="fr2",
             capability="delivery.fr2.project_flow",
-            route="/s/project.management",
+            route=str(target.get("route") or ""),
             diagnostics_ref=self.INTENT_TYPE,
             trace_id=str((self.context or {}).get("trace_id") or ""),
         )

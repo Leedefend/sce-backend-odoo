@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from odoo import api, fields, models
+from odoo.addons.smart_construction_scene.services.project_management_entry_target import (
+    resolve_project_management_entry_target,
+)
 
 
 class ProjectQuickCreateWizard(models.TransientModel):
@@ -28,8 +31,9 @@ class ProjectQuickCreateWizard(models.TransientModel):
         if self.owner_id:
             vals["owner_id"] = int(self.owner_id.id)
         project = self.env["project.project"].create(vals)
+        target = resolve_project_management_entry_target(self.env)
         return {
             "type": "ir.actions.act_url",
-            "url": "/s/project.management",
+            "url": str(target.get("route") or ""),
             "target": "self",
         }

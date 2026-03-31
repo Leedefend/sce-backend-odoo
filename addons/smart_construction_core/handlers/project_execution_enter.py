@@ -12,6 +12,9 @@ from odoo.addons.smart_construction_core.services.project_context_contract impor
 from odoo.addons.smart_core.orchestration.project_execution_scene_orchestrator import (
     ProjectExecutionSceneOrchestrator,
 )
+from odoo.addons.smart_construction_scene.services.project_management_entry_target import (
+    resolve_project_management_entry_target,
+)
 
 
 class ProjectExecutionEnterHandler(BaseIntentHandler):
@@ -56,11 +59,12 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
         project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
         data = attach_project_context_to_scene_payload(data, project)
+        target = resolve_project_management_entry_target(self.env)
         data = attach_release_surface_scene_contract(
             data,
             product_key="fr2",
             capability="delivery.fr2.project_flow",
-            route="/s/project.management",
+            route=str(target.get("route") or ""),
             diagnostics_ref=self.INTENT_TYPE,
             trace_id=str((self.context or {}).get("trace_id") or ""),
         )

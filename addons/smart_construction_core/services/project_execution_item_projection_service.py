@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from odoo import fields
 from odoo.addons.smart_construction_core.models.support.state_machine import ScStateMachine
+from odoo.addons.smart_construction_scene.services.capability_scene_targets import (
+    resolve_execution_projection_scene_key,
+)
 
 
 class ProjectExecutionItemProjectionService:
@@ -20,7 +23,6 @@ class ProjectExecutionItemProjectionService:
             "action_label": "查看合同",
             "reason_code": "SYSTEM_EXECUTION_PENDING",
             "priority": "high",
-            "scene_key": "contracts.list",
         },
         "payment.request": {
             "title_prefix": "付款事项",
@@ -32,7 +34,6 @@ class ProjectExecutionItemProjectionService:
             "action_label": "查看付款申请",
             "reason_code": "SYSTEM_EXECUTION_PENDING",
             "priority": "high",
-            "scene_key": "finance.payment_requests",
         },
         "sc.settlement.order": {
             "title_prefix": "结算事项",
@@ -44,7 +45,6 @@ class ProjectExecutionItemProjectionService:
             "action_label": "查看结算单",
             "reason_code": "SYSTEM_EXECUTION_PENDING",
             "priority": "medium",
-            "scene_key": "settlement",
         },
     }
 
@@ -158,7 +158,7 @@ class ProjectExecutionItemProjectionService:
                         "state": self._normalize_state(model_name, raw_state, config),
                         "state_code": raw_state,
                         "action_label": self._safe_text(config.get("action_label")),
-                        "scene_key": self._safe_text(config.get("scene_key") or "projects.list"),
+                        "scene_key": resolve_execution_projection_scene_key(model_name),
                         "reason_code": self._safe_text(config.get("reason_code")),
                         "priority": self._safe_text(config.get("priority") or "medium"),
                     }
@@ -178,7 +178,7 @@ class ProjectExecutionItemProjectionService:
                         "state": "open",
                         "state_code": "",
                         "action_label": self._safe_text(config.get("action_label")),
-                        "scene_key": self._safe_text(config.get("scene_key") or "projects.list"),
+                        "scene_key": resolve_execution_projection_scene_key(model_name),
                         "reason_code": self._safe_text(config.get("reason_code")),
                         "priority": self._safe_text(config.get("priority") or "medium"),
                     }
@@ -254,7 +254,7 @@ class ProjectExecutionItemProjectionService:
                                 str(config.get("deadline_field") or ""),
                                 str(config.get("fallback_deadline_field") or ""),
                             ),
-                            "scene_key": self._safe_text(config.get("scene_key") or "projects.list"),
+                            "scene_key": resolve_execution_projection_scene_key(model_name),
                             "source": model_name,
                             "action_label": self._safe_text(config.get("action_label")),
                             "action_key": "%s.open" % model_name,
@@ -270,7 +270,7 @@ class ProjectExecutionItemProjectionService:
                             "model": model_name,
                             "record_id": int(record.id),
                             "deadline": "",
-                            "scene_key": self._safe_text(config.get("scene_key") or "projects.list"),
+                            "scene_key": resolve_execution_projection_scene_key(model_name),
                             "source": model_name,
                             "action_label": self._safe_text(config.get("action_label")),
                             "action_key": "%s.open" % model_name,

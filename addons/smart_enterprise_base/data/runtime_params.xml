@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="0">
+        <function model="ir.config_parameter" name="set_param" eval="('sc.core.extension_modules', 'smart_enterprise_base,smart_construction_scene,smart_construction_core,smart_construction_portal')"/>
         <function model="smart.enterprise.base.runtime" name="ensure_extension_module_registration"/>
     </data>
 </odoo>

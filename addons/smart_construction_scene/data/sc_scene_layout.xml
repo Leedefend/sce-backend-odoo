@@ -347,7 +347,7 @@
                     'stage': 'wave3'
                 },
                 'target': {
-                    'route': '/s/project.management'
+                    'route': '/s/portal.capability_matrix'
                 }
             }"/>
         </record>

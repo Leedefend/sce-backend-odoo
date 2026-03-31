@@ -248,6 +248,14 @@ def build_urgent_keywords() -> List[str]:
 def resolve_scene_by_source(source_key: str) -> str:
     aliases = build_scene_aliases()
     text = _to_text(source_key).lower()
+    exact_map = {
+        "task_items": aliases["task_center"],
+        "payment_requests": "finance.payment_requests",
+        "risk_actions": aliases["risk_center"],
+        "project_actions": aliases["project_management"],
+    }
+    if text in exact_map:
+        return exact_map[text]
     if "risk" in text or "风险" in text:
         return aliases["risk_center"]
     if "task" in text or "任务" in text:
