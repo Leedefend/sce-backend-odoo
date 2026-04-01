@@ -73,6 +73,11 @@ class ProjectEntryContextService:
         source, confidence = self._source_from_reason((diagnostics or {}).get("resolution_path"))
         available = int(project_context.get("project_id") or 0) > 0
         guidance = self._build_lifecycle_guidance(available=available, project_context=project_context)
+        diagnostics_summary = self._build_diagnostics_summary(
+            resolution_path=(diagnostics or {}).get("resolution_path"),
+            available=available,
+            option_count=0,
+        )
         return {
             "available": available,
             "project_context": project_context,
@@ -82,6 +87,7 @@ class ProjectEntryContextService:
             "suggested_action": dict(guidance.get("suggested_action") or {}),
             "lifecycle_hints": dict(guidance.get("lifecycle_hints") or {}),
             "diagnostics": diagnostics or {},
+            "diagnostics_summary": dict(diagnostics_summary or {}),
         }
 
     @classmethod
@@ -159,6 +165,33 @@ class ProjectEntryContextService:
             },
         }
 
+    @staticmethod
+    def _build_diagnostics_summary(*, resolution_path="", available=False, option_count=0):
+        normalized_path = str(resolution_path or "").strip().lower()
+        if int(option_count or 0) > 0:
+            return {
+                "status": "options_available",
+                "message": "已提供可切换项目列表，可直接进入项目管理。",
+                "resolution_path": normalized_path or "options_ranked",
+                "option_count": int(option_count or 0),
+                "available": bool(available),
+            }
+        if bool(available):
+            return {
+                "status": "context_ready",
+                "message": "已解析到当前项目，可直接进入项目管理。",
+                "resolution_path": normalized_path or "context_resolved",
+                "option_count": 0,
+                "available": True,
+            }
+        return {
+            "status": "context_missing",
+            "message": "当前未解析到可用项目，建议先创建项目。",
+            "resolution_path": normalized_path or "context_missing",
+            "option_count": 0,
+            "available": False,
+        }
+
     def list_options(self, active_project_id=0, limit=12):
         Project = self.env["project.project"]
         domain = self._dashboard_service._project_domain_for_user()
@@ -194,9 +227,15 @@ class ProjectEntryContextService:
             if len(options) >= int(limit or 12):
                 break
         guidance = self._build_options_guidance(options, active_project_id=active_project_id)
+        diagnostics_summary = self._build_diagnostics_summary(
+            resolution_path="options_ranked",
+            available=bool(options),
+            option_count=len(options),
+        )
         return {
             "options": options,
             "active_project_id": int(active_project_id or 0),
             "suggested_action": dict(guidance.get("suggested_action") or {}),
             "lifecycle_hints": dict(guidance.get("lifecycle_hints") or {}),
+            "diagnostics_summary": dict(diagnostics_summary or {}),
         }

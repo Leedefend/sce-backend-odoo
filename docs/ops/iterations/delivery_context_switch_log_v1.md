@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T16:18:38Z
+- blocker_key: `entry_context_diagnostics_summary_verify_v1`
+- layer_target: `backend usability`
+- module: `entry context diagnostics summary enrichment`
+- reason: diagnostics 可读性增强批次完成，已在 resolve/options 输出增加 summary 且不破坏 raw diagnostics
+- completed_step: `已完成 ITER-2026-04-01-653/654：ProjectEntryContextService.resolve/list_options 新增 diagnostics_summary，make verify.project.management.acceptance PASS`
+- active_commit: `824710e`
+- next_step: `Open next business-fact screen batch for additional entry usability clarity candidate`
+
+### 2026-04-01T16:15:28Z
+- blocker_key: `entry_context_diagnostics_explainability_screen_v1`
+- layer_target: `backend usability`
+- module: `entry context diagnostics explainability screen`
+- reason: options 引导已完成后，下一条低风险候选为提升 diagnostics 可读性以增强可解释性
+- completed_step: `已完成 ITER-2026-04-01-652：选定 diagnostics_summary（保留 raw diagnostics）作为下一刀`
+- active_commit: `824710e`
+- next_step: `Open implement batch for additive diagnostics_summary in entry context service`
+
 ### 2026-04-01T16:00:44Z
 - blocker_key: `project_entry_context_options_guidance_verify_v1`
 - layer_target: `backend usability`

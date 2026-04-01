@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-01-653
+title: Add diagnostics_summary to project entry context service outputs
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Add human-readable diagnostics_summary to project entry context outputs while
+  preserving existing raw diagnostics payloads.
+
+user_visible_outcome:
+  - "上下文诊断更可读"
+  - "项目命中/未命中原因更易理解"
+  - "不破坏现有 diagnostics 消费"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/services/project_entry_context_service.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - business-fact-first
+  - additive-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 824710e
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-652
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: entry context diagnostics summary enrichment
+  module_owner: smart_construction_core services
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    Improve business-fact output explainability with additive summary fields.
+  reason: >
+    Selected by screen as next low-risk usability improvement.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-653.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - entry_context_diagnostics_summary_fields
+  - governance/report artifacts for ITER-2026-04-01-653
+
+rollback:
+  - git restore addons/smart_construction_core/services/project_entry_context_service.py
+  - git restore agent_ops/tasks/ITER-2026-04-01-653.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-653.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-653.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-652
