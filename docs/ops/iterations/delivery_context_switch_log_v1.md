@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T13:48:22Z
+- blocker_key: `record_view_hud_contract_boolean_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD verification`
+- reason: contract boolean placeholder 归一化后，当前 verify 只确认 display-only 修复不影响 strict typing 与 dedicated HUD smoke
+- completed_step: `已完成 ITER-2026-04-01-599：validate_task PASS、frontend strict typecheck PASS、make verify.portal.recordview_hud_smoke.container PASS`
+- active_commit: `a0c866c`
+- next_step: `Open the next bounded record-view continuity screen batch`
+
+### 2026-04-01T13:47:00Z
+- blocker_key: `record_view_hud_contract_boolean_impl_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD contract boolean readability`
+- reason: `597` 已选定 boolean placeholder consistency，当前批次只修契约布尔状态缺值占位，不改字段覆盖和真值语义
+- completed_step: `已完成 ITER-2026-04-01-598：契约可读 与 契约降级 缺值已统一显示为 -`
+- active_commit: `a0c866c`
+- next_step: `Run strict typecheck and dedicated HUD smoke for the boolean placeholder normalization`
+
+### 2026-04-01T13:46:00Z
+- blocker_key: `record_view_hud_contract_boolean_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity screen`
+- reason: route placeholder consistency 收口后，screen 继续选择下一条最小可用性缺口，选中 contract boolean missing-value placeholder 一致性
+- completed_step: `已完成 ITER-2026-04-01-597：下一条 bounded slice 选定为 contract boolean placeholder consistency`
+- active_commit: `a0c866c`
+- next_step: `Open a bounded P1 implementation batch for HUD contract boolean placeholder normalization`
+
 ### 2026-04-01T13:43:00Z
 - blocker_key: `record_view_hud_route_placeholder_verify_v1`
 - layer_target: `frontend layer`

@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-01-597",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-597.md",
+  "decision": {
+    "selected_slice": "contract boolean placeholder consistency",
+    "family_scope": "record-view HUD continuity",
+    "reason": "Normalize missing boolean display to remove blank-row ambiguity while preserving true/false semantics."
+  },
+  "next_step": "Open a bounded P1 implementation batch for HUD contract boolean placeholder normalization."
+}
