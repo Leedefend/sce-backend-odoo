@@ -82,4 +82,13 @@ class ProjectCreationService:
         }
         if len(rows) == 1:
             summary["primary"] = dict(rows[0])
+        primary = dict(summary.get("primary") or {})
+        bootstrap = dict(primary.get("bootstrap") or {})
+        ready_for_management = bool(primary.get("project_id") and bootstrap.get("project_task_root") is True)
+        summary["ready_for_management"] = ready_for_management
+        summary["summary_message"] = (
+            "项目初始化完成，可进入项目管理。"
+            if ready_for_management
+            else "项目已创建，初始化未完全确认。"
+        )
         return summary
