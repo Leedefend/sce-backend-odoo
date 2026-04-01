@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-02-665
+title: Harden lifecycle semantic guard with value-level anchors
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Add value-level semantic anchors into lifecycle guard checks to reduce weak
+  passes caused by token-only coverage.
+
+user_visible_outcome:
+  - "门禁更稳"
+  - "关键状态值回退更可检出"
+
+scope:
+  allowed_paths:
+    - scripts/verify/project_lifecycle_semantic_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - additive-only
+  - verify-guard-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: f016e38
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-664
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Agent/Verify Governance
+  module: semantic guard value-anchor hardening
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    Hardening targets business-fact usability semantics and status enums.
+  reason: >
+    Selected by screen to improve guard precision with low implementation risk.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-665.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - value_anchor_checks_in_semantic_guard
+  - governance/report artifacts for ITER-2026-04-02-665
+
+rollback:
+  - git restore scripts/verify/project_lifecycle_semantic_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-665.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-665.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-665.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-664

@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T00:42:32+0800
+- blocker_key: `semantic_guard_hardening_verify_v1`
+- layer_target: `agent/verify governance`
+- module: `semantic guard value-anchor hardening`
+- reason: 语义门禁从 token 检查升级为关键状态值锚点检查，并通过验收链验证
+- completed_step: `已完成 ITER-2026-04-02-665/666：project_lifecycle_semantic_guard 增加 context_ready/context_missing/options_available 以及 bootstrap summary message 锚点检查，python3 scripts/verify/project_lifecycle_semantic_guard.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `f016e38`
+- next_step: `Open next low-risk business-fact usability screen batch`
+
+### 2026-04-02T00:40:50+0800
+- blocker_key: `semantic_guard_hardening_screen_v1`
+- layer_target: `agent/verify governance`
+- module: `semantic guard hardening screen`
+- reason: token-only 门禁存在弱覆盖风险，需增加 value-level 锚点
+- completed_step: `已完成 ITER-2026-04-02-664：选定“状态值锚点 + 摘要文案锚点”作为下一刀`
+- active_commit: `f016e38`
+- next_step: `Open implement batch for value-level anchor checks and run acceptance verify`
+
 ### 2026-04-02T00:35:17+0800
 - blocker_key: `bootstrap_summary_guard_coverage_verify_v1`
 - layer_target: `agent/verify governance`
