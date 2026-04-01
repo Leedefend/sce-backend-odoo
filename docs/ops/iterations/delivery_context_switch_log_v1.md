@@ -16,6 +16,51 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T09:00:00Z
+- blocker_key: `native_list_toolbar_fresh_screen_stop_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `564` 之后剩余 fresh candidates 已不再是纯 display-only 范围；当前 screen 只消费 `561` 的剩余候选并判断是否还能继续低风险链，结果是不能
+- completed_step: `已完成 ITER-2026-04-01-565：确认 optimized route-preset 可见性、search section 显隐联动、以及 sort summary fallback visibility 都已越过当前低风险连续链边界，当前链按 STOP 收口`
+- active_commit: `8992446`
+- next_step: `Open a dedicated structural decision batch for optimized-toolbar route-preset visibility or search-section gating`
+
+### 2026-04-01T08:50:00Z
+- blocker_key: `native_list_toolbar_advanced_count_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `563` 已把 advanced-filter CTA 计数补齐到隐藏 quick filter / saved filter / search-panel facet 三类选项；当前 verify 只确认它仍是低风险显示层改动并保持可信 native-list smoke 绿色
+- completed_step: `已完成 ITER-2026-04-01-564：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，高级筛选 CTA 数量已与实际隐藏项库存对齐`
+- active_commit: `8992446`
+- next_step: `Open a new low-cost screen batch that reconsiders the remaining fresh candidates from ITER-2026-04-01-561`
+
+### 2026-04-01T08:40:00Z
+- blocker_key: `native_list_toolbar_advanced_count_impl_v1`
+- layer_target: `frontend layer`
+- module: `advanced-filter toggle count alignment`
+- reason: `562` 已从 fresh scan 中选定 advanced-filter toggle count 作为下一条最干净的 display-only 候选；当前实现只在 PageToolbar 单文件里修正 CTA 数量组成，不触碰行为和结构编排
+- completed_step: `已完成 ITER-2026-04-01-563：PageToolbar 的 advancedFilterCountText 已纳入隐藏 search-panel facet 选项，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `8992446`
+- next_step: `Open a low-cost verify batch that confirms the advanced-filter count alignment on the trusted native list surface`
+
+### 2026-04-01T08:35:00Z
+- blocker_key: `native_list_toolbar_fresh_screen_v2`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `561` 已生成新的 bounded candidate set；当前 screen 只消费 scan 结果并选择仍留在 display-only 边界内的下一族，避免直接越过到结构语义候选
+- completed_step: `已完成 ITER-2026-04-01-562：从 fresh scan 中选定 advanced-filter toggle count alignment 作为下一条 bounded implement 目标`
+- active_commit: `8992446`
+- next_step: `Open a bounded implementation batch limited to PageToolbar advanced-filter CTA count composition`
+
+### 2026-04-01T08:30:00Z
+- blocker_key: `native_list_toolbar_fresh_scan_v2`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar scan`
+- reason: `8992446` 提交后上一组 toolbar 候选已收口，当前重新在 5 个既定文件内做 fresh bounded scan，为下一轮低消耗可用性收敛生成短上下文输入
+- completed_step: `已完成 ITER-2026-04-01-561：候选收敛为 advanced-filter CTA 数量遗漏隐藏 facet、optimized route-preset 可见性缺口、search section 显隐与 primary toolbar 渲染不一致、以及 sort block 默认 truthiness 四类`
+- active_commit: `8992446`
+- next_step: `Open a low-cost screen batch and pick the cleanest remaining display-only family from the fresh bounded scan`
+
 ### 2026-04-01T08:20:00Z
 - blocker_key: `native_list_toolbar_visibility_impl_v1`
 - layer_target: `frontend layer`

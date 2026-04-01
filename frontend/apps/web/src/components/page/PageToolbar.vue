@@ -615,7 +615,9 @@ const secondaryMetadataCaptionText = computed(() => {
   return segments.join(' / ');
 });
 const advancedFilterCountText = computed(() => {
-  const total = advancedQuickFilters.value.length + advancedSavedFilters.value.length;
+  const total = advancedQuickFilters.value.length
+    + advancedSavedFilters.value.length
+    + advancedSearchPanelOptions.value.length;
   return String(total);
 });
 const advancedFiltersToggleText = computed(() => {
