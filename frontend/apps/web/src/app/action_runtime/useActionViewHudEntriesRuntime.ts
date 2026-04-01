@@ -24,7 +24,7 @@ export function useActionViewHudEntriesRuntime(options: UseActionViewHudEntriesR
       { label: '写入模式', value: input.lastWriteMode || '-' },
       { label: '追踪 ID', value: input.traceId || input.lastTraceId || '-' },
       { label: '耗时毫秒', value: input.lastLatencyMs ?? '-' },
-      { label: '当前路由', value: input.routeFullPath || '' },
+      { label: '当前路由', value: input.routeFullPath || '-' },
       { label: '契约动作数', value: input.contractActionCount || 0 },
       { label: '契约限制数', value: input.contractLimit || 0 },
       { label: '契约可读', value: input.contractReadAllowed },
