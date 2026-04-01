@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T14:46:08Z
+- blocker_key: `backend_sub_layer_gate_codification_verify_v1`
+- layer_target: `agent governance layer`
+- module: `backend sub-layer decision gate`
+- reason: 用户要求将“后端内部先分层判定”升级为强制约束，当前批次已固化并验证可检索
+- completed_step: `已完成 ITER-2026-04-01-622/623：AGENTS、低消耗策略、任务模板均加入 business-fact vs scene-orchestration 强制门禁`
+- active_commit: `4d40d49`
+- next_step: `Continue backend lifecycle semantic supply batches with explicit sub-layer decisions`
+
 ### 2026-04-01T14:37:14Z
 - blocker_key: `project_lifecycle_backend_semantic_impl_verify_v1`
 - layer_target: `backend semantic layer`
