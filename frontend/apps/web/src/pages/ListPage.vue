@@ -134,7 +134,7 @@
     </section>
 
     <section v-if="status === 'ok'" class="table">
-      <div class="table-hint">点击列表行可查看详情</div>
+      <div class="table-hint">{{ rowActionHintText }}</div>
       <section v-if="groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
           <span>分组结果</span>
@@ -505,6 +505,12 @@ const sortedGroupedRows = computed(() => {
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
+const rowActionHintText = computed(() => {
+  if (String(props.model || '').trim() === 'project.project') {
+    return '点击项目行可进入项目管理';
+  }
+  return '点击列表行可查看详情';
+});
 const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.quickFilters : []);
 const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.savedFilters : []);
 const groupByOptions = computed(() => Array.isArray(props.groupByOptions) ? props.groupByOptions : []);

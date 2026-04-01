@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T14:04:54Z
+- blocker_key: `project_lifecycle_row_action_hint_verify_v1`
+- layer_target: `frontend layer`
+- module: `project lifecycle usability verification`
+- reason: 创建入口引导后，当前继续验证“创建后进入管理动作”提示修复，确保项目管理 acceptance baseline 持续绿色
+- completed_step: `已完成 ITER-2026-04-01-608：validate_task PASS、typecheck PASS、make verify.project.management.acceptance PASS`
+- active_commit: `3e10bd1`
+- next_step: `Open next lifecycle-first screen slice for first-management-action discoverability`
+
+### 2026-04-01T14:03:00Z
+- blocker_key: `project_lifecycle_row_action_hint_impl_v1`
+- layer_target: `frontend layer`
+- module: `project list row-action continuity hint`
+- reason: `606` 选定创建后首个管理动作引导作为下一刀；当前实现只改项目列表行提示文案，不改导航行为
+- completed_step: `已完成 ITER-2026-04-01-607：project.project 列表提示改为 点击项目行可进入项目管理`
+- active_commit: `3e10bd1`
+- next_step: `Run strict typecheck and project-management acceptance verification`
+
+### 2026-04-01T14:02:00Z
+- blocker_key: `project_lifecycle_created_to_manage_screen_v1`
+- layer_target: `frontend layer`
+- module: `project lifecycle continuity screen`
+- reason: 生命周期主线从“创建入口”推进到“创建后首个管理动作”，screen 选定列表行入口提示澄清作为最小有效切片
+- completed_step: `已完成 ITER-2026-04-01-606：下一条 bounded slice 选定为 project-list row action hint clarity`
+- active_commit: `3e10bd1`
+- next_step: `Open bounded implementation for project-list row action hint guidance`
+
 ### 2026-04-01T14:00:13Z
 - blocker_key: `project_lifecycle_create_entry_verify_v1`
 - layer_target: `frontend layer`
