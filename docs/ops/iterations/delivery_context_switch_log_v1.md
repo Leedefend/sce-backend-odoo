@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:36:08Z
+- blocker_key: `project_enter_fallback_semantic_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `project.dashboard.enter / project.execution.enter fallback lifecycle continuity`
+- reason: 入口错误语义主线继续推进，已补齐 fallback hints 并完成 acceptance 验证
+- completed_step: `已完成 ITER-2026-04-01-638/639：dashboard/execution enter 在 PROJECT_NOT_FOUND 且上游 hints 为空时补齐 fallback lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `0eb34e4`
+- next_step: `Open next screen batch to determine whether any low-risk project semantic continuity candidate remains`
+
+### 2026-04-01T15:34:00Z
+- blocker_key: `project_enter_fallback_semantic_screen_v1`
+- layer_target: `backend semantic layer`
+- module: `project enter error fallback semantic screen`
+- reason: 快速筛选后识别到 enter 错误分支在极端上游回包缺失时可能输出空 lifecycle_hints
+- completed_step: `已完成 ITER-2026-04-01-637：选定 dashboard/execution enter fallback lifecycle_hints 补齐作为下一刀`
+- active_commit: `0eb34e4`
+- next_step: `Open implement batch for dashboard/execution enter fallback lifecycle hints and run acceptance verify`
+
 ### 2026-04-01T15:31:22Z
 - blocker_key: `project_initiation_semantic_verify_v1`
 - layer_target: `backend semantic layer`
