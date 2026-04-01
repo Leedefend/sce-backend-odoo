@@ -382,6 +382,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 "to_state": to_state,
                 "reason_code": reason_code,
                 "suggested_action": self._build_suggested_action(int(project.id), reason_code),
+                "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
             },
             "meta": {
                 "intent": self.INTENT_TYPE,

@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-02-668
+title: Screen execution-advance success semantic continuity candidate
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Select a new user-journey objective slice after convergence, focusing on
+  execution-advance success-path semantic continuity.
+
+user_visible_outcome:
+  - "执行推进成功后语义反馈更一致"
+  - "新主线启动清晰"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen stage only
+  - no implementation
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: ff6097a
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-667
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance success semantics screen
+  module_owner: smart_construction_core handlers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Candidate enriches scene orchestration success response semantics.
+  reason: >
+    Start new objective line with bounded continuity enhancement in execution flow.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-668.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - no_backend_semantic_candidate_remains
+
+deliverables:
+  - selected_execution_advance_success_semantic_candidate
+  - governance/report artifacts for ITER-2026-04-02-668
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-668.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-668.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-668.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-667
