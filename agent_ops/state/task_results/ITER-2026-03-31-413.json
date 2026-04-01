@@ -1,0 +1,29 @@
+{
+  "task_id": "ITER-2026-03-31-413",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Executed the customer bootstrap in sc_demo and confirmed persisted company, department, and primary-department user results.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-413.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "runtime execution in sc_demo via direct Odoo container shell",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-413.md"
+  },
+  "runtime_audit": {
+    "company_name": "四川保盛建设集团有限公司",
+    "department_count": 6,
+    "user_count": 20,
+    "created_user_count": 19,
+    "updated_user_count": 1,
+    "deferred_extra_department_count": 4,
+    "unresolved_department_count": 0
+  },
+  "next_suggestion": "Open the next additive implementation batch for post attachment and system-role attachment, while keeping multi-department persistence as a separate organization-capability batch."
+}

@@ -1,0 +1,30 @@
+{
+  "task_id": "ITER-2026-03-31-421",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Froze smart_enterprise_base as the platform-level carrier for workbook 岗位 after confirming that no repository-backed post model or user field currently exists.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-421.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "rg -n \"job_id|post_ids|hr\\\\.job|岗位|职务|position|job\" addons/smart_enterprise_base/models addons/smart_enterprise_base/views addons/smart_enterprise_base/data",
+      "result": "PASS"
+    },
+    {
+      "command": "audit smart_enterprise_base res.users / hr.department models and views",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-421.md"
+  },
+  "runtime_audit": {
+    "existing_user_department_field": true,
+    "existing_user_manager_field": true,
+    "existing_user_post_field": false,
+    "existing_post_model": false
+  },
+  "next_suggestion": "Implement the platform-level post master-data carrier in smart_enterprise_base with one primary post field on res.users."
+}

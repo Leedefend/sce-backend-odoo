@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-31-462
+title: Audit Sichuan Baosheng business-flow usability against the frozen delivery authorization matrix
+type: audit
+status: active
+priority: high
+
+goal: >
+  Verify the first batch of Sichuan Baosheng business-flow surfaces against the
+  frozen customer authorization matrix on sc_odoo, so delivery validation can
+  proceed from concrete role-to-flow usability rather than only group counts.
+
+user_visible_outcome:
+  - "四川保盛首批业务流程的角色可用性被正式核查"
+  - "PM / 财务 / 管理层 / 业务系统管理员 对应流程是否可用有事实结论"
+  - "后续问题能按权限缺口还是流程缺口分类推进"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - read-only runtime and configuration audit only
+  - do not modify code, data, ACL, or security XML in this batch
+  - evaluate delivered role-to-flow usability on sc_odoo using the frozen customer matrix
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+
+architecture:
+  layer_target: Customer Delivery Business-Flow Verification
+  module: Sichuan Baosheng role-to-flow usability
+  module_owner: customer delivery validation chain
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-461 froze the delivered authorization matrix. The next
+    efficient low-risk batch is to verify whether the first batch of delivered
+    business flows is actually usable by the assigned PM, finance, executive,
+    and business-admin users.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-462.yaml
+    - runtime/config audit confirms at least the first customer delivery flow set has a role-by-role usability conclusion on sc_odoo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - runtime_flow_ownership_is_ambiguous
+  - authority_to_flow_mapping_cannot_be_proven_from_repository_and_runtime_evidence
+
+deliverables:
+  - first-pass Sichuan Baosheng business-flow usability report
+  - task result artifact and delivery-log checkpoint for ITER-2026-03-31-462
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-462.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-462.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-462.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-461

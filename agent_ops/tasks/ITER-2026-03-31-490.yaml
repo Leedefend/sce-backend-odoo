@@ -1,0 +1,82 @@
+task_id: ITER-2026-03-31-490
+title: Execute one controlled pending-payment acceptance sample and cleanup
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Under explicit high-risk authorization, materialize exactly one scratch
+  pending-payment sample in sc_odoo, verify that the pending-payment
+  recommendation branch is emitted correctly, and clean the sample up in the
+  same batch.
+
+user_visible_outcome:
+  - "用单一 scratch payment.request 样本验证 pending-payment recommendation 分支"
+  - "样本创建、验证、清理在同一批完成"
+  - "不把 recommendation 验收扩散成真实财务流程污染"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - runtime-mutation batch with same-batch cleanup
+  - no code, ACL, record-rule, manifest, schema, or seed data changes
+  - only one scratch project, one scratch partner, and one scratch payment.request may be created
+  - the payment request may only be promoted by controlled state write to submit for recommendation acceptance
+  - cleanup of payment.request and generated payment evidence is mandatory before batch close
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: pending-payment acceptance sample execution
+  module_owner: customer delivery permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-489 defined a concrete reversible strategy for the
+    remaining pending-payment recommendation branch, so the next step is to
+    execute that single bounded sample and clean it up in the same batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-490.yaml
+    - "runtime audit confirms the scratch in-progress project exposes payment.pending >= 1 and emits 处理待审批付款 before cleanup"
+    - "post-cleanup audit confirms the scratch project, scratch payment.request, and associated payment evidence no longer remain"
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - scratch_sample_creation_or_cleanup_cannot_be_completed_with_certainty
+  - runtime_verification_does_not_match_pending_payment_rule
+  - any_unexpected_finance_side_effect_extends_beyond_the_single_sample_boundary
+
+deliverables:
+  - bounded runtime evidence for the pending-payment recommendation branch
+  - governance/report artifacts for ITER-2026-03-31-490
+
+rollback:
+  - rerun the documented cleanup query for the scratch project, scratch payment.request, partner, and business evidence
+  - git restore agent_ops/tasks/ITER-2026-03-31-490.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-490.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-490.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-489

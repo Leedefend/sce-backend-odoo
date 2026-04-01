@@ -1,0 +1,91 @@
+task_id: ITER-2026-03-31-485
+title: Fix overview read_group count extraction for next-action cost statistics
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Fix the overview aggregation bug found in ITER-2026-03-31-484 so
+  sc.project.overview.service reads read_group count fields correctly and
+  next-action cost recommendations reflect real ledger presence.
+
+user_visible_outcome:
+  - "overview 的 cost.count 与真实成本台账条数一致"
+  - "已有成本台账的项目不再被误推荐去维护成本台账"
+  - "不新增 ACL，不改变 recommendation 业务语义"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/services/project_overview_service.py
+    - addons/smart_construction_core/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - normalization-only or runtime-safe implementation
+  - no ACL, record-rule, manifest, or schema changes
+  - preserve existing overview and next-action semantics except for the incorrect count extraction
+  - keep 482 expression-evaluation fixes unchanged
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance + Permission Surface Fix
+  module: overview count extraction alignment
+  module_owner: customer delivery permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-484 isolated the cost-count mismatch to
+    sc.project.overview.service extracting the wrong count key from read_group.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-485.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - runtime audit confirms overview cost.count matches ledger presence for the representative project and the misleading maintenance-cost recommendation disappears
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - count_fix_requires_acl_or_rule_changes
+  - verify_smart_core_fails
+  - runtime_count_mismatch_remains
+
+deliverables:
+  - fixed overview read_group count extraction
+  - regression coverage for overview cost count
+  - governance/report artifacts for ITER-2026-03-31-485
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_core/services/project_overview_service.py
+  - git restore addons/smart_construction_core/tests
+  - git restore agent_ops/tasks/ITER-2026-03-31-485.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-485.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-485.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-484

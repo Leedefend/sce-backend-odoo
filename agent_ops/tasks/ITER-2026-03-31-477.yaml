@@ -1,0 +1,86 @@
+task_id: ITER-2026-03-31-477
+title: Audit secondary navigation and follow-through entry points after project object-button fix
+type: customer-delivery-flow-acceptance
+status: active
+priority: medium
+
+goal: >
+  Audit the corrected project overview/object-button baseline for remaining
+  secondary navigation residuals, especially wizard follow-through actions,
+  alternate object entries, and other non-primary paths that may still diverge
+  from the delivered role boundary.
+
+user_visible_outcome:
+  - "在 476 修复后的基线上，确认是否还存在二跳入口或备用导航残差"
+  - "如果发现新的残差，能明确定位到具体入口和角色组合"
+  - "如果未发现残差，形成可继续扩面验收的低风险结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit-only batch unless a new explicitly authorized implementation task is opened
+  - no ACL, record-rule, manifest, or schema changes
+  - use repository facts plus runtime audit on sc_odoo
+  - stop immediately if any newly found residual would require forbidden-path edits
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: secondary navigation residual audit
+  module_owner: customer delivery permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-476 closed the known project object-button residual. The
+    next low-risk step is to inspect secondary and follow-through navigation on
+    top of that corrected baseline before expanding deeper business-flow
+    acceptance.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-477.yaml
+    - repository and runtime audit classify secondary navigation/follow-through entry points as PASS or PASS_WITH_RISK
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - newly_found_residual_requires_acl_or_record_rule_change
+  - runtime_audit_cannot_classify_with_confidence
+
+deliverables:
+  - audit report for ITER-2026-03-31-477
+  - result snapshot for ITER-2026-03-31-477
+  - updated delivery context log
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-477.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-477.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-477.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-476

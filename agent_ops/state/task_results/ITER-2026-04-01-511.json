@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-04-01-511",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited the dictionary/quota-center family and found a real runtime residual: dictionary window actions are readable for delivered roles, but the visible quota-center client action still fails for PM, finance, and executive with ir.actions.client access errors.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_audit": "PASS",
+    "runtime_audit": {
+      "dictionary_window_actions_readable": true,
+      "quota_center_client_action_for_pm": false,
+      "quota_center_client_action_for_finance": false,
+      "quota_center_client_action_for_executive": false,
+      "quota_center_client_action_for_business_admin": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The residual is on the client-action follow-through path, not on project.dictionary model ACL itself.",
+      "Menus remain visible while action_project_quota_center is not executable for several delivered roles.",
+      "A narrow follow-up batch is required before dictionary/quota can be classified as a clean representative family."
+    ]
+  },
+  "next_step": "Open a narrow follow-up batch to align action_project_quota_center delivered-role executability with its visible menu surface."
+}

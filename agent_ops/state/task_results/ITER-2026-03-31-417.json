@@ -1,0 +1,32 @@
+{
+  "task_id": "ITER-2026-03-31-417",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Implemented a dedicated business-system-admin authority path and explicit workbook system-role mapping without implying base.group_system.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-417.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_construction_custom/models/security_policy.py addons/smart_construction_custom/tests/test_business_admin_authority_path.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "runtime Odoo-shell assertion in sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-417.md"
+  },
+  "next_suggestion": "Continue with an additive batch that attaches workbook system_roles to users using the new explicit mapping, while keeping posts on a separate platform master-data extension line."
+}

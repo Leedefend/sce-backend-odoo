@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-03-31-456",
+  "status": "PASS",
+  "summary": "Sichuan Baosheng customer users were already on zh_CN in sc_odoo; smart_construction_custom upgrade preserved that state, so no data-file change was necessary.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-456.yaml",
+    "pre-upgrade SQL audit confirms all Baosheng users have res_partner.lang = zh_CN",
+    "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo",
+    "post-upgrade SQL audit confirms zh_cn_count=20 and total_count=20"
+  ],
+  "risk": {
+    "level": "low",
+    "notes": [
+      "verification-only batch",
+      "no code or data change was required"
+    ]
+  },
+  "next_step": "Continue with Sichuan Baosheng authorization and business-flow verification using the already-correct Chinese language baseline."
+}

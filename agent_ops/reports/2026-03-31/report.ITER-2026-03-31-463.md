@@ -1,0 +1,69 @@
+# ITER-2026-03-31-463
+
+- status: PASS
+- summary: Upgraded the delivered customer-facing permission strategy so all internal users now inherit cross-domain read-only access, PM gains cost read without cost operation/approval, executive gains full business authority without platform leakage, and representative read-only menus/actions now align with that policy on `sc_odoo`.
+- changed_files:
+  - [role_matrix_groups.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_custom/security/role_matrix_groups.xml)
+  - [action_groups_patch.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_core/security/action_groups_patch.xml)
+  - [menu.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_core/views/menu.xml)
+  - [test_user_role_profile_backend.py](/mnt/e/sc-backend-odoo/addons/smart_construction_core/tests/test_user_role_profile_backend.py)
+  - [test_business_admin_authority_path.py](/mnt/e/sc-backend-odoo/addons/smart_construction_custom/tests/test_business_admin_authority_path.py)
+  - [ITER-2026-03-31-463.yaml](/mnt/e/sc-backend-odoo/agent_ops/tasks/ITER-2026-03-31-463.yaml)
+  - [report.ITER-2026-03-31-463.md](/mnt/e/sc-backend-odoo/agent_ops/reports/2026-03-31/report.ITER-2026-03-31-463.md)
+  - [ITER-2026-03-31-463.json](/mnt/e/sc-backend-odoo/agent_ops/state/task_results/ITER-2026-03-31-463.json)
+  - [delivery_context_switch_log_v1.md](/mnt/e/sc-backend-odoo/docs/ops/iterations/delivery_context_switch_log_v1.md)
+- verification:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-463.yaml` PASS
+  - `make verify.smart_core` PASS
+  - `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo` PASS
+  - `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo` PASS
+  - runtime SQL audit on `sc_odoo` confirms:
+    - `customer_users = 20`
+    - `contract_read_users = 20`
+    - `finance_read_users = 20`
+    - `settlement_read_users = 20`
+    - `cost_read_users = 20`
+    - `material_read_users = 20`
+    - `purchase_read_users = 20`
+    - `data_read_users = 20`
+    - `pm_cost_read_users = 4`
+    - `pm_cost_user_users = 0`
+    - `pm_cost_manager_users = 0`
+    - `executive_cost_manager_users = 4`
+    - `executive_material_manager_users = 4`
+    - `executive_purchase_manager_users = 4`
+    - `executive_with_base_group_system = 0`
+    - `executive_with_super_admin = 0`
+  - representative runtime visibility audit confirms:
+    - plain owner `chentianyou` can now see/read `合同 / 成本 / 付款 / 物资`
+    - `PM (hujun)` now sees/reads `合同 / 成本 / 付款 / 物资`, while the cost authority remains read-only
+    - `finance (jiangyijiao)` now sees/reads `合同 / 成本 / 付款 / 物资`
+    - `executive (wutao)` now sees/reads `合同 / 成本 / 付款 / 物资`
+    - `business_admin (duanyijun)` retains full delivered visibility
+- implementation:
+  - [role_matrix_groups.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_custom/security/role_matrix_groups.xml)
+    - added customer-side read-only role carriers for `cost / material / purchase / data`
+    - expanded `group_sc_role_owner` to carry cross-domain read-only access
+    - made `PM` and `finance` imply `owner` so all internal delivered roles inherit the read baseline
+    - made `executive` imply `owner + pm + finance + config_admin + cost/material/purchase manager`
+  - [action_groups_patch.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_core/security/action_groups_patch.xml)
+    - aligned read-only actions with existing read groups for `settlement / cost compare / profit compare / material plan / operating metrics / treasury`
+  - [menu.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_core/views/menu.xml)
+    - aligned `contract / cost / material` menus with read groups so navigation matches the delivered read policy
+- risk:
+  - the strategy change is broad but still additive and stayed inside role/menu/action-group scope
+  - no ACL, record-rule, manifest, financial-model, or platform-governance changes were introduced in this batch
+- rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo`
+  - git restore [role_matrix_groups.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_custom/security/role_matrix_groups.xml)
+  - git restore [action_groups_patch.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_core/security/action_groups_patch.xml)
+  - git restore [menu.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_core/views/menu.xml)
+  - git restore [test_user_role_profile_backend.py](/mnt/e/sc-backend-odoo/addons/smart_construction_core/tests/test_user_role_profile_backend.py)
+  - git restore [test_business_admin_authority_path.py](/mnt/e/sc-backend-odoo/addons/smart_construction_custom/tests/test_business_admin_authority_path.py)
+  - git restore [ITER-2026-03-31-463.yaml](/mnt/e/sc-backend-odoo/agent_ops/tasks/ITER-2026-03-31-463.yaml)
+  - git restore [report.ITER-2026-03-31-463.md](/mnt/e/sc-backend-odoo/agent_ops/reports/2026-03-31/report.ITER-2026-03-31-463.md)
+  - git restore [ITER-2026-03-31-463.json](/mnt/e/sc-backend-odoo/agent_ops/state/task_results/ITER-2026-03-31-463.json)
+  - git restore [delivery_context_switch_log_v1.md](/mnt/e/sc-backend-odoo/docs/ops/iterations/delivery_context_switch_log_v1.md)
+- next:
+  - resume Sichuan Baosheng business-flow verification using this upgraded permission strategy as the new delivery baseline

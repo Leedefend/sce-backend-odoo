@@ -1,0 +1,71 @@
+task_id: ITER-2026-03-31-447
+title: Recover sc_odoo platform baseline currency to CNY
+type: implementation
+status: active
+priority: high
+
+goal: >
+  Recover the current sc_odoo platform baseline so company currency is restored
+  to CNY and platform baseline verification passes again.
+
+user_visible_outcome:
+  - "sc_odoo 币种恢复为 CNY"
+  - "verify.platform_baseline 重新通过"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - recovery batch
+  - no repository code changes
+  - use existing verify autofix path only
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+
+architecture:
+  layer_target: Platform Runtime Recovery
+  module: sc_odoo platform baseline
+  module_owner: runtime validation chain
+  kernel_or_scenario: kernel
+  reason: >
+    The non-demo rebuild line stopped because sc_odoo no longer satisfies the
+    CNY baseline check, so the next step is a minimal runtime recovery that
+    restores that baseline before continuing installation work.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-447.yaml
+    - BASELINE_AUTO_FIX=1 make verify.baseline DB_NAME=sc_odoo
+    - make verify.platform_baseline DB_NAME=sc_odoo
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - baseline_autofix_cannot_restore_currency_to_cny
+
+deliverables:
+  - implementation/report/result artifacts for ITER-2026-03-31-447
+
+rollback:
+  - no repository rollback needed; runtime state can be rebuilt with db.reset
+  - git restore agent_ops/tasks/ITER-2026-03-31-447.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-447.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-447.json
+
+depends_on:
+  - ITER-2026-03-31-446

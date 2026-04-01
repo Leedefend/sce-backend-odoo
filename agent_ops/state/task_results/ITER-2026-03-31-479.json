@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-03-31-479",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited sc_execute_next_action() follow-through execution and found new residuals: the act_window_xmlid branch still fails at action metadata execution time, and the object_method branch currently invokes with_context on a Python bound method instead of a recordset.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_and_runtime_audit": {
+      "act_window_xmlid_execution_acl_residual_for_pm": true,
+      "act_window_xmlid_execution_acl_residual_for_executive": true,
+      "act_window_xmlid_execution_context_valueerror_for_business_admin": true,
+      "object_method_dispatch_attribute_error_for_all_sample_roles": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The remaining issue is in the execution dispatcher rather than in static entry visibility.",
+      "act_window_xmlid execution still has action-metadata/ACL fragility.",
+      "object_method execution is currently broken because with_context is called on the bound method instead of on the recordset."
+    ]
+  },
+  "next_step": "Open a narrow implementation batch to fix sc_execute_next_action() for both act_window_xmlid and object_method branches before deeper next-action flow acceptance continues."
+}

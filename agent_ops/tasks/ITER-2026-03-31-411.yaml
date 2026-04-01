@@ -1,0 +1,80 @@
+task_id: ITER-2026-03-31-411
+title: Freeze user bootstrap implementation boundary for primary department only
+type: documentation
+status: completed
+priority: high
+
+goal: >
+  Convert the discovered user-model constraint into an explicit implementation
+  boundary so later user bootstrap work does not silently collapse accepted
+  multi-department users into an incorrect single-department structure.
+
+user_visible_outcome:
+  - "明确当前系统用户模型只支持主部门"
+  - "明确附加部门仍属于后续能力缺口"
+  - "避免错误实现用户 bootstrap"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_custom/README.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/smart_construction_custom/security/**
+    - addons/**/security/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/smart_enterprise_base/models/**
+    - addons/smart_construction_custom/models/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - documentation only
+  - no user-write implementation in this batch
+  - reflect the actual model capability discovered in smart_enterprise_base
+  - do not normalize away accepted multi-department users
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Governance Documentation
+  module: customer user bootstrap boundary
+  module_owner: smart_construction_custom onboarding
+  kernel_or_scenario: scenario
+  reason: >
+    The current user model only exposes a single primary department field,
+    while the accepted customer baseline includes real multi-department users.
+    The next valid low-risk step is to freeze this implementation gap
+    explicitly before any user bootstrap code is attempted.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-411.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - user_model_constraint_unclear
+
+deliverables:
+  - updated implementation boundary in addons/smart_construction_custom/README.md
+  - report and task result artifacts for ITER-2026-03-31-411
+  - delivery log checkpoint with next suggestion
+
+rollback:
+  - git restore addons/smart_construction_custom/README.md
+  - git restore agent_ops/tasks/ITER-2026-03-31-411.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-411.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-411.json
+
+depends_on:
+  - ITER-2026-03-31-410

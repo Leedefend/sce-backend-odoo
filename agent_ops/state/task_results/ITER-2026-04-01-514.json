@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-04-01-514",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited workflow and business-evidence as the next low-risk candidate family and found a real workflow residual: PM and finance can read workflow actions while sc.workflow.* models remain unreadable to them. Business-evidence itself stays aligned with its read-only model semantics.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_audit": "PASS",
+    "runtime_audit": {
+      "workflow_actions_visible_to_pm": true,
+      "workflow_actions_visible_to_finance": true,
+      "workflow_model_read_for_pm": false,
+      "workflow_model_read_for_finance": false,
+      "business_evidence_read_for_pm": true,
+      "business_evidence_read_for_finance": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The residual is on workflow action visibility versus model ACL ownership.",
+      "This is not a sample issue and cannot be classified away.",
+      "A narrow follow-up governance batch is required before workflow can be treated as a clean family."
+    ]
+  },
+  "next_step": "Open a narrow follow-up batch to align workflow action visibility with actual sc.workflow.* model ownership."
+}

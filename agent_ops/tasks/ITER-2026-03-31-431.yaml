@@ -1,0 +1,87 @@
+task_id: ITER-2026-03-31-431
+title: Re-own enterprise company department and post maintenance to the business-admin authority path
+type: implementation
+status: active
+priority: high
+
+goal: >
+  Re-own the enterprise maintenance chain for company, department, and post
+  from platform-system-admin-only entry points to the business-admin authority
+  path, while keeping user maintenance under platform admin until a separate
+  governed batch resolves res.users ownership.
+
+user_visible_outcome:
+  - "业务系统管理员可进入公司管理、组织架构、岗位管理"
+  - "用户设置仍保持平台管理员专属"
+  - "不新增 manifest 依赖，不改变金融域"
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - addons/smart_enterprise_base/security/ir.model.access.csv
+    - addons/smart_enterprise_base/views/menu_enterprise_base.xml
+    - addons/smart_construction_custom/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive only
+  - use existing business-admin inheritance path through smart_construction_core.group_sc_business_full
+  - keep action_enterprise_user and menu_enterprise_user on base.group_system only
+  - no manifest changes
+  - no financial-domain changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Customer Delivery Ownership Implementation
+  module: smart_enterprise_base
+  module_owner: enterprise maintenance delivery chain
+  kernel_or_scenario: scenario
+  reason: >
+    The customer explicitly requires enterprise maintenance to be owned by the
+    business-system administrator path, and repository facts show the clean
+    implementation route is to reuse the existing business_full authority path
+    inherited by the custom business-admin role.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-431.yaml
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - res_users_ownership_becomes_required_inside_this_batch
+  - enterprise_maintenance_acl_change_cannot_be_scoped_to_company_department_post
+  - implied_authority_path_leaks_platform_admin_rights
+
+deliverables:
+  - implementation/report/result artifacts for ITER-2026-03-31-431
+
+rollback:
+  - git restore AGENTS.md
+  - git restore addons/smart_enterprise_base/security/ir.model.access.csv
+  - git restore addons/smart_enterprise_base/views/menu_enterprise_base.xml
+  - git restore addons/smart_construction_custom/tests/test_business_admin_authority_path.py
+  - git restore agent_ops/tasks/ITER-2026-03-31-431.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-431.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-431.json
+
+depends_on:
+  - ITER-2026-03-31-430

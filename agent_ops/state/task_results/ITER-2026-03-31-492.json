@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-03-31-492",
+  "status": "PASS",
+  "summary": "Fixed sc.project.overview.service to count in-progress tasks from project.task.sc_state, restoring the 推进任务执行 recommendation branch in runtime and test coverage.",
+  "verification": {
+    "task_contract": "PASS",
+    "verify_smart_core": "PASS",
+    "module_upgrade": "PASS",
+    "runtime_audit": {
+      "scratch_task_reaches_sc_state_in_progress": true,
+      "overview_task_in_progress_increments": true,
+      "push_task_recommendation_emits": true,
+      "scratch_task_cleanup_complete": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "The concrete task in-progress counter defect identified in ITER-2026-03-31-491 is closed.",
+      "The repaired counter is now aligned with runtime task transition semantics.",
+      "The only remaining uncovered recommendation branch in this chain is create task."
+    ]
+  },
+  "next_step": "Open the next low-risk batch to execute scratch runtime acceptance for the create-task recommendation branch."
+}

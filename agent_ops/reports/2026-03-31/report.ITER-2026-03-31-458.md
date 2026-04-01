@@ -1,0 +1,40 @@
+# ITER-2026-03-31-458
+
+- status: PASS_WITH_RISK
+- summary: Materialized the Sichuan Baosheng customer authorization matrix into install-time module data as far as the current permission model safely allows: PM and finance roles now land correctly through `sc_role_profile`, business-admin remains intact, and executive remains intentionally unassigned because the current executive path would cross the platform boundary.
+- changed_files:
+  - addons/smart_construction_custom/__manifest__.py
+  - addons/smart_construction_custom/data/customer_user_authorization.xml
+  - addons/smart_construction_custom/README.md
+  - agent_ops/tasks/ITER-2026-03-31-458.yaml
+  - agent_ops/reports/2026-03-31/report.ITER-2026-03-31-458.md
+  - agent_ops/state/task_results/ITER-2026-03-31-458.json
+  - docs/ops/iterations/delivery_context_switch_log_v1.md
+- verification:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-458.yaml` PASS
+  - `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo` PASS
+  - runtime SQL audit on `sc_odoo` PASS:
+    - `pm_role_users = 4`
+    - `finance_role_users = 5`
+    - `business_admin_users = 4`
+    - `executive_role_users = 0`
+  - sample user role-profile audit PASS:
+    - `hujun / lidexue / lijianfeng / xiaohuijiu -> pm`
+    - `wennan / shuiwujingbanren / jiangyijiao / lina / luomeng -> finance`
+- risk:
+  - the direct group-assignment approach did not work because the target users were originally created from `noupdate=1` data and `sc_role_profile` synchronization manages PM/finance/executive groups
+  - the final reproducible path now uses `customer_user_authorization.xml` with function-based writes, which is still install-time data driven and survives module upgrade
+  - executive remains `0` by design for now because the current `executive` role profile maps to platform-level groups (`group_sc_super_admin` / `group_sc_cap_config_admin`), which conflicts with the already-frozen boundary that customer authority must not grant platform governance
+- rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_custom/__manifest__.py
+  - git restore addons/smart_construction_custom/data/customer_user_authorization.xml
+  - git restore addons/smart_construction_custom/README.md
+  - git restore agent_ops/tasks/ITER-2026-03-31-458.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-458.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-458.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+- next:
+  - stop on the executive-role boundary
+  - if management users need a non-platform executive authority path, open a dedicated permission-governance batch to split `executive` from platform-level groups
+  - otherwise continue business-flow verification with the now-materialized PM / finance / business-admin matrix

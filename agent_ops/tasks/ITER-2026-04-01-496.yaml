@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-01-496
+title: Raise create-task recommendation priority above cost-entry on bootstrap-only projects
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Implement the governance choice to prioritize the create-task recommendation
+  above cost-maintenance on bootstrap-only in-progress projects, while keeping
+  root-task bootstrap semantics unchanged.
+
+user_visible_outcome:
+  - "fresh in-progress project 上优先看到 创建任务"
+  - "维护成本台账 仍保留，但不再遮住 bootstrap-only 场景下的创建任务"
+  - "不改 ACL，不改 project bootstrap 逻辑"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/data/project_next_action_rules.xml
+    - addons/smart_construction_core/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - narrow rule-priority batch
+  - no ACL, record-rule, manifest, schema, or bootstrap implementation changes
+  - only adjust recommendation ordering plus necessary regression coverage
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: create-task recommendation priority alignment
+  module_owner: customer delivery permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-495 closed the bootstrap precondition conflict but showed
+    create-task remains hidden by the higher-priority cost-maintenance rule.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-496.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - "runtime audit confirms a fresh in-progress scratch project with only the bootstrap root task emits 创建任务 before cleanup"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - verify_smart_core_fails
+  - create_task_still_does_not_emit_on_bootstrap_only_projects
+  - the_change_requires_mutual_exclusion_logic_beyond_simple_priority_adjustment
+
+deliverables:
+  - aligned recommendation ordering for create-task
+  - regression coverage for bootstrap-only create-task visibility
+  - governance/report artifacts for ITER-2026-04-01-496
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_core/data/project_next_action_rules.xml
+  - git restore addons/smart_construction_core/tests
+  - git restore agent_ops/tasks/ITER-2026-04-01-496.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-496.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-496.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-495

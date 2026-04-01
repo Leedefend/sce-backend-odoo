@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-31-427
+title: Freeze next-step boundary for deferred extra departments
+type: governance
+status: active
+priority: high
+
+goal: >
+  Freeze whether workbook deferred `extra_departments` should remain governance
+  only or move into a platform-level multi-department extension, based on the
+  current repository carrier and customer bootstrap chain.
+
+user_visible_outcome:
+  - "明确 extra_departments 的下一步边界"
+  - "避免把部门语义误塞进岗位或角色模型"
+
+scope:
+  allowed_paths:
+    - addons/smart_enterprise_base/models/**
+    - addons/smart_enterprise_base/views/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance and audit only
+  - no model implementation in this batch
+  - keep department semantics separate from post semantics
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Platform Master Data Governance
+  module: smart_enterprise_base
+  module_owner: enterprise base master data
+  kernel_or_scenario: kernel
+  reason: >
+    Multi-post closure is now complete, so the next unresolved workbook
+    bootstrap semantics are the deferred extra departments.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-427.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - no_clear_department_carrier_strategy
+  - extension_would_require_acl_or_manifest_change
+
+deliverables:
+  - governance/report/result artifacts for ITER-2026-03-31-427
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-427.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-427.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-427.json
+
+depends_on:
+  - ITER-2026-03-31-426

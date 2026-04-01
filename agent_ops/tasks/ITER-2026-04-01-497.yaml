@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-01-497
+title: Materialize create-task next-action rule updates into existing runtime rows
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Apply the already approved create-task priority and condition baseline to
+  existing sc.project.next_action.rule rows in runtime, without changing
+  manifests, ACL, bootstrap semantics, or broader recommendation logic.
+
+user_visible_outcome:
+  - "fresh in-progress project 上 runtime 首条 recommendation 真正切换为 创建任务"
+  - "既有数据库中的 next-action rule sequence / condition 与仓库基线对齐"
+  - "不改 ACL，不改 project bootstrap 逻辑，不扩展到其他 recommendation 规则"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/data/project_next_action_rules.xml
+    - addons/smart_construction_core/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - narrow next-action rule materialization batch
+  - no ACL, record-rule, manifest, schema, bootstrap, or financial semantic changes
+  - only use controlled data-file updates to rewrite the two approved next-action rules in existing databases
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: next-action rule runtime materialization
+  module_owner: customer delivery recommendation surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-04-01-496 proved the approved create-task rule changes exist in
+    repository XML but do not reach runtime because the underlying
+    sc.project.next_action.rule rows were preserved under noupdate semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-497.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - "runtime audit confirms database rule rows now carry the approved create-task sequence/condition baseline"
+    - "runtime audit confirms a fresh in-progress scratch project with only the bootstrap root task emits 创建任务 before cleanup"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - verify_smart_core_fails
+  - runtime_rule_rows_still_keep_old_sequence_or_condition
+  - create_task_still_does_not_emit_on_bootstrap_only_projects
+  - the_fix_requires_manifest_or_hook_changes
+
+deliverables:
+  - canonical data-file materialization path for the two next-action rules
+  - regression coverage for existing-row update behavior
+  - governance/report artifacts for ITER-2026-04-01-497
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_core/data/project_next_action_rules.xml
+  - git restore addons/smart_construction_core/tests
+  - git restore agent_ops/tasks/ITER-2026-04-01-497.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-497.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-497.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-496

@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-01-512
+title: Fix quota-center delivered-role entry path without changing ACL semantics
+type: permission-governance
+status: active
+priority: medium
+
+goal: >
+  Close the dictionary/quota residual by replacing the delivered-role menu entry
+  path for quota center with a safe executable path that returns the existing
+  client-action dict, without changing ACL ownership or manifest scope.
+
+user_visible_outcome:
+  - "定额中心入口对 delivered roles 可执行"
+  - "不再因为直接读取 ir.actions.client 记录而报 AccessError"
+  - "project.dictionary 的既有只读/可写语义保持不变"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/views/support/dictionary_views.xml
+    - addons/smart_construction_core/models/support/project_dictionary.py
+    - addons/smart_construction_core/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - narrow entry-path implementation batch only
+  - do not change dictionary ACL ownership or security matrices
+  - preserve the existing project_quota_center client-action tag and frontend consumer
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: quota-center delivered-role entry-path fix
+  module_owner: customer delivery scenario surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-04-01-511 confirmed the residual is on direct ir.actions.client
+    record access, not on project.dictionary ACL semantics. The next safe step
+    is to route the menu through an executable backend path that returns the
+    existing client-action dict.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-512.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - "runtime audit confirms PM / finance / executive can execute the quota-center entry without ir.actions.client AccessError"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - verify_smart_core_fails
+  - module_upgrade_fails
+  - fix_requires_security_or_acl_scope_expansion
+  - runtime_quota_center_entry_still_fails_for_delivered_roles
+
+deliverables:
+  - quota-center entry-path implementation
+  - regression coverage for delivered-role executability
+  - governance/report artifacts for ITER-2026-04-01-512
+
+rollback:
+  - git restore addons/smart_construction_core/views/support/dictionary_views.xml
+  - git restore addons/smart_construction_core/models/support/project_dictionary.py
+  - git restore addons/smart_construction_core/tests
+  - git restore agent_ops/tasks/ITER-2026-04-01-512.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-512.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-512.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-511

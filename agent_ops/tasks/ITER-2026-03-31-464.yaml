@@ -1,0 +1,109 @@
+task_id: ITER-2026-03-31-464
+title: Upgrade project-facing operation and approval permissions without finance leakage
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Upgrade the delivered customer permission strategy so project-facing internal
+  users gain project/contract/cost/material/purchase operation authority,
+  PM gains contract/material/purchase approval while keeping cost as operation-
+  only, finance authority remains isolated from project-facing roles, and the
+  resulting menu/action surface stays aligned with the upgraded role matrix.
+
+user_visible_outcome:
+  - "项目经办获得项目、合同、成本、物资、采购操作权限"
+  - "项目经理获得合同、物资、采购审批权限，并保留成本经办不含成本审批"
+  - "财务口操作与审批不下放到项目口"
+  - "管理层维持完整业务权限且不越到平台级"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_custom/security/role_matrix_groups.xml
+    - addons/smart_construction_core/security/action_groups_patch.xml
+    - addons/smart_construction_core/views/menu.xml
+    - addons/smart_construction_core/views/menu_finance_center.xml
+    - addons/smart_construction_core/tests/**
+    - addons/smart_construction_custom/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive or narrowing-only permission changes
+  - no ACL or record-rule edits in this batch
+  - project-facing operation authority must be granted through existing capability groups
+  - PM must gain contract/material/purchase approval but must not gain finance operation or approval
+  - cost authority for PM remains user-level only, not manager-level
+  - executive must remain off platform-level groups
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+
+architecture:
+  layer_target: Customer Permission Governance Implementation
+  module: project-facing role matrix + menu/action alignment
+  module_owner: customer delivery chain + industry permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    The user requested a second permission-strategy upgrade: project-facing
+    operators should gain project/contract/cost/material/purchase operation
+    authority, PM should gain contract/material/purchase approval while keeping
+    cost as operation-only, and finance operation/approval must not leak into
+    project-facing roles.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-464.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo
+    - runtime SQL audit confirms owner/project-facing users have contract/cost/material/purchase user authority, PM has contract/material/purchase manager authority and cost user authority only, and project-facing users have no finance user/manager authority
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - project_facing_operation_requires_acl_changes
+  - finance_authority_leaks_to_project_roles
+  - executive_platform_leak_reappears
+  - verify_smart_core_fails
+  - runtime_authority_matrix_becomes_ambiguous
+
+deliverables:
+  - upgraded project-facing role matrix for owner/pm/executive paths
+  - aligned project-facing action/menu authority for contract/cost/material/purchase
+  - governance/report artifacts for ITER-2026-03-31-464
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_custom/security/role_matrix_groups.xml
+  - git restore addons/smart_construction_core/security/action_groups_patch.xml
+  - git restore addons/smart_construction_core/views/menu.xml
+  - git restore addons/smart_construction_core/views/menu_finance_center.xml
+  - git restore addons/smart_construction_core/tests
+  - git restore addons/smart_construction_custom/tests
+  - git restore agent_ops/tasks/ITER-2026-03-31-464.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-464.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-464.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-463

@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-03-31-485",
+  "status": "PASS",
+  "summary": "Fixed sc.project.overview.service to extract read_group counts through a compatible helper, restoring overview cost.count to match real ledger rows and removing the false-positive cost-maintenance recommendation on project 20.",
+  "verification": {
+    "task_contract": "PASS",
+    "verify_smart_core": "PASS",
+    "module_upgrade": "PASS",
+    "runtime_audit": {
+      "project_20_overview_cost_count_matches_direct_search_count": true,
+      "sample_roles_hujun_wutao_admin_all_show_cost_count_four": true,
+      "false_positive_cost_maintenance_recommendation_removed": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "The concrete overview count extraction defect identified in ITER-2026-03-31-484 is closed.",
+      "The helper was applied across the same service's grouped-count branches to avoid repeated key-shape drift.",
+      "Broader recommendation correctness still needs follow-up sampling beyond the repaired cost-count path."
+    ]
+  },
+  "next_step": "Open the next low-risk audit batch to continue sampling recommendation correctness across other stage, role, and overview-counter combinations."
+}

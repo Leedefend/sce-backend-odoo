@@ -1,0 +1,24 @@
+# ITER-2026-03-31-451
+
+- status: PASS
+- summary: Installed `smart_construction_custom` on `sc_odoo` and verified that the customer-layer authority path and enterprise-maintenance entry chain are present and usable.
+- changed_files:
+  - agent_ops/tasks/ITER-2026-03-31-451.yaml
+  - agent_ops/reports/2026-03-31/report.ITER-2026-03-31-451.md
+  - agent_ops/state/task_results/ITER-2026-03-31-451.json
+- verification:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-451.yaml`
+  - `make mod.install MODULE=smart_construction_custom DB_NAME=sc_odoo`
+  - runtime SQL audit on `sc_odoo`
+- runtime_facts:
+  - `smart_construction_custom` installed on `sc_odoo`
+  - all expected customer bootstrap server actions are present
+  - enterprise maintenance actions/menus are reachable by both `base.group_system` and `smart_construction_core.group_sc_business_full`
+  - customer role groups exist but currently have `0` assigned users on `sc_odoo`
+- risk:
+  - customer-layer module is ready, but Sichuan Baosheng customer master data has not yet been bootstrapped into `sc_odoo`
+- rollback:
+  - rerun `make db.reset DB=sc_odoo`
+- next:
+  - bootstrap Sichuan Baosheng customer company/departments/posts/users/system roles into `sc_odoo`
+  - verify the customer-specific runtime is usable after bootstrap

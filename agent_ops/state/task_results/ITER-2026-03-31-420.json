@@ -1,0 +1,39 @@
+{
+  "task_id": "ITER-2026-03-31-420",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Attached frozen workbook system-role labels to 14 resolved customer users using the new business-admin and ordinary-user group mapping.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-420.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_construction_custom/models/security_policy.py addons/smart_construction_custom/tests/test_business_admin_authority_path.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "docker exec sc-odoo-web-1 odoo shell -d sc_demo bootstrap_customer_user_system_roles assertion",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-420.md"
+  },
+  "runtime_audit": {
+    "updated_user_count": 14,
+    "unresolved_user_count": 0,
+    "admin_role_count": 4,
+    "common_role_count": 12,
+    "dual_role_count": 2
+  },
+  "next_suggestion": "Continue with the platform-level post/master-data extension line so workbook 岗位 can move into a real repository-backed user field."
+}

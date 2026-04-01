@@ -1,0 +1,30 @@
+{
+  "task_id": "ITER-2026-03-31-475",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited project-form object buttons against the delivered role boundary and found a new runtime residual: PM and executive object-button methods that read action definitions hit ir.actions.act_window.view ACL errors, and stage-requirements wizard creation is unavailable for all delivered roles.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_and_runtime_audit": {
+      "cost_ledger_object_button_works_for_pm": true,
+      "progress_entries_object_button_works_for_pm": true,
+      "wbs_object_button_works_for_pm": true,
+      "project_budgets_object_button_acl_error_for_pm": true,
+      "project_contracts_object_button_acl_error_for_pm": true,
+      "view_my_tasks_object_button_acl_error_for_pm": true,
+      "project_budgets_object_button_acl_error_for_executive": true,
+      "project_contracts_object_button_acl_error_for_executive": true,
+      "view_my_tasks_object_button_acl_error_for_executive": true,
+      "stage_requirements_wizard_unavailable_for_delivered_roles": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The new residual is at object-method runtime level rather than plain action visibility.",
+      "Buttons that appear aligned by groups may still fail for PM and executive because env.ref(...).read()[0] touches ir.actions.act_window.view ACL.",
+      "Stage requirements wizard creation is not currently available to delivered business roles."
+    ]
+  },
+  "next_step": "Open a narrow implementation batch to fix or intentionally narrow the project-form object buttons that still fail at runtime, starting with action_open_project_budgets, action_open_project_contracts, and action_view_my_tasks."
+}

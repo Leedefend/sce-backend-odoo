@@ -1,0 +1,93 @@
+task_id: ITER-2026-03-31-460
+title: Implement a non-platform executive authority path for customer delivery users
+type: implementation
+status: active
+priority: high
+
+goal: >
+  Refactor the current executive role-profile path so customer-facing
+  management users can be assigned executive authority without inheriting
+  platform-level groups, then verify the Sichuan Baosheng matrix can use that
+  new path safely.
+
+user_visible_outcome:
+  - "管理层权限不再越到平台级"
+  - "四川保盛管理层用户可安全赋予 executive"
+  - "升级后管理层授权可重复再现"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/models/support/res_users_role_profile.py
+    - addons/smart_core/identity/identity_resolver.py
+    - addons/smart_construction_core/tests/**
+    - addons/smart_construction_custom/data/**
+    - addons/smart_construction_custom/README.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive or narrowing changes only
+  - do not modify ACL or security XML in this batch
+  - executive must stop inheriting platform-level authority
+  - keep PM / finance / business-admin behavior unchanged
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+
+architecture:
+  layer_target: Customer Permission Governance Implementation
+  module: executive authority path
+  module_owner: customer delivery chain + role-profile synchronization
+  kernel_or_scenario: scenario
+  reason: >
+    Governance batch 459 froze the boundary that executive cannot keep pointing
+    at platform-level groups. This batch implements the safer executive path in
+    the role-profile sync and identity resolver so management users can later
+    be assigned safely.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-460.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo
+    - runtime SQL audit confirms executive_role_users becomes non-zero for Sichuan Baosheng without granting base.group_system or group_sc_super_admin
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - executive_path_cannot_be_narrowed_with_certainty
+  - verify_smart_core_fails
+  - runtime_audit_shows_platform_authority_leak
+
+deliverables:
+  - narrowed executive role-profile sync path
+  - updated tests/governance artifacts for ITER-2026-03-31-460
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_core/models/support/res_users_role_profile.py
+  - git restore addons/smart_core/identity/identity_resolver.py
+  - git restore addons/smart_construction_core/tests
+  - git restore addons/smart_construction_custom/data
+  - git restore addons/smart_construction_custom/README.md
+  - git restore agent_ops/tasks/ITER-2026-03-31-460.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-460.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-460.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-459

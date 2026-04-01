@@ -1,0 +1,75 @@
+task_id: ITER-2026-03-31-418
+title: Amend repository rule for authorized high-risk permission batches
+type: governance
+status: active
+priority: critical
+
+goal: >
+  Amend the repository execution rule so that a dedicated high-risk
+  permission-governance batch with explicit user authorization may implement
+  controlled changes under security/**, instead of being blocked by the generic
+  stop condition.
+
+user_visible_outcome:
+  - "仓库规则明确允许受控高风险权限批次实施 security/** 改动"
+  - "417 后续实现具备规则层合法性"
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance only
+  - no addon implementation
+  - no security xml edit in this batch
+  - rule change must stay narrow and explicitly scoped to dedicated permission-governance batches
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Governance Baseline
+  module: repository execution rules
+  module_owner: repo-wide codex execution governance
+  kernel_or_scenario: scenario
+  reason: >
+    The user explicitly requires the business-system-admin authority path to be
+    implemented. Current AGENTS stop conditions forbid any security/** change,
+    so the repository rule must be amended first in a narrowly scoped way.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-418.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - rule_change_broadens_security_edits_beyond_dedicated_batches
+  - governance_boundary_unclear
+
+deliverables:
+  - narrowed AGENTS rule amendment
+  - report and task result artifacts for ITER-2026-03-31-418
+  - delivery log checkpoint with next suggestion
+
+rollback:
+  - git restore AGENTS.md
+  - git restore agent_ops/tasks/ITER-2026-03-31-418.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-418.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-418.json
+
+depends_on:
+  - ITER-2026-03-31-417

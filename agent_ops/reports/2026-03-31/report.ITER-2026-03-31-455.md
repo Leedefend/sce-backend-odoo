@@ -1,0 +1,48 @@
+# ITER-2026-03-31-455
+
+- status: PASS
+- summary: Materialized Sichuan Baosheng customer bootstrap into install-time module data in `smart_construction_custom`, and verified fresh `sc_odoo` reset/install reproduces the customer runtime without manual bootstrap actions.
+- changed_files:
+  - AGENTS.md
+  - addons/smart_construction_custom/__manifest__.py
+  - addons/smart_construction_custom/data/customer_company_departments.xml
+  - addons/smart_construction_custom/data/customer_posts.xml
+  - addons/smart_construction_custom/data/customer_users.xml
+  - addons/smart_construction_custom/data/customer_user_relations.xml
+  - addons/smart_construction_custom/README.md
+  - agent_ops/tasks/ITER-2026-03-31-455.yaml
+  - agent_ops/reports/2026-03-31/report.ITER-2026-03-31-455.md
+  - agent_ops/state/task_results/ITER-2026-03-31-455.json
+- verification:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-455.yaml` PASS
+  - `make db.reset DB=sc_odoo` PASS
+  - `make verify.platform_baseline DB_NAME=sc_odoo` PASS
+  - `make mod.install MODULE=smart_construction_core DB_NAME=sc_odoo` PASS
+  - `SC_SEED_ENABLED=1 SC_BOOTSTRAP_MODE=prod make mod.install MODULE=smart_construction_seed DB_NAME=sc_odoo` PASS
+  - `make mod.install MODULE=smart_construction_custom DB_NAME=sc_odoo` PASS
+  - runtime SQL audit on `sc_odoo` PASS:
+    - `company_count=1`
+    - `department_count=6`
+    - `post_count=7`
+    - `active_user_count=20`
+    - `primary_department_users=18`
+    - `extra_department_links=6`
+    - `primary_post_users=12`
+    - `extra_post_links=3`
+    - `business_admin_users=4`
+    - `owner_users=20`
+  - representative sample users PASS:
+    - `duanyijun`: primary department `经营部`, extra department `行政部`, primary post `总经理`
+    - `wennan`: primary department `财务部`, primary post `财务经理`, extra post `副总经理`
+    - `wutao`: primary department `项目部`, primary post `董事长`
+    - `hujun`: primary department `项目部`, primary post `项目负责人`, extra post `总经理`
+    - `shuiwujingbanren`: no primary department, primary post `财务经理`, extra post `财务助理`
+- risk:
+  - high-risk manifest/data-load batch completed under the narrow AGENTS exception
+  - runtime bootstrap helpers still remain as compatibility/ops fallback; install-time XML is now the canonical reproducible path for Sichuan Baosheng
+- rollback:
+  - rerun `make db.reset DB=sc_odoo`
+  - reinstall the clean baseline chain without `smart_construction_custom` if customer seed materialization must be removed
+- next:
+  - move to Sichuan Baosheng authorization and business-flow usability verification
+  - keep customer bootstrap evolution in XML data files so future fresh installs remain reproducible

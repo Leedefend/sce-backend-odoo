@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-03-31-494",
+  "status": "PASS_WITH_RISK",
+  "summary": "Classified the automatic task source on a fresh project: project.project.create() calls ProjectCreationService.post_create_bootstrap(), whose initializer creates a root project.task when none exists. The create-task recommendation rule now conflicts with this bootstrap semantic by design.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_and_runtime_audit": {
+      "project_create_calls_post_create_bootstrap": true,
+      "initializer_creates_project_root_task_when_missing": true,
+      "runtime_fresh_project_immediately_has_one_root_task": true,
+      "runtime_scratch_cleanup_complete": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The blocker is now a product/architecture conflict between recommendation rule semantics and platform bootstrap semantics.",
+      "Continuing automatically would require a governance choice, not just another implementation or audit batch.",
+      "The remaining create-task branch cannot be closed until that governance choice is made."
+    ]
+  },
+  "next_step": "Stop the chain and open a governance batch to choose whether to adjust the create-task rule, adjust project bootstrap, or redefine acceptance expectations."
+}

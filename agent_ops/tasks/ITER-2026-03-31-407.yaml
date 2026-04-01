@@ -1,0 +1,71 @@
+task_id: ITER-2026-03-31-407
+title: Draft system mapping for customer structure and user baseline
+type: audit
+status: completed
+priority: high
+
+goal: >
+  Translate the confirmed customer baseline into a system mapping draft covering
+  organization structure, post attributes, system roles, and customer bootstrap
+  semantics for later implementation in smart_construction_custom.
+
+user_visible_outcome:
+  - "形成可落系统的映射草案"
+  - "明确部门、岗位、系统角色如何进入系统"
+  - "明确 smart_construction_custom 后续应承接哪些客户装配内容"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit only; no implementation changes
+  - translate the frozen workbook baseline into system mapping semantics
+  - keep the output implementation-ready but governance-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Governance Audit
+  module: customer system mapping draft
+  module_owner: smart_construction_custom onboarding
+  kernel_or_scenario: scenario
+  reason: >
+    The workbook cleanup and baseline freeze are complete. The next low-risk
+    step is to turn the confirmed customer structure into a system mapping draft
+    before any implementation work begins.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-407.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - system_mapping_semantics_unclear
+
+deliverables:
+  - system mapping draft for enterprise, departments, posts, roles, and user bootstrap
+  - report and task result artifacts for ITER-2026-03-31-407
+  - delivery log checkpoint with next suggestion
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-407.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-407.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-407.json
+
+depends_on:
+  - ITER-2026-03-31-406

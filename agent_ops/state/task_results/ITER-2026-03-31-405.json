@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-03-31-405",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Completed a second-pass reconciliation on the workbook users and reduced the owner review set to 4 multi-department users, 3 项目部-only users, and 2 role-only users.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-405.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-405.md"
+  },
+  "review_buckets": {
+    "meaningful_user_count": 20,
+    "unmapped_count": 0,
+    "multi_department_count": 4,
+    "project_department_only_count": 3,
+    "role_only_count": 2
+  },
+  "next_suggestion": "Confirm the 4 multi-department users, 3 项目部-only users, and 2 role-only users with the owner."
+}

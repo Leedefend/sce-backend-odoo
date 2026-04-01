@@ -1,0 +1,93 @@
+task_id: ITER-2026-03-31-455
+title: Materialize Sichuan Baosheng customer bootstrap as install-time data files
+type: implementation
+status: active
+priority: high
+
+goal: >
+  Convert the Sichuan Baosheng customer initialization in
+  smart_construction_custom from runtime bootstrap-only behavior into
+  install-time module data loading so that a fresh reset/install can reproduce
+  the customer runtime without manual bootstrap actions.
+
+user_visible_outcome:
+  - "安装 smart_construction_custom 即自动加载四川保盛客户初始化数据"
+  - "公司、部门、岗位、用户、角色、附加关系可重复再现"
+  - "不再依赖手工执行 customer bootstrap server action 才能得到客户运行态"
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - addons/smart_construction_custom/__manifest__.py
+    - addons/smart_construction_custom/data/**
+    - addons/smart_construction_custom/README.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/smart_construction_core/security/**
+    - addons/smart_enterprise_base/security/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive changes only
+  - keep runtime server actions as compatibility helpers unless they block reproducibility
+  - install-time data becomes the canonical customer initialization path
+  - no ACL, record rule, or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+
+architecture:
+  layer_target: Customer Delivery Seed Reproducibility
+  module: smart_construction_custom
+  module_owner: customer delivery chain
+  kernel_or_scenario: scenario
+  reason: >
+    The user wants the customer-specific initialization to be reproducible by
+    module install itself, not by manual runtime bootstrap actions, so the
+    Sichuan Baosheng company, department, post, user, role, and extra
+    relations must be materialized as install-time module data.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-455.yaml
+    - make db.reset DB=sc_odoo
+    - make verify.platform_baseline DB_NAME=sc_odoo
+    - make mod.install MODULE=smart_construction_core DB_NAME=sc_odoo
+    - SC_SEED_ENABLED=1 SC_BOOTSTRAP_MODE=prod make mod.install MODULE=smart_construction_seed DB_NAME=sc_odoo
+    - make mod.install MODULE=smart_construction_custom DB_NAME=sc_odoo
+    - runtime SQL audit confirms Sichuan Baosheng company, departments, posts, users, and role assignments exist without manual bootstrap execution
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - customer_manifest_or_data_load_cannot_be_completed_with_certainty
+  - fresh_install_reproducibility_fails_on_sc_odoo
+
+deliverables:
+  - install-time customer seed files in smart_construction_custom
+  - implementation/report/result artifacts for ITER-2026-03-31-455
+
+rollback:
+  - rerun `make db.reset DB=sc_odoo`
+  - git restore AGENTS.md
+  - git restore addons/smart_construction_custom/__manifest__.py
+  - git restore addons/smart_construction_custom/data
+  - git restore addons/smart_construction_custom/README.md
+  - git restore agent_ops/tasks/ITER-2026-03-31-455.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-455.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-455.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-454
