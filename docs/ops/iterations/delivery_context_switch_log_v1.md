@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T13:52:31Z
+- blocker_key: `record_view_hud_title_source_verify_v1`
+- layer_target: `frontend layer`
+- module: `ActionView HUD verification`
+- reason: HUD title source 对齐后，当前 verify 仅确认 display-only 修复不影响 strict typing 与 dedicated HUD smoke
+- completed_step: `已完成 ITER-2026-04-01-602：validate_task PASS、frontend strict typecheck PASS、make verify.portal.recordview_hud_smoke.container PASS`
+- active_commit: `aca8eac`
+- next_step: `Open the next bounded record-view continuity screen batch`
+
+### 2026-04-01T13:51:00Z
+- blocker_key: `record_view_hud_title_source_impl_v1`
+- layer_target: `frontend layer`
+- module: `ActionView HUD title continuity`
+- reason: `600` 已选定 HUD title source alignment，当前批次只移除硬编码英文源标题，让既有中文回退逻辑生效
+- completed_step: `已完成 ITER-2026-04-01-601：ActionView hud.title 已从 View Context 调整为空源值`
+- active_commit: `aca8eac`
+- next_step: `Run strict typecheck and dedicated HUD smoke for the HUD title source alignment`
+
+### 2026-04-01T13:50:00Z
+- blocker_key: `record_view_continuity_screen_v2`
+- layer_target: `frontend layer`
+- module: `record-view continuity screen`
+- reason: boolean placeholder consistency 收口后，screen 继续选择下一条用户可见不一致，选中 ActionView HUD title source 对齐
+- completed_step: `已完成 ITER-2026-04-01-600：下一条 bounded slice 选定为 ActionView HUD title source alignment`
+- active_commit: `aca8eac`
+- next_step: `Open a bounded P1 implementation batch for ActionView HUD title source alignment`
+
 ### 2026-04-01T13:48:22Z
 - blocker_key: `record_view_hud_contract_boolean_verify_v1`
 - layer_target: `frontend layer`

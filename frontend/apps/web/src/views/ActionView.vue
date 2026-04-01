@@ -1674,7 +1674,7 @@ const { vm } = useActionPageModel({
   },
   hud: {
     visible: showHud,
-    title: 'View Context',
+    title: '',
     state: {
       actionId,
       menuId,
