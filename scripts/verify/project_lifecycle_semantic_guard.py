@@ -88,6 +88,18 @@ def main() -> None:
             "\"lifecycle_hints\"",
             "\"diagnostics_summary\"",
         ],
+        "project_creation_service.py": [
+            "post_create_bootstrap",
+            "\"ready_for_management\"",
+            "\"summary_message\"",
+        ],
+    }
+
+    creation_handler_targets = {
+        "project_initiation_enter.py": [
+            "\"bootstrap_summary\"",
+            "post_create_bootstrap",
+        ],
     }
 
     handler_base = ROOT / "addons" / "smart_construction_core" / "handlers"
@@ -100,6 +112,12 @@ def main() -> None:
     service_base = ROOT / "addons" / "smart_construction_core" / "services"
     for rel, tokens in service_targets.items():
         path = service_base / rel
+        content = _read(path)
+        checks.append((f"exists::{rel}", path.exists(), str(path)))
+        checks.append((f"semantic_tokens::{rel}", _contains_all(content, tokens), ",".join(tokens)))
+
+    for rel, tokens in creation_handler_targets.items():
+        path = handler_base / rel
         content = _read(path)
         checks.append((f"exists::{rel}", path.exists(), str(path)))
         checks.append((f"semantic_tokens::{rel}", _contains_all(content, tokens), ",".join(tokens)))
