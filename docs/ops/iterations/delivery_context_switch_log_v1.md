@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:27:33Z
+- blocker_key: `project_execution_advance_semantic_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `project.execution.advance blocked/error lifecycle continuity`
+- reason: 写路径可用性主线继续推进，已完成 execution.advance 异常/阻塞分支语义补齐并通过 acceptance
+- completed_step: `已完成 ITER-2026-04-01-632/633：project.execution.advance 所有 blocked/error 返回补齐 lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `a09edde`
+- next_step: `Open next screen batch for remaining project write-intent handlers envelope consistency`
+
+### 2026-04-01T15:25:00Z
+- blocker_key: `project_execution_advance_semantic_screen_v1`
+- layer_target: `backend semantic layer`
+- module: `project.execution.advance semantic continuity screen`
+- reason: 连续迭代转入 execution 写路径，screen 识别 blocked/error 分支缺少统一 lifecycle_hints
+- completed_step: `已完成 ITER-2026-04-01-631：选定 project.execution.advance blocked/error 返回语义补齐作为下一刀`
+- active_commit: `a09edde`
+- next_step: `Open implement batch for execution.advance lifecycle_hints continuity and run acceptance verify`
+
 ### 2026-04-01T15:21:16Z
 - blocker_key: `project_connection_transition_semantic_verify_v1`
 - layer_target: `backend semantic layer`

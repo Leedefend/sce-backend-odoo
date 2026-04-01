@@ -62,6 +62,26 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             "reason_code": reason_code,
         }
 
+    @staticmethod
+    def _build_lifecycle_hints(project_id: int, reason_code: str) -> dict:
+        if int(project_id or 0) > 0:
+            return {
+                "stage": "execution_blocked",
+                "first_action": "refresh_execution_next_actions",
+                "primary_action_label": "刷新下一步动作",
+                "suggested_action_intent": "project.execution.block.fetch",
+                "suggested_action_title": "刷新下一步动作",
+                "reason_code": str(reason_code or ""),
+            }
+        return {
+            "stage": "no_project_context",
+            "first_action": "create_project",
+            "primary_action_label": "创建项目",
+            "suggested_action_intent": "project.initiation.enter",
+            "suggested_action_title": "创建项目",
+            "reason_code": str(reason_code or "PROJECT_CONTEXT_MISSING"),
+        }
+
     def _project_tasks(self, project):
         try:
             task_model = self.env["project.task"]
@@ -175,6 +195,9 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "reason_code": "PROJECT_CONTEXT_MISSING",
                     "suggested_action": "fix_input",
                 },
+                "data": {
+                    "lifecycle_hints": self._build_lifecycle_hints(project_id, "PROJECT_CONTEXT_MISSING"),
+                },
                 "meta": {
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
@@ -188,6 +211,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         except Exception:
             project = False
         if not project:
+            reason_code = "PROJECT_NOT_FOUND"
             return {
                 "ok": True,
                 "data": {
@@ -195,8 +219,9 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "project_id": project_id,
                     "from_state": "ready",
                     "to_state": "ready",
-                    "reason_code": "PROJECT_NOT_FOUND",
-                    "suggested_action": self._build_suggested_action(project_id, "PROJECT_NOT_FOUND"),
+                    "reason_code": reason_code,
+                    "suggested_action": self._build_suggested_action(project_id, reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(project_id, reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -226,6 +251,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -247,6 +273,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": scope_reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), scope_reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), scope_reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -266,6 +293,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": alignment_reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), alignment_reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), alignment_reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -285,6 +313,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": task_reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), task_reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), task_reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -306,6 +335,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -325,6 +355,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": alignment_reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), alignment_reason_code),
+                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), alignment_reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
