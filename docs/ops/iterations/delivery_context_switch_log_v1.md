@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T14:18:26Z
+- blocker_key: `lifecycle_architecture_correction_verify_v1`
+- layer_target: `frontend layer`
+- module: `lifecycle semantic-consumer correction verification`
+- reason: 用户明确要求坚持架构边界，当前批次完成“去模型分支”的前端纠偏并验证 acceptance baseline
+- completed_step: `已完成 ITER-2026-04-01-614：validate_task PASS、typecheck PASS、make verify.project.management.acceptance PASS；前端文案消费已改为通用语义字段 primaryActionLabel`
+- active_commit: `4ba974e`
+- next_step: `Open backend semantic-gap batch for lifecycle guidance fields`
+
+### 2026-04-01T14:17:00Z
+- blocker_key: `lifecycle_architecture_correction_impl_v1`
+- layer_target: `frontend layer`
+- module: `lifecycle copy semantic-consumer correction`
+- reason: screen 选定“纠偏优先”；当前实现移除前端 model 特判，改为消费后端语义标签，不改变行为路径
+- completed_step: `已完成 ITER-2026-04-01-613：resolveEmptyCopy/ListPage 提示已从 model 判断切换为 primaryActionLabel 通用消费`
+- active_commit: `4ba974e`
+- next_step: `Run strict typecheck and project-management acceptance verification`
+
+### 2026-04-01T14:16:00Z
+- blocker_key: `lifecycle_architecture_correction_screen_v1`
+- layer_target: `frontend layer`
+- module: `lifecycle usability architecture correction screen`
+- reason: 用户否决前端模型判断后，当前优先选定架构纠偏切片：保留可用性收益但恢复“后端语义驱动、前端通用渲染”边界
+- completed_step: `已完成 ITER-2026-04-01-612：下一条切片选定为 semantic-driven copy consumer correction`
+- active_commit: `4ba974e`
+- next_step: `Open bounded implementation for semantic-driven lifecycle copy consumer correction`
+
 ### 2026-04-01T14:04:54Z
 - blocker_key: `project_lifecycle_row_action_hint_verify_v1`
 - layer_target: `frontend layer`

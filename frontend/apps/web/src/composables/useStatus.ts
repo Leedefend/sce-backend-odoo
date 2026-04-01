@@ -22,7 +22,7 @@ export interface StatusCopy {
 }
 
 type EmptyCopyContext = {
-  model?: string;
+  primaryActionLabel?: string;
 };
 
 export function resolveSuggestedAction(
@@ -228,10 +228,11 @@ export function resolveEmptyCopy(
   if (type === 'card') {
     return { title: 'No data', message: 'No cards returned for this action.' };
   }
-  if (String(context?.model || '').trim() === 'project.project') {
+  const actionLabel = String(context?.primaryActionLabel || '').trim();
+  if (actionLabel) {
     return {
-      title: '暂无项目',
-      message: '点击右上角“创建项目”开始项目管理闭环。',
+      title: '暂无数据',
+      message: `点击右上角“${actionLabel}”开始下一步。`,
     };
   }
   return { title: 'No data', message: 'No records returned for this action.' };
