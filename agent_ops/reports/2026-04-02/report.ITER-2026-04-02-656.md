@@ -9,14 +9,13 @@
 
 ## Summary of Change
 
-- extended `project_lifecycle_semantic_guard.py` coverage with service-level checks:
-  - `services/project_entry_context_service.py`
-  - required tokens include:
-    - `_build_lifecycle_guidance`
-    - `_build_options_guidance`
-    - `_build_diagnostics_summary`
-    - `suggested_action` / `lifecycle_hints` / `diagnostics_summary`
-- kept existing handler-level checks unchanged
+- extended `project_lifecycle_semantic_guard.py` with service coverage for:
+  - `project_entry_context_service.py`
+- added required token checks for:
+  - `_build_lifecycle_guidance`
+  - `_build_options_guidance`
+  - `_build_diagnostics_summary`
+  - `suggested_action` / `lifecycle_hints` / `diagnostics_summary`
 
 ## Verification Result
 
@@ -24,4 +23,4 @@
 
 ## Next Iteration Suggestion
 
-- run semantic guard and full acceptance chain to verify integration
+- run semantic guard and acceptance chain verification
