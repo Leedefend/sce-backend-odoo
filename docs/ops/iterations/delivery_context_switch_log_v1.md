@@ -16,6 +16,186 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T08:20:00Z
+- blocker_key: `native_list_toolbar_visibility_impl_v1`
+- layer_target: `frontend layer`
+- module: `primary toolbar visibility gating`
+- reason: `559` 已确认 primary-toolbar visibility 候选可以缩成一个局部结构 follow-up；当前实现只放宽 showPrimaryToolbar gate，使 search 隐藏但 sort summary 仍可见时不整块消失`
+- completed_step: `已完成 ITER-2026-04-01-560：PageToolbar 的 showPrimaryToolbar 从仅依赖 search section 可见，扩展为 search 可见或 sort block 可见，validate_task、frontend strict typecheck、verify.portal.v0_5.container 全部通过`
+- active_commit: `8194c19`
+- next_step: `Submit the current bounded frontend chain before opening a fresh scan`
+
+### 2026-04-01T08:00:00Z
+- blocker_key: `native_list_toolbar_visibility_decision_v1`
+- layer_target: `frontend layer`
+- module: `primary toolbar visibility gating`
+- reason: `551 STOP` 后没有直接进入结构性实现，而是先做单独决策批次；当前已确认剩余 visibility 候选可以缩成一个局部 gating 修正，而不是扩散成更大结构改造`
+- completed_step: `已完成 ITER-2026-04-01-559：确认可以把 follow-up 范围限制为 PageToolbar 的 showPrimaryToolbar gate，仅在 search 隐藏但 sort summary 仍可见时保留 primary toolbar`
+- active_commit: `8194c19`
+- next_step: `Open a dedicated structural implementation batch limited to showPrimaryToolbar gating`
+
+### 2026-04-01T07:45:00Z
+- blocker_key: `native_list_toolbar_hint_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `557` 的 hidden-clear scope hint 已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色；此后候选集中只剩结构性 visibility slice`
+- completed_step: `已完成 ITER-2026-04-01-558：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，hidden-clear scope hint 已通过当前可信门禁`
+- active_commit: `8194c19`
+- next_step: `Stop the current low-risk display-only chain and open a dedicated structural decision batch before touching primary-toolbar visibility gating`
+
+### 2026-04-01T07:35:00Z
+- blocker_key: `native_list_toolbar_hint_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `556` 已选定 hidden-clear scope hint 为下一族；当前在 PageToolbar 单文件内补一条说明，明确清空会移除隐藏的筛选和分组状态`
+- completed_step: `已完成 ITER-2026-04-01-557：PageToolbar 在两个当前条件区块下补充 hidden-clear scope caption，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost verify batch that confirms the hidden-clear scope hint on the native list surface`
+
+### 2026-04-01T07:20:00Z
+- blocker_key: `native_list_toolbar_hint_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `555` 验证通过后，重分解候选集中只剩一个 display-only hint slice 和一个结构性 visibility 候选；当前 screen 仅选择前者`
+- completed_step: `已完成 ITER-2026-04-01-556：选定 hidden-clear scope hint 作为下一条实现目标`
+- active_commit: `8194c19`
+- next_step: `Open a low-risk implementation batch that adds a concise hint for hidden clears near the reset CTA`
+
+### 2026-04-01T07:10:00Z
+- blocker_key: `native_list_toolbar_reset_label_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `554 的 reset-all wording cleanup 已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色；重分解候选集中还剩一个 display-only hint slice`
+- completed_step: `已完成 ITER-2026-04-01-555：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，清空全部条件文案已通过当前可信门禁`
+- active_commit: `8194c19`
+- next_step: `Continue the re-scoped candidate set with the remaining display-only hint slice`
+
+### 2026-04-01T06:55:00Z
+- blocker_key: `native_list_toolbar_reset_label_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `553` 已选定 reset-all wording clarity 为下一族；当前在 PageToolbar 单文件内把 reset CTA 文案改成更准确的清空全部条件`
+- completed_step: `已完成 ITER-2026-04-01-554：PageToolbar 的 reset CTA 从 重置条件 改为 清空全部条件，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost verify batch that confirms reset-all wording clarity on the native list surface`
+
+### 2026-04-01T06:45:00Z
+- blocker_key: `native_list_toolbar_rescope_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `552` 已重新拆出可回到 display-only 轨道的子切片，当前 screen 只消费该分解结果并选定最小的标签型改动`
+- completed_step: `已完成 ITER-2026-04-01-553：选定 reset-all wording clarity 作为下一条实现目标`
+- active_commit: `8194c19`
+- next_step: `Open a low-risk implementation batch that renames the reset CTA to clearly signal a full clear`
+
+### 2026-04-01T06:35:00Z
+- blocker_key: `native_list_toolbar_rescope_scan_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar scan`
+- reason: `551 STOP` 后没有直接越过风险边界，而是把剩余的结构/行为候选重新拆解成更小子问题；其中 reset affordance 已重新分解出可回到 display-only 轨道的标签澄清切片`
+- completed_step: `已完成 ITER-2026-04-01-552：把剩余候选拆成 reset-all wording clarity、hidden-clear scope hint、sort-summary fallback visibility 三个子切片`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost screen batch and pick the label-only reset-all wording clarity slice`
+
+### 2026-04-01T06:20:00Z
+- blocker_key: `native_list_toolbar_low_risk_exhausted_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `544 fresh scan` 的低风险显示层候选已经基本耗尽；剩余两条分别触及 primary toolbar 的结构性可见性门控和 reset 行为语义，不再属于当前连续低消耗链的安全实现范围
+- completed_step: `已完成 ITER-2026-04-01-551：重筛剩余 fresh candidates 后判定它们不再满足低风险 display-only 边界，当前链按 STOP 收口`
+- active_commit: `8194c19`
+- next_step: `Open a new bounded scan or decision batch for structural or behavior-adjacent toolbar semantics before any further implementation`
+
+### 2026-04-01T06:10:00Z
+- blocker_key: `native_list_toolbar_subset_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `549 的高频筛选优先项文案修正已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色；544 fresh candidate set 还剩两条更结构化候选`
+- completed_step: `已完成 ITER-2026-04-01-550：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，高频筛选优先项文案已通过当前可信门禁`
+- active_commit: `8194c19`
+- next_step: `Screen the remaining fresh candidates again and decide whether one still qualifies as a low-risk display-only slice`
+
+### 2026-04-01T05:55:00Z
+- blocker_key: `native_list_toolbar_subset_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `548 已选定 high-frequency subset wording 为下一族；当前在 PageToolbar 单文件内把高频筛选标题明确成优先子集`
+- completed_step: `已完成 ITER-2026-04-01-549：PageToolbar 将高频筛选标题改为 高频筛选优先项（N），并明确其余筛选项收纳到高级筛选，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost verify batch that confirms high-frequency subset wording on the native list surface`
+
+### 2026-04-01T05:40:00Z
+- blocker_key: `native_list_toolbar_remaining_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `547 已完成 cross-surface 文案对齐，当前继续消费 544 fresh candidate set。高频筛选子集计数歧义是剩余候选里最纯的显示层切片`
+- completed_step: `已完成 ITER-2026-04-01-548：选定 high-frequency filters header subset wording 为下一条实现目标`
+- active_commit: `8194c19`
+- next_step: `Open a low-risk implementation batch that clarifies the high-frequency filter header as a subset`
+
+### 2026-04-01T05:30:00Z
+- blocker_key: `native_list_toolbar_cross_surface_verify_v1`
+- layer_target: `frontend layer`
+- module: `route-preset provenance display verification`
+- reason: `546 的 cross-surface provenance wording alignment 已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色；544 fresh candidate set 仍有剩余候选`
+- completed_step: `已完成 ITER-2026-04-01-547：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，ActionView 与 toolbar 的 route-preset 来源文案对齐已通过当前可信门禁`
+- active_commit: `8194c19`
+- next_step: `Continue the fresh bounded candidate set with the next display-only toolbar family`
+
+### 2026-04-01T05:15:00Z
+- blocker_key: `native_list_toolbar_cross_surface_impl_v1`
+- layer_target: `frontend layer`
+- module: `route-preset provenance display`
+- reason: `545 已选定 cross-surface source label divergence 为下一族；当前在 ActionView 单文件内把 route-preset banner 的来源文案对齐到 toolbar 口径`
+- completed_step: `已完成 ITER-2026-04-01-546：ActionView 将 scene/route/query/url 来源统一显示为 路由上下文，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost verify batch that confirms cross-surface route-preset provenance alignment on the current list verification chain`
+
+### 2026-04-01T05:00:00Z
+- blocker_key: `native_list_toolbar_fresh_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `544 fresh scan 已给出 4 个候选；当前 screen 只消费 scan 结果并选择下一族。cross-surface route-preset provenance wording 是最小且最纯的文案对齐切片`
+- completed_step: `已完成 ITER-2026-04-01-545：选定 ActionView 的 route-preset provenance wording 对齐为下一条实现目标`
+- active_commit: `8194c19`
+- next_step: `Open a low-risk implementation batch that normalizes ActionView route-preset provenance wording to match the toolbar wording`
+
+### 2026-04-01T04:50:00Z
+- blocker_key: `native_list_toolbar_fresh_scan_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar scan`
+- reason: `上一组 bounded toolbar candidate 已全部实现并验证通过；当前按低消耗规则重新开 fresh scan，只在 5 个 toolbar 相关文件里生成下一轮候选`
+- completed_step: `已完成 ITER-2026-04-01-544：候选收敛为高频筛选子集计数歧义、primary toolbar 对 search section 的可见性耦合、active-condition reset 隐藏状态歧义、以及 ActionView 与 PageToolbar 的 route-preset 来源文案不一致四类`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost screen batch and choose one candidate family from the fresh bounded toolbar scan`
+
+### 2026-04-01T04:35:00Z
+- blocker_key: `native_list_toolbar_route_preset_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `542 的 route-preset provenance wording cleanup 已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色；此前 bounded toolbar candidate set 已全部执行完`
+- completed_step: `已完成 ITER-2026-04-01-543：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，route-preset provenance wording cleanup 已通过当前可信门禁`
+- active_commit: `8194c19`
+- next_step: `Open a fresh bounded scan for the next native list toolbar usability family`
+
+### 2026-04-01T04:20:00Z
+- blocker_key: `native_list_toolbar_route_preset_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `541 已选定 route-preset provenance wording 为下一族；当前在单文件显示层内恢复 route-derived preset 的可见来源说明`
+- completed_step: `已完成 ITER-2026-04-01-542：PageToolbar 将 scene/route/query/url 来源统一显示为 路由上下文，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `8194c19`
+- next_step: `Open a low-cost verify batch that confirms route-preset provenance wording cleanup on the native list surface`
+
+### 2026-04-01T04:05:00Z
+- blocker_key: `native_list_toolbar_route_preset_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `count parity / default sort / advanced toggle` 三条 bounded family 已完成，当前从 531 的最后一条候选中选定 route-preset provenance wording`
+- completed_step: `已完成 ITER-2026-04-01-541：选定 route preset provenance label 作为下一条实现目标`
+- active_commit: `8194c19`
+- next_step: `Open a low-risk implementation batch that restores a concise visible provenance label for route-derived presets`
+
 ### 2026-04-01T03:50:00Z
 - blocker_key: `native_list_toolbar_advanced_toggle_verify_v1`
 - layer_target: `frontend layer`

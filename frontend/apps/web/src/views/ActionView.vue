@@ -39,7 +39,7 @@
     <section v-if="!preferNativeListSurface && isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
-        <span v-if="vm.filters.routePreset?.source">（{{ t('route_preset_source_prefix', '来源：') }}{{ vm.filters.routePreset?.source }}）</span>
+        <span v-if="routePresetBannerSourceText">（{{ t('route_preset_source_prefix', '来源：') }}{{ routePresetBannerSourceText }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ t('route_preset_clear', '清除推荐') }}</button>
     </section>
@@ -1202,6 +1202,14 @@ const listRoutePresetDisplayLabel = computed(() => {
     return '推荐预设';
   }
   return rawLabel;
+});
+const routePresetBannerSourceText = computed(() => {
+  const raw = String(routeContextSource.value || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'scene' || raw === 'route' || raw === 'query' || raw === 'url') return '路由上下文';
+  if (raw === 'menu') return '菜单';
+  if (raw === 'recommended' || raw === 'preset') return '系统推荐';
+  return raw.replace(/[_-]+/g, ' ');
 });
 const listOptimizationComposition = computed(() => {
   const raw = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')

@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-01-542
+title: Restore concise provenance labels for route-derived route presets
+type: frontend
+status: active
+priority: medium
+
+goal: >
+  Make route-preset provenance visible when a preset comes from route context,
+  while keeping the toolbar wording compact and display-only.
+
+user_visible_outcome:
+  - "推荐筛选能区分系统推荐与路由带入"
+  - "route-derived preset 不再丢失来源说明"
+  - "保持纯显示层修复"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/PageToolbar.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no behavior changes
+  - keep provenance wording concise and localized inside PageToolbar
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8194c19
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-541
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The remaining bounded toolbar issue is that route-derived presets suppress
+    their provenance entirely. The next low-risk display fix is to restore a
+    short, readable source label without changing route behavior.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-542.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - route_preset_provenance_fix_requires_behavior_change
+
+deliverables:
+  - route_preset_provenance_label_cleanup
+  - governance/report artifacts for ITER-2026-04-01-542
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-04-01-542.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-542.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-542.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-541

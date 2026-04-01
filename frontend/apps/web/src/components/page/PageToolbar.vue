@@ -79,6 +79,7 @@
     >
       <template v-if="section.key === 'active_conditions' && visibleActiveStateChips.length">
         <span class="contract-group__label">当前条件（{{ visibleActiveStateChips.length }}）</span>
+        <span class="contract-group__caption">清空时会一并移除隐藏的筛选和分组状态</span>
         <div class="contract-group__chips">
           <span
             v-for="chip in visibleActiveStateChips"
@@ -93,14 +94,14 @@
             :disabled="loading"
             @click="resetActiveConditions"
           >
-            重置条件
+            清空全部条件
           </button>
         </div>
       </template>
 
       <template v-else-if="section.key === 'quick_filters' && prioritizedQuickFilters.length">
-        <span class="contract-group__label">高频筛选（{{ prioritizedQuickFilters.length }}）</span>
-        <span class="contract-group__caption">优先展示后端标记的高频条件</span>
+        <span class="contract-group__label">高频筛选优先项（{{ prioritizedQuickFilters.length }}）</span>
+        <span class="contract-group__caption">仅展示后端标记的优先筛选，其余筛选项收纳到高级筛选</span>
         <div class="contract-group__chips">
           <button
             v-for="chip in prioritizedQuickFilters"
@@ -241,6 +242,7 @@
   <section v-else-if="hasContractControls" class="contract-toolbar">
     <div v-if="activeStateChips.length" class="contract-group">
       <span class="contract-group__label">当前条件（{{ activeStateChips.length }}）</span>
+      <span class="contract-group__caption">清空时会一并移除隐藏的筛选和分组状态</span>
       <div class="contract-group__chips">
         <span
           v-for="chip in activeStateChips"
@@ -255,7 +257,7 @@
           :disabled="loading"
           @click="resetActiveConditions"
         >
-          重置条件
+          清空全部条件
         </button>
       </div>
     </div>
@@ -474,7 +476,7 @@ const routePresetLabelText = computed(() => String(props.routePresetLabel || '')
 const routePresetSourceText = computed(() => {
   const raw = String(props.routePresetSource || '').trim().toLowerCase();
   if (!raw) return '';
-  if (raw === 'scene' || raw === 'route' || raw === 'query' || raw === 'url') return '';
+  if (raw === 'scene' || raw === 'route' || raw === 'query' || raw === 'url') return '路由上下文';
   if (raw === 'menu') return '菜单';
   if (raw === 'recommended' || raw === 'preset') return '系统推荐';
   return raw.replace(/[_-]+/g, ' ');
@@ -592,7 +594,7 @@ const showLegacyStatusFilters = computed(() => !hasContractControls.value);
 const showPrimaryToolbar = computed(() => {
   if (!usesOptimizationComposition.value) return true;
   const searchSection = renderedSections.value.find((item) => item.key === 'search');
-  return Boolean(searchSection?.visible !== false);
+  return Boolean(searchSection?.visible !== false) || showSortBlock.value;
 });
 const showAdvancedFiltersSection = computed(() =>
   Boolean(advancedFiltersConfig.value?.visible !== false)
