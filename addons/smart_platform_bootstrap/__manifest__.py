@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "Smart Construction Bootstrap",
-    "summary": "Compatibility shim for smart_platform_bootstrap",
+    "name": "Smart Platform Bootstrap",
+    "summary": "System baseline bootstrap (lang/tz/currency) for fresh databases",
     "version": "17.0.0.1.0",
     "category": "Tools",
     "license": "LGPL-3",
     "author": "SCE",
-    "depends": ["smart_platform_bootstrap"],
+    "depends": ["base"],
     "data": [],
     "post_init_hook": "post_init_hook",
     "installable": True,
