@@ -29,6 +29,36 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
         "user_id",
     }
 
+    @staticmethod
+    def _build_lifecycle_hints(reason_code: str) -> Dict[str, Any]:
+        code = str(reason_code or "")
+        if code == "PERMISSION_DENIED":
+            return {
+                "stage": "project_create_denied",
+                "first_action": "request_access",
+                "primary_action_label": "申请权限",
+                "suggested_action_intent": "project.initiation.enter",
+                "suggested_action_title": "申请项目创建权限",
+                "reason_code": code,
+            }
+        if code == "BUSINESS_RULE_FAILED":
+            return {
+                "stage": "project_create_validation_failed",
+                "first_action": "fix_project_input",
+                "primary_action_label": "修正项目信息",
+                "suggested_action_intent": "project.initiation.enter",
+                "suggested_action_title": "修正后重试创建",
+                "reason_code": code,
+            }
+        return {
+            "stage": "project_create_input_missing",
+            "first_action": "fill_required_fields",
+            "primary_action_label": "补全必填信息",
+            "suggested_action_intent": "project.initiation.enter",
+            "suggested_action_title": "补全后重试创建",
+            "reason_code": code or "MISSING_PARAMS",
+        }
+
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params: Dict[str, Any] = payload or self.params or {}
@@ -37,12 +67,16 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
 
         name = str(params.get("name") or "").strip()
         if not name:
+            reason_code = "MISSING_PARAMS"
             return {
                 "ok": False,
                 "error": {
-                    "code": "MISSING_PARAMS",
+                    "code": reason_code,
                     "message": "缺少必填字段：name",
                     "suggested_action": "fix_input",
+                },
+                "data": {
+                    "lifecycle_hints": self._build_lifecycle_hints(reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -62,12 +96,16 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
             project = model.create(normalized_vals)
             creation_service.post_create_bootstrap(project)
         except AccessError:
+            reason_code = "PERMISSION_DENIED"
             return {
                 "ok": False,
                 "error": {
-                    "code": "PERMISSION_DENIED",
+                    "code": reason_code,
                     "message": "当前账号无项目立项创建权限",
                     "suggested_action": "request_access",
+                },
+                "data": {
+                    "lifecycle_hints": self._build_lifecycle_hints(reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -76,12 +114,16 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
             }
         except UserError as exc:
+            reason_code = "BUSINESS_RULE_FAILED"
             return {
                 "ok": False,
                 "error": {
-                    "code": "BUSINESS_RULE_FAILED",
+                    "code": reason_code,
                     "message": str(exc) or "项目立项业务校验失败",
                     "suggested_action": "fix_input",
+                },
+                "data": {
+                    "lifecycle_hints": self._build_lifecycle_hints(reason_code),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
