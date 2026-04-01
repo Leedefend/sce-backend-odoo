@@ -16,6 +16,78 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T11:20:00Z
+- blocker_key: `record_view_hud_label_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD verification`
+- reason: HUD title/message 与专用 smoke 已恢复后，当前 continuity 线继续完成 entries 标签可读性收口；verify 只确认 readable labels 不会破坏 strict typing 或 dedicated HUD smoke
+- completed_step: `已完成 ITER-2026-04-01-587：validate_task PASS、frontend strict typecheck PASS、make verify.portal.recordview_hud_smoke.container PASS，HUD entries 已改为可读上下文标签`
+- active_commit: `e430a7e`
+- next_step: `Open a P1 screen batch for the next record-view continuity slice`
+
+### 2026-04-01T11:15:00Z
+- blocker_key: `record_view_hud_label_impl_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD entry readability`
+- reason: `585` 已把下一条 continuity slice 收敛为 entries 标签可读性；当前批次只在 HUD entry builder 中把原始 snake_case 技术键改成可读上下文标签，不改值和字段集合
+- completed_step: `已完成 ITER-2026-04-01-586：useActionViewHudEntriesRuntime 的 HUD labels 已替换为中文可读标签`
+- active_commit: `e430a7e`
+- next_step: `Run strict typecheck and dedicated HUD smoke for the HUD label readability fix`
+
+### 2026-04-01T11:10:00Z
+- blocker_key: `record_view_hud_label_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity screen`
+- reason: HUD title/message 已澄清且专用 smoke 已恢复后，当前 continuity 线继续缩小到 entries 标签可读性这一条最明显的剩余阅读缺口
+- completed_step: `已完成 ITER-2026-04-01-585：将下一条 record-view continuity slice 收敛为 HUD entry label readability`
+- active_commit: `e430a7e`
+- next_step: `Open a bounded P1 implementation batch limited to useActionViewHudEntriesRuntime label readability`
+
+### 2026-04-01T11:05:00Z
+- blocker_key: `record_view_hud_smoke_recovery_v1`
+- layer_target: `frontend layer`
+- module: `recordview HUD smoke verification chain`
+- reason: `582 STOP` 后当前先修 dedicated verifier 的 login-token 兼容，再恢复 continuity 线；修复范围仅限 Makefile 和 smoke script 的兼容链
+- completed_step: `已完成 ITER-2026-04-01-583/584：recordview HUD smoke 已切回 PORTAL_SMOKE_LOGIN/PASSWORD 默认凭据，并兼容 data.session.token；make verify.portal.recordview_hud_smoke.container 已恢复 PASS`
+- active_commit: `e430a7e`
+- next_step: `Continue the record-view continuity line with the next bounded HUD readability slice`
+
+### 2026-04-01T11:00:00Z
+- blocker_key: `record_view_hud_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD verification`
+- reason: record-view continuity 线已经进入第一张 readability batch；基础 native-list 门禁虽然保持绿色，但补充执行的 `verify.portal.recordview_hud_smoke.container` 在当前环境下触发了真实 stop condition
+- completed_step: `已完成 ITER-2026-04-01-582：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS；但 make verify.portal.recordview_hud_smoke.container 失败，报错为 login response missing token（login=admin db=sc_demo）`
+- active_commit: `e430a7e`
+- next_step: `Open a dedicated verification/environment batch for the recordview HUD smoke login-token failure before continuing the continuity line`
+
+### 2026-04-01T10:55:00Z
+- blocker_key: `record_view_hud_impl_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity`
+- reason: `580` 已把 record-view continuity 的第一刀收敛为 HUD 可读性澄清；当前批次只在 ActionView 内把 fallback title 改为按 surface 感知的中文上下文标题，并补一条简短说明，不改 HUD 数据语义
+- completed_step: `已完成 ITER-2026-04-01-581：ActionView 为 DevContextPanel 补充了基于 content kind 的 HUD 标题与说明文案`
+- active_commit: `e430a7e`
+- next_step: `Run strict typecheck and trusted verification for the HUD readability fix`
+
+### 2026-04-01T10:50:00Z
+- blocker_key: `record_view_hud_readability_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity screen`
+- reason: `579` 已将下一条 P1 主链收敛为 record-view HUD continuity；当前继续把 follow-up 范围缩成 HUD 标题与上下文提示的第一张 bounded batch，而不是直接触碰 HUD 字段结构
+- completed_step: `已完成 ITER-2026-04-01-580：将 record-view continuity 的第一张 bounded 实现收敛为 HUD readability`
+- active_commit: `e430a7e`
+- next_step: `Open a bounded P1 implementation batch limited to ActionView HUD readability`
+
+### 2026-04-01T10:45:00Z
+- blocker_key: `record_view_hud_p1_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view continuity screen`
+- reason: route-preset、search、sort、row-open guidance 已收口后，当前 P1 主链继续转向 record-view continuity；screen 选择优先复用已有 `fe_recordview_hud_smoke.js` 验证资产，而不是无锚点地泛化 save/return 方向
+- completed_step: `已完成 ITER-2026-04-01-579：将下一条 P1 主链收敛为 record-view HUD continuity`
+- active_commit: `e430a7e`
+- next_step: `Open a bounded P1 decision or implementation batch for record-view HUD continuity`
+
 ### 2026-04-01T10:35:00Z
 - blocker_key: `native_list_record_open_verify_v1`
 - layer_target: `frontend layer`

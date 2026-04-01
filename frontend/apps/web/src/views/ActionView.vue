@@ -429,8 +429,9 @@
     <DevContextPanel
       :visible="isSectionVisible('dev_context', { defaultEnabled: pageSectionEnabled('dev_context', true), tag: 'div', vmVisible: vm.sections.hud && Boolean(vm.hud?.visible) })"
       :style="getSectionStyle('dev_context')"
-      :title="vm.hud?.title || 'View Context'"
+      :title="hudPanelTitle"
       :entries="vm.hud?.entries || []"
+      :message="hudPanelMessage"
     />
   </section>
 </template>
@@ -907,6 +908,18 @@ const displayHeaderActions = computed(() => {
   });
 });
 const preferNativeListSurface = computed(() => vm.value.content.kind === 'list');
+const hudPanelTitle = computed(() => {
+  const explicit = String(vm.value.hud?.title || '').trim();
+  if (explicit) return explicit;
+  return vm.value.content.kind === 'list' ? '列表上下文' : '记录上下文';
+});
+const hudPanelMessage = computed(() => {
+  if (!vm.value.sections.hud || !vm.value.hud?.visible) return '';
+  if (vm.value.content.kind === 'list') {
+    return '展示当前列表请求与排序等调试上下文';
+  }
+  return '展示当前记录请求、写入模式与耗时等上下文';
+});
 const advancedFields = ref<string[]>([]);
 const {
   isUiBusy,
