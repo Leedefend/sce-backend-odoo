@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T00:35:17+0800
+- blocker_key: `bootstrap_summary_guard_coverage_verify_v1`
+- layer_target: `agent/verify governance`
+- module: `bootstrap-summary guard coverage extension`
+- reason: create-success 摘要可读性字段已纳入语义门禁并通过验收链验证
+- completed_step: `已完成 ITER-2026-04-02-662/663：project_lifecycle_semantic_guard 增加 project_creation_service/project_initiation_enter bootstrap_summary 相关 token 检查，python3 scripts/verify/project_lifecycle_semantic_guard.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `9ff0442`
+- next_step: `Open next low-risk business-fact usability screen batch`
+
+### 2026-04-02T00:34:20+0800
+- blocker_key: `bootstrap_summary_guard_coverage_screen_v1`
+- layer_target: `agent/verify governance`
+- module: `bootstrap-summary guard coverage screen`
+- reason: screen 识别 bootstrap_summary 新字段尚未纳入语义门禁
+- completed_step: `已完成 ITER-2026-04-02-661：选定扩展 semantic guard 覆盖 project_creation_service + project_initiation_enter`
+- active_commit: `9ff0442`
+- next_step: `Open implement batch to extend guard coverage and run acceptance verify`
+
 ### 2026-04-02T00:32:32+0800
 - blocker_key: `entry_context_service_guard_coverage_verify_v2`
 - layer_target: `agent/verify governance`
