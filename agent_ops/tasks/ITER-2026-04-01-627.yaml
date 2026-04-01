@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-01-627
+title: Verify lifecycle_hints coverage for project block-fetch error envelopes
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify block-fetch error-envelope lifecycle_hints additions keep project
+  management acceptance baseline green.
+
+user_visible_outcome:
+  - "runtime block-fetch 错误语义增强已验证"
+  - "后端可用性增强保持无回归"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_dashboard_block_fetch.py
+    - addons/smart_construction_core/handlers/project_execution_block_fetch.py
+    - addons/smart_construction_core/handlers/project_plan_bootstrap_block_fetch.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f014943
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-626
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Semantic Layer
+  module: block-fetch lifecycle_hints verification
+  module_owner: smart_construction_core handlers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Verify scene runtime block-fetch semantic continuity additions.
+  reason: >
+    Keep backend usability improvements under acceptance gate before next batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-627.yaml
+    - make verify.project.management.acceptance
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_project_block_fetch_error_envelope_lifecycle_hints
+  - governance/report artifacts for ITER-2026-04-01-627
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-01-627.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-627.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-627.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-626

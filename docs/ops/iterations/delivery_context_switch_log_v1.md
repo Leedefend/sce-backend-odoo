@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:13:18Z
+- blocker_key: `project_lifecycle_block_fetch_semantic_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `project block-fetch error-envelope lifecycle continuity`
+- reason: 继续后端可用性主线，runtime block 缺参错误路径已补齐生命周期语义并完成 acceptance 验证
+- completed_step: `已完成 ITER-2026-04-01-626/627：project.dashboard/project.execution/project.plan_bootstrap.block.fetch 在 MISSING_PARAMS 返回补齐 data.lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `f014943`
+- next_step: `Open screen batch for project transition/write intent semantic continuity on error paths`
+
+### 2026-04-01T15:10:00Z
+- blocker_key: `project_lifecycle_block_fetch_semantic_impl_v1`
+- layer_target: `backend semantic layer`
+- module: `project block-fetch handlers semantic continuity`
+- reason: screen 识别到 block-fetch 缺参错误缺少 lifecycle_hints，可能导致前端通用渲染在异常路径缺少下一步引导
+- completed_step: `已完成 ITER-2026-04-01-626：三个 project.*.block.fetch handler 以 additive 方式补齐 lifecycle_hints`
+- active_commit: `f014943`
+- next_step: `Run acceptance verification and seal verify artifacts for block-fetch batch`
+
 ### 2026-04-01T15:07:32Z
 - blocker_key: `project_lifecycle_error_envelope_semantic_verify_v1`
 - layer_target: `backend semantic layer`
