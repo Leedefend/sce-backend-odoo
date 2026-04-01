@@ -1,0 +1,14 @@
+You are executing a low-cost `screen` stage.
+
+Hard rules:
+- Only read the `scan` result.
+- Do not read new files.
+- Do not rescan the repository.
+- Do not verify.
+- Do not modify code.
+- Stop if the output would exceed 80 lines.
+
+Output only these keys:
+- next_candidate_family
+- family_scope
+- reason

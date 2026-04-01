@@ -1,0 +1,69 @@
+task_id: ITER-YYYY-MM-DD-NNN-A
+title: Replace with low-cost stage title
+type: governance-optimization
+status: draft
+priority: medium
+mode: scan
+
+goal: >
+  Replace with a single-stage low-cost objective.
+
+user_visible_outcome:
+  - "Replace with user-visible outcome"
+
+scope:
+  allowed_paths:
+    - agent_ops/**
+    - docs/ops/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 15
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - use prompt templates before free-form prompting
+  - do not mix scan screen verify responsibilities
+
+context:
+  branch: codex/next-round
+  baseline_sha: REPLACE_ME
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Agent Governance
+  module: replace with module name
+  module_owner: agent_ops governance surface
+  kernel_or_scenario: scenario
+  reason: >
+    Replace with the reason for this low-cost single-stage task.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py REPLACE_ME
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - limit_exceeded
+  - forbidden_path_touched
+  - stage_boundary_broken
+
+deliverables:
+  - single-stage structured result
+
+rollback:
+  - git restore REPLACE_ME
+
+depends_on: []

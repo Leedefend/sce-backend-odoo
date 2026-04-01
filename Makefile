@@ -4232,7 +4232,7 @@ verify.native_view.ecosystem.readiness: guard.prod.forbid
 
 VERIFY_CMDS ?=
 
-.PHONY: agent.task.validate agent.risk.scan agent.classify agent.report agent.verify agent.iteration agent.queue.pick agent.queue.run agent.queue.normalize agent.baseline.candidate verify.architecture.platform_kernel_alignment
+.PHONY: agent.task.validate agent.risk.scan agent.classify agent.report agent.verify agent.iteration agent.queue.pick agent.queue.run agent.queue.normalize agent.baseline.candidate task.split task.run.low_cost task.validate.low_cost verify.architecture.platform_kernel_alignment
 
 agent.task.validate:
 	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
@@ -4257,6 +4257,18 @@ agent.verify:
 agent.iteration:
 	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
 	@bash agent_ops/scripts/run_iteration.sh "$(TASK)"
+
+task.split:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@python3 agent_ops/scripts/split_task.py "$(TASK)"
+
+task.run.low_cost:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@bash agent_ops/scripts/run_low_cost_iteration.sh "$(TASK)"
+
+task.validate.low_cost:
+	@test -n "$(TASK)" || (echo "TASK is required" && exit 2)
+	@python3 agent_ops/scripts/validate_task.py "$(TASK)"
 
 agent.queue.pick:
 	@python3 agent_ops/scripts/pick_next_task.py

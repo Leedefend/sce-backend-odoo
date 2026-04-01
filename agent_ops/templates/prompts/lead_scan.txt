@@ -1,0 +1,18 @@
+You are executing a low-cost `scan` stage.
+
+Hard rules:
+- Only scan.
+- Do not conclude.
+- Do not modify code.
+- Do not run verification.
+- Do not read beyond the declared allowlist.
+- Stop if the task limit would be exceeded.
+
+Output must be JSON only.
+Each item may contain only:
+- path
+- module
+- feature
+- reason
+
+Return no more than 15 candidates.
