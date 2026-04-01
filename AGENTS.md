@@ -29,6 +29,35 @@ Before any coding:
 
 ❌ If no task contract → STOP
 
+### 1.1 Low-Cost Iteration Mode (MANDATORY For Governance Tasks)
+
+For governance, audit, and classification tasks, the agent MUST default to a
+low-cost staged execution mode.
+
+Hard rules:
+
+- Complex tasks MUST plan before implementation.
+- A single task may execute only one stage at a time.
+- Governance tasks SHOULD be split into `scan`, `screen`, and `verify`.
+- `scan` may only find candidates and MUST NOT conclude.
+- `screen` may only classify scan output and MUST NOT rescan the repository.
+- `verify` may only run declared checks and MUST NOT introduce new reasoning.
+- Repo-wide scans are forbidden in low-cost mode.
+- Template prompts under `agent_ops/templates/prompts/` take priority over ad
+  hoc long prompts.
+- Cross-stage reasoning is forbidden in low-cost mode.
+- Each subtask should run in a new session with short context.
+- Subagents are allowed only when parallel execution is clearly required.
+- Default execution should remain single-agent, staged, and short-context.
+
+Low-cost mode should use:
+
+- `docs/ops/codex_low_cost_iteration_policy_v1.md`
+- `agent_ops/templates/task_low_cost.yaml`
+- `agent_ops/templates/prompts/lead_scan.txt`
+- `agent_ops/templates/prompts/lead_screen.txt`
+- `agent_ops/templates/prompts/lead_verify.txt`
+
 ---
 
 ## 2. Iteration Loop (Agent Loop)

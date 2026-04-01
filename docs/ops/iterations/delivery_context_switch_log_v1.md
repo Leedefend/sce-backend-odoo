@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T00:00:00Z
+- blocker_key: `low_cost_iteration_governance_v1`
+- layer_target: `agent governance`
+- module: `low-cost staged iteration policy and tooling`
+- reason: `当前连续迭代在治理类任务上容易累积长上下文和重复扫描；本轮把任务收敛为 scan/screen/verify 三阶段，并增加模板、拆分脚本和低消耗运行入口`
+- completed_step: `已建立 ITER-2026-04-01-523，新增低消耗制度文档、task/prompt 模板、split_task.py、run_low_cost_iteration.sh，并基于 ITER-2026-04-01-522 生成了 A/B/C 演示合同`
+- active_commit: `33751e6`
+- next_step: `Validate the generated 522-A/522-B/522-C tasks and run the low-cost runner to confirm the staged flow stays compatible with agent_ops`
+
 ### 2026-03-30T12:50:00Z
 - blocker_key: `preview_release_navigation_openability_v1`
 - layer_target: `platform + frontend layer`
