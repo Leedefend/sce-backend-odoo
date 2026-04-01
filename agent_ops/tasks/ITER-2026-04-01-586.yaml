@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-01-586
+title: Replace raw HUD entry keys with readable context labels
+type: frontend
+status: active
+priority: high
+
+goal: >
+  Replace raw HUD snake_case labels with readable context labels while keeping
+  the HUD values and field coverage unchanged.
+
+user_visible_outcome:
+  - "HUD 条目标签从技术键名变成可读上下文名称"
+  - "保留 HUD 原有值与字段覆盖范围"
+  - "不改变 HUD 数据来源或调试语义"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/app/action_runtime/useActionViewHudEntriesRuntime.ts
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - bounded P1 usability implementation
+  - no backend contract change
+  - keep HUD values and field set unchanged
+
+context:
+  branch: codex/next-round
+  baseline_sha: e430a7e
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-585
+  priority_lane: P1_core_usability
+
+architecture:
+  layer_target: Frontend Layer
+  module: record-view HUD entry readability
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The record-view continuity line has already clarified HUD title and message.
+    The next bounded readability fix is to replace raw technical labels with
+    readable context names without changing any HUD data semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-586.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+    - make verify.portal.recordview_hud_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - dedicated_hud_smoke_still_fails
+  - hud_label_fix_requires_schema_change
+
+deliverables:
+  - bounded_record_view_hud_label_fix
+  - governance/report artifacts for ITER-2026-04-01-586
+
+rollback:
+  - git restore frontend/apps/web/src/app/action_runtime/useActionViewHudEntriesRuntime.ts
+  - git restore agent_ops/tasks/ITER-2026-04-01-586.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-586.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-586.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-585
