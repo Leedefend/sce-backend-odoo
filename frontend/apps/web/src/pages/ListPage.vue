@@ -134,6 +134,7 @@
     </section>
 
     <section v-if="status === 'ok'" class="table">
+      <div class="table-hint">点击列表行可查看详情</div>
       <section v-if="groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
           <span>分组结果</span>
@@ -923,6 +924,12 @@ function columnLabel(col: string) {
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.table-hint {
+  padding: 10px 16px 0;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .table-pagination {

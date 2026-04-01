@@ -612,9 +612,18 @@ const visibleActiveStateChips = computed(() => {
   });
 });
 const showSortControls = computed(() => sortOptions.value.length > 0);
-const sortLabelText = computed(() => String(props.sortLabel || '').trim() || '默认');
+const explicitSortLabelText = computed(() => String(props.sortLabel || '').trim());
 const sortSourceLabelText = computed(() => String(props.sortSourceLabel || '').trim());
-const showSortBlock = computed(() => showSortControls.value || Boolean(sortLabelText.value));
+const sortLabelText = computed(() => {
+  if (explicitSortLabelText.value) return explicitSortLabelText.value;
+  if (showSortControls.value) return '默认';
+  return '';
+});
+const showSortBlock = computed(() =>
+  showSortControls.value
+  || Boolean(explicitSortLabelText.value)
+  || Boolean(sortSourceLabelText.value),
+);
 const showSearchBlock = computed(() => {
   if (!usesOptimizationComposition.value) return true;
   return optimizationSearchSection.value?.visible !== false;

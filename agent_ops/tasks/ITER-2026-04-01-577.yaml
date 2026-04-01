@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-01-577
+title: Add explicit record-open affordance guidance to the native list surface
+type: frontend
+status: active
+priority: high
+
+goal: >
+  Make the list-to-record continuation path more explicit by adding concise
+  guidance that rows can be opened for details from the native list surface.
+
+user_visible_outcome:
+  - "用户能更清楚地知道点击列表行会进入详情"
+  - "减少列表到详情主链的猜测成本"
+  - "不改变行点击行为本身"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - bounded P1 usability implementation
+  - no backend contract change
+  - do not modify row click behavior
+
+context:
+  branch: codex/next-round
+  baseline_sha: 5af85a3
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-576
+  priority_lane: P1_core_usability
+
+architecture:
+  layer_target: Frontend Layer
+  module: native list record-open affordance
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    Opening a record is part of the core list mainline. The current surface
+    relies on implicit row-click discovery, which is functional but not explicit
+    enough for clear continuation guidance.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-577.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+    - make verify.portal.v0_5.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - trusted_container_verify_failed
+  - affordance_fix_requires_behavior_change
+
+deliverables:
+  - bounded_record_open_affordance_hint
+  - governance/report artifacts for ITER-2026-04-01-577
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/tasks/ITER-2026-04-01-577.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-577.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-577.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-576

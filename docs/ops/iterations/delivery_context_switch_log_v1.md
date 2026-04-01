@@ -16,6 +16,60 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T10:35:00Z
+- blocker_key: `native_list_record_open_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-open affordance verification`
+- reason: 排序上下文已经收口后，当前 P1 主链推进到列表进入详情的继续路径；verify 只确认明确 row-open guidance 后，可信 native list 门禁仍保持绿色
+- completed_step: `已完成 ITER-2026-04-01-578：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，列表已明确提示点击行可查看详情`
+- active_commit: `5af85a3`
+- next_step: `Open a P1 screen batch for the next native list mainline usability family`
+
+### 2026-04-01T10:30:00Z
+- blocker_key: `native_list_record_open_impl_v1`
+- layer_target: `frontend layer`
+- module: `native list record-open affordance`
+- reason: `576` 已把下一条 P1 主链收敛为 record-open affordance clarity；当前批次只在 ListPage 表格入口补一条 guidance，明确点击列表行会进入详情，不触碰行为本身
+- completed_step: `已完成 ITER-2026-04-01-577：ListPage 在列表表格入口新增 点击列表行可查看详情 提示，保持原有行点击打开详情行为不变`
+- active_commit: `5af85a3`
+- next_step: `Run strict typecheck and trusted native-list verification for the record-open affordance hint`
+
+### 2026-04-01T10:25:00Z
+- blocker_key: `native_list_record_open_screen_v1`
+- layer_target: `frontend layer`
+- module: `native list mainline usability screen`
+- reason: 排序语义已经澄清后，当前 P1 主链继续收敛到列表到详情的继续路径提示，而不是更远的 save-return 问题
+- completed_step: `已完成 ITER-2026-04-01-576：将下一条 P1 主链收敛为 record-open affordance clarity`
+- active_commit: `5af85a3`
+- next_step: `Open a bounded P1 implementation batch limited to ListPage record-open affordance guidance`
+
+### 2026-04-01T10:20:00Z
+- blocker_key: `native_list_sort_summary_verify_v1`
+- layer_target: `frontend layer`
+- module: `sort summary fallback verification`
+- reason: usability-first 主线已经进入排序上下文语义；当前 verify 只确认移除误导性 sort fallback 后，native list 可信门禁仍保持绿色
+- completed_step: `已完成 ITER-2026-04-01-575：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，工具栏只在存在明确排序上下文时才显示排序摘要`
+- active_commit: `5af85a3`
+- next_step: `Open a P1 screen batch for the next native list mainline usability family`
+
+### 2026-04-01T10:15:00Z
+- blocker_key: `native_list_sort_summary_impl_v1`
+- layer_target: `frontend layer`
+- module: `sort summary fallback semantics`
+- reason: `573` 已把下一条 P1 主链收敛为 sort summary fallback；当前批次只在 PageToolbar 内去掉无依据的默认排序摘要，让排序上下文只在有真实元信息时出现
+- completed_step: `已完成 ITER-2026-04-01-574：PageToolbar 拆分了 explicit sort label 与 fallback label，showSortBlock 仅在有 controls 或明确排序元信息时显示`
+- active_commit: `5af85a3`
+- next_step: `Run strict typecheck and trusted native-list verification for the sort summary fix`
+
+### 2026-04-01T10:10:00Z
+- blocker_key: `native_list_sort_summary_screen_v1`
+- layer_target: `frontend layer`
+- module: `native list mainline usability screen`
+- reason: route-preset、search 连续性已经修复，当前 P1 主链继续收敛到最影响当前状态理解的排序语义问题，而不是扩散到更大的 record-open/save-return 线
+- completed_step: `已完成 ITER-2026-04-01-573：将下一条 P1 主链收敛为 sort summary fallback semantics`
+- active_commit: `5af85a3`
+- next_step: `Open a bounded P1 implementation batch limited to PageToolbar sort summary fallback semantics`
+
 ### 2026-04-01T10:05:00Z
 - blocker_key: `native_list_search_visibility_verify_v1`
 - layer_target: `frontend layer`
