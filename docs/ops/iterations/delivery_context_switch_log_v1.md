@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:18:58Z
+- blocker_key: `project_transition_write_semantic_screen_v1`
+- layer_target: `backend semantic layer`
+- module: `project transition/write handler semantic continuity screen`
+- reason: 连续迭代进入下一轮 screen，目标是从写路径中选择下一条最小后端可用性增强候选
+- completed_step: `已完成 ITER-2026-04-01-628：选定 project_connection_transition 的错误返回语义连续性作为下一刀`
+- active_commit: `121f139`
+- next_step: `Open implement batch to add lifecycle_hints for project_connection_transition error branches`
+
 ### 2026-04-01T15:13:18Z
 - blocker_key: `project_lifecycle_block_fetch_semantic_verify_v1`
 - layer_target: `backend semantic layer`
