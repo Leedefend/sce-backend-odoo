@@ -34,17 +34,53 @@ class ProjectEntryContextService:
             return "fallback", "low"
         return "fallback", "low"
 
+    @staticmethod
+    def _build_lifecycle_guidance(*, available=False, project_context=None):
+        project_id = int((project_context or {}).get("project_id") or 0)
+        if available and project_id > 0:
+            return {
+                "suggested_action": {
+                    "intent": "project.dashboard.enter",
+                    "reason_code": "PROJECT_CONTEXT_READY",
+                    "params": {"project_id": project_id},
+                },
+                "lifecycle_hints": {
+                    "stage": "project_context_ready",
+                    "project_id": project_id,
+                    "primary_action_label": "进入项目管理",
+                    "suggested_action_intent": "project.dashboard.enter",
+                    "suggested_action_title": "进入项目管理",
+                },
+            }
+        return {
+            "suggested_action": {
+                "intent": "project.initiation.enter",
+                "reason_code": "PROJECT_CONTEXT_MISSING",
+                "params": {},
+            },
+            "lifecycle_hints": {
+                "stage": "no_project_context",
+                "project_id": 0,
+                "primary_action_label": "创建项目",
+                "suggested_action_intent": "project.initiation.enter",
+                "suggested_action_title": "创建项目",
+            },
+        }
+
     def resolve(self, project_id=0):
         project, diagnostics = self._dashboard_service.resolve_project_with_diagnostics(project_id)
         project_context = build_project_context(project)
         source, confidence = self._source_from_reason((diagnostics or {}).get("resolution_path"))
         available = int(project_context.get("project_id") or 0) > 0
+        guidance = self._build_lifecycle_guidance(available=available, project_context=project_context)
         return {
             "available": available,
             "project_context": project_context,
             "source": source if available else "none",
             "confidence": confidence if available else "low",
             "route": self.ENTRY_ROUTE if available else "/my-work",
+            "suggested_action": dict(guidance.get("suggested_action") or {}),
+            "lifecycle_hints": dict(guidance.get("lifecycle_hints") or {}),
             "diagnostics": diagnostics or {},
         }
 
