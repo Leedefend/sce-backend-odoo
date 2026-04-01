@@ -1,6 +1,6 @@
 <template>
   <section v-if="showPrimaryToolbar" class="toolbar">
-    <div class="search">
+    <div v-if="showSearchBlock" class="search">
       <input
         type="search"
         :placeholder="searchPlaceholderText"
@@ -95,6 +95,22 @@
             @click="resetActiveConditions"
           >
             清空全部条件
+          </button>
+        </div>
+      </template>
+
+      <template v-else-if="section.key === 'route_preset' && routePresetLabelText">
+        <span class="contract-group__label">推荐筛选</span>
+        <span class="contract-group__caption">保留当前推荐筛选上下文，可单独清除</span>
+        <div class="contract-group__chips">
+          <span class="contract-chip static">{{ routePresetChipLabel }}</span>
+          <button
+            type="button"
+            class="contract-chip ghost"
+            :disabled="loading"
+            @click="onClearRoutePreset?.()"
+          >
+            清除推荐
           </button>
         </div>
       </template>
@@ -466,12 +482,15 @@ const optimizationToolbarSections = computed(() =>
     ? optimizationComposition.value?.toolbarSections || []
     : [],
 );
-const renderedSections = computed(() =>
+const baseRenderedSections = computed(() =>
   optimizationToolbarSections.value
     .filter((item) => item && item.visible !== false)
     .sort((a, b) => Number(a.priority || 0) - Number(b.priority || 0)),
 );
-const usesOptimizationComposition = computed(() => renderedSections.value.length > 0);
+const usesOptimizationComposition = computed(() => baseRenderedSections.value.length > 0);
+const optimizationSearchSection = computed(() =>
+  optimizationToolbarSections.value.find((item) => item && item.key === 'search') || null,
+);
 const routePresetLabelText = computed(() => String(props.routePresetLabel || '').trim());
 const routePresetSourceText = computed(() => {
   const raw = String(props.routePresetSource || '').trim().toLowerCase();
@@ -485,6 +504,21 @@ const routePresetChipLabel = computed(() => {
   if (!routePresetLabelText.value) return '';
   if (!routePresetSourceText.value) return routePresetLabelText.value;
   return `${routePresetLabelText.value}（来源：${routePresetSourceText.value}）`;
+});
+const renderedSections = computed(() => {
+  const rows = [...baseRenderedSections.value];
+  if (!usesOptimizationComposition.value || !routePresetLabelText.value) return rows;
+  if (rows.some((item) => item.key === 'route_preset')) return rows;
+  const activeConditionsPriority = rows.find((item) => item.key === 'active_conditions')?.priority;
+  rows.push({
+    key: 'route_preset',
+    kind: 'route_preset',
+    priority: Number.isFinite(Number(activeConditionsPriority)) ? Number(activeConditionsPriority) + 1 : 15,
+    visible: true,
+    collapsible: false,
+    defaultOpen: true,
+  });
+  return rows.sort((a, b) => Number(a.priority || 0) - Number(b.priority || 0));
 });
 const savedFilterCountText = computed(() => String(props.savedFilterCountLabel || '').trim() || String(savedFilters.value.length));
 const groupByCountText = computed(() => String(props.groupByCountLabel || '').trim() || String(groupByOptions.value.length));
@@ -581,9 +615,14 @@ const showSortControls = computed(() => sortOptions.value.length > 0);
 const sortLabelText = computed(() => String(props.sortLabel || '').trim() || '默认');
 const sortSourceLabelText = computed(() => String(props.sortSourceLabel || '').trim());
 const showSortBlock = computed(() => showSortControls.value || Boolean(sortLabelText.value));
+const showSearchBlock = computed(() => {
+  if (!usesOptimizationComposition.value) return true;
+  return optimizationSearchSection.value?.visible !== false;
+});
 const searchPlaceholderText = computed(() => String(props.searchPlaceholder || '').trim() || '搜索关键字');
 const hasContractControls = computed(() =>
-  quickFilters.value.length > 0
+  Boolean(routePresetLabelText.value)
+  || quickFilters.value.length > 0
   || savedFilters.value.length > 0
   || groupByOptions.value.length > 0
   || searchPanelOptions.value.length > 0
@@ -593,8 +632,7 @@ const hasContractControls = computed(() =>
 const showLegacyStatusFilters = computed(() => !hasContractControls.value);
 const showPrimaryToolbar = computed(() => {
   if (!usesOptimizationComposition.value) return true;
-  const searchSection = renderedSections.value.find((item) => item.key === 'search');
-  return Boolean(searchSection?.visible !== false) || showSortBlock.value;
+  return showSearchBlock.value || showSortBlock.value;
 });
 const showAdvancedFiltersSection = computed(() =>
   Boolean(advancedFiltersConfig.value?.visible !== false)

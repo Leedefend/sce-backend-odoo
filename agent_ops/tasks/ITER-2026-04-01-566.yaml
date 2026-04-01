@@ -1,0 +1,98 @@
+task_id: ITER-2026-04-01-566
+title: Select the next structural decision target after the low-risk toolbar chain stop
+type: frontend
+status: active
+priority: medium
+mode: screen
+
+goal: >
+  After the low-risk display-only toolbar chain has stopped, select the next
+  bounded structural decision target without reopening repository scan or
+  jumping directly into implementation.
+
+user_visible_outcome:
+  - "从剩余结构性 toolbar 候选中收敛出下一张决策目标"
+  - "保持新目标仍是短上下文治理批次"
+  - "避免把结构性可见性问题直接硬推成实现"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 3
+  max_candidates: 3
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: true
+  allowed_roles:
+    - executor
+    - auditor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - low-cost structural decision stage only
+  - consume only existing scan/screen results
+  - do not rescan product files
+  - do not implement structural changes in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ed77101
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-565
+  use_new_session: true
+  carry_long_context: false
+  role_parallel_enabled: true
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar structural decision
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The current low-risk display-only chain has stopped cleanly. The next move
+    should be a structural decision batch that picks one bounded follow-up
+    family before any structural implementation starts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-566.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_reads_new_product_files
+  - screen_reopens_repo_scan
+  - no_bounded_structural_candidate_remains
+
+deliverables:
+  - selected_structural_decision_target
+  - governance/report artifacts for ITER-2026-04-01-566
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-01-566.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-566.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-566.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-565
