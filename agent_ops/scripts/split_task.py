@@ -30,6 +30,18 @@ DEFAULT_LIMITS = {
     "use_new_session": True,
     "carry_long_context": False,
 }
+DEFAULT_ROLE_PARALLEL = {
+    "enabled": False,
+    "allowed_roles": ["executor"],
+    "require_disjoint_writes": True,
+    "require_new_session_per_role": True,
+    "stop_on_conflict": True,
+}
+STAGE_ROLE_DEFAULTS = {
+    "A": ["executor", "auditor"],
+    "B": ["executor", "reporter"],
+    "C": ["executor", "auditor", "reporter"],
+}
 
 
 def _stage_task_path(task_path: Path, suffix: str) -> Path:
@@ -53,6 +65,14 @@ def build_stage_task(base_task: dict, stage_path: Path, suffix: str) -> dict:
     stage_task["limits"] = deepcopy(base_task.get("limits", DEFAULT_LIMITS))
     for key, value in DEFAULT_LIMITS.items():
         stage_task["limits"].setdefault(key, value)
+    role_parallel = deepcopy(base_task.get("role_parallel", DEFAULT_ROLE_PARALLEL))
+    for key, value in DEFAULT_ROLE_PARALLEL.items():
+        role_parallel.setdefault(key, deepcopy(value))
+    if role_parallel.get("enabled"):
+        role_parallel["allowed_roles"] = list(STAGE_ROLE_DEFAULTS[suffix])
+    else:
+        role_parallel["allowed_roles"] = ["executor"]
+    stage_task["role_parallel"] = role_parallel
 
     change_rules = list(base_task.get("change_rules", []))
     change_rules.extend(
@@ -62,6 +82,8 @@ def build_stage_task(base_task: dict, stage_path: Path, suffix: str) -> dict:
             "must not carry long context from previous stages",
         ]
     )
+    if role_parallel.get("enabled"):
+        change_rules.append(f"role-parallel allowed in-stage only: {', '.join(stage_task['role_parallel']['allowed_roles'])}")
     if suffix == "A":
         change_rules.append("scan must not conclude")
     elif suffix == "B":
@@ -74,6 +96,7 @@ def build_stage_task(base_task: dict, stage_path: Path, suffix: str) -> dict:
     context["use_new_session"] = True
     context["carry_long_context"] = False
     context["base_task_id"] = base_task["task_id"]
+    context["role_parallel_enabled"] = bool(role_parallel.get("enabled"))
     if suffix == "B":
         context["input_from"] = f"{base_task['task_id']}-A"
     elif suffix == "C":

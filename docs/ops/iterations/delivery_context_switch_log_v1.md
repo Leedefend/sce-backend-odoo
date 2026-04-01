@@ -16,6 +16,141 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T03:50:00Z
+- blocker_key: `native_list_toolbar_advanced_toggle_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `539 的 advanced-filter CTA count cleanup 已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色；这一段前端微批次链已形成清晰提交边界`
+- completed_step: `已完成 ITER-2026-04-01-540：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，advanced-filter toggle cleanup 已通过当前可信门禁`
+- active_commit: `2a02eb6`
+- next_step: `Submit the current frontend usability micro-batch chain, then continue with the remaining bounded toolbar candidate family`
+
+### 2026-04-01T03:35:00Z
+- blocker_key: `native_list_toolbar_advanced_toggle_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `538 已选定 advanced-filter toggle count semantics 为下一族；当前在单文件显示层内把展开 CTA 的数量收敛到可操作隐藏项`
+- completed_step: `已完成 ITER-2026-04-01-539：PageToolbar 的 advanced-filter CTA 不再把静态 search-panel metadata 算入数量，并避免出现 展开高级筛选（0），validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-cost verify batch that confirms advanced-filter toggle count cleanup on the native list surface`
+
+### 2026-04-01T03:20:00Z
+- blocker_key: `native_list_toolbar_advanced_toggle_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `default-sort 家族已经完成，当前从 531 的 bounded scan 中选下一族。advanced-filter toggle count semantics 仍然满足单文件、纯显示层和低解释成本条件`
+- completed_step: `已完成 ITER-2026-04-01-538：选定 advanced filters toggle count semantics 作为下一条实现目标`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-risk implementation batch that narrows the advanced-filter toggle count to actionable hidden items`
+
+### 2026-04-01T03:10:00Z
+- blocker_key: `native_list_toolbar_default_sort_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `536 的 default-sort cleanup 已完成，当前 verify 只确认它仍是纯显示层改动并保持可信 smoke 绿色`
+- completed_step: `已完成 ITER-2026-04-01-537：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，default-sort active-condition cleanup 已通过当前可信门禁`
+- active_commit: `2a02eb6`
+- next_step: `Continue the native list usability line with the next bounded candidate family, starting from advanced-filter toggle count semantics`
+
+### 2026-04-01T02:55:00Z
+- blocker_key: `native_list_toolbar_default_sort_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `535 已选定 default-sort active-condition semantics 为下一族；当前在单文件显示层内去掉原生默认排序对 当前条件 的占位`
+- completed_step: `已完成 ITER-2026-04-01-536：PageToolbar 仅在 sortSource 不是 原生默认排序 时才把排序加入 active-condition summary，validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-cost verify batch that confirms default-sort cleanup on the native list surface`
+
+### 2026-04-01T02:40:00Z
+- blocker_key: `native_list_toolbar_default_sort_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `count-parity 批次已经完成，当前从 531 的 bounded scan 中选下一族。default-sort active-condition semantics 仍是单文件、纯显示层、低解释成本的下一条修正`
+- completed_step: `已完成 ITER-2026-04-01-535：选定 active condition summary 的 default sort semantics 作为下一条实现目标`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-risk implementation batch that hides native default sort from 当前条件 while preserving non-default sort visibility`
+
+### 2026-04-01T02:30:00Z
+- blocker_key: `native_list_toolbar_count_parity_verify_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `533 的 count-parity 实现已完成，当前 verify 只确认它仍是纯显示层改动并且没有破坏稳定 smoke 链路`
+- completed_step: `已完成 ITER-2026-04-01-534：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，优化态 toolbar 的 metadata count parity 改动已通过当前可信门禁`
+- active_commit: `2a02eb6`
+- next_step: `Continue the native list usability line with the next bounded candidate family, starting from default-sort active-condition semantics`
+
+### 2026-04-01T02:15:00Z
+- blocker_key: `native_list_toolbar_count_parity_impl_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `532 已选定 count parity gap 为下一族；本轮在单文件显示层内补回优化态下丢失的元数据数量提示，不触碰行为逻辑`
+- completed_step: `已完成 ITER-2026-04-01-533：PageToolbar 优化态 secondary metadata caption 改为按实际内容显示 可搜索字段（N）/分面维度（N），validate_task 与 frontend strict typecheck 均通过`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-cost verify batch that visually confirms optimized-toolbar metadata count parity on the native list surface`
+
+### 2026-04-01T02:00:00Z
+- blocker_key: `native_list_toolbar_count_parity_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar screen`
+- reason: `531 scan 已给出 4 个候选；当前 screen 只消费 scan 结果并选择下一族。count parity gap 最符合“单文件、纯显示层、低解释成本”的实现条件`
+- completed_step: `已完成 ITER-2026-04-01-532：从 bounded scan 中选定 optimized secondary metadata section 的 count parity gap 作为下一条实现目标，其余候选暂缓`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-risk implementation batch that restores explicit metadata count parity in PageToolbar optimized mode`
+
+### 2026-04-01T01:50:00Z
+- blocker_key: `native_list_toolbar_post_verify_scan_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar scan`
+- reason: `530 已恢复 verify PASS，主线重新回到产品可用性推进；当前按低消耗规则先做下一张 scan，只在 5 个 toolbar 相关文件里找下一条显示层切片`
+- completed_step: `已完成 ITER-2026-04-01-531：候选收敛为 count parity gap、default sort active-condition inflation、advanced-filter count mixing、route preset provenance clarity 四类，未在 scan 阶段下实现结论`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-cost screen batch and choose one candidate family from the bounded toolbar scan`
+
+### 2026-04-01T01:35:00Z
+- blocker_key: `native_list_route_preset_verify_pass_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `529 已修复 verify-tooling 与当前登录/scene-ready 契约的偏差，530 在 trusted container lane 上重新执行后确认产品改动无回归，产品可用性主线已恢复为 PASS 连续迭代状态`
+- completed_step: `已完成 ITER-2026-04-01-530：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，projects list action_id=483 正常解析到 model=project.project，list/read 均通过`
+- active_commit: `2a02eb6`
+- next_step: `Open the next low-risk product-usability scan batch for native list toolbar display or summary consistency improvements`
+
+### 2026-04-01T01:20:00Z
+- blocker_key: `native_list_route_preset_verify_resumed_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `528 的停止原因已确认是 verify-tooling 与当前登录/scene-ready 契约不兼容，而不是产品代码问题；529 已修复 host smoke，当前主线重新回到产品可用性 verify`
+- completed_step: `已完成 ITER-2026-04-01-529：MVP smoke 改为兼容 session.token/token 登录契约，v0.5 smoke 默认使用 canonical UI smoke 凭据和 scene-based projects list anchor，host 验证已恢复 PASS`
+- active_commit: `2a02eb6`
+- next_step: `Run the resumed native-list verification batch on the trusted container lane via ITER-2026-04-01-530`
+
+### 2026-04-01T01:00:00Z
+- blocker_key: `native_list_route_preset_verify_env_block_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar verification`
+- reason: `连续迭代已进入 528 verify，并显式启用了低风险角色并行；代码层 typecheck 通过，但 UI smoke 在登录链路上失败，无法把当前环境视为可信验证环境`
+- completed_step: `已完成 ITER-2026-04-01-528 的并行 verify：validate_task PASS，typecheck:strict PASS，但 make verify.portal.v0_5.host 在 login: admin db=sc_demo 阶段报错 'login response missing token'，当前批次按 ENV_UNSTABLE 停止`
+- active_commit: `2a02eb6`
+- next_step: `Open a dedicated low-risk environment/login verification batch before resuming native list visual verification`
+
+### 2026-04-01T00:45:00Z
+- blocker_key: `low_cost_role_parallel_v1`
+- layer_target: `agent governance`
+- module: `low-cost role-parallel policy`
+- reason: `低消耗规则已经落地，但仍缺少“低风险任务可按角色并行执行”的正式约束；本轮补齐 executor/auditor/reporter 的有界并行规则，并保持单阶段、短上下文、写集不重叠`
+- completed_step: `已完成 ITER-2026-04-01-527：更新低消耗制度文档、AGENTS、task_low_cost 模板与 split_task.py，使低风险任务可通过 role_parallel 显式声明角色并行；重新拆分 522 后，A/B/C 合同已带上 role_parallel 默认块`
+- active_commit: `2a02eb6`
+- next_step: `Continue the active product-usability line; future low-risk tasks may now declare bounded role-parallel execution when roles and write scopes are disjoint`
+
+### 2026-04-01T00:30:00Z
+- blocker_key: `native_list_route_preset_dedup_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar consumer`
+- reason: `产品可用性主线已切回 native-metadata list usability；低消耗 scan/screen 结果表明 route preset 在当前条件和推荐筛选区块中重复展示，是下一条最小、纯显示层且可验证的可用性切片`
+- completed_step: `已完成 ITER-2026-04-01-524 scan、ITER-2026-04-01-525 screen 和 ITER-2026-04-01-526 实现：扫描 7 个前端文件后锁定 route-preset duplication，随后从 PageToolbar 的 active-condition chips 中移除 route-preset 项，保留专用推荐筛选区块与清除动作；validate_task 与 frontend strict typecheck 均已通过`
+- active_commit: `2a02eb6`
+- next_step: `Open a low-cost verify batch that visually confirms route-preset state appears only once in the native list toolbar and then continue the list usability line`
+
 ### 2026-04-01T00:00:00Z
 - blocker_key: `low_cost_iteration_governance_v1`
 - layer_target: `agent governance`

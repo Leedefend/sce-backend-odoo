@@ -16,7 +16,7 @@ const ROOT_XMLID = process.env.ROOT_XMLID !== undefined
   : 'smart_construction_core.menu_sc_root';
 const ROOT_MENU_ID = process.env.ROOT_MENU_ID ? Number(process.env.ROOT_MENU_ID) : 0;
 const MVP_MENU_ID = process.env.MVP_MENU_ID ? Number(process.env.MVP_MENU_ID) : 0;
-const MVP_MENU_XMLID = process.env.MVP_MENU_XMLID || '';
+const MVP_MENU_XMLID = process.env.MVP_MENU_XMLID || 'scene.contract.projects_list';
 const MVP_MENU_MODEL = process.env.MVP_MENU_MODEL || '';
 const SCENE = process.env.SCENE || 'web';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
@@ -111,6 +111,43 @@ function collectMenus(nodes, out = []) {
   return out;
 }
 
+function findSceneByKey(scenes, sceneKey) {
+  if (!sceneKey) return null;
+  return (scenes || []).find((row) => {
+    const key = ((row && row.scene) ? row.scene.key : '') || ((row && row.page) ? row.page.scene_key : '');
+    return key === sceneKey;
+  }) || null;
+}
+
+function pickContractModel(contract, candidate) {
+  return contract.model
+    || ((contract.head || {}).model)
+    || (((contract.views || {}).tree || {}).model)
+    || (((contract.views || {}).list || {}).model)
+    || (((contract.views || {}).kanban || {}).model)
+    || (candidate.meta ? candidate.meta.model : '')
+    || '';
+}
+
+function pickContractViewMode(contract, candidate) {
+  return contract.view_type
+    || ((contract.head || {}).view_type)
+    || (((contract.views || {}).tree || {}).view_type)
+    || (((contract.views || {}).list || {}).view_type)
+    || (((contract.views || {}).kanban || {}).view_type)
+    || ((candidate.meta && candidate.meta.view_modes && candidate.meta.view_modes[0]) || 'tree');
+}
+
+function pickContractColumns(contract) {
+  const views = contract.views || {};
+  const tree = views.tree || views.list || {};
+  return tree.columns
+    || (contract.ui_contract && contract.ui_contract.columns)
+    || (contract.ui_contract && contract.ui_contract.columnsSchema ? contract.ui_contract.columnsSchema.map((c) => c.name).filter(Boolean) : null)
+    || Object.keys((contract.ui_contract_raw || {}).fields || {})
+    || [];
+}
+
 function writeSummary({ menuId, actionId, model, viewMode, recordId, navVersion, listStatus, recordStatus, rootXmlidFound, rootMenuId, rootAccessible }) {
   const safe = (value) => (value === undefined || value === null ? '' : value);
   const summary = [
@@ -146,7 +183,9 @@ async function main() {
     writeJson(path.join(outDir, 'fe_mvp_list.log'), loginResp);
     throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
-  const token = (loginResp.body.data || {}).token;
+  const loginData = (loginResp.body || {}).data || {};
+  const session = loginData.session || {};
+  const token = session.token || loginData.token || '';
   if (!token) {
     throw new Error('login response missing token');
   }
@@ -187,6 +226,7 @@ async function main() {
   }
   const initData = unwrap(initResp.body);
   const navTree = initData.nav || [];
+  const sceneReadyScenes = ((initData.scene_ready_contract_v1 || {}).scenes) || [];
   const navMeta = initData.nav_meta || {};
   const navVersion = navMeta.menu || (initData.meta || {}).nav_version || (((initData.meta || {}).parts || {}).nav) || '';
   const rootNodeById = findMenuById(navTree, ROOT_MENU_ID);
@@ -261,6 +301,11 @@ async function main() {
       menuId = candidate.menu_id;
       actionId = candidate.meta ? candidate.meta.action_id : undefined;
       if (!actionId) {
+        const sceneKey = candidate.scene_key || '';
+        const sceneReady = findSceneByKey(sceneReadyScenes, sceneKey);
+        actionId = (((sceneReady || {}).meta || {}).target || {}).action_id;
+      }
+      if (!actionId) {
         attempts.push({ menu_id: menuId, error: 'menu has no action_id' });
         continue;
       }
@@ -275,12 +320,9 @@ async function main() {
         continue;
       }
       const contract = unwrap(contractResp.body);
-      model = contract.model || (candidate.meta ? candidate.meta.model : '') || '';
-      viewMode = contract.view_type || ((candidate.meta && candidate.meta.view_modes && candidate.meta.view_modes[0]) || 'tree');
-      columns = (contract.ui_contract && contract.ui_contract.columns)
-        || (contract.ui_contract && contract.ui_contract.columnsSchema ? contract.ui_contract.columnsSchema.map((c) => c.name).filter(Boolean) : null)
-        || Object.keys((contract.ui_contract_raw || {}).fields || {})
-        || [];
+      model = pickContractModel(contract, candidate);
+      viewMode = pickContractViewMode(contract, candidate);
+      columns = pickContractColumns(contract);
       const fields = columns.length ? columns : ['id', 'name'];
       if (!model) {
         attempts.push({ menu_id: menuId, error: 'resolved action has no model' });

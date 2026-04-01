@@ -1,0 +1,8 @@
+{
+  "task_id": "ITER-2026-04-01-524",
+  "status": "PASS",
+  "mode": "scan",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-524.md",
+  "files_scanned": 7,
+  "next_step": "Open a screen-stage task that reads the scan report only and selects the next low-risk list usability candidate."
+}
