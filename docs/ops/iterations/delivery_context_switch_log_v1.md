@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:31:22Z
+- blocker_key: `project_initiation_semantic_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `project.initiation.enter error-envelope lifecycle continuity`
+- reason: 创建入口是闭环主链起点，已补齐错误返回生命周期语义并通过 acceptance 验证
+- completed_step: `已完成 ITER-2026-04-01-635/636：project.initiation.enter 的 MISSING_PARAMS/PERMISSION_DENIED/BUSINESS_RULE_FAILED 返回补齐 data.lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `adb53d6`
+- next_step: `Open next screen batch for remaining non-financial project handlers lifecycle envelope consistency`
+
+### 2026-04-01T15:29:30Z
+- blocker_key: `project_initiation_semantic_screen_v1`
+- layer_target: `backend semantic layer`
+- module: `project.initiation.enter semantic continuity screen`
+- reason: 连续迭代继续围绕“创建到管理闭环”，screen 识别创建入口错误分支缺少 lifecycle_hints
+- completed_step: `已完成 ITER-2026-04-01-634：选定 project.initiation.enter 错误返回语义补齐作为下一刀`
+- active_commit: `adb53d6`
+- next_step: `Open implement batch for project.initiation.enter error lifecycle_hints and run acceptance verify`
+
 ### 2026-04-01T15:27:33Z
 - blocker_key: `project_execution_advance_semantic_verify_v1`
 - layer_target: `backend semantic layer`
