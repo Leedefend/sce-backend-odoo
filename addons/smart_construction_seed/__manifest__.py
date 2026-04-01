@@ -6,7 +6,7 @@
     "category": "Tools",
     "license": "LGPL-3",
     "author": "SCE",
-    "depends": ["smart_construction_bootstrap", "account", "smart_construction_core"],
+    "depends": ["smart_platform_bootstrap", "account", "smart_construction_core"],
     "data": [
         "data/sc_seed_dictionary_contract.xml",
         "data/sc_seed_login_env.xml",
