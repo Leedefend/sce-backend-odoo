@@ -73,6 +73,30 @@
             <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
+        <record id="group_sc_role_cost_read" model="res.groups">
+            <field name="name">成控中心-只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        </record>
+
+        <record id="group_sc_role_material_read" model="res.groups">
+            <field name="name">物资中心-只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read'))]"/>
+        </record>
+
+        <record id="group_sc_role_purchase_read" model="res.groups">
+            <field name="name">采购中心-只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_purchase_read'))]"/>
+        </record>
+
+        <record id="group_sc_role_data_read" model="res.groups">
+            <field name="name">数据中心-只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_data_read'))]"/>
+        </record>
+
         <record id="group_sc_role_config_admin" model="res.groups">
             <field name="name">配置中心-管理员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
@@ -82,39 +106,67 @@
         <record id="group_sc_role_owner" model="res.groups">
             <field name="name">角色-业主</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[
-                (4, ref('smart_construction_custom.group_sc_role_project_read')),
-                (4, ref('smart_construction_custom.group_sc_role_contract_read'))
-            ]"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_custom.group_sc_role_project_user'),
+                ref('smart_construction_custom.group_sc_role_contract_user'),
+                ref('smart_construction_custom.group_sc_role_settlement_read'),
+                ref('smart_construction_custom.group_sc_role_payment_read'),
+                ref('smart_construction_core.group_sc_cap_cost_user'),
+                ref('smart_construction_core.group_sc_cap_material_user'),
+                ref('smart_construction_core.group_sc_cap_purchase_user'),
+                ref('smart_construction_custom.group_sc_role_data_read')
+            ])]"/>
         </record>
 
         <record id="group_sc_role_pm" model="res.groups">
             <field name="name">角色-项目经理</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[
-                (4, ref('smart_construction_custom.group_sc_role_project_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_contract_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_user'))
-            ]"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_custom.group_sc_role_owner'),
+                ref('smart_construction_custom.group_sc_role_project_manager'),
+                ref('smart_construction_custom.group_sc_role_contract_manager'),
+                ref('smart_construction_core.group_sc_cap_material_manager'),
+                ref('smart_construction_core.group_sc_cap_purchase_manager'),
+                ref('smart_construction_custom.group_sc_role_settlement_user')
+            ])]"/>
         </record>
 
         <record id="group_sc_role_finance" model="res.groups">
             <field name="name">角色-财务</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[
-                (4, ref('smart_construction_custom.group_sc_role_payment_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_manager'))
-            ]"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_custom.group_sc_role_project_read'),
+                ref('smart_construction_custom.group_sc_role_contract_read'),
+                ref('smart_construction_custom.group_sc_role_settlement_read'),
+                ref('smart_construction_custom.group_sc_role_payment_read'),
+                ref('smart_construction_custom.group_sc_role_cost_read'),
+                ref('smart_construction_custom.group_sc_role_material_read'),
+                ref('smart_construction_custom.group_sc_role_purchase_read'),
+                ref('smart_construction_custom.group_sc_role_data_read'),
+                ref('smart_construction_custom.group_sc_role_payment_manager'),
+                ref('smart_construction_custom.group_sc_role_settlement_manager')
+            ])]"/>
         </record>
 
         <record id="group_sc_role_executive" model="res.groups">
             <field name="name">角色-管理层</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_custom.group_sc_role_owner'),
+                ref('smart_construction_custom.group_sc_role_pm'),
+                ref('smart_construction_custom.group_sc_role_finance'),
+                ref('smart_construction_custom.group_sc_role_config_admin'),
+                ref('smart_construction_core.group_sc_cap_cost_manager'),
+                ref('smart_construction_core.group_sc_cap_material_manager'),
+                ref('smart_construction_core.group_sc_cap_purchase_manager')
+            ])]"/>
+        </record>
+
+        <record id="group_sc_role_business_admin" model="res.groups">
+            <field name="name">角色-业务系统管理员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[
-                (4, ref('smart_construction_custom.group_sc_role_project_read')),
-                (4, ref('smart_construction_custom.group_sc_role_pm')),
-                (4, ref('smart_construction_custom.group_sc_role_finance')),
-                (4, ref('smart_construction_custom.group_sc_role_config_admin'))
+                (4, ref('smart_construction_core.group_sc_business_full'))
             ]"/>
         </record>
     </data>

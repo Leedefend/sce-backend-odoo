@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="user_sc_baosheng_duanyijun" model="res.users">
+            <field name="sc_department_ids" eval="[(6, 0, [ref('smart_construction_custom.department_sc_baosheng_admin')])]"/>
+        </record>
+        <record id="user_sc_baosheng_chentianyou" model="res.users">
+            <field name="sc_department_ids" eval="[(6, 0, [ref('smart_construction_custom.department_sc_baosheng_admin')])]"/>
+        </record>
+        <record id="user_sc_baosheng_jiangyijiao" model="res.users">
+            <field name="sc_department_ids" eval="[(6, 0, [
+                ref('smart_construction_custom.department_sc_baosheng_admin'),
+                ref('smart_construction_custom.department_sc_baosheng_finance'),
+                ref('smart_construction_custom.department_sc_baosheng_project')
+            ])]"/>
+        </record>
+        <record id="user_sc_baosheng_chenshuai" model="res.users">
+            <field name="sc_department_ids" eval="[(6, 0, [ref('smart_construction_custom.department_sc_baosheng_project')])]"/>
+        </record>
+        <record id="user_sc_baosheng_hujun" model="res.users">
+            <field name="sc_post_ids" eval="[(6, 0, [ref('smart_construction_custom.post_sc_baosheng_general_manager')])]"/>
+        </record>
+        <record id="user_sc_baosheng_shuiwujingbanren" model="res.users">
+            <field name="sc_post_ids" eval="[(6, 0, [ref('smart_construction_custom.post_sc_baosheng_finance_assistant')])]"/>
+        </record>
+        <record id="user_sc_baosheng_wennan" model="res.users">
+            <field name="sc_post_ids" eval="[(6, 0, [ref('smart_construction_custom.post_sc_baosheng_deputy_general_manager')])]"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="post_sc_baosheng_chairman" model="sc.enterprise.post">
+            <field name="name">董事长</field>
+            <field name="code">CHRMAN</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="post_sc_baosheng_general_manager" model="sc.enterprise.post">
+            <field name="name">总经理</field>
+            <field name="code">GM</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="post_sc_baosheng_deputy_general_manager" model="sc.enterprise.post">
+            <field name="name">副总经理</field>
+            <field name="code">DGM</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="post_sc_baosheng_project_lead" model="sc.enterprise.post">
+            <field name="name">项目负责人</field>
+            <field name="code">PROJECT_LEAD</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="post_sc_baosheng_temp_project_lead" model="sc.enterprise.post">
+            <field name="name">临时项目负责人</field>
+            <field name="code">TEMP_PROJECT_LEAD</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="post_sc_baosheng_finance_manager" model="sc.enterprise.post">
+            <field name="name">财务经理</field>
+            <field name="code">FIN_MANAGER</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="post_sc_baosheng_finance_assistant" model="sc.enterprise.post">
+            <field name="name">财务助理</field>
+            <field name="code">FIN_ASSISTANT</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

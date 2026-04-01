@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="base.lang_zh_CN" model="res.lang">
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="base.user_admin" model="res.users">
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" eval="False"/>
+            <field name="sc_post_id" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_business_admin')),
+                (4, ref('smart_construction_custom.group_sc_role_owner'))
+            ]"/>
+        </record>
+
+        <record id="user_sc_baosheng_wutao" model="res.users">
+            <field name="name">吴涛</field>
+            <field name="login">wutao</field>
+            <field name="phone">13518193984</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_project"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_chairman"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_yangdesheng" model="res.users">
+            <field name="name">杨德胜</field>
+            <field name="login">yangdesheng</field>
+            <field name="phone">13990213999</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_engineering"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_duanyijun" model="res.users">
+            <field name="name">段奕俊</field>
+            <field name="login">duanyijun</field>
+            <field name="phone">13628105924</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_general_manager"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin'))]"/>
+        </record>
+        <record id="user_sc_baosheng_xudan" model="res.users">
+            <field name="name">徐丹</field>
+            <field name="login">xudan</field>
+            <field name="phone">13541712294</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_admin"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_chentianyou" model="res.users">
+            <field name="name">陈天友</field>
+            <field name="login">chentianyou</field>
+            <field name="phone">13980113378</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_engineering"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_wennan" model="res.users">
+            <field name="name">文楠</field>
+            <field name="login">wennan</field>
+            <field name="phone">13541719455</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_manager"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_lilinxu" model="res.users">
+            <field name="name">李林旭</field>
+            <field name="login">lilinxu</field>
+            <field name="phone">15282889978</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_admin"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_lina" model="res.users">
+            <field name="name">李娜</field>
+            <field name="login">lina</field>
+            <field name="phone">15283830106</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_assistant"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_jiangyijiao" model="res.users">
+            <field name="name">江一娇</field>
+            <field name="login">jiangyijiao</field>
+            <field name="phone">13881040419</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_assistant"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="user_sc_baosheng_yinjiamei" model="res.users">
+            <field name="name">尹佳梅</field>
+            <field name="login">yinjiamei</field>
+            <field name="phone">13281352598</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_zhangwencui" model="res.users">
+            <field name="name">张文翠</field>
+            <field name="login">zhangwencui</field>
+            <field name="phone">18224022898</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_lijianfeng" model="res.users">
+            <field name="name">李俭锋</field>
+            <field name="login">lijianfeng</field>
+            <field name="phone">17754915356</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="user_sc_baosheng_yelingyue" model="res.users">
+            <field name="name">叶凌越</field>
+            <field name="login">yelingyue</field>
+            <field name="phone">15892670626</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="user_sc_baosheng_lidexue" model="res.users">
+            <field name="name">李德学</field>
+            <field name="login">lidexue</field>
+            <field name="phone">18380686868</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_project"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_temp_project_lead"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="user_sc_baosheng_chenshuai" model="res.users">
+            <field name="name">陈帅</field>
+            <field name="login">chenshuai</field>
+            <field name="phone">13700909923</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_cost"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_general_manager"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_shuiwujingbanren" model="res.users">
+            <field name="name">税务经办人</field>
+            <field name="login">shuiwujingbanren</field>
+            <field name="phone">18180385662</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" eval="False"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_manager"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin'))]"/>
+        </record>
+        <record id="user_sc_baosheng_xiaohuijiu" model="res.users">
+            <field name="name">肖辉玖</field>
+            <field name="login">xiaohuijiu</field>
+            <field name="phone">18580396789</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+        <record id="user_sc_baosheng_luomeng" model="res.users">
+            <field name="name">罗萌</field>
+            <field name="login">luomeng</field>
+            <field name="phone">13096101508</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_assistant"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="user_sc_baosheng_hujun" model="res.users">
+            <field name="name">胡俊</field>
+            <field name="login">hujun</field>
+            <field name="phone">13698182176</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_project"/>
+            <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+        </record>
+    </data>
+</odoo>
