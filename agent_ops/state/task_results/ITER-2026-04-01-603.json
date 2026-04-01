@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-01-603",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-603.md",
+  "decision": {
+    "selected_slice": "project empty-list create-entry guidance",
+    "family_scope": "project lifecycle usability",
+    "reason": "Improve first-step discoverability from empty project list to project creation."
+  },
+  "next_step": "Implement bounded project empty-state create-entry guidance."
+}

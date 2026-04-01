@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T14:00:13Z
+- blocker_key: `project_lifecycle_create_entry_verify_v1`
+- layer_target: `frontend layer`
+- module: `project lifecycle usability verification`
+- reason: 调度目标已切到“创建项目到管理闭环”；本批次验证创建入口引导改动不会破坏项目管理 acceptance baseline
+- completed_step: `已完成 ITER-2026-04-01-605：validate_task PASS、typecheck PASS、make verify.project.management.acceptance PASS`
+- active_commit: `0872fae`
+- next_step: `Open next lifecycle-first screen slice for created-project to first-management-action continuity`
+
+### 2026-04-01T13:59:00Z
+- blocker_key: `project_lifecycle_create_entry_impl_v1`
+- layer_target: `frontend layer`
+- module: `project empty-state create-entry guidance`
+- reason: `603` 已选定创建入口可发现性作为首刀；当前实现仅在 `project.project` 空列表状态给出明确“创建项目”引导
+- completed_step: `已完成 ITER-2026-04-01-604：ListPage 已透传 model 给 resolveEmptyCopy，project 空态文案切换为创建项目导向`
+- active_commit: `0872fae`
+- next_step: `Run strict typecheck and project-management acceptance verification`
+
+### 2026-04-01T13:58:00Z
+- blocker_key: `project_lifecycle_scheduler_shift_screen_v1`
+- layer_target: `frontend layer`
+- module: `project lifecycle usability screen`
+- reason: 用户明确要求以“创建项目到完整管理闭环”作为第一目标，调度从 HUD 连续微调切换到 lifecycle-first 主线
+- completed_step: `已完成 ITER-2026-04-01-603：首个生命周期切片选定为 project empty-list create-entry guidance`
+- active_commit: `0872fae`
+- next_step: `Open bounded implementation for empty project list create-entry guidance`
+
 ### 2026-04-01T13:52:31Z
 - blocker_key: `record_view_hud_title_source_verify_v1`
 - layer_target: `frontend layer`
