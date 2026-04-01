@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T01:16:55+0800
+- blocker_key: `dashboard_enter_not_found_recovery_verify_v1`
+- layer_target: `backend usability`
+- module: `dashboard-enter not-found recovery continuity`
+- reason: 项目管理入口在 not-found 场景缺少显式 action payload，已完成后端语义补齐并通过验收
+- completed_step: `已完成 ITER-2026-04-02-671/672/673：project.dashboard.enter not-found data 新增 suggested_action_payload（project.initiation.enter），python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `cab5150`
+- next_step: `Open next low-risk screen batch for project lifecycle usability continuity`
+
 ### 2026-04-02T01:11:40+0800
 - blocker_key: `execution_advance_success_lifecycle_hints_verify_v1`
 - layer_target: `backend usability`
