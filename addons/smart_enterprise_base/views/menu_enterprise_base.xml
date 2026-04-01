@@ -66,6 +66,7 @@
         <field name="help" type="html">
             <p>从这里统一维护用户主数据，让公司、组织和负责人关系真正落到人。</p>
             <p>本页只承接基础资料，不替代角色、安全和高级权限原生页面。</p>
+            <p>本页现在由业务系统管理员与平台管理员共同持有，但仍不承接平台治理字段。</p>
         </field>
     </record>
 
@@ -81,6 +82,103 @@
         <field name="view_mode">form</field>
         <field name="view_id" ref="smart_enterprise_base.view_users_form_enterprise_base"/>
         <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_user"/>
+    </record>
+
+    <record id="view_enterprise_post_tree" model="ir.ui.view">
+        <field name="name">sc.enterprise.post.tree.enterprise.base</field>
+        <field name="model">sc.enterprise.post</field>
+        <field name="arch" type="xml">
+            <tree string="岗位管理" default_order="company_id, sequence, name">
+                <field name="name" string="岗位名称"/>
+                <field name="code" string="岗位编码"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="sequence" string="排序"/>
+                <field name="sc_user_count" string="用户数"/>
+                <field name="active" string="启用"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_enterprise_post_form" model="ir.ui.view">
+        <field name="name">sc.enterprise.post.form.enterprise.base</field>
+        <field name="model">sc.enterprise.post</field>
+        <field name="arch" type="xml">
+            <form string="岗位管理">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        这里只维护企业岗位主数据。岗位独立于部门和系统角色，当前系统仅支持一个主岗位。
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                                name="action_open_enterprise_users"
+                                class="oe_stat_button"
+                                icon="fa-users"
+                                string="用户设置">
+                            <field name="sc_user_count" widget="statinfo" string="用户数"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_enterprise_post_search" model="ir.ui.view">
+        <field name="name">sc.enterprise.post.search.enterprise.base</field>
+        <field name="model">sc.enterprise.post</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="岗位名称"/>
+                <field name="code" string="岗位编码"/>
+                <field name="company_id" string="所属公司"/>
+                <filter name="sc_enterprise_post_active_true" string="启用中" domain="[('active', '=', True)]"/>
+                <filter name="sc_enterprise_post_active_false" string="已停用" domain="[('active', '=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_by_company_id" string="所属公司" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_enterprise_post" model="ir.actions.act_window">
+        <field name="name">岗位管理</field>
+        <field name="res_model">sc.enterprise.post</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_enterprise_base.view_enterprise_post_tree"/>
+        <field name="search_view_id" ref="smart_enterprise_base.view_enterprise_post_search"/>
+        <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+        <field name="context">{'form_view_ref': 'smart_enterprise_base.view_enterprise_post_form'}</field>
+        <field name="help" type="html">
+            <p>从这里统一维护企业岗位主数据，用于承接用户主岗位。</p>
+            <p>岗位不替代组织架构，也不替代系统角色。</p>
+        </field>
+    </record>
+
+    <record id="action_enterprise_post_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="smart_enterprise_base.view_enterprise_post_tree"/>
+        <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_post"/>
+    </record>
+
+    <record id="action_enterprise_post_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_enterprise_base.view_enterprise_post_form"/>
+        <field name="act_window_id" ref="smart_enterprise_base.action_enterprise_post"/>
     </record>
 
     <menuitem id="menu_enterprise_base_root"
@@ -101,6 +199,13 @@
               parent="menu_enterprise_base_root"
               action="action_enterprise_department"
               sequence="20"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_enterprise_post"
+              name="岗位管理"
+              parent="menu_enterprise_base_root"
+              action="action_enterprise_post"
+              sequence="25"
               groups="base.group_system"/>
 
     <menuitem id="menu_enterprise_user"

@@ -13,5 +13,41 @@
             <field name="state">code</field>
             <field name="code">env['sc.security.policy'].apply_role_matrix()</field>
         </record>
+        <record id="action_bootstrap_customer_company_departments" model="ir.actions.server">
+            <field name="name">Bootstrap Customer Company and Departments</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].bootstrap_customer_company_departments()</field>
+        </record>
+        <record id="action_bootstrap_customer_users_primary_departments" model="ir.actions.server">
+            <field name="name">Bootstrap Customer Users (Primary Department Only)</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].bootstrap_customer_users_primary_departments()</field>
+        </record>
+        <record id="action_bootstrap_customer_user_system_roles" model="ir.actions.server">
+            <field name="name">Bootstrap Customer User System Roles</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].bootstrap_customer_user_system_roles()</field>
+        </record>
+        <record id="action_bootstrap_customer_user_primary_posts" model="ir.actions.server">
+            <field name="name">Bootstrap Customer User Primary Posts</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].bootstrap_customer_user_primary_posts()</field>
+        </record>
+        <record id="action_bootstrap_customer_user_extra_posts" model="ir.actions.server">
+            <field name="name">Bootstrap Customer User Extra Posts</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].bootstrap_customer_user_extra_posts()</field>
+        </record>
+        <record id="action_bootstrap_customer_user_extra_departments" model="ir.actions.server">
+            <field name="name">Bootstrap Customer User Extra Departments</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].bootstrap_customer_user_extra_departments()</field>
+        </record>
     </data>
 </odoo>

@@ -60,7 +60,12 @@ class HrDepartment(models.Model):
         self.ensure_one()
         action = self.env.ref("smart_enterprise_base.action_enterprise_user").sudo().read()[0]
         action["name"] = _("用户设置：%s") % self.display_name
-        action["domain"] = [("company_id", "=", self.company_id.id), ("sc_department_id", "=", self.id)]
+        action["domain"] = [
+            ("company_id", "=", self.company_id.id),
+            "|",
+            ("sc_department_id", "=", self.id),
+            ("sc_department_ids", "in", self.id),
+        ]
         action["context"] = {
             "default_company_id": self.company_id.id,
             "default_sc_department_id": self.id,

@@ -13,6 +13,11 @@
     "data": [
         "security/role_matrix_groups.xml",
         "security/ir.model.access.csv",
+        "data/customer_company_departments.xml",
+        "data/customer_posts.xml",
+        "data/customer_users.xml",
+        "data/customer_user_relations.xml",
+        "data/customer_user_authorization.xml",
         "data/security_policy_actions.xml",
     ],
     "post_init_hook": "post_init_hook",

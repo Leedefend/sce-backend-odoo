@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- 四川保盛客户授权矩阵：
+             这些用户最初由 noupdate=1 的 customer_users.xml 创建，因此这里使用
+             function/write 作为 canonical 升级路径，确保授权矩阵可重复重放。
+        -->
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'admin')]"/>
+            </function>
+            <value eval="{'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('smart_construction_custom.group_sc_role_owner'))]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'duanyijun')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin'))]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'wutao')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'executive'}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'wennan')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin'))]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'shuiwujingbanren')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+                (3, ref('smart_construction_custom.group_sc_role_owner')),
+                (3, ref('smart_construction_custom.group_sc_role_project_user')),
+                (3, ref('smart_construction_custom.group_sc_role_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_project_user')),
+                (3, ref('smart_construction_core.group_sc_cap_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_cost_user')),
+                (3, ref('smart_construction_core.group_sc_cap_material_user')),
+                (3, ref('smart_construction_core.group_sc_cap_purchase_user')),
+                (3, ref('project.group_project_user')),
+                (3, ref('purchase.group_purchase_user')),
+                (3, ref('stock.group_stock_user')),
+                (4, ref('smart_construction_custom.group_sc_role_business_admin'))
+            ]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'jiangyijiao')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+                (3, ref('smart_construction_custom.group_sc_role_owner')),
+                (3, ref('smart_construction_custom.group_sc_role_project_user')),
+                (3, ref('smart_construction_custom.group_sc_role_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_project_user')),
+                (3, ref('smart_construction_core.group_sc_cap_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_cost_user')),
+                (3, ref('smart_construction_core.group_sc_cap_material_user')),
+                (3, ref('smart_construction_core.group_sc_cap_purchase_user')),
+                (3, ref('project.group_project_user')),
+                (3, ref('purchase.group_purchase_user')),
+                (3, ref('stock.group_stock_user'))
+            ]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'lina')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+                (3, ref('smart_construction_custom.group_sc_role_owner')),
+                (3, ref('smart_construction_custom.group_sc_role_project_user')),
+                (3, ref('smart_construction_custom.group_sc_role_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_project_user')),
+                (3, ref('smart_construction_core.group_sc_cap_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_cost_user')),
+                (3, ref('smart_construction_core.group_sc_cap_material_user')),
+                (3, ref('smart_construction_core.group_sc_cap_purchase_user')),
+                (3, ref('project.group_project_user')),
+                (3, ref('purchase.group_purchase_user')),
+                (3, ref('stock.group_stock_user'))
+            ]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'luomeng')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+                (3, ref('smart_construction_custom.group_sc_role_owner')),
+                (3, ref('smart_construction_custom.group_sc_role_project_user')),
+                (3, ref('smart_construction_custom.group_sc_role_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_project_user')),
+                (3, ref('smart_construction_core.group_sc_cap_contract_user')),
+                (3, ref('smart_construction_core.group_sc_cap_cost_user')),
+                (3, ref('smart_construction_core.group_sc_cap_material_user')),
+                (3, ref('smart_construction_core.group_sc_cap_purchase_user')),
+                (3, ref('project.group_project_user')),
+                (3, ref('purchase.group_purchase_user')),
+                (3, ref('stock.group_stock_user'))
+            ]}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'hujun')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'pm'}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'chenshuai')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'executive'}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'lijianfeng')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'pm'}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'xiaohuijiu')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'pm'}"/>
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'lidexue')]"/>
+            </function>
+            <value eval="{'sc_role_profile': 'pm'}"/>
+        </function>
+    </data>
+</odoo>

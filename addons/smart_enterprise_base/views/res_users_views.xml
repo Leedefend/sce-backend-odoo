@@ -9,6 +9,9 @@
                 <field name="phone" string="手机号"/>
                 <field name="company_id" string="所属公司"/>
                 <field name="sc_department_id" string="所属部门"/>
+                <field name="sc_department_ids" widget="many2many_tags" string="附加部门"/>
+                <field name="sc_post_id" string="主岗位"/>
+                <field name="sc_post_ids" widget="many2many_tags" string="附加岗位"/>
                 <field name="active" string="启用"/>
             </tree>
         </field>
@@ -33,6 +36,9 @@
                         <group>
                             <field name="company_id" options="{'no_open': True}"/>
                             <field name="sc_department_id" options="{'no_open': True}"/>
+                            <field name="sc_department_ids" widget="many2many_tags" options="{'no_open': True}"/>
+                            <field name="sc_post_id" options="{'no_open': True}"/>
+                            <field name="sc_post_ids" widget="many2many_tags" options="{'no_open': True}"/>
                             <field name="sc_manager_user_id" options="{'no_open': True}"/>
                         </group>
                     </group>
@@ -50,12 +56,16 @@
                 <field name="login"/>
                 <field name="company_id"/>
                 <field name="sc_department_id"/>
+                <field name="sc_department_ids"/>
+                <field name="sc_post_id"/>
+                <field name="sc_post_ids"/>
                 <field name="sc_manager_user_id"/>
                 <filter name="sc_user_active_true" string="启用中" domain="[('active', '=', True)]"/>
                 <filter name="sc_user_active_false" string="已停用" domain="[('active', '=', False)]"/>
                 <group expand="0" string="分组">
                     <filter name="group_by_company_id" string="所属公司" context="{'group_by': 'company_id'}"/>
                     <filter name="group_by_sc_department_id" string="所属部门" context="{'group_by': 'sc_department_id'}"/>
+                    <filter name="group_by_sc_post_id" string="主岗位" context="{'group_by': 'sc_post_id'}"/>
                 </group>
             </search>
         </field>
