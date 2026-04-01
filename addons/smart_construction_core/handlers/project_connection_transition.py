@@ -43,6 +43,24 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
                 return project_id
         return 0
 
+    @staticmethod
+    def _build_lifecycle_hints(project_id: int, *, stage: str) -> Dict[str, Any]:
+        if int(project_id or 0) > 0:
+            return {
+                "stage": stage,
+                "first_action": "open_project_dashboard",
+                "primary_action_label": "进入项目管理",
+                "suggested_action_intent": "project.dashboard.enter",
+                "suggested_action_title": "进入项目管理",
+            }
+        return {
+            "stage": "no_project_context",
+            "first_action": "create_project",
+            "primary_action_label": "创建项目",
+            "suggested_action_intent": "project.initiation.enter",
+            "suggested_action_title": "创建项目",
+        }
+
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = payload or self.params or {}
@@ -61,6 +79,9 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
                     "message": "缺少 project_id 或 transition_key 不受支持",
                     "suggested_action": "fix_input",
                 },
+                "data": {
+                    "lifecycle_hints": self._build_lifecycle_hints(project_id, stage="transition_input_missing"),
+                },
                 "meta": {
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
@@ -75,6 +96,9 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
                     "code": "PROJECT_NOT_FOUND",
                     "message": "项目不存在或当前账号不可访问",
                     "suggested_action": "fix_input",
+                },
+                "data": {
+                    "lifecycle_hints": self._build_lifecycle_hints(project_id, stage="project_not_found"),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,

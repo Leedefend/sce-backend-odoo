@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:21:16Z
+- blocker_key: `project_connection_transition_semantic_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `project connection transition error-envelope continuity`
+- reason: 依据 628 screen 结论执行写路径语义补齐并完成验证，确保错误路径保持 lifecycle 引导
+- completed_step: `已完成 ITER-2026-04-01-629/630：project.connection.transition 的 INVALID_TRANSITION_INPUT/PROJECT_NOT_FOUND 返回补齐 data.lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `9684dcd`
+- next_step: `Open next screen batch for project.execution.advance blocked branches semantic continuity`
+
 ### 2026-04-01T15:18:58Z
 - blocker_key: `project_transition_write_semantic_screen_v1`
 - layer_target: `backend semantic layer`
