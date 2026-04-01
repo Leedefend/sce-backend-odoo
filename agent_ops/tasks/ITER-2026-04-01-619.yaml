@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-01-619
+title: Add backend lifecycle_hints semantic contract to scene entry responses
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Add a generic backend `lifecycle_hints` semantic envelope so frontend can
+  render lifecycle guidance without model-specific branching.
+
+user_visible_outcome:
+  - "后端返回统一 lifecycle_hints 语义"
+  - "前端可基于通用语义渲染创建/下一步提示"
+  - "不再依赖前端模型猜测"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/orchestration/base_scene_entry_orchestrator.py
+    - addons/smart_construction_core/handlers/project_initiation_enter.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - backend semantic supply implementation only
+  - additive contract fields only
+  - no frontend model branching
+  - no ACL, payment, settlement, account changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 35a1f6a
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-618
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Semantic Layer
+  module: scene entry lifecycle semantic contract
+  module_owner: smart_core orchestration + smart_construction_core handlers
+  kernel_or_scenario: kernel
+  reason: >
+    Lifecycle guidance should be provided by backend semantics so frontend stays
+    a generic renderer.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-619.yaml
+    - make verify.project.management.acceptance
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - lifecycle_hints_break_existing_payload
+
+deliverables:
+  - bounded_backend_lifecycle_hints_contract_addition
+  - governance/report artifacts for ITER-2026-04-01-619
+
+rollback:
+  - git restore addons/smart_core/orchestration/base_scene_entry_orchestrator.py
+  - git restore addons/smart_construction_core/handlers/project_initiation_enter.py
+  - git restore agent_ops/tasks/ITER-2026-04-01-619.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-619.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-619.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-618

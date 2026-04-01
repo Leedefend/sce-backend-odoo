@@ -36,6 +36,11 @@ class BaseSceneEntryOrchestrator:
                 "blocks": blocks,
                 "suggested_action": {},
                 "runtime_fetch_hints": {"blocks": {}},
+                "lifecycle_hints": self._build_lifecycle_hints(
+                    project_id=0,
+                    first_action={},
+                    stage="entry_missing_project",
+                ),
             }
 
         runtime_fetch_hints = {
@@ -66,6 +71,11 @@ class BaseSceneEntryOrchestrator:
                 "reason_code": self.suggested_action_reason_code,
             },
             "runtime_fetch_hints": runtime_fetch_hints,
+            "lifecycle_hints": self._build_lifecycle_hints(
+                project_id=resolved_project_id,
+                first_action=first_action,
+                stage="entry_ready",
+            ),
         }
 
     def build_runtime_block(self, block_key, project_id=None, context=None):
@@ -91,3 +101,19 @@ class BaseSceneEntryOrchestrator:
 
     def resolve_title(self, project_payload):
         return self.title_empty
+
+    def _build_lifecycle_hints(self, project_id, first_action, stage):
+        resolved_project_id = int(project_id or 0)
+        action = first_action if isinstance(first_action, dict) else {}
+        action_intent = str(action.get("intent") or "").strip()
+        action_key = str(self.suggested_action_key or "").strip()
+        default_next_label = str(action_key or action_intent or "continue").replace("_", " ").strip()
+        return {
+            "stage": str(stage or "entry").strip() or "entry",
+            "project_id": resolved_project_id,
+            "scene_key": str(self.scene_key or "").strip(),
+            "reason_code": str(self.suggested_action_reason_code or "").strip(),
+            "primary_action_label": str(self.scene_label or self.title_empty or "继续").strip(),
+            "next_step_label": default_next_label or "continue",
+            "suggested_action_intent": action_intent,
+        }
