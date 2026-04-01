@@ -94,7 +94,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
             creation_service = ProjectCreationService(self.env)
             normalized_vals = creation_service.normalize_create_vals(create_vals)
             project = model.create(normalized_vals)
-            creation_service.post_create_bootstrap(project)
+            bootstrap_summary = creation_service.post_create_bootstrap(project)
         except AccessError:
             reason_code = "PERMISSION_DENIED"
             return {
@@ -178,6 +178,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 "intent": "ui.contract",
                 "params": dict(contract_params),
             },
+            "bootstrap_summary": dict(bootstrap_summary or {}),
         }
 
         return {

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from typing import Any, Dict, List
+
 
 class ProjectInitializationService:
     """Initialize lightweight project skeleton after intake creation."""
@@ -61,6 +63,23 @@ class ProjectCreationService:
             normalized["lifecycle_state"] = "draft"
         return normalized
 
-    def post_create_bootstrap(self, projects):
+    def post_create_bootstrap(self, projects) -> Dict[str, Any]:
+        rows: List[Dict[str, Any]] = []
         for project in projects:
-            self.initializer.bootstrap(project)
+            bootstrap = dict(self.initializer.bootstrap(project) or {})
+            rows.append(
+                {
+                    "project_id": int(getattr(project, "id", 0) or 0),
+                    "project_name": str(getattr(project, "name", "") or ""),
+                    "bootstrap": bootstrap,
+                }
+            )
+
+        summary = {
+            "count": len(rows),
+            "project_ids": [int(item.get("project_id") or 0) for item in rows if int(item.get("project_id") or 0) > 0],
+            "items": rows,
+        }
+        if len(rows) == 1:
+            summary["primary"] = dict(rows[0])
+        return summary
