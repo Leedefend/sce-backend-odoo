@@ -30,7 +30,7 @@ ROLE_SURFACE_MAP = {
 }
 
 ROLE_GROUPS_EXPLICIT = {
-    "executive": {"base.group_system"},
+    "executive": set(),
     "pm": set(),
     "finance": set(),
 }

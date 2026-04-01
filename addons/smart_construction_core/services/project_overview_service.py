@@ -12,6 +12,11 @@ class ProjectOverviewService(models.AbstractModel):
     _name = "sc.project.overview.service"
     _description = "Project Overview Aggregation Service"
 
+    def _group_count(self, row, groupby):
+        if "__count" in row:
+            return row.get("__count", 0)
+        return row.get(f"{groupby}_count", 0)
+
     @api.model
     def get_overview(self, project_ids):
         ids = [pid for pid in (project_ids or []) if pid]
@@ -42,7 +47,7 @@ class ProjectOverviewService(models.AbstractModel):
             )
             for rec in rows:
                 project_id = rec["project_id"][0]
-                data[project_id]["contract"]["count"] = rec.get("__count", 0)
+                data[project_id]["contract"]["count"] = self._group_count(rec, "project_id")
 
         if can_cost:
             calls += 1
@@ -53,7 +58,7 @@ class ProjectOverviewService(models.AbstractModel):
             )
             for rec in rows:
                 project_id = rec["project_id"][0]
-                data[project_id]["cost"]["count"] = rec.get("__count", 0)
+                data[project_id]["cost"]["count"] = self._group_count(rec, "project_id")
 
         if can_payment:
             calls += 1
@@ -64,7 +69,7 @@ class ProjectOverviewService(models.AbstractModel):
             )
             for rec in rows:
                 project_id = rec["project_id"][0]
-                data[project_id]["payment"]["count"] = rec.get("__count", 0)
+                data[project_id]["payment"]["count"] = self._group_count(rec, "project_id")
             calls += 1
             pending_rows = env["payment.request"].read_group(
                 [
@@ -76,7 +81,7 @@ class ProjectOverviewService(models.AbstractModel):
             )
             for rec in pending_rows:
                 project_id = rec["project_id"][0]
-                data[project_id]["payment"]["pending"] = rec.get("__count", 0)
+                data[project_id]["payment"]["pending"] = self._group_count(rec, "project_id")
 
         if can_task:
             calls += 1
@@ -87,19 +92,19 @@ class ProjectOverviewService(models.AbstractModel):
             )
             for rec in rows:
                 project_id = rec["project_id"][0]
-                data[project_id]["task"]["count"] = rec.get("__count", 0)
+                data[project_id]["task"]["count"] = self._group_count(rec, "project_id")
             calls += 1
             progress_rows = env["project.task"].read_group(
                 [
                     ("project_id", "in", ids),
-                    ("state", "=", "in_progress"),
+                    ("sc_state", "=", "in_progress"),
                 ],
                 ["project_id"],
                 ["project_id"],
             )
             for rec in progress_rows:
                 project_id = rec["project_id"][0]
-                data[project_id]["task"]["in_progress"] = rec.get("__count", 0)
+                data[project_id]["task"]["in_progress"] = self._group_count(rec, "project_id")
 
         if env.context.get("sc_overview_debug"):
             elapsed = time.time() - start_ts

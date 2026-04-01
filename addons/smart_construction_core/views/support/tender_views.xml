@@ -25,9 +25,16 @@
         <field name="arch" type="xml">
             <form string="投标记录">
                 <header>
-                    <!-- 单一状态条：可点击，高亮随状态自动切换 -->
+                    <!-- 执行角色：可点击状态条 -->
                     <field name="state" widget="statusbar"
+                           groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"
                            options="{'clickable': '1'}"
+                           statusbar_visible="prepare,estimating,submitted,waiting,won,lost"
+                           statusbar_colors="{'won':'success','lost':'danger','waiting':'warning','estimating':'info'}"/>
+                    <!-- 只读查询角色：只展示状态，不允许状态流转 -->
+                    <field name="state" widget="statusbar"
+                           groups="smart_construction_core.group_sc_cap_project_read,!smart_construction_core.group_sc_cap_project_user,!smart_construction_core.group_sc_cap_project_manager"
+                           readonly="1"
                            statusbar_visible="prepare,estimating,submitted,waiting,won,lost"
                            statusbar_colors="{'won':'success','lost':'danger','waiting':'warning','estimating':'info'}"/>
                 </header>

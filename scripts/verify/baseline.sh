@@ -65,6 +65,7 @@ check_eq "lang zh_CN active" "1" "SELECT active::int FROM res_lang WHERE code='z
 check_eq "admin lang" "zh_CN" "SELECT lang FROM res_partner WHERE id=(SELECT partner_id FROM res_users WHERE login='admin');"
 check_eq "admin tz" "Asia/Shanghai" "SELECT tz FROM res_partner WHERE id=(SELECT partner_id FROM res_users WHERE login='admin');"
 check_company_currency_cny
-check_eq "module smart_construction_bootstrap installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_bootstrap';"
+check_eq "module smart_platform_bootstrap installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_platform_bootstrap';"
+check_eq "module smart_construction_bootstrap installed (compat shim)" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_bootstrap';"
 
 echo "[verify.baseline] PASS ALL on ${DB_NAME}"

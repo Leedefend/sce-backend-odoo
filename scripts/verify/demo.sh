@@ -34,7 +34,8 @@ check_eq "lang zh_CN active" "1" "SELECT active::int FROM res_lang WHERE code='z
 check_eq "admin lang" "zh_CN" "SELECT lang FROM res_partner WHERE id=(SELECT partner_id FROM res_users WHERE login='admin');"
 check_eq "admin tz" "Asia/Shanghai" "SELECT tz FROM res_partner WHERE id=(SELECT partner_id FROM res_users WHERE login='admin');"
 check_eq "company currency is CNY" "1" "SELECT 1 FROM res_company c JOIN res_currency rc ON c.currency_id=rc.id WHERE rc.name='CNY' LIMIT 1;"
-check_eq "module smart_construction_bootstrap installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_bootstrap';"
+check_eq "module smart_platform_bootstrap installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_platform_bootstrap';"
+check_eq "module smart_construction_bootstrap installed (compat shim)" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_bootstrap';"
 
 # Demo/seed specific
 check_eq "module smart_construction_seed installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_seed';"

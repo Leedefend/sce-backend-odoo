@@ -13,8 +13,8 @@ my_projects = Project.search(my_project_domain, limit=2)
 
 if len(my_projects) == 1:
     project = my_projects[0]
-    direct_action = env.ref('smart_construction_core.action_exec_structure_wbs').read()[0]
-    action_ctx = dict(direct_action.get('context') or {})
+    direct_action = project.action_open_exec_wbs()
+    action_ctx = Project._normalize_action_context(direct_action.get('context'))
     action_ctx.update(ctx)
     action_ctx['default_project_id'] = project.id
     action_ctx['search_default_project_id'] = project.id
@@ -22,8 +22,8 @@ if len(my_projects) == 1:
     direct_action['domain'] = [('project_id', '=', project.id)]
     action = direct_action
 else:
-    next_action = env.ref('smart_construction_core.action_sc_project_kanban_lifecycle').read()[0]
-    next_ctx = dict(next_action.get('context') or {})
+    next_action = env['ir.actions.act_window']._for_xml_id('smart_construction_core.action_sc_project_kanban_lifecycle')
+    next_ctx = Project._normalize_action_context(next_action.get('context'))
     next_ctx.update(ctx)
     next_ctx['search_default_filter_my_projects'] = 1
     next_ctx['sc_exec_entry_mode'] = 'wbs'

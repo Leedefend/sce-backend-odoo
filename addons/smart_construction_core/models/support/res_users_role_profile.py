@@ -28,8 +28,6 @@ ROLE_PROFILE_GROUP_XMLIDS = {
     ],
     "executive": [
         "smart_construction_custom.group_sc_role_executive",
-        "smart_construction_core.group_sc_super_admin",
-        "smart_construction_core.group_sc_cap_config_admin",
     ],
 }
 

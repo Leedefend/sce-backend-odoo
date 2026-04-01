@@ -107,29 +107,29 @@
               name="合同管理"
               parent="menu_sc_root"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_income"
               name="收入合同"
               parent="menu_sc_contract_center"
               action="action_construction_contract_income"
               sequence="5"
-              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_expense"
               name="支出合同"
               parent="menu_sc_contract_center"
               action="action_construction_contract_expense"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
     <!-- 强制覆盖合同中心菜单的 groups（移除只读组，避免财务看到） -->
     <record id="menu_sc_contract_center" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_read'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
     </record>
     <record id="menu_sc_contract_income" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_read'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
     </record>
     <record id="menu_sc_contract_expense" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_read'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
     </record>
 
     <!-- 成控中心 -->
@@ -138,7 +138,7 @@
               parent="menu_sc_root"
               action="smart_construction_core.action_project_cost_compare"
               sequence="25"
-              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+              groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_project_budget"
               name="项目预算"
               parent="menu_sc_cost_center"
@@ -156,7 +156,7 @@
               parent="menu_sc_cost_center"
               action="action_project_wbs"
               sequence="30"
-              groups="base.group_no_one"/>
+              groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_project_progress"
               name="进度计量"
               parent="menu_sc_cost_center"
@@ -168,19 +168,19 @@
               parent="menu_sc_cost_center"
               action="action_project_cost_ledger"
               sequence="50"
-              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+              groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_cost_reports"
               name="成本报表"
               parent="menu_sc_cost_center"
               action="smart_construction_core.action_project_cost_compare"
               sequence="60"
-              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+              groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_profit_reports"
               name="经营利润"
               parent="menu_sc_cost_center"
               action="smart_construction_core.action_project_profit_compare"
               sequence="70"
-              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+              groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
 
     <!-- 工程资料中心：归属项目中心 -->
     <menuitem id="menu_sc_doc_center"
@@ -200,13 +200,13 @@
               name="物资管理"
               parent="menu_sc_root"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_project_material_plan"
               name="物资计划"
               parent="menu_sc_material_center"
               action="action_project_material_plan"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_tier_review_my_material_plan"
               name="待我审批（物资计划）"
               parent="menu_sc_material_center"

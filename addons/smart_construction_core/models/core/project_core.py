@@ -5,6 +5,7 @@ import logging
 import uuid
 
 from odoo import models, fields, api
+from odoo.tools.safe_eval import safe_eval
 
 from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
@@ -921,10 +922,24 @@ class ProjectProject(models.Model):
     ]
 
     # ---------- 小工具：统一打开项目相关 action ----------
+    @api.model
+    def _normalize_action_context(self, raw_context):
+        if not raw_context:
+            return {}
+        if isinstance(raw_context, dict):
+            return dict(raw_context)
+        if isinstance(raw_context, str):
+            try:
+                value = safe_eval(raw_context)
+            except Exception:
+                return {}
+            return value if isinstance(value, dict) else {}
+        return {}
+
     def _action_open_related(self, xml_id, domain=None, extra_context=None):
         """统一封装打开与当前项目相关的 Action."""
         self.ensure_one()
-        action = self.env.ref(xml_id).read()[0]
+        action = self.env["ir.actions.act_window"]._for_xml_id(xml_id)
 
         # domain：默认过滤当前项目
         base_domain = [('project_id', '=', self.id)]
@@ -1493,7 +1508,7 @@ class ProjectProject(models.Model):
     def action_view_my_tasks(self):
         """Open tasks for current project with a 'my tasks' filter."""
         self.ensure_one()
-        action = self.env.ref("project.action_view_task").read()[0]
+        action = self.env.ref("project.action_view_task").sudo().read()[0]
         action["domain"] = [
             ("project_id", "=", self.id),
             "|",
@@ -1527,12 +1542,14 @@ class ProjectProject(models.Model):
                     "sc_overview_action_xmlid": "smart_construction_core.action_sc_project_overview",
                 },
             })
-        fallback = {
-            "title": "查看阶段要求",
-            "action_type": "object_method",
-            "action_ref": "action_view_stage_requirements",
-            "payload": {"project_id": self.id},
-        }
+        fallback = None
+        if self.env.user.has_group("smart_construction_core.group_sc_super_admin"):
+            fallback = {
+                "title": "查看阶段要求",
+                "action_type": "object_method",
+                "action_ref": "action_view_stage_requirements",
+                "payload": {"project_id": self.id},
+            }
         return {
             "status": "ok",
             "project_id": self.id,
@@ -1582,18 +1599,19 @@ class ProjectProject(models.Model):
         ctx.setdefault("search_default_project_id", self.id)
         if action_type == "act_window_xmlid":
             try:
-                action = self.env.ref(action_ref).read()[0]
+                action = self.env["ir.actions.act_window"]._for_xml_id(action_ref)
             except Exception:
                 return False
-            action_ctx = dict(action.get("context") or {})
+            action_ctx = self._normalize_action_context(action.get("context"))
             action_ctx.update(ctx)
             action["context"] = action_ctx
             return action
         if action_type == "object_method":
-            method = getattr(self, action_ref, None)
+            record = self.with_context(ctx)
+            method = getattr(record, action_ref, None)
             if not method:
                 return False
-            return method.with_context(ctx)()
+            return method()
         return False
 
     def action_open_project_progress_entry(self):
@@ -1619,8 +1637,12 @@ class ProjectProject(models.Model):
     def action_open_boq_import(self):
         """Open BOQ import wizard with current project prefilled."""
         self.ensure_one()
-        action = self.env.ref('smart_construction_core.action_project_boq_import_wizard').read()[0]
-        action['context'] = {'default_project_id': self.id}
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "smart_construction_core.action_project_boq_import_wizard"
+        )
+        ctx = self._normalize_action_context(action.get("context"))
+        ctx["default_project_id"] = self.id
+        action['context'] = ctx
         return action
 
     def action_generate_structure_from_boq(self):
@@ -1955,8 +1977,9 @@ class ProjectProject(models.Model):
     def action_view_stage_requirements(self):
         """Open stage requirements wizard."""
         self.ensure_one()
-        wizard = self.env["sc.project.stage.requirement.wizard"].create(
-            {"project_id": self.id, "lifecycle_state": self.lifecycle_state}
+        view = self.env.ref(
+            "smart_construction_core.view_sc_project_stage_requirement_wizard",
+            raise_if_not_found=False,
         )
         return {
             "name": "阶段要求",
@@ -1964,7 +1987,11 @@ class ProjectProject(models.Model):
             "res_model": "sc.project.stage.requirement.wizard",
             "view_mode": "form",
             "target": "new",
-            "res_id": wizard.id,
+            "view_id": view.id if view else False,
+            "context": {
+                "default_project_id": self.id,
+                "default_lifecycle_state": self.lifecycle_state,
+            },
         }
 
     def _validate_lifecycle_transition(self, target_state):

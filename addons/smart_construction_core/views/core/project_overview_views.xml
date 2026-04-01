@@ -46,6 +46,7 @@
                                             type="object"
                                             string="查看阶段要求"
                                             class="btn btn-primary"
+                                            groups="smart_construction_core.group_sc_super_admin"
                                             invisible="lifecycle_state == 'draft'"/>
                                 </div>
                             </div>

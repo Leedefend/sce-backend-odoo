@@ -236,7 +236,7 @@
 
             <!-- notebook 中重排业务页签，保证系统/描述/设置靠后 -->
             <xpath expr="//sheet/notebook/page[@name='sc_construction']" position="after">
-                <page string="WBS结构" name="wbs_tab" data-sc-anchor="wbs" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                <page string="WBS结构" name="wbs_tab" data-sc-anchor="wbs" groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
                     <field name="wbs_ids" context="{'default_project_id': id}">
                         <tree editable="bottom">
                             <field name="sequence"/>
