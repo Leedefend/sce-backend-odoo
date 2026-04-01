@@ -71,7 +71,10 @@ class TestUserRoleProfileBackend(TransactionCase):
             self.assertEqual(user.company_id, company)
             self.assertIn(company, user.company_ids)
             self.assertEqual(user.sc_role_effective, "executive")
-            self.assertIn("smart_construction_core.group_sc_super_admin", IdentityResolver(self.env).user_group_xmlids(user))
+            group_xmlids = IdentityResolver(self.env).user_group_xmlids(user)
+            self.assertIn("smart_construction_custom.group_sc_role_executive", group_xmlids)
+            self.assertNotIn("smart_construction_core.group_sc_super_admin", group_xmlids)
+            self.assertNotIn("base.group_system", group_xmlids)
             password_mock.assert_called_once()
             self.assertEqual(password_mock.call_args.args[1], "Pass1234")
 
@@ -110,7 +113,10 @@ class TestUserRoleProfileBackend(TransactionCase):
             self.assertEqual(user.company_id, other_company)
             self.assertIn(other_company, user.company_ids)
             self.assertEqual(user.sc_role_effective, "executive")
-            self.assertIn("smart_construction_core.group_sc_super_admin", IdentityResolver(self.env).user_group_xmlids(user))
+            group_xmlids = IdentityResolver(self.env).user_group_xmlids(user)
+            self.assertIn("smart_construction_custom.group_sc_role_executive", group_xmlids)
+            self.assertNotIn("smart_construction_core.group_sc_super_admin", group_xmlids)
+            self.assertNotIn("base.group_system", group_xmlids)
             password_mock.assert_called_once()
             self.assertEqual(password_mock.call_args.args[1], "Pass5678")
 
@@ -179,6 +185,14 @@ class TestUserRoleProfileBackend(TransactionCase):
         self.assertEqual(user.sc_role_profile, "pm")
         self.assertEqual(role_code, "pm")
         self.assertIn("smart_construction_core.group_sc_cap_project_manager", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_contract_manager", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_cost_user", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_cost_read", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_material_manager", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_purchase_manager", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_cost_manager", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_finance_user", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_finance_manager", resolver.user_group_xmlids(user))
 
     def test_create_with_company_id_adds_allowed_company_scope(self):
         company = self.env.company
@@ -224,6 +238,16 @@ class TestUserRoleProfileBackend(TransactionCase):
             }
             & resolver.user_group_xmlids(user)
         )
+        self.assertIn("smart_construction_core.group_sc_cap_project_read", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_contract_read", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_cost_read", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_material_read", resolver.user_group_xmlids(user))
+        self.assertIn("smart_construction_core.group_sc_cap_purchase_read", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_custom.group_sc_role_owner", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_contract_user", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_cost_user", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_material_user", resolver.user_group_xmlids(user))
+        self.assertNotIn("smart_construction_core.group_sc_cap_purchase_user", resolver.user_group_xmlids(user))
 
     def test_custom_acl_and_role_matrix_still_route_permissions_through_capability_groups(self):
         acl_rows = self.env["ir.model.access"].sudo().search(
@@ -243,6 +267,34 @@ class TestUserRoleProfileBackend(TransactionCase):
         )
         self.assertIn("smart_construction_custom.group_sc_role_config_admin", implied_xmlids)
         self.assertNotIn("smart_construction_core.group_sc_cap_config_admin", implied_xmlids)
+        self.assertIn("smart_construction_custom.group_sc_role_owner", implied_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_cost_manager", implied_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_material_manager", implied_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_purchase_manager", implied_xmlids)
+
+    def test_owner_role_now_carries_project_facing_operation_surface_without_finance_authority(self):
+        company = self.env.company
+        user = self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "Sprint1 Owner",
+                "login": "sprint1-owner@example.com",
+                "password": "Pass1234",
+                "company_id": company.id,
+                "company_ids": [(6, 0, [company.id])],
+                "sc_role_profile": "owner",
+            }
+        )
+
+        resolver = IdentityResolver(self.env)
+        group_xmlids = resolver.user_group_xmlids(user)
+
+        self.assertIn("smart_construction_core.group_sc_cap_project_user", group_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_contract_user", group_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_cost_user", group_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_material_user", group_xmlids)
+        self.assertIn("smart_construction_core.group_sc_cap_purchase_user", group_xmlids)
+        self.assertNotIn("smart_construction_core.group_sc_cap_finance_user", group_xmlids)
+        self.assertNotIn("smart_construction_core.group_sc_cap_finance_manager", group_xmlids)
 
     def test_legacy_core_role_groups_use_bridge_groups_instead_of_direct_capability_inheritance(self):
         role_to_bridge = {

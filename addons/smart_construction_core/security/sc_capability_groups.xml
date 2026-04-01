@@ -253,15 +253,14 @@
 
         <!-- =========================
              配置管理员
-             - 仍建议 implied internal_user，保持其为内部用户
+             - 企业业务系统配置管理员，不自动获得平台级设置权限
         ========================== -->
         <record id="group_sc_cap_config_admin" model="res.groups">
             <field name="name">SC 能力 - 配置管理员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[
                 (6, 0, [
-                    ref('smart_construction_core.group_sc_internal_user'),
-                    ref('base.group_system')
+                    ref('smart_construction_core.group_sc_internal_user')
                 ])
             ]"/>
         </record>

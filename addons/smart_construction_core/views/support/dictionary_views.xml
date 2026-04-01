@@ -279,6 +279,16 @@
         <field name="tag">project_quota_center</field>
     </record>
 
+    <record id="action_project_quota_center_entry" model="ir.actions.server">
+        <field name="name">定额中心入口</field>
+        <field name="model_id" ref="model_project_dictionary"/>
+        <field name="state">code</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_data_read'))]"/>
+        <field name="code"><![CDATA[
+action = env['project.dictionary'].action_open_quota_center()
+        ]]></field>
+    </record>
+
     <!-- ========== 菜单结构：施工企业管理 → 配置 → 数据字典 → 四个子菜单 ========== -->
     <!-- 父菜单配置中心：menu_sc_config_center -->
 
@@ -305,7 +315,7 @@
     <menuitem id="menu_project_quota_center"
               name="定额中心（左树右明细）"
               parent="menu_project_quota_root"
-              action="action_project_quota_center"
+              action="action_project_quota_center_entry"
               sequence="5"
               groups="smart_construction_core.group_sc_cap_data_read"/>
 

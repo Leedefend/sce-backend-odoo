@@ -109,7 +109,7 @@ class ScProjectStageRequirementWizardLine(models.TransientModel):
         if not self.action_xmlid:
             return False
         try:
-            action = self.env.ref(self.action_xmlid).read()[0]
+            action = self.env.ref(self.action_xmlid).sudo().read()[0]
         except Exception:
             return False
         ctx = dict(action.get("context") or {})
