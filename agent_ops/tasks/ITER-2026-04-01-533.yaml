@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-01-533
+title: Restore metadata count parity in the optimized native list toolbar
+type: frontend
+status: active
+priority: medium
+
+goal: >
+  Restore explicit metadata count visibility in the optimized native list
+  toolbar so it matches the readability of the non-optimized toolbar without
+  changing any filter behavior or backend semantics.
+
+user_visible_outcome:
+  - "优化态 toolbar 重新显示可搜索字段/分面维度数量"
+  - "保持纯显示层修复"
+  - "不改变任何筛选、分组或搜索行为"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/PageToolbar.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no behavior changes
+  - no new interactions
+  - restore count parity for optimized metadata presentation only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a02eb6
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-532
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The optimized toolbar currently merges metadata chips under a generic label
+    and hides explicit totals that still exist in the non-optimized toolbar.
+    Restoring those counts is the next smallest display-only usability slice.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-533.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - metadata_count_parity_requires_behavior_change
+
+deliverables:
+  - optimized_toolbar_metadata_count_parity
+  - governance/report artifacts for ITER-2026-04-01-533
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-04-01-533.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-533.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-533.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-532

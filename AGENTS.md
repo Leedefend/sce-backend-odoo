@@ -47,6 +47,15 @@ Hard rules:
   hoc long prompts.
 - Cross-stage reasoning is forbidden in low-cost mode.
 - Each subtask should run in a new session with short context.
+- Low-risk tasks MAY use bounded role-parallel execution only when the task
+  contract explicitly declares it.
+- Role-parallel execution must keep a single stage, disjoint write scope, and a
+  new session per role.
+- `executor`, `auditor`, and `reporter` may run in parallel only inside the
+  same declared low-risk stage; they must not reopen repository scans or add
+  cross-stage reasoning.
+- If role boundaries or write boundaries become unclear, the batch MUST fall
+  back to single-agent sequential execution.
 - Subagents are allowed only when parallel execution is clearly required.
 - Default execution should remain single-agent, staged, and short-context.
 

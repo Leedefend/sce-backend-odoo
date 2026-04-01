@@ -103,7 +103,9 @@ async function main() {
     writeJson(path.join(outDir, 'login.log'), loginResp);
     throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
-  const token = (loginResp.body.data || {}).token;
+  const loginData = (loginResp.body || {}).data || {};
+  const session = loginData.session || {};
+  const token = session.token || loginData.token || '';
   if (!token) {
     throw new Error('login response missing token');
   }

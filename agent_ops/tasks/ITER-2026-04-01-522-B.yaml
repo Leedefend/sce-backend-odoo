@@ -49,6 +49,7 @@ context:
   use_new_session: true
   carry_long_context: false
   base_task_id: ITER-2026-04-01-522
+  role_parallel_enabled: false
   input_from: ITER-2026-04-01-522-A
 architecture:
   layer_target: Platform Governance Acceptance
@@ -94,3 +95,10 @@ limits:
   forbid_repo_wide_scan: true
   use_new_session: true
   carry_long_context: false
+role_parallel:
+  enabled: false
+  allowed_roles:
+  - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true

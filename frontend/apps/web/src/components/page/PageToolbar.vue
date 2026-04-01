@@ -136,7 +136,7 @@
             :disabled="loading"
             @click="toggleAdvancedFilters"
           >
-            {{ showAdvancedFilters ? '收起高级筛选' : `展开高级筛选（${advancedFilterCountText}）` }}
+            {{ advancedFiltersToggleText }}
           </button>
         </div>
         <div v-if="showAdvancedFilters" class="contract-advanced">
@@ -216,7 +216,7 @@
 
       <template v-else-if="section.key === 'secondary_metadata' && showSecondaryMetadataSection">
         <span class="contract-group__label">辅助信息</span>
-        <span class="contract-group__caption">补充说明当前搜索模式与可读元数据</span>
+        <span class="contract-group__caption">{{ secondaryMetadataCaptionText }}</span>
         <div class="contract-group__chips">
           <span v-if="searchModeLabelText" class="contract-chip static">{{ searchModeLabelText }}</span>
           <span
@@ -538,9 +538,6 @@ const secondarySearchPanelOptions = computed(() =>
 );
 const activeStateChips = computed(() => {
   const chips: ToolbarChip[] = [];
-  if (routePresetLabelText.value) {
-    chips.push({ key: `preset:${routePresetLabelText.value}`, label: `推荐筛选：${routePresetChipLabel.value}` });
-  }
   const searchText = String(props.searchTerm || '').trim();
   if (searchText && !(routePresetOverridesSearchTerm.value && routePresetLabelText.value)) {
     chips.push({ key: `search:${searchText}`, label: `搜索：${searchText}` });
@@ -559,7 +556,7 @@ const activeStateChips = computed(() => {
   }
   const sortLabel = String(props.sortLabel || '').trim();
   const sortSource = String(props.sortSourceLabel || '').trim();
-  if (sortLabel) {
+  if (sortLabel && sortSource !== '原生默认排序') {
     const prefix = sortSource || '排序';
     chips.push({ key: `sort:${sortLabel}`, label: `${prefix}：${sortLabel}` });
   }
@@ -604,9 +601,28 @@ const showAdvancedFiltersSection = computed(() =>
 const showSecondaryMetadataSection = computed(() =>
   Boolean(searchModeLabelText.value || searchableFieldOptions.value.length || secondarySearchPanelOptions.value.length),
 );
+const secondaryMetadataCaptionText = computed(() => {
+  const segments: string[] = [];
+  if (searchableFieldOptions.value.length) {
+    segments.push(`可搜索字段（${searchableFieldCountText.value}）`);
+  }
+  if (secondarySearchPanelOptions.value.length) {
+    segments.push(`分面维度（${searchPanelCountText.value}）`);
+  }
+  if (!segments.length) return '补充说明当前搜索模式与可读元数据';
+  return segments.join(' / ');
+});
 const advancedFilterCountText = computed(() => {
-  const total = advancedQuickFilters.value.length + advancedSavedFilters.value.length + advancedSearchPanelOptions.value.length;
+  const total = advancedQuickFilters.value.length + advancedSavedFilters.value.length;
   return String(total);
+});
+const advancedFiltersToggleText = computed(() => {
+  if (showAdvancedFilters.value) return '收起高级筛选';
+  const count = Number(advancedFilterCountText.value || '0');
+  if (Number.isFinite(count) && count > 0) {
+    return `展开高级筛选（${advancedFilterCountText.value}）`;
+  }
+  return '展开高级筛选';
 });
 
 watch(

@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-01-524
+title: Scan the next low-risk product usability candidate on the native-metadata list line
+type: frontend
+status: active
+priority: medium
+mode: scan
+
+goal: >
+  Resume the product usability verification direction by scanning the current
+  native-metadata list surfaces and narrowing the next low-risk single-batch
+  usability candidate without implementing any UI changes.
+
+user_visible_outcome:
+  - "回到产品可用性验证主线"
+  - "筛出下一条低风险 list 可用性候选切片"
+  - "避免一次混入扫描、实现和验证"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/**
+    - frontend/apps/web/src/pages/**
+    - frontend/apps/web/src/views/ActionView.vue
+    - frontend/apps/web/src/views/ActionViewShell.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 15
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - low-cost scan stage only
+  - do not implement frontend changes
+  - do not conclude the final fix
+  - restrict reads to native-metadata list surfaces
+  - use structured candidate output only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a02eb6
+  explicit_user_authorization: true
+  use_new_session: true
+  carry_long_context: false
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list usability scan
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The active product-usability line already improved list toolbar readability.
+    The next safe step is to scan the current list surfaces and narrow the next
+    low-risk candidate before opening a new implementation batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-524.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - repo_wide_scan_attempted
+  - scan_output_exceeds_limits
+  - scan_attempts_to_conclude
+
+deliverables:
+  - structured scan candidate list
+  - next low-risk usability batch suggestion
+  - governance/report artifacts for ITER-2026-04-01-524
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-01-524.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-524.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-524.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-523

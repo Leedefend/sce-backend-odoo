@@ -102,6 +102,12 @@ endif
 MODULE       ?= smart_construction_core
 WITHOUT_DEMO ?= --without-demo=all
 ODOO_ARGS    ?=
+E2E_LOGIN    ?=
+E2E_PASSWORD ?=
+PORTAL_SMOKE_LOGIN ?= svc_e2e_smoke
+PORTAL_SMOKE_PASSWORD ?= demo
+MVP_MENU_XMLID ?= scene.contract.projects_list
+ROOT_XMLID   ?= smart_construction_core.menu_sc_root
 
 DEMO_TIMEOUT     ?= 600
 DEMO_LOG_TAIL    ?= 200
@@ -644,12 +650,12 @@ verify.portal.payment_request_approval_all_smoke.container: guard.prod.forbid ch
 verify.portal.payment_request_approval_field_consumer_audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/payment_request_approval_field_consumer_audit.py
 verify.portal.v0_5.host: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) ARTIFACTS_DIR=$(ARTIFACTS_DIR) \
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(or $(E2E_LOGIN),$(PORTAL_SMOKE_LOGIN)) E2E_PASSWORD=$(or $(E2E_PASSWORD),$(PORTAL_SMOKE_PASSWORD)) ARTIFACTS_DIR=$(ARTIFACTS_DIR) \
 		node scripts/verify/fe_mvp_list_smoke.js
 verify.portal.v0_5.all: verify.portal.view_state verify.portal.v0_5.container
 	@echo "[OK] verify.portal.v0_5.all done"
 verify.portal.v0_5.container: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/fe_mvp_list_smoke.js"
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(or $(E2E_LOGIN),$(PORTAL_SMOKE_LOGIN)) E2E_PASSWORD=$(or $(E2E_PASSWORD),$(PORTAL_SMOKE_PASSWORD)) node /mnt/scripts/verify/fe_mvp_list_smoke.js"
 verify.portal.v0_6.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MODEL=$(MVP_MODEL) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) CREATE_NAME=$(CREATE_NAME) UPDATE_NAME=$(UPDATE_NAME) node /mnt/scripts/verify/fe_mvp_write_smoke.js"
 verify.portal.recordview_hud_smoke.container: guard.prod.forbid check-compose-project check-compose-env

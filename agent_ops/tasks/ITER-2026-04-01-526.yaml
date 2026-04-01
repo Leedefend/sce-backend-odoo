@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-01-526
+title: Remove duplicate route-preset exposure from the native list toolbar
+type: frontend
+status: active
+priority: medium
+
+goal: >
+  Improve native list readability by showing route-preset state only in the
+  dedicated recommendation group instead of duplicating it in active-condition
+  chips, without changing any data flow, callbacks, or backend semantics.
+
+user_visible_outcome:
+  - "推荐筛选信息不再重复展示"
+  - "list toolbar 可读性提升"
+  - "不改变现有筛选交互或后端契约"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/PageToolbar.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no backend changes
+  - no new interactions
+  - preserve the dedicated route-preset group and clear callback
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a02eb6
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The low-cost scan and screen stages selected route-preset duplication as
+    the next low-risk usability slice. The fix stays inside PageToolbar display
+    logic and does not require contract or behavior changes.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-526.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - route_preset_dedup_requires_behavior_change
+
+deliverables:
+  - deduplicated_route_preset_display
+  - governance/report artifacts for ITER-2026-04-01-526
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-04-01-526.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-526.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-526.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-525

@@ -29,10 +29,19 @@ limits:
   use_new_session: true
   carry_long_context: false
 
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
 change_rules:
   - single-stage execution only
   - use prompt templates before free-form prompting
   - do not mix scan screen verify responsibilities
+  - allow role-parallel execution only when role_parallel.enabled is true
 
 context:
   branch: codex/next-round
