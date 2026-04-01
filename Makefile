@@ -2232,8 +2232,12 @@ verify.project.dashboard.evidence: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_evidence_export.py
 
 .PHONY: verify.project.management.productization
-verify.project.management.productization: guard.prod.forbid verify.project.dashboard.contract verify.project.dashboard.snapshot
+verify.project.management.productization: guard.prod.forbid verify.project.dashboard.contract verify.project.dashboard.snapshot verify.project.lifecycle.semantic.guard
 	@python3 scripts/verify/project_management_productization_flow_guard.py
+
+.PHONY: verify.project.lifecycle.semantic.guard
+verify.project.lifecycle.semantic.guard: guard.prod.forbid
+	@python3 scripts/verify/project_lifecycle_semantic_guard.py
 
 .PHONY: verify.frontend.project_management.scene_bridge.guard
 verify.frontend.project_management.scene_bridge.guard: guard.prod.forbid
