@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-01-549
+title: Clarify high-frequency filter header as a subset
+type: frontend
+status: active
+priority: medium
+
+goal: >
+  Make the optimized toolbar's high-frequency filter header clearly describe a
+  prioritized subset rather than the full quick-filter inventory.
+
+user_visible_outcome:
+  - "高频筛选标题更清楚地表达这是优先子集"
+  - "不再容易误解为全部快速筛选总量"
+  - "保持纯显示层修复"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/components/page/PageToolbar.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no behavior changes
+  - clarify the header/count wording for the prioritized quick-filter subset only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8194c19
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-548
+
+architecture:
+  layer_target: Frontend Layer
+  module: native metadata list toolbar consumer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The optimized toolbar exposes only the prioritized quick-filter subset in
+    the high-frequency section, but the current header can read like a total.
+    The next low-risk display fix is to make the subset meaning explicit.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-549.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - high_frequency_subset_clarity_requires_behavior_change
+
+deliverables:
+  - high_frequency_filter_header_subset_clarity
+  - governance/report artifacts for ITER-2026-04-01-549
+
+rollback:
+  - git restore frontend/apps/web/src/components/page/PageToolbar.vue
+  - git restore agent_ops/tasks/ITER-2026-04-01-549.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-549.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-549.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-548

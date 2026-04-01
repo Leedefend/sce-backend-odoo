@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-01-546
+title: Normalize ActionView route-preset provenance wording
+type: frontend
+status: active
+priority: medium
+
+goal: >
+  Align the non-native ActionView route-preset provenance wording with the
+  normalized toolbar wording, while keeping the change display-only.
+
+user_visible_outcome:
+  - "ActionView 与 toolbar 的推荐筛选来源文案一致"
+  - "route-derived preset 统一显示为路由上下文"
+  - "保持纯显示层修复"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/ActionView.vue
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - display-only enhancement
+  - no behavior changes
+  - normalize provenance wording locally inside ActionView
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8194c19
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-545
+
+architecture:
+  layer_target: Frontend Layer
+  module: route-preset provenance display
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    Toolbar wording already normalizes route-derived preset sources. The next
+    low-risk display fix is to bring ActionView onto the same wording so the
+    same preset does not read differently across surfaces.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-546.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - provenance_wording_alignment_requires_behavior_change
+
+deliverables:
+  - cross_surface_route_preset_provenance_alignment
+  - governance/report artifacts for ITER-2026-04-01-546
+
+rollback:
+  - git restore frontend/apps/web/src/views/ActionView.vue
+  - git restore agent_ops/tasks/ITER-2026-04-01-546.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-546.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-546.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-545

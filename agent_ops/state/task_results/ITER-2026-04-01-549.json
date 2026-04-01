@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-01-549",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-549.md",
+  "changed_files": [
+    "frontend/apps/web/src/components/page/PageToolbar.vue"
+  ],
+  "verification": {
+    "validate_task": "PASS",
+    "typecheck_strict": "PASS"
+  },
+  "next_step": "Open a low-cost verify batch for high-frequency subset wording."
+}

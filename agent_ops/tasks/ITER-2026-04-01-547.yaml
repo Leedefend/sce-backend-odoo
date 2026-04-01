@@ -1,0 +1,101 @@
+task_id: ITER-2026-04-01-547
+title: Verify cross-surface route-preset provenance wording alignment
+type: frontend
+status: active
+priority: medium
+mode: verify
+
+goal: >
+  Verify that the ActionView route-preset provenance wording alignment remains
+  a display-only improvement and does not regress the current list surface.
+
+user_visible_outcome:
+  - "确认跨 surface 的来源文案对齐没有引入回归"
+  - "确认当前 smoke 与类型门禁仍然稳定"
+  - "为下一轮 fresh scan 候选或提交窗口提供可信结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - addons/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: true
+  allowed_roles:
+    - executor
+    - auditor
+    - reporter
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - low-cost verify stage only
+  - do not modify product code in this batch
+  - do not reopen repository scans
+  - verify current frontend gate and trusted list smoke only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8194c19
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-546
+  use_new_session: true
+  carry_long_context: false
+  role_parallel_enabled: true
+
+architecture:
+  layer_target: Frontend Layer
+  module: route-preset provenance display verification
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    The cross-surface wording cleanup is complete. The next low-risk move is to
+    rerun the stable frontend gate and trusted list smoke before deciding on
+    the next scan or submit boundary.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-547.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+    - make verify.portal.v0_5.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - verify_command_failed
+  - trusted_container_verify_failed
+  - role_parallel_conflict_detected
+  - verification_requires_product_code_changes
+
+deliverables:
+  - verify verdict for cross-surface route-preset provenance alignment
+  - code result and gate result
+  - governance/report artifacts for ITER-2026-04-01-547
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-01-547.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-547.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-547.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-546
