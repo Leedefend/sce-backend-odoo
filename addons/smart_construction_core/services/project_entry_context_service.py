@@ -122,6 +122,43 @@ class ProjectEntryContextService:
             rank += 20
         return rank, context
 
+    @staticmethod
+    def _build_options_guidance(options, active_project_id=0):
+        normalized_options = list(options or [])
+        active_id = int(active_project_id or 0)
+        if normalized_options:
+            target_id = active_id if any(int(item.get("project_id") or 0) == active_id for item in normalized_options) else int(
+                (normalized_options[0] or {}).get("project_id") or 0
+            )
+            return {
+                "suggested_action": {
+                    "intent": "project.dashboard.enter",
+                    "reason_code": "PROJECT_OPTIONS_AVAILABLE",
+                    "params": {"project_id": int(target_id or 0)},
+                },
+                "lifecycle_hints": {
+                    "stage": "project_options_available",
+                    "project_id": int(target_id or 0),
+                    "primary_action_label": "进入项目管理",
+                    "suggested_action_intent": "project.dashboard.enter",
+                    "suggested_action_title": "进入项目管理",
+                },
+            }
+        return {
+            "suggested_action": {
+                "intent": "project.initiation.enter",
+                "reason_code": "PROJECT_OPTIONS_EMPTY",
+                "params": {},
+            },
+            "lifecycle_hints": {
+                "stage": "no_project_options",
+                "project_id": 0,
+                "primary_action_label": "创建项目",
+                "suggested_action_intent": "project.initiation.enter",
+                "suggested_action_title": "创建项目",
+            },
+        }
+
     def list_options(self, active_project_id=0, limit=12):
         Project = self.env["project.project"]
         domain = self._dashboard_service._project_domain_for_user()
@@ -156,7 +193,10 @@ class ProjectEntryContextService:
             )
             if len(options) >= int(limit or 12):
                 break
+        guidance = self._build_options_guidance(options, active_project_id=active_project_id)
         return {
             "options": options,
             "active_project_id": int(active_project_id or 0),
+            "suggested_action": dict(guidance.get("suggested_action") or {}),
+            "lifecycle_hints": dict(guidance.get("lifecycle_hints") or {}),
         }
