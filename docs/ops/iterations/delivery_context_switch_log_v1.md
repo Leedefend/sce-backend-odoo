@@ -16,6 +16,69 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T10:05:00Z
+- blocker_key: `native_list_search_visibility_verify_v1`
+- layer_target: `frontend layer`
+- module: `primary-toolbar search visibility verification`
+- reason: usability-first 总调度已经把 search affordance 视为列表主链问题；当前 verify 只确认 search section gating 修复后，native list 仍保持可信门禁绿色
+- completed_step: `已完成 ITER-2026-04-01-572：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，主工具栏 search 显示已与 optimization composition 的 search section 规则对齐`
+- active_commit: `ed77101`
+- next_step: `Open a P1 screen batch for the next native list mainline usability family`
+
+### 2026-04-01T09:55:00Z
+- blocker_key: `native_list_search_visibility_impl_v1`
+- layer_target: `frontend layer`
+- module: `primary-toolbar search visibility gating`
+- reason: `570` 已把下一条 P1 主链收敛为 search section visibility gating；当前批次只在 PageToolbar 内让 search block 跟 optimization composition 的 search section 显隐保持一致，避免误导用户继续搜索
+- completed_step: `已完成 ITER-2026-04-01-571：PageToolbar 的 search 区块已改为受 showSearchBlock 控制，showPrimaryToolbar 同步复用该 gate，与 sort block 的显隐策略保持一致`
+- active_commit: `ed77101`
+- next_step: `Run strict typecheck and trusted native-list verification for the search visibility fix`
+
+### 2026-04-01T09:50:00Z
+- blocker_key: `native_list_mainline_p1_screen_v1`
+- layer_target: `frontend layer`
+- module: `native list mainline usability screen`
+- reason: route-preset continuity 已恢复，当前开始按 usability-first 总调度筛选下一条 P1 主链，而不是回到 display-only 候选；screen 目标是找出最影响继续操作理解的下一族
+- completed_step: `已完成 ITER-2026-04-01-570：将下一条 P1 主链收敛为 search section visibility gating，而不是 sort-summary fallback 或更泛的显示层语义问题`
+- active_commit: `ed77101`
+- next_step: `Open a bounded P1 implementation batch limited to PageToolbar search visibility gating`
+
+### 2026-04-01T09:40:00Z
+- blocker_key: `native_list_toolbar_route_preset_verify_v1`
+- layer_target: `frontend layer`
+- module: `native list toolbar route-preset verification`
+- reason: 可用性优先调度已经把 route-preset visibility 从“结构候选”升级为 P1 主链问题；当前 verify 只确认 native list mainline 在 route-preset 独立可见性修复后仍保持可信门禁绿色
+- completed_step: `已完成 ITER-2026-04-01-569：validate_task PASS、frontend strict typecheck PASS、make verify.portal.v0_5.container PASS，优化态与 route-preset-only 状态下的推荐筛选上下文都已恢复可见`
+- active_commit: `ed77101`
+- next_step: `Open a P1 screen batch for the next native list mainline usability family`
+
+### 2026-04-01T09:30:00Z
+- blocker_key: `native_list_toolbar_route_preset_impl_v1`
+- layer_target: `frontend layer`
+- module: `native list toolbar route-preset visibility`
+- reason: 总调度已切换为 usability-first；当前批次把 optimized route-preset visibility 视为用户继续操作所需的主链上下文，而不是纯显示层优化，因此直接在 PageToolbar 内补齐独立可见性 fallback 与 route-preset-only 渲染条件
+- completed_step: `已完成 ITER-2026-04-01-568：PageToolbar 在优化态新增 route-preset 独立区块，并在 optimization composition 未显式声明该 section 时注入 fallback，同时把 route-preset 纳入 hasContractControls`
+- active_commit: `ed77101`
+- next_step: `Run strict typecheck and trusted native-list verification for the route-preset usability fix`
+
+### 2026-04-01T09:20:00Z
+- blocker_key: `native_list_toolbar_route_preset_decision_v1`
+- layer_target: `frontend layer`
+- module: `optimized route-preset visibility decision`
+- reason: `566` 已经把结构决策目标收敛到 optimized route-preset visibility；当前这张决策批次继续把 follow-up 范围缩成单一策略，避免 route-preset visibility 修复把已去重的 active-condition chips 再带回来
+- completed_step: `已完成 ITER-2026-04-01-567：确认下一条 follow-up 应为 optimized toolbar 内的 route-preset 独立可见性 fallback，而不是把 preset 重新并入当前条件 chips`
+- active_commit: `ed77101`
+- next_step: `Open a bounded structural implementation batch limited to PageToolbar optimized route-preset visibility fallback`
+
+### 2026-04-01T09:10:00Z
+- blocker_key: `native_list_toolbar_structural_target_screen_v1`
+- layer_target: `frontend layer`
+- module: `native metadata list toolbar structural decision`
+- reason: `565 STOP` 只终止了 display-only 连续链，没有终止产品可用性主线；当前用一张新的治理 screen 在剩余结构性候选里先选定下一条决策目标，避免直接进入结构实现
+- completed_step: `已完成 ITER-2026-04-01-566：将下一条结构性决策目标收敛为 optimized route-preset visibility，而不是 search section gating 或 sort summary fallback visibility`
+- active_commit: `ed77101`
+- next_step: `Open a dedicated structural decision batch for optimized-toolbar route-preset visibility`
+
 ### 2026-04-01T09:00:00Z
 - blocker_key: `native_list_toolbar_fresh_screen_stop_v1`
 - layer_target: `frontend layer`
