@@ -42,11 +42,15 @@ change_rules:
   - use prompt templates before free-form prompting
   - do not mix scan screen verify responsibilities
   - allow role-parallel execution only when role_parallel.enabled is true
+  - usability rounds are backend-semantic-first
+  - frontend must remain a generic semantic consumer
+  - do not introduce model-specific frontend branching
 
 context:
   branch: codex/next-round
   baseline_sha: REPLACE_ME
   explicit_user_authorization: true
+  usability_battlefield: backend
 
 architecture:
   layer_target: Agent Governance
