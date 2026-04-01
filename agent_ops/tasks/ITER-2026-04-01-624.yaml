@@ -1,0 +1,96 @@
+task_id: ITER-2026-04-01-624
+title: Add lifecycle_hints to project entry error envelopes for usability continuity
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Ensure project lifecycle entry handlers always return lifecycle_hints in
+  error envelopes, so frontend generic rendering keeps actionable guidance.
+
+user_visible_outcome:
+  - "项目入口报错时仍有统一 lifecycle 引导语义"
+  - "前端无需特判错误场景也可展示下一步动作"
+  - "创建->管理闭环在异常路径下可持续"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_dashboard_enter.py
+    - addons/smart_construction_core/handlers/project_execution_enter.py
+    - addons/smart_construction_core/handlers/project_plan_bootstrap_enter.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 8
+  max_candidates: 3
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - backend-semantic-first
+  - additive-only
+  - no frontend model branching
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9111443
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-623
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Semantic Layer
+  module: lifecycle entry error-envelope semantic continuity
+  module_owner: smart_construction_core handlers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch enriches entry-scene orchestration outputs, not business fact models.
+  reason: >
+    Error path currently drops actionable lifecycle guidance for some entry
+    handlers; additive hints keep generic frontend usable without boundary break.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-624.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - backend_sub_layer_target_missing
+
+deliverables:
+  - project_entry_error_envelopes_with_lifecycle_hints
+  - governance/report artifacts for ITER-2026-04-01-624
+
+rollback:
+  - git restore addons/smart_construction_core/handlers/project_dashboard_enter.py
+  - git restore addons/smart_construction_core/handlers/project_execution_enter.py
+  - git restore addons/smart_construction_core/handlers/project_plan_bootstrap_enter.py
+  - git restore agent_ops/tasks/ITER-2026-04-01-624.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-624.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-624.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-623

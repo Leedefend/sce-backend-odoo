@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:07:32Z
+- blocker_key: `project_lifecycle_error_envelope_semantic_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `project entry lifecycle_hints error-envelope continuity`
+- reason: 本轮目标是保持“前端通用渲染”边界下的异常路径可用性；已完成实现并通过 acceptance 验证
+- completed_step: `已完成 ITER-2026-04-01-624/625：project.dashboard/project.execution/project.plan_bootstrap 错误返回均补齐 data.lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `9111443`
+- next_step: `Open next backend screen batch for remaining lifecycle entry or alias envelope semantic consistency`
+
+### 2026-04-01T15:04:00Z
+- blocker_key: `project_lifecycle_error_envelope_semantic_impl_v1`
+- layer_target: `backend semantic layer`
+- module: `project entry handlers error-envelope semantic continuity`
+- reason: 延续后端主战场可用性增强，识别到部分 project 入口在错误路径未返回 lifecycle_hints
+- completed_step: `已完成 ITER-2026-04-01-624：仅在三个非财务 project.*.enter handler 以 additive 方式补齐 data.lifecycle_hints`
+- active_commit: `9111443`
+- next_step: `Run project-management acceptance verification and seal verify artifacts`
+
 ### 2026-04-01T14:46:08Z
 - blocker_key: `backend_sub_layer_gate_codification_verify_v1`
 - layer_target: `agent governance layer`

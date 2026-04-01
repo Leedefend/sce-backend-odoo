@@ -45,6 +45,16 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                 return project_id
         return 0
 
+    @staticmethod
+    def _missing_project_lifecycle_hints() -> Dict[str, Any]:
+        return {
+            "stage": "no_project_context",
+            "first_action": "create_project",
+            "primary_action_label": "创建项目",
+            "suggested_action_intent": "project.initiation.enter",
+            "suggested_action_title": "创建项目",
+        }
+
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = payload or self.params or {}
@@ -59,6 +69,9 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                     "code": "PROJECT_CONTEXT_MISSING",
                     "message": "缺少 project_id，无法进入计划编排场景",
                     "suggested_action": "fix_input",
+                },
+                "data": {
+                    "lifecycle_hints": self._missing_project_lifecycle_hints(),
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -79,12 +92,18 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
             trace_id=str((self.context or {}).get("trace_id") or ""),
         )
         if int(data.get("project_id") or 0) <= 0:
+            lifecycle_hints = dict((data or {}).get("lifecycle_hints") or {})
+            if not lifecycle_hints:
+                lifecycle_hints = self._missing_project_lifecycle_hints()
             return {
                 "ok": False,
                 "error": {
                     "code": "PROJECT_NOT_FOUND",
                     "message": "项目不存在或当前账号不可访问",
                     "suggested_action": "fix_input",
+                },
+                "data": {
+                    "lifecycle_hints": lifecycle_hints,
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
