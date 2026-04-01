@@ -84,6 +84,32 @@ Hard rules:
 - Any proposed frontend model-special-case for usability is a stop signal and
   must be redirected to backend semantic correction.
 
+### 1.3 Backend Sub-Layer Decision Gate (MANDATORY)
+
+When lifecycle usability work is on backend battlefield, the scheduler MUST
+decide the backend change layer before implementation:
+
+- `business-fact layer`:
+  - use when missing data is business truth (state, rule result, ownership,
+    amount, permission fact, workflow fact).
+- `scene-orchestration layer`:
+  - use when missing data is semantic organization for consumption (next-step
+    hints, lifecycle labels, entry guidance envelope, scene-ready grouping).
+
+Hard rules:
+
+- The decision must be explicit in task `architecture.reason`.
+- Scene/orchestration layer must not fabricate business facts.
+- Business-fact layer must not emit frontend-specific view structure.
+- If uncertainty exists, scheduler must run a `screen` task first and stop
+  direct implementation.
+
+Stop rules:
+
+- Implementing orchestration semantics that depend on missing business truth.
+- Implementing business fact changes to patch pure presentation semantics.
+- Any frontend special-case proposed before backend sub-layer decision is made.
+
 ---
 
 ## 2. Iteration Loop (Agent Loop)

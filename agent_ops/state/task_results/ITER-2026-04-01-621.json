@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-01-621",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-621.md",
+  "decision": {
+    "next_candidate_family": "extend lifecycle_hints to non-base-orchestrator entry handlers",
+    "family_scope": "backend lifecycle semantic coverage",
+    "reason": "Current lifecycle_hints coverage is partial and should be extended to direct entry handlers."
+  },
+  "next_step": "Open bounded backend implementation for lifecycle_hints coverage extension."
+}

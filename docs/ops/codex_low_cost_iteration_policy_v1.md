@@ -259,6 +259,19 @@ Rule 3：
 
 低消耗模式优先使用仓库模板：
 
+- `agent_ops/templates/task_low_cost.yaml`
+- `agent_ops/templates/prompts/lead_scan.txt`
+- `agent_ops/templates/prompts/lead_screen.txt`
+- `agent_ops/templates/prompts/lead_verify.txt`
+
+复杂任务必须先 plan，再实现。
+
+默认使用单代理、分阶段、短上下文模式。
+
+只有当任务合同显式声明 `role_parallel` 且满足低风险条件时，才允许角色并行。
+
+只有在明确需要并行时才允许启用 subagents。
+
 ---
 
 ## 12. 可用性主战场边界（强制）
@@ -276,22 +289,33 @@ Rule 3：
 - 若存在语义缺口，下一张任务必须是后端语义补齐任务。
 - 前端任务只有在“语义已具备且渲染未消费”时才可执行。
 
-- `agent_ops/templates/task_low_cost.yaml`
-- `agent_ops/templates/prompts/lead_scan.txt`
-- `agent_ops/templates/prompts/lead_screen.txt`
-- `agent_ops/templates/prompts/lead_verify.txt`
+---
 
-复杂任务必须先 plan，再实现。
+## 13. 后端内部分层判定门禁（强制）
 
-默认使用单代理、分阶段、短上下文模式。
+当可用性主战场已确定为后端时，实现前必须先判定改动归属：
 
-只有当任务合同显式声明 `role_parallel` 且满足低风险条件时，才允许角色并行。
+- `business-fact layer`：
+  - 缺的是业务真相：状态事实、规则结果、权限事实、金额事实、流程事实。
+- `scene-orchestration layer`：
+  - 缺的是语义组织：next-step hints、lifecycle labels、entry guidance envelope、scene-ready 语义聚合。
 
-只有在明确需要并行时才允许启用 subagents。
+强制规则：
+
+- 每个后端可用性任务都必须在 `architecture.reason` 中声明本轮归属层。
+- 编排层不得伪造业务事实。
+- 业务事实层不得输出前端结构特例。
+- 若无法判定归属，必须先开 `screen` 任务，不得直接实现。
+
+触发停止：
+
+- 用编排层补业务事实。
+- 用业务事实层补展示语义。
+- 未做分层判定就进入实现。
 
 ---
 
-## 12. 与现有 agent_ops 兼容规则
+## 14. 与现有 agent_ops 兼容规则
 
 本规范必须保持与现有 `agent_ops` 兼容：
 

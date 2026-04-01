@@ -45,6 +45,7 @@ change_rules:
   - usability rounds are backend-semantic-first
   - frontend must remain a generic semantic consumer
   - do not introduce model-specific frontend branching
+  - backend usability batches must declare business-fact vs scene-orchestration ownership before implementation
 
 context:
   branch: codex/next-round
@@ -57,6 +58,9 @@ architecture:
   module: replace with module name
   module_owner: agent_ops governance surface
   kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact_or_scene_orchestration
+  backend_sub_layer_reason: >
+    Replace with explicit reason for choosing business-fact or scene-orchestration layer.
   reason: >
     Replace with the reason for this low-cost single-stage task.
 
@@ -72,6 +76,7 @@ stop_conditions:
   - limit_exceeded
   - forbidden_path_touched
   - stage_boundary_broken
+  - backend_sub_layer_not_decided_before_implementation
 
 deliverables:
   - single-stage structured result
