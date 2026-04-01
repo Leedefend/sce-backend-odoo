@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T14:32:19Z
+- blocker_key: `project_lifecycle_backend_semantic_screen_v1`
+- layer_target: `backend semantic layer`
+- module: `project lifecycle semantic supply screen`
+- reason: 边界已固化后，主战场切到后端；当前 screen 明确识别 scene entry 仅有技术型 suggested_action，缺少稳定 lifecycle_hints 语义
+- completed_step: `已完成 ITER-2026-04-01-618：下一条后端候选家族选定为 lifecycle_hints semantic contract on scene entry payload`
+- active_commit: `36bbed6`
+- next_step: `Open bounded backend implementation for lifecycle_hints semantic contract`
+
 ### 2026-04-01T14:18:26Z
 - blocker_key: `lifecycle_architecture_correction_verify_v1`
 - layer_target: `frontend layer`

@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-01-616
+title: Implement governance constraints for backend-semantic-first lifecycle usability
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Implement governance-layer constraints that force backend semantic-gap checks
+  before frontend lifecycle usability changes.
+
+user_visible_outcome:
+  - "调度默认先查后端语义供给"
+  - "前端只做通用渲染消费"
+  - "可用性缺口优先转后端补齐"
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/codex_low_cost_iteration_policy_v1.md
+    - agent_ops/templates/task_low_cost.yaml
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - governance-only implementation
+  - no business or frontend feature code changes
+  - enforce backend-semantic-first precondition
+
+context:
+  branch: codex/next-round
+  baseline_sha: 36bbed6
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-615
+  priority_lane: P1_project_lifecycle_usability
+
+architecture:
+  layer_target: Agent Governance
+  module: scheduler precondition implementation
+  module_owner: agent_ops governance surface
+  kernel_or_scenario: scenario
+  reason: >
+    Governance constraints must prevent future architecture boundary drift in
+    lifecycle usability rounds.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-616.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - backend_first_scheduler_precondition_enforced
+  - governance/report artifacts for ITER-2026-04-01-616
+
+rollback:
+  - git restore AGENTS.md
+  - git restore docs/ops/codex_low_cost_iteration_policy_v1.md
+  - git restore agent_ops/templates/task_low_cost.yaml
+  - git restore agent_ops/tasks/ITER-2026-04-01-616.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-616.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-616.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-615

@@ -67,6 +67,23 @@ Low-cost mode should use:
 - `agent_ops/templates/prompts/lead_screen.txt`
 - `agent_ops/templates/prompts/lead_verify.txt`
 
+### 1.2 Lifecycle Usability Battlefield Rule (MANDATORY)
+
+For system usability analysis and enhancement rounds, scheduling MUST treat
+backend semantics as the primary battlefield.
+
+Hard rules:
+
+- Usability gaps must be diagnosed against backend-provided semantics first.
+- Frontend must stay as a generic semantic consumer and interaction renderer.
+- Frontend must NOT branch on concrete business models to patch usability gaps.
+- If current backend semantics cannot support required usability behavior, the
+  scheduler MUST open a backend semantic-supply task line.
+- Frontend-only batches in usability rounds are allowed only when they consume
+  existing generic semantics and do not introduce model-specific assumptions.
+- Any proposed frontend model-special-case for usability is a stop signal and
+  must be redirected to backend semantic correction.
+
 ---
 
 ## 2. Iteration Loop (Agent Loop)

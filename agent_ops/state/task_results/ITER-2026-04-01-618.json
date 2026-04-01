@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-01-618",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-618.md",
+  "decision": {
+    "next_candidate_family": "lifecycle_hints semantic contract on scene entry payload",
+    "family_scope": "backend semantic supply for project lifecycle usability",
+    "reason": "Scene entry payloads provide technical suggested_action fields but lack stable user-facing lifecycle guidance semantics."
+  },
+  "next_step": "Open bounded backend implementation for lifecycle_hints semantic contract."
+}
