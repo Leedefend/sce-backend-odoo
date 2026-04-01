@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T16:27:59Z
+- blocker_key: `bootstrap_summary_readability_verify_v1`
+- layer_target: `backend usability`
+- module: `bootstrap summary readability enrichment`
+- reason: create-success 摘要可读性增强批次完成，已补充 ready/message 信号并通过验收链
+- completed_step: `已完成 ITER-2026-04-02-659/660：ProjectCreationService.post_create_bootstrap summary 新增 ready_for_management/summary_message，make verify.project.management.acceptance PASS`
+- active_commit: `2563c52`
+- next_step: `Open next business-fact usability screen batch`
+
+### 2026-04-01T16:26:30Z
+- blocker_key: `bootstrap_summary_readability_screen_v1`
+- layer_target: `backend usability`
+- module: `bootstrap summary readability screen`
+- reason: 已有结构化 bootstrap_summary，但缺少顶层可读 readiness/message
+- completed_step: `已完成 ITER-2026-04-02-658：选定 bootstrap_summary 可读性字段增强作为下一刀`
+- active_commit: `2563c52`
+- next_step: `Open implement batch for readiness/message fields and run acceptance verify`
+
 ### 2026-04-01T16:24:13Z
 - blocker_key: `entry_context_service_guard_coverage_verify_v1`
 - layer_target: `agent/verify governance`
