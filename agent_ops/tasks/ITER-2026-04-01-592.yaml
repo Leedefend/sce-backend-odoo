@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-01-592
+title: Move HUD contract-status signals ahead of filter and group metadata
+type: frontend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Improve record-view continuity by moving HUD contract-status signals
+  (`契约动作数`、`契约限制数`、`契约可读`、`契约告警数`、`契约降级`) ahead of
+  filter/group metadata, without changing field coverage or labels.
+
+user_visible_outcome:
+  - "record-view HUD 中契约健康信息更早可见"
+  - "决策连续性优先于技术细节"
+  - "字段集合与值语义保持不变"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/app/action_runtime/useActionViewHudEntriesRuntime.ts
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/api/**
+    - frontend/apps/web/src/stores/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - frontend only
+  - bounded P1 usability implementation
+  - do not change HUD field coverage
+  - do not rename labels in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: 59536d3
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-591
+  priority_lane: P1_core_usability
+
+architecture:
+  layer_target: Frontend Layer
+  module: record-view HUD contract-status prominence
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    After key-signal ordering, contract health remains the next strongest
+    continuity signal. This batch only reorders existing HUD entries to improve
+    first-glance decision clarity.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-592.yaml
+    - pnpm -C frontend/apps/web typecheck:strict
+    - make verify.portal.recordview_hud_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - typecheck_failed
+  - dedicated_hud_smoke_still_fails
+  - ordering_fix_requires_field_set_change
+
+deliverables:
+  - bounded_record_view_hud_contract_status_ordering_fix
+  - governance/report artifacts for ITER-2026-04-01-592
+
+rollback:
+  - git restore frontend/apps/web/src/app/action_runtime/useActionViewHudEntriesRuntime.ts
+  - git restore agent_ops/tasks/ITER-2026-04-01-592.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-592.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-592.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-591
