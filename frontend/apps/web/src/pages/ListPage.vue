@@ -488,7 +488,9 @@ const errorCopy = computed(() =>
     props.errorMessage || '列表加载失败',
   ),
 );
-const emptyCopy = computed(() => resolveEmptyCopy('list', { model: props.model }));
+const emptyCopy = computed(() =>
+  resolveEmptyCopy('list', { primaryActionLabel: props.primaryActionLabel }),
+);
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
@@ -506,10 +508,9 @@ const sortedGroupedRows = computed(() => {
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const rowActionHintText = computed(() => {
-  if (String(props.model || '').trim() === 'project.project') {
-    return '点击项目行可进入项目管理';
-  }
-  return '点击列表行可查看详情';
+  const actionLabel = String(props.primaryActionLabel || '').trim();
+  if (actionLabel) return `点击列表行可查看详情；新增请使用右上角“${actionLabel}”`;
+  return '点击列表行可查看详情并继续处理';
 });
 const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.quickFilters : []);
 const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.savedFilters : []);
