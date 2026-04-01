@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-01-604",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-604.md",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "changed_files": [
+    "frontend/apps/web/src/composables/useStatus.ts",
+    "frontend/apps/web/src/pages/ListPage.vue"
+  ],
+  "next_step": "Run strict typecheck and project-management acceptance in ITER-2026-04-01-605."
+}

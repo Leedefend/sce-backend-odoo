@@ -21,6 +21,10 @@ export interface StatusCopy {
   hint?: string;
 }
 
+type EmptyCopyContext = {
+  model?: string;
+};
+
 export function resolveSuggestedAction(
   suggestedAction?: string,
   reasonCode?: string,
@@ -211,7 +215,10 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Req
   };
 }
 
-export function resolveEmptyCopy(type: 'list' | 'card' | 'record' | 'my_work' = 'list'): StatusCopy {
+export function resolveEmptyCopy(
+  type: 'list' | 'card' | 'record' | 'my_work' = 'list',
+  context?: EmptyCopyContext,
+): StatusCopy {
   if (type === 'record') {
     return { title: 'No data', message: 'Record not found or not readable.' };
   }
@@ -220,6 +227,12 @@ export function resolveEmptyCopy(type: 'list' | 'card' | 'record' | 'my_work' = 
   }
   if (type === 'card') {
     return { title: 'No data', message: 'No cards returned for this action.' };
+  }
+  if (String(context?.model || '').trim() === 'project.project') {
+    return {
+      title: '暂无项目',
+      message: '点击右上角“创建项目”开始项目管理闭环。',
+    };
   }
   return { title: 'No data', message: 'No records returned for this action.' };
 }

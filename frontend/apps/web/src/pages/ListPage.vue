@@ -488,7 +488,7 @@ const errorCopy = computed(() =>
     props.errorMessage || '列表加载失败',
   ),
 );
-const emptyCopy = computed(() => resolveEmptyCopy('list'));
+const emptyCopy = computed(() => resolveEmptyCopy('list', { model: props.model }));
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
