@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T16:00:44Z
+- blocker_key: `project_entry_context_options_guidance_verify_v1`
+- layer_target: `backend usability`
+- module: `project entry context options guidance enrichment`
+- reason: business-fact 可用性主线继续推进，options 接口已补齐空/非空态下一步引导
+- completed_step: `已完成 ITER-2026-04-01-650/651：ProjectEntryContextService.list_options 新增 suggested_action/lifecycle_hints（有 options→dashboard，无 options→initiation），make verify.project.management.acceptance PASS`
+- active_commit: `0ce0e25`
+- next_step: `Open next business-fact screen batch for entry context diagnostics explainability`
+
+### 2026-04-01T15:58:30Z
+- blocker_key: `project_entry_context_options_guidance_screen_v1`
+- layer_target: `backend usability`
+- module: `project entry context options guidance screen`
+- reason: screen 识别 options 接口在无项目场景缺少显式下一步动作语义
+- completed_step: `已完成 ITER-2026-04-01-649：选定 options 响应语义补齐（suggested_action/lifecycle_hints）作为下一刀`
+- active_commit: `0ce0e25`
+- next_step: `Open implement batch for options guidance enrichment and verify acceptance`
+
 ### 2026-04-01T15:55:41Z
 - blocker_key: `project_creation_bootstrap_feedback_verify_v1`
 - layer_target: `backend usability`
