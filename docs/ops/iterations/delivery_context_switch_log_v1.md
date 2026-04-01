@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T13:43:00Z
+- blocker_key: `record_view_hud_route_placeholder_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD verification`
+- reason: route placeholder 归一化已落地后，当前 verify 只确认 display-only 修复不影响 strict typing 与 dedicated HUD smoke
+- completed_step: `已完成 ITER-2026-04-01-596：validate_task PASS、frontend strict typecheck PASS、make verify.portal.recordview_hud_smoke.container PASS`
+- active_commit: `5555e15`
+- next_step: `Open the next bounded record-view continuity screen batch`
+
+### 2026-04-01T13:42:00Z
+- blocker_key: `record_view_hud_route_placeholder_impl_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD route fallback readability`
+- reason: `594` 已选定 route placeholder consistency，当前批次只修空路由 fallback 占位符一致性，不改字段覆盖与行为语义
+- completed_step: `已完成 ITER-2026-04-01-595：当前路由 的空值已统一显示为 -`
+- active_commit: `5555e15`
+- next_step: `Run strict typecheck and dedicated HUD smoke for the placeholder normalization`
+
+### 2026-04-01T13:41:00Z
+- blocker_key: `record_view_hud_route_placeholder_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity screen`
+- reason: key-signal 与 contract-status 排序都已收口后，screen 继续选择下一条最小可用性缺口，选中 route 空值显示一致性
+- completed_step: `已完成 ITER-2026-04-01-594：下一条 bounded slice 选定为 route placeholder consistency`
+- active_commit: `5555e15`
+- next_step: `Open a bounded P1 implementation batch for HUD route placeholder normalization`
+
 ### 2026-04-01T13:38:15Z
 - blocker_key: `record_view_hud_contract_status_verify_v1`
 - layer_target: `frontend layer`

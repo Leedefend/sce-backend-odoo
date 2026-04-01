@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-01-594",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-594.md",
+  "decision": {
+    "selected_slice": "route placeholder consistency",
+    "family_scope": "record-view HUD continuity",
+    "reason": "Normalize empty route display to avoid blank-row ambiguity while preserving field coverage."
+  },
+  "next_step": "Open a bounded P1 implementation batch for HUD route placeholder normalization."
+}
