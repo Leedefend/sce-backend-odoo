@@ -1,0 +1,98 @@
+task_id: ITER-2026-04-01-600
+title: Select the next bounded record-view continuity slice after boolean placeholder normalization
+type: frontend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Select the next bounded continuity slice with direct user-facing impact after
+  boolean placeholder normalization, without expanding into schema or behavior
+  refactors.
+
+user_visible_outcome:
+  - "明确下一条 record-view continuity 切片"
+  - "优先处理真实用户可见不一致"
+  - "保持低风险前端边界"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 3
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: true
+  allowed_roles:
+    - executor
+    - auditor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - screen stage only
+  - consume only existing continuity artifacts
+  - do not reopen repository scan
+  - do not implement in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: aca8eac
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-01-599
+  use_new_session: true
+  carry_long_context: false
+  role_parallel_enabled: true
+  priority_lane: P1_core_usability
+
+architecture:
+  layer_target: Frontend Layer
+  module: record-view continuity screen
+  module_owner: frontend/apps/web
+  kernel_or_scenario: kernel
+  reason: >
+    Previous slices stabilized HUD ordering and placeholder consistency. The next
+    slice should target remaining visible continuity inconsistency.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-600.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_reads_new_product_files
+  - screen_reopens_repo_scan
+  - no_bounded_candidate_remains
+
+deliverables:
+  - selected_next_record_view_continuity_slice_after_599
+  - governance/report artifacts for ITER-2026-04-01-600
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-01-600.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-600.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-600.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-599
