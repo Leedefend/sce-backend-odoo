@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:42:55Z
+- blocker_key: `project_lifecycle_semantic_guard_verify_v1`
+- layer_target: `agent/verify governance`
+- module: `project lifecycle semantic regression guard`
+- reason: 语义补齐批次基本收敛，已把可用性语义要求前移到自动门禁并完成验收链验证
+- completed_step: `已完成 ITER-2026-04-01-641/642：新增 verify.project.lifecycle.semantic.guard 并接入 verify.project.management.productization，productization+acceptance 全部 PASS`
+- active_commit: `0ed3e9f`
+- next_step: `Open next screen batch to decide whether low-risk non-financial project semantic lane is stabilized`
+
+### 2026-04-01T15:40:00Z
+- blocker_key: `project_lifecycle_semantic_guard_screen_v1`
+- layer_target: `backend semantic layer`
+- module: `lifecycle semantic regression guard candidate screen`
+- reason: 项目 handler 语义缺口已接近收敛，screen 判定下一步价值转为“防回归门禁”
+- completed_step: `已完成 ITER-2026-04-01-640：选定 scripts/verify + Makefile 语义门禁接入为下一低风险批次`
+- active_commit: `0ed3e9f`
+- next_step: `Implement lifecycle semantic guard script and wire verify.productization path`
+
 ### 2026-04-01T15:36:08Z
 - blocker_key: `project_enter_fallback_semantic_verify_v1`
 - layer_target: `backend semantic layer`
