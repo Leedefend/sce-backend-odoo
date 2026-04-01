@@ -48,6 +48,16 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
                 return project_id
         return 0
 
+    @staticmethod
+    def _fallback_lifecycle_hints() -> Dict[str, Any]:
+        return {
+            "stage": "project_not_found",
+            "first_action": "create_project",
+            "primary_action_label": "创建项目",
+            "suggested_action_intent": "project.initiation.enter",
+            "suggested_action_title": "创建项目",
+        }
+
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = payload or self.params or {}
@@ -70,6 +80,8 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
         )
         if int(data.get("project_id") or 0) <= 0:
             lifecycle_hints = dict((data or {}).get("lifecycle_hints") or {})
+            if not lifecycle_hints:
+                lifecycle_hints = self._fallback_lifecycle_hints()
             return {
                 "ok": False,
                 "error": {
