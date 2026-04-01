@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:51:57Z
+- blocker_key: `project_creation_bootstrap_feedback_screen_v1`
+- layer_target: `backend usability`
+- module: `project creation bootstrap feedback screen`
+- reason: business-fact 路线继续推进，screen 识别创建后初始化结果未回传，存在可解释性缺口
+- completed_step: `已完成 ITER-2026-04-01-646：选定“回传 bootstrap_summary 到 project.initiation.enter 成功返回”作为下一刀`
+- active_commit: `49db6bf`
+- next_step: `Open implement batch to surface bootstrap summary and verify acceptance`
+
 ### 2026-04-01T15:48:31Z
 - blocker_key: `project_entry_context_guidance_verify_v1`
 - layer_target: `backend usability`
