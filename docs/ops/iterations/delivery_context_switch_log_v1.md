@@ -16,6 +16,60 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T13:38:15Z
+- blocker_key: `record_view_hud_contract_status_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD verification`
+- reason: contract-status 前置已经实现后，当前 verify 只确认排序调整不影响 strict typing 和 dedicated HUD smoke
+- completed_step: `已完成 ITER-2026-04-01-593：validate_task PASS、frontend strict typecheck PASS、make verify.portal.recordview_hud_smoke.container PASS`
+- active_commit: `59536d3`
+- next_step: `Open the next bounded record-view continuity screen batch`
+
+### 2026-04-01T13:37:00Z
+- blocker_key: `record_view_hud_contract_status_impl_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD contract-status prominence`
+- reason: `591` 已选定 contract-status prominence，当前批次只做 HUD 条目顺序前置，不改字段覆盖、不改 label 与值语义
+- completed_step: `已完成 ITER-2026-04-01-592：契约健康信号已前置到筛选/分组技术信息之前`
+- active_commit: `59536d3`
+- next_step: `Run strict typecheck and dedicated HUD smoke for the contract-status ordering fix`
+
+### 2026-04-01T13:36:14Z
+- blocker_key: `record_view_hud_contract_status_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity screen`
+- reason: HUD 关键信号已经前置后，当前 continuity 继续收敛为 contract-status prominence；screen 只做选择，不做实现
+- completed_step: `已完成 ITER-2026-04-01-591：下一条 bounded slice 选定为 contract-status prominence ordering，目标是把契约健康信号前置到筛选/分组技术信息之前`
+- active_commit: `59536d3`
+- next_step: `Open a bounded P1 implementation batch limited to HUD contract-status ordering`
+
+### 2026-04-01T11:40:00Z
+- blocker_key: `record_view_hud_ordering_verify_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD verification`
+- reason: HUD 条目排序已完成后，当前 verify 只确认 key-signal ordering 不会破坏 strict typing 或 dedicated HUD smoke；本批次不再引入新字段或新语义
+- completed_step: `已完成 ITER-2026-04-01-590：validate_task PASS、frontend strict typecheck PASS、make verify.portal.recordview_hud_smoke.container PASS，HUD 关键信号已前置且专用门禁保持绿色`
+- active_commit: `59536d3`
+- next_step: `Open the next bounded record-view continuity screen batch`
+
+### 2026-04-01T11:35:00Z
+- blocker_key: `record_view_hud_ordering_impl_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD key-signal ordering`
+- reason: `588` 已把 continuity 缺口收敛为 ordering 而不是 coverage；当前批次只在 HUD entry builder 内前置排序、意图、写入模式、追踪、耗时与路由，不改字段集合和标签
+- completed_step: `已完成 ITER-2026-04-01-589：useActionViewHudEntriesRuntime 已把最关键的连续性信号前置到 HUD 上半区`
+- active_commit: `59536d3`
+- next_step: `Run strict typecheck and dedicated HUD smoke for the ordering-only fix`
+
+### 2026-04-01T11:30:00Z
+- blocker_key: `record_view_hud_ordering_screen_v1`
+- layer_target: `frontend layer`
+- module: `record-view HUD continuity screen`
+- reason: HUD title/message、label readability 与专用 smoke 都已收口后，当前 continuity 线继续缩小为 key-signal ordering，而不是直接扩散成 HUD 结构重排
+- completed_step: `已完成 ITER-2026-04-01-588：将下一条 record-view continuity slice 收敛为 HUD key-signal ordering`
+- active_commit: `59536d3`
+- next_step: `Open a bounded P1 implementation batch limited to HUD entry ordering`
+
 ### 2026-04-01T11:20:00Z
 - blocker_key: `record_view_hud_label_verify_v1`
 - layer_target: `frontend layer`

@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-01-588",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-588.md",
+  "decision": {
+    "selected_slice": "HUD key-signal ordering",
+    "family_scope": "record-view HUD continuity",
+    "reason": "Move trace, write mode, latency, and route ahead of deeper technical metadata without changing HUD field coverage."
+  },
+  "next_step": "Open a bounded P1 implementation batch limited to HUD entry ordering."
+}
