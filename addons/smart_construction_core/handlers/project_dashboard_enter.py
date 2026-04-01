@@ -78,12 +78,16 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
             trace_id=str((self.context or {}).get("trace_id") or ""),
         )
         if int(data.get("project_id") or 0) <= 0:
+            lifecycle_hints = dict((data or {}).get("lifecycle_hints") or {})
             return {
                 "ok": False,
                 "error": {
                     "code": "PROJECT_NOT_FOUND",
                     "message": "项目不存在或当前账号不可访问",
                     "suggested_action": "fix_input",
+                },
+                "data": {
+                    "lifecycle_hints": lifecycle_hints,
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
