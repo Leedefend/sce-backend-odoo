@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-02-656
+title: Extend lifecycle semantic guard to cover project entry context service
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Extend project lifecycle semantic regression guard with service-level checks
+  for project_entry_context_service semantics.
+
+user_visible_outcome:
+  - "entry context 语义字段纳入防回归"
+  - "可用性增强成果更稳定"
+
+scope:
+  allowed_paths:
+    - scripts/verify/project_lifecycle_semantic_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - additive-only
+  - verify-guard-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3fe276c
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-655
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Agent/Verify Governance
+  module: semantic guard coverage extension
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    Protect business-fact entry-context outputs from regression.
+  reason: >
+    Selected by screen after identifying service-level guard gap.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-656.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - guard_checks_for_project_entry_context_service
+  - governance/report artifacts for ITER-2026-04-02-656
+
+rollback:
+  - git restore scripts/verify/project_lifecycle_semantic_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-656.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-656.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-656.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-655

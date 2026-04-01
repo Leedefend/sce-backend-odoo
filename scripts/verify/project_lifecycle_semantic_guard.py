@@ -26,7 +26,7 @@ def _contains_all(content: str, tokens: list[str]) -> bool:
 def main() -> None:
     checks: list[tuple[str, bool, str]] = []
 
-    targets = {
+    handler_targets = {
         "project_dashboard_enter.py": [
             "_fallback_lifecycle_hints",
             "\"PROJECT_NOT_FOUND\"",
@@ -79,9 +79,27 @@ def main() -> None:
         ],
     }
 
-    base = ROOT / "addons" / "smart_construction_core" / "handlers"
-    for rel, tokens in targets.items():
-        path = base / rel
+    service_targets = {
+        "project_entry_context_service.py": [
+            "_build_lifecycle_guidance",
+            "_build_options_guidance",
+            "_build_diagnostics_summary",
+            "\"suggested_action\"",
+            "\"lifecycle_hints\"",
+            "\"diagnostics_summary\"",
+        ],
+    }
+
+    handler_base = ROOT / "addons" / "smart_construction_core" / "handlers"
+    for rel, tokens in handler_targets.items():
+        path = handler_base / rel
+        content = _read(path)
+        checks.append((f"exists::{rel}", path.exists(), str(path)))
+        checks.append((f"semantic_tokens::{rel}", _contains_all(content, tokens), ",".join(tokens)))
+
+    service_base = ROOT / "addons" / "smart_construction_core" / "services"
+    for rel, tokens in service_targets.items():
+        path = service_base / rel
         content = _read(path)
         checks.append((f"exists::{rel}", path.exists(), str(path)))
         checks.append((f"semantic_tokens::{rel}", _contains_all(content, tokens), ",".join(tokens)))

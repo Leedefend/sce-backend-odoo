@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T16:24:13Z
+- blocker_key: `entry_context_service_guard_coverage_verify_v1`
+- layer_target: `agent/verify governance`
+- module: `lifecycle semantic guard coverage extension`
+- reason: screen 识别的门禁覆盖缺口已补齐，entry_context service 语义已纳入防回归检查并通过验收链
+- completed_step: `已完成 ITER-2026-04-02-656/657：project_lifecycle_semantic_guard 增加 project_entry_context_service token 检查，python3 scripts/verify/project_lifecycle_semantic_guard.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `3fe276c`
+- next_step: `Open next low-risk business-fact usability screen batch`
+
+### 2026-04-01T16:22:00Z
+- blocker_key: `entry_context_service_guard_coverage_screen_v1`
+- layer_target: `agent/verify governance`
+- module: `lifecycle semantic guard coverage screen`
+- reason: 新增的 entry_context service 语义字段尚未被门禁覆盖，存在回归风险
+- completed_step: `已完成 ITER-2026-04-02-655：选定扩展 project_lifecycle_semantic_guard 覆盖 services/project_entry_context_service.py`
+- active_commit: `3fe276c`
+- next_step: `Open implement batch to extend guard coverage and run acceptance verify`
+
 ### 2026-04-01T16:18:38Z
 - blocker_key: `entry_context_diagnostics_summary_verify_v1`
 - layer_target: `backend usability`
