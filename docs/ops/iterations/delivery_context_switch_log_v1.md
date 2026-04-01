@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:55:41Z
+- blocker_key: `project_creation_bootstrap_feedback_verify_v1`
+- layer_target: `backend usability`
+- module: `project creation bootstrap feedback surfacing`
+- reason: create-success 可解释性增强批次已完成，初始化结果摘要可直接回传给入口响应
+- completed_step: `已完成 ITER-2026-04-01-647/648：ProjectCreationService.post_create_bootstrap 回传聚合结果，project.initiation.enter success data 新增 bootstrap_summary，make verify.project.management.acceptance PASS`
+- active_commit: `135445f`
+- next_step: `Open next business-fact screen batch for post-create context/options explainability`
+
 ### 2026-04-01T15:51:57Z
 - blocker_key: `project_creation_bootstrap_feedback_screen_v1`
 - layer_target: `backend usability`
