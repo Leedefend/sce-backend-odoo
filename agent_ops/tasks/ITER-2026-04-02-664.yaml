@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-02-664
+title: Screen semantic guard hardening candidate for value-level checks
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Screen whether lifecycle semantic guard should be hardened from token-presence
+  checks to key value-level checks on entry usability fields.
+
+user_visible_outcome:
+  - "语义门禁更有约束力"
+  - "关键状态值回退更易被发现"
+
+scope:
+  allowed_paths:
+    - scripts/verify/project_lifecycle_semantic_guard.py
+    - addons/smart_construction_core/services/project_entry_context_service.py
+    - addons/smart_construction_core/services/project_creation_service.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 6
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen stage only
+  - no implementation
+  - verify-guard-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: f016e38
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-663
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Agent/Verify Governance
+  module: semantic guard hardening screen
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    Hardening targets business-fact usability semantic fields already delivered.
+  reason: >
+    Token-only checks are necessary but not sufficient; value-level anchors reduce false-positive pass risk.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-664.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - no_backend_semantic_candidate_remains
+
+deliverables:
+  - selected_semantic_guard_hardening_candidate
+  - governance/report artifacts for ITER-2026-04-02-664
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-664.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-664.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-664.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-663

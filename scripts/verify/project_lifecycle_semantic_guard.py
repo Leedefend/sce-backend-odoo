@@ -87,11 +87,16 @@ def main() -> None:
             "\"suggested_action\"",
             "\"lifecycle_hints\"",
             "\"diagnostics_summary\"",
+            "\"status\": \"context_ready\"",
+            "\"status\": \"context_missing\"",
+            "\"status\": \"options_available\"",
         ],
         "project_creation_service.py": [
             "post_create_bootstrap",
             "\"ready_for_management\"",
             "\"summary_message\"",
+            "\"项目初始化完成，可进入项目管理。\"",
+            "\"项目已创建，初始化未完全确认。\"",
         ],
     }
 
