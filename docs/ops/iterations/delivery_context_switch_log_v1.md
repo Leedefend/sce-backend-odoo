@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T00:32:32+0800
+- blocker_key: `entry_context_service_guard_coverage_verify_v2`
+- layer_target: `agent/verify governance`
+- module: `lifecycle semantic guard coverage extension`
+- reason: 将 entry_context service 语义字段纳入防回归门禁并完成验收链验证
+- completed_step: `已完成 ITER-2026-04-02-656/657：project_lifecycle_semantic_guard 新增 project_entry_context_service 语义 token 检查，python3 scripts/verify/project_lifecycle_semantic_guard.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `757df4e`
+- next_step: `Open next low-risk business-fact usability screen batch`
+
 ### 2026-04-01T16:27:59Z
 - blocker_key: `bootstrap_summary_readability_verify_v1`
 - layer_target: `backend usability`

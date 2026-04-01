@@ -16,8 +16,8 @@
 ## Decision
 
 - PASS
-- lifecycle semantic guard now covers entry-context service semantics and stays green in acceptance chain
+- lifecycle semantic guard coverage extension verified in acceptance chain
 
 ## Next Iteration Suggestion
 
-- continue low-risk business-fact usability screen after guard coverage closure
+- continue business-fact usability screen for next bounded candidate
