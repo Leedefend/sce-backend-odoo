@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T15:48:31Z
+- blocker_key: `project_entry_context_guidance_verify_v1`
+- layer_target: `backend usability`
+- module: `project entry context resolve guidance enrichment`
+- reason: 主战场切入 business-fact 后首个可用性批次完成，入口上下文解析已提供显式下一步动作语义
+- completed_step: `已完成 ITER-2026-04-01-644/645：ProjectEntryContextService.resolve 增加 suggested_action/lifecycle_hints（有项目→dashboard，无项目→initiation），make verify.project.management.acceptance PASS`
+- active_commit: `ce01c1c`
+- next_step: `Open next business-fact screen batch for another bounded usability candidate`
+
+### 2026-04-01T15:46:00Z
+- blocker_key: `business_fact_usability_candidate_screen_v1`
+- layer_target: `backend usability`
+- module: `next-candidate layer decision screen`
+- reason: orchestration 语义线已加门禁，下一轮需要受控转入 business-fact 可用性候选筛选
+- completed_step: `已完成 ITER-2026-04-01-643：选定 ProjectEntryContextService.resolve 引导语义增强作为下一刀`
+- active_commit: `ce01c1c`
+- next_step: `Open implement batch on project_entry_context_service guidance enrichment`
+
 ### 2026-04-01T15:42:55Z
 - blocker_key: `project_lifecycle_semantic_guard_verify_v1`
 - layer_target: `agent/verify governance`
