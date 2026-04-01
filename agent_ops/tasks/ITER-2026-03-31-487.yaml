@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-31-487
+title: Audit uncovered pending-payment and task-based next-action branches
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Continue the recommendation-correctness audit by covering the remaining
+  representative branches that were not exercised in ITER-2026-03-31-486:
+  pending payment, task in progress, and create task.
+
+user_visible_outcome:
+  - "补齐 next-action recommendation 尚未覆盖的三条代表性分支"
+  - "如果样本存在，确认推荐与 payment/task 事实一致"
+  - "如果样本不存在，也能明确给出覆盖缺口而不是误判通过"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - audit-only batch
+  - no code, ACL, record-rule, manifest, schema, or seed data changes
+  - first discover whether representative runtime samples exist for each remaining branch
+  - stop immediately if a new recommendation correctness residual is found
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: uncovered recommendation branch audit
+  module_owner: customer delivery permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-486 closed several representative branches, but pending
+    payment, task in progress, and create task were still uncovered.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-487.yaml
+    - runtime audit either validates the remaining branches against representative samples or proves that the current runtime lacks suitable samples for one or more branches
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - any_new_recommendation_correctness_mismatch_is_found
+  - sample_discovery_or_runtime_audit_cannot_be_classified_with_certainty
+
+deliverables:
+  - runtime sample discovery for uncovered next-action branches
+  - governance/report artifacts for ITER-2026-03-31-487
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-487.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-487.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-487.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-486

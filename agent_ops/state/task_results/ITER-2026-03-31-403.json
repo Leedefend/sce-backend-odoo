@@ -1,0 +1,43 @@
+{
+  "task_id": "ITER-2026-03-31-403",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Converted the confirmed customer rules into a structured enterprise draft covering departments, enterprise-specific posts, system roles, and the special treatment rule for 项目部.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-403.yaml",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-403.md"
+  },
+  "normalized_structure": {
+    "enterprise_name": "四川保盛建设集团有限公司",
+    "departments": [
+      "经营部",
+      "工程部",
+      "财务部",
+      "行政部",
+      "成控部",
+      "项目部"
+    ],
+    "posts": [
+      "董事长",
+      "总经理",
+      "副总经理",
+      "项目负责人",
+      "临时项目负责人",
+      "财务经理",
+      "财务助理"
+    ],
+    "system_roles": [
+      "管理员角色",
+      "通用角色"
+    ],
+    "excluded_department_like_labels": [
+      "公司员工"
+    ]
+  },
+  "next_suggestion": "Next map user records into department, post, and system-role assignments, especially for 项目部-only members."
+}

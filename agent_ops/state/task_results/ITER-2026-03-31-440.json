@@ -1,0 +1,30 @@
+{
+  "task_id": "ITER-2026-03-31-440",
+  "status": "FAIL",
+  "classification": "FAIL",
+  "summary": "The first physical bootstrap migration batch failed because installing smart_platform_bootstrap on sc_demo re-ran the legacy currency bootstrap hook and Odoo rejected changing company currency after journal items already existed.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-440.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_platform_bootstrap/__init__.py addons/smart_platform_bootstrap/hooks.py addons/smart_construction_bootstrap/__init__.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.install MODULE=smart_platform_bootstrap DB_NAME=sc_demo",
+      "result": "FAIL"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-440.md"
+  },
+  "runtime_audit": {
+    "new_module_created": true,
+    "compatibility_shim_created": true,
+    "install_safe_on_used_db": false,
+    "failing_hook_operation": "env.company.write({'currency_id': currency.id})"
+  },
+  "next_suggestion": "Open a redesign batch for bootstrap-hook semantics before continuing the physical module migration."
+}

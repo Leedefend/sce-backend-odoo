@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-03-31-483",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited role-specific next-action stability and found that recommendations are stable across sampled roles, but an in-progress project that already has cost ledger rows still receives the '维护成本台账' recommendation, indicating a recommendation correctness residual rather than a role split residual.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_and_runtime_audit": {
+      "draft_recommendations_stable_across_sample_roles": true,
+      "in_progress_recommendations_stable_across_sample_roles": true,
+      "cost_maintenance_recommendation_still_emitted_when_cost_count_is_nonzero": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "No new role-specific split was found in the sampled recommendations.",
+      "A recommendation correctness residual remains because the cost-maintenance rule does not reflect the observed project state for at least one in-progress sample.",
+      "The next batch should inspect whether the mismatch comes from overview stats or from the rule condition itself."
+    ]
+  },
+  "next_step": "Open a narrow audit or implementation batch to inspect cost-count sourcing inside the overview/next-action pipeline before continuing broader next-action acceptance."
+}

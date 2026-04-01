@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-04-01-506",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited the tender family and found a real runtime boundary mismatch: action_tender_bid is visible to project_read roles including finance, but the tender.bid model grants no read access to project_read, so the family cannot be classified as clean.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_audit": "PASS",
+    "runtime_audit": {
+      "tender_action_visible_for_sampled_roles": true,
+      "pm_tender_write_capable": true,
+      "executive_tender_write_capable": true,
+      "business_admin_tender_write_capable": true,
+      "finance_tender_model_read": false,
+      "action_to_model_boundary_mismatch_detected": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "This is a real runtime residual, not a sample shortage.",
+      "Finance can currently see the tender action but cannot read the target model.",
+      "A narrow follow-up batch is required to align action_tender_bid with tender.bid read ownership."
+    ]
+  },
+  "next_step": "Stop the chain and open a narrow governance or implementation batch to align action_tender_bid with tender.bid read ownership."
+}

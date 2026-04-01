@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-03-31-478",
+  "status": "PASS",
+  "summary": "Aligned sc_get_next_actions() fallback with the stage-requirements visibility policy so delivered roles no longer receive the fallback while the super-admin branch remains covered by regression tests.",
+  "verification": {
+    "task_contract": "PASS",
+    "verify_smart_core": "PASS",
+    "module_upgrade": "PASS",
+    "runtime_audit": {
+      "stage_requirements_fallback_hidden_for_pm": true,
+      "stage_requirements_fallback_hidden_for_executive": true,
+      "stage_requirements_fallback_hidden_for_business_admin": true,
+      "runtime_super_admin_sample_present": false,
+      "super_admin_branch_covered_by_regression_test": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "The fix narrows exposure and does not add ACLs or record rules.",
+      "No runtime super-admin sample exists in sc_odoo, so that branch is verified through automated regression coverage.",
+      "Follow-through execution paths should still be audited for similar secondary action-metadata residuals."
+    ]
+  },
+  "next_step": "Open the next low-risk audit batch to inspect sc_execute_next_action() and related follow-through execution paths for secondary ACL or action-metadata residuals."
+}

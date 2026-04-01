@@ -1,0 +1,55 @@
+# ITER-2026-03-31-462
+
+- status: PASS_WITH_RISK
+- summary: Audited the first Sichuan Baosheng role-to-flow usability set on `sc_odoo` against the frozen authorization matrix. The delivered matrix is usable, but it is not fully aligned with the expected flow surfaces: PM and executive users do not currently receive the cost-work path, and finance still shows a navigation inconsistency where the contract action is reachable while the contract menu remains hidden.
+- changed_files:
+  - agent_ops/tasks/ITER-2026-03-31-462.yaml
+  - agent_ops/reports/2026-03-31/report.ITER-2026-03-31-462.md
+  - agent_ops/state/task_results/ITER-2026-03-31-462.json
+  - docs/ops/iterations/delivery_context_switch_log_v1.md
+- verification:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-462.yaml` PASS
+  - runtime SQL/config audit on `sc_odoo` confirms the frozen Sichuan Baosheng baseline:
+    - `customer_users = 20`
+    - `pm_role_users = 4`
+    - `finance_role_users = 4`
+    - `executive_role_users = 4`
+    - `business_admin_users = 4`
+  - representative role-to-flow visibility audit confirms:
+    - `PM (hujun)`:
+      - visible/allowed: `project_work`, `contract_work`
+      - not visible/allowed: `cost_work`, `finance_work`, enterprise maintenance
+    - `Finance (jiangyijiao)`:
+      - visible/allowed: `finance_work`, `project_work`
+      - hidden/denied: cost and enterprise maintenance
+      - inconsistency: `action_construction_contract_my = allowed` while `menu_sc_contract_income = denied`
+    - `Executive (wutao)`:
+      - visible/allowed: `project_work`, `contract_work`, `finance_work`
+      - not visible/allowed: `cost_work`, enterprise maintenance
+    - `Business admin overlays (duanyijun / wennan / shuiwujingbanren / admin)`:
+      - visible/allowed: project, contract, cost, finance, and enterprise maintenance chain
+- repository_evidence:
+  - [role_matrix_groups.xml](/mnt/e/sc-backend-odoo/addons/smart_construction_custom/security/role_matrix_groups.xml) shows:
+    - `group_sc_role_pm` implies project-manager, contract-manager, settlement-user
+    - `group_sc_role_finance` implies payment-manager, settlement-manager
+    - `group_sc_role_executive` implies project-read, PM, finance, config-admin
+    - no PM/executive path implies `cost_manager`
+  - [role_entry_map.js](/mnt/e/sc-backend-odoo/addons/smart_construction_core/static/src/config/role_entry_map.js) and [portal_dashboard_service.py](/mnt/e/sc-backend-odoo/addons/smart_construction_core/services/portal_dashboard_service.py) still advertise `cost_work` as a first-batch work surface
+  - [perm_matrix.py](/mnt/e/sc-backend-odoo/addons/smart_construction_core/tests/perm_matrix.py) confirms finance paths are intentionally finance-centered, which matches the hidden finance-vs-project menu boundary but does not explain the contract-action fallback
+- findings:
+  - finding 1:
+    - `PM` users do not currently receive the cost-work surface even though the delivered work-entry model still treats cost as part of the first-batch work set
+  - finding 2:
+    - `Executive` users also do not receive the cost-work surface because the customer-safe executive path inherits PM + finance + config-admin but not cost-manager
+  - finding 3:
+    - `Finance` users have a navigation mismatch: the contract menu stays hidden but the `action_construction_contract_my` window remains callable, which creates an inconsistent delivered surface
+- risk:
+  - the frozen authorization matrix is real and stable, but the first delivered flow set is not yet semantically aligned with it
+  - downstream business-flow validation would be misleading if it assumed PM/executive already own cost-work or if it ignored the finance navigation mismatch
+- rollback:
+  - none required; audit-only batch
+- next:
+  - open a dedicated low-risk governance batch to decide whether:
+    - `cost_work` should be added to PM/executive customer paths
+    - or the delivered first-batch work set should be narrowed to exclude cost for those roles
+  - separately resolve the finance-side contract navigation inconsistency before claiming the customer delivery surface is fully aligned

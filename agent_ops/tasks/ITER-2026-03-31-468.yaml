@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-31-468
+title: Validate Sichuan Baosheng first-batch concrete flow acceptance for PM and finance
+type: audit
+status: active
+priority: high
+
+goal: >
+  Move from role-to-authority verification to concrete first-batch business-flow
+  acceptance for Sichuan Baosheng on sc_odoo, starting with PM and finance so
+  the delivered surface can be judged at the page/action chain level rather
+  than only by group membership.
+
+user_visible_outcome:
+  - "四川保盛 PM 与财务首批关键流程的页面/动作链被具体验收"
+  - "可以区分入口可见、动作可执行、审批是否到位"
+  - "后续问题能直接归类为流程缺口还是页面缺口"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - read-only runtime and configuration audit only
+  - do not modify code, XML, ACL, record rules, or data files in this batch
+  - validate page/action-chain usability on sc_odoo using the finalized customer matrix
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: PM and finance first-batch flow acceptance
+  module_owner: customer delivery validation chain
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-467 confirmed the finalized role matrix at the authority
+    level. The next efficient low-risk batch is to verify concrete first-batch
+    page/action chains for PM and finance under that matrix.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-468.yaml
+    - runtime/config audit confirms concrete PM and finance flow acceptance conclusions on sc_odoo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - concrete_flow_chain_cannot_be_proven_from_repository_and_runtime_evidence
+  - page_entry_and_action_surface_conflict_without_resolvable_evidence
+
+deliverables:
+  - PM and finance concrete flow acceptance report
+  - task result artifact and delivery-log checkpoint for ITER-2026-03-31-468
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-468.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-468.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-468.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-467

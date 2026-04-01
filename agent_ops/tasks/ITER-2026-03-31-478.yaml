@@ -1,0 +1,94 @@
+task_id: ITER-2026-03-31-478
+title: Align next-action fallback with stage-requirements visibility policy
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Remove the remaining secondary exposure of action_view_stage_requirements by
+  aligning sc_get_next_actions() fallback output with the post-476 visibility
+  policy, without adding ACLs or changing any record rules.
+
+user_visible_outcome:
+  - "PM/管理层/业务系统管理员不再通过 next-action fallback 收到阶段要求入口"
+  - "super admin 仍保留与 overview 按钮一致的阶段要求 fallback"
+  - "next-action 契约与静态 overview 可见性一致"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/models/core/project_core.py
+    - addons/smart_construction_core/tests/**
+    - addons/smart_construction_custom/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - narrowing-only runtime-safe implementation
+  - no ACL, record-rule, manifest, or schema changes
+  - next-action fallback must match the already-frozen overview visibility policy
+  - keep the object-button fixes from 476 unchanged
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance + Permission Surface Fix
+  module: next-action fallback alignment
+  module_owner: customer delivery permission surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-03-31-477 found a real secondary-navigation residual: delivered
+    roles still receive action_view_stage_requirements through the next-action
+    fallback channel even after the overview button was hidden in 476.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-478.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - runtime audit confirms delivered roles no longer receive stage-requirements fallback while super admin keeps the aligned fallback
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - fallback_alignment_requires_acl_changes
+  - verify_smart_core_fails
+  - runtime_audit_shows_residual_secondary_exposure
+
+deliverables:
+  - aligned next-action fallback implementation
+  - regression coverage for delivered-role fallback suppression
+  - governance/report artifacts for ITER-2026-03-31-478
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_core/models/core/project_core.py
+  - git restore addons/smart_construction_core/tests
+  - git restore addons/smart_construction_custom/tests
+  - git restore agent_ops/tasks/ITER-2026-03-31-478.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-478.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-478.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-477

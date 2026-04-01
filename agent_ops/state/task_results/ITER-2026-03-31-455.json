@@ -1,0 +1,22 @@
+{
+  "task_id": "ITER-2026-03-31-455",
+  "status": "PASS",
+  "summary": "Sichuan Baosheng customer bootstrap is now materialized as install-time XML data in smart_construction_custom and reproduces automatically on fresh sc_odoo reset/install.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-455.yaml",
+    "make db.reset DB=sc_odoo",
+    "make verify.platform_baseline DB_NAME=sc_odoo",
+    "make mod.install MODULE=smart_construction_core DB_NAME=sc_odoo",
+    "SC_SEED_ENABLED=1 SC_BOOTSTRAP_MODE=prod make mod.install MODULE=smart_construction_seed DB_NAME=sc_odoo",
+    "make mod.install MODULE=smart_construction_custom DB_NAME=sc_odoo",
+    "runtime SQL audit confirms Baosheng company/departments/posts/users/system roles in sc_odoo without manual bootstrap actions"
+  ],
+  "risk": {
+    "level": "high",
+    "notes": [
+      "manifest and module data-load batch completed under a narrow AGENTS exception",
+      "runtime bootstrap helpers remain as compatibility fallback but are no longer required for fresh reproducibility"
+    ]
+  },
+  "next_step": "Continue with Sichuan Baosheng authorization and business-flow usability verification on top of the reproducible customer install state."
+}

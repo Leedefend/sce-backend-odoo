@@ -1,0 +1,41 @@
+{
+  "task_id": "ITER-2026-03-31-426",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Implemented multi-post platform extension and attached deferred workbook extra posts to live customer users via res.users.sc_post_ids.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-426.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_enterprise_base/models/res_users.py addons/smart_enterprise_base/models/sc_enterprise_post.py addons/smart_construction_custom/models/security_policy.py addons/smart_construction_custom/tests/test_business_admin_authority_path.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_enterprise_base DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "docker exec -i sc-backend-odoo-dev-odoo-1 odoo shell -d sc_demo bootstrap_customer_user_extra_posts assertion",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-426.md"
+  },
+  "runtime_audit": {
+    "updated_user_count": 3,
+    "created_post_count": 1,
+    "unresolved_user_count": 0
+  },
+  "next_suggestion": "Decide whether workbook extra_departments should remain governance-only or move to a future multi-department platform extension."
+}

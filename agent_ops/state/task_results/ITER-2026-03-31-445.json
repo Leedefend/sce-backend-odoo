@@ -1,0 +1,29 @@
+{
+  "task_id": "ITER-2026-03-31-445",
+  "status": "FAIL",
+  "classification": "FAIL",
+  "summary": "The verify-script migration batch failed because both verify.baseline and verify.demo still detect that the current sc_demo company currency is not CNY; the new canonical bootstrap module assertions were not the failing point.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-445.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.baseline DB_NAME=sc_demo",
+      "result": "FAIL"
+    },
+    {
+      "command": "make verify.demo DB_NAME=sc_demo",
+      "result": "FAIL"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-445.md"
+  },
+  "runtime_audit": {
+    "verify_canonical_bootstrap_check_updated": true,
+    "verify_compat_shim_check_updated": true,
+    "failing_baseline_condition": "company currency is CNY"
+  },
+  "next_suggestion": "Resolve the current baseline currency state on sc_demo before continuing verify-script migration."
+}

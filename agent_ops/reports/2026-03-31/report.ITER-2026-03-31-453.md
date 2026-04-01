@@ -1,0 +1,28 @@
+# ITER-2026-03-31-453
+
+- status: PASS
+- summary: Audited representative Sichuan Baosheng business-admin and internal-user runtime paths on `sc_odoo` and confirmed the customer-layer usability boundary is aligned.
+- changed_files:
+  - agent_ops/tasks/ITER-2026-03-31-453.yaml
+  - agent_ops/reports/2026-03-31/report.ITER-2026-03-31-453.md
+  - agent_ops/state/task_results/ITER-2026-03-31-453.json
+- verification:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-453.yaml`
+  - runtime `has_group()` audit on `sc_odoo`
+- runtime_facts:
+  - `duanyijun` and `wennan` both have `smart_construction_custom.group_sc_role_business_admin = 1`
+  - `duanyijun` and `wennan` both have `smart_construction_core.group_sc_business_full = 1`
+  - `duanyijun` and `wennan` both have `base.group_system = 0`
+  - `wutao` and `hujun` both have `smart_construction_custom.group_sc_role_owner = 1`
+  - `wutao` and `hujun` both have `smart_construction_core.group_sc_business_full = 0`
+  - `wutao` and `hujun` both have `base.group_system = 0`
+- alignment:
+  - business-admin users are on the enterprise business authority path
+  - internal users remain on the ordinary business-user path
+  - neither path leaks into platform-admin ownership
+- risk:
+  - no blocking risk in the customer organization/runtime boundary; next work should move into customer business-flow usability
+- rollback:
+  - no runtime data mutation planned
+- next:
+  - audit Sichuan Baosheng customer business-flow usability on `sc_odoo`

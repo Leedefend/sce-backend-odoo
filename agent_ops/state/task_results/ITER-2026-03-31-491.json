@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-03-31-491",
+  "status": "PASS_WITH_RISK",
+  "summary": "A scratch task was formally advanced to sc_state=in_progress on project 20, but overview.task.in_progress remained 0 and the 推进任务执行 recommendation did not emit, revealing a new task in-progress count mismatch in the overview-to-next-action pipeline.",
+  "verification": {
+    "task_contract": "PASS",
+    "runtime_scratch_audit": {
+      "scratch_task_reached_in_progress_state": true,
+      "overview_task_in_progress_stayed_zero": true,
+      "push_task_recommendation_missing": true,
+      "scratch_task_cleanup_complete": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "This is a concrete correctness defect, not a sample-coverage gap.",
+      "The task-based recommendation baseline is unreliable until overview.task.in_progress is aligned with real task state semantics.",
+      "Create-task acceptance should not continue before that alignment is repaired."
+    ]
+  },
+  "next_step": "Stop the chain and open a narrow implementation batch to fix overview task in-progress count extraction/semantics, then rerun task-based recommendation acceptance."
+}

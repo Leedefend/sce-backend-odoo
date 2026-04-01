@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-03-31-477",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited secondary navigation on top of the 476 baseline and found a new residual: although the overview stage-requirements button is hidden, sc_get_next_actions() still exposes action_view_stage_requirements as fallback for delivered roles.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_and_runtime_audit": {
+      "next_actions_fallback_exposes_stage_requirements_for_pm": true,
+      "next_actions_fallback_exposes_stage_requirements_for_executive": true,
+      "next_actions_fallback_exposes_stage_requirements_for_business_admin": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The stage-requirements entry is still exposed through the next-action fallback channel.",
+      "Overview view visibility and next-action contract payload are currently inconsistent.",
+      "A narrow implementation batch is needed before deeper downstream acceptance continues."
+    ]
+  },
+  "next_step": "Open a narrow implementation batch to align sc_get_next_actions() fallback output with the post-476 stage-requirements visibility policy."
+}

@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-04-01-505",
+  "status": "PASS",
+  "summary": "Selected the project-document family as the third representative non-first-batch flow and confirmed its canonical action and model-permission boundary are clean on sc_odoo: PM, executive, and business-admin are write-capable while finance remains read-only.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_audit": "PASS",
+    "runtime_audit": {
+      "document_action_visible_for_sampled_roles": true,
+      "pm_document_write_capable": true,
+      "executive_document_write_capable": true,
+      "business_admin_document_write_capable": true,
+      "finance_document_read_only": true,
+      "no_runtime_residual_detected": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "The audit covered the canonical document action and actual model ACL surface without introducing write side effects.",
+      "No action-to-ACL mismatch was found for the sampled delivered roles.",
+      "If later needed, document state-transition buttons should be audited in a narrower follow-up batch."
+    ]
+  },
+  "next_step": "Open the next low-risk audit batch for another representative non-first-batch family, preferably tender or an equivalent secondary delivery surface."
+}

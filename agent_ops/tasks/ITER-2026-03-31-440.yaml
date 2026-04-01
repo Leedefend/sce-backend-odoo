@@ -1,0 +1,80 @@
+task_id: ITER-2026-03-31-440
+title: Create smart_platform_bootstrap and convert smart_construction_bootstrap into compatibility shim
+type: implementation
+status: active
+priority: high
+
+goal: >
+  Implement the first physical migration step for the bootstrap taxonomy line:
+  create the new neutral module smart_platform_bootstrap and convert
+  smart_construction_bootstrap into a compatibility shim without yet migrating
+  downstream references.
+
+user_visible_outcome:
+  - "仓库里出现新的中性模块 smart_platform_bootstrap"
+  - "smart_construction_bootstrap 变成兼容 shim"
+  - "现有依赖与安装路径暂时不被打断"
+
+scope:
+  allowed_paths:
+    - addons/smart_platform_bootstrap/**
+    - addons/smart_construction_bootstrap/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/smart_construction_seed/**
+    - scripts/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - additive migration batch
+  - do not migrate downstream references in this batch
+  - preserve install/upgrade safety for current smart_construction_bootstrap users
+  - no security or financial-domain changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Platform Bootstrap Module Migration
+  module: smart_construction_bootstrap -> smart_platform_bootstrap
+  module_owner: repository taxonomy and upgrade path
+  kernel_or_scenario: kernel
+  reason: >
+    Governance is complete and the guard exception now exists, so the next
+    step is to create the neutral platform bootstrap module while preserving
+    the old industry-named module as a compatibility shim.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-440.yaml
+    - make mod.install MODULE=smart_platform_bootstrap DB_NAME=sc_demo
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_bootstrap DB_NAME=sc_demo
+    - make verify.smart_core
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - compatibility_shim_cannot_preserve_current_install_behavior_with_certainty
+  - manifest_or_hook_semantics_require_reference_migration_in_same_batch
+
+deliverables:
+  - implementation/report/result artifacts for ITER-2026-03-31-440
+
+rollback:
+  - git restore addons/smart_platform_bootstrap
+  - git restore addons/smart_construction_bootstrap
+  - git restore agent_ops/tasks/ITER-2026-03-31-440.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-440.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-440.json
+
+depends_on:
+  - ITER-2026-03-31-439

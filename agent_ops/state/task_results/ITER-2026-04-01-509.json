@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-04-01-509",
+  "status": "PASS",
+  "summary": "Realigned tender regression coverage to real delivered-role semantics. Tender verification now uses finance, pm, and executive role profiles instead of group-only users that were polluted by default owner overlay.",
+  "verification": {
+    "task_contract": "PASS",
+    "verify_smart_core": "PASS",
+    "coverage_alignment": {
+      "finance_read_only_tender": true,
+      "pm_tender_write_capable": true,
+      "executive_tender_write_capable": true,
+      "finance_form_non_clickable": true,
+      "pm_executive_forms_clickable": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "This batch only changes regression coverage.",
+      "Tender ACL and view semantics remain unchanged from the already-validated implementation.",
+      "Future tender audits should use delivered-role samples instead of group-only user creation."
+    ]
+  },
+  "next_step": "Continue the non-first-batch objective by selecting the next uncovered representative secondary-flow family after tender closure."
+}

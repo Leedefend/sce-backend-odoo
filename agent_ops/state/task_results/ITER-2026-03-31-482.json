@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-03-31-482",
+  "status": "PASS",
+  "summary": "Normalized next-action rule expressions before safe_eval by dedenting, trimming, and folding multiline expressions into a single line so the draft-stage submit-project recommendation evaluates again.",
+  "verification": {
+    "task_contract": "PASS",
+    "verify_smart_core": "PASS",
+    "module_upgrade": "PASS",
+    "runtime_audit": {
+      "draft_submit_project_recommendation_restored_for_pm": true,
+      "draft_submit_project_execution_succeeds_for_pm": true,
+      "rule_expression_eval_warning_removed_for_sample_case": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "The fix normalizes formatting only and does not change ACLs or rule ownership.",
+      "The audited draft-stage submit recommendation now evaluates and executes again.",
+      "Later batches should still audit role-specific recommendation stability without execution side effects."
+    ]
+  },
+  "next_step": "Open the next low-risk audit batch to inspect role-specific next-action recommendation stability on the corrected expression-evaluation baseline."
+}

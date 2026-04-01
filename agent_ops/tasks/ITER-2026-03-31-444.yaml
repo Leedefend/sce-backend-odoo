@@ -1,0 +1,69 @@
+task_id: ITER-2026-03-31-444
+title: Audit reset and verify script ownership during bootstrap compatibility phase
+type: governance
+status: active
+priority: medium
+
+goal: >
+  Determine the correct bootstrap target semantics for reset/install/verify
+  scripts during the compatibility phase after the semantic split and the first
+  dependent-manifest migration.
+
+user_visible_outcome:
+  - "明确 reset/install 脚本在兼容期应该指向新模块、旧 shim，还是两者组合"
+  - "为后续脚本迁移批次冻结正确目标"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - read-only governance batch
+  - no script changes
+  - no addon changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Bootstrap Compatibility Governance
+  module: reset/install/verify script ownership
+  module_owner: repository taxonomy and upgrade path
+  kernel_or_scenario: kernel
+  reason: >
+    After the semantic split and the first manifest migration, the next
+    low-risk step is to determine the correct script-layer bootstrap owner
+    during the compatibility phase before changing any script references.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-444.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - repository_facts_are_insufficient_to_choose_script_layer_bootstrap_owner
+
+deliverables:
+  - implementation/report/result artifacts for ITER-2026-03-31-444
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-03-31-444.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-444.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-444.json
+
+depends_on:
+  - ITER-2026-03-31-443

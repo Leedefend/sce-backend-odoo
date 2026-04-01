@@ -1,0 +1,41 @@
+{
+  "task_id": "ITER-2026-03-31-466",
+  "status": "PASS",
+  "summary": "Decoupled Sichuan Baosheng finance users from the owner/project-facing operator path while preserving finance manager authority and cross-domain read. Added canonical cleanup so module upgrade reproducibly removes stale project-facing operator groups from historical customer users.",
+  "verification": {
+    "task_contract": "PASS",
+    "smart_construction_custom_upgrade": "PASS",
+    "smart_construction_core_upgrade": "PASS",
+    "verify_smart_core": "PASS",
+    "runtime_authority_facts": {
+      "finance_owner": false,
+      "finance_project_user": false,
+      "finance_contract_user": false,
+      "finance_contract_read": true,
+      "finance_cost_read": true,
+      "finance_material_read": true,
+      "finance_purchase_read": true,
+      "finance_finance_manager": true,
+      "finance_cost_user": false,
+      "finance_material_user": false,
+      "finance_purchase_user": false,
+      "pm_contract_manager": true,
+      "pm_cost_user": true,
+      "pm_cost_manager": false,
+      "pm_material_manager": true,
+      "pm_purchase_manager": true,
+      "pm_finance_manager": false,
+      "executive_platform_leak": false
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "Finance now matches the requested 'finance-only plus cross-domain read' boundary.",
+      "PM and executive authority surfaces did not regress.",
+      "Customer authorization data now contains explicit cleanup for stale project-facing operator groups."
+    ]
+  },
+  "next_step": "Resume Sichuan Baosheng first-batch business-flow usability validation against the narrowed finance boundary."
+}

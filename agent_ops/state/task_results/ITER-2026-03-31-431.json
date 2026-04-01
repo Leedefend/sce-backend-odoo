@@ -1,0 +1,43 @@
+{
+  "task_id": "ITER-2026-03-31-431",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Shifted enterprise company, department, and post maintenance to the business-admin authority path while intentionally keeping user maintenance on the platform-admin path.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-431.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_construction_custom/tests/test_business_admin_authority_path.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_enterprise_base DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "live Odoo shell assertion for enterprise-maintenance ownership split",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-431.md"
+  },
+  "runtime_audit": {
+    "company_action_business_full": true,
+    "department_action_business_full": true,
+    "post_action_business_full": true,
+    "user_action_business_full": false,
+    "user_action_system_only": true,
+    "acl_company_business_full": true,
+    "acl_department_business_full": true,
+    "acl_post_business_full": true,
+    "acl_users_business_full": false
+  },
+  "next_suggestion": "Only open a new governed batch if res.users ownership itself should move off the platform-admin path."
+}

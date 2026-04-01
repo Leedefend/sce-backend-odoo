@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-01-500",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited the BOQ and execution-side secondary flow family and found a real runtime residual. The representative entrypoints are group-visible and their target models look accessible, but action_open_project_progress_entry() and action_exec_structure_entry.run() still fail for delivered roles with ir.actions.act_window.view ACL errors.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_audit": "PASS",
+    "runtime_audit": {
+      "group_visibility_matches_expected_family_boundary": true,
+      "pm_finance_executive_exec_side_entrypoints_fail_on_action_view_acl": true,
+      "residual_is_runtime_real_not_sample_gap": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "This family is not blocked by missing samples; representative no-write runtime entrypoints already fail.",
+      "The failure pattern matches earlier act_window.view ACL residuals on follow-through action paths.",
+      "Further progress now requires a dedicated narrow implementation batch for execution-side action dispatch."
+    ]
+  },
+  "next_step": "Stop the chain and open a narrow implementation batch to remove ir.actions.act_window.view ACL dependence from progress-entry and execution-structure follow-through entrypoints."
+}

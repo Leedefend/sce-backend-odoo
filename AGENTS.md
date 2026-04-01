@@ -156,6 +156,206 @@ The agent MUST STOP immediately if:
 6. Task cannot be completed with certainty
 7. Planned kernel alignment would absorb industry-specific semantics
 
+### 6.1 Narrow Exception For Dedicated Permission-Governance Batches
+
+The generic stop condition for `security/**` remains the default and MUST still
+trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `security/**` changes only when all of the
+following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated
+  `permission-governance` or equivalent high-risk authority-path objective
+- the task allowlist explicitly includes the exact `security/**` paths being
+  changed
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped to the approved authority-path
+  objective
+- `record_rules/**`, `ir.model.access.csv`, `__manifest__.py`, and financial
+  domains remain outside scope unless separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about implied groups, ACL impact, or platform-level
+  authority leakage, the agent MUST stop immediately
+
+### 6.2 Narrow Exception For Dedicated Post Master-Data ACL Batches
+
+The generic stop condition for `ir.model.access.csv` remains the default and
+MUST still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `ir.model.access.csv` changes only when all
+of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated platform master-data
+  objective for the customer/workbook `岗位` carrier
+- the task allowlist explicitly includes the exact
+  `addons/smart_enterprise_base/security/ir.model.access.csv` path
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped to the new post master-data model
+  plus its user-carrier relation
+- `record_rules/**`, `__manifest__.py`, and financial domains remain outside
+  scope unless separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about model ownership, access scope, or platform-level
+  leakage, the agent MUST stop immediately
+
+### 6.3 Narrow Exception For Dedicated Enterprise-Maintenance Ownership ACL Batches
+
+The generic stop condition for `ir.model.access.csv` remains the default and
+MUST still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `ir.model.access.csv` changes only when all
+of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated customer-delivery
+  ownership objective for enterprise maintenance
+- the task allowlist explicitly includes the exact
+  `addons/smart_enterprise_base/security/ir.model.access.csv` path
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to enterprise company,
+  department, and post maintenance ownership
+- `res.users` ownership, `record_rules/**`, `__manifest__.py`, and financial
+  domains remain outside scope unless separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about authority inheritance, ACL scope, or
+  platform-admin leakage, the agent MUST stop immediately
+
+### 6.4 Narrow Exception For Dedicated Enterprise User-Maintenance Ownership ACL Batches
+
+The generic stop condition for `ir.model.access.csv` remains the default and
+MUST still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `ir.model.access.csv` changes only when all
+of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated customer-delivery
+  ownership objective for enterprise user maintenance
+- the task allowlist explicitly includes the exact
+  `addons/smart_enterprise_base/security/ir.model.access.csv` path
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to enterprise user
+  maintenance ownership via the existing business-admin authority path
+- record rules, manifest changes, financial domains, and platform governance
+  fields remain outside scope unless separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about `res.users` exposure, ACL scope, or
+  platform-admin leakage, the agent MUST stop immediately
+
+### 6.5 Narrow Exception For Dedicated Bootstrap Module Migration Batches
+
+The generic stop condition for `__manifest__.py` remains the default and MUST
+still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `__manifest__.py` changes only when all of
+the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated taxonomy-migration or
+  equivalent high-risk objective for
+  `smart_construction_bootstrap -> smart_platform_bootstrap`
+- the task allowlist explicitly includes the exact manifest paths and any
+  directly related bootstrap reference files being changed
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to:
+  - creating the new neutral bootstrap module
+  - preserving `smart_construction_bootstrap` as a compatibility shim
+  - migrating bootstrap dependency/install/verify/doc references in the frozen
+    transition order
+- `security/**`, `record_rules/**`, `ir.model.access.csv`, and financial
+  domains remain outside scope unless separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about dependency direction, upgrade/install safety, or
+  compatibility-shim removal conditions, the agent MUST stop immediately
+
+### 6.6 Narrow Exception For Dedicated Fresh-Runtime Install-Order Recovery ACL Batches
+
+The generic stop conditions for `security/**` and `ir.model.access.csv` remain
+the default and MUST still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `security/**` and `ir.model.access.csv`
+changes only when all of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated fresh-runtime or
+  install-order recovery objective
+- the task allowlist explicitly includes the exact
+  `addons/smart_enterprise_base/security/ir.model.access.csv`,
+  `addons/smart_enterprise_base/views/menu_enterprise_base.xml`,
+  `addons/smart_construction_core/security/ir.model.access.csv`, and
+  `addons/smart_construction_core/security/action_groups_patch.xml` paths
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes only remove pre-core references from
+  `smart_enterprise_base` and re-apply the equivalent business-full grants from
+  `smart_construction_core` after its groups exist
+- `record_rules/**`, `__manifest__.py`, frontend paths, and financial domains
+  remain outside scope unless separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about final authority ownership, install order, or
+  platform-admin leakage, the agent MUST stop immediately
+
+### 6.7 Narrow Exception For Dedicated Customer Seed Materialization Batches
+
+The generic stop condition for `__manifest__.py` remains the default and MUST
+still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `__manifest__.py` and module data-load
+changes only when all of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated customer bootstrap or
+  install-time seed materialization objective
+- the task allowlist explicitly includes the exact
+  `addons/smart_construction_custom/__manifest__.py`,
+  `addons/smart_construction_custom/data/**`, and any directly related
+  customer-module documentation paths being changed
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to turning customer runtime
+  bootstrap facts into install-time module data for reproducible fresh installs
+- `security/**`, `record_rules/**`, `ir.model.access.csv`, frontend paths, and
+  financial domains remain outside scope unless separately authorized by a new
+  task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about install order, duplicate ownership, or customer
+  seed reproducibility, the agent MUST stop immediately
+
 ---
 
 ## 7. Allowed Change Rules

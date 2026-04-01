@@ -1,0 +1,38 @@
+{
+  "task_id": "ITER-2026-03-31-438",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Froze the transition plan for smart_construction_bootstrap: the preferred target is smart_platform_bootstrap, migration must use a temporary compatibility shim, and dependency/script/doc transitions must follow a fixed order.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-438.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "rg -n \"smart_platform_|smart_system_\" addons docs scripts",
+      "result": "PASS"
+    },
+    {
+      "command": "sed -n '1,220p' docs/architecture/platform_naming_alignment_v1.md",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-438.md"
+  },
+  "runtime_audit": {
+    "preferred_target_module_name": "smart_platform_bootstrap",
+    "compatibility_shim_required": true,
+    "direct_rename_first_step_allowed": false,
+    "transition_order": [
+      "create neutral target module",
+      "keep smart_construction_bootstrap as compatibility shim",
+      "migrate dependent manifests",
+      "migrate reset/install scripts",
+      "migrate verify scripts",
+      "migrate docs/runbooks",
+      "remove shim after zero active references remain"
+    ]
+  },
+  "next_suggestion": "Open a dedicated high-risk implementation batch to create smart_platform_bootstrap and migrate references in the frozen order."
+}

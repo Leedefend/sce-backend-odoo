@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-01-520",
+  "status": "PASS",
+  "summary": "Classified `quota import` as a clean representative config-admin governance family. The menu, action, and model ACLs align cleanly on the config-admin line and remain hidden from PM and finance.",
+  "verification": {
+    "task_contract": "PASS",
+    "repository_audit": "PASS",
+    "runtime_audit": {
+      "quota_import_hidden_from_pm": true,
+      "quota_import_hidden_from_finance": true,
+      "quota_import_visible_to_executive": true,
+      "quota_import_visible_to_business_admin": true,
+      "quota_import_model_denied_for_delivered_roles": true
+    }
+  },
+  "risk": {
+    "level": "low",
+    "result": "PASS",
+    "notes": [
+      "This batch classified only the wizard entrypoint and ACL/menu boundary.",
+      "No import execution side effects were exercised."
+    ]
+  },
+  "next_step": "Open the next low-risk config-admin batch and classify the workflow family on the governance line."
+}

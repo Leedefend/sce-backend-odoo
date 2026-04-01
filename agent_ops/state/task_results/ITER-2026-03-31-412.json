@@ -1,0 +1,28 @@
+{
+  "task_id": "ITER-2026-03-31-412",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Implemented manual customer user baseline bootstrap with company and primary-department assignment only.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-412.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_construction_custom/models/security_policy.py addons/smart_construction_custom/hooks.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_custom DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-412.md"
+  },
+  "next_suggestion": "Open the next verification batch to execute and audit the customer bootstrap result in sc_demo."
+}

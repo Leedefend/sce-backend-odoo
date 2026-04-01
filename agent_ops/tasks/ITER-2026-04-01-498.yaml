@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-01-498
+title: Recover verify gate for next-action rule materialization batch
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Diagnose and recover the failing verify/mod-upgrade gate introduced during
+  ITER-2026-04-01-497 so the approved next-action rule materialization path can
+  be validated safely.
+
+user_visible_outcome:
+  - "verify.smart_core 恢复到可重复通过"
+  - "project_next_action_rules.xml 可被 Odoo 正常加载"
+  - "不新增 recommendation 语义范围，不扩展到其他模块"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/data/project_next_action_rules.xml
+    - addons/smart_construction_core/tests/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - narrow recovery batch for verify and module-upgrade gates
+  - no ACL, manifest, bootstrap, or broader recommendation semantic changes
+  - only fix XML/data replay mechanics or directly related regression assertions
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_name: 四川保盛建设集团有限公司
+  customer_module: smart_construction_custom
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Customer Delivery Flow Acceptance
+  module: next-action rule materialization gate recovery
+  module_owner: customer delivery recommendation surface
+  kernel_or_scenario: scenario
+  reason: >
+    ITER-2026-04-01-497 introduced a candidate data replay path for existing
+    sc.project.next_action.rule rows, but verification stopped after XML load
+    errors and a subsequent verify.smart_core gate failure.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-01-498.yaml
+    - make verify.smart_core
+    - make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo
+    - "runtime audit confirms project_next_action_rules data loads and existing rule rows carry the approved create-task sequence/condition baseline"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - verify_smart_core_fails
+  - module_upgrade_fails
+  - the_recovery_requires_manifest_or_hook_changes
+  - the_fix_requires_broader_recommendation_semantic_changes
+
+deliverables:
+  - recovered verify and module-upgrade gate for next-action rule materialization
+  - report artifacts for ITER-2026-04-01-498
+
+rollback:
+  - rerun `make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_odoo`
+  - git restore addons/smart_construction_core/data/project_next_action_rules.xml
+  - git restore addons/smart_construction_core/tests
+  - git restore agent_ops/tasks/ITER-2026-04-01-498.yaml
+  - git restore agent_ops/reports/2026-04-01/report.ITER-2026-04-01-498.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-01-498.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-01-497

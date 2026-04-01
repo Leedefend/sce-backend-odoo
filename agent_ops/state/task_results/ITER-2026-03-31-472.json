@@ -1,0 +1,28 @@
+{
+  "task_id": "ITER-2026-03-31-472",
+  "status": "PASS_WITH_RISK",
+  "summary": "Audited representative write and approval paths for the delivered first-batch roles on sc_odoo. Ownership is classifiable and broadly aligned, but PM still sees payment_request_my without payment write rights, and finance still sees project_progress_entry without progress-entry model access.",
+  "verification": {
+    "task_contract": "PASS",
+    "runtime_write_path_audit": {
+      "pm_project_side_write_and_material_review": true,
+      "pm_finance_write_denied": true,
+      "finance_payment_write_and_review": true,
+      "finance_material_review_denied": true,
+      "executive_full_write_surface": true,
+      "business_admin_full_write_surface": true,
+      "pm_payment_request_entry_without_write": true,
+      "finance_progress_entry_without_model_access": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "Representative write ownership is broadly aligned by role, so the customer delivery boundary is understandable.",
+      "PM still has a visible payment-request entry while payment.request create/write is denied.",
+      "Finance still has a visible progress-entry action while project.progress.entry read/write is denied, which is a concrete action-vs-model mismatch."
+    ]
+  },
+  "next_step": "Open a narrow governance or implementation batch to align representative action visibility with actual write ownership for PM payment_request_my and finance project_progress_entry before continuing downstream flow acceptance."
+}

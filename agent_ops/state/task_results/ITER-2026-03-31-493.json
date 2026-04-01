@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-03-31-493",
+  "status": "PASS_WITH_RISK",
+  "summary": "No existing in-progress zero-task sample exists, and a scratch in-progress project immediately materializes with task.count = 1, so the create-task recommendation branch cannot currently be accepted without first understanding the runtime auto-task/bootstrap semantics.",
+  "verification": {
+    "task_contract": "PASS",
+    "runtime_audit": {
+      "existing_zero_task_in_progress_samples_absent": true,
+      "scratch_in_progress_project_created_successfully": true,
+      "scratch_project_immediately_has_task_count_one": true,
+      "scratch_project_cleanup_complete": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "This is no longer a simple sample-coverage problem; runtime bootstrap semantics now interfere with the create-task rule precondition.",
+      "Before continuing, the source of the automatic task on a fresh in-progress project must be classified.",
+      "The remaining acceptance gap may require a rule adjustment, a bootstrap adjustment, or a revised acceptance strategy."
+    ]
+  },
+  "next_step": "Stop the chain and open a narrow audit batch to identify the source of the automatic task on a fresh in-progress project before resuming create-task acceptance."
+}

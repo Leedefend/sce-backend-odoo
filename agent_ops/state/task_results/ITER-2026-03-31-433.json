@@ -1,0 +1,41 @@
+{
+  "task_id": "ITER-2026-03-31-433",
+  "status": "PASS",
+  "classification": "PASS",
+  "summary": "Shifted enterprise user maintenance to the business-admin authority path while keeping the page scoped to enterprise master-data fields.",
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-433.yaml",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile addons/smart_construction_custom/tests/test_business_admin_authority_path.py",
+      "result": "PASS"
+    },
+    {
+      "command": "make mod.upgrade CODEX_NEED_UPGRADE=1 MODULE=smart_enterprise_base DB_NAME=sc_demo",
+      "result": "PASS"
+    },
+    {
+      "command": "live Odoo shell assertion for enterprise user-maintenance ownership",
+      "result": "PASS"
+    },
+    {
+      "command": "make verify.smart_core",
+      "result": "PASS"
+    }
+  ],
+  "artifacts": {
+    "report": "agent_ops/reports/2026-03-31/report.ITER-2026-03-31-433.md"
+  },
+  "runtime_audit": {
+    "user_action_business_full": true,
+    "user_menu_business_full": true,
+    "user_action_system_group": true,
+    "acl_users_business_full": true,
+    "contains_groups_field": false,
+    "contains_company_ids_field": false,
+    "contains_role_profile_field": false
+  },
+  "next_suggestion": "Run a final low-risk governance audit to confirm the enterprise maintenance chain is now delivery-complete."
+}

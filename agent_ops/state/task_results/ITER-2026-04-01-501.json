@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-01-501",
+  "status": "PASS_WITH_RISK",
+  "summary": "Fixed the project progress entry dispatch so delivered roles no longer hit ir.actions.act_window.view ACL failures, but execution structure entry still fails at runtime because the server action now needs context-string normalization after switching to safe action dict retrieval.",
+  "verification": {
+    "task_contract": "PASS",
+    "verify_smart_core": "PASS",
+    "module_upgrade": "PASS",
+    "runtime_audit": {
+      "project_progress_entry_no_longer_hits_action_view_acl": true,
+      "execution_structure_entry_no_longer_hits_action_view_acl": true,
+      "execution_structure_entry_now_fails_on_context_value_error": true
+    }
+  },
+  "risk": {
+    "level": "medium",
+    "result": "PASS_WITH_RISK",
+    "notes": [
+      "The original act_window.view ACL residual is closed for progress entry and transformed for execution structure entry.",
+      "A narrower follow-up batch is still required to normalize string context inside the execution-structure server action.",
+      "No ACL or manifest changes are needed for the next step."
+    ]
+  },
+  "next_step": "Stop the chain and open a minimal follow-up batch that only normalizes context values inside action_exec_structure_entry."
+}

@@ -1,0 +1,76 @@
+task_id: ITER-2026-03-31-408
+title: Draft company and department bootstrap specification for customer onboarding
+type: documentation
+status: completed
+priority: high
+
+goal: >
+  Produce an implementation-ready specification for company and department
+  bootstrap so the later high-risk addon implementation can be executed without
+  re-opening customer-structure analysis.
+
+user_visible_outcome:
+  - "形成公司与部门 bootstrap 规格"
+  - "明确导入字段、顺序、约束"
+  - "为后续 smart_construction_custom 实现提供直接输入"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_custom/README.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - documentation/specification only; no implementation changes
+  - define bootstrap semantics for company and departments
+  - keep the output directly usable for a later implementation batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+
+architecture:
+  layer_target: Governance Documentation
+  module: customer bootstrap specification
+  module_owner: smart_construction_custom onboarding
+  kernel_or_scenario: scenario
+  reason: >
+    The customer baseline is frozen, but direct addon implementation would
+    touch high-risk paths. The next valid step is to produce an implementation-
+    ready bootstrap specification for company and department setup.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-408.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - bootstrap_spec_unclear
+
+deliverables:
+  - updated bootstrap specification in addons/smart_construction_custom/README.md
+  - report and task result artifacts for ITER-2026-03-31-408
+  - delivery log checkpoint with next suggestion
+
+rollback:
+  - git restore addons/smart_construction_custom/README.md
+  - git restore agent_ops/tasks/ITER-2026-03-31-408.yaml
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-408.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-408.json
+
+depends_on:
+  - ITER-2026-03-31-407

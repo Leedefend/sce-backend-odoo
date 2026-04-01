@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-03-31-457",
+  "status": "PASS_WITH_RISK",
+  "summary": "All 20 Sichuan Baosheng users on sc_odoo have internal-user login authority and the owner path, but only 4 users have business-admin authority and no users yet hold PM, finance, or executive business roles.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-457.yaml",
+    "runtime SQL audit confirms 20/20 users have base.group_user",
+    "runtime SQL audit confirms 20/20 users have group_sc_role_owner",
+    "runtime SQL audit confirms 4/20 users have group_sc_role_business_admin and effective group_sc_business_full",
+    "runtime SQL audit confirms pm_role_users=0, finance_role_users=0, executive_role_users=0"
+  ],
+  "risk": {
+    "level": "medium",
+    "notes": [
+      "basic system usage authority is present for all customer users",
+      "domain-specific business authorization is incomplete because PM/finance/executive roles are still unassigned"
+    ]
+  },
+  "next_step": "Define and materialize the Sichuan Baosheng authorization matrix before proceeding with business-flow usability verification."
+}

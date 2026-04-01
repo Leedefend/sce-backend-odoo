@@ -1,0 +1,74 @@
+task_id: ITER-2026-03-31-451
+title: Install smart_construction_custom on sc_odoo and verify customer-layer usability
+type: implementation
+status: active
+priority: high
+
+goal: >
+  Continue from the validated platform+industry non-demo runtime by installing
+  the customer-specific module smart_construction_custom on sc_odoo and
+  verifying that the customer-layer authority and maintenance chain are usable.
+
+user_visible_outcome:
+  - "sc_odoo 进入特定客户模块层"
+  - "完成 smart_construction_custom 安装验证"
+  - "确认客户层入口和权限链可用"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - execution-only batch
+  - no repository code changes
+  - install and inspect runtime facts only
+
+context:
+  branch: codex/next-round
+  baseline_sha: c23f8b2
+  target_db: sc_odoo
+  customer_module: smart_construction_custom
+
+architecture:
+  layer_target: Customer Delivery Runtime Validation
+  module: smart_construction_custom on sc_odoo
+  module_owner: customer delivery chain
+  kernel_or_scenario: scenario
+  reason: >
+    The user confirmed that sc_odoo should now move from the platform+industry
+    baseline into the customer-specific layer, so the next step is to install
+    smart_construction_custom and validate its runtime usability on sc_odoo.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-03-31-451.yaml
+    - make mod.install MODULE=smart_construction_custom DB_NAME=sc_odoo
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - smart_construction_custom_install_fails_on_sc_odoo
+  - customer_layer_runtime_state_cannot_be_verified_with_certainty
+
+deliverables:
+  - implementation/report/result artifacts for ITER-2026-03-31-451
+
+rollback:
+  - rerun `make db.reset DB=sc_odoo`
+  - git restore agent_ops/tasks/ITER-2026-03-31-451.yaml
+  - git restore agent_ops/reports/2026-03-31/report.ITER-2026-03-31-451.md
+  - git restore agent_ops/state/task_results/ITER-2026-03-31-451.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-03-31-450
