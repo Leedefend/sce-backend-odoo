@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-02-657
+title: Verify lifecycle semantic guard coverage extension for entry context service
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify semantic guard coverage extension passes and remains integrated in
+  project management acceptance chain.
+
+user_visible_outcome:
+  - "新增防回归门禁覆盖已验证"
+  - "项目管理验收链路保持绿色"
+
+scope:
+  allowed_paths:
+    - scripts/verify/project_lifecycle_semantic_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3fe276c
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-656
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Agent/Verify Governance
+  module: semantic guard coverage verify
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    Verify business-fact entry-context semantic guard coverage.
+  reason: >
+    Ensure guard extension is effective before next batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-657.yaml
+    - python3 scripts/verify/project_lifecycle_semantic_guard.py
+    - make verify.project.management.acceptance
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_guard_coverage_for_entry_context_service
+  - governance/report artifacts for ITER-2026-04-02-657
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-657.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-657.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-657.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-656
