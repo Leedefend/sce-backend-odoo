@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-01T14:37:14Z
+- blocker_key: `project_lifecycle_backend_semantic_impl_verify_v1`
+- layer_target: `backend semantic layer`
+- module: `scene entry lifecycle semantic contract`
+- reason: 后端主战场首个实现批次完成，`lifecycle_hints` 已以 additive 方式加入入口返回；当前 verify 确认 acceptance baseline 无回归
+- completed_step: `已完成 ITER-2026-04-01-619/620：BaseSceneEntryOrchestrator 与 project.initiation.enter 已补齐 lifecycle_hints，make verify.project.management.acceptance PASS`
+- active_commit: `35a1f6a`
+- next_step: `Open next backend screen batch to extend lifecycle_hints coverage to other lifecycle scene entries`
+
 ### 2026-04-01T14:32:19Z
 - blocker_key: `project_lifecycle_backend_semantic_screen_v1`
 - layer_target: `backend semantic layer`

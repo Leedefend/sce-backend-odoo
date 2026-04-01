@@ -123,6 +123,15 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                     "reason_code": "PROJECT_INITIATION_CREATED",
                 },
             },
+            "lifecycle_hints": {
+                "stage": "project_created",
+                "project_id": int(project.id),
+                "scene_key": "project.dashboard",
+                "reason_code": "PROJECT_INITIATION_CREATED",
+                "primary_action_label": "打开项目驾驶舱",
+                "next_step_label": "进入项目管理首页",
+                "suggested_action_intent": "project.dashboard.enter",
+            },
             "contract_ref": {
                 "intent": "ui.contract",
                 "params": dict(contract_params),
