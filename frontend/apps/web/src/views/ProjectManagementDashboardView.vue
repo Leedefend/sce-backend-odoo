@@ -305,7 +305,11 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
-import { consumePendingProjectContext, PROJECT_DASHBOARD_ENTRY_INTENT } from '../app/projectCreationBaseline';
+import {
+  consumePendingProjectContext,
+  PROJECT_DASHBOARD_ENTRY_INTENT,
+  PROJECT_EXECUTION_ENTRY_INTENT,
+} from '../app/projectCreationBaseline';
 import { useSessionStore } from '../stores/session';
 
 type RuntimeHint = {
@@ -433,8 +437,8 @@ const paymentEntrySubmitting = ref(false);
 const projectSwitcherOptions = ref<ProjectSwitchOption[]>([]);
 
 const SCENE_ENTRY_INTENTS: Record<string, string> = {
-  'project.dashboard': 'project.dashboard.enter',
-  'project.execution': 'project.execution.enter',
+  'project.dashboard': PROJECT_DASHBOARD_ENTRY_INTENT,
+  'project.execution': PROJECT_EXECUTION_ENTRY_INTENT,
   'cost.tracking': 'cost.tracking.enter',
   payment: 'payment.enter',
   settlement: 'settlement.enter',
