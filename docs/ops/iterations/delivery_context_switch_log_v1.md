@@ -8250,3 +8250,60 @@ Each entry must include:
   - latest classification: `PASS`
   - view contract shape slice is stable
   - next efficient action is continue view-state slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-796）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d71ee9e`
+- Layer Target: `Backend Usability`
+- Module: `view state continuity`
+- Reason: continue view usability closure after contract shape PASS
+- `796` verify result:
+  - `verify.portal.view_state`: PASS
+  - `Action ok/empty/error`: PASS
+  - `Record ok/empty/error`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - view-state slice is stable
+  - next efficient action is continue guard-groups slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-797）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d71ee9e`
+- Layer Target: `Backend Usability`
+- Module: `guard groups continuity`
+- Reason: continue startup usability closure after view-state PASS
+- `797` verify result:
+  - `verify.portal.guard_groups`: PASS
+  - `asArray/getGroups/safeIncludes` guard suite: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - guard-groups slice is stable
+  - next efficient action is continue menu-no-action slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-798）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d71ee9e`
+- Layer Target: `Backend Usability`
+- Module: `menu no action continuity`
+- Reason: continue navigation usability closure after guard-groups PASS
+- `798` verify result:
+  - `verify.portal.menu_no_action`: PASS
+  - menu leaf/group/scene/broken fallback suite: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - menu-no-action slice is stable
+  - next efficient action is run aggregated `verify.portal.ui.v0_7.container`
+## 2026-04-02 迭代锚点（ITER-2026-04-02-799）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d71ee9e`
+- Layer Target: `Backend Usability`
+- Module: `aggregated usability gate v0_7`
+- Reason: verify cross-slice closure from startup to recordview HUD
+- `799` verify result:
+  - `verify.portal.ui.v0_7.container`: PASS
+  - startup/guard/menu/load_view/fe_smoke/v0_6/hud suites: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - aggregated v0_7 usability gate is stable
+  - next efficient action is continue semantic gate `verify.portal.ui.v0_8.semantic.container`
