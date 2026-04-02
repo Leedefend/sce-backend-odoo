@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-02-790
+title: Verify project-journey sort-mvp usability slice
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify sort MVP path after search MVP PASS.
+
+user_visible_outcome:
+  - "排序链路可用"
+  - "列表检索与排序组合路径稳定"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8d23197
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-789
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: sort mvp verify
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Validate backend list-sort contract behavior for generic frontend.
+  reason: >
+    Continue list usability closure after search PASS.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-790.yaml
+    - make verify.portal.sort_mvp_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_sort_mvp_slice
+  - governance/report artifacts for ITER-2026-04-02-790
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-790.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-790.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-790.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-789
