@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-02-824
+title: Recover app.init startup surface scene_channel contract fields
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Fix backend startup minimal surface so app.init always exposes root-level
+  scene_channel and scene_contract_ref required by cross-stack scene channel smoke.
+
+user_visible_outcome:
+  - "自定义前端在 app.init 可稳定拿到 scene_channel"
+  - "场景通道校验不再回退到 nav 语义缺口"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/system_init_payload_builder.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_only
+  - backend_only
+  - no_frontend_semantic_patch
+  - no_acl_manifest_finance_changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: aa0524f
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-823
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: system.init startup minimal surface contract
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Root-level scene channel contract belongs to backend startup contract assembly.
+  reason: >
+    Keep frontend generic renderer unchanged and close usability gap in backend contract.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-824.yaml
+    - make verify.portal.scene_channel_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - contract_breaking_change
+
+deliverables:
+  - app.init startup minimal surface carries scene_channel and scene_contract_ref
+  - verification report and task result for ITER-2026-04-02-824
+
+rollback:
+  - git restore addons/smart_core/core/system_init_payload_builder.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-824.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-824.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-824.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-823

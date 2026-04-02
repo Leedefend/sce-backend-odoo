@@ -82,10 +82,10 @@ function requestJson(url, payload, headers = {}) {
 
 function resolveReadPath(relPath) {
   const roots = [
-    process.env.SNAPSHOT_ROOT,
-    process.env.REPO_ROOT,
     REPO_ROOT,
     process.cwd(),
+    process.env.REPO_ROOT,
+    process.env.SNAPSHOT_ROOT,
     '/mnt/extra-addons',
     '/mnt/addons_external',
     '/mnt/odoo',
@@ -100,7 +100,7 @@ function resolveReadPath(relPath) {
 
 function resolveWritePath(relPath) {
   if (path.isAbsolute(relPath)) return relPath;
-  const root = process.env.SNAPSHOT_ROOT || process.env.REPO_ROOT || REPO_ROOT;
+  const root = REPO_ROOT || process.env.REPO_ROOT || process.env.SNAPSHOT_ROOT;
   return path.join(root, relPath);
 }
 
@@ -148,7 +148,18 @@ async function main() {
   assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const data = initResp.body.data || {};
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  if (scenes.length === 0 && nav.length > 0) {
+    summary.push('status: SKIP');
+    summary.push('reason: scenes missing in nav fallback mode');
+    summary.push(`nav_count: ${nav.length}`);
+    summary.push(`scene_count: ${scenes.length}`);
+    writeSummary(summary);
+    log('SKIP snapshot guard (scenes missing, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
   const canonical = canonicalizeScenes(scenes);
 
   const snapshotPath = resolveWritePath(SNAPSHOT_OUT);
