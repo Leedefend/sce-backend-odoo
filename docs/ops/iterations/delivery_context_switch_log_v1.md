@@ -7989,3 +7989,19 @@ Each entry must include:
   - latest classification: `PASS`
   - load-view continuity path is stable
   - next efficient action is screen one next slice between `tree_view` and `kanban_view` (`ITER-2026-04-02-770`)
+## 2026-04-02 迭代锚点（ITER-2026-04-02-770 / 771）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `7bfa669`
+- Layer Target: `Backend Usability`
+- Module: `tree-view continuity`
+- Reason: continue single-slice view-mode journey closure after load-view PASS
+- `770` screen result:
+  - selected verify slice: `make verify.portal.tree_view_smoke.container`
+- `771` verify result:
+  - `verify.portal.tree_view_smoke.container`: FAIL
+  - reason: `grouped signature baseline mismatch`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated implement batch for grouped signature baseline alignment, then rerun tree-view verify
