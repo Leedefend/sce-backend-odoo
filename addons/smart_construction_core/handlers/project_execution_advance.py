@@ -17,6 +17,9 @@ from odoo.addons.smart_construction_core.services.project_execution_state_machin
 from odoo.addons.smart_construction_core.services.project_execution_response_builder import (
     ProjectExecutionResponseBuilder,
 )
+from odoo.addons.smart_construction_core.services.project_execution_precheck_service import (
+    ProjectExecutionPrecheckService,
+)
 from odoo.addons.smart_construction_core.services.project_execution_task_transition_service import (
     ProjectExecutionTaskTransitionService,
 )
@@ -118,6 +121,40 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
 
     def _task_transition_service(self) -> ProjectExecutionTaskTransitionService:
         return ProjectExecutionTaskTransitionService(self.env)
+
+    def _precheck_service(self, consistency_guard) -> ProjectExecutionPrecheckService:
+        return ProjectExecutionPrecheckService(consistency_guard)
+
+    def _blocked_response(
+        self,
+        *,
+        ts0: float,
+        trace_id: str,
+        project_id: int,
+        from_state: str,
+        reason_code: str,
+        extra_data: Dict[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        return ProjectExecutionResponseBuilder.blocked(
+            intent=self.INTENT_TYPE,
+            ts0=ts0,
+            trace_id=trace_id,
+            project_id=project_id,
+            from_state=from_state,
+            to_state=from_state,
+            reason_code=reason_code,
+            suggested_action=self._build_suggested_action(project_id, reason_code),
+            suggested_action_payload={
+                "intent": "project.execution.block.fetch",
+                "reason_code": reason_code,
+                "params": {
+                    "project_id": project_id,
+                    "reason_code": reason_code,
+                },
+            },
+            lifecycle_hints=self._build_lifecycle_hints(project_id, reason_code),
+            extra_data=extra_data,
+        )
 
     def _apply_real_task_transition(
         self, project, *, from_state: str, to_state: str, task_id: int = 0
@@ -232,79 +269,25 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         from_state = ProjectExecutionStateMachine.normalize_state(getattr(project, "sc_execution_state", "ready"))
         to_state = requested_target_state or ProjectExecutionStateMachine.default_target(from_state)
         consistency_guard = ProjectExecutionConsistencyGuard(self.env)
-        if not ProjectExecutionStateMachine.can_transition(from_state, to_state):
-            reason_code = ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
-            self._post_transition_note(
-                project,
-                from_state=from_state,
-                to_state=from_state,
-                reason_code=reason_code,
-                result="blocked",
-            )
-            return ProjectExecutionResponseBuilder.blocked(
-                intent=self.INTENT_TYPE,
-                ts0=ts0,
-                trace_id=trace_id,
-                project_id=int(project.id),
-                from_state=from_state,
-                to_state=from_state,
-                reason_code=reason_code,
-                suggested_action=self._build_suggested_action(int(project.id), reason_code),
-                suggested_action_payload={
-                    "intent": "project.execution.block.fetch",
-                    "reason_code": reason_code,
-                    "params": {
-                        "project_id": int(project.id),
-                        "reason_code": reason_code,
-                    },
-                },
-                lifecycle_hints=self._build_lifecycle_hints(int(project.id), reason_code),
-            )
-
-        scope_ok, scope_reason_code, _summary = consistency_guard.validate_scope(
+        precheck_ok, precheck_stage, precheck_reason_code = self._precheck_service(consistency_guard).evaluate(
             project, from_state=from_state, to_state=to_state
         )
-        if not scope_ok:
-            return ProjectExecutionResponseBuilder.blocked(
-                intent=self.INTENT_TYPE,
+        if not precheck_ok:
+            reason_code = str(precheck_reason_code or "EXECUTION_TRANSITION_BLOCKED")
+            if precheck_stage == ProjectExecutionPrecheckService.STAGE_TRANSITION:
+                self._post_transition_note(
+                    project,
+                    from_state=from_state,
+                    to_state=from_state,
+                    reason_code=reason_code,
+                    result="blocked",
+                )
+            return self._blocked_response(
                 ts0=ts0,
                 trace_id=trace_id,
                 project_id=int(project.id),
                 from_state=from_state,
-                to_state=from_state,
-                reason_code=scope_reason_code,
-                suggested_action=self._build_suggested_action(int(project.id), scope_reason_code),
-                suggested_action_payload={
-                    "intent": "project.execution.block.fetch",
-                    "reason_code": scope_reason_code,
-                    "params": {
-                        "project_id": int(project.id),
-                        "reason_code": scope_reason_code,
-                    },
-                },
-                lifecycle_hints=self._build_lifecycle_hints(int(project.id), scope_reason_code),
-            )
-
-        alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
-        if not alignment_ok and from_state != "ready":
-            return ProjectExecutionResponseBuilder.blocked(
-                intent=self.INTENT_TYPE,
-                ts0=ts0,
-                trace_id=trace_id,
-                project_id=int(project.id),
-                from_state=from_state,
-                to_state=from_state,
-                reason_code=alignment_reason_code,
-                suggested_action=self._build_suggested_action(int(project.id), alignment_reason_code),
-                suggested_action_payload={
-                    "intent": "project.execution.block.fetch",
-                    "reason_code": alignment_reason_code,
-                    "params": {
-                        "project_id": int(project.id),
-                        "reason_code": alignment_reason_code,
-                    },
-                },
-                lifecycle_hints=self._build_lifecycle_hints(int(project.id), alignment_reason_code),
+                reason_code=reason_code,
             )
 
         try:
@@ -325,26 +308,15 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         except ExecutionAdvanceAtomicRollback as atomic_block:
             reason_code = str(atomic_block.reason_code or "")
             task_telemetry = dict(atomic_block.task_telemetry or {})
-            return ProjectExecutionResponseBuilder.blocked(
-                intent=self.INTENT_TYPE,
+            return self._blocked_response(
                 ts0=ts0,
                 trace_id=trace_id,
                 project_id=int(project.id),
                 from_state=from_state,
-                to_state=from_state,
                 reason_code=reason_code,
-                suggested_action=self._build_suggested_action(int(project.id), reason_code),
-                suggested_action_payload={
-                    "intent": "project.execution.block.fetch",
-                    "reason_code": reason_code,
-                    "params": {
-                        "project_id": int(project.id),
-                        "reason_code": reason_code,
-                    },
-                },
-                lifecycle_hints=self._build_lifecycle_hints(int(project.id), reason_code),
                 extra_data=task_telemetry,
             )
+
         self._post_transition_note(
             project,
             from_state=from_state,
