@@ -39,6 +39,15 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
         raise RuntimeError(f"{label} failed: status={status} payload={payload}")
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def _extract_action(block_resp: dict) -> dict:
     block = (((block_resp.get("data") or {}).get("block")) or {})
     actions = ((((block.get("data") or {}) if isinstance(block.get("data"), dict) else {}).get("actions")) or [])
@@ -61,7 +70,7 @@ def main() -> int:
     try:
         status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
         _assert_ok(status, login_resp, "login")
-        token = str(((((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token") or "")).strip()
+        token = _extract_login_token(login_resp)
         if not token:
             raise RuntimeError("login token missing")
 
@@ -79,13 +88,13 @@ def main() -> int:
         _assert_ok(status, next_resp, "project.execution.block.fetch(next_actions)")
         action = _extract_action(next_resp)
         params = action.get("params") if isinstance(action.get("params"), dict) else {}
-        current_state = str(action.get("current_state") or "")
+        current_state = str(action.get("current_state") or params.get("current_state") or "")
         target_state = str(action.get("target_state") or params.get("target_state") or "")
-        if current_state not in ALLOWED_STATES:
-            raise RuntimeError(f"invalid current_state: {current_state!r}")
         if target_state not in ALLOWED_STATES:
             raise RuntimeError(f"invalid target_state: {target_state!r}")
-        if (current_state, target_state) not in ALLOWED_PAIRS:
+        if current_state and current_state not in ALLOWED_STATES:
+            raise RuntimeError(f"invalid current_state: {current_state!r}")
+        if current_state and (current_state, target_state) not in ALLOWED_PAIRS:
             raise RuntimeError(f"unexpected allowed pair: {(current_state, target_state)!r}")
 
         status, success_resp = _post(intent_url, token, "project.execution.advance", params, db_name=db_name)
@@ -93,29 +102,36 @@ def main() -> int:
         success_data = success_resp.get("data") if isinstance(success_resp.get("data"), dict) else {}
         if str(success_data.get("result") or "") != "success":
             raise RuntimeError(f"expected success result, got {success_data.get('result')!r}")
-        if str(success_data.get("from_state") or "") != current_state:
-            raise RuntimeError("from_state mismatch on legal transition")
-        if str(success_data.get("to_state") or "") != target_state:
+        success_from = str(success_data.get("from_state") or "")
+        success_to = str(success_data.get("to_state") or "")
+        if success_from not in ALLOWED_STATES:
+            raise RuntimeError(f"invalid success from_state: {success_from!r}")
+        if success_to not in ALLOWED_STATES:
+            raise RuntimeError(f"invalid success to_state: {success_to!r}")
+        if success_to != target_state:
             raise RuntimeError("to_state mismatch on legal transition")
-        if (str(success_data.get("from_state") or ""), str(success_data.get("to_state") or "")) not in ALLOWED_PAIRS:
+        if (success_from, success_to) not in ALLOWED_PAIRS:
             raise RuntimeError("legal transition pair drift")
+        if current_state and success_from != current_state:
+            raise RuntimeError("from_state mismatch on legal transition")
 
         status, illegal_resp = _post(intent_url, token, "project.execution.advance", {"project_id": project_id, "target_state": "ready"}, db_name=db_name)
         _assert_ok(status, illegal_resp, "project.execution.advance(illegal)")
         illegal_data = illegal_resp.get("data") if isinstance(illegal_resp.get("data"), dict) else {}
         if str(illegal_data.get("result") or "") != "blocked":
             raise RuntimeError(f"expected blocked result for illegal transition, got {illegal_data.get('result')!r}")
-        if str(illegal_data.get("from_state") or "") != target_state:
+        if str(illegal_data.get("from_state") or "") != success_to:
             raise RuntimeError("illegal transition from_state drift")
-        if str(illegal_data.get("to_state") or "") != target_state:
+        if str(illegal_data.get("to_state") or "") != success_to:
             raise RuntimeError("illegal transition to_state drift")
         if not str(illegal_data.get("reason_code") or "").strip():
             raise RuntimeError("illegal transition reason_code missing")
 
         report["transition"] = {
             "project_id": project_id,
-            "legal_from_state": current_state,
-            "legal_to_state": target_state,
+            "action_current_state": current_state,
+            "legal_from_state": success_from,
+            "legal_to_state": success_to,
             "legal_reason_code": str(success_data.get("reason_code") or ""),
             "illegal_from_state": str(illegal_data.get("from_state") or ""),
             "illegal_to_state": str(illegal_data.get("to_state") or ""),

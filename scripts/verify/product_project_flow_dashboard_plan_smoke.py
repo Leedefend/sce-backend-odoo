@@ -141,51 +141,73 @@ def main() -> int:
         actions = next_actions_payload.get("actions") if isinstance(next_actions_payload.get("actions"), list) else []
 
         plan_action = None
+        execution_action = None
         for item in actions:
             if not isinstance(item, dict):
                 continue
-            if str(item.get("intent") or "").strip() == "project.plan_bootstrap.enter":
+            item_intent = str(item.get("intent") or "").strip()
+            if item_intent == "project.plan_bootstrap.enter":
                 plan_action = item
-                break
-        if not isinstance(plan_action, dict):
-            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter")
-        plan_params = plan_action.get("params") if isinstance(plan_action.get("params"), dict) else {}
-        if int(plan_params.get("project_id") or 0) != project_id:
-            raise RuntimeError("dashboard->plan project_id mismatch")
+            if item_intent == "project.execution.enter":
+                execution_action = item
+        if not isinstance(plan_action, dict) and not isinstance(execution_action, dict):
+            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter/project.execution.enter")
 
-        status, plan_enter_resp = _post(intent_url, token, "project.plan_bootstrap.enter", plan_params, db_name=db_name)
-        _assert_ok(status, plan_enter_resp, "project.plan_bootstrap.enter")
-        plan_entry = plan_enter_resp.get("data") if isinstance(plan_enter_resp.get("data"), dict) else {}
-        _assert_plan_entry_shape(plan_entry, project_id)
+        if isinstance(plan_action, dict):
+            plan_params = plan_action.get("params") if isinstance(plan_action.get("params"), dict) else {}
+            if int(plan_params.get("project_id") or 0) != project_id:
+                raise RuntimeError("dashboard->plan project_id mismatch")
 
-        plan_hints = plan_entry.get("runtime_fetch_hints") if isinstance(plan_entry.get("runtime_fetch_hints"), dict) else {}
-        plan_blocks = plan_hints.get("blocks") if isinstance(plan_hints.get("blocks"), dict) else {}
-        summary_hint = plan_blocks.get("plan_summary_detail") if isinstance(plan_blocks.get("plan_summary_detail"), dict) else {}
-        status, plan_block_resp = _post(
-            intent_url,
-            token,
-            str(summary_hint.get("intent") or "project.plan_bootstrap.block.fetch"),
-            summary_hint.get("params") if isinstance(summary_hint.get("params"), dict) else {"project_id": project_id, "block_key": "plan_summary_detail"},
-            db_name=db_name,
-        )
-        _assert_ok(status, plan_block_resp, "project.plan_bootstrap.block.fetch(plan_summary_detail)")
-        plan_block_data = plan_block_resp.get("data") if isinstance(plan_block_resp.get("data"), dict) else {}
-        plan_block = plan_block_data.get("block") if isinstance(plan_block_data.get("block"), dict) else {}
-        if int(plan_block_data.get("project_id") or 0) != project_id:
-            raise RuntimeError("plan runtime block project_id mismatch")
-        if str(plan_block_data.get("block_key") or "").strip() != "plan_summary_detail":
-            raise RuntimeError("plan runtime block key mismatch")
-        if str(plan_block.get("block_type") or "").strip() != "plan_summary_detail":
-            raise RuntimeError("plan runtime block type mismatch")
+            status, plan_enter_resp = _post(intent_url, token, "project.plan_bootstrap.enter", plan_params, db_name=db_name)
+            _assert_ok(status, plan_enter_resp, "project.plan_bootstrap.enter")
+            plan_entry = plan_enter_resp.get("data") if isinstance(plan_enter_resp.get("data"), dict) else {}
+            _assert_plan_entry_shape(plan_entry, project_id)
 
-        report["flow"] = {
-            "project_id": project_id,
-            "dashboard_action_intent": str(plan_action.get("intent") or ""),
-            "dashboard_action_state": str(plan_action.get("state") or ""),
-            "plan_entry_keys": sorted(plan_entry.keys()),
-            "plan_block_key": str(plan_block_data.get("block_key") or ""),
-            "plan_block_state": str(plan_block.get("state") or ""),
-        }
+            plan_hints = plan_entry.get("runtime_fetch_hints") if isinstance(plan_entry.get("runtime_fetch_hints"), dict) else {}
+            plan_blocks = plan_hints.get("blocks") if isinstance(plan_hints.get("blocks"), dict) else {}
+            summary_hint = plan_blocks.get("plan_summary_detail") if isinstance(plan_blocks.get("plan_summary_detail"), dict) else {}
+            status, plan_block_resp = _post(
+                intent_url,
+                token,
+                str(summary_hint.get("intent") or "project.plan_bootstrap.block.fetch"),
+                summary_hint.get("params") if isinstance(summary_hint.get("params"), dict) else {"project_id": project_id, "block_key": "plan_summary_detail"},
+                db_name=db_name,
+            )
+            _assert_ok(status, plan_block_resp, "project.plan_bootstrap.block.fetch(plan_summary_detail)")
+            plan_block_data = plan_block_resp.get("data") if isinstance(plan_block_resp.get("data"), dict) else {}
+            plan_block = plan_block_data.get("block") if isinstance(plan_block_data.get("block"), dict) else {}
+            if int(plan_block_data.get("project_id") or 0) != project_id:
+                raise RuntimeError("plan runtime block project_id mismatch")
+            if str(plan_block_data.get("block_key") or "").strip() != "plan_summary_detail":
+                raise RuntimeError("plan runtime block key mismatch")
+            if str(plan_block.get("block_type") or "").strip() != "plan_summary_detail":
+                raise RuntimeError("plan runtime block type mismatch")
+
+            report["flow"] = {
+                "project_id": project_id,
+                "dashboard_route": "plan_bootstrap",
+                "dashboard_action_intent": str(plan_action.get("intent") or ""),
+                "dashboard_action_state": str(plan_action.get("state") or ""),
+                "plan_entry_keys": sorted(plan_entry.keys()),
+                "plan_block_key": str(plan_block_data.get("block_key") or ""),
+                "plan_block_state": str(plan_block.get("state") or ""),
+            }
+        else:
+            execution_params = execution_action.get("params") if isinstance(execution_action.get("params"), dict) else {}
+            if int(execution_params.get("project_id") or 0) != project_id:
+                raise RuntimeError("dashboard->execution project_id mismatch")
+            status, execution_enter_resp = _post(intent_url, token, "project.execution.enter", execution_params, db_name=db_name)
+            _assert_ok(status, execution_enter_resp, "project.execution.enter")
+            execution_entry = execution_enter_resp.get("data") if isinstance(execution_enter_resp.get("data"), dict) else {}
+            if str(execution_entry.get("scene_key") or "").strip() != "project.execution":
+                raise RuntimeError("execution entry scene_key mismatch on direct dashboard route")
+            report["flow"] = {
+                "project_id": project_id,
+                "dashboard_route": "execution_direct",
+                "dashboard_action_intent": str(execution_action.get("intent") or ""),
+                "dashboard_action_state": str(execution_action.get("state") or ""),
+                "execution_entry_keys": sorted(execution_entry.keys()),
+            }
     except Exception as exc:
         report["status"] = "FAIL"
         report.setdefault("errors", []).append(str(exc))

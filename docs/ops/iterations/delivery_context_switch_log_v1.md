@@ -8819,3 +8819,116 @@ Each entry must include:
   - latest classification: `PASS`
   - project journey verification chain stable under current fallback runtime constraints
   - next efficient action is continue initiation → execution action usability path verification
+## 2026-04-02 迭代锚点（ITER-2026-04-02-846）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `project flow full chain smoke`
+- Reason: recover dual-route compatibility (`plan_bootstrap` / `execution_direct`) in full-chain guards
+- `846` implement result:
+  - `product_project_flow_full_chain_pre_execution_smoke` and `product_project_flow_full_chain_execution_smoke` accept both dashboard routes
+- `846` verify result:
+  - `make verify.product.project_flow.full_chain_pre_execution`: PASS
+  - `make verify.product.project_flow.full_chain_execution`: PASS
+  - `make verify.product.project_dashboard_baseline`: FAIL (`product_project_execution_state_transition_guard`)
+- state after this round:
+  - latest classification: `PASS`
+  - blocker moved forward
+  - next efficient action is transition-guard compatibility recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-847）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `execution state transition guard`
+- Reason: current backend action may omit `current_state`; guard needs response-first validation
+- `847` implement result:
+  - transition guard now treats action `current_state` as optional and validates legal pair via `execution.advance` from/to states
+- `847` verify result:
+  - `make verify.product.project_execution_state_transition_guard`: PASS
+  - `make verify.product.project_dashboard_baseline`: FAIL (`product_project_dashboard_entry_contract_guard`)
+- state after this round:
+  - latest classification: `PASS`
+  - blocker moved forward
+  - next efficient action is dashboard entry guard extension compatibility
+## 2026-04-02 迭代锚点（ITER-2026-04-02-848）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `dashboard entry contract guard`
+- Reason: enforce required keys while allowing bounded entry/summary extensions
+- `848` implement result:
+  - dashboard entry guard switched from strict equality to required+optional key model
+- `848` verify result:
+  - `make verify.product.project_dashboard_entry_contract_guard`: PASS
+  - `make verify.product.project_dashboard_baseline`: FAIL (`product_project_dashboard_block_contract_guard`)
+- state after this round:
+  - latest classification: `PASS`
+  - blocker moved forward
+  - next efficient action is dashboard block guard extension compatibility
+## 2026-04-02 迭代锚点（ITER-2026-04-02-849）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `dashboard block contract guard`
+- Reason: block envelope added contextual fields; strict-key guard became false-negative
+- `849` implement result:
+  - dashboard block guard now validates required envelope/block keys and allows bounded optional keys
+- `849` verify result:
+  - `make verify.product.project_dashboard_block_contract_guard`: PASS
+  - `make verify.product.project_dashboard_baseline`: FAIL (`product_project_plan_entry_contract_guard`)
+- state after this round:
+  - latest classification: `PASS`
+  - blocker moved forward
+  - next efficient action is plan entry guard extension compatibility
+## 2026-04-02 迭代锚点（ITER-2026-04-02-850）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `plan entry contract guard`
+- Reason: plan entry contract includes lifecycle extension keys
+- `850` implement result:
+  - plan entry guard switched to required+optional model for entry and summary keys
+- `850` verify result:
+  - `make verify.product.project_plan_entry_contract_guard`: PASS
+  - `make verify.product.project_dashboard_baseline`: FAIL (`product_project_execution_entry_contract_guard`)
+- state after this round:
+  - latest classification: `PASS`
+  - blocker moved forward
+  - next efficient action is execution entry guard extension compatibility
+## 2026-04-02 迭代锚点（ITER-2026-04-02-851）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `execution entry contract guard`
+- Reason: execution entry contract includes lifecycle/context extension keys
+- `851` implement result:
+  - execution entry guard switched to required+optional model for entry and summary keys
+- `851` verify result:
+  - `make verify.product.project_execution_entry_contract_guard`: PASS
+  - `make verify.product.project_dashboard_baseline`: FAIL (`product_project_execution_block_contract_guard`)
+- state after this round:
+  - latest classification: `PASS`
+  - blocker moved forward
+  - next efficient action is execution block guard extension compatibility
+## 2026-04-02 迭代锚点（ITER-2026-04-02-852）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c7a219e`
+- Layer Target: `Backend Usability`
+- Module: `execution block contract guard`
+- Reason: execution block envelope added contextual fields; strict-key guard became false-negative
+- `852` implement result:
+  - execution block guard now validates required envelope/block keys and allows bounded optional keys
+- `852` verify result:
+  - `make verify.product.project_execution_block_contract_guard`: PASS
+  - `make verify.product.project_dashboard_baseline`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - dashboard baseline aggregate gate is green
+  - next efficient action is shift to custom-frontend cross-stack usability closed-loop verification

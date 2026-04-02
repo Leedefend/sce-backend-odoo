@@ -33,6 +33,15 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
         raise RuntimeError(f"{label} failed: status={status} payload={payload}")
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
@@ -46,7 +55,7 @@ def main() -> int:
     try:
         status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
         _assert_ok(status, login_resp, "login")
-        token = str(((((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token") or "")).strip()
+        token = _extract_login_token(login_resp)
         if not token:
             raise RuntimeError("login token missing")
 
@@ -82,27 +91,34 @@ def main() -> int:
         _assert_ok(status, dashboard_next_actions_resp, "project.dashboard.block.fetch(next_actions)")
         dashboard_next_actions = (((((dashboard_next_actions_resp.get("data") or {}).get("block") or {}).get("data") or {}).get("actions")) or [])
         plan_action = next((row for row in dashboard_next_actions if isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.plan_bootstrap.enter"), None)
-        if not isinstance(plan_action, dict):
-            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter")
-        plan_params = plan_action.get("params") if isinstance(plan_action.get("params"), dict) else {}
-        if int(plan_params.get("project_id") or 0) != project_id:
-            raise RuntimeError("dashboard->plan project_id mismatch")
+        direct_execution_action = next((row for row in dashboard_next_actions if isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.enter"), None)
+        if not isinstance(plan_action, dict) and not isinstance(direct_execution_action, dict):
+            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter/project.execution.enter")
 
-        status, plan_resp = _post(intent_url, token, "project.plan_bootstrap.enter", plan_params, db_name=db_name)
-        _assert_ok(status, plan_resp, "project.plan_bootstrap.enter")
-        plan_entry = plan_resp.get("data") if isinstance(plan_resp.get("data"), dict) else {}
-        if int(plan_entry.get("project_id") or 0) != project_id:
-            raise RuntimeError("plan entry project_id mismatch")
+        dashboard_route = "execution_direct"
+        execution_action = direct_execution_action
+        if isinstance(plan_action, dict):
+            dashboard_route = "plan_bootstrap"
+            plan_params = plan_action.get("params") if isinstance(plan_action.get("params"), dict) else {}
+            if int(plan_params.get("project_id") or 0) != project_id:
+                raise RuntimeError("dashboard->plan project_id mismatch")
 
-        status, plan_actions_resp = _post(intent_url, token, "project.plan_bootstrap.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
-        _assert_ok(status, plan_actions_resp, "project.plan_bootstrap.block.fetch(next_actions)")
-        plan_actions = (((((plan_actions_resp.get("data") or {}).get("block") or {}).get("data") or {}).get("actions")) or [])
-        execution_action = next((row for row in plan_actions if isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.enter"), None)
-        if not isinstance(execution_action, dict):
-            raise RuntimeError("plan next_actions missing project.execution.enter")
-        execution_params = execution_action.get("params") if isinstance(execution_action.get("params"), dict) else {}
+            status, plan_resp = _post(intent_url, token, "project.plan_bootstrap.enter", plan_params, db_name=db_name)
+            _assert_ok(status, plan_resp, "project.plan_bootstrap.enter")
+            plan_entry = plan_resp.get("data") if isinstance(plan_resp.get("data"), dict) else {}
+            if int(plan_entry.get("project_id") or 0) != project_id:
+                raise RuntimeError("plan entry project_id mismatch")
+
+            status, plan_actions_resp = _post(intent_url, token, "project.plan_bootstrap.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
+            _assert_ok(status, plan_actions_resp, "project.plan_bootstrap.block.fetch(next_actions)")
+            plan_actions = (((((plan_actions_resp.get("data") or {}).get("block") or {}).get("data") or {}).get("actions")) or [])
+            execution_action = next((row for row in plan_actions if isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.enter"), None)
+            if not isinstance(execution_action, dict):
+                raise RuntimeError("plan next_actions missing project.execution.enter")
+
+        execution_params = execution_action.get("params") if isinstance(execution_action, dict) and isinstance(execution_action.get("params"), dict) else {}
         if int(execution_params.get("project_id") or 0) != project_id:
-            raise RuntimeError("plan->execution project_id mismatch")
+            raise RuntimeError("dashboard/plan->execution project_id mismatch")
 
         status, execution_resp = _post(intent_url, token, "project.execution.enter", execution_params, db_name=db_name)
         _assert_ok(status, execution_resp, "project.execution.enter")
@@ -146,7 +162,8 @@ def main() -> int:
 
         report["flow"] = {
             "project_id": project_id,
-            "dashboard_plan_action_state": str(plan_action.get("state") or ""),
+            "dashboard_route": dashboard_route,
+            "dashboard_plan_action_state": str((plan_action or {}).get("state") or ""),
             "plan_execution_action_state": str(execution_action.get("state") or ""),
             "execution_entry_keys": sorted(execution_entry.keys()),
             "execution_block_key": str(execution_block_data.get("block_key") or ""),

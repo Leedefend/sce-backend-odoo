@@ -1,0 +1,100 @@
+task_id: ITER-2026-04-02-846
+title: Align full-chain project flow smokes with dashboard dual-route contract
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Remove hardcoded dashboard->plan assumptions in full-chain smoke checks by
+  supporting both approved dashboard routes: project.plan_bootstrap.enter and
+  project.execution.enter.
+
+user_visible_outcome:
+  - "项目从创建到执行前/执行态全链路校验不再因旧路由假设误报"
+  - "可用性主线门禁继续聚焦真实后端语义缺口"
+
+scope:
+  allowed_paths:
+    - scripts/verify/product_project_flow_full_chain_pre_execution_smoke.py
+    - scripts/verify/product_project_flow_full_chain_execution_smoke.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_only
+  - verify_smoke_only
+  - no_frontend_semantic_inference
+  - backend_semantics_first
+
+context:
+  branch: codex/next-round
+  baseline_sha: c7a219e
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-845
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: project flow full chain smoke
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Dashboard next_actions now may route to plan bootstrap or execution
+    directly; smoke must validate both without shifting model semantics to
+    frontend.
+  reason: >
+    Keep create->manage closure verification aligned with current backend
+    orchestration contract.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-846.yaml
+    - make verify.product.project_flow.full_chain_pre_execution
+    - make verify.product.project_flow.full_chain_execution
+    - make verify.product.project_dashboard_baseline
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - full_chain_smokes_accept_dashboard_dual_route
+  - verification report and task result for ITER-2026-04-02-846
+
+rollback:
+  - git restore scripts/verify/product_project_flow_full_chain_pre_execution_smoke.py
+  - git restore scripts/verify/product_project_flow_full_chain_execution_smoke.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-846.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-846.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-846.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-845
