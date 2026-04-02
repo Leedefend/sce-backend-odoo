@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-02-732
+title: Verify execution-advance post-transition service extraction
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify post-transition service extraction keeps acceptance chain green.
+
+user_visible_outcome:
+  - "结构拆分后行为兼容"
+  - "可用性验收持续通过"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - addons/smart_construction_core/services/project_execution_post_transition_service.py
+    - addons/smart_construction_core/services/__init__.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2d55c2e
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-731
+  priority_lane: P3_handler_slimming
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance post-transition service verify
+  module_owner: smart_construction_core handlers/services
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Verify orchestration-side split compatibility under existing acceptance chain.
+  reason: >
+    Gate this slimming slice before next usability batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-732.yaml
+    - make verify.project.management.acceptance
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_execution_advance_post_transition_service_extraction
+  - governance/report artifacts for ITER-2026-04-02-732
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-732.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-732.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-732.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-731
