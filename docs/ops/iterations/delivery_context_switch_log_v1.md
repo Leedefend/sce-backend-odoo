@@ -8219,3 +8219,34 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated implement batch for view_contract_coverage node-detection compatibility, then rerun verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-793 / 794）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b7b7b2b`
+- Layer Target: `Backend Usability`
+- Module: `view contract coverage recovery`
+- Reason: recover from `792` fail (layout_tree node detection mismatch)
+- `793` implement result:
+  - view-contract-coverage smoke now supports recursive node-tree detection
+  - statButtons/chatter detection aligned with current contract shape
+- `794` verify result:
+  - `verify.portal.view_contract_coverage_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - view coverage gate recovered
+  - next efficient action is continue view contract shape slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-795）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b7b7b2b`
+- Layer Target: `Backend Usability`
+- Module: `view contract shape continuity`
+- Reason: continue view contract closure after coverage recovery PASS
+- `795` verify result:
+  - `verify.portal.view_contract_shape.container`: PASS
+  - `layout_ok=true`
+  - `shape_level=B`
+- state after this round:
+  - latest classification: `PASS`
+  - view contract shape slice is stable
+  - next efficient action is continue view-state slice

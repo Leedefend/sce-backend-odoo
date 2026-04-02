@@ -82,6 +82,56 @@ function asArray(value) {
   return [];
 }
 
+function analyzeLayoutTree(layout, fieldsMap) {
+  const present = new Set();
+  const walk = (node, parentType, parentContainerName) => {
+    if (Array.isArray(node)) {
+      node.forEach((item) => walk(item, parentType, parentContainerName));
+      return;
+    }
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+    const type = String(node.type || '').trim().toLowerCase();
+    const name = String(node.name || '').trim();
+    const widgetName = String((((node.attributes || {}).name) || '')).trim();
+    const containerName = String((((node.attributes || {}).name) || '')).trim();
+    if (type === 'field') {
+      present.add('field');
+      if (name === 'message_ids' || name === 'message_follower_ids') {
+        present.add('chatter');
+      }
+    }
+    if (type === 'group') present.add('group');
+    if (type === 'notebook') present.add('notebook');
+    if (type === 'page') present.add('page');
+    if (type === 'button' && parentType === 'header') {
+      present.add('headerButtons');
+    }
+    if (type === 'button' && (containerName === 'button_box' || parentContainerName === 'button_box')) {
+      present.add('statButtons');
+    }
+    if (type === 'widget' && widgetName === 'web_ribbon') {
+      present.add('ribbon');
+    }
+    if (type === 'chatter') {
+      present.add('chatter');
+    }
+    Object.entries(node).forEach(([key, value]) => {
+      if (key === 'fieldInfo' || key === 'attributes' || key === 'modifiers' || key === 'meta') {
+        return;
+      }
+      walk(value, type, containerName || parentContainerName);
+    });
+  };
+  walk(layout, '', '');
+  const fields = fieldsMap && typeof fieldsMap === 'object' ? fieldsMap : {};
+  if (fields.message_ids || fields.message_follower_ids) {
+    present.add('chatter');
+  }
+  return present;
+}
+
 function isModelMissing(resp) {
   const msg = String((((resp || {}).body || {}).error || {}).message || '');
   return (
@@ -177,10 +227,8 @@ async function main() {
     throw new Error('layout missing');
   }
 
-  const present = new Set();
+  const present = analyzeLayoutTree(layout, viewData.fields || {});
   if (asArray(layout.groups).length) present.add('group');
-  const groupFields = asArray(layout.groups).some((g) => asArray(g.fields).length || asArray(g.sub_groups).length);
-  if (groupFields) present.add('field');
   if (asArray(layout.notebooks).length) present.add('notebook');
   if (asArray(layout.notebooks).some((nb) => asArray(nb.pages).length)) present.add('page');
   if (asArray(layout.headerButtons).length) present.add('headerButtons');
