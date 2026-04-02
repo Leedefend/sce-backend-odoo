@@ -9113,3 +9113,34 @@ Each entry must include:
   - latest classification: `PASS`
   - cost-chain closure gate recovered to green
   - next efficient action is proceed to payment-chain closure verification
+## 2026-04-02 迭代锚点（ITER-2026-04-02-865）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a161f84`
+- Layer Target: `Product Usability Closure`
+- Module: `project execution payment chain gates`
+- Reason: extend closure progression from cost chain to payment chain
+- `865` verify result:
+  - payment entry guard: PASS
+  - payment list guard: FAIL (`response keys drift`)
+  - payment summary guard: FAIL (`summary keys drift`)
+  - execution payment smoke: PASS
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is align payment guards with extended response semantics
+## 2026-04-02 迭代锚点（ITER-2026-04-02-866）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a161f84`
+- Layer Target: `Backend Usability`
+- Module: `payment list and summary contract guards`
+- Reason: remove strict-key false negatives under response enrichment
+- `866` implement result:
+  - payment list and summary guards switched to required+optional key model
+- `866` verify result:
+  - payment entry/list/summary guards and execution payment smoke: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - payment-chain closure gate recovered to green
+  - next efficient action is proceed to settlement-chain closure verification
