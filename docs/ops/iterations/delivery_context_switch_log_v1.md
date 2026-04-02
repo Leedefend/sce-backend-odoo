@@ -8051,3 +8051,17 @@ Each entry must include:
   - latest classification: `PASS`
   - record detail HUD path is stable
   - next efficient action is one2many read/edit continuity slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-776）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `7eb2e6c`
+- Layer Target: `Backend Usability`
+- Module: `one2many read continuity`
+- Reason: continue record-detail closure after HUD PASS
+- `776` verify result:
+  - `verify.portal.one2many_read_smoke.container`: FAIL
+  - reason: `one2many field not found in layout`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated implement batch for one2many layout contract alignment, then rerun one2many-read verify
