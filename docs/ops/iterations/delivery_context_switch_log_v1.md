@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T11:23:40+0800
+- blocker_key: `execution_advance_semantic_guard_recovery_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance semantic guard compatibility recovery`
+- reason: 上一批 hint service 抽离后触发 lifecycle semantic guard 失败，需最小兼容恢复
+- completed_step: `已完成 ITER-2026-04-02-736/737/738：通过 handler 兼容 shim 恢复 _build_lifecycle_hints 锚点并保留 hint service 下沉，python3 -m py_compile、python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `f5a84ba`
+- next_step: `Open next low-risk backend usability screen batch from recovered baseline`
+
+### 2026-04-02T10:24:47+0800
+- blocker_key: `execution_advance_hint_service_verify_fail_v1`
+- layer_target: `backend usability`
+- module: `execution-advance hint service extraction verify`
+- reason: hint service 抽离后 lifecycle semantic guard 缺少 handler 锚点 token
+- completed_step: `ITER-2026-04-02-735 在 make verify.project.management.acceptance 失败（verify.project.lifecycle.semantic），按 stop rule 立即停止并切换恢复批次`
+- active_commit: `f5a84ba`
+- next_step: `Open dedicated semantic-guard compatibility recovery batch`
+
 ### 2026-04-02T10:18:22+0800
 - blocker_key: `execution_advance_post_transition_service_extraction_verify_v1`
 - layer_target: `backend usability`

@@ -11,6 +11,7 @@ from . import portal_execute_button_service
 from . import contract_governance_overrides
 from . import my_work_aggregate_service
 from . import project_execution_item_projection_service
+from . import project_execution_hint_service
 from . import project_execution_post_transition_service
 from . import project_execution_precheck_service
 from . import project_execution_response_builder
