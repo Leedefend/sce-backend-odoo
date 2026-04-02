@@ -157,6 +157,15 @@ def _cleanup_test_pack(import_url: str, headers: dict, payload: dict) -> None:
     )
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or os.getenv("DB") or ""
@@ -186,7 +195,7 @@ def main():
         )
     if not login_resp.get("ok"):
         raise RuntimeError(f"login failed: {login_resp}")
-    token = (login_resp.get("data") or {}).get("token")
+    token = _extract_login_token(login_resp)
     if not token:
         raise RuntimeError("login response missing token")
 

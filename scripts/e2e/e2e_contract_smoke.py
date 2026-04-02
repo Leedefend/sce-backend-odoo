@@ -91,6 +91,15 @@ def _assert_scene_trace(resp: dict, *, label: str):
             raise RuntimeError(f"{label} missing meta.scene_trace.{key}")
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def _normalize_obj(obj):
     deny_keys = {
         "trace_id",
@@ -324,7 +333,7 @@ def main():
         )
     if not login_resp.get("ok"):
         raise RuntimeError(f"login failed: {login_resp}")
-    token = (login_resp.get("data") or {}).get("token")
+    token = _extract_login_token(login_resp)
     if not token:
         raise RuntimeError("login response missing token")
 

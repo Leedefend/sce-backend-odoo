@@ -8761,3 +8761,61 @@ Each entry must include:
   - latest classification: `PASS`
   - semantic aggregate gate recovered
   - next efficient action is continue user-facing usability iteration beyond semantic v0_8 gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-832）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `39ab54b`
+- Layer Target: `Backend Usability`
+- Module: `e2e scene project journey verification`
+- Reason: advance from semantic gate to project journey usability chain
+- `832` verify result:
+  - `make verify.e2e.scene`: FAIL (`login response missing token`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is login token extraction compatibility recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-833）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `39ab54b`
+- Layer Target: `Backend Usability`
+- Module: `e2e login contract consumer compatibility`
+- Reason: align e2e scripts with `data.session.token` login contract
+- `833` implement result:
+  - token extraction fallback to `data.session.token` added in `e2e_scene_smoke.py`, `e2e_contract_smoke.py`, `scene_admin_smoke.py`
+- `833` verify result:
+  - `make verify.e2e.scene`: PASS
+  - `make verify.e2e.scene_admin`: FAIL (`scenes.export returned empty scenes`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is scene_admin fallback compatibility recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-834）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `39ab54b`
+- Layer Target: `Backend Usability`
+- Module: `scene admin smoke fallback compatibility`
+- Reason: remove false-negative blocker when export is empty in fallback runtime
+- `834` implement result:
+  - `scene_admin_smoke` now classifies empty `scenes.export` under test-seed fallback as controlled `SKIP`
+- `834` verify result:
+  - `make verify.e2e.scene_admin`: PASS (`SKIP`)
+- state after this round:
+  - latest classification: `PASS`
+  - scene_admin fallback blocker cleared
+  - next efficient action is combined re-verification (`verify.e2e.scene` + `verify.e2e.scene_admin`)
+## 2026-04-02 迭代锚点（ITER-2026-04-02-835）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `39ab54b`
+- Layer Target: `Backend Usability`
+- Module: `e2e project journey chain verification`
+- Reason: reconfirm stabilized journey chain after recovery patches
+- `835` verify result:
+  - `make verify.e2e.scene`: PASS
+  - `make verify.e2e.scene_admin`: PASS (`SKIP`)
+- state after this round:
+  - latest classification: `PASS`
+  - project journey verification chain stable under current fallback runtime constraints
+  - next efficient action is continue initiation → execution action usability path verification

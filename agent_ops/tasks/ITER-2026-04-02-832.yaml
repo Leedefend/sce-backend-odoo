@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-02-832
+title: Verify project journey usability via e2e scene smoke
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Validate cross-stack project scene journey usability after semantic portal
+  gate recovery, focusing on create-to-manage loop continuity.
+
+user_visible_outcome:
+  - "项目创建到管理主链可用性得到端到端验证"
+  - "下一真实阻断点被快速暴露并可迭代修复"
+
+scope:
+  allowed_paths:
+    - scripts/e2e/**
+    - scripts/verify/**
+    - addons/smart_core/**
+    - addons/smart_construction_scene/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_frontend_semantic_patch
+  - run_declared_checks_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 39ab54b
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-831
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: e2e scene project journey verification
+  module_owner: smart_core + e2e verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    User journey usability is governed by backend scene orchestration and intent chain.
+  reason: >
+    Advance from semantic aggregate gate to create/manage journey closure validation.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-832.yaml
+    - make verify.e2e.scene
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_e2e_scene_project_journey_usability
+  - governance/report artifacts for ITER-2026-04-02-832
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-832.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-832.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-832.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-831

@@ -1,0 +1,12 @@
+{
+  "task_id": "ITER-2026-04-02-833",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-833.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_e2e_scene": "PASS",
+    "make_verify_e2e_scene_admin": "FAIL"
+  },
+  "failed_gate": "make verify.e2e.scene_admin",
+  "next_step": "Recover scene_admin smoke fallback compatibility for empty scenes.export."
+}
