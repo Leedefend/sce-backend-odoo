@@ -8085,3 +8085,35 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated implement batch for one2many-edit relation fallback alignment, then rerun edit verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-780 / 781）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `1324dc8`
+- Layer Target: `Backend Usability`
+- Module: `one2many edit recovery`
+- Reason: recover from `779` fail (`missing relation or relation_field for one2many`)
+- `780` implement result:
+  - one2many-edit smoke aligned to new layout shape
+  - missing `relation_field` now inferred from relation model form fields
+  - `create_mode=page` path switched to relation-entry contract guard (avoids invalid direct create false-fail)
+- `781` verify result:
+  - `verify.portal.one2many_edit_smoke.container`: PASS
+  - selected field: `collaborator_ids`
+- state after this round:
+  - latest classification: `PASS`
+  - one2many read/edit chain recovered
+  - next efficient action is continue detail path with attachment list slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-782）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `1324dc8`
+- Layer Target: `Backend Usability`
+- Module: `attachment list continuity`
+- Reason: continue record-detail collaboration path after one2many recovery
+- `782` verify result:
+  - `verify.portal.attachment_list_smoke.container`: PASS
+  - empty attachment state handling is valid (`attachments=0`)
+- state after this round:
+  - latest classification: `PASS`
+  - attachment list slice is stable
+  - next efficient action is continue file upload guard slice

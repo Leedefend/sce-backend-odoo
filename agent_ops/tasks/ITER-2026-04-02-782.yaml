@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-02-782
+title: Verify project-journey attachment-list usability slice
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify attachment list path in project detail journey after one2many read/edit
+  recovery.
+
+user_visible_outcome:
+  - "附件列表链路可用"
+  - "项目详情协作数据浏览路径继续收口"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 1324dc8
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-781
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: attachment list verify
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Validate attachment semantics and list contract in backend path.
+  reason: >
+    Continue end-user detail journey closure.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-782.yaml
+    - make verify.portal.attachment_list_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_attachment_list_slice
+  - governance/report artifacts for ITER-2026-04-02-782
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-782.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-782.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-782.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-781
