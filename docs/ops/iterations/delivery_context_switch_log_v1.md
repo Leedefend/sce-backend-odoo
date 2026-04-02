@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T03:24:40+0800
+- blocker_key: `execution_advance_transition_service_screen_v1`
+- layer_target: `backend usability`
+- module: `execution-advance transition service extraction candidate`
+- reason: response-builder 抽离完成后，继续筛选第二刀：transition path service 抽离
+- completed_step: `已完成 ITER-2026-04-02-720：确定下一步将 _apply_transition_atomically 及过渡内部逻辑下沉到 service 接口，保持 reason_code 与响应契约兼容`
+- active_commit: `33f9abd`
+- next_step: `Open implement batch for transition service extraction and acceptance verify`
+
 ### 2026-04-02T03:20:30+0800
 - blocker_key: `execution_advance_response_builder_extraction_verify_v1`
 - layer_target: `backend usability`
