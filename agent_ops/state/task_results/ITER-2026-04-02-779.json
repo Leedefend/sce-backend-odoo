@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-02-779",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-779.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_one2many_edit_smoke_container": "FAIL"
+  },
+  "failure_reason": "missing relation or relation_field for one2many",
+  "next_step": "Create implement task for one2many-edit contract fallback alignment before re-verify."
+}

@@ -75,25 +75,25 @@ function requestJson(url, payload, headers = {}) {
 
 function collectLayoutFields(layout) {
   const names = new Set();
-  if (!layout || typeof layout !== 'object') {
-    return names;
-  }
-  const pushField = (field) => {
-    if (field && typeof field === 'object' && field.name) {
-      names.add(field.name);
+  const walk = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
     }
-  };
-  const walkGroup = (group) => {
-    if (!group || typeof group !== 'object') return;
-    (group.fields || []).forEach(pushField);
-    (group.sub_groups || []).forEach(walkGroup);
-  };
-  (layout.groups || []).forEach(walkGroup);
-  (layout.notebooks || []).forEach((notebook) => {
-    (notebook.pages || []).forEach((page) => {
-      (page.groups || []).forEach(walkGroup);
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+    if (node.type === 'field' && typeof node.name === 'string' && node.name.trim()) {
+      names.add(node.name.trim());
+    }
+    Object.entries(node).forEach(([key, value]) => {
+      if (key === 'fieldInfo' || key === 'attributes' || key === 'modifiers' || key === 'meta') {
+        return;
+      }
+      walk(value);
     });
-  });
+  };
+  walk(layout);
   return names;
 }
 
@@ -153,7 +153,7 @@ async function main() {
 
   const viewData = viewResp.body.data || {};
   const fields = viewData.fields || {};
-  const layout = viewData.layout || {};
+  const layout = viewData.layout || (((viewData.views || {})[VIEW_TYPE] || {}).layout) || [];
   const layoutFields = collectLayoutFields(layout);
 
   let fieldName = '';
@@ -168,7 +168,8 @@ async function main() {
     fieldName = ONE2MANY_FIELD;
     descriptor = candidate;
   } else {
-    const one2manyEntry = Object.entries(fields).find(([, desc]) => desc && (desc.ttype === 'one2many' || desc.type === 'one2many'));
+    const one2manyEntries = Object.entries(fields).filter(([, desc]) => desc && (desc.ttype === 'one2many' || desc.type === 'one2many'));
+    const one2manyEntry = one2manyEntries.find(([name]) => layoutFields.has(name)) || one2manyEntries[0];
     if (!one2manyEntry) {
       writeSummary(['one2many_field: none']);
       throw new Error('no one2many field found in view contract (set ONE2MANY_FIELD or MVP_MODEL)');

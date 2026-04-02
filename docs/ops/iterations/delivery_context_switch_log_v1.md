@@ -8065,3 +8065,23 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated implement batch for one2many layout contract alignment, then rerun one2many-read verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-777 / 778 / 779）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `9178132`
+- Layer Target: `Backend Usability`
+- Module: `one2many read/edit continuity`
+- Reason: recover from `776` layout-shape mismatch and continue nested read/write closure
+- `777` implement result:
+  - one2many-read smoke now supports recursive node-tree layout scanning
+  - default one2many field selection prefers fields present in layout
+- `778` verify result:
+  - `verify.portal.one2many_read_smoke.container`: PASS
+  - selected field: `collaborator_ids`
+- `779` verify result:
+  - `verify.portal.one2many_edit_smoke.container`: FAIL
+  - reason: `missing relation or relation_field for one2many`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated implement batch for one2many-edit relation fallback alignment, then rerun edit verify
