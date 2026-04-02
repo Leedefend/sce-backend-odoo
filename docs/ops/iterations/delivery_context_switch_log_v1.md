@@ -8117,3 +8117,17 @@ Each entry must include:
   - latest classification: `PASS`
   - attachment list slice is stable
   - next efficient action is continue file upload guard slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-783）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `e5c488a`
+- Layer Target: `Backend Usability`
+- Module: `file upload continuity`
+- Reason: continue detail collaboration closure after attachment-list PASS
+- `783` verify result:
+  - `verify.portal.file_upload_smoke.container`: PASS
+  - upload/download chain passed (`upload id=836`)
+- state after this round:
+  - latest classification: `PASS`
+  - file upload slice is stable
+  - next efficient action is continue file guard slice
