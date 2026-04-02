@@ -7935,3 +7935,40 @@ Each entry must include:
   - latest classification: `PASS`
   - custom-frontend 登录 token 验证与发布场景 nav 回退主线已收口
   - next efficient action is continue user-journey usability slice (`create project -> manage lifecycle`)
+## 2026-04-02 迭代锚点（ITER-2026-04-02-763 / 764）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `881958d`
+- Layer Target: `Backend Usability`
+- Module: `project journey closure acceptance`
+- Reason: user direction switched to end-user journey first (`create project -> manage lifecycle closure`)
+- `763` screen result:
+  - selected verify slice: `make verify.project.management.acceptance`
+  - selection basis: direct journey closure coverage + backend-first architecture boundary
+- `764` verify result:
+  - `verify.project.management.acceptance`: PASS
+  - contract/assembly/snapshot/lifecycle semantic/frontend bridge checks all passed
+- state after this round:
+  - latest classification: `PASS`
+  - project-management journey acceptance gate is stable
+  - next efficient action is screen conflict/transaction safety slice (`write_conflict` / `edit_tx`)
+## 2026-04-02 迭代锚点（ITER-2026-04-02-765 / 766 / 767）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `881958d`
+- Layer Target: `Backend Usability`
+- Module: `project journey consistency safety`
+- Reason: after acceptance PASS, prioritize user-visible data consistency risks
+- `765` screen result:
+  - selected verify slice: `make verify.portal.write_conflict_smoke.container`
+  - priority rationale: concurrent-write conflict feedback is highest-trust path
+- `766` verify result:
+  - `verify.portal.write_conflict_smoke.container`: PASS
+  - conflict flow (`list/read/write conflict`) passed with expected behavior
+- `767` verify result:
+  - `verify.portal.edit_tx_smoke.container`: PASS
+  - edit transaction dry-run consistency chain passed
+- state after this round:
+  - latest classification: `PASS`
+  - project journey conflict/edit consistency paths are stable
+  - next efficient action is screen next view-mode continuity slice (`load_view/tree/kanban`)
