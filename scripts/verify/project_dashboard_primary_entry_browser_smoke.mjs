@@ -50,6 +50,8 @@ function assert(condition, message) {
 }
 
 async function fillLoginForm(page) {
+  await page.locator('input[autocomplete="username"]').waitFor({ timeout: 20000 });
+  await page.locator('input[autocomplete="current-password"]').waitFor({ timeout: 20000 });
   await page.locator('input[autocomplete="username"]').fill(LOGIN);
   await page.locator('input[autocomplete="current-password"]').fill(PASSWORD);
   await page.locator('input[placeholder*="数据库"]').fill(DB_NAME);
@@ -146,7 +148,8 @@ try {
     summary.page_errors.push(String(err?.message || err));
   });
 
-  await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await page.waitForLoadState('domcontentloaded');
   await fillLoginForm(page);
   await submitLogin(page);
   await waitForDashboard(page);
