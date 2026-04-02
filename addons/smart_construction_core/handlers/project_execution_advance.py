@@ -197,6 +197,13 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
                 "data": {
                     "lifecycle_hints": self._build_lifecycle_hints(project_id, "PROJECT_CONTEXT_MISSING"),
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": "PROJECT_CONTEXT_MISSING",
+                        "params": {
+                            "reason_code": "PROJECT_CONTEXT_MISSING",
+                        },
+                    },
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,

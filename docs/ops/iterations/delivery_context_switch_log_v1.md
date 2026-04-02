@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T01:58:20+0800
+- blocker_key: `execution_advance_context_missing_recovery_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance context-missing recovery continuity`
+- reason: 在立项入口错误分支补齐后，继续补齐执行推进 context-missing 恢复 payload，保持同旅程语义一致
+- completed_step: `已完成 ITER-2026-04-02-686/687/688：project.execution.advance 的 PROJECT_CONTEXT_MISSING data 新增 suggested_action_payload（project.initiation.enter），python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `e0db88e`
+- next_step: `Open next low-risk screen batch for residual lifecycle usability gaps`
+
 ### 2026-04-02T01:49:40+0800
 - blocker_key: `initiation_enter_error_recovery_verify_v1`
 - layer_target: `backend usability`
