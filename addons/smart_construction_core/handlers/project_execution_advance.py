@@ -18,6 +18,14 @@ from odoo.addons.smart_construction_core.services.project_task_state_support imp
 )
 
 
+class _ExecutionAdvanceAtomicRollback(Exception):
+    """Signal a blocked reason that must rollback the atomic transition section."""
+
+    def __init__(self, reason_code: str):
+        self.reason_code = str(reason_code or "EXECUTION_TRANSITION_FAILED")
+        super().__init__(self.reason_code)
+
+
 class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     INTENT_TYPE = "project.execution.advance"
     DESCRIPTION = "执行最小推进动作"
@@ -155,6 +163,33 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         if to_state == "ready":
             return self._recover_task_for_ready(project)
         return True, ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
+
+    def _apply_transition_atomically(
+        self,
+        project,
+        *,
+        from_state: str,
+        to_state: str,
+        consistency_guard: ProjectExecutionConsistencyGuard,
+    ) -> str:
+        """Apply critical transition path atomically to avoid half-success states."""
+        with self.env.cr.savepoint():
+            task_success, task_reason_code = self._apply_real_task_transition(
+                project, from_state=from_state, to_state=to_state
+            )
+            if not task_success:
+                raise _ExecutionAdvanceAtomicRollback(task_reason_code)
+
+            try:
+                project.sudo().write({"sc_execution_state": to_state})
+            except Exception:
+                raise _ExecutionAdvanceAtomicRollback("EXECUTION_TRANSITION_WRITE_FAILED")
+
+            alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
+            if not alignment_ok:
+                raise _ExecutionAdvanceAtomicRollback(alignment_reason_code)
+
+        return task_reason_code or ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
 
     def _post_transition_note(self, project, *, from_state: str, to_state: str, reason_code: str, result: str) -> None:
         if not project or not hasattr(project, "message_post"):
@@ -341,38 +376,15 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
             }
 
-        task_success, task_reason_code = self._apply_real_task_transition(project, from_state=from_state, to_state=to_state)
-        if not task_success:
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "from_state": from_state,
-                    "to_state": from_state,
-                    "reason_code": task_reason_code,
-                    "suggested_action": self._build_suggested_action(int(project.id), task_reason_code),
-                    "suggested_action_payload": {
-                        "intent": "project.execution.block.fetch",
-                        "reason_code": task_reason_code,
-                        "params": {
-                            "project_id": int(project.id),
-                            "reason_code": task_reason_code,
-                        },
-                    },
-                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), task_reason_code),
-                },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
-
         try:
-            project.sudo().write({"sc_execution_state": to_state})
-        except Exception:
-            reason_code = "EXECUTION_TRANSITION_WRITE_FAILED"
+            reason_code = self._apply_transition_atomically(
+                project,
+                from_state=from_state,
+                to_state=to_state,
+                consistency_guard=consistency_guard,
+            )
+        except _ExecutionAdvanceAtomicRollback as atomic_block:
+            reason_code = str(atomic_block.reason_code or "")
             return {
                 "ok": True,
                 "data": {
@@ -398,28 +410,6 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "trace_id": trace_id,
                 },
             }
-
-        alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
-        if not alignment_ok:
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "from_state": from_state,
-                    "to_state": from_state,
-                    "reason_code": alignment_reason_code,
-                    "suggested_action": self._build_suggested_action(int(project.id), alignment_reason_code),
-                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), alignment_reason_code),
-                },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
-
-        reason_code = task_reason_code or ProjectExecutionStateMachine.transition_reason_code(from_state, to_state)
         self._post_transition_note(
             project,
             from_state=from_state,

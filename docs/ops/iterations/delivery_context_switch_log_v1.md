@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T02:51:40+0800
+- blocker_key: `execution_advance_atomic_closure_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance atomic transition closure`
+- reason: 根据审阅意见优先修复 P0 半成功风险，将 task 推进 + project 写入 + 后置对齐校验收敛为原子段
+- completed_step: `已完成 ITER-2026-04-02-707/708/709：project_execution_advance 使用 savepoint 原子执行关键路径，失败统一回滚并返回 blocked，python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `dca329e`
+- next_step: `Open P1 batch to support explicit task_id targeting and return task state before/after`
+
 ### 2026-04-02T02:43:10+0800
 - blocker_key: `execution_advance_write_failed_recovery_verify_v1`
 - layer_target: `backend usability`

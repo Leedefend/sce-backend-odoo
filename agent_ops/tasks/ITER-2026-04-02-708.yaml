@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-02-708
+title: Implement execution-advance atomic transition closure
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Implement atomic closure of task transition + project state write + post
+  alignment check in execution advance handler.
+
+user_visible_outcome:
+  - "失败时自动回滚，避免半推进状态"
+  - "阻塞返回语义保持兼容"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - additive-only
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: dca329e
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-707
+  priority_lane: P0_execution_atomicity
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance atomic transition closure
+  module_owner: smart_construction_core handlers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Change limited to handler transaction path and blocked response wiring.
+  reason: >
+    Eliminate half-success risk identified by review.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-708.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - atomic_transition_closure_in_execution_advance
+  - governance/report artifacts for ITER-2026-04-02-708
+
+rollback:
+  - git restore addons/smart_construction_core/handlers/project_execution_advance.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-708.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-708.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-708.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-707
