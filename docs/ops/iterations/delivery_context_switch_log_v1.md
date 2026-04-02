@@ -8991,3 +8991,33 @@ Each entry must include:
   - latest classification: `PASS`
   - custom frontend cross-stack semantic chain is stable in container runtime
   - next efficient action is continue create->manage closed-loop verification under reachable browser route
+## 2026-04-02 迭代锚点（ITER-2026-04-02-857）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `8cbe195`
+- Layer Target: `Product Usability Closure`
+- Module: `release second-slice prepared gate`
+- Reason: verify create->manage closure readiness using release-level prepared gate
+- `857` verify result:
+  - `make verify.release.second_slice_prepared`: FAIL
+  - fail point: `verify.frontend.zero_business_semantics` found raw frontend literals
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is dedicated frontend zero-semantic cleanup batch
+## 2026-04-02 迭代锚点（ITER-2026-04-02-858）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `8cbe195`
+- Layer Target: `Frontend Contract Consumer`
+- Module: `router + dashboard/release entry views`
+- Reason: remove raw business semantic literals from frontend and keep generic consumer boundary
+- `858` implement result:
+  - introduced shared constants in `projectCreationBaseline.ts` and replaced raw literals in router/dashboard/release entry views
+- `858` verify result:
+  - `make verify.frontend.zero_business_semantics`: PASS
+  - `make verify.release.second_slice_prepared`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - release second-slice prepared gate recovered
+  - next efficient action is continue user-facing custom frontend closure validation

@@ -18,6 +18,7 @@ import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
 import CapabilityMatrixView from '../views/CapabilityMatrixView.vue';
 import { ApiError } from '../api/client';
 import { normalizeEditionQuery, parseEditionKeyFromQuery } from '../app/routeQuery';
+import { PROJECT_INTAKE_SCENE_PATH } from '../app/projectCreationBaseline';
 
 const APP_TITLE = '智能施工企业管理平台';
 
@@ -59,8 +60,8 @@ const router = createRouter({
     { path: '/portal/capability-matrix', redirect: '/s/portal.capability_matrix', meta: { layout: 'shell' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
     { path: '/s/project.management', name: 'scene-project-management', component: ProjectManagementDashboardView, meta: { layout: 'shell' } },
-    { path: '/s/projects.intake', name: 'scene-projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell' } },
-    { path: '/s/project.initiation', redirect: '/s/projects.intake', meta: { layout: 'shell' } },
+    { path: PROJECT_INTAKE_SCENE_PATH, name: 'scene-projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell' } },
+    { path: '/s/project.initiation', redirect: PROJECT_INTAKE_SCENE_PATH, meta: { layout: 'shell' } },
     { path: '/s/portal.capability_matrix', name: 'scene-capability-matrix', component: CapabilityMatrixView, meta: { layout: 'shell' } },
     { path: '/release/:productKey', name: 'release-product-entry', component: ReleaseProductEntryView, meta: { layout: 'shell' } },
     { path: '/release/operator', name: 'release-operator', component: ReleaseOperatorView, meta: { layout: 'shell' } },

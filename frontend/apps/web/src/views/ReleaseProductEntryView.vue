@@ -19,6 +19,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
+import { PROJECT_INTAKE_SCENE_PATH } from '../app/projectCreationBaseline';
 
 type ProductDescriptor = {
   title: string;
@@ -89,7 +90,7 @@ const productView = computed<ProductDescriptor>(() => ({
   scope: product.value.scope,
 }));
 function openProjectsIntake() {
-  router.push('/s/projects.intake').catch(() => {});
+  router.push(PROJECT_INTAKE_SCENE_PATH).catch(() => {});
 }
 
 function openProjectList() {
