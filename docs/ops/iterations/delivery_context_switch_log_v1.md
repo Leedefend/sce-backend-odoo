@@ -7972,3 +7972,20 @@ Each entry must include:
   - latest classification: `PASS`
   - project journey conflict/edit consistency paths are stable
   - next efficient action is screen next view-mode continuity slice (`load_view/tree/kanban`)
+## 2026-04-02 迭代锚点（ITER-2026-04-02-768 / 769）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `bd298af`
+- Layer Target: `Backend Usability`
+- Module: `project journey view continuity`
+- Reason: continue user-journey closure after consistency safety PASS
+- `768` screen result:
+  - selected verify slice: `make verify.portal.load_view_smoke.container`
+  - selection basis: core view loading continuity before tree/kanban expansion
+- `769` verify result:
+  - `verify.portal.load_view_smoke.container`: PASS
+  - `layout_ok / record_ok / semantic_ok` all true
+- state after this round:
+  - latest classification: `PASS`
+  - load-view continuity path is stable
+  - next efficient action is screen one next slice between `tree_view` and `kanban_view` (`ITER-2026-04-02-770`)

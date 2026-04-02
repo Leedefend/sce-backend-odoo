@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-02-769
+title: Verify project-journey load-view continuity slice
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify load-view continuity in project-management journey to ensure
+  view-mode transitions remain usable after consistency safety passes.
+
+user_visible_outcome:
+  - "项目管理加载视图链路可用"
+  - "视图连续性路径稳定"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - Makefile
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: bd298af
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-768
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: project-journey load-view verify
+  module_owner: verify scripts / make targets
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Validate backend view contract continuity for generic frontend rendering.
+  reason: >
+    Continue user-journey closure with view continuity.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-769.yaml
+    - make verify.portal.load_view_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_load_view_continuity_slice
+  - governance/report artifacts for ITER-2026-04-02-769
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-769.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-769.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-769.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-768
