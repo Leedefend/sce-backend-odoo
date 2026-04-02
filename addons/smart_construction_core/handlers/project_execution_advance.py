@@ -228,6 +228,14 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": "ready",
                     "reason_code": reason_code,
                     "suggested_action": self._build_suggested_action(project_id, reason_code),
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": reason_code,
+                        "params": {
+                            "project_id": project_id,
+                            "reason_code": reason_code,
+                        },
+                    },
                     "lifecycle_hints": self._build_lifecycle_hints(project_id, reason_code),
                 },
                 "meta": {
