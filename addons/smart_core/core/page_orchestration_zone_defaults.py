@@ -11,12 +11,12 @@ def to_text(value: Any) -> str:
 def build_default_zone_from_tag(tag: str) -> Dict[str, str]:
     normalized = to_text(tag).lower()
     if normalized == "header":
-        return {"key": "hero", "title": "页面头部", "zone_type": "hero", "display_mode": "stack"}
+        return {"key": "hero", "title": "页面概览", "zone_type": "hero", "display_mode": "stack"}
     if normalized == "details":
-        return {"key": "supporting", "title": "辅助信息", "zone_type": "supporting", "display_mode": "accordion"}
+        return {"key": "supporting", "title": "重点信息", "zone_type": "supporting", "display_mode": "accordion"}
     if normalized == "div":
-        return {"key": "secondary", "title": "扩展信息", "zone_type": "secondary", "display_mode": "flow"}
-    return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
+        return {"key": "secondary", "title": "补充信息", "zone_type": "secondary", "display_mode": "flow"}
+    return {"key": "primary", "title": "主要内容", "zone_type": "primary", "display_mode": "stack"}
 
 
 def build_default_zone_for_section(page_key: str, section_key: str, tag: str) -> Dict[str, str]:
@@ -66,4 +66,12 @@ def build_default_block_title(page_key: str, section_key: str) -> str:
         }
         if section in mapping:
             return mapping[section]
+    generic_mapping = {
+        "hero": "页面概览",
+        "todo_focus": "待处理事项",
+        "retry_panel": "失败处理",
+        "list_main": "事项清单",
+    }
+    if section in generic_mapping:
+        return generic_mapping[section]
     return to_text(section_key)

@@ -1971,6 +1971,14 @@ function openNativeFallback() {
   window.location.assign(nativeFallbackUrl.value);
 }
 
+function resolveActionViewSuggestedHint(...args: Parameters<typeof resolveSuggestedAction>) {
+  return resolveSuggestedAction(...args);
+}
+
+function runActionViewSuggestedAction(...args: Parameters<typeof runSuggestedAction>) {
+  runSuggestedAction(...args);
+}
+
 const {
   fetchScopedTotal,
   fetchProjectScopeMetrics,
@@ -1993,9 +2001,9 @@ const {
   failedCsvFileName,
   failedCsvContentB64,
   pageText,
-  resolveSuggestedAction,
+  resolveSuggestedAction: resolveActionViewSuggestedHint,
   describeSuggestedAction,
-  runSuggestedAction,
+  runSuggestedAction: runActionViewSuggestedAction,
   reload,
   resolveBatchFailurePreviewState,
   resolveBatchRetryTagTexts,
@@ -2664,7 +2672,7 @@ const {
   resolveBatchAssignFailureMessage,
   resolveBatchAssignErrorFallback,
   resolveBatchErrorHintResolver,
-  resolveSuggestedAction,
+  resolveSuggestedAction: resolveActionViewSuggestedHint,
   resolveBatchExportResetState,
   resolveBatchExportTargetModel,
   resolveBatchExportGuardDecision,

@@ -13,13 +13,13 @@ const LOGIN =
   process.env.E2E_LOGIN ||
   process.env.ROLE_PM_LOGIN ||
   process.env.SCENE_LOGIN ||
-  'demo_role_project_manager';
+  '';
 const PASSWORD =
   process.env.E2E_PASSWORD ||
   process.env.ROLE_PM_PASSWORD ||
   process.env.SCENE_PASSWORD ||
   process.env.ADMIN_PASSWD ||
-  'demo';
+  '';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const ALLOW_SKIP_UNKNOWN_INTENT = ['1', 'true', 'yes', 'on'].includes(
@@ -79,6 +79,25 @@ function requestJson(url, payload, headers = {}) {
   });
 }
 
+function buildLoginCandidates() {
+  const candidates = [];
+  const seen = new Set();
+  const pushCandidate = (loginRaw, passwordRaw, source) => {
+    const login = String(loginRaw || '').trim();
+    const password = String(passwordRaw || '').trim();
+    if (!login || !password) return;
+    const key = `${login}::${password}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ login, password, source });
+  };
+
+  pushCandidate(LOGIN, PASSWORD, 'explicit_env');
+  pushCandidate(process.env.ADMIN_LOGIN || 'admin', process.env.ADMIN_PASSWD || 'admin', 'admin_fallback');
+  pushCandidate('demo_role_project_manager', 'demo', 'pm_demo_fallback');
+  return candidates;
+}
+
 function assertSortedById(items, dir) {
   let prev = null;
   for (const row of items || []) {
@@ -108,18 +127,42 @@ async function main() {
   const summary = [];
 
   let token = AUTH_TOKEN;
+  let loginUsed = '';
   if (!token) {
-    const loginResp = await requestJson(
-      intentUrl,
-      { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } },
-      { 'X-Anonymous-Intent': '1' }
-    );
-    writeJson(path.join(outDir, 'login.log'), loginResp);
-    assertIntentEnvelope(loginResp, 'login');
-    const loginData = (loginResp.body || {}).data || {};
-    const session = loginData.session || {};
-    token = session.token || loginData.token || '';
-    if (!token) throw new Error('login response missing token');
+    const attempts = [];
+    const candidates = buildLoginCandidates();
+    for (const candidate of candidates) {
+      const loginResp = await requestJson(
+        intentUrl,
+        { intent: 'login', params: { db: DB_NAME, login: candidate.login, password: candidate.password } },
+        { 'X-Anonymous-Intent': '1' }
+      );
+      attempts.push({
+        source: candidate.source,
+        login: candidate.login,
+        status: loginResp.status || 0,
+        ok: Boolean((loginResp.body || {}).ok),
+        error: ((loginResp.body || {}).error || {}).message || '',
+      });
+      try {
+        assertIntentEnvelope(loginResp, 'login');
+      } catch (_err) {
+        continue;
+      }
+      const loginData = (loginResp.body || {}).data || {};
+      const session = loginData.session || {};
+      const candidateToken = session.token || loginData.token || '';
+      if (!candidateToken) continue;
+      token = candidateToken;
+      loginUsed = candidate.login;
+      writeJson(path.join(outDir, 'login.log'), { candidate, response: loginResp });
+      break;
+    }
+    writeJson(path.join(outDir, 'login_attempts.log'), { candidates: attempts });
+    if (!token) {
+      const last = attempts.length ? attempts[attempts.length - 1] : null;
+      throw new Error(`login failed: status=${last ? last.status : 0}`);
+    }
   }
 
   const authHeader = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
@@ -238,7 +281,7 @@ async function main() {
   if (items2.length > reflectedPageSize2) throw new Error('items length exceeds page_size on page2');
 
   summary.push(`db: ${DB_NAME}`);
-  summary.push(`login: ${LOGIN}`);
+  summary.push(`login: ${loginUsed || LOGIN || 'AUTH_TOKEN'}`);
   summary.push(`page_contract_title: ${title}`);
   summary.push(`page_contract_zone_titles: ${zones.map((zone) => String(zone.title || '').trim() || '(blank)').join(',') || '-'}`);
   summary.push(`page1_count: ${items1.length}`);

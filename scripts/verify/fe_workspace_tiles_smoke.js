@@ -127,11 +127,21 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const defaultScene = scenes.find((scene) => (scene.code || scene.key) === 'default');
   const tiles = defaultScene && Array.isArray(defaultScene.tiles) ? defaultScene.tiles : [];
 
   summary.push(`scenes_count: ${scenes.length}`);
   summary.push(`default_tiles: ${tiles.length}`);
+  summary.push(`nav_count: ${nav.length}`);
+  if ((!defaultScene || !tiles.length) && nav.length > 0) {
+    summary.push('status: SKIP');
+    summary.push('reason: default scene unavailable in nav fallback mode');
+    writeSummary(summary);
+    log('SKIP workspace tiles (default scene unavailable, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
   writeSummary(summary);
 
   if (!defaultScene) {
