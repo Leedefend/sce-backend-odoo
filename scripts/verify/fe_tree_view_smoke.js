@@ -522,6 +522,17 @@ async function main() {
     groupedOffsetPayload.params.group_offset,
   );
   const groupedIdentitySummary = buildGroupedIdentitySummary(groupedOffsetPaging);
+  const groupedIdentityBaselineSummary = stable({
+    ...groupedIdentitySummary,
+    response: {
+      ...groupedIdentitySummary.response,
+      query_fingerprint: groupedIdentitySummary.response.query_fingerprint ? '__hex40__' : '',
+      window_digest: groupedIdentitySummary.response.window_digest ? '__hex40__' : '',
+      window_id: groupedIdentitySummary.response.window_id ? '__window_id__' : '',
+      window_identity_key: groupedIdentitySummary.response.window_identity_key ? '__identity_key__' : '',
+      window_key: groupedIdentitySummary.response.window_key ? '__identity_key__' : '',
+    },
+  });
   summary.push(`group_by_field: ${groupByField}`);
   summary.push(`group_summary_count: ${groupSummary.length}`);
   summary.push(`grouped_rows_count: ${groupedRows.length}`);
@@ -584,7 +595,7 @@ async function main() {
     },
     grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,
     grouped_offset_replay_summary: groupedOffsetReplaySummary,
-    grouped_identity_summary: groupedIdentitySummary,
+    grouped_identity_summary: groupedIdentityBaselineSummary,
   });
   writeJson(path.join(outDir, 'grouped_signature.current.json'), groupedSignature);
   if (TREE_GROUPED_SNAPSHOT_UPDATE) {
