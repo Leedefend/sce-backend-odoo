@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-02-853",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-853.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "FAIL"
+  },
+  "next_step": "Stabilize host-browser smoke login waits and diagnose host-network reachability."
+}
+

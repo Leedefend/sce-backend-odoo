@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-02-855
+title: Verify custom frontend cross-stack contract smoke in container runtime
+type: frontend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Continue custom frontend cross-stack usability verification with container
+  runtime smoke when host-browser path is blocked by environment network limits.
+
+user_visible_outcome:
+  - "自定义前端跨栈契约链路在容器运行态得到验证"
+  - "可用性主线继续推进，不被宿主网络限制阻断"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_business_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 5519915
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-854
+  priority_lane: usability_verification_mainline
+  usability_battlefield: cross_stack_custom_frontend
+
+architecture:
+  layer_target: Cross-Stack Usability
+  module: custom frontend cross-stack contract smoke container
+  module_owner: portal/container smoke verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Use container path to validate custom frontend contract chain without host
+    network dependency.
+  reason: >
+    Keep execution continuous under sandbox host-network constraints.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-855.yaml
+    - make verify.portal.cross_stack_contract_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - cross-stack contract smoke container verification result
+  - governance/report artifacts for ITER-2026-04-02-855
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-855.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-855.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-855.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-854

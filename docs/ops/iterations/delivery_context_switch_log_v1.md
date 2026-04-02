@@ -8932,3 +8932,47 @@ Each entry must include:
   - latest classification: `PASS`
   - dashboard baseline aggregate gate is green
   - next efficient action is shift to custom-frontend cross-stack usability closed-loop verification
+## 2026-04-02 迭代锚点（ITER-2026-04-02-853）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `5519915`
+- Layer Target: `Cross-Stack Usability`
+- Module: `custom frontend project dashboard primary entry browser smoke`
+- Reason: shift from backend guard recovery to user-perspective custom frontend entry verification
+- `853` verify result:
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - fail point: login page navigation timeout
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is stabilize host-browser smoke wait strategy
+## 2026-04-02 迭代锚点（ITER-2026-04-02-854）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `5519915`
+- Layer Target: `Cross-Stack Usability`
+- Module: `project dashboard primary entry browser smoke`
+- Reason: reduce login navigation flake in host-browser smoke
+- `854` implement result:
+  - login page wait strategy switched from `networkidle` to `domcontentloaded` + form anchor waits
+- `854` verify result:
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - fail point: `page.goto net::ERR_NETWORK_CHANGED`
+  - diagnostics: host-network route is blocked in current execution environment (`curl` to local runtime route failed)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is continue with container runtime cross-stack smoke
+## 2026-04-02 迭代锚点（ITER-2026-04-02-855）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `5519915`
+- Layer Target: `Cross-Stack Usability`
+- Module: `custom frontend cross-stack contract smoke container`
+- Reason: keep verification continuity under host-network limitation
+- `855` verify result:
+  - `make verify.portal.cross_stack_contract_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - custom frontend cross-stack contract smoke is green in container runtime
+  - next efficient action is continue browser-chain validation on reachable runtime path
