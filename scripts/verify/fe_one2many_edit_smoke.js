@@ -75,23 +75,23 @@ function requestJson(url, payload, headers = {}) {
 
 function collectLayoutFields(layout) {
   const names = new Set();
-  if (!layout || typeof layout !== 'object') return names;
-  const pushField = (field) => {
-    if (field && typeof field === 'object' && field.name) {
-      names.add(field.name);
+  const walk = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
     }
-  };
-  const walkGroup = (group) => {
-    if (!group || typeof group !== 'object') return;
-    (group.fields || []).forEach(pushField);
-    (group.sub_groups || []).forEach(walkGroup);
-  };
-  (layout.groups || []).forEach(walkGroup);
-  (layout.notebooks || []).forEach((notebook) => {
-    (notebook.pages || []).forEach((page) => {
-      (page.groups || []).forEach(walkGroup);
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'field' && typeof node.name === 'string' && node.name.trim()) {
+      names.add(node.name.trim());
+    }
+    Object.entries(node).forEach(([key, value]) => {
+      if (key === 'fieldInfo' || key === 'attributes' || key === 'modifiers' || key === 'meta') {
+        return;
+      }
+      walk(value);
     });
-  });
+  };
+  walk(layout);
   return names;
 }
 
@@ -148,7 +148,7 @@ async function main() {
 
   const viewData = viewResp.body.data || {};
   const fields = viewData.fields || {};
-  const layout = viewData.layout || {};
+  const layout = viewData.layout || (((viewData.views || {})[VIEW_TYPE] || {}).layout) || [];
   const layoutFields = collectLayoutFields(layout);
 
   let fieldName = '';
@@ -163,7 +163,8 @@ async function main() {
     fieldName = ONE2MANY_FIELD;
     descriptor = candidate;
   } else {
-    const one2manyEntry = Object.entries(fields).find(([, desc]) => desc && (desc.ttype === 'one2many' || desc.type === 'one2many'));
+    const one2manyEntries = Object.entries(fields).filter(([, desc]) => desc && (desc.ttype === 'one2many' || desc.type === 'one2many'));
+    const one2manyEntry = one2manyEntries.find(([name]) => layoutFields.has(name)) || one2manyEntries[0];
     if (!one2manyEntry) {
       writeSummary(['one2many_field: none']);
       throw new Error('no one2many field found in view contract (set ONE2MANY_FIELD or MVP_MODEL)');
@@ -172,18 +173,42 @@ async function main() {
   }
 
   const relation = descriptor.relation;
-  const relationField = descriptor.relation_field;
-  if (!relation || !relationField) {
-    throw new Error('missing relation or relation_field for one2many');
+  let relationField = descriptor.relation_field;
+  const relationEntry = descriptor.relation_entry && typeof descriptor.relation_entry === 'object'
+    ? descriptor.relation_entry
+    : {};
+  const createMode = String(relationEntry.create_mode || '').trim();
+  const relationCanCreate = relationEntry.can_create === true;
+  if (!relation) {
+    throw new Error('missing relation for one2many');
   }
   const inLayout = layoutFields.has(fieldName);
   summary.push(`one2many_field: ${fieldName}`);
   summary.push(`relation: ${relation}`);
-  summary.push(`relation_field: ${relationField}`);
+  summary.push(`relation_field: ${relationField || '-'}`);
+  summary.push(`relation_create_mode: ${createMode || '-'}`);
+  summary.push(`relation_can_create: ${relationCanCreate ? 'true' : 'false'}`);
   summary.push(`in_layout: ${inLayout ? 'true' : 'false'}`);
   if (!inLayout) {
     writeSummary(summary);
     throw new Error('one2many field not found in layout');
+  }
+
+  if (!relationField) {
+    log('load_view (relation infer)');
+    const relationViewPayload = { intent: 'load_view', params: { model: relation, view_type: 'form' } };
+    const relationViewResp = await requestJson(intentUrl, relationViewPayload, authHeader);
+    writeJson(path.join(outDir, 'relation_load_view.log'), relationViewResp);
+    assertIntentEnvelope(relationViewResp, 'load_view');
+    const relationFields = ((relationViewResp.body || {}).data || {}).fields || {};
+    const inferred = Object.entries(relationFields).find(([, desc]) => {
+      if (!desc || typeof desc !== 'object') return false;
+      const t = desc.ttype || desc.type;
+      if (t !== 'many2one') return false;
+      return String(desc.relation || '').trim() === MODEL;
+    });
+    relationField = inferred ? inferred[0] : '';
+    summary.push(`relation_field_inferred: ${relationField || '-'}`);
   }
 
   let targetId = RECORD_ID;
@@ -214,42 +239,55 @@ async function main() {
   const relRecords = (relListResp.body.data || {}).records || [];
   const existingId = relRecords.length ? Number(relRecords[0].id) : 0;
 
-  log('api.data.create (dry_run)');
-  const createPayload = {
-    intent: 'api.data.create',
-    params: {
-      model: relation,
-      vals: { name: `Codex Task ${Date.now()}`, [relationField]: targetId },
-      dry_run: 1,
-    },
-  };
-  const createResp = await requestJson(intentUrl, createPayload, authHeader);
-  writeJson(path.join(outDir, 'create.log'), createResp);
-  assertIntentEnvelope(createResp, 'api.data.create', { allowMetaIntentAliases: ['api.data'] });
-
-  if (existingId) {
-    log('api.data.write (dry_run)');
-    const writePayload = {
-      intent: 'api.data.write',
+  if (createMode === 'page') {
+    summary.push('operation_mode: page_entry_contract_guard');
+    const hasPageEntry = Number.isInteger(Number(relationEntry.action_id)) || Number.isInteger(Number(relationEntry.menu_id));
+    summary.push(`relation_page_entry_present: ${hasPageEntry ? 'true' : 'false'}`);
+    if (!relationCanCreate || !hasPageEntry) {
+      writeSummary(summary);
+      throw new Error('page-entry one2many create contract not ready');
+    }
+  } else if (relationField) {
+    log('api.data.create (dry_run)');
+    const createPayload = {
+      intent: 'api.data.create',
       params: {
         model: relation,
-        ids: [existingId],
-        vals: { name: `Codex Task Updated ${Date.now()}` },
+        vals: { name: `Codex Task ${Date.now()}`, [relationField]: targetId },
         dry_run: 1,
       },
     };
-    const writeResp = await requestJson(intentUrl, writePayload, authHeader);
-    writeJson(path.join(outDir, 'write.log'), writeResp);
-    assertIntentEnvelope(writeResp, 'api.data.write', { allowMetaIntentAliases: ['api.data'] });
+    const createResp = await requestJson(intentUrl, createPayload, authHeader);
+    writeJson(path.join(outDir, 'create.log'), createResp);
+    assertIntentEnvelope(createResp, 'api.data.create', { allowMetaIntentAliases: ['api.data'] });
 
-    log('api.data.unlink (dry_run)');
-    const unlinkPayload = {
-      intent: 'api.data.unlink',
-      params: { model: relation, ids: [existingId], dry_run: 1 },
-    };
-    const unlinkResp = await requestJson(intentUrl, unlinkPayload, authHeader);
-    writeJson(path.join(outDir, 'unlink.log'), unlinkResp);
-    assertIntentEnvelope(unlinkResp, 'api.data.unlink', { allowMetaIntentAliases: ['api.data'] });
+    if (existingId) {
+      log('api.data.write (dry_run)');
+      const writePayload = {
+        intent: 'api.data.write',
+        params: {
+          model: relation,
+          ids: [existingId],
+          vals: { name: `Codex Task Updated ${Date.now()}` },
+          dry_run: 1,
+        },
+      };
+      const writeResp = await requestJson(intentUrl, writePayload, authHeader);
+      writeJson(path.join(outDir, 'write.log'), writeResp);
+      assertIntentEnvelope(writeResp, 'api.data.write', { allowMetaIntentAliases: ['api.data'] });
+
+      log('api.data.unlink (dry_run)');
+      const unlinkPayload = {
+        intent: 'api.data.unlink',
+        params: { model: relation, ids: [existingId], dry_run: 1 },
+      };
+      const unlinkResp = await requestJson(intentUrl, unlinkPayload, authHeader);
+      writeJson(path.join(outDir, 'unlink.log'), unlinkResp);
+      assertIntentEnvelope(unlinkResp, 'api.data.unlink', { allowMetaIntentAliases: ['api.data'] });
+    }
+  } else {
+    writeSummary(summary);
+    throw new Error('missing relation_field for one2many after inference');
   }
 
   summary.push(`record_id: ${targetId}`);
