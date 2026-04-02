@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T01:33:20+0800
+- blocker_key: `plan_bootstrap_not_found_recovery_verify_v1`
+- layer_target: `backend usability`
+- module: `plan-bootstrap not-found recovery continuity`
+- reason: deferred 候选已完成，实现与 dashboard/execution 入口恢复语义对齐并通过验收
+- completed_step: `已完成 ITER-2026-04-02-677/678/679：project.plan_bootstrap.enter not-found data 新增 suggested_action_payload（project.initiation.enter），python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `99dec04`
+- next_step: `Open next low-risk screen batch for lifecycle usability chain`
+
 ### 2026-04-02T01:24:40+0800
 - blocker_key: `execution_enter_not_found_recovery_verify_v1`
 - layer_target: `backend usability`

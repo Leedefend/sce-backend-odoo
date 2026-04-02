@@ -104,6 +104,13 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                 },
                 "data": {
                     "lifecycle_hints": lifecycle_hints,
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": "PROJECT_NOT_FOUND",
+                        "params": {
+                            "reason_code": "PROJECT_NOT_FOUND",
+                        },
+                    },
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
