@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T11:55:25+0800
+- blocker_key: `portal_bridge_e2e_login_token_compatibility_fix_v1`
+- layer_target: `backend usability`
+- module: `custom-frontend bridge e2e token compatibility`
+- reason: 可用性主线跨栈验证失败于 login token missing，需要恢复自定义前端桥接验证门禁
+- completed_step: `已完成 ITER-2026-04-02-745/746/747：portal_bridge_e2e_smoke 支持 data.session.token 回退，python3 agent_ops/scripts/validate_task.py 与 make verify.portal.bridge.e2e PASS`
+- active_commit: `9b21166`
+- next_step: `Continue custom-frontend usability verification mainline`
+
 ### 2026-04-02T11:40:32+0800
 - blocker_key: `execution_advance_project_lookup_service_extraction_verify_v1`
 - layer_target: `backend usability`
