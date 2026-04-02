@@ -9174,3 +9174,19 @@ Each entry must include:
   - latest classification: `PASS`
   - settlement-chain closure gate recovered to green
   - next efficient action is continue release-level closure gates with runtime constraint policy
+## 2026-04-02 迭代锚点（ITER-2026-04-02-869）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `879d644`
+- Layer Target: `Product Usability Closure`
+- Module: `aggregate closure gate (constrained runtime)`
+- Reason: reconfirm full create->manage closure after cost/payment/settlement recoveries
+- `869` verify result:
+  - release second-slice prepared: PASS
+  - execution cost flow smoke: PASS
+  - execution payment flow smoke: PASS
+  - execution settlement flow smoke: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - constrained-runtime aggregate closure gate is stable
+  - next efficient action is resume full freeze gate when host browser route becomes reachable
