@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-02-792",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-792.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_view_contract_coverage_smoke_container": "FAIL"
+  },
+  "failure_reason": "missing nodes: field,group,notebook,page,headerButtons,statButtons,ribbon,chatter",
+  "next_step": "Create implement task for node-detection compatibility before re-verify."
+}
