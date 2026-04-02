@@ -5,11 +5,12 @@ import logging
 import time
 from typing import Any, Dict
 
-from odoo.exceptions import AccessError
-
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_construction_core.services.project_execution_consistency_guard import (
     ProjectExecutionConsistencyGuard,
+)
+from odoo.addons.smart_construction_core.services.project_execution_post_transition_service import (
+    ProjectExecutionPostTransitionService,
 )
 from odoo.addons.smart_construction_core.services.project_execution_state_machine import (
     ProjectExecutionStateMachine,
@@ -125,6 +126,9 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     def _precheck_service(self, consistency_guard) -> ProjectExecutionPrecheckService:
         return ProjectExecutionPrecheckService(consistency_guard)
 
+    def _post_transition_service(self) -> ProjectExecutionPostTransitionService:
+        return ProjectExecutionPostTransitionService(self.env)
+
     def _blocked_response(
         self,
         *,
@@ -165,47 +169,6 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             to_state=to_state,
             task_id=task_id,
         )
-
-    def _post_transition_note(self, project, *, from_state: str, to_state: str, reason_code: str, result: str) -> None:
-        if not project or not hasattr(project, "message_post"):
-            return
-        try:
-            from_label = ProjectExecutionStateMachine.STATE_LABEL.get(from_state, from_state)
-            to_label = ProjectExecutionStateMachine.STATE_LABEL.get(to_state, to_state)
-            project.sudo().message_post(
-                body=(
-                    "执行推进记录：%s。状态变化 %s → %s。原因：%s。"
-                    % ("成功" if result == "success" else "阻塞", from_label, to_label, reason_code)
-                )
-            )
-        except Exception:
-            self._log_exception(
-                "post_transition_note_failed",
-                project_id=int(getattr(project, "id", 0) or 0),
-                from_state=from_state,
-                to_state=to_state,
-                reason_code=reason_code,
-                result=result,
-            )
-            return
-
-    def _schedule_followup_activity(self, project, *, to_state: str) -> None:
-        try:
-            ProjectExecutionConsistencyGuard(self.env).reconcile_followup_activity(project, project_state=to_state)
-        except AccessError:
-            _logger.warning(
-                "project.execution.advance.followup_activity_access_denied project_id=%s to_state=%s",
-                int(getattr(project, "id", 0) or 0),
-                str(to_state or ""),
-            )
-            return
-        except Exception:
-            self._log_exception(
-                "followup_activity_failed",
-                project_id=int(getattr(project, "id", 0) or 0),
-                to_state=str(to_state or ""),
-            )
-            return
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -275,7 +238,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         if not precheck_ok:
             reason_code = str(precheck_reason_code or "EXECUTION_TRANSITION_BLOCKED")
             if precheck_stage == ProjectExecutionPrecheckService.STAGE_TRANSITION:
-                self._post_transition_note(
+                self._post_transition_service().post_transition_note(
                     project,
                     from_state=from_state,
                     to_state=from_state,
@@ -317,14 +280,14 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 extra_data=task_telemetry,
             )
 
-        self._post_transition_note(
+        self._post_transition_service().post_transition_note(
             project,
             from_state=from_state,
             to_state=to_state,
             reason_code=reason_code,
             result="success",
         )
-        self._schedule_followup_activity(project, to_state=to_state)
+        self._post_transition_service().schedule_followup_activity(project, to_state=to_state)
         return ProjectExecutionResponseBuilder.success(
             intent=self.INTENT_TYPE,
             ts0=ts0,

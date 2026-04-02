@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T10:18:22+0800
+- blocker_key: `execution_advance_post_transition_service_extraction_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance post-transition service extraction`
+- reason: 按低风险并行角色筛选结果，抽离场景编排侧 post-transition side effects，保持业务事实层边界不变
+- completed_step: `已完成 ITER-2026-04-02-730/731/732：新增 ProjectExecutionPostTransitionService 并迁移 execution.advance note/followup 后置编排逻辑，python3 -m py_compile、python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `2d55c2e`
+- next_step: `Open next screen batch for remaining execution-advance orchestration simplification`
+
 ### 2026-04-02T10:09:58+0800
 - blocker_key: `execution_advance_precheck_service_extraction_verify_v1`
 - layer_target: `backend usability`
