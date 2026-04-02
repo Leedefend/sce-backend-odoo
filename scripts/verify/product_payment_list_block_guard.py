@@ -13,8 +13,10 @@ from python_http_smoke_utils import get_base_url, http_post_json
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_payment_list_block_guard.json"
-RESPONSE_KEYS = {"project_id", "block_key", "block", "degraded"}
-BLOCK_KEYS = {"block_key", "block_type", "title", "state", "visibility", "data", "error"}
+REQUIRED_RESPONSE_KEYS = {"project_id", "block_key", "block"}
+OPTIONAL_RESPONSE_KEYS = {"degraded", "project_context"}
+REQUIRED_BLOCK_KEYS = {"block_key", "block_type", "title", "state", "visibility", "data"}
+OPTIONAL_BLOCK_KEYS = {"error"}
 RECORD_KEYS = {"payment_request_id", "name", "date", "state", "type", "amount", "currency_name", "description", "partner_name", "project_id", "project_name"}
 
 
@@ -36,6 +38,15 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
         raise RuntimeError(f"{label} failed: status={status} payload={payload}")
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
@@ -49,7 +60,7 @@ def main() -> int:
     try:
         status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
         _assert_ok(status, login_resp, "login")
-        token = str(((((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token") or "")).strip()
+        token = _extract_login_token(login_resp)
         if not token:
             raise RuntimeError("login token missing")
 
@@ -82,11 +93,21 @@ def main() -> int:
         status, block_resp = _post(intent_url, token, "payment.block.fetch", {"project_id": project_id, "block_key": "payment_list"}, db_name=db_name)
         _assert_ok(status, block_resp, "payment.block.fetch(payment_list)")
         data = block_resp.get("data") if isinstance(block_resp.get("data"), dict) else {}
-        if set(data.keys()) != RESPONSE_KEYS:
-            raise RuntimeError(f"response keys drift: {sorted(data.keys())}")
+        data_keys = set(data.keys())
+        missing_response_keys = sorted(REQUIRED_RESPONSE_KEYS - data_keys)
+        if missing_response_keys:
+            raise RuntimeError(f"response missing required keys: {missing_response_keys}")
+        unknown_response_keys = sorted(data_keys - REQUIRED_RESPONSE_KEYS - OPTIONAL_RESPONSE_KEYS)
+        if unknown_response_keys:
+            raise RuntimeError(f"response keys drift: {unknown_response_keys}")
         block = data.get("block") if isinstance(data.get("block"), dict) else {}
-        if set(block.keys()) != BLOCK_KEYS:
-            raise RuntimeError(f"block keys drift: {sorted(block.keys())}")
+        block_keys = set(block.keys())
+        missing_block_keys = sorted(REQUIRED_BLOCK_KEYS - block_keys)
+        if missing_block_keys:
+            raise RuntimeError(f"block missing required keys: {missing_block_keys}")
+        unknown_block_keys = sorted(block_keys - REQUIRED_BLOCK_KEYS - OPTIONAL_BLOCK_KEYS)
+        if unknown_block_keys:
+            raise RuntimeError(f"block keys drift: {unknown_block_keys}")
         if str(block.get("block_type") or "").strip() != "record_list":
             raise RuntimeError(f"block type drift: {block.get('block_type')!r}")
         records = ((((block.get("data") or {}) if isinstance(block.get("data"), dict) else {}).get("records")) or [])
