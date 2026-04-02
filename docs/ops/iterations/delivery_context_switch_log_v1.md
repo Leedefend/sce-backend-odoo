@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T12:24:07+0800
+- blocker_key: `custom_frontend_scene_semantic_token_compatibility_fix_v1`
+- layer_target: `backend usability`
+- module: `custom-frontend scene semantic smoke`
+- reason: 主线下一切片失败于 login token 字段兼容，需要最小脚本修复
+- completed_step: `已完成 ITER-2026-04-02-757/758/759：fe_scene_semantic_smoke 支持 data.session.token 回退，python3 agent_ops/scripts/validate_task.py 与 make verify.portal.scene_semantic_smoke.container PASS`
+- active_commit: `b0326c8`
+- next_step: `Continue custom-frontend usability verification mainline with next slice`
+
 ### 2026-04-02T12:18:40+0800
 - blocker_key: `custom_frontend_layout_stability_token_compatibility_fix_v1`
 - layer_target: `backend usability`
