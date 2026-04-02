@@ -8203,3 +8203,19 @@ Each entry must include:
   - latest classification: `PASS`
   - search + sort slices are stable
   - next efficient action is continue view render mode slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-791 / 792）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `409e141`
+- Layer Target: `Backend Usability`
+- Module: `view render/coverage continuity`
+- Reason: continue view usability closure after search/sort PASS
+- `791` verify result:
+  - `verify.portal.view_render_mode_smoke.container`: PASS (`render_mode=layout_tree`)
+- `792` verify result:
+  - `verify.portal.view_contract_coverage_smoke.container`: FAIL
+  - reason: `missing nodes: field,group,notebook,page,headerButtons,statButtons,ribbon,chatter`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated implement batch for view_contract_coverage node-detection compatibility, then rerun verify
