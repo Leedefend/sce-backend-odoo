@@ -155,6 +155,12 @@ class CostTrackingEntryService:
         cost_code = self._resolve_cost_code(values)
         company = getattr(project, "company_id", None) or self.env.company
         journal = self._resolve_journal(company)
+        company = getattr(journal, "company_id", None) or company
+        if not company:
+            raise UserError("缺少公司上下文，无法创建成本记录。")
+        currency = getattr(company, "currency_id", None)
+        if not currency:
+            raise UserError("缺少公司币种上下文，无法创建成本记录。")
         expense_account = self._resolve_account(company, {"expense", "asset"})
         offset_account = self._resolve_account(company, {"liability", "equity"})
         Move = self._model("account.move")
@@ -162,16 +168,26 @@ class CostTrackingEntryService:
             raise UserError("缺少 account.move，无法创建成本记录。")
         move_vals = {
             "move_type": "entry",
+            "company_id": int(company.id),
+            "currency_id": int(currency.id),
             "journal_id": int(journal.id),
             "project_id": int(project.id),
             "date": entry_date,
             "ref": description,
             "line_ids": [
-                (0, 0, self._line_vals(account=expense_account, project=project, amount=amount, description=description, cost_code=cost_code)),
+                (0, 0, {
+                    **self._line_vals(account=expense_account, project=project, amount=amount, description=description, cost_code=cost_code),
+                    "company_id": int(company.id),
+                    "currency_id": int(currency.id),
+                    "amount_currency": amount,
+                }),
                 (0, 0, {
                     "name": description,
                     "account_id": int(offset_account.id),
                     "project_id": int(project.id),
+                    "company_id": int(company.id),
+                    "currency_id": int(currency.id),
+                    "amount_currency": -amount,
                     "debit": 0.0,
                     "credit": amount,
                 }),

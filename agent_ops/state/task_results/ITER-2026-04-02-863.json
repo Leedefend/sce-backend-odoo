@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-02-863",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-863.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_product_cost_entry_contract_guard": "PASS",
+    "make_verify_product_cost_summary_block_guard": "PASS",
+    "make_verify_product_project_flow_execution_cost": "PASS",
+    "make_verify_product_cost_list_block_guard": "FAIL"
+  },
+  "next_step": "Align cost_list block guard with required+optional response envelope."
+}
+
