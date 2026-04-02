@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-02-751
+title: Screen next custom-frontend layout-contract usability slice
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Select and launch the next custom-frontend usability slice focused on scene
+  layout contract verification.
+
+user_visible_outcome:
+  - "自定义前端可用性主线持续推进"
+  - "跨栈契约布局门禁得到验证"
+
+scope:
+  allowed_paths:
+    - Makefile
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen stage only
+  - no implementation
+  - usability-mainline-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: ec3335d
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-750
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: custom-frontend scene-layout slice selection
+  module_owner: verify scripts / make targets
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Validate contract layout chain consumed by custom frontend.
+  reason: >
+    Continue usability chain after cross-stack contract gate is green.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-751.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - no_candidate_selected
+
+deliverables:
+  - selected_scene_layout_contract_slice
+  - governance/report artifacts for ITER-2026-04-02-751
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-751.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-751.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-751.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-750

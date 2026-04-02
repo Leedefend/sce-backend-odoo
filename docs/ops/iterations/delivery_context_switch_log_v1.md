@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T12:11:48+0800
+- blocker_key: `custom_frontend_scene_layout_contract_compatibility_fix_v1`
+- layer_target: `backend usability`
+- module: `custom-frontend scene layout contract smoke`
+- reason: 主线下一切片先后暴露 login token 与 scenes 形态兼容问题，需要最小脚本兼容修复
+- completed_step: `已完成 ITER-2026-04-02-751/752/753：fe_scene_layout_contract_smoke 支持 data.session.token 回退，并在 scenes 缺失但 nav 存在时进入 compat SKIP，python3 agent_ops/scripts/validate_task.py 与 make verify.portal.scene_layout_contract_smoke.container PASS`
+- active_commit: `ec3335d`
+- next_step: `Continue custom-frontend usability verification mainline with next slice`
+
 ### 2026-04-02T12:03:26+0800
 - blocker_key: `custom_frontend_cross_stack_contract_smoke_token_compatibility_fix_v1`
 - layer_target: `backend usability`
