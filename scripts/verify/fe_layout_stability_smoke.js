@@ -92,7 +92,8 @@ async function main() {
     });
     writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
     assertIntentEnvelope(bootstrapResp, 'bootstrap', { requireTrace: false });
-    token = (bootstrapResp.body.data || {}).token || '';
+    const bootstrapData = (bootstrapResp.body.data || {});
+    token = bootstrapData.token || ((bootstrapData.session || {}).token) || '';
   }
   if (!token) {
     log(`login: ${LOGIN} db=${DB_NAME}`);
@@ -100,7 +101,8 @@ async function main() {
     const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
     writeJson(path.join(outDir, 'login.log'), loginResp);
     assertIntentEnvelope(loginResp, 'login');
-    token = (loginResp.body.data || {}).token || '';
+    const loginData = (loginResp.body.data || {});
+    token = loginData.token || ((loginData.session || {}).token) || '';
     if (!token) {
       throw new Error('login response missing token');
     }
