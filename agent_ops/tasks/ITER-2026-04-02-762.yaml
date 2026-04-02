@@ -1,16 +1,17 @@
 task_id: ITER-2026-04-02-762
-title: Verify custom-frontend scene-schema slice
+title: Verify one-shot custom-frontend compatibility slice
 type: backend
 status: active
 priority: high
 mode: verify
 
 goal: >
-  Verify custom-frontend scene-schema smoke gate and keep usability mainline
-  unblocked.
+  Verify one-shot compatibility fix across login token validation and
+  scene-style publish smoke gates with nav fallback compatibility.
 
 user_visible_outcome:
-  - "schema 链路可用"
+  - "登录 token 校验链路可用"
+  - "发布场景门禁在 nav 回退形态可用"
   - "主线继续推进"
 
 scope:
@@ -42,7 +43,7 @@ context:
 
 architecture:
   layer_target: Backend Usability
-  module: custom-frontend scene-schema verify
+  module: custom-frontend compatibility verify
   module_owner: verify scripts
   kernel_or_scenario: scenario
   backend_sub_layer_target: scene_orchestration
@@ -54,7 +55,16 @@ architecture:
 acceptance:
   commands:
     - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-762.yaml
+    - make verify.portal.scene_contract_smoke.container
+    - make verify.portal.scene_default_sort_smoke.container
+    - make verify.portal.scene_list_profile_smoke.container
+    - make verify.portal.scene_target_smoke.container
+    - make verify.portal.scene_targets_resolve_smoke.container
+    - make verify.portal.scene_filters_semantic_smoke.container
+    - make verify.portal.scene_tiles_semantic_smoke.container
+    - make verify.portal.scene_versioning_smoke.container
     - make verify.portal.scene_schema_smoke.container
+    - make verify.portal.scene_semantic_smoke.container
 
 risk:
   level: low
@@ -65,7 +75,7 @@ stop_conditions:
   - acceptance_failed
 
 deliverables:
-  - verified_custom_frontend_scene_schema_slice
+  - verified_custom_frontend_login_scene_compat_slice
   - governance/report artifacts for ITER-2026-04-02-762
 
 rollback:
