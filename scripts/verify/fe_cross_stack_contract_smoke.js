@@ -195,7 +195,8 @@ async function main() {
     );
     writeJson(path.join(outDir, 'login.log'), loginResp);
     assertIntentEnvelope(loginResp, 'login');
-    token = (((loginResp.body || {}).data) || {}).token || '';
+    const loginData = (((loginResp.body || {}).data) || {});
+    token = loginData.token || ((loginData.session || {}).token) || '';
     assert(Boolean(token), 'login response missing token');
   }
 

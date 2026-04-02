@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-02-750
+title: Verify next custom-frontend cross-stack usability slice
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify next selected custom-frontend cross-stack slice and confirm usability
+  mainline remains unblocked.
+
+user_visible_outcome:
+  - "自定义前端跨栈门禁持续通过"
+  - "用户闭环可用性持续收敛"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - Makefile
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 7b23852
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-749
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: custom-frontend cross-stack slice verify
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Keep verification focused on custom-frontend contract consumption.
+  reason: >
+    Validate next gate after bridge e2e recovery.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-750.yaml
+    - make verify.portal.cross_stack_contract_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_next_custom_frontend_cross_stack_slice
+  - governance/report artifacts for ITER-2026-04-02-750
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-750.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-750.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-750.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-749
