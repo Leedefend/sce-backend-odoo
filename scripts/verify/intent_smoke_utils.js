@@ -43,6 +43,15 @@ function assertIntentEnvelope(resp, intentName, options) {
     }
   }
 
+  if (intentName === 'login') {
+    const data = resp.body.data && typeof resp.body.data === 'object' ? resp.body.data : {};
+    const session = data.session && typeof data.session === 'object' ? data.session : {};
+    if (!data.token && session.token) {
+      data.token = String(session.token || '');
+      resp.body.data = data;
+    }
+  }
+
   return {
     traceId: traceId,
   };

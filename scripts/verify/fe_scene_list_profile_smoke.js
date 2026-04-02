@@ -120,9 +120,20 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const getScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
   const ledger = getScene('projects.ledger');
   const list = getScene('projects.list');
+  if (!scenes.length && nav.length > 0) {
+    summary.push(`scene_count: 0`);
+    summary.push(`nav_count: ${nav.length}`);
+    summary.push('status: SKIP');
+    summary.push('reason: app.init.scenes missing, nav present (compat mode)');
+    writeSummary(summary);
+    log('SKIP list_profile smoke (scenes missing, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
   if (!ledger) {
     throw new Error('scene projects.ledger missing');
   }

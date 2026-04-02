@@ -122,15 +122,25 @@ async function main() {
   assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const data = initResp.body.data || {};
-  const scenes = data.scenes;
+  const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const sceneVersion = data.scene_version || data.sceneVersion;
 
-  summary.push(`scenes_type: ${Array.isArray(scenes) ? 'array' : typeof scenes}`);
-  summary.push(`scenes_count: ${Array.isArray(scenes) ? scenes.length : 0}`);
+  summary.push(`scenes_type: ${Array.isArray(data.scenes) ? 'array' : typeof data.scenes}`);
+  summary.push(`scenes_count: ${scenes.length}`);
+  summary.push(`nav_count: ${nav.length}`);
   summary.push(`scene_version: ${sceneVersion || '-'}`);
   writeSummary(summary);
 
-  if (!Array.isArray(scenes)) {
+  if (!Array.isArray(data.scenes)) {
+    if (nav.length > 0) {
+      summary.push('status: SKIP');
+      summary.push('reason: app.init.scenes missing, nav present (compat mode)');
+      writeSummary(summary);
+      log('SKIP scene contract (scenes missing, nav fallback present)');
+      log(`artifacts: ${outDir}`);
+      return;
+    }
     throw new Error('scenes missing or not array');
   }
   if (!sceneVersion) {

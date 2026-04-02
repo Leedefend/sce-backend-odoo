@@ -5,5 +5,16 @@
   "verification": {
     "validate_task": "PASS"
   },
-  "next_step": "Re-run scene schema smoke after compatibility fixes."
+  "changes": [
+    "scripts/verify/intent_smoke_utils.js",
+    "scripts/verify/fe_scene_contract_smoke.js",
+    "scripts/verify/fe_scene_default_sort_smoke.js",
+    "scripts/verify/fe_scene_list_profile_smoke.js",
+    "scripts/verify/fe_scene_target_smoke.js",
+    "scripts/verify/fe_scene_targets_resolve_smoke.js",
+    "scripts/verify/fe_scene_filters_semantic_smoke.js",
+    "scripts/verify/fe_scene_tiles_semantic_smoke.js",
+    "scripts/verify/fe_scene_versioning_smoke.js"
+  ],
+  "next_step": "Run full scene-style verify gates to confirm one-shot compatibility fix."
 }

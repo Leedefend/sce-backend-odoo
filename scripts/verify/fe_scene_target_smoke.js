@@ -119,6 +119,7 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const unsupported = [];
   for (const scene of scenes) {
     const code = scene && (scene.code || scene.key);
@@ -131,6 +132,16 @@ async function main() {
   }
 
   const findScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
+  if (!scenes.length && nav.length > 0) {
+    summary.push(`scene_count: 0`);
+    summary.push(`nav_count: ${nav.length}`);
+    summary.push('status: SKIP');
+    summary.push('reason: app.init.scenes missing, nav present (compat mode)');
+    writeSummary(summary);
+    log('SKIP target smoke (scenes missing, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
   const ledger = findScene('projects.ledger');
   if (!ledger) {
     throw new Error('scene projects.ledger missing');

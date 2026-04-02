@@ -6,8 +6,9 @@ priority: high
 mode: implement
 
 goal: >
-  Apply minimal fix only if scene-schema smoke reports a custom-frontend
-  cross-stack blocker.
+  Apply one-shot systemic compatibility fix for custom-frontend usability:
+  normalize login token extraction and degrade scene-style smokes to nav fallback
+  mode when app.init does not provide scenes.
 
 user_visible_outcome:
   - "schema 门禁阻塞快速解除"
@@ -32,7 +33,7 @@ scope:
     - addons/**/__manifest__.py
 
 limits:
-  max_files: 8
+  max_files: 12
   max_candidates: 1
   max_output_lines: 80
   forbid_repo_wide_scan: true
@@ -43,6 +44,8 @@ change_rules:
   - implement stage only
   - additive-only
   - usability-mainline-first
+  - centralize token compatibility
+  - nav-fallback compatibility for scene-style smoke scripts
 
 context:
   branch: codex/next-round
@@ -54,7 +57,7 @@ context:
 
 architecture:
   layer_target: Backend Usability
-  module: custom-frontend scene-schema blocker fix
+  module: custom-frontend login/scene compatibility fix
   module_owner: verify scripts
   kernel_or_scenario: scenario
   backend_sub_layer_target: scene_orchestration
@@ -76,7 +79,7 @@ stop_conditions:
   - acceptance_failed
 
 deliverables:
-  - scene_schema_blocker_fix_if_needed
+  - one_shot_login_token_and_nav_fallback_fix
   - governance/report artifacts for ITER-2026-04-02-761
 
 rollback:

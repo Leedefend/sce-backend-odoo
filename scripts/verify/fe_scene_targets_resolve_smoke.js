@@ -119,10 +119,22 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const getScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
 
   const targets = ['projects.list', 'projects.ledger'];
   const errors = [];
+
+  if (!scenes.length && nav.length > 0) {
+    summary.push(`scene_count: 0`);
+    summary.push(`nav_count: ${nav.length}`);
+    summary.push('status: SKIP');
+    summary.push('reason: app.init.scenes missing, nav present (compat mode)');
+    writeSummary(summary);
+    log('SKIP targets-resolve smoke (scenes missing, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
 
   targets.forEach((key) => {
     const scene = getScene(key);

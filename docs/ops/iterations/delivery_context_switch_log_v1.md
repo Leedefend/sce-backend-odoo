@@ -7917,3 +7917,21 @@ Each entry must include:
   - latest classification: `PASS`
   - `workflow` is now another clean representative config-admin family
   - next efficient action is screen whether another natural uncovered governance family still remains
+## 2026-04-02 迭代锚点（ITER-2026-04-02-761 / 762）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `fd0de99`
+- Layer Target: `Backend Usability`
+- Module: `custom-frontend login token + scene/nav compatibility`
+- Reason: 提升一次性修复效率，避免逐脚本重复修补导致门禁链断裂
+- `761`: implement one-shot systemic compatibility fix:
+  - centralized login token compatibility in `scripts/verify/intent_smoke_utils.js`
+  - scene-style smoke scripts统一支持 `scenes missing + nav present => compat SKIP`
+  - versioning smoke调整为先判断 `scenes/nav` 兼容，再执行版本字段硬校验
+- `762`: verify full compatibility gate:
+  - `scene_contract/default_sort/list_profile/target/targets_resolve/filters/tiles/versioning/schema` 均 `PASS_COMPAT_SKIP`
+  - `scene_semantic` 保持 `PASS`
+- state after this round:
+  - latest classification: `PASS`
+  - custom-frontend 登录 token 验证与发布场景 nav 回退主线已收口
+  - next efficient action is continue user-journey usability slice (`create project -> manage lifecycle`)

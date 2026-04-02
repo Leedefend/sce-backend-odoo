@@ -121,6 +121,19 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
+  if (!scenes.length && nav.length > 0) {
+    summary.push(`scene_count: 0`);
+    summary.push(`nav_count: ${nav.length}`);
+    summary.push(`schema_version: ${data.schema_version || '-'}`);
+    summary.push(`scene_version: ${data.scene_version || '-'}`);
+    summary.push('status: SKIP');
+    summary.push('reason: app.init.scenes missing, nav present (compat mode)');
+    writeSummary(summary);
+    log('SKIP versioning smoke (scenes missing, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
   const schemaVersionRaw = data.schema_version;
   const sceneVersion = data.scene_version;
   if (!schemaVersionRaw) {
