@@ -72,6 +72,13 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                 },
                 "data": {
                     "lifecycle_hints": self._missing_project_lifecycle_hints(),
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": "PROJECT_CONTEXT_MISSING",
+                        "params": {
+                            "reason_code": "PROJECT_CONTEXT_MISSING",
+                        },
+                    },
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
