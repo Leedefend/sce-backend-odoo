@@ -9021,3 +9021,16 @@ Each entry must include:
   - latest classification: `PASS`
   - release second-slice prepared gate recovered
   - next efficient action is continue user-facing custom frontend closure validation
+## 2026-04-02 迭代锚点（ITER-2026-04-02-859）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `2e5bfb9`
+- Layer Target: `Product Usability Closure`
+- Module: `product v0_1 stability baseline`
+- Reason: raise closure confidence from second-slice prepared to wider stability baseline
+- `859` verify result:
+  - `make verify.product.v0_1_stability_baseline`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - create->manage stability baseline is green
+  - next efficient action is evaluate freeze-level gate with runtime reachability constraints
