@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-02-746
+title: Implement portal bridge e2e login token compatibility fix
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Implement minimal compatibility fix in custom-frontend cross-stack bridge e2e
+  script to accept default login contract token location.
+
+user_visible_outcome:
+  - "跨栈可用性验证恢复可用"
+  - "验证脚本兼容默认登录契约"
+
+scope:
+  allowed_paths:
+    - scripts/verify/portal_bridge_e2e_smoke.js
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - additive-only
+  - usability-mainline-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9b21166
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-745
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: portal bridge e2e token compatibility implementation
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Custom-frontend verification script should consume backend login contract
+    (data.session.token fallback) robustly.
+  reason: >
+    Fix login token missing failure without touching production business logic.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-746.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - portal_bridge_e2e_token_compatibility_fixed
+  - governance/report artifacts for ITER-2026-04-02-746
+
+rollback:
+  - git restore scripts/verify/portal_bridge_e2e_smoke.js
+  - git restore agent_ops/tasks/ITER-2026-04-02-746.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-746.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-746.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-745

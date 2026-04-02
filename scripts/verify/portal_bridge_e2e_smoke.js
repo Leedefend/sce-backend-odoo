@@ -104,7 +104,8 @@ async function main() {
   );
   writeJson(path.join(outDir, 'login.log'), loginResp);
   assertIntentEnvelope(loginResp, 'login');
-  const token = (((loginResp.body || {}).data) || {}).token || '';
+  const loginData = (((loginResp.body || {}).data) || {});
+  const token = loginData.token || ((loginData.session || {}).token) || '';
   if (!token) throw new Error('login token missing');
   summary.push(`jwt: ok`);
 
