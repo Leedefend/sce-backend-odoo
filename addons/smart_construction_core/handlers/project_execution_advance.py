@@ -12,6 +12,9 @@ from odoo.addons.smart_construction_core.services.project_execution_consistency_
 from odoo.addons.smart_construction_core.services.project_execution_post_transition_service import (
     ProjectExecutionPostTransitionService,
 )
+from odoo.addons.smart_construction_core.services.project_execution_request_service import (
+    ProjectExecutionRequestService,
+)
 from odoo.addons.smart_construction_core.services.project_execution_hint_service import (
     ProjectExecutionHintService,
 )
@@ -48,51 +51,8 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     def _log_exception(event: str, **context: Any) -> None:
         _logger.exception("project.execution.advance.%s context=%s", str(event or "unknown"), context)
 
-    @staticmethod
-    def _coerce_positive_id(raw: Any) -> int:
-        try:
-            value = int(raw or 0)
-        except Exception:
-            return 0
-        return value if value > 0 else 0
-
-    @staticmethod
-    def _coerce_project_id(raw: Any) -> int:
-        return ProjectExecutionAdvanceHandler._coerce_positive_id(raw)
-
-    def _resolve_project_id(self, params: Dict[str, Any], ctx: Dict[str, Any]) -> int:
-        candidates = [
-            (params or {}).get("project_id"),
-            (params or {}).get("record_id"),
-            (ctx or {}).get("project_id"),
-            (ctx or {}).get("record_id"),
-        ]
-        for item in candidates:
-            project_id = self._coerce_project_id(item)
-            if project_id > 0:
-                return project_id
-        return 0
-
-    @staticmethod
-    def _resolve_target_state(params: Dict[str, Any]) -> str:
-        raw = (params or {}).get("target_state")
-        if not str(raw or "").strip():
-            return ""
-        return ProjectExecutionStateMachine.normalize_state(raw)
-
-    @staticmethod
-    def _resolve_task_id(params: Dict[str, Any], ctx: Dict[str, Any]) -> int:
-        candidates = [
-            (params or {}).get("task_id"),
-            (params or {}).get("taskId"),
-            (ctx or {}).get("task_id"),
-            (ctx or {}).get("taskId"),
-        ]
-        for item in candidates:
-            task_id = ProjectExecutionAdvanceHandler._coerce_positive_id(item)
-            if task_id > 0:
-                return task_id
-        return 0
+    def _request_service(self) -> ProjectExecutionRequestService:
+        return ProjectExecutionRequestService()
 
     def _task_transition_service(self) -> ProjectExecutionTaskTransitionService:
         return ProjectExecutionTaskTransitionService(self.env)
@@ -153,13 +113,9 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        params = payload or self.params or {}
-        if isinstance(params, dict) and isinstance(params.get("params"), dict):
-            params = params.get("params") or {}
-        ctx = ctx or {}
-        project_id = self._resolve_project_id(params, ctx)
-        requested_task_id = self._resolve_task_id(params, ctx)
-        requested_target_state = self._resolve_target_state(params)
+        project_id, requested_task_id, requested_target_state = self._request_service().resolve_request(
+            payload or self.params or {}, ctx or {}
+        )
         trace_id = str((self.context or {}).get("trace_id") or "")
         if project_id <= 0:
             return ProjectExecutionResponseBuilder.input_error(

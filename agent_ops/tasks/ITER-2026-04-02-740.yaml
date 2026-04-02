@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-02-740
+title: Implement execution-advance request parsing service extraction
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Extract execution-advance request parsing/input normalization into dedicated
+  request service while preserving handler behavior.
+
+user_visible_outcome:
+  - "后端编排入口更清晰"
+  - "执行推进可用性行为无变化"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - addons/smart_construction_core/services/project_execution_request_service.py
+    - addons/smart_construction_core/services/__init__.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 7
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - additive-only
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: 4629212
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-739
+  priority_lane: usability_backend_orchestration
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance request parsing extraction
+  module_owner: smart_construction_core handlers/services
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Centralize request parsing in backend service, no frontend/domain boundary crossing.
+  reason: >
+    Continue handler slimming with no business-fact mutation logic changes.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-740.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - execution_advance_request_service_extracted
+  - governance/report artifacts for ITER-2026-04-02-740
+
+rollback:
+  - git restore addons/smart_construction_core/handlers/project_execution_advance.py
+  - git restore addons/smart_construction_core/services/project_execution_request_service.py
+  - git restore addons/smart_construction_core/services/__init__.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-740.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-740.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-740.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-739
