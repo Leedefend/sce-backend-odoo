@@ -296,6 +296,14 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     "to_state": from_state,
                     "reason_code": scope_reason_code,
                     "suggested_action": self._build_suggested_action(int(project.id), scope_reason_code),
+                    "suggested_action_payload": {
+                        "intent": "project.execution.block.fetch",
+                        "reason_code": scope_reason_code,
+                        "params": {
+                            "project_id": int(project.id),
+                            "reason_code": scope_reason_code,
+                        },
+                    },
                     "lifecycle_hints": self._build_lifecycle_hints(int(project.id), scope_reason_code),
                 },
                 "meta": {
