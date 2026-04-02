@@ -8036,3 +8036,18 @@ Each entry must include:
   - latest classification: `PASS`
   - tree + kanban view continuity paths both stable
   - next efficient action is continue record-detail slice (`recordview_hud`)
+## 2026-04-02 迭代锚点（ITER-2026-04-02-775）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `c058ab2`
+- Layer Target: `Backend Usability`
+- Module: `record detail HUD continuity`
+- Reason: continue project-journey closure after view-mode continuity PASS
+- `775` verify result:
+  - `verify.portal.recordview_hud_smoke.container`: PASS
+  - `hud_fields_ok=true`
+  - `footer_meta_ok=true`
+- state after this round:
+  - latest classification: `PASS`
+  - record detail HUD path is stable
+  - next efficient action is one2many read/edit continuity slice
