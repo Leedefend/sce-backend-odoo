@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T10:09:58+0800
+- blocker_key: `execution_advance_precheck_service_extraction_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance precheck service extraction`
+- reason: 按 P3 下一刀完成 precheck 决策下沉，进一步压缩 handler 厚度并维持后端语义主导
+- completed_step: `已完成 ITER-2026-04-02-727/728/729：新增 ProjectExecutionPrecheckService 并迁移 execution.advance transition/scope/alignment 预检决策，python3 -m py_compile、python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `2b626c5`
+- next_step: `Open next screen batch for remaining execution-advance post-action orchestration seams`
+
+### 2026-04-02T10:07:28+0800
+- blocker_key: `execution_advance_precheck_service_screen_v1`
+- layer_target: `backend usability`
+- module: `execution-advance precheck service extraction candidate`
+- reason: P3 连续收敛中，选定 precheck（transition/scope/alignment）下沉为下一刀
+- completed_step: `已完成 ITER-2026-04-02-727：确定将 execution.advance precheck 决策从 handler 下沉到专用 service，保持 blocked/success 契约兼容`
+- active_commit: `2b626c5`
+- next_step: `Open implement batch for precheck service extraction and run acceptance verify`
+
 ### 2026-04-02T03:39:25+0800
 - blocker_key: `execution_advance_task_transition_service_extraction_verify_v1`
 - layer_target: `backend usability`

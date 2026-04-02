@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-02-727
+title: Screen execution-advance precheck service extraction
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Screen minimal safe candidate for extracting transition/scope/alignment precheck
+  decisions from execution advance handler into dedicated service.
+
+user_visible_outcome:
+  - "handler 进一步瘦身，职责更清晰"
+  - "执行推进阻塞语义保持稳定"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - addons/smart_construction_core/services/project_execution_precheck_service.py
+    - addons/smart_construction_core/services/__init__.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 7
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen stage only
+  - no implementation
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2b626c5
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-726
+  priority_lane: P3_handler_slimming
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance precheck service extraction screen
+  module_owner: smart_construction_core handlers/services
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Candidate keeps frontend contract unchanged and moves orchestration precheck
+    decisions into backend service.
+  reason: >
+    Continue handler slimming while keeping architecture boundary: frontend generic
+    render only, backend owns semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-727.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - no_candidate_selected
+
+deliverables:
+  - selected_precheck_service_extraction_scope
+  - governance/report artifacts for ITER-2026-04-02-727
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-727.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-727.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-727.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-726
