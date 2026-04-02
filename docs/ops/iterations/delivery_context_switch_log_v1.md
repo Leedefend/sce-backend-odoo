@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T11:32:17+0800
+- blocker_key: `execution_advance_request_service_extraction_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance request parsing service extraction`
+- reason: 继续后端编排层收敛，将 handler 入参解析下沉到 service，减少入口复杂度
+- completed_step: `已完成 ITER-2026-04-02-739/740/741：新增 ProjectExecutionRequestService 并迁移 execution.advance 项目/任务/目标状态解析逻辑，python3 -m py_compile、python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `4629212`
+- next_step: `Open next low-risk backend usability screen batch`
+
 ### 2026-04-02T11:23:40+0800
 - blocker_key: `execution_advance_semantic_guard_recovery_verify_v1`
 - layer_target: `backend usability`
