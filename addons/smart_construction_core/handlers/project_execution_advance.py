@@ -20,17 +20,12 @@ from odoo.addons.smart_construction_core.services.project_execution_response_bui
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
+from odoo.addons.smart_construction_core.services.project_execution_transition_service import (
+    ExecutionAdvanceAtomicRollback,
+    ProjectExecutionTransitionService,
+)
 
 _logger = logging.getLogger(__name__)
-
-
-class _ExecutionAdvanceAtomicRollback(Exception):
-    """Signal a blocked reason that must rollback the atomic transition section."""
-
-    def __init__(self, reason_code: str, task_telemetry: Dict[str, Any] | None = None):
-        self.reason_code = str(reason_code or "EXECUTION_TRANSITION_FAILED")
-        self.task_telemetry = dict(task_telemetry or {})
-        super().__init__(self.reason_code)
 
 
 class ProjectExecutionAdvanceHandler(BaseIntentHandler):
@@ -265,40 +260,6 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             return self._recover_task_for_ready(project, task_id=task_id)
         return True, ProjectExecutionStateMachine.transition_reason_code(from_state, to_state), {}
 
-    def _apply_transition_atomically(
-        self,
-        project,
-        *,
-        from_state: str,
-        to_state: str,
-        task_id: int,
-        consistency_guard: ProjectExecutionConsistencyGuard,
-    ) -> tuple[str, Dict[str, Any]]:
-        """Apply critical transition path atomically to avoid half-success states."""
-        with self.env.cr.savepoint():
-            task_success, task_reason_code, task_telemetry = self._apply_real_task_transition(
-                project, from_state=from_state, to_state=to_state, task_id=task_id
-            )
-            if not task_success:
-                raise _ExecutionAdvanceAtomicRollback(task_reason_code, task_telemetry)
-
-            try:
-                project.sudo().write({"sc_execution_state": to_state})
-            except Exception:
-                self._log_exception(
-                    "project_state_write_failed",
-                    project_id=int(getattr(project, "id", 0) or 0),
-                    from_state=from_state,
-                    to_state=to_state,
-                )
-                raise _ExecutionAdvanceAtomicRollback("EXECUTION_TRANSITION_WRITE_FAILED", task_telemetry)
-
-            alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
-            if not alignment_ok:
-                raise _ExecutionAdvanceAtomicRollback(alignment_reason_code, task_telemetry)
-
-        return task_reason_code or ProjectExecutionStateMachine.transition_reason_code(from_state, to_state), task_telemetry
-
     def _post_transition_note(self, project, *, from_state: str, to_state: str, reason_code: str, result: str) -> None:
         if not project or not hasattr(project, "message_post"):
             return
@@ -478,14 +439,21 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             )
 
         try:
-            reason_code, task_telemetry = self._apply_transition_atomically(
-                project,
+            reason_code, task_telemetry = ProjectExecutionTransitionService.apply_transition_atomically(
+                env=self.env,
+                project=project,
                 from_state=from_state,
                 to_state=to_state,
-                task_id=requested_task_id,
                 consistency_guard=consistency_guard,
+                transition_runner=lambda **kwargs: self._apply_real_task_transition(
+                    kwargs.get("project"),
+                    from_state=str(kwargs.get("from_state") or ""),
+                    to_state=str(kwargs.get("to_state") or ""),
+                    task_id=requested_task_id,
+                ),
+                trace_id=trace_id,
             )
-        except _ExecutionAdvanceAtomicRollback as atomic_block:
+        except ExecutionAdvanceAtomicRollback as atomic_block:
             reason_code = str(atomic_block.reason_code or "")
             task_telemetry = dict(atomic_block.task_telemetry or {})
             return ProjectExecutionResponseBuilder.blocked(

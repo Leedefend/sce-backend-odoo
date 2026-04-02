@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T03:31:45+0800
+- blocker_key: `execution_advance_transition_service_extraction_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance transition service extraction`
+- reason: 按 P3 第二刀完成 transition path 下沉到 service，进一步收敛 handler 责任
+- completed_step: `已完成 ITER-2026-04-02-721/722/723：新增 ProjectExecutionTransitionService 并迁移 execution.advance 原子过渡逻辑，python3 -m py_compile、python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `33f9abd`
+- next_step: `Open next screen batch for remaining handler complexity hot spots`
+
 ### 2026-04-02T03:24:40+0800
 - blocker_key: `execution_advance_transition_service_screen_v1`
 - layer_target: `backend usability`
