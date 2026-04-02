@@ -80,6 +80,34 @@ function isModelMissing(resp) {
   );
 }
 
+function collectLayoutButtons(layout) {
+  const out = [];
+  const walk = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+    const type = String(node.type || '').trim().toLowerCase();
+    if (type === 'button' && typeof node.name === 'string' && node.name.trim()) {
+      out.push({
+        name: node.name.trim(),
+        type: String(node.buttonType || node.type || 'object').trim().toLowerCase(),
+      });
+    }
+    Object.entries(node).forEach(([key, value]) => {
+      if (key === 'fieldInfo' || key === 'attributes' || key === 'modifiers' || key === 'meta') {
+        return;
+      }
+      walk(value);
+    });
+  };
+  walk(layout);
+  return out;
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -150,8 +178,8 @@ async function main() {
   }
   writeJson(path.join(outDir, 'load_view.log'), { model_used: modelUsed, response: viewResp });
   const viewData = viewResp.body.data || {};
-  const layout = (viewData && viewData.layout) || {};
-  const buttons = [...(layout.headerButtons || []), ...(layout.statButtons || [])];
+  const layout = viewData.layout || (((viewData.views || {})[VIEW_TYPE] || {}).layout) || [];
+  const buttons = collectLayoutButtons(layout);
   const button =
     buttons.find((b) => b && b.name && /^[A-Za-z_]/.test(String(b.name)) && (b.type || 'object') === 'object') ||
     buttons.find((b) => b && b.name) ||

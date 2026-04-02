@@ -8159,3 +8159,32 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated implement batch for execute-button candidate fallback alignment, then rerun verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-786 / 787）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `fb3d7da`
+- Layer Target: `Backend Usability`
+- Module: `execute button recovery`
+- Reason: recover from `785` fail (`no button available for execute_button dry_run`)
+- `786` implement result:
+  - execute-button smoke now parses button candidates from recursive layout tree
+  - fallback to `views[view_type].layout` path when top-level layout shape changes
+- `787` verify result:
+  - `verify.portal.execute_button_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - execute-button gate recovered
+  - next efficient action is continue list shell title slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-788）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `fb3d7da`
+- Layer Target: `Backend Usability`
+- Module: `list shell title continuity`
+- Reason: continue list usability closure after execute-button recovery
+- `788` verify result:
+  - `verify.portal.list_shell_title_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - list shell title slice is stable
+  - next efficient action is continue search/sort slice
