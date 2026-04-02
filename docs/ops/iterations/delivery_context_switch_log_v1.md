@@ -9034,3 +9034,33 @@ Each entry must include:
   - latest classification: `PASS`
   - create->manage stability baseline is green
   - next efficient action is evaluate freeze-level gate with runtime reachability constraints
+## 2026-04-02 迭代锚点（ITER-2026-04-02-860）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `30fdd08`
+- Layer Target: `Product Usability Closure`
+- Module: `release second-slice freeze gate`
+- Reason: validate freeze-level closure including browser user path
+- `860` verify result:
+  - `make verify.release.second_slice_freeze`: FAIL
+  - inner chain `verify.release.second_slice_prepared`: PASS
+  - fail point: `verify.portal.second_slice_browser_smoke.host` (`ERR_NETWORK_CHANGED` at `/login`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - blocker classified as host runtime reachability constraint
+  - next efficient action is constrained-runtime freeze surrogate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-861）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `30fdd08`
+- Layer Target: `Product Usability Closure`
+- Module: `constrained-runtime freeze surrogate`
+- Reason: keep freeze confidence progression under host-browser constraints
+- `861` verify result:
+  - `make verify.release.second_slice_prepared`: PASS
+  - `make verify.portal.cross_stack_contract_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - constrained-runtime freeze surrogate is green
+  - next efficient action is continue closure iterations while tracking host browser reachability recovery
