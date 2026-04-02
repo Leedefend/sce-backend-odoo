@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any, Dict
 
@@ -16,6 +17,8 @@ from odoo.addons.smart_construction_core.services.project_execution_state_machin
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
+
+_logger = logging.getLogger(__name__)
 
 
 class _ExecutionAdvanceAtomicRollback(Exception):
@@ -33,6 +36,10 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
+
+    @staticmethod
+    def _log_exception(event: str, **context: Any) -> None:
+        _logger.exception("project.execution.advance.%s context=%s", str(event or "unknown"), context)
 
     @staticmethod
     def _coerce_positive_id(raw: Any) -> int:
@@ -124,6 +131,11 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         try:
             task_model = self.env["project.task"]
         except Exception:
+            self._log_exception(
+                "task_model_access_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                task_id=int(task_id or 0),
+            )
             return []
         try:
             domain = [("project_id", "=", int(project.id))]
@@ -131,6 +143,11 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 domain.append(("id", "=", int(task_id)))
             return task_model.search(domain, order="priority desc, id asc")
         except Exception:
+            self._log_exception(
+                "task_query_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                task_id=int(task_id or 0),
+            )
             return []
 
     def _actionable_open_task(self, project, *, task_id: int = 0):
@@ -160,6 +177,12 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 task_state = "in_progress"
             ProjectTaskStateSupport.sync_kanban_state(task)
         except Exception:
+            self._log_exception(
+                "task_prepare_or_start_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                task_id=int(getattr(task, "id", 0) or 0),
+                task_state=task_state,
+            )
             return False, "EXECUTION_TASK_START_FAILED", self._task_telemetry(task, before_state=before_state)
         after_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", task_state))
         return (
@@ -186,6 +209,12 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 task.action_mark_done()
             ProjectTaskStateSupport.sync_kanban_state(task)
         except Exception:
+            self._log_exception(
+                "task_complete_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                task_id=int(getattr(task, "id", 0) or 0),
+                task_state=before_state,
+            )
             return False, "EXECUTION_TASK_COMPLETE_FAILED", self._task_telemetry(task, before_state=before_state)
         after_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", "done"))
         return (
@@ -206,6 +235,12 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 task.action_prepare_task()
             ProjectTaskStateSupport.sync_kanban_state(task)
         except Exception:
+            self._log_exception(
+                "task_recover_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                task_id=int(getattr(task, "id", 0) or 0),
+                task_state=before_state,
+            )
             return False, "EXECUTION_TASK_RECOVER_FAILED", self._task_telemetry(task, before_state=before_state)
         after_state = ProjectExecutionStateMachine.normalize_task_state(getattr(task, "sc_state", task_state))
         return (
@@ -245,6 +280,12 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             try:
                 project.sudo().write({"sc_execution_state": to_state})
             except Exception:
+                self._log_exception(
+                    "project_state_write_failed",
+                    project_id=int(getattr(project, "id", 0) or 0),
+                    from_state=from_state,
+                    to_state=to_state,
+                )
                 raise _ExecutionAdvanceAtomicRollback("EXECUTION_TRANSITION_WRITE_FAILED", task_telemetry)
 
             alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
@@ -266,12 +307,32 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 )
             )
         except Exception:
+            self._log_exception(
+                "post_transition_note_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                from_state=from_state,
+                to_state=to_state,
+                reason_code=reason_code,
+                result=result,
+            )
             return
 
     def _schedule_followup_activity(self, project, *, to_state: str) -> None:
         try:
             ProjectExecutionConsistencyGuard(self.env).reconcile_followup_activity(project, project_state=to_state)
-        except (AccessError, Exception):
+        except AccessError:
+            _logger.warning(
+                "project.execution.advance.followup_activity_access_denied project_id=%s to_state=%s",
+                int(getattr(project, "id", 0) or 0),
+                str(to_state or ""),
+            )
+            return
+        except Exception:
+            self._log_exception(
+                "followup_activity_failed",
+                project_id=int(getattr(project, "id", 0) or 0),
+                to_state=str(to_state or ""),
+            )
             return
 
     def handle(self, payload=None, ctx=None):
@@ -314,6 +375,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         try:
             project = project_model.browse(project_id).exists()
         except Exception:
+            self._log_exception("project_lookup_failed", project_id=project_id, trace_id=trace_id)
             project = False
         if not project:
             reason_code = "PROJECT_NOT_FOUND"

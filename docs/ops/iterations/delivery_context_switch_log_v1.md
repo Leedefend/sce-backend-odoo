@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T03:07:05+0800
+- blocker_key: `execution_advance_exception_logging_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance exception logging tightening`
+- reason: 根据审阅意见 P2 收敛裸吞异常，保留 reason_code 兼容同时补足可追踪日志
+- completed_step: `已完成 ITER-2026-04-02-713/714/715：project_execution_advance 在 task/project/write/followup 等关键异常路径增加日志追踪，python3 -m py_compile、python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `1caf7bf`
+- next_step: `Open P3 screen batch for handler slimming split plan (service + response builder)`
+
 ### 2026-04-02T02:59:10+0800
 - blocker_key: `execution_advance_explicit_task_targeting_verify_v1`
 - layer_target: `backend usability`
