@@ -8188,3 +8188,18 @@ Each entry must include:
   - latest classification: `PASS`
   - list shell title slice is stable
   - next efficient action is continue search/sort slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-789 / 790）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `8d23197`
+- Layer Target: `Backend Usability`
+- Module: `search/sort continuity`
+- Reason: continue list usability closure after list shell title PASS
+- `789` verify result:
+  - `verify.portal.search_mvp_smoke.container`: PASS
+- `790` verify result:
+  - `verify.portal.sort_mvp_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - search + sort slices are stable
+  - next efficient action is continue view render mode slice
