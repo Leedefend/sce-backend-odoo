@@ -168,6 +168,23 @@ def _build_platform_minimum_nav_contract() -> dict:
     }
 
 
+def _normalize_access_suggested_action(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return data
+    access = data.get("access") if isinstance(data.get("access"), dict) else {}
+    if not access:
+        return data
+    reason_code = str(access.get("reason_code") or "").strip()
+    suggested_action = str(access.get("suggested_action") or "").strip()
+    if not suggested_action and reason_code:
+        suggested_action = str(failure_meta_for_reason(reason_code).get("suggested_action") or "").strip()
+    if suggested_action:
+        next_access = dict(access)
+        next_access["suggested_action"] = suggested_action
+        data["access"] = next_access
+    return data
+
+
 def _normalize_scene_validation_recovery_strategy(payload) -> dict:
     if not isinstance(payload, dict):
         return {}
@@ -716,6 +733,7 @@ class SystemInitHandler(BaseIntentHandler):
             build_mode=build_mode,
             inspect_payload=startup_inspect,
         )
+        data = _normalize_access_suggested_action(data)
         stage_ts = _mark("finalize_startup_surface", stage_ts)
 
         # 分部 etag：加入导航

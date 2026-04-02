@@ -1,0 +1,10 @@
+{
+  "task_id": "ITER-2026-04-02-804",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-804.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_my_work_smoke_container": "FAIL"
+  },
+  "next_step": "Recover backend page contract zone title semantics."
+}

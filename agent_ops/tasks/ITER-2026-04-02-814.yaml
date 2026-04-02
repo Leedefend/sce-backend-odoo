@@ -1,0 +1,92 @@
+task_id: ITER-2026-04-02-814
+title: Recover workspace tile smoke fallback compatibility batch
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Add scene-fallback compatibility to workspace tile-related smoke scripts.
+
+user_visible_outcome:
+  - "场景回退模式下 workspace 相关门禁不误报"
+  - "v0.8 聚合验证可持续推进"
+
+scope:
+  allowed_paths:
+    - scripts/verify/fe_workspace_tiles_smoke.js
+    - scripts/verify/fe_workspace_tile_navigate_smoke.js
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_only
+  - verify_script_only
+  - no business semantic changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: a32be47
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-813
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: workspace smoke fallback compatibility
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Align verifier behavior with backend nav-fallback runtime semantics.
+  reason: >
+    Remove repeated false-negative blockers from workspace tile smokes.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-814.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - contract_breaking_change
+
+deliverables:
+  - workspace_tile_smoke_fallback_compatibility_recovered
+  - governance/report artifacts for ITER-2026-04-02-814
+
+rollback:
+  - git restore scripts/verify/fe_workspace_tiles_smoke.js
+  - git restore scripts/verify/fe_workspace_tile_navigate_smoke.js
+  - git restore agent_ops/tasks/ITER-2026-04-02-814.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-814.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-814.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-813

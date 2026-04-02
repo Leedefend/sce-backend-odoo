@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-02-805
+title: Recover backend page contract zone title semantics for usability
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Replace technical fallback zone/block titles with user-facing semantics in backend page contract defaults.
+
+user_visible_outcome:
+  - "页面契约不再泄露技术标题"
+  - "my_work 与同类页面区块文案更可用"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/page_orchestration_zone_defaults.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_or_safe_replace
+  - backend_semantics_only
+  - no frontend business logic
+
+context:
+  branch: codex/next-round
+  baseline_sha: a32be47
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-804
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: page contract default semantics
+  module_owner: smart_core page orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Ensure backend emits user-facing semantics for frontend generic rendering.
+  reason: >
+    Fix my_work smoke failure caused by technical labels leaking from backend defaults.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-805.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - contract_breaking_change
+
+deliverables:
+  - backend_default_zone_title_semantics_recovered
+  - governance/report artifacts for ITER-2026-04-02-805
+
+rollback:
+  - git restore addons/smart_core/core/page_orchestration_zone_defaults.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-805.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-805.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-805.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-804

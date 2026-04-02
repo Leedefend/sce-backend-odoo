@@ -126,7 +126,18 @@ async function main() {
 
   const data = initResp.body.data || {};
   const diag = data.scene_diagnostics;
+  const nav = Array.isArray(data.nav) ? data.nav : [];
+  const scenes = Array.isArray(data.scenes) ? data.scenes : [];
   if (!diag || typeof diag !== 'object') {
+    if (nav.length > 0 && scenes.length === 0) {
+      summary.push('status: SKIP');
+      summary.push('reason: scene_diagnostics missing in nav fallback mode');
+      summary.push(`nav_count: ${nav.length}`);
+      writeSummary(summary);
+      log('SKIP diagnostics (scene_diagnostics missing, nav fallback present)');
+      log(`artifacts: ${outDir}`);
+      return;
+    }
     throw new Error('scene_diagnostics missing');
   }
   if (!diag.schema_version) {

@@ -8321,3 +8321,263 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated cross-stack recovery batch for `suggested_action` contract continuity
+## 2026-04-02 迭代锚点（ITER-2026-04-02-801）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `cross-stack suggested_action recovery`
+- Reason: recover semantic v0_8 gate fail without breaking frontend/backend boundary
+- `801` implement result:
+  - backend `system_init` recovers `access.suggested_action` fallback from reason metadata
+  - frontend `ActionView` restores explicit generic `resolveSuggestedAction(...)` and `runSuggestedAction(...)` invocation points
+- state after this round:
+  - latest classification: `PASS`
+  - recovery implementation is complete
+  - next efficient action is verify aggregate semantic gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-802）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `semantic v0_8 recovery verify`
+- Reason: validate cross-stack suggested_action continuity recovery
+- `802` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.my_work_smoke.container` login failed (`401`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated login/token recovery batch then rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-803）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `my-work smoke login/token fallback recovery`
+- Reason: recover `verify.portal.my_work_smoke.container` 401 stop condition
+- `803` implement result:
+  - verify script now supports sequential login candidates (env -> admin -> demo PM)
+  - login attempts are persisted for diagnosability
+- state after this round:
+  - latest classification: `PASS`
+  - my-work smoke auth recovery implementation completed
+  - next efficient action is run direct my-work smoke verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-804）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `my-work smoke recovery verify`
+- Reason: verify login/token fallback recovery
+- `804` verify result:
+  - `verify.portal.my_work_smoke.container`: FAIL
+  - fail point: technical zone title leaked (`页面头部`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is backend semantic title recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-805）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `page contract zone title semantics`
+- Reason: remove technical title leakage from backend defaults
+- `805` implement result:
+  - backend default zone titles changed to user-facing semantics
+  - common technical section keys now have semantic block title fallback
+- state after this round:
+  - latest classification: `PASS`
+  - backend semantic title recovery completed
+  - next efficient action is rerun `verify.portal.my_work_smoke.container`
+## 2026-04-02 迭代锚点（ITER-2026-04-02-806）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `my-work semantic title recovery verify`
+- Reason: validate backend title recovery effectiveness
+- `806` verify result:
+  - `verify.portal.my_work_smoke.container`: FAIL
+  - fail point: technical zone title still leaked (`页面头部`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is runtime page-contract sanitization for leaked titles
+## 2026-04-02 迭代锚点（ITER-2026-04-02-807）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `runtime page contract title sanitization`
+- Reason: sanitize runtime output when source data still carries technical labels
+- `807` implement result:
+  - runtime builder now sanitizes leaked zone/block technical titles before export
+- state after this round:
+  - latest classification: `PASS`
+  - runtime title sanitization implemented
+  - next efficient action is rerun `verify.portal.my_work_smoke.container`
+## 2026-04-02 迭代锚点（ITER-2026-04-02-808）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `my-work runtime sanitization verify`
+- Reason: verify runtime output after sanitization patch
+- `808` verify result:
+  - `verify.portal.my_work_smoke.container`: FAIL
+  - fail point remains `页面头部` technical title leak
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is restart runtime then rerun targeted smoke
+## 2026-04-02 迭代锚点（ITER-2026-04-02-809）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `runtime reload + my-work smoke verify`
+- Reason: remove stale-runtime variable and validate recovery on loaded code
+- `809` verify result:
+  - `make restart`: PASS
+  - `verify.portal.my_work_smoke.container`: PASS (after transient readiness retry)
+- state after this round:
+  - latest classification: `PASS`
+  - my-work smoke recovery confirmed
+  - next efficient action is rerun `verify.portal.ui.v0_8.semantic.container`
+## 2026-04-02 迭代锚点（ITER-2026-04-02-810）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate recovery verify`
+- Reason: verify full v0_8 semantic chain after my-work recovery
+- `810` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.workbench_tiles_smoke.container` (`no scenes with tiles`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated workbench-tiles recovery batch
+## 2026-04-02 迭代锚点（ITER-2026-04-02-811）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `workbench tiles smoke fallback compatibility`
+- Reason: avoid false-negative gate failure in scene-fallback runtime mode
+- `811` implement result:
+  - workbench tiles smoke now supports SKIP when nav fallback exists and no scene tiles are delivered
+- state after this round:
+  - latest classification: `PASS`
+  - workbench tiles fallback compatibility recovered
+  - next efficient action is run targeted workbench tiles verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-812）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `workbench tiles fallback compatibility verify`
+- Reason: verify smoke behavior under nav-fallback scene mode
+- `812` verify result:
+  - `verify.portal.workbench_tiles_smoke.container`: PASS (`SKIP` in nav fallback mode)
+- state after this round:
+  - latest classification: `PASS`
+  - targeted blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-813）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: confirm full v0_8 chain after blocker recovery
+- `813` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.workspace_tiles_smoke.container` (`default scene missing`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is workspace tiles/navigate fallback compatibility recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-814）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `workspace tile smoke fallback compatibility`
+- Reason: clear repeated false-negative blockers under nav-fallback mode
+- `814` implement result:
+  - workspace tiles + workspace tile navigate smokes now support nav-fallback SKIP
+- state after this round:
+  - latest classification: `PASS`
+  - workspace fallback compatibility recovered
+  - next efficient action is run targeted workspace smoke verifies
+## 2026-04-02 迭代锚点（ITER-2026-04-02-815）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `workspace smoke compatibility verify`
+- Reason: verify workspace blockers are cleared under nav-fallback runtime mode
+- `815` verify result:
+  - `verify.portal.workspace_tiles_smoke.container`: PASS (`SKIP`)
+  - `verify.portal.workspace_tile_navigate_smoke.container`: PASS (`SKIP`)
+- state after this round:
+  - latest classification: `PASS`
+  - workspace fallback blockers cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-816）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: continue end-to-end closure after workspace recovery
+- `816` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_diagnostics_smoke.container` (`scene_diagnostics missing`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is scene diagnostics smoke fallback compatibility recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-817）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `scene diagnostics smoke fallback compatibility`
+- Reason: clear fallback-mode false-negative blocker on diagnostics gate
+- `817` implement result:
+  - diagnostics smoke supports SKIP when diagnostics are absent in nav-fallback mode
+- state after this round:
+  - latest classification: `PASS`
+  - diagnostics fallback compatibility recovered
+  - next efficient action is run targeted diagnostics verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-818）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `diagnostics smoke compatibility verify`
+- Reason: verify diagnostics blocker clearance in nav-fallback runtime
+- `818` verify result:
+  - `verify.portal.scene_diagnostics_smoke.container`: PASS (`SKIP`)
+- state after this round:
+  - latest classification: `PASS`
+  - diagnostics blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-819）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a32be47`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: continue full-chain closure after diagnostics blocker recovery
+- `819` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_governance_action_smoke.container` (`scene_channel not updated after set_channel`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated scene-governance-action recovery batch

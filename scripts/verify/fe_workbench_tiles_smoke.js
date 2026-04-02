@@ -122,10 +122,23 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   summary.push(`scene_count: ${scenes.length}`);
 
   const tileScenes = scenes.filter((scene) => Array.isArray(scene.tiles) && scene.tiles.length > 0);
   summary.push(`scene_with_tiles: ${tileScenes.length}`);
+  summary.push(`nav_count: ${nav.length}`);
+
+  if (!Array.isArray(data.scenes) || !tileScenes.length) {
+    if (nav.length > 0) {
+      summary.push('status: SKIP');
+      summary.push('reason: no tiles in fallback scene mode, nav present');
+      writeSummary(summary);
+      log('SKIP workbench tiles (no scene tiles, nav fallback present)');
+      log(`artifacts: ${outDir}`);
+      return;
+    }
+  }
   writeSummary(summary);
 
   if (!tileScenes.length) {

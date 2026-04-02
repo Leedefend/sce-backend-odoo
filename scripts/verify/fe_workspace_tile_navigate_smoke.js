@@ -127,6 +127,7 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const sceneKeys = scenes.map((scene) => scene.code || scene.key).filter(Boolean);
   const defaultScene = scenes.find((scene) => (scene.code || scene.key) === 'default');
   const tiles = defaultScene && Array.isArray(defaultScene.tiles) ? defaultScene.tiles : [];
@@ -138,6 +139,15 @@ async function main() {
 
   summary.push(`scene_count: ${sceneKeys.length}`);
   summary.push(`tile_with_scene: ${sceneKey || 'none'}`);
+  summary.push(`nav_count: ${nav.length}`);
+  if (!sceneKey && nav.length > 0) {
+    summary.push('status: SKIP');
+    summary.push('reason: no tile scene target in nav fallback mode');
+    writeSummary(summary);
+    log('SKIP workspace tile navigation (no tile scene target, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
   writeSummary(summary);
 
   if (!sceneKey) {
