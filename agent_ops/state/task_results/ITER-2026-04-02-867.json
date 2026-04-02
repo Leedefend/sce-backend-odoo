@@ -1,0 +1,12 @@
+{
+  "task_id": "ITER-2026-04-02-867",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-867.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_product_settlement_summary_contract_guard": "FAIL",
+    "make_verify_product_project_flow_execution_settlement": "PASS"
+  },
+  "next_step": "Align settlement summary guard with required+optional key model."
+}
+

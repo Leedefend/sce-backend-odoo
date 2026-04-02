@@ -9144,3 +9144,33 @@ Each entry must include:
   - latest classification: `PASS`
   - payment-chain closure gate recovered to green
   - next efficient action is proceed to settlement-chain closure verification
+## 2026-04-02 迭代锚点（ITER-2026-04-02-867）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `49bcd8c`
+- Layer Target: `Product Usability Closure`
+- Module: `project execution settlement chain gates`
+- Reason: complete closure progression through settlement chain
+- `867` verify result:
+  - settlement summary guard: FAIL (`summary keys drift`)
+  - execution settlement smoke: PASS
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is settlement summary guard compatibility alignment
+## 2026-04-02 迭代锚点（ITER-2026-04-02-868）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `49bcd8c`
+- Layer Target: `Backend Usability`
+- Module: `settlement summary contract guard`
+- Reason: remove strict-key false negatives under summary extension
+- `868` implement result:
+  - settlement summary guard switched to required+optional key model
+- `868` verify result:
+  - settlement summary guard: PASS
+  - execution settlement smoke: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - settlement-chain closure gate recovered to green
+  - next efficient action is continue release-level closure gates with runtime constraint policy

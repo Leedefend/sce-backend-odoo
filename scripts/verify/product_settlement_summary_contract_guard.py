@@ -13,7 +13,7 @@ from python_http_smoke_utils import get_base_url, http_post_json
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_settlement_summary_contract_guard.json"
-EXPECTED_SUMMARY_KEYS = {
+REQUIRED_SUMMARY_KEYS = {
     "project_id",
     "carrier_models",
     "total_cost",
@@ -24,6 +24,10 @@ EXPECTED_SUMMARY_KEYS = {
     "payment_record_count",
     "scope",
     "as_of_date",
+}
+OPTIONAL_SUMMARY_KEYS = {
+    "executed_payment_amount",
+    "executed_payment_record_count",
 }
 
 
@@ -45,6 +49,15 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
         raise RuntimeError(f"{label} failed: status={status} payload={payload}")
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
@@ -58,7 +71,7 @@ def main() -> int:
     try:
         status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
         _assert_ok(status, login_resp, "login")
-        token = str(((((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token") or "")).strip()
+        token = _extract_login_token(login_resp)
         if not token:
             raise RuntimeError("login token missing")
 
@@ -122,8 +135,13 @@ def main() -> int:
         data = summary_resp.get("data") if isinstance(summary_resp.get("data"), dict) else {}
         block = data.get("block") if isinstance(data.get("block"), dict) else {}
         summary = ((((block.get("data") or {}) if isinstance(block.get("data"), dict) else {}).get("summary")) or {})
-        if set(summary.keys()) != EXPECTED_SUMMARY_KEYS:
-            raise RuntimeError(f"settlement summary keys drift: {sorted(summary.keys())}")
+        summary_keys = set(summary.keys())
+        missing_summary_keys = sorted(REQUIRED_SUMMARY_KEYS - summary_keys)
+        if missing_summary_keys:
+            raise RuntimeError(f"settlement summary missing required keys: {missing_summary_keys}")
+        unknown_summary_keys = sorted(summary_keys - REQUIRED_SUMMARY_KEYS - OPTIONAL_SUMMARY_KEYS)
+        if unknown_summary_keys:
+            raise RuntimeError(f"settlement summary keys drift: {unknown_summary_keys}")
         if float(summary.get("total_cost") or 0.0) < 200.0:
             raise RuntimeError("total_cost too small")
         if float(summary.get("total_payment") or 0.0) < 120.0:
