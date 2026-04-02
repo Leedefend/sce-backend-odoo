@@ -14,6 +14,7 @@ from . import project_execution_item_projection_service
 from . import project_execution_hint_service
 from . import project_execution_post_transition_service
 from . import project_execution_precheck_service
+from . import project_execution_project_lookup_service
 from . import project_execution_request_service
 from . import project_execution_response_builder
 from . import project_execution_task_transition_service

@@ -12,6 +12,9 @@ from odoo.addons.smart_construction_core.services.project_execution_consistency_
 from odoo.addons.smart_construction_core.services.project_execution_post_transition_service import (
     ProjectExecutionPostTransitionService,
 )
+from odoo.addons.smart_construction_core.services.project_execution_project_lookup_service import (
+    ProjectExecutionProjectLookupService,
+)
 from odoo.addons.smart_construction_core.services.project_execution_request_service import (
     ProjectExecutionRequestService,
 )
@@ -53,6 +56,9 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
 
     def _request_service(self) -> ProjectExecutionRequestService:
         return ProjectExecutionRequestService()
+
+    def _project_lookup_service(self) -> ProjectExecutionProjectLookupService:
+        return ProjectExecutionProjectLookupService(self.env)
 
     def _task_transition_service(self) -> ProjectExecutionTaskTransitionService:
         return ProjectExecutionTaskTransitionService(self.env)
@@ -138,12 +144,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 },
             )
 
-        project_model = self.env["project.project"]
-        try:
-            project = project_model.browse(project_id).exists()
-        except Exception:
-            self._log_exception("project_lookup_failed", project_id=project_id, trace_id=trace_id)
-            project = False
+        project = self._project_lookup_service().resolve_project(project_id=project_id, trace_id=trace_id)
         if not project:
             reason_code = "PROJECT_NOT_FOUND"
             return ProjectExecutionResponseBuilder.blocked(
