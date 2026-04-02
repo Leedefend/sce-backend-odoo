@@ -8581,3 +8581,183 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated scene-governance-action recovery batch
+## 2026-04-02 迭代锚点（ITER-2026-04-02-820）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `scene governance action recovery`
+- Reason: fix channel transition consistency after `set_channel` and `rollback`
+- `820` implement result:
+  - set_channel now exits rollback forcing mode and syncs operator channel context
+  - scene.health now backfills channel/rollback diagnostics when minimal init payload omits them
+- `820` verify result:
+  - `verify.portal.scene_governance_action_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - governance action blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-821）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: continue full-chain closure after governance-action recovery
+- `821` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_auto_degrade_smoke.container` (`auto_degrade.triggered=false`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated auto-degrade trigger recovery batch
+## 2026-04-02 迭代锚点（ITER-2026-04-02-822）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `scene health auto-degrade semantics recovery`
+- Reason: align scene.health diagnostics with runtime auto-degrade governance semantics
+- `822` implement result:
+  - scene.health now composes debug diagnostics and evaluates injected auto-degrade path
+- `822` verify result:
+  - `verify.portal.scene_auto_degrade_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - auto-degrade blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-823）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: continue full-chain closure after auto-degrade recovery
+- `823` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_channel_smoke.container` (`scene_channel missing`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated backend contract recovery for root-level scene channel fields
+## 2026-04-02 迭代锚点（ITER-2026-04-02-824）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `system.init startup minimal surface contract`
+- Reason: keep frontend generic by repairing backend scene channel contract surface
+- `824` implement result:
+  - startup minimal surface now preserves root-level `scene_channel`, `scene_channel_selector`, `scene_channel_source_ref`, `scene_contract_ref`
+- `824` verify result:
+  - `verify.portal.scene_channel_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - scene channel blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-825）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: verify aggregate after scene channel recovery
+- `825` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_rollback_smoke.container` (`rollback_active=false`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is dedicated rollback diagnostics recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-826）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `system.init rollback diagnostics startup contract`
+- Reason: recover rollback semantics in app.init startup contract
+- `826` implement result:
+  - app.init pinned/rollback mode now emits minimal `scene_diagnostics.rollback_active/rollback_ref`
+- `826` verify result:
+  - `verify.portal.scene_rollback_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - rollback blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-827）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: verify aggregate after rollback recovery
+- `827` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_diagnostics_smoke.container` (`scene_diagnostics.schema_version missing`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is diagnostics minimal contract completion
+## 2026-04-02 迭代锚点（ITER-2026-04-02-828）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `system.init pinned diagnostics minimal contract`
+- Reason: align diagnostics and rollback contract requirements
+- `828` implement result:
+  - minimal diagnostics payload completed with `schema_version/scene_version/loaded_from/normalize_warnings`
+- `828` verify result:
+  - `verify.portal.scene_diagnostics_smoke.container`: PASS
+  - `verify.portal.scene_rollback_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - diagnostics+rollback blockers cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-829）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: verify aggregate after diagnostics+rollback recovery
+- `829` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: FAIL
+  - fail point: `verify.portal.scene_snapshot_guard.container` (`scene snapshot mismatch`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`make verify.* failed`)
+  - next efficient action is snapshot guard fallback compatibility recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-830）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `scene snapshot verification guard`
+- Reason: remove snapshot false-negative under nav-fallback runtime
+- `830` implement result:
+  - snapshot guard path resolution stabilized to repo-root-first
+  - nav-fallback scenes-missing path now emits SKIP instead of FAIL
+- `830` verify result:
+  - `verify.portal.scene_snapshot_guard.container`: PASS (`SKIP`)
+- state after this round:
+  - latest classification: `PASS`
+  - snapshot false-negative blocker cleared
+  - next efficient action is rerun semantic aggregate gate
+## 2026-04-02 迭代锚点（ITER-2026-04-02-831）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `aa0524f`
+- Layer Target: `Backend Usability`
+- Module: `semantic aggregate rerun verify`
+- Reason: validate full chain after snapshot guard compatibility recovery
+- `831` verify result:
+  - `verify.portal.ui.v0_8.semantic.container`: PASS
+  - `scene_channel_smoke`: PASS
+  - `scene_rollback_smoke`: PASS
+  - `scene_diagnostics_smoke`: PASS
+  - `scene_snapshot_guard`: PASS (`SKIP` in nav fallback)
+- state after this round:
+  - latest classification: `PASS`
+  - semantic aggregate gate recovered
+  - next efficient action is continue user-facing usability iteration beyond semantic v0_8 gate

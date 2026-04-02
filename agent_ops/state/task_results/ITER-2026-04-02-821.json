@@ -1,0 +1,10 @@
+{
+  "task_id": "ITER-2026-04-02-821",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-821.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_ui_v0_8_semantic_container": "FAIL"
+  },
+  "next_step": "Recover scene auto-degrade trigger semantics."
+}

@@ -174,9 +174,30 @@ class SystemInitPayloadBuilder:
             "intents": intents,
             "feature_flags": feature_flags,
             "role_surface": role_surface,
+            "scene_channel": str(row.get("scene_channel") or ""),
+            "scene_channel_selector": str(row.get("scene_channel_selector") or ""),
+            "scene_channel_source_ref": str(row.get("scene_channel_source_ref") or ""),
+            "scene_contract_ref": row.get("scene_contract_ref"),
             "version": version,
             "init_meta": init_meta,
         }
+        pinned_param = str(params.get("scene_use_pinned") or "").strip().lower()
+        rollback_param = str(params.get("scene_rollback") or "").strip().lower()
+        pinned_requested = pinned_param in {"1", "true", "yes", "on"}
+        rollback_requested = rollback_param in {"1", "true", "yes", "on"}
+        rollback_ref = str(row.get("scene_contract_ref") or "").strip()
+        rollback_active = pinned_requested or rollback_requested or ("PINNED.json" in rollback_ref)
+        if rollback_active:
+            minimal["scene_diagnostics"] = {
+                "rollback_active": True,
+                "rollback_ref": rollback_ref or "stable/PINNED.json",
+                "schema_version": str(row.get("schema_version") or "1.0.0"),
+                "scene_version": str(row.get("scene_version") or "v1"),
+                "loaded_from": "contract",
+                "resolve_errors": [],
+                "drift": [],
+                "normalize_warnings": [],
+            }
         minimal_ext_facts = cls._build_minimal_ext_facts(row)
         if minimal_ext_facts:
             minimal["ext_facts"] = minimal_ext_facts

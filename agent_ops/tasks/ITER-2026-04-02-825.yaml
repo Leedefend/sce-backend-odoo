@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-02-825
+title: Rerun semantic aggregate gate after scene_channel contract recovery
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify end-to-end semantic aggregate gate after backend recovery of app.init
+  scene channel contract fields.
+
+user_visible_outcome:
+  - "自定义前端主链继续稳定推进"
+  - "可用性阻断点继续后移并收敛"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/**
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_frontend_semantic_patch
+  - run_declared_checks_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: aa0524f
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-824
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: semantic aggregate rerun verify
+  module_owner: smart_core + verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Validate backend scene orchestration contract closure under aggregate semantic gate.
+  reason: >
+    Keep frontend generic and let backend contract quality drive usability closure.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-825.yaml
+    - make verify.portal.ui.v0_8.semantic.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_semantic_aggregate_gate_after_scene_channel_recovery
+  - governance/report artifacts for ITER-2026-04-02-825
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-825.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-825.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-825.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-824

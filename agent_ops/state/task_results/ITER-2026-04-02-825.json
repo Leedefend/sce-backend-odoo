@@ -1,0 +1,11 @@
+{
+  "task_id": "ITER-2026-04-02-825",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-825.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_ui_v0_8_semantic_container": "FAIL"
+  },
+  "failed_gate": "verify.portal.scene_rollback_smoke.container",
+  "next_step": "Create rollback diagnostics contract recovery batch for app.init."
+}

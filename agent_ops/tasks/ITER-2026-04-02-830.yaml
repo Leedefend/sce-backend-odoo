@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-02-830
+title: Stabilize scene snapshot guard baseline path resolution
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Prevent false-negative snapshot mismatch by making snapshot guard resolve
+  baseline from repository root before external mount/env roots.
+
+user_visible_outcome:
+  - "可用性验证链减少路径漂移导致的误报"
+  - "聚合门禁输出更稳定可信"
+
+scope:
+  allowed_paths:
+    - scripts/verify/fe_scene_snapshot_guard.js
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_only
+  - verify_tooling_only
+  - no_business_semantics_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: aa0524f
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-829
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: scene snapshot verification guard
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Scene snapshot guard is part of backend usability verification toolchain.
+  reason: >
+    Remove guard false-negatives caused by mixed root path resolution.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-830.yaml
+    - make verify.portal.scene_snapshot_guard.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - scene snapshot guard reads baseline from repository root deterministically
+  - verification report and task result for ITER-2026-04-02-830
+
+rollback:
+  - git restore scripts/verify/fe_scene_snapshot_guard.js
+  - git restore agent_ops/tasks/ITER-2026-04-02-830.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-830.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-830.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-829
