@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-02-862",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-862.md",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_product_cost_entry_contract_guard": "FAIL",
+    "make_verify_product_cost_list_block_guard": "FAIL",
+    "make_verify_product_cost_summary_block_guard": "FAIL",
+    "make_verify_product_project_flow_execution_cost": "FAIL"
+  },
+  "next_step": "Fix cost.tracking.record.create backend 500 and rerun cost-chain gates."
+}
+

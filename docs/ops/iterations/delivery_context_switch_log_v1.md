@@ -9064,3 +9064,52 @@ Each entry must include:
   - latest classification: `PASS`
   - constrained-runtime freeze surrogate is green
   - next efficient action is continue closure iterations while tracking host browser reachability recovery
+## 2026-04-02 迭代锚点（ITER-2026-04-02-862）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `af86321`
+- Layer Target: `Product Usability Closure`
+- Module: `project execution cost chain gates`
+- Reason: extend create->manage closure to cost path without host-browser dependency
+- `862` verify result:
+  - `verify.product.cost_entry_contract_guard`: FAIL
+  - `verify.product.cost_list_block_guard`: FAIL
+  - `verify.product.cost_summary_block_guard`: FAIL
+  - `verify.product.project_flow.execution_cost`: FAIL
+  - common fail point: `cost.tracking.record.create` returns 500
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - next efficient action is backend cost record create fix
+## 2026-04-02 迭代锚点（ITER-2026-04-02-863）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `af86321`
+- Layer Target: `Backend Usability`
+- Module: `cost tracking entry service`
+- Reason: fix null currency/company context causing 500 in cost record creation
+- `863` implement result:
+  - enforced deterministic `company_id/currency_id/amount_currency` on move + lines
+  - restarted runtime to load updated service
+- `863` verify result:
+  - cost entry / cost summary / execution-cost smoke: PASS
+  - cost list guard: FAIL (`response keys drift`)
+- state after this round:
+  - latest classification: `PASS`
+  - runtime 500 root cause cleared
+  - next efficient action is align cost list guard envelope tolerance
+## 2026-04-02 迭代锚点（ITER-2026-04-02-864）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `af86321`
+- Layer Target: `Backend Usability`
+- Module: `cost list block contract guard`
+- Reason: remove strict-key false negatives after response envelope enrichment
+- `864` implement result:
+  - cost list guard switched to required+optional response/block key model
+- `864` verify result:
+  - cost list / cost entry / cost summary / execution-cost smoke: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - cost-chain closure gate recovered to green
+  - next efficient action is proceed to payment-chain closure verification
