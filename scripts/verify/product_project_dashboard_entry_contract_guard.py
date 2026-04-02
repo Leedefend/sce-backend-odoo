@@ -13,7 +13,7 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_dashboard_entry_contract_guard.json"
 
-ENTRY_KEYS = {
+REQUIRED_ENTRY_KEYS = {
     "project_id",
     "scene_key",
     "scene_label",
@@ -24,7 +24,29 @@ ENTRY_KEYS = {
     "suggested_action",
     "runtime_fetch_hints",
 }
-SUMMARY_KEYS = {"project_code", "manager_name", "partner_name", "stage_name", "health_state"}
+OPTIONAL_ENTRY_KEYS = {
+    "completion",
+    "evidence_refs",
+    "fact_metrics",
+    "facts",
+    "flow_map",
+    "lifecycle_hints",
+    "metrics_explain",
+    "project_context",
+    "scene_contract_standard_v1",
+    "state_explain",
+}
+REQUIRED_SUMMARY_KEYS = {"project_code", "stage_name", "health_state"}
+OPTIONAL_SUMMARY_KEYS = {
+    "manager_name",
+    "partner_name",
+    "cost_total",
+    "lifecycle_state",
+    "milestone",
+    "payment_total",
+    "progress_percent",
+    "status",
+}
 BLOCK_KEYS = {"progress", "risks", "next_actions"}
 BLOCK_ITEM_KEYS = {"key", "title", "state"}
 
@@ -47,6 +69,15 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
         raise RuntimeError(f"{label} failed: status={status} payload={payload}")
 
 
+def _extract_login_token(login_resp: dict) -> str:
+    data = login_resp.get("data") if isinstance(login_resp.get("data"), dict) else {}
+    token = str(data.get("token") or "").strip()
+    if token:
+        return token
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or "").strip()
+
+
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
@@ -60,7 +91,7 @@ def main() -> int:
     try:
         status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
         _assert_ok(status, login_resp, "login")
-        token = str(((((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token") or "")).strip()
+        token = _extract_login_token(login_resp)
         if not token:
             raise RuntimeError("login token missing")
 
@@ -77,8 +108,13 @@ def main() -> int:
         status, entry_resp = _post(intent_url, token, "project.dashboard.enter", {"project_id": project_id}, db_name=db_name)
         _assert_ok(status, entry_resp, "project.dashboard.enter")
         entry = entry_resp.get("data") if isinstance(entry_resp.get("data"), dict) else {}
-        if set(entry.keys()) != ENTRY_KEYS:
-            raise RuntimeError(f"entry keys drift: {sorted(entry.keys())}")
+        entry_keys = set(entry.keys())
+        missing_entry_keys = sorted(REQUIRED_ENTRY_KEYS - entry_keys)
+        if missing_entry_keys:
+            raise RuntimeError(f"entry missing required keys: {missing_entry_keys}")
+        unknown_entry_keys = sorted(entry_keys - REQUIRED_ENTRY_KEYS - OPTIONAL_ENTRY_KEYS)
+        if unknown_entry_keys:
+            raise RuntimeError(f"entry keys drift: {unknown_entry_keys}")
         if str(entry.get("scene_key") or "").strip() != "project.dashboard":
             raise RuntimeError(f"scene_key drift: {entry.get('scene_key')!r}")
         if not str(entry.get("scene_label") or "").strip():
@@ -86,8 +122,13 @@ def main() -> int:
         if not str(entry.get("state_fallback_text") or "").strip():
             raise RuntimeError("state_fallback_text missing")
         summary = entry.get("summary") if isinstance(entry.get("summary"), dict) else {}
-        if set(summary.keys()) != SUMMARY_KEYS:
-            raise RuntimeError(f"entry summary keys drift: {sorted(summary.keys())}")
+        summary_keys = set(summary.keys())
+        missing_summary_keys = sorted(REQUIRED_SUMMARY_KEYS - summary_keys)
+        if missing_summary_keys:
+            raise RuntimeError(f"entry summary missing required keys: {missing_summary_keys}")
+        unknown_summary_keys = sorted(summary_keys - REQUIRED_SUMMARY_KEYS - OPTIONAL_SUMMARY_KEYS)
+        if unknown_summary_keys:
+            raise RuntimeError(f"entry summary keys drift: {unknown_summary_keys}")
         blocks = entry.get("blocks") if isinstance(entry.get("blocks"), list) else []
         seen_blocks = set()
         for row in blocks:

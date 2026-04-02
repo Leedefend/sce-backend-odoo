@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-02-840
+title: Verify product project execution advance smoke
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Validate project execution advance smoke after action contract guard recovery.
+
+user_visible_outcome:
+  - "项目执行推进动作的可用性得到实证验证"
+  - "执行链路阻断点可继续快速收敛"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - addons/smart_core/**
+    - addons/smart_construction_core/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 10
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - run_declared_checks_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: c7a219e
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-839
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: project execution advance smoke verification
+  module_owner: smart_core + smart_construction_core + verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Execution advance usability is backend contract + state transition driven.
+  reason: >
+    Continue project create-to-manage closure on execution path.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-840.yaml
+    - make verify.product.project_execution_advance_smoke
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_product_project_execution_advance_smoke
+  - governance/report artifacts for ITER-2026-04-02-840
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-840.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-840.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-840.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-839

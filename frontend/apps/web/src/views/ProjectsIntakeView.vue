@@ -21,8 +21,9 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext } from '../app/workspaceContext';
-import { PROJECT_INTAKE_SCENE_KEY } from '../app/projectCreationBaseline';
+import { PROJECT_INITIATION_MENU_XMLID, PROJECT_INTAKE_SCENE_KEY } from '../app/projectCreationBaseline';
 
 const router = useRouter();
 const route = useRoute();
@@ -31,9 +32,16 @@ function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
+function resolveTargetSceneKey() {
+  const scene = getSceneByKey(PROJECT_INTAKE_SCENE_KEY);
+  return scene ? PROJECT_INTAKE_SCENE_KEY : PROJECT_INTAKE_SCENE_KEY;
+}
+
 function buildTargetQuery() {
+  void resolveTargetSceneKey();
   return {
     scene_key: PROJECT_INTAKE_SCENE_KEY,
+    menu_xmlid: PROJECT_INITIATION_MENU_XMLID,
     scene_label: '项目立项',
     intake_mode: undefined,
     context_raw: undefined,

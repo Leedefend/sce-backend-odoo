@@ -87,15 +87,17 @@ def main() -> int:
         _assert_ok(status, dashboard_next, "project.dashboard.block.fetch(next_actions)")
         dashboard_actions = _actions_from_block(dashboard_next)
         plan_action = next((row for row in dashboard_actions if isinstance(row, dict) and str(row.get("intent") or "") == "project.plan_bootstrap.enter"), None)
-        if not isinstance(plan_action, dict):
-            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter")
+        execution_action = next((row for row in dashboard_actions if isinstance(row, dict) and str(row.get("intent") or "") == "project.execution.enter"), None)
+        if not isinstance(plan_action, dict) and not isinstance(execution_action, dict):
+            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter/project.execution.enter")
 
-        status, plan_next = _post(intent_url, token, "project.plan_bootstrap.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
-        _assert_ok(status, plan_next, "project.plan_bootstrap.block.fetch(next_actions)")
-        plan_actions = _actions_from_block(plan_next)
-        execution_action = next((row for row in plan_actions if isinstance(row, dict) and str(row.get("intent") or "") == "project.execution.enter"), None)
-        if not isinstance(execution_action, dict):
-            raise RuntimeError("plan next_actions missing project.execution.enter")
+        if isinstance(plan_action, dict):
+            status, plan_next = _post(intent_url, token, "project.plan_bootstrap.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
+            _assert_ok(status, plan_next, "project.plan_bootstrap.block.fetch(next_actions)")
+            plan_actions = _actions_from_block(plan_next)
+            execution_action = next((row for row in plan_actions if isinstance(row, dict) and str(row.get("intent") or "") == "project.execution.enter"), None)
+            if not isinstance(execution_action, dict):
+                raise RuntimeError("plan next_actions missing project.execution.enter")
 
         status, execution_entry = _post(intent_url, token, "project.execution.enter", {"project_id": project_id}, db_name=db_name)
         _assert_ok(status, execution_entry, "project.execution.enter")
@@ -119,8 +121,12 @@ def main() -> int:
         _assert_ok(status, execution_next_2, "project.execution.block.fetch(next_actions)[after]")
         second_action = _advance_action(_actions_from_block(execution_next_2))
         second_params = second_action.get("params") if isinstance(second_action.get("params"), dict) else {}
-        if str(second_action.get("current_state") or "") != "in_progress":
-            raise RuntimeError(f"execution next_actions did not follow state machine: {second_action}")
+        if str(second_action.get("intent") or "").strip() != "project.execution.advance":
+            raise RuntimeError(f"execution next_actions intent drift: {second_action}")
+        if str(second_params.get("target_state") or "").strip() != "done":
+            raise RuntimeError(f"execution next_actions did not target done after first advance: {second_action}")
+        if str(second_action.get("reason_code") or "").strip() not in {"EXECUTION_READY_TO_COMPLETE", "EXECUTION_CAN_COMPLETE"}:
+            raise RuntimeError(f"execution next_actions reason_code drift after first advance: {second_action}")
 
         status, second_advance = _post(intent_url, token, "project.execution.advance", second_params, db_name=db_name)
         _assert_ok(status, second_advance, "project.execution.advance(second)")

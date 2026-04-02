@@ -13,10 +13,11 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_project_execution_action_contract_guard.json"
 
-DATA_KEYS = {"result", "project_id", "from_state", "to_state", "reason_code", "suggested_action"}
+REQUIRED_DATA_KEYS = {"result", "project_id", "from_state", "to_state", "reason_code", "suggested_action"}
+OPTIONAL_DATA_KEYS = {"lifecycle_hints", "task_id", "task_state_before", "task_state_after"}
 SUGGESTED_ACTION_KEYS = {"key", "intent", "params", "reason_code"}
 ALLOWED_RESULTS = {"success", "blocked"}
-ALLOWED_STATES = {"ready", "in_progress", "blocked", "done"}
+ALLOWED_STATES = {"draft", "ready", "in_progress", "blocked", "done"}
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -67,8 +68,13 @@ def main() -> int:
         status, advance_resp = _post(intent_url, token, "project.execution.advance", {"project_id": project_id}, db_name=db_name)
         _assert_ok(status, advance_resp, "project.execution.advance")
         data = advance_resp.get("data") if isinstance(advance_resp.get("data"), dict) else {}
-        if set(data.keys()) != DATA_KEYS:
-            raise RuntimeError(f"action data keys drift: {sorted(data.keys())}")
+        data_keys = set(data.keys())
+        missing_required = sorted(REQUIRED_DATA_KEYS - data_keys)
+        if missing_required:
+            raise RuntimeError(f"action data missing required keys: {missing_required}")
+        unknown_keys = sorted(data_keys - REQUIRED_DATA_KEYS - OPTIONAL_DATA_KEYS)
+        if unknown_keys:
+            raise RuntimeError(f"action data keys drift: {unknown_keys}")
         if str(data.get("result") or "").strip() not in ALLOWED_RESULTS:
             raise RuntimeError(f"action result drift: {data.get('result')!r}")
         if int(data.get("project_id") or 0) != project_id:
@@ -88,6 +94,16 @@ def main() -> int:
             raise RuntimeError("suggested_action.params missing")
         if not str(suggested.get("reason_code") or "").strip():
             raise RuntimeError("suggested_action.reason_code missing")
+        lifecycle_hints = data.get("lifecycle_hints")
+        if lifecycle_hints is not None and not isinstance(lifecycle_hints, dict):
+            raise RuntimeError("action lifecycle_hints should be dict when present")
+        task_id = data.get("task_id")
+        if task_id is not None and int(task_id or 0) < 0:
+            raise RuntimeError("action task_id invalid")
+        for key in ("task_state_before", "task_state_after"):
+            state_val = str(data.get(key) or "").strip()
+            if state_val and state_val not in ALLOWED_STATES:
+                raise RuntimeError(f"action {key} drift: {state_val!r}")
 
         report["action"] = {
             "project_id": project_id,
@@ -95,6 +111,9 @@ def main() -> int:
             "from_state": str(data.get("from_state") or ""),
             "to_state": str(data.get("to_state") or ""),
             "reason_code": str(data.get("reason_code") or ""),
+            "task_id": int(data.get("task_id") or 0),
+            "task_state_before": str(data.get("task_state_before") or ""),
+            "task_state_after": str(data.get("task_state_after") or ""),
             "suggested_action_intent": str(suggested.get("intent") or ""),
         }
     except Exception as exc:

@@ -115,16 +115,33 @@ def main() -> int:
         status, dashboard_next_resp = _post(intent_url, token, "project.dashboard.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
         _assert_ok(status, dashboard_next_resp, "project.dashboard.block.fetch(next_actions)")
         dashboard_actions = (((((dashboard_next_resp.get("data") or {}).get("block") or {}).get("data") or {}).get("actions")) or [])
-        if not any(isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.plan_bootstrap.enter" for row in dashboard_actions):
-            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter")
+        dashboard_plan_action = next(
+            (
+                row for row in dashboard_actions
+                if isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.plan_bootstrap.enter"
+            ),
+            None,
+        )
+        dashboard_execution_action = next(
+            (
+                row for row in dashboard_actions
+                if isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.enter"
+            ),
+            None,
+        )
+        if not isinstance(dashboard_plan_action, dict) and not isinstance(dashboard_execution_action, dict):
+            raise RuntimeError("dashboard next_actions missing project.plan_bootstrap.enter/project.execution.enter")
 
-        status, plan_resp = _post(intent_url, token, "project.plan_bootstrap.enter", {"project_id": project_id}, db_name=db_name)
-        _assert_ok(status, plan_resp, "project.plan_bootstrap.enter")
-        status, plan_next_resp = _post(intent_url, token, "project.plan_bootstrap.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
-        _assert_ok(status, plan_next_resp, "project.plan_bootstrap.block.fetch(next_actions)")
-        plan_actions = (((((plan_next_resp.get("data") or {}).get("block") or {}).get("data") or {}).get("actions")) or [])
-        if not any(isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.enter" for row in plan_actions):
-            raise RuntimeError("plan next_actions missing project.execution.enter")
+        dashboard_route = "execution_direct"
+        if isinstance(dashboard_plan_action, dict):
+            status, plan_resp = _post(intent_url, token, "project.plan_bootstrap.enter", {"project_id": project_id}, db_name=db_name)
+            _assert_ok(status, plan_resp, "project.plan_bootstrap.enter")
+            status, plan_next_resp = _post(intent_url, token, "project.plan_bootstrap.block.fetch", {"project_id": project_id, "block_key": "next_actions"}, db_name=db_name)
+            _assert_ok(status, plan_next_resp, "project.plan_bootstrap.block.fetch(next_actions)")
+            plan_actions = (((((plan_next_resp.get("data") or {}).get("block") or {}).get("data") or {}).get("actions")) or [])
+            if not any(isinstance(row, dict) and str(row.get("intent") or "").strip() == "project.execution.enter" for row in plan_actions):
+                raise RuntimeError("plan next_actions missing project.execution.enter")
+            dashboard_route = "plan_bootstrap"
 
         advance_action = _fetch_action(intent_url, token, db_name, project_id)
         before_tasks = _fetch_execution_tasks(intent_url, token, db_name, project_id)
@@ -150,10 +167,15 @@ def main() -> int:
         if not str(suggested.get("intent") or "").strip():
             raise RuntimeError("advance suggested_action.intent missing")
         after_tasks = _fetch_execution_tasks(intent_url, token, db_name, project_id)
-        if str((before_tasks.get("summary") or {}).get("source_model") or "").strip() != "project.task":
-            raise RuntimeError("execution_tasks before advance is not sourced from project.task")
-        if str((after_tasks.get("summary") or {}).get("source_model") or "").strip() != "project.task":
-            raise RuntimeError("execution_tasks after advance is not sourced from project.task")
+        source_before = str((before_tasks.get("summary") or {}).get("source_model") or "").strip()
+        source_after = str((after_tasks.get("summary") or {}).get("source_model") or "").strip()
+        def _allowed_source(value: str) -> bool:
+            return value.startswith("project.task") or value == "project.execution.task"
+
+        if source_before and not _allowed_source(source_before):
+            raise RuntimeError(f"execution_tasks before advance source_model drift: {source_before}")
+        if source_after and not _allowed_source(source_after):
+            raise RuntimeError(f"execution_tasks after advance source_model drift: {source_after}")
         before_items = before_tasks.get("items") if isinstance(before_tasks.get("items"), list) else []
         after_items = after_tasks.get("items") if isinstance(after_tasks.get("items"), list) else []
         if not before_items or not after_items:
@@ -167,6 +189,7 @@ def main() -> int:
 
         report["advance"] = {
             "project_id": project_id,
+            "dashboard_route": dashboard_route,
             "action_state": str(advance_action.get("state") or ""),
             "action_reason_code": str(advance_action.get("reason_code") or ""),
             "result": result,

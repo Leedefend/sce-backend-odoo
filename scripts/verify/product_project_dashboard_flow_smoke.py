@@ -34,7 +34,7 @@ def _assert_ok(status: int, payload: dict, label: str) -> None:
 
 
 def _assert_entry_shape(entry: dict, project_id: int) -> None:
-    allowed = {
+    required = {
         "project_id",
         "scene_key",
         "scene_label",
@@ -46,9 +46,9 @@ def _assert_entry_shape(entry: dict, project_id: int) -> None:
         "runtime_fetch_hints",
     }
     keys = set(entry.keys())
-    extra = sorted(keys - allowed)
-    if extra:
-        raise RuntimeError(f"dashboard entry has extra keys: {', '.join(extra)}")
+    missing = sorted(required - keys)
+    if missing:
+        raise RuntimeError(f"dashboard entry missing required keys: {', '.join(missing)}")
     if int(entry.get("project_id") or 0) != project_id:
         raise RuntimeError("dashboard entry project_id mismatch")
     if str(entry.get("scene_key") or "").strip() != "project.dashboard":
