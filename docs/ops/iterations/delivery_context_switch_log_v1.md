@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T02:59:10+0800
+- blocker_key: `execution_advance_explicit_task_targeting_verify_v1`
+- layer_target: `backend usability`
+- module: `execution-advance explicit task targeting`
+- reason: 根据审阅意见 P1 引入显式 task_id 目标选择，并返回任务推进遥测字段
+- completed_step: `已完成 ITER-2026-04-02-710/711/712：execution.advance 支持显式 task_id（缺省回退自动选择），返回 task_id/task_state_before/task_state_after，python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `2d6ef2a`
+- next_step: `Open P2 batch for exception logging tightening and reduce blind swallowing`
+
 ### 2026-04-02T02:51:40+0800
 - blocker_key: `execution_advance_atomic_closure_verify_v1`
 - layer_target: `backend usability`
