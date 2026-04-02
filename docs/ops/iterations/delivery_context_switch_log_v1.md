@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T03:10:55+0800
+- blocker_key: `execution_advance_handler_slimming_screen_v1`
+- layer_target: `backend usability`
+- module: `execution-advance handler slimming candidate selection`
+- reason: 在 P0/P1/P2 收口后，按审阅建议进入 handler 过厚治理并筛选最小拆分切口
+- completed_step: `已完成 ITER-2026-04-02-716：选择先抽离 ResponseBuilder（blocked/success 响应组装）作为低风险第一刀，再考虑 transition service 深拆`
+- active_commit: `1c1a818`
+- next_step: `Open implement batch for response builder extraction with behavior compatibility`
+
 ### 2026-04-02T03:07:05+0800
 - blocker_key: `execution_advance_exception_logging_verify_v1`
 - layer_target: `backend usability`
