@@ -77,6 +77,13 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
                 "data": {
                     "lifecycle_hints": self._build_lifecycle_hints(reason_code),
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": reason_code,
+                        "params": {
+                            "reason_code": reason_code,
+                        },
+                    },
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -106,6 +113,13 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
                 "data": {
                     "lifecycle_hints": self._build_lifecycle_hints(reason_code),
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": reason_code,
+                        "params": {
+                            "reason_code": reason_code,
+                        },
+                    },
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,
@@ -124,6 +138,13 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
                 "data": {
                     "lifecycle_hints": self._build_lifecycle_hints(reason_code),
+                    "suggested_action_payload": {
+                        "intent": "project.initiation.enter",
+                        "reason_code": reason_code,
+                        "params": {
+                            "reason_code": reason_code,
+                        },
+                    },
                 },
                 "meta": {
                     "intent": self.INTENT_TYPE,

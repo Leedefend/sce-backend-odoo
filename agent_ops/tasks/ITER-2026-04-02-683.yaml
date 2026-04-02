@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-02-683
+title: Screen initiation-enter error recovery payload continuity candidate
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Screen bounded candidate for project.initiation.enter error branches to align
+  recovery payload semantics.
+
+user_visible_outcome:
+  - "立项入口失败场景恢复引导更结构化"
+  - "后端语义可被前端通用渲染直接消费"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_initiation_enter.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 2
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen stage only
+  - no implementation
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4e4b9c
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-682
+  priority_lane: P1_project_lifecycle_usability
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: initiation-enter error recovery screen
+  module_owner: smart_construction_core handlers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Candidate limited to error response envelope in scene handler.
+  reason: >
+    Continue lifecycle continuity by aligning initiation error branches with
+    explicit action payload semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-683.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - no_candidate_selected
+
+deliverables:
+  - selected_initiation_enter_error_payload_candidate
+  - governance/report artifacts for ITER-2026-04-02-683
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-683.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-683.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-683.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-682

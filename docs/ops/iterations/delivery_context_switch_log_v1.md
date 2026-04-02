@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T01:49:40+0800
+- blocker_key: `initiation_enter_error_recovery_verify_v1`
+- layer_target: `backend usability`
+- module: `initiation-enter error recovery continuity`
+- reason: 在 plan-bootstrap 分支收口后补齐立项入口错误分支恢复 payload，强化创建链路可用性
+- completed_step: `已完成 ITER-2026-04-02-683/684/685：project.initiation.enter 的 MISSING_PARAMS/PERMISSION_DENIED/BUSINESS_RULE_FAILED 错误 data 新增 suggested_action_payload，python3 agent_ops/scripts/validate_task.py 与 make verify.project.management.acceptance PASS`
+- active_commit: `f4e4b9c`
+- next_step: `Open next low-risk screen batch for residual lifecycle usability gaps`
+
 ### 2026-04-02T01:40:55+0800
 - blocker_key: `plan_bootstrap_context_missing_recovery_verify_v1`
 - layer_target: `backend usability`
