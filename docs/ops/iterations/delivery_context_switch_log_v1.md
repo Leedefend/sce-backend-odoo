@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-02T12:03:26+0800
+- blocker_key: `custom_frontend_cross_stack_contract_smoke_token_compatibility_fix_v1`
+- layer_target: `backend usability`
+- module: `custom-frontend cross-stack contract smoke`
+- reason: 可用性主线下一切片失败于 login token 字段兼容，需最小修复验证脚本
+- completed_step: `已完成 ITER-2026-04-02-748/749/750：fe_cross_stack_contract_smoke 支持 data.session.token 回退，python3 agent_ops/scripts/validate_task.py 与 make verify.portal.cross_stack_contract_smoke.container PASS`
+- active_commit: `7b23852`
+- next_step: `Continue custom-frontend usability verification mainline with next slice`
+
 ### 2026-04-02T11:55:25+0800
 - blocker_key: `portal_bridge_e2e_login_token_compatibility_fix_v1`
 - layer_target: `backend usability`
