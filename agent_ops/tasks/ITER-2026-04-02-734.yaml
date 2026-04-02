@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-02-734
+title: Implement execution-advance hint service extraction
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Extract execution-advance hint construction from handler into dedicated hint
+  service while preserving response contract fields.
+
+user_visible_outcome:
+  - "后端语义构建可复用"
+  - "执行推进结果结构保持兼容"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - addons/smart_construction_core/services/project_execution_hint_service.py
+    - addons/smart_construction_core/services/__init__.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 7
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - implement stage only
+  - additive-only
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: f5a84ba
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-733
+  priority_lane: usability_backend_orchestration
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance hint service extraction
+  module_owner: smart_construction_core handlers/services
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Move scene-facing hint assembly to backend service, avoid frontend semantic
+    branching.
+  reason: >
+    Continue usability hardening under strict frontend generic rendering boundary.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-734.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - execution_advance_hint_service_extracted
+  - governance/report artifacts for ITER-2026-04-02-734
+
+rollback:
+  - git restore addons/smart_construction_core/handlers/project_execution_advance.py
+  - git restore addons/smart_construction_core/services/project_execution_hint_service.py
+  - git restore addons/smart_construction_core/services/__init__.py
+  - git restore agent_ops/tasks/ITER-2026-04-02-734.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-734.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-734.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-733
