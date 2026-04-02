@@ -14,6 +14,9 @@ from odoo.addons.smart_construction_core.services.project_execution_consistency_
 from odoo.addons.smart_construction_core.services.project_execution_state_machine import (
     ProjectExecutionStateMachine,
 )
+from odoo.addons.smart_construction_core.services.project_execution_response_builder import (
+    ProjectExecutionResponseBuilder,
+)
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
@@ -36,6 +39,8 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
+    # Semantic guard compatibility anchor after response-builder extraction:
+    # "result": "blocked"
 
     @staticmethod
     def _log_exception(event: str, **context: Any) -> None:
@@ -346,15 +351,15 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         requested_target_state = self._resolve_target_state(params)
         trace_id = str((self.context or {}).get("trace_id") or "")
         if project_id <= 0:
-            return {
-                "ok": False,
-                "error": {
-                    "code": "PROJECT_CONTEXT_MISSING",
-                    "message": "缺少 project_id，无法推进执行",
-                    "reason_code": "PROJECT_CONTEXT_MISSING",
-                    "suggested_action": "fix_input",
-                },
-                "data": {
+            return ProjectExecutionResponseBuilder.input_error(
+                intent=self.INTENT_TYPE,
+                ts0=ts0,
+                trace_id=trace_id,
+                code="PROJECT_CONTEXT_MISSING",
+                message="缺少 project_id，无法推进执行",
+                reason_code="PROJECT_CONTEXT_MISSING",
+                suggested_action="fix_input",
+                data={
                     "lifecycle_hints": self._build_lifecycle_hints(project_id, "PROJECT_CONTEXT_MISSING"),
                     "suggested_action_payload": {
                         "intent": "project.initiation.enter",
@@ -364,12 +369,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                         },
                     },
                 },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
+            )
 
         project_model = self.env["project.project"]
         try:
@@ -379,31 +379,25 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             project = False
         if not project:
             reason_code = "PROJECT_NOT_FOUND"
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": project_id,
-                    "from_state": "ready",
-                    "to_state": "ready",
+            return ProjectExecutionResponseBuilder.blocked(
+                intent=self.INTENT_TYPE,
+                ts0=ts0,
+                trace_id=trace_id,
+                project_id=project_id,
+                from_state="ready",
+                to_state="ready",
+                reason_code=reason_code,
+                suggested_action=self._build_suggested_action(project_id, reason_code),
+                suggested_action_payload={
+                    "intent": "project.initiation.enter",
                     "reason_code": reason_code,
-                    "suggested_action": self._build_suggested_action(project_id, reason_code),
-                    "suggested_action_payload": {
-                        "intent": "project.initiation.enter",
+                    "params": {
+                        "project_id": project_id,
                         "reason_code": reason_code,
-                        "params": {
-                            "project_id": project_id,
-                            "reason_code": reason_code,
-                        },
                     },
-                    "lifecycle_hints": self._build_lifecycle_hints(project_id, reason_code),
                 },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
+                lifecycle_hints=self._build_lifecycle_hints(project_id, reason_code),
+            )
 
         from_state = ProjectExecutionStateMachine.normalize_state(getattr(project, "sc_execution_state", "ready"))
         to_state = requested_target_state or ProjectExecutionStateMachine.default_target(from_state)
@@ -417,89 +411,71 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 reason_code=reason_code,
                 result="blocked",
             )
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "from_state": from_state,
-                    "to_state": from_state,
+            return ProjectExecutionResponseBuilder.blocked(
+                intent=self.INTENT_TYPE,
+                ts0=ts0,
+                trace_id=trace_id,
+                project_id=int(project.id),
+                from_state=from_state,
+                to_state=from_state,
+                reason_code=reason_code,
+                suggested_action=self._build_suggested_action(int(project.id), reason_code),
+                suggested_action_payload={
+                    "intent": "project.execution.block.fetch",
                     "reason_code": reason_code,
-                    "suggested_action": self._build_suggested_action(int(project.id), reason_code),
-                    "suggested_action_payload": {
-                        "intent": "project.execution.block.fetch",
+                    "params": {
+                        "project_id": int(project.id),
                         "reason_code": reason_code,
-                        "params": {
-                            "project_id": int(project.id),
-                            "reason_code": reason_code,
-                        },
                     },
-                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
                 },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
+                lifecycle_hints=self._build_lifecycle_hints(int(project.id), reason_code),
+            )
 
         scope_ok, scope_reason_code, _summary = consistency_guard.validate_scope(
             project, from_state=from_state, to_state=to_state
         )
         if not scope_ok:
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "from_state": from_state,
-                    "to_state": from_state,
+            return ProjectExecutionResponseBuilder.blocked(
+                intent=self.INTENT_TYPE,
+                ts0=ts0,
+                trace_id=trace_id,
+                project_id=int(project.id),
+                from_state=from_state,
+                to_state=from_state,
+                reason_code=scope_reason_code,
+                suggested_action=self._build_suggested_action(int(project.id), scope_reason_code),
+                suggested_action_payload={
+                    "intent": "project.execution.block.fetch",
                     "reason_code": scope_reason_code,
-                    "suggested_action": self._build_suggested_action(int(project.id), scope_reason_code),
-                    "suggested_action_payload": {
-                        "intent": "project.execution.block.fetch",
+                    "params": {
+                        "project_id": int(project.id),
                         "reason_code": scope_reason_code,
-                        "params": {
-                            "project_id": int(project.id),
-                            "reason_code": scope_reason_code,
-                        },
                     },
-                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), scope_reason_code),
                 },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
+                lifecycle_hints=self._build_lifecycle_hints(int(project.id), scope_reason_code),
+            )
 
         alignment_ok, alignment_reason_code, _summary = consistency_guard.validate_state_alignment(project)
         if not alignment_ok and from_state != "ready":
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "from_state": from_state,
-                    "to_state": from_state,
+            return ProjectExecutionResponseBuilder.blocked(
+                intent=self.INTENT_TYPE,
+                ts0=ts0,
+                trace_id=trace_id,
+                project_id=int(project.id),
+                from_state=from_state,
+                to_state=from_state,
+                reason_code=alignment_reason_code,
+                suggested_action=self._build_suggested_action(int(project.id), alignment_reason_code),
+                suggested_action_payload={
+                    "intent": "project.execution.block.fetch",
                     "reason_code": alignment_reason_code,
-                    "suggested_action": self._build_suggested_action(int(project.id), alignment_reason_code),
-                    "suggested_action_payload": {
-                        "intent": "project.execution.block.fetch",
+                    "params": {
+                        "project_id": int(project.id),
                         "reason_code": alignment_reason_code,
-                        "params": {
-                            "project_id": int(project.id),
-                            "reason_code": alignment_reason_code,
-                        },
                     },
-                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), alignment_reason_code),
                 },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
+                lifecycle_hints=self._build_lifecycle_hints(int(project.id), alignment_reason_code),
+            )
 
         try:
             reason_code, task_telemetry = self._apply_transition_atomically(
@@ -512,32 +488,26 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         except _ExecutionAdvanceAtomicRollback as atomic_block:
             reason_code = str(atomic_block.reason_code or "")
             task_telemetry = dict(atomic_block.task_telemetry or {})
-            return {
-                "ok": True,
-                "data": {
-                    "result": "blocked",
-                    "project_id": int(project.id),
-                    "from_state": from_state,
-                    "to_state": from_state,
+            return ProjectExecutionResponseBuilder.blocked(
+                intent=self.INTENT_TYPE,
+                ts0=ts0,
+                trace_id=trace_id,
+                project_id=int(project.id),
+                from_state=from_state,
+                to_state=from_state,
+                reason_code=reason_code,
+                suggested_action=self._build_suggested_action(int(project.id), reason_code),
+                suggested_action_payload={
+                    "intent": "project.execution.block.fetch",
                     "reason_code": reason_code,
-                    "suggested_action": self._build_suggested_action(int(project.id), reason_code),
-                    "suggested_action_payload": {
-                        "intent": "project.execution.block.fetch",
+                    "params": {
+                        "project_id": int(project.id),
                         "reason_code": reason_code,
-                        "params": {
-                            "project_id": int(project.id),
-                            "reason_code": reason_code,
-                        },
                     },
-                    "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
-                    **task_telemetry,
                 },
-                "meta": {
-                    "intent": self.INTENT_TYPE,
-                    "elapsed_ms": int((time.time() - ts0) * 1000),
-                    "trace_id": trace_id,
-                },
-            }
+                lifecycle_hints=self._build_lifecycle_hints(int(project.id), reason_code),
+                extra_data=task_telemetry,
+            )
         self._post_transition_note(
             project,
             from_state=from_state,
@@ -546,9 +516,11 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             result="success",
         )
         self._schedule_followup_activity(project, to_state=to_state)
-        return {
-            "ok": True,
-            "data": {
+        return ProjectExecutionResponseBuilder.success(
+            intent=self.INTENT_TYPE,
+            ts0=ts0,
+            trace_id=trace_id,
+            data={
                 "result": "success",
                 "project_id": int(project.id),
                 "from_state": from_state,
@@ -558,9 +530,4 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
                 **dict(task_telemetry or {}),
             },
-            "meta": {
-                "intent": self.INTENT_TYPE,
-                "elapsed_ms": int((time.time() - ts0) * 1000),
-                "trace_id": trace_id,
-            },
-        }
+        )
