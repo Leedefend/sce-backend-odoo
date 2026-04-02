@@ -8005,3 +8005,34 @@ Each entry must include:
   - latest classification: `FAIL`
   - stop condition triggered (`make verify.* failed`)
   - next efficient action is dedicated implement batch for grouped signature baseline alignment, then rerun tree-view verify
+## 2026-04-02 迭代锚点（ITER-2026-04-02-772 / 773）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `52f8ca9`
+- Layer Target: `Backend Usability`
+- Module: `tree-view grouped signature recovery`
+- Reason: recover from `771` fail (`grouped signature baseline mismatch`)
+- `772` implement result:
+  - normalized volatile identity fields in `fe_tree_view_smoke.js` before baseline compare
+  - aligned baseline placeholders in `scripts/verify/baselines/fe_tree_grouped_signature.json`
+  - tree-view smoke returned PASS after patch
+- `773` verify result:
+  - `verify.portal.tree_view_smoke.container`: PASS
+  - fail-recovery loop closed
+- state after this round:
+  - latest classification: `PASS`
+  - tree-view continuity gate recovered and stable
+  - next efficient action is continue kanban-view continuity slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-774）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `52f8ca9`
+- Layer Target: `Backend Usability`
+- Module: `kanban-view continuity`
+- Reason: continue view-mode closure after tree-view recovery PASS
+- `774` verify result:
+  - `verify.portal.kanban_view_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - tree + kanban view continuity paths both stable
+  - next efficient action is continue record-detail slice (`recordview_hud`)
