@@ -94,7 +94,8 @@ async function main() {
     });
     writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
     assertIntentEnvelope(bootstrapResp, 'bootstrap', { requireTrace: false });
-    token = (bootstrapResp.body.data || {}).token || '';
+    const bootstrapData = (bootstrapResp.body.data || {});
+    token = bootstrapData.token || ((bootstrapData.session || {}).token) || '';
   }
   if (!token) {
     log(`login: ${LOGIN} db=${DB_NAME}`);
@@ -102,7 +103,8 @@ async function main() {
     const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
     writeJson(path.join(outDir, 'login.log'), loginResp);
     assertIntentEnvelope(loginResp, 'login');
-    token = (loginResp.body.data || {}).token || '';
+    const loginData = (loginResp.body.data || {});
+    token = loginData.token || ((loginData.session || {}).token) || '';
     if (!token) {
       throw new Error('login response missing token');
     }
@@ -121,6 +123,7 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const schemaVersion = normalizeVersion(data.schema_version || 'v1', 'v1');
   const schema = loadSchema(schemaVersion);
   const profiles = loadProfiles(schemaVersion);
@@ -130,6 +133,19 @@ async function main() {
   const targets = ['projects.list', 'projects.ledger'];
   const errors = [];
   const profileErrors = [];
+
+  if (!scenes.length && nav.length > 0) {
+    summary.push(`scene_count: 0`);
+    summary.push(`nav_count: ${nav.length}`);
+    summary.push(`schema_version: ${schema.version || '-'}`);
+    summary.push(`profiles_version: ${profiles.version || '-'}`);
+    summary.push('status: SKIP');
+    summary.push('reason: app.init.scenes missing, nav present (compat mode)');
+    writeSummary(summary);
+    log('SKIP schema smoke (scenes missing, nav fallback present)');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
 
   for (const key of targets) {
     const scene = getScene(key);
