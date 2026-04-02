@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-02-756
+title: Verify custom-frontend layout-stability slice
+type: backend
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Verify custom-frontend layout-stability smoke gate and keep usability mainline
+  unblocked.
+
+user_visible_outcome:
+  - "布局稳定性链路可用"
+  - "主线可持续推进"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - Makefile
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+
+change_rules:
+  - verify-only
+  - no new implementation
+  - run declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 4734a3c
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-755
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: custom-frontend layout-stability verify
+  module_owner: verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Verify layout stability contract consumed by custom frontend.
+  reason: >
+    Keep objective on user-facing usability gates.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-756.yaml
+    - make verify.portal.layout_stability_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - verified_custom_frontend_layout_stability_slice
+  - governance/report artifacts for ITER-2026-04-02-756
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-756.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-756.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-756.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-755
