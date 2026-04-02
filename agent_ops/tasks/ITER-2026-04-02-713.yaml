@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-02-713
+title: Screen execution-advance exception logging tightening candidate
+type: backend
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Screen bounded P2 candidate for replacing blind exception swallowing with
+  traceable logging in execution advance handler.
+
+user_visible_outcome:
+  - "故障定位能力提升"
+  - "阻塞 reason_code 仍保持兼容"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/project_execution_advance.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - migrations/**
+    - deploy/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen stage only
+  - no implementation
+  - scenario-orchestration-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: 1caf7bf
+  explicit_user_authorization: true
+  input_from: review_feedback_2026-04-02
+  priority_lane: P2_exception_logging
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend Usability
+  module: execution-advance exception logging screen
+  module_owner: smart_construction_core handlers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Candidate is bounded to handler-level exception treatment and observability.
+  reason: >
+    User review requested reducing blind swallowing for non-expected runtime errors.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-713.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - no_candidate_selected
+
+deliverables:
+  - selected_exception_logging_tightening_candidate
+  - governance/report artifacts for ITER-2026-04-02-713
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-713.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-713.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-713.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on: []
