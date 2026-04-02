@@ -8131,3 +8131,17 @@ Each entry must include:
   - latest classification: `PASS`
   - file upload slice is stable
   - next efficient action is continue file guard slice
+## 2026-04-02 迭代锚点（ITER-2026-04-02-784）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d7151cd`
+- Layer Target: `Backend Usability`
+- Module: `file guard continuity`
+- Reason: continue detail collaboration file path after upload PASS
+- `784` verify result:
+  - `verify.portal.file_guard_smoke.container`: PASS
+  - deny-path guard behavior valid for upload/download
+- state after this round:
+  - latest classification: `PASS`
+  - file guard slice is stable
+  - next efficient action is continue execute-button slice
