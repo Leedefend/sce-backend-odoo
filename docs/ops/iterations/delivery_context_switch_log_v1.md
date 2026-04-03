@@ -9265,3 +9265,19 @@ Each entry must include:
   - latest classification: `PASS`
   - backend-first constrained-runtime closure gates remain green
   - next efficient action is keep low-risk cadence and run periodic host-route recovery probes before full freeze promotion
+## 2026-04-03 迭代锚点（ITER-2026-04-03-875）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b1b8fa5`
+- Layer Target: `Product Usability Closure`
+- Module: `host route recovery probe`
+- Reason: re-check whether full-freeze gate can be restored from constrained-runtime baseline
+- `875` verify result:
+  - `curl localhost:8070/login?db=sc_demo`: FAIL (connect)
+  - `curl 127.0.0.1:8070/login?db=sc_demo`: FAIL (connect)
+  - `verify.portal.second_slice_browser_smoke.host`: FAIL (`page.goto` timeout on `/login`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - full-freeze path remains blocked by host route reachability
+  - next efficient action is continue constrained-runtime closure gates and retry host probe only after reachability prerequisites change
