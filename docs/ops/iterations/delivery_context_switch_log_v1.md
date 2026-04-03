@@ -9311,3 +9311,18 @@ Each entry must include:
   - latest classification: `PASS`
   - low-risk parallel verification path is stable
   - next efficient action is continue constrained-runtime cadence and keep host-recovery probes as dedicated side batches
+## 2026-04-03 迭代锚点（ITER-2026-04-03-878）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `458833b`
+- Layer Target: `Product Usability Closure`
+- Module: `user-journey create-to-manage closure`
+- Reason: keep total scheduling aligned to usability-first objective under backend-first boundaries
+- `878` verify result:
+  - `verify.product.v0_1_stability_baseline`: PASS
+  - `verify.release.second_slice_prepared`: PASS
+  - `verify.portal.cross_stack_contract_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - user-journey closure from creation to management remains green on constrained-runtime baseline
+  - next efficient action is continue constrained-runtime cadence and retain host-recovery probe as independent side batch
