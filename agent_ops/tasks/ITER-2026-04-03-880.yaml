@@ -1,0 +1,92 @@
+task_id: ITER-2026-04-03-880
+title: Verify usability closure with semantic container regression in constrained runtime
+type: backend
+status: active
+priority: medium
+mode: verify
+
+goal: >
+  Keep usability-first closure stable by combining backend closure checks with a
+  custom-frontend semantic container regression under constrained-runtime mode.
+
+user_visible_outcome:
+  - "用户可用性闭环在前后端协同链路上持续稳定"
+  - "自定义前端语义容器消费链在通用渲染边界内持续通过"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_business_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2c4d721
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-879
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend_plus_cross_stack
+
+architecture:
+  layer_target: Product Usability Closure
+  module: backend closure plus semantic container regression
+  module_owner: verify chain
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Backend semantic supply remains source of truth; frontend verifies generic
+    contract consumption and interaction only.
+  reason: >
+    Increase confidence for end-user journey continuity across backend and custom
+    frontend integration.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-880.yaml
+    - make verify.release.second_slice_prepared
+    - make verify.portal.ui.v0_8.semantic.container
+    - make verify.portal.cross_stack_contract_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - constrained-runtime usability + semantic regression verification result
+  - governance/report artifacts for ITER-2026-04-03-880
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-880.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-880.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-880.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-879
