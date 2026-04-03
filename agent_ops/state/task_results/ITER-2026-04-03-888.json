@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-888",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-888.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "FAIL",
+    "make_verify_product_main_entry_convergence_v1": "FAIL"
+  },
+  "failure_point": "host primary-entry browser smoke readiness wait",
+  "failure_reason": "Backend PM landing semantics converged to project.management, but host custom-frontend smoke still times out while waiting for dashboard profile readiness.",
+  "next_step": "Create next low-risk host-smoke alignment batch focused on authenticated shell readiness and landing detection using backend semantic entry as single source."
+}
