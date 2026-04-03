@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-03-886
+title: Harden sidebar domain section normalization to prevent runtime crash in host usability flow
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Fix generic sidebar section-shape robustness so host custom-frontend usability
+  flow no longer fails with `domain.sections is not iterable`, and release-grade
+  primary entry smoke can continue to semantic validation.
+
+user_visible_outcome:
+  - "登录后自定义前端不会因侧边栏结构异常崩溃"
+  - "项目主入口可持续进入可验证状态"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/static/src/js/sc_sidebar.js
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - generic_guard_only
+  - no_business_model_change
+  - no_contract_field_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 025c357
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-885
+  priority_lane: usability_release_proof
+  usability_battlefield: backend_plus_cross_stack
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: sidebar runtime robustness
+  module_owner: scene_orchestration_governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Fix semantic payload/consumer boundary mismatch in runtime orchestration so
+    frontend generic rendering can proceed without domain-specific special cases.
+  reason: >
+    Current host flow fails before project entry verification due runtime
+    structure error; this blocks real-user usability proof.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-886.yaml
+    - make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+    - make verify.product.main_entry_convergence.v1
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - sidebar runtime robustness patch with shape guards
+  - updated release-grade verification evidence
+
+rollback:
+  - git restore addons/smart_construction_core/static/src/js/sc_sidebar.js
+  - git restore agent_ops/tasks/ITER-2026-04-03-886.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-886.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-886.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-885

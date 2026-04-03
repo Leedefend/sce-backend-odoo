@@ -9453,3 +9453,29 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
   - next efficient action is run dedicated host entry-contract alignment and rerun release-grade host gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-886）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `025c357`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host primary-entry semantic consumption hardening`
+- Reason: shift blocker analysis from launch/runtime noise to backend semantic entry contract consumption
+- `886` implement result:
+  - patched sidebar runtime robustness in `sc_sidebar.js`:
+    - normalized `domain.sections` runtime shape
+    - guarded iterable access in `findFirstActionFromSections` / `findSectionById`
+  - upgraded host smoke semantic strategy in `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - consume backend intents `project.entry.context.resolve` + `project.dashboard.enter`
+    - inject backend scene-key entry URL and keep UI fallback navigation
+- `886` verify result:
+  - `verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - `verify.product.main_entry_convergence.v1`: FAIL
+  - management acceptance chain: PASS
+  - host runtime probe: PASS
+  - previous sidebar crash (`domain.sections is not iterable`) removed after restart
+  - latest blocker: host custom-frontend still stays on collaboration shell and does not enter dashboard semantic surface
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is backend orchestration alignment for canonical primary-entry contract consumption, then rerun host gates
