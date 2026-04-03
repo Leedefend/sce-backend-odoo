@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-03-873
+title: Re-verify product usability stability baseline with cross-stack contract chain
+type: backend
+status: active
+priority: medium
+mode: verify
+
+goal: >
+  Keep project create-to-manage usability baseline continuously green under
+  backend-first constrained-runtime strategy.
+
+user_visible_outcome:
+  - "产品可用性稳定基线持续为绿"
+  - "自定义前端跨栈契约链路持续可执行"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_business_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: eccc361
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-872
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend_plus_cross_stack
+
+architecture:
+  layer_target: Product Usability Closure
+  module: stability baseline and cross-stack contract chain
+  module_owner: verify chain
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Usability closure semantics must be supplied by backend contracts while
+    frontend stays generic renderer.
+  reason: >
+    Preserve continuous usability confidence with short-context low-risk gates.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-873.yaml
+    - make verify.product.v0_1_stability_baseline
+    - make verify.portal.cross_stack_contract_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - product stability and cross-stack re-verification result
+  - governance/report artifacts for ITER-2026-04-03-873
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-873.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-873.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-873.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-872
