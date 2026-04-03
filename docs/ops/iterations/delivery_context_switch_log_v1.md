@@ -9479,3 +9479,77 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
   - next efficient action is backend orchestration alignment for canonical primary-entry contract consumption, then rerun host gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-888）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d156083`
+- Layer Target: `Product Release Usability Proof`
+- Module: `PM role surface entry semantic policy`
+- Reason: enforce backend-first entry semantics and remove PM role landing/blocklist drift
+- `888` implement result:
+  - updated PM role-surface overrides in `addons/smart_construction_scene/core_extension.py`
+  - PM landing candidates now prioritize `project.management`/`project.dashboard`
+  - PM allowlist includes `menu_sc_project_management_scene` and `menu_sc_project_dashboard`
+  - removed PM blocklist for `menu_sc_project_manage`
+- `888` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-888.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - `make verify.product.main_entry_convergence.v1`: FAIL
+  - both failures stop at host dashboard readiness wait timeout
+- backend evidence checkpoint:
+  - `system.init` for `demo_pm` now returns:
+    - `default_route.scene_key = project.management`
+    - `default_route.route = /s/project.management`
+    - `role_surface.landing_scene_key = project.management`
+    - `role_surface.menu_blocklist_xmlids = []`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated host-smoke readiness alignment batch while keeping backend semantic entry as single source
+## 2026-04-03 迭代锚点（ITER-2026-04-03-889）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d156083`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host primary-entry smoke landing strategy`
+- Reason: align host smoke to backend semantic entry route and forbid native-frontend false pass
+- `889` implement result:
+  - patched `scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs`:
+    - semantic-entry URL recovery built from backend `route + scene_key`
+    - login-surface credential fallback for token bootstrap miss
+    - explicit native Odoo surface guard (`/web` / `.o_main_navbar`) as invalid target
+    - removed acceptance of `/web` fallback candidate to preserve custom-frontend-only verification boundary
+- `889` verify result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-889.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - failure reason: semantic entry navigation failed after 27 tries
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260403T220746Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated custom-frontend entry availability batch (lock base URL + preflight reachability probe) before rerunning host/main-entry gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-890）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `d156083`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host smoke custom-frontend reachability preflight`
+- Reason: accelerate failure classification and reject native frontend fallback while validating custom frontend chain
+- `890` implement result:
+  - added fast reachability preflight in `project_dashboard_primary_entry_browser_smoke.mjs`
+  - default `BASE_URL` switched to `http://localhost:8070` for current host runtime reachability
+  - preflight probes custom-frontend entry candidates from `BASE_URL` alias set
+  - explicit fail reason standardized as `custom_frontend_entry_unreachable` for environment misses
+  - native Odoo `/web` fallback remains forbidden
+- `890` verify result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-890.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`native_odoo_surface_detected`)
+  - `make verify.product.main_entry_convergence.v1`: FAIL at host primary-entry gate with same reason
+  - host browser runtime probe: PASS
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is fix semantic entry routing to custom frontend shell (not native Odoo shell), then rerun host and convergence gates

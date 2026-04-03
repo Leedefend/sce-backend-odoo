@@ -13,13 +13,22 @@ ROLE_SURFACE_OVERRIDES = {
     },
     "pm": {
         "label": "项目经理",
-        "landing_scene_candidates": ["projects.intake", "projects.list", "projects.ledger", "my_work.workspace"],
+        "landing_scene_candidates": [
+            "project.management",
+            "project.dashboard",
+            "projects.intake",
+            "projects.list",
+            "projects.ledger",
+            "my_work.workspace",
+        ],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
+            "smart_construction_core.menu_sc_project_management_scene",
+            "smart_construction_core.menu_sc_project_dashboard",
             "smart_construction_core.menu_sc_contract_center",
             "smart_construction_core.menu_sc_cost_center",
         ],
-        "menu_blocklist_xmlids": ["smart_construction_core.menu_sc_project_manage"],
+        "menu_blocklist_xmlids": [],
     },
     "finance": {
         "label": "财务人员",
