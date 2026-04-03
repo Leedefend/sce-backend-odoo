@@ -9428,3 +9428,21 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
   - next efficient action is stabilize host browser runtime deterministically, then rerun release-grade convergence gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-885）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `02a3ee9`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host runtime pre-gate`
+- Reason: surface host runtime/browser blockers deterministically before costly scenario checks
+- `885` implement result:
+  - added `verify.portal.host_browser_runtime_probe` and wired it as pre-gate for host primary-entry smoke
+- `885` verify result:
+  - runtime probe: FAIL (flaky pass/fail; latest failure at Chromium launch fatal)
+  - host primary-entry smoke: FAIL fast via runtime probe
+  - main_entry_convergence: FAIL at host entry stage; management acceptance chain still PASS
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is move to dedicated host runtime remediation environment and rerun release-grade host gates
