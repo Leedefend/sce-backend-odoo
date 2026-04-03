@@ -9190,3 +9190,18 @@ Each entry must include:
   - latest classification: `PASS`
   - constrained-runtime aggregate closure gate is stable
   - next efficient action is resume full freeze gate when host browser route becomes reachable
+## 2026-04-03 迭代锚点（ITER-2026-04-02-870）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `bf0f1d2`
+- Layer Target: `Product Usability Closure`
+- Module: `host-browser reachability diagnostics`
+- Reason: define explicit recovery trigger for returning to full freeze gate
+- `870` verify result:
+  - localhost/127.0.0.1 login curl probes: FAIL (connect)
+  - `verify.portal.second_slice_browser_smoke.host`: FAIL (`page.goto` timeout on `/login`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - full freeze gate remains blocked by host runtime reachability
+  - next efficient action is continue constrained-runtime gates and retry full freeze only when host route becomes reachable
