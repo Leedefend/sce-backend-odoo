@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-03-883
+title: Stabilize host primary-entry browser smoke for release publishability proof
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Fix host-browser primary-entry smoke instability (`ERR_NETWORK_CHANGED` on
+  `/login`) so release-grade usability proof can be re-evaluated.
+
+user_visible_outcome:
+  - "真实用户主入口浏览器链路可稳定验证"
+  - "发布级可用性证明不再被 host 入口抖动阻塞"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - minimal_fix_only
+  - no_business_model_change
+  - no_contract_field_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 20b9030
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-882
+  priority_lane: usability_release_proof
+  usability_battlefield: backend_plus_cross_stack
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: host browser primary-entry smoke
+  module_owner: verify chain
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Release decision depends on host user-entry verification reliability, not on
+    frontend semantic special-casing.
+  reason: >
+    Remove false-negative instability in host entry verification path.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-883.yaml
+    - make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+    - make verify.product.main_entry_convergence.v1
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - host primary-entry smoke stabilization patch
+  - release-grade re-verification result for ITER-2026-04-03-883
+
+rollback:
+  - git restore scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-883.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-883.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-883.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-882

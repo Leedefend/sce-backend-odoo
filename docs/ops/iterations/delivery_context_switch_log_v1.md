@@ -9390,3 +9390,21 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision: `not_publishable`
   - next efficient action is stabilize host runtime/network reachability for `/login` and rerun release-grade convergence gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-883）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `20b9030`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host browser primary-entry smoke`
+- Reason: remove host entry false-negative instability in release-grade gate
+- `883` implement result:
+  - patched `project_dashboard_primary_entry_browser_smoke.mjs` with login navigation recovery and host fallback candidates
+- `883` verify result:
+  - `verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - `verify.product.main_entry_convergence.v1`: FAIL
+  - failure class: host Playwright browser launch runtime fatal (`sandbox_host_linux.cc:41`, operation not permitted)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is recover host browser launch runtime capability, then rerun release-grade host entry convergence gates

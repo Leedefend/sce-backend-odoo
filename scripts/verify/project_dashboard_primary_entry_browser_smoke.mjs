@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 const require = createRequire(import.meta.url);
 const playwrightEntry = require.resolve('playwright', { paths: [path.resolve(process.cwd(), 'frontend')] });
@@ -47,6 +48,64 @@ function writeJson(fileName, payload) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function buildLoginUrlCandidates(baseUrl, dbName) {
+  const base = String(baseUrl || '').replace(/\/+$/, '');
+  const encodedDb = encodeURIComponent(dbName);
+  const out = new Set();
+  const push = (url) => {
+    if (url && typeof url === 'string') out.add(url);
+  };
+
+  push(`${base}/login?db=${encodedDb}`);
+  if (base.startsWith('http://127.0.0.1')) {
+    push(`${base.replace('http://127.0.0.1', 'http://localhost')}/login?db=${encodedDb}`);
+  }
+  if (base.startsWith('http://localhost')) {
+    push(`${base.replace('http://localhost', 'http://127.0.0.1')}/login?db=${encodedDb}`);
+  }
+  if (/^http:\/\/(127\.0\.0\.1|localhost)$/.test(base)) {
+    push(`http://127.0.0.1:8070/login?db=${encodedDb}`);
+    push(`http://localhost:8070/login?db=${encodedDb}`);
+  }
+  return Array.from(out);
+}
+
+function isRetriableNavigationError(error) {
+  const message = String(error?.message || error || '');
+  return (
+    message.includes('ERR_NETWORK_CHANGED') ||
+    message.includes('ERR_CONNECTION_RESET') ||
+    message.includes('ERR_CONNECTION_REFUSED') ||
+    message.includes('ERR_CONNECTION_CLOSED') ||
+    message.includes('net::ERR_ABORTED') ||
+    message.includes('Timeout')
+  );
+}
+
+async function gotoLoginWithRecovery(page) {
+  const candidates = buildLoginUrlCandidates(BASE_URL, DB_NAME);
+  const errors = [];
+  for (const candidate of candidates) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        await page.waitForLoadState('domcontentloaded');
+        return candidate;
+      } catch (error) {
+        errors.push({
+          url: candidate,
+          attempt,
+          message: String(error?.message || error),
+        });
+        if (!isRetriableNavigationError(error) || attempt >= 3) break;
+        await sleep(1000 * attempt);
+      }
+    }
+  }
+  writeJson('login_navigation_errors.json', errors);
+  throw new Error(`login navigation failed after recovery attempts (${errors.length} tries)`);
 }
 
 async function fillLoginForm(page) {
@@ -148,8 +207,8 @@ try {
     summary.page_errors.push(String(err?.message || err));
   });
 
-  await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await page.waitForLoadState('domcontentloaded');
+  const loginUrlUsed = await gotoLoginWithRecovery(page);
+  summary.login_url_used = loginUrlUsed;
   await fillLoginForm(page);
   await submitLogin(page);
   await waitForDashboard(page);
