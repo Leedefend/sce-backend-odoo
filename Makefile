@@ -565,8 +565,13 @@ verify.portal.release_navigation_browser_smoke.host: guard.prod.forbid check-com
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/release_navigation_browser_smoke.mjs
+.PHONY: verify.portal.host_browser_runtime_probe
+verify.portal.host_browser_runtime_probe: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
+	@$(RUN_ENV) ARTIFACTS_DIR=$(ARTIFACTS_DIR) node scripts/verify/host_browser_runtime_probe.mjs
 .PHONY: verify.portal.project_dashboard_primary_entry_browser_smoke.host
 verify.portal.project_dashboard_primary_entry_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) --no-print-directory verify.portal.host_browser_runtime_probe
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
