@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-886",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-886.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "FAIL",
+    "make_verify_product_main_entry_convergence_v1": "FAIL"
+  },
+  "failure_point": "host primary-entry semantic consumption",
+  "failure_reason": "Backend-provided entry semantics are available but host custom-frontend remains on collaboration shell and does not transition to project dashboard surface in this flow.",
+  "next_step": "Create dedicated backend orchestration alignment batch to unify entry contract between project.entry.context.resolve and project.dashboard.enter, then rerun release-grade host gates."
+}

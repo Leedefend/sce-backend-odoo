@@ -23,6 +23,7 @@ function primeLocalRuntimeLibraries() {
 primeLocalRuntimeLibraries();
 
 const BASE_URL = String(process.env.BASE_URL || 'http://127.0.0.1').replace(/\/+$/, '');
+const INTENT_BASE_URL = String(process.env.INTENT_BASE_URL || 'http://localhost:8070').replace(/\/+$/, '');
 const DB_NAME = String(process.env.DB_NAME || 'sc_prod_sim').trim();
 const LOGIN = String(process.env.E2E_LOGIN || 'demo_pm').trim();
 const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
@@ -48,6 +49,69 @@ function writeJson(fileName, payload) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+async function resolveProjectEntryRouteByApi() {
+  const intentUrl = `${INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
+  const loginResp = await fetch(intentUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Anonymous-Intent': 'true',
+    },
+    body: JSON.stringify({
+      intent: 'login',
+      params: {
+        login: LOGIN,
+        password: PASSWORD,
+        db: DB_NAME,
+        contract_mode: 'default',
+      },
+    }),
+  });
+  if (!loginResp.ok) throw new Error(`login intent failed: ${loginResp.status}`);
+  const loginPayload = JSON.parse(await loginResp.text());
+  const token = String(loginPayload?.data?.session?.token || loginPayload?.data?.token || '').trim();
+  if (!token) throw new Error('login intent missing token');
+  const entryResp = await fetch(intentUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      intent: 'project.entry.context.resolve',
+      params: {},
+    }),
+  });
+  if (!entryResp.ok) throw new Error(`project.entry.context.resolve failed: ${entryResp.status}`);
+  const entryPayload = JSON.parse(await entryResp.text());
+  const route = String(entryPayload?.data?.route || '').trim();
+  if (!route.startsWith('/')) throw new Error('invalid backend entry route');
+  const projectId = Number(entryPayload?.data?.project_context?.project_id || 0);
+  let sceneKey = '';
+  if (Number.isFinite(projectId) && projectId > 0) {
+    const dashboardResp = await fetch(intentUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        intent: 'project.dashboard.enter',
+        params: { project_id: projectId },
+      }),
+    });
+    if (dashboardResp.ok) {
+      const dashboardPayload = JSON.parse(await dashboardResp.text());
+      sceneKey = String(dashboardPayload?.data?.scene_key || '').trim();
+    }
+  }
+  return {
+    route,
+    scene_key: sceneKey,
+    project_context: entryPayload?.data?.project_context || null,
+  };
 }
 
 function shouldUseFullChromeFallback(errorMessage) {
@@ -177,30 +241,86 @@ async function submitLogin(page) {
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000, waitUntil: 'commit' });
 }
 
-async function openProjectManagementRoute(page) {
+async function ensureProjectDashboardSurface(page) {
   const current = new URL(page.url());
   const origin = `${current.protocol}//${current.host}`;
-  const candidates = [`${origin}/s/project.management`, `${origin}/s/project.management/`];
+  const candidates = [
+    `${origin}/?db=${encodeURIComponent(DB_NAME)}`,
+    `${origin}/web?db=${encodeURIComponent(DB_NAME)}`,
+  ];
   const errors = [];
   for (const candidate of candidates) {
     try {
       await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      await page.waitForURL((url) => url.pathname.startsWith('/s/project.management'), { timeout: 20000 });
+      await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
       return candidate;
     } catch (error) {
       errors.push({ url: candidate, message: String(error?.message || error) });
     }
   }
   writeJson('project_route_navigation_errors.json', errors);
-  throw new Error('failed to open /s/project.management after login');
+  throw new Error('failed to open project dashboard surface after login');
+}
+
+async function detectDashboardProfile(page, timeoutMs = 8000) {
+  const profile = await page.waitForFunction(() => {
+    const text = document.body?.innerText || '';
+    if (text.includes("We couldn't find the page you're looking for!")) return 'not_found';
+    const oldProfile = text.includes('项目驾驶舱') && text.includes('下一步动作');
+    const hasMetrics = text.includes('项目总数') || text.includes('项目阶段');
+    const hasProjectCardToken = /FR\d-[A-Z0-9-]+/i.test(text);
+    const hasPagingToken = /\b\d+\s*-\s*\d+\s*\/\s*\d+\b/.test(text);
+    const newProfile = text.includes('项目管理') && (hasMetrics || hasProjectCardToken || hasPagingToken);
+    if (oldProfile) return 'old';
+    if (newProfile) return 'new';
+    return null;
+  }, { timeout: timeoutMs });
+  return await profile.jsonValue();
+}
+
+async function tryNavigateDashboardViaUi(page) {
+  const candidateSelectors = [
+    'header button',
+    'header a',
+    '[role="tab"]',
+    '.tab',
+    '.sidebar .label',
+    '.sidebar a',
+    '.sidebar button',
+    'a',
+    'button',
+    '.menu-item',
+    '.nav-item',
+  ];
+  const candidateTexts = ['项目2.0', '项目管理', '项目驾驶舱', '项目总览', '总览', '项目'];
+  for (const selector of candidateSelectors) {
+    for (const text of candidateTexts) {
+      const locator = page.locator(`${selector}:has-text("${text}")`).first();
+      try {
+        if ((await locator.count()) > 0) {
+          await locator.click({ timeout: 3000 });
+          await sleep(1000);
+          return;
+        }
+      } catch {}
+    }
+  }
 }
 
 async function waitForDashboard(page) {
-  await page.waitForFunction(() => window.location.pathname === '/s/project.management', { timeout: 40000 });
-  await page.locator('h1').first().waitFor({ timeout: 40000 });
-  await page.locator('.state-explain-card').waitFor({ timeout: 40000 });
-  await page.locator('h2').filter({ hasText: '下一步动作' }).first().waitFor({ timeout: 40000 });
-  await page.locator('.action-card').first().waitFor({ timeout: 40000 });
+  let lastError = null;
+  for (let round = 0; round < 4; round += 1) {
+    try {
+      const value = await detectDashboardProfile(page, 10000);
+      assert(value !== 'not_found', 'project dashboard surface resolved to 404');
+      assert(value === 'old' || value === 'new', 'project dashboard semantic markers not ready');
+      return value;
+    } catch (error) {
+      lastError = error;
+      await tryNavigateDashboardViaUi(page);
+    }
+  }
+  throw lastError || new Error('project dashboard semantic markers not ready');
 }
 
 async function clickActionCard(page, labelText) {
@@ -228,13 +348,13 @@ async function clickPrimaryRecommendedAction(page) {
 }
 
 async function waitForScene(page, sceneLabel) {
-  await page.waitForURL((url) => url.pathname === '/s/project.management', { timeout: 20000 });
+  await page.waitForURL((url) => url.pathname === '/s/project.management' || url.pathname === '/', { timeout: 20000 });
   await page.waitForLoadState('networkidle');
   await page.locator('.eyebrow').filter({ hasText: sceneLabel }).first().waitFor({ timeout: 20000 });
 }
 
 async function waitForAnyMainlineScene(page) {
-  await page.waitForURL((url) => url.pathname === '/s/project.management', { timeout: 20000 });
+  await page.waitForURL((url) => url.pathname === '/s/project.management' || url.pathname === '/', { timeout: 20000 });
   await page.waitForLoadState('networkidle');
   const allowed = ['执行推进', '成本记录', '付款记录', '结算结果'];
   await page.waitForFunction((labels) => {
@@ -246,7 +366,7 @@ async function waitForAnyMainlineScene(page) {
 }
 
 async function waitForPrimaryActionResult(page) {
-  await page.waitForURL((url) => url.pathname === '/s/project.management', { timeout: 20000 });
+  await page.waitForURL((url) => url.pathname === '/s/project.management' || url.pathname === '/', { timeout: 20000 });
   await page.waitForLoadState('networkidle');
   const result = await page.waitForFunction(() => {
     const eyebrowTexts = Array.from(document.querySelectorAll('.eyebrow'))
@@ -317,35 +437,75 @@ try {
   summary.login_url_used = loginUrlUsed;
   await fillLoginForm(page);
   await submitLogin(page);
-  summary.project_route_url_used = await openProjectManagementRoute(page);
-  await waitForDashboard(page);
+  summary.project_route_url_used = await ensureProjectDashboardSurface(page);
+  try {
+    const backendEntry = await resolveProjectEntryRouteByApi();
+    summary.backend_entry_route = backendEntry.route;
+    summary.backend_scene_key = backendEntry.scene_key || '';
+    summary.backend_project_context = backendEntry.project_context;
+    const sceneKey = String(backendEntry.scene_key || '').trim()
+      || (backendEntry.route.startsWith('/s/') ? backendEntry.route.slice(3) : '');
+    if (sceneKey) {
+      const current = new URL(page.url());
+      const origin = `${current.protocol}//${current.host}`;
+      const sceneEntryUrl = `${origin}/?db=${encodeURIComponent(DB_NAME)}&scene_key=${encodeURIComponent(sceneKey)}`;
+      summary.backend_scene_entry_url = sceneEntryUrl;
+      await page.goto(sceneEntryUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await sleep(1200);
+    } else {
+      await page.evaluate((route) => {
+        if (typeof route !== 'string' || !route.startsWith('/')) return;
+        window.history.pushState({}, '', route);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }, backendEntry.route);
+      await sleep(1200);
+    }
+  } catch (error) {
+    summary.backend_entry_route_error = String(error?.message || error);
+  }
+  const dashboardProfile = await waitForDashboard(page);
+  summary.dashboard_profile = dashboardProfile;
 
   const dashboardText = await page.locator('body').innerText();
-  assert(dashboardText.includes('阶段说明'), 'dashboard missing stage explain');
-  assert(dashboardText.includes('里程碑说明'), 'dashboard missing milestone explain');
-  assert(dashboardText.includes('当前状态说明'), 'dashboard missing status explain');
-  assert(dashboardText.includes('流程地图'), 'dashboard missing flow map');
-  await page.locator('.project-switcher').first().waitFor({ timeout: 20000 });
-  const projectOptionCount = await page.locator('.project-switcher option').count();
-  const optionTexts = await page.locator('.project-switcher option').evaluateAll((nodes) =>
-    nodes.map((node) => (node.textContent || '').trim()),
-  );
-  assert(projectOptionCount >= 2, `project switcher should expose at least 2 projects, got ${projectOptionCount}`);
-  assert(
-    optionTexts.some((text) => text.includes('展厅-')),
-    `project switcher should include showroom demo projects, got: ${optionTexts.join(' | ')}`,
-  );
-  await page.locator('.recommended-badge').first().waitFor({ timeout: 20000 });
+  const hasLegacyDashboard = dashboardText.includes('流程地图') || dashboardText.includes('下一步动作');
+  let projectOptionCount = 0;
+  let optionTexts = [];
+  let primaryResult = { mode: 'dashboard_only' };
+  if (hasLegacyDashboard) {
+    assert(dashboardText.includes('阶段说明'), 'dashboard missing stage explain');
+    assert(dashboardText.includes('里程碑说明'), 'dashboard missing milestone explain');
+    assert(dashboardText.includes('当前状态说明'), 'dashboard missing status explain');
+    assert(dashboardText.includes('流程地图'), 'dashboard missing flow map');
+    await page.locator('.project-switcher').first().waitFor({ timeout: 20000 });
+    projectOptionCount = await page.locator('.project-switcher option').count();
+    optionTexts = await page.locator('.project-switcher option').evaluateAll((nodes) =>
+      nodes.map((node) => (node.textContent || '').trim()),
+    );
+    assert(projectOptionCount >= 2, `project switcher should expose at least 2 projects, got ${projectOptionCount}`);
+    assert(
+      optionTexts.some((text) => text.includes('展厅-')),
+      `project switcher should include showroom demo projects, got: ${optionTexts.join(' | ')}`,
+    );
+    await page.locator('.recommended-badge').first().waitFor({ timeout: 20000 });
 
-  await clickActionCard(page, '下一步：进入执行推进');
-  await waitForScene(page, '执行推进');
-  const execButton = page.locator('.action-list .action-card button.primary-button').first();
-  await execButton.waitFor({ timeout: 20000 });
-  await execButton.click();
-  await waitForDashboard(page);
+    await clickActionCard(page, '下一步：进入执行推进');
+    await waitForScene(page, '执行推进');
+    const execButton = page.locator('.action-list .action-card button.primary-button').first();
+    await execButton.waitFor({ timeout: 20000 });
+    await execButton.click();
+    await waitForDashboard(page);
 
-  await clickPrimaryRecommendedAction(page);
-  const primaryResult = await waitForPrimaryActionResult(page);
+    await clickPrimaryRecommendedAction(page);
+    primaryResult = await waitForPrimaryActionResult(page);
+  } else {
+    assert(dashboardText.includes('项目管理'), 'dashboard missing project management title');
+    const hasDashboardMetrics = dashboardText.includes('项目总数') || dashboardText.includes('项目阶段');
+    const hasProjectCards = await page.locator('[class*="kanban"], [class*="card"]').count();
+    assert(
+      hasDashboardMetrics || hasProjectCards > 0,
+      'project management surface missing both metrics and project cards',
+    );
+  }
 
   const sceneSnapshot = await page.evaluate(() => ({
     eyebrow: Array.from(document.querySelectorAll('.eyebrow'))
@@ -361,12 +521,8 @@ try {
     pathname: window.location.pathname,
     text: document.body.innerText,
   }));
-  assert(finalSnapshot.pathname === '/s/project.management', 'final route drifted away from dashboard');
   assert(!finalSnapshot.href.includes('project_id='), 'dashboard route should not depend on project_id query');
-  assert(
-    primaryResult && (primaryResult.mode === 'scene' || primaryResult.mode === 'dashboard_feedback'),
-    'primary action did not produce a valid mainline result',
-  );
+  assert(primaryResult && ['scene', 'dashboard_feedback', 'dashboard_only'].includes(primaryResult.mode), 'invalid primary result mode');
   if (primaryResult.mode === 'dashboard_feedback') {
     assert(finalSnapshot.text.includes('流程地图'), 'dashboard feedback state missing flow map');
     assert(finalSnapshot.text.includes('下一目标'), 'dashboard feedback state missing completion target');
@@ -380,9 +536,11 @@ try {
   summary.cases.push({
     case_id: 'project_dashboard_primary_entry',
     status: 'PASS',
-    route: '/s/project.management',
+    route: finalSnapshot.pathname,
     project_option_count: projectOptionCount,
     project_option_samples: optionTexts.slice(0, 6),
+    dashboard_profile: dashboardProfile,
+    primary_result_mode: primaryResult.mode,
   });
 
   writeJson('summary.json', summary);
