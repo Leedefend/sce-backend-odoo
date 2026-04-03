@@ -9408,3 +9408,22 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
   - next efficient action is recover host browser launch runtime capability, then rerun release-grade host entry convergence gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-884）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `6dd7dac`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host Playwright runtime launch compatibility`
+- Reason: unblock release-grade real-user host entry verification
+- `884` implement result:
+  - kept minimal login navigation recovery patch in `project_dashboard_primary_entry_browser_smoke.mjs`
+  - executed bounded host gate reruns to classify runtime blocker
+- `884` verify result:
+  - `verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - `verify.product.main_entry_convergence.v1`: FAIL (host primary-entry stage)
+  - failure class: host runtime/browser instability (`login navigation recovery exhausted` and `sandbox_host_linux fatal`)
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is stabilize host browser runtime deterministically, then rerun release-grade convergence gates
