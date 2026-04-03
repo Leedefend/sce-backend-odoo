@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-03-891
+title: Enforce custom-login contract preflight before host semantic entry flow
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Enforce a strict custom-login contract preflight so host usability verification
+  fails early when `/login?db` is not the expected custom frontend login entry.
+
+user_visible_outcome:
+  - "可用性验证在入口契约不满足时快速给出明确原因"
+  - "避免错误进入原生前端后再超时"
+
+scope:
+  allowed_paths:
+    - scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - preflight_contract_hardening_only
+  - custom_frontend_only_guard
+  - no_business_model_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 4bc6632
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-890
+  priority_lane: usability_release_proof
+  usability_battlefield: cross_stack_verification
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: host login-entry preflight contract
+  module_owner: scene_orchestration_governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Verification runtime must classify login entry contract validity before
+    semantic entry navigation.
+  reason: >
+    Current gate reaches native Odoo shell because login entry contract is not
+    strictly validated.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-891.yaml
+    - make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+    - make verify.product.main_entry_convergence.v1
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - strict custom-login contract preflight in host smoke
+  - fast explicit FAIL when custom login contract is missing
+
+rollback:
+  - git restore scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-891.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-891.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-891.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-890

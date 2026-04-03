@@ -9553,3 +9553,26 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
   - next efficient action is fix semantic entry routing to custom frontend shell (not native Odoo shell), then rerun host and convergence gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-891）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `4bc6632`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host login-entry preflight contract`
+- Reason: enforce strict custom-login entry contract and fail early when route maps to non-custom page
+- `891` implement result:
+  - hardened preflight in `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - validates `/login?db` contract first
+    - requires login form signature
+    - detects Odoo website 404 signature and emits `custom_login_route_missing`
+  - custom-frontend-only boundary preserved (no native fallback)
+- `891` verify result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-891.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: custom_login_route_missing`)
+  - `make verify.product.main_entry_convergence.v1`: FAIL at host gate with same reason
+  - host browser runtime probe: PASS
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated environment-route fix to bind real custom frontend login URL into host gates
