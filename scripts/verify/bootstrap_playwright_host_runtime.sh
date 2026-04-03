@@ -92,6 +92,20 @@ required_libs=(
   libxkbcommon.so.0
   libasound.so.2
   libgtk-3.so.0
+  libcups.so.2
+  libcairo.so.2
+  libpango-1.0.so.0
+  libavahi-common.so.3
+  libavahi-client.so.3
+  libpixman-1.so.0
+  libfontconfig.so.1
+  libfreetype.so.6
+  libxcb-shm.so.0
+  libxcb-render.so.0
+  libthai.so.0
+  libharfbuzz.so.0
+  libdatrie.so.1
+  libgraphite2.so.3
 )
 
 packages=(
@@ -112,6 +126,20 @@ packages=(
   libxkbcommon0
   libasound2
   libgtk-3-0
+  libcups2
+  libcairo2
+  libpango-1.0-0
+  libavahi-common3
+  libavahi-client3
+  libpixman-1-0
+  libfontconfig1
+  libfreetype6
+  libxcb-shm0
+  libxcb-render0
+  libthai0
+  libharfbuzz0b
+  libdatrie1
+  libgraphite2-3
 )
 
 missing_libs=()

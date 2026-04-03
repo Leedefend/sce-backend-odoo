@@ -5,11 +5,11 @@
   "publishability": "not_publishable",
   "verification": {
     "validate_task": "PASS",
-    "make_verify_portal_host_browser_runtime_probe": "FAIL",
+    "make_verify_portal_host_browser_runtime_probe": "PASS",
     "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "FAIL",
     "make_verify_product_main_entry_convergence_v1": "FAIL"
   },
   "failure_point": "host runtime/browser launch capability",
-  "failure_reason": "Chromium launch fatal in host runtime probe (sandbox_host_linux.cc:41 Operation not permitted)",
-  "next_step": "Run dedicated host runtime remediation outside current constrained runtime and rerun release-grade host gates."
+  "failure_reason": "Host browser launch intermittent fatal persists in main convergence chain (sandbox_host_linux.cc:41 Operation not permitted)",
+  "next_step": "Apply host runtime permission remediation in dedicated environment, then rerun host probe + primary-entry smoke + main_entry_convergence."
 }

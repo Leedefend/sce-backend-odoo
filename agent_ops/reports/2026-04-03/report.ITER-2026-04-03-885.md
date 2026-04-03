@@ -14,21 +14,28 @@
 - integrated probe before host primary-entry smoke:
   - `Makefile` target `verify.portal.host_browser_runtime_probe`
   - `verify.portal.project_dashboard_primary_entry_browser_smoke.host` now invokes probe first
+- expanded host runtime bootstrap dependencies:
+  - `scripts/verify/bootstrap_playwright_host_runtime.sh` now includes
+    `libdatrie.so.1` / `libgraphite2.so.3` and corresponding packages
+- hardened browser launch policy in host probe + primary-entry smoke:
+  - default headless-shell launch now retries up to 3 attempts
+  - full-chrome fallback now only triggers for missing-shared-library failures
 
 ## Verification Result
 
 - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-885.yaml`: PASS
-- `make verify.portal.host_browser_runtime_probe`: FAIL (nondeterministic; may pass/fail between runs)
-  - latest failure: Chromium launch fatal `sandbox_host_linux.cc:41 ... Operation not permitted (1)`
+- `make verify.portal.host_browser_runtime_probe`: PASS (latest run: `20260403T134657Z`)
 - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
-  - now fails fast at runtime probe stage with explicit root cause
+  - pre-gate may pass, but host browser launch still intermittently fatal in same chain
 - `make verify.product.main_entry_convergence.v1`: FAIL
   - management acceptance chain still PASS
-  - host entry stage fails fast at runtime probe stage
+  - host entry stage fails at runtime probe with:
+    - `sandbox_host_linux.cc:41 ... Operation not permitted (1)`
 
 ## Risk Analysis
 
-- blocker is now clearly classified as host runtime/browser launch capability instability
+- blocker is now narrowed to host browser launch permission instability
+  under constrained runtime (not business/contract logic failure)
 - release-grade host evidence remains unavailable; publishability cannot be approved
 
 ## Rollback Suggestion
@@ -47,7 +54,8 @@
 
 ## Next Iteration Suggestion
 
-- move to dedicated host runtime remediation (outside current sandbox/runtime constraints), then rerun:
+- move to dedicated host runtime permission remediation and launch isolation
+  (outside current constrained runtime), then rerun:
   - `verify.portal.host_browser_runtime_probe`
   - `verify.portal.project_dashboard_primary_entry_browser_smoke.host`
   - `verify.product.main_entry_convergence.v1`

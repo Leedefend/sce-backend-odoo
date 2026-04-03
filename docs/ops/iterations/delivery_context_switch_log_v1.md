@@ -9437,12 +9437,18 @@ Each entry must include:
 - Reason: surface host runtime/browser blockers deterministically before costly scenario checks
 - `885` implement result:
   - added `verify.portal.host_browser_runtime_probe` and wired it as pre-gate for host primary-entry smoke
+  - expanded host runtime bootstrap libs (`libdatrie`/`libgraphite2`) for full-chrome dependency closure
+  - hardened launch strategy in probe + primary-entry smoke:
+    - default launch retries up to 3 attempts
+    - full-chrome fallback only for missing-shared-library errors
 - `885` verify result:
-  - runtime probe: FAIL (flaky pass/fail; latest failure at Chromium launch fatal)
-  - host primary-entry smoke: FAIL fast via runtime probe
+  - runtime probe: PASS (latest standalone probe)
+  - host primary-entry smoke: FAIL (host launch instability still present in chain)
   - main_entry_convergence: FAIL at host entry stage; management acceptance chain still PASS
+  - latest blocker signature:
+    - `sandbox_host_linux.cc:41 ... Operation not permitted (1)`
 - state after this round:
   - latest classification: `FAIL`
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
-  - next efficient action is move to dedicated host runtime remediation environment and rerun release-grade host gates
+  - next efficient action is move to dedicated host runtime permission-remediation environment and rerun release-grade host gates
