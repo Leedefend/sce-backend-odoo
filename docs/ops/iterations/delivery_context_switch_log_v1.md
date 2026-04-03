@@ -9443,12 +9443,13 @@ Each entry must include:
     - full-chrome fallback only for missing-shared-library errors
 - `885` verify result:
   - runtime probe: PASS (latest standalone probe)
-  - host primary-entry smoke: FAIL (host launch instability still present in chain)
+  - host primary-entry smoke: FAIL (now reaches login/post-login path, but host entry route semantics drift)
   - main_entry_convergence: FAIL at host entry stage; management acceptance chain still PASS
   - latest blocker signature:
-    - `sandbox_host_linux.cc:41 ... Operation not permitted (1)`
+    - `/s/project.management` returns 404 on host runtime path
+    - dashboard readiness selector contract not met after login
 - state after this round:
   - latest classification: `FAIL`
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
-  - next efficient action is move to dedicated host runtime permission-remediation environment and rerun release-grade host gates
+  - next efficient action is run dedicated host entry-contract alignment and rerun release-grade host gates
