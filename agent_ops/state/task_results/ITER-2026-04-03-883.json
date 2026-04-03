@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-883",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-883.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "FAIL",
+    "make_verify_product_main_entry_convergence_v1": "FAIL"
+  },
+  "failure_point": "playwright host browser launch",
+  "failure_reason": "FATAL content/browser/sandbox_host_linux.cc:41 shutdown Operation not permitted (1)",
+  "next_step": "Recover host runtime/browser launch capability, then rerun release-grade host entry convergence gates."
+}
