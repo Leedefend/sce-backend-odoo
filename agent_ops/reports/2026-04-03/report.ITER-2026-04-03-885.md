@@ -26,16 +26,18 @@
 - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-885.yaml`: PASS
 - `make verify.portal.host_browser_runtime_probe`: PASS (latest run: `20260403T134657Z`)
 - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
-  - pre-gate may pass, but host browser launch still intermittently fatal in same chain
+  - pre-gate stable PASS
+  - host smoke now reaches login and post-login routing, but target dashboard contract still fails:
+    - `/s/project.management` on host returns 404 in current runtime
+    - dashboard readiness selectors (`state-explain-card`) not satisfied on resolved page
 - `make verify.product.main_entry_convergence.v1`: FAIL
   - management acceptance chain still PASS
-  - host entry stage fails at runtime probe with:
-    - `sandbox_host_linux.cc:41 ... Operation not permitted (1)`
+  - host entry stage remains failure point
 
 ## Risk Analysis
 
-- blocker is now narrowed to host browser launch permission instability
-  under constrained runtime (not business/contract logic failure)
+- blocker is now narrowed from launch-level instability to host entry contract mismatch
+  after login (target route/readiness semantics drift)
 - release-grade host evidence remains unavailable; publishability cannot be approved
 
 ## Rollback Suggestion
@@ -54,8 +56,10 @@
 
 ## Next Iteration Suggestion
 
-- move to dedicated host runtime permission remediation and launch isolation
-  (outside current constrained runtime), then rerun:
+- move to dedicated host entry contract alignment batch:
+  - freeze canonical post-login entry route for project-management dashboard on host
+  - align smoke assertions to canonical semantic markers (not stale CSS-only selectors)
+  - rerun release-grade host gates:
   - `verify.portal.host_browser_runtime_probe`
   - `verify.portal.project_dashboard_primary_entry_browser_smoke.host`
   - `verify.product.main_entry_convergence.v1`

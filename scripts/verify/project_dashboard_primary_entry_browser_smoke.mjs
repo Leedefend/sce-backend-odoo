@@ -63,16 +63,21 @@ function buildLoginUrlCandidates(baseUrl, dbName) {
     if (url && typeof url === 'string') out.add(url);
   };
 
+  if (/^http:\/\/(127\.0\.0\.1|localhost)$/.test(base)) {
+    push(`http://localhost:8070/web/login?db=${encodedDb}`);
+    push(`http://127.0.0.1:8070/web/login?db=${encodedDb}`);
+    push(`http://localhost:8070/login?db=${encodedDb}`);
+    push(`http://127.0.0.1:8070/login?db=${encodedDb}`);
+  }
+  push(`${base}/web/login?db=${encodedDb}`);
   push(`${base}/login?db=${encodedDb}`);
   if (base.startsWith('http://127.0.0.1')) {
     push(`${base.replace('http://127.0.0.1', 'http://localhost')}/login?db=${encodedDb}`);
+    push(`${base.replace('http://127.0.0.1', 'http://localhost')}/web/login?db=${encodedDb}`);
   }
   if (base.startsWith('http://localhost')) {
     push(`${base.replace('http://localhost', 'http://127.0.0.1')}/login?db=${encodedDb}`);
-  }
-  if (/^http:\/\/(127\.0\.0\.1|localhost)$/.test(base)) {
-    push(`http://127.0.0.1:8070/login?db=${encodedDb}`);
-    push(`http://localhost:8070/login?db=${encodedDb}`);
+    push(`${base.replace('http://localhost', 'http://127.0.0.1')}/web/login?db=${encodedDb}`);
   }
   return Array.from(out);
 }
@@ -93,10 +98,13 @@ async function gotoLoginWithRecovery(page) {
   const candidates = buildLoginUrlCandidates(BASE_URL, DB_NAME);
   const errors = [];
   for (const candidate of candidates) {
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
       try {
-        await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 12000 });
         await page.waitForLoadState('domcontentloaded');
+        if (!(await isLoginSurfaceReady(page))) {
+          throw new Error(`login form not found on page: ${candidate}`);
+        }
         return candidate;
       } catch (error) {
         errors.push({
@@ -113,17 +121,78 @@ async function gotoLoginWithRecovery(page) {
   throw new Error(`login navigation failed after recovery attempts (${errors.length} tries)`);
 }
 
+async function pickVisibleLocator(page, selectors, timeout = 1500) {
+  for (const selector of selectors) {
+    const locator = page.locator(selector).first();
+    try {
+      await locator.waitFor({ timeout });
+      return locator;
+    } catch {}
+  }
+  return null;
+}
+
+async function isLoginSurfaceReady(page) {
+  const userField = await pickVisibleLocator(page, ['input[autocomplete="username"]', 'input[name="login"]', 'input[type="email"]']);
+  const passwordField = await pickVisibleLocator(page, ['input[autocomplete="current-password"]', 'input[name="password"]', 'input[type="password"]']);
+  return Boolean(userField && passwordField);
+}
+
 async function fillLoginForm(page) {
-  await page.locator('input[autocomplete="username"]').waitFor({ timeout: 20000 });
-  await page.locator('input[autocomplete="current-password"]').waitFor({ timeout: 20000 });
-  await page.locator('input[autocomplete="username"]').fill(LOGIN);
-  await page.locator('input[autocomplete="current-password"]').fill(PASSWORD);
-  await page.locator('input[placeholder*="数据库"]').fill(DB_NAME);
+  const userField = await pickVisibleLocator(page, ['input[autocomplete="username"]', 'input[name="login"]', 'input[type="email"]'], 20000);
+  const passwordField = await pickVisibleLocator(page, ['input[autocomplete="current-password"]', 'input[name="password"]', 'input[type="password"]'], 20000);
+  assert(Boolean(userField), 'login form missing username field');
+  assert(Boolean(passwordField), 'login form missing password field');
+  await userField.fill(LOGIN);
+  await passwordField.fill(PASSWORD);
+  const dbField = await pickVisibleLocator(
+    page,
+    ['input[placeholder*="数据库"]', 'input[name="db"]', 'input[placeholder*="Database"]', 'input[name="database"]'],
+    2000,
+  );
+  if (dbField) {
+    await dbField.fill(DB_NAME);
+  }
 }
 
 async function submitLogin(page) {
-  await page.locator('button.submit').click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 20000, waitUntil: 'commit' });
+  const submitButton = await pickVisibleLocator(
+    page,
+    [
+      'button.submit',
+      'button[type="submit"]',
+      'button.btn-primary[type="submit"]',
+      'form button.btn-primary',
+      'form button:has-text("Log in")',
+      'form button:has-text("Sign in")',
+      'form button:has-text("登录")',
+    ],
+    5000,
+  );
+  if (submitButton) {
+    await submitButton.click();
+  } else {
+    await page.keyboard.press('Enter');
+  }
+  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000, waitUntil: 'commit' });
+}
+
+async function openProjectManagementRoute(page) {
+  const current = new URL(page.url());
+  const origin = `${current.protocol}//${current.host}`;
+  const candidates = [`${origin}/s/project.management`, `${origin}/s/project.management/`];
+  const errors = [];
+  for (const candidate of candidates) {
+    try {
+      await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await page.waitForURL((url) => url.pathname.startsWith('/s/project.management'), { timeout: 20000 });
+      return candidate;
+    } catch (error) {
+      errors.push({ url: candidate, message: String(error?.message || error) });
+    }
+  }
+  writeJson('project_route_navigation_errors.json', errors);
+  throw new Error('failed to open /s/project.management after login');
 }
 
 async function waitForDashboard(page) {
@@ -248,6 +317,7 @@ try {
   summary.login_url_used = loginUrlUsed;
   await fillLoginForm(page);
   await submitLogin(page);
+  summary.project_route_url_used = await openProjectManagementRoute(page);
   await waitForDashboard(page);
 
   const dashboardText = await page.locator('body').innerText();
