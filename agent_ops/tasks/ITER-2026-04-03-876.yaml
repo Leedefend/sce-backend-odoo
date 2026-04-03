@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-03-876
+title: Continue constrained-runtime usability closure after host probe failure
+type: backend
+status: active
+priority: medium
+mode: verify
+
+goal: >
+  Keep user-facing usability verification chain stable by continuing
+  constrained-runtime closure gates after host recovery probe failure.
+
+user_visible_outcome:
+  - "受限运行态闭环验证持续可执行"
+  - "前后端边界不破坏前提下保持可用性主线连续"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_business_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 439cb98
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-875
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend_plus_cross_stack
+
+architecture:
+  layer_target: Product Usability Closure
+  module: constrained-runtime usability continuation
+  module_owner: verify chain
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Usability closure remains backend-semantic driven while frontend keeps
+    generic rendering and interaction responsibilities only.
+  reason: >
+    Resume continuous low-risk validation path immediately after host-probe fail.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-876.yaml
+    - make verify.release.second_slice_prepared
+    - make verify.portal.cross_stack_contract_smoke.container
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - constrained-runtime closure continuation result
+  - governance/report artifacts for ITER-2026-04-03-876
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-876.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-876.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-876.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-875

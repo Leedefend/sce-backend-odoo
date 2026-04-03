@@ -9281,3 +9281,17 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - full-freeze path remains blocked by host route reachability
   - next efficient action is continue constrained-runtime closure gates and retry host probe only after reachability prerequisites change
+## 2026-04-03 迭代锚点（ITER-2026-04-03-876）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `439cb98`
+- Layer Target: `Product Usability Closure`
+- Module: `constrained-runtime usability continuation`
+- Reason: resume stable closure baseline immediately after host-probe failure
+- `876` verify result:
+  - `verify.release.second_slice_prepared`: PASS
+  - `verify.portal.cross_stack_contract_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - constrained-runtime baseline resumed and remains green
+  - next efficient action is continue backend-first closure cadence and keep host-recovery probe as periodic side check
