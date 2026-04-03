@@ -74,27 +74,46 @@ async function probeCustomFrontendEntryReachability(baseUrl, dbName) {
   const checks = [];
   let lastError = '';
   for (const origin of origins) {
-    for (const pathPart of [`/login?db=${encodeURIComponent(dbName)}`, `/?db=${encodeURIComponent(dbName)}`]) {
-      const target = `${origin}${pathPart}`;
-      const startedAt = Date.now();
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 6000);
-      try {
-        const resp = await fetch(target, { method: 'GET', signal: controller.signal, redirect: 'follow' });
-        clearTimeout(timer);
-        const elapsedMs = Date.now() - startedAt;
-        const ok = resp.status > 0 && resp.status < 500;
-        checks.push({ url: target, status: resp.status, ok, elapsed_ms: elapsedMs });
-        if (ok) {
-          return { ok: true, base_url: origin, checks };
-        }
-      } catch (error) {
-        clearTimeout(timer);
-        const elapsedMs = Date.now() - startedAt;
-        const message = String(error?.message || error);
-        lastError = message;
-        checks.push({ url: target, ok: false, error: message, elapsed_ms: elapsedMs });
+    const target = `${origin}/login?db=${encodeURIComponent(dbName)}`;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    try {
+      const resp = await fetch(target, { method: 'GET', signal: controller.signal, redirect: 'follow' });
+      const html = await resp.text();
+      clearTimeout(timer);
+      const elapsedMs = Date.now() - startedAt;
+      const normalized = String(html || '').toLowerCase();
+      const has404Signature =
+        normalized.includes("we couldn't find the page you're looking for")
+        || normalized.includes('powered by odoo')
+        || normalized.includes('your logo');
+      const hasLoginFieldSignature =
+        normalized.includes('autocomplete="username"')
+        || normalized.includes('name="login"')
+        || normalized.includes('autocomplete="current-password"')
+        || normalized.includes('type="password"');
+      const ok = resp.status >= 200 && resp.status < 400 && hasLoginFieldSignature && !has404Signature;
+      checks.push({
+        url: target,
+        status: resp.status,
+        ok,
+        elapsed_ms: elapsedMs,
+        has_login_signature: hasLoginFieldSignature,
+        has_404_signature: has404Signature,
+      });
+      if (ok) {
+        return { ok: true, base_url: origin, checks };
       }
+      lastError = has404Signature
+        ? 'custom_login_route_missing'
+        : `custom_login_contract_invalid: status=${resp.status}`;
+    } catch (error) {
+      clearTimeout(timer);
+      const elapsedMs = Date.now() - startedAt;
+      const message = String(error?.message || error);
+      lastError = message;
+      checks.push({ url: target, ok: false, error: message, elapsed_ms: elapsedMs });
     }
   }
   return { ok: false, base_url: '', checks, last_error: lastError || 'unreachable' };
