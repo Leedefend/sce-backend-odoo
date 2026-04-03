@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-03-875
+title: Probe host route reachability for full-freeze gate recovery
+type: backend
+status: active
+priority: medium
+mode: verify
+
+goal: >
+  Re-probe host /login reachability and host browser smoke viability to decide
+  whether full-freeze verification path can be re-enabled.
+
+user_visible_outcome:
+  - "明确 host 路由是否恢复可用"
+  - "确认是否可从受限运行态切回 full-freeze 验证路径"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_business_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b1b8fa5
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-874
+  priority_lane: usability_verification_mainline
+  usability_battlefield: backend_plus_cross_stack
+
+architecture:
+  layer_target: Product Usability Closure
+  module: host route recovery probe
+  module_owner: verify chain
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Recovery decision for full-freeze path depends on host runtime route
+    availability, not frontend semantic inference.
+  reason: >
+    Keep recovery decision explicit and measurable in continuous iteration.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-875.yaml
+    - curl -I --max-time 10 "http://localhost:8070/login?db=sc_demo"
+    - curl -I --max-time 10 "http://127.0.0.1:8070/login?db=sc_demo"
+    - make verify.portal.second_slice_browser_smoke.host
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - host-route reachability probe result
+  - governance/report artifacts for ITER-2026-04-03-875
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-875.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-875.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-875.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-874
