@@ -9219,3 +9219,18 @@ Each entry must include:
   - latest classification: `PASS`
   - constrained-runtime surrogate baseline remains stable
   - next efficient action is continue backend-first usability closure under surrogate baseline and keep lightweight host-route recovery probes
+## 2026-04-03 迭代锚点（ITER-2026-04-03-872）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b5a3474`
+- Layer Target: `Product Usability Closure`
+- Module: `custom-frontend cross-stack usability chain`
+- Reason: keep user-facing create-to-manage closure stable with strict frontend/backend boundary
+- `872` verify result:
+  - `verify.release.second_slice_prepared`: PASS
+  - `verify.portal.ui.v0_8.semantic.container`: PASS
+  - `verify.portal.cross_stack_contract_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - cross-stack usability chain remains stable on constrained-runtime baseline
+  - next efficient action is continue backend-first closure checks and retain periodic host-route recovery probes
