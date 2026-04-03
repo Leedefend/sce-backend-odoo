@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-02-870
+title: Diagnose host-browser reachability for full freeze gate recovery
+type: frontend
+status: active
+priority: medium
+mode: verify
+
+goal: >
+  Produce an actionable host-browser reachability diagnosis for restoring
+  full freeze gate execution.
+
+user_visible_outcome:
+  - "明确 full freeze 门禁恢复前置条件"
+  - "避免重复无效 host 浏览器重试"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify-only
+  - no_business_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: bf0f1d2
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-02-869
+  priority_lane: usability_verification_mainline
+  usability_battlefield: cross_stack_custom_frontend
+
+architecture:
+  layer_target: Product Usability Closure
+  module: host-browser reachability diagnostics
+  module_owner: verify/runtime diagnostics
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Full freeze gate depends on host browser path; diagnose runtime constraint
+    separately from product semantics.
+  reason: >
+    Define recovery trigger for returning from surrogate gate to full freeze gate.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-02-870.yaml
+    - curl -I --max-time 8 http://localhost:8070/login?db=sc_demo
+    - curl -I --max-time 8 http://127.0.0.1:8070/login?db=sc_demo
+    - make verify.portal.second_slice_browser_smoke.host
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - host-browser reachability diagnosis result
+  - governance/report artifacts for ITER-2026-04-02-870
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-02-870.yaml
+  - git restore agent_ops/reports/2026-04-02/report.ITER-2026-04-02-870.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-02-870.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-02-869
