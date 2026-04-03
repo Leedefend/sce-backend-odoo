@@ -9373,3 +9373,20 @@ Each entry must include:
   - latest classification: `PASS`
   - low-risk parallel closure cadence remains stable and green
   - next efficient action is continue backend-first low-risk cadence with periodic dedicated host-recovery probes
+## 2026-04-03 迭代锚点（ITER-2026-04-03-882）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `a59dd24`
+- Layer Target: `Product Release Usability Proof`
+- Module: `real-user release-grade verification`
+- Reason: decide publishability based on real-user path gates instead of lightweight regression-only evidence
+- `882` verify result:
+  - `verify.e2e.scene_admin`: PASS (`fallback runtime SKIP`, no hard failure)
+  - `verify.product.main_entry_convergence.v1`: FAIL
+  - failure point: `verify.portal.project_dashboard_primary_entry_browser_smoke.host`
+  - error: `page.goto net::ERR_NETWORK_CHANGED` on `http://127.0.0.1/login?db=sc_demo`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision: `not_publishable`
+  - next efficient action is stabilize host runtime/network reachability for `/login` and rerun release-grade convergence gates
