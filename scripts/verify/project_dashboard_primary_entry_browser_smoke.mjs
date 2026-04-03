@@ -27,6 +27,7 @@ const DB_NAME = String(process.env.DB_NAME || 'sc_prod_sim').trim();
 const LOGIN = String(process.env.E2E_LOGIN || 'demo_pm').trim();
 const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
 const ARTIFACTS_DIR = String(process.env.ARTIFACTS_DIR || 'artifacts').trim() || 'artifacts';
+const FULL_CHROME_PATH = '/home/odoo/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome';
 const ts = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'project-dashboard-primary-entry-browser-smoke', ts);
 
@@ -47,6 +48,11 @@ function writeJson(fileName, payload) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function shouldUseFullChromeFallback(errorMessage) {
+  const text = String(errorMessage || '');
+  return text.includes('error while loading shared libraries');
 }
 
 function buildLoginUrlCandidates(baseUrl, dbName) {
@@ -196,7 +202,39 @@ async function waitForPrimaryActionResult(page) {
 let browser;
 let page;
 try {
-  browser = await chromium.launch({ headless: true, timeout: 20000 });
+  const launchBase = {
+    headless: true,
+    timeout: 20000,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-seccomp-filter-sandbox',
+      '--disable-namespace-sandbox',
+    ],
+  };
+  let defaultError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      browser = await chromium.launch(launchBase);
+      summary.launch_mode = 'default';
+      summary.default_launch_attempt = attempt;
+      break;
+    } catch (error) {
+      defaultError = error;
+      summary.default_launch_error = String(error?.message || error);
+      if (attempt < 3) {
+        await sleep(attempt * 500);
+      }
+    }
+  }
+  if (!browser) {
+    const canFallback =
+      fs.existsSync(FULL_CHROME_PATH) &&
+      shouldUseFullChromeFallback(summary.default_launch_error || String(defaultError?.message || defaultError));
+    if (!canFallback) throw defaultError;
+    browser = await chromium.launch({ ...launchBase, executablePath: FULL_CHROME_PATH });
+    summary.launch_mode = 'full_chrome_fallback';
+  }
   page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 
   page.on('console', (msg) => {

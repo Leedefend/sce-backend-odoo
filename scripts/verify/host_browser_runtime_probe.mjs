@@ -8,6 +8,7 @@ const { chromium } = require(playwrightEntry);
 
 const LOCAL_RUNTIME_LIB_ROOT = path.resolve(process.cwd(), '.codex-runtime', 'playwright-libs');
 const ARTIFACTS_DIR = String(process.env.ARTIFACTS_DIR || 'artifacts').trim() || 'artifacts';
+const FULL_CHROME_PATH = '/home/odoo/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome';
 const ts = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'host-browser-runtime-probe', ts);
 
@@ -28,6 +29,11 @@ function writeJson(fileName, payload) {
   fs.writeFileSync(path.join(outDir, fileName), `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 }
 
+function shouldUseFullChromeFallback(errorMessage) {
+  const text = String(errorMessage || '');
+  return text.includes('error while loading shared libraries');
+}
+
 primeLocalRuntimeLibraries();
 
 const summary = {
@@ -39,7 +45,7 @@ const summary = {
 
 let browser;
 try {
-  browser = await chromium.launch({
+  const launchBase = {
     headless: true,
     timeout: 20000,
     args: [
@@ -48,7 +54,30 @@ try {
       '--disable-seccomp-filter-sandbox',
       '--disable-namespace-sandbox',
     ],
-  });
+  };
+  let defaultError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      browser = await chromium.launch(launchBase);
+      summary.launch_mode = 'default';
+      summary.default_launch_attempt = attempt;
+      break;
+    } catch (error) {
+      defaultError = error;
+      summary.default_launch_error = String(error?.message || error);
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+  }
+  if (!browser) {
+    const canFallback =
+      fs.existsSync(FULL_CHROME_PATH) &&
+      shouldUseFullChromeFallback(summary.default_launch_error || String(defaultError?.message || defaultError));
+    if (!canFallback) throw defaultError;
+    browser = await chromium.launch({ ...launchBase, executablePath: FULL_CHROME_PATH });
+    summary.launch_mode = 'full_chrome_fallback';
+  }
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto('about:blank', { waitUntil: 'domcontentloaded', timeout: 10000 });
