@@ -9205,3 +9205,17 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - full freeze gate remains blocked by host runtime reachability
   - next efficient action is continue constrained-runtime gates and retry full freeze only when host route becomes reachable
+## 2026-04-03 迭代锚点（ITER-2026-04-03-871）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `0c0d94f`
+- Layer Target: `Product Usability Closure`
+- Module: `constrained-runtime surrogate baseline`
+- Reason: reconfirm executable baseline after latest closure commits
+- `871` verify result:
+  - `verify.release.second_slice_prepared`: PASS
+  - `verify.portal.cross_stack_contract_smoke.container`: PASS
+- state after this round:
+  - latest classification: `PASS`
+  - constrained-runtime surrogate baseline remains stable
+  - next efficient action is continue backend-first usability closure under surrogate baseline and keep lightweight host-route recovery probes
