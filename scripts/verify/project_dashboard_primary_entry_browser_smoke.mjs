@@ -10,15 +10,14 @@ const LOCAL_RUNTIME_LIB_ROOT = path.resolve(process.cwd(), '.codex-runtime', 'pl
 
 function primeLocalRuntimeLibraries() {
   const candidateDirs = [
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib', 'x86_64-linux-gnu'),
     path.join(LOCAL_RUNTIME_LIB_ROOT, 'usr', 'lib', 'x86_64-linux-gnu'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'usr', 'lib'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib'),
+    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib', 'x86_64-linux-gnu'),
   ].filter((dir) => fs.existsSync(dir));
   if (!candidateDirs.length) return;
   const existing = String(process.env.LD_LIBRARY_PATH || '').trim();
   const segments = existing ? existing.split(':').filter(Boolean) : [];
-  process.env.LD_LIBRARY_PATH = [...candidateDirs, ...segments].join(':');
+  const merged = [...segments, ...candidateDirs].filter((item, idx, arr) => item && arr.indexOf(item) === idx);
+  process.env.LD_LIBRARY_PATH = merged.join(':');
 }
 
 primeLocalRuntimeLibraries();

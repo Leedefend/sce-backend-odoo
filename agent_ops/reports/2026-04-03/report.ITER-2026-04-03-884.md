@@ -12,6 +12,9 @@
 - no business code changed
 - continued host runtime recovery attempt with existing login-navigation recovery patch in:
   - `scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs`
+- narrowed runtime library priming strategy in host-entry smoke:
+  - only architecture-specific runtime dirs are used
+  - runtime dirs are appended after existing `LD_LIBRARY_PATH` to reduce core-lib override risk
 - performed bounded reruns of release-grade host gates to classify blocker type
 
 ## Verification Result

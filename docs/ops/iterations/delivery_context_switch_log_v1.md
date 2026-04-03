@@ -9417,6 +9417,7 @@ Each entry must include:
 - Reason: unblock release-grade real-user host entry verification
 - `884` implement result:
   - kept minimal login navigation recovery patch in `project_dashboard_primary_entry_browser_smoke.mjs`
+  - narrowed runtime lib priming to architecture-specific dirs and switched to append-order `LD_LIBRARY_PATH` merge
   - executed bounded host gate reruns to classify runtime blocker
 - `884` verify result:
   - `verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
