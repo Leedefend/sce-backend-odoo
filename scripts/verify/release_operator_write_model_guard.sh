@@ -97,6 +97,8 @@ try:
             "request_payload_json": {"snapshot_id": int(candidate.get("id") or 0), "replace_active": True},
             "result_payload_json": {"status": "pending"},
             "diagnostics_json": {"status": "pending"},
+            "execution_protocol_version": "release_execution_protocol_v1",
+            "execution_trace_json": {"contract_version": "release_execution_protocol_v1", "runs": []},
         }
     )
     approve_model = write_model_service.build_from_intent(

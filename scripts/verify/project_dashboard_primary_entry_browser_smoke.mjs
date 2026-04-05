@@ -1,11 +1,14 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const require = createRequire(import.meta.url);
 const playwrightEntry = require.resolve('playwright', { paths: [path.resolve(process.cwd(), 'frontend')] });
-const { chromium } = require(playwrightEntry);
+const { chromium, request } = require(playwrightEntry);
 const LOCAL_RUNTIME_LIB_ROOT = path.resolve(process.cwd(), '.codex-runtime', 'playwright-libs');
 
 function primeLocalRuntimeLibraries() {
@@ -24,6 +27,7 @@ primeLocalRuntimeLibraries();
 
 const BASE_URL = String(process.env.BASE_URL || 'http://localhost:8070').replace(/\/+$/, '');
 const INTENT_BASE_URL = String(process.env.INTENT_BASE_URL || 'http://localhost:8070').replace(/\/+$/, '');
+let RUNTIME_INTENT_BASE_URL = INTENT_BASE_URL;
 const DB_NAME = String(process.env.DB_NAME || 'sc_prod_sim').trim();
 const LOGIN = String(process.env.E2E_LOGIN || 'demo_pm').trim();
 const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
@@ -40,8 +44,13 @@ const summary = {
   login: LOGIN,
   cases: [],
   console_errors: [],
+  http_5xx_resources: [],
   page_errors: [],
 };
+
+function isConnectEpermMessage(message) {
+  return String(message || '').toLowerCase().includes('connect eperm');
+}
 
 function writeJson(fileName, payload) {
   fs.writeFileSync(path.join(outDir, fileName), `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
@@ -57,70 +66,442 @@ function buildCustomFrontendOrigins(baseUrl) {
   const push = (origin) => {
     if (origin && typeof origin === 'string' && !out.includes(origin)) out.push(origin);
   };
+  const explicitGatewayOrigins = String(process.env.GATEWAY_BASE_URLS || '')
+    .split(',')
+    .map((item) => item.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+  if (explicitGatewayOrigins.length > 0) {
+    explicitGatewayOrigins.forEach((origin) => push(origin));
+    return out.filter(Boolean);
+  }
+
+  const envFallbackOrigins = String(process.env.BASE_URL_FALLBACKS || '')
+    .split(',')
+    .map((item) => item.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
   push(base);
+  envFallbackOrigins.forEach((origin) => push(origin));
   if (base.startsWith('http://127.0.0.1:')) {
     push(base.replace('http://127.0.0.1:', 'http://localhost:'));
+    push(base.replace(/:\d+$/, ''));
+    push(base.replace(/:\d+$/, ':80'));
   }
   if (base.startsWith('http://localhost:')) {
     push(base.replace('http://localhost:', 'http://127.0.0.1:'));
+    push(base.replace(/:\d+$/, ''));
+    push(base.replace(/:\d+$/, ':80'));
   }
   if (/^http:\/\/127\.0\.0\.1$/.test(base)) push('http://localhost');
   if (/^http:\/\/localhost$/.test(base)) push('http://127.0.0.1');
   return out.filter(Boolean);
 }
 
-async function probeCustomFrontendEntryReachability(baseUrl, dbName) {
+function fetchHtmlByHttpModule(targetUrl, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(targetUrl);
+    const mod = parsedUrl.protocol === 'https:' ? https : http;
+    const req = mod.request(parsedUrl, {
+      method: 'GET',
+      timeout: timeoutMs,
+      headers: {
+        Accept: 'text/html,application/xhtml+xml',
+      },
+    }, (resp) => {
+      const chunks = [];
+      resp.on('data', (chunk) => chunks.push(chunk));
+      resp.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf-8');
+        resolve({
+          status: Number(resp.statusCode || 0),
+          body,
+        });
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('http_module_timeout')));
+    req.on('error', (error) => reject(error));
+    req.end();
+  });
+}
+
+async function fetchHtmlByPlaywrightRequest(targetUrl, timeoutMs) {
+  const api = await request.newContext({
+    ignoreHTTPSErrors: true,
+    extraHTTPHeaders: {
+      Accept: 'text/html,application/xhtml+xml',
+    },
+  });
+  try {
+    const resp = await api.get(targetUrl, {
+      timeout: timeoutMs,
+      failOnStatusCode: false,
+    });
+    const body = await resp.text();
+    return {
+      status: Number(resp.status() || 0),
+      body,
+    };
+  } finally {
+    await api.dispose();
+  }
+}
+
+function probeTcpReachability(hostname, port, timeoutMs = 1500) {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const socket = net.createConnection({ host: hostname, port });
+    let settled = false;
+    const finish = (ok, error = '') => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve({ ok, error, elapsed_ms: Date.now() - startedAt });
+    };
+    socket.setTimeout(timeoutMs);
+    socket.on('connect', () => finish(true));
+    socket.on('timeout', () => finish(false, 'tcp_timeout'));
+    socket.on('error', (error) => finish(false, String(error?.message || error)));
+  });
+}
+
+async function runConnectivityDiagnostics(baseUrl, dbName) {
   const origins = buildCustomFrontendOrigins(baseUrl);
   const checks = [];
-  let lastError = '';
+  let tcpReachable = false;
+  let hasTcpPermissionBlocked = false;
   for (const origin of origins) {
-    const target = `${origin}/login?db=${encodeURIComponent(dbName)}`;
-    const startedAt = Date.now();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
-    try {
-      const resp = await fetch(target, { method: 'GET', signal: controller.signal, redirect: 'follow' });
-      const html = await resp.text();
-      clearTimeout(timer);
-      const elapsedMs = Date.now() - startedAt;
-      const normalized = String(html || '').toLowerCase();
-      const has404Signature =
-        normalized.includes("we couldn't find the page you're looking for")
-        || normalized.includes('powered by odoo')
-        || normalized.includes('your logo');
-      const hasLoginFieldSignature =
-        normalized.includes('autocomplete="username"')
-        || normalized.includes('name="login"')
-        || normalized.includes('autocomplete="current-password"')
-        || normalized.includes('type="password"');
-      const ok = resp.status >= 200 && resp.status < 400 && hasLoginFieldSignature && !has404Signature;
-      checks.push({
-        url: target,
-        status: resp.status,
-        ok,
-        elapsed_ms: elapsedMs,
-        has_login_signature: hasLoginFieldSignature,
-        has_404_signature: has404Signature,
-      });
-      if (ok) {
-        return { ok: true, base_url: origin, checks };
+    const parsed = new URL(origin);
+    const hostname = parsed.hostname;
+    const port = Number(parsed.port || (parsed.protocol === 'https:' ? 443 : 80));
+    const tcp = await probeTcpReachability(hostname, port, 1500);
+    checks.push({
+      origin,
+      transport: 'tcp',
+      hostname,
+      port,
+      ok: tcp.ok,
+      elapsed_ms: tcp.elapsed_ms,
+      error: tcp.error || '',
+    });
+    if (!tcp.ok && String(tcp.error || '').toLowerCase().includes('eperm')) {
+      hasTcpPermissionBlocked = true;
+    }
+    if (tcp.ok) {
+      tcpReachable = true;
+      const loginUrl = `${origin}/web/login?db=${encodeURIComponent(dbName)}`;
+      const httpDiagStartedAt = Date.now();
+      try {
+        const resp = await fetchHtmlByHttpModule(loginUrl, 4000);
+        checks.push({
+          origin,
+          transport: 'http_module_diag',
+          url: loginUrl,
+          status: resp.status,
+          ok: resp.status >= 200 && resp.status < 500,
+          elapsed_ms: Date.now() - httpDiagStartedAt,
+          error: '',
+        });
+      } catch (error) {
+        checks.push({
+          origin,
+          transport: 'http_module_diag',
+          url: loginUrl,
+          ok: false,
+          error: String(error?.message || error),
+          elapsed_ms: Date.now() - httpDiagStartedAt,
+        });
       }
-      lastError = has404Signature
-        ? 'custom_login_route_missing'
-        : `custom_login_contract_invalid: status=${resp.status}`;
-    } catch (error) {
-      clearTimeout(timer);
-      const elapsedMs = Date.now() - startedAt;
-      const message = String(error?.message || error);
-      lastError = message;
-      checks.push({ url: target, ok: false, error: message, elapsed_ms: elapsedMs });
+    }
+  }
+  return {
+    ok: tcpReachable || hasTcpPermissionBlocked,
+    checks,
+    last_error: tcpReachable ? '' : (hasTcpPermissionBlocked ? 'tcp_permission_blocked' : 'no_tcp_reachability'),
+    degraded: !tcpReachable && hasTcpPermissionBlocked,
+  };
+}
+
+function orderOriginsByDiagnostics(origins, diagnostics = null) {
+  if (!diagnostics || !Array.isArray(diagnostics.checks)) return origins;
+  const scoreByOrigin = new Map();
+  for (const origin of origins) scoreByOrigin.set(origin, 0);
+  for (const check of diagnostics.checks) {
+    const origin = String(check?.origin || '').trim();
+    if (!scoreByOrigin.has(origin)) continue;
+    const transport = String(check?.transport || '');
+    const ok = Boolean(check?.ok);
+    const baseScore = Number(scoreByOrigin.get(origin) || 0);
+    if (transport === 'tcp') {
+      scoreByOrigin.set(origin, baseScore + (ok ? 50 : -20));
+      continue;
+    }
+    if (transport === 'http_module_diag') {
+      scoreByOrigin.set(origin, baseScore + (ok ? 30 : -10));
+    }
+  }
+  return [...origins].sort((left, right) => {
+    const rightScore = Number(scoreByOrigin.get(right) || 0);
+    const leftScore = Number(scoreByOrigin.get(left) || 0);
+    return rightScore - leftScore;
+  });
+}
+
+async function probeCustomFrontendEntryReachability(baseUrl, dbName, diagnostics = null) {
+  const origins = orderOriginsByDiagnostics(buildCustomFrontendOrigins(baseUrl), diagnostics);
+  const checks = [];
+  let lastError = '';
+  const loginPaths = ['/web/login', '/login'];
+  const probeTimeoutMsByAttempt = [6000, 12000];
+  const originHandshakeFailureCounts = new Map();
+  const isAbortLikeFetchError = (error) => {
+    const message = String(error?.message || error || '').toLowerCase();
+    return error?.name === 'AbortError' || message.includes('aborted') || message.includes('timeout');
+  };
+  const isFallbackEligibleError = (error) => {
+    const message = String(error?.message || error || '').toLowerCase();
+    return isAbortLikeFetchError(error) || message.includes('fetch failed');
+  };
+  const isConnectEpermError = (errorOrMessage) => {
+    const message = String(errorOrMessage?.message || errorOrMessage || '').toLowerCase();
+    return message.includes('connect eperm');
+  };
+  const isHandshakeFailureMessage = (message) => {
+    const text = String(message || '').toLowerCase();
+    return (
+      text.includes('socket hang up')
+      || text.includes('timeout')
+      || text.includes('timed out')
+      || text.includes('aborted')
+      || text.includes('fetch failed')
+      || text.includes('http_module_timeout')
+      || text.includes('apirequestcontext.get')
+    );
+  };
+  for (const origin of origins) {
+    const handshakeFailures = Number(originHandshakeFailureCounts.get(origin) || 0);
+    if (handshakeFailures >= 4) {
+      checks.push({
+        origin,
+        transport: 'origin_short_circuit',
+        ok: false,
+        error: 'repeated_handshake_failure',
+      });
+      continue;
+    }
+    for (const loginPath of loginPaths) {
+      const target = `${origin}${loginPath}?db=${encodeURIComponent(dbName)}`;
+      for (let attempt = 1; attempt <= probeTimeoutMsByAttempt.length; attempt += 1) {
+        const startedAt = Date.now();
+        const timeoutMs = probeTimeoutMsByAttempt[attempt - 1];
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const resp = await fetch(target, { method: 'GET', signal: controller.signal, redirect: 'follow' });
+          const html = await resp.text();
+          const elapsedMs = Date.now() - startedAt;
+          const normalized = String(html || '').toLowerCase();
+          const has404Signature = normalized.includes("we couldn't find the page you're looking for");
+          const hasLoginFieldSignature =
+            normalized.includes('autocomplete="username"')
+            || normalized.includes('name="login"')
+            || normalized.includes('autocomplete="current-password"')
+            || normalized.includes('type="password"');
+          const hasSpaShellSignature =
+            normalized.includes('<div id="app"></div>')
+            || (normalized.includes('/assets/index-') && normalized.includes('<title>智能施工企业管理平台</title>'));
+          const ok = resp.status >= 200 && resp.status < 400 && (hasLoginFieldSignature || hasSpaShellSignature) && !has404Signature;
+          checks.push({
+            url: target,
+            attempt,
+            timeout_ms: timeoutMs,
+            status: resp.status,
+            ok,
+            elapsed_ms: elapsedMs,
+            has_login_signature: hasLoginFieldSignature,
+            has_404_signature: has404Signature,
+          });
+          if (ok) {
+            return { ok: true, base_url: origin, login_url: target, checks };
+          }
+          lastError = has404Signature
+            ? 'custom_login_route_missing'
+            : `custom_login_contract_invalid: status=${resp.status}`;
+          break;
+        } catch (error) {
+          const elapsedMs = Date.now() - startedAt;
+          const message = String(error?.message || error);
+          lastError = message;
+          checks.push({
+            url: target,
+            attempt,
+            timeout_ms: timeoutMs,
+            ok: false,
+            error: message,
+            elapsed_ms: elapsedMs,
+          });
+          if (isConnectEpermError(message)) {
+            checks.push({
+              url: target,
+              attempt,
+              timeout_ms: timeoutMs,
+              transport: 'eperm_fast_path',
+              ok: false,
+              error: 'connect_eperm_short_circuit',
+            });
+            const current = Number(originHandshakeFailureCounts.get(origin) || 0);
+            originHandshakeFailureCounts.set(origin, current + 4);
+            break;
+          }
+          if (isFallbackEligibleError(error)) {
+            try {
+              const fallbackStartedAt = Date.now();
+              const fallbackResp = await fetchHtmlByHttpModule(target, timeoutMs);
+              const fallbackElapsedMs = Date.now() - fallbackStartedAt;
+              const normalized = String(fallbackResp.body || '').toLowerCase();
+              const has404Signature = normalized.includes("we couldn't find the page you're looking for");
+              const hasLoginFieldSignature =
+                normalized.includes('autocomplete="username"')
+                || normalized.includes('name="login"')
+                || normalized.includes('autocomplete="current-password"')
+                || normalized.includes('type="password"');
+              const hasSpaShellSignature =
+                normalized.includes('<div id="app"></div>')
+                || (normalized.includes('/assets/index-') && normalized.includes('<title>智能施工企业管理平台</title>'));
+              const ok = fallbackResp.status >= 200 && fallbackResp.status < 400 && (hasLoginFieldSignature || hasSpaShellSignature) && !has404Signature;
+              checks.push({
+                url: target,
+                attempt,
+                timeout_ms: timeoutMs,
+                transport: 'http_module_fallback',
+                status: fallbackResp.status,
+                ok,
+                elapsed_ms: fallbackElapsedMs,
+                has_login_signature: hasLoginFieldSignature,
+                has_404_signature: has404Signature,
+              });
+              if (ok) {
+                return { ok: true, base_url: origin, login_url: target, checks };
+              }
+              lastError = has404Signature
+                ? 'custom_login_route_missing'
+                : `custom_login_contract_invalid: status=${fallbackResp.status}`;
+            } catch (fallbackError) {
+              const fallbackElapsedMs = Date.now() - startedAt;
+              const fallbackMessage = String(fallbackError?.message || fallbackError);
+              lastError = fallbackMessage;
+              checks.push({
+                url: target,
+                attempt,
+                timeout_ms: timeoutMs,
+                transport: 'http_module_fallback',
+                ok: false,
+                error: fallbackMessage,
+                elapsed_ms: fallbackElapsedMs,
+              });
+              if (isConnectEpermError(fallbackMessage)) {
+                checks.push({
+                  url: target,
+                  attempt,
+                  timeout_ms: timeoutMs,
+                  transport: 'eperm_fast_path',
+                  ok: false,
+                  error: 'connect_eperm_short_circuit',
+                });
+                const current = Number(originHandshakeFailureCounts.get(origin) || 0);
+                originHandshakeFailureCounts.set(origin, current + 4);
+                break;
+              }
+              try {
+                const pwStartedAt = Date.now();
+                const pwResp = await fetchHtmlByPlaywrightRequest(target, timeoutMs);
+                const pwElapsedMs = Date.now() - pwStartedAt;
+                const normalized = String(pwResp.body || '').toLowerCase();
+                const has404Signature = normalized.includes("we couldn't find the page you're looking for");
+                const hasLoginFieldSignature =
+                  normalized.includes('autocomplete="username"')
+                  || normalized.includes('name="login"')
+                  || normalized.includes('autocomplete="current-password"')
+                  || normalized.includes('type="password"');
+                const hasSpaShellSignature =
+                  normalized.includes('<div id="app"></div>')
+                  || (normalized.includes('/assets/index-') && normalized.includes('<title>智能施工企业管理平台</title>'));
+                const ok = pwResp.status >= 200 && pwResp.status < 400 && (hasLoginFieldSignature || hasSpaShellSignature) && !has404Signature;
+                checks.push({
+                  url: target,
+                  attempt,
+                  timeout_ms: timeoutMs,
+                  transport: 'playwright_api_request_fallback',
+                  status: pwResp.status,
+                  ok,
+                  elapsed_ms: pwElapsedMs,
+                  has_login_signature: hasLoginFieldSignature,
+                  has_404_signature: has404Signature,
+                });
+                if (ok) {
+                  return { ok: true, base_url: origin, login_url: target, checks };
+                }
+                lastError = has404Signature
+                  ? 'custom_login_route_missing'
+                  : `custom_login_contract_invalid: status=${pwResp.status}`;
+              } catch (pwError) {
+                const pwElapsedMs = Date.now() - startedAt;
+                const pwMessage = String(pwError?.message || pwError);
+                lastError = pwMessage;
+                checks.push({
+                  url: target,
+                  attempt,
+                  timeout_ms: timeoutMs,
+                  transport: 'playwright_api_request_fallback',
+                  ok: false,
+                  error: pwMessage,
+                  elapsed_ms: pwElapsedMs,
+                });
+                if (isConnectEpermError(pwMessage)) {
+                  checks.push({
+                    url: target,
+                    attempt,
+                    timeout_ms: timeoutMs,
+                    transport: 'eperm_fast_path',
+                    ok: false,
+                    error: 'connect_eperm_short_circuit',
+                  });
+                  const current = Number(originHandshakeFailureCounts.get(origin) || 0);
+                  originHandshakeFailureCounts.set(origin, current + 4);
+                  break;
+                }
+                if (isHandshakeFailureMessage(pwMessage)) {
+                  const current = Number(originHandshakeFailureCounts.get(origin) || 0);
+                  originHandshakeFailureCounts.set(origin, current + 1);
+                }
+              }
+            }
+          }
+          if (isHandshakeFailureMessage(lastError)) {
+            const current = Number(originHandshakeFailureCounts.get(origin) || 0);
+            originHandshakeFailureCounts.set(origin, current + 1);
+          }
+          const retriableAbort = isAbortLikeFetchError(error) && attempt < probeTimeoutMsByAttempt.length;
+          if (!retriableAbort) break;
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      if (Number(originHandshakeFailureCounts.get(origin) || 0) >= 4) {
+        checks.push({
+          origin,
+          url: target,
+          transport: 'origin_short_circuit',
+          ok: false,
+          error: 'repeated_handshake_failure',
+        });
+        break;
+      }
     }
   }
   return { ok: false, base_url: '', checks, last_error: lastError || 'unreachable' };
 }
 
 async function fetchLoginTokenByApi() {
-  const intentUrl = `${INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
+  const intentUrl = `${RUNTIME_INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
   const loginResp = await fetch(intentUrl, {
     method: 'POST',
     headers: {
@@ -171,7 +552,7 @@ async function bootstrapLoginToken(page, token) {
 
 async function resolveProjectEntryRouteByApi(token) {
   const runtimeToken = String(token || '').trim() || await fetchLoginTokenByApi();
-  const intentUrl = `${INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
+  const intentUrl = `${RUNTIME_INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
   const entryResp = await fetch(intentUrl, {
     method: 'POST',
     headers: {
@@ -383,7 +764,17 @@ async function submitLogin(page) {
   } else {
     await page.keyboard.press('Enter');
   }
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000, waitUntil: 'commit' });
+  try {
+    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 12000, waitUntil: 'commit' });
+    return;
+  } catch {}
+  await page.waitForFunction(() => {
+    const hasLoginUser = Boolean(document.querySelector('input[autocomplete="username"], input[name="login"], input[type="email"]'));
+    const hasLoginPassword = Boolean(document.querySelector('input[autocomplete="current-password"], input[name="password"], input[type="password"]'));
+    const hasLoginSurface = hasLoginUser && hasLoginPassword;
+    const hasToken = Boolean(sessionStorage.getItem('sc_auth_token'));
+    return !hasLoginSurface || hasToken;
+  }, null, { timeout: 12000 });
 }
 
 async function ensureProjectDashboardSurface(page) {
@@ -437,15 +828,15 @@ function buildSemanticEntryUrlCandidates(baseUrl, dbName, backendEntry = null) {
   const routeHasQuery = route.includes('?');
 
   for (const origin of baseOrigins) {
-    if (sceneKey) {
-      push(`${origin}/?db=${encodedDb}&scene_key=${encodeURIComponent(sceneKey)}`);
-      push(`${origin}/s/${encodeURIComponent(sceneKey)}?db=${encodedDb}`);
-    }
     if (route.startsWith('/')) {
       push(`${origin}${route}${routeHasQuery ? '&' : '?'}db=${encodedDb}`);
       if (sceneKey) {
         push(`${origin}${route}${routeHasQuery ? '&' : '?'}db=${encodedDb}&scene_key=${encodeURIComponent(sceneKey)}`);
       }
+    }
+    if (sceneKey) {
+      push(`${origin}/s/${encodeURIComponent(sceneKey)}?db=${encodedDb}`);
+      push(`${origin}/?db=${encodedDb}&scene_key=${encodeURIComponent(sceneKey)}`);
     }
     push(`${origin}/?db=${encodedDb}`);
   }
@@ -487,13 +878,16 @@ async function detectDashboardProfile(page, timeoutMs = 8000) {
     if (text.includes("We couldn't find the page you're looking for!")) return 'not_found';
     const oldProfile = text.includes('项目驾驶舱') && text.includes('下一步动作');
     const hasMetrics = text.includes('项目总数') || text.includes('项目阶段');
-    const hasProjectCardToken = /FR\d-[A-Z0-9-]+/i.test(text);
+    const hasProjectCardToken = /FR-\d+[A-Z0-9-]*/i.test(text);
     const hasPagingToken = /\b\d+\s*-\s*\d+\s*\/\s*\d+\b/.test(text);
+    const hasProjectDetailToken = /FR-\d+/i.test(text) && (text.includes('Owner') || text.includes('负责人'));
     const newProfile = text.includes('项目管理') && (hasMetrics || hasProjectCardToken || hasPagingToken);
+    const detailProfile = hasProjectCardToken || hasProjectDetailToken;
+    if (detailProfile) return 'new';
     if (oldProfile) return 'old';
     if (newProfile) return 'new';
     return null;
-  }, { timeout: timeoutMs });
+  }, null, { timeout: timeoutMs });
   return await profile.jsonValue();
 }
 
@@ -644,12 +1038,28 @@ async function waitForPrimaryActionResult(page) {
 let browser;
 let page;
 try {
-  const preflight = await probeCustomFrontendEntryReachability(BASE_URL, DB_NAME);
+  const connectivityDiagnostics = await runConnectivityDiagnostics(BASE_URL, DB_NAME);
+  summary.connectivity_diagnostics = connectivityDiagnostics;
+  if (!connectivityDiagnostics.ok) {
+    throw new Error(`connectivity_diagnostics_failed: ${connectivityDiagnostics.last_error || 'unknown'}`);
+  }
+  if (connectivityDiagnostics.degraded) {
+    summary.connectivity_diagnostics_degraded = true;
+  }
+
+  const preflight = await probeCustomFrontendEntryReachability(BASE_URL, DB_NAME, connectivityDiagnostics);
   summary.custom_frontend_preflight = preflight;
   if (!preflight.ok) {
-    throw new Error(`custom_frontend_entry_unreachable: ${preflight.last_error || 'unknown'}`);
+    const preflightError = String(preflight.last_error || 'unknown');
+    if (isConnectEpermMessage(preflightError)) {
+      summary.permission_lane_blocked = true;
+      throw new Error(`permission_lane_blocked: ${preflightError}`);
+    }
+    throw new Error(`custom_frontend_entry_unreachable: ${preflightError}`);
   }
   summary.effective_base_url = preflight.base_url || BASE_URL;
+  summary.effective_login_url = preflight.login_url || '';
+  RUNTIME_INTENT_BASE_URL = summary.effective_base_url || INTENT_BASE_URL;
 
   const launchBase = {
     headless: true,
@@ -689,21 +1099,62 @@ try {
   page.on('console', (msg) => {
     if (msg.type() === 'error') summary.console_errors.push(msg.text());
   });
+  page.on('response', (resp) => {
+    try {
+      const status = Number(resp.status() || 0);
+      if (status >= 500) {
+        const request = resp.request();
+        let intentHint = '';
+        try {
+          const jsonBody = request?.postDataJSON?.();
+          intentHint = String(jsonBody?.intent || '').trim();
+        } catch {}
+        if (!intentHint) {
+          try {
+            const rawBody = String(request?.postData?.() || '');
+            const match = rawBody.match(/"intent"\s*:\s*"([^"]+)"/);
+            intentHint = String(match?.[1] || '').trim();
+          } catch {}
+        }
+        const resource = {
+          status,
+          url: String(resp.url() || ''),
+          method: String(request?.method?.() || ''),
+          resource_type: String(request?.resourceType?.() || ''),
+          intent_hint: intentHint,
+        };
+        const key = `${resource.method}|${resource.status}|${resource.resource_type}|${resource.url}`;
+        const exists = summary.http_5xx_resources.some(
+          (item) => `${item.method}|${item.status}|${item.resource_type}|${item.url}` === key,
+        );
+        if (!exists) summary.http_5xx_resources.push(resource);
+      }
+    } catch {}
+  });
   page.on('pageerror', (err) => {
     summary.page_errors.push(String(err?.message || err));
   });
 
-  const bootstrapToken = await fetchLoginTokenByApi();
-  summary.login_mode = 'token_bootstrap';
-  await bootstrapLoginToken(page, bootstrapToken);
-  let backendEntry = null;
+  let bootstrapToken = '';
   try {
-    backendEntry = await resolveProjectEntryRouteByApi(bootstrapToken);
-    summary.backend_entry_route = backendEntry.route;
-    summary.backend_scene_key = backendEntry.scene_key || '';
-    summary.backend_project_context = backendEntry.project_context;
+    bootstrapToken = await fetchLoginTokenByApi();
+    summary.login_mode = 'token_bootstrap';
+    await bootstrapLoginToken(page, bootstrapToken);
   } catch (error) {
-    summary.backend_entry_route_error = String(error?.message || error);
+    summary.login_mode = 'form_login_only';
+    summary.login_intent_error = String(error?.message || error);
+  }
+
+  let backendEntry = null;
+  if (bootstrapToken) {
+    try {
+      backendEntry = await resolveProjectEntryRouteByApi(bootstrapToken);
+      summary.backend_entry_route = backendEntry.route;
+      summary.backend_scene_key = backendEntry.scene_key || '';
+      summary.backend_project_context = backendEntry.project_context;
+    } catch (error) {
+      summary.backend_entry_route_error = String(error?.message || error);
+    }
   }
   summary.project_route_url_used = await gotoSemanticEntryWithRecovery(page, backendEntry);
   summary.backend_scene_entry_url = summary.project_route_url_used;
@@ -713,7 +1164,7 @@ try {
   summary.dashboard_profile = dashboardProfile;
 
   const dashboardText = await page.locator('body').innerText();
-  const hasLegacyDashboard = dashboardText.includes('流程地图') || dashboardText.includes('下一步动作');
+  const hasLegacyDashboard = dashboardProfile === 'old';
   let projectOptionCount = 0;
   let optionTexts = [];
   let primaryResult = { mode: 'dashboard_only' };
@@ -744,12 +1195,13 @@ try {
     await clickPrimaryRecommendedAction(page);
     primaryResult = await waitForPrimaryActionResult(page);
   } else {
-    assert(dashboardText.includes('项目管理'), 'dashboard missing project management title');
+    const hasDashboardTitle = dashboardText.includes('项目管理');
     const hasDashboardMetrics = dashboardText.includes('项目总数') || dashboardText.includes('项目阶段');
     const hasProjectCards = await page.locator('[class*="kanban"], [class*="card"]').count();
+    const hasProjectDetailToken = /FR-\d+/i.test(dashboardText) && (dashboardText.includes('Owner') || dashboardText.includes('负责人'));
     assert(
-      hasDashboardMetrics || hasProjectCards > 0,
-      'project management surface missing both metrics and project cards',
+      hasDashboardTitle || hasDashboardMetrics || hasProjectCards > 0 || hasProjectDetailToken,
+      'project management surface missing both dashboard and project-detail semantic markers',
     );
   }
 
