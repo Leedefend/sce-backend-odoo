@@ -129,22 +129,22 @@ class TestDeliveryMenuServiceNativePreview(unittest.TestCase):
         nav = self.service.build_nav(policy=self.policy, role_surface={"role_code": "pm"}, native_nav=native_nav)
 
         root = nav[0]
-        self.assertEqual(root["key"], "root:delivery_engine")
+        self.assertEqual(root["key"], "root:system_menu")
+        self.assertEqual(root["label"], "系统菜单")
         groups = root["children"]
-        self.assertEqual(groups[0]["key"], "group:released_products")
-        self.assertEqual(groups[1]["key"], "group:released_utilities")
-        self.assertEqual(groups[2]["key"], "group:native_preview")
-        preview_children = groups[2]["children"]
-        self.assertEqual(len(preview_children), 4)
-        self.assertEqual(preview_children[0]["menu_id"], 201)
-        self.assertEqual(preview_children[1]["label"], "项目列表")
-        self.assertEqual(preview_children[1]["menu_id"], 202)
-        self.assertEqual(preview_children[3]["label"], "合同台账")
-        self.assertEqual(preview_children[3]["meta"]["action_id"], 504)
-        self.assertEqual(preview_children[3]["meta"]["model"], "construction.contract")
-        self.assertEqual(preview_children[0]["meta"]["route"], "/s/projects.intake")
-        self.assertEqual(preview_children[0]["meta"]["release_state"], "preview")
-        self.assertEqual(groups[2]["meta"]["release_state"], "preview")
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["label"], "项目中心")
+        merged_children = groups[0]["children"]
+        self.assertEqual(len(merged_children), 4)
+        self.assertEqual(merged_children[0]["menu_id"], 201)
+        self.assertEqual(merged_children[1]["label"], "项目列表")
+        self.assertEqual(merged_children[1]["menu_id"], 202)
+        self.assertEqual(merged_children[3]["label"], "合同台账")
+        self.assertEqual(merged_children[3]["meta"]["action_id"], 504)
+        self.assertEqual(merged_children[3]["meta"]["model"], "construction.contract")
+        self.assertEqual(merged_children[0]["meta"]["route"], "/s/projects.intake")
+        self.assertNotIn("release_state", merged_children[0]["meta"])
+        self.assertNotIn("release_state", groups[0]["meta"])
 
     def test_native_preview_projection_respects_role_pruned_native_nav(self):
         native_nav = [
@@ -172,11 +172,11 @@ class TestDeliveryMenuServiceNativePreview(unittest.TestCase):
 
         root = nav[0]
         groups = root["children"]
-        self.assertEqual(groups[0]["key"], "group:released_products")
-        self.assertEqual(len(groups[0]["children"]), 1)
-        self.assertEqual(groups[-1]["key"], "group:native_preview")
-        self.assertEqual(len(groups[-1]["children"]), 1)
-        self.assertEqual(groups[-1]["children"][0]["meta"]["scene_key"], "projects.list")
+        self.assertEqual(len(groups), 1)
+        children = groups[0]["children"]
+        self.assertEqual(len(children), 2)
+        self.assertEqual(children[0]["meta"]["scene_key"], "projects.list")
+        self.assertEqual(children[1]["meta"]["scene_key"], "my_work.workspace")
 
     def test_native_preview_projection_falls_back_to_policy_scene_route(self):
         policy = copy.deepcopy(self.policy)
@@ -212,11 +212,44 @@ class TestDeliveryMenuServiceNativePreview(unittest.TestCase):
         ]
 
         nav = self.service.build_nav(policy=policy, role_surface={"role_code": "pm"}, native_nav=native_nav)
-        preview_children = nav[0]["children"][-1]["children"]
+        preview_children = nav[0]["children"][0]["children"]
 
         self.assertEqual(preview_children[0]["label"], "项目驾驶舱")
         self.assertEqual(preview_children[0]["meta"]["scene_key"], "project.management")
         self.assertEqual(preview_children[0]["meta"]["route"], "/s/project.management")
+
+    def test_native_preview_projection_uses_leaf_level_action_context(self):
+        native_nav = [
+            {
+                "key": "root:scene_contract",
+                "children": [
+                    {
+                        "key": "group:role_primary",
+                        "children": [
+                            {
+                                "key": "menu:260",
+                                "menu_id": 260,
+                                "label": "合同看板",
+                                "children": [],
+                                "action_id": 860,
+                                "action_xmlid": "smart_construction_core.action_contract_board",
+                                "model": "construction.contract",
+                                "view_modes": ["kanban", "tree"],
+                                "meta": {"menu_xmlid": "smart_construction_core.menu_contract_board", "scene_source": "native_nav"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
+
+        nav = self.service.build_nav(policy=self.policy, role_surface={"role_code": "pm"}, native_nav=native_nav)
+        child = nav[0]["children"][0]["children"][0]
+
+        self.assertEqual(child["meta"]["action_id"], 860)
+        self.assertEqual(child["meta"]["action_xmlid"], "smart_construction_core.action_contract_board")
+        self.assertEqual(child["meta"]["model"], "construction.contract")
+        self.assertEqual(child["meta"]["view_modes"], ["kanban", "tree"])
 
     def test_describe_nav_exposes_stable_and_preview_counts(self):
         native_nav = [
@@ -251,13 +284,13 @@ class TestDeliveryMenuServiceNativePreview(unittest.TestCase):
         nav = self.service.build_nav(policy=self.policy, role_surface={"role_code": "pm"}, native_nav=native_nav)
         meta = self.service.describe_nav(nav)
 
-        self.assertEqual(meta["group_count"], 3)
-        self.assertEqual(meta["stable_group_count"], 2)
-        self.assertEqual(meta["native_preview_group_count"], 1)
-        self.assertEqual(meta["stable_leaf_count"], 2)
-        self.assertEqual(meta["native_preview_leaf_count"], 2)
-        self.assertEqual(meta["native_preview_group_key"], "native_preview")
-        self.assertEqual(meta["group_keys"], ["released_products", "released_utilities", "native_preview"])
+        self.assertEqual(meta["group_count"], 1)
+        self.assertEqual(meta["stable_group_count"], 1)
+        self.assertEqual(meta["native_preview_group_count"], 0)
+        self.assertEqual(meta["stable_leaf_count"], 3)
+        self.assertEqual(meta["native_preview_leaf_count"], 0)
+        self.assertEqual(meta["native_preview_group_key"], "")
+        self.assertEqual(meta["group_keys"], ["system.ungrouped"])
 
 
 if __name__ == "__main__":
