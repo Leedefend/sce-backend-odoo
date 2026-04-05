@@ -18,7 +18,8 @@ since: v0.3.0-stable
   - `make verify.extension_modules.guard DB_NAME=sc_demo`
   - required module tokens in `sc.core.extension_modules`:
     - `smart_construction_core`
-    - `smart_construction_portal`
+  - optional module tokens (non-blocking):
+    - `smart_scene` (future platform scene-kernel direction)
 - 导航对齐审计通过（业务前缀口径）:
   - `make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
   - `artifacts/audit/nav_alignment_report.latest.json` 中：
