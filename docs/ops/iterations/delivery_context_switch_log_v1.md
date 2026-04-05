@@ -10563,3 +10563,30 @@ Each entry must include:
 - completed_step: `ITER-2026-04-03-972 PASS：verify.release.execution_protocol.v1 与 verify.release.delivery_engine.v1 全部通过`
 - active_commit: `b2a6165`
 - next_step: `Proceed with formal release operation using accepted evidence bundle`
+
+### 2026-04-05T11:36:20+08:00
+- blocker_key: `prod_sim_dedemo_customer_user_alignment_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `prod-sim module footprint and customer user baseline`
+- reason: 用户要求将模拟生产环境从 demo 模块语义切换到客户交付语义，并导入指定客户用户数据
+- completed_step: `ITER-2026-04-05-973 FAIL：smart_construction_demo 已卸载且 customer 用户已对齐，但 verify.release.execution_protocol.v1 因 svc_e2e_smoke 登录 401 失败触发停机`
+- active_commit: `7de445f`
+- next_step: `STOP per acceptance_failed; open credential-lane alignment task then rerun release execution protocol`
+
+### 2026-04-05T12:00:10+08:00
+- blocker_key: `prod_sim_real_user_verification_lane_alignment_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `release verification account lane`
+- reason: 用户要求在去 demo 后将发布验证账号切换到真实客户用户
+- completed_step: `ITER-2026-04-05-974 FAIL：wutao 验证账号已对齐且 svc_e2e_smoke 401 阻塞已解除，但 release execution protocol 在 browser smoke 阶段因 /codex 目录写权限失败`
+- active_commit: `7de445f`
+- next_step: `STOP per acceptance_failed; open dedicated env-verify batch with writable ARTIFACTS_DIR and rerun protocol under E2E_LOGIN=wutao`
+
+### 2026-04-05T12:17:25+08:00
+- blocker_key: `prod_sim_release_protocol_artifacts_path_recovery_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `release execution protocol runtime environment`
+- reason: 在真实用户验证通道下修复 browser smoke 工件路径写权限并复跑正式执行协议
+- completed_step: `ITER-2026-04-05-975 PASS：ARTIFACTS_DIR=artifacts + E2E_LOGIN=wutao 条件下 verify.release.execution_protocol.v1 全链通过`
+- active_commit: `7de445f`
+- next_step: `Proceed with formal publish operation on current delivery-sim alignment baseline`
