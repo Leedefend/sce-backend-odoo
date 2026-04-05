@@ -44,6 +44,13 @@
   - 默认业务强校验范围：
     - `MENU_SCENE_ENFORCE_PREFIXES=smart_construction_core.,smart_construction_demo.,smart_construction_portal.`
 
+- 自定义前端交付模式下的运行扩展基线满足：
+  - `make verify.extension_modules.guard DB_NAME=<TARGET_DB>`
+  - `sc.core.extension_modules` 必需模块：
+    - `smart_construction_core`
+  - 可选模块（非阻断）：
+    - `smart_scene`（平台场景内核未来方向）
+
 ## 生产安全检查
 - `ENV=prod` 禁止：`make db.reset`, `make demo.*`, `make ci.*`, `make gate.*`
 - `ENV=prod` 必须 `PROD_DANGER=1`：`mod.install`, `mod.upgrade`, policy apply

@@ -44,6 +44,13 @@
   - default business enforcement scope:
     - `MENU_SCENE_ENFORCE_PREFIXES=smart_construction_core.,smart_construction_demo.,smart_construction_portal.`
 
+- Runtime extension baseline for custom-frontend delivery mode is satisfied:
+  - `make verify.extension_modules.guard DB_NAME=<TARGET_DB>`
+  - required module tokens in `sc.core.extension_modules`:
+    - `smart_construction_core`
+  - optional module tokens (non-blocking):
+    - `smart_scene` (future platform scene-kernel direction)
+
 ## Production Safety Checks
 - `ENV=prod` forbids: `make db.reset`, `make demo.*`, `make ci.*`, `make gate.*`
 - `ENV=prod` requires `PROD_DANGER=1` for `mod.install`, `mod.upgrade`, policy apply

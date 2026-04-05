@@ -23,7 +23,6 @@ normalized="${raw_value// /}"
 
 required_modules=(
   "smart_construction_core"
-  "smart_construction_portal"
 )
 missing_modules=()
 for mod in "${required_modules[@]}"; do
@@ -33,7 +32,12 @@ for mod in "${required_modules[@]}"; do
 done
 
 if [[ ${#missing_modules[@]} -eq 0 ]]; then
-  echo "[verify.extension_modules.guard] PASS db=${DB_NAME} value=${raw_value}"
+  if [[ ",${normalized}," == *",smart_scene,"* ]]; then
+    echo "[verify.extension_modules.guard] PASS db=${DB_NAME} value=${raw_value} scene_hint=present"
+  else
+    echo "[verify.extension_modules.guard] PASS db=${DB_NAME} value=${raw_value} scene_hint=recommended_missing"
+    echo "[verify.extension_modules.guard] INFO smart_scene is recommended for future scene-kernel alignment (non-blocking)."
+  fi
   exit 0
 fi
 
