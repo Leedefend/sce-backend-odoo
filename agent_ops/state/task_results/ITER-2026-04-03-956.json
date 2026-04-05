@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-03-956",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-956.md",
+  "publishability": "accepted",
+  "verification": {
+    "validate_task": "PASS",
+    "screen_input_load": "PASS"
+  },
+  "screen": {
+    "next_candidate_family": "release_operator_write_model_guard_payload_integrity",
+    "family_scope": "scripts/verify/release_operator_write_model_guard.sh",
+    "reason": "954 blocker originates in write-model guard execution lane; 955 scan has a single direct candidate"
+  },
+  "next_step": "Open ITER-2026-04-03-957 verify stage for release_operator_write_model_guard payload integrity checks."
+}

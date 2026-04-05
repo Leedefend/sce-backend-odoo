@@ -1,0 +1,12 @@
+{
+  "task_id": "ITER-2026-04-03-946",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-946.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "edition_route_fallback_guard": "FAIL"
+  },
+  "artifact": "artifacts/codex/edition-route-fallback-guard/20260404T140702Z/summary.json",
+  "next_step": "Open implement batch for edition_route_fallback_guard token-bootstrap hardening."
+}

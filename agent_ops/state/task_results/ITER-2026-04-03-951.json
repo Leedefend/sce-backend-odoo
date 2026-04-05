@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-03-951",
+  "status": "PASS_WITH_RISK",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-951.md",
+  "publishability": "conditional",
+  "verification": {
+    "validate_task": "PASS",
+    "restart_odoo": "PASS",
+    "product_scene_contract_guard": "PASS",
+    "release_operator_surface_v1": "FAIL"
+  },
+  "failure_gate": "verify.edition.route_fallback_guard",
+  "failure_reason": "fallback signal drift after runtime seed recovery",
+  "next_step": "Open guard alignment batch for fallback signal variants."
+}

@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-04-03-912",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-912.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host_with_cache_gateway": "PASS",
+    "make_verify_product_main_entry_convergence_v1_with_cache_gateway": "PASS"
+  },
+  "key_fix": {
+    "file": "addons/smart_construction_core/services/project_dashboard_service.py",
+    "change": "graceful fallback for missing sc.evidence.summary.service"
+  },
+  "runtime_probe": {
+    "project_entry_context_resolve_status": 200,
+    "fallback_route": "/my-work"
+  },
+  "next_step": "Optionally open semantic-supply batch to provide non-empty project context for sc_demo."
+}

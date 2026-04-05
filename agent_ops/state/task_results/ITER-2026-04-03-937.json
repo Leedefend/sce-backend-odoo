@@ -1,0 +1,7 @@
+{
+  "task_id": "ITER-2026-04-03-937",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-937.md",
+  "publishability": "screen_only",
+  "next_step": "Run 938 verify stage with declared delivery_policy_guard check only."
+}

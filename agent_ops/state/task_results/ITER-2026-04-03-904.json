@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-904",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-904.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_host_browser_runtime_probe_with_cache_window": "FAIL",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host_with_cache_window_and_explicit_gateway": "NOT_RUN"
+  },
+  "failure_point": "host browser runtime probe launch path",
+  "failure_reason": "No recent PASS cache-hit within configured window; live launch still fails with sandbox permission fatal.",
+  "next_step": "Create probe-cache policy batch with wider cache window and separated cache-refresh execution."
+}

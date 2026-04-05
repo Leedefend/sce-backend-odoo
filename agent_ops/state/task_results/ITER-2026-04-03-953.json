@@ -1,0 +1,12 @@
+{
+  "task_id": "ITER-2026-04-03-953",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-953.md",
+  "publishability": "accepted",
+  "verification": {
+    "validate_task": "PASS",
+    "release_operator_read_model_v1": "PASS"
+  },
+  "artifact": "artifacts/codex/release-operator-read-model-browser-smoke/20260404T173816Z/summary.json",
+  "next_step": "Continue next eligible low-risk delivery batch on active objective."
+}

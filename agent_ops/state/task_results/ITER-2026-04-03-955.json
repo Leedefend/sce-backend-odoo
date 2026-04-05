@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-04-03-955",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-955.md",
+  "publishability": "accepted",
+  "verification": {
+    "validate_task": "PASS",
+    "bounded_scan": "PASS"
+  },
+  "candidates": [
+    {
+      "path": "scripts/verify/release_operator_write_model_guard.sh",
+      "module": "verify guard",
+      "feature": "operator write-model guard output and assertion lane",
+      "reason": "direct blocker surfaced from verify.release.operator_write_model_guard failure"
+    }
+  ],
+  "next_step": "Open ITER-2026-04-03-956 screen stage to classify scan output."
+}

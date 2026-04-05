@@ -1,0 +1,22 @@
+{
+  "task_id": "ITER-2026-04-03-917",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-917.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "PASS"
+  },
+  "evidence": {
+    "summary": "artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T071637Z/summary.json",
+    "http_5xx_resources": [
+      {
+        "status": 500,
+        "url": "http://127.0.0.1/api/v1/intent?db=sc_demo",
+        "method": "POST",
+        "resource_type": "fetch"
+      }
+    ]
+  },
+  "next_step": "Open implement batch to normalize runtime intent origin and remove 127.0.0.1 500 noise path."
+}
