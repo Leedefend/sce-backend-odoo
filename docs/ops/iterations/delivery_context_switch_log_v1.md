@@ -10599,3 +10599,39 @@ Each entry must include:
 - completed_step: `ITER-2026-04-05-976 PASS：extension_modules guard 改为仅强制 smart_construction_core，smart_scene 改为非阻断推荐，发布清单模板已对齐`
 - active_commit: `6a75dc9`
 - next_step: `Proceed with formal publish using custom-frontend baseline (portal optional, scene recommended)`
+
+### 2026-04-05T12:55:28+08:00
+- blocker_key: `scene_dual_module_install_publish_precheck_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `scene module runtime footprint`
+- reason: 用户要求先安装 smart_scene 与 smart_construction_scene，再判断发布条件
+- completed_step: `ITER-2026-04-05-977 FAIL：smart_scene 安装成功，但 smart_construction_scene 安装因缺失 smart_construction_core.sc_cap_group_project_management 外部ID映射失败`
+- active_commit: `f4bccf7`
+- next_step: `STOP per acceptance_failed; open dedicated dependency/data-link repair batch for smart_construction_scene`
+
+### 2026-04-05T13:03:55+08:00
+- blocker_key: `scene_module_internal_xmlid_consistency_repair_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `scene installation dependency mapping`
+- reason: 按上一轮阻塞继续修复 smart_construction_scene 安装依赖映射并重试安装
+- completed_step: `ITER-2026-04-05-978 FAIL：已修复 smart_construction_core.* 依赖映射，但 smart_construction_scene 安装暴露模块内引用缺失 smart_construction_scene.sc_scene_project_initiation（sc_scene_layout.xml:121）`
+- active_commit: `f4bccf7`
+- next_step: `STOP per acceptance_failed; open source-fix batch under addons/smart_construction_scene data consistency`
+
+### 2026-04-05T13:06:20+08:00
+- blocker_key: `scene_layout_ref_target_consistency_fix_round1_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `scene module data-load consistency`
+- reason: 首轮源码修复将 version 记录引用改到已存在场景ID后继续安装验证
+- completed_step: `ITER-2026-04-05-979 FAIL：安装推进后暴露第二层问题（active_version update 记录ID仍指向不存在场景，触发 sc_scene.name 非空约束失败）`
+- active_commit: `f4bccf7`
+- next_step: `STOP per acceptance_failed; run second round source fix for active_version update target IDs`
+
+### 2026-04-05T13:43:10+08:00
+- blocker_key: `scene_layout_ref_target_consistency_fix_round2_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `scene module data-load consistency`
+- reason: 第二轮源码修复对齐 active_version update 记录ID并完成双场景安装与发布门禁复核
+- completed_step: `ITER-2026-04-05-980 PASS：smart_scene/smart_construction_scene 均 installed，verify.release.execution_protocol.v1（wutao + ARTIFACTS_DIR=artifacts）通过`
+- active_commit: `f4bccf7`
+- next_step: `Proceed with formal publish operation under dual-scene installed baseline`
