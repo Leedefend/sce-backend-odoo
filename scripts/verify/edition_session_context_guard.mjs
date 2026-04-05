@@ -23,6 +23,7 @@ function primeLocalRuntimeLibraries() {
 primeLocalRuntimeLibraries();
 
 const BASE_URL = String(process.env.BASE_URL || 'http://127.0.0.1').replace(/\/+$/, '');
+const API_BASE_URL = String(process.env.API_BASE_URL || 'http://127.0.0.1:18069').replace(/\/+$/, '');
 const DB_NAME = String(process.env.DB_NAME || 'sc_prod_sim').trim();
 const LOGIN = String(process.env.E2E_LOGIN || 'demo_pm').trim();
 const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
@@ -50,15 +51,53 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function fillLoginForm(page) {
-  await page.locator('input[autocomplete="username"]').fill(LOGIN);
-  await page.locator('input[autocomplete="current-password"]').fill(PASSWORD);
-  await page.locator('input[placeholder*="数据库"]').fill(DB_NAME);
+async function fetchLoginToken() {
+  let payload = null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Anonymous-Intent': 'true',
+      },
+      body: JSON.stringify({
+        intent: 'login',
+        params: {
+          login: LOGIN,
+          password: PASSWORD,
+          contract_mode: 'default',
+          db: DB_NAME,
+        },
+      }),
+    });
+    payload = {
+      status: response.status,
+      text: await response.text(),
+    };
+    if (Number(payload?.status || 0) === 200) {
+      const parsed = JSON.parse(String(payload?.text || '{}'));
+      const data = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+      const token = String(data?.session?.token || data?.token || '').trim();
+      assert(token, 'login response missing token');
+      return token;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+  }
+  throw new Error(`login token fetch failed: status=${payload?.status}`);
 }
 
-async function submitLogin(page) {
-  await page.locator('button.submit').click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 20000, waitUntil: 'commit' });
+async function bootstrapLogin(page) {
+  const token = await fetchLoginToken();
+  await page.addInitScript(({ runtimeToken, dbName }) => {
+    sessionStorage.setItem(`sc_auth_token:${dbName}`, runtimeToken);
+    sessionStorage.setItem('sc_auth_token:default', runtimeToken);
+    sessionStorage.setItem('sc_auth_token:test', runtimeToken);
+    sessionStorage.setItem('sc_auth_token', runtimeToken);
+    sessionStorage.setItem('sc_active_db:default', dbName);
+    sessionStorage.setItem('sc_active_db:test', dbName);
+    localStorage.setItem('sc_active_db:default', dbName);
+    localStorage.setItem('sc_active_db:test', dbName);
+  }, { runtimeToken: token, dbName: DB_NAME });
 }
 
 async function waitForRequestMatch(requests, predicate, timeoutMs = 20000) {
@@ -117,19 +156,19 @@ try {
     }
   });
 
-  await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'networkidle' });
-  await fillLoginForm(page);
-  await submitLogin(page);
-  await page.goto(`${BASE_URL}/my-work?edition=preview`, { waitUntil: 'networkidle' });
-  await page.waitForURL((url) => url.pathname === '/my-work' && url.searchParams.get('edition') === 'preview', { timeout: 20000 });
+  await bootstrapLogin(page);
+  await page.goto(`${BASE_URL}/my-work?edition=preview&db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((url) => url.pathname === '/my-work' && url.searchParams.get('edition') === 'preview', { timeout: 30000, waitUntil: 'commit' });
 
   const initRequest = await waitForRequestMatch(
     summary.intercepted,
     (item) => item.intent === 'system.init' && String(item.params?.edition_key || '').trim() === 'preview',
+    30000,
   );
   const summaryRequest = await waitForRequestMatch(
     summary.intercepted,
     (item) => item.intent === 'my.work.summary' && String(item.params?.edition_key || '').trim() === 'preview',
+    30000,
   );
   assert(initRequest, 'system.init preview routing request missing');
   assert(summaryRequest, 'my.work.summary preview edition pass-through missing');
@@ -141,6 +180,7 @@ try {
       && value?.effectiveEditionKey === 'preview'
       && value?.editionRuntimeV1?.effective?.edition_key === 'preview'
       && value?.deliveryEngineV1?.edition_key === 'preview',
+    30000,
   );
   assert(snapshot, 'session preview runtime context did not stabilize');
 

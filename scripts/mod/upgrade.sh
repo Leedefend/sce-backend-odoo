@@ -16,6 +16,44 @@ source "$ROOT_DIR/scripts/common/compose.sh"
 
 guard_prod_danger
 
+CUSTOMER_SEED_EXTERNAL_ID_GUARD="${CUSTOMER_SEED_EXTERNAL_ID_GUARD:-warn}"
+
+run_customer_seed_external_id_guard() {
+  local mode="$1"
+  local env_name="${ENV:-}"
+  if [[ "$env_name" == "prod" ]]; then
+    echo "[mod.upgrade][guard] skip customer seed external-id guard in prod mode"
+    return 0
+  fi
+  if [[ "$MODULE" != "smart_construction_core" && "$MODULE" != "smart_construction_custom" ]]; then
+    echo "[mod.upgrade][guard] skip customer seed external-id guard for module=$MODULE"
+    return 0
+  fi
+  if [[ "$mode" == "off" ]]; then
+    echo "[mod.upgrade][guard] customer seed external-id guard is off"
+    return 0
+  fi
+
+  echo "[mod.upgrade][guard] customer seed external-id guard mode=$mode db=$DB_NAME"
+  if ROOT_DIR="$ROOT_DIR" DB_NAME="$DB_NAME" ENV="${ENV:-}" ENV_FILE="${ENV_FILE:-}" \
+    COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" PROJECT="$PROJECT" \
+    bash "$ROOT_DIR/scripts/ops/check_customer_seed_external_ids.sh"; then
+    return 0
+  fi
+
+  if [[ "$mode" == "strict" ]]; then
+    echo "[mod.upgrade][guard] FAIL strict mode blocks upgrade"
+    return 1
+  fi
+
+  echo "[mod.upgrade][guard] WARN mode continues despite guard failure"
+  return 0
+}
+
+if ! run_customer_seed_external_id_guard "$CUSTOMER_SEED_EXTERNAL_ID_GUARD"; then
+  exit 1
+fi
+
 printf '[mod.upgrade] module=%s db=%s\n' "$MODULE" "$DB_NAME"
 
 compose_dev run --rm -T \
