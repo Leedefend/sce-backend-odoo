@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="project_sc_demo_seed_primary" model="project.project">
+            <field name="name">展厅-主线体验项目</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

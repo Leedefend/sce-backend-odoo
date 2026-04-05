@@ -14,6 +14,11 @@ from odoo.addons.smart_construction_core.services.project_task_state_support imp
 from .project_dashboard_builders import BUILDERS
 
 
+class _NullEvidenceSummaryService:
+    def summary_for_project(self, _project):
+        return {}
+
+
 class ProjectDashboardService:
     """Provide business-truth-backed dashboard data for orchestration carriers."""
 
@@ -32,7 +37,8 @@ class ProjectDashboardService:
     def __init__(self, env):
         self.env = env
         self._evidence_chain_service = EvidenceChainService(env)
-        self._evidence_summary_service = env["sc.evidence.summary.service"]
+        evidence_summary_service = self._model("sc.evidence.summary.service")
+        self._evidence_summary_service = evidence_summary_service or _NullEvidenceSummaryService()
         self._decision_engine = ProjectDecisionEngineService(env)
         self._state_explain_service = ProjectStateExplainService(env)
         self._metrics_explain_service = ProjectMetricsExplainService(env)

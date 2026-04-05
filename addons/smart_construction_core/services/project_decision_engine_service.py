@@ -63,8 +63,79 @@ class ProjectDecisionEngineService:
                 return 0.0
         return 0.0
 
+    @staticmethod
+    def _fallback_analyze_payload(project):
+        lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower() if project else ""
+        project_id = int(getattr(project, "id", 0) or 0) if project else 0
+        return {
+            "lifecycle_state": lifecycle_state,
+            "task_count": 0,
+            "cost_count": 0,
+            "payment_count": 0,
+            "settlement_count": 0,
+            "settlement_done_count": 0,
+            "cost_total": 0.0,
+            "payment_total": 0.0,
+            "progress_percent": 0.0,
+            "signals": {
+                "is_draft": lifecycle_state == "draft",
+                "ready_for_settlement": False,
+                "payment_exceeds_cost": False,
+                "settlement_completed": False,
+            },
+            "risk_count": 0,
+            "risk_codes": [],
+            "risks": [],
+            "evidence_summary": {},
+            "project_id": project_id,
+            "decision_fallback": "risk_engine_unavailable",
+        }
+
+    def _fallback_decide_payload(self, project):
+        facts = self._fallback_analyze_payload(project)
+        primary_key = "project_execution_enter"
+        return {
+            "primary_action_key": primary_key,
+            "reason": "risk/action engine unavailable, fallback decision applied",
+            "decision_rule": "fallback_unavailable_engine",
+            "decision_source": self.DECISION_SOURCE,
+            "priority_scores": {primary_key: 100},
+            "available_action_keys": [primary_key],
+            "actions": [
+                {
+                    "action_key": primary_key,
+                    "label": "进入执行推进",
+                    "intent": "project.execution.enter",
+                    "reason": "fallback action",
+                    "risk_codes": [],
+                    "evidence_refs": [],
+                }
+            ],
+            "primary_action": {
+                "action_key": primary_key,
+                "label": "进入执行推进",
+                "intent": "project.execution.enter",
+                "reason": "fallback action",
+                "risk_codes": [],
+                "evidence_refs": [],
+            },
+            "facts": facts,
+        }
+
     def analyze(self, project):
-        return self.env["sc.evidence.risk.engine"].analyze(project)
+        risk_engine = self._model("sc.evidence.risk.engine")
+        if risk_engine is None:
+            return self._fallback_analyze_payload(project)
+        try:
+            return risk_engine.analyze(project)
+        except Exception:
+            return self._fallback_analyze_payload(project)
 
     def decide(self, project):
-        return self.env["sc.evidence.action.engine"].decide(project)
+        action_engine = self._model("sc.evidence.action.engine")
+        if action_engine is None:
+            return self._fallback_decide_payload(project)
+        try:
+            return action_engine.decide(project)
+        except Exception:
+            return self._fallback_decide_payload(project)
