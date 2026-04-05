@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-03-954
+title: Verify operator write-model gate continuity after read-model pass
+type: governance
+status: active
+priority: high
+mode: verify
+
+goal: >
+  Validate next release gate continuity by replaying operator write-model gate
+  after operator read-model recovery.
+
+user_visible_outcome:
+  - "确认主线推进到 write-model 门禁后的真实状态"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify_only_declared_checks
+  - no_implementation_changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-953
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: release operator write-model gate verify
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Verify-stage continuity replay only; no business-fact mutation.
+  reason: >
+    release gate sequence places operator write-model after 953 read-model pass.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-954.yaml
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.release.operator_write_model.v1 DB_NAME=sc_demo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - operator_write_model_gate_verify_result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-954.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-954.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-954.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-953

@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-03-918
+title: Skip localhost->127 loopback redirect in test app env
+type: backend
+status: active
+priority: medium
+mode: implement
+
+goal: >
+  Prevent non-blocking 500 noise path by avoiding localhost->127 loopback
+  host normalization in test runtime.
+
+user_visible_outcome:
+  - "test 环境不再强制 localhost 跳转 127，减少跨 host 噪音请求"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/main.ts
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - generic_frontend_runtime_only
+  - no_model_specific_branching
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-917
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: frontend runtime loopback normalization gate
+  module_owner: frontend_runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Frontend consumes unchanged semantics; this is host normalization behavior fix.
+  reason: >
+    917 evidence shows captured 500 request on 127.0.0.1 intent endpoint while
+    entry semantics already PASS on localhost.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-918.yaml
+    - HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin DB_NAME=sc_demo make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - test_env_loopback_redirect_guard
+
+rollback:
+  - git restore frontend/apps/web/src/main.ts
+  - git restore agent_ops/tasks/ITER-2026-04-03-918.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-918.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-918.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-917

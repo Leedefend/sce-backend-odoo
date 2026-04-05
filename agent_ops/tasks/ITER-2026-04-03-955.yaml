@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-03-955
+title: Scan candidates for operator write-model trace null blocker
+type: governance
+status: active
+priority: high
+mode: scan
+
+goal: >
+  Collect bounded candidate locations related to operator write-model guard
+  failure on `sc_release_action.execution_trace_json` non-null constraint.
+
+user_visible_outcome:
+  - "产出 write-model 阻断候选文件清单，供下一步 screen 分类"
+
+scope:
+  allowed_paths:
+    - scripts/verify/release_operator_write_model_guard.sh
+    - addons/smart_construction_core/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 15
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - scan_only_collect_candidates
+  - no_classification
+  - no_implementation_changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-954
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: release operator write-model blocker scan
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Scan stage only collects orchestration-path candidates without reasoning
+    across stages.
+  reason: >
+    Acceptance failure in 954 requires low-cost scan->screen->verify triage.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-955.yaml
+    - rg -n "execution_trace_json|sc_release_action|release_operator_write_model_guard" scripts/verify/release_operator_write_model_guard.sh addons/smart_construction_core --glob "*.py" --glob "*.sh"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - operator_write_model_blocker_candidate_list
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-955.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-955.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-955.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-954

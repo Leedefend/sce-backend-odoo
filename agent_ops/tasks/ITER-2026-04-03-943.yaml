@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-03-943
+title: Stabilize edition session context guard via token bootstrap flow
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Reduce navigation-timeout drift in edition session context guard by replacing
+  fragile form-login navigation with token bootstrap flow.
+
+user_visible_outcome:
+  - "edition session context guard 更稳定，不再因登录导航超时误阻断主线"
+
+scope:
+  allowed_paths:
+    - scripts/verify/edition_session_context_guard.mjs
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - guard_script_flow_hardening_only
+  - no_business_fact_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-942
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: edition session context verification guard
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Change is verification-flow hardening in scenario guard script; no contract
+    or business fact mutation.
+  reason: >
+    Verify-stage evidence shows repeated timeout around login->route navigation;
+    token bootstrap path is already proven stable in adjacent host smoke scripts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-943.yaml
+    - node --check scripts/verify/edition_session_context_guard.mjs
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.edition.session_context_guard DB_NAME=sc_demo
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.release.operator_surface.v1 DB_NAME=sc_demo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - edition_session_context_guard_flow_stabilization
+
+rollback:
+  - git restore scripts/verify/edition_session_context_guard.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-943.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-943.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-943.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-942

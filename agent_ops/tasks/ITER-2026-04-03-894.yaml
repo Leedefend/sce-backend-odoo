@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-03-894
+title: Stabilize host login preflight against transient fetch aborts
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Reduce false-negative host gate failures by adding bounded retry and adaptive
+  timeout behavior for custom-login preflight probes.
+
+user_visible_outcome:
+  - "主入口预检对瞬时网络抖动更稳健，减少误判不可达"
+  - "验证更快进入语义入口判定而非卡在 fetch 中断"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - host_preflight_resilience_only
+  - custom_frontend_only_guard
+  - no_business_model_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-893
+  priority_lane: usability_release_proof
+  usability_battlefield: cross_stack_verification
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: host custom-login preflight resilience
+  module_owner: scene_orchestration_governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch tunes verification orchestration robustness for entry probing and
+    does not change any business truth.
+  reason: >
+    Current host gate fails before semantic routing checks because all login
+    probes abort at fixed timeout; bounded resilience is needed to keep
+    verification signal reliable.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-894.yaml
+    - make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+    - make verify.product.main_entry_convergence.v1
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - host preflight supports bounded retry for abort/timeouts
+  - updated verification evidence for stabilized preflight path
+
+rollback:
+  - git restore scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-894.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-894.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-894.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-893

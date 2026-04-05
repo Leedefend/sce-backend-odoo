@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-03-932
+title: Delivery menu integrity drift scan (candidates only)
+type: governance
+status: active
+priority: high
+mode: scan
+
+goal: >
+  Collect bounded candidate evidence for delivery menu integrity drift without
+  concluding root cause in scan stage.
+
+user_visible_outcome:
+  - "明确列出 delivery menu drift 候选证据点"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 5
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - scan_only_no_conclusion
+  - no_implementation_changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-931
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: delivery menu integrity drift scan
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Scan stage gathers guard-evidence candidates only; no business fact change.
+  reason: >
+    931 failed on menu keys drift; low-cost governance requires scan before
+    screen and verify.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-932.yaml
+    - rg -n "verify.product.delivery_menu_integrity_guard|menu keys drift|EXPECTED_MENU_KEYS" Makefile scripts/verify/product_delivery_menu_integrity_guard.py
+    - cat artifacts/backend/product_delivery_menu_integrity_guard.json
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - delivery_menu_drift_scan_candidates
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-932.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-932.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-932.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-931

@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-03-948
+title: Resolve fallback lane credential drift in edition route fallback guard
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Eliminate login-token 401 drift in edition route fallback guard by adding
+  deterministic low-risk fallback credential resolution for demo runtime lanes.
+
+user_visible_outcome:
+  - "route_fallback_guard 不再因 demo 凭据漂移误失败"
+
+scope:
+  allowed_paths:
+    - scripts/verify/edition_route_fallback_guard.mjs
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 2
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - guard_script_credential_resolution_only
+  - no_business_fact_change
+  - no_acl_or_manifest_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-947
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: edition route fallback verification guard
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This change only hardens verification script credential orchestration and
+    does not alter business facts.
+  reason: >
+    Current guard fails with login token fetch 401 for demo_finance; scan shows
+    sc_demo user seeds use multiple demo password lanes. Guard needs controlled
+    fallback credential resolution.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-948.yaml
+    - node --check scripts/verify/edition_route_fallback_guard.mjs
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.edition.route_fallback_guard DB_NAME=sc_demo
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.release.operator_surface.v1 DB_NAME=sc_demo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - edition_route_fallback_guard_credential_drift_fix
+
+rollback:
+  - git restore scripts/verify/edition_route_fallback_guard.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-948.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-948.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-948.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-947

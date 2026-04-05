@@ -1,0 +1,96 @@
+task_id: ITER-2026-04-03-915
+title: Materialize minimal project seed for sc_demo entry convergence
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Materialize minimal install-time project seed facts so sc_demo can resolve
+  non-empty project context for project.entry.context.resolve.
+
+user_visible_outcome:
+  - "sc_demo 主入口可解析项目上下文，不再仅回退 /my-work"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_custom/__manifest__.py
+    - addons/smart_construction_custom/data/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_seed_only
+  - business_fact_layer_only
+  - no_frontend_special_case
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-914
+  priority_lane: usability_release_proof
+  usability_battlefield: backend_semantics
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: customer seed materialization for entry context
+  module_owner: smart_construction_custom
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact
+  backend_sub_layer_reason: >
+    Required change is missing project business truth for sc_demo runtime.
+  reason: >
+    Screen batches confirmed sc_demo has zero project records; entry fallback to
+    /my-work is expected until minimal project fact is materialized.
+
+risk:
+  level: high
+  manual_approval_required: true
+  exception_policy: section_6_7_customer_seed_materialization
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-915.yaml
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim MODULE=smart_construction_custom DB_NAME=sc_demo make mod.upgrade
+    - docker exec sc-backend-odoo-prod-sim-db-1 psql -U odoo -d sc_demo -c "select count(*) from project_project;"
+    - HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin DB_NAME=sc_demo make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+  - authority_scope_unclear
+
+deliverables:
+  - sc_demo_minimal_project_seed_data
+  - entry_route_convergence_evidence
+
+rollback:
+  - git restore addons/smart_construction_custom/__manifest__.py
+  - git restore addons/smart_construction_custom/data/customer_project_seed.xml
+  - git restore agent_ops/tasks/ITER-2026-04-03-915.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-915.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-915.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-914

@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-03-896
+title: Add explicit connectivity diagnostics gate before host browser smoke
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Add bounded TCP/HTTP diagnostics before host login preflight so environment
+  connectivity blockers are classified explicitly and earlier.
+
+user_visible_outcome:
+  - "主入口验收在浏览器烟测前先输出连通性诊断证据"
+  - "不可达场景快速失败并给出可执行诊断信号"
+
+scope:
+  allowed_paths:
+    - scripts/verify/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - diagnostics_gate_only
+  - custom_frontend_only_guard
+  - no_business_model_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-895
+  priority_lane: usability_release_proof
+  usability_battlefield: cross_stack_verification
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: host preflight connectivity diagnostics gate
+  module_owner: scene_orchestration_governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch adds verification diagnostics and gating orchestration only,
+    without changing business facts.
+  reason: >
+    Current host gate still fails with transport timeouts; explicit diagnostics
+    must classify TCP/HTTP reachability before browser semantic checks.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-896.yaml
+    - make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+    - make verify.product.main_entry_convergence.v1
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - connectivity diagnostics artifact in host smoke summary
+  - early-fail gate when no TCP reachability exists
+
+rollback:
+  - git restore scripts/verify/project_dashboard_primary_entry_browser_smoke.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-896.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-896.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-896.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-895

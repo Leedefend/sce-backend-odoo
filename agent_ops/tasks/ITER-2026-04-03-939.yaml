@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-03-939
+title: Align delivery policy guard with release-core policy semantics
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Unblock release acceptance by aligning delivery policy guard menu checks with
+  release-core policy semantics while allowing governed native-preview menu
+  extensions.
+
+user_visible_outcome:
+  - "release 主线不再因 policy guard 对扩展菜单误判而阻断"
+
+scope:
+  allowed_paths:
+    - scripts/verify/product_delivery_policy_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_guard_logic_update_only
+  - no_business_fact_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-938
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: delivery policy guard
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Change refines policy verification semantics at orchestration contract level,
+    without mutating business-fact models.
+  reason: >
+    Verified failure shows policy core keys match release lane intent while
+    runtime nav includes governed native-preview extensions.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-939.yaml
+    - python3 -m py_compile scripts/verify/product_delivery_policy_guard.py
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim E2E_LOGIN=admin E2E_PASSWORD=admin make verify.product.delivery_policy_guard DB_NAME=sc_demo
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.release.operator_surface.v1 DB_NAME=sc_demo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - delivery_policy_guard_semantic_alignment
+
+rollback:
+  - git restore scripts/verify/product_delivery_policy_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-03-939.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-939.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-939.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-938
