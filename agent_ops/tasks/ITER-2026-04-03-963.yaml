@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-03-963
+title: Implement backend grouped projection for native-preview menus
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Replace native-preview leaf-only projection with grouped projection based on
+  native navigation hierarchy to restore menu grouping semantics.
+
+user_visible_outcome:
+  - "原生预发布菜单不再完全平铺，按后端分组投影展示"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_service.py
+    - addons/smart_core/tests/test_delivery_menu_service_native_preview.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - backend_grouped_projection_only
+  - no_business_fact_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-962
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: native preview menu projection
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Changes only affect navigation projection semantics for release-navigation
+    consumption.
+  reason: >
+    Current native-preview projection flattens leaf menus and loses grouping
+    usability; backend should supply grouped projection semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-963.yaml
+    - python3 -m unittest addons.smart_core.tests.test_delivery_menu_service_native_preview
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - native_preview_grouped_projection
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_service.py
+  - git restore addons/smart_core/tests/test_delivery_menu_service_native_preview.py
+  - git restore agent_ops/tasks/ITER-2026-04-03-963.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-963.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-963.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-962

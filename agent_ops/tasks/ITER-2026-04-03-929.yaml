@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-03-929
+title: Operator surface heading drift screen (classification only)
+type: governance
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Classify scan-stage candidates for operator-surface smoke failure and select
+  a single verify-stage path, without rescanning repository.
+
+user_visible_outcome:
+  - "给出候选优先级分类与下一条 verify 路径"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 4
+  max_candidates: 5
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen_only_no_rescan
+  - no_implementation_changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-928
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: operator surface heading expectation screen
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This stage classifies existing evidence and selects verify path; no fact or
+    orchestration implementation changes.
+  reason: >
+    Low-cost governance flow requires screen classification before verify action.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-929.yaml
+    - cat agent_ops/reports/2026-04-03/report.ITER-2026-04-03-928.md
+    - cat artifacts/codex/release-operator-surface-browser-smoke/20260404T085255Z/summary.json
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - operator_surface_screen_classification
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-929.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-929.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-929.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-928

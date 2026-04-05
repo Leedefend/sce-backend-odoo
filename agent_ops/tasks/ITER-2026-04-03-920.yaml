@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-03-920
+title: Add fallback when evidence risk/action engines are unavailable
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Eliminate project.dashboard.enter internal 500 by degrading gracefully when
+  sc.evidence.risk.engine or sc.evidence.action.engine is unavailable.
+
+user_visible_outcome:
+  - "project.dashboard.enter 不再因缺失引擎模型报 500"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/services/project_decision_engine_service.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_fallback_only
+  - no_contract_field_remove
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-919
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: project decision engine fallback
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Fix is orchestration-layer dependency fallback, not business-fact mutation.
+  reason: >
+    Logs and smoke evidence show project.dashboard.enter 500 due to missing
+    sc.evidence.risk.engine dependency.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-920.yaml
+    - python3 -m py_compile addons/smart_construction_core/services/project_decision_engine_service.py
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim MODULE=smart_construction_core DB_NAME=sc_demo CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_construction_core make mod.upgrade
+    - HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin DB_NAME=sc_demo make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - project_dashboard_enter_500_fallback_fix
+
+rollback:
+  - git restore addons/smart_construction_core/services/project_decision_engine_service.py
+  - git restore agent_ops/tasks/ITER-2026-04-03-920.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-920.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-920.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-919

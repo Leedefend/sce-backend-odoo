@@ -1,0 +1,92 @@
+task_id: ITER-2026-04-03-901
+title: Execute host gate with explicit gateway origin binding
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Validate host primary-entry gate under explicit gateway origin binding using
+  runtime environment configuration only.
+
+user_visible_outcome:
+  - "主入口验收按显式网关 origin 执行并输出独立证据"
+  - "将环境网关不可用与脚本策略问题进一步分离"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verification_and_reporting_only
+  - explicit_gateway_binding_required
+  - no_business_model_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-900
+  priority_lane: usability_release_proof
+  usability_battlefield: cross_stack_verification
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: host explicit-gateway verification run
+  module_owner: scene_orchestration_governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch executes verification under explicit orchestration inputs only,
+    with no business semantic changes.
+  reason: >
+    After introducing gateway allowlist support, run acceptance with explicit
+    `GATEWAY_BASE_URLS` to isolate runtime gateway availability.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-901.yaml
+    - GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host
+    - GATEWAY_BASE_URLS=http://localhost:8069 make verify.product.main_entry_convergence.v1
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - explicit-gateway host gate verification evidence
+  - updated iteration checkpoint with explicit gateway run result
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-03-901.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-901.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-901.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-900

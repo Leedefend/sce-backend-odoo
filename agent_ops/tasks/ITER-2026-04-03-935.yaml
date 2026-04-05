@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-03-935
+title: Align delivery menu integrity guard with release-core semantics
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Unblock delivery acceptance by adjusting menu integrity guard from strict
+  full-list equality to release-core integrity checks compatible with
+  additional native-preview entries.
+
+user_visible_outcome:
+  - "release 主线验收不再被 native-preview 扩展菜单误拦截"
+
+scope:
+  allowed_paths:
+    - scripts/verify/product_delivery_menu_integrity_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_guard_logic_update_only
+  - no_business_fact_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-934
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: delivery menu integrity guard
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Change refines verification semantics for release-core menu integrity,
+    without mutating business-fact models.
+  reason: >
+    Verified drift shows expected release-core keys are present while
+    native-preview extension keys are appended; strict full-list equality causes
+    false blocking in release acceptance chain.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-935.yaml
+    - python3 -m py_compile scripts/verify/product_delivery_menu_integrity_guard.py
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim E2E_LOGIN=admin E2E_PASSWORD=admin make verify.product.delivery_menu_integrity_guard DB_NAME=sc_demo
+    - ARTIFACTS_DIR=artifacts HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost E2E_LOGIN=admin E2E_PASSWORD=admin make verify.release.operator_surface.v1 DB_NAME=sc_demo
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - delivery_menu_guard_semantic_alignment
+
+rollback:
+  - git restore scripts/verify/product_delivery_menu_integrity_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-03-935.yaml
+  - git restore agent_ops/reports/2026-04-03/report.ITER-2026-04-03-935.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-03-935.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-03-934
