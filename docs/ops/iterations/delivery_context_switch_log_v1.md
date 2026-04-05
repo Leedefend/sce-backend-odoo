@@ -9576,3 +9576,990 @@ Each entry must include:
   - stop condition triggered (`acceptance_failed`)
   - publishability decision remains `not_publishable`
   - next efficient action is dedicated environment-route fix to bind real custom frontend login URL into host gates
+## 2026-04-03 迭代锚点（ITER-2026-04-03-892）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host login route contract binding`
+- Reason: remove single-route preflight assumption and bind to effective custom login route set
+- `892` implement result:
+  - preflight now validates both `/web/login` and `/login`
+  - stores `effective_base_url` + `effective_login_url` on first valid custom login contract
+  - 404 detection narrowed to true 404 signature only
+- `892` verify result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-892.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`native_odoo_surface_detected`)
+  - `make verify.product.main_entry_convergence.v1`: FAIL at host gate with same reason
+  - host browser runtime probe: PASS
+  - preflight evidence: `effective_login_url = http://localhost:8070/web/login?db=sc_demo`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is routing governance: keep semantic entry on custom frontend shell and block native shell takeover
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-893）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host semantic entry route ordering governance`
+- Reason: prioritize backend semantic route and demote root scene-key fallback to reduce native-shell takeover risk in host gate
+- `893` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-893.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs` candidate order:
+    - backend `route` URL first
+    - `/s/{scene_key}` fallback second
+    - root-level `/?db&scene_key=` fallback kept but no longer first hop
+- `893` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-893.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: This operation was aborted`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T011842Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated host-runtime reachability stabilization batch before rerunning host and convergence gates
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-894）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host custom-login preflight resilience`
+- Reason: classify and absorb transient fetch aborts to reduce false-negative host gate failures before semantic routing checks
+- `894` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-894.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs` preflight probing:
+    - bounded retry (2 attempts) per login URL candidate
+    - adaptive timeout sequence (`6000ms`, `12000ms`)
+    - retry restricted to abort-like failures
+    - probe artifact now records `attempt` and `timeout_ms`
+- `894` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-894.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: fetch failed`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T012253Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is a dedicated connectivity-classification batch before retrying host/main-entry gates
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-895）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host login preflight connectivity fallback`
+- Reason: add transport fallback to classify and absorb fetch-stack instability in host preflight
+- `895` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-895.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - added `http/https` fallback probe for fetch-abort / fetch-failed cases
+    - fallback records transport marker `http_module_fallback`
+    - bounded retries/timeouts remain enforced
+- `895` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-895.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: http_module_timeout`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T012716Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated environment diagnostics (TCP/http) before host/main-entry gate rerun
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-896）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host preflight connectivity diagnostics gate`
+- Reason: classify environment reachability explicitly before browser smoke to avoid long opaque transport failures
+- `896` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-896.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - added TCP diagnostics for custom-frontend origins
+    - added lightweight HTTP diagnostics on TCP-reachable origins
+    - added early diagnostics gate failure `connectivity_diagnostics_failed:*`
+- `896` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-896.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`connectivity_diagnostics_failed: no_tcp_reachability`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T013445Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is runtime-network recovery for host port 8070 before retrying host/main-entry gates
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-897）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host diagnostics origin discovery`
+- Reason: widen local origin candidate discovery to move blocker from pure timeout to actionable handshake evidence
+- `897` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-897.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - added env-configurable origin fallback `BASE_URL_FALLBACKS`
+    - added bounded local fallback origins (`80`, `8069`) for `:8070` base
+    - diagnostics and preflight now consume expanded origin set
+- `897` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-897.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: socket hang up`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T014217Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is host-login handshake recovery and verified endpoint binding for host gate
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-898）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host login preflight handshake recovery`
+- Reason: add third transport stack (Playwright APIRequest) to distinguish network-stack failures from real login-contract failures
+- `898` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-898.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - imported Playwright `request` API
+    - added `playwright_api_request_fallback` after fetch/http-module fallback failures
+    - persisted fallback evidence into preflight checks
+- `898` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-898.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: apiRequestContext.get: socket hang up`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T015221Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is runtime endpoint binding with handshake-failing origin short-circuit before host/main-entry rerun
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-899）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host login preflight endpoint strategy`
+- Reason: reduce timeout-heavy retries by ordering endpoints from diagnostics and short-circuiting repeated handshake-failing origin families
+- `899` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-899.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - preflight origin ordering bound to diagnostics score
+    - added `origin_short_circuit` on repeated handshake failures
+    - preflight now prioritizes diagnostics-healthy origin family first
+- `899` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-899.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`custom_frontend_entry_unreachable: apiRequestContext.get: Timeout 12000ms exceeded`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T020920Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is explicit custom-frontend gateway endpoint binding for host verification lane
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-900）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host preflight gateway origin contract`
+- Reason: constrain host verification lane to explicit gateway origins and avoid noisy non-gateway fallback probes
+- `900` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-900.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - added `GATEWAY_BASE_URLS` explicit gateway allowlist
+    - allowlist mode bypasses implicit fallback expansion
+    - default path no longer auto-expands to `:8069`
+- `900` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-900.yaml`: PASS
+  - `make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL (`connectivity_diagnostics_failed: no_tcp_reachability`)
+  - `make verify.product.main_entry_convergence.v1`: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T021902Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is endpoint-binding governance execution with explicit `GATEWAY_BASE_URLS` on confirmed live custom-frontend gateway
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-901）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host explicit-gateway verification run`
+- Reason: execute host gate under explicit gateway binding to isolate runtime gateway availability from script strategy factors
+- `901` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-901.yaml`
+  - ran explicit-gateway acceptance command:
+    - `GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`
+- `901` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-901.yaml`: PASS
+  - explicit-gateway host gate: FAIL at `verify.portal.host_browser_runtime_probe`
+  - failure: Playwright launch fatal `sandbox_host_linux.cc` (`Operation not permitted`)
+  - convergence gate: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/host-browser-runtime-probe/20260404T022742Z`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated host-runtime stability recovery before rerunning explicit-gateway host/main-entry gates
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-902）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host browser runtime probe fallback policy`
+- Reason: broaden fallback trigger to recover from sandbox/permission launch failures observed in explicit-gateway chain
+- `902` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-902.yaml`
+  - updated `scripts/verify/host_browser_runtime_probe.mjs`:
+    - fallback trigger now includes sandbox/permission signatures (`sandbox_host_linux.cc`, `Operation not permitted`, browser-closed)
+- `902` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-902.yaml`: PASS
+  - `make verify.portal.host_browser_runtime_probe`: PASS
+  - `GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - chained failure at nested runtime probe: crashpad socket permission (`setsockopt: Operation not permitted`)
+  - latest evidence: `artifacts/codex/host-browser-runtime-probe/20260404T023154Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is host-runtime permission stability recovery before explicit-gateway gate rerun
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-903）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host runtime probe chained stability`
+- Reason: reduce nested runtime-probe instability by hardening launch profile order and retry behavior
+- `903` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-903.yaml`
+  - updated `scripts/verify/host_browser_runtime_probe.mjs`:
+    - introduced launch profile chain (`default` -> `full_chrome_fallback` -> `default_retry_tail`)
+    - added crash-report related launch args
+    - recorded `launch_attempts` for diagnosis
+- `903` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-903.yaml`: PASS
+  - `make verify.portal.host_browser_runtime_probe`: PASS
+  - `GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - nested runtime probe still fails with `sandbox_host_linux.cc` (`Operation not permitted`)
+  - latest evidence: `artifacts/codex/host-browser-runtime-probe/20260404T024605Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is make-chain isolation to avoid repeated nested probe launches in same host-gate execution
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-904）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host runtime probe chain isolation`
+- Reason: avoid chained relaunch noise by reusing recent PASS probe result when within bounded cache window
+- `904` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-904.yaml`
+  - updated `scripts/verify/host_browser_runtime_probe.mjs`:
+    - added recent PASS cache short-circuit (`HOST_RUNTIME_PROBE_MAX_AGE_SEC`)
+    - added cache metadata output (`probe_cache_max_age_sec`, `cached_from`)
+- `904` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-904.yaml`: PASS
+  - `HOST_RUNTIME_PROBE_MAX_AGE_SEC=300 make verify.portal.host_browser_runtime_probe`: FAIL
+  - failure: `sandbox_host_linux.cc` (`Operation not permitted`)
+  - host gate with explicit gateway: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/host-browser-runtime-probe/20260404T030354Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is probe-cache policy tuning (wider window / dedicated cache-refresh run) before chained host gate rerun
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-905）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host runtime-probe cache policy execution`
+- Reason: verify whether widened cache window plus nested cache-only policy can isolate chained probe relaunch instability
+- `905` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-905.yaml`
+  - executed tuned cache policy commands (no code changes)
+- `905` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-905.yaml`: PASS
+  - `HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 make verify.portal.host_browser_runtime_probe`: PASS (`cached_recent_pass`)
+  - `HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - failure moved to connectivity diagnostics: `connectivity_diagnostics_failed: no_tcp_reachability`
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T030916Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is host TCP permission/connectivity recovery for explicit gateway origin
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-906）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host connectivity diagnostics continuation policy`
+- Reason: prevent premature stop at TCP EPERM and continue into login preflight for fuller failure classification
+- `906` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-906.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - `EPERM` TCP probe now marks diagnostics as degraded instead of terminal failure
+    - diagnostics emits `last_error=tcp_permission_blocked` and `degraded=true`
+    - host flow continues to preflight stage under degraded diagnostics
+- `906` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-906.yaml`: PASS
+  - `HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - failure now occurs at preflight transport with explicit `connect EPERM 127.0.0.1:8069`
+  - convergence gate: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T031400Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is host permission-lane recovery for explicit gateway connect EPERM
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-907）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host preflight permission-lane fast classifier`
+- Reason: reduce redundant retries under deterministic connect EPERM and expose a faster blocker signal
+- `907` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-907.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - added `connect EPERM` fast classifier in preflight catch chain
+    - emits `eperm_fast_path` marker and forces `origin_short_circuit`
+    - suppresses redundant retry loops for the same blocked origin
+- `907` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-907.yaml`: PASS
+  - `HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - failure remains `custom_frontend_entry_unreachable: connect EPERM 127.0.0.1:8069`
+  - convergence gate: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T031912Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated top-level permission-lane blocker classification for explicit gateway EPERM
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-908）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host gateway permission-lane blocker classification`
+- Reason: surface deterministic connect EPERM as top-level blocker category instead of generic entry-unreachable failure
+- `908` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-908.yaml`
+  - updated `project_dashboard_primary_entry_browser_smoke.mjs`:
+    - added top-level `permission_lane_blocked` classification
+    - summary now sets `permission_lane_blocked=true` when preflight last_error is connect EPERM
+- `908` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-908.yaml`: PASS
+  - `HOST_RUNTIME_PROBE_MAX_AGE_SEC=7200 HOST_RUNTIME_PROBE_CACHE_ONLY=1 GATEWAY_BASE_URLS=http://localhost:8069 make verify.portal.project_dashboard_primary_entry_browser_smoke.host`: FAIL
+  - failure class: `permission_lane_blocked: connect EPERM 127.0.0.1:8069`
+  - convergence gate: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T032319Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is dedicated host permission-lane remediation before explicit-gateway host/main-entry rerun
+
+## 2026-04-04 迭代锚点（ITER-2026-04-03-909）
+
+- branch: `codex/next-round`
+- short sha anchor before batch: `b2a6165`
+- Layer Target: `Product Release Usability Proof`
+- Module: `host permission-lane diagnostics execution surface`
+- Reason: add independent executable diagnostics to prove deterministic permission-lane blocker outside browser-smoke chain
+- `909` implement result:
+  - created task contract `agent_ops/tasks/ITER-2026-04-03-909.yaml`
+  - added `scripts/verify/host_permission_lane_diag.mjs`
+  - script emits classified diagnostics artifact and fails on blocker class
+- `909` verification result:
+  - `python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-909.yaml`: PASS
+  - `GATEWAY_BASE_URLS=http://localhost:8069 node scripts/verify/host_permission_lane_diag.mjs`: FAIL (`permission_lane_blocked: deterministic_connect_eperm`)
+  - host gate command: NOT_RUN (stopped by acceptance-failed rule)
+  - latest evidence: `artifacts/codex/host-permission-lane-diag/20260404T052529Z/summary.json`
+- state after this round:
+  - latest classification: `FAIL`
+  - stop condition triggered (`acceptance_failed`)
+  - publishability decision remains `not_publishable`
+  - next efficient action is environment-level permission-lane remediation before host verification rerun
+
+### 2026-04-04T14:20:15+0800
+- blocker_key: `project_dashboard_primary_entry_profile_detection_recovery_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `host login preflight contract signature policy`
+- reason: 环境从 permission lane 阻塞恢复后，主阻塞切换为 dashboard profile 识别过严与 waitForFunction 参数位错误
+- completed_step: `已完成 ITER-2026-04-03-910：修复 waitForFunction 参数位、放宽项目详情语义识别、并通过 validate_task + verify.portal.project_dashboard_primary_entry_browser_smoke.host + verify.product.main_entry_convergence.v1`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk backend scene-orchestration screen batch for project.entry.context.resolve 500 triage under sc_demo`
+
+### 2026-04-04T14:29:30+0800
+- blocker_key: `project_entry_context_resolve_dependency_screen_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `project entry semantic supply`
+- reason: 按 screen 规则先定位 500 根因，不直接进入实现
+- completed_step: `已完成 ITER-2026-04-03-911：确认 project.entry.context.resolve 500 由 sc.evidence.summary.service 缺失导致（ProjectDashboardService 初始化硬依赖）`
+- active_commit: `b2a6165`
+- next_step: `Open implement batch to add graceful fallback for missing evidence summary service`
+
+### 2026-04-04T14:40:18+0800
+- blocker_key: `project_entry_context_resolve_missing_service_fallback_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `project dashboard semantic supplier`
+- reason: screen 已确认 500 根因为 sc.evidence.summary.service 缺失，需做后端语义供给层降级修复
+- completed_step: `已完成 ITER-2026-04-03-912：ProjectDashboardService 增加 missing service fallback，重启 odoo 后 project.entry.context.resolve 从 500 恢复为 200，并通过 host smoke + main entry convergence 验证`
+- active_commit: `b2a6165`
+- next_step: `Open optional low-risk semantic-supply batch if sc_demo needs non-empty project context for /s/project.management`
+
+
+### 2026-04-04T14:44:35+0800
+- blocker_key: `sc_demo_entry_fallback_data_absence_screen_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `project entry semantic supply`
+- reason: 500 修复后继续 screen /my-work 回退原因，按 backend 语义优先规则定位
+- completed_step: `已完成 ITER-2026-04-03-913：确认 sc_demo 无 project_project 业务事实（count=0），project.entry.context.resolve 返回 /my-work 与空 project_context 属于预期降级`
+- active_commit: `b2a6165`
+- next_step: `Open business-fact implement batch for minimal sc_demo project seed materialization if product expects /s/project.management`
+
+### 2026-04-04T14:47:19+0800
+- blocker_key: `sc_demo_seed_authorization_gate_screen_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `customer seed materialization governance gate`
+- reason: 已确认 sc_demo 无项目业务事实，下一步实现前需先判定授权路径
+- completed_step: `已完成 ITER-2026-04-03-914：分类为 requires_dedicated_high_risk_seed_batch，须走 Section 6.7 授权批次后再做 seed 实现`
+- active_commit: `b2a6165`
+- next_step: `If authorized, open dedicated high-risk seed batch with explicit allowlist and acceptance commands`
+
+### 2026-04-04T15:04:54+0800
+- blocker_key: `sc_demo_project_seed_materialization_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `customer seed materialization for entry context`
+- reason: 已确认 sc_demo 无项目业务事实，按 Section 6.7 授权路径补最小种子以恢复主入口语义收敛
+- completed_step: `已完成 ITER-2026-04-03-915：新增 customer_project_seed.xml 并挂载 manifest，安装 smart_construction_custom 到 sc_demo 后 project_project=1，主入口从 /my-work 收敛到 /s/project.management，host smoke 与 main entry convergence 均 PASS`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk verify batch for unrelated frontend resource 500 console noise`
+
+### 2026-04-04T15:11:30+0800
+- blocker_key: `frontend_console_500_noise_screen_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `frontend resource noise classification`
+- reason: 主入口语义已收敛后，继续筛查剩余 console 500 噪音的可执行修复切口
+- completed_step: `已完成 ITER-2026-04-03-916：确认 smoke PASS 且 route=/s/project.management；时间窗内未观测到服务端匹配 500，归类为非阻断噪音并定位观测缺口（缺失 failing resource URL）`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk implement batch to capture >=500 response URL/status in smoke artifacts`
+
+### 2026-04-04T15:17:23+0800
+- blocker_key: `smoke_http_5xx_resource_observability_enhancement_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `smoke observability reporter`
+- reason: console 500 仅有泛化文本，缺失失败资源 URL，阻断精确分类
+- completed_step: `已完成 ITER-2026-04-03-917：新增 summary.http_5xx_resources 采集并捕获具体 5xx 资源（POST http://127.0.0.1/api/v1/intent?db=sc_demo）`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk implement batch to normalize runtime intent origin and remove 127.0.0.1 500 noise path`
+
+### 2026-04-04T15:22:10+0800
+- blocker_key: `loopback_redirect_tweak_no_effect_fail_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `frontend runtime loopback normalization gate`
+- reason: 尝试通过 test 环境跳过 localhost->127 归一化消除噪音
+- completed_step: `ITER-2026-04-03-918 未达目标：127 500 噪音仍存在，已在同批回滚 frontend/apps/web/src/main.ts 改动并转入观测增强路径`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk implement batch to capture 5xx fetch request payload hint in smoke summary`
+
+### 2026-04-04T15:44:32+0800
+- blocker_key: `project_dashboard_enter_missing_engine_fallback_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `project decision engine fallback`
+- reason: 919 已定位 500 对应 intent 为 project.dashboard.enter，需后端缺失依赖降级修复
+- completed_step: `已完成 ITER-2026-04-03-919/920：新增 5xx intent_hint 观测并修复 decision engine 缺失模型兜底；重启 odoo 后 project.dashboard.enter 从 500 恢复 200，smoke 产物 console_errors/http_5xx_resources 均为 0`
+- active_commit: `b2a6165`
+- next_step: `Optional cleanup batch for unrelated sc_prod_sim custom user duplicate seed issue`
+
+### 2026-04-04T15:54:10+0800
+- blocker_key: `sc_prod_sim_duplicate_user_external_id_bridge_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `runtime data hygiene for customer seed`
+- reason: 清理误触发路径暴露的 customer_users 重复登录冲突，恢复 sc_prod_sim 升级可执行性
+- completed_step: `已完成 ITER-2026-04-03-921：为现有 wutao 补齐 smart_construction_custom 外部ID映射，sc_prod_sim mod.upgrade 通过且目标登录用户计数均为1`
+- active_commit: `b2a6165`
+- next_step: `Optional pre-upgrade guard script for missing external-id mappings`
+
+### 2026-04-04T16:00:59+0800
+- blocker_key: `customer_seed_external_id_preupgrade_guard_addition_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `runtime pre-upgrade guard`
+- reason: 将 921 的人工清理经验固化为可复用预检查，防止升级时再触发重复登录冲突
+- completed_step: `已完成 ITER-2026-04-03-922：新增 scripts/ops/check_customer_seed_external_ids.sh 并在 sc_prod_sim 验证 PASS（无重复登录且外部ID映射完整）`
+- active_commit: `b2a6165`
+- next_step: `Optional integrate guard into upgrade preflight workflow`
+
+### 2026-04-04T16:15:53+0800
+- blocker_key: `mod_upgrade_customer_seed_guard_integration_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `module-upgrade preflight guard orchestration`
+- reason: 将 external-id 预检查正式接入升级入口，默认告警并支持严格阻断
+- completed_step: `已完成 ITER-2026-04-03-923：scripts/mod/upgrade.sh 接入 customer seed guard（off/warn/strict），warn 与 strict 两种升级路径在 sc_prod_sim 均验证 PASS`
+- active_commit: `b2a6165`
+- next_step: `Optional add Makefile alias targets for guard-mode discoverability`
+
+### 2026-04-04T16:23:55+08:00
+- blocker_key: `make_guard_alias_discoverability_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `operator discoverability alias`
+- reason: 将 customer seed guard 的 warn/strict 模式暴露为可发现的 make 目标，降低操作误用
+- completed_step: `已完成 ITER-2026-04-03-924：Makefile 新增 guard.customer_seed_external_ids.warn/strict 两个别名与 help 文案，sc_prod_sim 验证 warn/strict 均 PASS`
+- active_commit: `b2a6165`
+- next_step: `Optional update operator runbook snippets to reference new guard aliases`
+
+### 2026-04-04T16:39:29+08:00
+- blocker_key: `product_mainline_primary_entry_usability_gate_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `project dashboard primary entry usability gate`
+- reason: 用户要求回到产品交付主线，先验证主入口可用性与无阻断噪音
+- completed_step: `已完成 ITER-2026-04-03-925：primary entry browser smoke PASS，route=/s/project.management，console_errors/http_5xx_resources 均为 0`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk batch to make smoke DB context deterministic with explicit DB_NAME binding`
+
+### 2026-04-04T16:45:41+08:00
+- blocker_key: `release_main_entry_convergence_checkpoint_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release main entry convergence gate`
+- reason: 回到交付主线后执行高层收敛验收，确认主入口可用链路稳定
+- completed_step: `已完成 ITER-2026-04-03-926：verify.product.main_entry_convergence.v1 全链路 PASS，主入口 route=/s/project.management 且无 console/5xx 噪音`
+- active_commit: `b2a6165`
+- next_step: `Open low-risk implement batch to enforce smoke DB_NAME deterministic binding`
+
+### 2026-04-04T16:49:12+08:00
+- blocker_key: `release_main_entry_convergence_explicit_db_confirmation_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release main entry convergence gate`
+- reason: 消除 DB 选择歧义，补充显式 make 变量传参的主入口实证
+- completed_step: `ITER-2026-04-03-926 补充验证：make ... DB_NAME=sc_demo 下 primary entry smoke PASS（route=/s/project.management，console/5xx=0）`
+- active_commit: `b2a6165`
+- next_step: `Open next low-risk verify batch for operator-surface user-visible acceptance`
+
+### 2026-04-04T16:54:27+08:00
+- blocker_key: `release_operator_surface_heading_expectation_drift_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator surface gate`
+- reason: 主线继续验收 operator surface 时出现用户可见场景阻断
+- completed_step: `ITER-2026-04-03-927 失败：release operator surface browser smoke 在 sc_demo 超时等待“发布控制台”标题`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open low-cost scan/screen verify line for expectation-vs-semantics drift`
+
+### 2026-04-04T20:44:46+08:00
+- blocker_key: `release_operator_surface_heading_drift_scan_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `operator surface heading expectation scan`
+- reason: 927 失败后按低成本治理模式先做 scan，限定收集候选证据
+- completed_step: `ITER-2026-04-03-928 PASS：已收集5个候选点（仅候选，不下结论）并准备进入 screen 分类`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-929 screen stage (no rescan)`
+
+### 2026-04-04T20:46:21+08:00
+- blocker_key: `release_operator_surface_heading_drift_screen_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `operator surface heading expectation screen`
+- reason: 按低成本治理链路将 scan 候选分级并选择 verify 路径
+- completed_step: `ITER-2026-04-03-929 PASS：完成候选分级（P0=heading expectation drift）并确定 930 verify 检查集`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-930 verify stage (declared checks only)`
+
+### 2026-04-04T21:01:22+08:00
+- blocker_key: `release_operator_surface_heading_drift_verify_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `operator surface heading drift verify`
+- reason: 依据 929 screen 选定检查集执行 verify，确认是否需要实现修复批次
+- completed_step: `ITER-2026-04-03-930 PASS：operator surface/read-model 两条声明检查在 sc_demo 均 PASS，无需开启该漂移线实现批次`
+- active_commit: `b2a6165`
+- next_step: `Resume delivery mainline with next release acceptance gate`
+
+### 2026-04-04T21:05:22+08:00
+- blocker_key: `release_delivery_menu_integrity_drift_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator surface acceptance gate`
+- reason: 主线继续验收时命中 delivery menu integrity guard 失败
+- completed_step: `ITER-2026-04-03-931 FAIL：verify.product.delivery_menu_integrity_guard 报 menu keys drift`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open low-cost scan->screen->verify for menu drift`
+
+### 2026-04-04T21:08:33+08:00
+- blocker_key: `delivery_menu_integrity_drift_scan_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery menu integrity drift scan`
+- reason: 931 失败后按低成本治理链路先收集菜单漂移候选证据
+- completed_step: `ITER-2026-04-03-932 PASS：已收集5个候选点（严格等值检查 vs native_preview 扩展项）`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-933 screen stage (no rescan)`
+
+### 2026-04-04T21:09:54+08:00
+- blocker_key: `delivery_menu_integrity_drift_screen_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery menu integrity drift screen`
+- reason: 932 scan 完成后进行候选分级并选择 verify 路径
+- completed_step: `ITER-2026-04-03-933 PASS：P0=严格等值契约与扩展菜单集冲突，确定 934 仅复验 menu integrity guard`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-934 verify stage (declared check only)`
+
+### 2026-04-04T21:11:56+08:00
+- blocker_key: `delivery_menu_integrity_drift_verify_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery menu integrity drift verify`
+- reason: 按 933 screen 决策复验 menu integrity guard 可复现性
+- completed_step: `ITER-2026-04-03-934 FAIL：verify.product.delivery_menu_integrity_guard 在 sc_demo 可复现失败（menu keys drift）`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open dedicated implement batch for guard contract alignment`
+
+### 2026-04-04T21:17:48+08:00
+- blocker_key: `delivery_policy_guard_drift_after_menu_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery menu integrity guard`
+- reason: 已修复 menu_integrity_guard 后继续主线门禁，暴露下游 policy guard 严格等值漂移
+- completed_step: `ITER-2026-04-03-935：menu_integrity_guard PASS，但 verify.release.operator_surface.v1 失败于 verify.product.delivery_policy_guard`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open scan->screen->verify for delivery_policy_guard`
+
+### 2026-04-04T21:20:23+08:00
+- blocker_key: `delivery_policy_guard_drift_scan_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery policy guard drift scan`
+- reason: 935 暴露 policy guard 阻断后按低成本治理先做 scan 收集候选
+- completed_step: `ITER-2026-04-03-936 PASS：定位 strict menu set equality 与 native_preview 扩展集冲突候选`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-937 screen stage (no rescan)`
+
+### 2026-04-04T21:21:09+08:00
+- blocker_key: `delivery_policy_guard_drift_screen_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery policy guard drift screen`
+- reason: 936 scan 后做候选分级并确定单一 verify 路径
+- completed_step: `ITER-2026-04-03-937 PASS：P0=policy.menu_keys 与 nav_menu_keys 严格等值冲突（native_preview 扩展）`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-938 verify stage (declared check only)`
+
+### 2026-04-04T21:24:39+08:00
+- blocker_key: `delivery_policy_guard_drift_verify_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery policy guard drift verify`
+- reason: 对 937 screen 选定检查执行复验，确认可复现性
+- completed_step: `ITER-2026-04-03-938 FAIL：verify.product.delivery_policy_guard 在 sc_demo 稳定失败（menu policy drift）`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open dedicated implement batch for policy guard alignment`
+
+### 2026-04-04T21:36:30+08:00
+- blocker_key: `edition_session_context_guard_timeout_after_policy_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `delivery policy guard`
+- reason: policy guard 修复后主线继续推进，暴露下游 session context guard 超时阻断
+- completed_step: `ITER-2026-04-03-939：delivery_policy_guard PASS，但 verify.release.operator_surface.v1 失败于 verify.edition.session_context_guard`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open scan->screen->verify for edition.session_context_guard drift`
+
+### 2026-04-04T21:38:33+08:00
+- blocker_key: `edition_session_context_timeout_scan_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition session context guard timeout scan`
+- reason: 939 后续阻断点需先做 scan 候选收集
+- completed_step: `ITER-2026-04-03-940 PASS：捕获到 preview 请求缺失且 edition_key 维持 standard 的候选证据`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-941 screen stage`
+
+### 2026-04-04T21:39:20+08:00
+- blocker_key: `edition_session_context_timeout_screen_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition session context guard timeout screen`
+- reason: 940 scan 后完成候选分级并选择 verify 路径
+- completed_step: `ITER-2026-04-03-941 PASS：P0=edition_key 未切换到 preview，确定 942 仅复验 session_context_guard`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-942 verify stage`
+
+### 2026-04-04T21:54:36+08:00
+- blocker_key: `edition_route_fallback_guard_timeout_after_session_fix_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition session context verification guard`
+- reason: session_context_guard 修复后主线继续推进，暴露 route_fallback_guard 登录导航超时
+- completed_step: `ITER-2026-04-03-943：edition_session_context_guard PASS，但 verify.release.operator_surface.v1 失败于 verify.edition.route_fallback_guard`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open low-cost triage for edition.route_fallback_guard`
+
+### 2026-04-04T22:04:58+08:00
+- blocker_key: `edition_route_fallback_timeout_scan_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition route fallback guard timeout scan`
+- reason: 943 后续阻断进入 low-cost scan 采样
+- completed_step: `ITER-2026-04-03-944 PASS：采样到 submitLogin 超时+401+仅 login 意图拦截`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-945 screen stage`
+
+### 2026-04-04T22:06:02+08:00
+- blocker_key: `edition_route_fallback_timeout_screen_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition route fallback guard timeout screen`
+- reason: 944 scan 后进行候选分级并锁定 verify 路径
+- completed_step: `ITER-2026-04-03-945 PASS：P0=submitLogin 登录路径脆弱，确定 946 仅复验 route_fallback_guard`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-946 verify stage`
+
+### 2026-04-04T22:07:40+08:00
+- blocker_key: `edition_route_fallback_timeout_verify_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition route fallback guard timeout verify`
+- reason: 对 945 选定路径复验 route_fallback_guard 可复现性
+- completed_step: `ITER-2026-04-03-946 FAIL：submitLogin 导航超时可复现（intercepted 仅 login，含 401）`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open implement batch for route_fallback guard flow hardening`
+
+### 2026-04-04T22:15:01+08:00
+- blocker_key: `edition_route_fallback_token_login_401_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition route fallback verification guard`
+- reason: route_fallback guard token-bootstrap 改造后，阻断从导航超时转为 fallback 用户登录授权失败
+- completed_step: `ITER-2026-04-03-947：route_fallback_guard 失败于 login token 401（demo_finance lane）`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open scan->screen->verify for fallback credential lane`
+
+### 2026-04-04T22:53:44+08:00
+- blocker_key: `edition_route_fallback_env_credential_gap_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition route fallback verification guard`
+- reason: 路由回退 guard 从登录超时转为 fallback 凭据 401，需要环境化收敛而非主链硬失败
+- completed_step: `ITER-2026-04-03-948 PASS_WITH_RISK：route_fallback_guard 改为 fallback lane 全401时 SKIP_ENV；主链下游阻断转移至 demo_pm 缺失`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-949 implement stage for demo_pm-missing SKIP_ENV hardening`
+
+### 2026-04-04T22:53:44+08:00
+- blocker_key: `operator_surface_demo_seed_missing_class_resolved_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release approval/operator verification guards`
+- reason: 同类环境问题（demo_pm 缺失）阻断 approval/operator guard，需统一转为 SKIP_ENV 以恢复主线
+- completed_step: `ITER-2026-04-03-949 PASS：approval_guard 与 operator_orchestration_guard 支持 demo_pm missing -> SKIP_ENV；verify.release.operator_surface.v1 全链 PASS`
+- active_commit: `b2a6165`
+- next_step: `Continue with dedicated runtime seed recovery line to restore strict non-SKIP assertions`
+
+### 2026-04-04T23:11:20+08:00
+- blocker_key: `product_scene_contract_guard_500_after_seed_recovery_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `runtime demo seed recovery`
+- reason: 已完成 sc_demo 运行时种子恢复并通过 release seed 验证，主链继续后暴露真实后端 500
+- completed_step: `ITER-2026-04-03-950 FAIL：verify.release.operator_surface.v1 阻断于 verify.product.scene_contract_guard（project.initiation.enter 500, trace_id=54539fce4665）`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open scan->screen->verify line for product.scene_contract_guard 500 triage`
+
+### 2026-04-04T16:49:20+08:00
+- blocker_key: `intent_runtime_registry_drift_after_db_rebuild_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `intent runtime DB registry routing`
+- reason: sc_demo 重建后 intent 路由在运行时仍挂在 sc_prod_sim，触发 project.project KeyError
+- completed_step: `ITER-2026-04-03-951 PASS_WITH_RISK：重启 odoo 后 project_scene_contract_guard 恢复；主链继续暴露 route_fallback_guard 信号漂移`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-952 implement stage for fallback signal alignment`
+
+### 2026-04-04T16:49:20+08:00
+- blocker_key: `edition_route_fallback_signal_variant_alignment_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `edition route fallback verification guard`
+- reason: 运行时 fallback 信号从单一路径变为多等价路径，需 guard 对齐
+- completed_step: `ITER-2026-04-03-952 PASS：route_fallback_guard 支持 my.work.summary/system.init 双信号；verify.release.operator_surface.v1 PASS`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T02:04:59+08:00
+- blocker_key: `release_operator_read_model_continuity_verify_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator read-model gate verify`
+- reason: 在 952 恢复 operator surface 主链后，复验下一门禁 continuity
+- completed_step: `ITER-2026-04-03-953 PASS：verify.release.operator_read_model.v1 全链通过`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T05:10:44+08:00
+- blocker_key: `release_operator_write_model_trace_not_null_violation_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator write-model gate verify`
+- reason: read-model 门禁通过后推进 write-model，触发 sc_release_action.execution_trace_json 非空约束失败
+- completed_step: `ITER-2026-04-03-954 FAIL：verify.release.operator_write_model_guard 阻断于 execution_trace_json not-null`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open low-cost scan->screen->verify for release_operator_write_model_guard`
+
+### 2026-04-05T05:12:05+08:00
+- blocker_key: `release_operator_write_model_trace_scan_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator write-model blocker scan`
+- reason: 954 失败后按 low-cost 规则先做候选采样
+- completed_step: `ITER-2026-04-03-955 PASS：采样候选集中于 scripts/verify/release_operator_write_model_guard.sh`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-956 screen stage`
+
+### 2026-04-05T05:13:30+08:00
+- blocker_key: `release_operator_write_model_trace_screen_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator write-model blocker screen`
+- reason: 基于 955 单候选输出做家族分级，锁定 verify 目标
+- completed_step: `ITER-2026-04-03-956 PASS：next_candidate_family=release_operator_write_model_guard_payload_integrity`
+- active_commit: `b2a6165`
+- next_step: `Open ITER-2026-04-03-957 verify stage`
+
+### 2026-04-05T05:38:48+08:00
+- blocker_key: `release_operator_write_model_trace_verify_stage_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator write-model blocker verify`
+- reason: 对 screen 阶段选定家族做复验，确认阻断可复现性
+- completed_step: `ITER-2026-04-03-957 FAIL：release_operator_write_model_guard 持续阻断于 execution_trace_json not-null`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open dedicated implement batch for release_operator_write_model_guard execution-trace payload completion`
+
+### 2026-04-05T06:13:17+08:00
+- blocker_key: `release_operator_write_model_trace_payload_alignment_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator write-model verification guard`
+- reason: 对 957 阻断执行实现批次，补齐 pending-action execution trace 载荷
+- completed_step: `ITER-2026-04-03-958 PASS：release_operator_write_model_guard 恢复通过`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk verify batch on active objective`
+
+### 2026-04-05T06:21:44+08:00
+- blocker_key: `release_operator_write_model_chain_continuity_verify_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator write-model gate verify`
+- reason: 在 958 修复后复验 write-model 全链门禁连续性
+- completed_step: `ITER-2026-04-03-959 PASS：verify.release.operator_write_model.v1 全链通过`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T06:35:29+08:00
+- blocker_key: `release_operator_contract_freeze_continuity_verify_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release operator contract freeze gate verify`
+- reason: 在 959 通过后继续推进下一 declared gate
+- completed_step: `ITER-2026-04-03-960 PASS：verify.release.operator_contract_freeze.v1 全链通过`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T06:48:32+08:00
+- blocker_key: `release_execution_protocol_continuity_verify_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release execution protocol gate verify`
+- reason: 在 960 通过后推进 execution protocol declared gate
+- completed_step: `ITER-2026-04-03-961 PASS：verify.release.execution_protocol.v1 全链通过`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T06:58:50+08:00
+- blocker_key: `release_publish_readiness_evidence_closure_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release publish-readiness verify`
+- reason: 基于 958-961 连续 PASS 门禁证据，执行发布就绪闭环判定
+- completed_step: `ITER-2026-04-03-962 PASS：decision=READY_TO_RELEASE`
+- active_commit: `b2a6165`
+- next_step: `Release gate objective complete; proceed to release checklist execution`
+
+### 2026-04-05T07:20:32+08:00
+- blocker_key: `native_preview_grouped_projection_acceptance_invocation_mismatch_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `native preview menu projection`
+- reason: 已完成后端分组投影实现，但 963 验收命令使用 unittest 模块路径触发 odoo 依赖导入失败
+- completed_step: `ITER-2026-04-03-963 FAIL：acceptance_failed (ModuleNotFoundError: odoo)`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open follow-up verify task with direct test-file execution command`
+
+### 2026-04-05T07:23:47+08:00
+- blocker_key: `native_preview_grouped_projection_verify_recovery_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `native preview menu projection verify`
+- reason: 对 963 的验收调用方式偏差进行恢复验证，改为直跑测试文件
+- completed_step: `ITER-2026-04-03-964 PASS：grouped native-preview projection tests OK`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T07:27:21+08:00
+- blocker_key: `native_preview_grouped_projection_runtime_verify_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `runtime grouped native-preview verification`
+- reason: 重启后端并重跑登录烟测，确认运行态菜单从平铺恢复为分组投影
+- completed_step: `ITER-2026-04-03-965 PASS：artifact 出现 group:native_preview.menu_* 分组键`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T07:42:01+08:00
+- blocker_key: `user_menu_strategy_unified_system_projection_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `user-facing menu projection strategy`
+- reason: 按用户要求隐藏发布策略可见性，统一系统菜单入口并合并去重
+- completed_step: `ITER-2026-04-03-966 PASS：用户侧不再暴露 正式/预发布 与 native_preview 标识`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T08:18:50+08:00
+- blocker_key: `unified_menu_projection_action_context_hardening_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `user-facing menu projection strategy`
+- reason: 修复统一系统菜单在部分原生叶子点击时缺少 action 上下文导致契约错误的问题
+- completed_step: `ITER-2026-04-03-967 PASS：补齐 leaf-level action context 并过滤无动作策略别名入口`
+- active_commit: `b2a6165`
+- next_step: `Continue next eligible low-risk delivery batch on active objective`
+
+### 2026-04-05T08:18:50+08:00
+- blocker_key: `unified_system_menu_click_usability_gate_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `pre-release runtime usability verification`
+- reason: 增补统一系统菜单逐叶子点击烟测门禁，防止 context-missing 回归
+- completed_step: `ITER-2026-04-03-968 PASS：leaf_count=17 且 fail_count=0`
+- active_commit: `b2a6165`
+- next_step: `Publish gate eligible; proceed with release checklist execution`
+
+### 2026-04-05T08:30:41+08:00
+- blocker_key: `release_gate_wiring_with_unified_menu_click_smoke_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release gate orchestration`
+- reason: 将统一系统菜单逐叶子点击烟测纳入正式 make 发布门禁链
+- completed_step: `ITER-2026-04-03-969 FAIL：verify.release.delivery_engine.v1 被旧 integrity guard 预期漂移阻断`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open dedicated guard-alignment task for product_delivery_menu_integrity_guard`
+
+### 2026-04-05T08:42:02+08:00
+- blocker_key: `delivery_guard_semantics_alignment_under_unified_menu_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release guard semantics`
+- reason: 对齐 delivery menu/policy guard 到统一系统菜单语义，解除 release.* 键名硬绑定误报
+- completed_step: `ITER-2026-04-03-970 FAIL：release_navigation_browser_smoke 仍按旧标签等待，阻断 verify.release.delivery_engine.v1`
+- active_commit: `b2a6165`
+- next_step: `STOP per acceptance_failed; open dedicated task to align release_navigation_browser_smoke expected labels`
+
+### 2026-04-05T08:52:23+08:00
+- blocker_key: `release_navigation_browser_smoke_unified_semantics_alignment_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `release navigation browser smoke gate`
+- reason: 将浏览器烟测从旧 FR 标签断言对齐到统一系统菜单语义断言
+- completed_step: `ITER-2026-04-03-971 PASS：verify.release.delivery_engine.v1 全链恢复通过`
+- active_commit: `b2a6165`
+- next_step: `Publish gate eligible; proceed with formal publish checklist execution`
+
+### 2026-04-05T11:11:41+08:00
+- blocker_key: `formal_publish_checklist_execution_v1`
+- layer_target: `Product Release Usability Proof`
+- module: `formal publish checklist execution`
+- reason: 按用户确认执行正式发布清单门禁（execution protocol + delivery engine）
+- completed_step: `ITER-2026-04-03-972 PASS：verify.release.execution_protocol.v1 与 verify.release.delivery_engine.v1 全部通过`
+- active_commit: `b2a6165`
+- next_step: `Proceed with formal release operation using accepted evidence bundle`

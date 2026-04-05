@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-03-967
+title: Harden unified system menu against missing action context
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Fix unified system menu projection so user-clicked native entries do not fall
+  into contract-context-missing due to missing action context, and tighten
+  merge rules for no-action release slice aliases.
+
+user_visible_outcome:
+  - "原生菜单点击不再大量落入缺少 action_id 的契约上下文错误"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_service.py
+    - addons/smart_core/tests/test_delivery_menu_service_native_preview.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 7
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - projection_context_hardening_only
+  - no_business_fact_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-966
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: user-facing menu projection strategy
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Change hardens navigation semantic supply and merge constraints; frontend
+    remains a generic consumer and renderer.
+  reason: >
+    User reported widespread native menu failures with contract context missing
+    (e.g., action_id). We must preserve actionable context and remove known
+    no-action alias entries from merged policy slices.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-967.yaml
+    - python3 addons/smart_core/tests/test_delivery_menu_service_native_preview.py
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo make verify.portal.login_browser_smoke.host
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - unified_menu_projection_context_hardening
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_service.py
+  - git restore addons/smart_core/tests/test_delivery_menu_service_native_preview.py
+  - git restore agent_ops/tasks/ITER-2026-04-03-967.yaml
+
+depends_on:
+  - ITER-2026-04-03-966
