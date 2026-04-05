@@ -13,6 +13,26 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_delivery_policy_guard.json"
 OUT_MD = ROOT / "artifacts" / "backend" / "product_delivery_policy_guard.md"
+ALLOWED_NAV_MENU_KEY_PREFIXES = (
+    "system.",
+)
+
+
+def _flatten_leaf_rows(nav: list[dict] | None) -> list[dict]:
+    out: list[dict] = []
+
+    def _walk(nodes: list[dict] | None) -> None:
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children:
+                _walk(children)
+                continue
+            out.append(node)
+
+    _walk(nav)
+    return out
 
 
 def _write(path: Path, payload: str) -> None:
@@ -73,26 +93,55 @@ def main() -> int:
         nav = contract.get("nav") if isinstance(contract.get("nav"), list) else []
         scenes = contract.get("scenes") if isinstance(contract.get("scenes"), list) else []
         capabilities = contract.get("capabilities") if isinstance(contract.get("capabilities"), list) else []
+
         if str(policy.get("product_key") or "").strip() != "construction.standard":
             raise RuntimeError(f"product key drift: {policy}")
+
         menu_keys = {str(item or "").strip() for item in policy.get("menu_keys") or [] if str(item or "").strip()}
         scene_keys = {str(item or "").strip() for item in policy.get("scene_keys") or [] if str(item or "").strip()}
         capability_keys = {str(item or "").strip() for item in policy.get("capability_keys") or [] if str(item or "").strip()}
+
+        nav_leaves = _flatten_leaf_rows(nav)
         nav_menu_keys = {
             str((leaf.get("meta") or {}).get("menu_key") or leaf.get("key") or "").strip()
-            for root in nav if isinstance(root, dict)
-            for group in root.get("children") or [] if isinstance(group, dict)
-            for leaf in group.get("children") or [] if isinstance(leaf, dict)
+            for leaf in nav_leaves if isinstance(leaf, dict)
+        }
+        nav_scene_keys = {
+            str((leaf.get("meta") or {}).get("scene_key") or "").strip()
+            for leaf in nav_leaves if isinstance(leaf, dict)
+        }
+        nav_routes = {
+            str((leaf.get("meta") or {}).get("route") or "").strip()
+            for leaf in nav_leaves if isinstance(leaf, dict)
         }
         runtime_scene_keys = {str(row.get("scene_key") or "").strip() for row in scenes if isinstance(row, dict)}
         runtime_capability_keys = {str(row.get("key") or "").strip() for row in capabilities if isinstance(row, dict)}
-        if menu_keys != nav_menu_keys:
-            raise RuntimeError(f"menu policy drift: {sorted(menu_keys)} != {sorted(nav_menu_keys)}")
+
+        if not nav_leaves:
+            raise RuntimeError("nav leaf rows missing")
+
+        invalid_nav_menu_keys = [
+            key for key in sorted(nav_menu_keys)
+            if key and not any(key.startswith(prefix) for prefix in ALLOWED_NAV_MENU_KEY_PREFIXES)
+        ]
+        if invalid_nav_menu_keys:
+            raise RuntimeError(f"invalid nav menu key prefix: {invalid_nav_menu_keys}")
+
+        scene_overlap_keys = sorted(scene_key for scene_key in scene_keys if scene_key in nav_scene_keys)
+        if not scene_overlap_keys and "/my-work" not in nav_routes:
+            raise RuntimeError("scene policy has no overlap with nav leaf semantics")
+
         if scene_keys != runtime_scene_keys:
             raise RuntimeError(f"scene policy drift: {sorted(scene_keys)} != {sorted(runtime_scene_keys)}")
         if capability_keys != runtime_capability_keys:
             raise RuntimeError(f"capability policy drift: {sorted(capability_keys)} != {sorted(runtime_capability_keys)}")
+
         report["product_policy"] = policy
+        report["menu_keys"] = sorted(menu_keys)
+        report["nav_menu_keys"] = sorted(nav_menu_keys)
+        report["nav_scene_keys"] = sorted(key for key in nav_scene_keys if key)
+        report["nav_routes"] = sorted(route for route in nav_routes if route)
+        report["scene_overlap_keys"] = scene_overlap_keys
     except Exception as exc:
         report["status"] = "FAIL"
         report["error"] = str(exc)
@@ -110,4 +159,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

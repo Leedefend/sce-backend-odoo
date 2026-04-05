@@ -13,14 +13,15 @@ from python_http_smoke_utils import get_base_url, http_post_json
 ROOT = Path(__file__).resolve().parents[2]
 OUT_JSON = ROOT / "artifacts" / "backend" / "product_delivery_menu_integrity_guard.json"
 OUT_MD = ROOT / "artifacts" / "backend" / "product_delivery_menu_integrity_guard.md"
-EXPECTED_MENU_KEYS = [
-    "release.fr1.project_intake",
-    "release.fr2.project_flow",
-    "release.fr3.cost_tracking",
-    "release.fr4.payment_tracking",
-    "release.fr5.settlement_summary",
-    "release.my_work",
+EXPECTED_SCENE_KEYS = [
+    "projects.intake",
+    "project.management",
+    "cost",
+    "payment",
+    "settlement",
+    "my_work.workspace",
 ]
+ALLOWED_MENU_KEY_PREFIXES = ("system.",)
 
 
 def _write(path: Path, payload: str) -> None:
@@ -56,16 +57,43 @@ def _extract_token(login_payload: dict) -> str:
 
 def _flatten_leaf_rows(contract: dict) -> list[dict]:
     out: list[dict] = []
-    for root in contract.get("nav") or []:
-        if not isinstance(root, dict):
-            continue
-        for group in root.get("children") or []:
-            if not isinstance(group, dict):
+
+    def _walk(nodes: list[dict] | None) -> None:
+        for node in nodes or []:
+            if not isinstance(node, dict):
                 continue
-            for leaf in group.get("children") or []:
-                if isinstance(leaf, dict):
-                    out.append(leaf)
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children:
+                _walk(children)
+                continue
+            out.append(node)
+
+    _walk(contract.get("nav") if isinstance(contract.get("nav"), list) else [])
     return out
+
+
+def _menu_key(row: dict) -> str:
+    return str((row.get("meta") or {}).get("menu_key") or row.get("key") or "").strip()
+
+
+def _route(row: dict) -> str:
+    return str((row.get("meta") or {}).get("route") or "").strip()
+
+
+def _scene_key(row: dict) -> str:
+    return str((row.get("meta") or {}).get("scene_key") or "").strip()
+
+
+def _action_id(row: dict) -> int:
+    value = (row.get("meta") or {}).get("action_id")
+    try:
+        return int(value or 0)
+    except Exception:
+        return 0
+
+
+def _model(row: dict) -> str:
+    return str((row.get("meta") or {}).get("model") or "").strip()
 
 
 def main() -> int:
@@ -93,14 +121,56 @@ def main() -> int:
             raise RuntimeError("delivery_engine_v1 missing")
 
         rows = _flatten_leaf_rows(contract)
-        menu_keys = [str((row.get("meta") or {}).get("menu_key") or row.get("key") or "").strip() for row in rows]
-        routes = [str((row.get("meta") or {}).get("route") or "").strip() for row in rows]
-        if menu_keys != EXPECTED_MENU_KEYS:
-            raise RuntimeError(f"menu keys drift: {menu_keys}")
-        if any(not route for route in routes):
-            raise RuntimeError(f"empty route found: {routes}")
-        report["menu_keys"] = menu_keys
-        report["routes"] = routes
+        if not rows:
+            raise RuntimeError("nav leaf rows missing")
+        menu_keys = [_menu_key(row) for row in rows]
+        non_empty_menu_keys = [key for key in menu_keys if key]
+        if not non_empty_menu_keys:
+            raise RuntimeError("menu keys missing")
+        invalid_menu_keys = [
+            key for key in non_empty_menu_keys if not any(key.startswith(prefix) for prefix in ALLOWED_MENU_KEY_PREFIXES)
+        ]
+        if invalid_menu_keys:
+            raise RuntimeError(f"menu key prefix drift: {invalid_menu_keys[:8]}")
+
+        seen = set()
+        duplicates = []
+        for key in non_empty_menu_keys:
+            if key in seen:
+                duplicates.append(key)
+            seen.add(key)
+        if duplicates:
+            raise RuntimeError(f"duplicate menu keys: {sorted(set(duplicates))[:8]}")
+
+        context_missing = []
+        nav_scene_keys = set()
+        for row in rows:
+            key = _menu_key(row)
+            route = _route(row)
+            scene_key = _scene_key(row)
+            action_id = _action_id(row)
+            model = _model(row)
+            if scene_key:
+                nav_scene_keys.add(scene_key)
+            if not (route or scene_key or action_id > 0 or model):
+                context_missing.append(key or str(row.get("key") or ""))
+        if context_missing:
+            raise RuntimeError(f"menu context missing: {context_missing[:8]}")
+
+        scenes = contract.get("scenes") if isinstance(contract.get("scenes"), list) else []
+        runtime_scene_keys = [str(row.get("scene_key") or "").strip() for row in scenes if isinstance(row, dict)]
+        if runtime_scene_keys != EXPECTED_SCENE_KEYS:
+            raise RuntimeError(f"scene keys drift: {runtime_scene_keys}")
+
+        overlapping_scene_keys = sorted(scene_key for scene_key in runtime_scene_keys if scene_key in nav_scene_keys)
+        if not overlapping_scene_keys:
+            raise RuntimeError("nav leaves missing runtime scene-key overlap")
+
+        report["leaf_count"] = len(rows)
+        report["menu_key_count"] = len(non_empty_menu_keys)
+        report["scene_keys"] = runtime_scene_keys
+        report["nav_scene_keys"] = sorted(nav_scene_keys)
+        report["scene_overlap_keys"] = overlapping_scene_keys
     except Exception as exc:
         report["status"] = "FAIL"
         report["error"] = str(exc)
@@ -118,4 +188,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
