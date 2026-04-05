@@ -56,7 +56,7 @@
             :active-menu-id="activeMenuId"
             :capabilities="capabilities"
             :native-preview-group-key="nativePreviewGroupKey"
-            :release-metadata-mode="hasReleaseNavigation"
+            :release-metadata-mode="false"
             @select="handleSelect"
           />
         </div>
@@ -221,9 +221,7 @@ const stableGroupCount = computed(() => asInteger(releaseNavigationMeta.value?.s
 const nativePreviewGroupCount = computed(() => asInteger(releaseNavigationMeta.value?.native_preview_group_count) || 0);
 const stableLeafCount = computed(() => asInteger(releaseNavigationMeta.value?.stable_leaf_count) || 0);
 const nativePreviewLeafCount = computed(() => asInteger(releaseNavigationMeta.value?.native_preview_leaf_count) || 0);
-const showReleaseSummary = computed(() =>
-  hasReleaseNavigation.value && (stableGroupCount.value > 0 || nativePreviewGroupCount.value > 0)
-);
+const showReleaseSummary = computed(() => false);
 const rootTitle = computed(() => {
   const root = rootNode.value;
   return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
