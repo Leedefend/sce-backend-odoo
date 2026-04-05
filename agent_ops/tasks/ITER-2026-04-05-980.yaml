@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-05-980
+title: Fix scene active-version update record IDs in sc_scene_layout
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Correct scene record IDs used for active_version updates so
+  smart_construction_scene installation no longer attempts invalid creates.
+
+user_visible_outcome:
+  - "smart_construction_scene 安装链路继续收敛，避免场景记录空字段创建错误"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_scene/data/sc_scene_layout.xml
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 5
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - source_data_consistency_fix_only
+  - no_business_semantic_expansion
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4bccf7
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-979
+  priority_lane: delivery_simulation_alignment
+
+architecture:
+  layer_target: Delivery Simulation Runtime Alignment
+  module: scene module data-load consistency
+  module_owner: smart_construction_scene
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Fix only aligns scene data reference targets within orchestration payload.
+  reason: >
+    Install now fails because update records target nonexistent scene xmlids,
+    causing invalid create with missing mandatory fields.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-980.yaml
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim MODULE=smart_construction_scene DB_NAME=sc_prod_sim make mod.install
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart
+    - docker exec sc-backend-odoo-prod-sim-db-1 psql -U odoo -d sc_prod_sim -c "select name,state from ir_module_module where name in ('smart_scene','smart_construction_scene') order by name;"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+
+deliverables:
+  - scene_active_version_update_ids_fixed
+
+rollback:
+  - git restore addons/smart_construction_scene/data/sc_scene_layout.xml
+  - git restore agent_ops/tasks/ITER-2026-04-05-980.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-980.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-980.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-979
