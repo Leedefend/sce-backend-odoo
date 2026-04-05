@@ -1,0 +1,7 @@
+{
+  "task_id": "ITER-2026-04-03-945",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-945.md",
+  "publishability": "screen_only",
+  "next_step": "Run 946 verify stage for edition.route_fallback_guard replay."
+}

@@ -1,0 +1,8 @@
+{
+  "task_id": "ITER-2026-04-03-944",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-944.md",
+  "publishability": "scan_only",
+  "artifact": "artifacts/codex/edition-route-fallback-guard/20260404T135358Z/summary.json",
+  "next_step": "Run 945 screen stage for route_fallback timeout/credential-path classification."
+}

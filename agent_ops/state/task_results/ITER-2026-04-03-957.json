@@ -1,0 +1,12 @@
+{
+  "task_id": "ITER-2026-04-03-957",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-957.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "release_operator_write_model_guard": "FAIL"
+  },
+  "error": "null value in column \"execution_trace_json\" of relation \"sc_release_action\" violates not-null constraint",
+  "next_step": "STOP per acceptance_failed; open dedicated implement batch for release_operator_write_model_guard execution-trace payload completion."
+}

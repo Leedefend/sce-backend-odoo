@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-905",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-905.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_host_browser_runtime_probe_with_wide_cache": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host_with_wide_cache_and_explicit_gateway": "FAIL"
+  },
+  "failure_point": "gateway connectivity diagnostics",
+  "failure_reason": "Chained runtime probe reused cache successfully, but explicit gateway TCP probe fails with EPERM and reports no_tcp_reachability.",
+  "next_step": "Create host TCP permission/connectivity recovery batch before explicit-gateway host gate rerun."
+}

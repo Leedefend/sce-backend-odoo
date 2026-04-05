@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-900",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-900.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "FAIL",
+    "make_verify_product_main_entry_convergence_v1": "NOT_RUN"
+  },
+  "failure_point": "connectivity diagnostics gate",
+  "failure_reason": "Gateway-family origins are now constrained but still have no TCP reachability in current host runtime.",
+  "next_step": "Execute endpoint-binding governance slice with explicit GATEWAY_BASE_URLS to a confirmed live custom-frontend gateway origin."
+}

@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-03-932",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-932.md",
+  "publishability": "scan_only",
+  "verification": {
+    "validate_task": "PASS",
+    "bounded_scan": "PASS",
+    "artifact_read": "PASS"
+  },
+  "artifact": "artifacts/backend/product_delivery_menu_integrity_guard.json",
+  "next_step": "Run 933 screen stage to classify integrity contract intent without repository rescan."
+}

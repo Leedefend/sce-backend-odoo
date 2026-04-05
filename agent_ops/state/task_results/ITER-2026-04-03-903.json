@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-903",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-903.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_host_browser_runtime_probe": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host_with_explicit_gateway": "FAIL"
+  },
+  "failure_point": "nested host browser runtime probe in chained host gate",
+  "failure_reason": "Probe launch strategy is hardened but nested execution still intermittently hits sandbox permission fatal.",
+  "next_step": "Create make-chain isolation batch to avoid repeated nested probe launches in the same host-gate chain."
+}

@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-03-931",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-931.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_release_operator_surface_v1": "FAIL"
+  },
+  "failure_gate": "verify.product.delivery_menu_integrity_guard",
+  "failure_reason": "menu keys drift",
+  "next_step": "Start low-cost scan/screen/verify chain for delivery_menu_integrity_guard drift."
+}

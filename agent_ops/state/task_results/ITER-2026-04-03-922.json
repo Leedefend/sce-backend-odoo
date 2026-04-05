@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-03-922",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-922.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "customer_seed_external_id_guard_sc_prod_sim": "PASS"
+  },
+  "artifact": {
+    "script": "scripts/ops/check_customer_seed_external_ids.sh",
+    "result": "PASS"
+  },
+  "next_step": "Optionally integrate guard into upgrade preflight workflow."
+}

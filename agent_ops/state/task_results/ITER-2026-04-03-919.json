@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-03-919",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-919.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "PASS"
+  },
+  "evidence": {
+    "summary": "artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T072644Z/summary.json",
+    "intent_hint": "project.dashboard.enter"
+  },
+  "next_step": "Implement backend fallback for missing sc.evidence.risk.engine in project dashboard decision path."
+}

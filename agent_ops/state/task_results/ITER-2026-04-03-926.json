@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-04-03-926",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-926.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "product_main_entry_convergence": "PASS",
+    "primary_entry_smoke_explicit_db_sc_demo": "PASS"
+  },
+  "artifact": "artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260404T084827Z/summary.json",
+  "user_outcome": {
+    "db_name": "sc_demo",
+    "route": "/s/project.management",
+    "console_errors": 0,
+    "http_5xx_resources": 0
+  },
+  "next_step": "Continue delivery chain with next user-visible scenario acceptance in sim runtime."
+}

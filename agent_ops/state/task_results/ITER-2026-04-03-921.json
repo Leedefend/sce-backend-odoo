@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-04-03-921",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-921.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "sql_login_count_check": "PASS",
+    "mod_upgrade_sc_prod_sim": "PASS"
+  },
+  "runtime_fix": {
+    "db": "sc_prod_sim",
+    "external_id_added": "smart_construction_custom.user_sc_baosheng_wutao",
+    "result": "duplicate login conflict cleared"
+  },
+  "next_step": "Optional guard script batch for seed-login external-id precheck before upgrades."
+}

@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-908",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-908.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host_with_cache_gateway": "FAIL",
+    "make_verify_product_main_entry_convergence_v1_with_cache_gateway": "NOT_RUN"
+  },
+  "failure_point": "top-level permission lane blocker",
+  "failure_reason": "Explicit gateway preflight deterministically hits connect EPERM and is now classified as permission_lane_blocked.",
+  "next_step": "Create host permission-lane remediation batch and rerun explicit-gateway gates after environment recovery."
+}

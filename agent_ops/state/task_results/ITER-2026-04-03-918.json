@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-03-918",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-918.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "PASS",
+    "objective_127_noise_removal": "FAIL"
+  },
+  "failure_reason": "Frontend loopback-gate tweak showed no deterministic runtime effect; change reverted.",
+  "next_step": "Implement richer 5xx fetch observability (request payload hint) before next fix."
+}

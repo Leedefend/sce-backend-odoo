@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-03-948",
+  "status": "PASS_WITH_RISK",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-948.md",
+  "publishability": "conditional",
+  "verification": {
+    "validate_task": "PASS",
+    "node_check": "PASS",
+    "edition_route_fallback_guard": "PASS_SKIP_ENV",
+    "release_operator_surface_v1": "FAIL"
+  },
+  "artifact": "artifacts/codex/edition-route-fallback-guard/20260404T144851Z/summary.json",
+  "failure_gate": "verify.release.approval_guard",
+  "failure_reason": "demo_pm user missing",
+  "next_step": "Open implement batch to convert demo_pm-missing into explicit SKIP_ENV in release guards."
+}

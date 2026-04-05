@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-04-03-929",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-929.md",
+  "publishability": "screen_only",
+  "verification": {
+    "validate_task": "PASS",
+    "screen_input_loaded": "PASS"
+  },
+  "classification": {
+    "P0": "heading_expectation_contract_drift",
+    "P1": "route_surface_semantics_drift",
+    "P2": "bootstrap_session_context_drift",
+    "P3": "shared_assertion_surface"
+  },
+  "next_step": "Run 930 verify stage with declared operator-surface and operator-read-model smoke checks."
+}

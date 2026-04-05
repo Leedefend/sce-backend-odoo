@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-03-901",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-901.md",
+  "publishability": "not_publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host_with_explicit_gateway": "FAIL",
+    "make_verify_product_main_entry_convergence_v1_with_explicit_gateway": "NOT_RUN"
+  },
+  "failure_point": "host browser runtime probe",
+  "failure_reason": "Playwright launch fails with sandbox host runtime fatal (Operation not permitted) before gateway preflight stage.",
+  "next_step": "Create host-runtime-stability recovery batch and rerun explicit gateway verification after runtime probe PASS."
+}

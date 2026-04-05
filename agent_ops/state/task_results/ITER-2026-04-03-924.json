@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-04-03-924",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-924.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "guard_warn_alias": "PASS",
+    "guard_strict_alias": "PASS"
+  },
+  "integration": {
+    "file": "Makefile",
+    "aliases": [
+      "guard.customer_seed_external_ids.warn",
+      "guard.customer_seed_external_ids.strict"
+    ]
+  },
+  "next_step": "Optional runbook update to use the new guard aliases."
+}

@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-04-03-915",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-915.md",
+  "publishability": "publishable",
+  "verification": {
+    "validate_task": "PASS",
+    "mod_upgrade_sc_demo": "PASS",
+    "module_install_sc_demo": "PASS",
+    "project_count_check": "PASS",
+    "make_verify_portal_project_dashboard_primary_entry_browser_smoke_host": "PASS",
+    "make_verify_product_main_entry_convergence_v1": "PASS"
+  },
+  "seed_result": {
+    "db": "sc_demo",
+    "project_project_count": 1,
+    "backend_entry_route": "/s/project.management",
+    "project_context_project_id": 1
+  },
+  "next_step": "Open low-risk verify batch for remaining frontend resource 500 console noise classification."
+}
