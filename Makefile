@@ -383,6 +383,8 @@ help:
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
 	@echo "  make verify.portal.scene_observability_strict.container DB_NAME=<name>"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
+	@echo "  make guard.customer_seed_external_ids.warn [DB_NAME=...]"
+	@echo "  make guard.customer_seed_external_ids.strict [DB_NAME=...]"
 	@echo "  make policy.apply.business_full DB=<name> | smoke.business_full DB=<name>"
 	@echo "  make policy.apply.role_matrix DB=<name> | smoke.role_matrix DB=<name>"
 	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.load.full | demo.verify"
@@ -565,6 +567,11 @@ verify.portal.release_navigation_browser_smoke.host: guard.prod.forbid check-com
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
 	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/release_navigation_browser_smoke.mjs
+.PHONY: verify.portal.unified_system_menu_click_usability_smoke.host
+verify.portal.unified_system_menu_click_usability_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+		node scripts/verify/unified_system_menu_click_usability_smoke.mjs
 .PHONY: verify.portal.host_browser_runtime_probe
 verify.portal.host_browser_runtime_probe: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
@@ -937,7 +944,7 @@ verify.release.navigation.surface: verify.release.navigation.contract_guard veri
 	@echo "[OK] verify.release.navigation.surface done"
 
 .PHONY: verify.release.delivery_engine.v1
-verify.release.delivery_engine.v1: verify.product.delivery_menu_integrity_guard verify.product.delivery_scene_integrity_guard verify.product.delivery_policy_guard verify.product.scene_contract_guard verify.portal.release_navigation_browser_smoke.host
+verify.release.delivery_engine.v1: verify.product.delivery_menu_integrity_guard verify.product.delivery_scene_integrity_guard verify.product.delivery_policy_guard verify.product.scene_contract_guard verify.portal.release_navigation_browser_smoke.host verify.portal.unified_system_menu_click_usability_smoke.host
 	@echo "[OK] verify.release.delivery_engine.v1 done"
 
 verify.product.project_flow.initiation_dashboard: guard.prod.forbid check-compose-project check-compose-env
@@ -1547,11 +1554,20 @@ gate.demo: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 # ======================================================
 # ==================== Module Ops ======================
 # ======================================================
-.PHONY: mod.install mod.upgrade
+.PHONY: mod.install mod.upgrade guard.customer_seed_external_ids.warn guard.customer_seed_external_ids.strict
 mod.install: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/install.sh
 mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
+
+guard.customer_seed_external_ids.warn: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/check_customer_seed_external_ids.sh || { \
+		echo "[guard.customer_seed_external_ids.warn] WARN: guard failed but non-blocking mode continues"; \
+		true; \
+	}
+
+guard.customer_seed_external_ids.strict: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/check_customer_seed_external_ids.sh
 
 # ======================================================
 # ==================== Policy Ops ======================

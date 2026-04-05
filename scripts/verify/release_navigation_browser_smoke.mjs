@@ -30,13 +30,12 @@ const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
 const ARTIFACTS_DIR = String(process.env.ARTIFACTS_DIR || 'artifacts').trim() || 'artifacts';
 const ts = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'release-navigation-browser-smoke', ts);
-const EXPECTED_LABELS = [
-  'FR-1 项目立项',
-  'FR-2 项目推进',
-  'FR-3 成本记录',
-  'FR-4 付款记录',
-  'FR-5 结算结果',
-  '我的工作',
+const EXPECTED_ROOT_LABEL = '系统菜单';
+const MIN_EXPECTED_LEAF_COUNT = 6;
+const EXPECTED_SCENE_KEY_OPTIONS = [
+  ['projects.intake', 'project.initiation'],
+  ['project.management'],
+  ['my_work.workspace'],
 ];
 
 fs.mkdirSync(outDir, { recursive: true });
@@ -45,7 +44,9 @@ const summary = {
   base_url: BASE_URL,
   db_name: DB_NAME,
   login: LOGIN,
-  expected_labels: EXPECTED_LABELS,
+  expected_root_label: EXPECTED_ROOT_LABEL,
+  min_expected_leaf_count: MIN_EXPECTED_LEAF_COUNT,
+  expected_scene_key_options: EXPECTED_SCENE_KEY_OPTIONS,
   console_errors: [],
   page_errors: [],
   cases: [],
@@ -108,14 +109,33 @@ async function waitForReleaseNavigation(page) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
       await expandSidebarTree(page);
-      await page.waitForFunction((labels) => {
-        const textNodes = Array.from(
-          document.querySelectorAll('.sidebar .label, .sidebar .role-menu-item, .sidebar .title, .sidebar .role-label')
-        )
-          .map((el) => (el.textContent || '').trim())
-          .filter(Boolean);
-        return labels.every((label) => textNodes.includes(label));
-      }, EXPECTED_LABELS, { timeout: 12000 });
+      await page.waitForFunction(({ expectedRoot, minLeafCount }) => {
+        const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_4'));
+        const cache = cacheKey ? JSON.parse(localStorage.getItem(cacheKey) || 'null') : null;
+        const roots = Array.isArray(cache?.releaseNavigationTree) ? cache.releaseNavigationTree : [];
+        if (!roots.length) {
+          return false;
+        }
+        const root = roots[0] || {};
+        const rootLabel = String(root.label || root.title || '').trim();
+        if (rootLabel !== expectedRoot) {
+          return false;
+        }
+        let leafCount = 0;
+        const walk = (nodes) => {
+          for (const node of nodes || []) {
+            if (!node || typeof node !== 'object') continue;
+            const children = Array.isArray(node.children) ? node.children : [];
+            if (children.length) {
+              walk(children);
+            } else {
+              leafCount += 1;
+            }
+          }
+        };
+        walk(roots);
+        return leafCount >= minLeafCount;
+      }, { expectedRoot: EXPECTED_ROOT_LABEL, minLeafCount: MIN_EXPECTED_LEAF_COUNT }, { timeout: 12000 });
       return;
     } catch (error) {
       lastError = error;
@@ -215,18 +235,50 @@ try {
       search: window.location.search,
       title: document.title,
       sidebar_text: sidebarText,
-      cache_release_labels: ((cache?.releaseNavigationTree || []).flatMap((root) =>
-        (root.children || []).flatMap((group) =>
-          (group.children || []).map((child) => child.label || child.title || child.name || '')
-        )
-      )).filter(Boolean),
+      cache_release_root_label: String((cache?.releaseNavigationTree || [])[0]?.label || ''),
+      cache_release_leaf_count: (() => {
+        let leafCount = 0;
+        const walk = (nodes) => {
+          for (const node of nodes || []) {
+            if (!node || typeof node !== 'object') continue;
+            const children = Array.isArray(node.children) ? node.children : [];
+            if (children.length) {
+              walk(children);
+            } else {
+              leafCount += 1;
+            }
+          }
+        };
+        walk(cache?.releaseNavigationTree || []);
+        return leafCount;
+      })(),
+      cache_release_scene_keys: (() => {
+        const out = new Set();
+        const walk = (nodes) => {
+          for (const node of nodes || []) {
+            if (!node || typeof node !== 'object') continue;
+            const children = Array.isArray(node.children) ? node.children : [];
+            if (children.length) {
+              walk(children);
+              continue;
+            }
+            const sceneKey = String((node.meta || {}).scene_key || '').trim();
+            if (sceneKey) out.add(sceneKey);
+          }
+        };
+        walk(cache?.releaseNavigationTree || []);
+        return Array.from(out);
+      })(),
     };
   });
-  snapshot.release_labels = snapshot.cache_release_labels.length ? snapshot.cache_release_labels : snapshot.sidebar_text;
-
-  for (const label of EXPECTED_LABELS) {
-    assert(snapshot.release_labels.includes(label), `release navigation missing label: ${label}`);
-    assert(snapshot.sidebar_text.includes(label), `sidebar missing label: ${label}`);
+  assert(snapshot.cache_release_root_label === EXPECTED_ROOT_LABEL, `release root label drift: ${snapshot.cache_release_root_label}`);
+  assert(
+    Number(snapshot.cache_release_leaf_count || 0) >= MIN_EXPECTED_LEAF_COUNT,
+    `release leaf count drift: ${snapshot.cache_release_leaf_count}`,
+  );
+  for (const optionGroup of EXPECTED_SCENE_KEY_OPTIONS) {
+    const matched = optionGroup.some((sceneKey) => snapshot.cache_release_scene_keys.includes(sceneKey));
+    assert(matched, `release scene option missing: ${optionGroup.join('|')}`);
   }
   writeJson('sidebar_snapshot.json', snapshot);
   await page.screenshot({ path: path.join(outDir, 'sidebar.png'), fullPage: true });
@@ -246,8 +298,10 @@ try {
       `- db_name: \`${DB_NAME}\``,
       `- login: \`${LOGIN}\``,
       '',
-      '## Expected Labels',
-      ...EXPECTED_LABELS.map((item) => `- ${item}`),
+      '## Expected Runtime Semantics',
+      `- root_label: ${EXPECTED_ROOT_LABEL}`,
+      `- min_leaf_count: ${MIN_EXPECTED_LEAF_COUNT}`,
+      ...EXPECTED_SCENE_KEY_OPTIONS.map((item) => `- scene_key option: ${item.join(' | ')}`),
       '',
       '## Cases',
       ...summary.cases.map((item) => `- ${item.case_id}: ${item.status} (${item.route})`),
