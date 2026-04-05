@@ -10590,3 +10590,12 @@ Each entry must include:
 - completed_step: `ITER-2026-04-05-975 PASS：ARTIFACTS_DIR=artifacts + E2E_LOGIN=wutao 条件下 verify.release.execution_protocol.v1 全链通过`
 - active_commit: `7de445f`
 - next_step: `Proceed with formal publish operation on current delivery-sim alignment baseline`
+
+### 2026-04-05T12:46:32+08:00
+- blocker_key: `custom_frontend_release_gate_realignment_v1`
+- layer_target: `Delivery Simulation Runtime Alignment`
+- module: `release gate and checklist policy baseline`
+- reason: 用户明确自定义前端交付模式下 portal 非必需，需立即修正门禁基线并保留 smart_scene 方向性提示
+- completed_step: `ITER-2026-04-05-976 PASS：extension_modules guard 改为仅强制 smart_construction_core，smart_scene 改为非阻断推荐，发布清单模板已对齐`
+- active_commit: `6a75dc9`
+- next_step: `Proceed with formal publish using custom-frontend baseline (portal optional, scene recommended)`
