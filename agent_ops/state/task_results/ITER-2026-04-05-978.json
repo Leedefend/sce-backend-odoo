@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-05-978",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-978.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "runtime_dependency_mapping_repair": "PASS",
+    "mod_install_smart_construction_scene": "FAIL"
+  },
+  "failure": {
+    "stage": "mod.install smart_construction_scene",
+    "reason": "External ID not found: smart_construction_scene.sc_scene_project_initiation (sc_scene_layout.xml:121)"
+  },
+  "next_step": "Run source-level scene data consistency fix batch before re-attempting dual-scene installation and publish verification."
+}

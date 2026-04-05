@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-04-05-977",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-977.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "mod_install_smart_scene": "PASS",
+    "mod_install_smart_construction_scene": "FAIL"
+  },
+  "runtime_state": {
+    "db_name": "sc_prod_sim",
+    "smart_scene": "installed",
+    "smart_construction_scene": "uninstalled"
+  },
+  "failure": {
+    "stage": "mod.install smart_construction_scene",
+    "reason": "Cannot update missing record smart_construction_core.sc_cap_group_project_management"
+  },
+  "next_step": "Open dependency/data-link repair batch for smart_construction_scene installation prerequisites."
+}
