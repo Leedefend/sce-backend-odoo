@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-03-968
+title: Add unified system menu click usability smoke gate
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Add a runtime smoke verifier that clicks every leaf under unified system menu
+  and fails on contract-context-missing or menu-resolve failures.
+
+user_visible_outcome:
+  - "发布前可自动发现系统菜单点击后缺少契约上下文的问题"
+
+scope:
+  allowed_paths:
+    - scripts/verify/unified_system_menu_click_usability_smoke.mjs
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 1
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verification_gate_only
+  - no_business_fact_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: b2a6165
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-03-967
+  priority_lane: usability_release_proof
+
+architecture:
+  layer_target: Product Release Usability Proof
+  module: pre-release runtime usability verification
+  module_owner: scene_orchestration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This change adds verification on navigation semantic supply quality without
+    changing business facts or frontend model special-cases.
+  reason: >
+    Existing acceptance did not click through unified menu leaves, so runtime
+    contract-context defects escaped. Add dedicated click smoke gate.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-03-968.yaml
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart
+    - ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim BASE_URL=http://localhost API_BASE_URL=http://127.0.0.1:18069 DB_NAME=sc_prod_sim E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo ARTIFACTS_DIR=artifacts node scripts/verify/unified_system_menu_click_usability_smoke.mjs
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed
+
+deliverables:
+  - unified_menu_click_usability_gate
+
+rollback:
+  - git restore scripts/verify/unified_system_menu_click_usability_smoke.mjs
+  - git restore agent_ops/tasks/ITER-2026-04-03-968.yaml
+
+depends_on:
+  - ITER-2026-04-03-967

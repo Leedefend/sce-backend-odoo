@@ -1,0 +1,19 @@
+{
+  "task_id": "ITER-2026-04-03-970",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-970.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "restart": "PASS",
+    "verify_product_delivery_menu_integrity_guard": "PASS",
+    "verify_product_delivery_policy_guard": "PASS",
+    "verify_release_delivery_engine_v1": "FAIL"
+  },
+  "artifact": "artifacts/codex/release-navigation-browser-smoke/20260405T004007Z/summary.json",
+  "failure": {
+    "gate": "verify.portal.release_navigation_browser_smoke.host",
+    "message": "page.waitForFunction: Timeout 12000ms exceeded"
+  },
+  "next_step": "STOP per acceptance_failed; open dedicated release-navigation smoke alignment task."
+}

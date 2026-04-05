@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-03-968",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-968.md",
+  "publishability": "accepted",
+  "verification": {
+    "validate_task": "PASS",
+    "restart": "PASS",
+    "unified_system_menu_click_usability_smoke": "PASS"
+  },
+  "artifact": "artifacts/codex/unified-system-menu-click-usability-smoke/20260405T001341Z/summary.json",
+  "next_step": "Continue next eligible low-risk delivery batch on active objective."
+}
