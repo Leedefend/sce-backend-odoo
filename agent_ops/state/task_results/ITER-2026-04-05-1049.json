@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-1049",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1049.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "non_auth_backlog_reentry": "docs/audit/boundary/non_auth_residual_backlog_reentry.md"
+  },
+  "next_step": "Open dedicated screen for /api/meta/project_capabilities ownership permanence."
+}

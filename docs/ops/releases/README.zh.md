@@ -11,6 +11,19 @@ status: active
   - Release Notes：`docs/ops/release_notes_v0.3.0-stable.md`
   - Release Checklist：`docs/ops/release_checklist_v0.3.0-stable.md`
 
+## 最新治理收口
+- 2026-04-06 — Phase 16-G 六条边界治理收口（1121-1128）
+  - 类型：`governance`
+  - 状态：`closed`
+  - 文档：`docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md`
+  - Final Verify 证据：`docs/audit/boundary/six_clause_closure_final_verify_2026-04-06.md`
+  - 门禁：`make verify.controller.boundary.guard`
+- 2026-04-06 — Phase 16-F 边界治理收口（1103-1117）
+  - 类型：`governance`
+  - 状态：`closed`
+  - 文档：`docs/ops/releases/current/phase_16_f_boundary_recovery_closure_1103_1117.md`
+  - 门禁：`make verify.controller.boundary.guard`
+
 ## 模板
 - Release Notes 模板：`docs/ops/releases/templates/release_notes_TEMPLATE.md`
 - Release Checklist 模板：`docs/ops/releases/templates/release_checklist_TEMPLATE.md`

@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-05-1009
+title: Screen provider boundary for meta project capabilities endpoint
+type: governance
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Define provider-boundary constraints for `/api/meta/project_capabilities`
+  so scenario business facts remain outside kernel ownership.
+
+user_visible_outcome:
+  - "给出 /api/meta/project_capabilities 的 provider 边界与后续整改切片"
+
+scope:
+  allowed_paths:
+    - docs/audit/boundary/http_route_inventory.md
+    - docs/audit/boundary/http_route_classification.md
+    - docs/audit/boundary/meta_entry_layer_decision.md
+    - docs/audit/boundary/meta_project_capabilities_provider_boundary.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 30
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - classify_from_scan_outputs_only
+  - do_not_rescan_repository
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1008
+  priority_lane: smart_construction_core_boundary_remediation_p1_meta_provider
+
+architecture:
+  layer_target: Backend Sub-Layer Decision Gate
+  module: meta project capabilities provider boundary
+  module_owner: smart_construction_core (scenario business-fact provider)
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    project capability payload encodes industry truth and must remain supplied
+    by scenario/domain provider instead of kernel runtime route ownership.
+  reason: >
+    Enforce route-level boundary after describe_model migration to prevent
+    semantic leakage into platform kernel.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1009.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - stage_boundary_broken
+
+deliverables:
+  - docs/audit/boundary/meta_project_capabilities_provider_boundary.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1009.yaml
+  - git restore docs/audit/boundary/meta_project_capabilities_provider_boundary.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1009.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1009.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1008

@@ -1,0 +1,106 @@
+task_id: ITER-2026-04-05-1113
+title: Migrate non-forbidden orchestration services to extension-provider adapter
+type: implementation
+status: active
+priority: medium
+mode: execute
+
+goal: >
+  Decouple five non-forbidden smart_core orchestrators from direct
+  `smart_construction_core.services.*` imports by introducing a platform
+  orchestration service adapter backed by extension hooks.
+
+user_visible_outcome:
+  - "5 个非禁改 orchestrator 去除 direct industry service import，改为协议注入"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/industry_orchestration_service_adapter.py
+    - addons/smart_core/orchestration/project_execution_scene_orchestrator.py
+    - addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py
+    - addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py
+    - addons/smart_core/orchestration/project_dashboard_contract_orchestrator.py
+    - addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py
+    - addons/smart_construction_core/core_extension.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+    - addons/smart_core/orchestration/payment_slice_contract_orchestrator.py
+    - addons/smart_core/orchestration/settlement_slice_contract_orchestrator.py
+
+limits:
+  max_files: 14
+  max_candidates: 12
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - no_payment_or_settlement_touch
+  - protocol_adapter_migration_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: boundary_hotspot_followup_phase11
+  priority_lane: orchestration_boundary_recovery
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core.orchestration
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: orchestration layer should consume extension protocol providers instead of direct industry service imports.
+  reason: migrate 5 allowed hotspots from 1112 audit while respecting stop-condition exclusions.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1113.yaml
+    - python3 -m py_compile addons/smart_core/core/industry_orchestration_service_adapter.py addons/smart_core/orchestration/project_execution_scene_orchestrator.py addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py addons/smart_core/orchestration/project_dashboard_contract_orchestrator.py addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py addons/smart_construction_core/core_extension.py
+    - bash -lc '! rg -n "odoo\.addons\.smart_construction_core\.services" addons/smart_core/orchestration/project_execution_scene_orchestrator.py addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py addons/smart_core/orchestration/project_dashboard_contract_orchestrator.py addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py'
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - payment_or_settlement_file_touched
+
+deliverables:
+  - addons/smart_core/core/industry_orchestration_service_adapter.py
+  - addons/smart_core/orchestration/project_execution_scene_orchestrator.py
+  - addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py
+  - addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py
+  - addons/smart_core/orchestration/project_dashboard_contract_orchestrator.py
+  - addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py
+  - addons/smart_construction_core/core_extension.py
+
+rollback:
+  - git restore addons/smart_core/core/industry_orchestration_service_adapter.py
+  - git restore addons/smart_core/orchestration/project_execution_scene_orchestrator.py
+  - git restore addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py
+  - git restore addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py
+  - git restore addons/smart_core/orchestration/project_dashboard_contract_orchestrator.py
+  - git restore addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py
+  - git restore addons/smart_construction_core/core_extension.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1113.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1113.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1113.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1112

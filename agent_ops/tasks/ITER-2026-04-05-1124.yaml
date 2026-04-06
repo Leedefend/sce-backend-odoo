@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-05-1124
+title: Clause-2 closure migrate capability runtime to contribution-only path
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Remove legacy capability runtime hook fallback from platform capability provider
+  and contribution loader, enforcing contribution-only ownership path.
+
+user_visible_outcome:
+  - "capability registry 运行时不再走 smart_core_list_capabilities_for_user/smart_core_capability_groups 旧钩子"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/capability_provider.py
+    - addons/smart_core/core/capability_contribution_loader.py
+    - scripts/verify/architecture_capability_registry_platform_owner_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 10
+  max_candidates: 10
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - capability_runtime_contribution_only
+  - no_legacy_smart_core_capability_runtime_hooks
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: six_clause_verify_clause2_partial
+  priority_lane: boundary_closure
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core.capability_provider
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: runtime capability projection is platform semantic supply for generic consumers.
+  reason: close Clause-2 partial finding.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1124.yaml
+    - python3 -m py_compile addons/smart_core/core/capability_provider.py addons/smart_core/core/capability_contribution_loader.py scripts/verify/architecture_capability_registry_platform_owner_guard.py
+    - bash -lc 'rg -n "smart_core_list_capabilities_for_user|smart_core_capability_groups" addons/smart_core/core/capability_provider.py addons/smart_core/core/capability_contribution_loader.py && exit 1 || exit 0'
+    - python3 scripts/verify/architecture_capability_registry_platform_owner_guard.py
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/core/capability_provider.py
+  - addons/smart_core/core/capability_contribution_loader.py
+  - scripts/verify/architecture_capability_registry_platform_owner_guard.py
+
+rollback:
+  - git restore addons/smart_core/core/capability_provider.py
+  - git restore addons/smart_core/core/capability_contribution_loader.py
+  - git restore scripts/verify/architecture_capability_registry_platform_owner_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1124.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1124.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1124.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1123

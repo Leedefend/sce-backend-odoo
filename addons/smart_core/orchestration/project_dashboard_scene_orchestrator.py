@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo.addons.smart_construction_core.services.project_dashboard_service import (
-    ProjectDashboardService,
+from odoo.addons.smart_core.core.industry_orchestration_service_adapter import (
+    build_project_dashboard_service,
 )
 from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import (
     BaseSceneEntryOrchestrator,
@@ -38,7 +38,7 @@ class ProjectDashboardSceneOrchestrator(BaseSceneEntryOrchestrator):
     )
 
     def __init__(self, env):
-        super().__init__(env, ProjectDashboardService(env))
+        super().__init__(env, build_project_dashboard_service(env))
 
     def resolve_first_action(self, runtime_fetch_hints):
         blocks = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}

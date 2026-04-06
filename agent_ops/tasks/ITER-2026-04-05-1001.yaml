@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-05-1001
+title: P0 migrate menu tree routes from smart_construction_core to smart_core
+type: backend
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Move `/api/menu/tree` and `/api/user_menus` route ownership from
+  smart_construction_core to smart_core with generic platform semantics.
+
+user_visible_outcome:
+  - "平台模块接管 menu 入口，行业模块不再定义 menu 路由"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/**
+    - addons/smart_construction_core/controllers/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - addons/**/models/**/*payment*
+    - addons/**/models/**/*settlement*
+    - addons/**/models/**/*account*
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 25
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - p0_boundary_restoration_only
+  - platform_generic_semantics_only
+  - no_industry_xmlid_in_kernel
+  - no_acl_or_financial_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1000
+  priority_lane: smart_construction_core_boundary_remediation_p0
+
+architecture:
+  layer_target: Platform Runtime Entry Ownership
+  module: menu runtime entry
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Menu tree is runtime orchestration semantic and should be platform-generic.
+  reason: >
+    Execute P0-2 after decision gate to restore platform ownership without
+    absorbing industry-specific menu semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1001.yaml
+    - python3 -m py_compile addons/smart_core/controllers/platform_menu_api.py addons/smart_core/controllers/__init__.py addons/smart_construction_core/controllers/__init__.py
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - kernel_absorbs_industry_semantics
+
+deliverables:
+  - platform_menu_routes_owned_by_smart_core
+
+rollback:
+  - git restore addons/smart_core/controllers/platform_menu_api.py
+  - git restore addons/smart_core/controllers/__init__.py
+  - git restore addons/smart_construction_core/controllers/__init__.py
+  - git restore addons/smart_construction_core/controllers/frontend_api.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1001.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1001.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1001.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1000

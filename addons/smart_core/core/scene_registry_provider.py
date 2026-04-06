@@ -1,26 +1,28 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
-
-
 def load_scene_configs(env, *, drift=None):
-    payload = call_extension_hook_first(env, "smart_core_load_scene_configs", env, drift=drift)
+    from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs as direct_load_scene_configs
+
+    payload = direct_load_scene_configs(env, drift=drift)
     return payload if isinstance(payload, list) else []
 
 
 def has_db_scenes(env) -> bool:
-    result = call_extension_hook_first(env, "smart_core_has_db_scenes", env)
-    return bool(result)
+    from odoo.addons.smart_construction_scene.scene_registry import has_db_scenes as direct_has_db_scenes
+
+    return bool(direct_has_db_scenes(env))
 
 
 def get_scene_version(env) -> str | None:
-    result = call_extension_hook_first(env, "smart_core_get_scene_version", env)
-    text = str(result or "").strip()
+    from odoo.addons.smart_construction_scene.scene_registry import get_scene_version as direct_get_scene_version
+
+    text = str(direct_get_scene_version() or "").strip()
     return text or None
 
 
 def get_schema_version(env) -> str | None:
-    result = call_extension_hook_first(env, "smart_core_get_schema_version", env)
-    text = str(result or "").strip()
+    from odoo.addons.smart_construction_scene.scene_registry import get_schema_version as direct_get_schema_version
+
+    text = str(direct_get_schema_version() or "").strip()
     return text or None

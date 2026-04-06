@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-1076",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1076.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "bridge_cleanup_matrix": "docs/refactor/industry_bridge_compat_cleanup_candidates_v1.md"
+  },
+  "next_step": "Open bounded implementation batch to remove P0 scene legacy bridge exports."
+}

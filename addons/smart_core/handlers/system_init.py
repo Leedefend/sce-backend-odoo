@@ -11,7 +11,6 @@ from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import format_versions
-from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 from odoo.addons.smart_core.core.scene_provider import (
     load_scene_contract as provider_load_scene_contract,
     load_scenes_from_db_or_fallback as provider_load_scenes_from_db_or_fallback,
@@ -38,7 +37,10 @@ from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeO
 from odoo.addons.smart_core.core.system_init_runtime_context import SystemInitRuntimeContext
 from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
-from odoo.addons.smart_core.core.system_init_extension_fact_merger import merge_extension_facts
+from odoo.addons.smart_core.core.system_init_extension_fact_merger import (
+    apply_extension_fact_contributions,
+    merge_extension_facts,
+)
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context import SystemInitSceneRuntimeSurfaceContext
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
@@ -529,9 +531,9 @@ class SystemInitHandler(BaseIntentHandler):
         if build_mode in {SystemInitPayloadBuilder.BUILD_MODE_PRELOAD, SystemInitPayloadBuilder.BUILD_MODE_DEBUG}:
             SystemInitPayloadBuilder.attach_preload(data, home_contract, etags, preload_items)
 
-        # 扩展模块可附加场景/能力等（不影响主流程）
-        run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
-        merge_extension_facts(data)
+        # 扩展模块 facts contribution（平台 merge owner）
+        apply_extension_fact_contributions(data, env, user, context=params)
+        merge_extension_facts(data, include_workspace_collections=False)
         data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
         data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
         stage_ts = _mark("prepare_runtime_context", stage_ts)

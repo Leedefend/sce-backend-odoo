@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-05-1043
+title: Reconciliation checkpoint for 1040 fail and 1042 recovery pass
+type: governance
+status: active
+priority: medium
+mode: screen
+
+goal: >
+  Record an explicit reconciliation note linking 1040 failure to 1042 recovery,
+  so chain state is unambiguous for next implementation batches.
+
+user_visible_outcome:
+  - "形成 1040/1042 对账说明，明确失败已被命令契约修复覆盖"
+
+scope:
+  allowed_paths:
+    - agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1040.md
+    - agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1042.md
+    - docs/audit/boundary/auth_signup_1040_reconciliation_note.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 7
+  max_candidates: 8
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - reconciliation_note_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1042
+  priority_lane: smart_construction_core_auth_reconciliation
+
+architecture:
+  layer_target: Governance Checkpoint
+  module: implement batch reconciliation
+  module_owner: delivery governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: recovery-state alignment for acceptance chain.
+  reason: avoid ambiguous interpretation of 1040 fail after verified recovery.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1043.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - docs/audit/boundary/auth_signup_1040_reconciliation_note.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1043.yaml
+  - git restore docs/audit/boundary/auth_signup_1040_reconciliation_note.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1043.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1043.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1042

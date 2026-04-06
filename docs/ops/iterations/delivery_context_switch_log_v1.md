@@ -10635,3 +10635,1335 @@ Each entry must include:
 - completed_step: `ITER-2026-04-05-980 PASS：smart_scene/smart_construction_scene 均 installed，verify.release.execution_protocol.v1（wutao + ARTIFACTS_DIR=artifacts）通过`
 - active_commit: `f4bccf7`
 - next_step: `Proceed with formal publish operation under dual-scene installed baseline`
+
+### 2026-04-05T14:09:03+08:00
+- blocker_key: `smart_construction_core_boundary_fact_audit_scan_v1`
+- layer_target: `Agent Governance Fact Audit`
+- module: `smart_construction_core boundary fact inventory`
+- reason: 用户要求先澄清“行业模块为何存在 controller/handler/治理相关内容”事实，并沉淀临时文档后再制定方案
+- completed_step: `ITER-2026-04-05-981 PASS：在限定范围完成 scan 阶段事实盘点并产出 TEMP_smart_construction_core_boundary_fact_audit_2026-04-05.md`
+- active_commit: `f4bccf7`
+- next_step: `Open screen-stage classification task to classify boundary facts without rescan`
+
+### 2026-04-05T14:12:25+08:00
+- blocker_key: `smart_construction_core_boundary_fact_temp_delivery_v1`
+- layer_target: `Agent Governance Fact Delivery`
+- module: `repo-root temp summary publication`
+- reason: 用户要求将盘点总结同步到仓库根目录临时文档/tmp
+- completed_step: `ITER-2026-04-05-982 PASS：盘点文档已复制到 临时文档/tmp/TEMP_smart_construction_core_boundary_fact_audit_2026-04-05.md`
+- active_commit: `f4bccf7`
+- next_step: `Proceed to screen-stage classification if user confirms architecture rectification planning`
+
+### 2026-04-05T14:51:29+08:00
+- blocker_key: `smart_construction_core_boundary_phase_a_http_inventory_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `smart_construction_core HTTP entry surface`
+- reason: 用户要求按“先查清、再定性、后收口”从 Phase A 入口面开始详细排查
+- completed_step: `ITER-2026-04-05-983 PASS：已扫描 controllers 全部 route 并输出 docs/audit/boundary/http_route_inventory.md（34 条）`
+- active_commit: `f4102e4`
+- next_step: `Open screen-stage route classification batch (A/B/C/D/E/F) using existing inventory only`
+
+### 2026-04-05T14:54:06+08:00
+- blocker_key: `smart_construction_core_boundary_phase_a_http_screen_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `smart_construction_core HTTP entry classification`
+- reason: 按低成本三段式在 inventory 基础上进行职责分类，不重扫仓库
+- completed_step: `ITER-2026-04-05-984 PASS：基于 http_route_inventory.md 完成 34 条 route 的 A/B/C/D/E/F 分类与越界信号标记`
+- active_commit: `f4102e4`
+- next_step: `Open scan-stage platform entry occupation audit for /api/login /api/session/get /api/menu/tree /api/capabilities/* /api/scenes/* /api/ops/* /api/packs/*`
+
+### 2026-04-05T14:57:26+08:00
+- blocker_key: `smart_construction_core_boundary_phase_a_platform_entry_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `platform entry occupation evidence`
+- reason: 用户要求核查关键平台入口是否被行业模块占用，并识别定义源与调用引用
+- completed_step: `ITER-2026-04-05-985 PASS：已产出 platform_entry_occupation.md，覆盖 /api/login /api/session/get /api/menu/tree /api/capabilities/* /api/scenes/* /api/ops/* /api/packs/* 证据清单`
+- active_commit: `f4102e4`
+- next_step: `Open runtime dependency scan batch for frontend real-call chain and priority-matrix input`
+
+### 2026-04-05T15:01:47+08:00
+- blocker_key: `smart_construction_core_boundary_phase_f_runtime_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `frontend runtime dependency mapping`
+- reason: 用户要求区分“仓里有”和“主链真的在用”，需先形成前端真实调用证据
+- completed_step: `ITER-2026-04-05-986 PASS：已产出 frontend_runtime_dependency.md，覆盖 login/system.init/menu/scene/page/action 六条链路证据`
+- active_commit: `f4102e4`
+- next_step: `Open screen-stage runtime priority matrix batch (P0/P1/P2/P3) using existing chain evidence only`
+
+### 2026-04-05T15:04:10+08:00
+- blocker_key: `smart_construction_core_boundary_phase_f_priority_screen_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `runtime priority matrix`
+- reason: 用户要求对主链越界对象进行 P0/P1/P2/P3 分级，作为整改节奏输入
+- completed_step: `ITER-2026-04-05-987 PASS：基于既有 scan 产物完成 runtime_priority_matrix.md（34 条 route 分级）`
+- active_commit: `f4102e4`
+- next_step: `Open Phase-B handler scan batch for intent inventory and registry ownership inputs`
+
+### 2026-04-05T15:08:15+08:00
+- blocker_key: `smart_construction_core_boundary_phase_b_handler_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `handler and intent inventory`
+- reason: 按结构根因排查路线进入 Phase B，先建立 handler 与 intent 注册事实台账
+- completed_step: `ITER-2026-04-05-988 PASS：已产出 handler_inventory.md，含 handler 类清单、INTENT_TYPE、core_extension 注册映射与跨模块 hook 证据`
+- active_commit: `f4102e4`
+- next_step: `Open Phase-B screen batch for intent semantic classification`
+
+### 2026-04-05T15:11:18+08:00
+- blocker_key: `smart_construction_core_boundary_phase_b_intent_screen_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `intent semantic classification`
+- reason: 按排查清单 B-2 对 handler intent 做语义分类，识别平台/治理/场景混入面
+- completed_step: `ITER-2026-04-05-989 PASS：已产出 intent_semantic_classification.md（43 条 intent-class 映射）`
+- active_commit: `f4102e4`
+- next_step: `Open Phase-B registry ownership scan batch`
+
+### 2026-04-05T15:13:40+08:00
+- blocker_key: `smart_construction_core_boundary_phase_b_registry_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `registry ownership evidence`
+- reason: 用户要求确认注册权来源是否被行业模块占用，需审计 core_extension 与 scene/capability hook 证据
+- completed_step: `ITER-2026-04-05-990 PASS：已产出 registry_ownership_audit.md，包含 registry 绑定与跨模块 hook 证据`
+- active_commit: `f4102e4`
+- next_step: `Open Phase-D dependency graph scan batch`
+
+### 2026-04-05T15:16:26+08:00
+- blocker_key: `smart_construction_core_boundary_phase_d_dependency_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `module and file dependency mapping`
+- reason: 按排查清单 D-1 生成依赖方向图，识别反向依赖结构基础
+- completed_step: `ITER-2026-04-05-991 PASS：已产出 module_dependency_graph.md 与 file_dependency_hotspots.md`
+- active_commit: `f4102e4`
+- next_step: `Open Phase-D screen batch for reverse dependency hotspots Top 20`
+
+### 2026-04-05T15:18:56+08:00
+- blocker_key: `smart_construction_core_boundary_phase_d_hotspot_screen_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `reverse dependency hotspot ranking`
+- reason: 按排查清单 D-2 产出反向依赖热点 Top 20 及影响范围
+- completed_step: `ITER-2026-04-05-992 PASS：已产出 reverse_dependency_hotspots.md（Top 20）`
+- active_commit: `f4102e4`
+- next_step: `Open Phase-G duplicate controller/orchestration/registry surface scan chain`
+
+### 2026-04-05T15:21:14+08:00
+- blocker_key: `smart_construction_core_boundary_phase_g_controller_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `duplicate controller surface detection`
+- reason: 按排查清单 G-1 检测是否存在双入口控制面
+- completed_step: `ITER-2026-04-05-993 PASS：已产出 duplicate_controller_surface.md（含 exact duplicate 与 family-level 分布证据）`
+- active_commit: `f4102e4`
+- next_step: `Open G-2 duplicate orchestration surface scan batch`
+
+### 2026-04-05T15:25:21+08:00
+- blocker_key: `smart_construction_core_boundary_phase_g_orchestration_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `duplicate orchestration surface detection`
+- reason: 按排查清单 G-2 检测双编排源与同类编排语义跨模块共存
+- completed_step: `ITER-2026-04-05-994 PASS：已产出 duplicate_orchestration_surface.md（多模块编排 key 共存证据）`
+- active_commit: `f4102e4`
+- next_step: `Open G-3 duplicate registry surface scan batch`
+
+### 2026-04-05T15:27:36+08:00
+- blocker_key: `smart_construction_core_boundary_phase_g_registry_scan_v1`
+- layer_target: `Agent Governance Boundary Scan`
+- module: `duplicate registry source detection`
+- reason: 按排查清单 G-3 检测双注册源冲突面
+- completed_step: `ITER-2026-04-05-995 PASS：已产出 duplicate_registry_surface.md（多模块注册 key 共存证据）`
+- active_commit: `f4102e4`
+- next_step: `Open consolidation batch for required summary tables`
+
+### 2026-04-05T15:29:44+08:00
+- blocker_key: `smart_construction_core_boundary_summary_tables_screen_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `boundary summary table consolidation`
+- reason: 用户要求形成四张核心汇总表作为整改门槛输入
+- completed_step: `ITER-2026-04-05-996 PASS：已产出 boundary_object_master_table/mainchain_boundary_table/reverse_dependency_hotspot_table/duplicate_source_conflict_table`
+- active_commit: `f4102e4`
+- next_step: `Open final gate-screen batch to answer three remediation gate questions`
+
+### 2026-04-05T15:32:35+08:00
+- blocker_key: `smart_construction_core_boundary_final_gate_screen_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `remediation gate decision`
+- reason: 用户要求基于审计结果回答整改门槛三问并确定整改级别
+- completed_step: `ITER-2026-04-05-997 PASS：已产出 remediation_gate_answers.md，给出三问判定与整改级别结论`
+- active_commit: `f4102e4`
+- next_step: `Start remediation-design task chain with P0-first ownership transfer plan`
+
+### 2026-04-05T15:37:49+08:00
+- blocker_key: `smart_construction_core_boundary_full_conclusion_temp_delivery_v1`
+- layer_target: `Agent Governance Boundary Screen`
+- module: `temporary conclusion delivery`
+- reason: 用户要求将本轮排查结论完整输出到临时文档
+- completed_step: `ITER-2026-04-05-998 PASS：已产出 临时文档/tmp/TEMP_smart_construction_core_boundary_full_conclusion_2026-04-05.md`
+- active_commit: `f4102e4`
+- next_step: `Optional: start remediation-design task chain with P0-first sequencing`
+
+### 2026-04-05T15:44:07+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_session_entry_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `session/auth platform entry`
+- reason: 用户要求开始实质性回归边界约束，先执行最小 P0 切片（session 路由归属）
+- completed_step: `ITER-2026-04-05-999 PASS：/api/login /api/logout /api/session/get 已迁移到 smart_core 控制器；smart_construction_core 不再定义这三条路由`
+- active_commit: `f4102e4`
+- next_step: `Continue P0 with menu runtime entry migration after backend semantic-supply screening`
+
+### 2026-04-05T15:47:02+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_menu_layer_decision_v1`
+- layer_target: `Backend Sub-Layer Decision Gate`
+- module: `menu runtime entry ownership`
+- reason: 按强制门禁先完成 /api/menu/tree 的后端子层决策，避免内核吸收行业语义
+- completed_step: `ITER-2026-04-05-1000 PASS：决策为 scene-orchestration，已定义实施硬约束与 stop signals`
+- active_commit: `f4102e4`
+- next_step: `Implement P0-2 generic semantic-supply and migrate /api/menu/tree ownership`
+
+### 2026-04-05T15:50:25+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_menu_entry_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `menu runtime entry`
+- reason: 按 P0-2 将菜单入口归还平台模块，并保持内核泛化语义
+- completed_step: `ITER-2026-04-05-1001 PASS：/api/menu/tree 与 /api/user_menus 已由 smart_core 持有；smart_construction_core 控制器初始化不再加载 frontend_api`
+- active_commit: `f4102e4`
+- next_step: `Run runtime smoke for login/session/menu chain before next ownership migration`
+
+### 2026-04-05T15:56:07+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_runtime_smoke_v1`
+- layer_target: `Runtime Verification`
+- module: `frontend api smoke chain`
+- reason: 按用户同意执行 login/session/menu 运行链 smoke 验证
+- completed_step: `ITER-2026-04-05-1002 FAIL：verify.frontend_api 在沙箱受 socket 限制，提权重试后仍因目标运行时超时不可达`
+- active_commit: `f4102e4`
+- next_step: `STOP per acceptance_failed; recover prod-sim runtime connectivity then rerun verify batch`
+
+### 2026-04-05T16:02:50+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_runtime_smoke_recovery_v1`
+- layer_target: `Runtime Verification`
+- module: `prod-sim api chain connectivity`
+- reason: 用户要求继续执行；在前一轮超时后进行运行时恢复并复验
+- completed_step: `ITER-2026-04-05-1003 PASS：prod-sim 重启并健康，FRONTEND_API_BASE_URL=http://127.0.0.1:18069 条件下 verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Proceed with P1 orchestration ownership remediation`
+
+### 2026-04-05T16:07:19+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_execute_entry_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `generic execute action endpoint`
+- reason: 按“加快节奏”推进 P1，将高频通用 execute 入口归还平台模块
+- completed_step: `ITER-2026-04-05-1004 PASS：/api/execute_button 已由 smart_core 持有；frontend_api smoke 复验通过`
+- active_commit: `f4102e4`
+- next_step: `Proceed P1 portal execute ownership migration slices`
+
+### 2026-04-05T16:13:08+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_portal_execute_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `portal execute endpoints`
+- reason: 按加速节奏继续 P1，迁移 portal execute 路由 ownership
+- completed_step: `ITER-2026-04-05-1005 PASS：/api/contract/portal_execute_button 与 /api/portal/execute_button 已由 smart_core 持有；verify.portal.execute_button 通过`
+- active_commit: `f4102e4`
+- next_step: `Proceed P1 with ui_contract route ownership migration`
+
+### 2026-04-05T16:22:39+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_ui_contract_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `ui contract endpoint`
+- reason: 按加速节奏继续 P1，迁移 `/api/ui/contract` 路由 ownership 并保持 410 兼容行为
+- completed_step: `ITER-2026-04-05-1006 PASS：/api/ui/contract 已由 smart_core 持有；弃用语义（410）保持不变；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Open P1 screen batch for /api/meta/* ownership classification and backend sub-layer decision`
+
+### 2026-04-05T16:24:40+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_meta_decision_v1`
+- layer_target: `Backend Sub-Layer Decision Gate`
+- module: `meta runtime entry ownership`
+- reason: 按加速节奏进入 `/api/meta/*` 迁移前 screen，避免把行业 capability 事实吸入 kernel
+- completed_step: `ITER-2026-04-05-1007 PASS：已产出 meta_entry_layer_decision.md，完成 route-level 分层决策（describe_model=平台编排，project_capabilities=场景业务事实）`
+- active_commit: `f4102e4`
+- next_step: `Implement P1 Slice-1: migrate /api/meta/describe_model ownership to smart_core`
+
+### 2026-04-05T16:28:21+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_meta_describe_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `meta describe endpoint`
+- reason: 按 1007 决策执行 P1 Slice-1，仅迁移通用 metadata 路由 ownership
+- completed_step: `ITER-2026-04-05-1008 PASS：/api/meta/describe_model 已由 smart_core 持有；/api/meta/project_capabilities 保持场景业务事实归属；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Open P1 screen for /api/meta/project_capabilities provider-boundary hardening`
+
+### 2026-04-05T16:30:34+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_meta_project_capabilities_boundary_v1`
+- layer_target: `Backend Sub-Layer Decision Gate`
+- module: `meta project capabilities provider boundary`
+- reason: 在 describe_model 迁移后，补齐 project_capabilities 业务事实 provider 边界，防止 kernel 语义吸收
+- completed_step: `ITER-2026-04-05-1009 PASS：已产出 meta_project_capabilities_provider_boundary.md，明确场景供给与内核禁止项`
+- active_commit: `f4102e4`
+- next_step: `Continue P1 runtime entry remediation with /api/system/init and /api/open_app ownership split`
+
+### 2026-04-05T16:35:21+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_scenes_my_decision_v1`
+- layer_target: `Backend Sub-Layer Decision Gate`
+- module: `legacy scenes.my runtime entry`
+- reason: 核对下一条 P0 主链入口并建立 `/api/scenes/my` 迁移前置约束
+- completed_step: `ITER-2026-04-05-1010 PASS：已产出 scenes_my_entry_layer_decision.md，确定 smart_core 目标 ownership + 兼容适配迁移路径`
+- active_commit: `f4102e4`
+- next_step: `Implement compatibility adapter ownership slice for /api/scenes/my in smart_core`
+
+### 2026-04-05T16:37:16+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_contract_entry_decision_v1`
+- layer_target: `Backend Sub-Layer Decision Gate`
+- module: `contract runtime entries`
+- reason: 先为高频 `/api/contract/*` 入口建立 route shell 与 provider 分离策略，再进入实现切片
+- completed_step: `ITER-2026-04-05-1011 PASS：已产出 contract_entry_ownership_decision.md，确定 smart_core 持有入口壳 + scenario 保留事实供给`
+- active_commit: `f4102e4`
+- next_step: `Implement /api/contract/capability_matrix ownership transfer slice`
+
+### 2026-04-05T16:41:40+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_capability_matrix_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `capability_matrix contract entry`
+- reason: 按 contract-entry 决策执行首个实现切片，先迁移 capability_matrix 入口壳 ownership
+- completed_step: `ITER-2026-04-05-1012 PASS：/api/contract/capability_matrix 已由 smart_core 持有；schema_version 保持兼容；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Implement /api/contract/portal_dashboard ownership transfer slice`
+
+### 2026-04-05T16:45:28+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_portal_dashboard_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `portal_dashboard contract entry`
+- reason: 延续 contract-entry ownership 回归，迁移 portal_dashboard 入口壳到 smart_core
+- completed_step: `ITER-2026-04-05-1013 PASS：/api/contract/portal_dashboard 已由 smart_core 持有；schema_version 保持兼容；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Return to P0 /api/scenes/my compatibility-adapter ownership slice`
+
+### 2026-04-05T16:49:07+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p0_scenes_my_adapter_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `scenes.my runtime entry`
+- reason: 执行 P0 兼容适配方案，先迁移入口壳 ownership，再保留场景事实供给委托
+- completed_step: `ITER-2026-04-05-1014 PASS：/api/scenes/my 已由 smart_core 路由壳持有并委托场景实现；兼容语义保留；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Scan remaining active governance/runtime endpoints (/api/ops/*, /api/packs/*, /api/capabilities/*) for staged ownership normalization`
+
+### 2026-04-05T16:54:09+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_governance_family_decision_v1`
+- layer_target: `Backend Sub-Layer Decision Gate`
+- module: `ops/packs/capabilities families`
+- reason: 在核心主链迁移后，确定剩余治理族群的 staged ownership 策略与优先级
+- completed_step: `ITER-2026-04-05-1015 PASS：已产出 governance_endpoint_ownership_decision.md，确定 capabilities(P1)优先，ops/packs(P2)分批`
+- active_commit: `f4102e4`
+- next_step: `Implement /api/capabilities/* route-shell ownership migration batch`
+
+### 2026-04-05T16:56:28+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p1_capabilities_migration_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `capabilities endpoint family`
+- reason: 按治理族群决策先执行 capabilities(P1) 的 route-shell ownership 回归
+- completed_step: `ITER-2026-04-05-1016 PASS：/api/capabilities/export|search|lint 已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Start P2 staged migration for /api/ops/* family (read-first)`
+
+### 2026-04-05T17:01:12+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p2_ops_read_first_chain_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `ops read endpoint family`
+- reason: 按 read-first 决策先迁移 `/api/ops/tenants|audit/search|job/status` 的 route-shell ownership
+- completed_step: `ITER-2026-04-05-1017 PASS（screen）+ ITER-2026-04-05-1018 PASS（implement）：ops 三条读接口已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Screen write-endpoint migration for /api/ops/subscription/set and /api/ops/packs/batch_*`
+
+### 2026-04-05T17:06:42+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p2_ops_write_chain_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `ops write endpoint family`
+- reason: 在 read-first 完成后，按 screen 决策迁移 ops 三条写接口 route-shell ownership
+- completed_step: `ITER-2026-04-05-1019 PASS（screen）+ ITER-2026-04-05-1020 PASS（implement）：/api/ops/subscription/set + /api/ops/packs/batch_upgrade + /api/ops/packs/batch_rollback 已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Start /api/packs/* family screen for read-first migration sequence`
+
+### 2026-04-05T17:16:47+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p2_packs_read_first_chain_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `packs endpoint family`
+- reason: 延续治理族群策略，先完成 packs 读接口 `/api/packs/catalog` 的 route-shell ownership 回归
+- completed_step: `ITER-2026-04-05-1021 PASS（screen）+ ITER-2026-04-05-1022 PASS（implement）：/api/packs/catalog 已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Screen write migration for /api/packs/publish + /api/packs/install + /api/packs/upgrade`
+
+### 2026-04-05T17:22:16+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_p2_packs_write_chain_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `packs write endpoint family`
+- reason: 基于 screen 决策迁移 `/api/packs/publish|install|upgrade` 三条写接口 route-shell ownership
+- completed_step: `ITER-2026-04-05-1023 PASS（screen）+ ITER-2026-04-05-1024 PASS（implement）：packs 三条写接口已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Screen remaining /api/preferences/* and /api/insight ownership normalization`
+
+### 2026-04-05T17:28:46+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_tail_preferences_insight_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `preferences and insight endpoints`
+- reason: 完成尾部中优先级接口 `/api/preferences/*` 与 `/api/insight` 的 route-shell ownership 回归
+- completed_step: `ITER-2026-04-05-1025 PASS（screen）+ ITER-2026-04-05-1026 PASS（implement）：三条接口已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Run final residual-route ownership scan checkpoint`
+
+### 2026-04-05T17:30:45+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_residual_checkpoint_v1`
+- layer_target: `Governance Checkpoint`
+- module: `residual route ownership`
+- reason: 在连续迁移链后输出剩余 active route 与 dormant route 定位清单
+- completed_step: `ITER-2026-04-05-1027 PASS：已产出 residual_route_ownership_checkpoint.md（active residual + dormant definitions + next suggestion）`
+- active_commit: `f4102e4`
+- next_step: `Optional: open dedicated follow-up line for scene_template and auth_signup families`
+
+### 2026-04-05T17:32:44+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_followup_decision_v1`
+- layer_target: `Governance Decision`
+- module: `scene_template/auth_signup follow-up`
+- reason: 基于 residual checkpoint 决定下一条继续链路范围，避免跨域混改
+- completed_step: `ITER-2026-04-05-1028 PASS：已产出 follow-up 决策，scene_template 继续纳入 API 治理链，auth_signup 转独立 auth 任务线`
+- active_commit: `f4102e4`
+- next_step: `Open implement chain for scene_template family (/api/scenes/export first)`
+
+### 2026-04-05T17:37:45+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_scene_template_export_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `scenes export endpoint`
+- reason: 按 follow-up 决策先执行 `/api/scenes/export` 读向入口壳迁移
+- completed_step: `ITER-2026-04-05-1029 PASS：/api/scenes/export 已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Migrate /api/scenes/import in dedicated bounded write batch`
+
+### 2026-04-05T17:43:04+08:00
+- blocker_key: `smart_construction_core_boundary_remediation_scene_template_import_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `scenes import endpoint`
+- reason: 在 export 完成后执行 `/api/scenes/import` 写向入口壳迁移并保持导入语义委托
+- completed_step: `ITER-2026-04-05-1030 PASS：/api/scenes/import 已由 smart_core 路由壳持有并委托场景实现；verify.frontend_api 通过`
+- active_commit: `f4102e4`
+- next_step: `Optional cleanup batch for dormant controller files/imports`
+
+### 2026-04-05T19:28:01+08:00
+- blocker_key: `smart_construction_core_boundary_cleanup_candidates_screen_v1`
+- layer_target: `Governance Cleanup Screen`
+- module: `dormant controllers`
+- reason: 在迁移链完成后识别可安全清理的 dormant 控制器导入候选
+- completed_step: `ITER-2026-04-05-1031 PASS：已产出 dormant_controller_cleanup_candidates.md（active vs dormant import 差集）`
+- active_commit: `f4102e4`
+- next_step: `Implement safe cleanup by trimming dormant imports from controllers/__init__.py only`
+
+### 2026-04-05T19:34:04+08:00
+- blocker_key: `smart_construction_core_boundary_cleanup_apply_trim_v1`
+- layer_target: `Cleanup Hygiene`
+- module: `controllers init import list`
+- reason: 执行允许范围内的低风险清理，移除无活跃 route 的 controller 导入噪音
+- completed_step: `ITER-2026-04-05-1032 PASS：addons/smart_construction_core/controllers/__init__.py 已收敛为 auth_signup + meta_controller；validate_task/py_compile/verify.frontend_api 全部通过`
+- active_commit: `f4102e4`
+- next_step: `Open dedicated auth_signup boundary screen line (isolated auth scope, no cross-domain edits)`
+
+### 2026-04-05T19:37:13+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_screen_v1`
+- layer_target: `Governance Screen`
+- module: `auth_signup ownership`
+- reason: 在 runtime API 迁移链之外独立筛查 auth_signup 边界归属与风险等级
+- completed_step: `ITER-2026-04-05-1033 PASS：已产出 auth_signup_boundary_screen.md；确认 /web/signup 与 /sc/auth/activate 为 auth 生命周期侧链，不属于 /api/* 主链占用冲突`
+- active_commit: `f4102e4`
+- next_step: `Open bounded design batch for dedicated auth module ownership plan (screen->design, no immediate code move)`
+
+### 2026-04-05T19:39:35+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_design_v1`
+- layer_target: `Governance Design`
+- module: `auth_signup ownership plan`
+- reason: 将 auth_signup screen 结论收敛为可执行批次链，确保后续回归在低风险边界内推进
+- completed_step: `ITER-2026-04-05-1034 PASS：已产出 auth_signup_ownership_design_plan.md（批次链、风险模型、stop rules、exit criteria）`
+- active_commit: `f4102e4`
+- next_step: `Start Batch A dependency-map screen for auth_signup dedicated line`
+
+### 2026-04-05T19:42:01+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_dependency_scan_v1`
+- layer_target: `Governance Scan`
+- module: `auth_signup dependency map`
+- reason: 为 dedicated ownership 迁移前置建立可验证依赖地图，锁定兼容锚点
+- completed_step: `ITER-2026-04-05-1035 PASS：已产出 auth_signup_dependency_map.md（entry/downstream/config/template 依赖全表）`
+- active_commit: `f4102e4`
+- next_step: `Start Batch B target-owner decision screen for auth_signup`
+
+### 2026-04-05T19:45:57+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_owner_decision_v1`
+- layer_target: `Governance Decision`
+- module: `auth_signup target ownership`
+- reason: 基于 screen/design/dependency 三份证据锁定目标归属，避免无主线实现漂移
+- completed_step: `ITER-2026-04-05-1036 PASS：已产出 auth_signup_target_owner_decision.md；目标归属设为平台侧 dedicated auth line，当前模块为过渡 owner`
+- active_commit: `f4102e4`
+- next_step: `Start implement-prep touch-list task for auth ownership migration`
+
+### 2026-04-05T19:47:59+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement_prep_v1`
+- layer_target: `Governance Implementation Prep`
+- module: `auth_signup migration touch list`
+- reason: 在实现前固定文件触点、批次边界、兼容锚点与回滚锚点，降低实施不确定性
+- completed_step: `ITER-2026-04-05-1037 PASS：已产出 auth_signup_migration_touch_list.md（Implement-1/2 + Verify-1 分批）`
+- active_commit: `f4102e4`
+- next_step: `Open Implement-1 contract for controller ownership/delegation only`
+
+### 2026-04-05T19:50:22+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement1_blueprint_v1`
+- layer_target: `Governance Implementation Prep`
+- module: `auth controller handoff blueprint`
+- reason: 在进入真实实现前先固化 Implement-1 合同结构，减少执行歧义和越界风险
+- completed_step: `ITER-2026-04-05-1038 PASS：已产出 auth_signup_implement1_contract_blueprint.md（allowed/forbidden/acceptance/pass/rollback/stop）`
+- active_commit: `f4102e4`
+- next_step: `Instantiate concrete Implement-1 task with fixed target owner path and auth smoke command`
+
+### 2026-04-05T19:53:48+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement1_taskpack_v1`
+- layer_target: `Governance Implementation Prep`
+- module: `auth implement1 concrete task pack`
+- reason: 将蓝图收敛为可直接落地的固定输入（目标路径 + 验收命令 + 写范围）
+- completed_step: `ITER-2026-04-05-1039 PASS：已产出 auth_signup_implement1_task_pack.md（固定路径 addons/smart_core/controllers/platform_auth_signup_web.py 与验收命令集）`
+- active_commit: `f4102e4`
+- next_step: `Instantiate concrete Implement-1 implementation task using this task pack`
+
+### 2026-04-05T19:56:59+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement1_execution_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `auth_signup implement1`
+- reason: 执行 controller ownership handoff，但验收阶段 legacy auth smoke 失败触发 stop condition
+- completed_step: `ITER-2026-04-05-1040 FAIL：platform_auth_signup_web 已创建且 frontend_api 通过；scene_legacy_auth_smoke 报 RemoteDisconnected，批次未通过`
+- active_commit: `f4102e4`
+- next_step: `Stop and open recovery screen for auth smoke command contract before any further implement batch`
+
+### 2026-04-05T20:06:22+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_recovery_screen_v1`
+- layer_target: `Governance Recovery Screen`
+- module: `legacy auth smoke command contract`
+- reason: 对 1040 验收失败做恢复筛查，确认是否实现问题还是验收命令契约错误
+- completed_step: `ITER-2026-04-05-1041 PASS：已确认 scene_legacy_auth_smoke 使用 E2E_BASE_URL/ODOO_PORT；改用 E2E_BASE_URL=http://127.0.0.1:18069 后 smoke 通过`
+- active_commit: `f4102e4`
+- next_step: `Open recovery-implement batch to update task-pack acceptance command and rerun 1040 acceptance`
+
+### 2026-04-05T20:08:54+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_recovery_implement_v1`
+- layer_target: `Governance Recovery Implement`
+- module: `acceptance command contract`
+- reason: 修复 Implement-1 task pack 的 smoke 命令变量，并完成重跑验证
+- completed_step: `ITER-2026-04-05-1042 PASS：auth_signup_implement1_task_pack.md 已改为 E2E_BASE_URL；verify.frontend_api 与 scene_legacy_auth_smoke 均通过`
+- active_commit: `f4102e4`
+- next_step: `Open reconciliation checkpoint to supersede 1040 fail state with recovery-pass annotation`
+
+### 2026-04-05T20:11:27+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_reconciliation_v1`
+- layer_target: `Governance Checkpoint`
+- module: `1040/1042 reconciliation`
+- reason: 固化失败与恢复关系，避免后续链路误判 1040 的失败性质
+- completed_step: `ITER-2026-04-05-1043 PASS：已产出 auth_signup_1040_reconciliation_note.md，确认 1040 为命令契约失配且已在 1042 恢复验证通过`
+- active_commit: `f4102e4`
+- next_step: `Proceed to Implement-2 planning or auth flow verify batch`
+
+### 2026-04-05T20:14:00+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement2_planning_v1`
+- layer_target: `Governance Planning`
+- module: `auth policy dependency alignment`
+- reason: 在 Implement-1 收敛后规划 Implement-2 的依赖对齐边界与验收门禁
+- completed_step: `ITER-2026-04-05-1044 PASS：已产出 auth_signup_implement2_plan.md（scope/acceptance/stop/rollback）`
+- active_commit: `f4102e4`
+- next_step: `Create bounded Implement-2 task for throttle/default-seed dependency alignment`
+
+### 2026-04-05T20:23:24+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement2_feasibility_v1`
+- layer_target: `Governance Screen`
+- module: `implement2 feasibility under freeze`
+- reason: 在 manifest/ACL 冻结约束下判定 Implement-2 的可执行形式，避免越权实施
+- completed_step: `ITER-2026-04-05-1045 PASS：已确认跨模块迁移当前不可执行；建议实施 in-place hardening 路径`
+- active_commit: `f4102e4`
+- next_step: `Open bounded Implement-2 in-place hardening task`
+
+### 2026-04-05T20:29:02+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_implement2_inplace_v1`
+- layer_target: `Platform Runtime Entry Ownership`
+- module: `auth logic single-source hardening`
+- reason: 在冻结约束下执行可行的 Implement-2：平台 route-wrapper + 行业单一逻辑源
+- completed_step: `ITER-2026-04-05-1046 PASS：platform_auth_signup_web 已改为轻量 wrapper 委托 ScAuthSignup；verify.frontend_api 与 scene_legacy_auth_smoke 通过`
+- active_commit: `f4102e4`
+- next_step: `Run dedicated auth flow verify batch (signup page + activation callback)`
+
+### 2026-04-05T20:31:45+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_verify_v1`
+- layer_target: `Verification`
+- module: `auth flow compatibility`
+- reason: 对 Implement-2 hardening 后的 auth 主路径做独立验证收口
+- completed_step: `ITER-2026-04-05-1047 PASS：verify.frontend_api 与 scene_legacy_auth_smoke 均通过；已产出 auth_signup_flow_verify_checkpoint.md`
+- active_commit: `f4102e4`
+- next_step: `Finalize auth boundary line checkpoint and return to remaining boundary backlog`
+
+### 2026-04-05T20:40:40+08:00
+- blocker_key: `smart_construction_core_boundary_auth_signup_final_checkpoint_v1`
+- layer_target: `Governance Checkpoint`
+- module: `auth boundary remediation line`
+- reason: 收口 dedicated auth 线并提供回到全局 backlog 的交接基线
+- completed_step: `ITER-2026-04-05-1048 PASS：已产出 auth_signup_boundary_final_checkpoint.md（ownership settled + risks closed + deferred items）`
+- active_commit: `f4102e4`
+- next_step: `Return to global boundary backlog (non-auth residual surfaces)`
+
+### 2026-04-05T20:43:18+08:00
+- blocker_key: `smart_construction_core_boundary_global_backlog_reentry_v1`
+- layer_target: `Governance Screen`
+- module: `non-auth residual backlog`
+- reason: auth 线收口后恢复全局边界执行队列，先筛出下一可执行 residual 面
+- completed_step: `ITER-2026-04-05-1049 PASS：已产出 non_auth_residual_backlog_reentry.md，下一步聚焦 /api/meta/project_capabilities ownership permanence`
+- active_commit: `f4102e4`
+- next_step: `Open dedicated screen for /api/meta/project_capabilities ownership permanence`
+
+### 2026-04-05T20:46:43+08:00
+- blocker_key: `smart_construction_core_boundary_meta_project_capabilities_screen_v1`
+- layer_target: `Governance Screen`
+- module: `/api/meta/project_capabilities`
+- reason: 对 non-auth residual 的唯一 active endpoint 做归属长期性判定
+- completed_step: `ITER-2026-04-05-1050 PASS：已确认该端点为 scenario business-fact provider，建议保持当前归属并加 guardrails`
+- active_commit: `f4102e4`
+- next_step: `Open low-risk dormant controller cleanup screen for non-auth residual hygiene`
+
+### 2026-04-05T20:54:41+08:00
+- blocker_key: `smart_construction_core_boundary_non_auth_dormant_cleanup_screen_v1`
+- layer_target: `Governance Screen`
+- module: `non-auth dormant controller surfaces`
+- reason: 在保持运行面稳定前提下筛出可清理的 dormant 非 auth 控制器面
+- completed_step: `ITER-2026-04-05-1051 PASS：已定位四个 dormant 非 auth route-definition 文件并给出 parity-check -> cleanup 建议链`
+- active_commit: `f4102e4`
+- next_step: `Open parity-check screen for four dormant non-auth controller files before cleanup implement`
+
+### 2026-04-05T20:57:52+08:00
+- blocker_key: `smart_construction_core_boundary_non_auth_dormant_parity_v1`
+- layer_target: `Governance Screen`
+- module: `dormant non-auth owner parity`
+- reason: 在清理前验证四个 dormant 旧路由面已由 smart_core 提供对等 owner
+- completed_step: `ITER-2026-04-05-1052 PASS：四个 dormant 非 auth surfaces 均完成 owner parity（execute/menu/portal_execute/ui_contract）`
+- active_commit: `f4102e4`
+- next_step: `Open bounded cleanup-implement task for non-auth dormant legacy controller surfaces`
+
+### 2026-04-05T21:04:16+08:00
+- blocker_key: `smart_construction_core_boundary_non_auth_cleanup_guard_blockers_v1`
+- layer_target: `Governance Screen`
+- module: `dormant non-auth cleanup blockers`
+- reason: 在执行 dormant 非 auth 清理前识别 verify/controller 边界门禁的策略绑定阻塞点
+- completed_step: `ITER-2026-04-05-1053 PASS：已确认 runtime owner parity 存在，但 controller boundary guard 仍绑定 legacy 文件；已产出 implement task pack`
+- active_commit: `f4102e4`
+- next_step: `Open ITER-2026-04-05-1054 implement batch to migrate controller boundary policy ownership to smart_core owner surfaces and run boundary+frontend verification`
+
+### 2026-04-05T21:10:02+08:00
+- blocker_key: `smart_construction_core_boundary_controller_guard_alignment_v1`
+- layer_target: `Governance Implement`
+- module: `controller boundary guard policy ownership`
+- reason: 将 controller 边界策略检查源迁移至 smart_core 平台 owner 面，解除 legacy dormant 文件绑定
+- completed_step: `ITER-2026-04-05-1054 FAIL：validate/py_compile/verify.controller.boundary.guard 通过；verify.frontend_api 默认与提权复跑均 timeout 失败`
+- active_commit: `f4102e4`
+- next_step: `Open recovery screen batch for frontend_api timeout (runtime endpoint/base URL/service availability), then rerun 1054 acceptance`
+
+### 2026-04-05T21:16:40+08:00
+- blocker_key: `smart_construction_core_boundary_frontend_api_recovery_v1`
+- layer_target: `Governance Recovery Screen`
+- module: `verify.frontend_api timeout recovery`
+- reason: 为 1054 失败批次提供可执行的 runtime endpoint 证据与复跑路径
+- completed_step: `ITER-2026-04-05-1055 PASS：已确认 host 默认 8070 与当前运行栈不对齐；容器内 FRONTEND_API_BASE_URL=http://localhost:8069 可通过 frontend_api_smoke`
+- active_commit: `f4102e4`
+- next_step: `Open ITER-2026-04-05-1056 recovery-implement batch to replay 1054 acceptance with container-local frontend_api smoke and reconcile status`
+
+### 2026-04-05T21:19:53+08:00
+- blocker_key: `smart_construction_core_boundary_iter1054_recovery_v1`
+- layer_target: `Governance Recovery Verify`
+- module: `iter_1054 acceptance reconciliation`
+- reason: 使用 1055 恢复路径回放 1054 验收并完成失败批次对账
+- completed_step: `ITER-2026-04-05-1056 PASS：py_compile + verify.controller.boundary.guard + container-local frontend_api_smoke 全部通过；1054 已形成 reconciled-verified 结论`
+- active_commit: `f4102e4`
+- next_step: `Open bounded cleanup implement batch for dormant non-auth legacy controller surfaces`
+
+### 2026-04-05T21:22:55+08:00
+- blocker_key: `smart_construction_core_boundary_dormant_cleanup_impl_v1`
+- layer_target: `Governance Implement`
+- module: `dormant non-auth controller cleanup`
+- reason: 在 owner/guard 对齐完成后删除 smart_construction_core 内失效 non-auth legacy route-definition 文件
+- completed_step: `ITER-2026-04-05-1057 PASS：四个 dormant non-auth 控制器文件已删除；verify.controller.boundary.guard 与 container-local frontend_api_smoke 均通过`
+- active_commit: `f4102e4`
+- next_step: `Open follow-up screen for remaining non-auth boundary residue and decide additional archival/cleanup scope`
+
+### 2026-04-05T21:26:29+08:00
+- blocker_key: `smart_construction_core_boundary_residue_screen_v1`
+- layer_target: `Governance Screen`
+- module: `non-auth boundary residue after cleanup`
+- reason: 在 1057 清理后识别 remaining non-auth 文件是否仍可继续删除
+- completed_step: `ITER-2026-04-05-1058 PASS：剩余文件大多为 smart_core wrapper 依赖的 logic provider；仅 capability_matrix_controller.py 进入单文件候选`
+- active_commit: `f4102e4`
+- next_step: `Open dedicated screen for capability_matrix_controller.py usage proof, then decide single-file cleanup`
+
+### 2026-04-05T21:28:56+08:00
+- blocker_key: `smart_construction_core_boundary_capability_matrix_single_file_screen_v1`
+- layer_target: `Governance Screen`
+- module: `capability_matrix single-file cleanup`
+- reason: 对唯一单文件候选做使用证明，避免误删 active provider
+- completed_step: `ITER-2026-04-05-1059 PASS：capability_matrix_controller.py 无 route/无 import wiring/无 smart_core 依赖，单文件清理可执行`
+- active_commit: `f4102e4`
+- next_step: `Open single-file implement batch to delete capability_matrix_controller.py`
+
+### 2026-04-05T21:32:41+08:00
+- blocker_key: `smart_construction_core_boundary_capability_matrix_single_file_impl_v1`
+- layer_target: `Governance Implement`
+- module: `capability_matrix single-file cleanup`
+- reason: 清理最后一个无引用 non-auth residue stub 文件，完成 bounded cleanup 链
+- completed_step: `ITER-2026-04-05-1060 PASS：capability_matrix_controller.py 已删除；verify.controller.boundary.guard 与 container-local frontend_api_smoke 均通过`
+- active_commit: `f4102e4`
+- next_step: `Boundary cleanup chain stable; proceed to consolidated audit snapshot or next objective`
+
+### 2026-04-05T21:36:10+08:00
+- blocker_key: `smart_construction_core_boundary_consolidated_snapshot_v1`
+- layer_target: `Governance Snapshot`
+- module: `boundary chain consolidation 1054-1060`
+- reason: 输出 fail-recovery-reconcile-cleanup 全链路汇总快照，形成下一目标交接基线
+- completed_step: `ITER-2026-04-05-1061 PASS：已产出 boundary_governance_consolidated_snapshot_1054_1060.md，明确恢复对账与清理后验证基线`
+- active_commit: `f4102e4`
+- next_step: `Start next boundary lane (handler/registry/orchestration residue) or refresh ownership inventory from stable baseline`
+
+### 2026-04-05T21:39:02+08:00
+- blocker_key: `smart_construction_core_boundary_handler_registry_residue_v1`
+- layer_target: `Governance Screen`
+- module: `handler and registry residue`
+- reason: 在 controller 清理链收口后切入下一条边界线，识别 core_extension registry ownership 混合语义
+- completed_step: `ITER-2026-04-05-1062 PASS：已识别 app.*/usage.*/telemetry.* 平台风格意图仍在 construction core_extension 注入；payment/settlement 维持冻结外排`
+- active_commit: `f4102e4`
+- next_step: `Open dedicated 1063 screen for non-financial platform-style intent keys inside core_extension.py`
+
+### 2026-04-05T21:41:23+08:00
+- blocker_key: `smart_construction_core_boundary_platform_intent_keys_v1`
+- layer_target: `Governance Screen`
+- module: `core_extension platform-style intent keys`
+- reason: 对 app.* / usage.* / telemetry.* 非金融平台风格意图做边界归属证据提纯
+- completed_step: `ITER-2026-04-05-1063 PASS：已提取 7 个平台风格键，确认由 construction core_extension 注入，属于 ownership residue`
+- active_commit: `f4102e4`
+- next_step: `Open ownership mapping screen for seven non-financial platform-style keys (owner target + migration difficulty)`
+
+### 2026-04-05T21:51:29+08:00
+- blocker_key: `smart_construction_core_boundary_platform_intent_mapping_v1`
+- layer_target: `Governance Screen`
+- module: `platform-style intent owner mapping`
+- reason: 为 7 个非金融平台风格键提供 owner-target + migration-difficulty，准备低风险实施切片
+- completed_step: `ITER-2026-04-05-1064 PASS：已完成 7 键映射矩阵；建议先实施 telemetry.track + usage.track 归属对齐`
+- active_commit: `f4102e4`
+- next_step: `Open bounded implement slice for telemetry.track + usage.track ownership realignment`
+
+### 2026-04-05T22:01:19+08:00
+- blocker_key: `industry_shadow_bridge_batch0_docs_v1`
+- layer_target: `Governance Plan`
+- module: `batch-0 freeze and inventory docs`
+- reason: 按用户执行清单先落地批次0（冻结规则 + 对象台账），作为后续主权迁移前置
+- completed_step: `ITER-2026-04-05-1065 PASS：已新增 industry_shadow_bridge_execution_plan_v1.md 与 industry_shadow_bridge_object_inventory_v1.md，并覆盖指定对象清单`
+- active_commit: `f4102e4`
+- next_step: `Open bounded protocol-definition batch for handler contribution contract (batch-1 task 1.1)`
+
+### 2026-04-05T22:04:35+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task1_1_protocol_v1`
+- layer_target: `Governance Protocol`
+- module: `intent handler contribution contract`
+- reason: 执行清单 batch-1 task 1.1，先固定协议再做 loader/merge/register 实现
+- completed_step: `ITER-2026-04-05-1066 PASS：已新增 intent_handler_contribution_protocol_v1.md，明确 schema/ownership/merge/forbidden patterns`
+- active_commit: `f4102e4`
+- next_step: `Open batch-1 task 1.2 implement for platform contribution loader + merge/validate + final register service skeleton`
+
+### 2026-04-05T22:18:43+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task1_2_loader_impl_v1`
+- layer_target: `Platform Kernel Intent Engine`
+- module: `smart_core extension loader + contribution registry pipeline`
+- reason: 执行清单 batch-1 task 1.2，先在平台建立 contribution 收集/校验/合并/注册主权路径，并保持 legacy 兼容
+- completed_step: `ITER-2026-04-05-1067 PASS：新增 intent_contribution_loader.py；extension_loader 优先 get_intent_handler_contributions 并在 smart_core 完成 final register，同时保留 smart_core_register fallback`
+- active_commit: `f4102e4`
+- next_step: `Open batch-1 task 1.3 implement: convert smart_construction_core smart_core_register to pure get_intent_handler_contributions provider`
+
+### 2026-04-05T22:26:12+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task1_3_provider_impl_v1`
+- layer_target: `Industry Contribution Provider`
+- module: `smart_construction_core core_extension intent exports`
+- reason: 执行清单 batch-1 task 1.3，把行业模块 handler 输出从 direct register 迁移为 contribution provider
+- completed_step: `ITER-2026-04-05-1068 PASS：新增 get_intent_handler_contributions()；smart_core_register 改为 deprecated 兼容包装；移除显式 registry[...] 写入模式`
+- active_commit: `f4102e4`
+- next_step: `Open batch-1 task 2.1/2.2 for capability registry platform owner protocol + host migration`
+
+### 2026-04-05T22:34:57+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task2_1_2_2_capability_owner_v1`
+- layer_target: `Platform Capability Registry Core`
+- module: `smart_core capability contribution loader + runtime query path`
+- reason: 执行清单 batch-1 tasks 2.1/2.2，建立 capability 平台主容器和 contribution 协议
+- completed_step: `ITER-2026-04-05-1069 PASS：新增 capability_contribution_loader.py；capability_provider 优先平台 contribution path 并保留 legacy fallback；新增 capability_contribution_protocol_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Open batch-1 task 3.1 to define platform_scene_access_interface_v1 document and prep scene direct-connect migration`
+
+### 2026-04-05T22:42:26+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task3_1_scene_interface_doc_v1`
+- layer_target: `Platform Scene Access Boundary`
+- module: `platform scene access interface contract`
+- reason: 执行清单 batch-1 task 3.1，先固定 scene 访问边界，再进入 direct-connect 代码迁移
+- completed_step: `ITER-2026-04-05-1070 PASS：新增 platform_scene_access_interface_v1.md，定义平台 scene access surface、ownership 与迁移规则`
+- active_commit: `f4102e4`
+- next_step: `Open batch-1 task 5.1 protocol doc for system.init ext_facts contribution contract`
+
+### 2026-04-05T22:48:55+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task5_1_system_init_protocol_v1`
+- layer_target: `Platform system.init Extension Boundary`
+- module: `ext_facts contribution protocol contract`
+- reason: 执行清单 batch-1 task 5.1，先固定 ext_facts 贡献协议与平台 merge 主权边界
+- completed_step: `ITER-2026-04-05-1071 PASS：新增 system_init_ext_facts_contribution_protocol_v1.md，定义 module/facts/collections/meta 结构与禁止模式`
+- active_commit: `f4102e4`
+- next_step: `Open implement batch for smart_core_extend_system_init split (provider + platform merge)`
+
+### 2026-04-05T23:00:12+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task5_2_5_3_system_init_impl_v1`
+- layer_target: `Platform system.init Runtime`
+- module: `ext_facts contribution collection and merge path`
+- reason: 按协议执行实现迁移，将 system.init 扩展改为平台 merge owner + 行业 facts provider
+- completed_step: `ITER-2026-04-05-1072 PASS：新增 apply_extension_fact_contributions；system_init 先收集 contribution 后走 legacy fallback；construction 侧新增 get_system_init_fact_contributions 并保留兼容 smart_core_extend_system_init`
+- active_commit: `f4102e4`
+- next_step: `Open scene direct-connect implementation batch (3.2) to remove smart_core_scene_* industry bridge dependency`
+
+### 2026-04-05T23:08:37+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task3_2_scene_direct_connect_impl_v1`
+- layer_target: `Platform Scene Access Runtime`
+- module: `smart_core scene provider and scene package/governance handlers`
+- reason: 执行清单 batch-1 task 3.2，将平台 scene 访问从行业桥接改为直连优先
+- completed_step: `ITER-2026-04-05-1073 PASS：scene_registry_provider 与 scene_package/scene_governance handlers 均采用 smart_construction_scene 直连优先，并保留 legacy hook fallback`
+- active_commit: `f4102e4`
+- next_step: `Open platform policy constant ownership migration batch (task 4.1/4.2)`
+
+### 2026-04-05T23:21:04+08:00
+- blocker_key: `industry_shadow_bridge_batch1_task4_1_4_2_policy_owner_impl_v1`
+- layer_target: `Platform Policy Config Layer`
+- module: `smart_core policy defaults and policy consumers`
+- reason: 执行清单 batch-1 task 4.1/4.2，将平台规则常量主定义迁入 smart_core
+- completed_step: `ITER-2026-04-05-1074 PASS：新增 platform_policy_defaults.py；action/file/api/load_contract/api_data 消费路径改为平台 owner 优先；新增 platform_policy_constant_ownership_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Open architecture guard batch for ownership verify checks`
+
+### 2026-04-05T23:30:41+08:00
+- blocker_key: `industry_shadow_bridge_batch8_task8_2_architecture_guard_impl_v1`
+- layer_target: `Governance Verify Layer`
+- module: `ownership guard scripts`
+- reason: 执行清单 batch-8 task 8.2，补充架构主权迁移后的 verify guards
+- completed_step: `ITER-2026-04-05-1075 PASS：新增 6 个 architecture guard 脚本并接入 Makefile verify.architecture.* 目标；全部 guard 本地执行通过`
+- active_commit: `f4102e4`
+- next_step: `Open naming-and-bridge cleanup batch for residual smart_core_* compatibility exports`
+
+### 2026-04-05T23:37:06+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_pre_screen_v1`
+- layer_target: `Governance Cleanup Screen`
+- module: `smart_construction_core core_extension compatibility exports`
+- reason: 在执行删除批次前先输出 smart_core_* 残留桥接清理候选矩阵，控制删除风险
+- completed_step: `ITER-2026-04-05-1076 PASS：新增 industry_bridge_compat_cleanup_candidates_v1.md，已按 P0/P1/P2 分类并给出 removal preconditions`
+- active_commit: `f4102e4`
+- next_step: `Open bounded implementation batch to remove P0 scene legacy bridge exports`
+
+### 2026-04-05T23:44:52+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_p0_scene_impl_v1`
+- layer_target: `Industry Compatibility Cleanup`
+- module: `smart_construction_core scene bridge legacy exports`
+- reason: 执行候选矩阵中的 P0 项，删除 scene 相关 legacy bridge 导出
+- completed_step: `ITER-2026-04-05-1077 PASS：已删除 6 个 scene smart_core_* legacy exports 及 __init__ 对应 re-export；scene bridge architecture guard 通过`
+- active_commit: `f4102e4`
+- next_step: `Open bounded cleanup batch for P1 legacy policy bridge exports`
+
+### 2026-04-05T23:52:58+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_p1_policy_impl_v1`
+- layer_target: `Industry Compatibility Cleanup`
+- module: `smart_construction_core policy bridge legacy exports`
+- reason: 执行候选矩阵中的 P1 policy 项，删除 smart_core policy legacy bridge 导出
+- completed_step: `ITER-2026-04-05-1078 PASS：已删除 6 个 policy smart_core_* legacy exports 及 __init__ 对应 re-export；platform policy owner guard 通过`
+- active_commit: `f4102e4`
+- next_step: `Open bounded cleanup batch for P1 capability legacy exports`
+
+### 2026-04-05T23:59:41+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_p1_capability_impl_v1`
+- layer_target: `Industry Compatibility Cleanup`
+- module: `smart_construction_core capability hook exports`
+- reason: 执行候选矩阵中的 P1 capability 项，将 legacy hook 名迁移为 contribution provider 名
+- completed_step: `ITER-2026-04-05-1079 PASS：新增 get_capability_contributions/get_capability_group_contributions；移除 smart_core_list_capabilities_for_user/smart_core_capability_groups legacy exports`
+- active_commit: `f4102e4`
+- next_step: `Open bounded cleanup batch for deprecated smart_core_register export removal`
+
+### 2026-04-06T00:06:32+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_register_impl_v1`
+- layer_target: `Industry Compatibility Cleanup`
+- module: `smart_construction_core intent registration export`
+- reason: 删除已废弃 smart_core_register 兼容导出，保留 contribution provider 主路径
+- completed_step: `ITER-2026-04-05-1080 PASS：core_extension 删除 smart_core_register；__init__ 删除 re-export 并显式导出 get_intent_handler_contributions`
+- active_commit: `f4102e4`
+- next_step: `Open bounded cleanup batch for smart_core_extend_system_init legacy wrapper retirement`
+
+### 2026-04-06T00:14:03+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_system_init_wrapper_impl_v1`
+- layer_target: `Industry Compatibility Cleanup`
+- module: `smart_construction_core system_init extension export`
+- reason: 删除 smart_core_extend_system_init legacy wrapper，并改为 provider 导出
+- completed_step: `ITER-2026-04-05-1081 PASS：core_extension 删除 smart_core_extend_system_init；__init__ 改为导出 get_system_init_fact_contributions；system_init protocol guard 通过`
+- active_commit: `f4102e4`
+- next_step: `Open final residual cleanup batch for smart_core_create_field_fallbacks legacy hook migration`
+
+### 2026-04-06T00:21:18+08:00
+- blocker_key: `industry_shadow_bridge_batch7_cleanup_create_fallback_impl_v1`
+- layer_target: `Industry Compatibility Cleanup`
+- module: `smart_construction_core create fallback export`
+- reason: 迁移并删除最后一个 policy 相关 legacy hook 名称
+- completed_step: `ITER-2026-04-05-1082 PASS：smart_core_create_field_fallbacks 已迁移为 get_create_field_fallback_contributions 并完成 re-export 更新`
+- active_commit: `f4102e4`
+- next_step: `Produce migration close-out summary across 1067-1082 and generate final report artifact`
+
+### 2026-04-06T00:28:49+08:00
+- blocker_key: `industry_shadow_bridge_batch8_closeout_report_v1`
+- layer_target: `Governance Close-out`
+- module: `migration report artifact`
+- reason: 对 1067-1082 迁移链做收口沉淀，输出可审计 close-out 文档
+- completed_step: `ITER-2026-04-05-1083 PASS：新增 industry_shadow_bridge_migration_report_v1.md，汇总 ownership 迁移、guards、兼容状态与下一步`
+- active_commit: `f4102e4`
+- next_step: `Switch to rollout validation and guard tightening runtime batches`
+
+### 2026-04-06T00:35:47+08:00
+- blocker_key: `industry_shadow_bridge_batch8_rollout_validation_v1`
+- layer_target: `Governance Verification`
+- module: `architecture guard bundle validation`
+- reason: 在迁移收口后执行全量 architecture guard bundle，验证 rollout-ready 状态
+- completed_step: `ITER-2026-04-05-1084 PASS：6 个 verify.architecture.* 全部通过；新增 industry_shadow_bridge_rollout_validation_brief_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Transition to environment rollout monitoring and optional guard strictness upgrade`
+
+### 2026-04-06T00:44:02+08:00
+- blocker_key: `industry_shadow_bridge_guard_strictness_upgrade_v1`
+- layer_target: `Governance Verification`
+- module: `strict residue guard`
+- reason: rollout-ready 后增加回归防线，禁止 smart_construction_core 再出现 smart_core_* legacy 导出
+- completed_step: `ITER-2026-04-05-1085 PASS：新增 architecture_industry_legacy_bridge_residue_guard 并接入 make verify.architecture.industry_legacy_bridge_residue_guard`
+- active_commit: `f4102e4`
+- next_step: `Maintain rollout monitoring and periodically execute full architecture guard bundle`
+
+### 2026-04-06T00:50:31+08:00
+- blocker_key: `industry_shadow_bridge_guard_execution_plan_v1`
+- layer_target: `Governance Monitoring`
+- module: `periodic guard execution plan`
+- reason: 将 rollout 监控策略固化为可执行节奏与失败处理规则
+- completed_step: `ITER-2026-04-05-1086 PASS：新增 industry_shadow_bridge_guard_execution_plan_v1.md，明确 cadence / failure handling / escalation / exit criteria`
+- active_commit: `f4102e4`
+- next_step: `Execute first scheduled full-bundle run and archive artifact`
+
+### 2026-04-06T00:58:27+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_001_v1`
+- layer_target: `Governance Monitoring`
+- module: `guard run archive artifact`
+- reason: 执行计划中的首轮全量 guard bundle，并产出归档记录
+- completed_step: `ITER-2026-04-05-1087 PASS：7 个 architecture guards 全部通过；新增 industry_shadow_bridge_guard_run_001_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue cadence with next scheduled daily run (guard_run_002)`
+
+### 2026-04-06T01:05:16+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_002_v1`
+- layer_target: `Governance Monitoring`
+- module: `guard run archive artifact`
+- reason: 执行周期计划第二轮全量 guard bundle，验证连续稳定性
+- completed_step: `ITER-2026-04-05-1088 PASS：7 个 architecture guards 连续二次全通过；新增 industry_shadow_bridge_guard_run_002_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue cadence with guard_run_003; close monitoring lane after third consecutive PASS`
+
+### 2026-04-06T01:40:47+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_003_v1`
+- layer_target: `Governance Monitoring`
+- module: `guard run archive artifact`
+- reason: 执行周期计划第三轮全量 guard bundle，验证收口门槛（连续三次 PASS）
+- completed_step: `ITER-2026-04-05-1089 PASS：7 个 architecture guards 连续三次全通过；新增 industry_shadow_bridge_guard_run_003_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Close active migration monitoring lane and switch to routine release checklist cadence`
+
+### 2026-04-06T01:43:01+08:00
+- blocker_key: `industry_shadow_bridge_monitoring_lane_closeout_v1`
+- layer_target: `Governance Monitoring`
+- module: `monitoring lane closeout artifact`
+- reason: 连续三轮全量 guard 通过后，按计划关闭 active monitoring lane 并转入常规 release 检查节奏
+- completed_step: `ITER-2026-04-05-1090 PASS：新增 industry_shadow_bridge_monitoring_lane_closeout_v1.md，明确 steady-state cadence、reopen conditions 与 escalation rule`
+- active_commit: `f4102e4`
+- next_step: `Run routine release-checklist architecture guard bundle on cadence; reopen active lane only on guard failure`
+
+### 2026-04-06T01:45:30+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_004_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 在 closeout 后执行首轮 routine release-checklist 全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1091 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_004_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_005`
+
+### 2026-04-06T01:48:11+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_005_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第二轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1092 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_005_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_006`
+
+### 2026-04-06T01:52:40+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_006_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第三轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1093 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_006_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_007`
+
+### 2026-04-06T03:09:26+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_007_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第四轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1094 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_007_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_008`
+
+### 2026-04-06T04:04:07+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_008_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第五轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1095 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_008_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_009`
+
+### 2026-04-06T04:42:57+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_009_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第六轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1096 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_009_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_010`
+
+### 2026-04-06T04:47:20+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_010_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第七轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1097 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_010_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_011`
+
+### 2026-04-06T04:53:44+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_011_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第八轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1098 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_011_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_012`
+
+### 2026-04-06T04:57:15+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_012_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第九轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1099 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_012_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_013`
+
+### 2026-04-06T05:01:27+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_013_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第十轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1100 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_013_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_014`
+
+### 2026-04-06T05:05:59+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_014_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第十一轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1101 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_014_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_015`
+
+### 2026-04-06T06:24:36+08:00
+- blocker_key: `industry_shadow_bridge_guard_run_015_v1`
+- layer_target: `Governance Monitoring`
+- module: `routine guard run archive artifact`
+- reason: 按常规 release checklist 节奏执行第十二轮全量 guard bundle 并归档
+- completed_step: `ITER-2026-04-05-1102 PASS：7 个 architecture guards 例行检查全通过；新增 industry_shadow_bridge_guard_run_015_v1.md`
+- active_commit: `f4102e4`
+- next_step: `Continue routine cadence with archived run_016`
+
+### 2026-04-06T06:31:29+08:00
+- blocker_key: `controller_boundary_recovery_meta_entry_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 停止循环巡检归档，进入实质边界回归；将 `/api/meta/project_capabilities` 入口主权迁移到平台模块
+- completed_step: `ITER-2026-04-05-1103 PASS：platform_meta_api 新增 project_capabilities 路由；smart_construction_core controllers 移除 meta_controller 装载`
+- active_commit: `f4102e4`
+- next_step: `Continue controller ownership recovery for signup path and remove smart_construction_core inheritance bridge from platform auth entry`
+
+### 2026-04-06T06:36:36+08:00
+- blocker_key: `controller_boundary_recovery_signup_entry_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 继续实质边界回归，去除 smart_core 平台入口对 smart_construction_core.auth_signup 的继承桥
+- completed_step: `ITER-2026-04-05-1104 PASS：新增 platform_auth_signup_logic.py；platform_auth_signup_web 改为本地继承；smart_construction_core.controllers 移除 auth_signup 装载`
+- active_commit: `f4102e4`
+- next_step: `Open dedicated cleanup batch to retire unused smart_construction_core/controllers/auth_signup.py after residual reference audit`
+
+### 2026-04-06T06:40:15+08:00
+- blocker_key: `controller_boundary_recovery_signup_cleanup_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 完成 signup 主权回归后清理失效行业控制器，去除残留桥接文件
+- completed_step: `ITER-2026-04-05-1104 PASS(update)：删除 smart_construction_core/controllers/auth_signup.py；确认 addons 内无 smart_construction_core.controllers.auth_signup 残余引用`
+- active_commit: `f4102e4`
+- next_step: `Continue controller boundary recovery on remaining industry-owned platform-like controller surfaces (ops/packs/scene_template)`
+
+### 2026-04-06T06:46:34+08:00
+- blocker_key: `controller_boundary_recovery_ops_packs_scene_template_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 继续实质边界回归，将 ops/packs/scene_template 三组平台入口从行业控制器直接导入迁移为平台本地逻辑宿主
+- completed_step: `ITER-2026-04-05-1105 PASS：新增 platform_ops_logic/platform_packs_logic/platform_scene_template_logic；platform_*_api 去除 smart_construction_core.controllers 直接导入`
+- active_commit: `f4102e4`
+- next_step: `Continue decoupling remaining platform controllers from smart_construction_core.controllers imports (preference/insight, scene, capability_catalog)`
+
+### 2026-04-06T06:53:24+08:00
+- blocker_key: `controller_boundary_recovery_pref_scene_capability_catalog_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 扩展同批次实质回归，将 preference/insight、scene、capability_catalog 平台入口从行业控制器直接导入迁移为平台本地逻辑宿主
+- completed_step: `ITER-2026-04-05-1105 PASS(update)：新增 platform_preference_logic/platform_insight_logic/platform_scene_logic/platform_capability_catalog_logic；对应 platform_*_api 去除 smart_construction_core.controllers 直接导入`
+- active_commit: `f4102e4`
+- next_step: `Start orphan industry controller retirement batch for migrated surfaces and add guard to block new platform->industry controller imports`
+
+### 2026-04-06T06:59:23+08:00
+- blocker_key: `controller_boundary_recovery_orphan_retirement_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 完成平台主权迁移后，清理行业模块重复控制器宿主，消除双源回归风险
+- completed_step: `ITER-2026-04-05-1106 PASS：删除 7 个已迁移的 smart_construction_core/controllers/*.py 孤儿控制器文件；所有 controller guards 通过`
+- active_commit: `f4102e4`
+- next_step: `Add dedicated architecture guard to block smart_core.controllers direct imports from smart_construction_core.controllers.*`
+
+### 2026-04-06T07:11:16+08:00
+- blocker_key: `controller_boundary_recovery_platform_no_industry_import_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 增加并收口平台控制器反向导入守卫，防止 smart_core.controllers 再次直接依赖 smart_construction_core.controllers.*
+- completed_step: `ITER-2026-04-05-1107 PASS：补齐 platform_portal_execute_api.py 的本地 api_base 导入；verify.controller.platform_no_industry_import.guard 与 controller guards 全通过`
+- active_commit: `f4102e4`
+- next_step: `Continue boundary recovery on remaining platform runtime/service ownership edges with the new guard enforced in boundary gate`
+
+### 2026-04-06T07:19:42+08:00
+- blocker_key: `controller_boundary_recovery_service_import_decouple_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.controllers`
+- reason: 继续边界回归，将 smart_core 控制器中对行业 services 的直接导入下沉到平台适配层
+- completed_step: `ITER-2026-04-05-1108 PASS：新增 industry_runtime_service_adapter；platform_meta/contract_portal_dashboard/contract_capability/insight/portal_execute 五个控制器去除 direct industry service import；全部 controller guards 通过`
+- active_commit: `f4102e4`
+- next_step: `Continue ownership migration by replacing adapter-level direct industry imports with extension-loader protocol where support exists`
+
+### 2026-04-06T07:24:02+08:00
+- blocker_key: `controller_boundary_recovery_service_import_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 为 controller 边界新增行业 service 反向依赖守卫，防止 1108 后回退
+- completed_step: `ITER-2026-04-05-1109 PASS：新增 verify.controller.platform_no_industry_service_import.guard 并纳入 verify.controller.boundary.guard；边界门禁全通过`
+- active_commit: `f4102e4`
+- next_step: `Continue boundary recovery by migrating adapter-level industry service calls into extension-provider protocol`
+
+### 2026-04-06T07:29:42+08:00
+- blocker_key: `controller_boundary_recovery_adapter_protocol_migration_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.core`
+- reason: 继续边界回归，将 adapter 层对行业 services 的直接依赖迁移为 extension-provider 协议调用
+- completed_step: `ITER-2026-04-05-1110 PASS：extension_loader 新增 hook result collector；industry_runtime_service_adapter 改为 hook-only 调用；smart_construction_core.core_extension 补齐 provider hooks`
+- active_commit: `f4102e4`
+- next_step: `Add adapter protocol guard to ensure required extension hooks exist for runtime surfaces`
+
+### 2026-04-06T07:34:44+08:00
+- blocker_key: `controller_boundary_recovery_adapter_protocol_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 为 adapter 协议补一致性守卫，防止 hook 消费端与提供端漂移
+- completed_step: `ITER-2026-04-05-1111 PASS：新增 verify.adapter.protocol.hook.guard 并纳入 verify.controller.boundary.guard；所有边界门禁通过`
+- active_commit: `f4102e4`
+- next_step: `Expand boundary governance from controller path to core/runtime path to prevent direct industry imports outside controller layer`
+
+### 2026-04-06T07:39:27+08:00
+- blocker_key: `boundary_audit_smart_core_cross_module_hotspots_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases/archive/temp`
+- reason: 在触发 payment/settlement 禁改规则前先收口残留跨模块导入热点，明确可执行与禁改边界
+- completed_step: `ITER-2026-04-05-1112 PASS：生成 TEMP_smart_core_cross_module_import_hotspots_2026-04-06.md；识别 7 个热点，其中 payment/settlement 2 个按 stop rule 标记 HOLD`
+- active_commit: `f4102e4`
+- next_step: `Open low-risk implementation batch for 5 non-forbidden orchestration hotspots and keep payment/settlement hotspots in HOLD pending explicit high-risk authorization`
+
+### 2026-04-06T07:47:51+08:00
+- blocker_key: `orchestration_boundary_recovery_non_forbidden_hotspots_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.orchestration`
+- reason: 按 1112 审计结果先迁移 5 个非禁改 orchestrator 的行业 service 直连依赖，保持 payment/settlement 文件不触碰
+- completed_step: `ITER-2026-04-05-1113 PASS：新增 industry_orchestration_service_adapter；project_execution/project_dashboard/project_plan_bootstrap/project_dashboard_contract/cost_tracking 五个 orchestrator 改为 hook 协议注入；边界门禁通过`
+- active_commit: `f4102e4`
+- next_step: `Keep payment/settlement orchestrator files in HOLD until explicit high-risk authorization task line is opened`
+
+### 2026-04-06T07:55:42+08:00
+- blocker_key: `governance_exception_payment_settlement_orchestration_v1`
+- layer_target: `Governance Monitoring`
+- module: `AGENTS policy`
+- reason: 用户明确授权后，先补齐 stop-rule 例外条款，确保 payment/settlement 边界迁移仅在受控高风险任务下执行
+- completed_step: `ITER-2026-04-05-1114 PASS：AGENTS.md 新增 Section 6.8（payment-settlement orchestration boundary-recovery narrow exception）；默认 stop rule 保留`
+- active_commit: `f4102e4`
+- next_step: `Open dedicated high-risk implementation batch for payment/settlement orchestrator migration under Section 6.8 constraints`
+
+### 2026-04-06T08:00:08+08:00
+- blocker_key: `orchestration_boundary_recovery_payment_settlement_high_risk_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.orchestration`
+- reason: 在 AGENTS 6.8 例外与用户明确授权下，完成 payment/settlement 两个高风险热点的受控边界迁移
+- completed_step: `ITER-2026-04-05-1115 PASS：payment_slice_contract_orchestrator 与 settlement_slice_contract_orchestrator 改为 industry_orchestration_service_adapter 协议注入；core_extension 补齐 provider hooks；边界门禁通过`
+- active_commit: `f4102e4`
+- next_step: `Add orchestration adapter hook consistency guard to prevent hook/provider drift for orchestration services`
+
+### 2026-04-06T08:04:24+08:00
+- blocker_key: `orchestration_boundary_recovery_hook_consistency_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 在 payment/settlement 迁移完成后补齐 orchestration adapter hook 一致性守卫，防止后续 provider 漂移
+- completed_step: `ITER-2026-04-05-1116 PASS：新增 verify.orchestration.adapter.protocol.hook.guard 并接入 verify.controller.boundary.guard；所有边界门禁通过`
+- active_commit: `f4102e4`
+- next_step: `Run bounded orchestration import report to confirm full elimination of direct smart_construction_core.services imports in smart_core/orchestration`
+
+### 2026-04-06T08:10:44+08:00
+- blocker_key: `orchestration_boundary_recovery_zero_residue_audit_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases/archive/temp`
+- reason: 对 1103-1116 后的 orchestration 目录执行定向清零审计，确认 direct industry service import 是否已消除
+- completed_step: `ITER-2026-04-05-1117 PASS：生成 TEMP_smart_core_orchestration_import_zero_report_2026-04-06.md；scan 结果 0 行匹配`
+- active_commit: `f4102e4`
+- next_step: `Prepare consolidated boundary recovery closure summary for 1103-1117 chain`
+
+### 2026-04-06T08:15:37+08:00
+- blocker_key: `boundary_recovery_chain_closure_summary_1103_1117_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases/archive/temp`
+- reason: 输出 1103-1117 连续迭代总收口，形成可交付的完成范围、门禁覆盖与风险矩阵总结
+- completed_step: `ITER-2026-04-05-1118 PASS：生成 TEMP_boundary_recovery_closure_summary_1103_1117_2026-04-06.md；controller boundary guards 全通过`
+- active_commit: `f4102e4`
+- next_step: `Optionally promote closure summary into release-level persistent doc and keep boundary guards mandatory in CI lane`
+
+### 2026-04-06T08:23:34+08:00
+- blocker_key: `boundary_recovery_chain_release_promotion_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases`
+- reason: 将 1103-1117 收口从 temp 证据升级为 release 级常驻文档并补齐中英文索引入口
+- completed_step: `ITER-2026-04-05-1119 PASS：新增 phase_16_f_boundary_recovery_closure_1103_1117.md；README.md/README.zh.md 已加入索引链接；controller boundary guards 全通过`
+- active_commit: `f4102e4`
+- next_step: `Optionally archive temp closure docs after release maintainers confirm promotion completeness`
+
+### 2026-04-06T08:34:35+08:00
+- blocker_key: `boundary_clause6_startup_runtime_payload_split_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.system_init`
+- reason: 落实六条闭环第6条：startup 主链不再承载 workspace 重列表，runtime_fetch 保持重数据可用
+- completed_step: `ITER-2026-04-05-1120 PASS：merge_extension_facts 增加 include_workspace_collections 模式；system_init 固定 False；runtime_fetch 固定 True；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Run closure re-check against six governance clauses and open any remaining unresolved clause as dedicated task`
+
+### 2026-04-06T08:43:48+08:00
+- blocker_key: `six_clause_closure_recheck_scan_stage_v1`
+- layer_target: `Governance Monitoring`
+- module: `boundary_audit`
+- reason: 按低成本治理规则执行六条闭环复核 scan 阶段，仅收集文件证据候选，不做定性结论
+- completed_step: `ITER-2026-04-05-1121 PASS：新增 six_clause_closure_recheck_scan_2026-04-06.md，覆盖 Clause-1..Clause-6 的文件证据候选；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Open screen-stage task to classify scanned candidates into closed/partial/open without rescanning repository`
+
+### 2026-04-06T08:46:15+08:00
+- blocker_key: `six_clause_closure_recheck_screen_stage_v1`
+- layer_target: `Governance Monitoring`
+- module: `boundary_audit`
+- reason: 在不重扫仓库前提下对 scan 证据做 screen 分级，形成六条闭环当前态
+- completed_step: `ITER-2026-04-05-1122 PASS：新增 six_clause_closure_recheck_screen_2026-04-06.md；分级结果 Clause-1/6=closed，Clause-2/3/4/5=partial；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Open verify-stage task to validate screening levels and output executable closure batch plan for partial clauses`
+
+### 2026-04-06T08:48:56+08:00
+- blocker_key: `six_clause_closure_recheck_verify_stage_v1`
+- layer_target: `Governance Monitoring`
+- module: `boundary_audit`
+- reason: 对 scan/screen 结果执行 verify 一致性校验并输出剩余可执行批次清单
+- completed_step: `ITER-2026-04-05-1123 PASS_WITH_RISK：新增 six_clause_closure_recheck_verify_2026-04-06.md；核验结果 2 closed / 4 partial / 0 open；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Stop auto-chain by PASS_WITH_RISK rule and open explicit implementation taskline for Clause-2/3/4/5`
+
+### 2026-04-06T08:54:13+08:00
+- blocker_key: `six_clause_clause2_capability_runtime_owner_closure_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.capability_provider`
+- reason: 收口 Clause-2 partial，移除 capability runtime legacy hooks，平台仅走 contribution 路径
+- completed_step: `ITER-2026-04-05-1124 PASS：capability_provider 与 capability_contribution_loader 已去除 smart_core_list_capabilities_for_user/smart_core_capability_groups 运行时回退；capability owner guard 加严并通过`
+- active_commit: `f4102e4`
+- next_step: `Open Clause-3 implementation batch to retire scene legacy bridge fallback hooks from platform scene provider`
+
+### 2026-04-06T08:56:50+08:00
+- blocker_key: `six_clause_clause3_scene_bridge_fallback_retirement_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.scene_registry_provider`
+- reason: 收口 Clause-3 partial，移除 scene provider 对 smart_core_scene_* 兼容回退，固定平台直连 scene registry
+- completed_step: `ITER-2026-04-05-1125 PASS：scene_registry_provider 已移除 smart_core_scene_* 与 call_extension_hook_first 回退；scene bridge guard 加严并通过`
+- active_commit: `f4102e4`
+- next_step: `Open Clause-4 implementation batch to retire legacy smart_core_* policy compatibility hooks in platform policy defaults`
+
+### 2026-04-06T08:59:48+08:00
+- blocker_key: `six_clause_clause4_policy_legacy_fallback_retirement_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.platform_policy_defaults`
+- reason: 收口 Clause-4 partial，移除平台 policy defaults 对 smart_core_* 旧钩子的兼容回退
+- completed_step: `ITER-2026-04-05-1126 PASS：platform_policy_defaults 已移除 smart_core_* fallback，保留 contribution hooks；platform policy owner guard 加严并通过`
+- active_commit: `f4102e4`
+- next_step: `Open Clause-5 implementation batch to remove smart_core_extend_system_init legacy hook execution path`
+
+### 2026-04-06T09:03:24+08:00
+- blocker_key: `six_clause_clause5_system_init_legacy_hook_retirement_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.system_init`
+- reason: 收口 Clause-5 partial，移除 system.init 与 runtime_fetch 对 smart_core_extend_system_init 旧钩子执行
+- completed_step: `ITER-2026-04-05-1127 PASS：system_init 与 runtime_fetch 已移除 smart_core_extend_system_init 执行；system_init extension protocol guard 加严并通过`
+- active_commit: `f4102e4`
+- next_step: `Run final six-clause closure verify refresh and update closure matrix to reflect post-1124~1127 state`
+
+### 2026-04-06T09:06:48+08:00
+- blocker_key: `six_clause_closure_final_verify_refresh_v1`
+- layer_target: `Governance Monitoring`
+- module: `boundary_audit`
+- reason: 在 1124~1127 实施后刷新六条闭环最终复核矩阵并确认是否完全闭环
+- completed_step: `ITER-2026-04-05-1128 PASS：新增 six_clause_closure_final_verify_2026-04-06.md；最终矩阵 6 closed / 0 partial / 0 open；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Objective complete for six-clause closure; optionally archive interim checkpoints into release closure bundle`
+
+### 2026-04-06T09:13:27+08:00
+- blocker_key: `six_clause_release_bundle_promotion_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases`
+- reason: 将六条闭环链路（1121~1128）升级为 release 级常驻收口文档并接入中英文索引
+- completed_step: `ITER-2026-04-05-1129 PASS：新增 phase_16_g_six_clause_boundary_closure_1121_1128.md；README.md/README.zh.md 已接入索引；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Optional archive of interim six-clause checkpoint docs to long-term governance archive lane`
+
+### 2026-04-06T09:19:41+08:00
+- blocker_key: `six_clause_interim_checkpoint_archive_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases/archive`
+- reason: 将 1121~1123 中间 checkpoint 文档迁入长期治理归档目录并保持 release 收口文档引用一致
+- completed_step: `ITER-2026-04-05-1130 PASS：scan/screen/intermediate-verify 三份文档已迁入 docs/ops/releases/archive/governance/six_clause_1121_1128；phase_16_g 文档引用已同步；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Objective complete`
+
+### 2026-04-06T09:30:22+08:00
+- blocker_key: `six_clause_final_verify_index_link_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/ops/releases`
+- reason: 在 release 中英文索引中显式增加六条闭环 final verify 证据链接，提升审计检索效率
+- completed_step: `ITER-2026-04-05-1131 PASS：README.md/README.zh.md 已新增 six_clause_closure_final_verify_2026-04-06 链接；controller boundary guard 全通过`
+- active_commit: `f4102e4`
+- next_step: `Objective complete`

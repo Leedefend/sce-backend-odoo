@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-05-1040",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1040.md",
+  "publishability": "blocked",
+  "verification": {
+    "validate_task": "PASS",
+    "py_compile": "PASS",
+    "verify_frontend_api": "PASS",
+    "scene_legacy_auth_smoke": "FAIL"
+  },
+  "artifacts": {
+    "platform_auth_controller": "addons/smart_core/controllers/platform_auth_signup_web.py"
+  },
+  "next_step": "Recovery screen for auth smoke command contract, then rerun acceptance."
+}

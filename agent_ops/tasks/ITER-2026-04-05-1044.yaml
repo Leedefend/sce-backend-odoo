@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-05-1044
+title: Plan Implement-2 for auth policy dependency alignment
+type: governance
+status: active
+priority: medium
+mode: screen
+
+goal: >
+  Produce bounded Implement-2 plan for auth policy dependency alignment
+  (throttle model + signup defaults) following recovered Implement-1 state.
+
+user_visible_outcome:
+  - "形成 Implement-2 可执行计划与验收门禁"
+
+scope:
+  allowed_paths:
+    - docs/audit/boundary/auth_signup_migration_touch_list.md
+    - docs/audit/boundary/auth_signup_implement2_plan.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 7
+  max_candidates: 12
+  max_output_lines: 200
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - planning_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1043
+  priority_lane: smart_construction_core_auth_implement2_planning
+
+architecture:
+  layer_target: Governance Planning
+  module: auth policy dependency alignment
+  module_owner: n/a
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: align signup policy dependencies while preserving auth behavior facts.
+  reason: prepare next bounded implement slice after reconciliation.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1044.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - docs/audit/boundary/auth_signup_implement2_plan.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1044.yaml
+  - git restore docs/audit/boundary/auth_signup_implement2_plan.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1044.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1044.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1043

@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-1028",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1028.md",
+  "publishability": "n/a",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "followup_decision": "docs/audit/boundary/scene_template_auth_signup_followup_decision.md"
+  },
+  "next_step": "Open implement chain for scene_template family (/api/scenes/export first)."
+}

@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-1062",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1062.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "handler_registry_residue_screen": "docs/audit/boundary/handler_registry_residue_screen_after_1061.md"
+  },
+  "next_step": "Open dedicated 1063 screen for non-financial platform-style intent keys (app.*, usage.*, telemetry.*) inside core_extension.py."
+}

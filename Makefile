@@ -2593,13 +2593,29 @@ verify.controller.allowlist.routes.guard: guard.prod.forbid
 verify.controller.route.policy.guard: guard.prod.forbid
 	@python3 scripts/verify/controller_route_policy_guard.py
 
+.PHONY: verify.controller.platform_no_industry_import.guard
+verify.controller.platform_no_industry_import.guard: guard.prod.forbid
+	@python3 scripts/verify/controller_platform_no_industry_import_guard.py
+
+.PHONY: verify.controller.platform_no_industry_service_import.guard
+verify.controller.platform_no_industry_service_import.guard: guard.prod.forbid
+	@python3 scripts/verify/controller_platform_no_industry_service_import_guard.py
+
+.PHONY: verify.adapter.protocol.hook.guard
+verify.adapter.protocol.hook.guard: guard.prod.forbid
+	@python3 scripts/verify/adapter_protocol_hook_guard.py
+
+.PHONY: verify.orchestration.adapter.protocol.hook.guard
+verify.orchestration.adapter.protocol.hook.guard: guard.prod.forbid
+	@python3 scripts/verify/orchestration_adapter_protocol_hook_guard.py
+
 verify.controller.boundary.report: guard.prod.forbid
 	@python3 scripts/verify/controller_boundary_report.py
 
 verify.controller.boundary.baseline.guard: guard.prod.forbid
 	@python3 scripts/verify/controller_boundary_baseline_guard.py
 
-verify.controller.boundary.guard: guard.prod.forbid verify.controller.delegate.guard verify.controller.allowlist.routes.guard verify.controller.route.policy.guard verify.controller.boundary.report verify.controller.boundary.baseline.guard
+verify.controller.boundary.guard: guard.prod.forbid verify.controller.delegate.guard verify.controller.allowlist.routes.guard verify.controller.route.policy.guard verify.controller.platform_no_industry_import.guard verify.controller.platform_no_industry_service_import.guard verify.adapter.protocol.hook.guard verify.orchestration.adapter.protocol.hook.guard verify.controller.boundary.report verify.controller.boundary.baseline.guard
 	@echo "[OK] verify.controller.boundary.guard done"
 
 verify.scene.catalog.runtime_alignment.guard: guard.prod.forbid check-compose-project check-compose-env
@@ -4317,3 +4333,27 @@ agent.baseline.candidate:
 
 verify.architecture.platform_kernel_alignment: guard.prod.forbid
 	@python3 scripts/verify/platform_kernel_alignment_guard.py
+
+.PHONY: verify.architecture.intent_registry_single_owner_guard verify.architecture.capability_registry_platform_owner_guard verify.architecture.scene_bridge_industry_proxy_guard verify.architecture.platform_policy_constant_owner_guard verify.architecture.system_init_extension_protocol_guard verify.architecture.system_init_heavy_workspace_payload_guard
+.PHONY: verify.architecture.industry_legacy_bridge_residue_guard
+
+verify.architecture.intent_registry_single_owner_guard:
+	@python3 scripts/verify/architecture_intent_registry_single_owner_guard.py
+
+verify.architecture.capability_registry_platform_owner_guard:
+	@python3 scripts/verify/architecture_capability_registry_platform_owner_guard.py
+
+verify.architecture.scene_bridge_industry_proxy_guard:
+	@python3 scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+
+verify.architecture.platform_policy_constant_owner_guard:
+	@python3 scripts/verify/architecture_platform_policy_constant_owner_guard.py
+
+verify.architecture.system_init_extension_protocol_guard:
+	@python3 scripts/verify/architecture_system_init_extension_protocol_guard.py
+
+verify.architecture.system_init_heavy_workspace_payload_guard:
+	@python3 scripts/verify/architecture_system_init_heavy_workspace_payload_guard.py
+
+verify.architecture.industry_legacy_bridge_residue_guard:
+	@python3 scripts/verify/architecture_industry_legacy_bridge_residue_guard.py

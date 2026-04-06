@@ -1,0 +1,42 @@
+# smart_construction_core HTTP Route Inventory (Phase A / Scan)
+
+- Stage: `scan` (fact-only; no ownership conclusion)
+- Scope: `addons/smart_construction_core/controllers/**/*.py`
+- Route count: `34`
+
+| File | Method | Route | Auth | Type | Methods | Return Type | Major Calls | Direct Model Access | Tags |
+|---|---|---|---|---|---|---|---|---|---|
+| `addons/smart_construction_core/controllers/auth_signup.py` | `sc_activate_account` | `/sc/auth/activate/<string:token>` | `public` | `http` | `n/a` | `redirect` | `http.route, write` | `yes` | `none` |
+| `addons/smart_construction_core/controllers/auth_signup.py` | `web_auth_signup` | `/web/signup` | `public` | `http` | `n/a` | `redirect, web_login` | `http.route, qcontext.get, self.get_auth_signup_qcontext` | `yes` | `none` |
+| `addons/smart_construction_core/controllers/capability_catalog_controller.py` | `export_capabilities` | `/api/capabilities/export` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `capability` |
+| `addons/smart_construction_core/controllers/capability_catalog_controller.py` | `lint_capabilities` | `/api/capabilities/lint` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `capability` |
+| `addons/smart_construction_core/controllers/capability_catalog_controller.py` | `search_capabilities` | `/api/capabilities/search` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `app, capability` |
+| `addons/smart_construction_core/controllers/capability_matrix_controller.py` | `capability_matrix` | `/api/contract/capability_matrix` | `user` | `http` | `GET, POST` | `fail_from_exception, ok` | `CapabilityMatrixService, service.build_matrix` | `yes` | `capability` |
+| `addons/smart_construction_core/controllers/execute_controller.py` | `execute_button` | `/api/execute_button` | `user` | `http` | `POST` | `fail, fail_from_exception, ok` | `execute` | `yes` | `none` |
+| `addons/smart_construction_core/controllers/frontend_api.py` | `api_login` | `/api/login` | `public` | `json` | `POST` | `_error_resp, dict` | `_get_payload, get_trace_id, http.route` | `yes` | `session` |
+| `addons/smart_construction_core/controllers/frontend_api.py` | `api_logout` | `/api/logout` | `public` | `json` | `POST` | `dict` | `get_trace_id, http.route, session.logout` | `no` | `session` |
+| `addons/smart_construction_core/controllers/frontend_api.py` | `api_menu_tree` | `/api/menu/tree` | `user` | `json` | `POST` | `_error_resp, dict` | `get_trace_id, http.route, sudo` | `yes` | `menu` |
+| `addons/smart_construction_core/controllers/frontend_api.py` | `api_session_get` | `/api/session/get` | `public` | `json` | `POST` | `dict` | `_load_user_basic, get_trace_id, http.route` | `no` | `session` |
+| `addons/smart_construction_core/controllers/frontend_api.py` | `api_user_menus` | `/api/user_menus` | `user` | `json` | `POST` | `api_menu_tree` | `http.route, self.api_menu_tree` | `no` | `menu` |
+| `addons/smart_construction_core/controllers/insight_controller.py` | `get_insight` | `/api/insight` | `user` | `http` | `GET` | `_json` | `ProjectInsightService, service.get_insight` | `yes` | `scene` |
+| `addons/smart_construction_core/controllers/meta_controller.py` | `describe_model` | `/api/meta/describe_model` | `user` | `http` | `GET, POST` | `fail, fail_from_exception, ok` | `_merge_payload, http.route, strip` | `yes` | `app` |
+| `addons/smart_construction_core/controllers/meta_controller.py` | `describe_project_capabilities` | `/api/meta/project_capabilities` | `user` | `http` | `GET, POST` | `fail, fail_from_exception, ok` | `LifecycleCapabilityService, service.describe_project` | `yes` | `capability` |
+| `addons/smart_construction_core/controllers/ops_controller.py` | `audit_search` | `/api/ops/audit/search` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `app, ops, scene` |
+| `addons/smart_construction_core/controllers/ops_controller.py` | `job_status` | `/api/ops/job/status` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `ops` |
+| `addons/smart_construction_core/controllers/ops_controller.py` | `batch_rollback` | `/api/ops/packs/batch_rollback` | `public` | `http` | `POST` | `batch_upgrade, fail, fail_from_exception` | `get_user_from_token, http.route, request.env` | `yes` | `app, ops, pack` |
+| `addons/smart_construction_core/controllers/ops_controller.py` | `batch_upgrade` | `/api/ops/packs/batch_upgrade` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `PackController, controller._install_pack` | `yes` | `app, ops, pack` |
+| `addons/smart_construction_core/controllers/ops_controller.py` | `set_subscription` | `/api/ops/subscription/set` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `ops` |
+| `addons/smart_construction_core/controllers/ops_controller.py` | `tenants` | `/api/ops/tenants` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `app, ops` |
+| `addons/smart_construction_core/controllers/pack_controller.py` | `catalog` | `/api/packs/catalog` | `public` | `http` | `GET` | `fail_from_exception, ok` | `Registry.search` | `yes` | `app, pack` |
+| `addons/smart_construction_core/controllers/pack_controller.py` | `install_pack` | `/api/packs/install` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `self._install_pack` | `yes` | `pack` |
+| `addons/smart_construction_core/controllers/pack_controller.py` | `publish_pack` | `/api/packs/publish` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `Registry.create, Registry.search, _pack_hash, pack_meta.get` | `yes` | `app, pack, scene` |
+| `addons/smart_construction_core/controllers/pack_controller.py` | `upgrade_pack` | `/api/packs/upgrade` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `self._install_pack` | `yes` | `pack` |
+| `addons/smart_construction_core/controllers/portal_dashboard_controller.py` | `portal_dashboard` | `/api/contract/portal_dashboard` | `user` | `http` | `GET, POST` | `fail_from_exception, ok` | `PortalDashboardService, service.build_dashboard` | `yes` | `none` |
+| `addons/smart_construction_core/controllers/portal_execute_button_controller.py` | `portal_execute_button_contract` | `/api/contract/portal_execute_button` | `user` | `http` | `GET` | `ok` | `PortalExecuteButtonService, service.build_contract` | `yes` | `none` |
+| `addons/smart_construction_core/controllers/portal_execute_button_controller.py` | `portal_execute_button` | `/api/portal/execute_button` | `user` | `http` | `POST` | `fail, fail_from_exception, ok` | `PortalExecuteButtonService, execute, service.build_contract` | `yes` | `none` |
+| `addons/smart_construction_core/controllers/preference_controller.py` | `pref_get` | `/api/preferences/get` | `public` | `http` | `GET, POST` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `scene` |
+| `addons/smart_construction_core/controllers/preference_controller.py` | `pref_set` | `/api/preferences/set` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `scene._user_allowed` | `yes` | `scene` |
+| `addons/smart_construction_core/controllers/scene_controller.py` | `my_scenes` | `/api/scenes/my` | `public` | `http` | `GET` | `fail, ok` | `Scene.search, scene._user_allowed, scene.to_public_dict` | `yes` | `app, scene` |
+| `addons/smart_construction_core/controllers/scene_template_controller.py` | `export_scenes` | `/api/scenes/export` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `Scene.search, _pack_hash, out_scenes.append` | `yes` | `app, capability, pack, scene` |
+| `addons/smart_construction_core/controllers/scene_template_controller.py` | `import_scenes` | `/api/scenes/import` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `Scene.search, _apply_pack, scenes.unlink` | `yes` | `app, capability, pack, scene` |
+| `addons/smart_construction_core/controllers/ui_contract_controller.py` | `ui_contract` | `/api/ui/contract` | `user` | `http` | `GET, POST` | `fail` | `fail, http.route` | `no` | `scene` |

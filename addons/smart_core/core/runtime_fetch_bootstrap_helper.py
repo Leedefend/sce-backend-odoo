@@ -22,8 +22,7 @@ def build_runtime_fetch_bootstrap_surface(
     surface_builder,
 ) -> dict[str, Any]:
     delivery_surface_governance_fn = apply_contract_governance_fn
-    run_extension_hooks_fn(env, "smart_core_extend_system_init", data, env, user)
-    merge_extension_facts_fn(data)
+    merge_extension_facts_fn(data, include_workspace_collections=True)
     surface_ctx = surface_context_cls(
         data=data,
         contract_mode=contract_mode,

@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-05-982
+title: Copy smart_construction_core boundary fact summary to repo-root temp folder
+type: governance
+status: active
+priority: high
+mode: scan
+
+goal: >
+  Place a user-facing temporary summary document under repository-root
+  temporary folder for quick review.
+
+user_visible_outcome:
+  - "在仓库根目录临时文档/tmp 下可直接查看本轮盘点结论"
+
+scope:
+  allowed_paths:
+    - 临时文档/tmp/**
+    - docs/ops/releases/archive/temp/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - doc_only
+  - additive_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-981
+  priority_lane: architecture_boundary_fact_delivery
+
+architecture:
+  layer_target: Agent Governance Fact Delivery
+  module: smart_construction_core boundary fact summary publication
+  module_owner: governance_audit
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch only republishes verified facts to a user-designated temporary
+    location and does not alter runtime semantics.
+  reason: >
+    User explicitly requested root-level temporary document placement.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-982.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - repo_root_temp_summary
+
+rollback:
+  - git restore 临时文档/tmp/TEMP_smart_construction_core_boundary_fact_audit_2026-04-05.md
+  - git restore agent_ops/tasks/ITER-2026-04-05-982.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-982.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-982.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-981
+

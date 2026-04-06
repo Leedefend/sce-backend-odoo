@@ -8,7 +8,7 @@
 import logging, odoo
 from odoo import api
 from odoo.http import request
-from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from odoo.addons.smart_core.core.platform_policy_defaults import get_server_action_window_map
 
 _logger = logging.getLogger(__name__)
 
@@ -273,9 +273,7 @@ class ActionResolver:
         可选：将某些 server 动作映射为固定 act_window，避免执行代码。
         - 如无定制映射，返回 None。
         """
-        mapping = call_extension_hook_first(self.env, "smart_core_server_action_window_map", self.env)
-        if not isinstance(mapping, dict):
-            mapping = {}
+        mapping = get_server_action_window_map(self.env)
         target_xmlid = None
         if server_xmlid and server_xmlid in mapping:
             target_xmlid = mapping[server_xmlid]

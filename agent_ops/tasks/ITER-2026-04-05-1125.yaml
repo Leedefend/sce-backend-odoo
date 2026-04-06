@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-05-1125
+title: Clause-3 closure retire scene legacy bridge fallback in platform provider
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Remove legacy industry bridge fallback hooks from platform scene registry
+  provider so scene access no longer routes through smart_construction_core bridge.
+
+user_visible_outcome:
+  - "平台 scene 访问不再回退到 smart_core_scene_* 行业桥接钩子"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/scene_registry_provider.py
+    - scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 8
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - scene_access_direct_only
+  - no_smart_core_scene_legacy_fallback
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: six_clause_verify_clause3_partial
+  priority_lane: boundary_closure
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core.scene_registry_provider
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: scene registry access provides orchestration semantics and must be platform/scene direct.
+  reason: close Clause-3 partial finding.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1125.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_registry_provider.py scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+    - bash -lc 'rg -n "smart_core_load_scene_configs|smart_core_has_db_scenes|smart_core_get_scene_version|smart_core_get_schema_version|call_extension_hook_first" addons/smart_core/core/scene_registry_provider.py && exit 1 || exit 0'
+    - python3 scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/core/scene_registry_provider.py
+  - scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+
+rollback:
+  - git restore addons/smart_core/core/scene_registry_provider.py
+  - git restore scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1125.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1125.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1125.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1124

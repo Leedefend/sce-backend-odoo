@@ -11,7 +11,6 @@ from controller_allowlist_policy import CONTROLLER_ROUTE_POLICY
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
 ARTIFACT_JSON = ROOT / "artifacts" / "controller_route_policy_guard.json"
 POLICY = CONTROLLER_ROUTE_POLICY
 
@@ -68,16 +67,11 @@ def _extract_route_specs(path: Path) -> dict[str, dict]:
 
 
 def main() -> int:
-    if not CONTROLLERS_ROOT.is_dir():
-        print("[controller_route_policy_guard] FAIL")
-        print(f"missing dir: {CONTROLLERS_ROOT.relative_to(ROOT).as_posix()}")
-        return 1
-
     violations: list[str] = []
-    for filename, expected_map in sorted(POLICY.items()):
-        file_path = CONTROLLERS_ROOT / filename
+    for rel_path, expected_map in sorted(POLICY.items()):
+        file_path = ROOT / rel_path
         if not file_path.is_file():
-            violations.append(f"missing allowlist controller file: {file_path.relative_to(ROOT).as_posix()}")
+            violations.append(f"missing allowlist controller file: {rel_path}")
             continue
         actual_specs = _extract_route_specs(file_path)
         rel = file_path.relative_to(ROOT).as_posix()
@@ -102,7 +96,7 @@ def main() -> int:
     report = {
         "ok": not violations,
         "summary": {
-            "controller_root": CONTROLLERS_ROOT.relative_to(ROOT).as_posix(),
+            "policy_scope": "cross-module",
             "policy_file_count": len(POLICY),
             "violation_count": len(violations),
         },

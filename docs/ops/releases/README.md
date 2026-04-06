@@ -16,6 +16,19 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - Verify: `make ci.gate.tp08 DB=sc_demo`
   - GitHub Release: (not published)
 
+## Latest Governance Closure
+- 2026-04-06 — Phase 16-G Six-Clause Boundary Closure (1121-1128)
+  - Type: governance
+  - Status: closed
+  - Docs: `docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md`
+  - Final Verify Evidence: `docs/audit/boundary/six_clause_closure_final_verify_2026-04-06.md`
+  - Verify: `make verify.controller.boundary.guard`
+- 2026-04-06 — Phase 16-F Boundary Recovery Closure (1103-1117)
+  - Type: governance
+  - Status: closed
+  - Docs: `docs/ops/releases/current/phase_16_f_boundary_recovery_closure_1103_1117.md`
+  - Verify: `make verify.controller.boundary.guard`
+
 ## Release List (Newest First)
 
 1) 2026-02-04 — Portal Shell UI v0.7.1

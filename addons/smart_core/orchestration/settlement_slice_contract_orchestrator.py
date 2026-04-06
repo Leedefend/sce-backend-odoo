@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo.addons.smart_construction_core.services.settlement_slice_service import SettlementSliceService
+from odoo.addons.smart_core.core.industry_orchestration_service_adapter import (
+    build_settlement_slice_service,
+)
 from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import BaseSceneEntryOrchestrator
 
 
@@ -27,7 +29,7 @@ class SettlementSliceContractOrchestrator(BaseSceneEntryOrchestrator):
     )
 
     def __init__(self, env):
-        super().__init__(env, SettlementSliceService(env))
+        super().__init__(env, build_settlement_slice_service(env))
 
     def resolve_title(self, project_payload):
         return "结算结果：%s" % str(project_payload.get("name") or "项目")

@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-05-1099
+title: Execute routine release-checklist architecture guard bundle run 012
+type: governance
+status: active
+priority: low
+mode: verify
+
+goal: >
+  Continue routine release-checklist cadence by executing full architecture
+  guard bundle run_012 and archiving evidence.
+
+user_visible_outcome:
+  - "新增 routine run_012 guard archive 文档"
+
+scope:
+  allowed_paths:
+    - docs/refactor/industry_shadow_bridge_guard_run_012_v1.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 10
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - verify_then_archive
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: release_checklist_guard_cadence
+  priority_lane: industry_shadow_bridge_guard_hardening
+
+architecture:
+  layer_target: Governance Monitoring
+  module: routine guard run archive artifact
+  module_owner: docs/refactor
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: maintain steady-state architecture boundary verification.
+  reason: execute routine release-checklist guard bundle and archive evidence.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1099.yaml
+    - make verify.architecture.intent_registry_single_owner_guard
+    - make verify.architecture.capability_registry_platform_owner_guard
+    - make verify.architecture.scene_bridge_industry_proxy_guard
+    - make verify.architecture.platform_policy_constant_owner_guard
+    - make verify.architecture.system_init_extension_protocol_guard
+    - make verify.architecture.system_init_heavy_workspace_payload_guard
+    - make verify.architecture.industry_legacy_bridge_residue_guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - docs/refactor/industry_shadow_bridge_guard_run_012_v1.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1099.yaml
+  - git restore docs/refactor/industry_shadow_bridge_guard_run_012_v1.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1099.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1099.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1098

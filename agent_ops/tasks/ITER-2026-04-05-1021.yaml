@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-05-1021
+title: Screen read-first migration for packs endpoint family
+type: governance
+status: active
+priority: medium
+mode: screen
+
+goal: >
+  Define read-first migration order for `/api/packs/*` endpoints and isolate
+  install/upgrade write operations for controlled follow-up batches.
+
+user_visible_outcome:
+  - "给出 packs 读优先迁移切片与写操作延后边界"
+
+scope:
+  allowed_paths:
+    - docs/audit/boundary/governance_endpoint_ownership_decision.md
+    - docs/audit/boundary/runtime_priority_matrix.md
+    - docs/audit/boundary/packs_read_first_migration_decision.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 20
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - classify_from_scan_outputs_only
+  - do_not_rescan_repository
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1020
+  priority_lane: smart_construction_core_boundary_remediation_packs_p2
+
+architecture:
+  layer_target: Backend Sub-Layer Decision Gate
+  module: packs endpoint family
+  module_owner: smart_core (route shell target)
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    route shells converge to platform runtime boundary while pack write
+    semantics remain delegated in transition period.
+  reason: >
+    continue staged governance migration after ops family completion.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1021.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - stage_boundary_broken
+
+deliverables:
+  - docs/audit/boundary/packs_read_first_migration_decision.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1021.yaml
+  - git restore docs/audit/boundary/packs_read_first_migration_decision.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1021.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1021.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1020

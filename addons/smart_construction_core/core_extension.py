@@ -250,10 +250,8 @@ def _build_project_action_rows(env, user) -> List[Dict[str, Any]]:
     return result
 
 
-def smart_core_register(registry):
-    """
-    Register construction demo intent into smart_core registry.
-    """
+def get_intent_handler_contributions():
+    """Return construction intent handler contributions for platform loader."""
     try:
         from odoo.addons.smart_construction_core.handlers.system_ping_construction import (
             SystemPingConstructionHandler,
@@ -374,229 +372,123 @@ def smart_core_register(registry):
             AppOpenHandler,
         )
     except Exception as e:
-        _logger.warning("[smart_core_register] import handler failed: %s", e)
-        return
+        _logger.warning("[get_intent_handler_contributions] import handler failed: %s", e)
+        return []
 
-    registry["system.ping.construction"] = SystemPingConstructionHandler
-    registry["capability.describe"] = CapabilityDescribeHandler
-    registry["my.work.summary"] = MyWorkSummaryHandler
-    registry["my.work.complete"] = MyWorkCompleteHandler
-    registry["my.work.complete_batch"] = MyWorkCompleteBatchHandler
-    registry["usage.track"] = UsageTrackHandler
-    registry["telemetry.track"] = TelemetryTrackHandler
-    registry["usage.report"] = UsageReportHandler
-    registry["usage.export.csv"] = UsageExportCsvHandler
-    registry["capability.visibility.report"] = CapabilityVisibilityReportHandler
-    registry["payment.request.submit"] = PaymentRequestSubmitHandler
-    registry["payment.request.approve"] = PaymentRequestApproveHandler
-    registry["payment.request.reject"] = PaymentRequestRejectHandler
-    registry["payment.request.done"] = PaymentRequestDoneHandler
-    registry["payment.request.available_actions"] = PaymentRequestAvailableActionsHandler
-    registry["payment.request.execute"] = PaymentRequestExecuteHandler
-    registry["project.dashboard"] = ProjectDashboardHandler
-    registry["project.dashboard.open"] = ProjectDashboardOpenHandler
-    registry["project.dashboard.enter"] = ProjectDashboardEnterHandler
-    registry["project.entry.context.resolve"] = ProjectEntryContextResolveHandler
-    registry["project.entry.context.options"] = ProjectEntryContextOptionsHandler
-    registry["business.evidence.trace"] = BusinessEvidenceTraceHandler
-    registry["project.dashboard.block.fetch"] = ProjectDashboardBlockFetchHandler
-    registry["project.plan_bootstrap.enter"] = ProjectPlanBootstrapEnterHandler
-    registry["project.plan_bootstrap.block.fetch"] = ProjectPlanBootstrapBlockFetchHandler
-    registry["project.execution.enter"] = ProjectExecutionEnterHandler
-    registry["project.execution.block.fetch"] = ProjectExecutionBlockFetchHandler
-    registry["project.execution.advance"] = ProjectExecutionAdvanceHandler
-    registry["project.connection.transition"] = ProjectConnectionTransitionHandler
-    registry["cost.tracking.enter"] = CostTrackingEnterHandler
-    registry["cost.tracking.block.fetch"] = CostTrackingBlockFetchHandler
-    registry["cost.tracking.record.create"] = CostTrackingRecordCreateHandler
-    registry["payment.enter"] = PaymentSliceEnterHandler
-    registry["payment.block.fetch"] = PaymentSliceBlockFetchHandler
-    registry["payment.record.create"] = PaymentSliceRecordCreateHandler
-    registry["settlement.enter"] = SettlementSliceEnterHandler
-    registry["settlement.block.fetch"] = SettlementSliceBlockFetchHandler
-    registry["project.initiation.enter"] = ProjectInitiationEnterHandler
-    registry["risk.action.execute"] = RiskActionExecuteHandler
-    registry["app.catalog"] = AppCatalogHandler
-    registry["app.nav"] = AppNavHandler
-    registry["app.open"] = AppOpenHandler
-    _logger.info("[smart_core_register] registered system.ping.construction")
-    _logger.info("[smart_core_register] registered capability.describe")
-    _logger.info("[smart_core_register] registered my.work.summary")
-    _logger.info("[smart_core_register] registered my.work.complete")
-    _logger.info("[smart_core_register] registered my.work.complete_batch")
-    _logger.info("[smart_core_register] registered usage.track")
-    _logger.info("[smart_core_register] registered telemetry.track")
-    _logger.info("[smart_core_register] registered usage.report")
-    _logger.info("[smart_core_register] registered usage.export.csv")
-    _logger.info("[smart_core_register] registered capability.visibility.report")
-    _logger.info("[smart_core_register] registered payment.request.submit")
-    _logger.info("[smart_core_register] registered payment.request.approve")
-    _logger.info("[smart_core_register] registered payment.request.reject")
-    _logger.info("[smart_core_register] registered payment.request.done")
-    _logger.info("[smart_core_register] registered payment.request.available_actions")
-    _logger.info("[smart_core_register] registered payment.request.execute")
-    _logger.info("[smart_core_register] registered project.dashboard")
-    _logger.info("[smart_core_register] registered project.dashboard.open")
-    _logger.info("[smart_core_register] registered project.dashboard.enter")
-    _logger.info("[smart_core_register] registered project.entry.context.resolve")
-    _logger.info("[smart_core_register] registered business.evidence.trace")
-    _logger.info("[smart_core_register] registered project.dashboard.block.fetch")
-    _logger.info("[smart_core_register] registered project.plan_bootstrap.enter")
-    _logger.info("[smart_core_register] registered project.plan_bootstrap.block.fetch")
-    _logger.info("[smart_core_register] registered project.execution.enter")
-    _logger.info("[smart_core_register] registered project.execution.block.fetch")
-    _logger.info("[smart_core_register] registered project.execution.advance")
-    _logger.info("[smart_core_register] registered cost.tracking.enter")
-    _logger.info("[smart_core_register] registered cost.tracking.block.fetch")
-    _logger.info("[smart_core_register] registered cost.tracking.record.create")
-    _logger.info("[smart_core_register] registered payment.enter")
-    _logger.info("[smart_core_register] registered payment.block.fetch")
-    _logger.info("[smart_core_register] registered payment.record.create")
-    _logger.info("[smart_core_register] registered settlement.enter")
-    _logger.info("[smart_core_register] registered settlement.block.fetch")
-    _logger.info("[smart_core_register] registered project.initiation.enter")
-    _logger.info("[smart_core_register] registered risk.action.execute")
-    _logger.info("[smart_core_register] registered app.catalog")
-    _logger.info("[smart_core_register] registered app.nav")
-    _logger.info("[smart_core_register] registered app.open")
+    mapping = [
+        ("system.ping.construction", SystemPingConstructionHandler),
+        ("capability.describe", CapabilityDescribeHandler),
+        ("my.work.summary", MyWorkSummaryHandler),
+        ("my.work.complete", MyWorkCompleteHandler),
+        ("my.work.complete_batch", MyWorkCompleteBatchHandler),
+        ("usage.track", UsageTrackHandler),
+        ("telemetry.track", TelemetryTrackHandler),
+        ("usage.report", UsageReportHandler),
+        ("usage.export.csv", UsageExportCsvHandler),
+        ("capability.visibility.report", CapabilityVisibilityReportHandler),
+        ("payment.request.submit", PaymentRequestSubmitHandler),
+        ("payment.request.approve", PaymentRequestApproveHandler),
+        ("payment.request.reject", PaymentRequestRejectHandler),
+        ("payment.request.done", PaymentRequestDoneHandler),
+        ("payment.request.available_actions", PaymentRequestAvailableActionsHandler),
+        ("payment.request.execute", PaymentRequestExecuteHandler),
+        ("project.dashboard", ProjectDashboardHandler),
+        ("project.dashboard.open", ProjectDashboardOpenHandler),
+        ("project.dashboard.enter", ProjectDashboardEnterHandler),
+        ("project.entry.context.resolve", ProjectEntryContextResolveHandler),
+        ("project.entry.context.options", ProjectEntryContextOptionsHandler),
+        ("business.evidence.trace", BusinessEvidenceTraceHandler),
+        ("project.dashboard.block.fetch", ProjectDashboardBlockFetchHandler),
+        ("project.plan_bootstrap.enter", ProjectPlanBootstrapEnterHandler),
+        ("project.plan_bootstrap.block.fetch", ProjectPlanBootstrapBlockFetchHandler),
+        ("project.execution.enter", ProjectExecutionEnterHandler),
+        ("project.execution.block.fetch", ProjectExecutionBlockFetchHandler),
+        ("project.execution.advance", ProjectExecutionAdvanceHandler),
+        ("project.connection.transition", ProjectConnectionTransitionHandler),
+        ("cost.tracking.enter", CostTrackingEnterHandler),
+        ("cost.tracking.block.fetch", CostTrackingBlockFetchHandler),
+        ("cost.tracking.record.create", CostTrackingRecordCreateHandler),
+        ("payment.enter", PaymentSliceEnterHandler),
+        ("payment.block.fetch", PaymentSliceBlockFetchHandler),
+        ("payment.record.create", PaymentSliceRecordCreateHandler),
+        ("settlement.enter", SettlementSliceEnterHandler),
+        ("settlement.block.fetch", SettlementSliceBlockFetchHandler),
+        ("project.initiation.enter", ProjectInitiationEnterHandler),
+        ("risk.action.execute", RiskActionExecuteHandler),
+        ("app.catalog", AppCatalogHandler),
+        ("app.nav", AppNavHandler),
+        ("app.open", AppOpenHandler),
+    ]
+    return [
+        {
+            "intent": intent,
+            "handler": handler,
+            "source_module": "smart_construction_core",
+            "domain": "construction",
+            "status": "active",
+        }
+        for intent, handler in mapping
+    ]
 
 
-def smart_core_list_capabilities_for_user(env, user):
+def get_capability_contributions(env, user):
     try:
         from odoo.addons.smart_construction_core.services.capability_registry import (
             list_capabilities_for_user as registry_list_capabilities_for_user,
         )
     except Exception:
-        return None
+        return []
     try:
         capabilities = registry_list_capabilities_for_user(env, user)
     except Exception:
-        return None
-    return capabilities if isinstance(capabilities, list) and capabilities else None
+        return []
+    if not isinstance(capabilities, list) or not capabilities:
+        return []
+
+    out = []
+    for row in capabilities:
+        if not isinstance(row, dict):
+            continue
+        key = str(row.get("key") or "").strip()
+        if not key:
+            continue
+        item = dict(row)
+        item.setdefault("key", key)
+        item.setdefault("source_module", "smart_construction_core")
+        item.setdefault("owner_module", "smart_construction_core")
+        item.setdefault("status", "active")
+        out.append(item)
+    return out
 
 
-def smart_core_capability_groups(env):
+def get_capability_group_contributions(env):
     del env
     try:
         from odoo.addons.smart_construction_core.services.capability_registry import CAPABILITY_GROUPS
     except Exception:
-        return None
-    return [dict(item) for item in CAPABILITY_GROUPS if isinstance(item, dict)]
+        return []
+    out = []
+    for item in CAPABILITY_GROUPS:
+        if not isinstance(item, dict):
+            continue
+        row = dict(item)
+        row.setdefault("source_module", "smart_construction_core")
+        out.append(row)
+    return out
 
 
-def smart_core_scene_package_service_class(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
-    except Exception:
-        return None
-    return ScenePackageService
-
-
-def smart_core_scene_governance_service_class(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.services.scene_governance_service import SceneGovernanceService
-    except Exception:
-        return None
-    return SceneGovernanceService
-
-
-def smart_core_load_scene_configs(env, *, drift=None):
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
-    except Exception:
-        return None
-    try:
-        return load_scene_configs(env, drift=drift)
-    except Exception:
-        return None
-
-
-def smart_core_has_db_scenes(env):
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import has_db_scenes
-    except Exception:
-        return None
-    try:
-        return bool(has_db_scenes(env))
-    except Exception:
-        return None
-
-
-def smart_core_get_scene_version(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import get_scene_version
-    except Exception:
-        return None
-    try:
-        return get_scene_version()
-    except Exception:
-        return None
-
-
-def smart_core_get_schema_version(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import get_schema_version
-    except Exception:
-        return None
-    try:
-        return get_schema_version()
-    except Exception:
-        return None
-
-
-def smart_core_server_action_window_map(env):
-    del env
-    return dict(SERVER_ACTION_WINDOW_MAP)
-
-
-def smart_core_file_upload_allowed_models(env):
-    del env
-    return list(FILE_UPLOAD_ALLOWED_MODELS)
-
-
-def smart_core_file_download_allowed_models(env):
-    del env
-    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
-
-
-def smart_core_api_data_write_allowlist(env):
-    del env
-    return {str(model): list(fields) for model, fields in API_DATA_WRITE_ALLOWLIST.items()}
-
-
-def smart_core_api_data_unlink_allowed_models(env):
-    del env
-    return list(API_DATA_UNLINK_ALLOWED_MODELS)
-
-
-def smart_core_model_code_mapping(env):
-    del env
-    return dict(MODEL_CODE_MAPPING)
-
-
-def smart_core_create_field_fallbacks(env, model_name):
+def get_create_field_fallback_contributions(env, model_name):
     del env
     return dict(CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
 
 
-def smart_core_extend_system_init(data, env, user):
-    """
-    Enrich smart_core system.init response with construction facts only.
-    Contract shape fields (e.g. scenes/capabilities) are owned by smart_core.
-    """
+def get_system_init_fact_contributions(env, user, context=None):
+    """Return construction system.init facts contribution payload."""
+    del context
     try:
         Entitlement = env.get("sc.entitlement")
         Usage = env.get("sc.usage.counter")
-        ext_facts = data.get("ext_facts")
-        if not isinstance(ext_facts, dict):
-            ext_facts = {}
-        module_facts = ext_facts.get("smart_construction_core")
-        if not isinstance(module_facts, dict):
-            module_facts = {}
+        module_facts = {}
         if Entitlement:
             module_facts["entitlements"] = Entitlement.get_payload(user)
         if Usage:
@@ -621,7 +513,107 @@ def smart_core_extend_system_init(data, env, user):
             "project_actions": len(project_rows),
         }
 
-        ext_facts["smart_construction_core"] = module_facts
-        data["ext_facts"] = ext_facts
+        return {
+            "module": "smart_construction_core",
+            "facts": module_facts,
+            "collections": module_facts.get("workspace_collections") or {},
+            "meta": {
+                "source": "smart_construction_core",
+                "status": "active",
+            },
+        }
     except Exception as exc:
-        _logger.warning("[smart_core_extend_system_init] failed: %s", exc)
+        _logger.warning("[get_system_init_fact_contributions] failed: %s", exc)
+        return None
+
+
+def smart_core_describe_project_capabilities(env, project):
+    from odoo.addons.smart_construction_core.services.lifecycle_capability_service import (
+        LifecycleCapabilityService,
+    )
+
+    return LifecycleCapabilityService(env).describe_project(project)
+
+
+def smart_core_build_portal_dashboard(env):
+    from odoo.addons.smart_construction_core.services.portal_dashboard_service import (
+        PortalDashboardService,
+    )
+
+    return PortalDashboardService(env).build_dashboard()
+
+
+def smart_core_build_capability_matrix(env):
+    from odoo.addons.smart_construction_core.services.capability_matrix_service import (
+        CapabilityMatrixService,
+    )
+
+    return CapabilityMatrixService(env).build_matrix()
+
+
+def smart_core_get_project_insight(env, record, scene):
+    from odoo.addons.smart_construction_core.services.insight.project_insight_service import (
+        ProjectInsightService,
+    )
+
+    return ProjectInsightService(env).get_insight(record, scene=scene)
+
+
+def smart_core_build_portal_execute_button_contract(env, model, res_id, method):
+    from odoo.addons.smart_construction_core.services.portal_execute_button_service import (
+        PortalExecuteButtonService,
+    )
+
+    return PortalExecuteButtonService(env).build_contract(
+        model=model,
+        res_id=res_id,
+        method=method,
+    )
+
+
+def smart_core_build_project_execution_service(env):
+    from odoo.addons.smart_construction_core.services.project_execution_service import (
+        ProjectExecutionService,
+    )
+
+    return ProjectExecutionService(env)
+
+
+def smart_core_build_project_dashboard_service(env):
+    from odoo.addons.smart_construction_core.services.project_dashboard_service import (
+        ProjectDashboardService,
+    )
+
+    return ProjectDashboardService(env)
+
+
+def smart_core_build_project_plan_bootstrap_service(env):
+    from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service import (
+        ProjectPlanBootstrapService,
+    )
+
+    return ProjectPlanBootstrapService(env)
+
+
+def smart_core_build_cost_tracking_service(env):
+    from odoo.addons.smart_construction_core.services.cost_tracking_service import (
+        CostTrackingService,
+    )
+
+    return CostTrackingService(env)
+
+
+def smart_core_build_payment_slice_service(env):
+    from odoo.addons.smart_construction_core.services.payment_slice_service import (
+        PaymentSliceService,
+    )
+
+    return PaymentSliceService(env)
+
+
+def smart_core_build_settlement_slice_service(env):
+    from odoo.addons.smart_construction_core.services.settlement_slice_service import (
+        SettlementSliceService,
+    )
+
+    return SettlementSliceService(env)

@@ -1,0 +1,100 @@
+task_id: ITER-2026-04-05-1074
+title: Migrate platform policy constant ownership to smart_core (batch-1 task 4.1/4.2)
+type: governance
+status: active
+priority: low
+mode: implement
+
+goal: >
+  Move platform policy constant owner path into smart_core policy defaults and
+  keep industry values as compatibility contributions.
+
+user_visible_outcome:
+  - "平台规则常量 owner 迁入 smart_core policy 层"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/platform_policy_defaults.py
+    - addons/smart_core/app_config_engine/services/resolvers/action_resolver.py
+    - addons/smart_core/handlers/file_upload.py
+    - addons/smart_core/handlers/file_download.py
+    - addons/smart_core/handlers/api_data_write.py
+    - addons/smart_core/handlers/api_data_unlink.py
+    - addons/smart_core/handlers/load_contract.py
+    - addons/smart_core/handlers/api_data.py
+    - docs/refactor/platform_policy_constant_ownership_v1.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 14
+  max_candidates: 18
+  max_output_lines: 360
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - platform_policy_owner_first
+  - keep_legacy_extension_fallback
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: user_batch_checklist_v1_batch1_task4_1_4_2
+  priority_lane: industry_shadow_bridge_batch1_policy_owner
+
+architecture:
+  layer_target: Platform Policy Config Layer
+  module: smart_core policy defaults and policy consumers
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: policy ownership belongs to platform runtime governance.
+  reason: execute policy owner migration with compatibility contributions.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1074.yaml
+    - python3 -m py_compile addons/smart_core/core/platform_policy_defaults.py addons/smart_core/app_config_engine/services/resolvers/action_resolver.py addons/smart_core/handlers/file_upload.py addons/smart_core/handlers/file_download.py addons/smart_core/handlers/api_data_write.py addons/smart_core/handlers/api_data_unlink.py addons/smart_core/handlers/load_contract.py addons/smart_core/handlers/api_data.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/core/platform_policy_defaults.py
+  - docs/refactor/platform_policy_constant_ownership_v1.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1074.yaml
+  - git restore addons/smart_core/core/platform_policy_defaults.py
+  - git restore addons/smart_core/app_config_engine/services/resolvers/action_resolver.py
+  - git restore addons/smart_core/handlers/file_upload.py
+  - git restore addons/smart_core/handlers/file_download.py
+  - git restore addons/smart_core/handlers/api_data_write.py
+  - git restore addons/smart_core/handlers/api_data_unlink.py
+  - git restore addons/smart_core/handlers/load_contract.py
+  - git restore addons/smart_core/handlers/api_data.py
+  - git restore docs/refactor/platform_policy_constant_ownership_v1.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1074.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1074.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1073

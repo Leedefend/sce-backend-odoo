@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-05-981
+title: Scan and summarize smart_construction_core boundary facts into temp doc
+type: governance
+status: active
+priority: high
+mode: scan
+
+goal: >
+  Produce a fact-only temporary audit summary for smart_construction_core
+  boundary-relevant assets (controllers, handlers, governance hooks, imports)
+  to support user planning of architecture realignment.
+
+user_visible_outcome:
+  - "形成 smart_construction_core 边界事实临时文档，供后续方案制定"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/**
+    - docs/ops/releases/archive/temp/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 40
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - scan_stage_only
+  - fact_collection_without_solution_design
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-980
+  priority_lane: architecture_boundary_fact_audit
+
+architecture:
+  layer_target: Agent Governance Fact Audit
+  module: smart_construction_core boundary fact inventory
+  module_owner: governance_audit
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch only inventories boundary-related structure and imports without
+    changing business/runtime semantics.
+  reason: >
+    User requested a clear fact summary before deciding concrete architecture
+    rectification plan.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-981.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - temp_fact_audit_summary_for_smart_construction_core
+
+rollback:
+  - git restore docs/ops/releases/archive/temp/TEMP_smart_construction_core_boundary_fact_audit_2026-04-05.md
+  - git restore agent_ops/tasks/ITER-2026-04-05-981.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-981.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-981.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-980

@@ -4,8 +4,8 @@ from __future__ import annotations
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
-from odoo.addons.smart_construction_core.services.project_dashboard_service import (
-    ProjectDashboardService,
+from odoo.addons.smart_core.core.industry_orchestration_service_adapter import (
+    build_project_dashboard_service,
 )
 
 
@@ -95,7 +95,7 @@ class ProjectDashboardContractOrchestrator:
 
     def __init__(self, env):
         self.env = env
-        self._service = ProjectDashboardService(env)
+        self._service = build_project_dashboard_service(env)
         self._scene_content = self._scene_content_payload()
 
     def _scene_content_payload(self):

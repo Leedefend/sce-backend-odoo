@@ -26,7 +26,7 @@ from ..utils.reason_codes import (
     REASON_USER_ERROR,
     failure_meta_for_reason,
 )
-from ..utils.extension_hooks import call_extension_hook_first
+from ..core.platform_policy_defaults import get_api_data_write_allowlist
 
 _logger = logging.getLogger(__name__)
 
@@ -54,18 +54,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
     }
 
     def _allowed_models(self) -> Dict[str, set[str]]:
-        payload = call_extension_hook_first(self.env, "smart_core_api_data_write_allowlist", self.env)
-        if isinstance(payload, dict):
-            out: Dict[str, set[str]] = {}
-            for model_name, fields in payload.items():
-                model = str(model_name or "").strip()
-                if not model:
-                    continue
-                normalized = {str(item).strip() for item in (fields or []) if str(item).strip()}
-                if normalized:
-                    out[model] = normalized
-            if out:
-                return out
+        payload = get_api_data_write_allowlist(self.env)
+        if isinstance(payload, dict) and payload:
+            return {
+                str(model_name): {str(field).strip() for field in (field_names or []) if str(field).strip()}
+                for model_name, field_names in payload.items()
+            }
         return {
             str(model_name): {str(field).strip() for field in (field_names or []) if str(field).strip()}
             for model_name, field_names in self.ALLOWED_MODELS.items()

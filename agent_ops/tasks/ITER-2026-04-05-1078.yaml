@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-05-1078
+title: Remove P1 policy legacy bridge exports from industry module (batch-7 cleanup)
+type: governance
+status: active
+priority: low
+mode: implement
+
+goal: >
+  Remove P1 policy-related smart_core legacy bridge exports from
+  smart_construction_core after smart_core policy owner migration.
+
+user_visible_outcome:
+  - "行业模块删除 policy P1 legacy bridge exports"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/core_extension.py
+    - addons/smart_construction_core/__init__.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 7
+  max_candidates: 12
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - remove_only_p1_policy_bridges
+  - retain_create_fallback_compatibility
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: user_batch_checklist_v1_batch7_cleanup_p1_policy
+  priority_lane: industry_shadow_bridge_batch7_cleanup_impl
+
+architecture:
+  layer_target: Industry Compatibility Cleanup
+  module: smart_construction_core policy bridge legacy exports
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: platform policy ownership has moved to smart_core defaults.
+  reason: execute P1 cleanup item from candidate matrix.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1078.yaml
+    - python3 -m py_compile addons/smart_construction_core/core_extension.py addons/smart_construction_core/__init__.py
+    - make verify.architecture.platform_policy_constant_owner_guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_construction_core/core_extension.py
+  - addons/smart_construction_core/__init__.py
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1078.yaml
+  - git restore addons/smart_construction_core/core_extension.py
+  - git restore addons/smart_construction_core/__init__.py
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1078.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1078.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1077
