@@ -8,6 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ROOT / "addons/smart_core/core/platform_policy_defaults.py"
+INDUSTRY_EXTENSION = ROOT / "addons/smart_construction_core/core_extension.py"
 
 
 def main() -> int:
@@ -42,6 +43,23 @@ def main() -> int:
         for item in hits:
             print(f"legacy policy fallback remains: {item}")
         return 1
+
+    industry_text = INDUSTRY_EXTENSION.read_text(encoding="utf-8", errors="ignore") if INDUSTRY_EXTENSION.is_file() else ""
+    forbidden_industry_constants = [
+        "SERVER_ACTION_WINDOW_MAP",
+        "FILE_UPLOAD_ALLOWED_MODELS",
+        "FILE_DOWNLOAD_ALLOWED_MODELS",
+        "API_DATA_WRITE_ALLOWLIST",
+        "API_DATA_UNLINK_ALLOWED_MODELS",
+        "MODEL_CODE_MAPPING",
+    ]
+    industry_hits = [item for item in forbidden_industry_constants if f"{item} =" in industry_text]
+    if industry_hits:
+        print("[verify.architecture.platform_policy_constant_owner_guard] FAIL")
+        for item in industry_hits:
+            print(f"industry still owns platform policy constant: {item}")
+        return 1
+
     print("[verify.architecture.platform_policy_constant_owner_guard] PASS")
     return 0
 

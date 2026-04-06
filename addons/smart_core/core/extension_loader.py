@@ -28,8 +28,7 @@ def _is_true(val: str | None) -> bool:
 def load_extensions(env, registry):
     """
     Load external modules and register intent handlers into registry.
-    Preferred hook: get_intent_handler_contributions()
-    Legacy hook: smart_core_register(registry)
+    Required hook: get_intent_handler_contributions()
     """
     global _loaded
     if _loaded:
@@ -88,22 +87,7 @@ def load_extensions(env, registry):
             _loaded_modules.add(mod)
             continue
 
-        legacy_hook = getattr(m, "smart_core_register", None)
-        if callable(legacy_hook):
-            try:
-                before = len(registry or {})
-                legacy_hook(registry)
-                after = len(registry or {})
-                loaded_ok += 1
-                log("[extension_loader] legacy module: %s (handlers +%s)", mod, after - before)
-            except Exception as e:
-                _logger.warning("[extension_loader] legacy hook failed: %s (%s)", mod, e)
-                loaded_fail += 1
-                continue
-            _loaded_modules.add(mod)
-            continue
-
-        _logger.warning("[extension_loader] no contribution/legacy hook in %s", mod)
+        _logger.warning("[extension_loader] no contribution hook in %s", mod)
         loaded_fail += 1
 
     if contribution_rows:

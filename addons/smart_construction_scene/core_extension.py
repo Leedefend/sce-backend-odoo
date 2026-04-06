@@ -185,9 +185,8 @@ CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
 }
 
 
-def smart_core_register(registry):
-    del registry
-    return None
+def get_intent_handler_contributions():
+    return []
 
 
 def smart_core_identity_profile(env):

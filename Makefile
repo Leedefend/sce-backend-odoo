@@ -2815,6 +2815,7 @@ verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
 
 .PHONY: verify.scene.delivery.readiness.role_company_matrix
 verify.scene.delivery.readiness.role_company_matrix: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.architecture.platformization_boundary_closure_bundle
 	@$(MAKE) --no-print-directory verify.scene.delivery.readiness.role_matrix
 	@$(MAKE) --no-print-directory verify.delivery.journey.role_matrix.guard
 	@$(MAKE) --no-print-directory verify.scene.company_snapshot.collect
@@ -3978,6 +3979,8 @@ refresh.delivery.readiness.scoreboard: guard.prod.forbid
 
 # CI preflight: fail-fast on contract drift before heavier test suites.
 ci.preflight.contract: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.architecture.capability_projection_governance_gate
+	@$(MAKE) --no-print-directory verify.architecture.platformization_boundary_closure_bundle
 	@$(MAKE) --no-print-directory verify.contract.preflight
 	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
@@ -4336,6 +4339,70 @@ verify.architecture.platform_kernel_alignment: guard.prod.forbid
 
 .PHONY: verify.architecture.intent_registry_single_owner_guard verify.architecture.capability_registry_platform_owner_guard verify.architecture.scene_bridge_industry_proxy_guard verify.architecture.platform_policy_constant_owner_guard verify.architecture.system_init_extension_protocol_guard verify.architecture.system_init_heavy_workspace_payload_guard
 .PHONY: verify.architecture.industry_legacy_bridge_residue_guard
+.PHONY: verify.architecture.platformization_boundary_closure_bundle
+.PHONY: verify.architecture.capability_projection_governance_gate
+.PHONY: verify.architecture.native_capability_ingestion_guard
+.PHONY: verify.architecture.native_capability_ingestion_lint_bundle
+.PHONY: verify.architecture.native_capability_runtime_exposure_baseline_guard
+.PHONY: verify.architecture.native_capability_runtime_exposure_payload_guard
+.PHONY: verify.architecture.runtime_exposure_projection_schema_snapshot_guard
+.PHONY: verify.architecture.runtime_exposure_evidence_export
+.PHONY: verify.architecture.runtime_exposure_evidence_snapshot_guard
+.PHONY: verify.architecture.native_capability_projection_release_readiness_summary_guard
+.PHONY: verify.architecture.non_native_capability_binding_policy_parity_guard
+.PHONY: verify.architecture.mixed_source_capability_matrix_snapshot_guard
+.PHONY: verify.architecture.non_native_capability_drift_verify_bundle
+.PHONY: verify.architecture.native_capability_projection_coverage_report
+.PHONY: verify.architecture.native_capability_projection_snapshot_guard
+.PHONY: verify.architecture.native_capability_projection_release_guard_bundle
+
+verify.architecture.capability_projection_governance_gate: guard.prod.forbid verify.architecture.native_capability_projection_release_guard_bundle verify.architecture.non_native_capability_drift_verify_bundle
+	@echo "[OK] verify.architecture.capability_projection_governance_gate done"
+
+verify.architecture.platformization_boundary_closure_bundle: guard.prod.forbid verify.architecture.intent_registry_single_owner_guard verify.architecture.scene_bridge_industry_proxy_guard verify.architecture.platform_policy_constant_owner_guard verify.architecture.capability_projection_governance_gate
+	@echo "[OK] verify.architecture.platformization_boundary_closure_bundle done"
+
+verify.architecture.native_capability_ingestion_guard:
+	@python3 scripts/verify/architecture_native_capability_ingestion_guard.py
+
+verify.architecture.native_capability_ingestion_lint_bundle:
+	@python3 scripts/verify/architecture_native_capability_ingestion_lint_bundle.py
+
+verify.architecture.native_capability_runtime_exposure_baseline_guard:
+	@python3 scripts/verify/architecture_native_capability_runtime_exposure_baseline_guard.py
+
+verify.architecture.native_capability_runtime_exposure_payload_guard:
+	@python3 scripts/verify/architecture_native_capability_runtime_exposure_payload_guard.py
+
+verify.architecture.runtime_exposure_projection_schema_snapshot_guard:
+	@python3 scripts/verify/runtime_exposure_projection_schema_snapshot_guard.py
+
+verify.architecture.runtime_exposure_evidence_export:
+	@python3 scripts/verify/runtime_exposure_evidence_export.py
+
+verify.architecture.runtime_exposure_evidence_snapshot_guard: verify.architecture.runtime_exposure_evidence_export
+	@python3 scripts/verify/runtime_exposure_evidence_snapshot_guard.py
+
+verify.architecture.native_capability_projection_release_readiness_summary_guard:
+	@python3 scripts/verify/native_capability_projection_release_readiness_summary_guard.py
+
+verify.architecture.non_native_capability_binding_policy_parity_guard:
+	@python3 scripts/verify/architecture_non_native_capability_binding_policy_parity_guard.py
+
+verify.architecture.mixed_source_capability_matrix_snapshot_guard:
+	@python3 scripts/verify/mixed_source_capability_matrix_snapshot_guard.py
+
+verify.architecture.non_native_capability_drift_verify_bundle: guard.prod.forbid verify.architecture.non_native_capability_binding_policy_parity_guard verify.architecture.mixed_source_capability_matrix_snapshot_guard
+	@echo "[OK] verify.architecture.non_native_capability_drift_verify_bundle done"
+
+verify.architecture.native_capability_projection_coverage_report:
+	@python3 scripts/verify/native_capability_projection_coverage_report.py
+
+verify.architecture.native_capability_projection_snapshot_guard:
+	@python3 scripts/verify/native_capability_projection_snapshot_guard.py
+
+verify.architecture.native_capability_projection_release_guard_bundle: guard.prod.forbid verify.architecture.native_capability_ingestion_guard verify.architecture.native_capability_ingestion_lint_bundle verify.architecture.native_capability_runtime_exposure_baseline_guard verify.architecture.native_capability_runtime_exposure_payload_guard verify.architecture.runtime_exposure_projection_schema_snapshot_guard verify.architecture.runtime_exposure_evidence_snapshot_guard verify.architecture.native_capability_projection_coverage_report verify.architecture.native_capability_projection_snapshot_guard verify.architecture.native_capability_projection_release_readiness_summary_guard
+	@echo "[OK] verify.architecture.native_capability_projection_release_guard_bundle done"
 
 verify.architecture.intent_registry_single_owner_guard:
 	@python3 scripts/verify/architecture_intent_registry_single_owner_guard.py

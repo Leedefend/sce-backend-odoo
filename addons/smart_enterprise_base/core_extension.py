@@ -6,8 +6,8 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def smart_core_register(registry):
-    return registry
+def get_intent_handler_contributions():
+    return []
 
 
 def _resolve_action_target(env, action_xmlid: str, menu_xmlid: str) -> dict:

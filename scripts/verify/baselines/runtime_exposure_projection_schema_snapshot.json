@@ -1,0 +1,30 @@
+{
+  "capability_list_projection_fields": [
+    "access_mode",
+    "domain",
+    "group_key",
+    "key",
+    "label",
+    "lifecycle_status",
+    "name",
+    "owner_module",
+    "primary_intent",
+    "release_tier",
+    "runtime_target",
+    "source_module",
+    "supports_entry",
+    "target_scene_key",
+    "type"
+  ],
+  "workspace_projection_fields": [
+    "group_key",
+    "key",
+    "label",
+    "primary_intent",
+    "runtime_target"
+  ],
+  "required_runtime_exposure_fields": [
+    "primary_intent",
+    "runtime_target"
+  ]
+}

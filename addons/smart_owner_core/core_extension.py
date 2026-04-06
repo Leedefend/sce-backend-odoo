@@ -9,8 +9,7 @@ from .services.scene_registry_owner import list_owner_scenes
 _logger = logging.getLogger(__name__)
 
 
-def smart_core_register(registry):
-    """Register owner-domain intents into Smart Core registry."""
+def get_intent_handler_contributions():
     try:
         from odoo.addons.smart_owner_core.handlers.owner_payment_request import (
             OwnerApprovalCenterHandler,
@@ -24,16 +23,66 @@ def smart_core_register(registry):
         )
     except Exception as exc:
         _logger.warning("[smart_owner_core] intent import failed: %s", exc)
-        return
+        return []
 
-    registry["owner.payment.request.submit"] = OwnerPaymentRequestSubmitHandler
-    registry["owner.payment.request.approve"] = OwnerPaymentRequestApproveHandler
-    registry["owner.dashboard.open"] = OwnerDashboardOpenHandler
-    registry["owner.projects.list"] = OwnerProjectsListHandler
-    registry["owner.projects.detail"] = OwnerProjectsDetailHandler
-    registry["owner.risk.list"] = OwnerRiskListHandler
-    registry["owner.report.overview"] = OwnerReportOverviewHandler
-    registry["owner.approval.center"] = OwnerApprovalCenterHandler
+    return [
+        {
+            "intent": "owner.payment.request.submit",
+            "handler": OwnerPaymentRequestSubmitHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.payment.request.approve",
+            "handler": OwnerPaymentRequestApproveHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.dashboard.open",
+            "handler": OwnerDashboardOpenHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.projects.list",
+            "handler": OwnerProjectsListHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.projects.detail",
+            "handler": OwnerProjectsDetailHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.risk.list",
+            "handler": OwnerRiskListHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.report.overview",
+            "handler": OwnerReportOverviewHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+        {
+            "intent": "owner.approval.center",
+            "handler": OwnerApprovalCenterHandler,
+            "source_module": "smart_owner_core",
+            "domain": "owner",
+            "status": "active",
+        },
+    ]
 
 
 def smart_core_extend_system_init(data, env, user):

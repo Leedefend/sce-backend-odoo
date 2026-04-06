@@ -1,0 +1,46 @@
+{
+  "native_types_in_schema": [
+    "native_menu_entry",
+    "native_model_access",
+    "native_report_action",
+    "native_server_action",
+    "native_view_binding",
+    "native_window_action"
+  ],
+  "projection_calls": [
+    "project_menu_capabilities",
+    "project_window_action_capabilities",
+    "project_model_access_capabilities",
+    "project_server_action_capabilities",
+    "project_report_action_capabilities",
+    "project_view_binding_capabilities"
+  ],
+  "adapter_files": [
+    "action_adapter.py",
+    "menu_adapter.py",
+    "model_adapter.py",
+    "report_adapter.py",
+    "server_action_adapter.py",
+    "view_binding_adapter.py"
+  ],
+  "adapter_declared_native_types": {
+    "action_adapter.py": [
+      "native_window_action"
+    ],
+    "menu_adapter.py": [
+      "native_menu_entry"
+    ],
+    "model_adapter.py": [
+      "native_model_access"
+    ],
+    "report_adapter.py": [
+      "native_report_action"
+    ],
+    "server_action_adapter.py": [
+      "native_server_action"
+    ],
+    "view_binding_adapter.py": [
+      "native_view_binding"
+    ]
+  }
+}

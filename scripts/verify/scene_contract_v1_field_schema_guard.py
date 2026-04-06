@@ -82,6 +82,13 @@ def _to_bool(value: Any) -> bool:
     return _text(value).lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _env_bool(name: str, *, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return bool(default)
+    return _to_bool(raw)
+
+
 def _load_payload_state(path: Path) -> dict:
     payload = _load_json(path)
     if not payload:
@@ -175,7 +182,10 @@ def main() -> int:
         os.getenv("SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_SNAPSHOT_STATE_FILE")
         or DEFAULT_SNAPSHOT_STATE_PATH.relative_to(ROOT).as_posix()
     )
-    allow_fallback = _to_bool(os.getenv("SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL"))
+    allow_fallback = _env_bool(
+        "SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL",
+        default=True,
+    )
     try:
         payload = _fetch_scene_ready_payload()
         state_path.parent.mkdir(parents=True, exist_ok=True)

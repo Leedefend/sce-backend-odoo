@@ -12,6 +12,7 @@ from odoo.addons.smart_construction_core.services.project_context_contract impor
 from odoo.addons.smart_core.orchestration.project_execution_scene_orchestrator import (
     ProjectExecutionSceneOrchestrator,
 )
+from odoo.addons.smart_construction_core.handlers.reason_codes import REASON_PROJECT_NOT_FOUND
 from odoo.addons.smart_construction_scene.services.project_management_entry_target import (
     resolve_project_management_entry_target,
 )
@@ -93,9 +94,9 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
                     "lifecycle_hints": lifecycle_hints,
                     "suggested_action_payload": {
                         "intent": "project.initiation.enter",
-                        "reason_code": "PROJECT_NOT_FOUND",
+                        "reason_code": REASON_PROJECT_NOT_FOUND,
                         "params": {
-                            "reason_code": "PROJECT_NOT_FOUND",
+                            "reason_code": REASON_PROJECT_NOT_FOUND,
                         },
                     },
                 },

@@ -5,6 +5,12 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_PROJECT_COMPLETE,
+    REASON_PROJECT_CONFIRM_SETTLEMENT,
+    REASON_PROJECT_START_EXECUTION,
+    REASON_PROJECT_TRANSITION_BLOCKED,
+)
 
 
 class ProjectConnectionTransitionHandler(BaseIntentHandler):
@@ -15,9 +21,9 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["base.group_user"]
 
     TRANSITIONS = {
-        "start_execution": {"target_state": "in_progress", "reason_code": "PROJECT_START_EXECUTION"},
-        "confirm_settlement": {"target_state": "closing", "reason_code": "PROJECT_CONFIRM_SETTLEMENT"},
-        "complete_project": {"target_state": "closed", "reason_code": "PROJECT_COMPLETE"},
+        "start_execution": {"target_state": "in_progress", "reason_code": REASON_PROJECT_START_EXECUTION},
+        "confirm_settlement": {"target_state": "closing", "reason_code": REASON_PROJECT_CONFIRM_SETTLEMENT},
+        "complete_project": {"target_state": "closed", "reason_code": REASON_PROJECT_COMPLETE},
     }
 
     @staticmethod
@@ -117,7 +123,7 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
             result = "blocked"
             message = str(exc)
             target_state = from_state
-            reason_code = "PROJECT_TRANSITION_BLOCKED"
+            reason_code = REASON_PROJECT_TRANSITION_BLOCKED
         return {
             "ok": True,
             "data": {

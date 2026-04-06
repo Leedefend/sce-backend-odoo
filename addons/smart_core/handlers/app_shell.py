@@ -7,7 +7,6 @@ import time
 from typing import Any, Dict, List
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
-from odoo.addons.smart_core.core.scene_provider import load_scenes_from_db_or_fallback
 
 
 def _md5(payload: Any) -> str:
@@ -19,9 +18,14 @@ def _text(value: Any) -> str:
 
 
 def _scene_list(env) -> List[Dict[str, Any]]:
-    payload = load_scenes_from_db_or_fallback(env, drift=None, logger=None) or {}
-    scenes = payload.get("scenes") if isinstance(payload.get("scenes"), list) else []
-    return [scene for scene in scenes if isinstance(scene, dict)]
+    model_name = "sc.scene"
+    if model_name not in env:
+        return []
+    try:
+        rows = env[model_name].search_read([], fields=["code", "key", "title", "label", "name", "target"], limit=200)
+    except Exception:
+        return []
+    return [scene for scene in rows if isinstance(scene, dict)]
 
 
 def _scene_key(scene: Dict[str, Any]) -> str:
@@ -156,4 +160,3 @@ class AppOpenHandler(BaseIntentHandler):
             "data": {"subject": "ui.contract", "scene_key": scene_key, "route": f"/s/{scene_key}"},
             "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000)},
         }
-

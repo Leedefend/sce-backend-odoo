@@ -5,7 +5,7 @@ from . import models  # noqa: F401
 from . import core_extension  # noqa: F401
 
 from .core_extension import (  # noqa: F401
-    smart_core_register,
+    get_intent_handler_contributions,
     smart_core_extend_system_init,
     smart_core_identity_profile,
     smart_core_nav_scene_maps,
