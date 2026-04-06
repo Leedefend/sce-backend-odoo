@@ -14,8 +14,8 @@ PREFIX_MIN_TIER = {
 }
 
 
-def smart_core_register(registry):
-    return registry
+def get_intent_handler_contributions():
+    return []
 
 
 def _min_tier_for_key(cap_key: str) -> str:

@@ -7,6 +7,12 @@ from typing import Any, Dict
 from odoo.exceptions import AccessError, UserError
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.utils.reason_codes import (
+    REASON_BUSINESS_RULE_FAILED,
+    REASON_MISSING_PARAMS,
+    REASON_PERMISSION_DENIED,
+)
+from odoo.addons.smart_construction_core.handlers.reason_codes import REASON_PROJECT_INITIATION_CREATED
 from odoo.addons.smart_construction_core.services.project_creation_service import ProjectCreationService
 
 
@@ -32,7 +38,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
     @staticmethod
     def _build_lifecycle_hints(reason_code: str) -> Dict[str, Any]:
         code = str(reason_code or "")
-        if code == "PERMISSION_DENIED":
+        if code == REASON_PERMISSION_DENIED:
             return {
                 "stage": "project_create_denied",
                 "first_action": "request_access",
@@ -41,7 +47,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 "suggested_action_title": "申请项目创建权限",
                 "reason_code": code,
             }
-        if code == "BUSINESS_RULE_FAILED":
+        if code == REASON_BUSINESS_RULE_FAILED:
             return {
                 "stage": "project_create_validation_failed",
                 "first_action": "fix_project_input",
@@ -56,7 +62,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
             "primary_action_label": "补全必填信息",
             "suggested_action_intent": "project.initiation.enter",
             "suggested_action_title": "补全后重试创建",
-            "reason_code": code or "MISSING_PARAMS",
+            "reason_code": code or REASON_MISSING_PARAMS,
         }
 
     def handle(self, payload=None, ctx=None):
@@ -67,7 +73,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
 
         name = str(params.get("name") or "").strip()
         if not name:
-            reason_code = "MISSING_PARAMS"
+            reason_code = REASON_MISSING_PARAMS
             return {
                 "ok": False,
                 "error": {
@@ -103,7 +109,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
             project = model.create(normalized_vals)
             bootstrap_summary = creation_service.post_create_bootstrap(project)
         except AccessError:
-            reason_code = "PERMISSION_DENIED"
+            reason_code = REASON_PERMISSION_DENIED
             return {
                 "ok": False,
                 "error": {
@@ -128,7 +134,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 },
             }
         except UserError as exc:
-            reason_code = "BUSINESS_RULE_FAILED"
+            reason_code = REASON_BUSINESS_RULE_FAILED
             return {
                 "ok": False,
                 "error": {
@@ -180,17 +186,17 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
             "suggested_action": "open_project_dashboard",
             "suggested_action_payload": {
                 "intent": "project.dashboard.enter",
-                "reason_code": "PROJECT_INITIATION_CREATED",
+                "reason_code": REASON_PROJECT_INITIATION_CREATED,
                 "params": {
                     "project_id": int(project.id),
-                    "reason_code": "PROJECT_INITIATION_CREATED",
+                    "reason_code": REASON_PROJECT_INITIATION_CREATED,
                 },
             },
             "lifecycle_hints": {
                 "stage": "project_created",
                 "project_id": int(project.id),
                 "scene_key": "project.dashboard",
-                "reason_code": "PROJECT_INITIATION_CREATED",
+                "reason_code": REASON_PROJECT_INITIATION_CREATED,
                 "primary_action_label": "打开项目驾驶舱",
                 "next_step_label": "进入项目管理首页",
                 "suggested_action_intent": "project.dashboard.enter",

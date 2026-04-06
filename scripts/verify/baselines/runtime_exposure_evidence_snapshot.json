@@ -1,0 +1,18 @@
+{
+  "coverage": {
+    "total_types": 6,
+    "covered_types": 6,
+    "missing_types": 0
+  },
+  "projection_schema": {
+    "capability_list_field_count": 15,
+    "workspace_field_count": 5,
+    "required_runtime_exposure_fields": [
+      "primary_intent",
+      "runtime_target"
+    ]
+  },
+  "baseline": {
+    "schema_snapshot_match": true
+  }
+}

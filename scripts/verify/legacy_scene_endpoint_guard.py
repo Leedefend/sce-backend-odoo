@@ -16,7 +16,8 @@ SCAN_ROOTS = (
 )
 PATTERN = re.compile(r"/api/scenes/my")
 ALLOWLIST = {
-    "addons/smart_construction_core/controllers/scene_controller.py",
+    "addons/smart_core/controllers/platform_scenes_api.py",
+    "addons/smart_core/controllers/platform_scene_logic.py",
     "addons/smart_construction_core/static/src/config/role_entry_map.js",
     "addons/smart_construction_core/static/src/js/sc_sidebar.js",
     "scripts/e2e/e2e_scene_smoke.py",

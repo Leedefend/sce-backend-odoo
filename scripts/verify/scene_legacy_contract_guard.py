@@ -8,7 +8,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCENE_CONTROLLER = ROOT / "addons/smart_construction_core/controllers/scene_controller.py"
+SCENE_CONTROLLER = ROOT / "addons/smart_core/controllers/platform_scene_logic.py"
 LEGACY_CONTRACT = ROOT / "scripts/common/scene_legacy_contract.py"
 
 REQUIRED_PATTERNS = (

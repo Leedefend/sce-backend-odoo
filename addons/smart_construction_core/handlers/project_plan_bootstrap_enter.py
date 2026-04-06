@@ -9,6 +9,10 @@ from odoo.addons.smart_core.core.scene_contract_builder import attach_release_su
 from odoo.addons.smart_core.orchestration.project_plan_bootstrap_scene_orchestrator import (
     ProjectPlanBootstrapSceneOrchestrator,
 )
+from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_PROJECT_CONTEXT_MISSING,
+    REASON_PROJECT_NOT_FOUND,
+)
 from odoo.addons.smart_construction_scene.services.project_management_entry_target import (
     resolve_project_management_entry_target,
 )
@@ -74,9 +78,9 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                     "lifecycle_hints": self._missing_project_lifecycle_hints(),
                     "suggested_action_payload": {
                         "intent": "project.initiation.enter",
-                        "reason_code": "PROJECT_CONTEXT_MISSING",
+                        "reason_code": REASON_PROJECT_CONTEXT_MISSING,
                         "params": {
-                            "reason_code": "PROJECT_CONTEXT_MISSING",
+                            "reason_code": REASON_PROJECT_CONTEXT_MISSING,
                         },
                     },
                 },
@@ -113,9 +117,9 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                     "lifecycle_hints": lifecycle_hints,
                     "suggested_action_payload": {
                         "intent": "project.initiation.enter",
-                        "reason_code": "PROJECT_NOT_FOUND",
+                        "reason_code": REASON_PROJECT_NOT_FOUND,
                         "params": {
-                            "reason_code": "PROJECT_NOT_FOUND",
+                            "reason_code": REASON_PROJECT_NOT_FOUND,
                         },
                     },
                 },

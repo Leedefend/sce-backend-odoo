@@ -37,6 +37,10 @@ from odoo.addons.smart_construction_core.services.project_execution_transition_s
     ExecutionAdvanceAtomicRollback,
     ProjectExecutionTransitionService,
 )
+from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_PROJECT_CONTEXT_MISSING,
+    REASON_PROJECT_NOT_FOUND,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -128,17 +132,17 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 intent=self.INTENT_TYPE,
                 ts0=ts0,
                 trace_id=trace_id,
-                code="PROJECT_CONTEXT_MISSING",
+                code=REASON_PROJECT_CONTEXT_MISSING,
                 message="缺少 project_id，无法推进执行",
-                reason_code="PROJECT_CONTEXT_MISSING",
+                reason_code=REASON_PROJECT_CONTEXT_MISSING,
                 suggested_action="fix_input",
                 data={
-                    "lifecycle_hints": self._build_lifecycle_hints(project_id, "PROJECT_CONTEXT_MISSING"),
+                    "lifecycle_hints": self._build_lifecycle_hints(project_id, REASON_PROJECT_CONTEXT_MISSING),
                     "suggested_action_payload": {
                         "intent": "project.initiation.enter",
-                        "reason_code": "PROJECT_CONTEXT_MISSING",
+                        "reason_code": REASON_PROJECT_CONTEXT_MISSING,
                         "params": {
-                            "reason_code": "PROJECT_CONTEXT_MISSING",
+                            "reason_code": REASON_PROJECT_CONTEXT_MISSING,
                         },
                     },
                 },
@@ -146,7 +150,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
 
         project = self._project_lookup_service().resolve_project(project_id=project_id, trace_id=trace_id)
         if not project:
-            reason_code = "PROJECT_NOT_FOUND"
+            reason_code = REASON_PROJECT_NOT_FOUND
             return ProjectExecutionResponseBuilder.blocked(
                 intent=self.INTENT_TYPE,
                 ts0=ts0,

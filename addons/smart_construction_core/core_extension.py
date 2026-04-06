@@ -7,29 +7,7 @@ from odoo.exceptions import AccessError
 _logger = logging.getLogger(__name__)
 
 
-SERVER_ACTION_WINDOW_MAP = {
-    "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
-}
-
-FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
-FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
-API_DATA_WRITE_ALLOWLIST = {
-    "project.project": ["name", "description", "date_start"],
-    "project.task": ["name", "description", "date_deadline", "project_id"],
-}
-API_DATA_UNLINK_ALLOWED_MODELS = [
-    "project.task",
-    "res.company",
-    "hr.department",
-    "res.users",
-]
-
-MODEL_CODE_MAPPING = {
-    "project": "project.project",
-    "task": "project.task",
-}
-
-CREATE_FIELD_FALLBACKS = {
+INDUSTRY_CREATE_FIELD_FALLBACKS = {
     "project.project": {
         "selection_defaults": {
             "privacy_visibility": "followers",
@@ -452,11 +430,100 @@ def get_capability_contributions(env, user):
         key = str(row.get("key") or "").strip()
         if not key:
             continue
-        item = dict(row)
-        item.setdefault("key", key)
-        item.setdefault("source_module", "smart_construction_core")
-        item.setdefault("owner_module", "smart_construction_core")
-        item.setdefault("status", "active")
+        identity_name = str(row.get("name") or row.get("ui_label") or key).strip() or key
+        group_key = str(row.get("group_key") or "others").strip() or "others"
+        intent_name = str(row.get("intent") or "ui.contract").strip() or "ui.contract"
+        entry_target = row.get("entry_target") if isinstance(row.get("entry_target"), dict) else {}
+        entry_scene_key = str(entry_target.get("scene_key") or "").strip()
+        item = {
+            "key": key,
+            "name": identity_name,
+            "domain": str(key.split(".")[0] if "." in key else "construction").strip() or "construction",
+            "type": "entry",
+            "source_module": "smart_construction_core",
+            "owner_module": "smart_core",
+            "status": str(row.get("status") or "ga").strip().lower() or "ga",
+            "group_key": group_key,
+            "group_label": str(row.get("group_label") or "").strip(),
+            "group_icon": str(row.get("group_icon") or "").strip(),
+            "group_sequence": int(row.get("group_sequence") or 0),
+            "ui_label": str(row.get("ui_label") or identity_name).strip(),
+            "ui_hint": str(row.get("ui_hint") or "").strip(),
+            "intent": intent_name,
+            "required_roles": [str(x).strip() for x in (row.get("required_roles") or []) if str(x).strip()],
+            "required_groups": [str(x).strip() for x in (row.get("required_groups") or []) if str(x).strip()],
+            "entry_target": dict(entry_target),
+            "sequence": int(row.get("sequence") or 0),
+            "tags": list(row.get("tags") or []),
+            "identity": {
+                "key": key,
+                "name": identity_name,
+                "domain": str(key.split(".")[0] if "." in key else "construction").strip() or "construction",
+                "type": "entry",
+                "version": "v1",
+            },
+            "ownership": {
+                "owner_module": "smart_core",
+                "source_module": "smart_construction_core",
+                "source_kind": "industry_contribution",
+            },
+            "ui": {
+                "label": str(row.get("ui_label") or identity_name).strip(),
+                "hint": str(row.get("ui_hint") or "").strip(),
+                "group_key": group_key,
+                "icon": str(row.get("group_icon") or "").strip(),
+                "sequence": int(row.get("sequence") or 0),
+                "tags": list(row.get("tags") or []),
+            },
+            "binding": {
+                "scene": {
+                    "entry_scene_key": entry_scene_key,
+                    "target_mode": str(entry_target.get("target_mode") or "scene").strip() or "scene",
+                },
+                "intent": {
+                    "primary_intent": intent_name,
+                },
+                "contract": {
+                    "subject": "scene",
+                    "contract_type": "entry_contract",
+                    "contract_version": "v1",
+                },
+                "exposure": {
+                    "group_key": group_key,
+                },
+            },
+            "permission": {
+                "required_roles": [str(x).strip() for x in (row.get("required_roles") or []) if str(x).strip()],
+                "required_groups": [str(x).strip() for x in (row.get("required_groups") or []) if str(x).strip()],
+                "access_mode": "execute",
+                "data_scope": "user_env",
+            },
+            "release": {
+                "tier": "standard",
+                "slice": "",
+                "exposure_mode": "default",
+                "approval_required": False,
+                "feature_flag": "",
+            },
+            "lifecycle": {
+                "status": str(row.get("status") or "ga").strip().lower() or "ga",
+                "deprecated": False,
+                "replacement_key": "",
+                "introduced_in": "",
+                "sunset_after": "",
+            },
+            "runtime": {
+                "supports_entry": True,
+                "supports_execute": False,
+                "supports_batch": False,
+                "safe_fallback": "workspace.home",
+            },
+            "audit": {
+                "audit_enabled": True,
+                "policy_trace_enabled": True,
+                "owner_trace": "smart_construction_core.get_capability_contributions",
+            },
+        }
         out.append(item)
     return out
 
@@ -479,7 +546,7 @@ def get_capability_group_contributions(env):
 
 def get_create_field_fallback_contributions(env, model_name):
     del env
-    return dict(CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
+    return dict(INDUSTRY_CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
 
 
 def get_system_init_fact_contributions(env, user, context=None):
@@ -525,6 +592,23 @@ def get_system_init_fact_contributions(env, user, context=None):
     except Exception as exc:
         _logger.warning("[get_system_init_fact_contributions] failed: %s", exc)
         return None
+
+
+def smart_core_extend_system_init(data, env, user):
+    """Legacy hook shim: write construction facts only under data['ext_facts']."""
+    if not isinstance(data, dict):
+        return data
+
+    contribution = get_system_init_fact_contributions(env, user)
+    ext_facts = data.get("ext_facts")
+    if not isinstance(ext_facts, dict):
+        ext_facts = {}
+    if isinstance(contribution, dict):
+        module_key = str(contribution.get("module") or "smart_construction_core").strip() or "smart_construction_core"
+        facts_payload = contribution.get("facts") if isinstance(contribution.get("facts"), dict) else {}
+        ext_facts[module_key] = dict(facts_payload)
+    data["ext_facts"] = ext_facts
+    return data
 
 
 def smart_core_describe_project_capabilities(env, project):

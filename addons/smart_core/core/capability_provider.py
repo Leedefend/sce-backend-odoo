@@ -9,6 +9,9 @@ from .capability_group_defaults import (
     default_group_order_map,
     infer_group_key,
 )
+from odoo.addons.smart_core.app_config_engine.capability.services.capability_query_service import (
+    CapabilityQueryService,
+)
 from .capability_contribution_loader import (
     collect_capability_contributions,
     collect_capability_group_contributions,
@@ -21,6 +24,14 @@ def _default_group_meta(group_key: str) -> dict:
 
 def _infer_group_key(capability_key: str) -> str:
     return infer_group_key(capability_key)
+
+
+def _capability_legacy_fallback_enabled(env) -> bool:
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.capability_legacy_fallback_enabled", "0")
+    except Exception:
+        return False
+    return str(raw or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def build_capability_groups(capabilities: List[dict]) -> List[dict]:
@@ -82,6 +93,17 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 
 
 def load_capabilities_for_user(env, user) -> List[dict]:
+    legacy_fallback_enabled = _capability_legacy_fallback_enabled(env)
+    try:
+        query_service = CapabilityQueryService(platform_owner="smart_core")
+        runtime_caps = query_service.list_capabilities_for_user(env, user=user)
+        if isinstance(runtime_caps, list):
+            if runtime_caps or not legacy_fallback_enabled:
+                return runtime_caps
+    except Exception:
+        if not legacy_fallback_enabled:
+            return []
+
     extension_caps, _errors = collect_capability_contributions(env, user)
     if extension_caps:
         return extension_caps

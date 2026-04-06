@@ -1,0 +1,28 @@
+{
+  "matrix_return_keys": [
+    "by_domain",
+    "by_status",
+    "by_tier",
+    "rows",
+    "total"
+  ],
+  "matrix_row_keys": [
+    "domain",
+    "key",
+    "status",
+    "tier"
+  ],
+  "required_return_keys": [
+    "total",
+    "by_domain",
+    "by_status",
+    "by_tier",
+    "rows"
+  ],
+  "required_row_keys": [
+    "key",
+    "domain",
+    "status",
+    "tier"
+  ]
+}

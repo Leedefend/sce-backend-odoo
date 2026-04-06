@@ -92,6 +92,10 @@ def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
 
 
+def _bind_scene_assets(*args, **kwargs):
+    return bind_scene_assets(*args, **kwargs)
+
+
 def _is_any_module_installed(env, module_names: List[str]) -> bool:
     safe_names = [str(name or "").strip() for name in (module_names or []) if str(name or "").strip()]
     if not safe_names:
@@ -536,6 +540,11 @@ class SystemInitHandler(BaseIntentHandler):
         merge_extension_facts(data, include_workspace_collections=False)
         data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
         data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
+        data["scene_action_surface_strategy"] = _normalize_scene_action_surface_strategy(
+            dict(
+                action_surface_strategy=data.get("scene_action_surface_strategy")
+            ).get("action_surface_strategy")
+        )
         stage_ts = _mark("prepare_runtime_context", stage_ts)
 
         runtime_ctx = SystemInitRuntimeContext(
@@ -615,7 +624,7 @@ class SystemInitHandler(BaseIntentHandler):
             filter_delivery_scenes_fn=filter_delivery_scenes,
             startup_scene_subset_resolver_fn=SystemInitPayloadBuilder.resolve_startup_scene_subset,
             filter_startup_scenes_for_preload_fn=_filter_startup_scenes_for_preload,
-            bind_scene_assets_fn=bind_scene_assets,
+            bind_scene_assets_fn=_bind_scene_assets,
             build_scene_ready_contract_fn=build_scene_ready_contract_v1,
             build_scene_nav_contract_fn=build_scene_nav_contract,
         )
@@ -624,6 +633,21 @@ class SystemInitHandler(BaseIntentHandler):
         delivery_result = scene_runtime_surface_result["delivery_result"]
         scene_nav_contract = scene_runtime_surface_result["scene_nav_contract"]
         bind_result = scene_runtime_surface_result["bind_result"]
+        data["scene_ready_contract_v1"] = (
+            data.get("scene_ready_contract_v1")
+            if isinstance(data.get("scene_ready_contract_v1"), dict)
+            else {}
+        )
+        nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
+        if isinstance(bind_result, dict):
+            nav_meta["ui_base_contract_asset_scene_count"] = int(bind_result.get("asset_scene_count") or 0)
+            nav_meta["ui_base_contract_bound_scene_count"] = int(bind_result.get("bound_scene_count") or 0)
+            nav_meta["ui_base_contract_missing_scene_count"] = int(bind_result.get("missing_scene_count") or 0)
+        else:
+            nav_meta.setdefault("ui_base_contract_asset_scene_count", 0)
+            nav_meta.setdefault("ui_base_contract_bound_scene_count", 0)
+            nav_meta.setdefault("ui_base_contract_missing_scene_count", 0)
+        data["nav_meta"] = nav_meta
         stage_ts = _mark("build_scene_runtime_surface", stage_ts)
         legacy_release_navigation = build_release_navigation_contract(data if isinstance(data, dict) else {})
         delivery_engine = DeliveryEngine(env)
