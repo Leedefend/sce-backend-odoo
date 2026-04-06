@@ -31,6 +31,8 @@
 | `/api/scenes/export` | `addons/smart_construction_core/controllers/*` | `F` | `smart_construction_core` | `split_pending(screened mixed)` | scene open 链 | P2 | medium |
 | `/api/scenes/import` | `addons/smart_construction_core/controllers/*` | `F` | `smart_construction_core` | `split_pending(screened mixed)` | scene open 链 | P2 | medium |
 | `/api/scenes/my` | `addons/smart_construction_core/controllers/*` | `C` | `smart_construction_core` | `smart_construction_scene(scene runtime)` | scene open 链 | P0 | high |
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
 | `/api/session/get` | `addons/smart_construction_core/controllers/*` | `B` | `smart_construction_core` | `smart_core(platform runtime)` | 登录链 | P0 | high |
 | `/api/ui/contract` | `addons/smart_construction_core/controllers/*` | `B` | `smart_construction_core` | `smart_core(platform runtime)` | page/block fetch 链 | P1 | medium-high |
 | `/api/user_menus` | `addons/smart_construction_core/controllers/*` | `B` | `smart_construction_core` | `smart_core(platform runtime)` | menu/nav 链 | P3 | low |

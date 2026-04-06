@@ -17,6 +17,8 @@
   - `/api/menu/tree` -> `smart_construction_core:addons/smart_construction_core/controllers/frontend_api.py:150`
 - `/api/scenes/`: routes=`3`, modules=`smart_construction_core`
   - `/api/scenes/my` -> `smart_construction_core:addons/smart_construction_core/controllers/scene_controller.py:47`
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
   - `/api/scenes/export` -> `smart_construction_core:addons/smart_construction_core/controllers/scene_template_controller.py:446`
   - `/api/scenes/import` -> `smart_construction_core:addons/smart_construction_core/controllers/scene_template_controller.py:607`
 - `/api/ops/`: routes=`6`, modules=`smart_construction_core`

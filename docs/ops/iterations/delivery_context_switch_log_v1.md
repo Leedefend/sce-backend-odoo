@@ -11967,3 +11967,419 @@ Each entry must include:
 - completed_step: `ITER-2026-04-05-1131 PASS：README.md/README.zh.md 已新增 six_clause_closure_final_verify_2026-04-06 链接；controller boundary guard 全通过`
 - active_commit: `f4102e4`
 - next_step: `Objective complete`
+
+### 2026-04-06T09:42:42+08:00
+- blocker_key: `app_config_engine_capability_registry_batch_a_design_freeze_v1`
+- layer_target: `Governance Monitoring`
+- module: `app_config_engine.capability`
+- reason: 按用户授权启动平台级能力注册系统 Batch A，先冻结模块结构与迁移策略，避免直接补丁式改造
+- completed_step: `ITER-2026-04-05-1132 PASS：新增 app_config_engine_capability_registry_core_design_v1.md，覆盖 schema/contribution/merge/projection/guard 与 Batch A/B/C 迁移步骤；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Open Batch B implementation task to scaffold app_config_engine/capability/core registry components`
+
+### 2026-04-06T09:52:55+08:00
+- blocker_key: `app_config_engine_capability_registry_batch_b_scaffold_v1`
+- layer_target: `Platform Layer`
+- module: `app_config_engine.capability`
+- reason: 执行 Batch B，先搭建 capability registry core/scaffold，保持运行链路不切换
+- completed_step: `ITER-2026-04-05-1133 PASS：新增 capability/schema/core/lint/projection/services 骨架；形成 contribution->merge->ownership->snapshot 主链与 query/runtime service 基线；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Open Batch C to integrate existing capability provider runtime path with CapabilityQueryService under guarded migration`
+
+### 2026-04-06T09:56:59+08:00
+- blocker_key: `app_config_engine_capability_registry_batch_c_guarded_runtime_integration_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.capability_provider`
+- reason: 执行 Batch C，受控接入 CapabilityQueryService 到现有 runtime path，并保留回退安全
+- completed_step: `ITER-2026-04-05-1134 PASS：capability_provider 新增 CapabilityQueryService 路径与 smart_core.capability_registry_query_v2_enabled 开关；legacy fallback 保留；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Run controlled environment rollout with v2 toggle enabled and compare capability payload snapshots`
+
+### 2026-04-06T10:02:19+08:00
+- blocker_key: `capability_payload_v1_v2_diff_snapshot_evidence_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 补齐 v1/v2 capability payload 差异快照脚本，作为开关上线前 gate 证据工具
+- completed_step: `ITER-2026-04-05-1135 PASS：新增 capability_payload_v1_v2_diff_snapshot.py；示例差异报告已产出 artifacts/capability_payload_v1_v2_diff_snapshot.json；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Run real env capture with toggle off/on and archive diff report in release evidence lane`
+
+### 2026-04-06T10:13:38+08:00
+- blocker_key: `capability_payload_real_env_off_on_capture_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 在实环境执行 capability v2 开关 off/on 抓取并生成差异证据，作为 rollout gate 依据
+- completed_step: `ITER-2026-04-05-1136 PASS_WITH_RISK：新增 capability_payload_real_env_capture.py 并产出 artifacts/capability_payload_capture_1136/latest/capture_report.json；当前环境回包为 ENV_UNSTABLE（Remote end closed connection without response）；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Stop auto-chain by PASS_WITH_RISK rule; recover runtime endpoint health then rerun ITER-1136 capture command for trusted v1/v2 diff evidence`
+
+### 2026-04-06T10:20:12+08:00
+- blocker_key: `capability_payload_real_env_capture_connectivity_fix_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 修复实环境抓取脚本连通性判定，补齐多入口探测与失败证据，降低误报并输出可执行恢复指引
+- completed_step: `ITER-2026-04-05-1137 PASS_WITH_RISK：capability_payload_real_env_capture.py 已支持 selected_intent_url/probe_attempts；本地+提权实跑均为 ENV_UNSTABLE（8069 remote closed，8070/18080 timeout），controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Stop auto-chain by PASS_WITH_RISK rule; restore local intent endpoint availability and rerun ITER-1137 capture command for trusted diff evidence`
+
+### 2026-04-06T10:26:48+08:00
+- blocker_key: `runtime_endpoint_recovery_and_trusted_capture_retry_v1`
+- layer_target: `Governance Monitoring`
+- module: `runtime_capture_evidence`
+- reason: 恢复可用 runtime 入口并完成 trusted off/on 抓取，解除 ENV_UNSTABLE 对证据链的阻断
+- completed_step: `ITER-2026-04-05-1138 PASS：定位可用入口 http://127.0.0.1:18069 (sc_prod_sim) 并完成 trusted capture；生成 artifacts/capability_payload_capture_1138_trusted/latest/capture_report.json 与 diff 报告；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Run trusted capture against target business runtime lane with expected capability rows and archive into release evidence index`
+
+### 2026-04-06T10:40:34+08:00
+- blocker_key: `target_lane_trusted_capture_and_evidence_archive_v1`
+- layer_target: `Governance Monitoring`
+- module: `runtime_capture_evidence`
+- reason: 在目标业务通道执行 trusted 抓取并确认是否获得非空 capability 载荷
+- completed_step: `ITER-2026-04-05-1139 PASS_WITH_RISK：已在 18069 网关探测多 DB；sc_prod_sim/sc_demo trusted 抓取成功但 v1/v2 均为 0 行；sc_prod/sc_test/sc_odoo/sc_delivery_local 未形成可用抓取；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Stop auto-chain by PASS_WITH_RISK rule; confirm business DB lane expected non-empty capability payload then rerun trusted capture`
+
+### 2026-04-06T10:49:58+08:00
+- blocker_key: `capability_empty_count_root_cause_code_then_db_v1`
+- layer_target: `Governance Monitoring`
+- module: `runtime_capture_evidence`
+- reason: 按用户要求先做代码层排查再做数据库升级状态核验，收敛空 capability 根因
+- completed_step: `ITER-2026-04-05-1140 PASS：修正抓取脚本 capability 提取口径（补 data.delivery_engine_v1.capabilities）；sc_prod_sim trusted 抓取恢复为 v1=6/v2=6；DB核验确认升级并非该 lane 主因（模块已安装且 sc.capability 有数据）`
+- active_commit: `da08944`
+- next_step: `If required, add lane-readiness precheck guard (scene module installed + sc.capability non-empty) before trusted capture`
+
+### 2026-04-06T10:57:21+08:00
+- blocker_key: `capability_capture_lane_readiness_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `runtime_capture_evidence`
+- reason: 固化 lane 就绪守卫，避免未就绪数据库通道导致假空 capability 抓取
+- completed_step: `ITER-2026-04-05-1141 PASS：capability_payload_real_env_capture.py 新增 lane_readiness 检查与 --require-lane-ready；sc_prod_sim 守卫抓取通过（scene_module_installed=true, sc_capability_count=5, v1/v2=6）`
+- active_commit: `da08944`
+- next_step: `Promote --require-lane-ready as default in release evidence pipeline and monitor for lane readiness failures`
+
+### 2026-04-06T11:06:43+08:00
+- blocker_key: `capability_model_platformization_schema_upgrade_v1`
+- layer_target: `Platform Layer`
+- module: `app_config_engine.capability`
+- reason: 回归主目标，执行能力模型平台化升级第一步（schema/merge/projection 核心）
+- completed_step: `ITER-2026-04-05-1142 PASS：capability schema 升级为 identity/ownership/binding/policy/runtime/audit 结构；merge 引擎支持 runtime/audit/binding/tags；projection 新增 owner/source/access/release/lifecycle 和 by_status/by_tier；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Connect contribution providers to emit full ownership/binding/release metadata and run query-path parity verification`
+
+### 2026-04-06T11:15:08+08:00
+- blocker_key: `capability_provider_full_metadata_and_query_parity_v1`
+- layer_target: `Platform Layer`
+- module: `capability_contribution_pipeline`
+- reason: 连接真实 provider 输出完整能力元数据并验证 v1/v2 查询路径一致性
+- completed_step: `ITER-2026-04-05-1143 PASS：smart_construction_core provider 已输出 identity/ownership/ui/binding/policy/runtime/audit；legacy loader 兼容结构化 row；trusted lane parity=v1_count(6)=v2_count(6)，changed=0；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Promote CapabilityQueryService as default runtime path and keep legacy fallback behind explicit safety toggle`
+
+### 2026-04-06T11:20:44+08:00
+- blocker_key: `capability_query_default_path_promotion_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core.capability_provider`
+- reason: 将 CapabilityQueryService 提升为默认运行路径，仅保留显式 legacy safety toggle
+- completed_step: `ITER-2026-04-05-1144 PASS：capability_provider 默认走 CapabilityQueryService；新增 smart_core.capability_legacy_fallback_enabled 控制 legacy fallback；trusted lane 抓取 v1/v2=6/6；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Optionally add guard for unintended legacy fallback usage when legacy toggle is disabled`
+
+### 2026-04-06T11:26:55+08:00
+- blocker_key: `capability_legacy_fallback_usage_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify`
+- reason: 新增静态守卫，防止默认关闭 legacy fallback 时回归到隐式 fallback 路径
+- completed_step: `ITER-2026-04-05-1145 PASS：新增 architecture_capability_legacy_fallback_usage_guard.py；强制检查 capability_provider 保留 default query path、禁用旧开关键名并验证 no-fallback short-circuit；controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Integrate legacy fallback usage guard into restricted/architecture verify bundle for CI enforcement`
+
+### 2026-04-06T11:44:50+08:00
+- blocker_key: `capability_boundary_closure_intent_scene_policy_v1`
+- layer_target: `Platform Layer`
+- module: `smart_core extension and capability boundary`
+- reason: 完成能力平台化迁移收口：移除 legacy intent register fallback、移除 scene handler extension fallback、移除行业平台 policy constant owner
+- completed_step: `ITER-2026-04-05-1146 PASS：extension_loader 删除 smart_core_register fallback 并全量迁移 addon 为 get_intent_handler_contributions；scene_package/scene_governance/scene_packages_installed 移除 call_extension_hook_first fallback；smart_construction_core 删除平台 policy 常量 owner；三项架构守卫与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Integrate boundary closure guards into restricted verify baseline and CI gate bundle`
+
+### 2026-04-06T15:05:49+08:00
+- blocker_key: `boundary_closure_guard_bundle_ci_restricted_wiring_v1`
+- layer_target: `Governance Monitoring`
+- module: `Makefile CI baseline wiring`
+- reason: 将边界收口守卫纳入 restricted 主链与 CI preflight，固化为默认门禁
+- completed_step: `ITER-2026-04-05-1147 PASS：新增 verify.architecture.platformization_boundary_closure_bundle；已接入 verify.scene.delivery.readiness.role_company_matrix 与 ci.preflight.contract；bundle + controller boundary guard + Makefile wiring 校验全通过`
+- active_commit: `da08944`
+- next_step: `Optionally clear pre-existing verify.test_seed_dependency.guard failures for full ci.preflight.contract green`
+
+### 2026-04-06T15:17:40+08:00
+- blocker_key: `native_capability_ingestion_phase1_menu_action_v1`
+- layer_target: `Platform Layer`
+- module: `app_config_engine.capability.native`
+- reason: 补齐能力平台化关键缺口，建立原生菜单/窗口动作到 capability 的统一投影接入层
+- completed_step: `ITER-2026-04-05-1148 PASS：新增 native menu/action adapter 与 native_projection_service；registry contribution loader 已接入 native projected rows；capability schema 扩展 native/platform capability types；架构 bundle 与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Phase-2 implement native model access projection and add native ingestion lint/guard bundle`
+
+### 2026-04-06T15:25:41+08:00
+- blocker_key: `native_intent_resolver_capability_unified_spec_freeze_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/refactor`
+- reason: 冻结 Native Truth / Parse-Resolve / Capability / Intent / Contract-Orchestration 统一分层规范，避免后续实现语义漂移
+- completed_step: `ITER-2026-04-05-1149 PASS：新增 native_to_capability_projection_spec_v1、capability_intent_binding_spec_v1、parser_resolver_boundary_spec_v1 三份规范文档；内容校验与平台化边界守卫通过`
+- active_commit: `da08944`
+- next_step: `Open phase-2 implementation batch for native model access projection and native ingestion lint/guard integration`
+
+### 2026-04-06T15:30:25+08:00
+- blocker_key: `native_capability_ingestion_phase2_model_access_v1`
+- layer_target: `Platform Layer`
+- module: `app_config_engine.capability.native`
+- reason: 按冻结规范推进 phase-2，将原生模型访问事实投影接入 capability registry 并补架构守卫
+- completed_step: `ITER-2026-04-05-1150 PASS：新增 model_adapter 投影 ir.model + ir.model.access 到 native_model_access；native_projection_service 已并入 model 投影；新增 architecture_native_capability_ingestion_guard 与 Makefile 目标；验收与边界守卫全通过`
+- active_commit: `da08944`
+- next_step: `Phase-3 implement native server action/report/view binding projection plus native ingestion lint bundle`
+
+### 2026-04-06T15:37:22+08:00
+- blocker_key: `native_capability_ingestion_phase3_server_report_viewbinding_v1`
+- layer_target: `Platform Layer`
+- module: `app_config_engine.capability.native`
+- reason: 完成 phase-3 原生能力投影族（server action / report action / view binding）并加 lint bundle 守卫
+- completed_step: `ITER-2026-04-05-1151 PASS：新增 server_action_adapter、report_adapter、view_binding_adapter；native_projection_service 已覆盖六类投影；schema 加入 native_view_binding；新增 architecture_native_capability_ingestion_lint_bundle 与 Makefile 目标；验收与边界守卫全通过`
+- active_commit: `da08944`
+- next_step: `Build native projection coverage report and snapshot drift guard for release governance`
+
+### 2026-04-06T15:47:03+08:00
+- blocker_key: `native_capability_projection_release_governance_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 为原生能力投影建立覆盖报告与快照漂移守卫，并固化 release guard bundle 门禁
+- completed_step: `ITER-2026-04-05-1152 PASS：新增 native_capability_projection_snapshot_guard.py 与 baseline；新增 Makefile 目标 verify.architecture.native_capability_projection_{coverage_report,snapshot_guard,release_guard_bundle}；coverage/snapshot/bundle/controller-boundary 验收全通过`
+- active_commit: `da08944`
+- next_step: `Open phase-4 batch for native capability intent/runtime exposure unification under app_config_engine capability core`
+
+### 2026-04-06T15:51:34+08:00
+- blocker_key: `native_capability_phase4_intent_runtime_exposure_spec_freeze_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/refactor`
+- reason: 冻结原生能力 phase-4 intent/runtime exposure 规范，确保实现前边界与绑定规则一致
+- completed_step: `ITER-2026-04-05-1153 PASS：新增 native_capability_intent_runtime_exposure_spec_v1.md；明确六类 native type 的 binding canonical shape、type-to-intent baseline、runtime exposure channel 与 stop rules；release guard bundle 与 controller boundary guard 验收全通过`
+- active_commit: `da08944`
+- next_step: `Open phase-4 implementation batch to wire native type-to-intent runtime exposure in platform projection/query services`
+
+### 2026-04-06T15:55:33+08:00
+- blocker_key: `native_capability_phase4_runtime_exposure_wiring_v1`
+- layer_target: `Platform Layer`
+- module: `app_config_engine.capability.projection`
+- reason: 落地 phase-4 最小实现：集中 native type->intent baseline，并统一 runtime exposure 投影输出
+- completed_step: `ITER-2026-04-05-1154 PASS：新增 capability_runtime_exposure.py；capability_list_projection/workspace_projection 已统一接入 resolve_primary_intent + resolve_runtime_target，输出稳定 primary_intent 与 runtime_target；py_compile + native release guard bundle + controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Add focused architecture guard to enforce centralized native baseline and forbid ad-hoc projection intent branching`
+
+### 2026-04-06T16:00:17+08:00
+- blocker_key: `native_capability_phase4_runtime_exposure_baseline_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 固化 phase-4 baseline 中央化约束，防止投影层回归为分散 native type 分支
+- completed_step: `ITER-2026-04-05-1155 PASS：新增 architecture_native_capability_runtime_exposure_baseline_guard.py；校验 central baseline 定义、projection resolver 使用与 service/projection 禁止硬编码 native type；已接入 native release guard bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Add runtime exposure projection payload schema guard for list/workspace frontend-consumption contract stability`
+
+### 2026-04-06T16:04:00+08:00
+- blocker_key: `native_capability_phase4_runtime_exposure_payload_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 固化 projection runtime exposure 输出结构，避免前端消费字段漂移
+- completed_step: `ITER-2026-04-05-1156 PASS：新增 architecture_native_capability_runtime_exposure_payload_guard.py；校验 runtime resolver 含 mode 字段且 list/workspace projection 均输出 primary_intent + runtime_target；已接入 native release guard bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Capture runtime exposure output sample and freeze projection schema snapshot for regression governance`
+
+### 2026-04-06T16:08:13+08:00
+- blocker_key: `native_capability_phase4_runtime_exposure_schema_snapshot_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 固化 runtime exposure projection 字段快照，防止迭代中输出结构无感漂移
+- completed_step: `ITER-2026-04-05-1157 PASS：新增 runtime_exposure_projection_schema_snapshot_guard.py 与 baseline；校验 list/workspace projection 字段集合并强制 primary_intent/runtime_target；已接入 native release guard bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Add runtime exposure sample exporter from query/runtime services and evidence snapshot guard`
+
+### 2026-04-06T16:12:37+08:00
+- blocker_key: `native_capability_phase4_runtime_exposure_evidence_snapshot_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 建立 runtime exposure 证据导出与快照守卫，形成可比较的发布回归证据面
+- completed_step: `ITER-2026-04-05-1158 PASS：新增 runtime_exposure_evidence_export.py 与 runtime_exposure_evidence_snapshot_guard.py；新增 evidence baseline；Makefile 接入 verify.architecture.runtime_exposure_evidence_{export,snapshot_guard} 并纳入 native release guard bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Build compact release-readiness summary guard aggregating native coverage/schema/evidence snapshots`
+
+### 2026-04-06T16:17:51+08:00
+- blocker_key: `native_capability_phase4_release_readiness_summary_guard_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 将 coverage/schema/evidence 三类门禁信号汇总为单一 release-readiness 包络，降低发布判读成本
+- completed_step: `ITER-2026-04-05-1159 PASS：新增 native_capability_projection_release_readiness_summary_guard.py；产出 readiness summary json/md；Makefile 新增 verify.architecture.native_capability_projection_release_readiness_summary_guard 并接入 native release guard bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Freeze governance checklist doc mapping release bundle guards to risk class and owner module`
+
+### 2026-04-06T16:21:08+08:00
+- blocker_key: `native_capability_phase4_release_guard_governance_checklist_freeze_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/refactor`
+- reason: 冻结 release bundle 治理清单，固化 guard 风险等级与 owner 归属，支持运维交接
+- completed_step: `ITER-2026-04-05-1160 PASS：新增 native_capability_projection_release_guard_governance_checklist_v1.md，覆盖 guard->risk class 与 guard->owner module 映射、运行清单与 stop rules；release guard bundle 与 controller boundary guard 验收全通过`
+- active_commit: `da08944`
+- next_step: `Open narrow screen batch to classify residual non-native capability drift outside current release guard bundle scope`
+
+### 2026-04-06T16:24:47+08:00
+- blocker_key: `residual_non_native_capability_drift_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/refactor`
+- reason: 在不新增 repo 扫描的前提下，对 native bundle 外残余漂移进行 screen 分类
+- completed_step: `ITER-2026-04-05-1161 PASS_WITH_RISK：新增 residual_non_native_capability_drift_screen_v1.md；基于现有 artifacts 将残余风险分为 R1~R4（non-native definition/runtime exposure/ownership/mixed-source matrix）；native bundle 仍全绿，但残余风险待 verify 阶段收敛`
+- active_commit: `da08944`
+- next_step: `Open verify-stage governance batch for non-native capability drift guards (binding/policy parity + mixed-source matrix snapshot)`
+
+### 2026-04-06T16:30:13+08:00
+- blocker_key: `non_native_capability_drift_verify_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify + Makefile`
+- reason: 落地 verify 阶段两项守卫，收敛 1161 screen 暴露的 non-native/mixed-source 残余风险
+- completed_step: `ITER-2026-04-05-1162 PASS：新增 architecture_non_native_capability_binding_policy_parity_guard.py 与 mixed_source_capability_matrix_snapshot_guard.py（含 baseline）；Makefile 新增 verify.architecture.non_native_capability_drift_verify_bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Observe one iteration cycle then decide whether to promote non-native verify bundle into broader architecture governance gate`
+
+### 2026-04-06T16:34:44+08:00
+- blocker_key: `capability_projection_governance_gate_promotion_v1`
+- layer_target: `Governance Monitoring`
+- module: `Makefile gate orchestration`
+- reason: 将 non-native verify bundle 提级并入更高层架构门禁，形成 unified capability projection governance gate
+- completed_step: `ITER-2026-04-05-1163 PASS：新增 verify.architecture.capability_projection_governance_gate（native release bundle + non-native drift verify bundle）；并接入 verify.architecture.platformization_boundary_closure_bundle；验收与 controller boundary guard 全通过`
+- active_commit: `da08944`
+- next_step: `Observe one release cycle and decide whether to promote capability_projection_governance_gate into restricted default lane`
+
+### 2026-04-06T16:41:39+08:00
+- blocker_key: `capability_projection_governance_gate_restricted_lane_promotion_v1`
+- layer_target: `Governance Monitoring`
+- module: `Makefile CI preflight wiring`
+- reason: 尝试将 capability projection governance gate 显式纳入 restricted 默认入口 `ci.preflight.contract`
+- completed_step: `ITER-2026-04-05-1164 FAIL：wiring 已落地，但 acceptance 在 ci.preflight.contract 的 verify.test_seed_dependency.guard 失败触发强制停机；失败证据为 addons/smart_core/tests/test_action_dispatcher_server_mapping.py 的 Missing demo 依赖`
+- active_commit: `da08944`
+- next_step: `Open dedicated verify batch to resolve/waive verify.test_seed_dependency.guard failures, then rerun 1164 acceptance`
+
+### 2026-04-06T16:55:42+08:00
+- blocker_key: `seed_dependency_guard_unblock_followup_v1`
+- layer_target: `Governance Monitoring`
+- module: `addons/smart_core/tests + CI preflight`
+- reason: 先修复 seed dependency guard 文案触发点，再复跑 restricted preflight 观察是否全链恢复
+- completed_step: `ITER-2026-04-05-1165 FAIL：已在 test_action_dispatcher_server_mapping 用等价文案替换 Missing demo，verify.test_seed_dependency.guard 通过；但 ci.preflight.contract 被 verify.contract_drift.guard（历史 hard-coded reason_code 漂移）阻断，按规则停机`
+- active_commit: `da08944`
+- next_step: `Open dedicated low-risk verify batch for verify.contract_drift.guard triage/remediation, then rerun ci.preflight.contract`
+
+### 2026-04-06T17:08:36+08:00
+- blocker_key: `contract_drift_guard_constantization_followup_v1`
+- layer_target: `Governance Monitoring`
+- module: `handlers reason_code constantization`
+- reason: 清理 verify.contract_drift.guard 硬编码 reason_code 漂移并验证 restricted preflight 链路
+- completed_step: `ITER-2026-04-05-1166 FAIL：verify.contract_drift.guard 已通过；但 ci.preflight.contract 在 verify.backend.boundary_guard 失败，证据为 addons/smart_construction_core/core_extension.py 的 smart_core_extend_system_init 未按 data['ext_facts'] 命名空间写入约束`
+- active_commit: `da08944`
+- next_step: `Open dedicated boundary remediation batch for smart_core_extend_system_init ext_facts namespace compliance, then rerun ci.preflight.contract`
+
+### 2026-04-06T17:17:30+08:00
+- blocker_key: `system_init_ext_facts_namespace_boundary_fix_v1`
+- layer_target: `Governance Monitoring`
+- module: `addons/smart_construction_core/core_extension.py`
+- reason: 修复 smart_core_extend_system_init 的 ext_facts 命名空间边界，解除 backend boundary guard 阻断
+- completed_step: `ITER-2026-04-05-1167 FAIL：verify.backend.boundary_guard 已通过；但 ci.preflight.contract 在 verify.frontend.intent_channel.guard 失败，证据为 frontend/apps/web/src/api/capabilityMatrix.ts 使用禁用路径 /api/contract/capability_matrix`
+- active_commit: `da08944`
+- next_step: `Open dedicated frontend intent-channel remediation batch for capabilityMatrix API path compliance, then rerun ci.preflight.contract`
+
+### 2026-04-06T17:28:11+08:00
+- blocker_key: `frontend_capability_matrix_intent_channel_remediation_v1`
+- layer_target: `Governance Monitoring`
+- module: `frontend/apps/web/src/api/capabilityMatrix.ts`
+- reason: 修复前端 API 通道违规，移除 /api/contract/capability_matrix 直连并统一走 intent channel
+- completed_step: `ITER-2026-04-05-1168 FAIL：verify.frontend.intent_channel.guard 已通过；但 ci.preflight.contract 在 verify.scene.provider.guard 失败，证据为 addons/smart_core/handlers/app_shell.py 引入 scene_provider 超出白名单`
+- active_commit: `da08944`
+- next_step: `Open dedicated backend guard-remediation batch for app_shell scene_provider import boundary, then rerun ci.preflight.contract`
+
+### 2026-04-06T17:43:22+08:00
+- blocker_key: `app_shell_scene_provider_import_boundary_fix_v1`
+- layer_target: `Governance Monitoring`
+- module: `addons/smart_core/handlers/app_shell.py`
+- reason: 修复 app_shell 对 scene_provider 的越权依赖，恢复 scene_provider_guard 合规
+- completed_step: `ITER-2026-04-05-1169 FAIL：verify.scene.provider.guard 已通过；但 ci.preflight.contract 在 verify.scene.contract_v1.field_schema.guard 失败，因 live fetch 超时（urlopen timeout）`
+- active_commit: `da08944`
+- next_step: `Open dedicated remediation batch for scene contract v1 field schema guard live-fetch timeout handling, then rerun ci.preflight.contract`
+
+### 2026-04-06T18:01:54+08:00
+- blocker_key: `scene_contract_v1_field_schema_live_timeout_fallback_fix_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify/scene_contract_v1_field_schema_guard.py`
+- reason: 修复 scene_contract_v1 field schema guard 在 live fetch 超时时的可回退策略，避免环境网络抖动导致误阻断
+- completed_step: `ITER-2026-04-05-1170 FAIL：scene_contract_v1_field_schema_guard 已通过；但 ci.preflight.contract 在 verify.scene.legacy_endpoint.guard 失败，报告 /api/scenes/my 使用与 allowlist 不一致`
+- active_commit: `da08944`
+- next_step: `Open dedicated remediation batch for scene legacy endpoint guard reconciliation, then rerun ci.preflight.contract`
+
+### 2026-04-06T18:14:33+08:00
+- blocker_key: `scene_legacy_endpoint_allowlist_reconciliation_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify/legacy_scene_endpoint_guard.py`
+- reason: 对齐 legacy scene endpoint 守卫 allowlist 与实际 /api/scenes/my 使用面，消除误报与陈旧条目
+- completed_step: `ITER-2026-04-05-1171 FAIL：verify.scene.legacy_endpoint.guard 已通过；但 ci.preflight.contract 在 verify.scene.base_contract_asset_coverage.guard 失败，缺少 system_init nav_meta.ui_base_contract_* 统计字段`
+- active_commit: `da08944`
+- next_step: `Open dedicated batch for system_init nav_meta ui_base_contract asset coverage field补齐, then rerun ci.preflight.contract`
+
+### 2026-04-06T19:20:41+08:00
+- blocker_key: `system_init_nav_meta_ui_base_contract_coverage_fields_fix_v1`
+- layer_target: `Governance Monitoring`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: 补齐 scene base contract asset coverage 守卫要求的 nav_meta 三项统计字段
+- completed_step: `ITER-2026-04-05-1172 FAIL：verify.scene.base_contract_asset_coverage.guard 已通过；但 ci.preflight.contract 在 verify.scene.orchestrator.output.schema.guard 失败，提示 system_init missing scene_ready_contract_v1 assignment`
+- active_commit: `da08944`
+- next_step: `Open dedicated batch to restore explicit scene_ready_contract_v1 assignment path in system_init and rerun ci.preflight.contract`
+
+### 2026-04-06T19:33:44+08:00
+- blocker_key: `system_init_scene_ready_contract_assignment_visibility_fix_v1`
+- layer_target: `Scenario Orchestration Runtime`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: 恢复并显式保留 scene_ready_contract_v1 写入路径，解除 scene orchestrator output schema 守卫阻断
+- completed_step: `ITER-2026-04-05-1173 FAIL：verify.scene.orchestrator.output.schema.guard 已通过；但 ci.preflight.contract 在 verify.scene.orchestrator.base_fact_binding.guard 失败，提示 system_init missing bind_scene_assets call`
+- active_commit: `da08944`
+- next_step: `Open dedicated batch to restore explicit bind_scene_assets call visibility in system_init and rerun ci.preflight.contract`
+
+### 2026-04-06T19:55:14+08:00
+- blocker_key: `system_init_bind_scene_assets_call_visibility_fix_v1`
+- layer_target: `Scenario Orchestration Runtime`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: 恢复 system_init 边界上的 bind_scene_assets 显式调用可见性，解除 base_fact_binding 守卫阻断
+- completed_step: `ITER-2026-04-05-1174 FAIL：verify.scene.orchestrator.base_fact_binding.guard 已通过；但 ci.preflight.contract 在 verify.scene.action_surface_strategy.wiring.guard 失败，提示 system.init missing action strategy pass-through to scene_ready builder`
+- active_commit: `da08944`
+- next_step: `Open dedicated batch to restore explicit action strategy pass-through wiring in system_init and rerun ci.preflight.contract`
+
+### 2026-04-06T20:13:19+08:00
+- blocker_key: `system_init_action_surface_strategy_passthrough_visibility_fix_v1`
+- layer_target: `Scenario Orchestration Runtime`
+- module: `addons/smart_core/handlers/system_init.py`
+- reason: 恢复 system_init 对 scene_action_surface_strategy 的显式透传表达，解除 action_surface_strategy wiring 守卫阻断
+- completed_step: `ITER-2026-04-05-1175 FAIL：verify.scene.action_surface_strategy.wiring.guard 已通过；但 ci.preflight.contract 在 verify.scene.legacy_contract.guard 失败，提示缺失 addons/smart_construction_core/controllers/scene_controller.py`
+- active_commit: `da08944`
+- next_step: `Open dedicated batch to reconcile verify.scene.legacy_contract.guard expected file set with current controller ownership and rerun ci.preflight.contract`
+
+### 2026-04-06T20:38:00+08:00
+- blocker_key: `scene_legacy_contract_guard_controller_ownership_reconciliation_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify/scene_legacy_contract_guard.py`
+- reason: 对齐 legacy contract 守卫目标文件与当前 /api/scenes/my 归属实现（platform_scene_logic）
+- completed_step: `ITER-2026-04-05-1176 FAIL：verify.scene.legacy_contract.guard 已通过；但 ci.preflight.contract 在 verify.scene.legacy_docs.guard 失败，要求 boundary 文档补齐 /api/scenes/my 的 deprecated/successor(intent=app.init)/sunset 注记`
+- active_commit: `da08944`
+- next_step: `Open dedicated docs-governance batch for verify.scene.legacy_docs.guard and patch required docs markers, then rerun ci.preflight.contract`
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
+
+### 2026-04-06T21:00:39+08:00
+- blocker_key: `scene_legacy_docs_guard_marker_backfill_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/boundary/** + delivery_context_switch_log_v1.md`
+- reason: 按守卫要求补齐 /api/scenes/my 的 deprecated/successor(/api/v1/intent)/intent=app.init/sunset(2026-04-30) 文档注记
+- completed_step: `ITER-2026-04-05-1177 FAIL：verify.scene.legacy_docs.guard 已通过；但 ci.preflight.contract 在 verify.scene.legacy_auth.smoke 失败，HTTP request failed after retries: <urlopen error timed out>`
+- active_commit: `da08944`
+- next_step: `Open dedicated batch for verify.scene.legacy_auth.smoke runtime timeout handling/availability check, then rerun ci.preflight.contract`

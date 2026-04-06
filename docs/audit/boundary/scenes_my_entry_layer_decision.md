@@ -35,3 +35,5 @@
 ## Next Slice Suggestion
 
 - Implement a compatibility adapter in `smart_core` for `/api/scenes/my` that prefers successor semantic supply and preserves legacy deprecation envelope.
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.

@@ -35,6 +35,8 @@
 | `/api/scenes/export` | `addons/smart_construction_core/controllers/scene_template_controller.py` | scene open 链 | P2 | 治理/运维/模板导入导出低频链 |
 | `/api/scenes/import` | `addons/smart_construction_core/controllers/scene_template_controller.py` | scene open 链 | P2 | 治理/运维/模板导入导出低频链 |
 | `/api/scenes/my` | `addons/smart_construction_core/controllers/scene_controller.py` | scene open 链 | P0 | 登录/init/menu/scene 主链证据 |
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
 | `/api/session/get` | `addons/smart_construction_core/controllers/frontend_api.py` | 登录链 | P0 | 登录/init/menu/scene 主链证据 |
 | `/api/ui/contract` | `addons/smart_construction_core/controllers/ui_contract_controller.py` | page/block fetch 链 | P1 | 核心交互/契约/高频能力链 |
 | `/api/user_menus` | `addons/smart_construction_core/controllers/frontend_api.py` | menu/nav 链 | P3 | 兼容或边缘入口 |

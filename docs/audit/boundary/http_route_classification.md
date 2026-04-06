@@ -46,6 +46,8 @@
 | `addons/smart_construction_core/controllers/preference_controller.py` | `pref_get` | `/api/preferences/get` | `C` | scene/template runtime entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/preference_controller.py` | `pref_set` | `/api/preferences/set` | `C` | scene/template runtime entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/scene_controller.py` | `my_scenes` | `/api/scenes/my` | `C` | scene/template runtime entry | 疑似越界 |
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
 | `addons/smart_construction_core/controllers/scene_template_controller.py` | `export_scenes` | `/api/scenes/export` | `F` | scene + pack/template mixed surface | 疑似越界 |
 | `addons/smart_construction_core/controllers/scene_template_controller.py` | `import_scenes` | `/api/scenes/import` | `F` | scene + pack/template mixed surface | 疑似越界 |
 | `addons/smart_construction_core/controllers/ui_contract_controller.py` | `ui_contract` | `/api/ui/contract` | `B` | platform runtime entry | 疑似越界 |
