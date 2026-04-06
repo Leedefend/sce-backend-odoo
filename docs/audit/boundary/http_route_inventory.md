@@ -37,6 +37,8 @@
 | `addons/smart_construction_core/controllers/preference_controller.py` | `pref_get` | `/api/preferences/get` | `public` | `http` | `GET, POST` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `scene` |
 | `addons/smart_construction_core/controllers/preference_controller.py` | `pref_set` | `/api/preferences/set` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `scene._user_allowed` | `yes` | `scene` |
 | `addons/smart_construction_core/controllers/scene_controller.py` | `my_scenes` | `/api/scenes/my` | `public` | `http` | `GET` | `fail, ok` | `Scene.search, scene._user_allowed, scene.to_public_dict` | `yes` | `app, scene` |
+
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
 | `addons/smart_construction_core/controllers/scene_template_controller.py` | `export_scenes` | `/api/scenes/export` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `Scene.search, _pack_hash, out_scenes.append` | `yes` | `app, capability, pack, scene` |
 | `addons/smart_construction_core/controllers/scene_template_controller.py` | `import_scenes` | `/api/scenes/import` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `Scene.search, _apply_pack, scenes.unlink` | `yes` | `app, capability, pack, scene` |
 | `addons/smart_construction_core/controllers/ui_contract_controller.py` | `ui_contract` | `/api/ui/contract` | `user` | `http` | `GET, POST` | `fail` | `fail, http.route` | `no` | `scene` |

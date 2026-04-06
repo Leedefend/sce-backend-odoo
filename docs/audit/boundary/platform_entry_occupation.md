@@ -91,6 +91,8 @@
 - `addons/smart_construction_core/static/src/js/sc_sidebar.js:1233` → `const resp = await fetch("/api/scenes/my", { credentials: "include" });`
 - `addons/smart_construction_core/static/src/config/role_entry_map.js:3` → `// Role entries are now backend-orchestrated via /api/scenes/my.`
 
+Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
+
 ## `/api/ops/*`
 
 - definition_count: `6`
