@@ -1,0 +1,98 @@
+task_id: ITER-2026-04-05-992
+title: Screen reverse dependency hotspots Top20 for boundary Phase D-2
+type: governance
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Produce Top 20 reverse dependency hotspots from existing file dependency graph
+  artifacts and annotate impact scope.
+
+user_visible_outcome:
+  - "形成反向依赖热点 Top 20 清单"
+
+scope:
+  allowed_paths:
+    - docs/audit/boundary/module_dependency_graph.md
+    - docs/audit/boundary/file_dependency_hotspots.md
+    - docs/audit/boundary/reverse_dependency_hotspots.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 120
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - classify_from_scan_outputs_only
+  - do_not_rescan_repository
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-991
+  priority_lane: smart_construction_core_boundary_phase_d_hotspot_screen
+
+architecture:
+  layer_target: Agent Governance Boundary Screen
+  module: reverse dependency hotspot ranking
+  module_owner: governance_audit
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch ranks hotspot evidence from prebuilt dependency artifacts only.
+  reason: >
+    User requested prioritized hotspot list as input for boundary remediation planning.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-992.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - stage_boundary_broken
+
+deliverables:
+  - docs/audit/boundary/reverse_dependency_hotspots.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-992.yaml
+  - git restore docs/audit/boundary/reverse_dependency_hotspots.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-992.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-992.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-991

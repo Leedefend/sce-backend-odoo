@@ -8,7 +8,7 @@ from typing import Any, Dict
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..utils.extension_hooks import call_extension_hook_first
+from ..core.platform_policy_defaults import get_file_download_allowed_models
 
 _logger = logging.getLogger(__name__)
 
@@ -27,11 +27,9 @@ class FileDownloadHandler(BaseIntentHandler):
     ALLOWED_MODELS = {"res.partner"}
 
     def _allowed_models(self):
-        payload = call_extension_hook_first(self.env, "smart_core_file_download_allowed_models", self.env)
-        if isinstance(payload, (list, tuple, set)):
-            values = {str(item).strip() for item in payload if str(item).strip()}
-            if values:
-                return values
+        values = get_file_download_allowed_models(self.env)
+        if values:
+            return values
         return set(self.ALLOWED_MODELS)
 
     def _err(self, code: int, message: str):

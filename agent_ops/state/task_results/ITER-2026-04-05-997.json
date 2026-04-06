@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-997",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-997.md",
+  "publishability": "n/a_doc_only",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "remediation_gate_answers": "docs/audit/boundary/remediation_gate_answers.md"
+  },
+  "next_step": "Start remediation design task line with P0 scope and boundary-transfer plan."
+}

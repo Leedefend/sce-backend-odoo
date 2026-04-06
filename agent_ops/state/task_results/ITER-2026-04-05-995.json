@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-995",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-995.md",
+  "publishability": "n/a_doc_only",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "duplicate_registry_surface": "docs/audit/boundary/duplicate_registry_surface.md"
+  },
+  "next_step": "Open consolidation batch for boundary summary tables."
+}

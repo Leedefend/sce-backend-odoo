@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo.addons.smart_construction_core.services.project_execution_service import (
-    ProjectExecutionService,
+from odoo.addons.smart_core.core.industry_orchestration_service_adapter import (
+    build_project_execution_service,
 )
 from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import (
     BaseSceneEntryOrchestrator,
@@ -31,7 +31,7 @@ class ProjectExecutionSceneOrchestrator(BaseSceneEntryOrchestrator):
     )
 
     def __init__(self, env):
-        super().__init__(env, ProjectExecutionService(env))
+        super().__init__(env, build_project_execution_service(env))
 
     def resolve_first_action(self, runtime_fetch_hints):
         blocks = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}

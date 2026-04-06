@@ -22,6 +22,7 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.platform_policy_defaults import get_create_field_fallbacks
 from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
@@ -586,12 +587,7 @@ class ApiDataHandler(BaseIntentHandler):
             safe_vals["active"] = True
 
         # 扩展兜底：行业模块可以注入模型级 fallback，不在平台层硬编码。
-        payload = call_extension_hook_first(
-            env_model.env,
-            "smart_core_create_field_fallbacks",
-            env_model.env,
-            env_model._name,
-        )
+        payload = get_create_field_fallbacks(env_model.env, env_model._name)
         if isinstance(payload, dict):
             selection_defaults = payload.get("selection_defaults") if isinstance(payload.get("selection_defaults"), dict) else {}
             for field_name, preferred in selection_defaults.items():

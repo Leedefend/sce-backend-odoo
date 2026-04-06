@@ -1,0 +1,92 @@
+task_id: ITER-2026-04-05-1073
+title: Implement scene direct-connect path in smart_core (batch-1 task 3.2)
+type: governance
+status: active
+priority: low
+mode: implement
+
+goal: >
+  Migrate smart_core scene access from industry smart_core_scene_* bridge hooks
+  to direct scene-owner imports with compatibility fallback.
+
+user_visible_outcome:
+  - "平台访问 scene 改为直连优先，不再以行业桥接为主路径"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/scene_registry_provider.py
+    - addons/smart_core/handlers/scene_package.py
+    - addons/smart_core/handlers/scene_packages_installed.py
+    - addons/smart_core/handlers/scene_governance.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 9
+  max_candidates: 14
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - direct_connect_first
+  - keep_legacy_fallback
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: user_batch_checklist_v1_batch1_task3_2
+  priority_lane: industry_shadow_bridge_batch1_scene_direct_connect
+
+architecture:
+  layer_target: Platform Scene Access Runtime
+  module: smart_core scene provider and scene package/governance handlers
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: platform runtime consumes scene owner interfaces directly.
+  reason: execute direct-connect migration with compatibility.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1073.yaml
+    - python3 -m py_compile addons/smart_core/core/scene_registry_provider.py addons/smart_core/handlers/scene_package.py addons/smart_core/handlers/scene_packages_installed.py addons/smart_core/handlers/scene_governance.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/core/scene_registry_provider.py
+  - addons/smart_core/handlers/scene_package.py
+  - addons/smart_core/handlers/scene_packages_installed.py
+  - addons/smart_core/handlers/scene_governance.py
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1073.yaml
+  - git restore addons/smart_core/core/scene_registry_provider.py
+  - git restore addons/smart_core/handlers/scene_package.py
+  - git restore addons/smart_core/handlers/scene_packages_installed.py
+  - git restore addons/smart_core/handlers/scene_governance.py
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1073.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1073.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1072

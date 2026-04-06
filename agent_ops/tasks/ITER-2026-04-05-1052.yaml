@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-05-1052
+title: Screen owner parity for dormant non-auth controller files
+type: governance
+status: active
+priority: low
+mode: screen
+
+goal: >
+  Verify that each dormant non-auth legacy controller surface has an active
+  smart_core owner counterpart before any cleanup implementation.
+
+user_visible_outcome:
+  - "输出 dormant 非 auth 面的 owner parity 对照矩阵"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/controllers/execute_controller.py
+    - addons/smart_construction_core/controllers/frontend_api.py
+    - addons/smart_construction_core/controllers/portal_execute_button_controller.py
+    - addons/smart_construction_core/controllers/ui_contract_controller.py
+    - addons/smart_core/controllers/platform_execute_api.py
+    - addons/smart_core/controllers/platform_menu_api.py
+    - addons/smart_core/controllers/platform_portal_execute_api.py
+    - addons/smart_core/controllers/platform_ui_contract_api.py
+    - docs/audit/boundary/non_auth_dormant_owner_parity_matrix.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 14
+  max_candidates: 16
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - parity_matrix_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1051
+  priority_lane: smart_construction_core_boundary_dormant_parity
+
+architecture:
+  layer_target: Governance Screen
+  module: dormant non-auth owner parity
+  module_owner: n/a
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: parity check on route ownership surfaces.
+  reason: ensure cleanup is safe and non-functional.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1052.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - docs/audit/boundary/non_auth_dormant_owner_parity_matrix.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1052.yaml
+  - git restore docs/audit/boundary/non_auth_dormant_owner_parity_matrix.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1052.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1052.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1051

@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-05-1072",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1072.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "py_compile": "PASS"
+  },
+  "artifacts": {
+    "system_init_ext_facts_collector": "addons/smart_core/core/system_init_extension_fact_merger.py",
+    "system_init_handler_wiring": "addons/smart_core/handlers/system_init.py",
+    "construction_system_init_provider": "addons/smart_construction_core/core_extension.py"
+  },
+  "next_step": "Open scene direct-connect implementation batch to migrate platform off smart_core_scene_* industry bridge path."
+}

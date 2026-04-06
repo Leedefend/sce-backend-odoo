@@ -1,0 +1,92 @@
+task_id: ITER-2026-04-05-1015
+title: Screen ownership strategy for ops packs and capabilities endpoints
+type: governance
+status: active
+priority: high
+mode: screen
+
+goal: >
+  Decide staged ownership strategy for `/api/ops/*`, `/api/packs/*`, and
+  `/api/capabilities/*` endpoint families using existing audit artifacts.
+
+user_visible_outcome:
+  - "给出 ops/packs/capabilities 三个族群的迁移优先级与边界归属"
+
+scope:
+  allowed_paths:
+    - docs/audit/boundary/http_route_classification.md
+    - docs/audit/boundary/runtime_priority_matrix.md
+    - docs/audit/boundary/platform_entry_occupation.md
+    - docs/audit/boundary/governance_endpoint_ownership_decision.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 40
+  max_output_lines: 200
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - screen_stage_only
+  - classify_from_scan_outputs_only
+  - do_not_rescan_repository
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-05-1014
+  priority_lane: smart_construction_core_boundary_remediation_governance_surfaces
+
+architecture:
+  layer_target: Backend Sub-Layer Decision Gate
+  module: governance/runtime endpoint families
+  module_owner: mixed (platform entry shell target + scenario fact providers)
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    endpoint shells should converge to platform runtime boundary while
+    governance/business facts remain supplied by scenario services.
+  reason: >
+    establish prioritized migration sequence after completing P0/P1 core chains.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1015.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - stage_boundary_broken
+
+deliverables:
+  - docs/audit/boundary/governance_endpoint_ownership_decision.md
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1015.yaml
+  - git restore docs/audit/boundary/governance_endpoint_ownership_decision.md
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1015.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1015.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1014

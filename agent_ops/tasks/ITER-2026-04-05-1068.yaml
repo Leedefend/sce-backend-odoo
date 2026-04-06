@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1068
+title: Convert smart_core_register to contribution provider (batch-1 task 1.3)
+type: governance
+status: active
+priority: low
+mode: implement
+
+goal: >
+  Convert smart_construction_core handler export from direct registry write
+  (`smart_core_register`) to contribution provider (`get_intent_handler_contributions`)
+  while keeping a minimal compatibility wrapper.
+
+user_visible_outcome:
+  - "行业模块不再直接执行 registry[...] 写入"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/core_extension.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 10
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - keep_runtime_compatibility
+  - no_new_smart_core_bridge_functions
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: user_batch_checklist_v1_batch1_task1_3
+  priority_lane: industry_shadow_bridge_batch1_ownership_migration
+
+architecture:
+  layer_target: Industry Contribution Provider
+  module: smart_construction_core core_extension intent exports
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: reduce direct registry ownership and align to platform contribution protocol.
+  reason: execute batch-1 task 1.3 after platform loader landed.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1068.yaml
+    - python3 -m py_compile addons/smart_construction_core/core_extension.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_construction_core/core_extension.py
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1068.yaml
+  - git restore addons/smart_construction_core/core_extension.py
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1068.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1068.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1067

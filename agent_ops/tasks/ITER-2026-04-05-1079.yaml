@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-05-1079
+title: Migrate capability hooks to provider names and remove legacy exports (batch-7 cleanup)
+type: governance
+status: active
+priority: low
+mode: implement
+
+goal: >
+  Add capability contribution provider hooks in smart_construction_core and
+  remove legacy smart_core capability export hooks.
+
+user_visible_outcome:
+  - "capability legacy hooks 切换为 contribution provider 命名"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/core_extension.py
+    - addons/smart_construction_core/__init__.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 7
+  max_candidates: 12
+  max_output_lines: 300
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - provider_first
+  - capability_only_scope
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: user_batch_checklist_v1_batch7_cleanup_p1_capability
+  priority_lane: industry_shadow_bridge_batch7_cleanup_impl
+
+architecture:
+  layer_target: Industry Compatibility Cleanup
+  module: smart_construction_core capability hook exports
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: align industry module with platform capability contribution protocol.
+  reason: remove legacy hook names after provider migration.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1079.yaml
+    - python3 -m py_compile addons/smart_construction_core/core_extension.py addons/smart_construction_core/__init__.py
+    - make verify.architecture.capability_registry_platform_owner_guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_construction_core/core_extension.py
+  - addons/smart_construction_core/__init__.py
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-05-1079.yaml
+  - git restore addons/smart_construction_core/core_extension.py
+  - git restore addons/smart_construction_core/__init__.py
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1079.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1079.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1078

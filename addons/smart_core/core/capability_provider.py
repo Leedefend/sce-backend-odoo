@@ -3,12 +3,15 @@ from __future__ import annotations
 
 from typing import List
 
-from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from .capability_group_defaults import (
     DEFAULT_CAPABILITY_GROUPS,
     default_group_meta,
     default_group_order_map,
     infer_group_key,
+)
+from .capability_contribution_loader import (
+    collect_capability_contributions,
+    collect_capability_group_contributions,
 )
 
 
@@ -79,12 +82,12 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 
 
 def load_capabilities_for_user(env, user) -> List[dict]:
-    extension_caps = call_extension_hook_first(env, "smart_core_list_capabilities_for_user", env, user)
-    if isinstance(extension_caps, list) and extension_caps:
+    extension_caps, _errors = collect_capability_contributions(env, user)
+    if extension_caps:
         return extension_caps
 
     try:
-        extension_groups = call_extension_hook_first(env, "smart_core_capability_groups", env)
+        extension_groups = collect_capability_group_contributions(env)
         if isinstance(extension_groups, list) and extension_groups:
             global DEFAULT_CAPABILITY_GROUPS
             DEFAULT_CAPABILITY_GROUPS = [dict(item) for item in extension_groups if isinstance(item, dict)]

@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-05-1114
+title: Add high-risk exception rule for payment-settlement orchestration boundary recovery
+type: governance
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Extend Section 6 with a narrow exception that allows controlled
+  `*payment*` / `*settlement*` orchestration-boundary recovery batches
+  only under explicit high-risk task governance and user authorization.
+
+user_visible_outcome:
+  - "补充治理例外条款后，payment/settlement 边界迁移可在受控高风险任务下执行"
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 6
+  max_candidates: 6
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - governance_rule_additive_only
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: payment_settlement_exception_authorization
+  priority_lane: governance
+
+architecture:
+  layer_target: Governance Monitoring
+  module: AGENTS policy
+  module_owner: governance
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: unblock boundary recovery under strict high-risk guardrail without broadening default stop policy.
+  reason: user authorized dedicated exception path for payment/settlement orchestration migration.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1114.yaml
+    - bash -lc 'rg -n "### 6\\.8 Narrow Exception For Dedicated Payment-Settlement Orchestration Boundary-Recovery Batches|\*payment\*|\*settlement\*" AGENTS.md'
+    - make verify.controller.boundary.guard
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - AGENTS.md
+
+rollback:
+  - git restore AGENTS.md
+  - git restore agent_ops/tasks/ITER-2026-04-05-1114.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1114.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1114.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1113

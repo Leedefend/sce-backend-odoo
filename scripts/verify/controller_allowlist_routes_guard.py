@@ -11,16 +11,15 @@ from controller_allowlist_policy import CONTROLLER_ROUTE_POLICY
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
 ARTIFACT_JSON = ROOT / "artifacts" / "controller_allowlist_routes_guard.json"
 ALLOWED_ROUTE_MAP = {
-    filename: set(routes.keys()) for filename, routes in CONTROLLER_ROUTE_POLICY.items()
+    rel_path: set(routes.keys()) for rel_path, routes in CONTROLLER_ROUTE_POLICY.items()
 }
 
 
 def _iter_allowlist_files():
-    for filename in sorted(ALLOWED_ROUTE_MAP.keys()):
-        path = CONTROLLERS_ROOT / filename
+    for rel_path in sorted(ALLOWED_ROUTE_MAP.keys()):
+        path = ROOT / rel_path
         if path.is_file():
             yield path
 
@@ -57,15 +56,20 @@ def _collect_routes(text: str) -> set[str]:
 
 
 def main() -> int:
-    if not CONTROLLERS_ROOT.is_dir():
-        print("[controller_allowlist_routes_guard] FAIL")
-        print(f"missing dir: {CONTROLLERS_ROOT.relative_to(ROOT).as_posix()}")
-        return 1
-
     violations: list[str] = []
+    missing_files: list[str] = []
+    for rel_path in sorted(ALLOWED_ROUTE_MAP.keys()):
+        policy_path = ROOT / rel_path
+        if not policy_path.is_file():
+            missing_files.append(rel_path)
+
+    if missing_files:
+        for rel_path in missing_files:
+            violations.append(f"missing allowlist controller file: {rel_path}")
+
     for path in _iter_allowlist_files():
         rel = path.relative_to(ROOT).as_posix()
-        expected = ALLOWED_ROUTE_MAP[path.name]
+        expected = ALLOWED_ROUTE_MAP[rel]
         text = path.read_text(encoding="utf-8", errors="ignore")
         actual = _collect_routes(text)
         extra = sorted(actual - expected)
@@ -78,7 +82,7 @@ def main() -> int:
     report = {
         "ok": not violations,
         "summary": {
-            "controller_root": CONTROLLERS_ROOT.relative_to(ROOT).as_posix(),
+            "policy_scope": "cross-module",
             "allowlist_size": len(ALLOWED_ROUTE_MAP),
             "violation_count": len(violations),
         },

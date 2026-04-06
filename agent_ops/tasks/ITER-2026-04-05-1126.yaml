@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-05-1126
+title: Clause-4 closure retire legacy smart_core policy compatibility hooks
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Remove legacy `smart_core_*` compatibility hook fallback from platform policy
+  defaults while keeping platform-owned contribution hook path.
+
+user_visible_outcome:
+  - "平台 policy 常量只接受 contribution 协议，不再回退 smart_core_* 旧钩子"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/platform_policy_defaults.py
+    - scripts/verify/architecture_platform_policy_constant_owner_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 10
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - policy_constants_platform_owned
+  - no_smart_core_policy_legacy_fallback
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: six_clause_verify_clause4_partial
+  priority_lane: boundary_closure
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core.platform_policy_defaults
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business-fact
+  backend_sub_layer_reason: policy constants govern platform fact exposure and api boundaries.
+  reason: close Clause-4 partial finding.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1126.yaml
+    - python3 -m py_compile addons/smart_core/core/platform_policy_defaults.py scripts/verify/architecture_platform_policy_constant_owner_guard.py
+    - bash -lc 'rg -n "smart_core_server_action_window_map|smart_core_file_upload_allowed_models|smart_core_file_download_allowed_models|smart_core_api_data_write_allowlist|smart_core_api_data_unlink_allowed_models|smart_core_model_code_mapping|smart_core_create_field_fallbacks" addons/smart_core/core/platform_policy_defaults.py && exit 1 || exit 0'
+    - python3 scripts/verify/architecture_platform_policy_constant_owner_guard.py
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/core/platform_policy_defaults.py
+  - scripts/verify/architecture_platform_policy_constant_owner_guard.py
+
+rollback:
+  - git restore addons/smart_core/core/platform_policy_defaults.py
+  - git restore scripts/verify/architecture_platform_policy_constant_owner_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1126.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1126.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1126.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1125

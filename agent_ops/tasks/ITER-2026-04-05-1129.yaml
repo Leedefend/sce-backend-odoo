@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-05-1129
+title: Promote six-clause closure chain into release-level closure bundle
+type: governance
+stage: verify
+status: active
+priority: medium
+mode: execute
+
+goal: >
+  Publish release-level closure summary for six-clause governance chain
+  (1121-1128) and wire bilingual release indexes.
+
+user_visible_outcome:
+  - "1121~1128 六条闭环链路已升级到 release 常驻收口文档"
+
+scope:
+  allowed_paths:
+    - docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md
+    - docs/ops/releases/README.md
+    - docs/ops/releases/README.zh.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 10
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - release_doc_promotion_only
+  - no_runtime_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: f4102e4
+  explicit_user_authorization: true
+  input_from: user_approved_release_bundle_promotion
+  priority_lane: governance_low_cost
+
+architecture:
+  layer_target: Governance Monitoring
+  module: docs/ops/releases
+  module_owner: governance
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: documentation-only governance closure publication.
+  reason: publish final closure chain as release-level authoritative doc.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1129.yaml
+    - bash -lc 'test -f docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md && rg -n "Phase 16-G|6 closed / 0 partial / 0 open|Clause-1|Clause-6" docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md'
+    - bash -lc 'rg -n "phase_16_g_six_clause_boundary_closure_1121_1128" docs/ops/releases/README.md docs/ops/releases/README.zh.md'
+    - make verify.controller.boundary.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md
+  - docs/ops/releases/README.md
+  - docs/ops/releases/README.zh.md
+
+rollback:
+  - git restore docs/ops/releases/current/phase_16_g_six_clause_boundary_closure_1121_1128.md
+  - git restore docs/ops/releases/README.md
+  - git restore docs/ops/releases/README.zh.md
+  - git restore agent_ops/tasks/ITER-2026-04-05-1129.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1129.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1129.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1128

@@ -10,7 +10,7 @@ from ..core.load_contract_entry_context import (
 )
 from ..core.native_view_contract_projection import inject_primary_view_projection
 from ..app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
-from ..utils.extension_hooks import call_extension_hook_first
+from ..core.platform_policy_defaults import get_model_code_mapping
 from odoo import api, SUPERUSER_ID
 import json, hashlib
 
@@ -27,7 +27,7 @@ def _convert_model_code(code: str, env=None) -> str:
         'order':'sale.order','invoice':'account.move','employee':'hr.employee',
     }
     if env is not None:
-        ext = call_extension_hook_first(env, "smart_core_model_code_mapping", env)
+        ext = get_model_code_mapping(env)
         if isinstance(ext, dict):
             for key, value in ext.items():
                 k = str(key or "").strip()

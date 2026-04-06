@@ -24,7 +24,7 @@ from ..utils.reason_codes import (
     REASON_UNSUPPORTED_SOURCE,
     failure_meta_for_reason,
 )
-from ..utils.extension_hooks import call_extension_hook_first
+from ..core.platform_policy_defaults import get_api_data_unlink_allowed_models
 
 _logger = logging.getLogger(__name__)
 
@@ -48,11 +48,9 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     ALLOWED_MODELS = {"res.partner"}
 
     def _allowed_models(self) -> set[str]:
-        payload = call_extension_hook_first(self.env, "smart_core_api_data_unlink_allowed_models", self.env)
-        if isinstance(payload, (list, tuple, set)):
-            values = {str(item).strip() for item in payload if str(item).strip()}
-            if values:
-                return values
+        values = get_api_data_unlink_allowed_models(self.env)
+        if values:
+            return values
         return set(self.ALLOWED_MODELS)
 
     def _err(self, code: int, message: str, reason_code: str):

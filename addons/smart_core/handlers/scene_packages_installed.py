@@ -6,6 +6,12 @@ from ..utils.extension_hooks import call_extension_hook_first
 
 
 def _service(env, user):
+    try:
+        from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
+
+        return ScenePackageService(env, user)
+    except Exception:
+        pass
     service_cls = call_extension_hook_first(env, "smart_core_scene_package_service_class", env)
     if service_cls is None:
         raise RuntimeError("scene package service provider is not configured")

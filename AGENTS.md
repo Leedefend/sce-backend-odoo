@@ -437,6 +437,36 @@ When this exception is used:
 - if uncertainty remains about install order, duplicate ownership, or customer
   seed reproducibility, the agent MUST stop immediately
 
+### 6.8 Narrow Exception For Dedicated Payment-Settlement Orchestration Boundary-Recovery Batches
+
+The generic stop conditions for `*payment*` and `*settlement*` remain the
+default and MUST still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `*payment*` and `*settlement*` related file
+changes only when all of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated
+  orchestration-boundary recovery objective for payment/settlement slices
+- the task allowlist explicitly includes the exact target paths (for example
+  `addons/smart_core/orchestration/payment_slice_contract_orchestrator.py` and
+  `addons/smart_core/orchestration/settlement_slice_contract_orchestrator.py`)
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to dependency-ownership
+  migration (protocol adapter / extension-provider wiring), without changing
+  payment or settlement business/financial semantics
+- `security/**`, `record_rules/**`, `ir.model.access.csv`, `__manifest__.py`,
+  and accounting/financial rule semantics remain outside scope unless
+  separately authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about financial semantics, authority leakage, or
+  runtime safety, the agent MUST stop immediately
+
 ---
 
 ## 7. Allowed Change Rules

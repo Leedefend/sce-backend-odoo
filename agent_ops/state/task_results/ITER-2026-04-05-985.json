@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-985",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-985.md",
+  "publishability": "n/a_doc_only",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "platform_entry_occupation": "docs/audit/boundary/platform_entry_occupation.md"
+  },
+  "next_step": "Open runtime dependency scan batch for frontend real-call chains and priority mapping input."
+}

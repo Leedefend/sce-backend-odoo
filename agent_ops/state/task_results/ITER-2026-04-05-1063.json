@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-05-1063",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1063.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS"
+  },
+  "artifacts": {
+    "platform_intent_screen": "docs/audit/boundary/core_extension_platform_intent_keys_screen.md"
+  },
+  "next_step": "Open ownership mapping screen for seven non-financial platform-style keys (owner target + migration difficulty)."
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-05-1079",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1079.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "py_compile": "PASS",
+    "verify_capability_owner_guard": "PASS"
+  },
+  "artifacts": {
+    "core_extension_capability_provider_migration": "addons/smart_construction_core/core_extension.py",
+    "init_capability_export_migration": "addons/smart_construction_core/__init__.py"
+  },
+  "next_step": "Open bounded cleanup batch for deprecated smart_core_register export removal."
+}

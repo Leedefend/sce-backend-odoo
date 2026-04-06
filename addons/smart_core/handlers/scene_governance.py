@@ -13,6 +13,12 @@ def _trace_id_from_context(ctx) -> str:
 
 
 def _service(env, user):
+    try:
+        from odoo.addons.smart_construction_scene.services.scene_governance_service import SceneGovernanceService
+
+        return SceneGovernanceService(env, user)
+    except Exception:
+        pass
     service_cls = call_extension_hook_first(env, "smart_core_scene_governance_service_class", env)
     if service_cls is None:
         raise RuntimeError("scene governance service provider is not configured")
