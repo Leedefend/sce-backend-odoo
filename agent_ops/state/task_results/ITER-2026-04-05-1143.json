@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-04-05-1143",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1143.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "py_compile": "PASS",
+    "structure_checks": "PASS",
+    "trusted_capture_parity": "PASS",
+    "verify_controller_boundary_guard": "PASS"
+  },
+  "artifacts": {
+    "capture_report": "artifacts/capability_payload_capture_1143/latest/capture_report.json"
+  },
+  "next_step": "Switch default runtime query path to CapabilityQueryService and keep fallback behind explicit safety toggle."
+}

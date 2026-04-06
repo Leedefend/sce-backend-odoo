@@ -1,0 +1,110 @@
+task_id: ITER-2026-04-05-1146
+title: Close remaining capability-platform boundary items
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Complete boundary closure by removing legacy intent register fallback,
+  removing scene handler extension fallback, and eliminating industry ownership
+  of platform policy constants.
+
+user_visible_outcome:
+  - "平台 intent 注册单一 owner 收口完成"
+  - "scene 访问不再经过行业 fallback"
+  - "平台 policy 常量 owner 收口完成"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/extension_loader.py
+    - addons/smart_core/handlers/scene_package.py
+    - addons/smart_core/handlers/scene_governance.py
+    - addons/smart_core/handlers/scene_packages_installed.py
+    - addons/smart_core/core/platform_policy_defaults.py
+    - addons/smart_construction_core/core_extension.py
+    - addons/smart_owner_core/core_extension.py
+    - addons/smart_owner_core/__init__.py
+    - addons/smart_construction_bundle/core_extension.py
+    - addons/smart_construction_bundle/__init__.py
+    - addons/smart_license_core/core_extension.py
+    - addons/smart_license_core/__init__.py
+    - addons/smart_enterprise_base/core_extension.py
+    - addons/smart_enterprise_base/__init__.py
+    - addons/smart_owner_bundle/core_extension.py
+    - addons/smart_owner_bundle/__init__.py
+    - addons/smart_construction_scene/core_extension.py
+    - addons/smart_construction_scene/__init__.py
+    - scripts/verify/architecture_intent_registry_single_owner_guard.py
+    - scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+    - scripts/verify/architecture_platform_policy_constant_owner_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 30
+  max_candidates: 40
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - remove_legacy_intent_register_fallback
+  - remove_scene_extension_fallback
+  - remove_industry_platform_policy_constant_ownership
+  - preserve_runtime_contracts
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1146
+  priority_lane: capability_platformization_closure
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core extension and capability boundary
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: keep scene access ownership and registration ownership in platform core.
+  reason: close remaining boundary gaps after capability platformization promotion.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1146.yaml
+    - python3 scripts/verify/architecture_intent_registry_single_owner_guard.py
+    - python3 scripts/verify/architecture_scene_bridge_industry_proxy_guard.py
+    - python3 scripts/verify/architecture_platform_policy_constant_owner_guard.py
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - platform boundary closure for intent/scene/policy constants
+
+rollback:
+  - git restore addons/smart_core/core/extension_loader.py
+  - git restore addons/smart_core/handlers/scene_package.py
+  - git restore addons/smart_core/handlers/scene_governance.py
+  - git restore addons/smart_core/handlers/scene_packages_installed.py
+  - git restore addons/smart_construction_core/core_extension.py
+
+depends_on:
+  - ITER-2026-04-05-1145

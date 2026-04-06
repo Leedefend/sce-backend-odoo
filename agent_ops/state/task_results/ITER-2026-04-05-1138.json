@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-05-1138",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1138.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "capture_default_env": "PASS_WITH_RISK",
+    "verify_controller_boundary_guard": "PASS",
+    "capture_trusted_env": "PASS"
+  },
+  "artifacts": {
+    "default_capture_report": "artifacts/capability_payload_capture_1138/latest/capture_report.json",
+    "trusted_capture_report": "artifacts/capability_payload_capture_1138_trusted/latest/capture_report.json",
+    "trusted_diff_report": "artifacts/capability_payload_capture_1138_trusted/20260406T102526/capability_payload_v1_v2_diff_snapshot.json"
+  },
+  "next_step": "Repeat trusted capture on target business runtime lane with expected capability rows and archive into release evidence index."
+}

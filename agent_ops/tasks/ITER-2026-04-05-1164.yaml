@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-05-1164
+title: Promote capability projection governance gate into restricted default lane
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Wire capability projection governance gate into the restricted default lane
+  entry (`ci.preflight.contract`) for consistent CI default enforcement.
+
+user_visible_outcome:
+  - "restricted 默认入口显式包含 capability governance gate"
+  - "CI preflight 执行路径治理一致"
+
+scope:
+  allowed_paths:
+    - Makefile
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 8
+  max_candidates: 12
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - makefile_governance_wiring_only
+  - no_runtime_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: approved_after_1163
+  priority_lane: governance_promotion
+
+architecture:
+  layer_target: Governance Monitoring
+  module: Makefile CI preflight wiring
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: preflight lane must enforce orchestrated capability governance by default.
+  reason: make restricted default lane explicitly include capability governance gate.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1164.yaml
+    - make verify.architecture.capability_projection_governance_gate
+    - make ci.preflight.contract
+    - make verify.controller.boundary.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - restricted default lane governance wiring
+
+rollback:
+  - git restore Makefile
+  - git restore agent_ops/tasks/ITER-2026-04-05-1164.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1164.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1164.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1163
+

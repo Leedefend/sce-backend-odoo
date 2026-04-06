@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1172
+title: Add system_init nav_meta ui_base_contract coverage counters
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Resolve scene base-contract asset coverage guard by emitting required
+  ui_base_contract coverage counters into system_init nav_meta.
+
+user_visible_outcome:
+  - "verify.scene.base_contract_asset_coverage.guard 通过"
+  - "ci.preflight.contract 继续推进"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/system_init.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+
+limits:
+  max_files: 6
+  max_candidates: 10
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - nav_meta_coverage_fields_only
+  - no_scene_runtime_contract_shape_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_continue_execute
+  priority_lane: ci_unblock
+
+architecture:
+  layer_target: Governance Monitoring
+  module: system_init handler nav_meta
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: expose existing bind_scene_assets metrics via nav_meta for guard coverage.
+  reason: resolve verify.scene.base_contract_asset_coverage.guard stop condition.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1172.yaml
+    - make verify.scene.base_contract_asset_coverage.guard
+    - make ci.preflight.contract
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - system_init nav_meta includes ui_base_contract coverage counters
+
+rollback:
+  - git restore addons/smart_core/handlers/system_init.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1172.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1172.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1172.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1171
+

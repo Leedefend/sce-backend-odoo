@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1147
+title: Integrate boundary closure guards into restricted CI baseline
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Wire architecture boundary closure guards into CI preflight and restricted
+  delivery readiness chain so the closure becomes mandatory in baseline gates.
+
+user_visible_outcome:
+  - "三条边界守卫进入 CI baseline（preflight + restricted readiness）"
+
+scope:
+  allowed_paths:
+    - Makefile
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 12
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - wire_existing_guards_only
+  - no_runtime_business_semantic_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1147
+  priority_lane: boundary_closure_ci_enforcement
+
+architecture:
+  layer_target: Governance Monitoring
+  module: Makefile CI baseline wiring
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: ensure restricted CI path enforces boundary closure guards.
+  reason: lock completed boundary closure into mandatory CI and restricted baseline.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1147.yaml
+    - make verify.architecture.platformization_boundary_closure_bundle
+    - make verify.controller.boundary.guard
+    - rg -n "verify.architecture.platformization_boundary_closure_bundle" Makefile
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - Makefile guard bundle wiring for restricted baseline and CI preflight
+
+rollback:
+  - git restore Makefile
+  - git restore agent_ops/tasks/ITER-2026-04-05-1147.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1147.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1147.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1146

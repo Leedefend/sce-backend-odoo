@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-05-1136
+title: Capture real-env capability payload snapshots with v2 toggle off/on
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Execute controlled capability payload capture in real runtime by toggling
+  smart_core.capability_registry_query_v2_enabled off/on, archive v1/v2 payload
+  snapshots and generate machine-readable diff evidence.
+
+user_visible_outcome:
+  - "输出实环境 capability v1/v2 抓取证据与差异快照，支持开关上线 gate"
+
+scope:
+  allowed_paths:
+    - scripts/verify/capability_payload_real_env_capture.py
+    - docs/ops/iterations/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - artifacts/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 10
+  max_candidates: 10
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verification_script_only
+  - no_runtime_code_semantic_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1136
+  priority_lane: rollout_gating
+
+architecture:
+  layer_target: Governance Monitoring
+  module: scripts/verify
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: gather runtime rollout evidence without changing business facts.
+  reason: produce off/on toggle evidence and diff for guarded rollout decision.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1136.yaml
+    - python3 -m py_compile scripts/verify/capability_payload_real_env_capture.py
+    - python3 scripts/verify/capability_payload_real_env_capture.py --out-dir artifacts/capability_payload_capture_1136 --allow-env-unstable --request-timeout-sec 5
+    - rg -n '"env_status"|"diff_report"|"v1_payload"|"v2_payload"' artifacts/capability_payload_capture_1136/latest/capture_report.json
+    - make verify.controller.boundary.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - scripts/verify/capability_payload_real_env_capture.py
+
+rollback:
+  - git restore scripts/verify/capability_payload_real_env_capture.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1136.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1136.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1136.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1135

@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1173
+title: Restore explicit scene_ready_contract_v1 assignment in system_init
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Resolve scene orchestrator output schema guard by ensuring system_init
+  explicitly assigns scene_ready_contract_v1 on the response payload.
+
+user_visible_outcome:
+  - "verify.scene.orchestrator.output.schema.guard 通过"
+  - "ci.preflight.contract 继续推进"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/system_init.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+
+limits:
+  max_files: 6
+  max_candidates: 10
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - explicit_scene_ready_contract_assignment_only
+  - no_scene_contract_payload_shape_regression
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_continue_execute
+  priority_lane: ci_unblock
+
+architecture:
+  layer_target: Scenario Orchestration Runtime
+  module: system_init scene runtime surface
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: expose existing scene-ready contract payload under required key.
+  reason: resolve verify.scene.orchestrator.output.schema.guard stop condition.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1173.yaml
+    - make verify.scene.orchestrator.output.schema.guard
+    - make ci.preflight.contract
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - system_init contains explicit data["scene_ready_contract_v1"] assignment
+
+rollback:
+  - git restore addons/smart_core/handlers/system_init.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1173.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1173.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1173.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1172
+

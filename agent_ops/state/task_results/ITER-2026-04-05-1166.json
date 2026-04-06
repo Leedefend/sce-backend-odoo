@@ -1,0 +1,30 @@
+{
+  "task_id": "ITER-2026-04-05-1166",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1166.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_contract_drift_guard": "PASS",
+    "ci_preflight_contract": "FAIL"
+  },
+  "failure": {
+    "gate": "verify.backend.boundary_guard",
+    "reason": "smart_core_extend_system_init ext_facts namespace boundary violation",
+    "evidence": [
+      "addons/smart_construction_core/core_extension.py"
+    ]
+  },
+  "changed_files": [
+    "addons/smart_core/handlers/load_contract.py",
+    "addons/smart_construction_core/handlers/reason_codes.py",
+    "addons/smart_construction_core/handlers/project_plan_bootstrap_enter.py",
+    "addons/smart_construction_core/handlers/project_dashboard_enter.py",
+    "addons/smart_construction_core/handlers/project_connection_transition.py",
+    "addons/smart_construction_core/handlers/project_execution_advance.py",
+    "addons/smart_construction_core/handlers/project_initiation_enter.py",
+    "addons/smart_construction_core/handlers/project_execution_enter.py"
+  ],
+  "next_step": "Open dedicated boundary remediation batch for smart_core_extend_system_init ext_facts namespace compliance, then rerun ci.preflight.contract."
+}
+

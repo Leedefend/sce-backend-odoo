@@ -1,0 +1,98 @@
+task_id: ITER-2026-04-05-1142
+title: Platformize capability model schema and projection core
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Upgrade app_config_engine capability core from minimal catalog shape to
+  platformized capability asset shape by hardening schema normalization,
+  ownership semantics, merge behavior, and projection fields.
+
+user_visible_outcome:
+  - "能力模型升级为平台资产结构（identity/ownership/binding/policy/runtime/audit）并可稳定投影"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+    - addons/smart_core/app_config_engine/capability/schema/policy_schema.py
+    - addons/smart_core/app_config_engine/capability/core/merge_engine.py
+    - addons/smart_core/app_config_engine/capability/projection/capability_list_projection.py
+    - addons/smart_core/app_config_engine/capability/projection/capability_matrix_projection.py
+    - addons/smart_core/app_config_engine/capability/lint/schema_lint.py
+    - docs/ops/iterations/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 12
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_schema_upgrade
+  - no_business_model_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1142
+  priority_lane: platformization
+
+architecture:
+  layer_target: Platform Layer
+  module: app_config_engine.capability
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: capability as platform semantic asset for runtime consumption.
+  reason: return to main objective and solidify platform capability model.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1142.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/capability/schema/capability_schema.py addons/smart_core/app_config_engine/capability/schema/policy_schema.py addons/smart_core/app_config_engine/capability/core/merge_engine.py addons/smart_core/app_config_engine/capability/projection/capability_list_projection.py addons/smart_core/app_config_engine/capability/projection/capability_matrix_projection.py addons/smart_core/app_config_engine/capability/lint/schema_lint.py
+    - rg -n "ALLOWED_TYPES|_normalize_runtime|_normalize_audit|PATCHABLE_DICT_KEYS|by_status|by_tier" addons/smart_core/app_config_engine/capability/schema/capability_schema.py addons/smart_core/app_config_engine/capability/core/merge_engine.py addons/smart_core/app_config_engine/capability/projection/capability_matrix_projection.py
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+  - addons/smart_core/app_config_engine/capability/core/merge_engine.py
+  - addons/smart_core/app_config_engine/capability/projection/capability_list_projection.py
+  - addons/smart_core/app_config_engine/capability/projection/capability_matrix_projection.py
+
+rollback:
+  - git restore addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+  - git restore addons/smart_core/app_config_engine/capability/schema/policy_schema.py
+  - git restore addons/smart_core/app_config_engine/capability/core/merge_engine.py
+  - git restore addons/smart_core/app_config_engine/capability/projection/capability_list_projection.py
+  - git restore addons/smart_core/app_config_engine/capability/projection/capability_matrix_projection.py
+  - git restore addons/smart_core/app_config_engine/capability/lint/schema_lint.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1142.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1142.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1142.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1141

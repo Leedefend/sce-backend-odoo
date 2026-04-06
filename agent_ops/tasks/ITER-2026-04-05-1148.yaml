@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-05-1148
+title: Introduce native capability ingestion layer phase-1
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Implement phase-1 native capability ingestion for Odoo menu and window action
+  objects and merge projected rows into platform capability registry build path.
+
+user_visible_outcome:
+  - "平台能力注册支持原生菜单/窗口动作投影接入"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/capability/native/**
+    - addons/smart_core/app_config_engine/capability/core/contribution_loader.py
+    - addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 12
+  max_candidates: 20
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - native_projection_phase_1_only
+  - no_business_semantic_rewrite
+  - additive_registry_ingestion
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1148
+  priority_lane: native_capability_ingestion
+
+architecture:
+  layer_target: Platform Layer
+  module: app_config_engine.capability.native
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: unify native entry semantics into platform capability projection without changing domain facts.
+  reason: close capability platformization gap between declared and native executable surfaces.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1148.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/capability/native/__init__.py addons/smart_core/app_config_engine/capability/native/menu_adapter.py addons/smart_core/app_config_engine/capability/native/action_adapter.py addons/smart_core/app_config_engine/capability/native/native_projection_service.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+    - make verify.architecture.platformization_boundary_closure_bundle
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - native ingestion adapter and projection service
+  - registry loader integration
+
+rollback:
+  - git restore addons/smart_core/app_config_engine/capability/native
+  - git restore addons/smart_core/app_config_engine/capability/core/contribution_loader.py
+  - git restore addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1148.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1148.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1148.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1147

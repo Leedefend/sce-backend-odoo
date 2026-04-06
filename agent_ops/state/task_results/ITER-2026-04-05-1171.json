@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-04-05-1171",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1171.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_scene_legacy_endpoint_guard": "PASS",
+    "ci_preflight_contract": "FAIL"
+  },
+  "failure": {
+    "gate": "verify.scene.base_contract_asset_coverage.guard",
+    "reason": "system_init nav_meta missing required ui_base_contract_* coverage fields",
+    "evidence": [
+      "addons/smart_core/handlers/system_init.py"
+    ]
+  },
+  "changed_files": [
+    "scripts/verify/legacy_scene_endpoint_guard.py"
+  ],
+  "next_step": "Open dedicated batch to add required system_init nav_meta ui_base_contract coverage fields and rerun ci.preflight.contract."
+}
+
