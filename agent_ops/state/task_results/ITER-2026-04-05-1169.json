@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-05-1169",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1169.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_scene_provider_guard": "PASS",
+    "ci_preflight_contract": "FAIL"
+  },
+  "failure": {
+    "gate": "verify.scene.contract_v1.field_schema.guard",
+    "reason": "live fetch timeout while validating scene contract v1 field schema",
+    "evidence": [
+      "artifacts/backend/scene_contract_v1_field_schema_report.json",
+      "artifacts/backend/scene_contract_v1_field_schema_report.md"
+    ]
+  },
+  "changed_files": [
+    "addons/smart_core/handlers/app_shell.py"
+  ],
+  "next_step": "Open dedicated remediation batch for scene_contract_v1.field_schema live-fetch timeout handling, then rerun ci.preflight.contract."
+}
+

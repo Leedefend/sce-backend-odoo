@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-05-1149
+title: Freeze unified architecture spec for native-resolver-capability-intent
+type: governance
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Formalize architecture relationships between Native Truth, Parse/Resolve,
+  Capability Registry, Intent Runtime, and Contract/Orchestration into
+  normative docs for subsequent implementation batches.
+
+user_visible_outcome:
+  - "原生对象/解析服务/能力系统/意图系统统一规范冻结"
+
+scope:
+  allowed_paths:
+    - docs/refactor/native_to_capability_projection_spec_v1.md
+    - docs/refactor/capability_intent_binding_spec_v1.md
+    - docs/refactor/parser_resolver_boundary_spec_v1.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 10
+  max_candidates: 12
+  max_output_lines: 300
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - docs_only_architecture_freeze
+  - no_code_behavior_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1149
+  priority_lane: architecture_specification
+
+architecture:
+  layer_target: Governance Monitoring
+  module: docs/refactor
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: freeze cross-layer ownership and binding contracts before next implementation stages.
+  reason: avoid semantic drift between native resolver, capability registry, and intent runtime.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1149.yaml
+    - rg -n "Native Truth Layer|Parse / Resolve Layer|Capability Registry Layer|Intent" docs/refactor/native_to_capability_projection_spec_v1.md
+    - rg -n "Capability -> Intent Binding|primary_intent|secondary_intents" docs/refactor/capability_intent_binding_spec_v1.md
+    - rg -n "Resolver should|Resolver should not|禁止" docs/refactor/parser_resolver_boundary_spec_v1.md
+    - make verify.architecture.platformization_boundary_closure_bundle
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - three frozen architecture specs for native/capability/intent/resolver boundaries
+
+rollback:
+  - git restore docs/refactor/native_to_capability_projection_spec_v1.md
+  - git restore docs/refactor/capability_intent_binding_spec_v1.md
+  - git restore docs/refactor/parser_resolver_boundary_spec_v1.md
+  - git restore agent_ops/tasks/ITER-2026-04-05-1149.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1149.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1149.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1148

@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-05-1145
+title: Add guard for unintended legacy fallback usage when disabled
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Add architecture guard to fail when capability runtime path drifts back to
+  implicit legacy fallback while legacy fallback toggle is disabled by default.
+
+user_visible_outcome:
+  - "新增 legacy fallback 使用守卫，确保默认关闭时不会隐式回退"
+
+scope:
+  allowed_paths:
+    - scripts/verify/architecture_capability_legacy_fallback_usage_guard.py
+    - docs/ops/iterations/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - artifacts/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 8
+  max_candidates: 10
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - guard_script_only
+  - no_runtime_semantic_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1145
+  priority_lane: platformization_guard
+
+architecture:
+  layer_target: Governance Monitoring
+  module: scripts/verify
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: enforce default platform query ownership by static guard.
+  reason: prevent accidental regression to implicit legacy fallback behavior.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1145.yaml
+    - python3 -m py_compile scripts/verify/architecture_capability_legacy_fallback_usage_guard.py
+    - python3 scripts/verify/architecture_capability_legacy_fallback_usage_guard.py
+    - make verify.controller.boundary.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - scripts/verify/architecture_capability_legacy_fallback_usage_guard.py
+
+rollback:
+  - git restore scripts/verify/architecture_capability_legacy_fallback_usage_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1145.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1145.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1145.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1144

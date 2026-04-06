@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-04-05-1136",
+  "status": "PASS_WITH_RISK",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1136.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "py_compile": "PASS",
+    "real_env_capture": "PASS_WITH_RISK",
+    "verify_controller_boundary_guard": "PASS"
+  },
+  "artifacts": {
+    "capture_report": "artifacts/capability_payload_capture_1136/latest/capture_report.json",
+    "capture_dir": "artifacts/capability_payload_capture_1136/20260406T101213"
+  },
+  "risk": {
+    "classification": "ENV_UNSTABLE",
+    "detail": "Remote end closed connection without response"
+  },
+  "next_step": "Restore runtime endpoint health and rerun capability_payload_real_env_capture.py to obtain trusted v1/v2 diff evidence."
+}

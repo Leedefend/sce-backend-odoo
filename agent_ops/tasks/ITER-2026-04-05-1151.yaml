@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-05-1151
+title: Native capability ingestion phase-3 server report view-binding and lint bundle
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Implement phase-3 native projection for server actions, reports, and view
+  bindings, and add a native ingestion lint bundle guard target.
+
+user_visible_outcome:
+  - "原生 server action/report/view binding 能力投影接入完成"
+  - "native ingestion lint bundle 守卫可执行"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/capability/native/**
+    - addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+    - scripts/verify/architecture_native_capability_ingestion_lint_bundle.py
+    - Makefile
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 16
+  max_candidates: 28
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - native_phase3_projection_only
+  - additive_lint_bundle_guard
+  - no_business_semantics_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1151
+  priority_lane: native_capability_ingestion_phase3
+
+architecture:
+  layer_target: Platform Layer
+  module: app_config_engine.capability.native
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: server/report/view binding are orchestration-consumed semantic bindings projected from native facts.
+  reason: complete native projection families under frozen architecture specs.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1151.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/capability/native/__init__.py addons/smart_core/app_config_engine/capability/native/server_action_adapter.py addons/smart_core/app_config_engine/capability/native/report_adapter.py addons/smart_core/app_config_engine/capability/native/view_binding_adapter.py addons/smart_core/app_config_engine/capability/native/native_projection_service.py addons/smart_core/app_config_engine/capability/schema/capability_schema.py scripts/verify/architecture_native_capability_ingestion_lint_bundle.py
+    - make verify.architecture.native_capability_ingestion_guard
+    - make verify.architecture.native_capability_ingestion_lint_bundle
+    - make verify.architecture.platformization_boundary_closure_bundle
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - server action/report/view-binding native projection adapters
+  - native ingestion lint bundle guard
+
+rollback:
+  - git restore addons/smart_core/app_config_engine/capability/native
+  - git restore addons/smart_core/app_config_engine/capability/schema/capability_schema.py
+  - git restore scripts/verify/architecture_native_capability_ingestion_lint_bundle.py
+  - git restore Makefile
+  - git restore agent_ops/tasks/ITER-2026-04-05-1151.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1151.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1151.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1150

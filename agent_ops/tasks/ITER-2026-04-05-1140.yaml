@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-05-1140
+title: Diagnose capability empty-count root cause via code path and DB upgrade state
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Determine why capability capture showed empty counts by first auditing code
+  extraction path correctness, then checking database/module upgrade/runtime state,
+  and produce verifiable root-cause conclusion.
+
+user_visible_outcome:
+  - "明确空 capability 的代码根因与数据库升级状态结论，并修正抓取口径"
+
+scope:
+  allowed_paths:
+    - scripts/verify/capability_payload_real_env_capture.py
+    - docs/ops/iterations/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - artifacts/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 10
+  max_candidates: 12
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - bounded_code_and_db_diagnosis
+  - no_business_semantic_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_approved_1140
+  priority_lane: root_cause
+
+architecture:
+  layer_target: Governance Monitoring
+  module: runtime_capture_evidence
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: validate runtime payload shape and upgrade-state impact.
+  reason: user-requested root cause isolation sequence (code then db upgrade).
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1140.yaml
+    - python3 -m py_compile scripts/verify/capability_payload_real_env_capture.py
+    - E2E_BASE_URL=http://127.0.0.1:18069 E2E_DB=sc_prod_sim E2E_LOGIN=admin E2E_PASSWORD=admin python3 scripts/verify/capability_payload_real_env_capture.py --out-dir artifacts/capability_payload_capture_1140 --request-timeout-sec 8
+    - rg -n '"env_status"|"v1_count"|"v2_count"|"diff_report"' artifacts/capability_payload_capture_1140/latest/capture_report.json
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - scripts/verify/capability_payload_real_env_capture.py
+  - artifacts/capability_payload_capture_1140/latest/capture_report.json
+
+rollback:
+  - git restore scripts/verify/capability_payload_real_env_capture.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1140.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1140.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1140.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1139

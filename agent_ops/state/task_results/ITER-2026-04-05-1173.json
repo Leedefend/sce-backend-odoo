@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-04-05-1173",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1173.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_scene_orchestrator_output_schema_guard": "PASS",
+    "ci_preflight_contract": "FAIL"
+  },
+  "failure": {
+    "gate": "verify.scene.orchestrator.base_fact_binding.guard",
+    "reason": "system_init missing bind_scene_assets call",
+    "evidence": [
+      "addons/smart_core/handlers/system_init.py"
+    ]
+  },
+  "changed_files": [
+    "addons/smart_core/handlers/system_init.py"
+  ],
+  "next_step": "Open dedicated batch to restore explicit bind_scene_assets call path visibility in system_init and rerun ci.preflight.contract."
+}
+

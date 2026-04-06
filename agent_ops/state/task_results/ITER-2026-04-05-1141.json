@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-04-05-1141",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1141.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "py_compile": "PASS",
+    "lane_readiness_guarded_capture": "PASS",
+    "verify_controller_boundary_guard": "PASS"
+  },
+  "artifacts": {
+    "capture_report": "artifacts/capability_payload_capture_1141/latest/capture_report.json",
+    "diff_report": "artifacts/capability_payload_capture_1141/20260406T105542/capability_payload_v1_v2_diff_snapshot.json"
+  },
+  "next_step": "Adopt --require-lane-ready in release evidence pipeline defaults to prevent false-empty captures."
+}

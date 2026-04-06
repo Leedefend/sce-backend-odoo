@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1160
+title: Freeze native projection release guard governance checklist
+type: governance
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Freeze one-file governance checklist mapping native projection release bundle
+  guards to risk class and owner module for operational handoff.
+
+user_visible_outcome:
+  - "release guard 治理清单文档冻结"
+  - "风险等级与 owner 映射明确"
+
+scope:
+  allowed_paths:
+    - docs/refactor/native_capability_projection_release_guard_governance_checklist_v1.md
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 8
+  max_candidates: 12
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - docs_governance_only
+  - no_runtime_code_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: continuous_iteration_1159_next_step
+  priority_lane: native_capability_phase4_governance
+
+architecture:
+  layer_target: Governance Monitoring
+  module: docs/refactor
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: governance checklist supports stable release decisions for orchestrated capability surfaces.
+  reason: codify release-bundle controls as operational checklist.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1160.yaml
+    - make verify.architecture.native_capability_projection_release_guard_bundle
+    - make verify.controller.boundary.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - native projection release guard governance checklist
+
+rollback:
+  - git restore docs/refactor/native_capability_projection_release_guard_governance_checklist_v1.md
+  - git restore agent_ops/tasks/ITER-2026-04-05-1160.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1160.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1160.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1159
+

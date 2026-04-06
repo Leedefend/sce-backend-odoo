@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-04-05-1172",
+  "status": "FAIL",
+  "report": "agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1172.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_scene_base_contract_asset_coverage_guard": "PASS",
+    "ci_preflight_contract": "FAIL"
+  },
+  "failure": {
+    "gate": "verify.scene.orchestrator.output.schema.guard",
+    "reason": "system_init missing scene_ready_contract_v1 assignment",
+    "evidence": [
+      "addons/smart_core/handlers/system_init.py"
+    ]
+  },
+  "changed_files": [
+    "addons/smart_core/handlers/system_init.py"
+  ],
+  "next_step": "Open dedicated batch to restore explicit scene_ready_contract_v1 assignment path in system_init and rerun ci.preflight.contract."
+}
+

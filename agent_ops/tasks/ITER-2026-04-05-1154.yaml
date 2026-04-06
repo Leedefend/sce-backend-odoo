@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-05-1154
+title: Native capability type-to-intent runtime exposure wiring phase-4
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Implement phase-4 minimum runtime exposure wiring by centralizing native
+  capability type-to-intent mapping and exposure projection in platform
+  capability projection services.
+
+user_visible_outcome:
+  - "native capability 输出含统一 runtime exposure"
+  - "native type 缺省 intent 由平台投影层统一补全"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/capability/projection/**
+    - addons/smart_core/app_config_engine/capability/services/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+
+limits:
+  max_files: 10
+  max_candidates: 20
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - additive_projection_wiring_only
+  - no_domain_business_semantics_change
+  - no_scene_internal_dependency
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: continuous_iteration_1153_next_step
+  priority_lane: native_capability_phase4_implementation
+
+architecture:
+  layer_target: Platform Layer
+  module: app_config_engine.capability.projection
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: runtime exposure mapping is orchestration semantics for consumption.
+  reason: unify native capability runtime exposure without reintroducing industry bridge ownership.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1154.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/capability/projection/capability_runtime_exposure.py addons/smart_core/app_config_engine/capability/projection/capability_list_projection.py addons/smart_core/app_config_engine/capability/projection/workspace_projection.py addons/smart_core/app_config_engine/capability/services/capability_query_service.py addons/smart_core/app_config_engine/capability/services/capability_runtime_service.py
+    - make verify.architecture.native_capability_projection_release_guard_bundle
+    - make verify.controller.boundary.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - phase-4 projection runtime exposure wiring
+
+rollback:
+  - git restore addons/smart_core/app_config_engine/capability/projection
+  - git restore addons/smart_core/app_config_engine/capability/services
+  - git restore agent_ops/tasks/ITER-2026-04-05-1154.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1154.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1154.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1153
+

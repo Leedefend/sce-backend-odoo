@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1176
+title: Reconcile scene legacy contract guard with current controller ownership
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Resolve verify.scene.legacy_contract.guard failure by aligning guard target
+  with the current legacy scene endpoint implementation location.
+
+user_visible_outcome:
+  - "verify.scene.legacy_contract.guard 通过"
+  - "ci.preflight.contract 继续推进"
+
+scope:
+  allowed_paths:
+    - scripts/verify/scene_legacy_contract_guard.py
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+
+limits:
+  max_files: 6
+  max_candidates: 10
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - guard_target_path_alignment_only
+  - no_runtime_behavior_change
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: user_continue_execute
+  priority_lane: ci_unblock
+
+architecture:
+  layer_target: Governance Monitoring
+  module: scene legacy contract guard
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: guard should validate actual owner file of legacy endpoint contract.
+  reason: resolve verify.scene.legacy_contract.guard stop condition.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1176.yaml
+    - make verify.scene.legacy_contract.guard
+    - make ci.preflight.contract
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - scene_legacy_contract_guard points to current legacy endpoint source file
+
+rollback:
+  - git restore scripts/verify/scene_legacy_contract_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-05-1176.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1176.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1176.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1175
+

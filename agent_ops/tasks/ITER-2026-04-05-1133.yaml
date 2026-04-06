@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-05-1133
+title: Batch-B scaffold app_config_engine capability registry core
+type: implementation
+status: active
+priority: high
+mode: execute
+
+goal: >
+  Scaffold Capability Registry Core under app_config_engine capability subdomain,
+  including schema/core/services/lint/projection baseline modules.
+
+user_visible_outcome:
+  - "app_config_engine/capability 基础骨架可用，后续可承接合并与运行时接管"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/capability/**
+    - agent_ops/tasks/**
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - migrations/**
+    - deploy/**
+
+limits:
+  max_files: 40
+  max_candidates: 20
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - scaffold_only_no_runtime_switch
+  - no_industry_registry_owner
+
+context:
+  branch: codex/next-round
+  baseline_sha: da08944
+  explicit_user_authorization: true
+  input_from: batch_b_execution
+  priority_lane: platform_registry_upgrade
+
+architecture:
+  layer_target: Platform Layer
+  module: app_config_engine.capability
+  module_owner: platform
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: capability projection is semantic supply for generic consumers.
+  reason: execute Batch-B core scaffolding from design v1.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-05-1133.yaml
+    - python3 -m py_compile addons/smart_core/app_config_engine/capability/__init__.py addons/smart_core/app_config_engine/capability/schema/capability_schema.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/merge_engine.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/app_config_engine/capability/services/capability_query_service.py addons/smart_core/app_config_engine/capability/services/capability_runtime_service.py
+    - bash -lc 'rg -n "class CapabilityRegistry|def load_capability_contributions|def merge_capability_contributions|class CapabilityRegistryService" addons/smart_core/app_config_engine/capability'
+    - make verify.controller.boundary.guard
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - addons/smart_core/app_config_engine/capability/
+
+rollback:
+  - git restore addons/smart_core/app_config_engine/capability
+  - git restore agent_ops/tasks/ITER-2026-04-05-1133.yaml
+  - git restore agent_ops/reports/2026-04-05/report.ITER-2026-04-05-1133.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-05-1133.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-05-1132
