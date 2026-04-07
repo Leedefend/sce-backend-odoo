@@ -19,7 +19,14 @@ class ProjectDictionary(models.Model):
         [
             # 既有类型（保持兼容）
             ("project_type", "项目类型"),
+            ("project_status", "项目状态"),
+            ("project_stage", "项目阶段"),
+            ("task_type", "任务类型"),
+            ("task_status", "任务状态"),
             ("cost_item", "成本项"),
+            ("payment_category", "付款类别"),
+            ("settlement_category", "结算类别"),
+            ("contract_category", "合同类别"),
             ("uom", "计量单位"),
             # 新增：定额体系四层结构
             ("discipline", "专业"),

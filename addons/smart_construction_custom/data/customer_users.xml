@@ -278,5 +278,35 @@
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
+
+        <record id="user_sc_baosheng_outsider_seed" model="res.users">
+            <field name="name">外部观察员</field>
+            <field name="login">outsider_seed</field>
+            <field name="phone">13500000000</field>
+            <field name="active" eval="True"/>
+            <field name="share" eval="False"/>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_admin"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="user_sc_baosheng_wutao" model="res.users">
+            <field name="password">demo</field>
+        </record>
+        <record id="user_sc_baosheng_xiaohuijiu" model="res.users">
+            <field name="password">demo</field>
+        </record>
+        <record id="user_sc_baosheng_shuiwujingbanren" model="res.users">
+            <field name="password">demo</field>
+        </record>
+        <record id="user_sc_baosheng_wennan" model="res.users">
+            <field name="password">demo</field>
+        </record>
+        <record id="user_sc_baosheng_outsider_seed" model="res.users">
+            <field name="password">demo</field>
+        </record>
     </data>
 </odoo>

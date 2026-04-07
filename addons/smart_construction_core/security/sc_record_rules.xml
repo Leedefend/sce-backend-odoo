@@ -35,7 +35,7 @@
         <record id="rule_sc_project_read_project_project" model="ir.rule">
             <field name="name">SC Project Read - project.project member only</field>
             <field name="model_id" ref="project.model_project_project"/>
-            <field name="domain_force">['|', ('user_id', '=', user.id), ('message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('user_id', '=', user.id), ('create_uid', '=', user.id), ('project_manager_user_id', '=', user.id), ('technical_lead_user_id', '=', user.id), ('business_lead_user_id', '=', user.id), ('cost_lead_user_id', '=', user.id), ('finance_contact_user_id', '=', user.id), ('project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
@@ -46,7 +46,7 @@
         <record id="rule_sc_project_user_project_project" model="ir.rule">
             <field name="name">SC Project User - project.project member only</field>
             <field name="model_id" ref="project.model_project_project"/>
-            <field name="domain_force">['|', ('user_id', '=', user.id), ('message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('user_id', '=', user.id), ('create_uid', '=', user.id), ('project_manager_user_id', '=', user.id), ('technical_lead_user_id', '=', user.id), ('business_lead_user_id', '=', user.id), ('cost_lead_user_id', '=', user.id), ('finance_contact_user_id', '=', user.id), ('project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -63,6 +63,43 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_project_base_user_project_project" model="ir.rule">
+            <field name="name">SC Base User - project.project member scope</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('user_id', '=', user.id), ('create_uid', '=', user.id), ('project_manager_user_id', '=', user.id), ('technical_lead_user_id', '=', user.id), ('business_lead_user_id', '=', user.id), ('cost_lead_user_id', '=', user.id), ('finance_contact_user_id', '=', user.id), ('project_member_ids.user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="rule_sc_project_global_project_project_isolation" model="ir.rule">
+            <field name="name">SC Global - project.project isolation</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="domain_force">
+                [(1,'=',1)] if (
+                    user.has_group('base.group_system')
+                    or user.has_group('project.group_project_manager')
+                    or user.has_group('smart_construction_core.group_sc_super_admin')
+                    or user.has_group('smart_construction_core.group_sc_cap_project_manager')
+                ) else ['|','|','|','|','|','|','|',
+                    ('user_id', '=', user.id),
+                    ('create_uid', '=', user.id),
+                    ('project_manager_user_id', '=', user.id),
+                    ('technical_lead_user_id', '=', user.id),
+                    ('business_lead_user_id', '=', user.id),
+                    ('cost_lead_user_id', '=', user.id),
+                    ('finance_contact_user_id', '=', user.id),
+                    ('project_member_ids.user_id', '=', user.id)
+                ]
+            </field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
         </record>
 
         <record id="rule_sc_project_read_project_risk" model="ir.rule">
@@ -140,12 +177,16 @@
             <field name="name">SC Project Read - project.task visible by project/assignee/follower</field>
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">
-                ['|','|',
+                ['|','|','|','|','|','|','|','|',
                     ('project_id.user_id','=',user.id),
-                    ('project_id.message_is_follower','=',True),
-                    '|',
-                        ('user_ids','in',[user.id]),
-                        ('message_is_follower','=',True)
+                    ('project_id.project_manager_user_id','=',user.id),
+                    ('project_id.technical_lead_user_id','=',user.id),
+                    ('project_id.business_lead_user_id','=',user.id),
+                    ('project_id.cost_lead_user_id','=',user.id),
+                    ('project_id.finance_contact_user_id','=',user.id),
+                    ('project_id.project_member_ids.user_id','=',user.id),
+                    ('user_ids','in',[user.id]),
+                    ('create_uid','=',user.id)
                 ]
             </field>
             <field name="perm_read" eval="True"/>
@@ -159,12 +200,16 @@
             <field name="name">SC Project User - project.task visible by project/assignee/follower</field>
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">
-                ['|','|',
+                ['|','|','|','|','|','|','|','|',
                     ('project_id.user_id','=',user.id),
-                    ('project_id.message_is_follower','=',True),
-                    '|',
-                        ('user_ids','in',[user.id]),
-                        ('message_is_follower','=',True)
+                    ('project_id.project_manager_user_id','=',user.id),
+                    ('project_id.technical_lead_user_id','=',user.id),
+                    ('project_id.business_lead_user_id','=',user.id),
+                    ('project_id.cost_lead_user_id','=',user.id),
+                    ('project_id.finance_contact_user_id','=',user.id),
+                    ('project_id.project_member_ids.user_id','=',user.id),
+                    ('user_ids','in',[user.id]),
+                    ('create_uid','=',user.id)
                 ]
             </field>
             <field name="perm_read" eval="True"/>
@@ -185,6 +230,116 @@
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
         </record>
 
+        <record id="rule_sc_project_base_user_project_task" model="ir.rule">
+            <field name="name">SC Base User - project.task member scope</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">
+                ['|','|','|','|','|','|','|','|',
+                    ('project_id.user_id','=',user.id),
+                    ('project_id.project_manager_user_id','=',user.id),
+                    ('project_id.technical_lead_user_id','=',user.id),
+                    ('project_id.business_lead_user_id','=',user.id),
+                    ('project_id.cost_lead_user_id','=',user.id),
+                    ('project_id.finance_contact_user_id','=',user.id),
+                    ('project_id.project_member_ids.user_id','=',user.id),
+                    ('user_ids','in',[user.id]),
+                    ('create_uid','=',user.id)
+                ]
+            </field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="rule_sc_project_global_project_task_isolation" model="ir.rule">
+            <field name="name">SC Global - project.task isolation</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">
+                [(1,'=',1)] if (
+                    user.has_group('base.group_system')
+                    or user.has_group('project.group_project_manager')
+                    or user.has_group('smart_construction_core.group_sc_super_admin')
+                    or user.has_group('smart_construction_core.group_sc_cap_project_manager')
+                ) else ['|','|','|','|','|','|','|','|',
+                    ('project_id.user_id','=',user.id),
+                    ('project_id.project_manager_user_id','=',user.id),
+                    ('project_id.technical_lead_user_id','=',user.id),
+                    ('project_id.business_lead_user_id','=',user.id),
+                    ('project_id.cost_lead_user_id','=',user.id),
+                    ('project_id.finance_contact_user_id','=',user.id),
+                    ('project_id.project_member_ids.user_id','=',user.id),
+                    ('user_ids','in',[user.id]),
+                    ('create_uid','=',user.id)
+                ]
+            </field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- =========================================================
+             成本中心：项目预算 / 成本台账 record rules
+             - read/user: 仅限负责或关注的项目
+             - manager: 放行全部
+        ========================================================== -->
+        <record id="rule_sc_cost_read_project_budget" model="ir.rule">
+            <field name="name">SC Cost Read - project.budget by project member</field>
+            <field name="model_id" ref="model_project_budget"/>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        </record>
+
+        <record id="rule_sc_cost_manager_project_budget" model="ir.rule">
+            <field name="name">SC Cost Manager - project.budget ALL</field>
+            <field name="model_id" ref="model_project_budget"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_cost_read_project_cost_ledger" model="ir.rule">
+            <field name="name">SC Cost Read - project.cost.ledger by project member</field>
+            <field name="model_id" ref="model_project_cost_ledger"/>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        </record>
+
+        <record id="rule_sc_cost_user_project_cost_ledger" model="ir.rule">
+            <field name="name">SC Cost User - project.cost.ledger by project member</field>
+            <field name="model_id" ref="model_project_cost_ledger"/>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user'))]"/>
+        </record>
+
+        <record id="rule_sc_cost_manager_project_cost_ledger" model="ir.rule">
+            <field name="name">SC Cost Manager - project.cost.ledger ALL</field>
+            <field name="model_id" ref="model_project_cost_ledger"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
+        </record>
+
         <!-- =========================================================
              财务中心：付款申请 record rules
              - read/user: 仅限负责或关注的项目
@@ -193,7 +348,7 @@
         <record id="rule_sc_finance_read_payment_request" model="ir.rule">
             <field name="name">SC Finance Read - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
@@ -204,7 +359,7 @@
         <record id="rule_sc_finance_user_payment_request" model="ir.rule">
             <field name="name">SC Finance User - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -231,7 +386,7 @@
         <record id="rule_sc_finance_read_payment_ledger" model="ir.rule">
             <field name="name">SC Finance Read - payment.ledger by project member</field>
             <field name="model_id" ref="model_payment_ledger"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
@@ -242,7 +397,7 @@
         <record id="rule_sc_finance_user_payment_ledger" model="ir.rule">
             <field name="name">SC Finance User - payment.ledger by project member</field>
             <field name="model_id" ref="model_payment_ledger"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -307,7 +462,7 @@
         <record id="rule_sc_settlement_read_order" model="ir.rule">
             <field name="name">SC Settlement Read - sc.settlement.order by project member</field>
             <field name="model_id" ref="model_sc_settlement_order"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
@@ -321,7 +476,7 @@
         <record id="rule_sc_settlement_user_order" model="ir.rule">
             <field name="name">SC Settlement User - sc.settlement.order by project member</field>
             <field name="model_id" ref="model_sc_settlement_order"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>

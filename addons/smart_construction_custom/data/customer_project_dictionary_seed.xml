@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="customer_project_dictionary_project_type_construction" model="project.dictionary">
+        <field name="name">施工项目</field>
+        <field name="code">CUST_PROJECT_TYPE_CONSTRUCTION</field>
+        <field name="type">project_type</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_type_maintenance" model="project.dictionary">
+        <field name="name">运维项目</field>
+        <field name="code">CUST_PROJECT_TYPE_MAINTENANCE</field>
+        <field name="type">project_type</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_status_planning" model="project.dictionary">
+        <field name="name">规划中</field>
+        <field name="code">CUST_PROJECT_STATUS_PLANNING</field>
+        <field name="type">project_status</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_status_active" model="project.dictionary">
+        <field name="name">执行中</field>
+        <field name="code">CUST_PROJECT_STATUS_ACTIVE</field>
+        <field name="type">project_status</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_status_done" model="project.dictionary">
+        <field name="name">已完成</field>
+        <field name="code">CUST_PROJECT_STATUS_DONE</field>
+        <field name="type">project_status</field>
+        <field name="sequence">30</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_stage_prepare" model="project.dictionary">
+        <field name="name">筹备阶段</field>
+        <field name="code">CUST_PROJECT_STAGE_PREPARE</field>
+        <field name="type">project_stage</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_stage_delivery" model="project.dictionary">
+        <field name="name">实施交付</field>
+        <field name="code">CUST_PROJECT_STAGE_DELIVERY</field>
+        <field name="type">project_stage</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_project_stage_acceptance" model="project.dictionary">
+        <field name="name">验收收尾</field>
+        <field name="code">CUST_PROJECT_STAGE_ACCEPTANCE</field>
+        <field name="type">project_stage</field>
+        <field name="sequence">30</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_task_type_delivery" model="project.dictionary">
+        <field name="name">交付任务</field>
+        <field name="code">CUST_TASK_TYPE_DELIVERY</field>
+        <field name="type">task_type</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_task_type_inspection" model="project.dictionary">
+        <field name="name">巡检任务</field>
+        <field name="code">CUST_TASK_TYPE_INSPECTION</field>
+        <field name="type">task_type</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_task_status_todo" model="project.dictionary">
+        <field name="name">待处理</field>
+        <field name="code">CUST_TASK_STATUS_TODO</field>
+        <field name="type">task_status</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_task_status_doing" model="project.dictionary">
+        <field name="name">进行中</field>
+        <field name="code">CUST_TASK_STATUS_DOING</field>
+        <field name="type">task_status</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_task_status_done" model="project.dictionary">
+        <field name="name">已完成</field>
+        <field name="code">CUST_TASK_STATUS_DONE</field>
+        <field name="type">task_status</field>
+        <field name="sequence">30</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_cost_item_labor" model="project.dictionary">
+        <field name="name">人工成本</field>
+        <field name="code">CUST_COST_ITEM_LABOR</field>
+        <field name="type">cost_item</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_cost_item_material" model="project.dictionary">
+        <field name="name">材料成本</field>
+        <field name="code">CUST_COST_ITEM_MATERIAL</field>
+        <field name="type">cost_item</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_payment_category_progress" model="project.dictionary">
+        <field name="name">进度付款</field>
+        <field name="code">CUST_PAYMENT_CATEGORY_PROGRESS</field>
+        <field name="type">payment_category</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_payment_category_final" model="project.dictionary">
+        <field name="name">尾款支付</field>
+        <field name="code">CUST_PAYMENT_CATEGORY_FINAL</field>
+        <field name="type">payment_category</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_settlement_category_stage" model="project.dictionary">
+        <field name="name">阶段结算</field>
+        <field name="code">CUST_SETTLEMENT_CATEGORY_STAGE</field>
+        <field name="type">settlement_category</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_settlement_category_final" model="project.dictionary">
+        <field name="name">竣工结算</field>
+        <field name="code">CUST_SETTLEMENT_CATEGORY_FINAL</field>
+        <field name="type">settlement_category</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_contract_category_construction" model="project.dictionary">
+        <field name="name">施工合同</field>
+        <field name="code">CUST_CONTRACT_CATEGORY_CONSTRUCTION</field>
+        <field name="type">contract_category</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_contract_category_service" model="project.dictionary">
+        <field name="name">服务合同</field>
+        <field name="code">CUST_CONTRACT_CATEGORY_SERVICE</field>
+        <field name="type">contract_category</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_uom_square_meter" model="project.dictionary">
+        <field name="name">平方米</field>
+        <field name="code">CUST_UOM_SQUARE_METER</field>
+        <field name="type">uom</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="customer_project_dictionary_uom_cubic_meter" model="project.dictionary">
+        <field name="name">立方米</field>
+        <field name="code">CUST_UOM_CUBIC_METER</field>
+        <field name="type">uom</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

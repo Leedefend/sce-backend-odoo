@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from . import payment_request
+from . import payment_ledger
+from . import project_member
 from . import project_core
 from . import purchase_extend
 from . import cost_domain
@@ -12,8 +15,6 @@ from . import material_plan
 from . import settlement_order
 from . import settlement
 from . import funding_baseline
-from . import payment_request
-from . import payment_ledger
 from . import project_dashboard
 from . import contract_recon_summary
 from . import project_risk
