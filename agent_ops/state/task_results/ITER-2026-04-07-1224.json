@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-07-1224",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1224.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "docker_stop_odoo_paas_web": "PASS",
+    "make_odoo_recreate": "PASS",
+    "verify.scene.legacy_auth.runtime_probe": "PASS",
+    "verify.scene.legacy_contract.guard": "PASS",
+    "verify.test_seed_dependency.guard": "PASS",
+    "verify.scene.legacy_auth.smoke.semantic": "PASS"
+  },
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-07-1224.yaml",
+    "docs/audit/native/native_runtime_environment_repair_lane_batch11_release_recreate_evidence_v1.md",
+    "docs/audit/native/native_next_stage_roadmap_v1.md",
+    "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1224.md",
+    "agent_ops/state/task_results/ITER-2026-04-07-1224.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "next_step": "Start batch12 focusing on 8069 application-entry behavior causing RemoteDisconnected while service is up."
+}

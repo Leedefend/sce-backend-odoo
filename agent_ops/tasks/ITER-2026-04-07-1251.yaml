@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-07-1251
+title: Add role transition-readiness evidence for payment and settlement
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Extend native business-fact stage gate with role transition-readiness evidence
+  for payment.request and project.settlement contract surfaces.
+
+user_visible_outcome:
+  - "补齐付款/结算流转就绪证据"
+  - "真实角色业务事实可用性门禁继续收敛"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1251.yaml
+    - scripts/verify/native_business_fact_role_transition_readiness_smoke.py
+    - Makefile
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1251.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1251.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify-gate-extension-only
+  - minimal-compatible-fix-only
+  - no unrelated refactor
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1250
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence
+  module: role transition-readiness verifier
+  module_owner: verify tooling
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Adds runtime evidence checks only, no business-fact mutation.
+  reason: >
+    Need additional evidence that role-facing payment/settlement contract surfaces
+    are transition-ready under real users.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1251.yaml
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_custom DB_NAME=sc_prod_sim
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - role transition-readiness evidence integrated in native business-fact stage gate
+
+depends_on:
+  - ITER-2026-04-07-1250
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1251.yaml
+  - git restore scripts/verify/native_business_fact_role_transition_readiness_smoke.py
+  - git restore Makefile
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1251.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1251.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

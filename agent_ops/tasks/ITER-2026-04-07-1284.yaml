@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-07-1284
+title: Payment isolation completion and project-member rule integration v1
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Execute Batch A/B objective: complete payment-settlement anchor isolation data
+  closure and integrate minimal project-organization access rules for
+  project/task with real-role verification.
+
+user_visible_outcome:
+  - "支付/结算对象具备 company/project 双锚点且历史空值修复"
+  - "项目/任务规则接入项目组织事实，非成员默认不可见"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1284.yaml
+    - addons/smart_construction_core/models/core/project_core.py
+    - addons/smart_construction_core/security/sc_record_rules.xml
+    - scripts/verify/native_business_fact_payment_settlement_anchor_data_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1284.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1284.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/ir.model.access.csv
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 7
+  max_output_lines: 300
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - high-risk-additive-only
+  - permission-governance-authority-path
+  - no-financial-semantics-change
+  - no-ci-long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1283
+
+architecture:
+  layer_target: Business-Fact Layer
+  module: payment-settlement isolation anchors + project/task minimal rules
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Required changes are business truth anchors and object access boundaries,
+    not frontend semantics.
+  reason: >
+    Deliver requested Batch A/B closure with explicit governance path and real
+    role verification.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1284.yaml
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_prod_sim
+    - DB_NAME=sc_prod_sim E2E_BASE_URL=http://localhost:18069 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo python3 scripts/verify/native_business_fact_payment_settlement_anchor_data_verify.py
+    - DB_NAME=sc_prod_sim E2E_BASE_URL=http://localhost:18069 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_OUTSIDER_LOGIN=outsider_seed ROLE_OUTSIDER_PASSWORD=demo STRICT_OUTSIDER_DENY=true python3 scripts/verify/native_business_fact_fixed_user_matrix_verify.py
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: high
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - acl_scope_uncertainty
+  - isolation_anchor_uncertainty
+
+deliverables:
+  - payment/settlement anchor data no-null closure
+  - project/task minimal rule integration proof with real roles
+
+depends_on:
+  - ITER-2026-04-07-1283
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1284.yaml
+  - git restore addons/smart_construction_core/models/core/project_core.py
+  - git restore addons/smart_construction_core/security/sc_record_rules.xml
+  - git restore scripts/verify/native_business_fact_payment_settlement_anchor_data_verify.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1284.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1284.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

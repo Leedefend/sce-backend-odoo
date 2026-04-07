@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-07-1295
+title: Normalize outsider verification sample semantics and freeze non-member deny conclusion
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Unify outsider sample semantics between fresh-install min-flow and non-member denial verifies,
+  eliminate stage evidence noise, and freeze default non-member deny conclusion.
+
+user_visible_outcome:
+  - "fresh_install_min_flow 与 non_member_denial 在 outsider 默认不可见结论上口径一致"
+  - "项目级默认拒绝结论从 PASS_WITH_RISK 推进为 PASS（若验证一致）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1295.yaml
+    - scripts/verify/native_business_fact_fresh_install_min_flow_verify.py
+    - docs/ops/project_org_isolation_acceptance_v1.md
+    - docs/ops/project_org_isolation_design_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1295.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1295.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 7
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify-sample-semantics-normalization-only
+  - no-new-rule-surface
+  - no-frontend-change
+  - no-business-topic-expansion
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  verification_db_primary: sc_prod_fresh_1292_b
+  verification_db_secondary: sc_prod_fresh_core_1293
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence
+  module: outsider verification sample semantics
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch changes only verification evidence orchestration and sample-user semantics,
+    without changing business facts, ACL/rules, or frontend contracts.
+  reason: >
+    Existing fresh min-flow uses outsider_seed and produces noisy project/task visibility
+    evidence inconsistent with dedicated non-member denial verification.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1295.yaml
+    - "audit_outsider_seed_groups_on_sc_prod_fresh_1292_b"
+    - DB_NAME=sc_prod_fresh_1292_b E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_OUTSIDER_PASSWORD=demo python3 scripts/verify/native_business_fact_fresh_install_min_flow_verify.py
+    - DB_NAME=sc_prod_fresh_1292_b E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_NON_MEMBER_PASSWORD=demo python3 scripts/verify/native_business_fact_non_member_denial_verify.py
+    - DB_NAME=sc_prod_fresh_core_1293 E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=admin ROLE_OWNER_PASSWORD=admin ROLE_OUTSIDER_PASSWORD=demo python3 scripts/verify/native_business_fact_fresh_install_min_flow_verify.py
+    - DB_NAME=sc_prod_fresh_core_1293 E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=admin ROLE_OWNER_PASSWORD=admin ROLE_NON_MEMBER_PASSWORD=demo python3 scripts/verify/native_business_fact_non_member_denial_verify.py
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - uncertainty_on_outsider_semantics
+
+deliverables:
+  - outsider_seed semantic audit evidence
+  - normalized outsider sample verify script
+  - frozen non-member deny conclusion docs
+
+depends_on:
+  - ITER-2026-04-07-1294
+
+rollback:
+  - git restore scripts/verify/native_business_fact_fresh_install_min_flow_verify.py
+  - git restore docs/ops/project_org_isolation_acceptance_v1.md
+  - git restore docs/ops/project_org_isolation_design_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1295.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1295.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

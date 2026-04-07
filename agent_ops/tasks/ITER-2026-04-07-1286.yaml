@@ -1,0 +1,99 @@
+task_id: ITER-2026-04-07-1286
+title: Legacy auth smoke strictification and budget-cost member rule sink v1
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Execute dual mainline: make scene_legacy_auth_smoke runtime reachability
+  gate strict-by-default with no fallback WARN in stage gate, and sink project
+  organization facts into budget/cost visibility boundaries with real-role
+  verification.
+
+user_visible_outcome:
+  - "scene_legacy_auth_smoke 运行不可达默认 FAIL，stage_gate 不再出现 fallback WARN"
+  - "project.budget/project.cost.ledger 纳入成员/负责人/创建人最小规则体系并通过真实角色验证"
+  - "剩余 6 条 project.company 缺口形成独立人工处理清单"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1286.yaml
+    - scripts/verify/scene_legacy_auth_smoke.py
+    - scripts/verify/scene_legacy_auth_smoke_semantic_verify.py
+    - addons/smart_construction_core/security/sc_record_rules.xml
+    - scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1286.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1286.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/ir.model.access.csv
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 8
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - high-risk-additive-only
+  - permission-governance-authority-path
+  - no-financial-semantics-change
+  - no-ci-long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1285
+
+architecture:
+  layer_target: Business-Fact Layer
+  module: legacy smoke gate strictification + budget/cost rule sink
+  module_owner: smart_construction_core and verify gate scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Changes adjust runtime verification semantics and object-access business
+    boundaries; no frontend contract branch and no financial business mutation.
+  reason: >
+    User requested dual-mainline iteration focused on deliverability blockers:
+    strict runtime reachability signal and project-member anchored budget/cost
+    access control.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1286.yaml
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_prod_sim
+    - DB_NAME=sc_prod_sim E2E_BASE_URL=http://localhost:18069 python3 scripts/verify/scene_legacy_auth_smoke_semantic_verify.py
+    - DB_NAME=sc_prod_sim E2E_BASE_URL=http://localhost:18069 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_OUTSIDER_LOGIN=outsider_seed ROLE_OUTSIDER_PASSWORD=demo python3 scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: high
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - acl_scope_uncertainty
+  - runtime_smoke_semantic_uncertainty
+
+deliverables:
+  - strict legacy auth smoke semantics with clean stage-gate signal
+  - budget/cost member-owner-creator visibility verification proof
+  - separate manual handling list for remaining project.company null records
+
+depends_on:
+  - ITER-2026-04-07-1285
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1286.yaml
+  - git restore scripts/verify/scene_legacy_auth_smoke.py
+  - git restore scripts/verify/scene_legacy_auth_smoke_semantic_verify.py
+  - git restore addons/smart_construction_core/security/sc_record_rules.xml
+  - git restore scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1286.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1286.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

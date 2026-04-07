@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-07-1242
+title: Role-aligned authenticated fact-read gate batch
+status: completed
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Add role-aligned authenticated fact-read smoke (non-admin) and integrate it
+  into business-fact stage gate to better match real business usability demand.
+
+user_visible_outcome:
+  - "门禁覆盖非admin角色的业务事实读取能力"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1242.yaml
+    - scripts/verify/native_business_fact_role_alignment_smoke.py
+    - Makefile
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1242.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1242.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - verifier-only
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: continue_execute_batch1242
+
+architecture:
+  layer_target: Governance Verify Tooling
+  module: role-aligned fact-read smoke
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Real business alignment requires authenticated non-admin role to read core fact contracts.
+  reason: >
+    Extend gate semantics from admin-only to role-level usability signal.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1242.yaml
+    - E2E_BASE_URL=http://localhost:8069 python3 scripts/verify/native_business_fact_role_alignment_smoke.py
+    - make verify.native.business_fact.stage_gate
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - role-aligned authenticated fact-read smoke integrated into stage gate
+
+depends_on:
+  - ITER-2026-04-07-1241
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1242.yaml
+  - git restore scripts/verify/native_business_fact_role_alignment_smoke.py
+  - git restore Makefile
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1242.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1242.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

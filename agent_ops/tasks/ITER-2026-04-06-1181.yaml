@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-06-1181
+title: Update native blocker ledger after legacy auth strict-gate remediation
+type: governance
+status: completed
+priority: high
+mode: execute
+
+goal: >
+  Apply the first sequential execution step from the seven-audit screen result by
+  updating blocker ledger status for legacy auth smoke semantics and preserving
+  remaining high-risk items as gated backlog.
+
+user_visible_outcome:
+  - "blocker清单标记 P0 语义修复状态"
+  - "保留 ACL/record-rule 高风险项待专用授权批次"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-06-1181.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_foundation_blockers_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 7
+  max_candidates: 10
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify and governance paths only
+  - no ACL or record-rule edits
+  - no business runtime code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: seven_audit_sequential_execution_step_1
+
+architecture:
+  layer_target: Governance Monitoring
+  module: native blocker ledger
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch updates blocker semantics and execution ordering metadata only,
+    without changing business facts.
+  reason: >
+    Execute step-1 in the agreed seven-audit sequence: normalize blocker status
+    to reflect completed strict-gate remediation and preserve high-risk gating.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-06-1181.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - updated blocker ledger with current remediation status
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-06-1181.yaml
+  - git restore docs/audit/native/native_foundation_blockers_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-06-1180

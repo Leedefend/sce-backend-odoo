@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-06-1184
+title: Step-4 checkpoint for module init/bootstrap audit in seven-audit sequence
+type: governance
+status: completed
+priority: high
+mode: execute
+
+goal: >
+  Execute step-4 of the seven-audit sequence by recording a low-risk checkpoint
+  for module init/bootstrap audit and update execution progress.
+
+user_visible_outcome:
+  - "module init/bootstrap 项完成顺序检查"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-06-1184.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_foundation_execution_sequence_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 7
+  max_candidates: 12
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - verify and governance paths only
+  - no ACL or record-rule edits
+  - no business runtime code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: seven_audit_sequential_execution_step_4
+
+architecture:
+  layer_target: Governance Monitoring
+  module: module init/bootstrap checkpoint
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch captures sequencing evidence only without changing backend facts.
+  reason: >
+    Continue agreed sequential execution from seven native audits in low-risk mode.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-06-1184.yaml
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - sequence progress update for module init/bootstrap checkpoint
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-06-1184.yaml
+  - git restore docs/audit/native/native_foundation_execution_sequence_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-06-1183

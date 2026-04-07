@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-04-07-1272",
+  "status": "FAIL",
+  "timestamp": "2026-04-07T13:57:01+08:00",
+  "summary": "Added isolation-anchor verify and gate refocus, but acceptance fails with concrete blocker: payment.ledger missing company_id isolation anchor.",
+  "verification": {
+    "validate_task": "PASS",
+    "verify_native_business_fact_stage_gate": "FAIL"
+  },
+  "risk_level": "low",
+  "blocker": {
+    "key": "payment_ledger_company_anchor_missing",
+    "detail": "native_business_fact_isolation_anchor_verify reports missing payment.ledger.company_id"
+  },
+  "deliverability_progress": {
+    "isolation_anchor_verify": "added",
+    "stage_gate_refocus": "done",
+    "surface_consistency_expansion": "paused_in_gate"
+  },
+  "next_step": "Open dedicated high-risk authority task for payment.ledger isolation anchor supply"
+}

@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-06-1190
+title: Low-risk seed and load-surface checkpoint after step-5/6 closure
+type: governance
+status: completed
+priority: high
+mode: execute
+
+goal: >
+  Run a low-risk verification checkpoint for seed/load dependency surface and
+  update native blocker governance status without touching business runtime code.
+
+user_visible_outcome:
+  - "seed/load 依赖面短链检查结果"
+  - "阻塞台账更新剩余治理项"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-06-1190.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_foundation_blockers_v1.md
+    - docs/audit/native/native_foundation_execution_sequence_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 8
+  max_candidates: 10
+  max_output_lines: 140
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - governance and verify evidence only
+  - no business runtime code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: post_step5_6_low_risk_follow_up
+
+architecture:
+  layer_target: Governance Monitoring
+  module: seed and load-surface checkpoint
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch tracks operational readiness semantics and does not alter business facts.
+  reason: >
+    Continue agreed low-risk follow-up after step-5/6 closure by checking seed/load
+    dependency guard and updating blocker state.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-06-1190.yaml
+    - make verify.test_seed_dependency.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - low-risk seed/load dependency checkpoint with blocker status update
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-06-1190.yaml
+  - git restore docs/audit/native/native_foundation_blockers_v1.md
+  - git restore docs/audit/native/native_foundation_execution_sequence_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-06-1189

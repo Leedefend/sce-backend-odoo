@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-07-1229",
+  "status": "PASS",
+  "timestamp": "2026-04-07T05:04:32+08:00",
+  "summary": "Host-approved live probes classify native and legacy endpoints as 401 AUTH_REQUIRED (reachable, not transport-fail).",
+  "verification": {
+    "validate_task": "PASS",
+    "scene_legacy_auth_smoke_semantic_verify": "PASS",
+    "host_live_probe": "PASS"
+  },
+  "live_probe": {
+    "native_post": "401 AUTH_REQUIRED",
+    "legacy_get": "401 AUTH_REQUIRED",
+    "legacy_deprecation_headers": true
+  },
+  "risk_level": "low",
+  "next_step": "Continue native business-fact usability batches"
+}

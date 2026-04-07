@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-07-1236
+title: Compact checkpoint summary for 7-audit chain with stage gate
+status: completed
+type: governance
+priority: medium
+mode: execute
+
+goal: >
+  Produce a compact checkpoint summary that links the agreed 7-audit chain to
+  the new one-shot stage gate and records current gate signal.
+
+user_visible_outcome:
+  - "形成 7审计链路压缩检查点"
+  - "明确 stage gate 当前信号"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1236.yaml
+    - docs/audit/native/native_business_fact_stage_gate_checkpoint_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1236.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1236.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - documentation-and-governance-only
+  - no source mutation
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: continue_execute_batch1236
+
+architecture:
+  layer_target: Governance Monitoring
+  module: stage gate checkpoint summary
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Summary evaluates factual readiness gates and sequencing only.
+  reason: >
+    Keep the continuous chain auditable and ready for next executable step.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1236.yaml
+    - make verify.native.business_fact.stage_gate
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - compact 7-audit + stage-gate checkpoint summary
+
+depends_on:
+  - ITER-2026-04-07-1235
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1236.yaml
+  - git restore docs/audit/native/native_business_fact_stage_gate_checkpoint_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1236.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1236.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

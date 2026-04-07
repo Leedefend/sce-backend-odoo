@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-07-1228
+title: Native access runtime window evidence batch
+status: completed
+type: governance
+priority: high
+mode: verify
+
+goal: >
+  Capture host-local runtime accessibility evidence for corrected native endpoint
+  and legacy auth endpoint using short commands only.
+
+user_visible_outcome:
+  - "给出原生 URL 实际可达性证据"
+  - "区分 native 与 legacy 的运行态结果"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1228.yaml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1228.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1228.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - __manifest__.py
+
+limits:
+  max_files: 4
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - evidence-only
+  - no source mutation
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: user_execute_continue
+
+architecture:
+  layer_target: Governance Monitoring
+  module: native runtime accessibility evidence
+  module_owner: platform
+  kernel_or_scenario: scenario
+  reason: >
+    Confirm corrected URL behavior with direct host-local probes and semantic guard.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1228.yaml
+    - E2E_BASE_URL=http://localhost:8069 python3 scripts/verify/scene_legacy_auth_runtime_probe.py
+    - python3 scripts/verify/scene_legacy_auth_smoke_semantic_verify.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - batch1228 runtime accessibility evidence
+
+depends_on:
+  - ITER-2026-04-07-1227
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1228.yaml
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1228.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1228.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

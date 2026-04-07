@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-07-1277
+title: High-risk project-member rule binding implementation
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Implement additive project-member based record-rule binding for core business
+  objects to close permission operability boundary using facts delivered in 1275.
+
+user_visible_outcome:
+  - "关键对象访问边界绑定到项目成员事实"
+  - "同公司非成员默认不可见无关项目对象"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1277.yaml
+    - addons/smart_construction_core/security/sc_record_rules.xml
+    - scripts/verify/native_business_fact_project_member_rule_binding_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1277.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1277.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/ir.model.access.csv
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - high-risk-additive-only
+  - permission-governance-authority-path
+  - no-financial-semantics-change
+  - no-ci-long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1276
+
+architecture:
+  layer_target: Business-Fact Layer
+  module: project-member rule binding on core business objects
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Access boundaries depend on project-member business truth and project-level
+    ownership facts, not frontend or scene-only packaging.
+  reason: >
+    Execute deferred permission closure from 1275 by binding record rules to
+    project key roles and project-member carrier facts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1277.yaml
+    - python3 scripts/verify/native_business_fact_project_member_rule_binding_verify.py
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_prod_sim
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: high
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - acl_scope_uncertainty
+
+deliverables:
+  - additive project-member-based domains for project/task/budget/cost/payment/settlement
+  - rule-binding verification evidence
+
+depends_on:
+  - ITER-2026-04-07-1276
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1277.yaml
+  - git restore addons/smart_construction_core/security/sc_record_rules.xml
+  - git restore scripts/verify/native_business_fact_project_member_rule_binding_verify.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1277.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1277.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-04-07-1294",
+  "status": "PASS_WITH_RISK",
+  "timestamp": "2026-04-07T18:18:00+08:00",
+  "summary": "Added global isolation rules for project/task and verified outsider default deny with dedicated non-member and standalone checks; fresh-flow outsider_seed signal remains noisy.",
+  "verification": {
+    "validate_task": "PASS",
+    "upgrade_sc_prod_fresh_1292_b": "PASS",
+    "upgrade_sc_prod_fresh_core_1293": "PASS",
+    "non_member_denial_1292_b": "PASS",
+    "non_member_denial_core_1293": "PASS",
+    "core_standalone_min_flow_core_1293": "PASS",
+    "fresh_install_min_flow_1292_b": "PASS_WITH_OBSERVATION"
+  },
+  "risk_level": "high",
+  "risk_notes": [
+    "fresh_install_min_flow uses outsider_seed and still observes project/task visibility",
+    "outsider_seed account semantics may include elevated project visibility"
+  ],
+  "next_step": "Open a verify-only batch to normalize outsider sample account in fresh-flow script and align stage evidence with non-member denial semantics."
+}

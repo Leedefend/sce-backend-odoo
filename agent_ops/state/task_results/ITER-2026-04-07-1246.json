@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-07-1246",
+  "status": "FAIL",
+  "timestamp": "2026-04-07T06:31:21+08:00",
+  "summary": "Rerun on sc_prod_sim reached correct DB but failed on dictionary seed type compatibility during module upgrade.",
+  "verification": {
+    "validate_task": "PASS",
+    "mod_upgrade_sc_prod_sim": "FAIL"
+  },
+  "failure": {
+    "db": "sc_prod_sim",
+    "detail": "ValueError: Wrong value for project.dictionary.type: 'project_status' at customer_project_dictionary_seed.xml:19"
+  },
+  "risk_level": "stop",
+  "next_step": "Fix dictionary seed type values for current project.dictionary.type domain"
+}

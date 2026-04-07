@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-06-1186
+title: High-risk authorization contract for ACL and record-rule remediation lanes
+type: governance
+status: completed
+priority: high
+mode: screen
+
+goal: >
+  Prepare a dedicated high-risk authorization contract for step-5/6 remediation
+  lanes involving ACL and record-rule surfaces, without implementing any code.
+
+user_visible_outcome:
+  - "高风险授权批次契约草案就绪"
+  - "明确需用户显式批准后才可实施"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-06-1186.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 5
+  max_candidates: 8
+  max_output_lines: 100
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - proposal-only
+  - no implementation before explicit user authorization
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: step5_step6_high_risk_gate_result
+
+architecture:
+  layer_target: Governance Monitoring
+  module: high-risk authorization boundary
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This stage only defines execution authorization semantics and boundaries.
+  reason: >
+    Step-5/6 are gated by repository stop policy and require a dedicated
+    authorized high-risk batch before any ACL or record-rule edits.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-06-1186.yaml
+
+risk:
+  level: medium
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - user_authorization_missing
+
+deliverables:
+  - high-risk task contract draft awaiting explicit user approval
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-06-1186.yaml
+
+depends_on:
+  - ITER-2026-04-06-1185

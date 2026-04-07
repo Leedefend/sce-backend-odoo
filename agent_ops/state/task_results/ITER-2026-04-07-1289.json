@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-07-1289",
+  "status": "PASS",
+  "timestamp": "2026-04-07T16:55:53+08:00",
+  "summary": "Recovered core-owned capability/scene external IDs so fresh-runtime scene install succeeds and native business-fact stage gate passes on fresh DB.",
+  "verification": {
+    "validate_task": "PASS",
+    "upgrade_smart_construction_core_fresh_db": "PASS",
+    "install_smart_construction_scene_fresh_db": "PASS",
+    "budget_cost_anchor_verify_fresh_db": "PASS",
+    "native_business_fact_stage_gate_fresh_db": "PASS"
+  },
+  "risk_level": "high",
+  "next_step": "Continue fresh-runtime anti-regression line to prevent install-order and anchor fallback regressions."
+}

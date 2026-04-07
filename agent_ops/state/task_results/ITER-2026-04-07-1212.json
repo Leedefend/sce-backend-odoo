@@ -1,0 +1,22 @@
+{
+  "task_id": "ITER-2026-04-07-1212",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1212.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "escalated_live_reprobe": "PASS_WITH_REMOTE_DISCONNECTED",
+    "verify.scene.legacy_contract.guard": "PASS",
+    "verify.test_seed_dependency.guard": "PASS",
+    "verify.scene.legacy_auth.smoke.semantic": "PASS"
+  },
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-07-1212.yaml",
+    "docs/audit/native/native_runtime_repair_lane_batch2_live_probe_evidence_v1.md",
+    "docs/audit/native/native_next_stage_roadmap_v1.md",
+    "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1212.md",
+    "agent_ops/state/task_results/ITER-2026-04-07-1212.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "next_step": "Open dedicated runtime environment repair lane for service/proxy behavior, then rerun live 401/403 evidence probe."
+}

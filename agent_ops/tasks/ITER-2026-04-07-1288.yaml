@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-07-1288
+title: Fresh database anti-regression verification for anchor non-regeneration
+status: active
+type: verification
+priority: high
+mode: execute
+
+goal: >
+  Verify on a brand-new database that project/company and budget-cost anchor
+  gaps do not regenerate after clean create + module install + strict gates.
+
+user_visible_outcome:
+  - "全新数据库安装后 project.company 空值不再重生"
+  - "budget/cost project_without_company 严格校验在新库直接 PASS"
+  - "fresh 库 stage_gate 全通过"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1288.yaml
+    - scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1288.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1288.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+
+limits:
+  max_files: 4
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verification-only
+  - bounded-verify-script-adjustment-only
+  - no-ci-long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1287
+  fresh_db_name: sc_prod_fresh_1288
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence
+  module: fresh database anti-regression
+  module_owner: verify and delivery governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch validates runtime evidence and does not alter business facts.
+  reason: >
+    User requested a dedicated fresh-database validation line before next
+    development iteration.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1288.yaml
+    - "fresh_db_create_and_install: create db sc_prod_fresh_1288 and install smart_construction_custom"
+    - DB_NAME=sc_prod_fresh_1288 E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo BUDGET_COST_VERIFY_REQUIRE_PM_VISIBLE=false python3 scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_fresh_1288
+
+risk:
+  level: medium
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - verification_uncertainty
+
+deliverables:
+  - fresh database strict-gate pass evidence
+  - anti-regression conclusion for anchor non-regeneration
+
+depends_on:
+  - ITER-2026-04-07-1287
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1288.yaml
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1288.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1288.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

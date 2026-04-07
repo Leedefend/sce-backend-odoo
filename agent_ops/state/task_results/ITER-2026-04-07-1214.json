@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-07-1214",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1214.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify.scene.legacy_auth.runtime_probe": "PASS",
+    "verify.scene.legacy_contract.guard": "PASS",
+    "verify.test_seed_dependency.guard": "PASS",
+    "verify.scene.legacy_auth.smoke.semantic": "PASS"
+  },
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-07-1214.yaml",
+    "scripts/verify/scene_legacy_auth_runtime_probe.py",
+    "Makefile",
+    "docs/audit/native/native_runtime_environment_repair_lane_batch1_probe_evidence_v1.md",
+    "docs/audit/native/native_next_stage_roadmap_v1.md",
+    "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1214.md",
+    "agent_ops/state/task_results/ITER-2026-04-07-1214.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "next_step": "Run runtime probe batch2 with escalated window and explicit base-url matrix to drive environment repair decisions."
+}
