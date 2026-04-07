@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-07-1270
+title: Sync native 7-audit dashboard with real-role stage-gate PASS evidence
+status: active
+type: implementation
+priority: medium
+mode: execute
+
+goal: >
+  Synchronize native business-fact audit dashboards/blocker ledger to latest
+  verified state after real-role full-chain alignment, keeping 7-audit sequence
+  evidence consistent for continuous delivery tracking.
+
+user_visible_outcome:
+  - "7审计看板与阻塞台账同步到最新真实角色门禁结果"
+  - "原生业务事实层可交付进展在文档侧可追踪"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1270.yaml
+    - docs/audit/native/native_business_fact_gate_dashboard_v1.md
+    - docs/audit/native/native_foundation_blockers_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1270.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1270.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - docs-evidence-sync-only
+  - no business-fact-model-change
+  - no acl-change
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1269
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence Reporting
+  module: native audit dashboard synchronization
+  module_owner: docs + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch only synchronizes verification evidence reporting, no backend
+    business semantics change.
+  reason: >
+    Continuous-iteration requires latest PASS/PASS_WITH_RISK status reflected in
+    audit dashboards to avoid stale blocker perception.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1270.yaml
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - updated native gate dashboard evidence
+  - updated blocker ledger progress note
+
+depends_on:
+  - ITER-2026-04-07-1269
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1270.yaml
+  - git restore docs/audit/native/native_business_fact_gate_dashboard_v1.md
+  - git restore docs/audit/native/native_foundation_blockers_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1270.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1270.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-07-1240
+title: Ready-to-execute low-risk backlog page for native business-fact lane
+status: completed
+type: governance
+priority: medium
+mode: execute
+
+goal: >
+  Publish a single-page actionable low-risk backlog derived from the current
+  business-fact gate dashboard and verifier chain.
+
+user_visible_outcome:
+  - "提供可直接执行的低风险待办页"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1240.yaml
+    - docs/audit/native/native_business_fact_low_risk_backlog_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1240.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1240.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - documentation-and-governance-only
+  - no source mutation
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: continue_execute_batch1240
+
+architecture:
+  layer_target: Governance Monitoring
+  module: low-risk actionable backlog
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Backlog items target factual usability evidence expansion under current gate.
+  reason: >
+    Keep iteration cadence fast with clear, executable next tasks.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1240.yaml
+    - make verify.native.business_fact.stage_gate
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - native business-fact low-risk backlog page
+
+depends_on:
+  - ITER-2026-04-07-1239
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1240.yaml
+  - git restore docs/audit/native/native_business_fact_low_risk_backlog_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1240.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1240.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

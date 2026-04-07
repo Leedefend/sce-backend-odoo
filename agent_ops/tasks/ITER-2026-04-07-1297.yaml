@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-07-1297
+title: Native payment-settlement minimum operability acceptance v1
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Validate native minimum operability for payment and settlement objects without
+  entering deep approval chains, while preserving outsider default deny boundary.
+
+user_visible_outcome:
+  - "支付/结算原生最小办理能力有证据可验"
+  - "outsider 对支付/结算默认不可见不可操作"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1297.yaml
+    - scripts/verify/native_business_fact_payment_settlement_operability_verify.py
+    - docs/ops/project_org_isolation_acceptance_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1297.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1297.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - payment-settlement-verify-only
+  - no-financial-semantics-change
+  - no-new-permission-topic
+  - no-frontend-change
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  high_risk_exception: payment_settlement_boundary_recovery
+  verification_db_primary: sc_prod_fresh_1292_b
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence
+  module: native payment-settlement operability closure
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch only validates runtime operability evidence and does not modify
+    payment/settlement backend business semantics or authority model.
+  reason: >
+    User approved next-step acceptance for payment/settlement minimum operability.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1297.yaml
+    - DB_NAME=sc_prod_fresh_1292_b E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_OUTSIDER_PASSWORD=demo python3 scripts/verify/native_business_fact_payment_settlement_operability_verify.py
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - uncertainty_on_payment_settlement_operability_evidence
+
+deliverables:
+  - payment-settlement minimum operability evidence
+  - outsider deny evidence for payment-settlement objects
+
+depends_on:
+  - ITER-2026-04-07-1296
+
+rollback:
+  - git restore scripts/verify/native_business_fact_payment_settlement_operability_verify.py
+  - git restore docs/ops/project_org_isolation_acceptance_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1297.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1297.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

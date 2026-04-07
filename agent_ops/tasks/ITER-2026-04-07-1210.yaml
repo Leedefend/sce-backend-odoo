@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-07-1210
+title: Runtime availability repair lane pre-screen
+type: governance
+status: completed
+priority: high
+mode: screen
+
+goal: >
+  Define a dedicated low-risk pre-screen for runtime availability repair lane
+  without touching business facts or permission semantics.
+
+user_visible_outcome:
+  - "runtime 修复专线边界清晰"
+  - "下一步实现可直接落批"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1210.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_runtime_repair_lane_prescreen_v1.md
+    - docs/audit/native/native_next_stage_roadmap_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 8
+  max_candidates: 12
+  max_output_lines: 200
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - screen-only
+  - no source code mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: execute_runtime_repair_lane_prescreen
+
+architecture:
+  layer_target: Governance Monitoring
+  module: runtime repair lane prescreen
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch defines verification and boundary setup for a future runtime fix lane.
+  reason: >
+    Keep iterative progress by preparing a bounded repair lane after observing
+    RemoteDisconnected in live probe.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1210.yaml
+    - make verify.scene.legacy_contract.guard
+    - make verify.test_seed_dependency.guard
+    - make verify.scene.legacy_auth.smoke.semantic
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - runtime repair lane pre-screen boundary document
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1210.yaml
+  - git restore docs/audit/native/native_runtime_repair_lane_prescreen_v1.md
+  - git restore docs/audit/native/native_next_stage_roadmap_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-07-1209

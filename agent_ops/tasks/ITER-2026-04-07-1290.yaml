@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-07-1290
+title: Fresh-runtime anti-regression verification after scene external-id recovery
+status: active
+type: verification
+priority: high
+mode: execute
+
+goal: >
+  Validate on a brand-new database that scene install-order recovery remains stable
+  and native business-fact stage gate passes without fallback semantics.
+
+user_visible_outcome:
+  - "fresh 新库完成 custom+scene 安装，/api/scenes/my 语义恢复"
+  - "fresh 新库 native business-fact stage gate 全 PASS"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1290.yaml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1290.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1290.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+
+limits:
+  max_files: 4
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verification-only
+  - no-business-semantics-change
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1289
+  fresh_db_name: sc_prod_fresh_1290
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence
+  module: fresh-runtime anti-regression validation
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch verifies runtime facts and install-order behavior, without frontend
+    or abstraction changes.
+  reason: >
+    Ensure the external-id recovery from ITER-1289 is durable on a newly created
+    database and does not regress into scene 404 or gate fallback behavior.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1290.yaml
+    - ENV=prod.sim ENV_FILE=.env.prod.sim make db.create DB=sc_prod_fresh_1290
+    - ENV=prod.sim ENV_FILE=.env.prod.sim make mod.install MODULE=smart_construction_custom DB_NAME=sc_prod_fresh_1290
+    - ENV=prod.sim ENV_FILE=.env.prod.sim make mod.install MODULE=smart_construction_scene DB_NAME=sc_prod_fresh_1290
+    - "start_temp_verify_odoo_18079_with_dbfilter_^sc_prod_fresh_1290$"
+    - DB_NAME=sc_prod_fresh_1290 E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo BUDGET_COST_VERIFY_REQUIRE_PM_VISIBLE=false python3 scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18079 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_fresh_1290
+
+risk:
+  level: medium
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - runtime_semantics_regression
+
+deliverables:
+  - fresh-db anti-regression verification evidence
+  - stage-gate pass/fail conclusion for recovered scene chain
+
+depends_on:
+  - ITER-2026-04-07-1289
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1290.yaml
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1290.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1290.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

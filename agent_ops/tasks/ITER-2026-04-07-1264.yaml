@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-07-1264
+title: Native factual closure for project organization and project members
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Close native business-fact gap so a project can carry project-level role
+  assignment and active member roster after creation, forming a real
+  operable business organization unit.
+
+user_visible_outcome:
+  - "项目创建后可在原生页面维护项目岗位与项目成员"
+  - "项目/任务可见范围基于项目成员事实与负责人事实"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1264.yaml
+    - addons/smart_construction_core/models/core/project_core.py
+    - addons/smart_construction_core/views/core/project_views.xml
+    - docs/ops/project_member_role_design_v1.md
+    - docs/ops/project_member_role_acceptance_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1264.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1264.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/__manifest__.py
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/security/ir.model.access.csv
+
+limits:
+  max_files: 8
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - native-business-fact-only
+  - no frontend-contract-layer-change
+  - no platform-abstraction-introduction
+  - minimal-deliverable-first
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1263
+
+architecture:
+  layer_target: Business-Fact Layer
+  module: project organization and member factual closure
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Missing data is project business truth (member assignment and role carrier),
+    not orchestration packaging.
+  reason: >
+    Current project record lacks sufficient project-level staffing facts, causing
+    operability gap between global role and project-internal responsibility.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1264.yaml
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_custom DB_NAME=sc_prod_sim
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: medium
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - project role key-position fields on project.project
+  - project member factual model fields and native entry on project form
+  - project/task visibility factual linkage via project member facts
+  - two docs under docs/ops
+
+depends_on:
+  - ITER-2026-04-07-1263
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1264.yaml
+  - git restore addons/smart_construction_core/models/core/project_core.py
+  - git restore addons/smart_construction_core/views/core/project_views.xml
+  - git restore docs/ops/project_member_role_design_v1.md
+  - git restore docs/ops/project_member_role_acceptance_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1264.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1264.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

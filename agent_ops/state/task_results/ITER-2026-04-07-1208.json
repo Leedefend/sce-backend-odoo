@@ -1,0 +1,21 @@
+{
+  "task_id": "ITER-2026-04-07-1208",
+  "status": "PASS",
+  "report": "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1208.md",
+  "publishability": "internal",
+  "verification": {
+    "validate_task": "PASS",
+    "verify.scene.legacy_contract.guard": "PASS",
+    "verify.test_seed_dependency.guard": "PASS",
+    "verify.scene.legacy_auth.smoke.semantic": "PASS"
+  },
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-07-1208.yaml",
+    "docs/audit/native/native_runtime_probe_permission_screen_v1.md",
+    "docs/audit/native/native_next_stage_roadmap_v1.md",
+    "agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1208.md",
+    "agent_ops/state/task_results/ITER-2026-04-07-1208.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "next_step": "Execute reachable-window live 401/403 evidence batch when runtime probe permission becomes available."
+}

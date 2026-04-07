@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-07-1287
+title: Historical project company closure and strict budget-cost anchor enforcement
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Complete manual company assignment for six historical scene projects and
+  upgrade budget/cost anchor verification to hard-blocking semantics, then
+  re-run audits and stage gate.
+
+user_visible_outcome:
+  - "6 条历史 SCENE-CONTRACT 项目 company_id 完成归属"
+  - "budget/cost 的 project_without_company 从观测升级为硬阻塞"
+  - "project.company 空值审计 + budget/cost 审计 + stage gate 全量复验通过"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1287.yaml
+    - scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1287.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1287.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/ir.model.access.csv
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - high-risk-additive-only
+  - no-financial-semantics-change
+  - no-ci-long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1286
+
+architecture:
+  layer_target: Business-Fact Layer
+  module: project company data remediation + budget/cost strict verify gate
+  module_owner: smart_construction_core runtime data + verify scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch only repairs business-truth anchor data and strengthens runtime
+    verification gate semantics for budget/cost objects.
+  reason: >
+    User requested immediate closure of remaining six project company gaps and
+    strict budget/cost anchor enforcement before next clean-db anti-regression line.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1287.yaml
+    - DB_NAME=sc_prod_sim E2E_BASE_URL=http://localhost:18069 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo python3 scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: medium
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - company_assignment_uncertainty
+
+deliverables:
+  - six historical scene projects assigned to target company
+  - strict blocking budget/cost anchor verifier
+
+depends_on:
+  - ITER-2026-04-07-1286
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1287.yaml
+  - git restore scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1287.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1287.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

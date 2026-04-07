@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-07-1290",
+  "status": "FAIL",
+  "timestamp": "2026-04-07T17:03:35+08:00",
+  "summary": "Fresh anti-regression batch blocked at custom module install due missing capability-read group external id referenced by recovered seed data.",
+  "verification": {
+    "validate_task": "PASS",
+    "db_create_fresh_1290": "PASS",
+    "install_smart_construction_custom_fresh_1290": "FAIL"
+  },
+  "failure_reason": "sc_capability_group_seed.xml references smart_construction_core.group_sc_cap_project_read in required_group_ids during fresh install stage before that xmlid is available.",
+  "risk_level": "high",
+  "next_step": "Open dedicated recovery batch to make capability seed install-order safe on fresh DB, then rerun ITER-1290 acceptance chain."
+}

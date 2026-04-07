@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-07-1235
+title: Compose one-shot native business-fact stage gate command
+status: completed
+type: implementation
+priority: medium
+mode: execute
+
+goal: >
+  Compose a one-shot stage gate command that runs the mapped BF checklist hooks
+  in order and can be reused by subsequent low-risk batches.
+
+user_visible_outcome:
+  - "新增一键业务事实层 stage gate 命令"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1235.yaml
+    - Makefile
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1235.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1235.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: continue_execute_batch1235
+
+architecture:
+  layer_target: Governance Verify Tooling
+  module: one-shot stage gate command
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Gate command orchestrates verify hooks; it does not alter business facts.
+  reason: >
+    Improve repeatability and reduce operator error in ongoing staged execution.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1235.yaml
+    - make verify.native.business_fact.stage_gate
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - make verify.native.business_fact.stage_gate command
+
+depends_on:
+  - ITER-2026-04-07-1234
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1235.yaml
+  - git restore Makefile
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1235.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1235.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

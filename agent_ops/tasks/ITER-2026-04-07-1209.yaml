@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-07-1209
+title: Reachable-window live 401/403 auth evidence batch
+type: governance
+status: completed
+priority: high
+mode: verify
+
+goal: >
+  Attempt live `/api/scenes/my` unauthenticated runtime probe in a reachable
+  window and capture 401/403 evidence under strict default policy.
+
+user_visible_outcome:
+  - "若可达则补齐 401/403 实机证据"
+  - "若不可达则保留可审计失败原因"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1209.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_live_auth_401_403_evidence_v1.md
+    - docs/audit/native/native_next_stage_roadmap_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 8
+  max_candidates: 12
+  max_output_lines: 200
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - evidence-only verify batch
+  - no source code mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: execute_live_auth_401_403_evidence
+
+architecture:
+  layer_target: Governance Monitoring
+  module: live auth reachability evidence
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Batch validates runtime endpoint behavior only.
+  reason: >
+    Try to complete the last runtime evidence gap with live unauthenticated
+    status code observation when environment permits active probe.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1209.yaml
+    - make verify.scene.legacy_contract.guard
+    - make verify.test_seed_dependency.guard
+    - make verify.scene.legacy_auth.smoke.semantic
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - live auth 401/403 evidence document
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1209.yaml
+  - git restore docs/audit/native/native_live_auth_401_403_evidence_v1.md
+  - git restore docs/audit/native/native_next_stage_roadmap_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-07-1208

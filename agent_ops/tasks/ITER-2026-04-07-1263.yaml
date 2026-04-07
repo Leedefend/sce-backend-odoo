@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-07-1263
+title: Fix role operability blocker via minimal cost-code seed supply
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Resolve stage-gate delivery blocker by supplying minimal project.cost.code
+  master data through existing customer seed path and making operability
+  verifier consume seeded references instead of creating governance records.
+
+user_visible_outcome:
+  - "修复 project.cost.ledger 可办性阻塞"
+  - "不新增 role-surface 证据链，聚焦交付阻塞"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1263.yaml
+    - addons/smart_construction_custom/data/customer_project_seed.xml
+    - scripts/verify/native_business_fact_role_operability_blockers_smoke.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1263.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1263.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - blocker-fix-only
+  - additive-seed-only
+  - no acl-change
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1262
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence + Business Fact Seed Supply
+  module: cost-code seed unblock for role operability
+  module_owner: customer delivery + verify tooling
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Missing data is business truth (cost subject master data), not UI orchestration.
+  reason: >
+    Stage gate currently fails because project.cost.code reference data is missing
+    and not creatable via current role/API authority path.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1263.yaml
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_custom DB_NAME=sc_prod_sim
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - minimal cost-code seed available in customer seed path
+  - operability verifier consumes seeded reference instead of forbidden create
+
+depends_on:
+  - ITER-2026-04-07-1262
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1263.yaml
+  - git restore addons/smart_construction_custom/data/customer_project_seed.xml
+  - git restore scripts/verify/native_business_fact_role_operability_blockers_smoke.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1263.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1263.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

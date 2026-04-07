@@ -1,0 +1,22 @@
+{
+  "task_id": "ITER-2026-04-07-1267",
+  "status": "FAIL",
+  "timestamp": "2026-04-07T13:25:03+08:00",
+  "summary": "Added stage-read group seed for real role users and admin, but stage gate still fails at project.dashboard.enter with the same stage_id permission denial.",
+  "verification": {
+    "validate_task": "PASS",
+    "mod_upgrade_smart_construction_custom_sc_prod_sim": "PASS",
+    "verify_native_business_fact_stage_gate": "FAIL"
+  },
+  "risk_level": "low",
+  "blocker": {
+    "key": "dashboard_enter_stage_field_permission_path",
+    "detail": "project.dashboard.enter still returns 403 PERMISSION_DENIED on project.project.stage_id for User:2 even after confirmed group membership"
+  },
+  "deliverability_progress": {
+    "role_user_stage_group_seed": "applied",
+    "admin_stage_group_seed": "applied",
+    "permission_blocker_root": "not_seed_related"
+  },
+  "next_step": "Create dedicated runtime-path recovery batch for project.dashboard.enter restricted-field read handling"
+}

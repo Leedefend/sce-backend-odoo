@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-04-07-1265",
+  "status": "FAIL",
+  "timestamp": "2026-04-07T12:33:30+08:00",
+  "summary": "Exposed smart_core runtime provider hooks at smart_construction_core addon root, but acceptance still fails due existing project view validation blocker preventing smart_construction_core upgrade and schema materialization.",
+  "verification": {
+    "validate_task": "PASS",
+    "mod_upgrade_smart_construction_custom_sc_prod_sim": "PASS",
+    "verify_native_business_fact_stage_gate": "FAIL",
+    "mod_upgrade_smart_construction_core_sc_prod_sim": "FAIL"
+  },
+  "risk_level": "low",
+  "blocker": {
+    "key": "project_view_validation_blocks_core_upgrade",
+    "detail": "project_views.xml validation error: company_id missing in form for post_id domain; blocks core upgrade and leaves new project fields not materialized"
+  },
+  "deliverability_progress": {
+    "dashboard_hook_export_wiring": "patched",
+    "runtime_reload": "performed",
+    "schema_upgrade_for_project_member_fields": "blocked_by_view_validation"
+  },
+  "next_step": "Create dedicated recovery task to fix project_views.xml validation, re-run smart_construction_core upgrade, then re-run native business-fact stage gate"
+}

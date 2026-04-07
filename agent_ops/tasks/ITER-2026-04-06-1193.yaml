@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-06-1193
+title: Low-risk acceptance evidence for install-time dictionary seed visibility
+type: governance
+status: completed
+priority: high
+mode: execute
+
+goal: >
+  Produce low-risk acceptance evidence that install-time dictionary seed is
+  correctly wired and visible in module load chain after 1192.
+
+user_visible_outcome:
+  - "seed 安装可见性证据文档"
+  - "短链验证与证据路径可审计"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-06-1193.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_seed_install_visibility_evidence_v1.md
+    - docs/audit/native/native_foundation_execution_sequence_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 8
+  max_candidates: 10
+  max_output_lines: 140
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - evidence and governance only
+  - no runtime business changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: post_1192_seed_visibility_acceptance
+
+architecture:
+  layer_target: Governance Monitoring
+  module: seed visibility acceptance evidence
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch records acceptance evidence and does not modify business facts.
+  reason: >
+    Provide auditable acceptance proof for install-time seed visibility after
+    executing minimal seed materialization.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-06-1193.yaml
+    - make verify.test_seed_dependency.guard
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - seed install visibility evidence document and iteration records
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-06-1193.yaml
+  - git restore docs/audit/native/native_seed_install_visibility_evidence_v1.md
+  - git restore docs/audit/native/native_foundation_execution_sequence_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-06-1192

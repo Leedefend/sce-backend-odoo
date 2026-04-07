@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-07-1291",
+  "status": "PASS",
+  "timestamp": "2026-04-07T17:14:12+08:00",
+  "summary": "Recovered install-order safety by removing premature required_group_ids dependencies in capability seed; fresh custom+scene install and native stage gate pass on sc_prod_fresh_1291.",
+  "verification": {
+    "validate_task": "PASS",
+    "db_create_fresh_1291": "PASS",
+    "install_smart_construction_custom_fresh_1291": "PASS",
+    "install_smart_construction_scene_fresh_1291": "PASS",
+    "budget_cost_anchor_verify_fresh_1291": "PASS",
+    "native_business_fact_stage_gate_fresh_1291": "PASS"
+  },
+  "risk_level": "high",
+  "next_step": "Continue fresh-runtime anti-regression chain with repeated fresh-db sampling and install-order guard hardening."
+}

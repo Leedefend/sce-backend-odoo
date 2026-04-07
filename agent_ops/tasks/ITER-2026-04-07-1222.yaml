@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-07-1222
+title: Environment repair lane batch9 execute odoo runtime state restore and re-probe
+type: governance
+status: completed
+priority: high
+mode: execute
+
+goal: >
+  Restore compose odoo runtime state using minimal service recreate and re-run
+  live runtime probe diagnostics for `/api/scenes/my`.
+
+user_visible_outcome:
+  - "odoo runtime state 已最小恢复尝试"
+  - "重探测结果可审计"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1222.yaml
+    - agent_ops/reports/**
+    - agent_ops/state/task_results/**
+    - docs/audit/native/native_runtime_environment_repair_lane_batch9_odoo_recreate_reprobe_evidence_v1.md
+    - docs/audit/native/native_next_stage_roadmap_v1.md
+    - docs/ops/iterations/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+
+limits:
+  max_files: 8
+  max_candidates: 12
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - runtime execute + evidence only
+  - no source code mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: a2d0e90
+  explicit_user_authorization: true
+  input_from: execute_runtime_environment_repair_batch9
+
+architecture:
+  layer_target: Governance Monitoring
+  module: compose odoo runtime restore
+  module_owner: platform
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    Batch operates on runtime service state and verification evidence.
+  reason: >
+    Resolve process snapshot inconsistency by recreating odoo service and
+    re-observing handshake behavior.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1222.yaml
+    - make verify.scene.legacy_auth.runtime_probe
+    - make verify.scene.legacy_contract.guard
+    - make verify.test_seed_dependency.guard
+    - make verify.scene.legacy_auth.smoke.semantic
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - runtime environment repair lane batch9 odoo recreate + re-probe evidence
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1222.yaml
+  - git restore docs/audit/native/native_runtime_environment_repair_lane_batch9_odoo_recreate_reprobe_evidence_v1.md
+  - git restore docs/audit/native/native_next_stage_roadmap_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-07-1221

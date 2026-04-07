@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-07-1289
+title: Fresh-runtime scene external-id recovery for install-order stability
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Restore missing smart_construction_core capability/scene external IDs required
+  by smart_construction_scene fresh install, so fresh-db stage gate can pass.
+
+user_visible_outcome:
+  - "fresh 库可安装 smart_construction_scene，不再报 missing external id"
+  - "/api/scenes/my 在 fresh stage gate 恢复 401/403 语义"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1289.yaml
+    - addons/smart_construction_core/data/sc_capability_group_seed.xml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1289.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1289.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/ir.model.access.csv
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - install-order-recovery
+  - no-financial-semantics-change
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1288
+  fresh_db_name: sc_prod_fresh_1288
+
+architecture:
+  layer_target: Business-Fact Layer
+  module: core capability seed ownership recovery
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Recovery is external-id ownership/data materialization, not frontend semantics.
+  reason: >
+    Fresh install fails because scene module updates smart_construction_core IDs
+    that are absent after seed shim migration.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1289.yaml
+    - CODEX_NEED_UPGRADE=1 ENV=prod.sim ENV_FILE=.env.prod.sim make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_prod_fresh_1288
+    - ENV=prod.sim ENV_FILE=.env.prod.sim make mod.install MODULE=smart_construction_scene DB_NAME=sc_prod_fresh_1288
+    - "start_temp_verify_odoo_18079_with_dbfilter_^sc_prod_.*$"
+    - DB_NAME=sc_prod_fresh_1288 E2E_BASE_URL=http://localhost:18079 ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo BUDGET_COST_VERIFY_REQUIRE_PM_VISIBLE=false python3 scripts/verify/native_business_fact_budget_cost_member_visibility_verify.py
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18079 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_fresh_1288
+
+risk:
+  level: high
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - external_id_recovery_uncertainty
+
+deliverables:
+  - recovered core external ids for scene update path
+  - fresh stage-gate pass evidence after scene install
+
+depends_on:
+  - ITER-2026-04-07-1288
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1289.yaml
+  - git restore addons/smart_construction_core/data/sc_capability_group_seed.xml
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1289.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1289.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-07-1269
+title: Align full-chain execution smoke with real role credentials
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Align product full-chain execution smoke with real-role verification policy by
+  defaulting login credentials to ROLE_OWNER env values before admin fallback,
+  so native closure gate validates business role path.
+
+user_visible_outcome:
+  - "full-chain smoke 优先使用真实角色账号验证"
+  - "原生业务闭环门禁对齐真实角色目标"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1269.yaml
+    - Makefile
+    - scripts/verify/product_project_flow_full_chain_execution_smoke.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1269.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1269.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify-alignment-only
+  - no business-model-change
+  - no acl-change
+  - no ci long-chain
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+  input_from: ITER-2026-04-07-1268
+
+architecture:
+  layer_target: Verify/Gate Runtime Evidence
+  module: full-chain smoke credential alignment
+  module_owner: verify tooling
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch adjusts verification execution identity path, not business facts
+    or ACL policy files.
+  reason: >
+    Current gate blocker is concentrated on admin identity path; user objective
+    explicitly requires real-role validation.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1269.yaml
+    - ROLE_OWNER_LOGIN=wutao ROLE_OWNER_PASSWORD=demo ROLE_PM_LOGIN=xiaohuijiu ROLE_PM_PASSWORD=demo ROLE_FINANCE_LOGIN=shuiwujingbanren ROLE_FINANCE_PASSWORD=demo ROLE_EXECUTIVE_LOGIN=wennan ROLE_EXECUTIVE_PASSWORD=demo E2E_BASE_URL=http://localhost:18069 make verify.native.business_fact.stage_gate DB_NAME=sc_prod_sim
+
+risk:
+  level: low
+  manual_approval_required: true
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - full-chain smoke login path aligned to ROLE_OWNER env priority
+  - refreshed stage-gate evidence under real-role identity chain
+
+depends_on:
+  - ITER-2026-04-07-1268
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-07-1269.yaml
+  - git restore scripts/verify/product_project_flow_full_chain_execution_smoke.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1269.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1269.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
