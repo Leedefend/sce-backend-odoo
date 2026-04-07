@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 from http.client import RemoteDisconnected
 from urllib import request as urlrequest
@@ -37,7 +38,7 @@ def get_base_url() -> str:
         env_file = os.getenv("ENV_FILE") or os.path.join(os.getcwd(), ".env")
         port = load_env_value_from_file(env_file, "ODOO_PORT")
     if not port:
-        port = "8070"
+        port = "8069"
     return f"http://localhost:{port}"
 
 
@@ -46,12 +47,15 @@ def _request_json(
     *,
     retries: int = 3,
     backoff_sec: float = 0.5,
+    timeout_sec: int = 30,
 ) -> tuple[int, dict, dict]:
     attempt = 0
+    method = req.get_method()
+    url = req.full_url
     while True:
         attempt += 1
         try:
-            with urlrequest.urlopen(req, timeout=30) as resp:
+            with urlrequest.urlopen(req, timeout=timeout_sec) as resp:
                 body = resp.read().decode("utf-8") or "{}"
                 return resp.status, json.loads(body), dict(resp.headers or {})
         except HTTPError as e:
@@ -61,9 +65,20 @@ def _request_json(
             except Exception:
                 payload = {"raw": body}
             return e.code, payload, dict(getattr(e, "headers", {}) or {})
-        except (RemoteDisconnected, ConnectionResetError, URLError) as e:
+        except (RemoteDisconnected, ConnectionResetError, TimeoutError, URLError, OSError) as e:
+            err_type = e.__class__.__name__
+            if attempt < retries:
+                print(
+                    f"[http_smoke] retry={attempt}/{retries} method={method} url={url} "
+                    f"timeout={timeout_sec}s error={err_type}: {e}",
+                    file=sys.stderr,
+                )
             if attempt >= retries:
-                raise RuntimeError(f"HTTP request failed after retries: {e}") from e
+                raise RuntimeError(
+                    "HTTP request failed after retries: "
+                    f"method={method} url={url} retries={retries} timeout={timeout_sec}s "
+                    f"last_error={err_type}: {e}"
+                ) from e
             time.sleep(backoff_sec * attempt)
 
 

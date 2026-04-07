@@ -90,13 +90,19 @@ SCENE_USE_PINNED ?= 0
 # Back-compat alias: BD -> DB_NAME (lower priority than DB)
 BD ?=
 ifneq ($(strip $(BD)),)
+ifneq ($(filter environment command line,$(origin DB_NAME)),)
+else
 DB_NAME := $(BD)
+endif
 endif
 
 # Use one knob to control dev/test db: `make test DB=sc_test`
 DB ?=
 ifneq ($(strip $(DB)),)
+ifneq ($(filter environment command line,$(origin DB_NAME)),)
+else
 DB_NAME := $(DB)
+endif
 endif
 
 MODULE       ?= smart_construction_core
@@ -2560,6 +2566,18 @@ verify.scene.legacy_docs.guard: guard.prod.forbid
 verify.scene.legacy_auth.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_legacy_auth_smoke.py
 
+.PHONY: verify.scene.legacy_auth.smoke.semantic
+verify.scene.legacy_auth.smoke.semantic: guard.prod.forbid
+	@python3 scripts/verify/scene_legacy_auth_smoke_semantic_verify.py
+
+.PHONY: verify.scene.legacy_auth.runtime_probe
+verify.scene.legacy_auth.runtime_probe: guard.prod.forbid
+	@python3 scripts/verify/scene_legacy_auth_runtime_probe.py
+
+.PHONY: verify.native.business_fact.static
+verify.native.business_fact.static: guard.prod.forbid
+	@python3 scripts/verify/native_business_fact_static_usability_verify.py
+
 verify.scene.legacy_deprecation.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_legacy_deprecation_smoke.py
 
@@ -4424,3 +4442,20 @@ verify.architecture.system_init_heavy_workspace_payload_guard:
 
 verify.architecture.industry_legacy_bridge_residue_guard:
 	@python3 scripts/verify/architecture_industry_legacy_bridge_residue_guard.py
+
+.PHONY: verify.native.business_fact.stage_gate
+verify.native.business_fact.stage_gate: guard.prod.forbid
+	@$(MAKE) verify.native.business_fact.static
+	@python3 scripts/verify/scene_legacy_auth_smoke_semantic_verify.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) python3 scripts/verify/scene_legacy_auth_smoke.py
+	@python3 scripts/verify/native_business_fact_action_openability_verify.py
+	@python3 scripts/verify/native_business_fact_dictionary_completeness_verify.py
+	@python3 scripts/verify/native_business_fact_project_org_closure_verify.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) python3 scripts/verify/native_business_fact_isolation_anchor_verify.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) python3 scripts/verify/native_business_fact_authenticated_alignment_smoke.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) python3 scripts/verify/native_business_fact_role_operability_blockers_smoke.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) python3 scripts/verify/native_business_fact_role_alignment_smoke.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) ROLE_EXECUTIVE_LOGIN=$(or $(ROLE_EXECUTIVE_LOGIN),demo_role_executive) ROLE_EXECUTIVE_PASSWORD=$(or $(ROLE_EXECUTIVE_PASSWORD),demo) python3 scripts/verify/native_business_fact_role_matrix_alignment_smoke.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) ROLE_EXECUTIVE_LOGIN=$(or $(ROLE_EXECUTIVE_LOGIN),demo_role_executive) ROLE_EXECUTIVE_PASSWORD=$(or $(ROLE_EXECUTIVE_PASSWORD),demo) python3 scripts/verify/native_business_fact_role_flow_usability_smoke.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) E2E_LOGIN=$(or $(E2E_LOGIN),$(ROLE_OWNER_LOGIN),admin) E2E_PASSWORD=$(or $(E2E_PASSWORD),$(ROLE_OWNER_PASSWORD),admin) python3 scripts/verify/product_project_flow_full_chain_execution_smoke.py
+	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) python3 scripts/verify/native_business_fact_runtime_snapshot.py

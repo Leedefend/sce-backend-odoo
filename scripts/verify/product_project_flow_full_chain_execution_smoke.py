@@ -45,8 +45,17 @@ def _extract_login_token(login_resp: dict) -> str:
 def main() -> int:
     base_url = get_base_url()
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
-    login = str(os.getenv("E2E_LOGIN") or "admin").strip()
-    password = str(os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
+    login = str(
+        os.getenv("E2E_LOGIN")
+        or os.getenv("ROLE_OWNER_LOGIN")
+        or "admin"
+    ).strip()
+    password = str(
+        os.getenv("E2E_PASSWORD")
+        or os.getenv("ROLE_OWNER_PASSWORD")
+        or os.getenv("ADMIN_PASSWD")
+        or "admin"
+    ).strip()
     intent_url = f"{base_url}/api/v1/intent"
     if db_name:
         intent_url = f"{intent_url}?db={db_name}"

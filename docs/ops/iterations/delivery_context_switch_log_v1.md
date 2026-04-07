@@ -16,6 +16,222 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-06T23:55:45+08:00
+- blocker_key: `stage_b_prescreen_boundary_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `stage-b boundary screening`
+- reason: Stage-A 三批回归完成后，进入 Stage-B 前置边界筛分以控制中风险扩展
+- completed_step: `已完成 ITER-2026-04-06-1201：新增 Stage-B pre-screen 边界与门禁文档并更新路线图`
+- active_commit: `a2d0e90`
+- next_step: `Create Stage-B execute Batch1 for controlled non-transactional seed/dictionary extension`
+
+### 2026-04-06T23:51:26+08:00
+- blocker_key: `stage_a_batch3_broader_entry_evidence_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `stage-a key-entry evidence aggregation`
+- reason: 继续执行 Stage-A 第三批，聚合更广业务入口证据并验证短链稳定性
+- completed_step: `已完成 ITER-2026-04-06-1200：短链门禁全 PASS，新增 Batch3 证据并更新路线图进度`
+- active_commit: `a2d0e90`
+- next_step: `Open Stage-B pre-screen batch to define medium-risk extension boundary and gate set`
+
+### 2026-04-06T23:46:14+08:00
+- blocker_key: `stage_a_batch2_entry_evidence_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `stage-a entry click-path evidence`
+- reason: 持续执行 Stage-A，增强入口点击链路证据并保持短链门禁稳定
+- completed_step: `已完成 ITER-2026-04-06-1199：短链门禁全 PASS，新增 Batch2 证据并更新路线图进度`
+- active_commit: `a2d0e90`
+- next_step: `Execute Stage-A Batch3 under same short-chain guard set with broader key-entry evidence aggregation`
+
+### 2026-04-06T23:41:21+08:00
+- blocker_key: `stage_a_batch1_short_chain_regression_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `stage-a targeted regression`
+- reason: 按 file-level checklist 启动 Stage-A 首个短链回归批次
+- completed_step: `已完成 ITER-2026-04-06-1198：三条短链回归命令全 PASS，新增 Batch1 证据文档并更新路线图进度`
+- active_commit: `a2d0e90`
+- next_step: `Execute Stage-A Batch2 with entry click-path evidence reinforcement under short-chain guards`
+
+### 2026-04-06T23:36:52+08:00
+- blocker_key: `batch_b_file_level_checklist_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `batch-b execution planning`
+- reason: 用户要求按审计驱动工程推进，需输出可直接执行的逐文件清单
+- completed_step: `已完成 ITER-2026-04-06-1197：新增 native_batch_b_file_level_change_list_v1 并更新验收总览索引`
+- active_commit: `a2d0e90`
+- next_step: `Execute Stage-A first targeted regression batch following file-level checklist`
+
+### 2026-04-06T23:31:59+08:00
+- blocker_key: `next_stage_roadmap_planning_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `next-stage roadmap planning`
+- reason: 在完成安装后证据补强后，继续输出可执行的下一阶段低风险路线与回归清单
+- completed_step: `已完成 ITER-2026-04-06-1196：新增 native_next_stage_roadmap_v1 并更新验收总览索引`
+- active_commit: `a2d0e90`
+- next_step: `Execute Stage-A low-risk checklist items with short-chain verification`
+
+### 2026-04-06T23:27:30+08:00
+- blocker_key: `post_install_business_entry_smoke_evidence_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `post-install entry smoke evidence`
+- reason: 在 seed 物化与总览后补齐安装后业务入口 smoke 证据，形成可审计闭环
+- completed_step: `已完成 ITER-2026-04-06-1195：新增 native_post_install_business_entry_smoke_evidence_v1，短链门禁全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Proceed with low-risk next-stage planning or targeted regression batches on demand`
+
+### 2026-04-06T23:22:39+08:00
+- blocker_key: `seven_audit_consolidated_acceptance_summary_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `acceptance summary closure`
+- reason: 连续迭代执行后需要形成 7 审计链路总览，确认完成项与剩余项
+- completed_step: `已完成 ITER-2026-04-06-1194：新增 native_foundation_acceptance_summary_v1 并完成治理收口记录`
+- active_commit: `a2d0e90`
+- next_step: `Open low-risk usability-evidence batch for post-install business entry smoke proof`
+
+### 2026-04-06T23:18:18+08:00
+- blocker_key: `seed_install_visibility_acceptance_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `seed visibility acceptance evidence`
+- reason: seed 物化执行后需要补齐可见性证据，确保安装链可审计
+- completed_step: `已完成 ITER-2026-04-06-1193：新增 native_seed_install_visibility_evidence_v1 并通过 verify.test_seed_dependency.guard`
+- active_commit: `a2d0e90`
+- next_step: `Prepare low-risk consolidated acceptance summary for seven-audit chain closure`
+
+### 2026-04-06T23:14:50+08:00
+- blocker_key: `seed_materialization_execute_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `customer seed materialization`
+- reason: 在 seed scope screen 后按授权执行最小 install-time 字典种子物化
+- completed_step: `已完成 ITER-2026-04-06-1192：新增 customer_project_dictionary_seed 并挂载 manifest，verify.test_seed_dependency.guard PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open low-risk acceptance batch for seed install-time visibility evidence`
+
+### 2026-04-06T23:10:04+08:00
+- blocker_key: `seed_materialization_scope_screen_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `seed materialization scope`
+- reason: 按连续迭代主线推进 seed 治理项，先做 screen 定义最小 install-time 物化范围
+- completed_step: `已完成 ITER-2026-04-06-1191：产出 native_seed_materialization_scope_v1 并回写执行序列，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated high-risk seed execute contract under customer seed materialization exception lane if user approves`
+
+### 2026-04-06T23:07:00+08:00
+- blocker_key: `seed_dependency_surface_checkpoint_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `seed and load-surface checkpoint`
+- reason: step-5/6 收敛后继续低风险跟进，先确认 seed/demo 依赖面无越界
+- completed_step: `已完成 ITER-2026-04-06-1190：verify.test_seed_dependency.guard PASS，并更新 blockers 与执行序列`
+- active_commit: `a2d0e90`
+- next_step: `Open low-cost screen batch for minimal seed materialization scope and exception boundary definition`
+
+### 2026-04-06T22:59:18+08:00
+- blocker_key: `execute_batch_1189_route_b_closure_pass_v1`
+- layer_target: `Governance Monitoring`
+- module: `business-fact ACL and rule closure`
+- reason: 在 Route B 草案基础上执行最小闭环修复（ACL 去重 + record-rule 补齐）
+- completed_step: `已完成 ITER-2026-04-06-1189：project.budget 重复 ACL 去重并补齐 project.budget/project.cost.ledger 规则，短链验证全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue low-risk follow-up for remaining native business-fact governance backlog`
+
+### 2026-04-06T22:55:14+08:00
+- blocker_key: `execute_batch_1189_policy_stop_v1`
+- layer_target: `Governance Monitoring`
+- module: `business-fact ACL and rule closure`
+- reason: 用户要求直接执行，但目标触及未匹配窄例外的 security/ACL/record-rule 高风险路径
+- completed_step: `ITER-2026-04-06-1189 标记 BLOCKED：未实施高风险代码改动，生成 FAIL_STOP 报告与结果`
+- active_commit: `a2d0e90`
+- next_step: `Require repository-level narrow-exception approval matching this exact objective before reopening execute batch`
+
+### 2026-04-06T22:52:04+08:00
+- blocker_key: `route_b_exception_draft_ready_v1`
+- layer_target: `Governance Monitoring`
+- module: `exception policy drafting`
+- reason: Route A 映射失败后，继续执行 Route B 以形成可落地窄例外草案
+- completed_step: `已完成 ITER-2026-04-06-1188：产出 native_business_fact_acl_recordrule_exception_draft_v1，并回写执行序列，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Await user approval of exception draft, then open high-risk execute batch for step-5/6 closure`
+
+### 2026-04-06T22:49:07+08:00
+- blocker_key: `route_a_existing_exception_mapping_result_v1`
+- layer_target: `Governance Monitoring`
+- module: `high-risk policy alignment`
+- reason: 用户选择 Route A，需先验证 step-5/6 是否可映射到既有窄例外条款
+- completed_step: `已完成 ITER-2026-04-06-1187：Route A 映射失败（step-5/6 均未命中既有窄例外），实施批次继续停止，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open Route-B exception drafting batch before any ACL/record-rule implementation`
+
+### 2026-04-06T22:44:54+08:00
+- blocker_key: `native_step5_step6_authorization_boundary_gate_v1`
+- layer_target: `Governance Monitoring`
+- module: `high-risk authorization boundary`
+- reason: 用户已授权继续，但需先判定是否命中仓库既有 ACL/record-rule 窄例外
+- completed_step: `已完成 ITER-2026-04-06-1186：确认授权有效但当前目标未命中既有窄例外条款，实施批次维持停止，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open policy-alignment batch to map target work into an existing high-risk narrow exception before implementation`
+
+### 2026-04-06T22:41:27+08:00
+- blocker_key: `native_step5_step6_high_risk_gate_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `high-risk gate screening`
+- reason: 7 审计顺序推进到第 5/6 步时触及 ACL/record-rule 风险域，必须先 screen 分流
+- completed_step: `已完成 ITER-2026-04-06-1185：将 step-5/6 分类为高风险授权队列并写入执行清单，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Prepare dedicated high-risk authorization task for ACL and record-rule lanes before implementation`
+
+### 2026-04-06T22:39:13+08:00
+- blocker_key: `native_module_init_bootstrap_step4_checkpoint_v1`
+- layer_target: `Governance Monitoring`
+- module: `module init/bootstrap checkpoint`
+- reason: 按 7 审计顺序推进第 4 步，先做 module init/bootstrap 只读检查点并保持低风险策略
+- completed_step: `已完成 ITER-2026-04-06-1184：execution sequence 文档追加 module init/bootstrap 检查点，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start ITER-2026-04-06-1185 for step-5 field-binding checkpoint with high-risk gate screening`
+
+### 2026-04-06T22:37:25+08:00
+- blocker_key: `native_menu_action_health_step3_checkpoint_v1`
+- layer_target: `Governance Monitoring`
+- module: `native menu-action health checkpoint`
+- reason: 按 7 审计顺序推进第 3 步，先做 menu/action 只读检查点并保持低风险策略
+- completed_step: `已完成 ITER-2026-04-06-1183：execution sequence 文档追加 menu/action 健康项检查点，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start ITER-2026-04-06-1184 for step-4 low-risk module-init/bootstrap checkpoint`
+
+### 2026-04-06T22:34:31+08:00
+- blocker_key: `native_manifest_load_chain_step2_checkpoint_v1`
+- layer_target: `Governance Monitoring`
+- module: `native manifest load-chain checkpoint`
+- reason: 按 7 审计顺序推进第 2 步，先做 manifest 只读检查点并保持低风险策略
+- completed_step: `已完成 ITER-2026-04-06-1182：execution sequence 文档追加 manifest 链路证据检查点，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start ITER-2026-04-06-1183 for step-3 low-risk menu-action checkpoint`
+
+### 2026-04-06T22:33:04+08:00
+- blocker_key: `native_blocker_ledger_step1_status_normalization_v1`
+- layer_target: `Governance Monitoring`
+- module: `native blocker ledger`
+- reason: 按 7 审计顺序推进第 1 个执行批次，先收敛 P0 legacy auth 阻塞语义并保持高风险闸门
+- completed_step: `已完成 ITER-2026-04-06-1181：native_foundation_blockers_v1 更新为 P0 已收敛、P1/P2 分流与高风险闸门保留，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start ITER-2026-04-06-1182 for next low-risk blocker closure item excluding ACL and record-rule changes`
+
+### 2026-04-06T22:31:07+08:00
+- blocker_key: `native_audit_seven_result_sequencing_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `native business-fact audit sequencing`
+- reason: 用户要求按 7 份原生审计结果依次推进，需先 screen 出可执行顺序与高风险闸门
+- completed_step: `已完成 ITER-2026-04-06-1180：产出 native_foundation_execution_sequence_v1，明确 low-risk 连续执行序列与 ACL/record-rule 高风险停止闸门，validate_task PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start ITER-2026-04-06-1181 low-risk blocker remediation excluding ACL and record-rule changes`
+
+### 2026-04-06T22:26:08+08:00
+- blocker_key: `legacy_auth_smoke_gate_semantic_strict_mode_fix_v1`
+- layer_target: `Governance Monitoring`
+- module: `verify smoke stability`
+- reason: 修复 legacy auth smoke 门禁语义，默认严格失败不可达，仅允许显式环境变量开启 fallback
+- completed_step: `已完成 ITER-2026-04-05-1179：scene_legacy_auth_smoke 默认 strict，runtime unreachable 未显式 fallback 则 FAIL；新增 scene_legacy_auth_smoke_semantic_verify 与 make verify.scene.legacy_auth.smoke.semantic；validate_task 与短链 verify PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue native business-fact verification mainline with next low-risk blocker remediation batch`
+
 ### 2026-04-02T12:30:25+0800
 - blocker_key: `custom_frontend_scene_schema_compatibility_fix_v1`
 - layer_target: `backend usability`
@@ -12383,3 +12599,867 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-05-1177 FAIL：verify.scene.legacy_docs.guard 已通过；但 ci.preflight.contract 在 verify.scene.legacy_auth.smoke 失败，HTTP request failed after retries: <urlopen error timed out>`
 - active_commit: `da08944`
 - next_step: `Open dedicated batch for verify.scene.legacy_auth.smoke runtime timeout handling/availability check, then rerun ci.preflight.contract`
+
+### 2026-04-06T21:38:30+08:00
+- blocker_key: `native_business_fact_foundation_batch_audit_v1`
+- layer_target: `Domain Business Fact Foundation`
+- module: `docs/audit/native/**`
+- reason: 回到原生视图业务事实层清理主目标，先完成 Batch A 盘点与审计基线，暂不进入前端契约/scene/平台抽象优化
+- completed_step: `ITER-2026-04-05-1178 PASS：完成原生基础设置验收矩阵、manifest加载链、阻塞清单、主数据字段绑定、角色能力ACL规则矩阵、原生菜单动作健康检查、模块初始化bootstrap审计`
+- active_commit: `da08944`
+- next_step: `Start Batch B native blocking remediation: minimal master-data closure + ACL/rule/menu-action/view fixes + smoke timeout handling`
+
+### 2026-04-06T23:59:43+08:00
+- blocker_key: `native_stage_b_batch1_dictionary_seed_extension_v1`
+- layer_target: `Governance Monitoring`
+- module: `addons/smart_construction_custom/data/customer_project_dictionary_seed.xml`
+- reason: 在 Stage-B 受控边界内扩展非交易型业务字典事实，提升原生业务事实层可用性
+- completed_step: `ITER-2026-04-06-1202 PASS：完成 project_status/project_stage/task_type/task_status/payment_category/settlement_category/contract_category 的 seed 扩展，并通过 validate_task + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic`
+- active_commit: `a2d0e90`
+- next_step: `Create Stage-B Batch2 for targeted regression matrix and dictionary visibility evidence refresh`
+
+### 2026-04-07T00:03:58+08:00
+- blocker_key: `native_stage_b_batch2_regression_matrix_refresh_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_stage_b_batch2_regression_evidence_v1.md`
+- reason: 在 Stage-B Batch1 后执行目标门禁矩阵复跑，并刷新字典可见性证据，确认链路稳定
+- completed_step: `ITER-2026-04-06-1203 PASS：完成 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic 复跑并更新 batch2 证据`
+- active_commit: `a2d0e90`
+- next_step: `Create Stage-B Batch3 focused on strict-mode runtime evidence and fallback policy visibility`
+
+### 2026-04-07T00:06:15+08:00
+- blocker_key: `native_stage_b_batch3_strict_policy_evidence_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_stage_b_batch3_strict_mode_evidence_v1.md`
+- reason: 对 strict-mode 默认无 fallback 与显式 fallback 语义完成可审计证据补齐
+- completed_step: `ITER-2026-04-07-1204 PASS：完成 validate_task + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic 并输出 batch3 证据`
+- active_commit: `a2d0e90`
+- next_step: `Prepare Stage-B close-out summary or open next objective lane per user priority`
+
+### 2026-04-07T00:11:50+08:00
+- blocker_key: `native_stage_b_closeout_acceptance_checkpoint_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_stage_b_closeout_acceptance_summary_v1.md`
+- reason: 汇总 Stage-B Batch1/2/3 证据并形成收口验收检查点，保持短链门禁一致
+- completed_step: `ITER-2026-04-07-1205 PASS：发布 Stage-B closeout summary，并通过 validate_task + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic`
+- active_commit: `a2d0e90`
+- next_step: `Continue low-risk runtime availability evidence chain unless user opens explicit Stage-C high-risk objective`
+
+### 2026-04-07T00:14:51+08:00
+- blocker_key: `native_runtime_availability_evidence_strict_default_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_availability_evidence_v1.md`
+- reason: 在当前 runtime 不可达条件下验证 strict 默认失败与显式 fallback 放行的策略分离
+- completed_step: `ITER-2026-04-07-1206 PASS：strict probe(no fallback)=预期失败；explicit fallback=PASS；并通过 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic`
+- active_commit: `a2d0e90`
+- next_step: `Continue low-risk runtime evidence chain for /api/scenes/my 401/403 reachable response when runtime window is available`
+
+### 2026-04-07T00:18:25+08:00
+- blocker_key: `native_runtime_listener_reachability_checkpoint_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_listener_reachability_evidence_v1.md`
+- reason: 记录监听端口与主动探测权限约束，明确 401/403 实机验证的前置可达窗口条件
+- completed_step: `ITER-2026-04-07-1207 PASS：监听信号已采集（*:8069），主动 TCP 探测受 PermissionError 约束；并通过 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic`
+- active_commit: `a2d0e90`
+- next_step: `Collect real /api/scenes/my 401/403 runtime response evidence when network/socket policy permits active probe`
+
+### 2026-04-07T00:21:39+08:00
+- blocker_key: `native_runtime_probe_permission_blocker_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_probe_permission_screen_v1.md`
+- reason: 对 runtime probe 权限阻塞做低成本 screen 分类，给出非侵入恢复触发条件
+- completed_step: `ITER-2026-04-07-1208 PASS：确认阻塞源为环境能力边界，并保持 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Execute reachable-window live 401/403 evidence batch when runtime probe permission becomes available`
+
+### 2026-04-07T00:27:42+08:00
+- blocker_key: `native_live_auth_probe_remote_disconnected_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_live_auth_401_403_evidence_v1.md`
+- reason: 已执行提权实机 probe，确认 strict 语义正常但 runtime 返回 RemoteDisconnected，尚未形成 401/403 可达证据
+- completed_step: `ITER-2026-04-07-1209 PASS：escalated strict probe 完成并记录 base_url/endpoint/original error；同时 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated runtime availability repair lane for /api/scenes/my RemoteDisconnected behavior if user confirms`
+
+### 2026-04-07T00:31:09+08:00
+- blocker_key: `native_runtime_repair_lane_prescreen_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_repair_lane_prescreen_v1.md`
+- reason: 为 RemoteDisconnected 运行态异常准备受控修复专线，先锁定 verify-helper 低风险执行边界
+- completed_step: `ITER-2026-04-07-1210 PASS：完成 runtime repair lane pre-screen，并保持 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke_semantic 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open runtime repair lane execute batch constrained to verify helpers and runtime evidence boundaries`
+
+### 2026-04-07T01:30:47+08:00
+- blocker_key: `native_runtime_repair_lane_batch1_unreachable_classification_hardening_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify/scene_legacy_auth_smoke.py + scripts/verify/scene_legacy_auth_smoke_semantic_verify.py`
+- reason: 在 verify-helper 边界内增强 runtime unreachable 分类，显式覆盖 RemoteDisconnected 传输异常
+- completed_step: `ITER-2026-04-07-1211 PASS：_is_runtime_unreachable 增补 RemoteDisconnected 关键字；semantic verify 新增 remote disconnect 严格失败/显式fallback通过用例；并通过 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Run runtime repair lane Batch2 live probe to check whether 401/403 is now observable in escalated window`
+
+### 2026-04-07T01:43:23+08:00
+- blocker_key: `native_runtime_repair_lane_batch2_live_reprobe_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_repair_lane_batch2_live_probe_evidence_v1.md`
+- reason: 在 Batch1 helper hardening 后复验提权实机探测，确认 runtime 是否恢复为 401/403
+- completed_step: `ITER-2026-04-07-1212 PASS：escalated live re-probe 仍为 RemoteDisconnected；strict 包装语义正确；并通过 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated runtime environment repair lane for service/proxy behavior, then rerun live 401/403 evidence probe`
+
+### 2026-04-07T01:46:36+08:00
+- blocker_key: `native_runtime_environment_repair_lane_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_screen_v1.md`
+- reason: 将重复 live evidence 循环收敛为专线 screen，明确环境修复边界与退出信号
+- completed_step: `ITER-2026-04-07-1213 PASS：完成 runtime environment repair lane screen，并保持 legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start dedicated runtime environment repair execute batch within non-business, non-ACL boundaries`
+
+### 2026-04-07T03:34:45+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch1_probe_tooling_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify/scene_legacy_auth_runtime_probe.py + Makefile`
+- reason: 在环境修复专线内新增可复用 runtime probe 工具，支持多轮可达性证据采集而不触碰业务代码
+- completed_step: `ITER-2026-04-07-1214 PASS：新增 verify.scene.legacy_auth.runtime_probe 目标并完成门禁（runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic）`
+- active_commit: `a2d0e90`
+- next_step: `Run runtime probe batch2 with escalated window and explicit base-url matrix to drive environment repair decisions`
+
+### 2026-04-07T03:45:29+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch2_matrix_sampling_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch2_matrix_evidence_v1.md`
+- reason: 在提权窗口完成 8069/8070 对照采样，收敛环境层异常分布
+- completed_step: `ITER-2026-04-07-1215 PASS：矩阵采样结果为 8069->RemoteDisconnected, 8070->timeout；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start environment repair lane batch3 focused on 8070 timeout root-cause evidence (listener/forward chain)`
+
+### 2026-04-07T03:54:09+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch3_8070_rootcause_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch3_8070_rootcause_evidence_v1.md`
+- reason: 对 8070 timeout 做集中根因证据采集，确认 listener/forward 路径缺口
+- completed_step: `ITER-2026-04-07-1216 PASS：提权证据显示 ss 仅见 *:8069 监听，8070 探针稳定超时；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Open environment repair lane batch4 execute to adjust local listener/forward path for 8070, then rerun live auth evidence`
+
+### 2026-04-07T04:00:07+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch4_fallback_port_correction_v1`
+- layer_target: `Governance Monitoring`
+- module: `scripts/verify/python_http_smoke_utils.py`
+- reason: 在 verify helper 层修正无配置场景默认端口回退（8070->8069），降低与实际监听面不一致导致的噪音
+- completed_step: `ITER-2026-04-07-1217 PASS：get_base_url fallback 默认改为 8069；无配置验证输出 http://localhost:8069；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start batch5 to locate and reconcile explicit 8070 config source in current environment chain`
+
+### 2026-04-07T04:06:18+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch5_8070_config_source_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch5_8070_config_source_screen_v1.md`
+- reason: 确认当前 8070 行为是否来自显式配置链而非 fallback 机制
+- completed_step: `ITER-2026-04-07-1218 PASS：定位 Makefile ENV=dev -> .env.dev -> ODOO_PORT=8070 为显式来源；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start batch6 environment execute lane: either fix 8070 service chain or switch dev port to 8069 with regression verify`
+
+### 2026-04-07T04:12:08+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch6_dev_port_alignment_v1`
+- layer_target: `Governance Monitoring`
+- module: `.env.dev`
+- reason: 执行 batch5 决策分支 B，将 dev 显式端口从 8070 对齐到 8069，减少配置层不一致
+- completed_step: `ITER-2026-04-07-1219 PASS：.env.dev ODOO_PORT=8069；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start batch7 to analyze 8069 RemoteDisconnected runtime service chain`
+
+### 2026-04-07T04:18:23+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch7_8069_service_chain_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch7_8069_service_chain_evidence_v1.md`
+- reason: 通过 listener+直连握手链路证据确认 8069 的 RemoteDisconnected 发生边界
+- completed_step: `ITER-2026-04-07-1220 PASS：ss 显示 *:8069 监听；http.client 直连 /api/scenes/my 返回 RemoteDisconnected；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start batch8 runtime process/entry diagnostics (service health + handshake-window logs)`
+
+### 2026-04-07T04:24:42+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch8_process_entry_diagnostics_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch8_process_entry_diagnostics_v1.md`
+- reason: 收集 compose 进程快照与入口日志，验证 8069 握手失败是否伴随服务链状态不一致
+- completed_step: `ITER-2026-04-07-1221 PASS：compose ps 未见 odoo 活跃服务条目而 logs 仍返回 odoo-1 历史流；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start batch9 execute to restore compose odoo runtime state and re-run live auth evidence probe`
+
+### 2026-04-07T04:32:40+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch9_odoo_recreate_port_collision_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch9_odoo_recreate_reprobe_evidence_v1.md`
+- reason: 执行最小恢复动作时命中 8069 端口占用冲突，导致 odoo 容器无法成功绑定启动
+- completed_step: `ITER-2026-04-07-1222 PASS_WITH_RISK：make odoo.recreate 失败(Bind 0.0.0.0:8069 already allocated)；其余 verify.* 全 PASS；链路按风险规则停机`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated port-collision owner resolution batch before next runtime restore attempt`
+
+### 2026-04-07T04:38:49+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch10_port_owner_screen_v1`
+- layer_target: `Governance Monitoring`
+- module: `docs/audit/native/native_runtime_environment_repair_lane_batch10_port_collision_owner_screen_v1.md`
+- reason: 对 8069 冲突 owner 做专项 screen，明确是否跨项目容器占用
+- completed_step: `ITER-2026-04-07-1223 PASS：docker ps 发现 odoo-paas-web 绑定 0.0.0.0:8069，dev odoo 处于 Created；并通过 runtime_probe + legacy_contract_guard + seed_dependency_guard + legacy_auth_smoke.semantic`
+- active_commit: `a2d0e90`
+- next_step: `Start batch11 execute: release or rebind odoo-paas-web 8069 port, then retry odoo.recreate`
+
+### 2026-04-07T04:44:50+08:00
+- blocker_key: `native_runtime_environment_repair_lane_batch11_release_recreate_v1`
+- layer_target: `Governance Monitoring`
+- module: `runtime execute (docker stop odoo-paas-web + make odoo.recreate)`
+- reason: 执行端口冲突解除后的最小恢复动作，验证 dev odoo 能否绑定 8069 并启动
+- completed_step: `ITER-2026-04-07-1224 PASS：odoo-paas-web 停止成功，odoo.recreate 成功，dev odoo up@8069；但 /api/scenes/my 仍 RemoteDisconnected；其余 verify.* 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start batch12 focusing on 8069 application-entry behavior causing RemoteDisconnected while service is up`
+
+### 2026-04-07T04:55:19+08:00
+- blocker_key: `native_access_url_alignment_batch1226`
+- layer_target: `Governance Verify Tooling`
+- module: `scripts/verify/scene_legacy_auth_runtime_probe.py`
+- reason: 用户指出原生访问 URL 使用错误，需要把 runtime probe 从硬编码 legacy 路径对齐到原生入口默认路径
+- completed_step: `ITER-2026-04-07-1226 PASS：runtime_probe 默认改为 /api/v1/intent(POST app.init)；legacy_auth_smoke 增加 URL/endpoint 覆盖能力；短链验证全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue app-entry evidence with explicit native base URL in runtime lane`
+
+### 2026-04-07T04:58:53+08:00
+- blocker_key: `native_endpoint_runtime_probe_execute_batch1227`
+- layer_target: `Governance Monitoring`
+- module: `scene_legacy_auth_runtime_probe native endpoint execution`
+- reason: 在 URL 对齐后执行原生入口 runtime 探针，确认探针确实打到 `/api/v1/intent` 而非 legacy 路径
+- completed_step: `ITER-2026-04-07-1227 PASS：E2E_BASE_URL=http://localhost:8069 下 runtime_probe 输出 endpoint=/api/v1/intent；语义短链 verify 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue runtime lane with host-approved local accessibility check to obtain live 401/403 or transport evidence`
+
+### 2026-04-07T05:02:32+08:00
+- blocker_key: `native_runtime_window_evidence_batch1228`
+- layer_target: `Governance Monitoring`
+- module: `native runtime accessibility evidence`
+- reason: 在 URL 对齐后继续采集主机级可达窗口证据，区分 native 与 legacy 入口的运行态结果
+- completed_step: `ITER-2026-04-07-1228 PASS：runtime_probe 目标为 /api/v1/intent；短链 verify 全 PASS；curl 对 native/legacy 均为 couldn't connect`
+- active_commit: `a2d0e90`
+- next_step: `Open host-approved non-sandbox probe batch for decisive live 401/403 vs transport classification`
+
+### 2026-04-07T05:04:32+08:00
+- blocker_key: `host_live_probe_classification_batch1229`
+- layer_target: `Governance Monitoring`
+- module: `native/legacy live endpoint classification`
+- reason: 在沙箱受限后执行一次主机授权探测，确认 corrected URL 对应入口是否真实可达与可判定
+- completed_step: `ITER-2026-04-07-1229 PASS：/api/v1/intent POST 返回401 AUTH_REQUIRED；/api/scenes/my GET 返回401 AUTH_REQUIRED 且 deprecation headers 齐全`
+- active_commit: `a2d0e90`
+- next_step: `Proceed to native business-fact-layer usability iteration with runtime reachability blocker removed`
+
+### 2026-04-07T05:08:07+08:00
+- blocker_key: `native_business_fact_stage_entry_screen_batch1230`
+- layer_target: `Governance Monitoring`
+- module: `native business-fact stage entry screen`
+- reason: 运行态 URL/可达性问题已澄清，需要确认是否可进入业务事实层可用性迭代并锁定低风险边界
+- completed_step: `ITER-2026-04-07-1230 PASS：完成业务事实层入口 screen，确认下一批应走非ACL/非record-rule 的低风险事实可用性检查`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1231 low-risk execute: factual-usability checklist verify/evidence (no ACL/rule edits)`
+
+### 2026-04-07T05:10:28+08:00
+- blocker_key: `native_business_fact_static_usability_verify_batch1231`
+- layer_target: `Governance Verify Tooling`
+- module: `scripts/verify/native_business_fact_static_usability_verify.py`
+- reason: 在业务事实层迭代入口后补充可重复执行的低风险静态门禁，避免直接进入高风险 ACL/rule 修改
+- completed_step: `ITER-2026-04-07-1231 PASS：新增业务事实层静态可用性校验脚本并执行 PASS（七审计文档+入口路由+核心模型存在性）`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1232 low-risk execute for runtime-open factual evidence hooks (no ACL/rule edits)`
+
+### 2026-04-07T05:13:24+08:00
+- blocker_key: `native_business_fact_make_gate_batch1232`
+- layer_target: `Governance Verify Tooling`
+- module: `Makefile verify.native.business_fact.static`
+- reason: 将业务事实层静态可用性校验纳入统一 make 门禁入口，便于连续批次复用
+- completed_step: `ITER-2026-04-07-1232 PASS：新增 make verify.native.business_fact.static 并执行 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1233 for native runtime status snapshot evidence (business-fact handoff)`
+
+### 2026-04-07T05:21:16+08:00
+- blocker_key: `native_business_fact_runtime_snapshot_batch1233`
+- layer_target: `Governance Verify Tooling`
+- module: `scripts/verify/native_business_fact_runtime_snapshot.py`
+- reason: 为业务事实层阶段交接增加可重复执行的运行态状态快照证据脚本
+- completed_step: `ITER-2026-04-07-1233 PASS：新增 runtime snapshot 脚本；主机授权探测下 native/legacy 均为 401`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1234 to formalize business-fact usability checklist and verify-hook mapping`
+
+### 2026-04-07T05:25:32+08:00
+- blocker_key: `native_business_fact_checklist_mapping_batch1234`
+- layer_target: `Governance Monitoring`
+- module: `native business-fact usability checklist mapping`
+- reason: 将业务事实层可用性检查项与现有 verify 钩子显式绑定，形成可重复执行清单
+- completed_step: `ITER-2026-04-07-1234 PASS：新增 checklist 映射文档；静态门禁与runtime snapshot均PASS(native/legacy=401)`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1235 to compose one-shot stage gate command for BF checklist`
+
+### 2026-04-07T05:29:03+08:00
+- blocker_key: `native_business_fact_stage_gate_command_batch1235`
+- layer_target: `Governance Verify Tooling`
+- module: `make verify.native.business_fact.stage_gate`
+- reason: 将BF检查清单映射为一键门禁命令，提升后续批次执行一致性
+- completed_step: `ITER-2026-04-07-1235 PASS：新增并执行 stage_gate 命令；static PASS + runtime snapshot(native/legacy=401)`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1236 for compact 7-audit checkpoint summary based on new stage gate`
+
+### 2026-04-07T05:32:24+08:00
+- blocker_key: `native_business_fact_stage_gate_checkpoint_batch1236`
+- layer_target: `Governance Monitoring`
+- module: `native business-fact stage gate checkpoint summary`
+- reason: 对 7审计链路与一键stage_gate命令做压缩检查点，保证连续迭代可追踪
+- completed_step: `ITER-2026-04-07-1236 PASS：发布checkpoint文档；stage_gate执行PASS(static+runtime snapshot=401/401)`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1237 for low-risk dictionary completeness evidence extension`
+
+### 2026-04-07T05:35:26+08:00
+- blocker_key: `native_business_fact_dictionary_evidence_batch1237`
+- layer_target: `Governance Verify Tooling`
+- module: `dictionary completeness verifier + stage gate integration`
+- reason: 在业务事实层门禁中补齐字典完备性证据，提升“原生可用”判定可信度
+- completed_step: `ITER-2026-04-07-1237 PASS：新增dictionary completeness校验并接入stage_gate，records=23/types=10，runtime snapshot=401/401`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1238 for compact business-fact gate dashboard summary`
+
+### 2026-04-07T05:39:02+08:00
+- blocker_key: `native_business_fact_gate_dashboard_batch1238`
+- layer_target: `Governance Monitoring`
+- module: `native business-fact gate dashboard summary`
+- reason: 将当前复合门禁信号集中展示，支持连续迭代快速决策
+- completed_step: `ITER-2026-04-07-1238 PASS：发布gate dashboard，stage_gate维持PASS(static+dictionary+runtime snapshot)`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1239 for native action openability evidence subtask under current gate`
+
+### 2026-04-07T05:43:13+08:00
+- blocker_key: `native_business_fact_action_openability_batch1239`
+- layer_target: `Governance Verify Tooling`
+- module: `native action openability verifier + stage gate integration`
+- reason: 在复合门禁中补齐原生菜单动作可打开性证据，形成更完整的低风险可用性判定
+- completed_step: `ITER-2026-04-07-1239 PASS：新增action openability校验(menu_action_refs=65/action_ids=99)并接入stage_gate，整体PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1240 for compact ready-to-execute low-risk backlog page`
+
+### 2026-04-07T05:46:56+08:00
+- blocker_key: `native_business_fact_low_risk_backlog_batch1240`
+- layer_target: `Governance Monitoring`
+- module: `ready-to-execute low-risk backlog page`
+- reason: 将门禁状态转化为可执行的低风险任务队列，保证连续迭代节奏
+- completed_step: `ITER-2026-04-07-1240 PASS：发布low-risk backlog页；复合stage_gate维持PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1241 for P0 stability sampling (3 consecutive stage-gate runs)`
+
+### 2026-04-07T05:55:06+08:00
+- blocker_key: `authenticated_business_fact_alignment_batch1241`
+- layer_target: `Governance Verify Tooling`
+- module: `authenticated alignment smoke + stage gate upgrade`
+- reason: 按用户目标将门禁语义从未认证可达提升为认证态业务事实对齐
+- completed_step: `ITER-2026-04-07-1241 PASS：新增认证态对齐smoke(login+system.init+project/dictionary contract)并接入stage_gate，均PASS`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1242 for role-aligned authenticated fact-read check`
+
+### 2026-04-07T06:00:28+08:00
+- blocker_key: `role_aligned_business_fact_gate_batch1242`
+- layer_target: `Governance Verify Tooling`
+- module: `role-aligned authenticated fact-read smoke`
+- reason: 按真实业务目标将门禁扩展到非admin角色的业务事实读取能力验证
+- completed_step: `ITER-2026-04-07-1242 PASS：新增role alignment smoke并接入stage_gate，demo_role_pm下system.init/project/task contract均200`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1243 for multi-role fact-read sampling and mismatch classification`
+
+### 2026-04-07T06:07:01+08:00
+- blocker_key: `real_role_matrix_business_fact_gate_batch1243`
+- layer_target: `Governance Verify Tooling`
+- module: `real role-matrix authenticated alignment smoke`
+- reason: 按用户要求使用真实业务角色集合验证原生业务事实层对齐能力
+- completed_step: `ITER-2026-04-07-1243 PASS：新增role-matrix smoke并接入stage_gate，owner/pm/finance/executive均通过`
+- active_commit: `a2d0e90`
+- next_step: `Start batch1244 for role-matrix drift classification report`
+
+### 2026-04-07T06:15:52+08:00
+- blocker_key: `real_user_credentials_mismatch_batch1244`
+- layer_target: `Governance Monitoring`
+- module: `real customer user matrix gate execution`
+- reason: 按用户指令使用 customer_users.xml 真实登录名 + demo 密码执行门禁
+- completed_step: `ITER-2026-04-07-1244 FAIL：真实用户登录401，role alignment步骤失败（xiaohuijiu/wutao/shuiwujingbanren/wennan）`
+- active_commit: `a2d0e90`
+- next_step: `Run credential reconciliation batch (confirm real passwords or reset target users), then rerun stage gate`
+
+### 2026-04-07T06:24:54+08:00
+- blocker_key: `customer_module_upgrade_idempotency_conflict_batch1245`
+- layer_target: `Business Fact Data Seed`
+- module: `smart_construction_custom customer users + module upgrade`
+- reason: 按用户要求设置customer_users默认密码并执行一次升级
+- completed_step: `ITER-2026-04-07-1245 FAIL：customer_users补丁已写入，但mod.upgrade因customer_company_departments.xml重复公司名触发UniqueViolation`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated conflict-screen/fix batch for smart_construction_custom upgrade idempotency, then rerun real-user gate`
+
+### 2026-04-07T06:31:21+08:00
+- blocker_key: `sc_prod_sim_dictionary_seed_type_conflict_batch1246`
+- layer_target: `Governance Monitoring`
+- module: `simulated production rerun (mod.upgrade smart_construction_custom)`
+- reason: 纠正DB目标到sc_prod_sim后重跑升级与真实用户门禁前置
+- completed_step: `ITER-2026-04-07-1246 FAIL：升级命中customer_project_dictionary_seed.xml type取值冲突（project_status 非当前允许值）`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated seed-type compatibility fix batch, then rerun upgrade + real-user gate`
+
+### 2026-04-07T06:38:40+08:00
+- blocker_key: `dictionary_completeness_semantic_mismatch_batch1247`
+- layer_target: `Business Fact Data Seed`
+- module: `customer dictionary seed compatibility + real-user stage gate rerun`
+- reason: 修复seed type兼容性并恢复真实用户门禁验证链
+- completed_step: `ITER-2026-04-07-1247 FAIL：sc_prod_sim升级已恢复PASS，但stage_gate在dictionary_completeness校验失败（缺少legacy type类别）`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated semantic-alignment batch for dictionary completeness rule vs current project.dictionary.type domain, then rerun stage_gate`
+
+### 2026-04-07T06:52:40+08:00
+- blocker_key: `real_role_auth_chain_instability_batch1248`
+- layer_target: `Business Fact Layer`
+- module: `project.dictionary type-domain alignment + stage-gate DB propagation`
+- reason: 修复字典语义冲突并对齐真实运行时门禁参数（DB_NAME/URL）
+- completed_step: `ITER-2026-04-07-1248 FAIL：字典语义链已修复（model+seed+completeness PASS），但real-user role auth/system.init在stage_gate链路仍出现401不稳定`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated role-auth runtime screen/fix batch to stabilize login token -> system.init for real users on sc_prod_sim@18069`
+
+### 2026-04-07T09:42:20+08:00
+- blocker_key: `stage_gate_db_routing_fix_batch1249`
+- layer_target: `Verify/Gate Runtime Auth`
+- module: `native business-fact stage-gate DB routing and role-auth stabilization`
+- reason: 修复 stage_gate 链路中 DB_NAME 解析漂移（误落 sc_demo）导致的真实角色401误判
+- completed_step: `ITER-2026-04-07-1249 PASS：sc_prod_sim@18069 下 native business-fact stage_gate 全链路PASS（含 real-role alignment/matrix）`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk governance checkpoint for business-fact usability closure with real-role evidence expansion`
+
+### 2026-04-07T09:49:10+08:00
+- blocker_key: `real_role_flow_usability_evidence_batch1250`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role-flow usability verifier integration`
+- reason: 将门禁从角色认证对齐扩展到关键业务模型可用性（project/task/payment/settlement）
+- completed_step: `ITER-2026-04-07-1250 PASS：新增role-flow usability smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue role-flow depth checkpoint with transition/read-after-write evidence under same real-role matrix`
+
+### 2026-04-07T09:55:05+08:00
+- blocker_key: `real_role_transition_readiness_evidence_batch1251`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role transition-readiness verifier integration`
+- reason: 在 role-flow 基础上补齐 payment.request / project.settlement 的流转就绪证据
+- completed_step: `ITER-2026-04-07-1251 PASS：新增role_transition_readiness_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for read-after-write evidence under real-role matrix`
+
+### 2026-04-07T10:01:30+08:00
+- blocker_key: `real_role_read_after_write_evidence_batch1252`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role read-after-write consistency verifier integration`
+- reason: 在既有流转证据基础上补齐 role 登录/初始化后双读一致性证据
+- completed_step: `ITER-2026-04-07-1252 PASS：新增role_read_after_write_consistency_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role-scoped intent action readiness evidence`
+
+### 2026-04-07T10:07:15+08:00
+- blocker_key: `real_role_action_readiness_evidence_batch1253`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role action-readiness verifier integration`
+- reason: 补齐 role 视角下 contract 按钮 intent/params 就绪性证据
+- completed_step: `ITER-2026-04-07-1253 PASS：新增role_action_readiness_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role action payload-shape consistency evidence`
+
+### 2026-04-07T10:17:30+08:00
+- blocker_key: `real_role_action_payload_shape_evidence_batch1254`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role action payload-shape verifier integration`
+- reason: 补齐 role 动作 payload 结构在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1254 PASS：新增role_action_payload_shape_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role contract policy-surface consistency evidence`
+
+### 2026-04-07T10:23:35+08:00
+- blocker_key: `real_role_policy_surface_consistency_evidence_batch1255`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role policy-surface consistency verifier integration`
+- reason: 补齐 role 合同策略面(access_policy)在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1255 PASS：新增role_policy_surface_consistency_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role contract field-policy surface consistency evidence`
+
+### 2026-04-07T10:31:40+08:00
+- blocker_key: `real_role_field_policy_surface_consistency_evidence_batch1256`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role field-policy surface consistency verifier integration`
+- reason: 补齐 role 合同字段策略面(field_policies)在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1256 PASS：新增role_field_policy_surface_consistency_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role button-visibility surface consistency evidence`
+
+### 2026-04-07T10:38:20+08:00
+- blocker_key: `real_role_button_visibility_surface_consistency_evidence_batch1257`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role button-visibility surface consistency verifier integration`
+- reason: 补齐 role 按钮可见性在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1257 PASS：新增role_button_visibility_surface_consistency_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role toolbar/panel surface consistency evidence`
+
+### 2026-04-07T10:46:30+08:00
+- blocker_key: `real_role_toolbar_panel_surface_consistency_evidence_batch1258`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role toolbar/panel surface consistency verifier integration`
+- reason: 补齐 role 页面 toolbar/panel 面在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1258 PASS：新增role_toolbar_panel_surface_consistency_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role degraded-surface stability evidence`
+
+### 2026-04-07T11:22:59+08:00
+- blocker_key: `real_role_degraded_surface_stability_evidence_batch1259`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role degraded-surface stability verifier integration`
+- reason: 补齐 role 合同降级语义面在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1259 PASS：新增role_degraded_surface_stability_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role contract-envelope stability evidence`
+
+### 2026-04-07T11:28:22+08:00
+- blocker_key: `real_role_contract_envelope_stability_evidence_batch1260`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role contract-envelope stability verifier integration`
+- reason: 补齐 role 合同响应封套在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1260 PASS：新增role_contract_envelope_stability_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role contract-meta stability evidence`
+
+### 2026-04-07T11:33:29+08:00
+- blocker_key: `real_role_contract_meta_stability_evidence_batch1261`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native business-fact role contract-meta stability verifier integration`
+- reason: 补齐 role 合同 meta 面在重复读取下的一致性证据
+- completed_step: `ITER-2026-04-07-1261 PASS：新增role_contract_meta_stability_smoke并接入stage_gate，sc_prod_sim@18069 real-role全链路PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk checkpoint for role contract-field-key stability evidence`
+
+### 2026-04-07T11:43:35+08:00
+- blocker_key: `delivery_blocker_role_operability_cost_code_gap_batch1262`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `delivery blocker stage-gate re-focus + role operability verification`
+- reason: 按用户策略切换为交付阻塞优先，暂停继续扩展 role surface 证据链
+- completed_step: `ITER-2026-04-07-1262 FAIL：stage_gate改为阻塞项优先并新增role_operability_blockers_smoke，但因project.cost.code无创建权限导致project.cost.ledger可办性校验阻塞`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated blocker-fix batch for minimal cost-code master-data supply and re-run blocker-focused stage gate`
+
+### 2026-04-07T11:58:53+08:00
+- blocker_key: `delivery_blocker_admin_closure_dashboard_enter_500_batch1263`
+- layer_target: `Verify/Gate Runtime Evidence + Business Fact Seed Supply`
+- module: `cost-code seed unblock + role operability verifier adjustment`
+- reason: 修复上一批 project.cost.code 主数据/权限阻塞，并继续验证交付阻塞主链
+- completed_step: `ITER-2026-04-07-1263 FAIL：cost-code阻塞已解除（role_operability_blockers_smoke通过），但admin原生闭环在project.dashboard.enter触发500，stage_gate仍阻塞`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated closure-blocker batch for project.dashboard.enter runtime 500 diagnosis/fix and rerun blocker-focused stage gate`
+
+### 2026-04-07T12:14:26+08:00
+- blocker_key: `native_project_member_factual_closure_with_runtime_blocker_batch1264`
+- layer_target: `Business-Fact Layer`
+- module: `project organization + project member factual closure`
+- reason: 补齐项目组织与项目成员落位闭环，形成项目可办理事实基础
+- completed_step: `ITER-2026-04-07-1264 FAIL：已完成项目岗位字段、项目成员事实模型扩展、原生成员维护入口与可见性联动，但stage_gate仍被project.dashboard.enter运行时500阻断`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated runtime diagnosis/fix batch for project.dashboard.enter 500 and rerun blocker-focused stage gate`
+
+### 2026-04-07T12:33:30+08:00
+- blocker_key: `runtime_hook_recovery_blocked_by_project_view_validation_batch1265`
+- layer_target: `Scene-Orchestration Runtime Supply`
+- module: `smart_construction_core addon-root hook provider exposure`
+- reason: 修复 `project.dashboard.enter` 运行时缺失 hook（`smart_core_build_project_dashboard_service`）
+- completed_step: `ITER-2026-04-07-1265 FAIL：已在 addons/smart_construction_core/__init__.py 暴露 smart_core provider hooks 并重启运行态；但 stage_gate 受 smart_construction_core 升级阻塞（project_views.xml 校验错误）未能完成`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated recovery batch to fix project_views.xml validation blocker, complete smart_construction_core upgrade, then rerun verify.native.business_fact.stage_gate`
+
+### 2026-04-07T13:01:19+08:00
+- blocker_key: `project_dashboard_enter_stage_permission_blocker_batch1266`
+- layer_target: `Business-Fact Native View Layer`
+- module: `project member native form view validation recovery`
+- reason: 修复 core 升级阻塞（project member 子视图中 post_id domain 依赖字段缺失）
+- completed_step: `ITER-2026-04-07-1266 FAIL：已修复 project_views.xml 校验并恢复 smart_construction_core 升级；stage_gate 现阻塞于 project.dashboard.enter 的明确 403 权限问题（project.project.stage_id 读取权限）`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated permission-operability recovery batch for dashboard enter stage_id read path, then rerun verify.native.business_fact.stage_gate`
+
+### 2026-04-07T13:25:03+08:00
+- blocker_key: `dashboard_enter_permission_seed_not_effective_batch1267`
+- layer_target: `Business-Fact Role Authorization Seed`
+- module: `customer user authorization seed alignment`
+- reason: 以最小授权种子修复 project.dashboard.enter 的 stage_id 读取 403
+- completed_step: `ITER-2026-04-07-1267 FAIL：已补齐 admin/真实角色 project.group_project_stages 授权并升级重启验证，但 stage_gate 仍在 project.dashboard.enter 的 stage_id 读取返回 403，阻塞根因不在 seed 缺失`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated runtime-path recovery batch to handle restricted-field read in project.dashboard.enter path`
+
+### 2026-04-07T13:36:16+08:00
+- blocker_key: `dashboard_enter_admin_identity_stage_access_denied_batch1268`
+- layer_target: `Scene-Orchestration Runtime Read Path`
+- module: `project dashboard service/handler read hardening`
+- reason: 通过 runtime 读取路径修复 project.dashboard.enter stage_id 字段权限阻断
+- completed_step: `ITER-2026-04-07-1268 FAIL：已落地 service/handler 读取路径兜底，但 stage_gate 仍在 full-chain 中以 User:2(admin) 触发 stage_id 403，阻塞未解除`
+- active_commit: `a2d0e90`
+- next_step: `Open verify-alignment batch to bind full-chain smoke login to real role env credentials and rerun stage_gate`
+
+### 2026-04-07T13:41:08+08:00
+- blocker_key: `full_chain_identity_alignment_unblock_batch1269`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `full-chain smoke credential priority alignment`
+- reason: 对齐“真实角色验证”目标，避免 full-chain 默认 admin 路径继续阻断
+- completed_step: `ITER-2026-04-07-1269 PASS：stage_gate 全链路通过（含 product_project_flow_full_chain_execution_smoke PASS），原生业务事实层门禁由阻塞转为可收口`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk native business-fact checkpoint in 7-audit sequence`
+
+### 2026-04-07T13:47:25+08:00
+- blocker_key: `native_audit_dashboard_sync_after_real_role_gate_pass_batch1270`
+- layer_target: `Verify/Gate Runtime Evidence Reporting`
+- module: `native audit dashboard + blocker ledger synchronization`
+- reason: 同步 7 审计看板与阻塞台账到最新真实角色门禁 PASS 事实，避免状态漂移
+- completed_step: `ITER-2026-04-07-1270 PASS：native_business_fact_gate_dashboard 与 native_foundation_blockers 已对齐最新门禁证据；stage_gate 复验继续 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk native business-fact checkpoint for master-data acceptance hardening`
+
+### 2026-04-07T13:50:54+08:00
+- blocker_key: `native_dictionary_acceptance_hardening_batch1271`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `dictionary completeness verifier hardening`
+- reason: 将主数据验收从“类型存在”提升为“关键类型最小可用条目数”
+- completed_step: `ITER-2026-04-07-1271 PASS：native_business_fact_dictionary_completeness_verify 已升级为 XML 解析 + 分类型最小条目校验；stage_gate 复验 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue next low-risk role-specific closure evidence checkpoint`
+
+### 2026-04-07T13:57:01+08:00
+- blocker_key: `project_org_isolation_anchor_gate_blocker_batch1272`
+- layer_target: `Verify/Gate Runtime Evidence + Business-Fact Documentation`
+- module: `isolation anchor verify + gate refocus + project-org isolation docs`
+- reason: 启动项目组织落位+隔离主迭代，新增隔离锚点门禁并暂停表面一致性扩展
+- completed_step: `ITER-2026-04-07-1272 FAIL：isolation anchor verify 发现真实阻塞 payment.ledger.company_id 缺失；stage_gate 按预期阻断并给出明确对象级证据`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated high-risk authority task line for payment-ledger isolation anchor supply before continuing closure`
+
+### 2026-04-07T13:59:45+08:00
+- blocker_key: `payment_ledger_isolation_authority_screen_batch1273`
+- layer_target: `Governance/Authorization Screen`
+- module: `payment-ledger isolation authority path`
+- reason: 用户已授权继续，但 payment 路径属于高风险 stop 条件，需先完成专用 authority screen
+- completed_step: `ITER-2026-04-07-1273 PASS(screen)：已产出 payment_ledger_isolation_authority_screen_v1，明确下一实施批次 allowlist/guardrails/验收清单`
+- active_commit: `a2d0e90`
+- next_step: `Create dedicated high-risk implementation batch for additive payment-ledger company_id anchor supply`
+
+### 2026-04-07T14:10:57+08:00
+- blocker_key: `payment_ledger_company_isolation_anchor_closed_batch1274`
+- layer_target: `Business-Fact Layer`
+- module: `payment ledger company/project isolation anchor supply`
+- reason: 关闭 `native_business_fact_isolation_anchor_verify` 的真实阻塞：`payment.ledger.company_id` 缺失
+- completed_step: `ITER-2026-04-07-1274 PASS：已在 payment.ledger 增加 company_id 事实锚点（related project.company_id, store/index），并修复 core 模型加载顺序；stage_gate 全链路复验 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue main iteration on project organization placement + company/project isolation rule closure for key business objects`
+
+### 2026-04-07T14:30:19+08:00
+- blocker_key: `project_org_fact_modeling_closure_v1_batch1275`
+- layer_target: `Business-Fact Layer`
+- module: `project organization fact modeling (project key roles + member carrier + native form persistence)`
+- reason: 在保持 1275 主线不变前提下完成最小增强：原生表单可见、成员入口可维护、字段可落库
+- completed_step: `ITER-2026-04-07-1275 PASS：项目关键岗位字段已独立化，项目成员载体拆分到独立模型文件 project_member.py，新增原生表单/成员入口/落库验收验证脚本并通过；stage_gate 复验 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated permission-binding iteration to attach object access rules to project-member facts (ACL/rule files deferred scope)`
+
+### 2026-04-07T14:30:19+08:00
+- blocker_key: `project_member_rule_binding_screen_batch1276`
+- layer_target: `Governance/Authorization Screen`
+- module: `project-member based object rule-binding planning`
+- reason: 1275 已明确 ACL/rule 绑定延后，本批次先完成专用 screen，约束下轮高风险实施边界
+- completed_step: `ITER-2026-04-07-1276 PASS(screen)：已产出 project_member_rule_binding_screen_v1，明确对象范围、候选 authority 路径、执行顺序与验收清单`
+- active_commit: `a2d0e90`
+- next_step: `Create dedicated high-risk implementation batch for additive project-member rule binding`
+
+### 2026-04-07T14:40:42+08:00
+- blocker_key: `project_member_rule_binding_implementation_batch1277`
+- layer_target: `Business-Fact Layer`
+- module: `project-member + project-key-role record-rule binding`
+- reason: 基于 1275 项目组织事实闭环，执行延后权限绑定，收敛关键对象访问边界
+- completed_step: `ITER-2026-04-07-1277 PASS：在 sc_record_rules.xml 将 project/task/budget/cost/payment/settlement 目标对象域绑定到项目关键岗位字段与 project_member_ids.user_id（任务补 assignee），并通过 upgrade + stage_gate 全量复验`
+- active_commit: `a2d0e90`
+- next_step: `Open runtime negative-proof batch for same-company non-member denial evidence on targeted objects`
+
+### 2026-04-07T14:46:08+08:00
+- blocker_key: `non_member_denial_runtime_proof_batch1278`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `same-company non-member denial runtime proof`
+- reason: 对 1277 权限绑定结果补齐“非成员拒绝访问”运行时证据
+- completed_step: `ITER-2026-04-07-1278 PASS：新增 non_member_denial_verify 并完成运行时验证（含临时 outsider bootstrap 与 followers 可见性场景），输出可执行拒绝证据`
+- active_commit: `a2d0e90`
+- next_step: `Expand fixed real-user deny/allow matrix verification for delivery acceptance dossier`
+
+### 2026-04-07T14:53:35+08:00
+- blocker_key: `fixed_real_user_matrix_verify_batch1279`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `fixed real-user allow matrix verification`
+- reason: 将交付证据从临时 outsider 拓展到固定真实用户角色矩阵
+- completed_step: `ITER-2026-04-07-1279 PASS：新增 fixed_user_matrix_verify，完成 owner/pm/finance 固定真实用户运行时可见矩阵验证；outsider 固定用户拓扑下不满足严格 deny 条件，拒绝证据继续引用 1278`
+- active_commit: `a2d0e90`
+- next_step: `If strict fixed-user deny matrix is required, add dedicated outsider seed user then rerun deny matrix verify`
+
+### 2026-04-07T15:01:04+08:00
+- blocker_key: `fixed_outsider_seed_path_screen_batch1280`
+- layer_target: `Governance/Authorization Screen`
+- module: `strict outsider seed path planning`
+- reason: 为严格 fixed-user deny 矩阵准备稳定 outsider 身份种子路径
+- completed_step: `ITER-2026-04-07-1280 PASS(screen)：已产出 fixed_outsider_seed_path_screen_v1，明确 customer seed 落点与验证方案`
+- active_commit: `a2d0e90`
+- next_step: `Implement dedicated outsider seed user and rerun strict matrix verify`
+
+### 2026-04-07T15:01:04+08:00
+- blocker_key: `strict_fixed_outsider_deny_matrix_pass_batch1281`
+- layer_target: `Business-Fact Layer`
+- module: `outsider seed materialization + strict matrix verify`
+- reason: 将 outsider 拒绝证据从临时用户提升为固定种子用户可复现实证
+- completed_step: `ITER-2026-04-07-1281 PASS：新增 outsider_seed（base.group_user only）并在授权脚本中固化密码/组，strict outsider deny matrix 复验通过`
+- active_commit: `a2d0e90`
+- next_step: `Assemble consolidated delivery acceptance dossier for runtime/fact/rule/matrix closure`
+
+### 2026-04-07T15:03:31+08:00
+- blocker_key: `consolidated_acceptance_dossier_batch1282`
+- layer_target: `Verify/Gate Runtime Evidence Reporting`
+- module: `native delivery acceptance dossier assembly`
+- reason: 将分散批次证据汇总为交付可读的一体化验收档
+- completed_step: `ITER-2026-04-07-1282 PASS：已产出 native_delivery_acceptance_dossier_v1，覆盖 runtime/fact/rule/matrix 关键闭环与批次证据索引`
+- active_commit: `a2d0e90`
+- next_step: `Optionally publish dossier into release-note/customer acceptance handoff`
+
+### 2026-04-07T15:07:07+08:00
+- blocker_key: `release_handoff_mapping_batch1283`
+- layer_target: `Verify/Gate Runtime Evidence Reporting`
+- module: `delivery release-note and customer handoff mapping`
+- reason: 将验收总档转换为可执行发布口径与客户验收清单
+- completed_step: `ITER-2026-04-07-1283 PASS：已产出 native_delivery_release_handoff_v1，完成 release-note payload 与 customer handoff checklist 映射`
+- active_commit: `a2d0e90`
+- next_step: `Execute customer-side checklist rerun and archive sign-off outputs`
+
+### 2026-04-07T15:31:30+08:00
+- blocker_key: `payment_settlement_anchor_and_project_rule_batch1284`
+- layer_target: `Business-Fact Layer`
+- module: `payment/settlement isolation anchors + project/task minimal rule integration`
+- reason: 执行用户指定 Batch A/B，完成支付链 company/project 锚点补齐与项目组织最小规则接入
+- completed_step: `ITER-2026-04-07-1284 PASS：payment_request/payment_ledger 历史 company 锚点补齐完成，anchor_data_verify + fixed_user_matrix + stage_gate 全部通过；project.project 规则补入创建人路径`
+- active_commit: `a2d0e90`
+- next_step: `Open focused project-company anchor cleanup batch to eliminate project_without_company residuals, then tighten full-set anchor enforcement`
+
+### 2026-04-07T15:44:32+08:00
+- blocker_key: `project_company_fact_remediation_batch1285`
+- layer_target: `Business-Fact Layer`
+- module: `project company backfill + strict anchor blocking + project.task creator rule`
+- reason: 按用户新主线将锚点从“有条件成立”升级到“项目型记录全量阻塞校验”
+- completed_step: `ITER-2026-04-07-1285 PASS：project.company 空值由 65 降至 6（输出人工清单）；payment/request/ledger/settlement 项目型锚点严格校验 0 缺口；project.task 规则补入 create_uid 路径并通过真实角色矩阵与 stage_gate`
+- active_commit: `a2d0e90`
+- next_step: `Run independent strictification batch for scene_legacy_auth_smoke runtime-unreachable fallback removal`
+
+### 2026-04-07T16:00:55+08:00
+- blocker_key: `dual_mainline_legacy_smoke_and_budget_cost_rule_batch1286`
+- layer_target: `Business-Fact Layer`
+- module: `scene legacy auth strict signal + budget/cost member-owner-creator rule sink`
+- reason: 按双主线要求清理 fallback WARN 信号噪音并下沉预算/成本访问边界
+- completed_step: `ITER-2026-04-07-1286 PASS：scene_legacy_auth_smoke_semantic_verify 去除 fallback 分支输出泄露且 stage_gate 无 unreachable WARN；budget/cost 规则补入 create_uid 路径并通过真实角色验收；补齐 budget/cost company 存量数据`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated manual-data batch for remaining 6 project.company null records and harden budget/cost project_without_company gate`
+
+### 2026-04-07T16:12:56+08:00
+- blocker_key: `project_company_manual_cleanup_and_budget_cost_hard_gate_batch1287`
+- layer_target: `Business-Fact Layer`
+- module: `historical project company closure + strict budget/cost project_without_company gate`
+- reason: 按用户指令仅做两件事：清理 6 条历史归属并把预算/成本锚点校验升级为硬阻塞
+- completed_step: `ITER-2026-04-07-1287 PASS：指定 6 条 SCENE-CONTRACT 项目完成 company 归属，连同新增 3 条空值项目一并闭环；budget/cost project_without_company 已升级为 FAIL 条件；审计与 stage_gate 全通过`
+- active_commit: `a2d0e90`
+- next_step: `Start fresh-database anti-regression validation line for anchor non-regeneration`
+
+### 2026-04-07T16:36:44+08:00
+- blocker_key: `fresh_db_anchor_non_regeneration_batch1288`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `fresh database anti-regression validation`
+- reason: 验证全新数据库下 project/company 与 budget/cost 锚点是否再生缺口
+- completed_step: `ITER-2026-04-07-1288 FAIL：fresh 库 budget/cost 严格锚点校验通过，但 stage_gate 在 scene_legacy_auth_smoke 上返回 404；smart_construction_scene 安装因缺失 external id smart_construction_core.sc_cap_group_project_management 失败`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated fresh-runtime scene install-order/external-id recovery batch, then rerun 1288 gate`
+
+### 2026-04-07T16:55:53+08:00
+- blocker_key: `fresh_runtime_scene_external_id_recovery_batch1289`
+- layer_target: `Business-Fact Layer`
+- module: `core capability seed ownership recovery`
+- reason: 修复 fresh-runtime 下 `smart_construction_scene` 安装依赖的 core-owned external id 缺口，恢复 stage gate 可达性
+- completed_step: `ITER-2026-04-07-1289 PASS：sc_capability_group_seed 重新物化 capability group/capability/default scene 外部ID；fresh库 core升级 + scene安装通过；budget/cost 严格锚点校验与 native stage_gate 在 fresh 库全部 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue fresh-runtime anti-regression iteration focusing on install-order stability and anchor non-regeneration guard`
+
+### 2026-04-07T17:03:35+08:00
+- blocker_key: `fresh_runtime_anti_regression_batch1290`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `fresh-runtime anti-regression validation`
+- reason: 在 brand-new 库复验 1289 修复的长期稳定性
+- completed_step: `ITER-2026-04-07-1290 FAIL：fresh 库安装 smart_construction_custom 时在 sc_capability_group_seed.xml 命中 External ID not found（smart_construction_core.group_sc_cap_project_read），导致安装链中断，按 acceptance_failed 停止`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated install-order safety recovery batch for sc_capability_group_seed, then rerun fresh anti-regression chain`
+
+### 2026-04-07T17:14:12+08:00
+- blocker_key: `fresh_runtime_install_order_recovery_batch1291`
+- layer_target: `Business-Fact Layer`
+- module: `core capability seed install-order safety`
+- reason: 修复 fresh 安装阶段 capability seed 提前引用安全组 xmlid 导致的阻断
+- completed_step: `ITER-2026-04-07-1291 PASS：移除 sc_capability_group_seed 中 4 个 capability 的 required_group_ids 前置依赖；fresh 库 custom+scene 安装通过，budget/cost 严格锚点与 native stage_gate 全 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Continue fresh-runtime anti-regression sampling to ensure install-order and stage-gate stability on repeated new databases`
+
+### 2026-04-07T17:40:53+08:00
+- blocker_key: `fresh_runtime_continuous_anti_regression_v1_batch1292`
+- layer_target: `Business-Fact Layer`
+- module: `fresh-runtime repeatability guard`
+- reason: 将单次 fresh 通过升级为多 fresh 可重复通过，并补 install-order 守卫与 fresh 最小业务流验证
+- completed_step: `ITER-2026-04-07-1292 PASS_WITH_RISK：样本库 A/B 均完成 custom+scene 安装、budget/cost 锚点验证、fresh 最小业务流、stage_gate 全 PASS；新增 install-order guard verify 与最小规则文档；观测到 outsider 对新建 project/task 仍可见（预算/成本 outsider deny 正常）`
+- active_commit: `a2d0e90`
+- next_step: `Stop continuous chain at PASS_WITH_RISK and open dedicated permission-governance screen batch for project/task outsider visibility`
+
+### 2026-04-07T18:04:55+08:00
+- blocker_key: `core_standalone_fresh_verification_batch1293`
+- layer_target: `Business-Fact Layer`
+- module: `core standalone runtime verification`
+- reason: 在不提前宣告独立可靠前，先验证 smart_construction_core 独立 fresh 能力并与 product-chain 对比
+- completed_step: `ITER-2026-04-07-1293 PASS_WITH_RISK：core-only fresh 可完成 project/task/budget/cost/payment/settlement 最小流，锚点成立；但 outsider 对 project/task 仍可见。对比 current product-chain（sc_prod_fresh_1292_b）同样存在该缺口，故暂不做“核心模块独立可靠”结论`
+- active_commit: `a2d0e90`
+- next_step: `Open dedicated permission-governance implementation batch for project/task outsider default deny`
+
+### 2026-04-07T18:18:00+08:00
+- blocker_key: `project_task_outsider_permission_governance_batch1294`
+- layer_target: `Business-Fact Layer`
+- module: `project/task global isolation record-rule binding`
+- reason: 在 dedicated permission-governance 专题中收敛 outsider 默认可见缺口，且不混入 fresh-runtime 主线
+- completed_step: `ITER-2026-04-07-1294 PASS_WITH_RISK：新增 project/task 全局隔离规则（成员/主责/创建人范围 + 特权组放行），core 独立库最小流验证 outsider_project/task 已降为 0；non_member_denial 在 1292_b/core_1293 均 PASS；fresh_install_min_flow 仍因 outsider_seed 样本语义出现 project/task 可见观测噪音`
+- active_commit: `a2d0e90`
+- next_step: `Open verify-only cleanup batch to replace outsider_seed in fresh-flow evidence chain with temporary minimal-privilege outsider account`
+
+### 2026-04-07T18:37:00+08:00
+- blocker_key: `outsider_sample_semantics_normalization_batch1295`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `fresh min-flow outsider sample normalization`
+- reason: 统一 fresh_install_min_flow 与 non_member_denial 在 outsider 默认不可见结论上的证据口径，消除 stage evidence 噪音
+- completed_step: `ITER-2026-04-07-1295 PASS：审计确认 outsider_seed 具备 project/group/capability 业务权限并非纯 outsider；fresh_install_min_flow 已改为临时最小权限 outsider（仅 base.group_user）并自动清理；在 1292_b 与 core_1293 两个 fresh 库上 outsider_project/task/budget/cost 均为 0，证据与 non_member_denial 完全一致；项目级默认拒绝结论冻结为 PASS`
+- active_commit: `a2d0e90`
+- next_step: `Keep outsider semantics frozen and move to next approved business-fact objective`
+
+### 2026-04-07T18:49:00+08:00
+- blocker_key: `native_business_operability_closure_acceptance_v1_batch1296`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `native project/task/budget/cost operability closure`
+- reason: 在已完成 outsider 默认拒绝与 fresh 防再生的基础上，验证原生业务层最小办理能力
+- completed_step: `ITER-2026-04-07-1296 PASS：新增 native_operability_closure_verify，完成项目创建+岗位维护+成员维护、任务创建/编辑/状态推进、预算成本创建与锚点继承校验；outsider 对 project/task/budget/cost 均不可见且不可写`
+- active_commit: `a2d0e90`
+- next_step: `Hold baseline and wait for next approved scope (no new permission/front-end topic by default)`
+
+### 2026-04-07T19:03:00+08:00
+- blocker_key: `native_payment_settlement_operability_closure_v1_batch1297`
+- layer_target: `Verify/Gate Runtime Evidence`
+- module: `payment-settlement minimum operability closure`
+- reason: 在 project/task/budget/cost 闭环基础上补齐 payment/settlement 最小办理证据且不扩深层审批链
+- completed_step: `ITER-2026-04-07-1297 PASS：新增 payment_settlement_operability_verify，完成 finance 授权成员 payment.request/sc.settlement.order 创建与编辑、project/company 锚点校验、outsider 默认不可见不可写验证`
+- active_commit: `a2d0e90`
+- next_step: `Baseline complete for native minimum operability closure; wait next approved topic`
