@@ -550,6 +550,34 @@ class ProjectProject(models.Model):
     manager_id = fields.Many2one('res.users', string='项目经理')
     cost_manager_id = fields.Many2one('res.users', string='成本负责人')
     doc_manager_id = fields.Many2one('res.users', string='资料负责人')
+    project_manager_user_id = fields.Many2one(
+        'res.users',
+        string='项目经理（项目岗位）',
+        domain="[('company_ids', 'in', company_id)]",
+        index=True,
+    )
+    technical_lead_user_id = fields.Many2one(
+        'res.users',
+        string='技术负责人',
+        domain="[('company_ids', 'in', company_id)]",
+    )
+    business_lead_user_id = fields.Many2one(
+        'res.users',
+        string='商务负责人',
+        domain="[('company_ids', 'in', company_id)]",
+        index=True,
+    )
+    cost_lead_user_id = fields.Many2one(
+        'res.users',
+        string='成本负责人（项目岗位）',
+        domain="[('company_ids', 'in', company_id)]",
+        index=True,
+    )
+    finance_contact_user_id = fields.Many2one(
+        'res.users',
+        string='财务接口人',
+        domain="[('company_ids', 'in', company_id)]",
+    )
     location = fields.Char('项目地点')
     contract_no = fields.Char('主合同编号')
     sc_demo_showcase = fields.Boolean(
@@ -638,6 +666,11 @@ class ProjectProject(models.Model):
     responsibility_ids = fields.One2many(
         'project.responsibility', 'project_id',
         string='责任矩阵'
+    )
+    project_member_ids = fields.One2many(
+        'project.responsibility',
+        'project_id',
+        string='项目成员',
     )
     payment_request_ids = fields.One2many(
         'payment.request',
@@ -1110,7 +1143,54 @@ class ProjectProject(models.Model):
                 creation_service.post_create_bootstrap(projects)
             except Exception:
                 pass
+        projects._sync_project_member_visibility()
         return projects
+
+    def _project_member_visibility_user_ids(self):
+        self.ensure_one()
+        user_ids = {
+            self.create_uid.id,
+            self.user_id.id,
+            self.manager_id.id,
+            self.project_manager_user_id.id,
+            self.technical_lead_user_id.id,
+            self.business_lead_user_id.id,
+            self.cost_manager_id.id,
+            self.cost_lead_user_id.id,
+            self.finance_contact_user_id.id,
+        }
+
+        today = fields.Date.context_today(self)
+        members = self.project_member_ids.filtered(
+            lambda member: member.active
+            and (not member.date_start or member.date_start <= today)
+            and (not member.date_end or member.date_end >= today)
+        )
+        user_ids.update(members.mapped('user_id').ids)
+
+        PostUser = self.env['res.users']
+        for post in members.mapped('post_id'):
+            post_users = PostUser.search(
+                [
+                    '|',
+                    ('sc_post_id', '=', post.id),
+                    ('sc_post_ids', 'in', post.id),
+                    ('company_ids', 'in', self.company_id.id),
+                ]
+            )
+            user_ids.update(post_users.ids)
+        return [uid for uid in user_ids if uid]
+
+    def _sync_project_member_visibility(self):
+        for project in self:
+            user_ids = project._project_member_visibility_user_ids()
+            if not user_ids:
+                continue
+            partner_ids = self.env['res.users'].browse(user_ids).mapped('partner_id').ids
+            current_partner_ids = set(project.message_partner_ids.ids)
+            add_partner_ids = [pid for pid in partner_ids if pid and pid not in current_partner_ids]
+            if add_partner_ids:
+                project.message_subscribe(partner_ids=add_partner_ids)
 
     def init(self):
         # 确保老项目也有默认阶段
@@ -2046,6 +2126,20 @@ class ProjectProject(models.Model):
                             hints=["请先补齐 BOQ/任务/结算/付款等业务数据"],
                         )
         res = super().write(vals)
+        visibility_fields = {
+            'user_id',
+            'manager_id',
+            'project_manager_user_id',
+            'technical_lead_user_id',
+            'business_lead_user_id',
+            'cost_manager_id',
+            'cost_lead_user_id',
+            'finance_contact_user_id',
+            'responsibility_ids',
+            'project_member_ids',
+        }
+        if visibility_fields.intersection(vals.keys()):
+            self._sync_project_member_visibility()
         if "lifecycle_state" not in vals and "stage_id" not in vals:
             self.filtered(lambda p: not p.stage_id)._sync_stage_from_lifecycle()
         return res
@@ -2098,47 +2192,54 @@ class ProjectProject(models.Model):
             )
 
 
-# =========================
-# 项目责任矩阵
-# =========================
-class ProjectResponsibility(models.Model):
-    _name = 'project.responsibility'
-    _description = '项目责任矩阵'
-    _order = 'project_id, role_key, id'
+class PaymentLedgerIsolationAnchor(models.Model):
+    _inherit = 'payment.ledger'
 
-    project_id = fields.Many2one(
-        'project.project', string='项目',
-        required=True, index=True, ondelete='cascade'
-    )
     company_id = fields.Many2one(
-        'res.company', string='公司',
+        'res.company',
+        string='公司',
         related='project_id.company_id',
-        store=True, readonly=True
+        store=True,
+        readonly=True,
+        index=True,
     )
-    role_key = fields.Selection(
-        [
-            ('manager', '项目经理'),
-            ('cost', '成本负责人'),
-            ('finance', '财务'),
-            ('cashier', '出纳'),
-            ('material', '材料员'),
-            ('safety', '安全员'),
-            ('quality', '质检员'),
-            ('document', '资料员'),
-        ],
-        string='角色',
-        required=True,
-    )
-    user_id = fields.Many2one(
-        'res.users', string='责任人',
-        required=True, index=True
-    )
-    note = fields.Char('说明/授权范围')
 
-    _sql_constraints = [
-        (
-            'project_role_unique',
-            'unique(project_id, role_key)',
-            '同一项目下每个角色仅允许指派一人。'
+    def _auto_init(self):
+        res = super()._auto_init()
+        self._cr.execute(
+            """
+            UPDATE payment_ledger AS ledger
+               SET project_id = request.project_id
+              FROM payment_request AS request
+             WHERE ledger.payment_request_id = request.id
+               AND ledger.project_id IS NULL
+               AND request.project_id IS NOT NULL
+            """
         )
-    ]
+        self._cr.execute(
+            """
+            UPDATE payment_ledger AS ledger
+               SET company_id = project.company_id
+              FROM project_project AS project
+             WHERE ledger.project_id = project.id
+               AND (ledger.company_id IS NULL OR ledger.company_id <> project.company_id)
+            """
+        )
+        return res
+
+
+class PaymentRequestIsolationAnchor(models.Model):
+    _inherit = 'payment.request'
+
+    def _auto_init(self):
+        res = super()._auto_init()
+        self._cr.execute(
+            """
+            UPDATE payment_request AS request
+               SET company_id = project.company_id
+              FROM project_project AS project
+             WHERE request.project_id = project.id
+               AND (request.company_id IS NULL OR request.company_id <> project.company_id)
+            """
+        )
+        return res

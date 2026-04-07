@@ -226,6 +226,12 @@ class ProjectDashboardService:
         return None, diagnostics
 
     def project_payload(self, project):
+        if project:
+            try:
+                project = project.sudo()
+            except Exception:
+                pass
+
         def _safe_text(value):
             try:
                 return str(value or "")

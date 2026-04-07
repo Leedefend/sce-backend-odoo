@@ -19,6 +19,7 @@
         "data/customer_user_relations.xml",
         "data/customer_user_authorization.xml",
         "data/security_policy_actions.xml",
+        "data/customer_project_dictionary_seed.xml",
         "data/customer_project_seed.xml",
     ],
     "post_init_hook": "post_init_hook",

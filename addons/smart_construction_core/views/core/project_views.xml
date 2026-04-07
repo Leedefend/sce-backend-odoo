@@ -202,12 +202,24 @@
                         <field name="manager_id"/>
                         <field name="cost_manager_id"/>
                         <field name="doc_manager_id"/>
+                        <field name="project_manager_user_id"/>
+                        <field name="technical_lead_user_id"/>
+                        <field name="business_lead_user_id"/>
+                        <field name="cost_lead_user_id"/>
+                        <field name="finance_contact_user_id"/>
                     </group>
-                    <group string="职责分工">
-                        <field name="responsibility_ids">
+                    <group string="项目成员配置">
+                        <field name="project_member_ids" context="{'default_project_id': id}">
                             <tree editable="bottom">
-                                <field name="role_key"/>
+                                <field name="company_id" invisible="1"/>
+                                <field name="project_role_code"/>
                                 <field name="user_id"/>
+                                <field name="department_id"/>
+                                <field name="post_id"/>
+                                <field name="is_primary"/>
+                                <field name="active"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
                                 <field name="note"/>
                             </tree>
                         </field>

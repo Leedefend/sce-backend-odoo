@@ -8,37 +8,42 @@
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'admin')]"/>
+                <value eval="[('login', '=', 'admin')]" />
             </function>
-            <value eval="{'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('smart_construction_custom.group_sc_role_owner'))]}"/>
+            <value
+                eval="{'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('smart_construction_custom.group_sc_role_owner')), (4, ref('project.group_project_stages'))]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'duanyijun')]"/>
+                <value eval="[('login', '=', 'duanyijun')]" />
             </function>
-            <value eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin'))]}"/>
+            <value
+                eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin'))]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'wutao')]"/>
+                <value eval="[('login', '=', 'wutao')]" />
             </function>
-            <value eval="{'sc_role_profile': 'executive'}"/>
+            <value
+                eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('project.group_project_stages'))]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'wennan')]"/>
+                <value eval="[('login', '=', 'wennan')]" />
             </function>
-            <value eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin'))]}"/>
+            <value
+                eval="{'sc_role_profile': 'executive', 'groups_id': [(4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('project.group_project_stages'))]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'shuiwujingbanren')]"/>
+                <value eval="[('login', '=', 'shuiwujingbanren')]" />
             </function>
-            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+            <value
+                eval="{'sc_role_profile': 'finance', 'groups_id': [
                 (3, ref('smart_construction_custom.group_sc_role_owner')),
                 (3, ref('smart_construction_custom.group_sc_role_project_user')),
                 (3, ref('smart_construction_custom.group_sc_role_contract_user')),
@@ -50,15 +55,17 @@
                 (3, ref('project.group_project_user')),
                 (3, ref('purchase.group_purchase_user')),
                 (3, ref('stock.group_stock_user')),
-                (4, ref('smart_construction_custom.group_sc_role_business_admin'))
-            ]}"/>
+                (4, ref('smart_construction_custom.group_sc_role_business_admin')),
+                (4, ref('project.group_project_stages'))
+            ]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'jiangyijiao')]"/>
+                <value eval="[('login', '=', 'jiangyijiao')]" />
             </function>
-            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+            <value
+                eval="{'sc_role_profile': 'finance', 'groups_id': [
                 (3, ref('smart_construction_custom.group_sc_role_owner')),
                 (3, ref('smart_construction_custom.group_sc_role_project_user')),
                 (3, ref('smart_construction_custom.group_sc_role_contract_user')),
@@ -70,14 +77,15 @@
                 (3, ref('project.group_project_user')),
                 (3, ref('purchase.group_purchase_user')),
                 (3, ref('stock.group_stock_user'))
-            ]}"/>
+            ]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'lina')]"/>
+                <value eval="[('login', '=', 'lina')]" />
             </function>
-            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+            <value
+                eval="{'sc_role_profile': 'finance', 'groups_id': [
                 (3, ref('smart_construction_custom.group_sc_role_owner')),
                 (3, ref('smart_construction_custom.group_sc_role_project_user')),
                 (3, ref('smart_construction_custom.group_sc_role_contract_user')),
@@ -89,14 +97,15 @@
                 (3, ref('project.group_project_user')),
                 (3, ref('purchase.group_purchase_user')),
                 (3, ref('stock.group_stock_user'))
-            ]}"/>
+            ]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'luomeng')]"/>
+                <value eval="[('login', '=', 'luomeng')]" />
             </function>
-            <value eval="{'sc_role_profile': 'finance', 'groups_id': [
+            <value
+                eval="{'sc_role_profile': 'finance', 'groups_id': [
                 (3, ref('smart_construction_custom.group_sc_role_owner')),
                 (3, ref('smart_construction_custom.group_sc_role_project_user')),
                 (3, ref('smart_construction_custom.group_sc_role_contract_user')),
@@ -108,42 +117,51 @@
                 (3, ref('project.group_project_user')),
                 (3, ref('purchase.group_purchase_user')),
                 (3, ref('stock.group_stock_user'))
-            ]}"/>
+            ]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'hujun')]"/>
+                <value eval="[('login', '=', 'hujun')]" />
             </function>
-            <value eval="{'sc_role_profile': 'pm'}"/>
+            <value eval="{'sc_role_profile': 'pm'}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'chenshuai')]"/>
+                <value eval="[('login', '=', 'chenshuai')]" />
             </function>
-            <value eval="{'sc_role_profile': 'executive'}"/>
+            <value eval="{'sc_role_profile': 'executive'}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'lijianfeng')]"/>
+                <value eval="[('login', '=', 'lijianfeng')]" />
             </function>
-            <value eval="{'sc_role_profile': 'pm'}"/>
+            <value eval="{'sc_role_profile': 'pm'}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'xiaohuijiu')]"/>
+                <value eval="[('login', '=', 'xiaohuijiu')]" />
             </function>
-            <value eval="{'sc_role_profile': 'pm'}"/>
+            <value
+                eval="{'sc_role_profile': 'pm', 'groups_id': [(4, ref('project.group_project_stages'))]}" />
         </function>
 
         <function model="res.users" name="write">
             <function model="res.users" name="search">
-                <value eval="[('login', '=', 'lidexue')]"/>
+                <value eval="[('login', '=', 'lidexue')]" />
             </function>
-            <value eval="{'sc_role_profile': 'pm'}"/>
+            <value eval="{'sc_role_profile': 'pm'}" />
+        </function>
+
+        <function model="res.users" name="write">
+            <function model="res.users" name="search">
+                <value eval="[('login', '=', 'outsider_seed')]" />
+            </function>
+            <value
+                eval="{'password': 'demo', 'sc_role_profile': False, 'groups_id': [(6, 0, [ref('base.group_user')])]}" />
         </function>
     </data>
 </odoo>
