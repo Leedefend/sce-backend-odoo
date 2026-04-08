@@ -94,6 +94,8 @@ class ActionResolver:
             d = dict(act)
             d.setdefault('type', d.get('type') or d.get('_name'))
             d.setdefault('_name', d.get('_name') or d.get('type'))
+            d.setdefault('domain', d.get('domain') or [])
+            d.setdefault('context', d.get('context') or {})
             d.setdefault('url', d.get('url'))
             d.setdefault('target', d.get('target'))
             d.setdefault('name', d.get('name'))
@@ -114,6 +116,8 @@ class ActionResolver:
                 'type': _type, '_name': _name, 'id': getattr(act, 'id', None),
                 'xml_id': xmlid, 'res_model': getattr(act, 'res_model', None),
                 'view_mode': getattr(act, 'view_mode', None), 'tag': getattr(act, 'tag', None),
+                'domain': getattr(act, 'domain', None) or [],
+                'context': getattr(act, 'context', None) or {},
                 'url': getattr(act, 'url', None), 'target': getattr(act, 'target', None),
                 'name': getattr(act, 'name', None),
                 'exists': True,
@@ -193,6 +197,8 @@ class ActionResolver:
                 'xml_id': action.get('xml_id') or action.get('xmlid'),
                 'res_model': action.get('res_model'),
                 'view_mode': action.get('view_mode'),
+                'domain': action.get('domain') or [],
+                'context': action.get('context') or {},
                 'tag': action.get('tag'),
                 'exists': True,
             }

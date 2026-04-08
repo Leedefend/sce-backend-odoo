@@ -861,6 +861,12 @@ class SystemInitHandler(BaseIntentHandler):
         except Exception:
             pass
         data = _normalize_access_suggested_action(data)
+        data["contract_mode"] = contract_mode
+        if contract_mode == "user":
+            data.pop("scene_diagnostics", None)
+            data.pop("diagnostic", None)
+            data.pop("scene_channel_selector", None)
+            data.pop("scene_channel_source_ref", None)
         stage_ts = _mark("finalize_startup_surface", stage_ts)
 
         # 分部 etag：加入导航
@@ -888,6 +894,18 @@ class SystemInitHandler(BaseIntentHandler):
             nav_fp=nav_fp,
             startup_profile=startup_profile,
         )
+        if contract_mode == "hud":
+            hud_trace = data.get("hud") if isinstance(data.get("hud"), dict) else {}
+            for trace_key in ("scene_source", "scene_contract_ref", "channel_selector", "channel_source_ref"):
+                trace_value = scene_trace_meta.get(trace_key)
+                if str(trace_value or "").strip():
+                    hud_trace[trace_key] = trace_value
+            governance_payload = scene_trace_meta.get("governance")
+            if isinstance(governance_payload, dict):
+                hud_trace["governance"] = governance_payload
+            data["hud"] = hud_trace
+            if not isinstance(data.get("scene_diagnostics"), dict) and isinstance(scene_diagnostics, dict):
+                data["scene_diagnostics"] = scene_diagnostics
         _ = scene_trace_meta
         _ = diag_enabled
         _ = diagnostic_info

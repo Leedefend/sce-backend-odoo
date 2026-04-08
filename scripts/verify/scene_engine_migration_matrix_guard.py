@@ -58,6 +58,42 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _iter_state_candidates(primary_state_path: Path) -> list[Path]:
+    candidates: list[Path] = []
+
+    def _add(path: Path) -> None:
+        if path.is_file() and path not in candidates:
+            candidates.append(path)
+
+    _add(primary_state_path)
+    for path in sorted(primary_state_path.parent.glob("scene_registry_asset_snapshot_state*.json")):
+        _add(path)
+    return candidates
+
+
+def _select_best_state(primary_state_path: Path) -> tuple[dict, str]:
+    best_state: dict = {}
+    best_source = ""
+    best_scene_count = -1
+    best_per_scene_count = -1
+
+    for path in _iter_state_candidates(primary_state_path):
+        state = _load_json(path)
+        if not state:
+            continue
+        scene_count = _safe_int(state.get("scene_count"), 0)
+        per_scene_count = len(_as_dict(state.get("per_scene")))
+        if scene_count > best_scene_count or (
+            scene_count == best_scene_count and per_scene_count > best_per_scene_count
+        ):
+            best_state = state
+            best_source = path.relative_to(ROOT).as_posix()
+            best_scene_count = scene_count
+            best_per_scene_count = per_scene_count
+
+    return best_state, best_source
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_PATH)
     if not baseline:
@@ -89,7 +125,7 @@ def main() -> int:
     }
 
     module_map = _load_json(module_map_path)
-    state = _load_json(state_path)
+    state, selected_state_source = _select_best_state(state_path)
     if not module_map:
         print("[scene_engine_migration_matrix_guard] FAIL")
         print(f" - missing module map: {module_map_path.relative_to(ROOT).as_posix()}")
@@ -170,6 +206,7 @@ def main() -> int:
             "baseline": BASELINE_PATH.relative_to(ROOT).as_posix(),
             "module_map_file": module_map_path.relative_to(ROOT).as_posix(),
             "state_file": state_path.relative_to(ROOT).as_posix(),
+            "selected_state_file": selected_state_source,
         },
     }
 

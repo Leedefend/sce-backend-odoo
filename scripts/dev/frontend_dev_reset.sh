@@ -4,11 +4,40 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 PORT="${VITE_DEV_PORT:-5174}"
 HOST="${VITE_DEV_HOST:-127.0.0.1}"
+FRONTEND_PROFILE="${FRONTEND_PROFILE:-daily}"
+PROXY_TARGET_DEFAULT="${VITE_API_PROXY_TARGET:-}"
 PIDFILE="${FRONTEND_DEV_PIDFILE:-/tmp/sc-frontend-dev.pid}"
 LOGFILE="${FRONTEND_DEV_LOGFILE:-/tmp/sc-frontend-dev.log}"
 READY_URL="${FRONTEND_DEV_READY_URL:-http://${HOST}:${PORT}/}"
 NVM_SH="${NVM_SH:-$HOME/.nvm/nvm.sh}"
 TMUX_SESSION="${FRONTEND_DEV_TMUX_SESSION:-sc-frontend-dev}"
+
+resolve_profile_defaults() {
+  case "${FRONTEND_PROFILE}" in
+    daily)
+      PROFILE_DB="sc_demo"
+      PROFILE_PROXY_TARGET="http://localhost:8069"
+      ;;
+    test)
+      PROFILE_DB="sc_test"
+      PROFILE_PROXY_TARGET="http://localhost:8071"
+      ;;
+    uat|prod-sim)
+      PROFILE_DB="sc_prod_sim"
+      PROFILE_PROXY_TARGET="http://localhost:18069"
+      ;;
+    *)
+      log "unknown FRONTEND_PROFILE=${FRONTEND_PROFILE}, fallback to daily"
+      FRONTEND_PROFILE="daily"
+      PROFILE_DB="sc_demo"
+      PROFILE_PROXY_TARGET="http://localhost:8069"
+      ;;
+  esac
+
+  if [[ -n "${PROXY_TARGET_DEFAULT}" ]]; then
+    PROFILE_PROXY_TARGET="${PROXY_TARGET_DEFAULT}"
+  fi
+}
 
 log() { printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
 
@@ -64,28 +93,26 @@ fi
 stop_tmux_session_if_exists
 kill_existing_port_listener "${PORT}"
 
-log "start frontend dev host=${HOST} port=${PORT}"
+resolve_profile_defaults
+log "start frontend dev host=${HOST} port=${PORT} profile=${FRONTEND_PROFILE} db=${PROFILE_DB} proxy=${PROFILE_PROXY_TARGET}"
 cd "${ROOT_DIR}"
 rm -f "${LOGFILE}"
-if ! command -v tmux >/dev/null 2>&1; then
-  log "tmux is required for stable frontend dev runtime"
-  exit 1
+START_CMD="cd \"${ROOT_DIR}\" && export VITE_API_PROXY_TARGET=\"${PROFILE_PROXY_TARGET}\" VITE_ODOO_DB=\"${PROFILE_DB}\" && exec pnpm -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1"
+
+new_pid=""
+if command -v setsid >/dev/null 2>&1; then
+  setsid bash -lc "${START_CMD}" >/dev/null 2>&1 < /dev/null &
+  new_pid="$!"
+else
+  nohup bash -lc "${START_CMD}" >/dev/null 2>&1 &
+  new_pid="$!"
 fi
 
-tmux new-session -d -s "${TMUX_SESSION}" "bash -lc 'source \"${NVM_SH}\" >/dev/null 2>&1 && nvm use 20 >/dev/null && cd \"${ROOT_DIR}\" && exec pnpm -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1'"
-sleep 1
-new_pid="$(tmux list-panes -t "${TMUX_SESSION}" -F '#{pane_pid}' 2>/dev/null | head -n 1)"
-echo "${new_pid:-tmux:${TMUX_SESSION}}" > "${PIDFILE}"
+echo "${new_pid}" > "${PIDFILE}"
 
 for _ in $(seq 1 60); do
-  if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
-    log "frontend dev exited unexpectedly"
-    tail -n 120 "${LOGFILE}" 2>/dev/null || true
-    exit 1
-  fi
   if command -v curl >/dev/null 2>&1 && curl -fsI --max-time 2 "${READY_URL}" >/dev/null 2>&1; then
-    current_pid="$(tmux list-panes -t "${TMUX_SESSION}" -F '#{pane_pid}' 2>/dev/null | head -n 1)"
-    log "frontend dev ready pid=${current_pid:-unknown} session=${TMUX_SESSION} url=http://${HOST}:${PORT}/"
+    log "frontend dev ready pid=${new_pid:-unknown} url=http://${HOST}:${PORT}/"
     exit 0
   fi
   sleep 1

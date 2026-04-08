@@ -478,11 +478,15 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 const rights = computed(() => {
   const head = contract.value?.head?.permissions;
   const effective = contract.value?.permissions?.effective?.rights;
+  const effectiveCollapsed = Boolean(
+    effective
+    && ['read', 'write', 'create', 'unlink'].every((key) => (effective as Record<string, unknown>)[key] === false),
+  );
   const resolve = (key: 'read' | 'write' | 'create' | 'unlink') => {
     const a = head?.[key];
     if (typeof a === 'boolean') return a;
     const b = effective?.[key];
-    if (typeof b === 'boolean') return b;
+    if (!effectiveCollapsed && typeof b === 'boolean') return b;
     return true;
   };
   return {

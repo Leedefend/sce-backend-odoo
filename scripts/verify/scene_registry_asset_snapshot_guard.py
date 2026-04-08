@@ -91,7 +91,7 @@ def _fetch_live_snapshot() -> dict:
 
     status, init_resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with_preload": True}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init")
@@ -145,6 +145,12 @@ def _fetch_live_snapshot() -> dict:
         for key, value in source_kind_counts.items()
     }
 
+    bound_scene_count_meta = _safe_int(scene_meta.get("base_contract_bound_scene_count"), 0)
+    bound_scene_count_fallback = sum(
+        1 for item in per_scene.values() if isinstance(item, dict) and bool(item.get("base_contract_bound"))
+    )
+    bound_scene_count = bound_scene_count_meta if bound_scene_count_meta > 0 else bound_scene_count_fallback
+
     return {
         "runtime_env": _text(_as_dict(_as_dict(data.get("scene_governance_v1")).get("delivery_policy")).get("runtime_env")) or _text(os.getenv("ENV") or "dev"),
         "role_code": _text(nav_meta.get("role_surface_code")) or "unknown",
@@ -152,7 +158,7 @@ def _fetch_live_snapshot() -> dict:
         "allowed_company_ids": allowed_company_ids,
         "login_company_id_requested": login_company_id if login_company_id > 0 else None,
         "scene_count": total_scene_count,
-        "base_contract_bound_scene_count": _safe_int(scene_meta.get("base_contract_bound_scene_count"), 0),
+        "base_contract_bound_scene_count": bound_scene_count,
         "compile_issue_scene_count": _safe_int(scene_meta.get("compile_issue_scene_count"), 0),
         "scene_keys": sorted(set(scene_keys)),
         "source_kind_counts": source_kind_counts,

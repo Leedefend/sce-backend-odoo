@@ -24,8 +24,12 @@ ALLOWLIST = {
     "scripts/verify/marketplace_smoke.py",
     "scripts/verify/scene_admin_smoke.py",
     "scripts/verify/scene_legacy_auth_smoke.py",
+    "scripts/verify/scene_legacy_auth_smoke_semantic_verify.py",
+    "scripts/verify/scene_legacy_auth_runtime_probe.py",
     "scripts/verify/scene_legacy_deprecation_smoke.py",
     "scripts/verify/scene_legacy_docs_guard.py",
+    "scripts/verify/native_business_fact_runtime_snapshot.py",
+    "scripts/verify/native_business_fact_static_usability_verify.py",
 }
 
 

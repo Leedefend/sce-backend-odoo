@@ -8,6 +8,8 @@ import urllib.request
 from http.cookiejar import CookieJar
 from urllib.error import HTTPError
 
+from python_http_smoke_utils import get_base_url
+
 
 def _post_json(url: str, payload: dict, *, cookie_jar: CookieJar, headers: dict | None = None):
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST")
@@ -120,7 +122,7 @@ def _run_one(base_url: str, db: str, login: str, password: str) -> bool:
 
 
 def main() -> None:
-    raw_base_url = os.environ.get("FRONTEND_API_BASE_URL", "http://localhost:8070").rstrip("/")
+    raw_base_url = os.environ.get("FRONTEND_API_BASE_URL", get_base_url()).rstrip("/")
     lang = os.environ.get("FRONTEND_API_LANG", "").strip("/")
     db = os.environ.get("DB_NAME", "sc_demo")
     login = os.environ.get("FRONTEND_API_LOGIN", "admin")

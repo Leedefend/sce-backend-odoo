@@ -11,6 +11,13 @@ from python_http_smoke_utils import get_base_url, http_post_json
 REQUIRED_HUD_KEYS = (
     "scene_source",
     "scene_contract_ref",
+    "channel_selector",
+    "channel_source_ref",
+)
+
+REQUIRED_META_TRACE_KEYS = (
+    "scene_source",
+    "scene_contract_ref",
     "scene_channel",
     "channel_selector",
     "channel_source_ref",
@@ -70,12 +77,14 @@ def main() -> None:
             raise RuntimeError(f"system.init hud meta.scene_trace missing trace field: {key}")
         if str(hud.get(key) or "") != str(meta_trace.get(key) or ""):
             raise RuntimeError(f"system.init hud/meta trace mismatch field: {key}")
+
+    for key in REQUIRED_META_TRACE_KEYS:
+        if not str(meta_trace.get(key) or "").strip():
+            raise RuntimeError(f"system.init hud meta.scene_trace missing trace field: {key}")
+
     governance = hud.get("governance")
     if not isinstance(governance, dict):
         raise RuntimeError("system.init hud governance summary missing")
-    governance_applied = hud.get("governance_applied")
-    if not isinstance(governance_applied, dict):
-        raise RuntimeError("system.init hud governance_applied summary missing")
     meta_governance = meta_trace.get("governance")
     if not isinstance(meta_governance, dict):
         raise RuntimeError("system.init hud meta.scene_trace governance summary missing")
@@ -85,8 +94,6 @@ def main() -> None:
     for key in ("before", "after", "filtered"):
         if not isinstance(governance.get(key), dict):
             raise RuntimeError(f"system.init hud governance missing section: {key}")
-        if not isinstance(governance_applied.get(key), dict):
-            raise RuntimeError(f"system.init hud governance_applied missing section: {key}")
         if not isinstance(meta_governance.get(key), dict):
             raise RuntimeError(f"system.init hud meta.scene_trace governance missing section: {key}")
         if not isinstance(meta_governance_applied.get(key), dict):

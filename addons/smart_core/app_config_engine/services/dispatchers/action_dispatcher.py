@@ -9,6 +9,7 @@ from odoo import api
 from odoo.addons.smart_core.app_config_engine.services.resolvers.action_resolver import ActionResolver
 from odoo.addons.smart_core.app_config_engine.services.assemblers.page_assembler import PageAssembler
 from odoo.addons.smart_core.app_config_engine.services.assemblers.client_url_report import ClientUrlReportAssembler
+from odoo.addons.smart_core.app_config_engine.utils.misc import safe_eval
 
 _logger = logging.getLogger(__name__)
 
@@ -34,6 +35,26 @@ class ActionDispatcher:
         run_env = api.Environment(self.env.cr, self.env.user.id, runtime_ctx)
         run_su_env = api.Environment(self.su_env.cr, self.su_env.uid, runtime_ctx)
         return PageAssembler(run_env, run_su_env).assemble_page_contract(p, action=action)
+
+    @staticmethod
+    def _normalize_action_domain(raw_domain):
+        if isinstance(raw_domain, list):
+            return raw_domain
+        if isinstance(raw_domain, str):
+            parsed = safe_eval(raw_domain)
+            if isinstance(parsed, list):
+                return parsed
+        return []
+
+    @staticmethod
+    def _normalize_action_context(raw_context):
+        if isinstance(raw_context, dict):
+            return raw_context
+        if isinstance(raw_context, str):
+            parsed = safe_eval(raw_context)
+            if isinstance(parsed, dict):
+                return parsed
+        return {}
 
     def dispatch(self, p):
         subject = p.get('subject')
@@ -84,6 +105,10 @@ class ActionDispatcher:
                 return ClientUrlReportAssembler(self.env).assemble_diagnostic_contract(p, info, issue="窗口动作必须配置 res_model")
             p['model'] = info.get('res_model')
             p['view_types'] = PageAssembler.normalize_view_types(info.get('view_mode') or p.get('view_type') or 'tree,form')
+            if not p.get('domain'):
+                p['domain'] = self._normalize_action_domain(info.get('domain'))
+            if not p.get('context'):
+                p['context'] = self._normalize_action_context(info.get('context'))
             if amid:
                 # 把 active_menu_id 放入上下文，利于 domain/context 计算
                 ctx = p.setdefault('context', {})

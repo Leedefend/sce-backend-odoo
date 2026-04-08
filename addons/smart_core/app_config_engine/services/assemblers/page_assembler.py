@@ -296,7 +296,7 @@ class PageAssembler:
         #    - 返回时开启 filter_runtime=True，按“当前用户组”裁剪出 effective.rights/rules
         try:
             pcfg = su['app.permission.config']._generate_from_access_rights(model)
-            data["permissions"] = pcfg.get_permission_contract(filter_runtime=True)
+            data["permissions"] = pcfg.with_context(runtime_uid=env.uid).get_permission_contract(filter_runtime=True)
             versions["perm"] = pcfg.version
         except KeyError:
             mark_missing("app.permission.config")
@@ -358,12 +358,22 @@ class PageAssembler:
         # 8) head（标题/ACL 概览/上下文）
         #    - ACL 概览继续用 check_access_rights（仅四权），与 permissions.effective.rights 一致
         if action:
+            context_payload = p.get("context")
+            if not isinstance(context_payload, dict):
+                context_payload = safe_eval(action.get('context'))
+
+            domain_payload = p.get("domain")
+            if not isinstance(domain_payload, list):
+                parsed_domain = safe_eval(action.get('domain'))
+                domain_payload = parsed_domain if isinstance(parsed_domain, list) else []
+
             data["head"] = {
                 "title": action.get('name'),
                 "model": model,
                 "view_type": ",".join(view_types),
                 "action_id": action.get('id'),
-                "context": safe_eval(action.get('context')),
+                "context": context_payload,
+                "domain": domain_payload,
                 "permissions": {
                     "read": env[model].check_access_rights('read', raise_exception=False),
                     "write": env[model].check_access_rights('write', raise_exception=False),

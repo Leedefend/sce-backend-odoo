@@ -81,6 +81,15 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
     action_id: Number(actionId || 0),
     action_type: actionType || 'ir.actions.act_window',
   };
+  if (head.domain !== undefined) {
+    out.domain = head.domain as unknown as string;
+  }
+  if (head.context !== undefined) {
+    out.context = head.context as unknown as string;
+  }
+  if (head.order !== undefined) {
+    out.order = String(head.order || '');
+  }
   if (model) out.model = model;
   if (name) out.name = name;
   if (derivedViewModes.length) {

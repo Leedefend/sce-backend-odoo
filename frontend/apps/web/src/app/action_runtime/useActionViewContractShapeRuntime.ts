@@ -77,10 +77,24 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, unknown>) {
-    const normalized = rawColumns.filter(Boolean);
+    const normalized = rawColumns
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
     if (!normalized.length) return normalized;
-    void fields;
-    return normalized;
+    const fieldEntries = Object.entries(fields || {});
+    if (!fieldEntries.length) return normalized;
+    const fieldNames = new Set(fieldEntries.map(([name]) => String(name || '').trim()).filter(Boolean));
+    const labelToField = fieldEntries.reduce<Record<string, string>>((acc, [name, descriptor]) => {
+      const label = String(((descriptor || {}) as Dict).string || '').trim();
+      if (label && !acc[label]) {
+        acc[label] = name;
+      }
+      return acc;
+    }, {});
+    return normalized.map((column) => {
+      if (fieldNames.has(column)) return column;
+      return labelToField[column] || column;
+    });
   }
 
   function extractKanbanFields(contract: unknown) {

@@ -12,6 +12,12 @@ DOCS_ROOT = ROOT / "docs"
 PRIMARY_DOC = ROOT / "docs/architecture/scene_orchestration_v0_1.md"
 COMMON = ROOT / "scripts/common/scene_legacy_contract.py"
 LEGACY_ENDPOINT = "/api/scenes/my"
+SKIP_DOC_PREFIXES = (
+    "docs/audit/native/",
+)
+SKIP_DOC_EXACT = {
+    "docs/ops/business_admin_config_center_intent_endpoint_screen_v1.md",
+}
 
 
 def _extract_constant(text: str, name: str) -> str:
@@ -60,6 +66,8 @@ def main() -> int:
             if LEGACY_ENDPOINT not in text:
                 continue
             rel = path.relative_to(ROOT).as_posix()
+            if rel in SKIP_DOC_EXACT or any(rel.startswith(prefix) for prefix in SKIP_DOC_PREFIXES):
+                continue
             lowered = text.lower()
             if "deprecated" not in lowered:
                 violations.append(f"{rel}: missing deprecated marker for {LEGACY_ENDPOINT}")

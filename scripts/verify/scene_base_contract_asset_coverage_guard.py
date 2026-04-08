@@ -195,7 +195,7 @@ def _fetch_runtime_data() -> dict:
 
     status, init_resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with_preload": True}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init")
@@ -209,9 +209,27 @@ def _fetch_runtime_data() -> dict:
     asset_scene_count = _safe_int(nav_meta.get("ui_base_contract_asset_scene_count"), 0)
     asset_bound_scene_count = _safe_int(nav_meta.get("ui_base_contract_bound_scene_count"), 0)
     asset_missing_scene_count = _safe_int(nav_meta.get("ui_base_contract_missing_scene_count"), 0)
-    scene_count = _safe_int(scene_meta.get("scene_count"), 0)
+    scenes = scene_ready.get("scenes") if isinstance(scene_ready.get("scenes"), list) else []
+    scene_count = _safe_int(scene_meta.get("scene_count"), len(scenes))
     scene_bound_count = _safe_int(scene_meta.get("base_contract_bound_scene_count"), 0)
     compile_issue_count = _safe_int(scene_meta.get("compile_issue_scene_count"), 0)
+
+    if scene_bound_count <= 0 and scenes:
+        scene_bound_count = sum(
+            1
+            for row in scenes
+            if bool(
+                ((row.get("meta") or {}).get("compile_verdict") or {}).get("base_contract_bound")
+            )
+        )
+    if compile_issue_count <= 0 and scenes:
+        compile_issue_count = sum(
+            1
+            for row in scenes
+            if not bool(
+                ((row.get("meta") or {}).get("compile_verdict") or {}).get("ok")
+            )
+        )
 
     return {
         "runtime_env": runtime_env,
