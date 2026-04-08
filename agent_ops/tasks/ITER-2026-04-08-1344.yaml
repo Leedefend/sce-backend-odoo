@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-08-1344
+title: Role-entry frontend filter snapshot replay verify v1
+status: active
+type: verify
+priority: medium
+mode: execute
+
+goal: >
+  Add deterministic replay verification for role-entry frontend filtering so
+  runtime visibility behavior remains stable across future iterations.
+
+user_visible_outcome:
+  - "role-entry 过滤行为具备可回放、可对比的稳定性验证"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1344.yaml
+    - scripts/verify/native_business_admin_config_role_entry_filter_snapshot_verify.py
+    - docs/ops/business_admin_config_role_entry_filter_snapshot_v1.md
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1344.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1344.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify-only
+  - no-functional-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification Guardrail
+  module: role-entry frontend filter determinism
+  module_owner: verify tooling
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    No backend changes in this batch.
+  reason: >
+    Lock deterministic filter behavior via snapshot-style replay checks.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1344.yaml
+    - python3 scripts/verify/native_business_admin_config_role_entry_filter_snapshot_verify.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - snapshot replay verify script
+  - determinism evidence doc
+  - iteration report and result
+
+depends_on:
+  - ITER-2026-04-08-1343
+
+rollback:
+  - git restore scripts/verify/native_business_admin_config_role_entry_filter_snapshot_verify.py
+  - git restore docs/ops/business_admin_config_role_entry_filter_snapshot_v1.md
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1344.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1344.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

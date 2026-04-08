@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-07-1326
+title: Business admin config center runtime role click-path verify
+status: active
+type: verify
+priority: high
+mode: verify
+
+goal: >
+  Execute runtime role-based native click-path verification for business admin
+  config center by proving config-admin create/edit/save operations on
+  sc.dictionary config types.
+
+user_visible_outcome:
+  - "配置管理员角色 runtime create/edit/save 证据"
+  - "配置中心运行态点击链最小闭环 PASS"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1326.yaml
+    - scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1326.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1326.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - low-cost-mode
+  - verify-focused
+  - no-business-logic-change
+  - no-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Runtime Verification Guardrail
+  module: Business admin config center runtime click-path
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch verifies runtime operability and role semantics without changing
+    business facts or authorization policy.
+  reason: >
+    Upgrade static operability evidence into runtime role evidence.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1326.yaml
+    - python3 scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - runtime_clickpath_fail
+
+deliverables:
+  - runtime click-path verify script and PASS evidence
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1325
+
+rollback:
+  - git restore scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1326.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1326.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

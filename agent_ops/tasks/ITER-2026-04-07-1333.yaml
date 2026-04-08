@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-07-1333
+title: Intent endpoint availability screen for config-center runtime parity
+status: active
+type: screen
+priority: high
+mode: execute
+
+goal: >
+  Identify why intent endpoint is unavailable on current runtime stack and
+  provide a bounded remediation path to restore intent-envelope verification
+  parity for business-admin config center.
+
+user_visible_outcome:
+  - "明确 /api/v1/intent 不可达根因与最小修复路径"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1333.yaml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1333.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1333.json
+    - docs/ops/business_admin_config_center_intent_endpoint_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - screen-only-no-implementation
+  - no-business-fact-change
+  - no-contract-schema-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Runtime Contract Access Screen
+  module: intent endpoint availability for config-center verification
+  module_owner: runtime gateway
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch only screens runtime gateway availability and does not alter
+    business or frontend semantics.
+  reason: >
+    Clear PASS_WITH_RISK blocker from 1332 before claiming full contract
+    runtime parity.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1333.yaml
+    - "rg -n \"/api/v1/intent|/api/intent|intent\" addons/smart_core addons/smart_scene addons/smart_construction_core -S"
+    - "python3 - <<'PY'\nimport json,urllib.request\nfor p in ['/api/v1/intent','/api/intent']:\n req=urllib.request.Request('http://localhost:8069'+p,data=json.dumps({'intent':'login','params':{'db':'sc_test','login':'admin','password':'admin'}}).encode(),headers={'Content-Type':'application/json','X-Anonymous-Intent':'1'},method='POST')\n try:\n  urllib.request.urlopen(req,timeout=10)\n  print(p,'OK')\n except Exception as e:\n  print(p,'ERR',e)\nPY"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - intent endpoint availability root-cause screen
+  - bounded remediation path recommendation
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1332
+
+rollback:
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1333.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1333.json
+  - git restore docs/ops/business_admin_config_center_intent_endpoint_screen_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

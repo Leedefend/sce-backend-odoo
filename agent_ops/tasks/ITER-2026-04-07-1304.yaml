@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-07-1304
+title: Contract Alignment Acceptance v1 Batch A contract object inventory
+status: active
+type: governance
+priority: high
+mode: execute
+
+goal: >
+  Inventory middle-layer contracts between native business facts and frontend consumption
+  for project/task/budget/cost/payment/settlement, and produce a field matrix baseline.
+
+user_visible_outcome:
+  - "输出六对象 contract 字段矩阵（稳定/差异/前端依赖）"
+  - "为 Batch B/C/D 提供可执行基线"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1304.yaml
+    - docs/ops/contract_alignment_object_inventory_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1304.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1304.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 5
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - low-cost-mode
+  - batch-a-scan-screen-only
+  - no-implementation
+  - no-business-logic-change
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Contract Alignment Evidence
+  module: middle-layer contract inventory
+  module_owner: docs/ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch audits contract surface only and does not alter backend facts or frontend behavior.
+  reason: >
+    Start Contract Alignment Acceptance v1 with Batch A as required by staged governance.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1304.yaml
+    - "inventory covers project/task/budget/cost/payment/settlement"
+    - "matrix includes list/form/rights/runtime sections"
+    - "matrix includes stable fields / variant fields / frontend-dependent fields"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - contract_inventory_evidence_missing
+
+deliverables:
+  - contract object inventory matrix v1
+  - batch-b/c/d input checklist
+
+depends_on:
+  - ITER-2026-04-07-1303
+
+rollback:
+  - git restore docs/ops/contract_alignment_object_inventory_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1304.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1304.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

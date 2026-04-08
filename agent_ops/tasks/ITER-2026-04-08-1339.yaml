@@ -1,0 +1,75 @@
+task_id: ITER-2026-04-08-1339
+title: Config-center audit traceability acceptance v1
+status: active
+type: verify
+priority: medium
+mode: execute
+
+goal: >
+  Verify that admin configuration operations leave auditable traces (write_uid,
+  write_date) and can be observed through runtime verification.
+
+user_visible_outcome:
+  - "管理员配置变更可追溯证据成立"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1339.yaml
+    - scripts/verify/native_business_admin_config_audit_trace_verify.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1339.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1339.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify-only
+  - no-business-fact-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification Guardrail
+  module: config-center audit trace evidence
+  module_owner: verify tooling
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Runtime evidence capture only.
+  reason: >
+    Extend admin-configurability proof with operation traceability acceptance.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1339.yaml
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_audit_trace_verify.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - audit trace verify script and pass evidence
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-08-1338
+
+rollback:
+  - git restore scripts/verify/native_business_admin_config_audit_trace_verify.py
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1339.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1339.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

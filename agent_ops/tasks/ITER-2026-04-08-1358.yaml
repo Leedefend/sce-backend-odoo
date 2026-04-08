@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-08-1358
+title: Home block role-surface semantic correction Batch 3/3
+status: active
+type: fix
+priority: high
+mode: execute
+batch: 3/3
+
+goal: >
+  Correct runtime role-surface classification on sc_test so PM/Finance/Outsider
+  no longer collapse to the same role_code, enabling trustworthy home block
+  differentiation evidence.
+
+user_visible_outcome:
+  - "sc_test 运行态中 PM/Finance/Outsider 的 role_code 与首页区块差异可被真实证明"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1358.yaml
+    - addons/smart_construction_scene/core_extension.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1358.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1358.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/views/**
+    - scripts/verify/**
+
+limits:
+  max_files: 5
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - minimal-semantic-supply-fix-only
+  - no-frontend-model-special-case
+  - no-acl-or-record-rule-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+  runtime_env: test
+  db_name: sc_test
+
+architecture:
+  layer_target: Scene orchestration layer
+  module: role-surface semantic supply
+  module_owner: addons/smart_construction_scene
+  kernel_or_scenario: scenario
+  reason: >
+    Current runtime evidence shows all fixtures resolve to role_code=pm due
+    overly broad PM explicit group mapping, which blocks role-specific homepage
+    configuration acceptance.
+
+acceptance:
+  commands:
+    - "DB_NAME=sc_test E2E_BASE_URL=http://localhost:8071 python3 scripts/verify/native_business_admin_config_home_block_runtime_verify.py"
+    - "DB_NAME=sc_test E2E_BASE_URL=http://localhost:8071 python3 scripts/verify/native_business_admin_config_home_block_clickpath_verify.py"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - role_mapping_uncertainty
+  - acceptance_command_failed
+
+deliverables:
+  - corrected role-group mapping for runtime role_surface resolution
+  - refreshed sc_test runtime evidence for PM/Finance/Outsider
+
+depends_on:
+  - ITER-2026-04-08-1357
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-08-1358.yaml
+  - git restore addons/smart_construction_scene/core_extension.py
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1358.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1358.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

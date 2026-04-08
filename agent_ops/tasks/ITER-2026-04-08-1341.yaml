@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-08-1341
+title: Config role-entry contract runtime closure v1
+status: active
+type: feature
+priority: medium
+mode: execute
+
+goal: >
+  Add non-breaking role-entry contract output for business-admin config center
+  and close runtime parity evidence through session-bootstrap + intent flow.
+
+user_visible_outcome:
+  - "业务管理员配置的角色入口可通过 contract 输出并被验收脚本验证"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1341.yaml
+    - addons/smart_construction_core/core_extension.py
+    - addons/smart_core/core/system_init_extension_fact_merger.py
+    - addons/smart_core/core/system_init_payload_builder.py
+    - addons/smart_core/handlers/system_init.py
+    - scripts/verify/native_business_admin_config_role_entry_intent_parity_verify.py
+    - scripts/verify/native_business_admin_config_role_entry_runtime_verify.py
+    - scripts/verify/native_business_admin_config_center_acceptance_pack.py
+    - docs/ops/business_admin_config_role_entry_contract_runtime_v1.md
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1341.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1341.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - contract-optional-non-breaking
+  - no-acl-or-menu-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Scene orchestration contract supply
+  module: business admin config center role entry
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    role-entry output is consumption semantics for frontend entry filtering and
+    does not alter business facts.
+  reason: >
+    Deliver config.role.entry capability as contract-visible optional surface
+    without changing ACL, menu definitions, or frozen core business facts.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1341.yaml
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_role_entry_intent_parity_verify.py"
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_role_entry_runtime_verify.py"
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_acceptance_pack.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - contract_breaking_change_detected
+
+deliverables:
+  - optional role-entry contract output implementation
+  - intent/runtime parity verification evidence
+  - acceptance-pack integration evidence
+
+depends_on:
+  - ITER-2026-04-08-1340
+
+rollback:
+  - git restore addons/smart_construction_core/core_extension.py
+  - git restore scripts/verify/native_business_admin_config_role_entry_intent_parity_verify.py
+  - git restore scripts/verify/native_business_admin_config_role_entry_runtime_verify.py
+  - git restore scripts/verify/native_business_admin_config_center_acceptance_pack.py
+  - git restore docs/ops/business_admin_config_role_entry_contract_runtime_v1.md
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1341.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1341.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

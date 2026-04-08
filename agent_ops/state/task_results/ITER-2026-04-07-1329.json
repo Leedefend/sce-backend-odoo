@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-07-1329",
+  "status": "PASS",
+  "summary": "Environment base-chain repaired; clean sc_test install path restored; runtime click-path verify passed.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1329.yaml",
+    "docker ps --format '{{.Names}} {{.Status}}' | rg 'sc-backend-odoo-dev-(db|odoo)-1'",
+    "COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.install DB_NAME=sc_test MODULE=smart_enterprise_base",
+    "COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.install DB_NAME=sc_test MODULE=smart_construction_core",
+    "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py"
+  ],
+  "risks": [
+    "Cross-project named-volume reuse risk remains for redis/odoo volumes and should be governed separately."
+  ],
+  "next_step": "Re-run and close previous runtime evidence line (1326/1328) on repaired sc_test baseline."
+}

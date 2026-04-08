@@ -1,0 +1,103 @@
+task_id: ITER-2026-04-07-1300
+title: Frontend alignment acceptance v1 Batch B-2 task-slice contract
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Complete task-slice frontend alignment against native baseline by consuming backend
+  contracts only, prioritizing generic paths and without frontend permission patching
+  or backend truth changes.
+
+user_visible_outcome:
+  - "task-slice 场景下前端列表/表单/创建/编辑与原生基线一致"
+  - "task-slice 场景下不可见/不可写处理口径与原生一致"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1300.yaml
+    - frontend/apps/web/src/router/index.ts
+    - frontend/apps/web/src/views/ActionView.vue
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/views/MyWorkView.vue
+    - frontend/apps/web/src/app/action_runtime/useActionViewNavigationRuntime.ts
+    - docs/ops/frontend_native_alignment_matrix_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1300.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1300.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+
+limits:
+  max_files: 10
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - frontend-consumer-only
+  - no-permission-patch
+  - no-business-fact-change
+  - no-generic-refactor-beyond-task-scope
+  - no-model-specific-branching-added
+  - only-navigation-link-change-allowed
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend Consumer Alignment
+  module: task-slice frontend contract alignment
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Frontend should consume existing semantics and must not redefine backend facts or permission behavior.
+  reason: >
+    Continue Batch B in declared priority order after project-slice completion.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1300.yaml
+    - "generic path evidence captured for /a/project.task equivalent action-list path"
+    - "generic path evidence captured for /f/project.task/:id form path"
+    - "task-slice contract list alignment evidence captured (entry, visible rows, deny handling)"
+    - "task-slice contract form alignment evidence captured (load, readonly/edit mode, error surface)"
+    - "task-slice contract create alignment evidence captured (create path and success/failure handling)"
+    - "task-slice contract edit alignment evidence captured (write path and save feedback handling)"
+    - "task-slice contract stage-change evidence captured"
+    - "task-slice contract deny-path alignment evidence captured (not visible/not writable in frontend behavior)"
+    - "native consistency evidence captured: create/edit/stage success and outsider deny"
+    - "my-work and project-entry link checks captured without code-first changes"
+    - "no-op is allowed only with per-item evidence for list/form/create/edit/deny"
+    - "no new model-specific frontend branch introduced in this batch"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - frontend_permission_patch_detected
+  - task_alignment_evidence_missing
+  - model_specific_frontend_branching_detected
+  - task_special_component_proposed
+  - form_behavior_rewrite_proposed
+
+deliverables:
+  - task-slice frontend alignment closure evidence
+  - task-slice frontend delta assessment
+  - updated frontend alignment matrix (task row and priority notes)
+
+depends_on:
+  - ITER-2026-04-07-1299
+
+rollback:
+  - git restore frontend/apps/web/src
+  - git restore docs/ops/frontend_native_alignment_matrix_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1300.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1300.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

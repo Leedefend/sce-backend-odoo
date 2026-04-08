@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-08-1356
+title: Home block frontend rendering effectuation Batch 1/3
+status: active
+type: feature
+priority: high
+mode: execute
+batch: 1/3
+
+goal: >
+  Make homepage rendering consume runtime home_blocks contract with enabled,
+  sequence, and fallback semantics so users can perceive role-specific changes.
+
+user_visible_outcome:
+  - "首页按 home_blocks 生效，角色看到的入口内容与顺序可控"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1356.yaml
+    - frontend/apps/web/src/stores/session.ts
+    - frontend/apps/web/src/views/HomeView.vue
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1356.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1356.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/verify/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/ir.model.access.csv
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - frontend-only-home-block-consumer
+  - no-new-component
+  - no-role-hardcode
+  - contract-first-with-fallback
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer
+  module: homepage rendering
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    User requested direct homepage visual effect from home_blocks with strict
+    fallback and no frontend model-specific patching.
+
+acceptance:
+  commands:
+    - "Frontend behavior change only in this batch: no extra verify expansion"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - role_hardcode_detected
+
+deliverables:
+  - home_blocks frontend consume for filtering/sorting/fallback
+  - batch report and result checkpoint
+
+depends_on:
+  - ITER-2026-04-08-1355
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-08-1356.yaml
+  - git restore frontend/apps/web/src/stores/session.ts
+  - git restore frontend/apps/web/src/views/HomeView.vue
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1356.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1356.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

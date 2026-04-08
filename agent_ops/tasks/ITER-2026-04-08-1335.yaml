@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-08-1335
+title: Config-center stage-gate subset integration v1
+status: active
+type: improve
+priority: medium
+mode: execute
+
+goal: >
+  Integrate config-center dedicated runtime verifies into a reusable stage-gate
+  subset command for repeatable acceptance without CI long-chain.
+
+user_visible_outcome:
+  - "形成配置中心专题可复跑的最小 stage-gate 子集"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1335.yaml
+    - scripts/verify/native_business_admin_config_center_stage_gate.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1335.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1335.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify-tooling-only
+  - no-business-fact-change
+  - no-contract-schema-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification Guardrail
+  module: business admin config-center stage gate subset
+  module_owner: verify tooling
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Verification tooling only, preserving established backend semantics.
+  reason: >
+    Convert ad-hoc verification sequence into a stable, repeatable gate entry.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1335.yaml
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_stage_gate.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - config-center stage-gate runner script
+  - pass evidence on sc_test
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-08-1334
+
+rollback:
+  - git restore scripts/verify/native_business_admin_config_center_stage_gate.py
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1335.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1335.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

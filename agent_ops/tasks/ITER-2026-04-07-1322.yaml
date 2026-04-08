@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-07-1322
+title: Business admin config center v1 Phase3 frontend shell design
+status: active
+type: governance
+priority: high
+mode: screen
+
+goal: >
+  Define frontend shell structure for business admin visual configuration
+  center v1 using list/form experience, without introducing model-specific
+  business logic or permission patches.
+
+user_visible_outcome:
+  - "配置中心前端壳层结构与导航方案"
+  - "列表/表单承载约束与最小交互流程"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1322.yaml
+    - docs/ops/business_admin_config_center_frontend_shell_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1322.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1322.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 5
+  max_output_lines: 360
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - low-cost-mode
+  - single-stage-screen-only
+  - docs-only
+  - no-business-logic-change
+  - no-frontend-permission-patch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend Consumption Shell Baseline
+  module: Business Admin Config Center v1
+  module_owner: docs/ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This stage defines consumer shell and interaction boundaries that consume
+    backend configuration semantics without adding business facts.
+  reason: >
+    Ensure the admin config center is delivered as a bounded shell rather than
+    a low-code engine.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1322.yaml
+    - "frontend shell doc defines list/form structure and entry routes"
+    - "frontend shell doc explicitly forbids model-specific logic and drag-drop engine"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - shell_boundary_undefined
+
+deliverables:
+  - Phase 3 frontend shell design baseline
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1321
+
+rollback:
+  - git restore docs/ops/business_admin_config_center_frontend_shell_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1322.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1322.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
