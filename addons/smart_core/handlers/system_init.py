@@ -743,6 +743,28 @@ class SystemInitHandler(BaseIntentHandler):
         else:
             data.pop("scene_governance_v1", None)
         data = _strip_ui_base_contract_for_frontend(data)
+        extension_snapshot: dict = {}
+        apply_extension_fact_contributions(extension_snapshot, env, user, context=params)
+        snapshot_ext = (
+            extension_snapshot.get("ext_facts")
+            if isinstance(extension_snapshot.get("ext_facts"), dict)
+            else {}
+        )
+        role_entries = []
+        home_blocks = []
+        for module_facts in snapshot_ext.values():
+            if not isinstance(module_facts, dict):
+                continue
+            candidate = module_facts.get("role_entries")
+            if isinstance(candidate, list) and candidate:
+                role_entries = candidate
+            block_candidate = module_facts.get("home_blocks")
+            if isinstance(block_candidate, list) and block_candidate:
+                home_blocks = block_candidate
+        if isinstance(role_entries, list) and role_entries:
+            data["role_entries"] = role_entries
+        if isinstance(home_blocks, list) and home_blocks:
+            data["home_blocks"] = home_blocks
         startup_inspect = {}
         if build_mode == SystemInitPayloadBuilder.BUILD_MODE_DEBUG:
             startup_inspect = {
@@ -759,6 +781,85 @@ class SystemInitHandler(BaseIntentHandler):
             build_mode=build_mode,
             inspect_payload=startup_inspect,
         )
+        try:
+            if "sc.dictionary" in env:
+                try:
+                    rows = env["sc.dictionary"].sudo().search_read(
+                        [("type", "=", "role_entry"), ("active", "=", True)],
+                        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
+                        limit=200,
+                        order="sequence asc, id asc",
+                    )
+                    grouped = {}
+                    for row in rows:
+                        scope_type = str(row.get("scope_type") or "").strip() or "global"
+                        scope_ref = str(row.get("scope_ref") or "").strip()
+                        role_code = scope_ref if scope_type == "role" else "__global__"
+                        if not role_code:
+                            continue
+                        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
+                        entry_key = (
+                            str(row.get("code") or "").strip()
+                            or str(value_json.get("entry_key") or "").strip()
+                            or str(row.get("name") or "").strip()
+                        )
+                        if not entry_key:
+                            continue
+                        grouped.setdefault(role_code, []).append(
+                            {
+                                "entry_key": entry_key,
+                                "entry_type": str(value_json.get("entry_type") or "menu").strip() or "menu",
+                                "is_enabled": bool(value_json.get("is_enabled", True)),
+                                "sequence": int(row.get("sequence") or 10),
+                            }
+                        )
+                    if grouped:
+                        data["role_entries"] = [
+                            {"role_code": role_code, "entries": entries}
+                            for role_code, entries in sorted(grouped.items(), key=lambda item: str(item[0]))
+                        ]
+                except Exception:
+                    pass
+
+                try:
+                    home_rows = env["sc.dictionary"].sudo().search_read(
+                        [("type", "=", "home_block"), ("active", "=", True)],
+                        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
+                        limit=200,
+                        order="sequence asc, id asc",
+                    )
+                    home_grouped = {}
+                    for row in home_rows:
+                        scope_type = str(row.get("scope_type") or "").strip() or "global"
+                        scope_ref = str(row.get("scope_ref") or "").strip()
+                        role_code = scope_ref if scope_type == "role" else "__global__"
+                        if not role_code:
+                            continue
+                        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
+                        is_enabled = value_json.get("is_enabled")
+                        if isinstance(is_enabled, bool) and not is_enabled:
+                            continue
+                        block_key = (
+                            str(row.get("code") or "").strip()
+                            or str(value_json.get("block_key") or "").strip()
+                            or str(row.get("name") or "").strip()
+                        )
+                        if not block_key:
+                            continue
+                        sequence = int(row.get("sequence") or 10)
+                        home_grouped.setdefault(role_code, []).append((sequence, block_key))
+                    if home_grouped:
+                        data["home_blocks"] = [
+                            {
+                                "role_code": role_code,
+                                "blocks": [item[1] for item in sorted(blocks, key=lambda pair: (pair[0], pair[1]))],
+                            }
+                            for role_code, blocks in sorted(home_grouped.items(), key=lambda item: str(item[0]))
+                        ]
+                except Exception:
+                    pass
+        except Exception:
+            pass
         data = _normalize_access_suggested_action(data)
         stage_ts = _mark("finalize_startup_surface", stage_ts)
 

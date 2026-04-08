@@ -74,6 +74,14 @@ def merge_extension_facts(data: dict[str, Any], *, include_workspace_collections
             if key in module_facts and key not in data:
                 data[key] = module_facts.get(key)
 
+        role_entries = module_facts.get("role_entries")
+        if isinstance(role_entries, list) and role_entries:
+            data["role_entries"] = role_entries
+
+        home_blocks = module_facts.get("home_blocks")
+        if isinstance(home_blocks, list) and home_blocks:
+            data["home_blocks"] = home_blocks
+
         if include_workspace_collections:
             workspace_collections = module_facts.get("workspace_collections")
             if isinstance(workspace_collections, dict):

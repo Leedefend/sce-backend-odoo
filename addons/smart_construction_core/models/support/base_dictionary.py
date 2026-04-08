@@ -33,7 +33,20 @@ class ScDictionary(models.Model):
         ('tax_type', '税种'),
         ('contract_type', '合同方向'),
         ('contract_category', '合同类别'),
+        ('system_param', '系统参数项'),
+        ('role_entry', '角色入口项'),
+        ('home_block', '首页区块项'),
     ], string='字典类型', required=True, index=True)
+
+    value_text = fields.Text('配置值文本')
+    value_json = fields.Json('配置值JSON')
+    scope_type = fields.Selection([
+        ('global', '全局'),
+        ('company', '公司级'),
+        ('role', '角色级'),
+    ], string='作用域', default='global', required=True)
+    scope_ref = fields.Char('作用域标识')
+    note = fields.Text('备注')
 
     sequence = fields.Integer('排序', default=10)
     active = fields.Boolean('启用', default=True)

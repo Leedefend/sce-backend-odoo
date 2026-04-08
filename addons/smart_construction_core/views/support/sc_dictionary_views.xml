@@ -6,8 +6,11 @@
         <field name="arch" type="xml">
             <tree string="业务字典" default_order="type, sequence, id">
                 <field name="type"/>
+                <field name="scope_type"/>
+                <field name="scope_ref"/>
                 <field name="code"/>
                 <field name="name"/>
+                <field name="value_text"/>
                 <field name="sequence"/>
                 <field name="active"/>
             </tree>
@@ -22,8 +25,13 @@
                 <sheet>
                     <group>
                         <field name="type"/>
+                        <field name="scope_type"/>
+                        <field name="scope_ref"/>
                         <field name="code"/>
                         <field name="name"/>
+                        <field name="value_text"/>
+                        <field name="value_json" widget="json"/>
+                        <field name="note"/>
                         <field name="sequence"/>
                         <field name="active"/>
                     </group>
@@ -41,5 +49,32 @@
             (4, ref('smart_construction_core.group_sc_cap_project_manager')),
             (4, ref('smart_construction_core.group_sc_cap_config_admin'))
         ]"/>
+    </record>
+
+    <record id="action_sc_config_system_param" model="ir.actions.act_window">
+        <field name="name">系统参数配置</field>
+        <field name="res_model">sc.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type', '=', 'system_param')]</field>
+        <field name="context">{'default_type': 'system_param'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+
+    <record id="action_sc_config_role_entry" model="ir.actions.act_window">
+        <field name="name">角色入口配置</field>
+        <field name="res_model">sc.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type', '=', 'role_entry')]</field>
+        <field name="context">{'default_type': 'role_entry'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+
+    <record id="action_sc_config_home_block" model="ir.actions.act_window">
+        <field name="name">首页区块配置</field>
+        <field name="res_model">sc.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type', '=', 'home_block')]</field>
+        <field name="context">{'default_type': 'home_block'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
     </record>
 </odoo>
