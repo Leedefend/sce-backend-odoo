@@ -14048,3 +14048,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-08-1361 PASS：sc_test 完成 smart_construction_custom install/upgrade、test 后端重启、前端构建并启动 5174；真实用户登录验证通过`
 - active_commit: `ca23376`
 - next_step: `User performs interactive real-user login verification on frontend test runtime`
+
+### 2026-04-08T11:45:38+08:00
+- blocker_key: `native_default_language_init_gap_fix_1362`
+- layer_target: `Business fact initialization`
+- module: `smart_construction_custom post_init_hook`
+- reason: 用户反馈真实用户原生页面默认英文；需在初始化逻辑补齐默认语言基线而非依赖人工设置
+- completed_step: `ITER-2026-04-08-1362 PASS：post_init_hook 已补“zh_CN 语言包装载 + locale baseline（系统参数 + 内部用户 lang/tz 归一化）”；sc_test 验证 base.menu_administration 在 zh 上显示“设置”`
+- active_commit: `ca23376`
+- next_step: `Continue next PASS-eligible low-risk batch under current governance chain`
