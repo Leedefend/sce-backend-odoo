@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-08-1363",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Patched action_open semantic chain to preserve domain/context in action resolver, but acceptance unittest could not run due missing Odoo runtime package in current environment.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1363.yaml (PASS)",
+    "python3 -m py_compile addons/smart_core/app_config_engine/services/resolvers/action_resolver.py addons/smart_core/tests/test_action_dispatcher_server_mapping.py (PASS)",
+    "python3 -m unittest addons.smart_core.tests.test_action_dispatcher_server_mapping (FAIL: ModuleNotFoundError: No module named 'odoo')"
+  ],
+  "risks": [
+    "acceptance_command_failed",
+    "runtime_missing_odoo_dependency"
+  ],
+  "next_step": "Stop current iteration per policy; rerun unittest in Odoo-enabled environment before promoting this batch."
+}

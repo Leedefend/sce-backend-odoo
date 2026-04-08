@@ -1,0 +1,92 @@
+task_id: ITER-2026-04-08-1364
+title: Fix action_open list parity by propagating action domain and context
+status: active
+type: fix
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Make custom action page list data match native action list semantics by
+  carrying action domain/context through backend contract assembly.
+
+user_visible_outcome:
+  - "同一 action 下，原生页与自定义页记录口径一致"
+  - "系统参数配置页只显示 system_param，避免出现 17 条混入"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1364.yaml
+    - addons/smart_core/app_config_engine/services/dispatchers/action_dispatcher.py
+    - addons/smart_core/app_config_engine/services/assemblers/page_assembler.py
+    - addons/smart_core/tests/test_action_dispatcher_server_mapping.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1364.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1364.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 7
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - backend-semantic-supply-first
+  - no-frontend-model-special-case
+  - additive-action-open-semantics-fix-only
+  - no-acl-or-financial-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+  runtime_env: test
+  db_name: sc_test
+
+architecture:
+  layer_target: Scene-orchestration contract semantics
+  module: smart_core action dispatcher action_open path
+  module_owner: addons/smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration
+  backend_sub_layer_reason: >
+    The missing piece is semantic propagation for consumer contracts
+    (action domain/context), not business-fact storage.
+  reason: >
+    Screenshots show native action data is filtered while custom action page
+    is not. action_open pipeline must preserve action filtering semantics.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1364.yaml"
+    - "python3 -m py_compile addons/smart_core/app_config_engine/services/dispatchers/action_dispatcher.py addons/smart_core/tests/test_action_dispatcher_server_mapping.py"
+    - "python3 - <<'PY'\nimport json, urllib.request\nfrom http.cookiejar import CookieJar\nbase='http://localhost:8071'; db='sc_test'; login='wutao'; pw='demo'\nopener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))\ndef post(path,payload,headers=None):\n req=urllib.request.Request(base+path,data=json.dumps(payload).encode(),headers={'Content-Type':'application/json', **(headers or {})},method='POST')\n with opener.open(req,timeout=30) as r: return json.loads(r.read().decode())\npost('/web/session/authenticate',{'jsonrpc':'2.0','method':'call','params':{'db':db,'login':login,'password':pw},'id':1})\nb=post('/api/v1/intent',{'intent':'ui.contract','params':{'op':'action_open','action_id':542}},headers={'X-Anonymous-Intent':'1'})\nhead=((b.get('data') or {}).get('head') or {})\nd=head.get('domain')\nassert isinstance(d,list) and d and any(isinstance(x,(list,tuple)) and len(x)>=3 and x[0]=='type' and x[1]=='=' and x[2]=='system_param' for x in d), d\nprint('PASS action_open domain parity', d)\nPY"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - action dispatcher forwards action domain/context into page assembly input
+  - page contract head exposes effective domain/context for list parity
+  - runtime proof that action_open(542) includes system_param domain
+
+depends_on:
+  - ITER-2026-04-08-1363
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-08-1364.yaml
+  - git restore addons/smart_core/app_config_engine/services/dispatchers/action_dispatcher.py
+  - git restore addons/smart_core/app_config_engine/services/assemblers/page_assembler.py
+  - git restore addons/smart_core/tests/test_action_dispatcher_server_mapping.py
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1364.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1364.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

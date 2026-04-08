@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1380",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Implemented root-cause compatibility fixes for login token schema and system.init contract_mode/hud trace; contract_mode_smoke now passes, preflight now blocked by scene baseline data insufficiency.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1380.yaml",
+    "make verify.contract.mode.smoke DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.scene.contract_v1.field_schema.guard failed: scene count below baseline (8 < 50) with schema violations"
+  ],
+  "next_step": "Run dedicated environment baseline recovery for scene data (sc_demo) or switch to baseline-compliant DB before re-running preflight."
+}

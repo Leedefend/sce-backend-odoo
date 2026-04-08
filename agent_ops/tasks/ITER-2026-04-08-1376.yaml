@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-08-1376
+title: Fix scene legacy deprecation smoke login token extraction
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Repair verify.scene.legacy_deprecation.smoke login token parsing so
+  verify.contract.preflight can continue beyond this guard.
+
+user_visible_outcome:
+  - "verify.scene.legacy_deprecation.smoke 通过"
+  - "verify.contract.preflight 继续推进"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1376.yaml
+    - scripts/verify/scene_legacy_deprecation_smoke.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1376.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1376.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification smoke runtime layer
+  module: scene_legacy_deprecation_smoke login handling
+  module_owner: platform verification governance
+  kernel_or_scenario: scenario
+  reason: >
+    Login response schema now provides token under data.session.token, while
+    smoke script still reads data.token causing false failures.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1376.yaml"
+    - "make verify.scene.legacy_deprecation.smoke DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+    - "CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - corrected token extraction in legacy deprecation smoke
+  - updated preflight evidence
+
+depends_on:
+  - ITER-2026-04-08-1375
+
+rollback:
+  - "git restore scripts/verify/scene_legacy_deprecation_smoke.py"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1376.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1376.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1376.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-08-1370",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Fixed custom form readonly lock by adding frontend fallback for collapsed effective rights (all false) while preserving backend enforcement.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1370.yaml",
+    "make verify.frontend.build",
+    "FRONTEND_PROFILE=daily bash scripts/dev/frontend_dev_reset.sh",
+    "curl -I --max-time 8 http://127.0.0.1:5174/"
+  ],
+  "risks": [
+    "Frontend fallback may display editable controls in edge cases; backend still enforces final write permissions"
+  ],
+  "next_step": "User validates create form input + save flow on action_id=543 page in 5174 runtime."
+}

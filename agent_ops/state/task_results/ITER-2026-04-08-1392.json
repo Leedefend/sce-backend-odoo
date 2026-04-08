@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1392",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Aligned scene_meta_trace_smoke with current hud/meta trace field placement by comparing hud payload only against selector-aligned keys while preserving scene_channel checks in meta trace.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1392.yaml",
+    "make verify.scene.meta.trace.smoke DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.contract.api.mode.smoke failed: http://localhost:8070 timeout"
+  ],
+  "next_step": "Open dedicated batch for contract_api_mode_smoke runtime reachability alignment (8070)."
+}

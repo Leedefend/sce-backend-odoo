@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-08-1395
+title: Align view_type_render_coverage_guard with split ActionView runtime markers
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Remove false failures in view-type render coverage guard by validating
+  current split-runtime semantic markers instead of legacy monolithic
+  ActionView-only markers.
+
+user_visible_outcome:
+  - "view_type_render_coverage_guard 不再误报旧 marker"
+  - "preflight 继续推进到下一真实门禁"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1395.yaml
+    - scripts/verify/view_type_render_coverage_guard.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1395.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1395.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification guard logic layer
+  module: view_type_render_coverage_guard
+  module_owner: platform verification governance
+  kernel_or_scenario: scenario
+  reason: >
+    Guard currently requires legacy ActionView marker strings that moved into
+    split runtime modules; this produces false negatives despite valid behavior.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1395.yaml"
+    - "python3 scripts/verify/view_type_render_coverage_guard.py"
+    - "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - view-type coverage guard aligned to split runtime semantics
+  - updated preflight evidence
+
+depends_on:
+  - ITER-2026-04-08-1394
+
+rollback:
+  - "git restore scripts/verify/view_type_render_coverage_guard.py"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1395.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1395.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1395.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

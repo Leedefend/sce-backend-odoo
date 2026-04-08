@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1375",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Scoped legacy docs guard to normative docs and restored verify.scene.legacy_docs.guard pass; preflight now blocked by existing scene_legacy_deprecation_smoke login-token issue.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1375.yaml",
+    "make verify.scene.legacy_docs.guard",
+    "CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.scene.legacy_deprecation.smoke failed: login response missing token"
+  ],
+  "next_step": "Open dedicated batch to fix scene_legacy_deprecation_smoke login/token handling and rerun preflight."
+}

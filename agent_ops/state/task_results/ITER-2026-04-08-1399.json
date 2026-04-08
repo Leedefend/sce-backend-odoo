@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1399",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Runtime rights probes passed for target actions 542/543 (create+edit), showing effective rights are not collapsed to all-false and remain internally consistent.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1399.yaml",
+    "python3 scripts/verify/permission_runtime_uid_probe.py --db sc_demo --login admin --password admin --action-id 542 --render-profile create",
+    "python3 scripts/verify/permission_runtime_uid_probe.py --db sc_demo --login admin --password admin --action-id 543 --render-profile create"
+  ],
+  "risks": [
+    "Probe user is admin; non-admin role-path still requires UI role-based manual regression to confirm end-user editing constraints."
+  ],
+  "next_step": "Execute non-admin UI regression for role-entry/system-params pages with a constrained business user account."
+}

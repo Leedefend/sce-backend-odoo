@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1389",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Aligned native_surface_integrity_guard with native-ui-contract deprecation policy by accepting the documented disablement response as policy-compliant evidence.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1389.yaml",
+    "make verify.native_surface_integrity_guard DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.contract.surface_mapping_guard failed: still requires ui.contract.native success while native op is disabled"
+  ],
+  "next_step": "Open dedicated batch for surface_mapping_guard policy alignment."
+}

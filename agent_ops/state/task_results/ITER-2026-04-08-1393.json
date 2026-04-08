@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1393",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Aligned contract_api_mode_smoke default endpoint to runtime base URL (8069) instead of hardcoded 8070, removing environment mismatch timeouts.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1393.yaml",
+    "make verify.contract.api.mode.smoke DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.frontend.search_groupby_savedfilters.guard failed: required action_view markers missing"
+  ],
+  "next_step": "Open dedicated batch for frontend search/groupby/saved-filters marker alignment."
+}
