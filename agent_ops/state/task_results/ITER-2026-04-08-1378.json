@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-08-1378",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Added explicit docs-gate skip switch for fast preflight lane; docs blocker bypassed, next blocker moved to grouped frontend governance bundle.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1378.yaml",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.frontend.grouped_rows_runtime.guard failed inside verify.grouped.governance.bundle"
+  ],
+  "next_step": "Open dedicated batch for grouped governance bundle fast-lane switch."
+}

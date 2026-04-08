@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-08-1368
+title: Fix native login crash by removing hard dependency on workbench client-action redirect
+status: active
+type: bugfix
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Eliminate post-login KeyNotFoundError for sc_project_workbench by making login
+  default redirect target a stable act_window action instead of a custom client action.
+
+user_visible_outcome:
+  - "原生登录不再因 sc_project_workbench registry 丢失而报错"
+  - "登录后可进入稳定可渲染页面"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1368.yaml
+    - addons/smart_construction_core/views/web_login_views.xml
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1368.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1368.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - minimal-redirect-fallback-fix
+  - no-acl-or-financial-change
+  - no-contract-structure-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend login route semantic fallback
+  module: smart_construction_core web login template
+  module_owner: customer scenario module
+  kernel_or_scenario: scenario
+  reason: >
+    Login currently defaults to a custom client action tag that can fail on
+    registry mismatch; stable default should avoid custom action dependency.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1368.yaml"
+    - "CODEX_MODE=fast CODEX_NEED_UPGRADE=1 ENV=dev DB_NAME=sc_demo MODULE=smart_construction_core make mod.upgrade"
+    - "docker exec sc-backend-odoo-dev-odoo-1 sh -lc \"curl -s http://127.0.0.1:8069/web/login | grep -n 'name=\\\"redirect\\\"'\""
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - login default redirect no longer points to custom client action
+  - minimal runtime evidence for redirect target rendering
+
+depends_on:
+  - ITER-2026-04-08-1367
+
+rollback:
+  - "git restore addons/smart_construction_core/views/web_login_views.xml"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1368.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1368.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1368.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

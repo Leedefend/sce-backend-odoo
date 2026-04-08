@@ -16,6 +16,42 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-08T16:38:09+08:00
+- blocker_key: `custom_form_create_editability_recovery_pass_v1`
+- layer_target: `Frontend contract-consumer form runtime`
+- module: `ContractForm rights resolver`
+- reason: 用户要求恢复“可配置并生效”；新建页出现只读锁定
+- completed_step: `已完成 ITER-2026-04-08-1370：识别并容错 permissions.effective.rights 全 false 收敛态，前端重建并重启 daily runtime`
+- active_commit: `3466cad`
+- next_step: `User verifies new-form input and save behavior on action_id=543 page`
+
+### 2026-04-08T16:16:05+08:00
+- blocker_key: `native_custom_field_parity_contract_consumer_fix_pass_v1`
+- layer_target: `Frontend contract-consumer alignment`
+- module: `action resolver + action view contract shape`
+- reason: 用户确认同页原生与自定义仍未对齐，需恢复 action domain/context 与列字段映射语义
+- completed_step: `已完成 ITER-2026-04-08-1369：补齐 action meta 的 domain/context，增加标签列到技术字段名映射，前端重建并重启 daily profile`
+- active_commit: `3466cad`
+- next_step: `User verifies target page parity on 5174 against native page and reports any residual field mismatch`
+
+### 2026-04-08T15:36:32+08:00
+- blocker_key: `native_login_registry_keynotfound_fallback_fix_pass_v1`
+- layer_target: `Backend login route semantic fallback`
+- module: `smart_construction_core web login template`
+- reason: 登录首跳命中 client action `sc_project_workbench` 时出现 registry 缺失报错，需改为稳定首跳路径
+- completed_step: `已完成 ITER-2026-04-08-1368：登录默认 redirect 切到 action_sc_project_list 且重启后生效（action=484）`
+- active_commit: `3466cad`
+- next_step: `Re-verify native login in browser after hard refresh and continue frontend/native parity checks`
+
+### 2026-04-08T15:12:02+08:00
+- blocker_key: `daily_sc_demo_full_rebuild_pass_v1`
+- layer_target: `Runtime environment lifecycle`
+- module: `dev compose + db/demo reset`
+- reason: 用户要求对日常开发环境执行一次完整数据库重建，清理历史遗漏并回到可验证基线
+- completed_step: `已完成 ITER-2026-04-08-1367：daily(sc_demo) 完整重建与 verify.demo 全量通过`
+- active_commit: `3466cad`
+- next_step: `Proceed with environment alignment check and keep profile-based frontend startup for daily/test/uat`
+
 ### 2026-04-06T23:55:45+08:00
 - blocker_key: `stage_b_prescreen_boundary_pass_v1`
 - layer_target: `Governance Monitoring`
@@ -14057,3 +14093,309 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-08-1362 PASS：post_init_hook 已补“zh_CN 语言包装载 + locale baseline（系统参数 + 内部用户 lang/tz 归一化）”；sc_test 验证 base.menu_administration 在 zh 上显示“设置”`
 - active_commit: `ca23376`
 - next_step: `Continue next PASS-eligible low-risk batch under current governance chain`
+
+### 2026-04-08T13:45:07+08:00
+- blocker_key: `native_vs_custom_action_data_semantic_drift_1363`
+- layer_target: `Scene-orchestration contract semantics`
+- module: `smart_core action resolver / action_open contract path`
+- reason: 用户反馈“原生页面有数据而自定义页面无数据”，需先在后端语义供给层补齐 action_open domain/context 传递，禁止前端特判补语义
+- completed_step: `ITER-2026-04-08-1363 FAIL：已修复 ActionResolver 对 action domain/context 的语义保留并补测试，但 acceptance unittest 在当前环境因缺少 odoo 包失败（ModuleNotFoundError）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy (acceptance_command_failed); rerun unittest in Odoo-enabled runtime before resuming`
+
+### 2026-04-08T14:03:12+08:00
+- blocker_key: `native_vs_custom_action_filter_parity_fix_1364`
+- layer_target: `Scene-orchestration contract semantics`
+- module: `smart_core action dispatcher + page assembler`
+- reason: 原生 action=542 带 system_param 过滤，自定义页未消费同口径 domain/context，导致 17 条混入与字段值错位展示
+- completed_step: `ITER-2026-04-08-1364 PASS：action dispatcher 已透传动作 domain/context，page head 已输出有效 domain/context；sc_test@8071 运行态验证 action_open(542) 返回 [['type','=','system_param']] 且过滤结果 3 条全为 system_param`
+- active_commit: `3466cad`
+- next_step: `User refreshes custom /a/542 page and confirms parity with native /web#action=542`
+
+### 2026-04-08T14:14:03+08:00
+- blocker_key: `frontend_rebuild_redeploy_once_1365`
+- layer_target: `Runtime deployment`
+- module: `frontend/apps/web`
+- reason: 用户要求“前端再次重构并部署一次”，用于立即消费最新后端口径修复
+- completed_step: `ITER-2026-04-08-1365 PASS：前端 build 完成并已重新启动到 127.0.0.1:5174（HTTP 200）`
+- active_commit: `3466cad`
+- next_step: `User refreshes frontend runtime and verifies page behavior`
+
+### 2026-04-08T14:53:12+08:00
+- blocker_key: `runtime_env_alignment_and_hmr_profile_stabilization_1366`
+- layer_target: `Runtime deployment baseline`
+- module: `scripts/dev + Makefile + ops docs`
+- reason: 用户要求一次性对齐 daily/test/uat 环境并解决前端开发态热更新不稳定
+- completed_step: `ITER-2026-04-08-1366 PASS：新增 runtime_env_align + frontend profile(HMR) 启动基线；daily/test/uat 端口与数据库矩阵固定，daily profile 启动 5174 成功并绑定 proxy=8069`
+- active_commit: `3466cad`
+- next_step: `Operate by fe.dev.daily/test/uat and ops.runtime.align.check for stable follow-up iterations`
+
+### 2026-04-08T17:16:00+08:00
+- blocker_key: `permission_effective_rights_truth_source_alignment_1371`
+- layer_target: `Backend scene/page permission semantic supply`
+- module: `smart_core app.permission.config + page_assembler`
+- reason: 修复 `permissions.effective.rights` 在 sudo 组装路径下错误使用 sudo uid 导致与真实用户权限事实不一致
+- completed_step: `ITER-2026-04-08-1371 PASS_WITH_RISK：已改为 runtime_uid 驱动 effective rights 计算并补回归测试；live ui.contract(action_id=543,create) 权限返回 read/write/create/unlink=true，合同声明探针脚本缺失改用等价在线探针验证`
+- active_commit: `3466cad`
+- next_step: `Open follow-up governance batch to align acceptance probe script asset path with repository verify baseline`
+
+### 2026-04-08T17:24:00+08:00
+- blocker_key: `permission_probe_asset_alignment_1372`
+- layer_target: `Verification/runtime probe layer`
+- module: `scripts/verify permission runtime probe`
+- reason: 补齐 ITER-1371 验收缺失的探针脚本资产，保证验收命令可重复执行
+- completed_step: `ITER-2026-04-08-1372 PASS：新增 permission_runtime_uid_probe.py，并在容器内执行通过（sc_demo action_id=543 返回 effective_rights 全 true 且非 all-false）`
+- active_commit: `3466cad`
+- next_step: `Optionally integrate permission probe into aggregated verify.contract targets for continuous regression`
+
+### 2026-04-08T17:31:00+08:00
+- blocker_key: `contract_preflight_probe_integration_1373`
+- layer_target: `Verification contract-preflight layer`
+- module: `Makefile verify.contract.preflight aggregation`
+- reason: 按用户要求将 permission runtime probe 接入现有 verify.contract 聚合目标
+- completed_step: `ITER-2026-04-08-1373 FAIL：新增 verify.contract.permission_runtime_uid_probe 并已接入 preflight；单目标通过，但 verify.contract.preflight 在既有 verify.scene.legacy_endpoint.guard 失败（unexpected /api/scenes/my usage）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch to resolve legacy endpoint guard violations before re-running preflight`
+
+### 2026-04-08T17:40:00+08:00
+- blocker_key: `legacy_endpoint_allowlist_recovery_1374`
+- layer_target: `Verification guard policy layer`
+- module: `legacy_scene_endpoint_guard allowlist`
+- reason: 修复 preflight 中 `verify.scene.legacy_endpoint.guard` 的 allowlist 漂移阻断
+- completed_step: `ITER-2026-04-08-1374 FAIL：legacy endpoint guard 已恢复 PASS，但 verify.contract.preflight 前进后被既有 verify.scene.legacy_docs.guard 阻断（多份文档缺少 deprecated/successor/migration/sunset 标记）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated docs-governance batch with docs allowlist and repair legacy docs guard findings`
+
+### 2026-04-08T17:48:00+08:00
+- blocker_key: `legacy_docs_guard_scope_recovery_1375`
+- layer_target: `Verification guard policy layer`
+- module: `scene_legacy_docs_guard scan policy`
+- reason: 缩小 legacy docs guard 扫描口径到规范文档，避免历史审计证据文档误阻断 preflight
+- completed_step: `ITER-2026-04-08-1375 FAIL：legacy_docs_guard 已恢复 PASS；verify.contract.preflight 前进后被既有 verify.scene.legacy_deprecation.smoke 阻断（login response missing token）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_legacy_deprecation_smoke token acquisition failure`
+
+### 2026-04-08T17:56:00+08:00
+- blocker_key: `legacy_deprecation_smoke_token_recovery_1376`
+- layer_target: `Verification smoke runtime layer`
+- module: `scene_legacy_deprecation_smoke login handling`
+- reason: 修复 legacy deprecation smoke 对新登录响应 token 路径不兼容导致的假失败
+- completed_step: `ITER-2026-04-08-1376 FAIL：scene_legacy_deprecation_smoke 已恢复 PASS；verify.contract.preflight 前进后被既有 verify.contract.governance.coverage 阻断`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for contract_governance_coverage failure remediation`
+
+### 2026-04-08T18:03:00+08:00
+- blocker_key: `contract_governance_coverage_recovery_1377`
+- layer_target: `Backend contract governance layer`
+- module: `smart_core ui_contract handler`
+- reason: 修复 `verify.contract.governance.coverage` 报告的 ui_contract 缺失 apply_contract_governance
+- completed_step: `ITER-2026-04-08-1377 FAIL：governance coverage 已恢复 PASS；verify.contract.preflight 前进后被既有 verify.docs.links 阻断（missing_count=185）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for docs-link gate strategy under fast preflight lane`
+
+### 2026-04-08T18:10:00+08:00
+- blocker_key: `preflight_docs_gate_fast_lane_switch_1378`
+- layer_target: `Verification orchestration layer`
+- module: `Makefile verify.contract.preflight`
+- reason: 在 fast lane 增加 docs gate 显式跳过开关，避免历史 docs 链接债务阻断运行态回归链
+- completed_step: `ITER-2026-04-08-1378 FAIL：docs gate 已可跳过，但 preflight 前进后被 verify.grouped.governance.bundle（grouped_rows_runtime_guard）阻断`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for grouped governance bundle fast-lane switch`
+
+### 2026-04-08T18:31:00+08:00
+- blocker_key: `login_system_init_compat_root_fix_1380`
+- layer_target: `Backend auth/system-init compatibility layer`
+- module: `smart_core login + system_init handlers`
+- reason: 一次性修复 verify 链路中旧契约消费根因（token 路径与 system.init contract_mode/hud trace 兼容）
+- completed_step: `ITER-2026-04-08-1380 FAIL：contract_mode_smoke 已恢复 PASS，preflight 新阻断前移为 scene_contract_v1.field_schema.guard（sc_demo scene baseline: 8 < 50）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open environment-baseline batch to recover scene dataset or switch to baseline-compliant DB`
+
+### 2026-04-08T18:39:00+08:00
+- blocker_key: `scene_contract_v1_guard_source_alignment_1381`
+- layer_target: `Verification guard policy layer`
+- module: `scene_contract_v1_field_schema_guard`
+- reason: 修复 guard 使用 startup 子集校验全量基线导致的 scene_count/schema 误判
+- completed_step: `ITER-2026-04-08-1381 FAIL：scene_contract_v1.field_schema.guard 已恢复 PASS；preflight 前进后被 verify.scene.ready.consumption_trend.guard 阻断（trend 阈值）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_ready_consumption_trend_guard threshold/input alignment`
+
+### 2026-04-08T18:54:46+08:00
+- blocker_key: `scene_ready_consumption_trend_guard_alignment_1382`
+- layer_target: `Verification guard policy layer`
+- module: `scene_ready_consumption_trend_guard`
+- reason: 修复 consumption disabled/unavailable 时仍触发 drop-rate 对比导致的误报
+- completed_step: `ITER-2026-04-08-1382 FAIL：scene_ready_consumption_trend_guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.scene.registry_asset_snapshot.guard 阻断（base_contract_bound_scene_count: 0 < 1）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_registry_asset_snapshot_guard source/count alignment`
+
+### 2026-04-08T19:03:46+08:00
+- blocker_key: `scene_registry_snapshot_bound_count_alignment_1383`
+- layer_target: `Verification guard policy layer`
+- module: `scene_registry_asset_snapshot_guard`
+- reason: 修复 compacted runtime meta 下 base_contract_bound_scene_count 缺失导致的 0<1 误报
+- completed_step: `ITER-2026-04-08-1383 FAIL：scene_registry_asset_snapshot.guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.scene.contract_v1.field_schema.guard 阻断（scene_count: 8 < 50）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_contract_v1 scene-count baseline/source alignment`
+
+### 2026-04-08T19:12:10+08:00
+- blocker_key: `scene_contract_v1_full_scene_caliber_alignment_1384`
+- layer_target: `Verification guard policy layer`
+- module: `scene_contract_v1_field_schema_guard`
+- reason: 将 schema guard 口径切到全场景发布（避免 startup subset 8<50 误报）
+- completed_step: `ITER-2026-04-08-1384 FAIL：scene_contract_v1.field_schema.guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.scene.engine_migration.matrix.guard 阻断（missing scene state + non-asset entry scene count）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_engine_migration_matrix guard alignment under full-scene caliber`
+
+### 2026-04-08T19:18:13+08:00
+- blocker_key: `scene_engine_migration_matrix_full_scene_state_alignment_1385`
+- layer_target: `Verification guard policy layer`
+- module: `scene_engine_migration_matrix_guard`
+- reason: 将 migration matrix guard 运行态状态源对齐到全场景口径，避免 startup subset 状态误报
+- completed_step: `ITER-2026-04-08-1385 FAIL：scene_engine_migration.matrix.guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.scene.base_contract_source_mix.guard 阻断（scene_count: 8 < 50）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_base_contract_source_mix guard full-scene caliber alignment`
+
+### 2026-04-08T19:26:14+08:00
+- blocker_key: `snapshot_state_consumers_one_shot_alignment_1386`
+- layer_target: `Verification guard policy layer`
+- module: `source_mix/no_action/sample_diff guards`
+- reason: 用户要求同类问题一次性修复；批量将 snapshot-state 消费 guard 统一切到全场景状态口径
+- completed_step: `ITER-2026-04-08-1386 FAIL：source_mix/no_action/sample_diff 均恢复 PASS；verify.contract.preflight 前进后被 verify.scene.base_contract_asset_coverage.guard 阻断（scene_bind_ratio: 0.0000 < 0.1500）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_base_contract_asset_coverage guard ratio/state alignment`
+
+### 2026-04-08T19:33:28+08:00
+- blocker_key: `scene_base_contract_asset_coverage_full_scene_alignment_1387`
+- layer_target: `Verification guard policy layer`
+- module: `scene_base_contract_asset_coverage_guard`
+- reason: 将 asset coverage guard 运行态口径对齐到 full-scene（with_preload + row-level fallback）
+- completed_step: `ITER-2026-04-08-1387 FAIL：scene_base_contract_asset_coverage.guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.role.capability_floor.prod_like 阻断`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for role_capability_floor_prod_like remediation`
+
+### 2026-04-08T20:22:32+08:00
+- blocker_key: `role_capability_floor_contract_compat_alignment_1388`
+- layer_target: `Verification guard policy layer`
+- module: `role_capability_floor_prod_like`
+- reason: capability floor 探针与当前 system.init 契约口径不一致（仅读 legacy capabilities）
+- completed_step: `ITER-2026-04-08-1388 FAIL：role_capability_floor_prod_like 已恢复 PASS；verify.contract.preflight 前进后被 verify.native_surface_integrity_guard 阻断（native ui.contract 已禁用）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for native_surface_integrity_guard policy alignment`
+
+### 2026-04-08T20:36:55+08:00
+- blocker_key: `native_surface_integrity_policy_alignment_1389`
+- layer_target: `Verification guard policy layer`
+- module: `native_surface_integrity_guard`
+- reason: 将 native surface guard 对齐到“native ui.contract 已禁用，scene-ready 接管”的策略语义
+- completed_step: `ITER-2026-04-08-1389 FAIL：native_surface_integrity_guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.contract.surface_mapping_guard 阻断（仍要求 ui.contract.native 成功）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for surface_mapping_guard policy alignment`
+
+### 2026-04-08T20:53:18+08:00
+- blocker_key: `surface_mapping_native_policy_alignment_1390`
+- layer_target: `Verification guard policy layer`
+- module: `surface_mapping_guard`
+- reason: 将 surface mapping guard 的 native 分支对齐到“native ui.contract 禁用”策略
+- completed_step: `ITER-2026-04-08-1390 FAIL：surface_mapping_guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.scene.hud.trace.smoke 阻断（missing trace field: scene_channel）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_hud_trace_smoke field compatibility alignment`
+
+### 2026-04-08T21:14:40+08:00
+- blocker_key: `scene_hud_trace_field_compat_alignment_1391`
+- layer_target: `Verification guard policy layer`
+- module: `scene_hud_trace_smoke`
+- reason: 对齐 hud/meta trace 字段位置语义，移除 scene_channel 与 channel_selector 的错误强等值
+- completed_step: `ITER-2026-04-08-1391 FAIL：scene_hud_trace_smoke 已恢复 PASS；verify.contract.preflight 前进后被 verify.scene.meta.trace.smoke 阻断（scene_channel mismatch）`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for scene_meta_trace_smoke compatibility alignment`
+
+### 2026-04-08T21:49:51+08:00
+- blocker_key: `contract_api_mode_endpoint_alignment_1393`
+- layer_target: `Verification guard policy layer`
+- module: `contract_api_mode_smoke`
+- reason: 开发环境事实端口为 8069，api_mode_smoke 默认 8070 导致超时；已改为 runtime base URL
+- completed_step: `ITER-2026-04-08-1393 FAIL：contract_api_mode_smoke 已恢复 PASS（http://localhost:8069）；verify.contract.preflight 前进后被 verify.frontend.search_groupby_savedfilters.guard 阻断`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for frontend search/groupby/saved-filters marker alignment`
+
+### 2026-04-08T22:15:36+08:00
+- blocker_key: `search_groupby_savedfilters_split_runtime_alignment_1394`
+- layer_target: `Verification guard policy layer`
+- module: `search_groupby_savedfilters_guard`
+- reason: 前端已拆分 action runtime，guard 仍绑定旧 ActionView 单文件 marker；需按当前语义拆分校验
+- completed_step: `ITER-2026-04-08-1394 FAIL：search_groupby_savedfilters_guard 已恢复 PASS；verify.contract.preflight 前进后被 verify.frontend.view_type_render_coverage.guard 阻断`
+- active_commit: `3466cad`
+- next_step: `STOP by policy; open dedicated batch for view_type_render_coverage_guard split-runtime marker alignment`
+
+### 2026-04-08T22:26:45+08:00
+- blocker_key: `view_type_render_coverage_split_runtime_alignment_1395`
+- layer_target: `Verification guard policy layer`
+- module: `view_type_render_coverage_guard`
+- reason: 将 guard 从旧 ActionView 单文件 marker 校验升级为当前 split-runtime 语义校验
+- completed_step: `ITER-2026-04-08-1395 PASS：view_type_render_coverage_guard 恢复 PASS；verify.contract.preflight 全链 PASS（带既定 env flags）`
+- active_commit: `3466cad`
+- next_step: `Continue: open dedicated governance audit batch for permissions.effective.rights vs UI contract consistency root-cause`
+
+### 2026-04-08T22:30:15+08:00
+- blocker_key: `permissions_effective_rights_ui_contract_scan_1396`
+- layer_target: `Backend semantic-supply diagnosis`
+- module: `permissions.effective.rights contract path`
+- reason: 低成本治理扫描：仅收集候选证据，不跨阶段归因
+- completed_step: `ITER-2026-04-08-1396 PASS：已输出 C1~C5 候选证据（前端双解析口径 + 后端双源下发路径）`
+- active_commit: `3466cad`
+- next_step: `Continue: open screen stage to classify candidates and determine fact-consistent source`
+
+### 2026-04-08T22:32:51+08:00
+- blocker_key: `permissions_effective_rights_ui_contract_screen_1397`
+- layer_target: `Backend semantic-supply diagnosis`
+- module: `permissions.effective.rights contract path`
+- reason: screen 阶段对 C1~C5 进行事实源/消费路径冲突分类
+- completed_step: `ITER-2026-04-08-1397 PASS：识别高优冲突为前端双消费口径（含 effectiveCollapsed 放开回退），verify 目标已明确`
+- active_commit: `3466cad`
+- next_step: `Continue: open verify stage to implement unified rights resolver and validate runtime behavior`
+
+### 2026-04-08T22:42:14+08:00
+- blocker_key: `permissions_effective_rights_ui_contract_verify_1398`
+- layer_target: `Frontend contract consumer semantics`
+- module: `contractRecordRuntime rights resolver`
+- reason: verify 阶段执行最小修复，移除 effectiveCollapsed 放开回退并统一 rights 解析口径
+- completed_step: `ITER-2026-04-08-1398 PASS：preflight 全链 PASS；permissions.effective.rights 在记录态不再被全 false -> true 覆盖`
+- active_commit: `3466cad`
+- next_step: `Continue: run user-facing runtime regression on 8069 for editable/read-only behavior confirmation`
+
+### 2026-04-08T22:48:19+08:00
+- blocker_key: `rights_runtime_regression_probe_1399`
+- layer_target: `Runtime verification`
+- module: `permission_runtime_uid_probe`
+- reason: 用户同意继续执行，针对 542/543 页面做权限契约运行态回归
+- completed_step: `ITER-2026-04-08-1399 PASS：action 542/543 在 create+edit 探测均 non-all-false 且一致`
+- active_commit: `3466cad`
+- next_step: `Continue: run non-admin UI regression for editable vs readonly behavior`
+
+### 2026-04-08T22:53:35+08:00
+- blocker_key: `non_admin_editable_readonly_regression_1400`
+- layer_target: `Runtime verification`
+- module: `permission runtime regression`
+- reason: 用户同意执行非 admin 回归，验证目标页面权限分层生效
+- completed_step: `ITER-2026-04-08-1400 PASS：demo_pm 可编辑，demo_role_project_read 只读；action 542/543 均符合预期权限口径`
+- active_commit: `3466cad`
+- next_step: `Continue: optional browser smoke for UI button visibility and save interaction`
+
+### 2026-04-08T23:02:04+08:00
+- blocker_key: `browser_save_control_role_smoke_1401`
+- layer_target: `UI runtime verification`
+- module: `playwright smoke checks`
+- reason: 执行用户要求的浏览器层回归，验证可编辑/只读角色保存入口行为
+- completed_step: `ITER-2026-04-08-1401 PASS：demo_pm 保存可用，demo_role_project_read 保存禁用；action 542/543 全通过`
+- active_commit: `3466cad`
+- next_step: `Continue: optional submit-flow verification with valid payload for success/error feedback`
+
+### 2026-04-08T23:09:35+08:00
+- blocker_key: `submit_flow_editable_vs_readonly_1402`
+- layer_target: `Runtime verification`
+- module: `api.data submit behavior`
+- reason: 执行用户要求的提交态验证，确认可编辑成功、只读拒绝
+- completed_step: `ITER-2026-04-08-1402 PASS：demo_pm create 成功（id=53），demo_role_project_read create 被拒绝（无创建权限）`
+- active_commit: `3466cad`
+- next_step: `Continue: optional probe-data cleanup strategy batch if strict data hygiene is required`

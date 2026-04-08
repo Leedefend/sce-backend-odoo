@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-08-1365
+title: Rebuild and redeploy frontend runtime once after parity fix
+status: active
+type: ops
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Rebuild frontend web bundle and redeploy dev runtime once so latest backend
+  parity fix can be consumed on the custom page immediately.
+
+user_visible_outcome:
+  - "前端已重新构建并重新部署到 5174"
+  - "自定义页面可直接刷新验证与原生一致"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1365.yaml
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1365.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1365.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 4
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - deployment-and-verification-only
+  - no-backend-business-change
+  - no-frontend-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+  runtime_env: test
+
+architecture:
+  layer_target: Runtime deployment
+  module: frontend/apps/web runtime
+  module_owner: frontend apps web
+  kernel_or_scenario: scenario
+  reason: >
+    User requested one more frontend refactor-build and deployment cycle to
+    apply latest runtime behavior before manual verification.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1365.yaml"
+    - "make verify.frontend.build"
+    - "pkill -f 'pnpm -C frontend/apps/web dev --host 127.0.0.1 --port 5174' || true"
+    - "nohup pnpm -C frontend/apps/web dev --host 127.0.0.1 --port 5174 >/tmp/sc-frontend-dev.log 2>&1 & echo $! >/tmp/sc-frontend-dev.pid"
+    - "curl -I --max-time 5 http://127.0.0.1:5174/"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - frontend build succeeds
+  - frontend dev runtime refreshed and reachable on 5174
+
+depends_on:
+  - ITER-2026-04-08-1364
+
+rollback:
+  - restart previous frontend runtime process if needed
+  - git restore agent_ops/tasks/ITER-2026-04-08-1365.yaml
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1365.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1365.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

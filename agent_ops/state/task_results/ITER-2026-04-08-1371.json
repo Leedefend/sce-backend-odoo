@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-08-1371",
+  "batch": "1/1",
+  "status": "PASS_WITH_RISK",
+  "summary": "Fixed permission effective-rights truth-source drift by propagating requester runtime_uid through sudo assembly path; live ui.contract now matches runtime rights facts.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1371.yaml",
+    "CODEX_MODE=fast CODEX_NEED_UPGRADE=1 ENV=dev DB_NAME=sc_demo MODULE=smart_core make mod.upgrade",
+    "ENV=dev DB_NAME=sc_demo make restart",
+    "live intent API probe: login + ui.contract(action_id=543, render_profile=create)"
+  ],
+  "risks": [
+    "Task-contract declared probe script /mnt/scripts/verify/permission_runtime_uid_probe.py is missing in runtime; equivalent live probe was used"
+  ],
+  "next_step": "Create a follow-up low-risk governance task to align acceptance probe asset path with repository verify scripts."
+}

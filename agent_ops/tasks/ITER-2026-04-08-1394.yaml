@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-08-1394
+title: Align search_groupby_savedfilters_guard with split frontend runtime implementation
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Remove false frontend marker failures by validating search/group_by/saved-filter
+  semantics across the current runtime-split frontend files.
+
+user_visible_outcome:
+  - "search_groupby_savedfilters_guard 不再误报旧单文件 marker 缺失"
+  - "preflight 继续推进到下一真实门禁"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1394.yaml
+    - scripts/verify/search_groupby_savedfilters_guard.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1394.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1394.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification guard logic layer
+  module: search_groupby_savedfilters_guard
+  module_owner: platform verification governance
+  kernel_or_scenario: scenario
+  reason: >
+    Guard assumes legacy monolithic ActionView markers, while frontend runtime
+    is now split into composable modules.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1394.yaml"
+    - "python3 scripts/verify/search_groupby_savedfilters_guard.py"
+    - "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - frontend marker guard aligned to current split runtime semantics
+  - updated preflight evidence
+
+depends_on:
+  - ITER-2026-04-08-1393
+
+rollback:
+  - "git restore scripts/verify/search_groupby_savedfilters_guard.py"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1394.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1394.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1394.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

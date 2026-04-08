@@ -1,0 +1,13 @@
+{
+  "task_id": "ITER-2026-04-08-1397",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Completed screen-stage classification for C1~C5 and identified verify-stage target: eliminate multi-source + permissive fallback mismatch in rights consumption.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1397.yaml"
+  ],
+  "risks": [
+    "Classification-only stage; implementation deferred to verify stage to avoid cross-stage reasoning drift."
+  ],
+  "next_step": "Open verify stage to apply minimal fix and validate permissions.effective.rights consistency in UI consumer runtime."
+}

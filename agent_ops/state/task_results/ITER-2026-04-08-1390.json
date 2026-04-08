@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1390",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Aligned surface_mapping_guard with native-ui-contract disablement policy by accepting policy-disabled native response while keeping strict user/hud mapping checks.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1390.yaml",
+    "make verify.contract.surface_mapping_guard DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.scene.hud.trace.smoke failed: system.init hud missing trace field scene_channel"
+  ],
+  "next_step": "Open dedicated batch for scene_hud_trace_smoke field compatibility alignment."
+}

@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1376",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Fixed scene_legacy_deprecation_smoke login token extraction; standalone smoke passes, preflight now blocked by existing contract governance coverage failure.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1376.yaml",
+    "make verify.scene.legacy_deprecation.smoke DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.contract.governance.coverage failed inside preflight aggregate"
+  ],
+  "next_step": "Open dedicated batch for contract_governance_coverage failure diagnosis and remediation."
+}

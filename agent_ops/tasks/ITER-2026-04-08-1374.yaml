@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-08-1374
+title: Resolve legacy endpoint guard allowlist drift in verify scripts
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Fix verify.scene.legacy_endpoint.guard failures caused by allowlist drift,
+  and restore verify.contract.preflight passability.
+
+user_visible_outcome:
+  - "verify.scene.legacy_endpoint.guard 通过"
+  - "verify.contract.preflight 不再因 legacy endpoint guard 阻断"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1374.yaml
+    - scripts/verify/legacy_scene_endpoint_guard.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1374.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1374.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification guard policy layer
+  module: legacy_scene_endpoint_guard allowlist
+  module_owner: platform verification governance
+  kernel_or_scenario: scenario
+  reason: >
+    verify.contract.preflight is currently blocked by existing verify scripts
+    using /api/scenes/my but not listed in guard allowlist.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1374.yaml"
+    - "make verify.scene.legacy_endpoint.guard"
+    - "CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - corrected legacy endpoint guard allowlist
+  - restored preflight gate continuity
+
+depends_on:
+  - ITER-2026-04-08-1373
+
+rollback:
+  - "git restore scripts/verify/legacy_scene_endpoint_guard.py"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1374.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1374.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1374.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

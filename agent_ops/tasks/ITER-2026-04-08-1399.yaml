@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-08-1399
+title: Runtime regression verify for rights consistency on target config pages
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  对系统参数配置与角色入口配置页面执行运行态回归，确认 permissions.effective.rights
+  与 head.permissions 一致且不再出现全 false 被前端误放开。
+
+user_visible_outcome:
+  - "两类配置页面权限契约一致性通过"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1399.yaml
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1399.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1399.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 4
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verification-only
+  - no source implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Runtime verification
+  module: permission contract runtime probe
+  module_owner: verification scripts
+  kernel_or_scenario: scenario
+  reason: >
+    用户要求继续执行页面生效回归，本批只做运行态验证与证据输出。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1399.yaml"
+    - "python3 scripts/verify/permission_runtime_uid_probe.py --db sc_demo --login admin --password admin --action-id 542 --render-profile create"
+    - "python3 scripts/verify/permission_runtime_uid_probe.py --db sc_demo --login admin --password admin --action-id 543 --render-profile create"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+
+deliverables:
+  - runtime rights probe evidence for target actions
+
+depends_on:
+  - ITER-2026-04-08-1398
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1399.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1399.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1399.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

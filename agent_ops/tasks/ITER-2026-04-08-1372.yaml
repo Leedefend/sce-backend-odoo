@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-08-1372
+title: Align acceptance with runtime permission probe asset
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Add a stable runtime probe script for permission effective-rights verification,
+  so acceptance commands are executable and reproducible.
+
+user_visible_outcome:
+  - "权限验收探针脚本可直接运行"
+  - "任务验收命令与仓库资产路径一致"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1372.yaml
+    - scripts/verify/permission_runtime_uid_probe.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1372.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1372.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification/runtime probe layer
+  module: scripts.verify permission probe
+  module_owner: platform verification governance
+  kernel_or_scenario: scenario
+  reason: >
+    Previous task acceptance referenced a missing probe script path; this batch
+    restores executable acceptance by adding the declared runtime probe asset.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1372.yaml"
+    - "docker exec sc-backend-odoo-dev-odoo-1 sh -lc \"python3 /mnt/scripts/verify/permission_runtime_uid_probe.py --db sc_demo --action-id 543 --login admin --password admin\""
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - executable permission runtime uid probe script
+  - acceptance alignment evidence
+
+depends_on:
+  - ITER-2026-04-08-1371
+
+rollback:
+  - "git restore scripts/verify/permission_runtime_uid_probe.py"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1372.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1372.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1372.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

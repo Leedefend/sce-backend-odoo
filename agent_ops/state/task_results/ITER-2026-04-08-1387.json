@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1387",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Aligned base_contract_asset_coverage guard to full-scene runtime caliber by enabling with_preload and deriving bound/issue counts from scene rows when compacted meta omits them.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1387.yaml",
+    "make verify.scene.base_contract_asset_coverage.guard DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.role.capability_floor.prod_like failed"
+  ],
+  "next_step": "Open dedicated batch for role capability floor prod-like guard remediation."
+}

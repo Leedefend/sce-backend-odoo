@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1364",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Fixed native-vs-custom action list parity by propagating action domain/context through action dispatcher and exposing effective head.domain/context in page contract.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1364.yaml",
+    "python3 -m py_compile addons/smart_core/app_config_engine/services/dispatchers/action_dispatcher.py addons/smart_core/app_config_engine/services/assemblers/page_assembler.py addons/smart_core/tests/test_action_dispatcher_server_mapping.py",
+    "CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_core make mod.upgrade MODULE=smart_core ENV=test DB_NAME=sc_test",
+    "make restart ENV=test DB_NAME=sc_test",
+    "runtime parity check: ui.contract(action_open=542).head.domain == [['type','=','system_param']] and filtered list count == 3"
+  ],
+  "risks": [],
+  "next_step": "User refreshes custom page /a/542 and confirms it now matches native action=542 data scope."
+}

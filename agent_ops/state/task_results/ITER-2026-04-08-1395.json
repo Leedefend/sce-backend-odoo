@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1395",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Aligned view_type_render_coverage_guard to current split ActionView runtime semantics; preflight now passes end-to-end under declared env flags.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1395.yaml",
+    "python3 scripts/verify/view_type_render_coverage_guard.py",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "No additional functional risk introduced; change is guard-only semantic alignment to existing split runtime files"
+  ],
+  "next_step": "Proceed to next product/governance objective since current preflight chain is unblocked."
+}

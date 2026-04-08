@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-08-1366
+title: Align multi-runtime environment baseline and stabilize frontend HMR profiles
+status: active
+type: ops
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Establish one-time aligned runtime matrix for daily dev, test, and prod-sim
+  acceptance; provide stable frontend HMR startup profiles bound to each runtime.
+
+user_visible_outcome:
+  - "环境分层清晰：daily/test/uat 端口与数据库不再混用"
+  - "前端开发态热更新可按 profile 稳定启动"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1366.yaml
+    - scripts/dev/frontend_dev_reset.sh
+    - scripts/dev/runtime_env_align.sh
+    - Makefile
+    - docs/ops/runtime_environment_alignment_v1.md
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1366.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1366.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 8
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - runtime-ops-and-doc-only
+  - no-business-fact-change
+  - no-acl-or-financial-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Runtime deployment baseline
+  module: scripts/dev + frontend runtime startup
+  module_owner: ops runtime toolchain
+  kernel_or_scenario: scenario
+  reason: >
+    Current runtime and frontend routing drift causes db confusion (sc_demo vs
+    sc_test). Need profile-based deterministic startup and one-click alignment.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1366.yaml"
+    - "bash scripts/dev/runtime_env_align.sh --check-only"
+    - "FRONTEND_PROFILE=daily bash scripts/dev/frontend_dev_reset.sh"
+    - "curl -I --max-time 8 http://127.0.0.1:5174/"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - runtime alignment script with explicit environment matrix
+  - frontend HMR reset script supporting daily/test/uat profiles
+  - make targets for aligned runtime operation
+
+depends_on:
+  - ITER-2026-04-08-1365
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-08-1366.yaml
+  - git restore scripts/dev/frontend_dev_reset.sh
+  - git restore scripts/dev/runtime_env_align.sh
+  - git restore Makefile
+  - git restore docs/ops/runtime_environment_alignment_v1.md
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1366.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1366.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

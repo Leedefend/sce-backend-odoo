@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-08-1378
+title: Add controlled docs gate skip switch for fast preflight lane
+status: active
+type: governance
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Introduce an explicit switch to skip docs gate in fast preflight lane,
+  preserving strict default while unblocking runtime contract regression chain.
+
+user_visible_outcome:
+  - "verify.contract.preflight 可在 fast lane 下跳过 docs gate"
+  - "默认严格门禁行为不变"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1378.yaml
+    - Makefile
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1378.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1378.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification orchestration layer
+  module: Makefile verify.contract.preflight
+  module_owner: platform verification governance
+  kernel_or_scenario: scenario
+  reason: >
+    Existing docs link debt blocks fast runtime preflight despite runtime fixes;
+    need explicit opt-in skip switch without changing strict default.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1378.yaml"
+    - "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - explicit docs gate skip switch for fast preflight
+  - validated preflight runtime chain progression
+
+depends_on:
+  - ITER-2026-04-08-1377
+
+rollback:
+  - "git restore Makefile"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1378.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1378.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1378.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

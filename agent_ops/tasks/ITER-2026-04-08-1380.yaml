@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-08-1380
+title: Root-cause fix login token schema compatibility for verify scripts
+status: active
+type: bugfix
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Fix the shared root cause by restoring login top-level token compatibility in
+  default mode and restoring system.init data.contract_mode compatibility,
+  so legacy verify scripts no longer fail on envelope drift.
+
+user_visible_outcome:
+  - "login 默认响应兼容 data.token"
+  - "验证脚本不再因 token 路径漂移批量报错"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1380.yaml
+    - addons/smart_core/handlers/login.py
+    - addons/smart_core/handlers/system_init.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1380.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1380.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-only
+  - no-acl-table-change
+  - no-financial-semantic-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3466cad
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend auth contract compatibility layer
+  module: smart_core login intent handler
+  module_owner: platform runtime
+  kernel_or_scenario: scenario
+  reason: >
+    Multiple verify scripts still consume legacy data.token path; default login
+    response only emits data.session.token, and some scripts still require
+    data.contract_mode in system.init payload.
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1380.yaml"
+    - "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+
+deliverables:
+  - login response compatibility shim for top-level token fields
+  - system.init data.contract_mode compatibility shim
+  - preflight progression evidence after root-cause fix
+
+depends_on:
+  - ITER-2026-04-08-1379
+
+rollback:
+  - "git restore addons/smart_core/handlers/login.py"
+  - "git restore addons/smart_core/handlers/system_init.py"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1380.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1380.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1380.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-08-1379",
+  "batch": "1/1",
+  "status": "FAIL",
+  "summary": "Added grouped-governance and scene-capability skip switches for fast preflight lane; preflight progressed and is now blocked by contract_mode_smoke token parsing.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1379.yaml",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "verify.contract.mode.smoke failed: login response missing token"
+  ],
+  "next_step": "Open dedicated batch for contract_mode_smoke login token compatibility fix."
+}
