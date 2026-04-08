@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-08-1359",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Unified outsider sample semantics in home-block runtime/clickpath verifies to use pure outsider by default.",
+  "verification": [
+    "DB_NAME=sc_test E2E_BASE_URL=http://localhost:8071 python3 scripts/verify/native_business_admin_config_home_block_runtime_verify.py",
+    "DB_NAME=sc_test E2E_BASE_URL=http://localhost:8071 python3 scripts/verify/native_business_admin_config_home_block_clickpath_verify.py"
+  ],
+  "risks": [
+    "None significant; verify-only sample alignment."
+  ],
+  "next_step": "Reuse same outsider sample default in adjacent role-evidence scripts when touched."
+}

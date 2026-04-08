@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-07-1302
+title: Frontend alignment acceptance v1 Batch B-4 payment-settlement-slice contract
+status: active
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Complete payment/settlement-slice frontend alignment against native baseline
+  for minimum operability only, without entering deep approval chains.
+
+user_visible_outcome:
+  - "payment/settlement-slice 前端最小办理与原生基线一致"
+  - "payment/settlement-slice 不可见/不可写处理口径与原生一致"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1302.yaml
+    - frontend/apps/web/src/router/index.ts
+    - frontend/apps/web/src/views/ActionView.vue
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/views/ProjectManagementDashboardView.vue
+    - frontend/apps/web/src/views/MyWorkView.vue
+    - frontend/apps/web/src/api/paymentRequest.ts
+    - docs/ops/frontend_native_alignment_matrix_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1302.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1302.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+
+limits:
+  max_files: 11
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - frontend-consumer-only
+  - no-permission-patch
+  - no-business-fact-change
+  - no-generic-refactor-beyond-payment-settlement-scope
+  - no-model-specific-branching-added
+  - no-deep-approval-chain-expansion
+  - only-navigation-link-change-allowed
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend Consumer Alignment
+  module: payment-settlement-slice frontend contract alignment
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Frontend consumes existing semantics; no backend truth/permission mutation.
+  reason: >
+    Finish Batch B ordered execution with minimum payment/settlement operability scope.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1302.yaml
+    - "payment/settlement-slice list/form/create/edit/deny evidence captured"
+    - "native consistency evidence captured for payment/settlement minimum operability and outsider deny"
+    - "no new model-specific frontend branch introduced in this batch"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - frontend_permission_patch_detected
+  - payment_settlement_alignment_evidence_missing
+  - model_specific_frontend_branching_detected
+  - deep_approval_chain_scope_expanded
+
+deliverables:
+  - payment/settlement-slice frontend alignment closure evidence
+  - payment/settlement-slice frontend delta assessment
+  - updated frontend alignment matrix (payment/settlement rows and priority notes)
+
+depends_on:
+  - ITER-2026-04-07-1301
+
+rollback:
+  - git restore frontend/apps/web/src
+  - git restore docs/ops/frontend_native_alignment_matrix_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1302.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1302.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

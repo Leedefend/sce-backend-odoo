@@ -1,0 +1,14 @@
+{
+  "task_id": "ITER-2026-04-07-1332",
+  "status": "PASS_WITH_RISK",
+  "summary": "Config-center runtime contract-equivalent evidence captured and frozen with role samples.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1332.yaml",
+    "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py",
+    "test -f docs/ops/business_admin_config_center_contract_runtime_samples_v1.json"
+  ],
+  "risks": [
+    "Intent endpoint (/api/v1/intent or /api/intent) unavailable in current runtime baseline; evidence uses Odoo RPC runtime-equivalent surfaces."
+  ],
+  "next_step": "Open intent-endpoint availability screen batch before claiming full intent-envelope runtime parity."
+}

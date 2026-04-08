@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1358",
+  "batch": "3/3",
+  "status": "PASS",
+  "summary": "Fixed scenario role-surface mapping breadth so PM/finance/outsider runtime role codes no longer collapse on sc_test.",
+  "verification": [
+    "DB_NAME=sc_test E2E_BASE_URL=http://localhost:8071 python3 scripts/verify/native_business_admin_config_home_block_runtime_verify.py",
+    "DB_NAME=sc_test E2E_BASE_URL=http://localhost:8071 python3 scripts/verify/native_business_admin_config_home_block_clickpath_verify.py",
+    "Runtime intent evidence: sc_fx_pm=pm, sc_fx_finance=finance, sc_fx_outsider=owner, sc_fx_pure_outsider=owner"
+  ],
+  "risks": [
+    "Acceptance script outsider sample still uses sc_fx_outsider semantics; pure outsider evidence was captured separately in this batch."
+  ],
+  "next_step": "Freeze role-surface evidence and move to next user-value capability batch under cadence rules."
+}

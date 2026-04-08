@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-07-1332
+title: Business admin config center contract runtime verification v1
+status: active
+type: verify
+priority: high
+mode: execute
+
+goal: >
+  Capture runtime contract payload evidence for config-center relevant surfaces,
+  compare with current frontend dependency and freeze the minimal contract
+  surface for administrator operability.
+
+user_visible_outcome:
+  - "形成配置中心 contract runtime 样本与冻结面对齐结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1332.yaml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1332.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1332.json
+    - docs/ops/business_admin_config_center_contract_runtime_samples_v1.json
+    - docs/ops/business_admin_config_center_contract_runtime_acceptance_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - runtime-evidence-only
+  - no-business-fact-mutation
+  - no-frontend-permission-patch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Contract Runtime Verification
+  module: business admin config center contract runtime acceptance
+  module_owner: contract/runtime evidence
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch validates runtime contract outputs for existing semantics without
+    changing business facts.
+  reason: >
+    Freeze config-center minimal contract surface after frontend alignment PASS.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1332.yaml
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py"
+    - "test -f docs/ops/business_admin_config_center_contract_runtime_samples_v1.json"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - runtime payload sample set
+  - contract runtime acceptance with freeze fields
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1331
+
+rollback:
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1332.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1332.json
+  - git restore docs/ops/business_admin_config_center_contract_runtime_samples_v1.json
+  - git restore docs/ops/business_admin_config_center_contract_runtime_acceptance_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

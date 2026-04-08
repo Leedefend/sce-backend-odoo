@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-07-1318
+title: Contract runtime remediation final closure for CRG-001/002/003
+status: active
+type: governance
+priority: high
+mode: execute
+
+goal: >
+  Finalize closure classification for CRG-001/002/003 as intentional-not-in-surface
+  under current runtime baseline and sync acceptance/gap documents.
+
+user_visible_outcome:
+  - "CRG-001/002/003 最终分类落地"
+  - "runtime acceptance 结论与剩余项收口同步"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1318.yaml
+    - docs/ops/contract_runtime_gap_list_v1.md
+    - docs/ops/contract_runtime_acceptance_v1.md
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1318.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1318.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - low-cost-mode
+  - docs-refinement-only
+  - no-implementation
+  - no-business-logic-change
+
+context:
+  branch: codex/next-round
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Contract Runtime Evidence
+  module: CRG-001/002/003 closure sync
+  module_owner: docs/ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch syncs governance baselines according to classified runtime surface ownership.
+  reason: >
+    Close remaining CRG items under current runtime baseline after screen + remediation captures.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1318.yaml
+    - "gap doc marks CRG-001/002/003 as intentional-not-in-surface with evidence reference"
+    - "runtime acceptance doc updates verdict consistency after CRG closure"
+    - "runtime acceptance doc keeps boundary notes explicit"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - closure_sync_incomplete
+
+deliverables:
+  - final CRG closure synced baselines
+
+depends_on:
+  - ITER-2026-04-07-1317
+
+rollback:
+  - git restore docs/ops/contract_runtime_gap_list_v1.md
+  - git restore docs/ops/contract_runtime_acceptance_v1.md
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1318.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1318.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

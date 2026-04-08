@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-07-1325
+title: Business admin config center native operability verify batch
+status: active
+type: verify
+priority: high
+mode: verify
+
+goal: >
+  Add and run a focused native operability verification for business admin
+  config center v1 to prove menu/action/model evidence chain for create/edit
+  readiness under the current non-CI-long-chain policy.
+
+user_visible_outcome:
+  - "新增业务管理员配置中心原生可办验证脚本"
+  - "输出配置入口与模型字段证据链 PASS 结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1325.yaml
+    - scripts/verify/native_business_admin_config_center_operability_verify.py
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1325.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1325.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - low-cost-mode
+  - verify-focused
+  - no-business-logic-change
+  - no-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification Guardrail
+  module: Business admin config center native operability evidence
+  module_owner: scripts/verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Verification checks configuration entry semantics and native operability
+    evidence without introducing new business facts.
+  reason: >
+    Freeze a lightweight repeatable gate proving config-center readiness while
+    CI long chain remains paused.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1325.yaml
+    - python3 scripts/verify/native_business_admin_config_center_operability_verify.py
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - evidence_chain_fail
+
+deliverables:
+  - native operability verify script and PASS evidence
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1324
+
+rollback:
+  - git restore scripts/verify/native_business_admin_config_center_operability_verify.py
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1325.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1325.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

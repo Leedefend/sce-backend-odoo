@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-08-1361
+title: Install real-user module and deploy frontend to test runtime
+status: active
+type: ops
+priority: high
+mode: execute
+batch: 1/1
+
+goal: >
+  Ensure real customer users are available in sc_test and frontend runtime is
+  deployed against test backend for real-user login verification.
+
+user_visible_outcome:
+  - "真实用户模块已在 sc_test 安装生效"
+  - "前端已部署到测试运行态，可直接用真实用户登录验证"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1361.yaml
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1361.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1361.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 4
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - no-business-fact-model-change
+  - deployment-and-verification-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+  runtime_env: test
+  db_name: sc_test
+
+architecture:
+  layer_target: Runtime deployment
+  module: module install + frontend runtime
+  module_owner: scripts/mod and frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    User requested immediate real-user login verification on test runtime.
+
+acceptance:
+  commands:
+    - "make mod.install MODULE=smart_construction_custom ENV=test DB_NAME=sc_test"
+    - "make mod.upgrade MODULE=smart_construction_custom ENV=test DB_NAME=sc_test"
+    - "make restart ENV=test DB_NAME=sc_test"
+    - "pnpm -C frontend/apps/web build"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - test_runtime_unreachable
+
+deliverables:
+  - smart_construction_custom installed/upgraded in sc_test
+  - frontend build/deploy ready for test login
+  - login verification evidence for real users
+
+rollback:
+  - use previous container/image state and restart test stack

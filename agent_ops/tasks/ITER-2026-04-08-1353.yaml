@@ -1,0 +1,97 @@
+task_id: ITER-2026-04-08-1353
+title: Config home block runtime contract and acceptance integration
+status: active
+type: feature
+priority: medium
+mode: execute
+
+goal: >
+  Deliver config.home.block v1 with optional runtime contract output,
+  frontend contract ingestion, dedicated verifies, and acceptance-pack integration.
+
+user_visible_outcome:
+  - "业务管理员可配置角色首页区块（contract optional + frontend consume + verify）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1353.yaml
+    - addons/smart_construction_core/core_extension.py
+    - addons/smart_core/core/system_init_extension_fact_merger.py
+    - addons/smart_core/core/system_init_payload_builder.py
+    - addons/smart_core/handlers/system_init.py
+    - frontend/apps/web/src/stores/session.ts
+    - scripts/verify/native_business_admin_config_home_block_runtime_verify.py
+    - scripts/verify/native_business_admin_config_home_block_clickpath_verify.py
+    - scripts/verify/native_business_admin_config_center_acceptance_pack.py
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1353.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1353.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/ir.model.access.csv
+
+limits:
+  max_files: 12
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-first
+  - contract-optional-nonbreaking
+  - no-frontend-permission-patch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Business config runtime + contract consumer
+  module: config.home.block
+  module_owner: smart_construction_core + smart_core + frontend session store
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    Home block is presentation orchestration config; no business truth mutation.
+  reason: >
+    Provide admin-configurable role-based homepage blocks with optional contract
+    output and fallback-safe frontend ingestion.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1353.yaml
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_home_block_runtime_verify.py"
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_home_block_clickpath_verify.py"
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_acceptance_pack.py"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+
+deliverables:
+  - home_blocks optional contract output
+  - frontend session home_blocks ingestion + fallback retention
+  - runtime and clickpath verifies for home_block
+  - acceptance-pack integration for home_block verifies
+
+depends_on:
+  - ITER-2026-04-08-1352
+
+rollback:
+  - git restore addons/smart_construction_core/core_extension.py
+  - git restore addons/smart_core/core/system_init_extension_fact_merger.py
+  - git restore addons/smart_core/core/system_init_payload_builder.py
+  - git restore addons/smart_core/handlers/system_init.py
+  - git restore frontend/apps/web/src/stores/session.ts
+  - git restore scripts/verify/native_business_admin_config_home_block_runtime_verify.py
+  - git restore scripts/verify/native_business_admin_config_home_block_clickpath_verify.py
+  - git restore scripts/verify/native_business_admin_config_center_acceptance_pack.py
+  - git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1353.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-08-1353.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

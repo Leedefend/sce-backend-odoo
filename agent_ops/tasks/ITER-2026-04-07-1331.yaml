@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-07-1331
+title: Business admin config center frontend alignment acceptance v1
+status: active
+type: verify
+priority: high
+mode: execute
+
+goal: >
+  Validate that frontend generic contract-consumer paths can carry business-admin
+  configuration center operability on top of established native fact/runtime
+  baseline, without adding model-specific patches.
+
+user_visible_outcome:
+  - "确认管理员在前端承接层具备配置业务的最小可办证据"
+  - "输出前端对齐验收矩阵与差异评估"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1331.yaml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1331.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1331.json
+    - docs/ops/business_admin_config_center_frontend_alignment_acceptance_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - evidence-first-no-model-special-case
+  - no-generic-refactor-beyond-config-center-scope
+  - no-frontend-permission-patch
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend Contract Consumer Alignment
+  module: business admin config center frontend acceptance
+  module_owner: web contract-consumer shell
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch verifies frontend consumption against existing backend semantics;
+    no business-fact changes are introduced.
+  reason: >
+    Move from native/runtime operability to frontend-bearing evidence, following
+    the standard process without introducing model-specific frontend semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1331.yaml
+    - "rg -n \"/a/:model|/f/:model/:id\" frontend/apps/web/src"
+    - "E2E_BASE_URL=http://localhost:8069 DB_NAME=sc_test python3 scripts/verify/native_business_admin_config_center_runtime_clickpath_verify.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - project_alignment_evidence_missing
+
+deliverables:
+  - frontend operability alignment matrix for config center
+  - delta assessment and evidence verdict
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1330
+
+rollback:
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1331.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1331.json
+  - git restore docs/ops/business_admin_config_center_frontend_alignment_acceptance_v1.md
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

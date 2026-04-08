@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-07-1324
+title: Business admin config center v1 implementation batch A via sc.dictionary
+status: active
+type: feature
+priority: high
+mode: execute
+
+goal: >
+  Deliver the first minimal native-operable configuration capability for
+  business admins by extending existing sc.dictionary model with config-center
+  types and native list/form entries, without touching manifest/security.
+
+user_visible_outcome:
+  - "基础资料下可见三类配置入口（系统参数/角色入口/首页区块）"
+  - "可在原生列表/表单中创建与维护最小配置记录"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-07-1324.yaml
+    - addons/smart_construction_core/models/support/base_dictionary.py
+    - addons/smart_construction_core/views/support/sc_dictionary_views.xml
+    - addons/smart_construction_core/views/support/dictionary_views.xml
+    - agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1324.md
+    - agent_ops/state/task_results/ITER-2026-04-07-1324.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 7
+  max_output_lines: 360
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-change-preferred
+  - no-acl-or-record-rule-change
+  - no-manifest-change
+  - native-operability-first
+
+context:
+  branch: codex/next-round
+  baseline_sha: ca23376
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Business Fact Configuration Governance
+  module: smart_construction_core config-center dictionary extension
+  module_owner: addons/smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch adds configurable metadata carriers and native entry routing,
+    without altering core business truth or permission semantics.
+  reason: >
+    Ship the first executable admin-config capability with minimum risk by
+    reusing existing model, ACL, and loaded view files.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-07-1324.yaml
+    - "sc.dictionary adds config-center types and metadata fields"
+    - "native config-center menus/actions exist for system_param/role_entry/home_block"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - native_config_entries_missing
+
+deliverables:
+  - minimal native config-center operability on existing sc.dictionary
+  - governance report and task result
+
+depends_on:
+  - ITER-2026-04-07-1323
+
+rollback:
+  - git restore addons/smart_construction_core/models/support/base_dictionary.py
+  - git restore addons/smart_construction_core/views/support/sc_dictionary_views.xml
+  - git restore addons/smart_construction_core/views/support/dictionary_views.xml
+  - git restore agent_ops/reports/2026-04-07/report.ITER-2026-04-07-1324.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-07-1324.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
