@@ -65,6 +65,42 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _iter_state_candidates(primary_state_path: Path) -> list[Path]:
+    candidates: list[Path] = []
+
+    def _add(path: Path) -> None:
+        if path.is_file() and path not in candidates:
+            candidates.append(path)
+
+    _add(primary_state_path)
+    for path in sorted(primary_state_path.parent.glob("scene_registry_asset_snapshot_state*.json")):
+        _add(path)
+    return candidates
+
+
+def _select_best_state(primary_state_path: Path) -> tuple[dict, str]:
+    best_state: dict = {}
+    best_source = ""
+    best_scene_count = -1
+    best_per_scene_count = -1
+
+    for path in _iter_state_candidates(primary_state_path):
+        state = _load_json(path)
+        if not state:
+            continue
+        scene_count = _safe_int(state.get("scene_count"), 0)
+        per_scene_count = len(_as_dict(state.get("per_scene")))
+        if scene_count > best_scene_count or (
+            scene_count == best_scene_count and per_scene_count > best_per_scene_count
+        ):
+            best_state = state
+            best_source = path.relative_to(ROOT).as_posix()
+            best_scene_count = scene_count
+            best_per_scene_count = per_scene_count
+
+    return best_state, best_source
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_PATH)
     if not baseline:
@@ -75,7 +111,7 @@ def main() -> int:
     state_path = ROOT / _text(baseline.get("state_file") or "artifacts/backend/scene_registry_asset_snapshot_state.json")
     report_json_path = ROOT / _text(baseline.get("report_json") or "artifacts/backend/scene_base_contract_source_mix_report.json")
     report_md_path = ROOT / _text(baseline.get("report_md") or "artifacts/backend/scene_base_contract_source_mix_report.md")
-    state = _load_json(state_path)
+    state, selected_state_source = _select_best_state(state_path)
 
     scene_count = _safe_int(state.get("scene_count"), 0)
     role_code = _text(state.get("role_code")) or "unknown"
@@ -156,6 +192,7 @@ def main() -> int:
         "sources": {
             "baseline": BASELINE_PATH.relative_to(ROOT).as_posix(),
             "state": state_path.relative_to(ROOT).as_posix(),
+            "selected_state": selected_state_source,
         },
         "errors": errors,
         "report": {

@@ -152,7 +152,12 @@ class AppPermissionConfig(models.Model):
             return perm
 
         # 运行态裁剪：按当前用户组聚合
-        eff = self.compile_effective_for_user(uid=self.env.uid)
+        runtime_uid = self.env.context.get('runtime_uid')
+        try:
+            runtime_uid = int(runtime_uid)
+        except Exception:
+            runtime_uid = self.env.uid
+        eff = self.compile_effective_for_user(uid=runtime_uid)
         # 将四权与命中规则回填到 permission_def 的副本上，便于服务层直用
         perm['effective'] = eff
         return perm
@@ -205,7 +210,10 @@ class AppPermissionConfig(models.Model):
             if isinstance(mapping, dict):
                 for gid, xid in mapping.items():
                     if xid:
-                        xmlid_to_id[xid] = gid
+                        try:
+                            xmlid_to_id[xid] = int(gid)
+                        except Exception:
+                            continue
         except Exception:
             pass
 

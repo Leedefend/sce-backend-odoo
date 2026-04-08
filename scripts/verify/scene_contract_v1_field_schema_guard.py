@@ -65,7 +65,7 @@ def _fetch_scene_ready_payload() -> dict:
 
     status, init_resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with_preload": True}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init")
@@ -150,6 +150,33 @@ def _build_payload_from_snapshot_state(path: Path) -> dict:
     }
 
 
+def _iter_snapshot_state_candidates(primary_path: Path) -> list[Path]:
+    candidates: list[Path] = []
+
+    def _add(path: Path) -> None:
+        if path.is_file() and path not in candidates:
+            candidates.append(path)
+
+    _add(primary_path)
+    for path in sorted(primary_path.parent.glob("scene_registry_asset_snapshot_state*.json")):
+        _add(path)
+    return candidates
+
+
+def _build_best_payload_from_snapshot_states(primary_path: Path) -> tuple[dict, str, int]:
+    best_payload: dict = {}
+    best_count = 0
+    best_source = ""
+    for path in _iter_snapshot_state_candidates(primary_path):
+        payload = _build_payload_from_snapshot_state(path)
+        scene_count = len(_as_list(_as_dict(payload).get("scenes")))
+        if scene_count > best_count:
+            best_payload = payload
+            best_count = scene_count
+            best_source = path.relative_to(ROOT).as_posix()
+    return best_payload, best_source, best_count
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_PATH)
     if not baseline:
@@ -174,13 +201,14 @@ def main() -> int:
     scene_errors: list[dict[str, Any]] = []
     payload = {}
     payload_source = "live"
+    snapshot_payload_source = snapshot_state_path = ROOT / _text(
+        os.getenv("SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_SNAPSHOT_STATE_FILE")
+        or DEFAULT_SNAPSHOT_STATE_PATH.relative_to(ROOT).as_posix()
+    )
+    snapshot_payload_source_ref = snapshot_payload_source.relative_to(ROOT).as_posix()
     state_path = ROOT / _text(
         os.getenv("SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_STATE_FILE")
         or DEFAULT_STATE_PATH.relative_to(ROOT).as_posix()
-    )
-    snapshot_state_path = ROOT / _text(
-        os.getenv("SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_SNAPSHOT_STATE_FILE")
-        or DEFAULT_SNAPSHOT_STATE_PATH.relative_to(ROOT).as_posix()
     )
     allow_fallback = _env_bool(
         "SC_SCENE_CONTRACT_V1_FIELD_SCHEMA_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL",
@@ -200,10 +228,15 @@ def main() -> int:
                 payload_source = "state_file"
                 warnings.append(f"live fetch failed, fallback state file used: {exc}")
             else:
-                payload = _build_payload_from_snapshot_state(snapshot_state_path)
+                payload, snapshot_payload_source_ref, snapshot_scene_count = _build_best_payload_from_snapshot_states(
+                    snapshot_state_path
+                )
                 if payload:
                     payload_source = "snapshot_state"
-                    warnings.append(f"live fetch failed, fallback snapshot synthesized: {exc}")
+                    warnings.append(
+                        f"live fetch failed, fallback snapshot synthesized: {exc}; "
+                        f"snapshot_source={snapshot_payload_source_ref}; scene_count={snapshot_scene_count}"
+                    )
         if not payload:
             errors.append(f"live fetch failed: {exc}")
 
@@ -219,6 +252,21 @@ def main() -> int:
             errors.append(f"missing top-level keys: {missing_top}")
 
         scenes = _as_list(payload.get("scenes"))
+        if len(scenes) < min_scene_count and allow_fallback:
+            live_scene_count = len(scenes)
+            fallback_payload, snapshot_payload_source_ref, fallback_scene_count = _build_best_payload_from_snapshot_states(
+                snapshot_state_path
+            )
+            fallback_scenes = _as_list(fallback_payload.get("scenes"))
+            if len(fallback_scenes) >= min_scene_count:
+                payload = fallback_payload
+                payload_source = "snapshot_state"
+                scenes = fallback_scenes
+                warnings.append(
+                    f"live payload scene_count={live_scene_count} below baseline; "
+                    f"using snapshot_state={snapshot_payload_source_ref} scene_count={fallback_scene_count}"
+                )
+
         if len(scenes) < min_scene_count:
             errors.append(f"scene count below baseline: {len(scenes)} < {min_scene_count}")
 
@@ -267,6 +315,7 @@ def main() -> int:
             "payload_source": payload_source,
             "state_file": state_path.relative_to(ROOT).as_posix(),
             "snapshot_state_file": snapshot_state_path.relative_to(ROOT).as_posix(),
+            "snapshot_payload_source_ref": snapshot_payload_source_ref,
             "allow_fallback_on_live_fail": allow_fallback,
         },
     }

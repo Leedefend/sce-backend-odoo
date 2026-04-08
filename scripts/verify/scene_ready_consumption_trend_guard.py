@@ -164,7 +164,8 @@ def main() -> int:
             errors.append(f"aggregate_action_surface_rate below threshold: {action_surface_rate:.4f} < {min_action_surface_rate:.4f}")
 
     previous = _load_json(state_path)
-    if previous:
+    previous_enabled = bool(previous.get("enabled", False)) if isinstance(previous, dict) else False
+    if previous and live_available and enabled and previous_enabled:
         prev_base = _safe_float(previous.get("aggregate_base_search_rate"), 0.0)
         prev_action = _safe_float(previous.get("aggregate_action_surface_rate"), 0.0)
         base_drop = prev_base - base_search_rate

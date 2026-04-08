@@ -32,7 +32,7 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
     return token
 
 
-def _fetch_surface(intent_url: str, token: str, surface: str) -> tuple[dict, dict]:
+def _fetch_surface(intent_url: str, token: str, surface: str) -> tuple[int, dict]:
     status, resp = http_post_json(
         intent_url,
         {
@@ -47,10 +47,7 @@ def _fetch_surface(intent_url: str, token: str, surface: str) -> tuple[dict, dic
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    require_ok(status, resp, f"ui.contract.{surface}")
-    data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
-    meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
-    return data, meta
+    return status, resp if isinstance(resp, dict) else {}
 
 
 def _validate_mapping(mapping: dict) -> list[str]:
@@ -93,7 +90,35 @@ def main() -> int:
     failures: list[str] = []
     report: dict[str, dict] = {}
     for surface in ("native", "user", "hud"):
-        data, meta = _fetch_surface(intent_url, token, surface)
+        status, resp = _fetch_surface(intent_url, token, surface)
+        if surface != "native":
+            require_ok(status, resp, f"ui.contract.{surface}")
+
+        data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
+        meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
+        error = resp.get("error") if isinstance(resp.get("error"), dict) else {}
+
+        if surface == "native" and resp.get("ok") is not True:
+            error_code = str(error.get("code") or "").strip()
+            error_msg = str(error.get("message") or "").strip().lower()
+            native_disabled = (
+                error_code == "INTERNAL_ERROR"
+                and "native ui.contract op is disabled" in error_msg
+                and "scene-ready contract" in error_msg
+            )
+            if native_disabled:
+                report[surface] = {
+                    "ok": True,
+                    "errors": [],
+                    "mode": "native_disabled_expected",
+                    "status": status,
+                    "error_code": error_code,
+                }
+                continue
+            failures.append(f"native: ui.contract request failed status={status} code={error_code}")
+            report[surface] = {"ok": False, "errors": ["native request failed"], "status": status}
+            continue
+
         mapping = data.get("surface_mapping") if isinstance(data.get("surface_mapping"), dict) else {}
         errors = _validate_mapping(mapping)
         if surface == "native":
@@ -133,4 +158,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

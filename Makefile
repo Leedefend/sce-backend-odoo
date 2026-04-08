@@ -1944,7 +1944,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.dev.reset dev.rebuild.full fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.contract.operation_gateway.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
+.PHONY: fe.install fe.dev fe.dev.reset fe.dev.daily fe.dev.test fe.dev.uat ops.runtime.align ops.runtime.align.check dev.rebuild.full fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.contract.operation_gateway.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
 
 fe.install:
 	@pnpm -C frontend install
@@ -1954,6 +1954,21 @@ fe.dev:
 
 fe.dev.reset: guard.prod.forbid
 	@bash scripts/dev/frontend_dev_reset.sh
+
+fe.dev.daily: guard.prod.forbid
+	@FRONTEND_PROFILE=daily bash scripts/dev/frontend_dev_reset.sh
+
+fe.dev.test: guard.prod.forbid
+	@FRONTEND_PROFILE=test bash scripts/dev/frontend_dev_reset.sh
+
+fe.dev.uat: guard.prod.forbid
+	@FRONTEND_PROFILE=uat bash scripts/dev/frontend_dev_reset.sh
+
+ops.runtime.align: guard.prod.forbid
+	@bash scripts/dev/runtime_env_align.sh
+
+ops.runtime.align.check: guard.prod.forbid
+	@bash scripts/dev/runtime_env_align.sh --check-only
 
 dev.rebuild.full: guard.codex.fast.noheavy guard.prod.forbid
 	@$(MAKE) dev.rebuild
@@ -3908,7 +3923,14 @@ verify.contract.mode.smoke: guard.prod.forbid check-compose-project check-compos
 verify.contract.api.mode.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/contract_api_mode_smoke.py
 
-.PHONY: verify.contract.view_type_semantic.smoke verify.contract.view_type_semantic.strict.smoke
+.PHONY: verify.contract.permission_runtime_uid_probe verify.contract.view_type_semantic.smoke verify.contract.view_type_semantic.strict.smoke
+verify.contract.permission_runtime_uid_probe: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	LOGIN="$${PERMISSION_PROBE_LOGIN:-$(or $(E2E_LOGIN),admin)}"; \
+	PASSWORD="$${PERMISSION_PROBE_PASSWORD:-$(or $(E2E_PASSWORD),admin)}"; \
+	ACTION_ID="$${PERMISSION_PROBE_ACTION_ID:-543}"; \
+	python3 scripts/verify/permission_runtime_uid_probe.py --db "$(DB_NAME)" --action-id "$$ACTION_ID" --login "$$LOGIN" --password "$$PASSWORD"
+
 verify.contract.view_type_semantic.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/contract_view_type_semantic_smoke.py
 
@@ -3931,12 +3953,25 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
 	@$(MAKE) --no-print-directory verify.scene.contract_path.gate
 	@$(MAKE) --no-print-directory verify.contract.governance.coverage
-	@$(MAKE) --no-print-directory verify.docs.all
-	@$(MAKE) --no-print-directory verify.grouped.governance.bundle
+	@if [ "$(CONTRACT_PREFLIGHT_SKIP_DOCS)" = "1" ]; then \
+	  echo "[verify.contract.preflight] CONTRACT_PREFLIGHT_SKIP_DOCS=1: skip docs gates"; \
+	else \
+	  $(MAKE) --no-print-directory verify.docs.all; \
+	fi
+	@if [ "$(CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE)" = "1" ]; then \
+	  echo "[verify.contract.preflight] CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1: skip grouped governance bundle"; \
+	else \
+	  $(MAKE) --no-print-directory verify.grouped.governance.bundle; \
+	fi
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
-	@$(MAKE) --no-print-directory verify.scene_capability.contract.guard
+	@if [ "$(CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD)" = "1" ]; then \
+	  echo "[verify.contract.preflight] CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1: skip scene capability contract guard"; \
+	else \
+	  $(MAKE) --no-print-directory verify.scene_capability.contract.guard; \
+	fi
 	@$(MAKE) --no-print-directory verify.contract.governance.brief
 	@$(MAKE) --no-print-directory verify.contract.scene_coverage.guard
+	@$(MAKE) --no-print-directory verify.contract.permission_runtime_uid_probe
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
 	@$(MAKE) --no-print-directory verify.project.form.contract.surface.guard
 	@$(MAKE) --no-print-directory verify.relation.access_policy.consistency.audit

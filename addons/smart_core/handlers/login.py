@@ -205,11 +205,11 @@ class LoginHandler(BaseIntentHandler):
         elif compat_requested:
             data["contract"]["deprecation_notice"] = "compat_mode_deprecated_use_default"
 
-        # Compatibility surface: legacy top-level token fields only.
-        if contract_mode in {"compat", "debug"}:
-            data["token"] = token
-            data["token_type"] = token_type
-            data["expires_at"] = expires_at
+        # Compatibility surface: keep legacy top-level token fields for all modes.
+        # Canonical source remains data.session.*; legacy fields are shim for old consumers.
+        data["token"] = token
+        data["token_type"] = token_type
+        data["expires_at"] = expires_at
 
         if contract_mode == "debug":
             data["debug"] = {

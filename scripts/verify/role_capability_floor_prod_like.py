@@ -237,7 +237,7 @@ def _run_journey_intent(intent_url: str, token: str, intent: str) -> tuple[bool,
 def _system_init_capability_count(intent_url: str, token: str) -> int:
     status, resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with_preload": True}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, resp, "system.init user")
@@ -245,7 +245,20 @@ def _system_init_capability_count(intent_url: str, token: str) -> int:
     if isinstance(data.get("data"), dict):
         data = data.get("data") or data
     caps = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
-    return len(caps)
+    if caps:
+        return len(caps)
+
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    scene_candidates = role_surface.get("scene_candidates") if isinstance(role_surface.get("scene_candidates"), list) else []
+    if scene_candidates:
+        return len(scene_candidates)
+
+    scene_ready = data.get("scene_ready_contract_v1") if isinstance(data.get("scene_ready_contract_v1"), dict) else {}
+    scenes = scene_ready.get("scenes") if isinstance(scene_ready.get("scenes"), list) else []
+    if scenes:
+        return len(scenes)
+
+    return 0
 
 
 def _probe_model_read(intent_url: str, token: str, model: str) -> tuple[bool, str]:

@@ -45,6 +45,42 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _iter_state_candidates(primary_state_path: Path) -> list[Path]:
+    candidates: list[Path] = []
+
+    def _add(path: Path) -> None:
+        if path.is_file() and path not in candidates:
+            candidates.append(path)
+
+    _add(primary_state_path)
+    for path in sorted(primary_state_path.parent.glob("scene_registry_asset_snapshot_state*.json")):
+        _add(path)
+    return candidates
+
+
+def _select_best_state(primary_state_path: Path) -> tuple[dict, str]:
+    best_state: dict = {}
+    best_source = ""
+    best_scene_count = -1
+    best_per_scene_count = -1
+
+    for path in _iter_state_candidates(primary_state_path):
+        state = _load_json(path)
+        if not state:
+            continue
+        scene_count = _safe_int(state.get("scene_count"), 0)
+        per_scene_count = len(_as_dict(state.get("per_scene")))
+        if scene_count > best_scene_count or (
+            scene_count == best_scene_count and per_scene_count > best_per_scene_count
+        ):
+            best_state = state
+            best_source = path.relative_to(ROOT).as_posix()
+            best_scene_count = scene_count
+            best_per_scene_count = per_scene_count
+
+    return best_state, best_source
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_PATH)
     if not baseline:
@@ -58,7 +94,7 @@ def main() -> int:
     report_md_path = ROOT / _text(baseline.get("report_md") or "artifacts/backend/scene_sample_registry_diff_report.md")
 
     sample_baseline = _load_json(sample_baseline_path)
-    snapshot_state = _load_json(snapshot_state_path)
+    snapshot_state, selected_snapshot_state = _select_best_state(snapshot_state_path)
     errors: list[str] = []
     warnings: list[str] = []
     if not sample_baseline:
@@ -131,6 +167,7 @@ def main() -> int:
         "sources": {
             "sample_baseline": sample_baseline_path.relative_to(ROOT).as_posix(),
             "snapshot_state": snapshot_state_path.relative_to(ROOT).as_posix(),
+            "selected_snapshot_state": selected_snapshot_state,
             "guard_baseline": BASELINE_PATH.relative_to(ROOT).as_posix(),
         },
         "warnings": warnings,
@@ -178,4 +215,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

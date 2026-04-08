@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "summary": {
+    "role_count": 2,
+    "passed_role_count": 2,
+    "failed_role_count": 0,
+    "error_count": 0,
+    "artifacts_dir": "backend"
+  },
+  "roles": [
+    {
+      "role": "pm",
+      "login": "sc_fx_pm",
+      "ok": true,
+      "reason": "native_ui_contract_disabled_by_policy",
+      "debug": {
+        "status": 200,
+        "ok": false,
+        "error_code": "INTERNAL_ERROR",
+        "error_message": "native ui.contract op is disabled for frontend delivery; use scene-ready contract",
+        "policy_mode": "native_disabled_expected"
+      }
+    },
+    {
+      "role": "executive",
+      "login": "sc_fx_executive",
+      "ok": true,
+      "reason": "native_ui_contract_disabled_by_policy",
+      "debug": {
+        "status": 200,
+        "ok": false,
+        "error_code": "INTERNAL_ERROR",
+        "error_message": "native ui.contract op is disabled for frontend delivery; use scene-ready contract",
+        "policy_mode": "native_disabled_expected"
+      }
+    }
+  ],
+  "errors": []
+}

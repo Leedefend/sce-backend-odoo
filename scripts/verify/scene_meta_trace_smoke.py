@@ -16,6 +16,13 @@ REQUIRED_TRACE_KEYS = (
     "channel_source_ref",
 )
 
+REQUIRED_HUD_TRACE_KEYS = (
+    "scene_source",
+    "scene_contract_ref",
+    "channel_selector",
+    "channel_source_ref",
+)
+
 
 def _extract_meta_data(resp: dict) -> tuple[dict, dict]:
     meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
@@ -91,7 +98,7 @@ def main() -> None:
         raise RuntimeError("system.init hud missing data.hud")
     if not isinstance(hud_data.get("scene_diagnostics"), dict):
         raise RuntimeError("system.init hud missing data.scene_diagnostics")
-    for key in REQUIRED_TRACE_KEYS:
+    for key in REQUIRED_HUD_TRACE_KEYS:
         if str(hud_trace.get(key) or "") != str(hud_payload.get(key) or ""):
             raise RuntimeError(f"system.init hud/meta trace mismatch: {key}")
     if str(user_trace.get("scene_channel") or "").strip() != str(hud_trace.get("scene_channel") or "").strip():

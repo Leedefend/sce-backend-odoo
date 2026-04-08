@@ -51,7 +51,7 @@ def _login_token(intent_url: str, db_name: str, login: str, password: str) -> st
     return token
 
 
-def _request_native_surface(intent_url: str, token: str) -> tuple[dict, dict]:
+def _request_native_surface(intent_url: str, token: str) -> tuple[int, dict]:
     status, resp = http_post_json(
         intent_url,
         {
@@ -66,10 +66,7 @@ def _request_native_surface(intent_url: str, token: str) -> tuple[dict, dict]:
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    require_ok(status, resp, "ui.contract.native_surface")
-    data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
-    meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
-    return data, meta
+    return status, resp if isinstance(resp, dict) else {}
 
 
 def _collect_layout_field_names(layout: object) -> set[str]:
@@ -120,7 +117,33 @@ def main() -> int:
         row = {"role": role, "login": login, "ok": False, "reason": ""}
         try:
             token = _login_token(intent_url, db_name, login, fixture_password)
-            data, meta = _request_native_surface(intent_url, token)
+            status, resp = _request_native_surface(intent_url, token)
+            data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
+            meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
+            error = resp.get("error") if isinstance(resp.get("error"), dict) else {}
+
+            if resp.get("ok") is not True:
+                error_code = str(error.get("code") or "").strip()
+                error_msg = str(error.get("message") or "").strip().lower()
+                native_disabled = (
+                    error_code == "INTERNAL_ERROR"
+                    and "native ui.contract op is disabled" in error_msg
+                    and "scene-ready contract" in error_msg
+                )
+                row["debug"] = {
+                    "status": status,
+                    "ok": resp.get("ok"),
+                    "error_code": error_code,
+                    "error_message": str(error.get("message") or ""),
+                    "policy_mode": "native_disabled_expected" if native_disabled else "unexpected_error",
+                }
+                if native_disabled:
+                    row["ok"] = True
+                    row["reason"] = "native_ui_contract_disabled_by_policy"
+                    role_reports.append(row)
+                    continue
+                raise RuntimeError(f"ui.contract.native_surface failed: status={status} payload={resp}")
+
             views = data.get("views") if isinstance(data.get("views"), dict) else {}
             form = views.get("form") if isinstance(views.get("form"), dict) else {}
             layout = form.get("layout")
