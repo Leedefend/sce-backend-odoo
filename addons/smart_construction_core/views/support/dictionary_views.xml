@@ -325,6 +325,33 @@ action = env['project.dictionary'].action_open_quota_center()
               sequence="10"
               groups="smart_construction_core.group_sc_cap_data_read"/>
 
+    <menuitem id="menu_sc_business_admin_config_root"
+              name="业务管理员配置中心"
+              parent="menu_sc_config_center"
+              sequence="12"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <menuitem id="menu_sc_config_system_param"
+              name="系统参数配置"
+              parent="menu_sc_business_admin_config_root"
+              action="smart_construction_core.action_sc_config_system_param"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <menuitem id="menu_sc_config_role_entry"
+              name="角色入口配置"
+              parent="menu_sc_business_admin_config_root"
+              action="smart_construction_core.action_sc_config_role_entry"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <menuitem id="menu_sc_config_home_block"
+              name="首页区块配置"
+              parent="menu_sc_business_admin_config_root"
+              action="smart_construction_core.action_sc_config_home_block"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
     <menuitem id="menu_sc_dictionary_all"
               name="全部字典"
               parent="menu_sc_dictionary_root"

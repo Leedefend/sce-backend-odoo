@@ -82,6 +82,8 @@ class SystemInitPayloadBuilder:
         preload_requested = bool(params.get("with_preload", False))
         default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
         role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
+        role_entries = row.get("role_entries") if isinstance(row.get("role_entries"), list) else []
+        home_blocks = row.get("home_blocks") if isinstance(row.get("home_blocks"), list) else []
 
         scene_subset: list[str] = []
         landing_scene_key = str(default_route.get("scene_key") or role_surface.get("landing_scene_key") or "workspace.home").strip()
@@ -158,6 +160,8 @@ class SystemInitPayloadBuilder:
         intents = row.get("intents") if isinstance(row.get("intents"), list) else []
         feature_flags = row.get("feature_flags") if isinstance(row.get("feature_flags"), dict) else {}
         role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
+        role_entries = row.get("role_entries") if isinstance(row.get("role_entries"), list) else []
+        home_blocks = row.get("home_blocks") if isinstance(row.get("home_blocks"), list) else []
 
         version = {
             "contract_version": str(row.get("contract_version") or "1.0.0"),
@@ -225,6 +229,10 @@ class SystemInitPayloadBuilder:
         if bool(params.get("with_preload", False)):
             if isinstance(row.get("workspace_home"), dict):
                 minimal["workspace_home"] = row.get("workspace_home")
+        if role_entries:
+            minimal["role_entries"] = role_entries
+        if home_blocks:
+            minimal["home_blocks"] = home_blocks
         if resolved_build_mode == cls.BUILD_MODE_DEBUG:
             minimal["startup_inspect"] = inspect_payload if isinstance(inspect_payload, dict) else {}
         return minimal

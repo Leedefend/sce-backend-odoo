@@ -64,14 +64,12 @@ ROLE_GROUPS_EXPLICIT = {
     "pm": {
         "smart_construction_custom.group_sc_role_pm",
         "smart_construction_custom.group_sc_role_project_manager",
-        "smart_construction_custom.group_sc_role_project_user",
         "smart_construction_core.group_sc_role_project_manager",
     },
     "finance": {
         "smart_construction_custom.group_sc_role_finance",
         "smart_construction_custom.group_sc_role_payment_manager",
         "smart_construction_custom.group_sc_role_payment_user",
-        "smart_construction_custom.group_sc_role_payment_read",
         "smart_construction_core.group_sc_role_finance_manager",
         "smart_construction_core.group_sc_role_finance_user",
     },
@@ -80,7 +78,6 @@ ROLE_GROUPS_EXPLICIT = {
 ROLE_GROUPS_CAPABILITY_FALLBACK = {
     "pm": {
         "smart_construction_core.group_sc_cap_project_manager",
-        "smart_construction_core.group_sc_cap_project_user",
     },
     "finance": {
         "smart_construction_core.group_sc_cap_finance_user",

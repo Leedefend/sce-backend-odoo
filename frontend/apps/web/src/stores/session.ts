@@ -259,6 +259,29 @@ export interface SceneGovernancePayload {
   reasons?: Record<string, unknown>;
 }
 
+export interface RoleEntryContractRow {
+  entry_key: string;
+  entry_type: string;
+  is_enabled: boolean;
+  sequence: number;
+}
+
+export interface RoleEntryContractGroup {
+  role_code: string;
+  entries: RoleEntryContractRow[];
+}
+
+export interface HomeBlockContractGroup {
+  role_code: string;
+  blocks: HomeBlockContractRow[];
+}
+
+export interface HomeBlockContractRow {
+  block_key: string;
+  is_enabled: boolean;
+  sequence: number;
+}
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -289,6 +312,8 @@ export interface SessionState {
   pageContracts: Record<string, PageContract>;
   sceneReadyContractV1: SceneReadyContract | null;
   sceneGovernanceV1: SceneGovernancePayload | null;
+  roleEntries: RoleEntryContractGroup[];
+  homeBlocks: HomeBlockContractGroup[];
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -369,6 +394,8 @@ export const useSessionStore = defineStore('session', {
     pageContracts: {},
     sceneReadyContractV1: null,
     sceneGovernanceV1: null,
+    roleEntries: [],
+    homeBlocks: [],
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -419,6 +446,8 @@ export const useSessionStore = defineStore('session', {
           this.pageContracts = parsed.pageContracts ?? {};
           this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
           this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
+          this.roleEntries = parsed.roleEntries ?? [];
+          this.homeBlocks = parsed.homeBlocks ?? [];
           // Only hydrate the runtime registry from fresh startup responses.
           // Cached scene contracts can lag behind the current frontend validator.
           this.lastTraceId = parsed.lastTraceId ?? '';
@@ -472,6 +501,8 @@ export const useSessionStore = defineStore('session', {
       this.pageContracts = {};
       this.sceneReadyContractV1 = null;
       this.sceneGovernanceV1 = null;
+      this.roleEntries = [];
+      this.homeBlocks = [];
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -544,6 +575,8 @@ export const useSessionStore = defineStore('session', {
         pageContracts: this.pageContracts,
         sceneReadyContractV1: this.sceneReadyContractV1,
         sceneGovernanceV1: this.sceneGovernanceV1,
+        roleEntries: this.roleEntries,
+        homeBlocks: this.homeBlocks,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -607,6 +640,8 @@ export const useSessionStore = defineStore('session', {
       this.workspaceHomeRef = null;
       this.sceneReadyContractV1 = null;
       this.sceneGovernanceV1 = null;
+      this.roleEntries = [];
+      this.homeBlocks = [];
       this.initMeta = null;
       this.initRequestSeq = 0;
       this.defaultRoute = null;
@@ -939,6 +974,63 @@ export const useSessionStore = defineStore('session', {
         : null);
       this.sceneReadyContractV1 = ((result as AppInitResponse & { scene_ready_contract_v1?: SceneReadyContract }).scene_ready_contract_v1 ?? null);
       this.sceneGovernanceV1 = ((result as AppInitResponse & { scene_governance_v1?: SceneGovernancePayload }).scene_governance_v1 ?? null);
+      const runtimeRoleEntries = ((result as AppInitResponse & { role_entries?: unknown[] }).role_entries ?? []);
+      this.roleEntries = Array.isArray(runtimeRoleEntries)
+        ? runtimeRoleEntries
+          .map((item) => {
+            const group = (item && typeof item === 'object') ? (item as Record<string, unknown>) : {};
+            const roleCode = String(group.role_code || '').trim();
+            const rawEntries = Array.isArray(group.entries) ? group.entries : [];
+            const entries: RoleEntryContractRow[] = rawEntries
+              .map((entry) => {
+                const row = (entry && typeof entry === 'object') ? (entry as Record<string, unknown>) : {};
+                return {
+                  entry_key: String(row.entry_key || '').trim(),
+                  entry_type: String(row.entry_type || '').trim(),
+                  is_enabled: Boolean(row.is_enabled),
+                  sequence: Number(row.sequence || 0),
+                };
+              })
+              .filter((entry) => entry.entry_key.length > 0 && entry.entry_type.length > 0);
+            return {
+              role_code: roleCode,
+              entries,
+            };
+          })
+          .filter((group) => group.role_code.length > 0)
+        : [];
+      const runtimeHomeBlocks = ((result as AppInitResponse & { home_blocks?: unknown[] }).home_blocks ?? []);
+      this.homeBlocks = Array.isArray(runtimeHomeBlocks)
+        ? runtimeHomeBlocks
+          .map((item) => {
+            const group = (item && typeof item === 'object') ? (item as Record<string, unknown>) : {};
+            const roleCode = String(group.role_code || '').trim();
+            const blocks = Array.isArray(group.blocks)
+              ? group.blocks
+                .map((entry, index) => {
+                  if (entry && typeof entry === 'object') {
+                    const row = entry as Record<string, unknown>;
+                    return {
+                      block_key: String(row.block_key || row.key || row.scene_key || '').trim(),
+                      is_enabled: row.is_enabled !== false,
+                      sequence: Number(row.sequence || 0),
+                    };
+                  }
+                  return {
+                    block_key: String(entry || '').trim(),
+                    is_enabled: true,
+                    sequence: index + 1,
+                  };
+                })
+                .filter((entry) => entry.block_key.length > 0)
+              : [];
+            return {
+              role_code: roleCode,
+              blocks,
+            };
+          })
+          .filter((group) => group.role_code.length > 0)
+        : [];
       if (this.sceneReadyContractV1?.scenes?.length) {
         setSceneRegistryFromSceneReadyContract(this.sceneReadyContractV1);
       } else {
@@ -1010,8 +1102,9 @@ export const useSessionStore = defineStore('session', {
       // 为导航项添加 key 属性
       const menuTreeWithKeys = nav.map((item, index) => addKeys(item, index));
       const releaseNavigationTreeWithKeys = releaseNav.map((item, index) => addKeys(item, index + 1000));
-      this.menuTree = menuTreeWithKeys;
-      this.releaseNavigationTree = releaseNavigationTreeWithKeys;
+      const roleCode = String(this.roleSurface?.role_code || '').trim();
+      this.menuTree = applyRoleEntryNavFilter(menuTreeWithKeys, this.roleEntries, roleCode);
+      this.releaseNavigationTree = applyRoleEntryNavFilter(releaseNavigationTreeWithKeys, this.roleEntries, roleCode);
       const activeTree = this.releaseNavigationTree.length ? this.releaseNavigationTree : this.menuTree;
       const filteredExpandedKeys = filterExpandedKeys(activeTree, this.menuExpandedKeys);
       this.menuExpandedKeys = filteredExpandedKeys.length ? filteredExpandedKeys : defaultExpandedKeys(activeTree);
@@ -1237,4 +1330,110 @@ function defaultExpandedKeys(tree: NavNode[]): string[] {
     });
   });
   return keys;
+}
+
+function normalizeRoleEntryKey(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+function collectNodeMatchKeys(node: NavNode): Set<string> {
+  const keys = new Set<string>();
+  const rawNode = node as NavNode & Record<string, unknown>;
+  const directCandidates = [
+    rawNode.xmlid,
+    rawNode.menu_xmlid,
+    rawNode.action_xmlid,
+    rawNode.scene_key,
+    rawNode.model,
+    rawNode.key,
+    rawNode.menu_id,
+    rawNode.id,
+    rawNode.action_id,
+  ];
+  directCandidates.forEach((candidate) => {
+    const normalized = normalizeRoleEntryKey(candidate);
+    if (normalized) {
+      keys.add(normalized);
+    }
+  });
+
+  const meta = (rawNode.meta && typeof rawNode.meta === 'object') ? (rawNode.meta as Record<string, unknown>) : null;
+  if (meta) {
+    const metaCandidates = [
+      meta.xmlid,
+      meta.menu_xmlid,
+      meta.action_xmlid,
+      meta.scene_key,
+      meta.model,
+      meta.menu_id,
+      meta.action_id,
+    ];
+    metaCandidates.forEach((candidate) => {
+      const normalized = normalizeRoleEntryKey(candidate);
+      if (normalized) {
+        keys.add(normalized);
+      }
+    });
+  }
+
+  return keys;
+}
+
+function applyRoleEntryNavFilter(
+  tree: NavNode[],
+  roleEntries: RoleEntryContractGroup[],
+  roleCode: string,
+): NavNode[] {
+  if (!tree.length || !roleEntries.length) {
+    return tree;
+  }
+
+  const normalizedRoleCode = normalizeRoleEntryKey(roleCode);
+  const eligibleGroups = roleEntries.filter((group) => {
+    const code = normalizeRoleEntryKey(group.role_code);
+    if (!code) {
+      return false;
+    }
+    return code === '__global__' || (normalizedRoleCode && code === normalizedRoleCode);
+  });
+
+  if (!eligibleGroups.length) {
+    return tree;
+  }
+
+  const allowedKeys = new Set<string>();
+  eligibleGroups.forEach((group) => {
+    (group.entries || []).forEach((entry) => {
+      if (!entry.is_enabled) {
+        return;
+      }
+      const normalized = normalizeRoleEntryKey(entry.entry_key);
+      if (normalized) {
+        allowedKeys.add(normalized);
+      }
+    });
+  });
+
+  if (!allowedKeys.size) {
+    return tree;
+  }
+
+  const walk = (nodes: NavNode[]): NavNode[] => {
+    const filtered: NavNode[] = [];
+    nodes.forEach((node) => {
+      const children = Array.isArray(node.children) ? walk(node.children) : [];
+      const nodeKeys = collectNodeMatchKeys(node);
+      const matched = [...nodeKeys].some((key) => allowedKeys.has(key));
+      if (matched || children.length) {
+        filtered.push({
+          ...node,
+          children,
+        });
+      }
+    });
+    return filtered;
+  };
+
+  const filteredTree = walk(tree);
+  return filteredTree.length ? filteredTree : tree;
 }

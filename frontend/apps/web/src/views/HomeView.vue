@@ -543,7 +543,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
+import { useSessionStore, type CapabilityRuntimeMeta, type HomeBlockContractRow } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
@@ -708,6 +708,42 @@ const showEnterpriseEnablementCard = computed(() => {
 const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
 const capabilityGroups = computed(() => session.capabilityGroups);
+const activeHomeBlockRows = computed<HomeBlockContractRow[]>(() => {
+  const roleCode = asText(roleSurface.value?.role_code).toLowerCase();
+  const groups = Array.isArray(session.homeBlocks) ? session.homeBlocks : [];
+  const flattened: HomeBlockContractRow[] = [];
+  groups.forEach((group) => {
+    const groupRoleCode = asText(group.role_code).toLowerCase();
+    const roleMatched = groupRoleCode === '__global__' || (groupRoleCode && groupRoleCode === roleCode);
+    if (!roleMatched) return;
+    (Array.isArray(group.blocks) ? group.blocks : []).forEach((row, index) => {
+      const blockKey = asText(row.block_key).toLowerCase();
+      if (!blockKey) return;
+      flattened.push({
+        block_key: blockKey,
+        is_enabled: row.is_enabled !== false,
+        sequence: Number(row.sequence || index + 1),
+      });
+    });
+  });
+  const map = new Map<string, HomeBlockContractRow>();
+  flattened.forEach((row) => {
+    if (!row.is_enabled) return;
+    const current = map.get(row.block_key);
+    if (!current || row.sequence < current.sequence) {
+      map.set(row.block_key, row);
+    }
+  });
+  return Array.from(map.values()).sort((a, b) => a.sequence - b.sequence || a.block_key.localeCompare(b.block_key));
+});
+const hasHomeBlockOverride = computed(() => activeHomeBlockRows.value.length > 0);
+const homeBlockOrderMap = computed(() => {
+  const map = new Map<string, number>();
+  activeHomeBlockRows.value.forEach((row) => {
+    map.set(row.block_key, row.sequence);
+  });
+  return map;
+});
 const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);
 const workspaceLayout = computed(() => (
   workspaceHome.value.layout && typeof workspaceHome.value.layout === 'object'
@@ -771,6 +807,22 @@ const workspaceLayoutActions = computed(() => (
 const workspaceLayoutSections = computed(() => {
   return buildSectionLayoutMap(workspaceLayout.value.sections);
 });
+const contractHomeSectionOrderMap = computed(() => {
+  if (!hasHomeBlockOverride.value) return new Map<string, number>();
+  const knownSections = new Set<string>(Array.from(workspaceLayoutSections.value.keys()));
+  const map = new Map<string, number>();
+  activeHomeBlockRows.value.forEach((row, index) => {
+    const normalized = normalizeHomeBlockSectionKey(row.block_key);
+    if (!normalized || !knownSections.has(normalized)) return;
+    const sequence = Number(row.sequence || index + 1);
+    const current = map.get(normalized);
+    if (typeof current !== 'number' || sequence < current) {
+      map.set(normalized, sequence);
+    }
+  });
+  return map;
+});
+const hasRenderableHomeBlockOverride = computed(() => contractHomeSectionOrderMap.value.size > 0);
 const workspacePageOrchestration = computed(() => (
   workspaceHome.value.page_orchestration && typeof workspaceHome.value.page_orchestration === 'object'
     ? workspaceHome.value.page_orchestration as Record<string, unknown>
@@ -983,8 +1035,22 @@ function homeLayoutText(key: string, fallback: string) {
   return value || fallback;
 }
 
+function normalizeHomeBlockSectionKey(raw: unknown): string {
+  const value = asText(raw).toLowerCase();
+  if (!value) return '';
+  const lastToken = value.split('.').pop() || value;
+  const normalized = lastToken.replace(/-/g, '_');
+  if (normalized === 'metric') return 'metrics';
+  if (normalized === 'today_action') return 'today_actions';
+  return normalized;
+}
+
 function isHomeSectionEnabled(key: string) {
-  return sectionEnabled(workspaceLayoutSections.value, key, true);
+  const enabledByLayout = sectionEnabled(workspaceLayoutSections.value, key, true);
+  if (!enabledByLayout) return false;
+  if (!hasHomeBlockOverride.value) return true;
+  if (!hasRenderableHomeBlockOverride.value) return true;
+  return contractHomeSectionOrderMap.value.has(key);
 }
 
 function isHomeSectionTag(key: string, expected: SectionTag) {
@@ -996,7 +1062,9 @@ function isHomeSectionOpenDefault(key: string, fallback = false) {
 }
 
 function homeSectionStyle(key: string) {
-  const order = homeSectionOrderMap.value.get(key);
+  const order = (hasRenderableHomeBlockOverride.value
+    ? contractHomeSectionOrderMap.value.get(key)
+    : undefined) ?? homeSectionOrderMap.value.get(key);
   if (!order) return {};
   return { order: String(order) };
 }
@@ -1060,6 +1128,21 @@ function normalizeContextQuery(raw: unknown) {
     if (text) acc[key] = text;
     return acc;
   }, {});
+}
+
+function resolveEntryHomeBlockOrder(entry: Pick<CapabilityEntry, 'key' | 'sceneKey'>): number {
+  const byKey = homeBlockOrderMap.value.get(asText(entry.key).toLowerCase());
+  if (typeof byKey === 'number') return byKey;
+  const byScene = homeBlockOrderMap.value.get(asText(entry.sceneKey).toLowerCase());
+  if (typeof byScene === 'number') return byScene;
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function matchEntryByHomeBlock(entry: Pick<CapabilityEntry, 'key' | 'sceneKey'>): boolean {
+  if (!hasHomeBlockOverride.value) return true;
+  const key = asText(entry.key).toLowerCase();
+  const sceneKey = asText(entry.sceneKey).toLowerCase();
+  return homeBlockOrderMap.value.has(key) || homeBlockOrderMap.value.has(sceneKey);
 }
 
 function toPositiveInt(raw: unknown) {
@@ -1216,7 +1299,16 @@ const entries = computed<CapabilityEntry[]>(() => {
       });
     });
   });
-  return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
+  const visible = hasHomeBlockOverride.value
+    ? list.filter((entry) => matchEntryByHomeBlock(entry))
+    : list;
+  const effective = (hasHomeBlockOverride.value && visible.length === 0) ? list : visible;
+  return effective.sort((a, b) => {
+    const orderA = resolveEntryHomeBlockOrder(a);
+    const orderB = resolveEntryHomeBlockOrder(b);
+    if (orderA !== orderB) return orderA - orderB;
+    return a.sequence - b.sequence || a.title.localeCompare(b.title);
+  });
 });
 
 const coreMetrics = computed<CoreMetric[]>(() => {
