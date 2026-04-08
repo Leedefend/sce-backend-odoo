@@ -1,0 +1,573 @@
+{
+  "summary": {
+    "generated_at": "2026-04-07T21:12:40+0800",
+    "base_url": "http://localhost:8069",
+    "db_name": "sc_demo",
+    "roles": {
+      "owner": "iter1313_owner_1775567477",
+      "pm": "iter1313_pm_1775567477",
+      "finance": "iter1313_finance_1775567477",
+      "outsider": "iter1313_outsider_1775567477"
+    },
+    "sample_count": 40,
+    "crg_hits": {
+      "CRG-001_can_create": 0,
+      "CRG-002_can_edit": 0,
+      "CRG-003_page_status": 0
+    }
+  },
+  "samples": [
+    {
+      "role": "owner",
+      "surface": "system.init",
+      "mode": "user",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 4,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "system.init",
+      "mode": "hud",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 4,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "my_work",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "project_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "payment_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "settlement_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "project",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "task",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "budget",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "owner",
+      "surface": "page.contract",
+      "page_key": "cost",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "system.init",
+      "mode": "user",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 8,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "system.init",
+      "mode": "hud",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 8,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "my_work",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "project_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "payment_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "settlement_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "project",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "task",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "budget",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "pm",
+      "surface": "page.contract",
+      "page_key": "cost",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "system.init",
+      "mode": "user",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 4,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "system.init",
+      "mode": "hud",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 4,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "my_work",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "project_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "payment_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "settlement_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "project",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "task",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "budget",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "finance",
+      "surface": "page.contract",
+      "page_key": "cost",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "system.init",
+      "mode": "user",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 4,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "system.init",
+      "mode": "hud",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "scenes_count": 4,
+        "hit_can_create": 0,
+        "hit_can_edit": 0,
+        "hit_page_status": 0
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "my_work",
+      "response_status": 200,
+      "response_ok": true,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "project_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "payment_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "settlement_management",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "project",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "task",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "budget",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    },
+    {
+      "role": "outsider",
+      "surface": "page.contract",
+      "page_key": "cost",
+      "response_status": 200,
+      "response_ok": false,
+      "observation": {
+        "has_scene_contract_v1": false,
+        "has_can_create": false,
+        "has_can_edit": false,
+        "has_page_status": false,
+        "consumer_runtime_keys": []
+      }
+    }
+  ]
+}

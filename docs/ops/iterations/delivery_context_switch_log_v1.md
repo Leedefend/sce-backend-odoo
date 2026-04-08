@@ -13463,3 +13463,588 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-07-1297 PASS：新增 payment_settlement_operability_verify，完成 finance 授权成员 payment.request/sc.settlement.order 创建与编辑、project/company 锚点校验、outsider 默认不可见不可写验证`
 - active_commit: `a2d0e90`
 - next_step: `Baseline complete for native minimum operability closure; wait next approved topic`
+
+### 2026-04-07T19:28:00+08:00
+- blocker_key: `frontend_alignment_acceptance_batchA_matrix_1298`
+- layer_target: `Frontend Consumer Alignment`
+- module: `frontend-native alignment matrix`
+- reason: 启动“自定义前端对齐验收 v1”，先完成 Batch A 矩阵审计，不做实现
+- completed_step: `ITER-2026-04-07-1298 PASS：产出 frontend_native_alignment_matrix_v1，覆盖 project/task/budget/cost/payment/settlement 六对象与五维对齐项，明确 Batch B 优先级与差异判定规则`
+- active_commit: `ca23376`
+- next_step: `Open Batch B implementation task for project-first frontend alignment`
+
+### 2026-04-07T19:43:00+08:00
+- blocker_key: `frontend_alignment_batchB1_project_slice_1299`
+- layer_target: `Frontend Consumer Alignment`
+- module: `project-slice contract alignment`
+- reason: 在 Batch A 矩阵后执行 project-slice 对齐，且明确禁止模型特判补丁
+- completed_step: `ITER-2026-04-07-1299 PASS：以 no-op 方式完成 project-slice list/form/create/edit/deny 逐项证据收口；更新矩阵 delta assessment；未新增 frontend model-specific branching`
+- active_commit: `ca23376`
+- next_step: `Open Batch B-2 implementation task for task-slice alignment`
+
+### 2026-04-07T19:56:00+08:00
+- blocker_key: `frontend_alignment_batchB2_task_slice_1300`
+- layer_target: `Frontend Consumer Alignment`
+- module: `task-slice contract alignment`
+- reason: 按用户策略执行 Batch B-2，优先通用路径并禁止 task 特判补丁
+- completed_step: `ITER-2026-04-07-1300 PASS：task-slice 以 no-op 方式完成 list/form/create/edit/stage/deny 证据收口；复跑原生闭环脚本确认 task create/edit/stage 与 outsider deny 一致；未新增 task 模型特判/专用组件/权限前端补丁`
+- active_commit: `ca23376`
+- next_step: `Open Batch B-3 implementation task for budget/cost-slice alignment`
+
+### 2026-04-07T20:06:00+08:00
+- blocker_key: `frontend_alignment_batchB3_budget_cost_slice_1301`
+- layer_target: `Frontend Consumer Alignment`
+- module: `budget-cost-slice contract alignment`
+- reason: 按 Batch B 顺序推进至 budget/cost，保持契约消费优先与禁止模型特判约束
+- completed_step: `ITER-2026-04-07-1301 PASS：budget/cost-slice 以 no-op 方式完成通用路径与 list/form/create/edit/deny 证据收口；复跑原生闭环脚本确认 budget/cost create 与 outsider deny 一致；未新增模型特判或表单行为改写`
+- active_commit: `ca23376`
+- next_step: `Open Batch B-4 implementation task for payment/settlement-slice minimal operability alignment`
+
+### 2026-04-07T20:18:00+08:00
+- blocker_key: `frontend_alignment_batchB4_payment_settlement_slice_1302`
+- layer_target: `Frontend Consumer Alignment`
+- module: `payment-settlement-slice contract alignment`
+- reason: 按 Batch B 顺序推进至 payment/settlement，保持最小办理范围且不扩审批深链
+- completed_step: `ITER-2026-04-07-1302 PASS：payment/settlement-slice 以 no-op 方式完成 list/form/create/edit/deny 证据收口；复跑原生支付结算最小办理脚本确认创建/编辑与 outsider deny 一致；未新增模型特判与权限前端补丁`
+- active_commit: `ca23376`
+- next_step: `Open Batch C end-to-end frontend minimal operability closure verification`
+
+### 2026-04-07T20:27:00+08:00
+- blocker_key: `frontend_alignment_batchC_minimal_chain_closure_1303`
+- layer_target: `Frontend Consumer Alignment`
+- module: `frontend minimal operability chain consistency`
+- reason: 完成 frontend alignment acceptance v1 的最终一致性收口
+- completed_step: `ITER-2026-04-07-1303 PASS：在 fresh 库复跑原生最小办理与支付结算最小办理验证，六对象链路全部通过且 outsider deny 成立；更新前端矩阵 Batch C 收口结论，确认前端与原生基线一致`
+- active_commit: `ca23376`
+- next_step: `Hold v1 acceptance baseline and wait next user-directed objective`
+
+### 2026-04-07T21:05:00+08:00
+- blocker_key: `contract_alignment_acceptance_batchA_inventory_1304`
+- layer_target: `Contract Alignment Evidence`
+- module: `middle-layer contract object inventory`
+- reason: 启动 Contract Alignment Acceptance v1，先收敛六对象 contract 盘点证据并为 Batch B/C/D 提供输入基线
+- completed_step: `ITER-2026-04-07-1304 PASS：新增 contract_alignment_object_inventory_v1，覆盖 project/task/budget/cost/payment/settlement 六对象的 list/form/rights/runtime 契约面，并给出稳定字段/差异字段/前端真实依赖字段矩阵`
+- active_commit: `ca23376`
+- next_step: `Open Batch B for contract-native consistency checks with verify/doc-only scope`
+
+### 2026-04-07T21:18:00+08:00
+- blocker_key: `contract_alignment_acceptance_batchB_native_consistency_1305`
+- layer_target: `Contract Alignment Evidence`
+- module: `contract-native consistency`
+- reason: 在 Batch A 对象盘点后，核对六对象 contract 语义与原生办理结果的一致性
+- completed_step: `ITER-2026-04-07-1305 PASS：新增 contract_alignment_native_consistency_v1，完成 project/task/budget/cost/payment/settlement 的 create/edit/readonly/restricted/deny-path 一致性核对并收敛为无冲突结论`
+- active_commit: `ca23376`
+- next_step: `Open Batch C for contract-frontend consumer consistency checks and fallback-mask screening`
+
+### 2026-04-07T21:31:00+08:00
+- blocker_key: `contract_alignment_acceptance_batchC_consumer_dependency_1306`
+- layer_target: `Contract Alignment Evidence`
+- module: `contract-frontend consumer dependency`
+- reason: 在 Batch B 一致性通过后，核对前端真实消费字段与兜底掩盖风险
+- completed_step: `ITER-2026-04-07-1306 PASS：新增 contract_consumer_dependency_v1，覆盖六对象真实消费字段、fallback-mask 风险分类与 Batch D 冻结候选字段`
+- active_commit: `ca23376`
+- next_step: `Open Batch D to publish contract_alignment_acceptance_v1 and contract_freeze_surface_v1 baselines`
+
+### 2026-04-07T21:44:00+08:00
+- blocker_key: `contract_alignment_acceptance_batchD_freeze_baseline_1307`
+- layer_target: `Contract Alignment Evidence`
+- module: `acceptance and freeze baseline publication`
+- reason: 完成 Contract Alignment Acceptance v1 最终收口，发布验收与冻结基线文档
+- completed_step: `ITER-2026-04-07-1307 PASS：新增 contract_alignment_acceptance_v1 与 contract_freeze_surface_v1，冻结六对象最小契约面并定义冻结字段变更门禁规则`
+- active_commit: `ca23376`
+- next_step: `Contract Alignment Acceptance v1 completed; wait for next user-directed objective`
+
+### 2026-04-07T22:16:00+08:00
+- blocker_key: `contract_runtime_verification_batchA_capture_1308`
+- layer_target: `Contract Runtime Evidence`
+- module: `runtime contract payload capture`
+- reason: 启动 Contract Runtime Verification v1，先完成运行态 payload 基线采样
+- completed_step: `ITER-2026-04-07-1308 PASS：在 sc_demo 运行时环境抓取四角色（owner/pm/finance/outsider）× 六对象 × list/form 共 48 条 ui.contract 样本，并落盘 runtime payload 与抓取报告`
+- active_commit: `ca23376`
+- next_step: `Open Batch B for payload-vs-freeze-surface comparison (missing fields/shape drift/role diffs)`
+
+### 2026-04-07T22:24:00+08:00
+- blocker_key: `contract_runtime_verification_batchB_freeze_compare_1309`
+- layer_target: `Contract Runtime Evidence`
+- module: `payload vs freeze comparison`
+- reason: 在 Batch A 样本基线后，核对冻结字段在运行态 payload 的可得性与形态稳定性
+- completed_step: `ITER-2026-04-07-1309 PASS：新增 contract_runtime_freeze_compare_v1，完成六对象四角色对比，识别 runtime 字段在 op=model 样本中的系统性缺口并输出 shape/role 差异摘要`
+- active_commit: `ca23376`
+- next_step: `Open Batch C for payload-vs-consumer dependency comparison and fallback-mask verification`
+
+### 2026-04-07T22:31:00+08:00
+- blocker_key: `contract_runtime_verification_batchC_consumer_compare_1310`
+- layer_target: `Contract Runtime Evidence`
+- module: `payload vs consumer dependency`
+- reason: 在 Batch B 后核对运行态 payload 对前端真实依赖字段的供给稳定性
+- completed_step: `ITER-2026-04-07-1310 PASS：新增 contract_runtime_consumer_compare_v1，确认基础 contract 字段稳定供给，并识别 runtime/action 依赖字段在 op=model 样本的缺口及 fallback 掩盖风险`
+- active_commit: `ca23376`
+- next_step: `Open Batch D to publish contract_runtime_acceptance_v1 and contract_runtime_gap_list_v1`
+
+### 2026-04-07T22:39:00+08:00
+- blocker_key: `contract_runtime_verification_batchD_acceptance_gap_1311`
+- layer_target: `Contract Runtime Evidence`
+- module: `runtime acceptance and gap publication`
+- reason: 完成 Contract Runtime Verification v1 最终结论与差距基线发布
+- completed_step: `ITER-2026-04-07-1311 PASS：新增 contract_runtime_acceptance_v1 与 contract_runtime_gap_list_v1，发布运行态 PARTIAL_PASS 结论并固化 CRG-001~004 修复通道`
+- active_commit: `ca23376`
+- next_step: `Contract Runtime Verification v1 completed; open next approved remediation lane or new objective`
+
+### 2026-04-07T22:53:00+08:00
+- blocker_key: `contract_runtime_remediation_batchA_extended_capture_1312`
+- layer_target: `Contract Runtime Evidence`
+- module: `runtime/action surface extended capture`
+- reason: 用户授权后启动 CRG 修复通道，先扩展运行态抓取路径
+- completed_step: `ITER-2026-04-07-1312 PASS：新增 extended payload 样本与报告，补到 CRG-004 payment action surface 证据；CRG-001/002/003 在 model/action_open 路径仍未命中`
+- active_commit: `ca23376`
+- next_step: `Open remediation Batch B to capture runtime-dedicated contract paths for CRG-001/002/003 closure`
+
+### 2026-04-07T23:06:00+08:00
+- blocker_key: `contract_runtime_remediation_batchB_dedicated_capture_1313`
+- layer_target: `Contract Runtime Evidence`
+- module: `runtime-dedicated path capture`
+- reason: 继续 CRG 修复通道，补抓 system.init/page.contract 路径以命中 runtime 字段
+- completed_step: `ITER-2026-04-07-1313 PASS_WITH_RISK：完成 dedicated capture（40 样本），但 CRG-001/002/003 命中仍为 0，出现冻结字段口径与运行时路径口径不一致风险`
+- active_commit: `ca23376`
+- next_step: `STOP and run a dedicated low-cost screen task to classify CRG-001/002/003 correct contract surface ownership before further capture/closure`
+
+### 2026-04-07T23:18:00+08:00
+- blocker_key: `contract_runtime_remediation_screen_crg_surface_1314`
+- layer_target: `Contract Runtime Evidence`
+- module: `CRG surface ownership screen`
+- reason: 对 1313 的 PASS_WITH_RISK 不确定性进行低成本 screen 分类
+- completed_step: `ITER-2026-04-07-1314 PASS：已将 CRG-001/002/003 归属分类为 ui.contract 的 scene_contract_v1 runtime-extension surface，并给出后续低风险文档修订步骤`
+- active_commit: `ca23376`
+- next_step: `Open documentation refinement batch to stratify freeze surface and reclassify CRG-001/002/003 status as surface-conditional`
+
+### 2026-04-07T23:27:00+08:00
+- blocker_key: `contract_runtime_remediation_docs_stratification_1315`
+- layer_target: `Contract Runtime Evidence`
+- module: `freeze/gap stratification refinement`
+- reason: 将 1314 的 screen 结论写回冻结与 gap 基线，消除口径噪音
+- completed_step: `ITER-2026-04-07-1315 PASS：freeze 文档已分层（model-surface vs scene-runtime-extension），CRG-001/002/003 重分类为 surface-conditional，runtime acceptance 已同步`
+- active_commit: `ca23376`
+- next_step: `Open next remediation batch for settlement action-surface symmetric evidence capture (CRG-004 closure)`
+
+### 2026-04-07T23:40:00+08:00
+- blocker_key: `contract_runtime_remediation_settlement_action_symmetry_1316`
+- layer_target: `Contract Runtime Evidence`
+- module: `settlement action-surface symmetry capture`
+- reason: 按 1315 下一步执行 settlement 对称动作面证据补抓
+- completed_step: `ITER-2026-04-07-1316 PASS：完成 payment vs settlement 动作面对照抓取，payment dedicated actions 与 settlement intent-ready contract buttons 证据成立，CRG-004 分类为 CLOSED`
+- active_commit: `ca23376`
+- next_step: `Open closure batch to mark CRG-004 closed in gap/acceptance baselines and recalculate runtime verdict`
+
+### 2026-04-07T23:49:00+08:00
+- blocker_key: `contract_runtime_remediation_crg004_closure_sync_1317`
+- layer_target: `Contract Runtime Evidence`
+- module: `CRG-004 closure baseline sync`
+- reason: 将 1316 的收口证据同步到 gap/acceptance 基线
+- completed_step: `ITER-2026-04-07-1317 PASS：CRG-004 在 runtime gap 基线标记为 closed，runtime acceptance 未判定项收敛为仅剩 scene-runtime-extension-surface`
+- active_commit: `ca23376`
+- next_step: `Open next remediation batch for CRG-001/002/003 extension-surface conditional closure`
+
+### 2026-04-08T00:00:00+08:00
+- blocker_key: `contract_runtime_remediation_final_crg001_003_closure_1318`
+- layer_target: `Contract Runtime Evidence`
+- module: `final CRG closure sync`
+- reason: 完成 runtime 主题最后三项 CRG 的最终分类与验收结论同步
+- completed_step: `ITER-2026-04-07-1318 PASS：CRG-001/002/003 标记 intentional-not-in-surface，CRG-004 保持 closed，runtime acceptance 结论收敛为 PASS（带当前基线边界说明）`
+- active_commit: `ca23376`
+- next_step: `Runtime verification line closed; switch to next approved objective`
+
+### 2026-04-08T00:12:00+08:00
+- blocker_key: `platform_development_standard_baseline_1319`
+- layer_target: `Governance Documentation Baseline`
+- module: `Platform Development Standard`
+- reason: 将当前迭代实践沉淀为可复用的平台开发标准流程 v1
+- completed_step: `ITER-2026-04-07-1319 PASS：新增 platform_development_standard_v1，固化业务事实->契约->前端->运行时->冻结五阶段流程及 Batch A~F 模板`
+- active_commit: `ca23376`
+- next_step: `Use platform_development_standard_v1 as default baseline for next approved objective`
+
+### 2026-04-07T22:21:13+08:00
+- blocker_key: `business_admin_config_center_phase1_inventory_1320`
+- layer_target: `Governance Planning Baseline`
+- module: `Business Admin Config Center v1`
+- reason: 启动新专题并先完成 Phase 1 配置化对象盘点与边界冻结
+- completed_step: `ITER-2026-04-07-1320 PASS：新增 business_admin_config_center_scope_v1，完成立即/下一步/暂不配置化分级并明确不改业务真相与不破坏契约冻结面`
+- active_commit: `ca23376`
+- next_step: `Open Phase 2 task to design minimal backend configuration governance model`
+
+### 2026-04-07T22:24:51+08:00
+- blocker_key: `business_admin_config_center_phase2_backend_model_1321`
+- layer_target: `Governance Design Baseline`
+- module: `Business Admin Config Center v1`
+- reason: 在 Phase 1 盘点后，输出后端最小配置治理模型设计基线
+- completed_step: `ITER-2026-04-07-1321 PASS：新增 business_admin_config_center_backend_model_v1，定义 config.item/config.role.entry/config.home.block、审计字段与 contract/backend 边界`
+- active_commit: `ca23376`
+- next_step: `Open Phase 3 task for frontend config center shell structure design`
+
+### 2026-04-07T22:27:34+08:00
+- blocker_key: `business_admin_config_center_phase3_frontend_shell_1322`
+- layer_target: `Frontend Consumption Shell Baseline`
+- module: `Business Admin Config Center v1`
+- reason: 在后端模型基线后输出前端配置中心壳层结构与交互约束
+- completed_step: `ITER-2026-04-07-1322 PASS：新增 business_admin_config_center_frontend_shell_v1，明确列表/表单壳层、路由建议与非低代码/非模型特判约束`
+- active_commit: `ca23376`
+- next_step: `Open Phase 4 task for config-result and contract linkage plan`
+
+### 2026-04-07T22:29:42+08:00
+- blocker_key: `business_admin_config_center_phase4_contract_linkage_1323`
+- layer_target: `Contract Governance Baseline`
+- module: `Business Admin Config Center v1`
+- reason: 完成配置结果与契约联动边界预案，收口专题启动四阶段
+- completed_step: `ITER-2026-04-07-1323 PASS：新增 business_admin_config_center_contract_linkage_plan_v1，分离 contract 可选输出面与 backend-only 参数面并固化 non-breaking rollout`
+- active_commit: `ca23376`
+- next_step: `Topic launch baseline complete; open implementation batch for minimal config.item model if approved`
+
+### 2026-04-07T22:42:21+08:00
+- blocker_key: `business_admin_config_center_impl_batchA_1324`
+- layer_target: `Business Fact Configuration Governance`
+- module: `smart_construction_core config-center dictionary extension`
+- reason: 将 Phase 1~4 设计基线落地为原生最小可办配置入口
+- completed_step: `ITER-2026-04-07-1324 PASS：扩展 sc.dictionary 增加 system_param/role_entry/home_block 与配置字段，新增基础资料下三类配置菜单动作`
+- active_commit: `ca23376`
+- next_step: `Open native operability verify batch for config-admin role create/edit/save evidence`
+
+### 2026-04-07T22:47:33+08:00
+- blocker_key: `business_admin_config_center_native_verify_1325`
+- layer_target: `Verification Guardrail`
+- module: `Business admin config center native operability evidence`
+- reason: 在不跑 CI 长链条件下补齐可复跑的原生可办证据门禁
+- completed_step: `ITER-2026-04-07-1325 PASS：新增并执行 native_business_admin_config_center_operability_verify，验证模型类型/字段、动作定义、菜单绑定证据链通过`
+- active_commit: `ca23376`
+- next_step: `Open runtime role-based native click-path verify batch if environment access is ready`
+
+### 2026-04-07T22:57:51+08:00
+- blocker_key: `business_admin_config_center_runtime_clickpath_1326`
+- layer_target: `Runtime Verification Guardrail`
+- module: `Business admin config center runtime click-path`
+- reason: 执行配置管理员角色运行态 create/edit/save 证据验证
+- completed_step: `ITER-2026-04-07-1326 FAIL：runtime 脚本在 sc_demo 报字段缺失（scope_type），尝试模块升级被 smart_construction_custom 客户公司重复数据冲突阻断（res_company_name_uniq）`
+- active_commit: `ca23376`
+- next_step: `STOP and open dedicated DB remediation/fresh-db verification batch before rerunning runtime click-path`
+
+### 2026-04-07T23:12:59+08:00
+- blocker_key: `business_admin_config_center_fresh_db_remediation_1327`
+- layer_target: `Runtime Verification Remediation`
+- module: `fresh-db runtime click-path recovery`
+- reason: 尝试用 fresh-db 路径规避历史库冲突并恢复 runtime 验证
+- completed_step: `ITER-2026-04-07-1327 FAIL：fresh 库路径仍受 compose/dbfilter 运行拓扑不一致影响，runtime 侧无法获得已安装模块态（sc.dictionary KeyError）`
+- active_commit: `ca23376`
+- next_step: `STOP and open dedicated environment unification batch (single compose project + dbfilter) before rerun`
+
+### 2026-04-07T23:19:38+08:00
+- blocker_key: `business_admin_config_center_env_unification_1328`
+- layer_target: `Runtime Verification Environment Guard`
+- module: `config-center runtime verification environment unification`
+- reason: 统一单项目 compose + 允许库路径，恢复 runtime 点击链验证
+- completed_step: `ITER-2026-04-07-1328 FAIL：在 clean sc_test 上安装链仍被基础环境问题阻断（UndefinedColumn: res_users.sc_role_profile），导致 runtime click-path 无法进入可验状态`
+- active_commit: `ca23376`
+- next_step: `STOP and open dedicated environment base-chain repair task before rerun 1326/1328 runtime verifies`
+
+### 2026-04-07T23:41:43+08:00
+- blocker_key: `business_admin_config_center_env_base_chain_repair_1329`
+- layer_target: `Runtime Verification Environment Guard`
+- module: `config-center runtime verification environment base-chain repair`
+- reason: 修复 DB 容器损坏与安装链前置，恢复配置中心 runtime 证据可验状态
+- completed_step: `ITER-2026-04-07-1329 PASS：重建损坏 db 卷并统一到 sc-backend-odoo-dev，clean sc_test 安装 smart_enterprise_base->smart_construction_core 成功，runtime click-path verify PASS`
+- active_commit: `ca23376`
+- next_step: `Re-open runtime evidence closure batch to synchronize 1326/1328 line to PASS on repaired baseline`
+
+### 2026-04-07T23:43:31+08:00
+- blocker_key: `business_admin_config_center_runtime_closure_sync_1330`
+- layer_target: `Runtime Verification Evidence`
+- module: `config-center runtime evidence closure`
+- reason: 在 1329 修复基线后执行 runtime 证据线收口同步
+- completed_step: `ITER-2026-04-07-1330 PASS：dev 栈 db/odoo 健康，sc_test runtime click-path 再次 PASS，1326/1328 证据链恢复可复跑状态`
+- active_commit: `ca23376`
+- next_step: `Continue next approved objective (frontend alignment acceptance chain) on stable runtime baseline`
+
+### 2026-04-07T23:50:23+08:00
+- blocker_key: `business_admin_config_center_frontend_alignment_acceptance_1331`
+- layer_target: `Frontend Contract Consumer Alignment`
+- module: `business admin config center frontend acceptance`
+- reason: 按标准流程从事实层/runtime 证据推进到前端承接层验收
+- completed_step: `ITER-2026-04-07-1331 PASS：通用 action/form 路由承载证据成立，sc_test runtime create/edit/save 继续 PASS，输出配置中心前端对齐验收矩阵与 delta assessment`
+- active_commit: `ca23376`
+- next_step: `Open config-center contract runtime capture and freeze-surface alignment batch`
+
+### 2026-04-07T23:59:12+08:00
+- blocker_key: `business_admin_config_center_contract_runtime_acceptance_1332`
+- layer_target: `Contract Runtime Verification`
+- module: `business admin config center contract runtime acceptance`
+- reason: 在前端承接证据后冻结配置中心 runtime 契约最小面
+- completed_step: `ITER-2026-04-07-1332 PASS_WITH_RISK：完成 admin/pm/finance/outsider role runtime 样本与最小字段面冻结；intent endpoint 在当前栈不可用，采用 Odoo RPC runtime-equivalent 证据`
+- active_commit: `ca23376`
+- next_step: `STOP (risk present): open dedicated intent-endpoint availability screen batch before full intent-envelope parity claim`
+
+### 2026-04-08T00:06:26+08:00
+- blocker_key: `business_admin_config_center_intent_endpoint_screen_1333`
+- layer_target: `Runtime Contract Access Screen`
+- module: `intent endpoint availability for config-center verification`
+- reason: 清零 1332 风险项，定位 /api/v1/intent 404 根因
+- completed_step: `ITER-2026-04-07-1333 PASS：确认路由代码存在，404 原因为 no-session 下无 db 上下文访问路径；已给出 session-bootstrap 有界修复路径`
+- active_commit: `ca23376`
+- next_step: `Open 1334 low-risk implementation batch: update verify scripts to bootstrap session before /api intent calls and re-evaluate intent-envelope parity`
+
+### 2026-04-08T00:14:30+08:00
+- blocker_key: `business_admin_config_center_intent_runtime_parity_1334`
+- layer_target: `Runtime Verification Remediation`
+- module: `config-center intent runtime parity verify`
+- reason: 实施 1333 建议的 session-bootstrap 修复并回归 intent-envelope 证据
+- completed_step: `ITER-2026-04-08-1334 PASS：新增 session-bootstrap intent verify 脚本并在 sc_test 回归 PASS，配置中心 contract runtime acceptance 从 PASS_WITH_RISK 收敛为 PASS`
+- active_commit: `ca23376`
+- next_step: `Continue next eligible low-risk batch: fold new intent runtime verify into config-center stage-gate subset`
+
+### 2026-04-08T00:17:27+08:00
+- blocker_key: `business_admin_config_center_stage_gate_subset_1335`
+- layer_target: `Verification Guardrail`
+- module: `business admin config-center stage gate subset`
+- reason: 将 clickpath + intent parity 验证固化为专题最小可复跑子集
+- completed_step: `ITER-2026-04-08-1335 PASS：新增 native_business_admin_config_center_stage_gate.py 并在 sc_test 全量通过（clickpath + intent runtime）`
+- active_commit: `ca23376`
+- next_step: `Proceed to next business-admin config-center objective with stage-gate subset as default acceptance guard`
+
+### 2026-04-08T00:21:58+08:00
+- blocker_key: `business_admin_config_center_governance_verify_1336`
+- layer_target: `Verification Guardrail`
+- module: `business admin config governance evidence`
+- reason: 对“管理员可配置业务”目标补齐角色治理与权限边界证据
+- completed_step: `ITER-2026-04-08-1336 PASS：新增 native_business_admin_config_governance_verify.py，验证配置类型可用、管理员可写回、outsider deny 全通过`
+- active_commit: `ca23376`
+- next_step: `Open acceptance-pack batch to consolidate config-center v1 checklist (stage-gate + governance verify)`
+
+### 2026-04-08T00:24:31+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_1337`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance pack`
+- reason: 将 stage-gate 与 governance verify 汇总为单命令 v1 验收入口
+- completed_step: `ITER-2026-04-08-1337 PASS：新增 native_business_admin_config_center_acceptance_pack.py 并在 sc_test 一键全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed to next config-center feature extension batch with acceptance-pack as mandatory gate`
+
+### 2026-04-08T00:40:42+08:00
+- blocker_key: `business_admin_config_center_intent_contract_unify_1338`
+- layer_target: `Contract Runtime Verification`
+- module: `config-center intent contract unification`
+- reason: 按用户要求完成 session-bootstrap 统一、intent parity、runtime acceptance 收口
+- completed_step: `ITER-2026-04-08-1338 PASS：新增 intent parity verify，list/form/rights/runtime parity 在 sc_test 全通过，runtime acceptance 保持 PASS 并补齐统一 intent 契约证据`
+- active_commit: `ca23376`
+- next_step: `Proceed to next config-center objective on top of unified intent-contract baseline`
+
+### 2026-04-08T00:45:43+08:00
+- blocker_key: `business_admin_config_center_audit_trace_acceptance_1339`
+- layer_target: `Verification Guardrail`
+- module: `config-center audit trace evidence`
+- reason: 在统一 intent 契约基线后补齐管理员配置变更留痕验收
+- completed_step: `ITER-2026-04-08-1339 PASS：新增 native_business_admin_config_audit_trace_verify.py，验证写入后 write_uid/write_date 审计字段可追溯`
+- active_commit: `ca23376`
+- next_step: `Integrate audit trace verify into config-center acceptance-pack as next low-risk batch`
+
+### 2026-04-08T00:50:00+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_audit_integration_1340`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack integration`
+- reason: 将审计留痕验证并入一键验收入口，形成完整门禁闭环
+- completed_step: `ITER-2026-04-08-1340 PASS：acceptance-pack 已覆盖 stage-gate + governance + audit-trace，并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next config-center deliverable batch using acceptance-pack as mandatory gate`
+
+### 2026-04-08T01:36:04+08:00
+- blocker_key: `business_admin_config_role_entry_contract_runtime_1341`
+- layer_target: `Scene orchestration contract supply`
+- module: `config-center role-entry contract runtime`
+- reason: 完成 role-entry 可选 contract 输出与 intent/runtime parity 收口，接入 acceptance-pack 统一门禁
+- completed_step: `ITER-2026-04-08-1341 PASS：system.init 已可输出 role_entries（optional），新增 role-entry parity/runtime verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed to frontend role-entry consumer batch with contract-only consumption and fallback`
+
+### 2026-04-08T01:44:52+08:00
+- blocker_key: `business_admin_config_role_entry_frontend_consumer_1342`
+- layer_target: `Frontend contract consumer`
+- module: `config-center role-entry frontend ingest`
+- reason: 将 role_entries 接入前端 session 消费层，形成后续入口过滤的运行时输入基础
+- completed_step: `ITER-2026-04-08-1342 PASS：frontend session 已消费并持久化 role_entries，前端消费验证与 intent parity 验证通过`
+- active_commit: `ca23376`
+- next_step: `Proceed to role-entry runtime visibility filtering batch with generic consumer logic and fallback`
+
+### 2026-04-08T01:51:32+08:00
+- blocker_key: `business_admin_config_role_entry_frontend_filter_1343`
+- layer_target: `Frontend contract consumer`
+- module: `config-center role-entry runtime visibility filtering`
+- reason: 基于 role_entries 完成通用导航过滤落地，形成业务管理员入口配置的前端可见性闭环
+- completed_step: `ITER-2026-04-08-1343 PASS：menuTree/releaseNavigationTree 已接入 role_entries 通用过滤并保留 fallback，验证脚本与 intent parity 通过`
+- active_commit: `ca23376`
+- next_step: `Proceed to runtime snapshot replay verification for role-entry filtering determinism`
+
+### 2026-04-08T01:54:42+08:00
+- blocker_key: `business_admin_config_role_entry_filter_snapshot_verify_1344`
+- layer_target: `Verification Guardrail`
+- module: `role-entry frontend filter snapshot replay`
+- reason: 为 role-entry 过滤增加确定性回放与 fallback 守卫，降低后续迭代回归噪音
+- completed_step: `ITER-2026-04-08-1344 PASS：新增 snapshot replay verify，确定性与 fallback 验证通过`
+- active_commit: `ca23376`
+- next_step: `Proceed to integrate snapshot replay verify into config-center acceptance pack`
+
+### 2026-04-08T01:59:28+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_snapshot_integration_1345`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack snapshot integration`
+- reason: 将 role-entry 前端过滤确定性验证纳入一键门禁，形成默认回归覆盖
+- completed_step: `ITER-2026-04-08-1345 PASS：acceptance-pack 已并入 role-entry filter snapshot verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed to runtime frontend clickpath evidence sampling for role-entry filtered navigation`
+
+### 2026-04-08T02:10:14+08:00
+- blocker_key: `business_admin_config_role_entry_clickpath_evidence_1346`
+- layer_target: `Verification Guardrail`
+- module: `role-entry filtered clickpath runtime evidence`
+- reason: 补齐“过滤后入口可点击”运行时证据，支撑业务管理员入口配置可交付性论证
+- completed_step: `ITER-2026-04-08-1346 PASS：新增 clickpath evidence verify 并在 sc_test 通过，形成角色采样证据`
+- active_commit: `ca23376`
+- next_step: `Proceed to controlled outsider sample tightening for deny evidence freeze`
+
+### 2026-04-08T02:18:32+08:00
+- blocker_key: `business_admin_config_role_entry_controlled_outsider_tightening_1347`
+- layer_target: `Verification Guardrail`
+- module: `role-entry outsider sample semantics tightening`
+- reason: 用受控临时 outsider 样本替代历史样本漂移风险，收敛 deny 证据口径
+- completed_step: `ITER-2026-04-08-1347 PASS：clickpath evidence verify 已加入 outsider_controlled 运行时样本并在 sc_test 通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center objective on current acceptance baseline`
+
+### 2026-04-08T06:36:32+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_clickpath_integration_1348`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack integration`
+- reason: 将 role-entry clickpath 运行时证据纳入默认一键门禁，降低回归风险
+- completed_step: `ITER-2026-04-08-1348 PASS：acceptance-pack 已覆盖 clickpath evidence verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch`
+
+### 2026-04-08T07:16:07+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_intent_parity_integration_1349`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack integration`
+- reason: 将 role-entry intent parity 纳入默认一键门禁，收紧契约一致性回归防线
+- completed_step: `ITER-2026-04-08-1349 PASS：acceptance-pack 已覆盖 role-entry intent parity verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch`
+
+### 2026-04-08T07:54:25+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_frontend_consumer_integration_1350`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack integration`
+- reason: 将 role-entry 前端消费校验纳入默认一键门禁，保证 contract-consumer 链路持续可回归
+- completed_step: `ITER-2026-04-08-1350 PASS：acceptance-pack 已覆盖 role-entry frontend-consumer verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch`
+
+### 2026-04-08T08:00:20+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_frontend_filter_integration_1351`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack integration`
+- reason: 将 role-entry 前端过滤校验纳入默认一键门禁，保证前端行为层持续可回归
+- completed_step: `ITER-2026-04-08-1351 PASS：acceptance-pack 已覆盖 role-entry frontend-filter verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch`
+
+### 2026-04-08T08:07:27+08:00
+- blocker_key: `business_admin_config_center_acceptance_pack_center_intent_parity_integration_1352`
+- layer_target: `Verification Guardrail`
+- module: `config-center acceptance-pack integration`
+- reason: 将 config-center intent parity 纳入默认一键门禁，收紧配置中心契约一致性回归防线
+- completed_step: `ITER-2026-04-08-1352 PASS：acceptance-pack 已覆盖 config-center intent parity verify 并在 sc_test 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch`
+
+### 2026-04-08T09:16:50+08:00
+- blocker_key: `business_admin_config_home_block_runtime_alignment_1353`
+- layer_target: `Verification Guardrail`
+- module: `config.home.block runtime + clickpath evidence`
+- reason: 修复 home-block 运行时证据链在 sc_test 的账号样本与 scene payload 解析偏差，恢复 acceptance-pack 稳定通过
+- completed_step: `ITER-2026-04-08-1353 PASS：home-block runtime/clickpath verify 与 config-center acceptance-pack 在 sc_test@8071 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch with runtime pinned to ENV=test`
+
+### 2026-04-08T09:25:04+08:00
+- blocker_key: `business_admin_config_home_block_intent_parity_1354`
+- layer_target: `Verification Guardrail`
+- module: `config.home.block intent parity evidence`
+- reason: 为 home-block 增加专用 intent parity 验证并纳入 acceptance-pack，冻结契约运行时一致性证据
+- completed_step: `ITER-2026-04-08-1354 PASS：home-block intent parity verify 已接入 acceptance-pack 并在 sc_test@8071 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next low-risk config-center capability batch on pinned test runtime`
+
+### 2026-04-08T09:33:34+08:00
+- blocker_key: `platform_baseline_freeze_and_cadence_1355`
+- layer_target: `Governance Baseline`
+- module: `platform baseline freeze + execution cadence rules`
+- reason: 用户明确要求 config.home.block 封板后，立即切换到平台基线冻结与执行节奏规则建设
+- completed_step: `ITER-2026-04-08-1355 PASS_WITH_RISK：已落治理任务合同与基线节奏规范文档（本轮按用户指令不执行 verify）`
+- active_commit: `ca23376`
+- next_step: `Proceed to ITER-1356 single-goal low-risk batch under frozen cadence baseline`
+
+### 2026-04-08T09:36:26+08:00
+- blocker_key: `platform_baseline_freeze_cadence_refinement_1355`
+- layer_target: `Governance Baseline`
+- module: `freeze v1 + iteration rules v1`
+- reason: 按用户新增要求补齐 1355 Batch A/B/C：封板文档、节奏规则、Codex 执行约束与 1356 准入条件
+- completed_step: `ITER-2026-04-08-1355 PASS_WITH_RISK：已输出 platform_baseline_freeze_v1 与 iteration_execution_rules_v1（本轮按指令不执行 verify）`
+- active_commit: `ca23376`
+- next_step: `Start ITER-1356 with explicit Batch declaration and user-value-first scope`
+
+### 2026-04-08T09:47:10+08:00
+- blocker_key: `home_block_frontend_effectuation_batch1_1356`
+- layer_target: `Frontend Contract Consumer`
+- module: `homepage home_blocks consumption`
+- reason: 按用户要求完成“首页真的变了”第一批：接入 home_blocks 的启用、排序与 fallback 语义
+- completed_step: `ITER-2026-04-08-1356 Batch 1/3 PASS_WITH_RISK：已完成 HomeView 与 session 契约消费改造（本轮未采集角色运行时证据）`
+- active_commit: `ca23376`
+- next_step: `Proceed Batch 2/3 for PM/Finance/Outsider runtime evidence under same contract path`
+
+### 2026-04-08T10:04:04+08:00
+- blocker_key: `home_block_frontend_effectuation_batch2_1357`
+- layer_target: `Frontend Contract Consumer`
+- module: `homepage home_blocks fallback + runtime evidence`
+- reason: 完成 Batch 2/3 的前端回退加固与角色样本运行态证据采集，避免 contract 映射不足时首页空白
+- completed_step: `ITER-2026-04-08-1357 Batch 2/3 PASS_WITH_RISK：已完成 HomeView section-level fallback hardening；sc_test 证据显示 PM/Finance/Outsider 当前 role_surface 仍同值（role_code=pm）`
+- active_commit: `ca23376`
+- next_step: `Proceed Batch 3/3 to fix runtime role-surface semantic supply, then rerun final frontend acceptance evidence`
+
+### 2026-04-08T10:23:14+08:00
+- blocker_key: `home_block_frontend_effectuation_batch3_1358`
+- layer_target: `Scene orchestration layer`
+- module: `role-surface semantic supply`
+- reason: 修复 role-surface 角色分流语义，解决 PM/Finance/Outsider 运行态同值导致的首页配置不可验证问题
+- completed_step: `ITER-2026-04-08-1358 Batch 3/3 PASS：收敛 scene 角色映射范围后，sc_test 运行态角色分流成立（pm/finance/owner）且 home-block acceptance 命令通过`
+- active_commit: `ca23376`
+- next_step: `Freeze current evidence and continue next user-value batch under cadence baseline`
+
+### 2026-04-08T10:29:12+08:00
+- blocker_key: `home_block_outsider_sample_semantics_alignment_1359`
+- layer_target: `Verification guardrail`
+- module: `home-block runtime/clickpath verify sample`
+- reason: 统一 outsider 样本为纯 outsider 账户，消除 stage evidence 噪音并冻结验证口径
+- completed_step: `ITER-2026-04-08-1359 PASS：home-block runtime/clickpath verify 默认 outsider 样本切换为 sc_fx_pure_outsider，并在 sc_test@8071 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next user-value capability batch under platform cadence baseline`
+
+### 2026-04-08T10:37:09+08:00
+- blocker_key: `business_admin_role_evidence_outsider_alignment_1360`
+- layer_target: `Verification guardrail`
+- module: `config-center + role-entry role-evidence scripts`
+- reason: 扩展 outsider 样本语义统一到相邻业务管理员验证脚本，消除跨脚本证据口径漂移
+- completed_step: `ITER-2026-04-08-1360 PASS：5 条目标 verify 脚本均切换为 ROLE_OUTSIDER_LOGIN 默认 sc_fx_pure_outsider，并在 sc_test@8071 全通过`
+- active_commit: `ca23376`
+- next_step: `Proceed with next user-value capability batch`
+
+### 2026-04-08T11:02:00+08:00
+- blocker_key: `real_user_module_install_and_frontend_test_deploy_1361`
+- layer_target: `Runtime deployment`
+- module: `smart_construction_custom + frontend/apps/web`
+- reason: 用户要求立即完成“真实用户模块安装 + 前端部署到测试库”，并支持真实用户登录验证
+- completed_step: `ITER-2026-04-08-1361 PASS：sc_test 完成 smart_construction_custom install/upgrade、test 后端重启、前端构建并启动 5174；真实用户登录验证通过`
+- active_commit: `ca23376`
+- next_step: `User performs interactive real-user login verification on frontend test runtime`

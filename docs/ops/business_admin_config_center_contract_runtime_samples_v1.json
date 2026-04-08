@@ -1,0 +1,70 @@
+{
+  "base_url": "http://localhost:8069",
+  "db": "sc_test",
+  "surface": "odoo-rpc-runtime-equivalent",
+  "note": "intent endpoint unavailable in this runtime; using web rpc equivalent runtime evidence",
+  "samples": [
+    {
+      "role": "admin",
+      "login": "admin",
+      "login_ok": true,
+      "uid": 2,
+      "access": {
+        "read": true,
+        "write": true,
+        "create": true,
+        "unlink": true
+      },
+      "field_count": 16,
+      "has_scope_fields": true,
+      "config_record_count": 12
+    },
+    {
+      "role": "pm",
+      "login": "sc_fx_pm",
+      "login_ok": true,
+      "uid": 7,
+      "access": {
+        "read": true,
+        "write": true,
+        "create": true,
+        "unlink": false
+      },
+      "field_count": 16,
+      "has_scope_fields": true,
+      "config_record_count": 12
+    },
+    {
+      "role": "finance",
+      "login": "sc_fx_finance",
+      "login_ok": true,
+      "uid": 8,
+      "access": {
+        "read": false,
+        "write": false,
+        "create": false,
+        "unlink": false
+      },
+      "field_count": 16,
+      "has_scope_fields": true,
+      "config_record_count": null,
+      "count_error": "You are not allowed to access 'Smart Construction Dictionary' (sc.dictionary) records.\n\nThis operation is allowed for the following groups:\n\t- Smart Construction/SC 能力 - 数据中心只读\n\t- Smart Construction/SC 能力 - 配置管理员\n\t- Smart Construction/SC 能力 - 项目中心审批\n\nContact your administrator to request access if necessary."
+    },
+    {
+      "role": "outsider",
+      "login": "sc_fx_outsider",
+      "login_ok": true,
+      "uid": 6,
+      "access": {
+        "read": false,
+        "write": false,
+        "create": false,
+        "unlink": false
+      },
+      "field_count": 16,
+      "has_scope_fields": true,
+      "config_record_count": null,
+      "count_error": "You are not allowed to access 'Smart Construction Dictionary' (sc.dictionary) records.\n\nThis operation is allowed for the following groups:\n\t- Smart Construction/SC 能力 - 数据中心只读\n\t- Smart Construction/SC 能力 - 配置管理员\n\t- Smart Construction/SC 能力 - 项目中心审批\n\nContact your administrator to request access if necessary."
+    }
+  ]
+}
