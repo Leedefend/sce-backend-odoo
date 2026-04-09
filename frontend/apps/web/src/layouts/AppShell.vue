@@ -24,7 +24,7 @@
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
           <button v-if="showReleaseOperatorEntry" class="ghost mini" @click="router.push('/release/operator')">发布控制</button>
         </div>
-        <div v-if="!hasReleaseNavigation && roleMenus.length" class="role-menus">
+        <div v-if="roleMenus.length" class="role-menus">
           <button
             v-for="menu in roleMenus"
             :key="`role-menu-${menu.id}`"
@@ -54,9 +54,6 @@
           <MenuTree
             :nodes="filteredMenu"
             :active-menu-id="activeMenuId"
-            :capabilities="capabilities"
-            :native-preview-group-key="nativePreviewGroupKey"
-            :release-metadata-mode="false"
             @select="handleSelect"
           />
         </div>
@@ -144,9 +141,10 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
-import { buildSceneRegistryFallbackPath, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
+import { parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
-import type { NavNode } from '@sc/schema';
+import { useNavigationMenu } from '../composables/useNavigationMenu';
+import type { ExplainedMenuNode } from '../types/navigation';
 import {
   exportSuggestedActionTraces,
   getLatestSuggestedActionTrace,
@@ -156,10 +154,6 @@ import {
 } from '../services/trace';
 
 type UnknownDict = Record<string, unknown>;
-type SceneAwareNavNode = NavNode & {
-  scene_key?: string;
-  sceneKey?: string;
-};
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -197,22 +191,15 @@ function stripRoleFromIdentity(identity: string, role: string): string {
   return removedRole;
 }
 
-function resolveSceneKeyFromNode(node: NavNode): string | undefined {
-  const sceneNode = node as SceneAwareNavNode;
-  return asText(sceneNode.scene_key) || asText(sceneNode.sceneKey) || asText(node.meta?.scene_key);
-}
-
 const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
 const query = ref('');
+const navigationMenu = useNavigationMenu();
 
-const menuTree = computed(() => session.menuTree);
-const releaseNavigationTree = computed(() => session.releaseNavigationTree);
 const releaseNavigationMeta = computed(() => asDict(session.deliveryEngineV1?.meta));
 const roleSurface = computed(() => session.roleSurface);
-const hasReleaseNavigation = computed(() => releaseNavigationTree.value.length > 0);
-const navigationTree = computed(() => hasReleaseNavigation.value ? releaseNavigationTree.value : menuTree.value);
+const navigationTree = computed(() => navigationMenu.tree.value);
 const rootNode = computed(() => (navigationTree.value.length === 1 ? navigationTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? navigationTree.value);
 const menuCount = computed(() => menuNodes.value.length);
@@ -224,7 +211,7 @@ const nativePreviewLeafCount = computed(() => asInteger(releaseNavigationMeta.va
 const showReleaseSummary = computed(() => false);
 const rootTitle = computed(() => {
   const root = rootNode.value;
-  return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
+  return normalizeDeliveryText(root?.name || '智能工程协作平台');
 });
 const userName = computed(() => session.user?.name ?? '访客');
 const enterpriseLabel = computed(() => {
@@ -264,7 +251,6 @@ const roleLabel = computed(() => {
   return '负责人';
 });
 const roleLandingPath = computed(() => session.resolveLandingPath('/'));
-const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
 const navVersion = computed(() => {
@@ -332,9 +318,9 @@ const menuLabel = computed(() => {
   if (!menuId) {
     return '';
   }
-  const menuPath = findMenuPath(menuTree.value, menuId);
+  const menuPath = findMenuPath(navigationTree.value, menuId);
   const node = menuPath[menuPath.length - 1];
-  return node?.title || node?.name || node?.label || '';
+  return node?.name || '';
 });
 
 const hudEnabled = computed(() => isHudEnabled(route));
@@ -646,6 +632,7 @@ onMounted(() => {
   if (typeof window === 'undefined') return;
   window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   handleTraceUpdate();
+  navigationMenu.loadNavigation().catch(() => {});
 });
 
 onUnmounted(() => {
@@ -653,14 +640,14 @@ onUnmounted(() => {
   window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
 });
 
-function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
+function findMenuPath(nodes: ExplainedMenuNode[], menuId?: number): ExplainedMenuNode[] {
   if (!menuId) {
     return [];
   }
-  const walk = (items: NavNode[], parents: NavNode[] = []): NavNode[] | null => {
+  const walk = (items: ExplainedMenuNode[], parents: ExplainedMenuNode[] = []): ExplainedMenuNode[] | null => {
     for (const node of items) {
       const nextParents = [...parents, node];
-      if (node.menu_id === menuId || node.id === menuId) {
+      if (node.menu_id === menuId) {
         return nextParents;
       }
       if (node.children?.length) {
@@ -675,18 +662,52 @@ function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
   return walk(navigationTree.value, []) || [];
 }
 
-function findMenuIdBySceneKey(nodes: NavNode[], sceneKey?: string): number | undefined {
-  const target = String(sceneKey || '').trim();
-  if (!target) return undefined;
-  const walk = (items: NavNode[]): number | undefined => {
+function parseSceneKeyFromPath(path: string): string {
+  const matched = String(path || '').match(/^\/s\/([^/?#]+)/);
+  return matched?.[1] ? decodeURIComponent(matched[1]) : '';
+}
+
+function parseActionIdFromPath(path: string): number | undefined {
+  const actionMatched = String(path || '').match(/^\/(?:a|native\/action)\/(\d+)/);
+  return actionMatched?.[1] ? asInteger(actionMatched[1]) : undefined;
+}
+
+const currentRouteContext = computed(() => {
+  const menuId = asInteger(route.query.menu_id) || asInteger(route.params.menuId);
+  const sceneKey = String(routeSceneKey.value || parseSceneKeyFromPath(route.path) || '').trim();
+  const actionId = parseActionIdFromPath(route.path);
+  const fullPath = String(route.fullPath || route.path || '').trim();
+  return {
+    menuId,
+    sceneKey,
+    actionId,
+    fullPath,
+  };
+});
+
+function matchesActiveNode(node: ExplainedMenuNode): boolean {
+  const active = node.active_match || {};
+  const menuId = asInteger(active.menu_id);
+  const sceneKey = asText(active.scene_key);
+  const actionId = asInteger(active.action_id);
+  const routePrefix = asText(active.route_prefix);
+  const current = currentRouteContext.value;
+  if (menuId && current.menuId && menuId === current.menuId) return true;
+  if (sceneKey && current.sceneKey && sceneKey === current.sceneKey) return true;
+  if (actionId && current.actionId && actionId === current.actionId) return true;
+  if (routePrefix && current.fullPath && current.fullPath.startsWith(routePrefix)) return true;
+  return false;
+}
+
+function findActiveMenuId(nodes: ExplainedMenuNode[]): number | undefined {
+  const walk = (items: ExplainedMenuNode[]): number | undefined => {
     for (const node of items) {
-      const currentSceneKey = resolveSceneKeyFromNode(node);
-      if (currentSceneKey === target) {
-        return asInteger(node.menu_id) || asInteger(node.id);
+      if (matchesActiveNode(node)) {
+        return asInteger(node.menu_id);
       }
       if (node.children?.length) {
-        const matched = walk(node.children);
-        if (matched) return matched;
+        const found = walk(node.children);
+        if (found) return found;
       }
     }
     return undefined;
@@ -700,11 +721,11 @@ const breadcrumb = computed(() => {
       const menuPath = findMenuPath(navigationTree.value, menuId);
   if (menuPath.length) {
     menuPath.forEach((node) => {
-      const label = node.title || node.name || node.label || '菜单';
-      const id = node.menu_id ?? node.id;
-      if (id) {
-        crumbs.push({ label, to: `/m/${id}` });
-      }
+      const label = node.name || '菜单';
+      const routePath = node.is_clickable && node.target_type !== 'directory' && node.target_type !== 'unavailable'
+        ? asText(node.route)
+        : undefined;
+      crumbs.push({ label, to: routePath });
     });
   }
   if (route.name === 'action') {
@@ -730,49 +751,19 @@ const showRefresh = computed(
 );
 
 const activeMenuId = computed(() => {
-  if (route.name === 'menu') {
-    return Number(route.params.menuId ?? 0) || undefined;
-  }
-  const fromQuery = asInteger(route.query.menu_id);
-  if (fromQuery) return fromQuery;
-
-  const activeSceneKey = String(routeSceneKey.value || '').trim();
-  if (activeSceneKey) {
-    const contracts = session.pageContracts || {};
-    const contractEntries = Object.values(contracts) as Array<Record<string, unknown>>;
-    for (const entry of contractEntries) {
-      const sceneContract = asDict((entry as { scene_contract_v1?: unknown }).scene_contract_v1);
-      if (!sceneContract) continue;
-      const scene = asDict(sceneContract.scene);
-      const sceneKey = asText(scene?.scene_key) || asText(scene?.key) || asText(scene?.code);
-      if (sceneKey !== activeSceneKey) continue;
-      const navRef = asDict(sceneContract.nav_ref);
-      const navRefMenuId = asInteger(navRef?.active_menu_id);
-      if (navRefMenuId) return navRefMenuId;
-    }
-  }
-
-  const workspaceSceneContract = asDict((session.workspaceHome as { scene_contract_v1?: unknown } | null)?.scene_contract_v1);
-  const workspaceNavRef = asDict(workspaceSceneContract?.nav_ref);
-  const workspaceMenuId = asInteger(workspaceNavRef?.active_menu_id);
-  if (workspaceMenuId) return workspaceMenuId;
-
-  const fromScene = findMenuIdBySceneKey(navigationTree.value, activeSceneKey);
-  if (fromScene) return fromScene;
-
-  return undefined;
+  return findActiveMenuId(navigationTree.value);
 });
 
-function filterNodes(nodes: NavNode[], q: string): NavNode[] {
+function filterNodes(nodes: ExplainedMenuNode[], q: string): ExplainedMenuNode[] {
   const term = q.trim().toLowerCase();
   if (!term) {
     return nodes;
   }
-  const matches = (node: NavNode) => {
-    const label = node.title || node.name || node.label || '';
+  const matches = (node: ExplainedMenuNode) => {
+    const label = node.name || '';
     return label.toLowerCase().includes(term);
   };
-  const walk = (items: NavNode[]): NavNode[] => {
+  const walk = (items: ExplainedMenuNode[]): ExplainedMenuNode[] => {
     return items
       .map((node) => {
         const children = node.children ? walk(node.children) : [];
@@ -781,7 +772,7 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
         }
         return null;
       })
-      .filter(Boolean) as NavNode[];
+      .filter(Boolean) as ExplainedMenuNode[];
   };
   return walk(nodes);
 }
@@ -792,13 +783,13 @@ const roleMenus = computed(() => {
   if (!allow.size) return [];
   const found: Array<{ id: number; label: string }> = [];
   const seen = new Set<number>();
-  const walk = (nodes: NavNode[]) => {
+  const walk = (nodes: ExplainedMenuNode[]) => {
     for (const node of nodes) {
-      const xmlid = (node as NavNode & { xmlid?: string }).xmlid || node.meta?.menu_xmlid;
-      const id = Number(node.menu_id || node.id || 0);
+      const xmlid = String(node.key || '').trim();
+      const id = Number(node.menu_id || 0);
       if (xmlid && allow.has(xmlid) && id && !seen.has(id)) {
         seen.add(id);
-        found.push({ id, label: node.title || node.name || node.label || `菜单 ${id}` });
+        found.push({ id, label: node.name || `菜单 ${id}` });
       }
       if (node.children?.length) {
         walk(node.children);
@@ -809,37 +800,38 @@ const roleMenus = computed(() => {
   return found.slice(0, 6);
 });
 
-function handleSelect(node: NavNode) {
-  if (!node.menu_id && node.id) {
-    node.menu_id = node.id as number;
-  }
-  const routePath = asText(node.meta?.route);
-  if (routePath) {
-    router.push({
-      path: routePath,
-      query: node.menu_id ? { menu_id: node.menu_id } : {},
-    }).catch(() => {});
+function navigateByExplainedMenuNode(node: ExplainedMenuNode) {
+  if (!node.is_clickable) {
     return;
   }
-  const sceneKey = resolveSceneKeyFromNode(node);
-  const scene = sceneKey ? getSceneByKey(sceneKey) : null;
-  if (sceneKey && scene) {
-    const rawPath = String(scene.target?.route || scene.route || `/s/${sceneKey}`).trim();
-    const resolvedPath = normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
-    router.push({ path: resolvedPath, query: { menu_id: node.menu_id || undefined } }).catch(() => {});
+  if (node.target_type === 'directory' || node.target_type === 'unavailable') {
     return;
   }
-  if (sceneKey) {
-    router.push(buildSceneRegistryFallbackPath({
-      sceneKey,
-      menuId: Number(node.menu_id || node.id || 0) || undefined,
-      label: node.title || node.name || node.label || sceneKey,
-    })).catch(() => {});
+  const routePath = asText(node.route);
+  if (!routePath) {
     return;
   }
-  if (node.menu_id) {
-    router.push(`/m/${node.menu_id}`).catch(() => {});
-  }
+  router.push(routePath).catch(() => {});
+}
+
+function handleSelect(node: ExplainedMenuNode) {
+  navigateByExplainedMenuNode(node);
+}
+
+function findMenuNodeById(nodes: ExplainedMenuNode[], menuId: number): ExplainedMenuNode | null {
+  const walk = (items: ExplainedMenuNode[]): ExplainedMenuNode | null => {
+    for (const node of items) {
+      if (node.menu_id === menuId) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes);
 }
 
 function openRoleLanding() {
@@ -847,11 +839,16 @@ function openRoleLanding() {
 }
 
 function openRoleMenu(menuId: number) {
-  router.push(`/m/${menuId}`).catch(() => {});
+  const node = findMenuNodeById(navigationTree.value, menuId);
+  if (!node) {
+    return;
+  }
+  navigateByExplainedMenuNode(node);
 }
 
 async function refreshInit() {
   await session.loadAppInit();
+  await navigationMenu.loadNavigation(true);
 }
 
 async function logout() {
