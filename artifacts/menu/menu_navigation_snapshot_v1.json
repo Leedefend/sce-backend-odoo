@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "db": "sc_demo",
+    "user_login": "__superuser__",
+    "status": "SKIP",
+    "reason": "odoo_runtime_not_available"
+  },
+  "nav_fact": {
+    "flat": [],
+    "tree": []
+  },
+  "nav_explained": {
+    "flat": [],
+    "tree": []
+  }
+}

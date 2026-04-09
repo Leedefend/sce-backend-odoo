@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-09-1505
+title: interpreter batch2 scene mapping resolver
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在菜单目标解释器中实现显式 scene 映射解析能力，支持 menu_id/action_id/menu_xmlid
+  三类映射输入，并在命中时统一输出 scene 目标解释结果。
+
+user_visible_outcome:
+  - "已产品化菜单可稳定解释为 scene 目标，不再与其他解释分支混淆"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1505.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1505.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1505.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - frontend/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 5
+  max_output_lines: 300
+
+change_rules:
+  - interpreter-layer only
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: MenuTargetInterpreterService scene mapper
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    scene 映射是解释组织语义，不改变菜单与 action 的业务事实。
+  reason: >
+    为菜单解释器建立显式 scene 优先路径，消除前端猜测并为后续 route 统一生成做输入准备。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1505.yaml"
+    - 'rg -n "def _build_scene_resolver|def _resolve_scene_key|custom_scene|scene_key" addons/smart_core/delivery/menu_target_interpreter_service.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - scene mapping resolver in menu target interpreter
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_target_interpreter_service.py
+
+depends_on:
+  - ITER-2026-04-09-1504

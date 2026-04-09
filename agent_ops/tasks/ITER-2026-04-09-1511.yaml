@@ -1,0 +1,73 @@
+task_id: ITER-2026-04-09-1511
+title: interpreter batch8 directory-only rule hardening
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  固化目录节点解释规则：目录节点必须不可点击、无 route、reason_code= DIRECTORY_ONLY。
+
+user_visible_outcome:
+  - "目录菜单行为一致，不再出现目录节点误跳转"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1511.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1511.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1511.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - frontend/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+
+change_rules:
+  - interpreter-layer only
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: MenuTargetInterpreterService directory rule
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    目录节点行为属于导航解释语义，不属于菜单事实变更。
+  reason: >
+    确保目录节点与业务目标节点边界清晰，避免交互歧义。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1511.yaml"
+    - 'rg -n "def _is_directory_only|DIRECTORY_ONLY|is_clickable = False" addons/smart_core/delivery/menu_target_interpreter_service.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - hardened directory-only interpretation rule
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_target_interpreter_service.py
+
+depends_on:
+  - ITER-2026-04-09-1510

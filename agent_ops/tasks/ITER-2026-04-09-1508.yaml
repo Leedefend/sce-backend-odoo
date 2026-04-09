@@ -1,0 +1,73 @@
+task_id: ITER-2026-04-09-1508
+title: interpreter batch5 url and unavailable adjudication
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在菜单目标解释器中补齐 act_url 解释与 unavailable 原因码，确保每个不可用节点可审计。
+
+user_visible_outcome:
+  - "外链菜单有 explicit_url 结果，不可用菜单具备明确 reason_code"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1508.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1508.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1508.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - frontend/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+
+change_rules:
+  - interpreter-layer only
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: MenuTargetInterpreterService url/unavailable adjudicator
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    url/unavailable 分类属于导航目标解释，不改变业务事实层。
+  reason: >
+    消除“点击后才发现不可达”的不确定性，给出明确的 URL 与不可用原因码。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1508.yaml"
+    - 'rg -n "TARGET_MISSING|ACTION_INVALID|external_url|target_type = \"url\"|PERMISSION_DENIED" addons/smart_core/delivery/menu_target_interpreter_service.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - url and unavailable reason-code adjudication
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_target_interpreter_service.py
+
+depends_on:
+  - ITER-2026-04-09-1507
