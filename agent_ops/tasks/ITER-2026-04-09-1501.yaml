@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1501
+title: batch4 expose unified facts-only menu outlet
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  提供统一可信的菜单事实出口，返回 facts-only 菜单树与扁平事实，
+  不包含 route/scene/target_type/delivery_mode 等解释层字段。
+
+user_visible_outcome:
+  - "后续解释层可统一消费单一菜单事实来源"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/platform_menu_api.py
+    - addons/smart_core/delivery/menu_fact_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1501.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1501.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1501.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - record_rules/**
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+
+change_rules:
+  - facts-only output
+  - keep existing endpoint contract envelope (ok/meta)
+  - forbid route/scene/delivery inference fields
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform fact layer
+  module: Platform menu facts API
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    统一菜单事实出口属于平台事实发布，不应混入解释策略。
+  reason: >
+    按 Batch4 要求，对 `/api/menu/tree` 输出进行事实层统一，供后续解释层单向消费。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1501.yaml"
+    - 'rg -n "MenuFactService|nav_fact|action_meta|has_children" addons/smart_core/controllers/platform_menu_api.py'
+    - 'python3 -c "from pathlib import Path; t=Path(\"addons/smart_core/controllers/platform_menu_api.py\").read_text(encoding=\"utf-8\"); forbidden=[\"scene_key\",\"delivery_mode\",\"target_type\",\"active_match\"]; print(\"forbidden_hits\", [k for k in forbidden if k in t])"'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - unified menu facts-only API outlet
+
+rollback:
+  - git restore addons/smart_core/controllers/platform_menu_api.py
+  - git restore addons/smart_core/delivery/menu_fact_service.py
+
+depends_on:
+  - ITER-2026-04-09-1500

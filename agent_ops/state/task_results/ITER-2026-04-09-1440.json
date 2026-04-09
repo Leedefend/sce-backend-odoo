@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-04-09-1440",
+  "batch": "1/1",
+  "status": "PASS_WITH_RISK",
+  "summary": "Tri-view runtime replay confirms action_open mode carrying and frontend mode-consumer markers after 1439; admin/pm search behavior is effective while finance/outsider project samples are empty in this dataset.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1440.yaml",
+    "runtime replay -> artifacts/playwright/iter-2026-04-09-1440/tri_view_runtime_replay.json",
+    "static markers -> artifacts/playwright/iter-2026-04-09-1440/tri_view_static_markers.json"
+  ],
+  "artifacts": [
+    "artifacts/playwright/iter-2026-04-09-1440/tri_view_runtime_replay.json",
+    "artifacts/playwright/iter-2026-04-09-1440/tri_view_static_markers.json"
+  ],
+  "risks": [
+    "No browser-level click replay evidence in this container; closure is based on API/runtime + static consumer-chain checks.",
+    "finance/outsider project samples are empty, so search effectiveness cannot be observed on non-empty project data for those roles."
+  ],
+  "next_step": "Run a browser-capable replay batch for final no-risk closure, or proceed to next objective with current low-risk governance evidence baseline."
+}

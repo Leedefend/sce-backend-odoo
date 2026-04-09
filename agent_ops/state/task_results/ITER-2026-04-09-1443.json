@@ -1,0 +1,55 @@
+{
+  "task_id": "ITER-2026-04-09-1443",
+  "status": "PASS",
+  "mode": "scan",
+  "stage_boundary_ok": true,
+  "verification": {
+    "task_contract_validation": "PASS"
+  },
+  "scan_candidates": [
+    {
+      "path": "addons/smart_core/handlers/load_contract.py",
+      "module": "load_contract semantic projection",
+      "feature": "action gate requires_write heuristic",
+      "reason": "keyword-based requires_write inference"
+    },
+    {
+      "path": "addons/smart_core/handlers/load_contract.py",
+      "module": "load_contract semantic projection",
+      "feature": "closed-state action blocking",
+      "reason": "state-based action disabling in interpreter"
+    },
+    {
+      "path": "addons/smart_core/handlers/load_contract.py",
+      "module": "load_contract semantic projection",
+      "feature": "x2many editable fallback",
+      "reason": "derive create/unlink from readonly when policies missing"
+    },
+    {
+      "path": "addons/smart_core/handlers/load_contract.py",
+      "module": "load_contract semantic projection",
+      "feature": "tree/kanban row action synthesis",
+      "reason": "interpreter emits action enabled flags"
+    },
+    {
+      "path": "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+      "module": "page assembler",
+      "feature": "access policy injection",
+      "reason": "assembler applies allow/degrade/block surface policy"
+    },
+    {
+      "path": "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+      "module": "page assembler",
+      "feature": "view semantic coercion",
+      "reason": "assembler coerces view semantic keys with defaults"
+    },
+    {
+      "path": "addons/smart_core/handlers/api_data_write.py",
+      "module": "write intent policy gate",
+      "feature": "required group gate before write flow",
+      "reason": "required groups and ACL may diverge"
+    }
+  ],
+  "risk_level": "low",
+  "next_step": "open screen stage to classify candidate ownership and remediation scope"
+}

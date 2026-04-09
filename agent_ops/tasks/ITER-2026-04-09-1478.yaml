@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1478
+title: implement list grouped-toolbar loading-gate parity
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛 ListPage 分组工具条在 loading 态的交互门控，
+  防止请求处理中继续触发展开/收起/样本量/组内排序等操作。
+
+user_visible_outcome:
+  - "分组列表加载中，分组工具条关键控件不可操作，状态更稳定"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1478.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1478.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1478.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ListPage grouped toolbar
+  module_owner: frontend list page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修复前端交互门控，不更改后端分组语义与数据。
+  reason: >
+    分组态已有并发分页加载能力，工具条在 loading 时继续可点会制造竞态与体验抖动。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1478.yaml"
+    - "rg -n \"grouped-sort-btn|groupSampleLimit|:disabled=\\\"loading\"\" frontend/apps/web/src/pages/ListPage.vue"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - list grouped-toolbar loading-gate patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1478.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1478.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1477

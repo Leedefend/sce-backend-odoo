@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-09-1408",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Implemented P1-A kanban parity refinement by prioritizing activeGroupByField for kanban grouping and resolving card tone via semantic field candidates before fallback.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1408.yaml",
+    "python3 scripts/verify/search_groupby_savedfilters_guard.py",
+    "python3 scripts/verify/view_type_render_coverage_guard.py"
+  ],
+  "risks": [
+    "No backend contract change; behavior depends on existing active group_by and status field declarations."
+  ],
+  "next_step": "Open P1-B verify batch for debug/advanced_view boundary cleanup (C3+C7)."
+}

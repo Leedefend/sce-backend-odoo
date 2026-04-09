@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-09-1420
+title: verify frontend redeploy for iterative effect validation
+status: active
+type: governance
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  按当前开发环境口径重启前端开发态服务（5174），用于用户验证本轮迭代效果。
+
+user_visible_outcome:
+  - "前端服务重新部署并可访问"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1420.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1420.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1420.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 4
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify stage executes declared checks only
+  - no implementation code change in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Runtime deployment verification
+  module: frontend dev runtime (vite)
+  module_owner: dev scripts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只重启前端运行时，不改后端语义。
+  reason: >
+    按用户要求立即重构后重新部署并提供验证入口。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1420.yaml"
+    - "FRONTEND_PROFILE=daily bash scripts/dev/frontend_dev_reset.sh"
+    - "curl -fsI http://127.0.0.1:5174/"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+
+deliverables:
+  - frontend redeploy and reachability evidence
+
+depends_on:
+  - ITER-2026-04-09-1419
+
+rollback:
+  - "pkill -f \"pnpm -C frontend/apps/web dev\" || true"
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1420.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1420.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1420.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

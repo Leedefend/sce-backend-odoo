@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1409
+title: contract-first scan backend capability for tree form kanban parity
+status: active
+type: governance
+priority: high
+mode: scan
+batch: 1/1
+
+goal: >
+  先确认后端 ui.contract 实际输出是否完整承载原生 tree/form/kanban 三视图的结构与交互语义，
+  本批仅扫描取证，不做归因结论与实现修改。
+
+user_visible_outcome:
+  - "得到后端契约承载能力证据清单（tree/form/kanban）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1409.yaml
+    - addons/smart_core/**
+    - scripts/verify/**
+    - docs/ops/**
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1409.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1409.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - scan stage may only collect candidates and evidence
+  - scan stage must not conclude root cause
+  - no implementation edits in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend contract semantic-supply diagnosis
+  module: ui.contract tree/form/kanban capability surface
+  module_owner: smart_core contract providers
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅检查场景编排契约可供给语义，不改业务事实。
+  reason: >
+    按用户要求重建“契约承载能力优先”的分析链路，先做后端能力扫描。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1409.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+
+deliverables:
+  - backend contract capability evidence candidates for tree/form/kanban
+
+depends_on:
+  - ITER-2026-04-09-1408
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1409.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1409.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1409.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

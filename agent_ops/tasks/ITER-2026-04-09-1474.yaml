@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1474
+title: implement list grouped-hint interaction copy parity
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛 ListPage 顶部交互提示文案：分组模式使用分组语义提示，
+  非分组模式保留列表行提示，避免误导用户操作路径。
+
+user_visible_outcome:
+  - "分组模式下提示文案与实际交互一致（分组内行/分组操作）"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1474.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1474.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1474.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ListPage interaction hints
+  module_owner: frontend list page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅调整前端提示表达，不改后端契约或业务事实。
+  reason: >
+    分组模式已与平铺模式分离后，统一“点击列表行”提示不再精确表达分组交互。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1474.yaml"
+    - "rg -n \"rowActionHintText|groupedRows.value.length\" frontend/apps/web/src/pages/ListPage.vue"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - list grouped-hint copy parity patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1474.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1474.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1473

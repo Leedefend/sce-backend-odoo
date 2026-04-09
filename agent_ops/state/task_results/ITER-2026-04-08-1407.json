@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1407",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Implemented P0-C by adding kanban intent/field parity checks into native config-center parity verify flow, aligned default DB to sc_demo, and made outsider probe optional by default.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1407.yaml",
+    "python3 scripts/verify/native_business_admin_config_center_intent_parity_verify.py",
+    "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  ],
+  "risks": [
+    "Outsider role probe is now optional unless STRICT_OUTSIDER_ROLE=1 is set for strict environments."
+  ],
+  "next_step": "Open P1-A parity batch for kanban interaction/detail alignment after P0 stage gate PASS."
+}

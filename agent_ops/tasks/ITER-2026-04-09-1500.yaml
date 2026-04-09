@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-09-1500
+title: batch3 audit menu fact anomalies
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  对菜单事实快照执行结构性异常审计，输出异常分类清单与审计文档，
+  仅停留在事实层，不做自动修复。
+
+user_visible_outcome:
+  - "菜单层脏数据与结构风险可审计、可追溯"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - scripts/verify/menu_fact_anomaly_audit.py
+    - docs/menu/menu_fact_audit_v1.md
+    - artifacts/menu/menu_fact_anomalies_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1500.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1500.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1500.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - record_rules/**
+
+limits:
+  max_files: 8
+  max_output_lines: 320
+
+change_rules:
+  - fact-layer audit only; no mutation/repair in this batch
+  - anomalies must be explicit and categorized
+  - no route/scene/delivery-mode fields
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform fact layer
+  module: Menu fact anomaly auditor
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    菜单结构异常识别属于事实审计，不属于前端解释策略。
+  reason: >
+    按专项治理 Batch3 要求，形成孤儿/空菜单/无效action/混乱菜单/sequence 风险清单。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1500.yaml"
+    - "python3 scripts/verify/menu_fact_anomaly_audit.py --snapshot artifacts/menu/menu_fact_snapshot_v1.json --output artifacts/menu/menu_fact_anomalies_v1.json"
+    - 'python3 -c "import json; from pathlib import Path; data=json.loads(Path(\"artifacts/menu/menu_fact_anomalies_v1.json\").read_text(encoding=\"utf-8\")); print(\"anomaly_keys\", sorted(list(data.get(\"anomalies\", {}).keys()))[:3])"'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - menu anomaly auditor
+  - anomaly snapshot
+  - menu audit doc
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_fact_service.py
+  - git restore scripts/verify/menu_fact_anomaly_audit.py
+  - git restore docs/menu/menu_fact_audit_v1.md
+  - git restore artifacts/menu/menu_fact_anomalies_v1.json
+
+depends_on:
+  - ITER-2026-04-09-1499

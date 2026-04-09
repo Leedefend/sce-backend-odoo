@@ -1,0 +1,101 @@
+task_id: ITER-2026-04-09-1422
+title: align custom frontend tree form kanban with native semantic_page structures
+status: active
+type: product-implementation
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  补齐三类基础视图（tree/form/kanban）的语义页面结构编排与消费，
+  使自定义前端按 semantic_page 结构直接对齐原生页面结构与核心交互。
+
+user_visible_outcome:
+  - "自定义 tree/form/kanban 页面结构与原生结构对齐"
+  - "页面渲染优先消费 semantic_page，不再依赖零散回退口径"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1422.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1422.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1422.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - addons/smart_core/handlers/load_contract.py
+    - frontend/apps/web/src/views/ActionView.vue
+    - frontend/apps/web/src/pages/ListPage.vue
+    - frontend/apps/web/src/pages/KanbanPage.vue
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/app/contractTakeover.ts
+    - frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts
+    - frontend/apps/web/src/components/page/PageRenderer.vue
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 14
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive changes only
+  - frontend must consume backend semantics, no model-specific inference
+  - no ACL or financial semantic changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Scenario UI semantic consumption
+  module: smart_core semantic_page + frontend action rendering
+  module_owner: smart_core handlers and frontend action runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批目标是补齐可消费的页面结构语义组织，不新增业务事实。
+  reason: >
+    当前后端只完成部分结构编排、前端消费不完整，导致自定义页面结构
+    与原生 tree/form/kanban 不对齐。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1422.yaml"
+    - "python3 scripts/verify/native_business_admin_config_center_intent_parity_verify.py"
+    - "pnpm -C frontend/apps/web build"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - semantic_page_contract_incomplete
+
+deliverables:
+  - tree form kanban semantic structure parity implementation
+  - verification evidence and risk report
+
+depends_on:
+  - ITER-2026-04-09-1421
+
+rollback:
+  - "git restore addons/smart_core/handlers/load_contract.py"
+  - "git restore frontend/apps/web/src/views/ActionView.vue"
+  - "git restore frontend/apps/web/src/pages/ListPage.vue"
+  - "git restore frontend/apps/web/src/pages/KanbanPage.vue"
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+  - "git restore frontend/apps/web/src/app/contractTakeover.ts"
+  - "git restore frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts"
+  - "git restore frontend/apps/web/src/components/page/PageRenderer.vue"
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1422.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1422.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1422.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

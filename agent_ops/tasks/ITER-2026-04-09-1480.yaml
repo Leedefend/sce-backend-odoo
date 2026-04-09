@@ -1,0 +1,75 @@
+task_id: ITER-2026-04-09-1480
+title: verify native business-admin parity after 1478-1479 grouped gates
+type: governance-optimization
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  对 1478/1479 分组交互门控收敛执行阶段性 parity 校验，
+  确保 list-surface 连续迭代未破坏核心 contract 与权限口径。
+
+user_visible_outcome:
+  - "输出最新 verify 通过结果，确认可继续下一实现阶段"
+
+scope:
+  allowed_paths:
+    - docs/ops/business_admin_config_center_intent_parity_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1480.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1480.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1480.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - verify-only batch
+  - no implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification gate
+  module: native parity for business-admin config-center
+  module_owner: verify-and-gate
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做 verify，不改事实层与编排输出。
+  reason: >
+    在 grouped 交互门控连续收敛后执行阶段门禁，保证持续可回归。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1480.yaml"
+    - "python3 scripts/verify/native_business_admin_config_center_intent_parity_verify.py"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - verify checkpoint result
+
+rollback:
+  - git restore docs/ops/business_admin_config_center_intent_parity_v1.md
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1480.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1480.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1479

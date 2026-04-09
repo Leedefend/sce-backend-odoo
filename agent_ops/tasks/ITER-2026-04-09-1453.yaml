@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-09-1453
+title: verify release business-fact completeness against baseline checklist
+status: active
+type: governance
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  执行 CF-01~CF-05 验证清单，输出发布业务事实层“完善/不完善”结论。
+
+user_visible_outcome:
+  - "给出发布业务事实层完善性结论与缺口列表"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/models/release_action.py
+    - addons/smart_core/delivery/release_operator_write_model_service.py
+    - addons/smart_core/delivery/release_orchestrator.py
+    - addons/smart_core/delivery/release_execution_engine.py
+    - addons/smart_core/delivery/release_audit_trail_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1453.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1453.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1453.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - artifacts/codex/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 10
+  max_output_lines: 200
+
+change_rules:
+  - verify only
+  - no implementation changes
+  - execute declared checks only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Release business-fact governance
+  module: release fact completeness verification
+  module_owner: smart_core backend contract stack
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    本批仅验证事实承载是否完整，不修改实现。
+  reason: >
+    用户要求确认发布业务事实层是否完善，需要可追溯验证结论。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1453.yaml"
+    - "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nroot=Path('.')\nmodel=(root/'addons/smart_core/models/release_action.py').read_text(encoding='utf-8')\nwrite_model=(root/'addons/smart_core/delivery/release_operator_write_model_service.py').read_text(encoding='utf-8')\norch=(root/'addons/smart_core/delivery/release_orchestrator.py').read_text(encoding='utf-8')\nengine=(root/'addons/smart_core/delivery/release_execution_engine.py').read_text(encoding='utf-8')\naudit=(root/'addons/smart_core/delivery/release_audit_trail_service.py').read_text(encoding='utf-8')\nchecks={}\nchecks['CF-01']=all(k in model for k in ['action_type','state','product_key','base_product_key','edition_key','request_payload_json','result_payload_json','diagnostics_json','reason_code','requested_at','executed_at','completed_at'])\nchecks['CF-02']=all(k in model for k in ['policy_key','approval_required','approval_state','allowed_executor_role_codes_json','required_approver_role_codes_json','policy_snapshot_json','approved_by_user_id','approved_at','approval_note'])\nchecks['CF-03']=all(k in model for k in ['execution_protocol_version','execution_trace_json']) and ('RELEASE_EXECUTION_PROTOCOL_VERSION' in model)\nchecks['CF-04']=all(k in orch for k in ['submit_write_model','_create_action_record','_finalize_action','approval_state','reason_code']) and ('ReleaseExecutionEngine' in orch) and ('build_from_intent' in write_model)\nchecks['CF-05']=all(k in audit for k in ['build_audit_trail','build_runtime_summary','release_actions','release_snapshots','lineage','runtime'])\nstatus='PASS' if all(checks.values()) else 'FAIL'\nout={'status':status,'checks':checks}\nprobe=Path('artifacts/codex/boundary-probes/20260409T1602_release_fact_verify')\nprobe.mkdir(parents=True,exist_ok=True)\n(probe/'release_fact_completeness_verify.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')\nprint(json.dumps({'status':status,'artifact':str(probe/'release_fact_completeness_verify.json')},ensure_ascii=False))\nif status!='PASS':\n    raise SystemExit(2)\nPY"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - verify_failed
+
+deliverables:
+  - release fact completeness verify artifact
+  - conclusion report
+
+depends_on:
+  - ITER-2026-04-09-1452
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1453.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1453.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1453.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

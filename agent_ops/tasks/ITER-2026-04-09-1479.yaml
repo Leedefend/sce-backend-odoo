@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1479
+title: implement grouped-header action loading-gate parity
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛分组块头部动作在 loading 态的门控一致性，
+  包括组展开/收起与“查看全部”按钮，降低并发交互竞态。
+
+user_visible_outcome:
+  - "分组加载中时，组头动作受控禁用，交互反馈更一致"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1479.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1479.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1479.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ListPage grouped header actions
+  module_owner: frontend list page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只修复前端动作门控，不触及后端分组数据供应。
+  reason: >
+    分组工具条已接入 loading 门控，需让组头按钮保持同口径，避免局部交互越界。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1479.yaml"
+    - 'rg -n "group-toggle|group-open-btn|Boolean\\(group.loading\\)|:disabled=\"loading\"" frontend/apps/web/src/pages/ListPage.vue'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - grouped-header loading-gate patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1479.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1479.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1478

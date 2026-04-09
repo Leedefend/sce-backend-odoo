@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-09-1495
+title: implement form input mutation lock guards
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  为 ContractFormPage 的字段写入函数与 onchange roundtrip 增加交互锁门控，
+  防止 loading/busy 期间写入本地草稿并触发不必要 roundtrip。
+
+user_visible_outcome:
+  - "form 输入变更链路在忙碌态更一致、更可控"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1495.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1495.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1495.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ContractFormPage input mutation chain
+  module_owner: frontend contract form page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅增强前端消费链路门控，不改变后端契约语义。
+  reason: >
+    在动作入口与关系入口门控后，补齐字段输入写入链路门控，收敛 form 交互一致性。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1495.yaml"
+    - 'rg -n "function (setBooleanField|setMany2oneField|setSelectionField|setRelationMultiField|setTextField|runOnchangeRoundtrip)\(" frontend/apps/web/src/pages/ContractFormPage.vue'
+    - 'rg -n "if \(isInteractionLocked.value\) return;" frontend/apps/web/src/pages/ContractFormPage.vue'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - form input mutation lock guard patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ContractFormPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1495.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1495.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1494

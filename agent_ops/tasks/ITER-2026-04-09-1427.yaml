@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1427
+title: verify tri-view parity after bootstrap-ready and sample-scope correction
+status: active
+type: governance
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在修正“登录就绪判定 + 样本范围”后，重新执行 tree/form/kanban
+  原生与自定义对比，输出真实差异。
+
+user_visible_outcome:
+  - "输出去除假阳性后的三视图真实差异清单"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1427.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1427.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1427.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - artifacts/playwright/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify stage executes declared checks only
+  - no implementation code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance UI parity verification
+  module: playwright parity evidence rerun
+  module_owner: verify runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅重跑验证并输出差异，不修改后端语义。
+  reason: >
+    上一批已确定假阳性来源，本批需要给出校正后的三视图对齐事实。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1427.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - evidence_not_generated
+
+deliverables:
+  - corrected tri-view parity evidence and delta summary
+
+depends_on:
+  - ITER-2026-04-09-1426
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1427.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1427.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1427.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

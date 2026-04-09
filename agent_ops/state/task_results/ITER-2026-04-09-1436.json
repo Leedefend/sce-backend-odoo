@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-04-09-1436",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Fixed api.data search_term mapping and search-domain composition so runtime search filtering is effective and aligned with explicit domain behavior.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1436.yaml",
+    "python3 -m py_compile addons/smart_core/handlers/api_data.py",
+    "make restart",
+    "runtime probe -> artifacts/playwright/iter-2026-04-09-1436/api_data_search_term_probe.json"
+  ],
+  "artifacts": [
+    "artifacts/playwright/iter-2026-04-09-1436/api_data_search_term_probe.json"
+  ],
+  "risks": [],
+  "next_step": "Open ITER-2026-04-09-1437 verify batch to rerun role-parallel parity closure after search fix."
+}

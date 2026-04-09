@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1468
+title: implement list-surface searchable metadata consumer convergence
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛 ActionView 列表搜索元数据消费路径，
+  消除因本地标签去重导致的 searchable 字段误删与 search panel 重复候选。
+
+user_visible_outcome:
+  - "列表页搜索/分面候选与契约语义保持稳定一致"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/ActionView.vue
+    - agent_ops/tasks/ITER-2026-04-09-1468.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1468.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1468.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no business fact or ACL changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ActionView list surface
+  module_owner: frontend action runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修复前端消费分叉，不调整后端契约供应。
+  reason: >
+    1467 已锁定实现家族为 list-surface consumer，需先修复可确定的消费偏差点。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1468.yaml"
+    - "rg -n \"listSearchableFieldMetadata|searchPanelLabels|listSearchPanelOptions\" frontend/apps/web/src/views/ActionView.vue"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - list-surface consumer convergence patch
+
+rollback:
+  - git restore frontend/apps/web/src/views/ActionView.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1468.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1468.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1467

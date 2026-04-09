@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-09-1446",
+  "status": "FAIL",
+  "mode": "verify",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "pm_edit_tx_smoke": "PASS",
+    "pm_execute_button_smoke": "PASS",
+    "pm_file_upload_smoke": "FAIL_403"
+  },
+  "findings": {
+    "blocked_intent": "file.upload",
+    "role": "sc_fx_pm",
+    "suspected_policy_source": "addons/smart_core/handlers/file_upload.py REQUIRED_GROUPS"
+  },
+  "risk_level": "medium",
+  "next_step": "open implementation batch to unify write-intent required-group policy and rerun pm/finance full matrix"
+}

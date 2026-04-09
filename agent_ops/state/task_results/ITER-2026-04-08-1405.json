@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-08-1405",
+  "batch": "1/1",
+  "status": "PASS",
+  "summary": "Implemented P0-A tree parity gate: legacy all/active/archived filter controls now appear only when active field exists.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1405.yaml",
+    "python3 scripts/verify/search_groupby_savedfilters_guard.py",
+    "python3 scripts/verify/view_type_render_coverage_guard.py"
+  ],
+  "risks": [
+    "Full-chain preflight deferred to P0 stage close by explicit user instruction for iteration efficiency."
+  ],
+  "next_step": "Open P0-B verify batch for form structure parity; run deferred full-chain preflight at P0 closing gate."
+}

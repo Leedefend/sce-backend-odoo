@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-09-1455
+title: high-risk release model acl classification implementation
+status: active
+type: permission-governance
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  对发布域模型（sc.release.action / sc.edition.release.snapshot）落地 A/B/C/D 权限分类，
+  在业务事实层显式定义可读/可写边界。
+
+user_visible_outcome:
+  - "发布模型 ACL 完成分类并在运行态可验证"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/security/smart_core_security.xml
+    - addons/smart_core/security/ir.model.access.csv
+    - agent_ops/tasks/ITER-2026-04-09-1455.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1455.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1455.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/__manifest__.py
+    - record_rules/**
+    - frontend/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+
+change_rules:
+  - high-risk dedicated acl batch
+  - additive acl changes only
+  - no record rule changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform business-fact permission layer
+  module: smart_core release models acl
+  module_owner: smart_core backend contract stack
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    发布模型访问边界属于平台业务事实权限定义，应由 ACL 层直接承载。
+  reason: >
+    用户已特别授权直接执行 ACL 分类落地，并要求保留迭代记录。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1455.yaml"
+    - "make restart"
+    - "cat <<'PY' | make odoo.shell.exec DB_NAME=sc_demo\nacl=env['ir.model.access'].sudo().search([('model_id.model','in',['sc.release.action','sc.edition.release.snapshot'])],order='model_id,group_id')\nrows=[]\nfor a in acl:\n    gid=a.group_id.id if a.group_id else 0\n    xml=''\n    if gid:\n      xml=(a.group_id.get_external_id() or {}).get(gid,'')\n    rows.append((a.model_id.model,xml,bool(a.perm_read),bool(a.perm_write),bool(a.perm_create),bool(a.perm_unlink)))\nprint(rows)\nPY"
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - acl_verification_mismatch
+
+deliverables:
+  - acl classification patch
+  - runtime acl evidence
+
+depends_on:
+  - ITER-2026-04-09-1454
+
+rollback:
+  - "git restore addons/smart_core/security/smart_core_security.xml"
+  - "git restore addons/smart_core/security/ir.model.access.csv"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1455.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1455.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

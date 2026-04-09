@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1441
+title: verify browser-level tri-view click replay closure in container runtime
+status: active
+type: governance
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在容器内执行前端 tree/form/kanban 浏览器侧 smoke 回放，补齐点击级证据，
+  收口 1440 的残余风险。
+
+user_visible_outcome:
+  - "输出浏览器点击回放证据与无风险/有风险判定"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1441.yaml
+    - artifacts/playwright/**
+    - artifacts/backend/**
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1441.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1441.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - verify stage only
+  - no implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance parity verification
+  module: browser tri-view click replay
+  module_owner: verify runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅做运行态点击回放验证，不修改后端语义。
+  reason: >
+    用户要求立即执行，补齐浏览器层交互证据闭环。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1441.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - verification_evidence_incomplete
+
+deliverables:
+  - browser-level tri-view replay evidence
+
+depends_on:
+  - ITER-2026-04-09-1440
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1441.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1441.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1441.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

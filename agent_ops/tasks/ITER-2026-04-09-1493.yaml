@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1493
+title: implement form relation and one2many lock guards
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  为 ContractFormPage 的关系字段新建入口与 one2many 行操作补齐函数层交互锁守卫，
+  防止 loading/busy 期间重复触发行增删与关系新建跳转。
+
+user_visible_outcome:
+  - "form 关系字段与子表行操作在忙碌态更稳定"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1493.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1493.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1493.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ContractFormPage relation/one2many handlers
+  module_owner: frontend contract form page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅前端函数门控增强，不改变后端契约承载。
+  reason: >
+    1491 已覆盖 form 主动作入口，本批补齐关系字段与 one2many 行编辑入口，
+    继续收敛 form 交互并发一致性。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1493.yaml"
+    - 'rg -n "function (addOne2manyRow|removeOne2manyRow|restoreOne2manyRow|openRelationCreateForm)\(" frontend/apps/web/src/pages/ContractFormPage.vue'
+    - 'rg -n "if \(isInteractionLocked.value\) return;" frontend/apps/web/src/pages/ContractFormPage.vue'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - form relation/one2many lock guard patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ContractFormPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1493.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1493.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1492

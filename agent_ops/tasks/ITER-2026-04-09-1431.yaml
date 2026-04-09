@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-09-1431
+title: scan parallel role sampling over customer mainline full project lifecycle
+status: active
+type: governance
+priority: high
+mode: scan
+batch: 1/1
+
+goal: >
+  使用客户真实角色并行采样核心业务主线（项目全流程相关场景），
+  覆盖入口可见性、页面结构、数据样本、操作可用性事实证据。
+
+user_visible_outcome:
+  - "输出角色并行采样证据矩阵（不下结论）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1431.yaml
+    - artifacts/playwright/**
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1431.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1431.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - scan stage only produces candidate facts
+  - no cross-layer conclusion
+  - no implementation changes
+
+execution:
+  role_parallel_allowed: true
+  role_parallel_stage: scan
+  role_parallel_roles:
+    - pm
+    - executive
+    - admin
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance role-based fact scan
+  module: customer mainline lifecycle parity evidence
+  module_owner: verify runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只采样事实证据，不改业务事实或编排语义。
+  reason: >
+    用户要求并行角色同步采样，并以项目全流程主线为覆盖面。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1431.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - role_parallel_sampling_incomplete
+
+deliverables:
+  - parallel role sampling matrix across lifecycle mainline scenes
+
+depends_on:
+  - ITER-2026-04-09-1430
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1431.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1431.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1431.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

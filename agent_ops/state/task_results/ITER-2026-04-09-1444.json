@@ -1,0 +1,52 @@
+{
+  "task_id": "ITER-2026-04-09-1444",
+  "status": "PASS",
+  "mode": "screen",
+  "stage_boundary_ok": true,
+  "verification": {
+    "task_contract_validation": "PASS"
+  },
+  "source_scan": "ITER-2026-04-09-1443",
+  "screened_ownership": {
+    "business_fact_required": [
+      {
+        "path": "addons/smart_core/handlers/load_contract.py",
+        "feature": "closed-state action blocking"
+      },
+      {
+        "path": "addons/smart_core/handlers/load_contract.py",
+        "feature": "x2many editable fallback"
+      }
+    ],
+    "permission_fact_required": [
+      {
+        "path": "addons/smart_core/handlers/load_contract.py",
+        "feature": "action gate requires_write heuristic"
+      },
+      {
+        "path": "addons/smart_core/handlers/load_contract.py",
+        "feature": "tree/kanban row action synthesis"
+      },
+      {
+        "path": "addons/smart_core/handlers/api_data_write.py",
+        "feature": "required group gate before write flow"
+      }
+    ],
+    "scene_orchestration_allowed": [
+      {
+        "path": "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+        "feature": "access policy injection"
+      },
+      {
+        "path": "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+        "feature": "view semantic coercion"
+      }
+    ]
+  },
+  "bounded_remediation_scope": [
+    "addons/smart_core/handlers/load_contract.py",
+    "addons/smart_core/handlers/api_data_write.py"
+  ],
+  "risk_level": "medium",
+  "next_step": "open implementation batch to remove interpreter-side business/permission adjudication and keep contract as fact carrier"
+}

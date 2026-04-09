@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-09-1465
+title: align orchestration guard actor to platform admin only
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 release_operator_orchestration_guard 的执行口径：
+  发布动作不再使用 demo_pm，而统一使用平台发布管理员身份。
+
+user_visible_outcome:
+  - "orchestration guard 与 admin-only 发布权限策略一致"
+
+scope:
+  allowed_paths:
+    - scripts/verify/release_operator_orchestration_guard.sh
+    - agent_ops/tasks/ITER-2026-04-09-1465.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1465.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1465.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+
+change_rules:
+  - minimal guard actor change only
+  - keep platform-admin-only release policy
+  - no role grants to demo_pm
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification identity policy alignment
+  module: release operator orchestration guard
+  module_owner: verify-and-gate surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    本批只对齐验证执行身份与已确认权限事实，不改业务事实结构。
+  reason: >
+    1464 失败表明 guard 仍使用 demo_pm 执行发布动作，与用户策略冲突。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1465.yaml"
+    - "DB_NAME=sc_demo make verify.release.operator_orchestration_guard"
+    - "DB_NAME=sc_demo make verify.release.operator_write_model_guard"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - admin_only_policy_broken
+
+deliverables:
+  - orchestration guard actor fix
+  - release guard verification evidence
+
+rollback:
+  - git restore scripts/verify/release_operator_orchestration_guard.sh
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1465.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1465.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1464

@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1481
+title: implement grouped-page-controls global-loading-gate parity
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛分组分页控件在全局 loading 态的门控，
+  确保组内分页与跳转在页面加载期间不可操作。
+
+user_visible_outcome:
+  - "页面加载中时，分组内分页按钮与跳转输入统一禁用"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1481.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1481.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1481.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ListPage grouped pagination controls
+  module_owner: frontend list page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修正前端分页交互门控，不调整后端分页事实。
+  reason: >
+    当前组分页控件仅受 group.loading 控制，需并入口径纳入全局 loading。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1481.yaml"
+    - 'rg -n "group-page-btn|group-page-input|loading \|\| Boolean\(group.loading\)" frontend/apps/web/src/pages/ListPage.vue'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - grouped-page controls loading-gate patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1481.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1481.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1480

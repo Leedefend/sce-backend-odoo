@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-09-1450
+title: remove execute and release operator required-group overreach
+status: active
+type: backend-implementation
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  消除 execute_button 与 release.operator.* 的解释层组门禁越界，
+  使写意图由后端事实权限与编排校验裁决而非 REQUIRED_GROUPS 前置裁决。
+
+user_visible_outcome:
+  - "execute/release 写意图不再因 required-groups 前置拒绝"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/execute_button.py
+    - addons/smart_core/handlers/release_operator.py
+    - agent_ops/tasks/ITER-2026-04-09-1450.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1450.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1450.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - artifacts/codex/**
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 7
+  max_output_lines: 220
+
+change_rules:
+  - bounded implementation only
+  - no acl file or record rule changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend permission-boundary recovery
+  module: execute and release operator handlers
+  module_owner: smart_core backend contract stack
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    写意图授权应由模型ACL/编排写模型校验决定，解释层不应以 REQUIRED_GROUPS 提前改写。
+  reason: >
+    用户明确要求职责边界收口，需要完成剩余 active group gate 意图清理。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1450.yaml"
+    - "python3 -m py_compile addons/smart_core/handlers/execute_button.py addons/smart_core/handlers/release_operator.py"
+    - "make restart"
+    - "make verify.portal.execute_button_smoke.container DB_NAME=sc_demo E2E_LOGIN=sc_fx_pm E2E_PASSWORD=prod_like"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - denial_source_still_required_groups
+
+deliverables:
+  - execute/release group gate boundary fix
+  - denial-source probe evidence
+
+depends_on:
+  - ITER-2026-04-09-1449
+
+rollback:
+  - "git restore addons/smart_core/handlers/execute_button.py"
+  - "git restore addons/smart_core/handlers/release_operator.py"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1450.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1450.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

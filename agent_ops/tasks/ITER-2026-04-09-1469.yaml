@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-09-1469
+title: implement list toolbar count-label parity convergence
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛列表工具条计数口径，保证 saved/group/search 三类计数标签严格基于
+  前端实际消费并透传到 ListPage/PageToolbar 的选项集合，避免“显示计数”与“可操作项”不一致。
+
+user_visible_outcome:
+  - "列表页高级筛选中的已保存筛选/分组/分面计数与实际可点选项一致"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/ActionView.vue
+    - agent_ops/tasks/ITER-2026-04-09-1469.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1469.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1469.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ActionView list surface
+  module_owner: frontend action runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅对齐前端计数展示口径，不改后端事实与契约供给。
+  reason: >
+    1468 修复 searchable/searchpanel 去重后，剩余差异聚焦在 toolbar count label
+    来源口径；需统一为“实际传递给 ListPage 的选项集合”。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1469.yaml"
+    - "rg -n \"listSavedFilterCountLabel|listGroupByCountLabel|listSearchPanelCountLabel\" frontend/apps/web/src/views/ActionView.vue"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - list toolbar count-label parity patch
+
+rollback:
+  - git restore frontend/apps/web/src/views/ActionView.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1469.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1469.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1468

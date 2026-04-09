@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1498
+title: batch1 scan menu fact source from ir.ui.menu
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  新增菜单事实扫描能力，以 ir.ui.menu 为唯一来源输出当前用户可见菜单事实，
+  支持扁平与树形两种结果，并生成事实快照产物。
+
+user_visible_outcome:
+  - "可导出稳定、可审计的菜单事实树与扁平事实表"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - scripts/verify/menu_fact_export.py
+    - artifacts/menu/menu_fact_snapshot_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1498.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1498.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1498.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+    - record_rules/**
+
+limits:
+  max_files: 7
+  max_output_lines: 260
+
+change_rules:
+  - fact-layer only; no route/scene/delivery-mode fields
+  - no sidebar/frontend changes
+  - no ACL/business-fact mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform fact layer
+  module: Menu fact scanner/export
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    菜单树与 action_raw 绑定属于平台事实，不是前端解释语义。
+  reason: >
+    按菜单事实源治理目标，先完成 Batch 1 扫描器，确保后续解释层仅消费唯一事实出口。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1498.yaml"
+    - "python3 scripts/verify/menu_fact_export.py --help"
+    - 'python3 -c "from pathlib import Path; p=Path(\"artifacts/menu/menu_fact_snapshot_v1.json\"); print(\"snapshot_exists\", p.exists())"'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - menu fact scan service
+  - menu fact export script
+  - menu fact snapshot artifact
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_fact_service.py
+  - git restore scripts/verify/menu_fact_export.py
+  - git restore artifacts/menu/menu_fact_snapshot_v1.json
+
+depends_on:
+  - ITER-2026-04-09-1497

@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-09-1425",
+  "batch": "1/1",
+  "status": "PASS_WITH_RISK",
+  "summary": "Collected Playwright evidence for native vs custom tree/form/kanban and produced gap classification with screenshots.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1425.yaml",
+    "node -e \"const p=require(require.resolve('playwright',{paths:['./frontend']})); console.log(Boolean(p.chromium));\""
+  ],
+  "artifacts": [
+    "artifacts/playwright/iter-2026-04-09-1425/compare.json",
+    "artifacts/playwright/iter-2026-04-09-1425/fixed_cases/compare_fixed_cases.json",
+    "artifacts/playwright/iter-2026-04-09-1425/native_tree.png",
+    "artifacts/playwright/iter-2026-04-09-1425/custom_tree.png",
+    "artifacts/playwright/iter-2026-04-09-1425/native_kanban.png",
+    "artifacts/playwright/iter-2026-04-09-1425/custom_kanban.png",
+    "artifacts/playwright/iter-2026-04-09-1425/native_form.png",
+    "artifacts/playwright/iter-2026-04-09-1425/custom_form.png"
+  ],
+  "risks": [
+    "Custom deep-link fixed cases (542/543) fall back to login in automated session while native remains reachable.",
+    "For discovered tri-view action 26, custom page shell is present but main render parity is missing versus native."
+  ],
+  "next_step": "Open a screen task to isolate deep-link bootstrap gap (token/session restore vs route guard) before final parity verification."
+}

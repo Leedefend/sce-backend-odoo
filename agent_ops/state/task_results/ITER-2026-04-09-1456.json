@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-09-1456",
+  "status": "PASS",
+  "mode": "scan",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "bounded_sudo_scan": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1456.md",
+    "candidate_count": 3
+  },
+  "conclusion": "scan-stage completed with bounded release sudo candidates",
+  "risk_level": "low",
+  "next_step": "open screen-stage task to classify candidate ownership and sudo retention/downshift"
+}
