@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1485
+title: implement list batch-handler loading-gate hardening
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  补齐 ListPage 批量操作与选择相关函数层 loading 守卫，
+  确保加载态下 batch/selection 入口不会被边界触发执行。
+
+user_visible_outcome:
+  - "加载中批量与选择动作稳定受控，避免并发误操作"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1485.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1485.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1485.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ListPage batch handlers
+  module_owner: frontend list page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅加强前端 handler 门控，不改变后端批处理语义。
+  reason: >
+    1483 已覆盖分组/分页/行点击，本批补齐批量与选择链路，形成完整 loading 守卫闭环。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1485.yaml"
+    - 'rg -n "if \(props.loading\) return;" frontend/apps/web/src/pages/ListPage.vue'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - batch-handler loading guard hardening patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1485.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1485.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1484

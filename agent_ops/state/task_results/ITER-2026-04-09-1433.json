@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-09-1433",
+  "batch": "1/1",
+  "status": "PASS_WITH_RISK",
+  "summary": "Implemented P0 backend contract-carrying patch so action_open now emits view_mode/view_modes/primary_view_type in both head and top-level payload.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1433.yaml",
+    "python3 -m py_compile addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+    "make restart"
+  ],
+  "artifacts": [
+    "artifacts/playwright/iter-2026-04-09-1433/action_open_view_mode_probe.json"
+  ],
+  "risks": [
+    "Current backend canonicalization still uses tree where native UI label may be list for equivalent list view semantics."
+  ],
+  "next_step": "Open P1 frontend batch for search/group interaction binding parity, then run role-parallel full-chain verification batch."
+}

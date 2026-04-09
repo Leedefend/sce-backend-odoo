@@ -1,0 +1,91 @@
+task_id: ITER-2026-04-08-1406
+title: P0-B verify align form section ordering with native-first layout structure
+status: active
+type: governance
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在 form 页面结构中优先保持原生 layout 分区顺序，避免默认回退分区插入到最前导致
+  的结构表达偏差。
+
+user_visible_outcome:
+  - "表单结构先显示原生 layout 分区，再显示默认补充分区"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1406.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1406.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1406.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 180
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify stage executes declared checks only
+  - no acl/financial semantics change
+  - frontend remains generic consumer
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer structure parity
+  module: ContractFormPage layout tree ordering
+  module_owner: frontend form runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅调整前端分区展示顺序，不改业务事实。
+  reason: >
+    落地 P0-B：原生布局结构优先，默认补充分区后置。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1406.yaml"
+    - "python3 scripts/verify/view_type_render_coverage_guard.py"
+    - "python3 scripts/verify/x2many_command_semantic_guard.py"
+
+stage_gate:
+  deferred_commands:
+    - "CONTRACT_PREFLIGHT_SKIP_DOCS=1 CONTRACT_PREFLIGHT_SKIP_GROUPED_GOV_BUNDLE=1 CONTRACT_PREFLIGHT_SKIP_SCENE_CAPABILITY_GUARD=1 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 BASELINE_FREEZE_ENFORCE=0 make verify.contract.preflight DB_NAME=sc_demo E2E_LOGIN=admin E2E_PASSWORD=admin"
+  policy:
+    - "Run deferred full-chain gate once at P0 stage close"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+
+
+deliverables:
+  - form structure ordering parity improvement
+  - focused verification evidence
+
+depends_on:
+  - ITER-2026-04-08-1405
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1406.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1406.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1406.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

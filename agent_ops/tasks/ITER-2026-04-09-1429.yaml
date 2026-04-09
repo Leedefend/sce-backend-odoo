@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-09-1429
+title: scan role-based native vs custom mainline visibility structure data operation evidence
+status: active
+type: governance
+priority: high
+mode: scan
+batch: 1/1
+
+goal: >
+  使用真实用户角色登录，围绕核心业务主线页面采集原生与自定义的入口可见性、
+  页面结构、数据规模、操作可达性的事实证据，不做结论归因。
+
+user_visible_outcome:
+  - "输出按角色与页面组织的原始对比证据矩阵"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1429.yaml
+    - artifacts/playwright/**
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1429.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1429.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - scan stage only captures facts and candidates
+  - no root-cause conclusion in this batch
+  - no implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance runtime fact scan
+  module: role-based tri-view parity evidence
+  module_owner: verify runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只采集消费层事实证据，不改业务事实层。
+  reason: >
+    用户要求以真实角色与业务主线做全面事实盘点，先得到可审计证据，再进入归因与计划。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1429.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - role_login_unavailable
+  - evidence_incomplete
+
+deliverables:
+  - role x page x surface raw evidence matrix
+
+depends_on:
+  - ITER-2026-04-09-1428
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1429.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1429.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1429.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

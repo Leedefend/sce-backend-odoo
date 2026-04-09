@@ -1,0 +1,23 @@
+{
+  "task_id": "ITER-2026-04-09-1447",
+  "status": "PASS",
+  "mode": "implement",
+  "changes": [
+    "addons/smart_core/handlers/file_upload.py"
+  ],
+  "verification": {
+    "task_contract_validation": "PASS",
+    "py_compile": "PASS",
+    "restart": "PASS",
+    "pm_edit_tx_smoke": "PASS",
+    "pm_execute_button_smoke": "PASS",
+    "file_upload_denial_source_probe": "PASS"
+  },
+  "evidence": {
+    "pm_edit_tx_artifact": "artifacts/codex/portal-shell-v0_8-6/20260409T032655",
+    "pm_execute_button_artifact": "artifacts/codex/portal-shell-v0_8-semantic/20260409T032703",
+    "file_upload_probe_artifact": "artifacts/codex/boundary-probes/20260409T0330_file_upload_gate/file_upload_denial_source_probe.json"
+  },
+  "risk_level": "medium",
+  "next_step": "continue removing remaining write-intent required-group overreach (unlink/batch/chatter)"
+}

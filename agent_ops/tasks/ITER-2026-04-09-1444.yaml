@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-09-1444
+title: screen contract-interpreter boundary candidates and remediation ownership
+status: active
+type: governance
+priority: high
+mode: screen
+batch: 1/1
+
+goal: >
+  仅基于 1443 scan 候选，完成架构分层归因，明确可执行修复边界与后续 verify 输入。
+
+user_visible_outcome:
+  - "输出越界候选的分层归因与修复范围（不实现、不验证）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1444.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1444.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1444.json
+    - agent_ops/state/task_results/ITER-2026-04-09-1443.json
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1443.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 8
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - single-stage execution only
+  - screen only classify scan outputs
+  - no repository rescan
+  - no implementation changes
+  - no verification commands except task validation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend semantic boundary governance
+  module: smart_core contract interpreter surface
+  module_owner: smart_core backend contract stack
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅做解释层候选分层归因，不改业务事实、不改权限事实。
+  reason: >
+    在 scan 候选基础上明确越界归属，生成可执行修复集合，避免解释层继续吸收业务语义。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1444.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - stage_boundary_broken
+  - repository_rescan_attempted
+
+deliverables:
+  - screened ownership matrix
+  - bounded remediation scope for implementation batch
+
+depends_on:
+  - ITER-2026-04-09-1443
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1444.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1444.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1444.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

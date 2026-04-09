@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1432
+title: screen aggregate parallel role lifecycle samples and classify root-cause layers
+status: active
+type: governance
+priority: high
+mode: screen
+batch: 1/1
+
+goal: >
+  汇总 1431 并行角色采样结果，对项目全流程问题按层分类：
+  业务事实层/权限定义/平台契约承载/前端消费岔路。
+
+user_visible_outcome:
+  - "输出分层分类结论与执行优先级计划"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1432.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1432.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1432.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - artifacts/playwright/**
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - screen stage only classifies evidence and outputs judgement
+  - no implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance lifecycle root-cause classification
+  module: parallel role lifecycle parity judgement
+  module_owner: verify runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做归因分类，不改业务事实与编排实现。
+  reason: >
+    用户要求并行采样后进行统一分类判断，再安排下一步计划。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1432.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - classification_incomplete
+
+deliverables:
+  - lifecycle parity layer-classification matrix and execution-ready plan
+
+depends_on:
+  - ITER-2026-04-09-1431
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1432.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1432.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1432.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

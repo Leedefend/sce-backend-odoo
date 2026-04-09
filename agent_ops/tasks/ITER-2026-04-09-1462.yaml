@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-09-1462
+title: implement release guard admin identity resolver
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在 release guard 中将审批执行身份对齐到 smart_core 发布管理员组成员，
+  消除 base.user_admin 与 smart_core ACL 事实口径偏差。
+
+user_visible_outcome:
+  - "release operator guards 在正确管理员身份下通过"
+
+scope:
+  allowed_paths:
+    - scripts/verify/release_operator_orchestration_guard.sh
+    - scripts/verify/release_operator_write_model_guard.sh
+    - agent_ops/tasks/ITER-2026-04-09-1462.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1462.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1462.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - frontend/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 240
+
+change_rules:
+  - minimal guard identity resolver changes only
+  - no ACL/security file changes
+  - no business model changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Verification identity baseline alignment
+  module: release operator guards
+  module_owner: verify-and-gate surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    本批只对齐验证身份与既有权限事实，不改业务事实定义。
+  reason: >
+    1461 screen 结论明确审批应使用 smart_core 发布管理员组成员。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1462.yaml"
+    - "DB_NAME=sc_demo make verify.release.operator_orchestration_guard"
+    - "DB_NAME=sc_demo make verify.release.operator_write_model_guard"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - uncertainty_on_admin_identity
+
+deliverables:
+  - guard admin identity resolver patch
+  - release guard verification evidence
+
+rollback:
+  - git restore scripts/verify/release_operator_orchestration_guard.sh
+  - git restore scripts/verify/release_operator_write_model_guard.sh
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1462.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1462.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1461

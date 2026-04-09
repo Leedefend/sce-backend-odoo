@@ -1,0 +1,99 @@
+task_id: ITER-2026-04-09-1466
+title: low-cost scan for native tree-form-kanban parity chain
+type: governance-optimization
+status: active
+priority: high
+mode: scan
+
+goal: >
+  对“原生三类基础视图结构对齐”主线做定点扫描，
+  收敛后端契约承载点与前端消费点候选，不做结论与实现。
+
+user_visible_outcome:
+  - "输出 tree/form/kanban 对齐候选清单（仅扫描）"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/app_config_engine/services/assemblers/page_assembler.py
+    - frontend/apps/web/src/views/ActionView.vue
+    - frontend/apps/web/src/pages/ListPage.vue
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/pages/KanbanPage.vue
+    - frontend/apps/web/src/components/page/PageToolbar.vue
+    - scripts/verify/native_business_admin_config_center_intent_parity_verify.py
+    - docs/ops/business_admin_config_center_intent_parity_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1466.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1466.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1466.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 12
+  max_candidates: 15
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - single-stage scan only
+  - scan may find candidates only
+  - no conclusions
+  - no implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Native-view parity governance
+  module: action view parity chain
+  module_owner: frontend contract consumer + backend contract assembler
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅扫描编排契约承载与前端消费链路，不改变业务事实。
+  reason: >
+    用户要求回到主线继续推进 tree/form/kanban 与原生对齐。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1466.yaml"
+    - "rg -n \"search|filter|group|sort|inline|editable|tree|form|kanban|arch|contract|schema\" addons/smart_core/app_config_engine/services/assemblers/page_assembler.py frontend/apps/web/src/views/ActionView.vue frontend/apps/web/src/pages/ListPage.vue frontend/apps/web/src/pages/ContractFormPage.vue frontend/apps/web/src/pages/KanbanPage.vue frontend/apps/web/src/components/page/PageToolbar.vue scripts/verify/native_business_admin_config_center_intent_parity_verify.py docs/ops/business_admin_config_center_intent_parity_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - stage_boundary_broken
+  - limit_exceeded
+
+deliverables:
+  - bounded parity candidate list
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-09-1466.yaml
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1466.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1466.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1465

@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-09-1435",
+  "batch": "1/1",
+  "status": "PASS_WITH_RISK",
+  "summary": "Completed post-fix role-parallel verification: view_mode carrying is present in action_open contract, while api.data search-term effectiveness remains unproven and outsider role sampling is incomplete.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1435.yaml",
+    "runtime probe -> artifacts/playwright/iter-2026-04-09-1435/post_fix_role_parallel_verify.json"
+  ],
+  "artifacts": [
+    "artifacts/playwright/iter-2026-04-09-1435/post_fix_role_parallel_verify.json"
+  ],
+  "risks": [
+    "Search-term filtering via api.data on sc.dictionary does not show count delta in admin/pm samples.",
+    "Outsider role login failed in current runtime sample, reducing role coverage."
+  ],
+  "next_step": "Open next low-risk batch to align api.data search semantics and rerun role-complete parity verification."
+}

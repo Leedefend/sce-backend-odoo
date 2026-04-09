@@ -1,0 +1,17 @@
+{
+  "task_id": "ITER-2026-04-09-1437",
+  "batch": "1/1",
+  "status": "PASS_WITH_RISK",
+  "summary": "Role-parallel closure replay confirms search-term effectiveness for admin/pm and stable action_open view-mode carrying; finance remains permission-denied by design and outsider sample is still missing.",
+  "verification": [
+    "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1437.yaml",
+    "runtime probe -> artifacts/playwright/iter-2026-04-09-1437/post_fix_role_parallel_verify.json"
+  ],
+  "artifacts": [
+    "artifacts/playwright/iter-2026-04-09-1437/post_fix_role_parallel_verify.json"
+  ],
+  "risks": [
+    "Outsider role login still fails in runtime sample, so four-role closure remains incomplete."
+  ],
+  "next_step": "Open a tiny verify batch to restore outsider credentials/sample and rerun the same parity matrix for full closure."
+}

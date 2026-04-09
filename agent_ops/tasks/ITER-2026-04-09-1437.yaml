@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-09-1437
+title: verify role-parallel closure after api.data search semantic fix
+status: active
+type: governance
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在 1436 搜索语义修复后重跑角色并行采样，确认 search_term 生效、
+  view_mode 承载持续有效，并输出收口结论。
+
+user_visible_outcome:
+  - "产出修复后角色并行验证矩阵与闭环结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1437.yaml
+    - artifacts/playwright/**
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1437.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1437.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 280
+
+change_rules:
+  - verify stage only
+  - no implementation changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance parity verification
+  module: role-parallel full-chain replay
+  module_owner: verify runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只验证修复结果，不新增语义推理。
+  reason: >
+    1436 已修复 search_term 根因，需执行并行复验完成闭环判定。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1437.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - verification_evidence_incomplete
+
+deliverables:
+  - post-fix role-parallel closure verification matrix
+
+depends_on:
+  - ITER-2026-04-09-1436
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1437.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1437.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1437.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

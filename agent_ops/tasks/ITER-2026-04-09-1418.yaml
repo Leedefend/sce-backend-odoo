@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1418
+title: p1-b-v2 verify keep advanced fallback as structure replacement only
+status: active
+type: governance
+priority: medium
+mode: verify
+batch: 1/1
+
+goal: >
+  执行 V2：advanced 兜底分支仅承载结构替代内容，将调试摘要信息限制在 HUD/debug
+  场景，避免普通路径混入调试语义。
+
+user_visible_outcome:
+  - "advanced 兜底页面在普通路径仅显示替代结构内容"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-09-1418.yaml
+    - frontend/apps/web/src/views/ActionView.vue
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1418.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1418.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verify stage executes declared checks only
+  - no acl/financial semantics change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer boundary cleanup
+  module: ActionView advanced fallback presentation
+  module_owner: frontend action runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅收敛前端展示边界，不改后端事实。
+  reason: >
+    执行 1416 定义的 V2：advanced 兜底职责纯化。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1418.yaml"
+    - "python3 scripts/verify/view_type_render_coverage_guard.py"
+    - "python3 scripts/verify/search_groupby_savedfilters_guard.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+
+deliverables:
+  - advanced fallback branch keeps structure-replacement role
+
+depends_on:
+  - ITER-2026-04-09-1417
+
+rollback:
+  - "git restore frontend/apps/web/src/views/ActionView.vue"
+  - "git restore agent_ops/tasks/ITER-2026-04-09-1418.yaml"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1418.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1418.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

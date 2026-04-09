@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-09-1445
+title: fix contract interpreter overreach and align write permission facts
+status: active
+type: backend-implementation
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  移除契约解释层对动作可用性的关键字/状态裁决，避免越界改写业务事实；
+  同步收敛 api.data.write 的额外组门禁与 ACL 事实口径。
+
+user_visible_outcome:
+  - "合同解释层仅承载事实，PM 写入能力与权限事实口径一致"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/load_contract.py
+    - addons/smart_core/handlers/api_data_write.py
+    - addons/smart_core/core/base_handler.py
+    - agent_ops/tasks/ITER-2026-04-09-1445.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1445.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1445.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 220
+
+change_rules:
+  - additive and bounded refactor only
+  - do not alter business model schema
+  - do not touch ACL files or record rules
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend semantic boundary recovery
+  module: load_contract and api_data_write
+  module_owner: smart_core backend contract stack
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    修复解释层越界裁决，改为透传事实；不在编排层新增业务事实。
+  reason: >
+    根除契约解释层越界导致的权限/状态不一致，确保事实源与契约消费口径一致。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1445.yaml"
+    - "python3 -m py_compile addons/smart_core/handlers/load_contract.py addons/smart_core/handlers/api_data_write.py"
+    - "python3 -m py_compile addons/smart_core/core/base_handler.py"
+    - "make verify.portal.edit_tx_smoke.container DB_NAME=sc_demo E2E_LOGIN=sc_fx_pm E2E_PASSWORD=prod_like"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - forbidden_path_touched
+  - uncertainty_on_permission_scope
+
+deliverables:
+  - boundary-fix patch in contract interpreter
+  - write-permission fact alignment evidence
+
+depends_on:
+  - ITER-2026-04-09-1444
+
+rollback:
+  - "git restore addons/smart_core/handlers/load_contract.py"
+  - "git restore addons/smart_core/handlers/api_data_write.py"
+  - "git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1445.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-09-1445.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

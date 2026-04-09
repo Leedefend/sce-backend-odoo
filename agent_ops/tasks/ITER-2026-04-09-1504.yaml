@@ -1,0 +1,75 @@
+task_id: ITER-2026-04-09-1504
+title: interpreter batch1 skeleton for menu target explanation
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  新增菜单目标解释器骨架服务，统一入口消费 menu_fact 并产出 navigation target 结构，
+  仅建立解释层框架，不回写事实层字段。
+
+user_visible_outcome:
+  - "菜单解释逻辑有单一后端入口，不再依赖前端分散推理"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1504.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1504.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1504.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - frontend/**
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+
+change_rules:
+  - interpreter-layer only
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: MenuTargetInterpreterService skeleton
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    解释器输出是对事实层的组织解释，不是业务事实本身。
+  reason: >
+    建立统一解释入口与标准输出骨架，为后续 scene/custom/native/url/unavailable 分批接入做准备。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1504.yaml"
+    - 'rg -n "class MenuTargetInterpreterService|def interpret\(|target_type|delivery_mode|reason_code" addons/smart_core/delivery/menu_target_interpreter_service.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - menu target interpreter skeleton service
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_target_interpreter_service.py
+
+depends_on:
+  - ITER-2026-04-09-1503

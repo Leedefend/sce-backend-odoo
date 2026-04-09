@@ -1,0 +1,88 @@
+task_id: ITER-2026-04-08-1403
+title: Scan native parity gaps for tree/form/kanban structure and interaction
+status: active
+type: governance-optimization
+priority: high
+mode: scan
+batch: 1/1
+
+goal: >
+  仅执行 scan 阶段，收集自定义前端在 tree/form/kanban 结构与交互逻辑上
+  相对原生口径的差异候选，不做结论裁决和代码实现。
+
+user_visible_outcome:
+  - "输出可进入 screen 阶段的差异候选清单（tree/form/kanban）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-08-1403.yaml
+    - agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1403.md
+    - agent_ops/state/task_results/ITER-2026-04-08-1403.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 4
+  max_candidates: 15
+  max_output_lines: 140
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - single-stage execution only
+  - scan only finds candidates
+  - no cross-stage reasoning
+  - no implementation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Frontend parity governance scan
+  module: native parity (tree/form/kanban)
+  module_owner: frontend contract consumer + verify surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本阶段仅扫描“可消费语义与交互编排差异候选”，不改业务事实字段定义。
+  reason: >
+    为下一阶段 screen/verify 提供差异候选证据，确保对齐实施可分批落地。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-08-1403.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - limit_exceeded
+  - forbidden_path_touched
+  - stage_boundary_broken
+
+
+deliverables:
+  - scan candidate list for native parity alignment
+
+depends_on:
+  - ITER-2026-04-08-1402
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-08-1403.yaml"
+  - "git restore agent_ops/reports/2026-04-08/report.ITER-2026-04-08-1403.md"
+  - "git restore agent_ops/state/task_results/ITER-2026-04-08-1403.json"
+  - "git restore docs/ops/iterations/delivery_context_switch_log_v1.md"

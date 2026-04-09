@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-09-1472
+title: implement list grouped-surface flat-table visibility parity
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛 ListPage 分组视图显示结构：当存在 groupedRows 时只呈现分组块，
+  不再并行渲染平铺 table，避免与原生分组列表双面板不一致。
+
+user_visible_outcome:
+  - "分组模式下仅显示分组结果，不再重复出现平铺列表"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ListPage.vue
+    - agent_ops/tasks/ITER-2026-04-09-1472.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1472.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1472.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - scripts/**
+    - frontend/**/security/**
+
+limits:
+  max_files: 5
+  max_output_lines: 200
+
+change_rules:
+  - minimal frontend consumer convergence only
+  - no backend contract changes
+  - no ACL or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract consumer alignment
+  module: ListPage grouped structure
+  module_owner: frontend list page
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只修正前端结构呈现，不改后端分组语义。
+  reason: >
+    当前 groupedRows 存在时仍渲染平铺 table，导致分组模式结构与原生差异显著。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1472.yaml"
+    - "rg -n \"<table v-if=\\\"!groupedRows.length\\\"\" frontend/apps/web/src/pages/ListPage.vue"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+
+deliverables:
+  - list grouped structure parity patch
+
+rollback:
+  - git restore frontend/apps/web/src/pages/ListPage.vue
+  - git restore agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1472.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-09-1472.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1471

@@ -1,0 +1,71 @@
+task_id: ITER-2026-04-09-1503
+title: batch6 freeze menu fact layer v1 contract doc
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  冻结菜单事实层 v1 协议文档，明确唯一来源、字段定义、职责边界与解释层消费关系。
+
+user_visible_outcome:
+  - "菜单事实层与解释层职责边界稳定可执行"
+
+scope:
+  allowed_paths:
+    - docs/contract/menu_fact_layer_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1503.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1503.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1503.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - frontend/**
+    - addons/**
+    - scripts/**
+
+limits:
+  max_files: 5
+  max_output_lines: 260
+
+change_rules:
+  - document-only freeze batch
+  - explicitly list responsibilities and non-responsibilities
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance contract documentation
+  module: Menu fact layer v1
+  module_owner: docs contract
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    文档冻结的是事实层协议边界，不涉及解释层行为。
+  reason: >
+    按 Batch6 要求，防止后续将 route/scene/delivery 等解释字段反向塞入事实层。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1503.yaml"
+    - 'rg -n "唯一数据来源|字段定义|不负责|route|scene|delivery" docs/contract/menu_fact_layer_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - menu fact layer v1 frozen contract doc
+
+rollback:
+  - git restore docs/contract/menu_fact_layer_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1502
