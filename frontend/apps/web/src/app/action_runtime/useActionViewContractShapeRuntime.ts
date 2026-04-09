@@ -20,7 +20,30 @@ type KanbanProfile = {
   primaryFields: string[];
   secondaryFields: string[];
   statusFields: string[];
+  metricFields: string[];
+  quickActionCount: number;
 };
+
+function asDict(value: unknown): Dict {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return value as Dict;
+}
+
+function semanticZones(contract: unknown): Dict[] {
+  const typed = asDict(contract);
+  const semanticPage = asDict(typed.semantic_page);
+  const rows = semanticPage.zones;
+  if (!Array.isArray(rows)) return [];
+  return rows.filter((item) => item && typeof item === 'object' && !Array.isArray(item)) as Dict[];
+}
+
+function findZoneBlocks(contract: unknown, zoneKey: string, blockType: string): Dict[] {
+  const zone = semanticZones(contract).find((item) => String(item.key || '').trim() === zoneKey);
+  const blocks = Array.isArray(zone?.blocks) ? zone?.blocks : [];
+  return blocks
+    .filter((item) => item && typeof item === 'object' && !Array.isArray(item))
+    .filter((item) => String((item as Dict).type || '').trim() === blockType) as Dict[];
+}
 
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
@@ -37,6 +60,18 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     if (Array.isArray(sceneColumns) && sceneColumns.length) {
       return sceneColumns;
     }
+    const detailBlocks = findZoneBlocks(contract, 'detail_zone', 'relation_table_block');
+    const zoneColumns = detailBlocks
+      .flatMap((block) => {
+        const data = asDict(block.data);
+        const rows = data.columns;
+        if (!Array.isArray(rows)) return [];
+        return rows.map((item) => String(item || '').trim()).filter(Boolean);
+      });
+    if (zoneColumns.length) {
+      return zoneColumns;
+    }
+
     const listSemantics = resolveContractListSemantics(contract);
     const semanticColumns = Array.isArray(listSemantics.columns)
       ? listSemantics.columns
@@ -98,6 +133,18 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function extractKanbanFields(contract: unknown) {
+    const detailBlocks = findZoneBlocks(contract, 'detail_zone', 'relation_card_block');
+    const zoneFields = detailBlocks
+      .flatMap((block) => {
+        const data = asDict(block.data);
+        const rows = data.fields;
+        if (!Array.isArray(rows)) return [];
+        return rows.map((item) => String(item || '').trim()).filter(Boolean);
+      });
+    if (zoneFields.length) {
+      return zoneFields;
+    }
+
     const kanbanSemantics = resolveContractKanbanSemantics(contract);
     if (Array.isArray(kanbanSemantics.card_fields) && kanbanSemantics.card_fields.length) {
       return kanbanSemantics.card_fields.map((item) => String(item || '')).filter(Boolean);
@@ -115,6 +162,26 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function extractKanbanProfile(contract: unknown): KanbanProfile {
+    const detailBlocks = findZoneBlocks(contract, 'detail_zone', 'relation_card_block');
+    const detailCard = detailBlocks[0] || {};
+    const detailData = asDict(detailCard.data);
+    const zoneSemantics = asDict(detailData.kanban_semantics);
+    if (zoneSemantics.title_field || zoneSemantics.card_fields) {
+      const cardFields = Array.isArray(zoneSemantics.card_fields)
+        ? zoneSemantics.card_fields.map((item) => String(item || '').trim()).filter(Boolean)
+        : [];
+      return {
+        titleField: String(zoneSemantics.title_field || '').trim(),
+        primaryFields: cardFields.slice(0, 2),
+        secondaryFields: cardFields.slice(2, 5),
+        statusFields: [String(zoneSemantics.group_by_field || zoneSemantics.stage_field || '').trim()].filter(Boolean),
+        metricFields: Array.isArray(zoneSemantics.metric_fields)
+          ? zoneSemantics.metric_fields.map((item) => String(item || '').trim()).filter(Boolean)
+          : [],
+        quickActionCount: Number(zoneSemantics.quick_action_count || 0),
+      };
+    }
+
     const kanbanSemantics = resolveContractKanbanSemantics(contract);
     if (kanbanSemantics.title_field || kanbanSemantics.card_fields) {
       const cardFields = Array.isArray(kanbanSemantics.card_fields)
@@ -125,6 +192,10 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
         primaryFields: cardFields.slice(0, 2),
         secondaryFields: cardFields.slice(2, 5),
         statusFields: [String(kanbanSemantics.group_by_field || kanbanSemantics.stage_field || '').trim()].filter(Boolean),
+        metricFields: Array.isArray(kanbanSemantics.metric_fields)
+          ? kanbanSemantics.metric_fields.map((item) => String(item || '').trim()).filter(Boolean)
+          : [],
+        quickActionCount: Number(kanbanSemantics.quick_action_count || 0),
       };
     }
     const typed = (contract || {}) as Dict;
@@ -139,6 +210,8 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       primaryFields: normalize(profile.primary_fields),
       secondaryFields: normalize(profile.secondary_fields),
       statusFields: normalize(profile.status_fields),
+      metricFields: normalize(profile.metric_fields),
+      quickActionCount: Number(profile.quick_action_count || 0),
     };
   }
 

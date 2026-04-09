@@ -58,6 +58,7 @@
           type="button"
           class="sort-option"
           :class="{ active: opt.value === sortValue }"
+          :disabled="loading"
           @click="onSort(opt.value)"
         >
           {{ opt.label }}
@@ -400,7 +401,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 type ToolbarChip = { key: string; label: string };
 type ToolbarSection = {
@@ -421,6 +422,7 @@ const props = defineProps<{
   sortLabel?: string;
   sortSourceLabel?: string;
   filterValue: 'all' | 'active' | 'archived';
+  hasActiveField?: boolean;
   onSearch: (value: string) => void;
   onSort: (value: string) => void;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
@@ -466,6 +468,7 @@ const props = defineProps<{
 
 const inputValue = ref(props.searchTerm || '');
 const isComposing = ref(false);
+const autoSearchTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const showAdvancedFilters = ref(false);
 const sortOptions = computed(() => Array.isArray(props.sortOptions) ? props.sortOptions : []);
 const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.quickFilters : []);
@@ -574,6 +577,9 @@ const secondarySearchPanelOptions = computed(() =>
 );
 const activeStateChips = computed(() => {
   const chips: ToolbarChip[] = [];
+  if (usesOptimizationComposition.value && routePresetChipLabel.value) {
+    chips.push({ key: `preset:${routePresetLabelText.value}`, label: `推荐筛选：${routePresetChipLabel.value}` });
+  }
   const searchText = String(props.searchTerm || '').trim();
   if (searchText && !(routePresetOverridesSearchTerm.value && routePresetLabelText.value)) {
     chips.push({ key: `search:${searchText}`, label: `搜索：${searchText}` });
@@ -638,7 +644,7 @@ const hasContractControls = computed(() =>
   || searchableFieldOptions.value.length > 0
   || Boolean(searchModeLabelText.value),
 );
-const showLegacyStatusFilters = computed(() => !hasContractControls.value);
+const showLegacyStatusFilters = computed(() => !hasContractControls.value && Boolean(props.hasActiveField));
 const showPrimaryToolbar = computed(() => {
   if (!usesOptimizationComposition.value) return true;
   return showSearchBlock.value || showSortBlock.value;
@@ -693,8 +699,17 @@ watch(
 );
 
 function onSearchInput(event: Event) {
+  if (props.loading) return;
   const target = event.target as HTMLInputElement;
   inputValue.value = target.value;
+  if (isComposing.value) return;
+  if (autoSearchTimer.value) {
+    clearTimeout(autoSearchTimer.value);
+  }
+  autoSearchTimer.value = setTimeout(() => {
+    autoSearchTimer.value = null;
+    submitSearch();
+  }, 320);
 }
 
 function onCompositionStart() {
@@ -702,17 +717,24 @@ function onCompositionStart() {
 }
 
 function onCompositionEnd(event: CompositionEvent) {
+  if (props.loading) return;
   const target = event.target as HTMLInputElement | null;
   inputValue.value = target?.value || inputValue.value;
   isComposing.value = false;
 }
 
 function submitSearch() {
+  if (props.loading) return;
   if (isComposing.value) return;
+  if (autoSearchTimer.value) {
+    clearTimeout(autoSearchTimer.value);
+    autoSearchTimer.value = null;
+  }
   props.onSearch(inputValue.value || '');
 }
 
 function resetActiveConditions() {
+  if (props.loading) return;
   if (isComposing.value) return;
   inputValue.value = '';
   props.onSearch('');
@@ -723,8 +745,16 @@ function resetActiveConditions() {
 }
 
 function toggleAdvancedFilters() {
+  if (props.loading) return;
   showAdvancedFilters.value = !showAdvancedFilters.value;
 }
+
+onBeforeUnmount(() => {
+  if (autoSearchTimer.value) {
+    clearTimeout(autoSearchTimer.value);
+    autoSearchTimer.value = null;
+  }
+});
 </script>
 
 <style scoped>

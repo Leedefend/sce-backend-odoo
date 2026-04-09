@@ -35,7 +35,7 @@
       :on-retry="onReload"
     />
 
-    <section v-else-if="groupColumns.length" class="kanban-columns">
+    <section v-else-if="showDetailZone && groupColumns.length" class="kanban-columns">
       <article
         v-for="column in groupColumns"
         :key="column.key"
@@ -45,6 +45,7 @@
           <div>
             <p class="kanban-column-label">{{ column.label }}</p>
             <p v-if="groupFieldLabel" class="kanban-column-field">{{ groupFieldLabel }}</p>
+            <p v-if="quickActionCount > 0" class="kanban-column-field">快捷操作 {{ quickActionCount }}</p>
           </div>
           <span class="kanban-column-count">{{ column.records.length }}</span>
         </header>
@@ -68,6 +69,12 @@
                 <dd>{{ semanticCell(field, row[field]).text }}</dd>
               </div>
             </dl>
+            <dl v-if="metricMetaFields.length" class="card-meta metric">
+              <div v-for="field in metricMetaFields" :key="`metric-${field}`" class="meta-row">
+                <dt>{{ fieldLabel(field) }}</dt>
+                <dd>{{ semanticCell(field, row[field]).text }}</dd>
+              </div>
+            </dl>
             <dl class="card-meta">
               <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
                 <dt>{{ fieldLabel(field) }}</dt>
@@ -79,7 +86,7 @@
       </article>
     </section>
 
-    <section v-else class="grid">
+    <section v-else-if="showDetailZone" class="grid">
       <article
         v-for="(row, index) in records"
         :key="String(row.id ?? index)"
@@ -99,6 +106,12 @@
             <dd>{{ semanticCell(field, row[field]).text }}</dd>
           </div>
         </dl>
+        <dl v-if="metricMetaFields.length" class="card-meta metric">
+          <div v-for="field in metricMetaFields" :key="`metric-${field}`" class="meta-row">
+            <dt>{{ fieldLabel(field) }}</dt>
+            <dd>{{ semanticCell(field, row[field]).text }}</dd>
+          </div>
+        </dl>
         <dl class="card-meta">
           <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
             <dt>{{ fieldLabel(field) }}</dt>
@@ -107,6 +120,13 @@
         </dl>
       </article>
     </section>
+    <StatusPanel
+      v-else
+      title="当前看板语义未开放详情区"
+      message="semantic_page 未声明 detail_zone，已按契约隐藏看板主体。"
+      variant="info"
+      :on-retry="onReload"
+    />
   </section>
 </template>
 
@@ -132,6 +152,9 @@ const props = defineProps<{
   primaryFields?: string[];
   secondaryFields?: string[];
   statusFields?: string[];
+  metricFields?: string[];
+  quickActionCount?: number;
+  activeGroupByField?: string;
   fieldLabels?: Record<string, string>;
   titleField: string;
   onReload: () => void;
@@ -140,6 +163,7 @@ const props = defineProps<{
   statusLabel: string;
   pageMode?: string;
   sceneKey?: string;
+  semanticZones?: Array<Record<string, unknown>>;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -162,21 +186,41 @@ const primaryMetaFields = computed(() => {
   if (preferred.length) return preferred.slice(0, 2);
   return fallbackMetaFields.value.filter((field) => !statusMetaFields.value.includes(field)).slice(0, 2);
 });
-const secondaryMetaFields = computed(() => {
-  const preferred = (props.secondaryFields || []).filter(
+const metricMetaFields = computed(() => {
+  const preferred = (props.metricFields || []).filter(
     (field) =>
       field
       && field !== props.titleField
       && !statusMetaFields.value.includes(field)
       && !primaryMetaFields.value.includes(field),
   );
+  return preferred.slice(0, 2);
+});
+const secondaryMetaFields = computed(() => {
+  const preferred = (props.secondaryFields || []).filter(
+    (field) =>
+      field
+      && field !== props.titleField
+      && !statusMetaFields.value.includes(field)
+      && !primaryMetaFields.value.includes(field)
+      && !metricMetaFields.value.includes(field),
+  );
   if (preferred.length) return preferred.slice(0, 3);
   return fallbackMetaFields.value
-    .filter((field) => !statusMetaFields.value.includes(field) && !primaryMetaFields.value.includes(field))
+    .filter(
+      (field) =>
+        !statusMetaFields.value.includes(field)
+        && !primaryMetaFields.value.includes(field)
+        && !metricMetaFields.value.includes(field),
+    )
     .slice(0, 3);
 });
 
 const groupField = computed(() => {
+  const active = String(props.activeGroupByField || '').trim();
+  if (active && active !== props.titleField) {
+    return active;
+  }
   const preferred = (props.statusFields || []).find((field) => field && field !== props.titleField);
   return preferred || '';
 });
@@ -185,6 +229,14 @@ const groupFieldLabel = computed(() => {
   if (!groupField.value) return '';
   return fieldLabel(groupField.value);
 });
+const semanticZoneKeySet = computed(() => {
+  const rows = Array.isArray(props.semanticZones) ? props.semanticZones : [];
+  const keys = rows
+    .map((item) => String((item && typeof item === 'object' && !Array.isArray(item) ? item.key : '') || '').trim())
+    .filter(Boolean);
+  return new Set(keys);
+});
+const showDetailZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('detail_zone'));
 
 const groupColumns = computed(() => {
   if (!groupField.value) return [];
@@ -210,8 +262,17 @@ function semanticCell(field: string, value: unknown) {
 }
 
 function rowTone(row: Record<string, unknown>) {
-  const state = row.state || row.stage_id || row.status;
-  return semanticStatus(state).tone;
+  const toneFieldCandidates = [groupField.value, ...(props.statusFields || []), 'state', 'stage_id', 'status']
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  for (const field of toneFieldCandidates) {
+    if (!(field in row)) continue;
+    const semantic = semanticCell(field, row[field]);
+    if (semantic.text !== '--') {
+      return semantic.tone;
+    }
+  }
+  return semanticStatus(row.state || row.stage_id || row.status).tone;
 }
 
 function fieldLabel(name: string) {
@@ -220,6 +281,7 @@ function fieldLabel(name: string) {
 }
 
 function handleCard(row: Record<string, unknown>) {
+  if (props.loading) return;
   props.onCardClick(row);
 }
 
