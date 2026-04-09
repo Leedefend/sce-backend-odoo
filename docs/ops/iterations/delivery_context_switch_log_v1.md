@@ -15434,3 +15434,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-09-1520 PASS：8 项 Sidebar 验证命令全部通过`
 - active_commit: `2a3d7b3`
 - next_step: `Continue: prepare classified commits for sidebar feature and governance artifacts`
+
+### 2026-04-09T18:54:10+08:00
+- blocker_key: `sidebar_classified_commit_1521`
+- layer_target: `Governance execution layer`
+- module: `Commit classification for sidebar objective`
+- reason: 将 Sidebar 纯消费化改动按 feature/governance 分类提交并收口
+- completed_step: `ITER-2026-04-09-1521 PASS：生成 202f424 + fb3c440 两类提交并完成门禁复核`
+- active_commit: `fb3c440`
+- next_step: `Continue: start next objective from clean anchor fb3c440`
