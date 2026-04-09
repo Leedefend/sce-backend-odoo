@@ -387,6 +387,7 @@ class LoadContractHandler(BaseIntentHandler):
                 return None
             card_fields = kanban_view.get("fields") if isinstance(kanban_view.get("fields"), list) else []
             profile = kanban_view.get("kanban_profile") if isinstance(kanban_view.get("kanban_profile"), dict) else {}
+            quick_actions = _normalize_action_list(kanban_view.get("quick_actions") if isinstance(kanban_view.get("quick_actions"), list) else [], default_prefix="quick")
             title_field = str(profile.get("title_field") or (card_fields[0] if card_fields else "name"))
             stage_field = str(kanban_view.get("stages_field") or profile.get("stage_field") or ("stage_id" if "stage_id" in card_fields else ""))
             subtitle_field = str(profile.get("subtitle_field") or ("manager_id" if "manager_id" in card_fields else ""))
@@ -405,7 +406,8 @@ class LoadContractHandler(BaseIntentHandler):
                 "group_by_field": str(kanban_view.get("default_group_by") or stage_field or ""),
                 "card_fields": card_fields,
                 "metric_fields": metric_fields,
-                "quick_action_count": len(kanban_view.get("quick_actions") if isinstance(kanban_view.get("quick_actions"), list) else []),
+                "quick_actions": quick_actions,
+                "quick_action_count": len(quick_actions),
                 "support_tier": "lightweight",
             }
 
@@ -462,15 +464,17 @@ class LoadContractHandler(BaseIntentHandler):
 
             return {
                 "layout_section_count": len(layout),
+                "layout": layout,
                 "has_statusbar": isinstance(form_view.get("statusbar"), dict) and bool(form_view.get("statusbar")),
                 "has_notebook": any(isinstance(node, dict) and node.get("type") == "notebook" for node in layout),
                 "has_chatter": isinstance(form_view.get("chatter"), dict) and bool(form_view.get("chatter")),
                 "has_attachments": isinstance(form_view.get("attachments"), dict) and bool(form_view.get("attachments")),
                 "relation_fields": relation_items,
                 "field_behavior_map": behavior_map,
+                "zone_keys": ["header_zone", "summary_zone", "detail_zone", "relation_zone", "collaboration_zone"],
             }
 
-        def _extract_list_semantics(tree_view, *, toolbar_actions):
+        def _extract_list_semantics(tree_view, *, toolbar_actions, search_semantics):
             if not isinstance(tree_view, dict):
                 return None
             capabilities = tree_view.get("capabilities") if isinstance(tree_view.get("capabilities"), dict) else {}
@@ -500,6 +504,8 @@ class LoadContractHandler(BaseIntentHandler):
                 },
                 "row_action_keys": [str(item.get("name") or item.get("key") or "") for item in row_actions if isinstance(item, dict)],
                 "toolbar_action_count": len(toolbar_actions),
+                "search": search_semantics if isinstance(search_semantics, dict) else {},
+                "zone_keys": ["action_zone", "detail_zone"],
                 "supports_export_current_result": True,
             }
 
@@ -523,7 +529,6 @@ class LoadContractHandler(BaseIntentHandler):
             "reason": "" if permission_verdicts["read"]["allowed"] else "permission denied",
         }
 
-        closed_states = {"done", "closed", "cancel", "cancelled", "archived"}
         state_field = ""
         state_value = ""
         state_source = "unknown"
@@ -538,44 +543,22 @@ class LoadContractHandler(BaseIntentHandler):
             state_value = str(head.get("state") or "")
             state_source = "head"
 
-        def _action_requires_write(action_key: str) -> bool:
-            lowered = str(action_key or "").lower()
-            write_tokens = ("edit", "write", "save", "create", "unlink", "delete", "archive")
-            return any(token in lowered for token in write_tokens)
-
         def _with_action_gate(action: dict):
             if not isinstance(action, dict):
                 return action
-            key = str(action.get("key") or "")
-            requires_write = _action_requires_write(key)
-            permission_allowed = bool(permission_verdicts["write"]["allowed"]) if requires_write else bool(permission_verdicts["execute"]["allowed"])
-            is_closed_state = str(state_value).lower() in closed_states if state_value else False
-            state_blocked = is_closed_state and requires_write
             current_enabled = bool(action.get("enabled", True))
-            allowed = bool(current_enabled and permission_allowed and not state_blocked)
-            reason_code = REASON_OK
-            reason = ""
-            if not allowed:
-                if not current_enabled:
-                    reason_code = str(action.get("reason_code") or "DISABLED")
-                    reason = str(action.get("reason") or "")
-                elif not permission_allowed:
-                    reason_code = REASON_PERMISSION_DENIED
-                    reason = "permission denied"
-                elif state_blocked:
-                    reason_code = REASON_STATE_BLOCKED
-                    reason = "record state blocks action"
+            reason_code = str(action.get("reason_code") or (REASON_OK if current_enabled else "DISABLED"))
+            reason = str(action.get("reason") or "")
 
             return {
                 **action,
-                "enabled": allowed,
+                "enabled": current_enabled,
                 "reason_code": reason_code,
                 "reason": reason,
                 "gate": {
-                    "allowed": allowed,
-                    "requires_write": requires_write,
-                    "state_blocked": state_blocked,
+                    "allowed": current_enabled,
                     "reason_code": reason_code,
+                    "source": "upstream",
                 },
             }
 
@@ -631,9 +614,9 @@ class LoadContractHandler(BaseIntentHandler):
                     has_tree = isinstance(sv.get("tree"), dict)
                     has_form = isinstance(sv.get("form"), dict)
                     preferred_view = "tree" if has_tree else ("form" if has_form else "tree")
-                    inline_edit = bool(policies.get("inline_edit")) if "inline_edit" in policies else (has_tree and not bool(field_mod.get("readonly")))
-                    can_create = bool(policies.get("can_create")) if "can_create" in policies else (not bool(field_mod.get("readonly")))
-                    can_unlink = bool(policies.get("can_unlink")) if "can_unlink" in policies else (not bool(field_mod.get("readonly")))
+                    inline_edit = bool(policies.get("inline_edit")) if "inline_edit" in policies else False
+                    can_create = bool(policies.get("can_create")) if "can_create" in policies else False
+                    can_unlink = bool(policies.get("can_unlink")) if "can_unlink" in policies else False
                     relation_items.append({
                         "field": field_name,
                         "relation_model": field_meta.get("relation") or "",
@@ -716,9 +699,12 @@ class LoadContractHandler(BaseIntentHandler):
         normalized_toolbar_actions = _with_action_gate_list(_normalize_action_list(toolbar_actions, default_prefix="toolbar"))
         normalized_header_actions = _with_action_gate_list(normalized_header_actions)
         form_semantics = _extract_form_semantics(views.get("form"))
-        list_semantics = _extract_list_semantics(views.get("tree"), toolbar_actions=normalized_toolbar_actions)
+        list_semantics = _extract_list_semantics(
+            views.get("tree"),
+            toolbar_actions=normalized_toolbar_actions,
+            search_semantics=search_semantics,
+        )
 
-        is_closed_state = str(state_value).lower() in closed_states if state_value else False
         action_gating = {
             "record_state": {
                 "field": state_field,
@@ -726,11 +712,10 @@ class LoadContractHandler(BaseIntentHandler):
                 "source": state_source,
             },
             "policy": {
-                "closed_states": sorted(closed_states),
+                "source": "upstream",
             },
             "verdict": {
-                "is_closed_state": is_closed_state,
-                "reason_code": REASON_STATE_BLOCKED if is_closed_state else REASON_OK,
+                "reason_code": REASON_OK,
             },
         }
 

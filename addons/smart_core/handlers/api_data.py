@@ -71,6 +71,15 @@ class ApiDataHandler(BaseIntentHandler):
     def _collect_params(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         merged: Dict[str, Any] = {}
 
+        def _is_blank(value: Any) -> bool:
+            if value is None:
+                return True
+            if isinstance(value, str):
+                return value.strip() == ""
+            if isinstance(value, (list, tuple, dict, set)):
+                return len(value) == 0
+            return False
+
         def _merge(d: Any):
             if isinstance(d, dict):
                 merged.update(d)
@@ -85,7 +94,7 @@ class ApiDataHandler(BaseIntentHandler):
             inner = merged.get(key)
             if isinstance(inner, dict):
                 for k, v in inner.items():
-                    if k not in merged:
+                    if (k not in merged) or _is_blank(merged.get(k)):
                         merged[k] = v
         return merged
 
@@ -717,10 +726,10 @@ class ApiDataHandler(BaseIntentHandler):
             candidates.extend(["name"])
         else:
             candidates.extend(["name"])
-            if "display_name" in model_fields:
-                candidates.append("display_name")
         for field_name in fields_safe:
             if field_name in model_fields and field_name not in candidates:
+                if field_name == "display_name":
+                    continue
                 field = model_fields[field_name]
                 if getattr(field, "type", "") in {"char", "text", "html"}:
                     candidates.append(field_name)
