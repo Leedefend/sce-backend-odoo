@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-09-1506
+title: interpreter batch3 act-window custom-action adjudicator
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在菜单目标解释器中新增 act_window 自定义承接判定，仅针对 list/tree/form/kanban
+  可承接范围输出 custom_action 解释结果。
+
+user_visible_outcome:
+  - "常见 list/form/kanban 菜单可被稳定解释为 custom_action"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1506.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1506.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1506.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - frontend/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+
+change_rules:
+  - interpreter-layer only
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: MenuTargetInterpreterService custom_action adjudicator
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    custom_action 判定是菜单目标解释组织逻辑，不改变 action 业务事实。
+  reason: >
+    将可承接的 act_window 统一解释为 custom_action，避免前端自行推断承接能力。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1506.yaml"
+    - 'rg -n "def _resolve_custom_action_target|custom_action|act_window|view_mode" addons/smart_core/delivery/menu_target_interpreter_service.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - act_window custom_action adjudication in menu target interpreter
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_target_interpreter_service.py
+
+depends_on:
+  - ITER-2026-04-09-1505

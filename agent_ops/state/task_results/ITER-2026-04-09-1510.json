@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-09-1510",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "active_match_signature_check": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1510.md"
+  },
+  "conclusion": "active_match is now generated centrally with target-type specific route prefixes",
+  "risk_level": "low",
+  "next_step": "open interpreter batch8 directory rule hardening"
+}

@@ -14399,3 +14399,975 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-08-1402 PASS：demo_pm create 成功（id=53），demo_role_project_read create 被拒绝（无创建权限）`
 - active_commit: `3466cad`
 - next_step: `Continue: optional probe-data cleanup strategy batch if strict data hygiene is required`
+
+### 2026-04-08T23:38:16+08:00
+- blocker_key: `native_parity_tree_form_kanban_scan_1403`
+- layer_target: `Frontend parity governance scan`
+- module: `native parity (tree/form/kanban)`
+- reason: 启动下一目标的 scan 阶段，收集结构/交互差异候选
+- completed_step: `ITER-2026-04-08-1403 PASS：输出 C1~C8 差异候选（tree/form/kanban + parity 覆盖缺口）`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen stage to classify C1~C8 into P0/P1 implementation batches`
+
+### 2026-04-08T23:45:31+08:00
+- blocker_key: `native_parity_tree_form_kanban_screen_1404`
+- layer_target: `Frontend parity governance screen`
+- module: `native parity (tree/form/kanban)`
+- reason: 对 C1~C8 扫描候选做分类与优先级决策
+- completed_step: `ITER-2026-04-08-1404 PASS：形成 P0/P1 批次顺序（P0-A tree, P0-B form, P0-C kanban parity coverage）`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify batch P0-A for tree parity implementation`
+
+### 2026-04-09T00:09:25+08:00
+- blocker_key: `p0a_tree_legacy_status_filter_active_gate_1405`
+- layer_target: `Frontend contract consumer interaction parity`
+- module: `tree toolbar legacy status filter`
+- reason: P0-A 实施：将 legacy 在办/归档筛选入口门控到 active 字段存在场景
+- completed_step: `ITER-2026-04-08-1405 PASS：tree 交互口径更贴近原生；专项 guard 均 PASS；全链路 preflight 延后至 P0 收口门禁`
+- active_commit: `9109f99`
+- next_step: `Continue: open P0-B verify batch for form structure parity`
+
+### 2026-04-09T00:14:17+08:00
+- blocker_key: `p0b_form_native_first_layout_order_1406`
+- layer_target: `Frontend contract consumer structure parity`
+- module: `ContractFormPage layout tree ordering`
+- reason: P0-B 实施：默认补充分区后置，确保原生 layout 分区优先
+- completed_step: `ITER-2026-04-08-1406 PASS：form 结构顺序更贴近原生；专项验证 PASS；全链路 preflight 继续延后至 P0 收口`
+- active_commit: `9109f99`
+- next_step: `Continue: open P0-C verify batch for kanban parity coverage`
+
+### 2026-04-09T00:41:34+08:00
+- blocker_key: `p0c_kanban_parity_coverage_1407`
+- layer_target: `Governance parity verification coverage`
+- module: `native_business_admin_config_center_intent_parity_verify`
+- reason: P0-C 实施：将 kanban 纳入 tree/form 同口径 parity 校验，并执行 P0 收口全链 preflight
+- completed_step: `ITER-2026-04-08-1407 PASS：kanban parity 覆盖已补齐；deferred verify.contract.preflight 全链 PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open P1-A verify batch for kanban interaction/detail parity refinement`
+
+### 2026-04-09T00:46:14+08:00
+- blocker_key: `p1a_kanban_groupby_tone_parity_1408`
+- layer_target: `Frontend contract consumer interaction parity`
+- module: `KanbanPage grouping and tone resolver`
+- reason: P1-A 实施：kanban 分栏优先跟随 active group_by，卡片 tone 按语义字段序列消费
+- completed_step: `ITER-2026-04-09-1408 PASS：kanban 分栏与分组策略对齐，tone 解析更一致；专项 guard 均 PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open P1-B verify batch for debug/advanced_view boundary cleanup`
+
+### 2026-04-09T00:59:21+08:00
+- blocker_key: `contract_first_backend_capability_scan_1409`
+- layer_target: `Backend contract semantic-supply diagnosis`
+- module: `ui.contract tree/form/kanban capability surface`
+- reason: 按用户反馈重建更深链路，先做后端契约承载能力 scan（不下结论）
+- completed_step: `ITER-2026-04-09-1409 PASS：输出 C1~C6 后端能力证据（view type 覆盖 + form/tree/kanban 语义供给 + action/permission gate + 快照覆盖现状）`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen stage for frontend fidelity classification against backend contract`
+
+### 2026-04-09T01:00:07+08:00
+- blocker_key: `contract_first_frontend_fidelity_screen_1410`
+- layer_target: `Frontend contract consumer diagnosis`
+- module: `ActionView/ListPage/ContractFormPage/KanbanPage + action runtime`
+- reason: 承接 1409，分类前端对 tree/form/kanban 契约消费忠实度
+- completed_step: `ITER-2026-04-09-1410 PASS：分类 F1~F5（已消费/降级消费/未消费）；P0 缺口明确为 action_gating+permission_verdicts 与 form_semantics 优先消费`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify batch P0-1 for action_gating/permission_verdicts consumption`
+
+### 2026-04-09T01:03:51+08:00
+- blocker_key: `p0_1_form_semantic_gate_consumption_1411`
+- layer_target: `Frontend contract consumer semantics`
+- module: `ContractFormPage save/action enablement resolver`
+- reason: 消费 semantic_page.permission_verdicts + action_gating，修复门禁供给与前端可用态不一致
+- completed_step: `ITER-2026-04-09-1411 PASS：表单保存与动作可用态已接入语义门禁消费；专项 guard PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open P0-2 verify batch for form_semantics preferred consumption`
+
+### 2026-04-09T05:50:28+08:00
+- blocker_key: `p0_2_form_semantics_field_behavior_prefer_1412`
+- layer_target: `Frontend contract consumer semantics`
+- module: `ContractFormPage field behavior resolver`
+- reason: 优先消费 semantic_page.form_semantics.field_behavior_map，减少降级依赖
+- completed_step: `ITER-2026-04-09-1412 PASS：字段行为优先走 form_semantics，回退链保持可用；专项 guard + 全链 preflight PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open runtime regression verify batch for role-based editable/readonly behavior`
+
+### 2026-04-09T05:53:35+08:00
+- blocker_key: `runtime_closure_config_center_1413`
+- layer_target: `Runtime verification`
+- module: `config center intent/runtime click-path checks`
+- reason: 完成本轮 contract-first 修复链的运行态收口验证
+- completed_step: `ITER-2026-04-09-1413 PASS：sc_demo 上 intent parity 与 runtime create/edit/save 闭环均 PASS`
+- active_commit: `9109f99`
+- next_step: `Objective complete; optional continue with P1 kanban metric/quick-action semantics consumption`
+
+### 2026-04-09T06:02:50+08:00
+- blocker_key: `p1a_kanban_metric_quick_action_semantics_1414`
+- layer_target: `Frontend contract consumer semantics`
+- module: `ActionView/KanbanPage semantic consumption path`
+- reason: 进入 P1 阶段，补齐 kanban metric_fields/quick_action_count 消费
+- completed_step: `ITER-2026-04-09-1414 PASS：kanban 指标字段与快捷操作计数语义已接入前端展示链；专项+运行态 parity 验证 PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open P1-B governance batch for debug/advanced_view boundary cleanup`
+
+### 2026-04-09T06:06:40+08:00
+- blocker_key: `p1b_advanced_debug_boundary_scan_1415`
+- layer_target: `Frontend contract consumer diagnosis`
+- module: `ActionView advanced/debug boundary`
+- reason: 启动 P1-B 扫描，收集 advanced 与 debug 分支边界候选
+- completed_step: `ITER-2026-04-09-1415 PASS：输出 C1~C5 边界候选（debug 并行路径、advanced 兜底路径、strict/label 耦合点、surface 来源分离）`
+- active_commit: `9109f99`
+- next_step: `Continue: open P1-B screen batch to classify C1~C5 into minimal verify changes`
+
+### 2026-04-09T06:08:22+08:00
+- blocker_key: `p1b_advanced_debug_boundary_screen_1416`
+- layer_target: `Frontend contract consumer diagnosis`
+- module: `advanced/debug boundary sequencing`
+- reason: 对 C1~C5 做边界分类并定义最小 verify 顺序
+- completed_step: `ITER-2026-04-09-1416 PASS：分类为调试隔离/结构替代/增强展示/来源边界四类；形成 V1->V3 实施顺序`
+- active_commit: `9109f99`
+- next_step: `Continue: open V1 verify batch for debug trigger isolation`
+
+### 2026-04-09T06:10:36+08:00
+- blocker_key: `p1b_v1_debug_trigger_isolation_1417`
+- layer_target: `Frontend contract consumer boundary cleanup`
+- module: `ActionView debug trigger gate`
+- reason: 执行 V1，收敛 debug 面板触发条件到 HUD/debug 显式态
+- completed_step: `ITER-2026-04-09-1417 PASS：普通路径不再展示 view-switch debug；专项 guard PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open V2 verify batch for advanced fallback boundary cleanup`
+
+### 2026-04-09T06:13:07+08:00
+- blocker_key: `p1b_v2_advanced_fallback_boundary_1418`
+- layer_target: `Frontend contract consumer boundary cleanup`
+- module: `ActionView advanced fallback presentation`
+- reason: 执行 V2，advanced 兜底仅保留结构替代职责
+- completed_step: `ITER-2026-04-09-1418 PASS：advanced 契约摘要调试信息仅 HUD 可见；专项 guard PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: open V3 verify batch for strict advanced text/source precedence centralization`
+
+### 2026-04-09T06:16:16+08:00
+- blocker_key: `p1b_v3_strict_precedence_centralization_1419`
+- layer_target: `Frontend contract consumer boundary cleanup`
+- module: `actionView advanced/projection contract helpers`
+- reason: 执行 V3，集中收敛 strict advanced 文案与 surface 来源优先级
+- completed_step: `ITER-2026-04-09-1419 PASS：strict 文案缺省回退与 surface kind 来源回退已统一；专项 guard PASS`
+- active_commit: `9109f99`
+- next_step: `Continue: prepare grouped staging/commit plan for P1 chain delivery`
+
+### 2026-04-09T06:26:41+08:00
+- blocker_key: `frontend_redeploy_daily_1420`
+- layer_target: `Runtime deployment verification`
+- module: `frontend dev runtime (vite)`
+- reason: 按用户指令执行前端重构后重新部署，供立即验收
+- completed_step: `ITER-2026-04-09-1420 PASS：frontend_dev_reset 成功，5174 可达（HTTP 200）`
+- active_commit: `9109f99`
+- next_step: `Continue: await user verification feedback and patch next deltas immediately`
+
+### 2026-04-09T06:34:00+08:00
+- blocker_key: `frontend_rebuild_then_redeploy_1421`
+- layer_target: `Runtime deployment verification`
+- module: `frontend build + vite runtime`
+- reason: 用户要求先重构前端，再部署；本批按顺序重做
+- completed_step: `ITER-2026-04-09-1421 PASS：pnpm build 成功后完成 frontend_dev_reset，5174 可达（HTTP 200）`
+- active_commit: `9109f99`
+- next_step: `Continue: await user page-level validation feedback and patch next deltas`
+
+### 2026-04-09T07:22:00+08:00
+- blocker_key: `native_three_base_views_structure_alignment_1422`
+- layer_target: `Scenario UI semantic consumption`
+- module: `smart_core semantic_page + frontend action rendering`
+- reason: 以原生 tree/form/kanban 为标准，补齐结构编排与前端消费口径
+- completed_step: `ITER-2026-04-09-1422 PASS_WITH_RISK：后端补充 list/form/kanban 结构语义，前端消费优先切到 semantic_page；验收命令全部通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open P1 structure-renderer batch to migrate ActionView main surface to semantic_page.zones-driven block rendering`
+
+### 2026-04-09T08:05:00+08:00
+- blocker_key: `p1_structure_renderer_zone_gating_1423`
+- layer_target: `Scenario UI semantic consumption`
+- module: `frontend action/list/kanban/form rendering path`
+- reason: 将三类基础视图主展示区切换到 semantic_page.zones 驱动口径
+- completed_step: `ITER-2026-04-09-1423 PASS：ActionView 下发 semanticZones，List/Kanban/Form 主区按 zone gating 渲染；前端 build 通过`
+- active_commit: `9109f99`
+- next_step: `Continue: implement form relation_zone/collaboration_zone block-level renderer parity`
+
+### 2026-04-09T08:26:00+08:00
+- blocker_key: `p1_form_relation_collaboration_block_parity_1424`
+- layer_target: `Scenario UI semantic consumption`
+- module: `frontend form page renderer`
+- reason: 补齐 form 的 relation_zone/collaboration_zone 块级结构对齐
+- completed_step: `ITER-2026-04-09-1424 PASS：form 新增 relation/collaboration zone block 渲染与 zone gating；前端 build 通过`
+- active_commit: `9109f99`
+- next_step: `Continue: run manual screenshot parity check on tree/form/kanban and patch final visual deltas if any`
+
+### 2026-04-09T08:58:00+08:00
+- blocker_key: `playwright_native_custom_gap_scan_1425`
+- layer_target: `Governance UI evidence scan`
+- module: `playwright browser comparison`
+- reason: 按用户指令对三类典型页面执行原生/自定义自动化差异取证
+- completed_step: `ITER-2026-04-09-1425 PASS_WITH_RISK：已输出 compare.json + 固定样本对比与截图；识别到深链登录回退与页面主体等价差距`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen task for deep-link bootstrap root-cause classification before final parity fix`
+
+### 2026-04-09T09:16:00+08:00
+- blocker_key: `deep_link_login_fallback_root_screen_1426`
+- layer_target: `Governance runtime diagnosis`
+- module: `frontend bootstrap route and auth restore`
+- reason: 对“深链回登录/空主体”做根因分类，区分真实产品问题与扫描误差
+- completed_step: `ITER-2026-04-09-1426 PASS：确认主因是 bootstrap 等待口径与样本范围不当（非登录失败）；给出最小修复范围`
+- active_commit: `9109f99`
+- next_step: `Continue: implement compare-tool ready gating + supported action sampling for stable parity baseline`
+
+### 2026-04-09T09:41:00+08:00
+- blocker_key: `tri_view_parity_corrected_verify_1427`
+- layer_target: `Governance UI parity verification`
+- module: `playwright parity evidence rerun`
+- reason: 在修正就绪判定后重跑三视图，提取真实差异
+- completed_step: `ITER-2026-04-09-1427 PASS_WITH_RISK：tree 基本对齐；form 存在保存/交互语义差异；kanban 存在结果集口径差异`
+- active_commit: `9109f99`
+- next_step: `Continue: open implementation batch for form interaction parity (priority P0), then kanban result-scope parity (P1)`
+
+### 2026-04-09T10:12:00+08:00
+- blocker_key: `list_interaction_deep_screen_1428`
+- layer_target: `Governance interaction diagnosis`
+- module: `native/custom list interaction parity`
+- reason: 深挖搜索/分类/排序/行内编辑真实交互差异并输出根因分类
+- completed_step: `ITER-2026-04-09-1428 PASS_WITH_RISK：已确认搜索有效过滤与分组入口口径存在真实偏差；排序与行内编辑在样本内未形成可判定对齐证据`
+- active_commit: `9109f99`
+- next_step: `Continue: open implementation batch to fix search/group semantic binding first, then rerun stage-end full-chain verification once`
+
+### 2026-04-09T10:34:00+08:00
+- blocker_key: `role_mainline_full_scan_1429`
+- layer_target: `Governance runtime fact scan`
+- module: `role-based tri-view parity evidence`
+- reason: 使用真实角色与核心主线场景采集入口/结构/数据/操作事实证据
+- completed_step: `ITER-2026-04-09-1429 PASS：已输出 role_mainline_full_scan 证据矩阵与 C1~C5 候选`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen batch for C1~C5 root-cause classification and fact-level judgement`
+
+### 2026-04-09T10:47:00+08:00
+- blocker_key: `role_mainline_gap_classification_1430`
+- layer_target: `Governance root-cause classification`
+- module: `role-mainline parity gap judgement`
+- reason: 对 1429 证据做层级归因，形成事实判断与执行计划
+- completed_step: `ITER-2026-04-09-1430 PASS_WITH_RISK：主根因定位为平台契约承载不足 + 前端消费岔路；业务事实与权限在本轮样本下非主根因`
+- active_commit: `9109f99`
+- next_step: `Continue: open implementation batch P0(contract carrying) -> P1(frontend binding) -> P2(role-mainline full verification)`
+
+### 2026-04-09T11:02:00+08:00
+- blocker_key: `parallel_role_lifecycle_scan_1431`
+- layer_target: `Governance role-based fact scan`
+- module: `customer mainline lifecycle parity evidence`
+- reason: 按用户要求执行并行角色采样并扩展到全流程入口可见性对照
+- completed_step: `ITER-2026-04-09-1431 PASS：并行采样证据矩阵已产出（主线结构/数据/操作 + native/custom 全流程入口对照）`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen batch to aggregate and classify lifecycle parity gaps by fact/permission/contract/frontend layers`
+
+### 2026-04-09T11:16:00+08:00
+- blocker_key: `parallel_role_lifecycle_classification_1432`
+- layer_target: `Governance lifecycle root-cause classification`
+- module: `parallel role lifecycle parity judgement`
+- reason: 汇总并行角色采样并输出分层分类结论与执行优先级
+- completed_step: `ITER-2026-04-09-1432 PASS_WITH_RISK：主根因确认为平台契约承载不足 + 前端消费岔路；业务事实与权限在样本内非主根因`
+- active_commit: `9109f99`
+- next_step: `Continue: open implementation batch P0(contract carrying coverage + view_mode) -> P1(frontend search/group binding) -> P2(role-parallel full-chain verification)`
+
+### 2026-04-09T11:32:00+08:00
+- blocker_key: `p0_action_open_view_mode_carrying_1433`
+- layer_target: `Backend scene-orchestration contract carrying`
+- module: `app_config_engine page assembler`
+- reason: 执行 P0 修复，补齐 action_open 的 view_mode/view_modes/primary_view_type 承载
+- completed_step: `ITER-2026-04-09-1433 PASS_WITH_RISK：契约输出已补齐 view_mode 语义并运行态复验通过；仍需后续统一 list/tree 字面口径`
+- active_commit: `9109f99`
+- next_step: `Continue: open P1 frontend batch for search/group interaction binding parity, then run role-parallel full-chain verification`
+
+### 2026-04-09T11:48:00+08:00
+- blocker_key: `p1_frontend_search_group_binding_1434`
+- layer_target: `Frontend contract consumer parity`
+- module: `list view interaction binding`
+- reason: 执行 P1 修复，收敛搜索触发链与分组入口显隐口径
+- completed_step: `ITER-2026-04-09-1434 PASS_WITH_RISK：PageToolbar 已支持搜索防抖自动提交；List toolbar 分组入口受 contract visible 标志约束`
+- active_commit: `9109f99`
+- next_step: `Continue: open P2 role-parallel full-chain verification batch for interaction parity closure`
+
+### 2026-04-09T12:24:00+08:00
+- blocker_key: `p2_role_parallel_verify_1435`
+- layer_target: `Governance parity verification`
+- module: `role-parallel full-chain replay`
+- reason: 在 P0/P1 后对 action_open 视图模式承载与搜索/分组交互进行复采样收口
+- completed_step: `ITER-2026-04-09-1435 PASS_WITH_RISK：view_mode 承载验证通过；api.data 搜索口径仍未形成有效过滤证据，outsider 样本缺失`
+- active_commit: `9109f99`
+- next_step: `Continue: open low-risk batch to align api.data search semantics, restore outsider sampling, then rerun full role-parallel closure verification`
+
+### 2026-04-09T12:36:00+08:00
+- blocker_key: `api_data_search_semantic_fix_1436`
+- layer_target: `Backend scene-orchestration semantic supply`
+- module: `api.data list param merge`
+- reason: 修复 search_term 未生效根因（参数遮蔽 + display_name 全匹配）
+- completed_step: `ITER-2026-04-09-1436 PASS：api.data 搜索计数已与显式 domain 对齐（none=55, hit=1, miss=0）`
+- active_commit: `9109f99`
+- next_step: `Continue: open ITER-2026-04-09-1437 verify batch for role-parallel closure replay including outsider sample recovery`
+
+### 2026-04-09T12:46:00+08:00
+- blocker_key: `role_parallel_closure_replay_1437`
+- layer_target: `Governance parity verification`
+- module: `role-parallel full-chain replay`
+- reason: 在 1436 修复后复跑并行矩阵，验证 view_mode 承载与搜索有效性
+- completed_step: `ITER-2026-04-09-1437 PASS_WITH_RISK：admin/pm 搜索过滤已生效且契约承载稳定；finance 为权限拒绝口径一致；outsider 样本仍缺失`
+- active_commit: `9109f99`
+- next_step: `Continue: open tiny verify batch for outsider credential/sample recovery, then rerun matrix for full four-role closure`
+
+### 2026-04-09T13:18:00+08:00
+- blocker_key: `outsider_recovery_four_role_closure_1438`
+- layer_target: `Governance parity verification`
+- module: `role-parallel full-chain replay`
+- reason: 按用户要求通过 Makefile/数据库恢复 outsider 样本并完成四角色闭环
+- completed_step: `ITER-2026-04-09-1438 PASS：已确认 outsider=outsider_seed/demo 并完成四角色复采样；admin/pm/outsider 搜索生效，finance 403 与权限口径一致`
+- active_commit: `9109f99`
+- next_step: `Continue: proceed to next objective (frontend tree/form/kanban native-structure + interaction alignment) with recovered four-role baseline`
+
+### 2026-04-09T13:42:00+08:00
+- blocker_key: `tri_view_mode_alignment_1439`
+- layer_target: `Frontend contract consumer parity`
+- module: `tri-view mode routing and interaction guards`
+- reason: 对齐 tree/form/kanban 模式链路，修复 form 模式承接与 tree/list 口径错位
+- completed_step: `ITER-2026-04-09-1439 PASS_WITH_RISK：已补齐 form 模式可用性与路由承接，批量操作守卫改为 tree 口径；构建通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify batch 1440 for tri-view runtime interaction replay (tree/form/kanban) and closure judgement`
+
+### 2026-04-09T14:06:00+08:00
+- blocker_key: `tri_view_runtime_replay_1440`
+- layer_target: `Governance parity verification`
+- module: `tri-view runtime replay`
+- reason: 对 1439 修复执行 tree/form/kanban 运行态复验并输出闭环判断
+- completed_step: `ITER-2026-04-09-1440 PASS_WITH_RISK：API/runtime 证据确认三视图承载与消费链关键标记；admin/pm 搜索有效；finance/outsider 在 project 样本为空`
+- active_commit: `9109f99`
+- next_step: `Continue: optional browser-capable click replay for no-risk closure, or proceed to next objective with current low-risk evidence baseline`
+
+### 2026-04-09T14:24:00+08:00
+- blocker_key: `tri_view_browser_smoke_closure_1441`
+- layer_target: `Governance parity verification`
+- module: `browser tri-view click replay`
+- reason: 立即执行容器内浏览器侧 smoke，补齐 1440 剩余风险
+- completed_step: `ITER-2026-04-09-1441 PASS：load/tree/kanban/form(recordview) smoke 全通过，三视图阶段收口完成`
+- active_commit: `9109f99`
+- next_step: `Continue: proceed to next objective implementation with tri-view closure baseline`
+
+### 2026-04-09T14:56:00+08:00
+- blocker_key: `contract_interpreter_boundary_scan_1443`
+- layer_target: `Backend semantic boundary governance`
+- module: `smart_core contract interpreter surface`
+- reason: 用户指出契约解释层越界风险，启动 scan 阶段只收集候选
+- completed_step: `ITER-2026-04-09-1443 PASS：已形成 7 个越界候选点（load_contract/page_assembler/api_data_write）`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen batch to classify ownership and lock bounded remediation set`
+
+### 2026-04-09T15:08:00+08:00
+- blocker_key: `contract_interpreter_boundary_screen_1444`
+- layer_target: `Backend semantic boundary governance`
+- module: `smart_core contract interpreter surface`
+- reason: 基于 1443 候选执行分层归因，划定实现批修复边界
+- completed_step: `ITER-2026-04-09-1444 PASS：已完成 business_fact / permission_fact / scene_orchestration 三类归因，并锁定修复路径 load_contract + api_data_write`
+- active_commit: `9109f99`
+- next_step: `Continue: open implementation batch to remove interpreter-side adjudication and keep contract as factual carrier`
+
+### 2026-04-09T15:14:00+08:00
+- blocker_key: `contract_boundary_fix_1445`
+- layer_target: `Backend semantic boundary recovery`
+- module: `load_contract/api_data_write/base_handler`
+- reason: 执行越界修复并对齐 PM 写入链路权限口径
+- completed_step: `ITER-2026-04-09-1445 PASS：解释层动作裁决已退回上游事实；写意图仅在 REQUIRED_GROUPS 非空时启用组门禁；PM edit_tx smoke 通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open focused verify sampling for other write intents (execute_button/file_upload/unlink) under PM/finance`
+
+### 2026-04-09T15:20:00+08:00
+- blocker_key: `write_intent_boundary_verify_1446`
+- layer_target: `Boundary closure verification`
+- module: `write-intent permission surface`
+- reason: 对 PM/finance 进行 execute_button/file_upload/edit_tx 采样验证
+- completed_step: `ITER-2026-04-09-1446 FAIL：PM file_upload smoke 返回 403（其余 PM 样本通过），finance 样本因 stop condition 未执行`
+- active_commit: `9109f99`
+- next_step: `STOP: open new implementation batch to align remaining write-intent REQUIRED_GROUPS policy before rerun`
+
+### 2026-04-09T15:32:00+08:00
+- blocker_key: `file_upload_boundary_fix_1447`
+- layer_target: `Backend permission-boundary recovery`
+- module: `file.upload intent handler`
+- reason: 1446 失败点确认由 required-groups 引起，执行定点去越界修复
+- completed_step: `ITER-2026-04-09-1447 PASS：file.upload 移除 REQUIRED_GROUPS；PM 上传成功，finance 拒绝来源转为 ACL（无 required-groups 拒绝）`
+- active_commit: `9109f99`
+- next_step: `Continue: open next bounded batch to align remaining write intents (api.data.unlink/api.data.batch/chatter.post) and rerun denial-source probes`
+
+### 2026-04-09T15:36:00+08:00
+- blocker_key: `unlink_batch_boundary_fix_1448`
+- layer_target: `Backend permission-boundary recovery`
+- module: `api.data.unlink/api.data.batch handlers`
+- reason: 继续清理剩余写意图的 required-groups 越界门禁
+- completed_step: `ITER-2026-04-09-1448 PASS：unlink/batch 已移除 REQUIRED_GROUPS；PM/finance 探针均进入参数校验，无 required-groups 拒绝`
+- active_commit: `9109f99`
+- next_step: `Continue: audit chatter.post/api.onchange and generate final boundary-zero closure report`
+
+### 2026-04-09T15:41:00+08:00
+- blocker_key: `write_gate_matrix_closure_1449`
+- layer_target: `Boundary closure verification`
+- module: `smart_core write-intent gates`
+- reason: 生成全写意图门禁矩阵，确认通用数据写链路越界是否已清零
+- completed_step: `ITER-2026-04-09-1449 PASS：api.data.create/unlink/batch/file.upload 的 group_gate_active 全部为 false；剩余组门禁仅 execute_button 与 release.operator.*`
+- active_commit: `9109f99`
+- next_step: `Continue: if needed, open dedicated decision batch for execute_button/release.operator gate ownership`
+
+### 2026-04-09T15:50:00+08:00
+- blocker_key: `execute_release_boundary_fix_1450`
+- layer_target: `Backend permission-boundary recovery`
+- module: `execute_button + release_operator handlers`
+- reason: 用户确认职责边界问题，继续清理最后一组 active group gate 意图
+- completed_step: `ITER-2026-04-09-1450 PASS：execute/release 写意图移除 REQUIRED_GROUPS；修复后写意图门禁矩阵 active_count=0`
+- active_commit: `9109f99`
+- next_step: `Continue: optional core business regression, then switch to next objective`
+
+### 2026-04-09T15:58:00+08:00
+- blocker_key: `release_fact_completeness_scan_1451`
+- layer_target: `Release business-fact governance`
+- module: `release operator chain`
+- reason: 用户要求先确认发布业务事实层是否完善，先执行候选扫描
+- completed_step: `ITER-2026-04-09-1451 PASS：已锁定 release_action/write_model/orchestrator/execution/audit 与架构基线文档候选集合`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen+verify to conclude release fact-layer completeness`
+
+### 2026-04-09T16:08:00+08:00
+- blocker_key: `release_fact_completeness_verify_1454`
+- layer_target: `Release business-fact governance`
+- module: `release fact completeness`
+- reason: 基于 1451/1452 清单执行 CF-01~CF-05 语义等价验证
+- completed_step: `ITER-2026-04-09-1454 PASS：发布业务事实层完整性校验通过（CF-01..CF-05 全部 PASS）`
+- active_commit: `9109f99`
+- next_step: `Continue: proceed to next objective or run runtime release-flow rehearsal`
+
+### 2026-04-09T16:32:00+08:00
+- blocker_key: `release_acl_classification_1455`
+- layer_target: `Platform business-fact permission layer`
+- module: `smart_core release models acl`
+- reason: 用户特别授权高风险 ACL 专批，要求模型访问边界显式分类并落库生效
+- completed_step: `ITER-2026-04-09-1455 PASS：新增 release_operator/release_auditor 组并完成 sc.release.action / sc.edition.release.snapshot ACL 分类，升级模块后运行态验证通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open dedicated screen batch for release_orchestrator sudo boundary classification`
+
+### 2026-04-09T16:44:00+08:00
+- blocker_key: `release_sudo_boundary_scan_1456`
+- layer_target: `Backend semantic boundary governance`
+- module: `smart_core release execution chain`
+- reason: 用户同意立即执行下一目标，按低成本治理先做 scan 候选收敛
+- completed_step: `ITER-2026-04-09-1456 PASS：在 release_orchestrator / write_model_service / handler 收敛 3 个 sudo 边界候选`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen-stage classification for sudo retain/downshift decision`
+
+### 2026-04-09T16:52:00+08:00
+- blocker_key: `release_sudo_boundary_screen_1457`
+- layer_target: `Backend semantic boundary governance`
+- module: `release sudo boundary ownership`
+- reason: 基于 1456 scan 输出执行 screen 分类，锁定下一实现家族
+- completed_step: `ITER-2026-04-09-1457 PASS：下一实现家族锁定为 release_orchestrator_sudo_write_path（orchestrator + write_model_service）`
+- active_commit: `9109f99`
+- next_step: `Continue: open implement batch for sudo retain/downshift whitelist and runtime validation`
+
+### 2026-04-09T17:00:00+08:00
+- blocker_key: `release_sudo_boundary_implement_1458`
+- layer_target: `Backend permission-boundary recovery`
+- module: `release_orchestrator_sudo_write_path`
+- reason: 执行 sudo 下沉实现并运行发布链路 guard 验证
+- completed_step: `ITER-2026-04-09-1458 FAIL：verify.release.operator_orchestration_guard 因 uid=27 无 sc.edition.release.snapshot 读取权限失败，触发硬停规则`
+- active_commit: `9109f99`
+- next_step: `STOP: open dedicated permission-baseline screen batch before any further implementation`
+
+### 2026-04-09T17:08:00+08:00
+- blocker_key: `release_permission_baseline_screen_1459`
+- layer_target: `Backend permission-boundary governance`
+- module: `release guard permission baseline`
+- reason: 用户同意继续执行，先按低成本 screen 分类 1458 失败根因归属
+- completed_step: `ITER-2026-04-09-1459 PASS：失败根因归类为 guard 执行身份与权限事实基线不一致（非编排逻辑问题）`
+- active_commit: `9109f99`
+- next_step: `Continue: open permission-governance implement batch for guard identity/group alignment and rerun release guards`
+
+### 2026-04-09T17:16:00+08:00
+- blocker_key: `release_guard_identity_implement_1460`
+- layer_target: `Verification identity baseline alignment`
+- module: `release operator orchestration guard`
+- reason: 按 1459 结论执行身份对齐并复跑 guard
+- completed_step: `ITER-2026-04-09-1460 FAIL：verify.release.operator_orchestration_guard 报 uid=2 无 sc.release.action 写权限，触发硬停规则`
+- active_commit: `9109f99`
+- next_step: `STOP: open dedicated screen batch for base.user_admin vs smart_core admin ownership classification`
+
+### 2026-04-09T17:24:00+08:00
+- blocker_key: `release_admin_identity_screen_1461`
+- layer_target: `Backend permission-boundary governance`
+- module: `release admin identity ownership`
+- reason: 用户要求继续执行，先 screen 明确管理员身份口径
+- completed_step: `ITER-2026-04-09-1461 PASS：guard 审批链路需绑定 smart_core.group_smart_core_admin 成员身份，不应固定 base.user_admin`
+- active_commit: `9109f99`
+- next_step: `Continue: open implement batch for guard admin identity resolver and rerun release guards`
+
+### 2026-04-09T17:34:00+08:00
+- blocker_key: `release_admin_identity_implement_1462`
+- layer_target: `Verification identity baseline alignment`
+- module: `release operator guards`
+- reason: 执行管理员身份解析修复并复跑 release guards
+- completed_step: `ITER-2026-04-09-1462 PASS_WITH_RISK：guard 身份口径修复完成，但验证为 SKIP_ENV（缺少 active smart_core release admin 用户）`
+- active_commit: `9109f99`
+- next_step: `STOP: open permission-governance batch to seed/align release admin user baseline, then rerun guards`
+
+### 2026-04-09T17:42:00+08:00
+- blocker_key: `release_guard_policy_alignment_1463`
+- layer_target: `Verification identity policy alignment`
+- module: `release operator orchestration guard`
+- reason: 用户明确要求发布权限不得赋给行业用户 demo_pm
+- completed_step: `ITER-2026-04-09-1463 PASS_WITH_RISK：已移除 demo_pm 自动赋发布角色逻辑，守卫策略对齐为平台级 admin-only`
+- active_commit: `9109f99`
+- next_step: `STOP: open permission-governance baseline batch to provision active platform release admin and rerun guards`
+
+### 2026-04-09T17:50:00+08:00
+- blocker_key: `release_admin_baseline_provision_1464`
+- layer_target: `Platform permission baseline`
+- module: `release admin runtime baseline`
+- reason: 补齐平台发布管理员运行态基线并复跑 guards
+- completed_step: `ITER-2026-04-09-1464 FAIL：base.user_admin 已补齐发布管理员组，但 orchestration guard 仍用 demo_pm 执行发布流程导致 ACL 拒绝`
+- active_commit: `9109f99`
+- next_step: `STOP: open implement batch to switch orchestration guard actor to platform admin-only`
+
+### 2026-04-09T18:02:00+08:00
+- blocker_key: `release_guard_actor_admin_only_1465`
+- layer_target: `Verification identity policy alignment`
+- module: `release operator orchestration guard`
+- reason: 用户同意执行，修复 guard actor 以满足平台 admin-only 发布策略
+- completed_step: `ITER-2026-04-09-1465 PASS：orchestration guard 发布动作改为平台发布管理员身份执行，release guards 双通过`
+- active_commit: `9109f99`
+- next_step: `Continue: proceed to next objective`
+
+### 2026-04-09T18:12:00+08:00
+- blocker_key: `native_parity_scan_1466`
+- layer_target: `Native-view parity governance`
+- module: `action view parity chain`
+- reason: 回到主线推进 tree/form/kanban 与原生对齐，先做低成本 scan 收敛候选
+- completed_step: `ITER-2026-04-09-1466 PASS：已收敛 8 个候选，覆盖后端契约承载、前端消费路径与验证覆盖缺口`
+- active_commit: `9109f99`
+- next_step: `Continue: open screen batch to classify candidates into backend contract / frontend consumer / verify coverage families`
+
+### 2026-04-09T18:18:00+08:00
+- blocker_key: `native_parity_screen_1467`
+- layer_target: `Native-view parity governance`
+- module: `parity candidate family classification`
+- reason: 基于 1466 scan 结果执行 screen 分类
+- completed_step: `ITER-2026-04-09-1467 PASS：下一实现家族锁定 frontend_list_surface_contract_consumer（ActionView + PageToolbar + ListPage）`
+- active_commit: `9109f99`
+- next_step: `Continue: open implement batch for frontend list-surface contract-consumer convergence`
+
+### 2026-04-09T18:24:00+08:00
+- blocker_key: `native_parity_implement_1468`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ActionView list surface`
+- reason: 在已锁定家族内先落一处可验证的消费分叉收敛
+- completed_step: `ITER-2026-04-09-1468 PASS：list searchable 字段按 key 去重并移除 label 误删路径；search panel 候选按 key 去重`
+- active_commit: `9109f99`
+- next_step: `Continue: implement next slice for PageToolbar/ListPage display-count parity`
+
+### 2026-04-09T18:32:00+08:00
+- blocker_key: `native_parity_implement_1469`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ActionView list surface`
+- reason: 在同家族内继续收敛列表工具条计数口径，确保显示数与可操作项一致
+- completed_step: `ITER-2026-04-09-1469 PASS：saved/group toolbar 选项按 key 去重，count label 改为基于实际透传选项集合计算`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for PageToolbar/ListPage interaction parity (search/filter/sort structure)`
+
+### 2026-04-09T18:41:00+08:00
+- blocker_key: `native_parity_implement_1470`
+- layer_target: `Frontend contract consumer alignment`
+- module: `PageToolbar active conditions`
+- reason: 收敛当前条件展示口径与清空行为一致性（route preset）
+- completed_step: `ITER-2026-04-09-1470 PASS：优化模式下 active_conditions 新增 preset 状态芯片，条件汇总与清空语义一致`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for ListPage structure parity and stage verify`
+
+### 2026-04-09T18:55:00+08:00
+- blocker_key: `native_parity_verify_1471`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1468-1470 收敛批次执行阶段性 parity 校验
+- completed_step: `ITER-2026-04-09-1471 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过（admin/pm/finance parity-ok）`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for ListPage structural interaction parity`
+
+### 2026-04-09T19:06:00+08:00
+- blocker_key: `native_parity_implement_1472`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage grouped structure`
+- reason: 修复分组模式结构重复渲染，收敛至原生分组口径
+- completed_step: `ITER-2026-04-09-1472 PASS：groupedRows 存在时隐藏平铺 table，仅显示 grouped-table`
+- active_commit: `9109f99`
+- next_step: `Continue: open next list-surface interaction parity slice`
+
+### 2026-04-09T19:16:00+08:00
+- blocker_key: `native_parity_implement_1473`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage grouped interaction`
+- reason: 修复分组模式交互入口与可操作面不一致（batch bar）
+- completed_step: `ITER-2026-04-09-1473 PASS：groupedRows 存在时隐藏 batch bar，仅平铺列表显示批量操作`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for list toolbar ordering/visibility parity`
+
+### 2026-04-09T19:24:00+08:00
+- blocker_key: `native_parity_implement_1474`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage interaction hints`
+- reason: 分组模式与平铺模式提示语义分离，收敛用户可感知交互表达
+- completed_step: `ITER-2026-04-09-1474 PASS：rowActionHintText 增加 groupedRows 分支，提示分组内交互路径`
+- active_commit: `9109f99`
+- next_step: `Continue: open next slice for toolbar ordering/visibility parity and stage verify`
+
+### 2026-04-09T19:33:00+08:00
+- blocker_key: `native_parity_verify_1475`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1472-1474 list 收敛批次执行阶段性 parity 校验
+- completed_step: `ITER-2026-04-09-1475 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for toolbar/list ordering visibility parity`
+
+### 2026-04-09T19:42:00+08:00
+- blocker_key: `native_parity_implement_1476`
+- layer_target: `Frontend contract consumer alignment`
+- module: `PageToolbar sort controls`
+- reason: 对齐加载态交互门控，防止排序重复触发
+- completed_step: `ITER-2026-04-09-1476 PASS：sort-option 增加 loading 禁用门控`
+- active_commit: `9109f99`
+- next_step: `Continue: open next toolbar/list parity slice`
+
+### 2026-04-09T19:49:00+08:00
+- blocker_key: `native_parity_verify_1477`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1476 工具条交互批次执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1477 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for list-toolbar ordering visibility parity`
+
+### 2026-04-09T20:03:00+08:00
+- blocker_key: `native_parity_implement_1478`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage grouped toolbar`
+- reason: 对齐分组工具条 loading 态门控，减少并发交互抖动
+- completed_step: `ITER-2026-04-09-1478 PASS：expand/collapse/sample-limit/group-sort 全部接入 loading 禁用`
+- active_commit: `9109f99`
+- next_step: `Continue: open next list-toolbar interaction parity slice`
+
+### 2026-04-09T20:14:00+08:00
+- blocker_key: `native_parity_implement_1479`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage grouped header actions`
+- reason: 对齐组头动作与分组工具条 loading 门控口径
+- completed_step: `ITER-2026-04-09-1479 PASS：group-toggle/group-open-btn 接入 loading+group.loading 禁用；任务验收转义问题同步修复`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest list-surface slices`
+
+### 2026-04-09T20:22:00+08:00
+- blocker_key: `native_parity_verify_1480`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1478/1479 分组交互门控收敛执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1480 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for list/toolbar parity`
+
+### 2026-04-09T20:31:00+08:00
+- blocker_key: `native_parity_implement_1481`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage grouped pagination controls`
+- reason: 分组分页控件补齐全局 loading 门控，消除分页交互竞态
+- completed_step: `ITER-2026-04-09-1481 PASS：group page prev/next/jump controls 全部接入 loading + group.loading 禁用`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest grouped interaction slices`
+
+### 2026-04-09T20:40:00+08:00
+- blocker_key: `native_parity_verify_1482`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1481 分组分页门控收敛执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1482 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for list/toolbar parity`
+
+### 2026-04-09T20:49:00+08:00
+- blocker_key: `native_parity_implement_1483`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage action handlers`
+- reason: 将 loading 门控从模板下沉到函数层，封堵边界触发路径
+- completed_step: `ITER-2026-04-09-1483 PASS：分组/分页/行点击关键动作均新增 props.loading 短路守卫`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest list interaction hardening`
+
+### 2026-04-09T20:58:00+08:00
+- blocker_key: `native_parity_verify_1484`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1483 事件层 loading 守卫增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1484 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for list/toolbar parity`
+
+### 2026-04-09T21:07:00+08:00
+- blocker_key: `native_parity_implement_1485`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ListPage batch handlers`
+- reason: 补齐 batch/selection 函数层 loading 守卫，防止边界误触发
+- completed_step: `ITER-2026-04-09-1485 PASS：batch/selection 关键 handler 全部新增 props.loading 短路`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest list interaction hardening`
+
+### 2026-04-09T21:16:00+08:00
+- blocker_key: `native_parity_verify_1486`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1485 批量/选择 handler 守卫增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1486 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for list/toolbar parity`
+
+### 2026-04-09T15:11:13+08:00
+- blocker_key: `native_parity_implement_1487`
+- layer_target: `Frontend contract consumer alignment`
+- module: `PageToolbar interactions`
+- reason: 补齐顶部搜索/高级筛选函数层 loading 门控，防止加载态边界触发
+- completed_step: `ITER-2026-04-09-1487 PASS：onSearchInput/onCompositionEnd/submitSearch/resetActiveConditions/toggleAdvancedFilters 全部新增 props.loading 短路`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest toolbar interaction hardening`
+
+### 2026-04-09T15:14:36+08:00
+- blocker_key: `native_parity_verify_1488`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1487 PageToolbar 守卫增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1488 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for remaining view-parity gaps`
+
+### 2026-04-09T15:18:30+08:00
+- blocker_key: `native_parity_implement_1489`
+- layer_target: `Frontend contract consumer alignment`
+- module: `KanbanPage card interactions`
+- reason: 补齐 kanban 卡片入口函数层 loading 门控，统一三类典型视图交互口径
+- completed_step: `ITER-2026-04-09-1489 PASS：handleCard 新增 props.loading 短路守卫`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest kanban interaction hardening`
+
+### 2026-04-09T15:21:37+08:00
+- blocker_key: `native_parity_verify_1490`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1489 Kanban 卡片点击守卫增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1490 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice focused on form interaction parity`
+
+### 2026-04-09T15:27:54+08:00
+- blocker_key: `native_parity_implement_1491`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ContractFormPage interaction handlers`
+- reason: 补齐 form 关键动作入口函数层 loading/busy 门控，统一三类视图并发口径
+- completed_step: `ITER-2026-04-09-1491 PASS：openFormNativeFallback/runAction/openEnterpriseNextAction/openFilter/cancelIntake/saveRecord 接入 isInteractionLocked 守卫`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest form interaction hardening`
+
+### 2026-04-09T15:30:52+08:00
+- blocker_key: `native_parity_verify_1492`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1491 Form 关键动作入口守卫增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1492 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for remaining form parity details`
+
+### 2026-04-09T15:35:10+08:00
+- blocker_key: `native_parity_implement_1493`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ContractFormPage relation/one2many handlers`
+- reason: 补齐关系新建与 one2many 行操作函数层 loading/busy 门控
+- completed_step: `ITER-2026-04-09-1493 PASS：add/remove/restore one2many 与 openRelationCreateForm 全部接入 isInteractionLocked 守卫`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest form relation/one2many hardening`
+
+### 2026-04-09T15:39:13+08:00
+- blocker_key: `native_parity_verify_1494`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1493 Form relation/one2many 交互守卫增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1494 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for form input mutation guard consistency`
+
+### 2026-04-09T15:44:26+08:00
+- blocker_key: `native_parity_implement_1495`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ContractFormPage input mutation chain`
+- reason: 补齐输入写入函数与 onchange roundtrip 的 loading/busy 门控
+- completed_step: `ITER-2026-04-09-1495 PASS：set* 输入函数全部接入 isInteractionLocked；runOnchangeRoundtrip 锁态改为重排重试`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest form input mutation hardening`
+
+### 2026-04-09T15:48:01+08:00
+- blocker_key: `native_parity_verify_1496`
+- layer_target: `Verification gate`
+- module: `business-admin config-center parity`
+- reason: 对 1495 Form 输入变更链路门控增强执行阶段 parity 校验
+- completed_step: `ITER-2026-04-09-1496 PASS：native_business_admin_config_center_intent_parity_verify 提权后通过`
+- active_commit: `9109f99`
+- next_step: `Continue: open next implement slice for tree/list deeper interaction parity`
+
+### 2026-04-09T15:55:47+08:00
+- blocker_key: `native_parity_implement_1497`
+- layer_target: `Frontend contract consumer alignment`
+- module: `ActionView list navigation handlers`
+- reason: 补齐列表分页与新建入口在加载态的函数层门控
+- completed_step: `ITER-2026-04-09-1497 PASS：openListCreateForm/handlePageChange 接入 isListInteractionLocked 守卫`
+- active_commit: `9109f99`
+- next_step: `Continue: open verify checkpoint for latest list navigation hardening`
+
+### 2026-04-09T16:15:14+08:00
+- blocker_key: `menu_fact_batch1_scan_1498`
+- layer_target: `Platform fact layer`
+- module: `Menu fact scanner/export`
+- reason: 启动菜单事实源专项治理 Batch1，仅构建 ir.ui.menu 事实扫描与导出能力
+- completed_step: `ITER-2026-04-09-1498 PASS：新增 MenuFactService 与 menu_fact_export 脚本，产出 menu_fact_snapshot_v1`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch2 action raw binding fact parser`
+
+### 2026-04-09T16:19:31+08:00
+- blocker_key: `menu_fact_batch2_action_parse_1499`
+- layer_target: `Platform fact layer`
+- module: `Menu action binding fact parser`
+- reason: 补齐 action_raw 标准化事实字段与显式解析失败标记
+- completed_step: `ITER-2026-04-09-1499 PASS：新增 action_type/action_id/action_model/action_exists/action_meta/action_parse_error`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch3 menu anomaly audit`
+
+### 2026-04-09T16:25:52+08:00
+- blocker_key: `menu_fact_batch3_anomaly_audit_1500`
+- layer_target: `Platform fact layer`
+- module: `Menu fact anomaly auditor`
+- reason: 对菜单事实执行结构异常分类审计并输出报告产物
+- completed_step: `ITER-2026-04-09-1500 PASS：新增 audit_menu_facts 与 menu_fact_anomaly_audit 脚本，产出 menu_fact_anomalies_v1`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch4 facts-only unified menu endpoint`
+
+### 2026-04-09T16:30:40+08:00
+- blocker_key: `menu_fact_batch4_unified_outlet_1501`
+- layer_target: `Platform fact layer`
+- module: `Platform menu facts API`
+- reason: 将 `/api/menu/tree` 统一为 facts-only 出口，作为后续解释层唯一输入
+- completed_step: `ITER-2026-04-09-1501 PASS：/api/menu/tree 输出 nav_fact(flat+tree) 且无解释层字段`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch5 role visibility sample verify`
+
+### 2026-04-09T16:41:09+08:00
+- blocker_key: `menu_fact_batch5_visibility_sample_1502`
+- layer_target: `Platform fact layer verification`
+- module: `Menu fact visibility sample verifier`
+- reason: 对管理/项目/财务角色执行菜单事实可见性样本校验
+- completed_step: `ITER-2026-04-09-1502 PASS：新增 role sample verify 脚本并产出 menu_fact_visibility_sample_v1`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch6 menu fact layer contract freeze`
+
+### 2026-04-09T16:45:50+08:00
+- blocker_key: `menu_fact_batch6_contract_freeze_1503`
+- layer_target: `Governance contract documentation`
+- module: `Menu fact layer v1`
+- reason: 冻结菜单事实层 v1 协议边界，防止解释层字段回流
+- completed_step: `ITER-2026-04-09-1503 PASS：新增 docs/contract/menu_fact_layer_v1.md 并通过边界关键词门禁`
+- active_commit: `9109f99`
+- next_step: `Completed: menu fact source governance objective ready for menu target interpreter phase`
+
+### 2026-04-09T16:58:43+08:00
+- blocker_key: `menu_target_interpreter_batch1_1504`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService skeleton`
+- reason: 启动菜单目标解释器治理，先建立统一解释入口与标准输出骨架
+- completed_step: `ITER-2026-04-09-1504 PASS：新增解释器服务，输出 target_type/delivery_mode/route/active_match/reason_code 统一结构`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch2 scene mapping resolver`
+
+### 2026-04-09T17:14:25+08:00
+- blocker_key: `menu_target_interpreter_batch2_1505`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService scene mapping resolver`
+- reason: 建立显式 scene 映射优先解释路径，按 menu/action 绑定输出 custom_scene 目标
+- completed_step: `ITER-2026-04-09-1505 PASS：解释器支持 menu_id/action_id 及 registry xmlid 映射，命中后统一输出 scene/custom_scene`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch3 act_window custom_action adjudicator`
+
+### 2026-04-09T17:17:31+08:00
+- blocker_key: `menu_target_interpreter_batch3_1506`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService act_window custom_action adjudicator`
+- reason: 将可承接 act_window 菜单统一解释为 custom_action，限定 list/tree/form/kanban 承接范围
+- completed_step: `ITER-2026-04-09-1506 PASS：新增 custom_action 判定器并接入解释流程`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch4 native_bridge adjudicator`
+
+### 2026-04-09T17:21:27+08:00
+- blocker_key: `menu_target_interpreter_batch4_1507`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService native_bridge adjudicator`
+- reason: 对非 scene/custom_action 的 action 菜单提供显式 native_bridge 解释，终结前端模糊 fallback
+- completed_step: `ITER-2026-04-09-1507 PASS：解释器新增 native 判定并输出 target.action_id/action_type`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch5 url and unavailable adjudication`
+
+### 2026-04-09T17:24:56+08:00
+- blocker_key: `menu_target_interpreter_batch5_1508`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService url/unavailable adjudicator`
+- reason: 补齐 act_url 解释和 unavailable 原因码，避免菜单点击后才暴露不可达
+- completed_step: `ITER-2026-04-09-1508 PASS：新增 external_url 分支与 ACTION_INVALID/DELIVERY_UNSUPPORTED/SCENE_UNRESOLVED 等原因码`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch6 route generation`
+
+### 2026-04-09T17:28:15+08:00
+- blocker_key: `menu_target_interpreter_batch6_1509`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService route generator`
+- reason: 统一后端 route 口径，结束前端拼接导航地址
+- completed_step: `ITER-2026-04-09-1509 PASS：scene/action/native/url 的 route 在解释器单点生成`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch7 active_match generator hardening`
+
+### 2026-04-09T17:33:20+08:00
+- blocker_key: `menu_target_interpreter_batch7_1510`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService active_match generator`
+- reason: 为前端提供稳定 active 匹配依据，降低高亮逻辑分叉
+- completed_step: `ITER-2026-04-09-1510 PASS：active_match 由解释器统一生成并输出 route_prefix`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch8 directory rule hardening`
+
+### 2026-04-09T17:36:05+08:00
+- blocker_key: `menu_target_interpreter_batch8_1511`
+- layer_target: `Navigation interpretation layer`
+- module: `MenuTargetInterpreterService directory rule`
+- reason: 固化目录节点不可点击规则，避免目录菜单出现误跳转
+- completed_step: `ITER-2026-04-09-1511 PASS：新增目录规则收口并统一 DIRECTORY_ONLY 输出`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch9 navigation outlet`
+
+### 2026-04-09T17:38:50+08:00
+- blocker_key: `menu_target_interpreter_batch9_1512`
+- layer_target: `Navigation interpretation layer`
+- module: `platform menu navigation api outlet`
+- reason: 为解释层建立统一后端出口，保障前端后续单输入消费
+- completed_step: `ITER-2026-04-09-1512 PASS：新增 /api/menu/navigation 输出 nav_fact+nav_explained`
+- active_commit: `9109f99`
+- next_step: `Continue: open Batch10 verification snapshot and docs freeze`
+
+### 2026-04-09T17:44:00+08:00
+- blocker_key: `menu_target_interpreter_batch10_1513`
+- layer_target: `Navigation interpretation layer`
+- module: `interpreter verification + contract docs`
+- reason: 冻结解释层 v1 协议与快照验证入口，形成可回归门禁
+- completed_step: `ITER-2026-04-09-1513 PASS：新增 navigation snapshot verify、契约文档与审计文档`
+- active_commit: `9109f99`
+- next_step: `Completed: menu target interpreter objective ready for Sidebar pure-consumer phase`

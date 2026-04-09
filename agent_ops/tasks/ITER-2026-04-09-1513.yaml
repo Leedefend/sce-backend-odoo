@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1513
+title: interpreter batch10 verification snapshot and docs freeze
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  为菜单解释层补齐可执行快照验证与契约文档冻结，形成可回归的审计基线。
+
+user_visible_outcome:
+  - "菜单解释层具备快照验证和清晰契约边界文档"
+
+scope:
+  allowed_paths:
+    - scripts/verify/menu_target_navigation_snapshot.py
+    - artifacts/menu/menu_navigation_snapshot_v1.json
+    - docs/contract/menu_target_interpreter_v1.md
+    - docs/menu/menu_target_interpreter_audit_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1513.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1513.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1513.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - frontend/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 8
+  max_output_lines: 400
+
+change_rules:
+  - verification/docs only for interpreter layer
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: interpreter verification and contract docs
+  module_owner: smart_core delivery and docs
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次仅冻结解释层契约与验证快照，不触碰业务事实定义。
+  reason: >
+    为后续 Sidebar 纯消费化提供稳定可审计输入与门禁。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1513.yaml"
+    - "python3 scripts/verify/menu_target_navigation_snapshot.py --db ${DB_NAME:-sc_demo} --output artifacts/menu/menu_navigation_snapshot_v1.json"
+    - 'rg -n "menu_target_interpreter|target_type|delivery_mode|nav_explained" docs/contract/menu_target_interpreter_v1.md docs/menu/menu_target_interpreter_audit_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - interpreter snapshot verification script
+  - menu navigation snapshot artifact
+  - interpreter contract and audit docs
+
+rollback:
+  - git restore scripts/verify/menu_target_navigation_snapshot.py artifacts/menu/menu_navigation_snapshot_v1.json docs/contract/menu_target_interpreter_v1.md docs/menu/menu_target_interpreter_audit_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1512

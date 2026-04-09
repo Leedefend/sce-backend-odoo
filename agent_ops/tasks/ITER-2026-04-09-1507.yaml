@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-09-1507
+title: interpreter batch4 native-bridge adjudicator
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在菜单目标解释器中为非 scene、非 custom_action 且有 action 的菜单建立显式 native_bridge
+  解释结果，避免前端 fallback 推断。
+
+user_visible_outcome:
+  - "复杂或未承接 action 菜单会被明确解释为 native_bridge"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - agent_ops/tasks/ITER-2026-04-09-1507.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1507.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1507.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - frontend/**
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 5
+  max_output_lines: 300
+
+change_rules:
+  - interpreter-layer only
+  - no facts-layer mutation
+  - no sidebar/frontend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 9109f99
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Navigation interpretation layer
+  module: MenuTargetInterpreterService native bridge adjudicator
+  module_owner: smart_core delivery
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    native_bridge 属于目标分发解释语义，不是业务事实。
+  reason: >
+    对当前不在自定义承接范围内的 action 给出显式 native 结果，统一导航决策口径。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1507.yaml"
+    - 'rg -n "native_bridge|target_type = \"native\"|def _resolve_native_bridge_target" addons/smart_core/delivery/menu_target_interpreter_service.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - explicit native_bridge adjudication in interpreter
+
+rollback:
+  - git restore addons/smart_core/delivery/menu_target_interpreter_service.py
+
+depends_on:
+  - ITER-2026-04-09-1506
