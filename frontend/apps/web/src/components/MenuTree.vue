@@ -4,9 +4,9 @@
       <div
         class="node"
         :class="{
-          active: activeMenuId === (node.menu_id ?? node.id),
+          active: activeMenuId === node.menu_id,
           ancestor: activeParents.has(nodeKey(node)),
-          disabled: isBlocked(node),
+          disabled: isNodeDisabled(node),
         }"
       >
         <button v-if="node.children?.length" class="toggle" @click="toggle(nodeKey(node))">
@@ -15,13 +15,8 @@
         <span v-else class="toggle-spacer" aria-hidden="true"></span>
         <button
           class="label"
-          :class="{
-            'label--group-stable': isReleaseGroup(node) && !isPreviewGroup(node),
-            'label--group-preview': isPreviewGroup(node),
-            'label--leaf-preview': isPreviewLeaf(node),
-          }"
-          :disabled="isBlocked(node)"
-          :title="blockedTitle(node)"
+          :disabled="isNodeDisabled(node)"
+          :title="nodeDisabledTitle(node)"
           @click="onSelect(node)"
         >
           <span>{{ nodeLabel(node) }}</span>
@@ -34,10 +29,7 @@
           v-show="expanded.has(nodeKey(node))"
           :nodes="node.children"
           :active-menu-id="activeMenuId"
-          :capabilities="capabilities"
           :level="level + 1"
-          :native-preview-group-key="nativePreviewGroupKey"
-          :release-metadata-mode="releaseMetadataMode"
           @select="emit('select', $event)"
         />
       </transition>
@@ -47,37 +39,24 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watchEffect } from 'vue';
-import type { NavNode } from '@sc/schema';
-import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
+import type { ExplainedMenuNode } from '../types/navigation';
 import { useSessionStore } from '../stores/session';
 
 const props = withDefaults(defineProps<{
-  nodes: NavNode[];
+  nodes: ExplainedMenuNode[];
   activeMenuId?: number;
-  capabilities?: string[];
   level?: number;
-  nativePreviewGroupKey?: string;
-  releaseMetadataMode?: boolean;
 }>(), {
   activeMenuId: undefined,
-  capabilities: () => [],
   level: 0,
-  nativePreviewGroupKey: '',
-  releaseMetadataMode: false,
 });
-const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
+const emit = defineEmits<{ (e: 'select', node: ExplainedMenuNode): void }>();
 
 const session = useSessionStore();
 const expanded = computed(() => new Set(session.menuExpandedKeys));
 const activeParents = ref<Set<string>>(new Set());
 
-const sorted = computed(() => {
-  return [...props.nodes].sort((a, b) => {
-    const seqA = a.meta?.sequence ?? 0;
-    const seqB = b.meta?.sequence ?? 0;
-    return seqA - seqB;
-  });
-});
+const sorted = computed(() => props.nodes || []);
 
 const level = computed(() => Number(props.level || 0));
 const treeStyle = computed<Record<string, string>>(() => {
@@ -93,12 +72,12 @@ function toggle(key: string) {
   session.toggleMenuExpanded(key);
 }
 
-function nodeKey(node: NavNode) {
-  return (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id}`;
+function nodeKey(node: ExplainedMenuNode) {
+  return String(node.key || `menu_${node.menu_id || 0}`);
 }
 
-function nodeLabel(node: NavNode) {
-  const raw = String(node.title || node.name || node.label || 'Unnamed');
+function nodeLabel(node: ExplainedMenuNode) {
+  const raw = String(node.name || 'Unnamed');
   return raw
     .replace(/\s*\(\d+\)\s*$/g, '')
     .replace(/^project\s*manager$/i, '项目经理')
@@ -111,46 +90,34 @@ function nodeLabel(node: NavNode) {
     .replace(/^dashboard$/i, '看板');
 }
 
-function groupKey(node: NavNode) {
-  return String(node.meta?.group_key || '');
-}
-
-function isReleaseGroup(node: NavNode) {
-  return Boolean(props.releaseMetadataMode && node.children?.length && groupKey(node));
-}
-
-function isPreviewGroup(node: NavNode) {
-  return Boolean(props.releaseMetadataMode && groupKey(node) && groupKey(node) === props.nativePreviewGroupKey);
-}
-
-function isPreviewLeaf(node: NavNode) {
-  return Boolean(props.releaseMetadataMode && node.meta?.release_state === 'preview');
-}
-
-function nodeBadge(node: NavNode) {
-  if (!props.releaseMetadataMode) return '';
-  if (isPreviewGroup(node) || isPreviewLeaf(node)) return '预发布';
-  if (isReleaseGroup(node)) return '正式';
+function nodeBadge(node: ExplainedMenuNode) {
+  if (node.target_type === 'native') return '原生';
+  if (node.target_type === 'unavailable') return '不可用';
+  if (node.target_type === 'directory') return '目录';
   return '';
 }
 
-function badgeClass(node: NavNode) {
-  return isPreviewGroup(node) || isPreviewLeaf(node) ? 'badge--preview' : 'badge--stable';
+function badgeClass(node: ExplainedMenuNode) {
+  return node.target_type === 'unavailable' ? 'badge--preview' : 'badge--stable';
 }
 
-function onSelect(node: NavNode) {
-  if (isBlocked(node)) {
+function onSelect(node: ExplainedMenuNode) {
+  if (isNodeDisabled(node)) {
+    return;
+  }
+  if (node.target_type === 'directory' && node.children?.length) {
+    toggle(nodeKey(node));
     return;
   }
   emit('select', node);
 }
 
-function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string> {
+function ensureExpandedForActive(nodes: ExplainedMenuNode[], menuId?: number): Set<string> {
   if (!menuId) {
     return new Set();
   }
   const next = new Set<string>();
-  const walk = (items: NavNode[], parents: string[] = []) => {
+  const walk = (items: ExplainedMenuNode[], parents: string[] = []) => {
     for (const node of items) {
       const key = nodeKey(node);
       if (node.menu_id === menuId) {
@@ -173,14 +140,24 @@ watchEffect(() => {
   activeParents.value = parents;
 });
 
-function isBlocked(node: NavNode) {
-  return evaluateCapabilityPolicy({ source: node.meta, available: props.capabilities }).state !== 'enabled';
+function isNodeDisabled(node: ExplainedMenuNode) {
+  if (node.is_visible === false) {
+    return true;
+  }
+  if (node.is_clickable === false) {
+    return true;
+  }
+  return node.target_type === 'unavailable';
 }
 
-function blockedTitle(node: NavNode) {
-  const policy = evaluateCapabilityPolicy({ source: node.meta, available: props.capabilities });
-  const tip = capabilityTooltip(policy);
-  return tip || undefined;
+function nodeDisabledTitle(node: ExplainedMenuNode) {
+  if (node.target_type === 'unavailable') {
+    return node.reason_code ? `不可用：${node.reason_code}` : '不可用菜单';
+  }
+  if (node.is_clickable === false) {
+    return '当前节点不可点击';
+  }
+  return undefined;
 }
 
 // 调试：打印接收到的节点
@@ -190,12 +167,11 @@ onMounted(() => {
     if (props.nodes.length > 0) {
       console.info('[MenuTree] First node:', {
         key: props.nodes[0].key,
-        name: props.nodes[0].name || props.nodes[0].title || props.nodes[0].label,
-        label: props.nodes[0].label,
-        title: props.nodes[0].title,
+        name: props.nodes[0].name,
         menu_id: props.nodes[0].menu_id,
         children: props.nodes[0].children?.length || 0,
-        meta: props.nodes[0].meta
+        target_type: props.nodes[0].target_type,
+        route: props.nodes[0].route,
       });
     }
   }
