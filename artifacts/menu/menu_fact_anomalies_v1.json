@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "source_snapshot": "artifacts/menu/menu_fact_snapshot_v1.json",
+    "menu_total": 0
+  },
+  "summary": {
+    "menu_total": 0,
+    "directory_menu_count": 0,
+    "action_menu_count": 0,
+    "anomaly_menu_count": 0
+  },
+  "anomalies": {
+    "orphan_menus": [],
+    "empty_menus": [],
+    "invalid_action_menus": [],
+    "mixed_menus": [],
+    "sequence_risk": {
+      "missing_or_invalid": [],
+      "duplicate": []
+    }
+  }
+}

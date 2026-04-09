@@ -1,0 +1,35 @@
+{
+  "base_url": "http://localhost:8069",
+  "db": "sc_demo",
+  "result": "PASS",
+  "rows": [
+    {
+      "role": "admin",
+      "login": "admin",
+      "password_used": "admin",
+      "schema_mode": "legacy_tree",
+      "menu_count": 1,
+      "node_count": 1,
+      "field_check_pass": true
+    },
+    {
+      "role": "pm",
+      "login": "sc_fx_pm",
+      "password_used": "prod_like",
+      "schema_mode": "legacy_tree",
+      "menu_count": 1,
+      "node_count": 1,
+      "field_check_pass": true
+    },
+    {
+      "role": "finance",
+      "login": "sc_fx_finance",
+      "password_used": "prod_like",
+      "schema_mode": "legacy_tree",
+      "menu_count": 1,
+      "node_count": 1,
+      "field_check_pass": true
+    }
+  ],
+  "failures": []
+}

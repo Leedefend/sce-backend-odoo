@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "version": "v1",
+    "source": "ir.ui.menu",
+    "note": "placeholder snapshot generated in code workspace; run scripts/verify/menu_fact_export.py in Odoo runtime for live data",
+    "node_schema": [
+      "menu_id",
+      "name",
+      "parent_id",
+      "complete_name",
+      "sequence",
+      "action_raw",
+      "action_type",
+      "action_id",
+      "action_model",
+      "action_exists",
+      "action_meta",
+      "action_parse_error",
+      "groups",
+      "web_icon",
+      "child_ids"
+    ]
+  },
+  "flat": [],
+  "tree": []
+}
