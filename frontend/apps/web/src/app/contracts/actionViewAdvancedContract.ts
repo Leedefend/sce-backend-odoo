@@ -6,10 +6,6 @@ export function resolveActionViewAdvancedTitle(options: {
   viewMode: string;
   pageText: (key: string, fallback: string) => string;
 }): string {
-  if (options.strictContractMode) {
-    const title = String(options.strictAdvancedViewContract.title || '').trim();
-    return title || options.pageText('advanced_view_title_contract_missing', '高级视图（契约缺失）');
-  }
   const labels: Record<string, string> = {
     pivot: options.pageText('advanced_title_pivot', '数据透视视图'),
     graph: options.pageText('advanced_title_graph', '图表视图'),
@@ -18,7 +14,12 @@ export function resolveActionViewAdvancedTitle(options: {
     activity: options.pageText('advanced_title_activity', '活动视图'),
     dashboard: options.pageText('advanced_title_dashboard', '仪表板视图'),
   };
-  return labels[options.viewMode] || options.pageText('advanced_title_default', '高级视图');
+  const fallbackTitle = labels[options.viewMode] || options.pageText('advanced_title_default', '高级视图');
+  if (options.strictContractMode) {
+    const title = String(options.strictAdvancedViewContract.title || '').trim();
+    return title || fallbackTitle;
+  }
+  return fallbackTitle;
 }
 
 export function resolveActionViewAdvancedHint(options: {
@@ -27,10 +28,6 @@ export function resolveActionViewAdvancedHint(options: {
   viewMode: string;
   pageText: (key: string, fallback: string) => string;
 }): string {
-  if (options.strictContractMode) {
-    const hint = String(options.strictAdvancedViewContract.hint || '').trim();
-    return hint || options.pageText('advanced_view_hint_contract_missing', '当前场景未提供 advanced_view 提示，请补齐契约。');
-  }
   const hints: Record<string, string> = {
     pivot: options.pageText('advanced_hint_pivot', '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。'),
     graph: options.pageText('advanced_hint_graph', '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。'),
@@ -39,5 +36,10 @@ export function resolveActionViewAdvancedHint(options: {
     activity: options.pageText('advanced_hint_activity', '当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。'),
     dashboard: options.pageText('advanced_hint_dashboard', '当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。'),
   };
-  return hints[options.viewMode] || options.pageText('advanced_hint_default', '当前视图使用可读降级渲染。');
+  const fallbackHint = hints[options.viewMode] || options.pageText('advanced_hint_default', '当前视图使用可读降级渲染。');
+  if (options.strictContractMode) {
+    const hint = String(options.strictAdvancedViewContract.hint || '').trim();
+    return hint || fallbackHint;
+  }
+  return fallbackHint;
 }

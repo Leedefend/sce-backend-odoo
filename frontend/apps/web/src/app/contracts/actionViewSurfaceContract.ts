@@ -114,7 +114,7 @@ export function resolveActionViewAvailableModes(options: {
   const seen = new Set<string>();
   const addMode = (raw: unknown) => {
     const mode = normalizeActionViewMode(raw);
-    if (!mode || mode === 'form' || seen.has(mode)) return;
+    if (!mode || seen.has(mode)) return;
     seen.add(mode);
     out.push(mode);
   };
@@ -138,6 +138,7 @@ export function resolveActionViewModeLabel(options: {
   const strictLabel = options.strictLabelMap[normalized];
   if (options.strictContractMode && strictLabel) return strictLabel;
   if (normalized === 'tree') return options.pageText('view_mode_tree', '列表');
+  if (normalized === 'form') return options.pageText('view_mode_form', '表单');
   if (normalized === 'kanban') return options.pageText('view_mode_kanban', '看板');
   if (normalized === 'pivot') return options.pageText('view_mode_pivot', '透视');
   if (normalized === 'graph') return options.pageText('view_mode_graph', '图表');

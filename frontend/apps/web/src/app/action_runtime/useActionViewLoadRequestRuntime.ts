@@ -43,6 +43,8 @@ type ExecuteLoadDataRequestOptions = {
     kanbanPrimaryFields: string[];
     kanbanSecondaryFields: string[];
     kanbanStatusFields: string[];
+    kanbanMetricFields: string[];
+    kanbanQuickActionCount: number;
   };
   resolveLoadPreflightFieldFlags: (input: Dict) => { hasActiveField: boolean; hasAssigneeField: boolean };
   loadAssigneeOptions: () => Promise<void>;
@@ -61,6 +63,8 @@ type ExecuteLoadDataRequestOptions = {
   kanbanPrimaryFieldsRef: { value: string[] };
   kanbanSecondaryFieldsRef: { value: string[] };
   kanbanStatusFieldsRef: { value: string[] };
+  kanbanMetricFieldsRef: { value: string[] };
+  kanbanQuickActionCountRef: { value: number };
   hasActiveFieldRef: { value: boolean };
   hasAssigneeFieldRef: { value: boolean };
 };
@@ -106,6 +110,8 @@ export function useActionViewLoadRequestRuntime() {
     options.kanbanPrimaryFieldsRef.value = kanbanFieldState.kanbanPrimaryFields;
     options.kanbanSecondaryFieldsRef.value = kanbanFieldState.kanbanSecondaryFields;
     options.kanbanStatusFieldsRef.value = kanbanFieldState.kanbanStatusFields;
+    options.kanbanMetricFieldsRef.value = kanbanFieldState.kanbanMetricFields;
+    options.kanbanQuickActionCountRef.value = kanbanFieldState.kanbanQuickActionCount;
 
     const fieldFlags = options.resolveLoadPreflightFieldFlags({
       fieldMapRaw: options.typedContract.fields || {},

@@ -134,6 +134,7 @@
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
         <DetailShellLayout
+          v-if="showDetailShellZone"
           :shells="detailShells"
           :busy="busy"
           :is-project-create-page="isProjectCreatePage"
@@ -142,6 +143,25 @@
           @field-change="onTemplateFieldChange"
           @toggle-advanced="advancedExpanded = !advancedExpanded"
         />
+        <StatusPanel
+          v-else
+          title="当前表单语义未开放详情区"
+          message="semantic_page 未声明 detail_zone，已按契约隐藏详情布局。"
+          variant="info"
+        />
+        <section v-if="showRelationZoneBlock" class="block zone-block">
+          <h3>关联数据</h3>
+          <div class="zone-chip-list">
+            <span v-for="item in semanticRelationZoneItems" :key="item.field" class="zone-chip">
+              {{ item.label }} · {{ item.viewType }} · {{ item.editableLabel }}
+            </span>
+          </div>
+        </section>
+        <section v-if="showCollaborationZoneBlock" class="block zone-block">
+          <h3>协作区</h3>
+          <p class="zone-collaboration-line">讨论区：{{ semanticHasChatter ? '已启用' : '未启用' }}</p>
+          <p class="zone-collaboration-line">附件区：{{ semanticHasAttachments ? '已启用' : '未启用' }}</p>
+        </section>
         <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -394,6 +414,7 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const busy = computed(() => busyKind.value !== null);
+const isInteractionLocked = computed(() => status.value === 'loading' || busy.value);
 const formRenderPolicy = computed(() => resolveContractViewRenderPolicy(contract.value, 'form'));
 const formNativeFallbackUrl = computed(() => {
   const action = formRenderPolicy.value.fallbackAction;
@@ -405,6 +426,62 @@ const formNativeFallbackMessage = computed(() => (
 ));
 const sceneContractV1 = computed<Record<string, unknown>>(() => asRecord((contract.value as Record<string, unknown> | null)?.scene_contract_v1));
 const sceneContractPermissions = computed<Record<string, unknown>>(() => asRecord(sceneContractV1.value.permissions));
+const semanticPage = computed<Record<string, unknown>>(() => asRecord((contract.value as Record<string, unknown> | null)?.semantic_page));
+const semanticFormSemantics = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.form_semantics));
+const semanticFormLayout = computed<unknown[]>(() => (Array.isArray(semanticFormSemantics.value.layout) ? semanticFormSemantics.value.layout : []));
+const semanticZoneKeySet = computed(() => {
+  const zones = Array.isArray(semanticPage.value.zones) ? semanticPage.value.zones : [];
+  const keys = zones
+    .map((item) => {
+      const row = asRecord(item);
+      return asText(row.key);
+    })
+    .filter(Boolean);
+  return new Set(keys);
+});
+const semanticHasSummaryZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('summary_zone'));
+const semanticHasDetailZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('detail_zone'));
+const semanticHasActionZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('action_zone'));
+const semanticHasRelationZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('relation_zone'));
+const semanticHasCollaborationZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('collaboration_zone'));
+const semanticRelationZoneItems = computed<Array<{ field: string; label: string; viewType: string; editableLabel: string }>>(() => {
+  const rows = Array.isArray(semanticFormSemantics.value.relation_fields) ? semanticFormSemantics.value.relation_fields : [];
+  return rows
+    .map((item) => {
+      const row = asRecord(item);
+      const field = asText(row.field);
+      if (!field) return null;
+      const fieldDescriptor = contract.value?.fields?.[field] as Record<string, unknown> | undefined;
+      const label = String(fieldDescriptor?.string || field).trim();
+      const viewType = asText(row.preferred_view_type) || 'tree';
+      const editable = asRecord(row.editable);
+      const editableLabel = editable.inline_edit === true ? '可行内编辑' : '只读关系';
+      return { field, label, viewType, editableLabel };
+    })
+    .filter((item): item is { field: string; label: string; viewType: string; editableLabel: string } => Boolean(item));
+});
+const semanticHasChatter = computed(() => semanticFormSemantics.value.has_chatter === true);
+const semanticHasAttachments = computed(() => semanticFormSemantics.value.has_attachments === true);
+const semanticPermissionVerdicts = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.permission_verdicts));
+const semanticActionGating = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.action_gating));
+const semanticActionGatingVerdict = computed<Record<string, unknown>>(() => asRecord(semanticActionGating.value.verdict));
+const semanticActionStateByKey = computed<Record<string, { enabled: boolean; reason: string }>>(() => {
+  const out: Record<string, { enabled: boolean; reason: string }> = {};
+  const actions = asRecord(semanticPage.value.actions);
+  const buckets = [actions.header_actions, actions.record_actions, actions.toolbar_actions];
+  for (const bucket of buckets) {
+    if (!Array.isArray(bucket)) continue;
+    for (const item of bucket) {
+      const row = asRecord(item);
+      const key = asText(row.key);
+      if (!key) continue;
+      const enabled = row.enabled === true;
+      const reason = asText(row.reason) || asText(row.reason_code);
+      out[key] = { enabled, reason };
+    }
+  }
+  return out;
+});
 const sceneConsumerRuntime = computed<Record<string, unknown>>(() => {
   const diagnostics = asRecord(sceneContractV1.value.diagnostics);
   return asRecord(diagnostics.consumer_runtime);
@@ -478,15 +555,13 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 const rights = computed(() => {
   const head = contract.value?.head?.permissions;
   const effective = contract.value?.permissions?.effective?.rights;
-  const effectiveCollapsed = Boolean(
-    effective
-    && ['read', 'write', 'create', 'unlink'].every((key) => (effective as Record<string, unknown>)[key] === false),
-  );
   const resolve = (key: 'read' | 'write' | 'create' | 'unlink') => {
+    const semanticVerdict = asRecord(semanticPermissionVerdicts.value[key]);
+    if (typeof semanticVerdict.allowed === 'boolean') return semanticVerdict.allowed;
     const a = head?.[key];
     if (typeof a === 'boolean') return a;
     const b = effective?.[key];
-    if (!effectiveCollapsed && typeof b === 'boolean') return b;
+    if (typeof b === 'boolean') return b;
     return true;
   };
   return {
@@ -506,7 +581,12 @@ const canPersistBySceneRuntime = computed(() => {
   if (sceneRuntimePageStatus.value === 'restricted') return false;
   return true;
 });
-const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create) && canPersistBySceneRuntime.value);
+const isSemanticStateWriteBlocked = computed(() => Boolean(semanticActionGatingVerdict.value.is_closed_state) && Boolean(recordId.value));
+const canSave = computed(() => (
+  (recordId.value ? rights.value.write : rights.value.create)
+  && canPersistBySceneRuntime.value
+  && !isSemanticStateWriteBlocked.value
+));
 const isProjectQuickIntakeMode = computed(() => {
   if (String(model.value || '').trim() !== 'project.project') return false;
   if (recordId.value) return false;
@@ -771,7 +851,19 @@ const preferNativeFormSurface = computed(() => {
   return contractReadiness.value.usable && layoutNodes.value.some((node) => node.kind === 'field');
 });
 const showPageOverviewStrip = computed(() => pageOverviewItems.value.length > 0 && !preferNativeFormSurface.value);
-const showCommandBar = computed(() => statusbarSteps.value.length > 0 || contractActionStrip.value.length > 0);
+const showCommandBar = computed(() => {
+  if (!semanticHasSummaryZone.value && !semanticHasActionZone.value) return false;
+  return statusbarSteps.value.length > 0 || contractActionStrip.value.length > 0;
+});
+const showDetailShellZone = computed(() => semanticHasDetailZone.value);
+const showRelationZoneBlock = computed(() => {
+  if (!semanticHasRelationZone.value) return false;
+  return semanticRelationZoneItems.value.length > 0 && !preferNativeFormSurface.value;
+});
+const showCollaborationZoneBlock = computed(() => {
+  if (!semanticHasCollaborationZone.value) return false;
+  return (semanticHasChatter.value || semanticHasAttachments.value) && !preferNativeFormSurface.value;
+});
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
 const enterpriseStepTargets = computed(() => {
@@ -812,9 +904,18 @@ const hideSearchFiltersSection = computed(() => Boolean(formGovernance.value.hid
 const hideBodyActionsSection = computed(() => Boolean(formGovernance.value.hide_body_actions));
 const showContractWarnings = computed(() => warnings.value.length > 0 && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
 const showStrictContractGuard = computed(() => Boolean(strictContractMissingSummary.value) && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
-const showWorkflowTransitions = computed(() => workflowTransitions.value.length > 0 && !isProjectCreatePage.value && !hideWorkflowSection.value && !preferNativeFormSurface.value);
-const showInlineSearchFilters = computed(() => showSearchFilters.value && searchFilters.value.length > 0 && !isProjectCreatePage.value && !hideSearchFiltersSection.value && !preferNativeFormSurface.value);
-const showBodyActionStrip = computed(() => bodyActions.value.length > 0 && !isProjectCreatePage.value && !hideBodyActionsSection.value && !preferNativeFormSurface.value);
+const showWorkflowTransitions = computed(() => {
+  if (!semanticHasActionZone.value) return false;
+  return workflowTransitions.value.length > 0 && !isProjectCreatePage.value && !hideWorkflowSection.value && !preferNativeFormSurface.value;
+});
+const showInlineSearchFilters = computed(() => {
+  if (!semanticHasActionZone.value) return false;
+  return showSearchFilters.value && searchFilters.value.length > 0 && !isProjectCreatePage.value && !hideSearchFiltersSection.value && !preferNativeFormSurface.value;
+});
+const showBodyActionStrip = computed(() => {
+  if (!semanticHasActionZone.value) return false;
+  return bodyActions.value.length > 0 && !isProjectCreatePage.value && !hideBodyActionsSection.value && !preferNativeFormSurface.value;
+});
 
 const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
@@ -1266,6 +1367,7 @@ function makeOne2manyKey() {
 }
 
 function addOne2manyRow(name: string) {
+  if (isInteractionLocked.value) return;
   const rows = ensureOne2manyRows(name);
   const primary = one2manyPrimaryColumn(name);
   const columns = one2manyColumns(name);
@@ -1330,6 +1432,7 @@ function one2manyColumnDisplayValue(column: One2ManyColumn, value: unknown) {
 }
 
 function removeOne2manyRow(fieldName: string, rowKey: string) {
+  if (isInteractionLocked.value) return;
   const rows = ensureOne2manyRows(fieldName);
   const index = rows.findIndex((item) => item.key === rowKey);
   if (index < 0) return;
@@ -1344,6 +1447,7 @@ function removeOne2manyRow(fieldName: string, rowKey: string) {
 }
 
 function restoreOne2manyRow(fieldName: string, rowKey: string) {
+  if (isInteractionLocked.value) return;
   const rows = ensureOne2manyRows(fieldName);
   const row = rows.find((item) => item.key === rowKey);
   if (!row) return;
@@ -1647,6 +1751,7 @@ async function ensureRelationFieldDescriptors(name: string) {
 }
 
 async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescriptor) {
+  if (isInteractionLocked.value) return;
   const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
   if (!relation) return;
   const mode = relationCreateMode(fieldName, descriptor);
@@ -1804,6 +1909,41 @@ function detectMethodName(key: string, payloadMethod: string) {
   return detectObjectMethodFromActionKey(key, payloadMethod);
 }
 
+function actionRequiresWritePermission(actionKey: string) {
+  const lowered = String(actionKey || '').trim().toLowerCase();
+  if (!lowered) return false;
+  return ['edit', 'write', 'save', 'create', 'unlink', 'delete', 'archive', 'submit'].some((token) => lowered.includes(token));
+}
+
+function resolveSemanticActionGate(actionKey: string, fallbackEnabled: boolean, fallbackHint: string) {
+  const key = String(actionKey || '').trim();
+  let enabled = Boolean(fallbackEnabled);
+  let hint = String(fallbackHint || '').trim();
+
+  const semanticRow = semanticActionStateByKey.value[key];
+  if (semanticRow) {
+    enabled = enabled && semanticRow.enabled;
+    if (!enabled && semanticRow.reason) {
+      hint = semanticRow.reason;
+    }
+  }
+
+  const requiresWrite = actionRequiresWritePermission(key);
+  const verdictKey = requiresWrite ? 'write' : 'execute';
+  const verdict = asRecord(semanticPermissionVerdicts.value[verdictKey]);
+  if (verdict.allowed === false) {
+    enabled = false;
+    hint = asText(verdict.reason) || asText(verdict.reason_code) || hint || 'permission denied';
+  }
+
+  if (requiresWrite && isSemanticStateWriteBlocked.value) {
+    enabled = false;
+    hint = asText(semanticActionGatingVerdict.value.reason_code) || hint || 'STATE_BLOCKED';
+  }
+
+  return { enabled, hint };
+}
+
 const contractActions = computed<ContractAction[]>(() => {
   const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
     const protocol = normalizeSceneActionProtocol(row);
@@ -1821,6 +1961,7 @@ const contractActions = computed<ContractAction[]>(() => {
       : tier === 'secondary'
         ? 'secondary_action'
         : '';
+    const gated = resolveSemanticActionGate(key, true, '');
     return {
       key,
       label: String(row.label || key),
@@ -1833,8 +1974,8 @@ const contractActions = computed<ContractAction[]>(() => {
       domainRaw: String(target.domain_raw || '').trim(),
       target: String(target.target || '').trim(),
       url: String(target.url || target.route || '').trim(),
-      enabled: true,
-      hint: '',
+      enabled: gated.enabled,
+      hint: gated.hint,
       semantic,
       visibleProfiles: ['create', 'edit', 'readonly'],
       mutation: protocol?.mutation,
@@ -1888,7 +2029,11 @@ const contractActions = computed<ContractAction[]>(() => {
     if (!policy.visible) continue;
     const byGroup = hasGroupAccess(groups);
     const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
-    const enabled = policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
+    const fallbackEnabled = policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
+    const fallbackHint = byGroup
+      ? (needRecord && !recordId.value ? 'requires record id' : policy.reason)
+      : 'permission denied';
+    const gated = resolveSemanticActionGate(key, fallbackEnabled, fallbackHint);
     out.push({
       key,
       label: String(row.label || key),
@@ -1901,10 +2046,8 @@ const contractActions = computed<ContractAction[]>(() => {
       domainRaw,
       target,
       url: String(payload.url || '').trim(),
-      enabled,
-      hint: byGroup
-        ? (needRecord && !recordId.value ? 'requires record id' : policy.reason)
-        : 'permission denied',
+      enabled: gated.enabled,
+      hint: gated.hint,
       semantic: policy.semantic,
       visibleProfiles,
     });
@@ -2122,6 +2265,22 @@ const contractVisibleFields = computed<string[]>(() => {
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
 });
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
+  const semanticFieldBehaviorMapRaw = asRecord(semanticFormSemantics.value.field_behavior_map);
+  const semanticFieldBehaviorMap: Record<string, Record<string, unknown>> = {};
+  Object.entries(semanticFieldBehaviorMapRaw).forEach(([name, raw]) => {
+    const row = asRecord(raw);
+    const key = String(name || '').trim();
+    if (!key) return;
+    semanticFieldBehaviorMap[key] = {
+      readonly: row.readonly === true,
+      required: row.required === true,
+      invisible: row.invisible === true,
+      widget: asText(row.widget),
+    };
+  });
+  if (Object.keys(semanticFieldBehaviorMap).length > 0) {
+    return semanticFieldBehaviorMap;
+  }
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
   return formView.field_modifiers || {};
 });
@@ -2201,7 +2360,8 @@ function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string
 
 const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
-  const order = contract.value?.views?.form?.layout || [];
+  const formLayout = contract.value?.views?.form?.layout;
+  const order = Array.isArray(formLayout) && formLayout.length ? formLayout : semanticFormLayout.value;
   const fieldGroups = contract.value?.permissions?.field_groups || {};
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
@@ -2300,7 +2460,8 @@ function dividerDefaultLabel(kind: LayoutNode['kind']) {
 
 const layoutTrees = computed<LayoutTreeSection[]>(() => {
   const fieldMap = contract.value?.fields || {};
-  const order = contract.value?.views?.form?.layout || [];
+  const formLayout = contract.value?.views?.form?.layout;
+  const order = Array.isArray(formLayout) && formLayout.length ? formLayout : semanticFormLayout.value;
   const fieldGroups = contract.value?.permissions?.field_groups || {};
   const used = new Set<string>();
   const roots: LayoutTreeSection[] = [];
@@ -2409,7 +2570,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
     fallbackFields.forEach((name) => appendField(null, buildFieldNode(name)));
   }
 
-  if (rootDefault.fields.length > 0) roots.unshift(rootDefault);
+  if (rootDefault.fields.length > 0) roots.push(rootDefault);
 
   const prune = (section: LayoutTreeSection): LayoutTreeSection | null => {
     const children = section.children
@@ -2598,11 +2759,13 @@ function inputFieldValue(name: string) {
 }
 
 function setBooleanField(name: string, checked: boolean) {
+  if (isInteractionLocked.value) return;
   formData[name] = checked;
   markFieldChanged(name);
 }
 
 function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined, value: string) {
+  if (isInteractionLocked.value) return;
   const normalized = String(value || '').trim();
   if (!normalized) {
     formData[name] = false;
@@ -2624,11 +2787,13 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
 }
 
 function setSelectionField(name: string, value: string) {
+  if (isInteractionLocked.value) return;
   formData[name] = value || false;
   markFieldChanged(name);
 }
 
 function setRelationMultiField(name: string, target: HTMLSelectElement) {
+  if (isInteractionLocked.value) return;
   const ids = Array.from(target.selectedOptions)
     .map((item) => Number(item.value))
     .filter((id) => Number.isFinite(id) && id > 0)
@@ -2638,6 +2803,7 @@ function setRelationMultiField(name: string, target: HTMLSelectElement) {
 }
 
 function setTextField(name: string, value: string) {
+  if (isInteractionLocked.value) return;
   formData[name] = value;
   markFieldChanged(name);
 }
@@ -2686,6 +2852,10 @@ function buildOnchangeValues() {
 }
 
 async function runOnchangeRoundtrip() {
+  if (isInteractionLocked.value) {
+    scheduleOnchange();
+    return;
+  }
   if (!model.value) return;
   if (!changedFieldSet.size) return;
   const changed = Array.from(changedFieldSet);
@@ -2868,9 +3038,17 @@ function analyzeFormContractReadiness(
   const layout = formView && typeof formView === 'object' && !Array.isArray(formView)
     ? (formView as Record<string, unknown>).layout
     : [];
-  const layoutFieldNames = collectLayoutFieldNames(layout);
+  const semanticPageRaw = row.semantic_page && typeof row.semantic_page === 'object' && !Array.isArray(row.semantic_page)
+    ? row.semantic_page as Record<string, unknown>
+    : {};
+  const semanticFormRaw = semanticPageRaw.form_semantics && typeof semanticPageRaw.form_semantics === 'object' && !Array.isArray(semanticPageRaw.form_semantics)
+    ? semanticPageRaw.form_semantics as Record<string, unknown>
+    : {};
+  const semanticLayout = Array.isArray(semanticFormRaw.layout) ? semanticFormRaw.layout : [];
+  const effectiveLayout = Array.isArray(layout) && layout.length ? layout : semanticLayout;
+  const layoutFieldNames = collectLayoutFieldNames(effectiveLayout);
   if (!layoutFieldNames.size) {
-    issues.push('contract.views.form.layout has no field nodes');
+    issues.push('contract.views.form.layout/semantic_page.form_semantics.layout has no field nodes');
   }
 
   const head = row.head;
@@ -3258,11 +3436,13 @@ watchEffect(() => {
 });
 
 function openFormNativeFallback() {
+  if (isInteractionLocked.value) return;
   if (!formNativeFallbackUrl.value) return;
   window.location.assign(formNativeFallbackUrl.value);
 }
 
 async function runAction(action: ContractAction) {
+  if (isInteractionLocked.value) return;
   if (!action.enabled) return;
   const actionKey = String(action.key || '').trim().toLowerCase();
   if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
@@ -3368,6 +3548,7 @@ async function runAction(action: ContractAction) {
 }
 
 async function openEnterpriseNextAction() {
+  if (isInteractionLocked.value) return;
   const target = enterpriseNextActionTarget.value;
   if (!target) return;
   await router.push({
@@ -3402,6 +3583,7 @@ async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPoli
 }
 
 async function openFilter(filterKey: string) {
+  if (isInteractionLocked.value) return;
   if (!actionId.value) return;
   const selected = searchFilters.value.find((item) => item.key === filterKey);
   activeFilterKey.value = filterKey;
@@ -3418,12 +3600,14 @@ async function openFilter(filterKey: string) {
 }
 
 async function cancelIntake() {
+  if (isInteractionLocked.value) return;
   if (!isProjectCreatePage.value) return;
   const target = session.resolveLandingPath('/');
   await router.replace({ path: target, query: resolveWorkspaceContextQuery() });
 }
 
 async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
+  if (isInteractionLocked.value) return;
   if (!canSave.value || !model.value) return;
   submissionFeedback.value = null;
   validationErrors.value = [];
@@ -3922,6 +4106,33 @@ watch(
   border-bottom: 0;
   padding-bottom: 0;
   margin-top: 2px;
+}
+
+.zone-block {
+  margin-top: 6px;
+}
+
+.zone-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.zone-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.zone-collaboration-line {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
 }
 
 @media (max-width: 860px) {

@@ -23,12 +23,16 @@ export function resolveActionViewSurfaceKind(options: {
   contractSurfaceKind: unknown;
   extensionSurfaceKind: unknown;
 }): ActionViewSurfaceKind {
-  if (options.strictContractMode) {
-    return normalizeSurfaceKind(options.strictSurfaceContract.kind);
-  }
   const contractKind = normalizeSurfaceKind(options.contractSurfaceKind);
+  const extensionKind = normalizeSurfaceKind(options.extensionSurfaceKind);
+  if (options.strictContractMode) {
+    const strictKind = normalizeSurfaceKind(options.strictSurfaceContract.kind);
+    if (strictKind !== 'generic') return strictKind;
+    if (contractKind !== 'generic') return contractKind;
+    return extensionKind;
+  }
   if (contractKind !== 'generic') return contractKind;
-  return normalizeSurfaceKind(options.extensionSurfaceKind);
+  return extensionKind;
 }
 
 export function mapProjectionMetricItems(rowsRaw: unknown, keyPrefix: string): ProjectionMetricItem[] {

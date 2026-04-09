@@ -289,11 +289,15 @@
       :primary-fields="kanbanPrimaryFields"
       :secondary-fields="kanbanSecondaryFields"
       :status-fields="kanbanStatusFields"
+      :metric-fields="kanbanMetricFields"
+      :quick-action-count="kanbanQuickActionCount"
+      :active-group-by-field="activeGroupByField"
       :field-labels="contractColumnLabels"
       :title-field="kanbanTitleField"
       :subtitle="vm.page.subtitle"
       :status-label="vm.page.statusLabel"
       :scene-key="vm.page.sceneKey"
+      :semantic-zones="semanticZones"
       :page-mode="vm.page.pageMode"
       :on-reload="reload"
       :on-card-click="handleRowClick"
@@ -316,10 +320,11 @@
       :sort-source-label="sortSourceLabel"
       :search-placeholder="listSearchPlaceholder"
       :filter-value="filterValue"
+      :has-active-field="hasActiveField"
       :search-term="searchTerm"
       :quick-filters="[...vm.filters.quickFilters.primary, ...vm.filters.quickFilters.overflow]"
       :saved-filters="listSavedFilterOptions"
-      :group-by-options="listGroupByOptions"
+      :group-by-options="listGroupByToolbarOptions"
       :search-panel-options="listSearchPanelOptions"
       :searchable-field-options="listSearchableFieldOptions"
       :searchable-field-total-count="listSearchableFieldTotalCount"
@@ -339,6 +344,7 @@
       :primary-action-label="listPrimaryActionLabel"
       :on-primary-action="listPrimaryAction"
       :scene-key="vm.page.sceneKey"
+      :semantic-zones="semanticZones"
       :page-mode="vm.page.pageMode"
       :record-count="recordCount"
       :page-offset="listOffset"
@@ -395,7 +401,7 @@
         <h3>{{ vm.content.advanced?.title }}</h3>
         <p>{{ vm.content.advanced?.hint }}</p>
       </header>
-      <div class="advanced-contract">
+      <div v-if="showHud" class="advanced-contract">
         <p class="contract-label">{{ t('label.contract_summary', '契约摘要') }}</p>
         <p>view_type={{ contractViewType || '-' }} · mode={{ vm.page.viewMode || '-' }} · records={{ records.length }}</p>
       </div>
@@ -830,6 +836,7 @@ const {
 const routeQueryMap = computed<Record<string, unknown>>(() => normalizeActionViewRouteQuery(route.query));
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
+const isListInteractionLocked = computed(() => status.value === 'loading');
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
@@ -845,6 +852,8 @@ const kanbanFields = ref<string[]>([]);
 const kanbanPrimaryFields = ref<string[]>([]);
 const kanbanSecondaryFields = ref<string[]>([]);
 const kanbanStatusFields = ref<string[]>([]);
+const kanbanMetricFields = ref<string[]>([]);
+const kanbanQuickActionCount = ref(0);
 const kanbanTitleFieldHint = ref('');
 const hasActiveField = ref(false);
 const hasAssigneeField = ref(false);
@@ -1088,6 +1097,16 @@ function applyDefaultMarkerLabel<T extends { label?: string; isDefault?: boolean
     };
   });
 }
+function dedupeToolbarChipsByKey<T extends { key?: string }>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    const key = String(row?.key || '').trim();
+    if (!key) return false;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 function normalizeMetadataModeLabel(mode: string): string {
   const raw = String(mode || '').trim().toLowerCase();
   if (!raw) return '';
@@ -1116,17 +1135,12 @@ const listSearchableFieldMetadata = computed(() => {
       .map((item) => String(item.key || '').trim())
       .filter(Boolean),
   );
-  const searchPanelLabels = new Set(
-    listSearchPanelOptions.value
-      .map((item) => String(item.label || '').trim())
-      .filter(Boolean),
-  );
   const rawFields = Array.isArray(sceneReadyListSurface.value.searchableFields) ? sceneReadyListSurface.value.searchableFields : [];
   return rawFields
     .map((field) => String(field || '').trim())
     .filter(Boolean)
     .map((field) => ({ key: field, label: String(contractColumnLabels.value[field] || field).trim() || field }))
-    .filter((item) => !searchPanelKeys.has(item.key) && !searchPanelLabels.has(item.label))
+    .filter((item) => !searchPanelKeys.has(item.key))
     .filter((item, index, rows) => rows.findIndex((row) => row.key === item.key) === index);
 });
 const listSearchableFieldOptions = computed(() =>
@@ -1155,7 +1169,8 @@ const listSearchPanelOptions = computed(() => {
       if (!key || !label) return null;
       return { key, label };
     })
-    .filter(Boolean) as Array<{ key: string; label: string }>;
+    .filter(Boolean)
+    .filter((item, index, list) => list.findIndex((row) => row && item && row.key === item.key) === index) as Array<{ key: string; label: string }>;
 });
 const listSearchPanelCountLabel = computed(() => {
   const total = listSearchPanelOptions.value.length;
@@ -1170,27 +1185,35 @@ const listSearchModeLabel = computed(() => {
   return normalizeMetadataModeLabel(mode);
 });
 const listSavedFilterOptions = computed(() =>
-  applyDefaultMarkerLabel([
-    ...savedFilterPrimaryChips.value,
-    ...savedFilterOverflowChips.value,
-  ]),
+  applyDefaultMarkerLabel(
+    dedupeToolbarChipsByKey([
+      ...savedFilterPrimaryChips.value,
+      ...savedFilterOverflowChips.value,
+    ]),
+  ),
 );
 const listSavedFilterCountLabel = computed(() => {
-  const total = contractSavedFilterChips.value.length;
+  const total = listSavedFilterOptions.value.length;
   if (!total) return '0';
-  const defaultCount = contractSavedFilterChips.value.filter((chip) => Boolean((chip as { isDefault?: boolean }).isDefault)).length;
+  const defaultCount = listSavedFilterOptions.value.filter((chip) => Boolean((chip as { isDefault?: boolean }).isDefault)).length;
   return defaultCount > 0 ? `${total}，默认 ${defaultCount}` : String(total);
 });
 const listGroupByOptions = computed(() =>
-  applyDefaultMarkerLabel([
-    ...groupByPrimaryChips.value,
-    ...groupByOverflowChips.value,
-  ]),
+  applyDefaultMarkerLabel(
+    dedupeToolbarChipsByKey([
+      ...groupByPrimaryChips.value,
+      ...groupByOverflowChips.value,
+    ]),
+  ),
 );
+const listGroupByToolbarOptions = computed(() => {
+  if (!vm.value.filters.groupBy.visible) return [];
+  return listGroupByOptions.value;
+});
 const listGroupByCountLabel = computed(() => {
-  const total = contractGroupByChips.value.length;
+  const total = listGroupByToolbarOptions.value.length;
   if (!total) return '0';
-  const defaultCount = contractGroupByChips.value.filter((chip) => Boolean((chip as { isDefault?: boolean }).isDefault)).length;
+  const defaultCount = listGroupByToolbarOptions.value.filter((chip) => Boolean((chip as { isDefault?: boolean }).isDefault)).length;
   return defaultCount > 0 ? `${total}，默认 ${defaultCount}` : String(total);
 });
 const listRoutePresetDisplayLabel = computed(() => {
@@ -1321,6 +1344,17 @@ const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
+const semanticZones = computed<Array<Record<string, unknown>>>(() => {
+  const contract = actionContract.value as Record<string, unknown> | null;
+  if (!contract || typeof contract !== 'object') return [];
+  const semanticPage = contract.semantic_page;
+  if (!semanticPage || typeof semanticPage !== 'object' || Array.isArray(semanticPage)) return [];
+  const zones = (semanticPage as Record<string, unknown>).zones;
+  if (!Array.isArray(zones)) return [];
+  return zones
+    .filter((item) => item && typeof item === 'object' && !Array.isArray(item))
+    .map((item) => item as Record<string, unknown>);
+});
 const resolvedModelRef = ref('');
 const model = computed(() => {
   const actionModel = String(actionMeta.value?.model || '').trim();
@@ -1340,11 +1374,11 @@ const enterpriseBootstrapCreateLabel = computed(() => {
 });
 const canBatchDelete = computed(() => {
   if (String(model.value || '').trim() === 'project.project') return false;
-  return contractRights.value.unlink === true && viewMode.value === 'list';
+  return contractRights.value.unlink === true && viewMode.value === 'tree';
 });
 const batchDeleteOnlyModels = new Set(['project.task', 'res.company', 'hr.department', 'res.users']);
 const useDeleteOnlyBatchMode = computed(() => {
-  return viewMode.value === 'list' && batchDeleteOnlyModels.has(String(model.value || '').trim());
+  return viewMode.value === 'tree' && batchDeleteOnlyModels.has(String(model.value || '').trim());
 });
 const activeGroupByField = ref('');
 const {
@@ -1381,12 +1415,39 @@ const viewMode = computed(() => {
   const modes = availableViewModes.value;
   const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || '';
   if (mode === 'kanban') return 'kanban';
+  if (mode === 'form') return 'form';
   if (mode === 'list' || mode === 'tree') return 'tree';
   if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
     return mode;
   }
   return '';
 });
+
+function resolveFormTargetId(): string {
+  const fromQuery = String(route.query.id || route.query.res_id || route.query.active_id || '').trim();
+  if (/^\d+$/.test(fromQuery)) return fromQuery;
+  return 'new';
+}
+
+watch(
+  [viewMode, model],
+  ([mode, modelName]) => {
+    if (mode !== 'form') return;
+    const normalizedModel = String(modelName || '').trim();
+    if (!normalizedModel) return;
+    if (route.name === 'model-form' && String(route.params.model || '').trim() === normalizedModel) return;
+    const carryQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
+      action_id: actionId.value || undefined,
+      menu_id: menuId.value || undefined,
+    });
+    void router.push({
+      name: 'model-form',
+      params: { model: normalizedModel, id: resolveFormTargetId() },
+      query: carryQuery,
+    }).catch(() => {});
+  },
+  { immediate: true },
+);
 
 const {
   viewModeLabel,
@@ -1589,12 +1650,13 @@ const actionableViewModes = computed(() => {
   const hasKanban = modes.includes('kanban');
   const filtered = modes.filter((mode) => {
     if (mode === 'kanban') return true;
+    if (mode === 'form') return true;
     if (mode === 'tree' && hasKanban) return true;
     return resolveModeRecommendedRuntime(actionContract.value, mode) !== 'native';
   });
   return filtered.length ? filtered : modes;
 });
-const showViewSwitchDebug = computed(() => String(route.query.debug_view_switch || '').trim() === '1');
+const showViewSwitchDebug = computed(() => isHudEnabled(route) && String(route.query.debug_view_switch || '').trim() === '1');
 const viewSwitchDebugState = computed(() => ({
   routePath: route.fullPath,
   actionId: Number(route.params.actionId || 0),
@@ -1723,6 +1785,7 @@ const listPrimaryActionLabel = computed(() => {
   return '新建记录';
 });
 function openListCreateForm() {
+  if (isListInteractionLocked.value) return;
   if (!canCreateListRecord.value || !model.value) return;
   router.push({
     name: 'model-form',
@@ -1735,6 +1798,7 @@ function openListCreateForm() {
 const listPrimaryAction = computed(() => (canCreateListRecord.value ? openListCreateForm : null));
 
 function handlePageChange(nextOffset: number) {
+  if (isListInteractionLocked.value) return;
   const normalized = Math.max(0, Math.trunc(Number(nextOffset || 0)));
   if (normalized === listOffset.value) return;
   listOffset.value = normalized;
@@ -2490,6 +2554,8 @@ const {
     kanbanPrimaryFieldsRef: kanbanPrimaryFields,
     kanbanSecondaryFieldsRef: kanbanSecondaryFields,
     kanbanStatusFieldsRef: kanbanStatusFields,
+    kanbanMetricFieldsRef: kanbanMetricFields,
+    kanbanQuickActionCountRef: kanbanQuickActionCount,
     hasActiveFieldRef: hasActiveField,
     hasAssigneeFieldRef: hasAssigneeField,
   }),

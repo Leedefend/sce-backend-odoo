@@ -14,6 +14,7 @@
     />
 
     <PageToolbar
+      v-if="showActionZone"
       :loading="loading"
       :search-term="searchTerm || ''"
       :search-placeholder="searchPlaceholder || ''"
@@ -22,6 +23,7 @@
       :sort-label="sortLabel || ''"
       :sort-source-label="sortSourceLabel || ''"
       :filter-value="filterValue || 'all'"
+      :has-active-field="Boolean(hasActiveField)"
       :on-search="onSearch"
       :on-sort="onSort"
       :on-filter="onFilter"
@@ -133,7 +135,7 @@
       </button>
     </section>
 
-    <section v-if="status === 'ok'" class="table">
+    <section v-if="status === 'ok' && showDetailZone" class="table">
       <div class="table-hint">{{ rowActionHintText }}</div>
       <section v-if="groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
@@ -142,7 +144,7 @@
             <button
               type="button"
               class="grouped-sort-btn"
-              :disabled="!groupedRows.length || !hasCollapsedGroups"
+              :disabled="loading || !groupedRows.length || !hasCollapsedGroups"
               @click="expandAllGroups"
             >
               全部展开
@@ -150,24 +152,29 @@
             <button
               type="button"
               class="grouped-sort-btn"
-              :disabled="!groupedRows.length || allGroupsCollapsed"
+              :disabled="loading || !groupedRows.length || allGroupsCollapsed"
               @click="collapseAllGroups"
             >
               全部收起
             </button>
-            <select :value="String(groupSampleLimit || 3)" @change="onGroupSampleLimitSelectChange">
+            <select :value="String(groupSampleLimit || 3)" :disabled="loading" @change="onGroupSampleLimitSelectChange">
               <option value="3">每组 3 条</option>
               <option value="5">每组 5 条</option>
               <option value="8">每组 8 条</option>
             </select>
-            <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
+            <button type="button" class="grouped-sort-btn" :disabled="loading || !groupedRows.length" @click="toggleGroupSort">
               {{ groupSortLabel }}
             </button>
           </div>
         </header>
         <article v-for="group in sortedGroupedRows" :key="group.key" class="group-block">
           <header class="group-head">
-            <button type="button" class="group-toggle" @click="toggleGroupCollapsed(group.key)">
+            <button
+              type="button"
+              class="group-toggle"
+              :disabled="loading || Boolean(group.loading)"
+              @click="toggleGroupCollapsed(group.key)"
+            >
               {{ isGroupCollapsed(group.key) ? '展开' : '收起' }}
             </button>
             <p>{{ group.label }}</p>
@@ -176,7 +183,7 @@
               <button
                 type="button"
                 class="group-page-btn"
-                :disabled="Boolean(group.loading) || !canGroupPagePrev(group)"
+                :disabled="loading || Boolean(group.loading) || !canGroupPagePrev(group)"
                 @click="pageGroupPrev(group)"
               >
                 上一页
@@ -185,7 +192,7 @@
               <button
                 type="button"
                 class="group-page-btn"
-                :disabled="Boolean(group.loading) || !canGroupPageNext(group)"
+                :disabled="loading || Boolean(group.loading) || !canGroupPageNext(group)"
                 @click="pageGroupNext(group)"
               >
                 下一页
@@ -193,7 +200,7 @@
               <input
                 class="group-page-input"
                 :value="groupJumpPageInput[group.key] || String(groupCurrentPage(group))"
-                :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                :disabled="loading || Boolean(group.loading) || groupTotalPages(group) <= 1"
                 inputmode="numeric"
                 pattern="[0-9]*"
                 @change="onGroupJumpInputChange(group.key, $event)"
@@ -201,7 +208,7 @@
               <button
                 type="button"
                 class="group-page-btn"
-                :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                :disabled="loading || Boolean(group.loading) || groupTotalPages(group) <= 1"
                 @click="jumpGroupPage(group)"
               >
                 跳转
@@ -211,6 +218,7 @@
               v-if="onOpenGroup"
               type="button"
               class="group-open-btn"
+              :disabled="loading || Boolean(group.loading)"
               @click="openGroup(group)"
             >
               查看全部
@@ -243,7 +251,7 @@
           </table>
         </article>
       </section>
-      <table>
+      <table v-if="!groupedRows.length">
         <thead>
           <tr>
             <th v-if="showSelectionColumn" class="cell-select">
@@ -312,6 +320,13 @@
         </div>
       </footer>
     </section>
+    <StatusPanel
+      v-else-if="status === 'ok'"
+      title="当前列表语义未开放详情区"
+      message="semantic_page 未声明 detail_zone，已按契约隐藏列表主体。"
+      variant="info"
+      :on-retry="onReload"
+    />
   </section>
 </template>
 
@@ -384,6 +399,7 @@ const props = defineProps<{
   sortOptions?: Array<{ label: string; value: string }>;
   sortValue?: string;
   filterValue?: 'all' | 'active' | 'archived';
+  hasActiveField?: boolean;
   quickFilters?: ToolbarChip[];
   savedFilters?: ToolbarChip[];
   groupByOptions?: ToolbarChip[];
@@ -405,6 +421,7 @@ const props = defineProps<{
   statusLabel: string;
   pageMode?: string;
   sceneKey?: string;
+  semanticZones?: Array<Record<string, unknown>>;
   recordCount?: number;
   primaryActionLabel?: string;
   onPrimaryAction?: (() => void) | null;
@@ -508,6 +525,9 @@ const sortedGroupedRows = computed(() => {
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const rowActionHintText = computed(() => {
+  if (groupedRows.value.length > 0) {
+    return '点击分组内记录查看详情；可使用“展开/收起”“查看全部”继续处理分组数据';
+  }
   const actionLabel = String(props.primaryActionLabel || '').trim();
   if (actionLabel) return `点击列表行可查看详情；新增请使用右上角“${actionLabel}”`;
   return '点击列表行可查看详情并继续处理';
@@ -516,6 +536,15 @@ const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.qu
 const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.savedFilters : []);
 const groupByOptions = computed(() => Array.isArray(props.groupByOptions) ? props.groupByOptions : []);
 const searchPanelOptions = computed(() => Array.isArray(props.searchPanelOptions) ? props.searchPanelOptions : []);
+const semanticZoneKeySet = computed(() => {
+  const rows = Array.isArray(props.semanticZones) ? props.semanticZones : [];
+  const keys = rows
+    .map((item) => String((item && typeof item === 'object' && !Array.isArray(item) ? item.key : '') || '').trim())
+    .filter(Boolean);
+  return new Set(keys);
+});
+const showActionZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('action_zone'));
+const showDetailZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('detail_zone'));
 const searchableFieldOptions = computed(() => Array.isArray(props.searchableFieldOptions) ? props.searchableFieldOptions : []);
 const optimizationComposition = computed(() => {
   const raw = props.optimizationComposition;
@@ -584,6 +613,7 @@ function isStatusColumn(field: string) {
 }
 
 function toggleGroupCollapsed(key: string) {
+  if (props.loading) return;
   if (!props.onGroupCollapsedChange) return;
   const set = new Set(collapsedSet.value);
   if (set.has(key)) set.delete(key);
@@ -596,11 +626,13 @@ function isGroupCollapsed(key: string) {
 }
 
 function toggleGroupSort() {
+  if (props.loading) return;
   if (!props.onGroupSortChange) return;
   props.onGroupSortChange(groupSortDesc.value ? 'asc' : 'desc');
 }
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
+  if (props.loading) return;
   props.onOpenGroup?.(group);
 }
 
@@ -687,6 +719,7 @@ function groupPageInfoText(group: { count: number; pageOffset?: number; pageLimi
 }
 
 function pageGroupPrev(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (props.loading) return;
   if (!props.onGroupPageChange) return;
   const limit = resolveGroupPageLimit(group);
   const offset = resolveGroupPageOffset(group);
@@ -695,6 +728,7 @@ function pageGroupPrev(group: { key: string; label: string; count: number; domai
 }
 
 function pageGroupNext(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (props.loading) return;
   if (!props.onGroupPageChange) return;
   const limit = resolveGroupPageLimit(group);
   const offset = resolveGroupPageOffset(group);
@@ -704,6 +738,7 @@ function pageGroupNext(group: { key: string; label: string; count: number; domai
 }
 
 function jumpGroupPage(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (props.loading) return;
   if (!props.onGroupPageChange) return;
   const totalPages = groupTotalPages(group);
   const raw = String(groupJumpPageInput.value[group.key] || '').trim();
@@ -717,6 +752,7 @@ function jumpGroupPage(group: { key: string; label: string; count: number; domai
 }
 
 function onGroupJumpInputChange(groupKey: string, event: Event) {
+  if (props.loading) return;
   const value = String((event.target as HTMLInputElement | null)?.value || '');
   groupJumpPageInput.value = { ...groupJumpPageInput.value, [groupKey]: value };
 }
@@ -741,32 +777,38 @@ watch(
 );
 
 function onGroupSampleLimitSelectChange(event: Event) {
+  if (props.loading) return;
   const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
   if (!Number.isFinite(value)) return;
   props.onGroupSampleLimitChange?.(value);
 }
 
 function collapseAllGroups() {
+  if (props.loading) return;
   if (!props.onGroupCollapsedChange) return;
   props.onGroupCollapsedChange(sortedGroupedRows.value.map((item) => item.key));
 }
 
 function expandAllGroups() {
+  if (props.loading) return;
   if (!props.onGroupCollapsedChange) return;
   props.onGroupCollapsedChange([]);
 }
 
 function handleRow(row: Record<string, unknown>) {
+  if (props.loading) return;
   props.onRowClick(row);
 }
 
 function pagePrev() {
+  if (props.loading) return;
   if (!props.onPageChange || !canPagePrev.value) return;
   const next = Math.max(0, paginationOffset.value - paginationLimit.value);
   props.onPageChange(next);
 }
 
 function pageNext() {
+  if (props.loading) return;
   if (!props.onPageChange || !canPageNext.value) return;
   const next = paginationOffset.value + paginationLimit.value;
   props.onPageChange(next);
@@ -791,7 +833,7 @@ const batchDetails = computed<Array<string | BatchDetailLine>>(() =>
 );
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
-const showBatchBar = computed(() => showSelectionColumn.value);
+const showBatchBar = computed(() => showSelectionColumn.value && groupedRows.value.length === 0);
 const showArchive = computed(() => props.showArchive !== false);
 const showActivate = computed(() => props.showActivate !== false);
 const allSelected = computed(() => {
@@ -807,21 +849,25 @@ function isSelected(row: Record<string, unknown>) {
 }
 
 function onToggleRow(row: Record<string, unknown>, selected: boolean) {
+  if (props.loading) return;
   const id = rowId(row);
   if (!id || !props.onToggleSelection) return;
   props.onToggleSelection(id, selected);
 }
 
 function onToggleAll(selected: boolean) {
+  if (props.loading) return;
   if (!props.onToggleSelectionAll) return;
   props.onToggleSelectionAll(selectableRows.value, selected);
 }
 
 function clearSelection() {
+  if (props.loading) return;
   props.onClearSelection?.();
 }
 
 function callBatchAction(action: 'archive' | 'activate' | 'delete') {
+  if (props.loading) return;
   if (selectedCount.value <= 0) return;
   const label = action === 'archive' ? '归档' : action === 'activate' ? '激活' : '删除';
   if (!window.confirm(`确认批量${label} ${selectedCount.value} 条记录？`)) {
@@ -831,6 +877,7 @@ function callBatchAction(action: 'archive' | 'activate' | 'delete') {
 }
 
 function callBatchAssign() {
+  if (props.loading) return;
   if (!props.selectedAssigneeId) return;
   if (selectedCount.value <= 0) return;
   if (!window.confirm(`确认将 ${selectedCount.value} 条记录批量指派给当前负责人？`)) {
@@ -840,6 +887,7 @@ function callBatchAssign() {
 }
 
 function callBatchExport(scope: 'selected' | 'all') {
+  if (props.loading) return;
   const count = scope === 'selected' ? selectedCount.value : props.records.length;
   if (count <= 0) return;
   const label = scope === 'selected' ? '导出选中' : '导出当前页';
@@ -850,16 +898,19 @@ function callBatchExport(scope: 'selected' | 'all') {
 }
 
 function onSelectAllChange(event: Event) {
+  if (props.loading) return;
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
   onToggleAll(checked);
 }
 
 function onRowCheckboxChange(row: Record<string, unknown>, event: Event) {
+  if (props.loading) return;
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
   onToggleRow(row, checked);
 }
 
 function onAssigneeSelectChange(event: Event) {
+  if (props.loading) return;
   const value = String((event.target as HTMLSelectElement | null)?.value || '').trim();
   if (!props.onAssigneeChange) return;
   if (!value) {
@@ -871,10 +922,12 @@ function onAssigneeSelectChange(event: Event) {
 }
 
 function downloadFailedCsv() {
+  if (props.loading) return;
   props.onDownloadFailedCsv?.();
 }
 
 function loadMoreFailures() {
+  if (props.loading) return;
   props.onLoadMoreFailures?.();
 }
 
@@ -889,6 +942,7 @@ function batchDetailActionLabel(line: string | BatchDetailLine) {
 }
 
 function runBatchDetailAction(line: string | BatchDetailLine) {
+  if (props.loading) return;
   if (!props.onBatchDetailAction) return;
   if (!line || typeof line === 'string') return;
   const raw = String(line.actionRaw || '').trim();

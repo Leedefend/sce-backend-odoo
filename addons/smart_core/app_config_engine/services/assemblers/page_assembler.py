@@ -367,10 +367,21 @@ class PageAssembler:
                 parsed_domain = safe_eval(action.get('domain'))
                 domain_payload = parsed_domain if isinstance(parsed_domain, list) else []
 
+            view_mode_value = str(action.get('view_mode') or "").strip() or ",".join(view_types)
+            normalized_view_modes = [
+                str(part or "").strip()
+                for part in view_mode_value.split(",")
+                if str(part or "").strip()
+            ]
+            primary_view_type = normalized_view_modes[0] if normalized_view_modes else (view_types[0] if view_types else "form")
+
             data["head"] = {
                 "title": action.get('name'),
                 "model": model,
                 "view_type": ",".join(view_types),
+                "view_mode": view_mode_value,
+                "view_modes": normalized_view_modes,
+                "primary_view_type": primary_view_type,
                 "action_id": action.get('id'),
                 "context": context_payload,
                 "domain": domain_payload,
@@ -386,6 +397,22 @@ class PageAssembler:
         self._apply_access_policy(data, model_name=model)
         if isinstance(data.get("head"), dict) and isinstance(data.get("access_policy"), dict):
             data["head"]["access_policy"] = dict(data.get("access_policy") or {})
+
+        if isinstance(data.get("head"), dict):
+            head_view_mode = str((data["head"].get("view_mode") or "")).strip()
+            if not head_view_mode:
+                head_view_mode = str((data["head"].get("view_type") or "")).strip()
+                if head_view_mode:
+                    data["head"]["view_mode"] = head_view_mode
+            if head_view_mode:
+                data["view_mode"] = head_view_mode
+                data["view_modes"] = [
+                    str(part or "").strip()
+                    for part in head_view_mode.split(",")
+                    if str(part or "").strip()
+                ]
+                if data["view_modes"]:
+                    data["primary_view_type"] = data["view_modes"][0]
 
         # 9) with_data：首屏数据（列表/表单）——必须用“当前用户 env”以自动应用记录规则
         if p.get("with_data"):
