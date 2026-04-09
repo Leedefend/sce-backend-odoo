@@ -32,7 +32,7 @@ class ReleaseOperatorPromoteHandler(BaseIntentHandler):
     INTENT_TYPE = "release.operator.promote"
     DESCRIPTION = "通过 operator surface 发起 release snapshot promote"
     VERSION = "1.0.0"
-    REQUIRED_GROUPS = ["base.group_user"]
+    REQUIRED_GROUPS = []
 
     def handle(self, payload=None, ctx=None):
         params = _params(payload)
@@ -45,7 +45,7 @@ class ReleaseOperatorApproveHandler(BaseIntentHandler):
     INTENT_TYPE = "release.operator.approve"
     DESCRIPTION = "通过 operator surface 审批并执行 release action"
     VERSION = "1.0.0"
-    REQUIRED_GROUPS = ["base.group_user"]
+    REQUIRED_GROUPS = []
 
     def handle(self, payload=None, ctx=None):
         params = _params(payload)
@@ -58,7 +58,7 @@ class ReleaseOperatorRollbackHandler(BaseIntentHandler):
     INTENT_TYPE = "release.operator.rollback"
     DESCRIPTION = "通过 operator surface 执行 rollback"
     VERSION = "1.0.0"
-    REQUIRED_GROUPS = ["base.group_user"]
+    REQUIRED_GROUPS = []
 
     def handle(self, payload=None, ctx=None):
         params = _params(payload)

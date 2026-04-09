@@ -25,7 +25,7 @@ class FileUploadHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell file upload intent"
     VERSION = "0.1.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
+    REQUIRED_GROUPS = []
     ACL_MODE = "explicit_check"
 
     ALLOWED_MODELS = {"res.partner"}

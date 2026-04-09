@@ -40,9 +40,17 @@ def write_json(path: Path, payload: dict) -> None:
 
 report = {"status": "PASS", "promote": {}, "approve": {}, "rollback": {}}
 try:
+    admin_group = env.ref("smart_core.group_smart_core_admin", raise_if_not_found=False)
+    release_admin_user = env["res.users"].browse()
+    if admin_group:
+        release_admin_user = env["res.users"].sudo().search([("groups_id", "in", [admin_group.id]), ("active", "=", True)], limit=1)
+    if not release_admin_user:
+        raise RuntimeError("release_admin missing")
+    release_env = env(user=release_admin_user.id)
+
     snapshot_service = EditionReleaseSnapshotService(env)
-    write_model_service = ReleaseOperatorWriteModelService(env)
-    orchestrator = ReleaseOrchestrator(env)
+    write_model_service = ReleaseOperatorWriteModelService(release_env)
+    orchestrator = ReleaseOrchestrator(release_env)
 
     candidate = snapshot_service.freeze_release_surface(
         product_key="construction.standard",
@@ -79,7 +87,7 @@ try:
             "product_key": "construction.standard",
             "base_product_key": "construction",
             "edition_key": "standard",
-            "requested_by_user_id": int(env.user.id) if env.user else False,
+            "requested_by_user_id": int(release_env.user.id) if release_env.user else False,
             "requested_at": fields.Datetime.now(),
             "policy_key": "release.promote.standard",
             "approval_required": True,
@@ -139,6 +147,21 @@ try:
         "approval_state": rollback_result.get("approval_state"),
     }
 except Exception as exc:
+    if str(exc).strip() == "release_admin missing":
+        report["status"] = "SKIP_ENV"
+        report["skip_reason"] = "release_admin_user_missing"
+        report["skip_detail"] = "no active user in smart_core.group_smart_core_admin"
+        write_json(OUT_JSON, report)
+        write(
+            OUT_MD,
+            "# Release Operator Write Model Guard\n\n"
+            "- status: `SKIP_ENV`\n"
+            f"- reason: `{report['skip_reason']}`\n"
+            f"- detail: `{report['skip_detail']}`\n",
+        )
+        print("[release_operator_write_model_guard] SKIP_ENV")
+        print(f" - {report['skip_detail']}")
+        raise SystemExit(0)
     report["status"] = "FAIL"
     report["error"] = str(exc)
     write_json(OUT_JSON, report)

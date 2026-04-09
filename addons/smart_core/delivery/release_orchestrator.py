@@ -29,10 +29,10 @@ class ReleaseOrchestrator:
         self.execution_engine = ReleaseExecutionEngine(env)
 
     def _action_model(self):
-        return self.env["sc.release.action"].sudo()
+        return self.env["sc.release.action"]
 
     def _snapshot_model(self):
-        return self.env["sc.edition.release.snapshot"].sudo()
+        return self.env["sc.edition.release.snapshot"]
 
     def _load_action(self, action_id: int):
         rec = self._action_model().browse(int(action_id))

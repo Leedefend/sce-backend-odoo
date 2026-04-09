@@ -37,7 +37,7 @@ class ReleaseOperatorWriteModelService:
         }
 
     def _approve_identity(self, *, action_id: int) -> dict[str, str]:
-        rec = self.env["sc.release.action"].sudo().browse(int(action_id or 0))
+        rec = self.env["sc.release.action"].browse(int(action_id or 0))
         if not rec.exists() or not rec.active:
             raise ValueError("RELEASE_ACTION_NOT_FOUND")
         return {

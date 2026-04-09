@@ -121,7 +121,7 @@ class BaseIntentHandler:
 
         # 权限（可选）
         self._check_permissions()
-        if self.is_write():
+        if self.is_write() and (getattr(self, "REQUIRED_GROUPS", []) or []):
             self.enforce_required_groups()
 
         # ---- 智能适配调用 ----

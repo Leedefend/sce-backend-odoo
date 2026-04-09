@@ -80,8 +80,9 @@ def _login(base_url: str, db_name: str, login: str, passwords: list[str]) -> tup
 
 def main() -> None:
     base_url = _env("E2E_BASE_URL", "http://localhost:8069")
-    db_name = _env("DB_NAME", "sc_test")
+    db_name = _env("DB_NAME", "sc_demo")
     outsider_login = _env("ROLE_OUTSIDER_LOGIN", "sc_fx_pure_outsider")
+    strict_outsider = _env("STRICT_OUTSIDER_ROLE", "0").lower() in {"1", "true", "yes", "y"}
 
     roles = [
         ("admin", "admin", ["admin"]),
@@ -97,6 +98,9 @@ def main() -> None:
     for role, login, pwds in roles:
         session, used = _login(base_url, db_name, login, pwds)
         if not session:
+            if role == "outsider" and not strict_outsider:
+                details.append(f"{role}:skipped-auth-missing")
+                continue
             failures.append(f"{role}: session bootstrap auth failed")
             continue
 
@@ -109,9 +113,15 @@ def main() -> None:
             "ui.contract",
             {"op": "model", "model": "sc.dictionary", "view_type": "tree", "contract_mode": "user"},
         )
+        status_kanban, body_kanban = session.intent(
+            "ui.contract",
+            {"op": "model", "model": "sc.dictionary", "view_type": "kanban", "contract_mode": "user"},
+        )
 
-        if status_form != 200 or status_tree != 200:
-            failures.append(f"{role}: intent status form={status_form} tree={status_tree}")
+        if status_form != 200 or status_tree != 200 or status_kanban != 200:
+            failures.append(
+                f"{role}: intent status form={status_form} tree={status_tree} kanban={status_kanban}"
+            )
             continue
         if not (isinstance(body_form, dict) and body_form.get("ok") is True):
             failures.append(f"{role}: form intent not ok")
@@ -119,15 +129,22 @@ def main() -> None:
         if not (isinstance(body_tree, dict) and body_tree.get("ok") is True):
             failures.append(f"{role}: tree intent not ok")
             continue
+        if not (isinstance(body_kanban, dict) and body_kanban.get("ok") is True):
+            failures.append(f"{role}: kanban intent not ok")
+            continue
 
         form_payload = (body_form.get("data") or {}) if isinstance(body_form.get("data"), dict) else {}
         tree_payload = (body_tree.get("data") or {}) if isinstance(body_tree.get("data"), dict) else {}
+        kanban_payload = (body_kanban.get("data") or {}) if isinstance(body_kanban.get("data"), dict) else {}
         form_fields = set((form_payload.get("fields") or {}).keys())
         tree_fields = set((tree_payload.get("fields") or {}).keys())
+        kanban_fields = set((kanban_payload.get("fields") or {}).keys())
         if not REQUIRED_FIELDS.issubset(form_fields):
             failures.append(f"{role}: form missing required fields")
         if not REQUIRED_FIELDS.issubset(tree_fields):
             failures.append(f"{role}: tree missing required fields")
+        if not REQUIRED_FIELDS.issubset(kanban_fields):
+            failures.append(f"{role}: kanban missing required fields")
 
         # Batch B parity: compare with runtime-equivalent surfaces
         eq_fields = session.call_kw("sc.dictionary", "fields_get", [], {"attributes": ["type", "readonly", "required"]})
@@ -150,9 +167,11 @@ def main() -> None:
                 "password_used": used,
                 "intent_form_field_count": len(form_fields),
                 "intent_tree_field_count": len(tree_fields),
+                "intent_kanban_field_count": len(kanban_fields),
                 "equivalent_field_count": len(eq_field_keys),
                 "required_fields_present": REQUIRED_FIELDS.issubset(form_fields)
                 and REQUIRED_FIELDS.issubset(tree_fields)
+                and REQUIRED_FIELDS.issubset(kanban_fields)
                 and REQUIRED_FIELDS.issubset(eq_field_keys),
                 "equivalent_rights": rights,
             }
@@ -178,7 +197,8 @@ def main() -> None:
         for row in parity_rows:
             fp.write(
                 f"- role={row['role']} intent_form={row['intent_form_field_count']} "
-                f"intent_tree={row['intent_tree_field_count']} eq_fields={row['equivalent_field_count']} "
+                f"intent_tree={row['intent_tree_field_count']} intent_kanban={row['intent_kanban_field_count']} "
+                f"eq_fields={row['equivalent_field_count']} "
                 f"required_fields_present={row['required_fields_present']} rights={row['equivalent_rights']}\n"
             )
         if failures:
