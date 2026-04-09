@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-09-1514
+title: sidebar consumer batch1-batch6 core refactor
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  将 Sidebar 核心数据流切换为 nav_explained 纯消费，完成类型收口、点击分发、目录规则、
+  active_match 高亮与父链展开主逻辑。
+
+user_visible_outcome:
+  - "Sidebar 仅消费 nav_explained，不再前端推断 scene/action/native 与 route"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/types/navigation.ts
+    - frontend/apps/web/src/stores/session.ts
+    - frontend/apps/web/src/components/MenuTree.vue
+    - frontend/apps/web/src/layouts/AppShell.vue
+    - frontend/apps/web/src/api/client.ts
+    - frontend/apps/web/src/composables/useNavigationMenu.ts
+    - docs/frontend/sidebar_navigation_consumer_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1514.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1514.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1514.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/delivery/menu_fact_service.py
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - addons/**/__manifest__.py
+
+limits:
+  max_files: 11
+  max_output_lines: 420
+
+change_rules:
+  - frontend consumes nav_explained only
+  - no frontend route synthesis
+  - no backend interpreter boundary changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a3d7b3
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend consumer layer
+  module: Sidebar navigation consumer pipeline
+  module_owner: frontend web shell
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次仅消费既有解释层输出，不改动后端语义。
+  reason: >
+    让 Sidebar 从半解释器转为纯消费组件，降低前后端语义漂移。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1514.yaml"
+    - "pnpm --dir frontend/apps/web exec tsc --noEmit src/types/navigation.ts"
+    - 'rg -n "nav_explained|is_clickable|active_match|target_type|navigateByExplainedMenuNode" frontend/apps/web/src/layouts/AppShell.vue frontend/apps/web/src/components/MenuTree.vue frontend/apps/web/src/stores/session.ts'
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - sidebar consumer-only data path
+  - explained menu type contract
+  - unified click/highlight/expand logic
+  - sidebar consumer documentation
+
+rollback:
+  - git restore frontend/apps/web/src/types/navigation.ts frontend/apps/web/src/stores/session.ts frontend/apps/web/src/components/MenuTree.vue frontend/apps/web/src/layouts/AppShell.vue frontend/apps/web/src/composables/useNavigationMenu.ts docs/frontend/sidebar_navigation_consumer_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1513

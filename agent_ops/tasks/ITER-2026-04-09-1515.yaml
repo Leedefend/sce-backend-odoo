@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-09-1515
+title: sidebar consumer batch7-batch10 guards and verification
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  为 Sidebar 纯消费化补齐旧解释逻辑清理门禁与专项 verify，确保后续迭代不回退到前端菜单解释。
+
+user_visible_outcome:
+  - "Sidebar 消费规则有可执行验证门禁，不再轻易回归旧解释路径"
+
+scope:
+  allowed_paths:
+    - scripts/verify/sidebar_navigation_consumer_verify.py
+    - scripts/verify/sidebar_active_chain_verify.py
+    - scripts/verify/sidebar_directory_rule_verify.py
+    - scripts/verify/sidebar_unavailable_guard_verify.py
+    - docs/frontend/sidebar_navigation_consumer_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1515.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1515.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1515.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/**
+
+limits:
+  max_files: 9
+  max_output_lines: 300
+
+change_rules:
+  - add verify guards only
+  - no backend boundary changes
+  - no content area refactor
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a3d7b3
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend consumer layer verification
+  module: Sidebar consumer gate scripts
+  module_owner: frontend web + scripts verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次不改后端，仅加消费层门禁。
+  reason: >
+    将 Sidebar 消费约束转为自动化检查，防止 action/scene/route 前端推导回流。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1515.yaml"
+    - "python3 scripts/verify/sidebar_navigation_consumer_verify.py"
+    - "python3 scripts/verify/sidebar_active_chain_verify.py"
+    - "python3 scripts/verify/sidebar_directory_rule_verify.py"
+    - "python3 scripts/verify/sidebar_unavailable_guard_verify.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - sidebar consumer verify scripts
+  - sidebar documentation guard updates
+
+rollback:
+  - git restore scripts/verify/sidebar_navigation_consumer_verify.py scripts/verify/sidebar_active_chain_verify.py scripts/verify/sidebar_directory_rule_verify.py scripts/verify/sidebar_unavailable_guard_verify.py docs/frontend/sidebar_navigation_consumer_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1514
