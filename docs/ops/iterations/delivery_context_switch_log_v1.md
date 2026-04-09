@@ -15371,3 +15371,66 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-09-1513 PASS：新增 navigation snapshot verify、契约文档与审计文档`
 - active_commit: `9109f99`
 - next_step: `Completed: menu target interpreter objective ready for Sidebar pure-consumer phase`
+
+### 2026-04-09T18:18:07+08:00
+- blocker_key: `sidebar_consumer_batch_1514`
+- layer_target: `Frontend consumer layer`
+- module: `Sidebar navigation consumer pipeline`
+- reason: 启动 Sidebar 纯消费化，切换数据源到 nav_explained 并统一点击/高亮消费逻辑
+- completed_step: `ITER-2026-04-09-1514 PASS：AppShell/MenuTree 改为解释层消费，新增 useNavigationMenu 与 navigation 类型契约`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: open cleanup batch for legacy frontend menu interpretation paths`
+
+### 2026-04-09T18:25:41+08:00
+- blocker_key: `sidebar_consumer_verify_guards_1515`
+- layer_target: `Frontend consumer layer verification`
+- module: `Sidebar consumer gate scripts`
+- reason: 为 Sidebar 纯消费化补齐 active/directory/unavailable 专项门禁，防止旧解释逻辑回流
+- completed_step: `ITER-2026-04-09-1515 PASS：新增 3 个 verify 脚本并通过验收命令`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: open cleanup batch for residual legacy menu interpretation paths`
+
+### 2026-04-09T18:32:32+08:00
+- blocker_key: `sidebar_consumer_cleanup_1516`
+- layer_target: `Frontend consumer layer`
+- module: `Sidebar AppShell navigation dispatcher`
+- reason: 清理 /m/:id 前端回退跳转，统一改为解释层 route 消费
+- completed_step: `ITER-2026-04-09-1516 PASS：面包屑与角色快捷入口不再拼接 /m/:id`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: open sidebar UX validation batch for parent-chain and unavailable feedback`
+
+### 2026-04-09T18:35:19+08:00
+- blocker_key: `sidebar_consumer_ux_guard_1517`
+- layer_target: `Frontend consumer layer verification`
+- module: `Sidebar route consumer UX guards`
+- reason: 为角色快捷入口与面包屑 route 消费补充专项门禁
+- completed_step: `ITER-2026-04-09-1517 PASS：新增 route_consumer_ux verify 并通过验收`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: open sidebar interaction smoke sampling batch`
+
+### 2026-04-09T18:40:15+08:00
+- blocker_key: `sidebar_interaction_smoke_1518`
+- layer_target: `Frontend consumer layer verification`
+- module: `Sidebar interaction smoke guards`
+- reason: 为目录展开/不可用拦截/active 父链展开增加统一 smoke 门禁
+- completed_step: `ITER-2026-04-09-1518 PASS：新增 sidebar_interaction_smoke_verify 并通过验收`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: open sidebar acceptance checklist mapping batch`
+
+### 2026-04-09T18:43:15+08:00
+- blocker_key: `sidebar_acceptance_mapping_1519`
+- layer_target: `Governance verification layer`
+- module: `Sidebar acceptance checklist and gates`
+- reason: 冻结 Sidebar 验收清单并建立 verify 脚本映射校验
+- completed_step: `ITER-2026-04-09-1519 PASS：新增 acceptance 文档与 checklist verify`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: run combined acceptance command group and prepare classification commit`
+
+### 2026-04-09T18:46:04+08:00
+- blocker_key: `sidebar_combined_acceptance_1520`
+- layer_target: `Governance verification layer`
+- module: `Sidebar combined acceptance gate`
+- reason: 分类提交前执行 Sidebar 纯消费化组合门禁
+- completed_step: `ITER-2026-04-09-1520 PASS：8 项 Sidebar 验证命令全部通过`
+- active_commit: `2a3d7b3`
+- next_step: `Continue: prepare classified commits for sidebar feature and governance artifacts`

@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-09-1516
+title: sidebar residual legacy routing cleanup
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  清理 Sidebar 与顶栏面包屑中的残留旧菜单跳转口径，统一改为消费 nav_explained 节点 route。
+
+user_visible_outcome:
+  - "Sidebar 与 role 快捷菜单不再使用 /m/:id 回退跳转，统一由后端解释 route 驱动"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/layouts/AppShell.vue
+    - scripts/verify/sidebar_navigation_consumer_verify.py
+    - docs/frontend/sidebar_navigation_consumer_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1516.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1516.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1516.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/**
+
+limits:
+  max_files: 7
+  max_output_lines: 300
+
+change_rules:
+  - sidebar navigation consume only explained route
+  - no backend changes
+  - no content area refactor
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a3d7b3
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend consumer layer
+  module: Sidebar AppShell navigation dispatcher
+  module_owner: frontend web shell
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次仅前端消费层清理，不改后端语义供给。
+  reason: >
+    终结 /m/:id 前端回退跳转，确保点击与面包屑都直接消费解释层 route。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1516.yaml"
+    - "python3 scripts/verify/sidebar_navigation_consumer_verify.py"
+    - "python3 scripts/verify/sidebar_active_chain_verify.py"
+    - "python3 scripts/verify/sidebar_directory_rule_verify.py"
+    - "python3 scripts/verify/sidebar_unavailable_guard_verify.py"
+    - "bash -lc 'if rg -n \"/m/\\$\\{\" frontend/apps/web/src/layouts/AppShell.vue; then exit 1; fi'"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - app shell explained-route-only cleanup
+  - sidebar verify guard strengthened
+
+rollback:
+  - git restore frontend/apps/web/src/layouts/AppShell.vue scripts/verify/sidebar_navigation_consumer_verify.py docs/frontend/sidebar_navigation_consumer_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1515

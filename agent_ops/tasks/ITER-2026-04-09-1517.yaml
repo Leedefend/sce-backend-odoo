@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-09-1517
+title: sidebar explained-route ux guard verification
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  为 Sidebar 纯消费化补充角色快捷入口与面包屑 route 消费门禁，锁定 UX 交互不回退到 menu_id 推导。
+
+user_visible_outcome:
+  - "角色快捷入口与面包屑仅消费解释层 route，目录与不可用节点保持不可跳转"
+
+scope:
+  allowed_paths:
+    - scripts/verify/sidebar_route_consumer_ux_verify.py
+    - agent_ops/tasks/ITER-2026-04-09-1517.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1517.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1517.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/apps/web/src/views/**
+
+limits:
+  max_files: 5
+  max_output_lines: 240
+
+change_rules:
+  - verify-only batch
+  - no frontend behavior rewrite
+  - no backend changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a3d7b3
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend consumer layer verification
+  module: Sidebar route consumer UX guards
+  module_owner: frontend web + scripts verify
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次不改后端，只补充前端消费门禁验证。
+  reason: >
+    增补对角色快捷入口与面包屑 route 消费的一致性校验，避免 UX 回归到 menu_id 跳转推导。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1517.yaml"
+    - "python3 scripts/verify/sidebar_route_consumer_ux_verify.py"
+    - "python3 scripts/verify/sidebar_navigation_consumer_verify.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - sidebar explained-route ux verify guard
+
+rollback:
+  - git restore scripts/verify/sidebar_route_consumer_ux_verify.py
+
+depends_on:
+  - ITER-2026-04-09-1516
+
