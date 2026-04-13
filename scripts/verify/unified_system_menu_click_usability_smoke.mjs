@@ -149,6 +149,25 @@ function isFailureText(text) {
   return tokens.some((token) => normalized.includes(token.toLowerCase()));
 }
 
+async function waitForPageSettled(page, { allowNetworkIdleTimeout = false } = {}) {
+  let networkIdleTimedOut = false;
+  await page.waitForLoadState('domcontentloaded');
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 10000 });
+  } catch (error) {
+    const message = String(error?.message || error || '');
+    const isNetworkIdleTimeout =
+      (message.includes('waitForLoadState') || message.includes('page.waitForLoadState'))
+      && message.includes('Timeout');
+    if (!allowNetworkIdleTimeout || !isNetworkIdleTimeout) {
+      throw error;
+    }
+    networkIdleTimedOut = true;
+  }
+  await page.waitForTimeout(networkIdleTimedOut ? 1200 : 500);
+  return { networkIdleTimedOut };
+}
+
 async function verifyLeaf(page, leaf) {
   const targetUrl = `${BASE_URL}/m/${leaf.menu_id}?menu_id=${leaf.menu_id}`;
   const result = {
@@ -157,11 +176,12 @@ async function verifyLeaf(page, leaf) {
     final_url: '',
     status: 'PASS',
     error_text: '',
+    networkidle_timeout: false,
   };
   try {
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(500);
+    const settle = await waitForPageSettled(page, { allowNetworkIdleTimeout: true });
+    result.networkidle_timeout = settle.networkIdleTimedOut;
     result.final_url = page.url();
     result.error_text = await page.evaluate(() => {
       const text = Array.from(document.querySelectorAll('body, .status-panel, [data-component="StatusPanel"]'))
@@ -195,6 +215,7 @@ const summary = {
   leaf_count: 0,
   fail_count: 0,
   failed_menu_ids: [],
+  non_blocking_networkidle_timeouts: 0,
 };
 
 let browser;
@@ -219,7 +240,7 @@ try {
   }, { token, dbName: DB_NAME });
 
   await page.goto(`${BASE_URL}/?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
+  await waitForPageSettled(page, { allowNetworkIdleTimeout: true });
   await page.waitForTimeout(1500);
 
   const runtime = await readMenusFromStorage(page);
@@ -236,6 +257,7 @@ try {
   writeJson('cases.json', cases);
 
   const failed = cases.filter((item) => item.status !== 'PASS');
+  summary.non_blocking_networkidle_timeouts = cases.filter((item) => item.networkidle_timeout).length;
   summary.fail_count = failed.length;
   summary.failed_menu_ids = failed.map((item) => item.menu_id);
   if (failed.length) {

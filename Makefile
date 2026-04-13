@@ -362,6 +362,7 @@ check-odoo-conf:
 help:
 	@echo "Targets:"
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make frontend.dev/frontend.stop/frontend.restart/frontend.logs"
 	@echo "  make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim"
 	@echo "  make verify.prod.sim.isolation   # prod-sim 一键隔离验证"
 	@echo "  make verify.prod.sim.isolation.quick   # prod-sim 快速隔离验证（不reset）"
@@ -412,7 +413,7 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick frontend.dev frontend.stop frontend.restart frontend.logs
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -425,6 +426,40 @@ ps: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/ps.sh
 odoo-shell: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/shell.sh
+
+FRONTEND_DEV_LOG ?= /tmp/sc-frontend-dev.log
+FRONTEND_DEV_PID ?= /tmp/sc-frontend-dev.pid
+
+frontend.dev: guard.prod.forbid
+	@if [ -f "$(FRONTEND_DEV_PID)" ] && kill -0 "$$(cat "$(FRONTEND_DEV_PID)")" 2>/dev/null; then \
+		echo "[frontend.dev] already running pid=$$(cat "$(FRONTEND_DEV_PID)")"; \
+		exit 0; \
+	fi
+	@echo "[frontend.dev] starting vite on http://localhost:5174"
+	@nohup pnpm -C frontend dev > "$(FRONTEND_DEV_LOG)" 2>&1 & echo $$! > "$(FRONTEND_DEV_PID)"
+	@sleep 2
+	@tail -n 20 "$(FRONTEND_DEV_LOG)" || true
+
+frontend.stop:
+	@echo "[frontend.stop] stopping frontend dev server"
+	@pid=""; \
+	if command -v lsof >/dev/null 2>&1; then \
+		pid="$$(lsof -ti tcp:5174 -sTCP:LISTEN 2>/dev/null | head -n1 || true)"; \
+	fi; \
+	if [ -n "$$pid" ]; then \
+		kill $$pid 2>/dev/null || true; \
+		echo "[frontend.stop] killed pid=$$pid"; \
+	else \
+		echo "[frontend.stop] no listener on :5174"; \
+	fi
+	@rm -f "$(FRONTEND_DEV_PID)"
+
+frontend.restart: frontend.stop frontend.dev
+	@echo "[frontend.restart] done"
+
+frontend.logs:
+	@echo "[frontend.logs] $(FRONTEND_DEV_LOG)"
+	@tail -n 80 "$(FRONTEND_DEV_LOG)" || true
 
 prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/restart.sh
@@ -4494,3 +4529,39 @@ verify.native.business_fact.stage_gate: guard.prod.forbid
 	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) ROLE_EXECUTIVE_LOGIN=$(or $(ROLE_EXECUTIVE_LOGIN),demo_role_executive) ROLE_EXECUTIVE_PASSWORD=$(or $(ROLE_EXECUTIVE_PASSWORD),demo) python3 scripts/verify/native_business_fact_role_flow_usability_smoke.py
 	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) E2E_LOGIN=$(or $(E2E_LOGIN),$(ROLE_OWNER_LOGIN),admin) E2E_PASSWORD=$(or $(E2E_PASSWORD),$(ROLE_OWNER_PASSWORD),admin) python3 scripts/verify/product_project_flow_full_chain_execution_smoke.py
 	@DB_NAME=$(DB_NAME) E2E_BASE_URL=$(or $(E2E_BASE_URL),http://localhost:8069) python3 scripts/verify/native_business_fact_runtime_snapshot.py
+
+# ================== v2 app governance verify ==================
+.PHONY: verify.v2.app.reason_code verify.v2.app.contract verify.v2.app.snapshot verify.v2.app.linkage verify.v2.intent_migration_freeze verify.v2.app.governance
+
+verify.v2.app.reason_code:
+	@python3 scripts/verify/v2_app_reason_code_audit.py --json
+
+verify.v2.app.contract:
+	@python3 scripts/verify/v2_app_contract_guard_audit.py --json
+
+verify.v2.app.snapshot:
+	@python3 scripts/verify/v2_app_contract_snapshot_audit.py --json
+
+verify.v2.app.linkage:
+	@python3 scripts/verify/v2_app_intent_contract_linkage_audit.py --json
+
+verify.v2.intent_migration_freeze:
+	@python3 scripts/verify/v2_intent_migration_freeze_audit.py --json
+
+.PHONY: verify.v2.app.all
+verify.v2.app.governance: verify.v2.app.reason_code verify.v2.app.contract verify.v2.app.snapshot verify.v2.app.linkage verify.v2.intent_migration_freeze
+	@python3 scripts/verify/v2_app_verify_all.py --json
+	@echo "[OK] verify.v2.app.governance done"
+
+verify.v2.app.all: verify.v2.app.governance
+	@echo "[OK] verify.v2.app.all done"
+
+.PHONY: verify.v2.app.ci.light
+verify.v2.app.ci.light: verify.v2.app.all
+	@python3 scripts/verify/v2_app_governance_output_schema_audit.py --json
+	@echo "[OK] verify.v2.app.ci.light done"
+
+.PHONY: verify.v2.app.verify_all_failure_path
+verify.v2.app.verify_all_failure_path:
+	@python3 scripts/verify/v2_app_verify_all_failure_path_audit.py --json
+	@echo "[OK] verify.v2.app.verify_all_failure_path done"

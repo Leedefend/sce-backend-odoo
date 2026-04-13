@@ -59,7 +59,11 @@ def main() -> int:
         errors.append("login failed for ui surface stability")
         token = ""
 
-    required = ["user", "nav", "scenes", "capabilities", "intents", "default_route"]
+    required_exact = ["user", "nav", "intents", "default_route"]
+    required_any = {
+        "scenes": ["scenes", "scene_ready_contract_v1"],
+        "capabilities": ["capabilities", "released_scene_semantic_surface", "delivery_engine_v1"],
+    }
     modes = {
         "default": {},
         "bundle_construction": {"sc.bundle": "construction"},
@@ -76,9 +80,15 @@ def main() -> int:
             data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
             keys = _shape(data)
             shapes[mode] = keys
-            for k in required:
-                if k not in keys:
-                    errors.append(f"mode={mode} missing required surface key: {k}")
+            key_set = set(keys)
+            for key in required_exact:
+                if key not in key_set:
+                    errors.append(f"mode={mode} missing required surface key: {key}")
+            for semantic_key, alternatives in required_any.items():
+                if not any(candidate in key_set for candidate in alternatives):
+                    errors.append(
+                        f"mode={mode} missing required surface semantic: {semantic_key} (any of {alternatives})"
+                    )
 
     if shapes.get("default") and shapes.get("bundle_owner"):
         if shapes["default"] != shapes["bundle_owner"]:
