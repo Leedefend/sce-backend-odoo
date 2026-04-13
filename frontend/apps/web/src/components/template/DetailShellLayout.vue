@@ -1,17 +1,14 @@
 <template>
   <template v-for="shell in shells" :key="shell.key">
-    <section :class="['contract-detail-shell', shell.shellClass]" data-component="DetailShellLayout">
-      <div v-if="shell.title || shell.eyebrow || shell.summary" class="contract-detail-shell__head">
+    <section :class="['contract-detail-shell', shell.shellClass, { 'contract-detail-shell--native': nativeLike }]" data-component="DetailShellLayout">
+      <div v-if="!nativeLike && !shell.tabs?.length && (shell.title || shell.eyebrow || shell.summary)" class="contract-detail-shell__head">
         <div class="contract-detail-shell__title-wrap">
           <span v-if="shell.eyebrow" class="contract-detail-shell__eyebrow">{{ shell.eyebrow }}</span>
           <h3 v-if="shell.title" class="contract-detail-shell__title">{{ shell.title }}</h3>
         </div>
         <span v-if="shell.summary" class="contract-detail-shell__summary">{{ shell.summary }}</span>
       </div>
-      <div
-        v-if="shell.tabs?.length"
-        class="contract-detail-tabs"
-      >
+      <div v-if="shell.tabs?.length" :class="['contract-detail-tabs', { 'contract-detail-tabs--native': nativeLike }]">
         <div class="contract-detail-tabs__rail">
           <button
             v-for="tab in shell.tabs"
@@ -21,24 +18,24 @@
             type="button"
             @click="setActiveTab(shell.key, tab.key)"
           >
-            {{ tab.label }}
+            {{ normalizeTabLabel(shell, tab.key, tab.label) }}
           </button>
         </div>
         <div class="contract-detail-tabs__panel">
           <section
-            v-for="section in activeTabSections(shell)"
+            v-for="(section, sectionIndex) in activeTabSections(shell)"
             :key="section.key"
-            :class="['contract-form-shell', section.shellClass]"
+            :class="['contract-form-shell', section.shellClass, { 'contract-form-shell--native': nativeLike }]"
           >
-            <div v-if="showTabSectionMeta(shell, section)" class="contract-form-shell__meta">
+            <div v-if="showTabSectionMeta(shell, section, sectionIndex)" class="contract-form-shell__meta">
               <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
               <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
             </div>
             <FormSectionTemplate
-              :title="tabSectionTitle(shell, section)"
-              :hint="tabSectionHint(shell, section)"
+              :title="tabSectionTitle(shell, section, sectionIndex)"
+              :hint="tabSectionHint(shell, section, sectionIndex)"
               :tone="section.tone"
-              :columns="2"
+              :columns="resolveSectionColumns(section)"
               :fields="section.fields"
               @field-change="$emit('field-change', $event)"
             >
@@ -52,21 +49,30 @@
           </section>
         </div>
       </div>
-      <div v-else :class="['contract-detail-shell__body', { 'contract-detail-shell__body--stacked': shell.sections.length <= 1 }]">
+      <div
+        v-else
+        :class="[
+          'contract-detail-shell__body',
+          {
+            'contract-detail-shell__body--stacked': shell.sections.length <= 1,
+            'contract-detail-shell__body--native': nativeLike,
+          },
+        ]"
+      >
         <section
-          v-for="section in shell.sections"
+          v-for="(section, sectionIndex) in shell.sections"
           :key="section.key"
-          :class="['contract-form-shell', section.shellClass, { 'contract-form-shell--nested': shell.sections.length > 1 }]"
+          :class="['contract-form-shell', section.shellClass, { 'contract-form-shell--nested': shell.sections.length > 1, 'contract-form-shell--native': nativeLike }]"
         >
-          <div v-if="section.eyebrow || section.summary" class="contract-form-shell__meta">
+          <div v-if="!nativeLike && (section.eyebrow || section.summary)" class="contract-form-shell__meta">
             <span v-if="section.eyebrow" class="contract-form-shell__eyebrow">{{ section.eyebrow }}</span>
             <span v-if="section.summary" class="contract-form-shell__summary">{{ section.summary }}</span>
           </div>
           <FormSectionTemplate
-            :title="section.title"
+            :title="sectionTitle(section, sectionIndex)"
             :hint="section.hint"
             :tone="section.tone"
-            :columns="2"
+            :columns="resolveSectionColumns(section)"
             :fields="section.fields"
             @field-change="$emit('field-change', $event)"
           >
@@ -101,6 +107,7 @@ const props = defineProps<{
   shells: DetailShellView[];
   busy: boolean;
   isProjectCreatePage: boolean;
+  nativeLike: boolean;
   advancedExpanded: boolean;
   relationFallbackAdapter: RelationFallbackAdapter;
 }>();
@@ -132,30 +139,108 @@ function activeTabSections(shell: DetailShellView) {
 
 function activeTabLabel(shell: DetailShellView) {
   const activeKey = activeTabKey(shell);
-  return shell.tabs?.find((tab) => tab.key === activeKey)?.label || shell.tabs?.[0]?.label || '';
+  return normalizeTabLabel(shell, activeKey, shell.tabs?.find((tab) => tab.key === activeKey)?.label || shell.tabs?.[0]?.label || '');
 }
 
-function tabSectionTitle(shell: DetailShellView, section: DetailSectionView) {
-  const title = String(section.title || '').trim();
-  if (!title) return '';
+function tabSectionTitle(shell: DetailShellView, section: DetailSectionView, sectionIndex: number) {
+  const title = normalizeSectionTitle(String(section.title || '').trim());
+  if (!title) return fallbackSectionTitle(sectionIndex, section);
   if (title === activeTabLabel(shell)) return '';
-  if (title === '信息分组') return '';
-  if (title === '分组') return '';
   if (section.fields.length <= 2 && section.fields[0]?.label === title) return '';
   return title;
 }
 
-function tabSectionHint(shell: DetailShellView, section: DetailSectionView) {
+function tabSectionHint(shell: DetailShellView, section: DetailSectionView, sectionIndex: number) {
   const hint = String(section.hint || '').trim();
   if (!hint) return '';
-  const title = tabSectionTitle(shell, section);
+  const title = tabSectionTitle(shell, section, sectionIndex);
   if (!title) return '';
   if (hint.toLowerCase() === title.toLowerCase()) return '';
   return hint;
 }
 
-function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) {
-  return Boolean(tabSectionTitle(shell, section) && (section.eyebrow || section.summary));
+function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView, sectionIndex: number) {
+  if (props.nativeLike) return false;
+  return Boolean(tabSectionTitle(shell, section, sectionIndex) && (section.eyebrow || section.summary));
+}
+
+function sectionTitle(section: DetailSectionView, sectionIndex: number) {
+  const title = normalizeSectionTitle(String(section.title || '').trim());
+  if (!title) return fallbackSectionTitle(sectionIndex, section);
+  return title;
+}
+
+function normalizeSectionTitle(rawTitle: string) {
+  if (isGenericSectionTitle(rawTitle)) return '';
+  return rawTitle;
+}
+
+function isGenericSectionTitle(rawTitle: string): boolean {
+  const title = String(rawTitle || '').trim();
+  if (!title) return true;
+  const lowered = title.toLowerCase();
+  if (['主体信息', '信息分组', '分组', '核心信息'].includes(title)) return true;
+  if (lowered === 'group' || lowered === 'sheet' || lowered === 'page' || lowered === 'notebook') return true;
+  if (title.includes('_')) return true;
+  if (/^[a-z0-9.:-]+$/i.test(title)) return true;
+  return false;
+}
+
+function fallbackSectionTitle(sectionIndex: number, section?: DetailSectionView): string {
+  const semanticTitle = resolveSemanticSectionTitle(section);
+  if (semanticTitle) return semanticTitle;
+  const firstFieldLabel = String(section?.fields?.[0]?.label || '').trim();
+  if (firstFieldLabel && !isGenericSectionTitle(firstFieldLabel)) {
+    return `${firstFieldLabel}信息`;
+  }
+  return `信息分组 ${sectionIndex + 1}`;
+}
+
+function resolveSemanticSectionTitle(section?: DetailSectionView): string {
+  const fieldNames = (section?.fields || []).map((field) => String(field.name || '').trim()).filter(Boolean);
+  if (!fieldNames.length) return '';
+  const hasAny = (candidates: string[]) => candidates.some((name) => fieldNames.includes(name));
+  if (hasAny(['name', 'is_favorite', 'label_tasks'])) return '主体信息';
+  if (hasAny(['user_id', 'manager_id', 'owner_id', 'date_start', 'date'])) return '管理信息';
+  if (hasAny(['description'])) return '描述';
+  if (hasAny(['privacy_visibility', 'allow_rating', 'alias_contact', 'alias_name', 'alias_email'])) return '设置';
+  if (hasAny(['task_ids', 'collaborator_ids', 'analytic_account_id'])) return '协作 / 系统';
+  return '';
+}
+
+function normalizeTabLabel(shell: DetailShellView, tabKey: string, rawLabel: string): string {
+  const label = String(rawLabel || '').trim();
+  if (label && !isGenericTabLabel(label)) return label;
+  const semanticLabel = resolveSemanticTabLabel(shell, tabKey);
+  if (semanticLabel) return semanticLabel;
+  const index = shell.tabs?.findIndex((tab) => tab.key === tabKey) ?? -1;
+  return fallbackTabLabel(index >= 0 ? index : 0);
+}
+
+function isGenericTabLabel(rawLabel: string): boolean {
+  const label = String(rawLabel || '').trim().toLowerCase();
+  if (!label) return true;
+  return ['page', 'tab', 'notebook', '默认', 'default'].includes(label);
+}
+
+function resolveSemanticTabLabel(shell: DetailShellView, tabKey: string): string {
+  const tab = shell.tabs?.find((item) => item.key === tabKey);
+  if (!tab || !Array.isArray(tab.sections)) return '';
+  for (const section of tab.sections) {
+    const semanticTitle = resolveSemanticSectionTitle(section);
+    if (semanticTitle && semanticTitle !== '主体信息' && semanticTitle !== '管理信息') return semanticTitle;
+    const sectionTitle = String(section.title || '').trim();
+    if (sectionTitle && !isGenericSectionTitle(sectionTitle)) return sectionTitle;
+  }
+  return '';
+}
+
+function fallbackTabLabel(tabIndex: number): string {
+  return `页签 ${tabIndex + 1}`;
+}
+
+function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
+  return section.columns === 1 ? 1 : 2;
 }
 </script>
 
@@ -167,6 +252,14 @@ function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) 
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   padding: 18px 20px;
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+}
+
+.contract-detail-shell--native {
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  padding: 0;
+  box-shadow: none;
 }
 
 .contract-detail-shell--sheet {
@@ -228,6 +321,11 @@ function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) 
   grid-template-columns: 1fr;
 }
 
+.contract-detail-shell__body--native {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+
 .contract-detail-tabs {
   display: grid;
   gap: 14px;
@@ -258,9 +356,30 @@ function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) 
   color: #fff;
 }
 
+.contract-detail-tabs--native .contract-detail-tabs__rail {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+}
+
+.contract-detail-tabs--native .contract-detail-tabs__tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #4b5563;
+  padding: 6px 8px;
+  font-weight: 500;
+}
+
+.contract-detail-tabs--native .contract-detail-tabs__tab--active {
+  border-color: #6b7280;
+  background: transparent;
+  color: #111827;
+}
+
 .contract-detail-tabs__panel {
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 .contract-form-shell {
@@ -270,6 +389,14 @@ function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) 
   background: #fff;
   padding: 14px 16px 12px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.contract-form-shell--native {
+  border: 1px solid #eceff3;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: none;
+  padding: 6px 8px;
 }
 
 .contract-form-shell--sheet {
@@ -293,6 +420,47 @@ function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView) 
   background: rgba(255, 255, 255, 0.84);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
   padding: 12px 14px 10px;
+}
+
+.contract-form-shell--native.contract-form-shell--nested {
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: none;
+  padding: 6px 8px;
+}
+
+.contract-form-shell--native :deep(.template-form-section-grid) {
+  row-gap: 10px;
+  column-gap: 14px;
+}
+
+.contract-form-shell--native :deep(.template-form-section-head) {
+  margin-bottom: 6px;
+}
+
+.contract-form-shell--native :deep(.template-form-section-title) {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.contract-form-shell--native :deep(.label) {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.contract-form-shell--native :deep(.input) {
+  height: 36px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.contract-form-shell--native :deep(.readonly-value) {
+  min-height: 36px;
+  font-size: 13px;
 }
 
 .contract-form-shell__meta {

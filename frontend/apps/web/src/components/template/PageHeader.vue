@@ -1,5 +1,5 @@
 <template>
-  <header class="template-page-header" data-component="PageHeader">
+  <header :class="['template-page-header', { 'template-page-header--compact': compact }]" data-component="PageHeader">
     <div class="template-page-header-main">
       <h1>{{ title }}</h1>
       <p v-if="subtitle" class="template-page-subtitle">{{ subtitle }}</p>
@@ -18,6 +18,7 @@
 defineProps<{
   title: string;
   subtitle?: string;
+  compact?: boolean;
 }>();
 </script>
 
@@ -41,6 +42,22 @@ defineProps<{
   margin: 0;
   font-size: 36px;
   line-height: 1.12;
+}
+
+.template-page-header--compact {
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.template-page-header--compact .template-page-header-main h1 {
+  font-size: 22px;
+  line-height: 1.22;
+}
+
+.template-page-header--compact .template-page-subtitle {
+  margin-top: 0;
+  font-size: 11px;
 }
 
 .template-page-subtitle {

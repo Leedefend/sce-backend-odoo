@@ -1,6 +1,7 @@
 import { resolveTemplateSectionPresentation } from '../../components/template/sectionPresentation.mapper';
 import type { DetailSectionView, DetailShellView } from '../../components/template/detailLayout.types';
 import type { FormSectionFieldSchema } from '../../components/template/formSection.types';
+import { normalizeRenderProfile, type RenderProfile } from '../pageContract';
 
 export type LayoutKind = 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
 
@@ -17,6 +18,7 @@ export type LayoutSectionView = {
   key: string;
   title: string;
   kind: LayoutKind;
+  columns?: 1 | 2;
   fields: LayoutNodeView[];
 };
 
@@ -24,9 +26,14 @@ export type LayoutTreeSectionView = {
   key: string;
   title: string;
   kind: LayoutKind;
+  columns?: 1 | 2;
   fields: LayoutNodeView[];
   children: LayoutTreeSectionView[];
 };
+
+function normalizeSectionColumns(columnsRaw: unknown): 1 | 2 {
+  return Number(columnsRaw) === 1 ? 1 : 2;
+}
 
 function resolveSectionShellClass(section: LayoutSectionView) {
   if (section.kind === 'sheet') return 'contract-form-shell--sheet';
@@ -53,7 +60,9 @@ function resolveSectionSummary(
   section: LayoutSectionView,
   visibleFieldCount: number,
   preferNativeFormSurface: boolean,
+  renderProfile: RenderProfile,
 ) {
+  if (renderProfile === 'readonly') return '';
   if (preferNativeFormSurface) return '';
   if (visibleFieldCount <= 0) return '';
   return `${visibleFieldCount} 个字段`;
@@ -78,6 +87,7 @@ export function buildDetailSectionViews(options: {
   buildSectionFields: (section: LayoutSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile?: RenderProfile;
 }): DetailSectionView[] {
   const {
     layoutSections,
@@ -85,7 +95,9 @@ export function buildDetailSectionViews(options: {
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile,
   } = options;
+  const resolvedRenderProfile = normalizeRenderProfile(renderProfile, projectCreateMode ? 'create' : 'edit');
 
   return layoutSections.map((section) => {
     const presentation = resolveTemplateSectionPresentation(section, { projectCreateMode });
@@ -95,9 +107,10 @@ export function buildDetailSectionViews(options: {
       hint: presentation.hint,
       tone: presentation.tone,
       isAdvanced: presentation.isAdvanced,
+      columns: normalizeSectionColumns(section.columns),
       shellClass: resolveSectionShellClass(section),
       eyebrow: resolveSectionEyebrow(section, preferNativeFormSurface),
-      summary: resolveSectionSummary(section, visibleSectionFieldCount(section), preferNativeFormSurface),
+      summary: resolveSectionSummary(section, visibleSectionFieldCount(section), preferNativeFormSurface, resolvedRenderProfile),
       fields: buildSectionFields(section),
     };
   });
@@ -122,6 +135,8 @@ export function buildDetailShellViews(options: {
     notebookShell = null;
     activeNotebookTab = null;
   };
+
+  const tabLabel = (rawLabel: string): string => String(rawLabel || '').trim() || '信息页签';
 
   const nestedSection = (section: DetailSectionView, kind: LayoutKind, shell: DetailShellView | null): DetailSectionView => ({
     ...section,
@@ -151,9 +166,10 @@ export function buildDetailShellViews(options: {
       continue;
     }
     if (kind === 'page' && notebookShell) {
+      const label = tabLabel(section.title);
       activeNotebookTab = {
         key: section.key,
-        label: section.title,
+        label,
         summary: section.summary,
         sections: [{ ...section, title: '' }],
       };
@@ -165,12 +181,12 @@ export function buildDetailShellViews(options: {
       continue;
     }
     pushNotebookShell();
-    const startsContainer = kind === 'sheet' || kind === 'page' || kind === 'notebook' || kind === 'default';
+    const startsContainer = kind === 'sheet' || kind === 'page' || kind === 'notebook';
     if (!current || startsContainer) {
       pushShell();
       current = {
         key: `detail_shell_${section.key}`,
-        title: kind === 'default' ? '' : section.title,
+        title: kind === 'default' ? (current?.title || '') : section.title,
         kind,
         shellClass: resolveDetailShellClass(kind),
         eyebrow: resolveDetailShellEyebrow(kind),
@@ -192,6 +208,7 @@ function createDetailSectionView(options: {
   buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile: RenderProfile;
   titleOverride?: string;
 }): DetailSectionView {
   const {
@@ -200,6 +217,7 @@ function createDetailSectionView(options: {
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile,
     titleOverride,
   } = options;
   const presentation = resolveTemplateSectionPresentation(section, { projectCreateMode });
@@ -209,9 +227,10 @@ function createDetailSectionView(options: {
     hint: presentation.hint,
     tone: presentation.tone,
     isAdvanced: presentation.isAdvanced,
+    columns: normalizeSectionColumns(section.columns),
     shellClass: resolveSectionShellClass(section),
     eyebrow: resolveSectionEyebrow(section, preferNativeFormSurface),
-    summary: resolveSectionSummary(section, visibleSectionFieldCount(section), preferNativeFormSurface),
+    summary: resolveSectionSummary(section, visibleSectionFieldCount(section), preferNativeFormSurface, renderProfile),
     fields: buildSectionFields(section),
   };
 }
@@ -222,6 +241,7 @@ function buildNestedSections(options: {
   buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile: RenderProfile;
 }): DetailSectionView[] {
   const {
     nodes,
@@ -229,6 +249,7 @@ function buildNestedSections(options: {
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile,
   } = options;
   const sections: DetailSectionView[] = [];
   const hasRenderableChildren = (node: LayoutTreeSectionView): boolean => node.children.some(
@@ -244,6 +265,7 @@ function buildNestedSections(options: {
         buildSectionFields,
         preferNativeFormSurface,
         projectCreateMode,
+        renderProfile,
       }));
     }
     if (node.children.length) {
@@ -253,6 +275,7 @@ function buildNestedSections(options: {
         buildSectionFields,
         preferNativeFormSurface,
         projectCreateMode,
+        renderProfile,
       }));
     }
   }
@@ -264,28 +287,68 @@ function buildNotebookShell(node: LayoutTreeSectionView, options: {
   buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile: RenderProfile;
 }): DetailShellView | null {
   const {
     visibleSectionFieldCount,
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile,
   } = options;
-  const tabs = node.children
-    .filter((child) => child.kind === 'page')
-    .map((page) => ({
-      key: page.key,
-      label: page.title,
-      summary: '',
-      sections: buildContainerSections({
+  const collectPageNodesRecursively = (nodes: LayoutTreeSectionView[]): LayoutTreeSectionView[] => {
+    const pages: LayoutTreeSectionView[] = [];
+    for (const child of nodes) {
+      if (child.kind === 'page') {
+        pages.push(child);
+        continue;
+      }
+      if (child.children.length) {
+        pages.push(...collectPageNodesRecursively(child.children));
+      }
+    }
+    return pages;
+  };
+  const explicitPages = node.children.filter((child) => child.kind === 'page');
+  const recursivePages = explicitPages.length ? explicitPages : collectPageNodesRecursively(node.children);
+  const fallbackPages = recursivePages.length ? recursivePages : node.children;
+  const seenPageKeys = new Set<string>();
+  const tabs = fallbackPages
+    .filter((page) => {
+      if (seenPageKeys.has(page.key)) return false;
+      seenPageKeys.add(page.key);
+      return true;
+    })
+    .map((page, pageIndex) => {
+      const sections = buildContainerSections({
         container: page,
         visibleSectionFieldCount,
         buildSectionFields,
         preferNativeFormSurface,
         projectCreateMode,
-      }),
-    }))
-    .filter((tab) => tab.sections.length > 0);
+        renderProfile,
+      });
+      const ensuredSections = sections.length
+        ? sections
+        : [{
+          key: `${page.key}_placeholder`,
+          title: page.title || `页签 ${pageIndex + 1}`,
+          hint: '',
+          tone: 'core' as const,
+          isAdvanced: false,
+          columns: 1 as const,
+          shellClass: 'contract-form-shell--page',
+          eyebrow: '',
+          summary: '',
+          fields: [],
+        }];
+      return {
+        key: page.key,
+        label: page.title || `页签 ${pageIndex + 1}`,
+        summary: '',
+        sections: ensuredSections,
+      };
+    });
   if (!tabs.length) return null;
   return {
     key: `detail_shell_${node.key}`,
@@ -304,6 +367,7 @@ function collectNestedNotebookShells(nodes: LayoutTreeSectionView[], options: {
   buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile: RenderProfile;
 }): DetailShellView[] {
   const shells: DetailShellView[] = [];
   for (const node of nodes) {
@@ -325,6 +389,7 @@ function buildContainerSections(options: {
   buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile: RenderProfile;
 }): DetailSectionView[] {
   const {
     container,
@@ -332,6 +397,7 @@ function buildContainerSections(options: {
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile,
   } = options;
   const sections: DetailSectionView[] = [];
   if (container.fields.length > 0) {
@@ -341,7 +407,7 @@ function buildContainerSections(options: {
       buildSectionFields,
       preferNativeFormSurface,
       projectCreateMode,
-      titleOverride: container.kind === 'page' || container.kind === 'sheet' || container.kind === 'header' ? '' : undefined,
+      renderProfile,
     }));
   }
   if (container.children.length) {
@@ -351,6 +417,7 @@ function buildContainerSections(options: {
       buildSectionFields,
       preferNativeFormSurface,
       projectCreateMode,
+      renderProfile,
     }));
   }
   return sections;
@@ -362,6 +429,7 @@ export function buildDetailShellViewsFromTree(options: {
   buildSectionFields: (section: LayoutTreeSectionView) => FormSectionFieldSchema[];
   preferNativeFormSurface: boolean;
   projectCreateMode: boolean;
+  renderProfile?: RenderProfile;
 }): DetailShellView[] {
   const {
     layoutTrees,
@@ -369,18 +437,92 @@ export function buildDetailShellViewsFromTree(options: {
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile,
   } = options;
+  const resolvedRenderProfile = normalizeRenderProfile(renderProfile, projectCreateMode ? 'create' : 'edit');
   const shells: DetailShellView[] = [];
   const shellOptions = {
     visibleSectionFieldCount,
     buildSectionFields,
     preferNativeFormSurface,
     projectCreateMode,
+    renderProfile: resolvedRenderProfile,
+  };
+  const collectPageNodesRecursively = (nodes: LayoutTreeSectionView[]): LayoutTreeSectionView[] => {
+    const pages: LayoutTreeSectionView[] = [];
+    for (const node of nodes) {
+      if (node.kind === 'page') {
+        pages.push(node);
+        continue;
+      }
+      if (node.children.length) {
+        pages.push(...collectPageNodesRecursively(node.children));
+      }
+    }
+    return pages;
+  };
+  const orphanPageNodes = collectPageNodesRecursively(layoutTrees);
+  let orphanPagesConsumed = false;
+
+  const buildSyntheticNotebookFromOrphanPages = (): DetailShellView | null => {
+    if (!orphanPageNodes.length || orphanPagesConsumed) return null;
+    const seenPageKeys = new Set<string>();
+    const tabs = orphanPageNodes.filter((page) => {
+      if (seenPageKeys.has(page.key)) return false;
+      seenPageKeys.add(page.key);
+      return true;
+    }).map((page, pageIndex) => {
+      const sections = buildContainerSections({
+        container: page,
+        visibleSectionFieldCount,
+        buildSectionFields,
+        preferNativeFormSurface,
+        projectCreateMode,
+        renderProfile: resolvedRenderProfile,
+      });
+      const ensuredSections = sections.length
+        ? sections
+        : [{
+          key: `${page.key}_placeholder`,
+          title: page.title || `页签 ${pageIndex + 1}`,
+          hint: '',
+          tone: 'core' as const,
+          isAdvanced: false,
+          columns: 1 as const,
+          shellClass: 'contract-form-shell--page',
+          eyebrow: '',
+          summary: '',
+          fields: [],
+        }];
+      return {
+        key: page.key,
+        label: page.title || `页签 ${pageIndex + 1}`,
+        summary: '',
+        sections: ensuredSections,
+      };
+    });
+    orphanPagesConsumed = true;
+    return {
+      key: 'detail_shell_notebook_orphan_pages',
+      title: '页签',
+      kind: 'notebook',
+      shellClass: resolveDetailShellClass('notebook'),
+      eyebrow: resolveDetailShellEyebrow('notebook'),
+      summary: '',
+      sections: [],
+      tabs,
+    };
   };
 
   for (const node of layoutTrees) {
+    if (node.kind === 'page') {
+      continue;
+    }
     if (node.kind === 'notebook') {
-      const shell = buildNotebookShell(node, shellOptions);
+      let shell = buildNotebookShell(node, shellOptions);
+      if (!shell) {
+        shell = buildSyntheticNotebookFromOrphanPages();
+      }
       if (!shell) continue;
       shells.push(shell);
       continue;
@@ -392,6 +534,7 @@ export function buildDetailShellViewsFromTree(options: {
       buildSectionFields,
       preferNativeFormSurface,
       projectCreateMode,
+      renderProfile: resolvedRenderProfile,
     });
     if (!sections.length) continue;
     shells.push({
@@ -406,6 +549,11 @@ export function buildDetailShellViewsFromTree(options: {
     if (node.children.length) {
       shells.push(...collectNestedNotebookShells(node.children, shellOptions));
     }
+  }
+
+  if (!shells.some((shell) => Array.isArray(shell.tabs) && shell.tabs.length > 0)) {
+    const synthetic = buildSyntheticNotebookFromOrphanPages();
+    if (synthetic) shells.push(synthetic);
   }
 
   return shells;

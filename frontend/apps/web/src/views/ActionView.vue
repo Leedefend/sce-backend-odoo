@@ -901,7 +901,15 @@ const {
 } = groupRuntimeState;
 const headerActions = computed(() => pageGlobalActions.value);
 const displayHeaderActions = computed(() => {
-  if (preferNativeListSurface.value) return [];
+  if (preferNativeListSurface.value) {
+    return [
+      {
+        key: 'open_workbench',
+        label: '返回工作台',
+        enabled: true,
+      },
+    ];
+  }
   const disabledMap = new Map(
     headerActions.value.map((item) => [item.key, { disabled: Boolean(item.disabled), reason: item.disabledReason || '' }]),
   );
@@ -1460,6 +1468,16 @@ const {
   viewMode,
   normalizeActionViewMode,
   resolveActionViewModeLabel,
+  beforeSwitchViewMode: async (mode: string) => {
+    const currentMode = normalizeActionViewMode(route.query.view_mode);
+    if (!mode || currentMode === mode) return;
+    await router.replace({
+      query: {
+        ...(route.query as Record<string, unknown>),
+        view_mode: mode,
+      },
+    } as never).catch(() => {});
+  },
   load: requestLoad,
 });
 const sceneContractV1 = computed<Record<string, unknown>>(() => {
@@ -1648,13 +1666,16 @@ const {
 const actionableViewModes = computed(() => {
   const modes = availableViewModes.value;
   const hasKanban = modes.includes('kanban');
-  const filtered = modes.filter((mode) => {
+  const normalizedModes = hasKanban && !modes.includes('tree')
+    ? ['tree', ...modes]
+    : modes;
+  const filtered = normalizedModes.filter((mode) => {
     if (mode === 'kanban') return true;
     if (mode === 'form') return true;
     if (mode === 'tree' && hasKanban) return true;
     return resolveModeRecommendedRuntime(actionContract.value, mode) !== 'native';
   });
-  return filtered.length ? filtered : modes;
+  return filtered.length ? filtered : normalizedModes;
 });
 const showViewSwitchDebug = computed(() => isHudEnabled(route) && String(route.query.debug_view_switch || '').trim() === '1');
 const viewSwitchDebugState = computed(() => ({

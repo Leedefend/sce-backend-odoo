@@ -1,5 +1,9 @@
 <template>
-  <section v-if="steps.length || actions.length" class="page-command-bar" data-component="DetailCommandBar">
+  <section
+    v-if="steps.length || actions.length"
+    :class="['page-command-bar', { 'page-command-bar--native': nativeLike }]"
+    data-component="DetailCommandBar"
+  >
     <section v-if="steps.length" class="page-statusbar-strip">
       <span
         v-for="step in steps"
@@ -31,6 +35,7 @@ defineProps<{
   steps: DetailStatusbarStep[];
   actions: DetailActionItem[];
   busy: boolean;
+  nativeLike?: boolean;
 }>();
 
 defineEmits<{
@@ -41,39 +46,40 @@ defineEmits<{
 <style scoped>
 .page-command-bar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
 }
 
 .page-statusbar-strip,
 .page-action-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px;
   margin-bottom: 0;
 }
 
 .page-statusbar-chip {
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
   background: #fff;
-  color: #475569;
+  color: #4b5563;
 }
 
 .page-statusbar-chip--active {
-  border-color: #111827;
-  background: #111827;
+  border-color: #9ca3af;
+  background: #f3f4f6;
   color: #fff;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  color: #111827;
+  box-shadow: none;
 }
 
 .page-action-strip {
@@ -81,22 +87,37 @@ defineEmits<{
   justify-content: flex-end;
 }
 
+.page-command-bar--native {
+  margin-bottom: 6px;
+  padding: 2px 0 6px;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  background: transparent;
+}
+
+.page-command-bar--native .page-statusbar-chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
 .ghost,
 .primary {
   border-radius: 6px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
   background: #fff;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .primary {
-  background: #111827;
+  background: #1f2937;
   color: #fff;
-  border-color: #111827;
+  border-color: #1f2937;
 }
 
 .ghost {
-  color: #6b7280;
+  color: #374151;
 }
 </style>
