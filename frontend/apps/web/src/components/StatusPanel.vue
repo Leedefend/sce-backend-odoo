@@ -6,6 +6,9 @@
     <p v-if="variant === 'error' && !showHudMeta && compactContext" class="error-context">
       Context: {{ compactContext }}
     </p>
+    <p v-if="variant === 'error' && !showHudMeta && compactTraceLine" class="error-context">
+      {{ compactTraceLine }}
+    </p>
     <div v-if="variant === 'error' && showHudMeta" class="error-meta">
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
@@ -28,7 +31,7 @@
     >
       {{ suggestedActionLabel }}
     </button>
-    <button v-if="onRetry" @click="onRetry">Retry</button>
+    <button v-if="onRetry" @click="onRetry">{{ retryButtonText }}</button>
   </section>
 </template>
 
@@ -49,6 +52,7 @@ const props = defineProps<{
   retryable?: boolean;
   hint?: string;
   suggestedAction?: string;
+  retryLabel?: string;
   variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
   onSuggestedAction?: (action: string) => boolean | void;
@@ -90,6 +94,15 @@ const compactContext = computed(() => {
   if (reason) return `[${reason}]`;
   return '';
 });
+const compactTraceLine = computed(() => {
+  const code = props.errorCode !== null && props.errorCode !== undefined ? String(props.errorCode) : '';
+  const trace = String(props.traceId || '').trim();
+  if (code && trace) return `错误码：${code} · TraceID：${trace}`;
+  if (code) return `错误码：${code}`;
+  if (trace) return `TraceID：${trace}`;
+  return '';
+});
+const retryButtonText = computed(() => String(props.retryLabel || '').trim() || '重试');
 const userHint = computed(() => {
   if (showHudMeta.value) return '';
   return props.hint || '';
@@ -103,12 +116,12 @@ function runSuggestedAction() {
     reasonCode: props.reasonCode,
     message: props.message,
     onExecuted: (result) => {
-      actionRunFeedback.value = result.success ? 'Suggested action executed.' : 'Suggested action could not run.';
+      actionRunFeedback.value = result.success ? '建议操作已执行。' : '建议操作执行失败。';
       emit('action-executed', { action: result.raw || result.kind, success: result.success });
     },
   });
   if (!ran && !actionRunFeedback.value) {
-    actionRunFeedback.value = 'Suggested action is not executable in current context.';
+    actionRunFeedback.value = '当前上下文不支持执行建议操作。';
   }
 }
 

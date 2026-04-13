@@ -4,7 +4,7 @@ import path from 'path';
 
 const port = Number(process.env.VITE_DEV_PORT ?? 5174);
 const host = process.env.VITE_DEV_HOST ?? '0.0.0.0';
-const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8070';
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8069';
 
 export default defineConfig({
   plugins: [vue()],

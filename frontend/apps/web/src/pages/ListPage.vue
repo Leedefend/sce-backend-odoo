@@ -1,64 +1,90 @@
 <template>
-  <section class="page">
-    <PageHeader
-      :title="title"
-      :subtitle="subtitle"
-      :status="status"
-      :status-label="statusLabel"
-      :loading="loading"
-      :on-reload="onReload"
-      :primary-action-label="primaryActionLabel"
-      :on-primary-action="onPrimaryAction || undefined"
-      :mode-label="pageModeLabelText"
-      :record-count="recordCountSafe"
-    />
+  <PageLayout class="page">
+    <template #header v-if="!compactDeliveryMode">
+      <PageHeader
+        :title="title"
+        :subtitle="headerSubtitle"
+        :status="status"
+        :status-label="statusLabel"
+        :loading="loading"
+        :on-reload="onReload"
+        :primary-action-label="primaryActionLabel"
+        :on-primary-action="onPrimaryAction || undefined"
+        :mode-label="headerModeLabel"
+        :record-count="recordCountSafe"
+      />
+    </template>
 
-    <PageToolbar
-      v-if="showActionZone"
-      :loading="loading"
-      :search-term="searchTerm || ''"
-      :search-placeholder="searchPlaceholder || ''"
-      :sort-options="sortOptions || []"
-      :sort-value="sortValue || ''"
-      :sort-label="sortLabel || ''"
-      :sort-source-label="sortSourceLabel || ''"
-      :filter-value="filterValue || 'all'"
-      :has-active-field="Boolean(hasActiveField)"
-      :on-search="onSearch"
-      :on-sort="onSort"
-      :on-filter="onFilter"
-      :quick-filters="quickFilters"
-      :saved-filters="savedFilters"
-      :group-by-options="groupByOptions"
-      :search-panel-options="searchPanelOptions"
-      :searchable-field-options="searchableFieldOptions"
-      :searchable-field-total-count="searchableFieldTotalCount || 0"
-      :searchable-field-count-label="searchableFieldCountLabel || ''"
-      :saved-filter-count-label="savedFilterCountLabel || ''"
-      :group-by-count-label="groupByCountLabel || ''"
-      :search-panel-count-label="searchPanelCountLabel || ''"
-      :route-preset-label="routePresetLabel || ''"
-      :route-preset-source="routePresetSource || ''"
-      :search-mode-label="searchModeLabel || ''"
-      :optimization-composition="optimizationComposition"
-      :active-contract-filter-key="activeContractFilterKey || ''"
-      :active-saved-filter-key="activeSavedFilterKey || ''"
-      :active-group-by-field="activeGroupByField || ''"
-      :on-apply-contract-filter="onApplyContractFilter"
-      :on-clear-contract-filter="onClearContractFilter"
-      :on-apply-saved-filter="onApplySavedFilter"
-      :on-clear-saved-filter="onClearSavedFilter"
-      :on-apply-group-by="onApplyGroupBy"
-      :on-clear-group-by="onClearGroupBy"
-      :on-clear-route-preset="onClearRoutePreset"
-    />
+    <template #filter>
+      <section v-if="showUnifiedTopbar" class="unified-topbar">
+        <div class="topbar-title">
+          <strong>{{ title }}</strong>
+          <span>{{ recordCountSafe }} 条</span>
+        </div>
+        <div class="topbar-search">
+          <input
+            v-model="searchInputValue"
+            type="search"
+            :placeholder="searchPlaceholder || '搜索'"
+            :disabled="loading"
+            @keyup.enter="submitSearch"
+          />
+          <button type="button" :disabled="loading" @click="submitSearch">搜索</button>
+        </div>
+        <div class="topbar-tabs">
+          <button
+            type="button"
+            :class="{ active: (filterValue || 'all') === 'all' }"
+            :disabled="loading"
+            @click="onFilter('all')"
+          >
+            全部
+          </button>
+          <button
+            v-if="hasActiveField"
+            type="button"
+            :class="{ active: filterValue === 'active' }"
+            :disabled="loading"
+            @click="onFilter('active')"
+          >
+            进行中
+          </button>
+          <button
+            v-if="hasActiveField"
+            type="button"
+            :class="{ active: filterValue === 'archived' }"
+            :disabled="loading"
+            @click="onFilter('archived')"
+          >
+            已归档
+          </button>
+        </div>
+        <div class="topbar-sort" v-if="(sortOptions || []).length">
+          <select :value="sortValue || ''" :disabled="loading" @change="onSortSelectChange">
+            <option value="">默认排序</option>
+            <option v-for="opt in sortOptions || []" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+        <div class="topbar-pagination" v-if="showFlatPagination">
+          <button type="button" :disabled="loading || !canPagePrev" @click="pagePrev">上一页</button>
+          <span>{{ paginationPageText }}</span>
+          <button type="button" :disabled="loading || !canPageNext" @click="pageNext">下一页</button>
+        </div>
+        <button
+          v-if="primaryActionLabel && onPrimaryAction"
+          type="button"
+          class="topbar-primary"
+          :disabled="loading"
+          @click="onPrimaryAction"
+        >
+          {{ primaryActionLabel }}
+        </button>
+      </section>
+    </template>
 
-    <section v-if="summaryItems.length" class="summary-strip">
-      <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
-        <p class="summary-label">{{ item.label }}</p>
-        <p class="summary-value">{{ item.value }}</p>
-      </article>
-    </section>
+    <template #content>
 
     <StatusPanel v-if="loading" title="正在加载列表..." variant="info" />
     <StatusPanel
@@ -75,16 +101,18 @@
       :suggested-action="error?.suggestedAction"
       variant="error"
       :on-retry="onReload"
+      retry-label="重新加载"
     />
     <StatusPanel
       v-else-if="status === 'empty'"
       :title="emptyCopy.title"
-      :message="emptyCopy.message"
+      :message="emptyMessageText"
       variant="info"
       :on-retry="onReload"
+      retry-label="刷新"
     />
 
-    <section v-if="status === 'ok' && showBatchBar" class="batch-bar">
+    <section v-if="status === 'ok' && showBatchBar && (!compactDeliveryMode || selectedCount > 0)" class="batch-bar">
       <span>已选 {{ selectedCount }} 条</span>
       <button v-if="showArchive" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
       <button v-if="showActivate" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
@@ -136,7 +164,7 @@
     </section>
 
     <section v-if="status === 'ok' && showDetailZone" class="table">
-      <div class="table-hint">{{ rowActionHintText }}</div>
+      <div v-if="!compactDeliveryMode" class="table-hint">{{ rowActionHintText }}</div>
       <section v-if="groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
           <span>分组结果</span>
@@ -294,31 +322,6 @@
           </tr>
         </tbody>
       </table>
-      <footer v-if="showFlatPagination" class="table-pagination">
-        <div class="table-pagination-meta">
-          <span>{{ paginationRangeText }}</span>
-          <span>共 {{ paginationTotal }} 条</span>
-        </div>
-        <div class="table-pagination-actions">
-          <button
-            type="button"
-            class="table-page-btn"
-            :disabled="loading || !canPagePrev"
-            @click="pagePrev"
-          >
-            上一页
-          </button>
-          <span>{{ paginationPageText }}</span>
-          <button
-            type="button"
-            class="table-page-btn"
-            :disabled="loading || !canPageNext"
-            @click="pageNext"
-          >
-            下一页
-          </button>
-        </div>
-      </footer>
     </section>
     <StatusPanel
       v-else-if="status === 'ok'"
@@ -326,15 +329,17 @@
       message="semantic_page 未声明 detail_zone，已按契约隐藏列表主体。"
       variant="info"
       :on-retry="onReload"
+      retry-label="刷新"
     />
-  </section>
+    </template>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
-import PageToolbar from '../components/page/PageToolbar.vue';
+import PageLayout from '../components/page/PageLayout.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { semanticValueByField } from '../utils/semantic';
@@ -508,6 +513,14 @@ const errorCopy = computed(() =>
 const emptyCopy = computed(() =>
   resolveEmptyCopy('list', { primaryActionLabel: props.primaryActionLabel }),
 );
+const emptyMessageText = computed(() => {
+  const pageTitle = String(props.title || '').trim();
+  if (pageTitle.includes('投标')) {
+    const actionLabel = String(props.primaryActionLabel || '').trim() || '新建记录';
+    return `当前暂无投标数据。建议先点击“${actionLabel}”创建一条示例投标，再返回列表继续办理。`;
+  }
+  return emptyCopy.value.message;
+});
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
@@ -523,19 +536,19 @@ const sortedGroupedRows = computed(() => {
   return rows;
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
-const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const rowActionHintText = computed(() => {
   if (groupedRows.value.length > 0) {
     return '点击分组内记录查看详情；可使用“展开/收起”“查看全部”继续处理分组数据';
   }
+  const pageTitle = String(props.title || '').trim();
   const actionLabel = String(props.primaryActionLabel || '').trim();
+  if (pageTitle.includes('预算') || pageTitle.includes('成本')) {
+    if (actionLabel) return `先选择一条记录查看详情；新增请点击右上角“${actionLabel}”`;
+    return '先选择一条记录查看详情，再继续预算/成本处理';
+  }
   if (actionLabel) return `点击列表行可查看详情；新增请使用右上角“${actionLabel}”`;
   return '点击列表行可查看详情并继续处理';
 });
-const quickFilters = computed(() => Array.isArray(props.quickFilters) ? props.quickFilters : []);
-const savedFilters = computed(() => Array.isArray(props.savedFilters) ? props.savedFilters : []);
-const groupByOptions = computed(() => Array.isArray(props.groupByOptions) ? props.groupByOptions : []);
-const searchPanelOptions = computed(() => Array.isArray(props.searchPanelOptions) ? props.searchPanelOptions : []);
 const semanticZoneKeySet = computed(() => {
   const rows = Array.isArray(props.semanticZones) ? props.semanticZones : [];
   const keys = rows
@@ -545,11 +558,6 @@ const semanticZoneKeySet = computed(() => {
 });
 const showActionZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('action_zone'));
 const showDetailZone = computed(() => semanticZoneKeySet.value.size === 0 || semanticZoneKeySet.value.has('detail_zone'));
-const searchableFieldOptions = computed(() => Array.isArray(props.searchableFieldOptions) ? props.searchableFieldOptions : []);
-const optimizationComposition = computed(() => {
-  const raw = props.optimizationComposition;
-  return raw && typeof raw === 'object' ? raw : null;
-});
 const recordCountSafe = computed(() => {
   const raw = Number(props.recordCount);
   if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
@@ -586,14 +594,13 @@ const paginationTotalPages = computed(() => {
 });
 const canPagePrev = computed(() => paginationOffset.value > 0);
 const canPageNext = computed(() => paginationOffset.value + paginationLimit.value < paginationTotal.value);
-const paginationRangeText = computed(() => {
-  if (!paginationTotal.value) return '0 - 0';
-  const start = paginationOffset.value + 1;
-  const end = Math.min(paginationTotal.value, paginationOffset.value + Math.max(paginationLimit.value, props.records.length));
-  return `${start} - ${end}`;
-});
 const paginationPageText = computed(() => `${paginationCurrentPage.value} / ${paginationTotalPages.value} 页`);
 const pageModeLabelText = computed(() => pageModeLabel(props.pageMode || 'list'));
+const compactDeliveryMode = computed(() => String(import.meta.env.VITE_UI_COMPACT_MODE || '1').trim() !== '0');
+const headerSubtitle = computed(() => compactDeliveryMode.value ? '' : props.subtitle);
+const headerModeLabel = computed(() => compactDeliveryMode.value ? '' : pageModeLabelText.value);
+const showUnifiedTopbar = computed(() => showActionZone.value);
+const searchInputValue = ref(String(props.searchTerm || ''));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
   if (!sortedGroupedRows.value.length) return false;
@@ -775,6 +782,25 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  () => props.searchTerm,
+  (value) => {
+    searchInputValue.value = String(value || '');
+  },
+  { immediate: true },
+);
+
+function submitSearch() {
+  if (props.loading) return;
+  props.onSearch(searchInputValue.value || '');
+}
+
+function onSortSelectChange(event: Event) {
+  if (props.loading) return;
+  const value = String((event.target as HTMLSelectElement | null)?.value || '');
+  props.onSort(value);
+}
 
 function onGroupSampleLimitSelectChange(event: Event) {
   if (props.loading) return;
@@ -976,7 +1002,99 @@ function columnLabel(col: string) {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: 10px;
+}
+
+.unified-topbar {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 1.4fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.topbar-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.topbar-title strong {
+  font-size: 16px;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.topbar-title span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-search input {
+  flex: 1;
+  min-width: 180px;
+  height: 34px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+.topbar-search button,
+.topbar-tabs button,
+.topbar-pagination button,
+.topbar-sort select {
+  height: 32px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.topbar-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-tabs button.active {
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.topbar-sort {
+  display: inline-flex;
+}
+
+.topbar-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.topbar-primary {
+  height: 32px;
+  border: 1px solid #0f172a;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #fff;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 

@@ -1,6 +1,7 @@
 import type { LocationQueryRaw, Router } from 'vue-router';
 import { getSceneByKey } from './resolvers/sceneRegistry';
 import { buildSceneRegistryFallbackPath, normalizeLegacyWorkbenchPath } from './routeQuery';
+import { normalizeRenderProfile, type RenderProfile } from './pageContract';
 
 export type ContractActionDeps = {
   actionKey: string;
@@ -8,6 +9,7 @@ export type ContractActionDeps = {
   actionIntent: (key: string, fallback?: string) => string;
   actionTarget: (key: string) => Record<string, unknown>;
   query?: LocationQueryRaw;
+  renderProfile?: RenderProfile;
   onRefresh?: () => Promise<void> | void;
   onOpenMenuFirstReachable?: () => Promise<boolean> | boolean;
   onFallback?: (actionKey: string) => Promise<boolean> | boolean;
@@ -19,6 +21,13 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
   const kind = String(target.kind || '');
   const scene = String(target.scene_key || '');
   const query = deps.query || {};
+  const renderProfile = normalizeRenderProfile(deps.renderProfile, 'edit');
+  const visibleProfiles = Array.isArray(target.visible_profiles)
+    ? target.visible_profiles.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (visibleProfiles.length > 0 && !visibleProfiles.includes(renderProfile)) {
+    return false;
+  }
 
   const resolveScenePath = (sceneKey: string): string => {
     const sceneNode = getSceneByKey(sceneKey);
@@ -44,9 +53,10 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
 
   if (kind === 'route.path') {
     const path = String(target.path || '');
-    if (!path) return false;
-    await deps.router.push({ path, query });
-    return true;
+    if (path) {
+      await deps.router.push({ path, query });
+      return true;
+    }
   }
 
   if (kind === 'scene.key') {

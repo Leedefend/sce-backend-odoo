@@ -1,6 +1,37 @@
 <template>
-  <LayoutShell :flow="isProjectCreatePage">
-    <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
+  <LayoutShell :flow="layoutShellFlow">
+    <header v-if="effectiveCompactMode" class="form-compact-topbar">
+      <div class="form-compact-title">
+        <strong>{{ pageDisplayTitle }}</strong>
+        <span v-if="pageDisplaySubtitle">{{ pageDisplaySubtitle }}</span>
+      </div>
+      <div class="form-compact-actions">
+        <button
+          v-if="!isProjectCreatePage"
+          class="ghost"
+          :disabled="busy"
+          @click="goBackFromDetail"
+        >
+          返回
+        </button>
+        <button
+          v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
+          class="primary"
+          :disabled="isQuickSubmitDisabled"
+          :title="sceneWriteDisabledReason"
+          @click="saveRecord"
+        >
+          {{ submitButtonLabel }}
+        </button>
+      </div>
+    </header>
+
+    <PageHeaderTemplate
+      v-else
+      :title="pageDisplayTitle"
+      :subtitle="pageDisplaySubtitle || undefined"
+      :compact="projectDetailStructureAlignMode"
+    >
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
@@ -12,6 +43,14 @@
         </template>
       </template>
       <template #actions>
+        <button
+          v-if="!isProjectCreatePage"
+          class="ghost"
+          :disabled="busy"
+          @click="goBackFromDetail"
+        >
+          返回
+        </button>
         <button
           v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
           class="primary"
@@ -36,13 +75,28 @@
     </PageHeaderTemplate>
 
     <StatusPanel v-if="status === 'loading'" title="正在加载页面..." variant="info" />
-    <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
+    <StatusPanel
+      v-else-if="status === 'error'"
+      title="页面加载失败"
+      :message="errorMessage"
+      hint="请稍后重试；若持续失败请联系管理员。"
+      variant="error"
+      :on-retry="reload"
+      retry-label="重新加载"
+    />
     <section v-else-if="showFormNativeFallback" class="card">
       <StatusPanel title="当前表单建议使用原生页面" :message="formNativeFallbackMessage" variant="info" />
       <button class="primary" @click="openFormNativeFallback">打开原生页面</button>
     </section>
 
-    <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
+    <section
+      v-else
+      :class="['card', {
+        'card--flow': isProjectCreatePage,
+        'card--compact': effectiveCompactMode,
+        'card--project-align': projectDetailStructureAlignMode,
+      }]"
+    >
       <section v-if="showPageOverviewStrip" class="page-overview-strip">
         <div v-for="item in pageOverviewItems" :key="item.label" class="page-overview-pill">
           <span class="page-overview-pill__label">{{ item.label }}</span>
@@ -54,6 +108,7 @@
         :steps="statusbarSteps"
         :actions="contractActionStrip"
         :busy="busy"
+        :native-like="projectDetailStructureAlignMode"
         @run-action="runAction"
       />
       <StatusPanel
@@ -107,7 +162,18 @@
         </div>
       </section>
 
-      <section class="form-grid">
+      <section :class="['form-grid', { 'form-grid--project-align': projectDetailStructureAlignMode }]">
+        <section v-if="showStructureProjectionSummary" class="block zone-block structure-projection-block">
+          <h3>结构投影摘要</h3>
+          <p class="zone-collaboration-line">shell 数：{{ structureProjectionSummary.shellCount }}，section 数：{{ structureProjectionSummary.sectionCount }}，tab 数：{{ structureProjectionSummary.tabCount }}</p>
+          <p class="zone-collaboration-line">shell 标题：{{ structureProjectionSummary.shellTitles || '（空）' }}</p>
+          <p class="zone-collaboration-line">contract 输入（views.form.layout）：notebook={{ contractTabAuditSummary.source_layout.notebook }}，page={{ contractTabAuditSummary.source_layout.page }}</p>
+          <p class="zone-collaboration-line">contract 输入（semantic layout）：notebook={{ contractTabAuditSummary.semantic_layout.notebook }}，page={{ contractTabAuditSummary.semantic_layout.page }}</p>
+          <p class="zone-collaboration-line">pipeline(layout_tree)：notebook={{ contractTabAuditSummary.layout_tree.notebook }}，page={{ contractTabAuditSummary.layout_tree.page }}</p>
+          <p class="zone-collaboration-line">pipeline(detail_shell_raw)：shell={{ contractTabAuditSummary.detail_shell_raw.shell }}，tab={{ contractTabAuditSummary.detail_shell_raw.tab }}</p>
+          <p class="zone-collaboration-line">消费真值源：{{ contractTabAuditSummary.single_source }}（semantic 仅观测，不参与投影）</p>
+          <p class="zone-collaboration-line">投影对账：projected tabs={{ contractTabAuditSummary.projected_tabs }}，delta(layout-page - projected)={{ contractTabAuditSummary.delta_from_layout_page }}</p>
+        </section>
         <div v-if="isProjectCreatePage" class="form-flow-guide">
           <p class="form-flow-guide-main">只需完成核心信息即可创建项目</p>
         </div>
@@ -135,9 +201,10 @@
         </p>
         <DetailShellLayout
           v-if="showDetailShellZone"
-          :shells="detailShells"
+          :shells="normalizedDetailShells"
           :busy="busy"
           :is-project-create-page="isProjectCreatePage"
+          :native-like="isProjectFormPage && !isProjectCreatePage && !forceStructureVisibilityMode"
           :advanced-expanded="advancedExpanded"
           :relation-fallback-adapter="relationFallbackAdapter"
           @field-change="onTemplateFieldChange"
@@ -251,6 +318,7 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import { normalizeRenderProfile } from '../app/pageContract';
 import {
   buildDetailShellViewsFromTree,
   type LayoutNodeView,
@@ -388,6 +456,7 @@ const applyingOnchangePatch = ref(false);
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const isProjectFormPage = computed(() => String(model.value || '').trim() === 'project.project');
+const isWorkBreakdownFormPage = computed(() => String(model.value || '').trim() === 'construction.work.breakdown');
 const actionId = computed(() => {
   return resolveActionIdFromContext({
     routeQuery: route.query as Record<string, unknown>,
@@ -460,11 +529,59 @@ const semanticRelationZoneItems = computed<Array<{ field: string; label: string;
     })
     .filter((item): item is { field: string; label: string; viewType: string; editableLabel: string } => Boolean(item));
 });
-const semanticHasChatter = computed(() => semanticFormSemantics.value.has_chatter === true);
-const semanticHasAttachments = computed(() => semanticFormSemantics.value.has_attachments === true);
+const semanticHasChatter = computed(() => {
+  if (semanticFormSemantics.value.has_chatter === true) return true;
+  const chatter = contract.value?.views?.form?.chatter;
+  return Boolean(chatter && typeof chatter === 'object' && (chatter as Record<string, unknown>).enabled === true);
+});
+const semanticHasAttachments = computed(() => {
+  if (semanticFormSemantics.value.has_attachments === true) return true;
+  const attachments = contract.value?.views?.form?.attachments;
+  return Boolean(attachments && typeof attachments === 'object' && (attachments as Record<string, unknown>).enabled === true);
+});
 const semanticPermissionVerdicts = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.permission_verdicts));
 const semanticActionGating = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.action_gating));
 const semanticActionGatingVerdict = computed<Record<string, unknown>>(() => asRecord(semanticActionGating.value.verdict));
+function resolveSurfaceActionRows(kind: 'header_buttons' | 'button_box' | 'stat_buttons') {
+  const profile = normalizeRenderProfile(contract.value?.render_profile, recordId.value ? 'edit' : 'create');
+  const renderSurfaces = asRecord((contract.value as Record<string, unknown> | null)?.render_surfaces);
+  const activeSurface = asRecord(renderSurfaces[profile]);
+  const actions = asRecord(activeSurface.actions);
+  const rows = actions[kind];
+  if (Array.isArray(rows)) return rows;
+  const formView = asRecord((contract.value as Record<string, unknown> | null)?.views?.form);
+  const fallback = formView[kind];
+  return Array.isArray(fallback) ? fallback : [];
+}
+const formViewSurfaceActions = computed<Array<Record<string, unknown>>>(() => {
+  const buckets = [
+    { rows: resolveSurfaceActionRows('header_buttons'), level: 'header' },
+    { rows: resolveSurfaceActionRows('button_box'), level: 'smart' },
+    { rows: resolveSurfaceActionRows('stat_buttons'), level: 'smart' },
+  ];
+  const out: Array<Record<string, unknown>> = [];
+  const dedup = new Set<string>();
+  for (const bucket of buckets) {
+    if (!Array.isArray(bucket.rows)) continue;
+    for (const item of bucket.rows) {
+      const row = asRecord(item);
+      const payload = parseMaybeJsonRecord(row.payload);
+      const key = asText(row.key)
+        || asText(row.name)
+        || asText(payload.method)
+        || asText(payload.ref)
+        || asText(row.label);
+      if (!key || dedup.has(key)) continue;
+      dedup.add(key);
+      out.push({
+        ...row,
+        key,
+        level: asText(row.level) || bucket.level,
+      });
+    }
+  }
+  return out;
+});
 const semanticActionStateByKey = computed<Record<string, { enabled: boolean; reason: string }>>(() => {
   const out: Record<string, { enabled: boolean; reason: string }> = {};
   const actions = asRecord(semanticPage.value.actions);
@@ -479,6 +596,11 @@ const semanticActionStateByKey = computed<Record<string, { enabled: boolean; rea
       const reason = asText(row.reason) || asText(row.reason_code);
       out[key] = { enabled, reason };
     }
+  }
+  for (const row of formViewSurfaceActions.value) {
+    const key = asText(row.key);
+    if (!key || out[key]) continue;
+    out[key] = { enabled: true, reason: '' };
   }
   return out;
 });
@@ -544,12 +666,16 @@ const sceneRuntimeStatusPanel = computed(() => {
 });
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
-  const profile = String(contract.value?.render_profile || '').trim().toLowerCase();
+  const profile = normalizeRenderProfile(contract.value?.render_profile, 'edit');
   if (profile === 'readonly') return 'readonly';
   if (profile === 'edit') return 'edit';
   if (profile === 'create') return 'create';
   if (!canSave.value) return 'readonly';
   return recordId.value ? 'edit' : 'create';
+});
+const activeRenderSurface = computed<Record<string, unknown>>(() => {
+  const renderSurfaces = asRecord((contract.value as Record<string, unknown> | null)?.render_surfaces);
+  return asRecord(renderSurfaces[renderProfile.value]);
 });
 
 const rights = computed(() => {
@@ -700,6 +826,9 @@ const intakeMissingSummary = computed(() => {
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
+  if (isWorkBreakdownFormPage.value) {
+    return '工程结构详情';
+  }
   if (isProjectFormPage.value) {
     const recordName = String(formData.name || '').trim();
     if (recordName) return recordName;
@@ -721,6 +850,9 @@ const pageDisplayTitle = computed(() => {
 const pageDisplaySubtitle = computed(() => {
   if (isProjectCreatePage.value) {
     return '填写核心信息即可完成项目立项';
+  }
+  if (isWorkBreakdownFormPage.value) {
+    return '查看或编辑工程结构节点信息';
   }
   if (isProjectFormPage.value) {
     const statusLabel = activeStatusbarLabel.value;
@@ -793,17 +925,21 @@ const headerActionsVisible = computed(() => {
 });
 const contractActionStrip = computed(() => {
   const source = headerActionsVisible.value;
-  if (!isProjectFormPage.value) return source;
-  const score = (action: ContractAction) => {
-    let total = 0;
-    if (action.semantic === 'primary_action') total += 100;
-    if (action.enabled) total += 10;
-    if (action.level === 'header') total += 5;
-    return total;
+  const dedup = new Set<string>();
+  const isTechnicalLabel = (labelRaw: unknown): boolean => {
+    const label = String(labelRaw || '').trim();
+    if (!label) return true;
+    if (label.includes('_')) return true;
+    return /^[a-z0-9.:-]+$/i.test(label);
   };
-  return [...source]
-    .sort((a, b) => score(b) - score(a) || a.label.localeCompare(b.label, 'zh-CN'))
-    .slice(0, 3);
+  const out = source.filter((action) => {
+    const key = String(action.key || '').trim();
+    if (!key || dedup.has(key)) return false;
+    dedup.add(key);
+    if (projectDetailStructureAlignMode.value && isTechnicalLabel(action.label)) return false;
+    return true;
+  });
+  return out;
 });
 const statusbarFieldName = computed(() => String(contract.value?.views?.form?.statusbar?.field || '').trim());
 const statusbarSteps = computed<DetailStatusbarStep[]>(() => {
@@ -827,6 +963,18 @@ const statusbarSteps = computed<DetailStatusbarStep[]>(() => {
     .filter((item): item is DetailStatusbarStep => Boolean(item));
 });
 const activeStatusbarLabel = computed(() => statusbarSteps.value.find((item) => item.active)?.label || '');
+const formCompactMode = computed(() => String(import.meta.env.VITE_FORM_COMPACT || '1').trim() !== '0');
+const projectDetailStructureAlignMode = computed(() => isProjectFormPage.value && !isProjectCreatePage.value);
+const structureAuditMode = computed(() => {
+  if (showHud.value) return true;
+  const querySwitchRaw = route.query.structure_audit ?? route.query.audit_structure ?? route.query.debug_structure ?? '';
+  const querySwitch = String(querySwitchRaw || '').trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(querySwitch)) return true;
+  return String(import.meta.env.VITE_FORM_STRUCTURE_AUDIT || '0').trim() === '1';
+});
+const forceStructureVisibilityMode = computed(() => projectDetailStructureAlignMode.value && structureAuditMode.value);
+const effectiveCompactMode = computed(() => formCompactMode.value && !projectDetailStructureAlignMode.value);
+const layoutShellFlow = computed(() => isProjectCreatePage.value && !effectiveCompactMode.value);
 const pageOverviewItems = computed(() => {
   const items: Array<{ label: string; value: string }> = [];
   if (recordId.value) items.push({ label: '记录ID', value: String(recordId.value) });
@@ -846,23 +994,32 @@ const preferNativeFormSurface = computed(() => {
   if (isProjectCreatePage.value) return false;
   if (!recordId.value) return false;
   if (showFormNativeFallback.value) return false;
+  if (isProjectFormPage.value) return true;
   const viewType = String(contract.value?.head?.view_type || contract.value?.view_type || '').trim().toLowerCase();
   if (viewType && viewType !== 'form') return false;
   return contractReadiness.value.usable && layoutNodes.value.some((node) => node.kind === 'field');
 });
-const showPageOverviewStrip = computed(() => pageOverviewItems.value.length > 0 && !preferNativeFormSurface.value);
+const showPageOverviewStrip = computed(() => {
+  if (projectDetailStructureAlignMode.value) return false;
+  return pageOverviewItems.value.length > 0 && !preferNativeFormSurface.value && !effectiveCompactMode.value;
+});
 const showCommandBar = computed(() => {
+  if (effectiveCompactMode.value) return false;
+  if (projectDetailStructureAlignMode.value) {
+    return statusbarSteps.value.length > 0 || contractActionStrip.value.length > 0;
+  }
   if (!semanticHasSummaryZone.value && !semanticHasActionZone.value) return false;
   return statusbarSteps.value.length > 0 || contractActionStrip.value.length > 0;
 });
 const showDetailShellZone = computed(() => semanticHasDetailZone.value);
 const showRelationZoneBlock = computed(() => {
+  if (projectDetailStructureAlignMode.value) return false;
   if (!semanticHasRelationZone.value) return false;
-  return semanticRelationZoneItems.value.length > 0 && !preferNativeFormSurface.value;
+  return semanticRelationZoneItems.value.length > 0 && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showCollaborationZoneBlock = computed(() => {
   if (!semanticHasCollaborationZone.value) return false;
-  return (semanticHasChatter.value || semanticHasAttachments.value) && !preferNativeFormSurface.value;
+  return (semanticHasChatter.value || semanticHasAttachments.value) && !effectiveCompactMode.value;
 });
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
@@ -905,16 +1062,19 @@ const hideBodyActionsSection = computed(() => Boolean(formGovernance.value.hide_
 const showContractWarnings = computed(() => warnings.value.length > 0 && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
 const showStrictContractGuard = computed(() => Boolean(strictContractMissingSummary.value) && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
 const showWorkflowTransitions = computed(() => {
+  if (projectDetailStructureAlignMode.value) return false;
   if (!semanticHasActionZone.value) return false;
-  return workflowTransitions.value.length > 0 && !isProjectCreatePage.value && !hideWorkflowSection.value && !preferNativeFormSurface.value;
+  return workflowTransitions.value.length > 0 && !isProjectCreatePage.value && !hideWorkflowSection.value && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showInlineSearchFilters = computed(() => {
+  if (projectDetailStructureAlignMode.value) return false;
   if (!semanticHasActionZone.value) return false;
-  return showSearchFilters.value && searchFilters.value.length > 0 && !isProjectCreatePage.value && !hideSearchFiltersSection.value && !preferNativeFormSurface.value;
+  return showSearchFilters.value && searchFilters.value.length > 0 && !isProjectCreatePage.value && !hideSearchFiltersSection.value && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showBodyActionStrip = computed(() => {
+  if (projectDetailStructureAlignMode.value) return false;
   if (!semanticHasActionZone.value) return false;
-  return bodyActions.value.length > 0 && !isProjectCreatePage.value && !hideBodyActionsSection.value && !preferNativeFormSurface.value;
+  return bodyActions.value.length > 0 && !isProjectCreatePage.value && !hideBodyActionsSection.value && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 
 const isQuickSubmitDisabled = computed(() => {
@@ -1303,6 +1463,26 @@ function one2manyColumns(name: string): One2ManyColumn[] {
   return out.slice(0, 4);
 }
 
+function one2manyPolicies(name: string) {
+  const formSubviews = asRecord((asRecord(contract.value?.views?.form)).subviews);
+  const baseSubview = asRecord(formSubviews[name]);
+  const basePolicies = asRecord(baseSubview.policies);
+  const surfaceSubviews = asRecord(activeRenderSurface.value.subviews);
+  const surfaceSubview = asRecord(surfaceSubviews[name]);
+  const surfacePolicies = asRecord(surfaceSubview.policies);
+  return {
+    inlineEdit: surfacePolicies.inline_edit !== undefined
+      ? Boolean(surfacePolicies.inline_edit)
+      : Boolean(basePolicies.inline_edit !== false),
+    canCreate: surfacePolicies.can_create !== undefined
+      ? Boolean(surfacePolicies.can_create)
+      : Boolean(basePolicies.can_create !== false),
+    canUnlink: surfacePolicies.can_unlink !== undefined
+      ? Boolean(surfacePolicies.can_unlink)
+      : Boolean(basePolicies.can_unlink !== false),
+  };
+}
+
 function one2manyPrimaryColumn(name: string) {
   const cols = one2manyColumns(name);
   return cols.length ? cols[0].name : 'name';
@@ -1368,6 +1548,8 @@ function makeOne2manyKey() {
 
 function addOne2manyRow(name: string) {
   if (isInteractionLocked.value) return;
+  const policies = one2manyPolicies(name);
+  if (!policies.canCreate) return;
   const rows = ensureOne2manyRows(name);
   const primary = one2manyPrimaryColumn(name);
   const columns = one2manyColumns(name);
@@ -1404,6 +1586,8 @@ function normalizeOne2manyColumnValue(column: One2ManyColumn, value: unknown) {
 }
 
 function setOne2manyRowField(fieldName: string, rowKey: string, column: One2ManyColumn, value: unknown) {
+  const policies = one2manyPolicies(fieldName);
+  if (!policies.inlineEdit) return;
   const rows = ensureOne2manyRows(fieldName);
   const row = rows.find((item) => item.key === rowKey);
   if (!row) return;
@@ -1433,6 +1617,8 @@ function one2manyColumnDisplayValue(column: One2ManyColumn, value: unknown) {
 
 function removeOne2manyRow(fieldName: string, rowKey: string) {
   if (isInteractionLocked.value) return;
+  const policies = one2manyPolicies(fieldName);
+  if (!policies.canUnlink) return;
   const rows = ensureOne2manyRows(fieldName);
   const index = rows.findIndex((item) => item.key === rowKey);
   if (index < 0) return;
@@ -1992,6 +2178,7 @@ const contractActions = computed<ContractAction[]>(() => {
     merged.push(...sceneReadyActions);
   } else {
     if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
+    merged.push(...formViewSurfaceActions.value);
     if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
     if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
     if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
@@ -2302,11 +2489,17 @@ function isFieldVisible(name: string) {
   if (isProjectQuickIntakeMode.value) {
     return ['name', 'manager_id', 'owner_id'].includes(String(name || '').trim());
   }
+  const state = runtimeState(name);
+  if (state.invisible) return false;
+  if (projectDetailStructureAlignMode.value) {
+    const semantic = fieldSemanticMeta(name);
+    if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
+    if (semantic.surface_role === 'hidden' && !showHud.value) return false;
+    return true;
+  }
   const semantic = fieldSemanticMeta(name);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
-  const state = runtimeState(name);
-  if (state.invisible) return false;
   const visible = contractVisibleFields.value;
   if (visible.length && !visible.includes(name)) return false;
   if (semantic.surface_role === 'core') return true;
@@ -2346,6 +2539,112 @@ function isMissingRequiredValue(value: unknown) {
   return false;
 }
 
+function normalizeLayoutNodeKind(rawType: unknown, sourceKey?: string, nodeRaw?: unknown): string {
+  const kind = String(rawType || '').trim().toLowerCase();
+  const source = String(sourceKey || '').trim().toLowerCase();
+  if (kind === 'tab' || source === 'tabs' || source === 'pages') return 'page';
+  if (kind === 'notebook' || source === 'notebook') return 'notebook';
+  if (kind === 'group' || kind === 'sheet' || kind === 'page' || kind === 'header' || kind === 'field') return kind;
+  if (kind === 'container' && nodeRaw && typeof nodeRaw === 'object' && !Array.isArray(nodeRaw)) {
+    const node = nodeRaw as Record<string, unknown>;
+    const attrs = node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes)
+      ? node.attributes as Record<string, unknown>
+      : {};
+    const attrName = String(attrs.name || '').trim().toLowerCase();
+    const attrClass = String(attrs.class || '').trim().toLowerCase();
+    if (attrName === 'button_box' || attrClass.includes('oe_button_box')) return 'group';
+    if (attrClass.includes('oe_title')) return 'header';
+    if (Array.isArray(node.pages) || Array.isArray(node.tabs)) return 'notebook';
+    if (Array.isArray(node.children)) {
+      const hasCols = Number(node.cols || node.col || attrs.cols || attrs.col) > 0;
+      const hasLabel = Boolean(String(node.title || node.string || node.label || attrs.string || '').trim());
+      if (hasCols || hasLabel) return 'group';
+    }
+  }
+  if (!kind && nodeRaw && typeof nodeRaw === 'object' && !Array.isArray(nodeRaw)) {
+    const node = nodeRaw as Record<string, unknown>;
+    const attrs = node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes)
+      ? node.attributes as Record<string, unknown>
+      : {};
+    if (Array.isArray(node.pages) || Array.isArray(node.tabs)) return 'notebook';
+    if (Array.isArray(node.children)) {
+      const hasCols = Number(node.cols || node.col || attrs.cols || attrs.col) > 0;
+      const hasLabel = Boolean(String(node.title || node.string || node.label || attrs.string || '').trim());
+      if (hasCols || hasLabel) return 'group';
+    }
+  }
+  return kind;
+}
+
+function normalizeLayoutChildNode(childRaw: unknown, sourceKey: string): unknown {
+  if (!childRaw || typeof childRaw !== 'object' || Array.isArray(childRaw)) return childRaw;
+  const child = childRaw as Record<string, unknown>;
+  const normalizedKind = normalizeLayoutNodeKind(child.type, sourceKey, child);
+  if (!normalizedKind) return childRaw;
+  const currentKind = String(child.type || '').trim().toLowerCase();
+  if (currentKind === normalizedKind) return childRaw;
+  return {
+    ...child,
+    type: normalizedKind,
+  };
+}
+
+function forEachLayoutChildren(
+  node: Record<string, unknown>,
+  visitor: (child: unknown, sourceKey: string, index: number) => void,
+) {
+  const pages = Array.isArray(node.pages) ? node.pages : null;
+  const tabs = Array.isArray(node.tabs) ? node.tabs : null;
+  const primaryTabSource = pages && pages.length ? ['pages', pages] : (tabs && tabs.length ? ['tabs', tabs] : null);
+  if (primaryTabSource) {
+    const [sourceKey, children] = primaryTabSource as [string, unknown[]];
+    children.forEach((child, index) => visitor(child, sourceKey, index));
+  }
+  ['children', 'nodes', 'items'].forEach((key) => {
+    const children = node[key];
+    if (!Array.isArray(children)) return;
+    children.forEach((child, index) => visitor(child, key, index));
+  });
+}
+
+function resolveLayoutNodeLabel(node: Record<string, unknown>): string {
+  const attrs = node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes)
+    ? node.attributes as Record<string, unknown>
+    : {};
+  const attrName = String(attrs.name || '').trim();
+  const safeAttrName = isHumanReadableLayoutLabel(attrName) ? attrName : '';
+  return String(
+    node.title
+    || node.string
+    || node.label
+    || attrs.string
+    || attrs.title
+    || safeAttrName
+    || (isHumanReadableLayoutLabel(node.name) ? node.name : '')
+    || '',
+  ).trim();
+}
+
+function isHumanReadableLayoutLabel(labelRaw: unknown): boolean {
+  const label = String(labelRaw || '').trim();
+  if (!label) return false;
+  if (label.includes('_')) return false;
+  if (/^[a-z0-9.:-]+$/i.test(label)) return false;
+  return true;
+}
+
+function resolveLayoutNodeColumns(node: Record<string, unknown>): 1 | 2 {
+  const attrs = node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes)
+    ? node.attributes as Record<string, unknown>
+    : {};
+  const candidates = [node.cols, node.col, attrs.cols, attrs.col];
+  for (const raw of candidates) {
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric) && numeric === 1) return 1;
+  }
+  return 2;
+}
+
 function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string>): string[] {
   const out: string[] = [];
   for (const field of sceneValidationRequiredFields.value) {
@@ -2365,7 +2664,6 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldGroups = contract.value?.permissions?.field_groups || {};
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
-  const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
 
   function pushField(nameRaw: unknown, viewLabelRaw?: unknown) {
     const name = String(nameRaw || '').trim();
@@ -2406,9 +2704,9 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   function walkLayout(nodeRaw: unknown, parentKey: string) {
     if (!nodeRaw || typeof nodeRaw !== 'object') return;
     const node = nodeRaw as Record<string, unknown>;
-    const kind = String(node.type || '').trim().toLowerCase();
+    const kind = normalizeLayoutNodeKind(node.type, undefined, node);
     if (!kind) return;
-    const label = String(node.string || node.label || '').trim();
+    const label = resolveLayoutNodeLabel(node);
     const nodeKey = `${parentKey}_${kind}_${String(node.name || label || nodes.length)}`;
 
     if (kind === 'header' || kind === 'sheet' || kind === 'group' || kind === 'notebook' || kind === 'page') {
@@ -2425,13 +2723,11 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
         ? (node.fieldInfo as Record<string, unknown>)
         : null;
-      pushField(node.name, node.string || node.label || fieldInfo?.label);
+      pushField(node.name, node.title || node.string || node.label || fieldInfo?.label);
       return;
     }
-    containerKeys.forEach((key) => {
-      const children = node[key];
-      if (!Array.isArray(children)) return;
-      children.forEach((child, index) => walkLayout(child, `${nodeKey}_${key}_${index}`));
+    forEachLayoutChildren(node, (child, sourceKey, index) => {
+      walkLayout(normalizeLayoutChildNode(child, sourceKey), `${nodeKey}_${sourceKey}_${index}`);
     });
   }
 
@@ -2450,12 +2746,49 @@ const layoutNodes = computed<LayoutNode[]>(() => {
 });
 
 function dividerDefaultLabel(kind: LayoutNode['kind']) {
-  if (kind === 'header') return '头部信息';
-  if (kind === 'sheet') return '主体信息';
-  if (kind === 'notebook') return '分组页签';
-  if (kind === 'page') return '页面分组';
-  if (kind === 'group') return '信息分组';
-  return '基础信息';
+  if (kind === 'header') return '头部';
+  if (kind === 'sheet') return '主体';
+  if (kind === 'notebook') return '页签';
+  if (kind === 'page') return '页面';
+  if (kind === 'group') return '分组';
+  return '信息';
+}
+
+function mapDetailFieldLabel(fieldName: string, fallbackLabel: string): string {
+  const label = String(fallbackLabel || '').trim();
+  return label || fieldName;
+}
+
+function normalizeDetailSectionTree(sections: LayoutTreeSection[]): LayoutTreeSection[] {
+  let pageIndex = 0;
+  let groupIndex = 0;
+  let notebookIndex = 0;
+
+  const normalizeFallbackTitle = (titleRaw: string): string => {
+    const title = String(titleRaw || '').trim();
+    if (title.toLowerCase() === 'button_box') return '统计动作';
+    return title;
+  };
+
+  const walk = (node: LayoutTreeSection): LayoutTreeSection => {
+    let title = normalizeFallbackTitle(node.title);
+    if (node.kind === 'page') {
+      if (!title) title = `页面${pageIndex + 1}`;
+      pageIndex += 1;
+    } else if (node.kind === 'group') {
+      if (!title) title = `分组${groupIndex + 1}`;
+      groupIndex += 1;
+    } else if (node.kind === 'notebook') {
+      if (!title) title = `页签${notebookIndex + 1}`;
+      notebookIndex += 1;
+    }
+    return {
+      ...node,
+      title,
+      children: node.children.map((child) => walk(child)),
+    };
+  };
+  return sections.map((section) => walk(section));
 }
 
 const layoutTrees = computed<LayoutTreeSection[]>(() => {
@@ -2463,21 +2796,20 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
   const formLayout = contract.value?.views?.form?.layout;
   const order = Array.isArray(formLayout) && formLayout.length ? formLayout : semanticFormLayout.value;
   const fieldGroups = contract.value?.permissions?.field_groups || {};
-  const used = new Set<string>();
   const roots: LayoutTreeSection[] = [];
   const rootDefault: LayoutTreeSection = {
     key: 'layout_root_default',
     title: coreFieldsLabel.value || '核心信息',
     kind: 'default',
+    columns: 2,
     fields: [],
     children: [],
   };
-  const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
   const structuralKinds = new Set<LayoutTreeSection['kind']>(['header', 'sheet', 'group', 'notebook', 'page']);
 
   function buildFieldNode(nameRaw: unknown, viewLabelRaw?: unknown): LayoutNode | null {
     const name = String(nameRaw || '').trim();
-    if (!name || used.has(name)) return null;
+    if (!name) return null;
     const groups = fieldGroups[name]?.groups_xmlids;
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return null;
     const descriptor = fieldMap[name];
@@ -2492,14 +2824,13 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
       policyContext.value,
     );
     if (!resolved.visible) return null;
-    used.add(name);
     const state = runtimeState(name);
     const viewLabel = String(viewLabelRaw || '').trim();
     return {
       key: `tree_field_${name}`,
       kind: 'field',
       name,
-      label: viewLabel || String(descriptor?.string || name),
+      label: mapDetailFieldLabel(name, viewLabel || String(descriptor?.string || name)),
       readonly: Boolean(
         resolved.readonly
         || state.readonly
@@ -2523,15 +2854,15 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
   function walk(nodeRaw: unknown, parent: LayoutTreeSection | null, parentKey: string) {
     if (!nodeRaw || typeof nodeRaw !== 'object') return;
     const node = nodeRaw as Record<string, unknown>;
-    const kind = String(node.type || '').trim().toLowerCase();
+    const kind = normalizeLayoutNodeKind(node.type, undefined, node);
     if (!kind) return;
-    const label = String(node.string || node.label || '').trim();
+    const label = resolveLayoutNodeLabel(node);
     const nodeKey = `${parentKey}_${kind}_${String(node.name || label || roots.length)}`;
     if (kind === 'field') {
       const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
         ? (node.fieldInfo as Record<string, unknown>)
         : null;
-      appendField(parent, buildFieldNode(node.name, node.string || node.label || fieldInfo?.label));
+      appendField(parent, buildFieldNode(node.name, node.title || node.string || node.label || fieldInfo?.label));
       return;
     }
     const nextParent = structuralKinds.has(kind as LayoutTreeSection['kind'])
@@ -2539,6 +2870,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
         key: `tree_${nodeKey}`,
         title: label || dividerDefaultLabel(kind as LayoutNode['kind']),
         kind: kind as LayoutTreeSection['kind'],
+        columns: resolveLayoutNodeColumns(node),
         fields: [],
         children: [],
       }
@@ -2547,10 +2879,8 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
       if (parent) parent.children.push(nextParent);
       else roots.push(nextParent);
     }
-    containerKeys.forEach((key) => {
-      const children = node[key];
-      if (!Array.isArray(children)) return;
-      children.forEach((child, index) => walk(child, nextParent, `${nodeKey}_${key}_${index}`));
+    forEachLayoutChildren(node, (child, sourceKey, index) => {
+      walk(normalizeLayoutChildNode(child, sourceKey), nextParent, `${nodeKey}_${sourceKey}_${index}`);
     });
   }
 
@@ -2576,17 +2906,30 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
     const children = section.children
       .map((child) => prune(child))
       .filter((child): child is LayoutTreeSection => Boolean(child));
-    if (!section.fields.length && !children.length && section.kind === 'group') return null;
+    const visibleFieldCount = section.fields.filter((field) => isFieldVisible(field.name)).length;
+    if (visibleFieldCount <= 0 && !children.length && section.kind === 'group') return null;
     return {
       ...section,
       children,
     };
   };
 
-  return roots
+  const normalizedRoots = roots
     .map((section) => prune(section))
     .filter((section): section is LayoutTreeSection => Boolean(section));
+
+  return normalizeDetailSectionTree(normalizedRoots);
 });
+
+async function goBackFromDetail() {
+  if (busy.value) return;
+  const fallback = session.resolveLandingPath('/');
+  if (window.history.length > 1) {
+    router.back();
+    return;
+  }
+  await router.push({ path: fallback, query: resolveWorkspaceContextQuery() });
+}
 
 function visibleTreeSectionFields(section: LayoutTreeSection) {
   return section.fields.filter((node) => isFieldVisible(node.name));
@@ -2621,7 +2964,184 @@ const detailShells = computed<DetailShellView[]>(() => buildDetailShellViewsFrom
   buildSectionFields: treeSectionTemplateFields,
   preferNativeFormSurface: preferNativeFormSurface.value,
   projectCreateMode: isProjectCreatePage.value,
+  renderProfile: renderProfile.value,
 }));
+
+function tabSignature(tab: NonNullable<DetailShellView['tabs']>[number]): string {
+  const label = String(tab.label || '').trim().toLowerCase();
+  const sectionKeys = (tab.sections || []).map((section) => String(section.key || '').trim()).filter(Boolean);
+  const fieldKeys = (tab.sections || [])
+    .flatMap((section) => (section.fields || []).map((field) => String(field.name || '').trim()))
+    .filter(Boolean);
+  const keys = fieldKeys.length ? fieldKeys : sectionKeys;
+  return `${label}::${Array.from(new Set(keys)).join('|')}`;
+}
+
+function dedupeTabs(tabs: NonNullable<DetailShellView['tabs']>): NonNullable<DetailShellView['tabs']> {
+  const seen = new Set<string>();
+  const result: NonNullable<DetailShellView['tabs']> = [];
+  for (const tab of tabs) {
+    const signature = tabSignature(tab);
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    result.push(tab);
+  }
+  return result;
+}
+
+function isRenderableSection(section: DetailSectionView): boolean {
+  const fields = Array.isArray(section.fields) ? section.fields.length : 0;
+  if (fields > 0) return true;
+  const title = String(section.title || '').trim();
+  const hint = String(section.hint || '').trim();
+  if (hint) return true;
+  if (!title) return false;
+  if (/^信息分组\s*\d*$/.test(title)) return false;
+  return true;
+}
+
+const normalizedDetailShells = computed<DetailShellView[]>(() => {
+  const shells = detailShells.value;
+  if (!projectDetailStructureAlignMode.value) return shells;
+  return shells
+    .filter((shell) => shell.kind !== 'header')
+    .map((shell) => {
+      const normalizedSections = Array.isArray(shell.sections)
+        ? shell.sections.filter((section) => isRenderableSection(section))
+        : shell.sections;
+      if (!Array.isArray(shell.tabs) || shell.tabs.length <= 1) return shell;
+      const filteredTabs = shell.tabs
+        .filter((tab) => {
+          const label = String(tab.label || '').trim();
+          const hasSemanticLabel = Boolean(label);
+          const hasRenderableSection = Array.isArray(tab.sections) && tab.sections.some((sec) => (
+            sec.fields.length > 0 || Boolean(String(sec.title || '').trim()) || Boolean(String(sec.hint || '').trim())
+          ));
+          return hasSemanticLabel || hasRenderableSection;
+        });
+      const dedupedTabs = dedupeTabs(filteredTabs.length ? filteredTabs : shell.tabs);
+      return {
+        ...shell,
+        title: '页签',
+        sections: normalizedSections,
+        tabs: dedupedTabs.length ? dedupedTabs : shell.tabs,
+      };
+    })
+    .map((shell) => {
+      if (Array.isArray(shell.tabs) && shell.tabs.length > 0) return shell;
+      const normalizedSections = Array.isArray(shell.sections)
+        ? shell.sections.filter((section) => isRenderableSection(section))
+        : shell.sections;
+      return {
+        ...shell,
+        sections: normalizedSections,
+      };
+    })
+    .filter((shell) => {
+      const sectionSize = Array.isArray(shell.sections) ? shell.sections.length : 0;
+      const tabSize = Array.isArray(shell.tabs) ? shell.tabs.length : 0;
+      return sectionSize > 0 || tabSize > 0;
+    });
+});
+
+const GENERIC_SHELL_TITLES = new Set(['default', '头部', '页签容器']);
+
+function normalizeShellSummaryTitle(shell: DetailShellView): string {
+  const rawTitle = String(shell.title || '').trim();
+  if (rawTitle && !GENERIC_SHELL_TITLES.has(rawTitle)) return rawTitle;
+  if (Array.isArray(shell.tabs) && shell.tabs.length > 0) return '页签';
+  if (shell.kind === 'sheet') return '项目';
+  if (shell.kind === 'page') return '页面';
+  return '';
+}
+
+const structureProjectionSummary = computed(() => {
+  const shells = normalizedDetailShells.value;
+  const shellCount = shells.length;
+  const sectionCount = shells.reduce((acc, shell) => acc + (Array.isArray(shell.sections) ? shell.sections.length : 0), 0);
+  const tabCount = shells.reduce((acc, shell) => acc + (Array.isArray(shell.tabs) ? shell.tabs.length : 0), 0);
+  const shellTitles = Array.from(new Set(shells
+    .map((shell) => normalizeShellSummaryTitle(shell))
+    .filter(Boolean)))
+    .slice(0, 6)
+    .join(' / ');
+  return {
+    shellCount,
+    sectionCount,
+    tabCount,
+    shellTitles,
+  };
+});
+
+function countLayoutKinds(layoutRaw: unknown): { notebook: number; page: number } {
+  const result = { notebook: 0, page: 0 };
+  const walk = (nodeRaw: unknown) => {
+    if (!nodeRaw || typeof nodeRaw !== 'object' || Array.isArray(nodeRaw)) return;
+    const node = nodeRaw as Record<string, unknown>;
+    const kind = normalizeLayoutNodeKind(node.type, undefined, node);
+    if (kind === 'notebook') result.notebook += 1;
+    if (kind === 'page') result.page += 1;
+    forEachLayoutChildren(node, (child, sourceKey) => {
+      walk(normalizeLayoutChildNode(child, sourceKey));
+    });
+  };
+  if (Array.isArray(layoutRaw)) {
+    layoutRaw.forEach((node) => walk(node));
+  }
+  return result;
+}
+
+
+function countLayoutTreeKinds(sectionsRaw: unknown): { notebook: number; page: number } {
+  const result = { notebook: 0, page: 0 };
+  const walk = (sectionRaw: unknown) => {
+    if (!sectionRaw || typeof sectionRaw !== 'object' || Array.isArray(sectionRaw)) return;
+    const section = sectionRaw as Record<string, unknown>;
+    const kind = String(section.kind || '').trim().toLowerCase();
+    if (kind === 'notebook') result.notebook += 1;
+    if (kind === 'page') result.page += 1;
+    const children = section.children;
+    if (Array.isArray(children)) {
+      children.forEach((child) => walk(child));
+    }
+  };
+  if (Array.isArray(sectionsRaw)) {
+    sectionsRaw.forEach((section) => walk(section));
+  }
+  return result;
+}
+
+function countShellTabs(shellsRaw: unknown): { shell: number; tab: number } {
+  if (!Array.isArray(shellsRaw)) return { shell: 0, tab: 0 };
+  return shellsRaw.reduce((acc, shellRaw) => {
+    if (!shellRaw || typeof shellRaw !== 'object' || Array.isArray(shellRaw)) return acc;
+    const shell = shellRaw as Record<string, unknown>;
+    acc.shell += 1;
+    const tabs = shell.tabs;
+    if (Array.isArray(tabs)) acc.tab += tabs.length;
+    return acc;
+  }, { shell: 0, tab: 0 });
+}
+
+const contractTabAuditSummary = computed(() => {
+  const sourceLayout = countLayoutKinds(contract.value?.views?.form?.layout);
+  const semanticLayout = countLayoutKinds(semanticFormLayout.value);
+  const layoutTreeKinds = countLayoutTreeKinds(layoutTrees.value as unknown);
+  const rawShell = countShellTabs(detailShells.value as unknown);
+  const projectedTabs = structureProjectionSummary.value.tabCount;
+  const sourcePageCount = sourceLayout.page;
+  return {
+    source_layout: sourceLayout,
+    semantic_layout: semanticLayout,
+    layout_tree: layoutTreeKinds,
+    detail_shell_raw: rawShell,
+    single_source: 'views.form.layout',
+    projected_tabs: projectedTabs,
+    delta_from_layout_page: sourcePageCount - projectedTabs,
+  };
+});
+
+const showStructureProjectionSummary = computed(() => structureAuditMode.value && projectDetailStructureAlignMode.value && !isProjectCreatePage.value);
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
   dispatchTemplateFieldChange(payload, {
@@ -3013,7 +3533,7 @@ function analyzeFormContractReadiness(
         const fieldName = String(node.name || '').trim();
         if (fieldName) names.add(fieldName);
       }
-      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
+      forEachLayoutChildren(node, (child, sourceKey) => walk(normalizeLayoutChildNode(child, sourceKey)));
     };
     walk(layoutRaw);
     return names;
@@ -3365,7 +3885,7 @@ async function reload() {
       });
       return;
     }
-    errorMessage.value = err instanceof Error ? err.message : 'load failed';
+    errorMessage.value = err instanceof Error ? err.message : '页面加载失败，请稍后重试';
     status.value = 'error';
   }
 }
@@ -3389,11 +3909,11 @@ watchEffect(() => {
           seen.add(name);
           out.push({
             name,
-            label: String(node.string || node.label || '').trim(),
+            label: String(node.title || node.string || node.label || '').trim(),
           });
         }
       }
-      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
+      forEachLayoutChildren(node, (child, sourceKey) => walk(normalizeLayoutChildNode(child, sourceKey)));
     };
     walk(contract.value?.views?.form?.layout || []);
     return out;
@@ -3476,7 +3996,7 @@ async function runAction(action: ContractAction) {
       window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
       return;
     }
-    errorMessage.value = 'contract open action missing action_id';
+    errorMessage.value = '契约打开动作缺少 action_id';
     status.value = 'error';
     return;
   }
@@ -3497,7 +4017,7 @@ async function runAction(action: ContractAction) {
       await applyProjectionRefreshPolicy(action.refreshPolicy);
       return;
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : 'scene mutation execute failed';
+      errorMessage.value = err instanceof Error ? err.message : '场景变更执行失败，请稍后重试';
       status.value = 'error';
       return;
     } finally {
@@ -3539,7 +4059,7 @@ async function runAction(action: ContractAction) {
         await applyProjectionRefreshPolicy(action.refreshPolicy);
       }
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
+      errorMessage.value = err instanceof Error ? err.message : '动作执行失败，请稍后重试';
       status.value = 'error';
     } finally {
       busyKind.value = null;
@@ -3870,6 +4390,37 @@ watch(
   line-height: 1.12;
 }
 
+.form-compact-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 4px 2px;
+}
+
+.form-compact-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.form-compact-title strong {
+  font-size: 24px;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.form-compact-title span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.form-compact-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .meta {
   margin: 1px 0;
   color: #64748b;
@@ -3925,6 +4476,16 @@ watch(
   margin: 0 auto;
 }
 
+.card--compact {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  background: #fff;
+  box-shadow: none;
+  max-width: none;
+  margin: 0;
+}
+
 .card--flow {
   max-width: 1280px;
   width: 100%;
@@ -3934,12 +4495,33 @@ watch(
   box-shadow: none;
 }
 
+.card--compact.card--flow {
+  max-width: none;
+  margin: 0;
+}
+
+.card--project-align {
+  border: 0;
+  border-radius: 0;
+  padding: 2px 0 0;
+  background: transparent;
+  max-width: none;
+}
+
 .block {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 10px;
   background: #f8fafc;
+}
+
+.card--compact .block {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #fff;
 }
 
 .block.warn {
@@ -4030,6 +4612,19 @@ watch(
 .form-grid {
   display: grid;
   gap: 14px;
+}
+
+.form-grid--project-align {
+  gap: 8px;
+}
+
+.structure-projection-block {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.card--compact .form-grid {
+  gap: 10px;
 }
 
 .card--flow .form-grid {

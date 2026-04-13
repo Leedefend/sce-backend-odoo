@@ -11,6 +11,7 @@ type UseActionViewModeRuntimeOptions = {
     strictLabelMap: Record<string, string>;
     pageText: (key: string, fallback: string) => string;
   }) => string;
+  beforeSwitchViewMode?: (mode: string) => Promise<void> | void;
   load: () => Promise<void>;
 };
 
@@ -24,9 +25,12 @@ export function useActionViewModeRuntime(options: UseActionViewModeRuntimeOption
     });
   }
 
-  function switchViewMode(mode: string) {
+  async function switchViewMode(mode: string) {
     const normalized = options.normalizeActionViewMode(mode);
     if (!normalized || normalized === options.viewMode.value) return;
+    if (options.beforeSwitchViewMode) {
+      await options.beforeSwitchViewMode(normalized);
+    }
     options.preferredViewMode.value = normalized;
     void options.load();
   }

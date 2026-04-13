@@ -1,94 +1,87 @@
 <template>
-  <section class="page">
-    <PageHeader
-      :title="title"
-      :subtitle="subtitle"
-      :status="status"
-      :status-label="statusLabel"
-      :loading="loading"
-      :on-reload="onReload"
-      :mode-label="modeLabelText"
-      :record-count="records.length"
-    />
+  <PageLayout class="page">
+    <template #header>
+      <PageHeader
+        :title="title"
+        :subtitle="subtitle"
+        :status="status"
+        :status-label="statusLabel"
+        :loading="loading"
+        :on-reload="onReload"
+        :mode-label="modeLabelText"
+        :record-count="records.length"
+      />
+    </template>
 
-    <StatusPanel v-if="loading" title="Loading cards..." variant="info" />
-    <StatusPanel
-      v-else-if="status === 'error'"
-      :title="errorCopy.title"
-      :message="errorCopy.message"
-      :trace-id="error?.traceId || traceId"
-      :error-code="error?.code || errorCode"
-      :reason-code="error?.reasonCode"
-      :error-category="error?.errorCategory"
-      :error-details="error?.details"
-      :retryable="error?.retryable"
-      :hint="errorCopy.hint || errorHint"
-      :suggested-action="error?.suggestedAction"
-      variant="error"
-      :on-retry="onReload"
-    />
-    <StatusPanel
-      v-else-if="status === 'empty'"
-      :title="emptyCopy.title"
-      :message="emptyCopy.message"
-      variant="info"
-      :on-retry="onReload"
-    />
+    <template #content>
+      <section v-if="status === 'ok' && showDetailZone" class="kanban-detail-zone">
+      <section v-if="groupedFilterTabs.length" class="kanban-filter-tabs">
+        <button
+          v-for="tab in groupedFilterTabs"
+          :key="`tab-${tab.key}`"
+          type="button"
+          class="kanban-filter-tab"
+          :class="{ 'kanban-filter-tab--active': selectedGroupKey === tab.key }"
+          @click="selectGroupedTab(tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      </section>
 
-    <section v-else-if="showDetailZone && groupColumns.length" class="kanban-columns">
-      <article
-        v-for="column in groupColumns"
-        :key="column.key"
-        class="kanban-column"
-      >
-        <header class="kanban-column-header">
-          <div>
-            <p class="kanban-column-label">{{ column.label }}</p>
-            <p v-if="groupFieldLabel" class="kanban-column-field">{{ groupFieldLabel }}</p>
-            <p v-if="quickActionCount > 0" class="kanban-column-field">快捷操作 {{ quickActionCount }}</p>
-          </div>
-          <span class="kanban-column-count">{{ column.records.length }}</span>
-        </header>
-        <section class="kanban-column-body">
-          <article
-            v-for="(row, index) in column.records"
-            :key="String(row.id ?? `${column.key}-${index}`)"
-            class="card"
-            :class="`tone-${rowTone(row)}`"
-            @click="handleCard(row)"
-          >
-            <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
-            <div v-if="statusMetaFields.length" class="status-chips">
-              <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
-                {{ fieldLabel(field) }}: {{ semanticCell(field, row[field]).text }}
-              </span>
+      <section v-if="filteredGroupColumns.length" class="kanban-columns">
+        <article
+          v-for="column in filteredGroupColumns"
+          :key="column.key"
+          class="kanban-column"
+        >
+          <header class="kanban-column-header">
+            <div>
+              <p class="kanban-column-label">{{ column.label }}</p>
+              <p v-if="groupFieldLabel" class="kanban-column-field">{{ groupFieldLabel }}</p>
+              <p v-if="quickActionCount > 0" class="kanban-column-field">快捷操作 {{ quickActionCount }}</p>
             </div>
-            <dl v-if="primaryMetaFields.length" class="card-meta primary">
-              <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
-                <dt>{{ fieldLabel(field) }}</dt>
-                <dd>{{ semanticCell(field, row[field]).text }}</dd>
+            <span class="kanban-column-count">{{ column.records.length }}</span>
+          </header>
+          <section class="kanban-column-body">
+            <article
+              v-for="(row, index) in column.records"
+              :key="String(row.id ?? `${column.key}-${index}`)"
+              class="card"
+              :class="`tone-${rowTone(row)}`"
+              @click="handleCard(row)"
+            >
+              <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
+              <div v-if="statusMetaFields.length" class="status-chips">
+                <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
+                  {{ fieldLabel(field) }}: {{ semanticCell(field, row[field]).text }}
+                </span>
               </div>
-            </dl>
-            <dl v-if="metricMetaFields.length" class="card-meta metric">
-              <div v-for="field in metricMetaFields" :key="`metric-${field}`" class="meta-row">
-                <dt>{{ fieldLabel(field) }}</dt>
-                <dd>{{ semanticCell(field, row[field]).text }}</dd>
-              </div>
-            </dl>
-            <dl class="card-meta">
-              <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
-                <dt>{{ fieldLabel(field) }}</dt>
-                <dd>{{ semanticCell(field, row[field]).text }}</dd>
-              </div>
-            </dl>
-          </article>
-        </section>
-      </article>
-    </section>
+              <dl v-if="primaryMetaFields.length" class="card-meta primary">
+                <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
+                  <dt>{{ fieldLabel(field) }}</dt>
+                  <dd>{{ semanticCell(field, row[field]).text }}</dd>
+                </div>
+              </dl>
+              <dl v-if="metricMetaFields.length" class="card-meta metric">
+                <div v-for="field in metricMetaFields" :key="`metric-${field}`" class="meta-row">
+                  <dt>{{ fieldLabel(field) }}</dt>
+                  <dd>{{ semanticCell(field, row[field]).text }}</dd>
+                </div>
+              </dl>
+              <dl class="card-meta">
+                <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
+                  <dt>{{ fieldLabel(field) }}</dt>
+                  <dd>{{ semanticCell(field, row[field]).text }}</dd>
+                </div>
+              </dl>
+            </article>
+          </section>
+        </article>
+      </section>
 
-    <section v-else-if="showDetailZone" class="grid">
+      <section v-else class="grid">
       <article
-        v-for="(row, index) in records"
+        v-for="(row, index) in filteredRecords"
         :key="String(row.id ?? index)"
         class="card"
         :class="`tone-${rowTone(row)}`"
@@ -119,21 +112,56 @@
           </div>
         </dl>
       </article>
-    </section>
-    <StatusPanel
-      v-else
-      title="当前看板语义未开放详情区"
-      message="semantic_page 未声明 detail_zone，已按契约隐藏看板主体。"
-      variant="info"
-      :on-retry="onReload"
-    />
-  </section>
+      </section>
+      </section>
+    </template>
+
+    <template #feedback>
+      <PageFeedback>
+        <StatusPanel v-if="loading" title="正在加载看板..." variant="info" />
+        <StatusPanel
+          v-else-if="status === 'error'"
+          :title="errorCopy.title"
+          :message="errorCopy.message"
+          :trace-id="error?.traceId || traceId"
+          :error-code="error?.code || errorCode"
+          :reason-code="error?.reasonCode"
+          :error-category="error?.errorCategory"
+          :error-details="error?.details"
+          :retryable="error?.retryable"
+          :hint="errorCopy.hint || errorHint"
+          :suggested-action="error?.suggestedAction"
+          variant="error"
+          :on-retry="onReload"
+          retry-label="重新加载"
+        />
+        <StatusPanel
+          v-else-if="status === 'empty'"
+          :title="emptyCopy.title"
+          :message="emptyCopy.message"
+          variant="info"
+          :on-retry="onReload"
+          retry-label="刷新"
+        />
+        <StatusPanel
+          v-else-if="status === 'ok' && !showDetailZone"
+          title="当前看板语义未开放详情区"
+          message="semantic_page 未声明 detail_zone，已按契约隐藏看板主体。"
+          variant="info"
+          :on-retry="onReload"
+          retry-label="刷新"
+        />
+      </PageFeedback>
+    </template>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
+import PageLayout from '../components/page/PageLayout.vue';
+import PageFeedback from '../components/page/PageFeedback.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import { pageModeLabel } from '../app/pageMode';
 import { semanticStatus, semanticValueByField } from '../utils/semantic';
@@ -168,7 +196,7 @@ const props = defineProps<{
 const errorCopy = computed(() =>
   resolveErrorCopy(
     props.error || null,
-    props.errorMessage || 'Card load failed',
+    props.errorMessage || '看板加载失败',
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('card'));
@@ -255,6 +283,38 @@ const groupColumns = computed(() => {
   return Array.from(buckets.values());
 });
 
+const selectedGroupKey = ref('all');
+const groupedFilterTabs = computed(() => {
+  if (!groupColumns.value.length) return [];
+  return [
+    { key: 'all', label: `全部（${props.records.length}）` },
+    ...groupColumns.value.map((group) => ({ key: group.key, label: `${group.label}（${group.records.length}）` })),
+  ];
+});
+const filteredGroupColumns = computed(() => {
+  if (!groupColumns.value.length) return [];
+  if (selectedGroupKey.value === 'all') return groupColumns.value;
+  return groupColumns.value.filter((group) => group.key === selectedGroupKey.value);
+});
+const filteredRecords = computed(() => {
+  if (!groupColumns.value.length || selectedGroupKey.value === 'all') return props.records;
+  return props.records.filter((row) => normalizeGroupKey(row[groupField.value], semanticCell(groupField.value, row[groupField.value]).text || formatValue(row[groupField.value]) || '未分组') === selectedGroupKey.value);
+});
+
+watch(groupColumns, (rows) => {
+  if (!rows.length) {
+    selectedGroupKey.value = 'all';
+    return;
+  }
+  if (selectedGroupKey.value === 'all') return;
+  const exists = rows.some((row) => row.key === selectedGroupKey.value);
+  if (!exists) selectedGroupKey.value = 'all';
+}, { immediate: true });
+
+function selectGroupedTab(key: string) {
+  selectedGroupKey.value = key || 'all';
+}
+
 const modeLabelText = computed(() => pageModeLabel(props.pageMode || 'workspace'));
 
 function semanticCell(field: string, value: unknown) {
@@ -327,6 +387,34 @@ function formatValue(value: unknown) {
 .page {
   display: grid;
   gap: 16px;
+}
+
+.kanban-detail-zone {
+  display: grid;
+  gap: 12px;
+}
+
+.kanban-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kanban-filter-tab {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kanban-filter-tab--active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
 }
 
 

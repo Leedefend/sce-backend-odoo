@@ -1,6 +1,21 @@
 import { computed, watchEffect } from 'vue';
 import { useSessionStore, type PageContract, type SceneConsumerRuntime } from '../stores/session';
 
+export type RenderProfile = 'create' | 'edit' | 'readonly';
+
+export function normalizeRenderProfile(value: unknown, fallback: RenderProfile = 'edit'): RenderProfile {
+  const profile = String(value || '').trim().toLowerCase();
+  if (profile === 'readonly' || profile === 'read' || profile === 'view') return 'readonly';
+  if (profile === 'edit') return 'edit';
+  if (profile === 'create') return 'create';
+  return fallback;
+}
+
+export function resolveRenderProfileFromContract(contract: unknown, fallback: RenderProfile = 'edit'): RenderProfile {
+  const row = contract && typeof contract === 'object' ? contract as Record<string, unknown> : {};
+  return normalizeRenderProfile(row.render_profile ?? row.renderProfile, fallback);
+}
+
 function asText(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
@@ -302,7 +317,9 @@ export function usePageContract(pageKey: string) {
 
   function sectionTagIs(key: string, expected: Exclude<SectionTag, ''>, fallback = true): boolean {
     if (!sections.value.size) return fallback;
-    return sections.value.get(key)?.tag === expected;
+    const section = sections.value.get(key);
+    if (!section) return fallback;
+    return section.tag === expected;
   }
 
   function actionText(key: string, fallback: string): string {

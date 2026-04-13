@@ -61,6 +61,10 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
           openFocusAction('/s/projects.dashboard');
           return true;
         }
+        if (key === 'open_workbench' || key === 'open_landing') {
+          openFocusAction('/my-work');
+          return true;
+        }
         if (key === 'refresh_page' || key === 'refresh') {
           reload();
           return true;

@@ -1,12 +1,13 @@
 <template>
   <div
     class="shell layout-shell"
+    :class="{ 'layout-shell--sidebar-compact': compactSidebarEnabled }"
     data-component="LayoutShell"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
   >
-    <aside class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
+    <aside class="sidebar sidebar-nav" :class="[sidebarClass, { 'sidebar--delivery-compact': compactSidebarEnabled }]" data-component="SidebarNav">
       <div class="brand">
         <div class="logo">SC</div>
         <div>
@@ -15,16 +16,16 @@
         </div>
       </div>
 
-      <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
+      <p v-if="!compactSidebarEnabled" class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
 
-      <div class="role-surface">
+      <div v-if="!compactSidebarEnabled" class="role-surface">
         <p class="role-label">当前角色：{{ roleLabel }}</p>
-        <div class="role-actions">
+        <div v-if="!compactSidebarEnabled" class="role-actions">
           <button class="ghost mini" @click="openRoleLanding">进入工作台</button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
           <button v-if="showReleaseOperatorEntry" class="ghost mini" @click="router.push('/release/operator')">发布控制</button>
         </div>
-        <div v-if="roleMenus.length" class="role-menus">
+        <div v-if="roleMenus.length && !compactSidebarEnabled" class="role-menus">
           <button
             v-for="menu in roleMenus"
             :key="`role-menu-${menu.id}`"
@@ -65,8 +66,9 @@
       </div>
     </aside>
 
-    <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal }">
+    <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--flat-action': hideTopbarForActionList }">
       <header
+        v-if="!hideTopbarForActionList"
         class="topbar"
         :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
       >
@@ -297,6 +299,12 @@ const activeLayout = computed(() => {
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
   return resolveSceneLayout(scene);
 });
+const compactActionShellEnabled = computed(() => String(import.meta.env.VITE_ACTION_SHELL_COMPACT || '1').trim() !== '0');
+const hideTopbarForActionList = computed(() => {
+  if (!compactActionShellEnabled.value) return false;
+  return route.name === 'action' || route.name === 'model-form' || route.name === 'record';
+});
+const compactSidebarEnabled = computed(() => String(import.meta.env.VITE_SIDEBAR_COMPACT || '1').trim() !== '0');
 const useMinimalTopbar = computed(() => route.name === 'workbench' || route.name === 'home');
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
@@ -632,7 +640,14 @@ onMounted(() => {
   if (typeof window === 'undefined') return;
   window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   handleTraceUpdate();
-  navigationMenu.loadNavigation().catch(() => {});
+  navigationMenu.loadNavigation().catch(async () => {
+    try {
+      await session.loadAppInit();
+      await navigationMenu.loadNavigation(true);
+    } catch {
+      // keep shell stable; error state is exposed by navigation composable
+    }
+  });
 });
 
 onUnmounted(() => {
@@ -876,6 +891,10 @@ async function logout() {
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
 
+.layout-shell--sidebar-compact {
+  grid-template-columns: 198px minmax(0, 1fr);
+}
+
 .sidebar {
   padding: 18px 14px 14px;
   display: grid;
@@ -888,6 +907,60 @@ async function logout() {
   position: sticky;
   top: 0;
   align-self: start;
+}
+
+.sidebar--delivery-compact {
+  padding: 12px 10px 10px;
+  gap: 8px;
+}
+
+.sidebar--delivery-compact .brand {
+  padding: 0 1px 4px;
+}
+
+.sidebar--delivery-compact .logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.sidebar--delivery-compact .title {
+  font-size: 14px;
+}
+
+.sidebar--delivery-compact .subtitle {
+  font-size: 10px;
+}
+
+.sidebar--delivery-compact .role-surface {
+  padding: 0 2px;
+}
+
+.sidebar--delivery-compact :deep(.label) {
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.sidebar--delivery-compact :deep(.tree) {
+  gap: 1px;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  border-left: 0 !important;
+}
+
+.sidebar--delivery-compact :deep(.node) {
+  gap: 3px;
+}
+
+.sidebar--delivery-compact :deep(.toggle),
+.sidebar--delivery-compact :deep(.toggle-spacer) {
+  width: 14px;
+  flex-basis: 14px;
+}
+
+.sidebar--delivery-compact :deep(.label .badge) {
+  display: none;
 }
 
 .sidebar--scroll {
@@ -1070,6 +1143,12 @@ async function logout() {
 .content--scene-compact {
   gap: 6px;
   padding: 24px 32px;
+}
+
+.content--flat-action {
+  grid-template-rows: 1fr;
+  gap: 8px;
+  padding-top: 14px;
 }
 
 .topbar {
