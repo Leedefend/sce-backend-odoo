@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1561
+title: backend refactor B2-3 extract permission detail and intent governance helpers
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  将 intent_dispatcher 内的权限错误细节构造与 intent alias/schema 规则抽离为独立 helper，继续收敛 dispatcher 纯分发职责。
+
+user_visible_outcome:
+  - "dispatcher 业务语义拼接进一步减少，意图治理规则集中在可复用 helper"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/intent_dispatcher.py
+    - addons/smart_core/controllers/intent_permission_details.py
+    - addons/smart_core/controllers/intent_governance.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1561.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1561.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1561.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 380
+
+change_rules:
+  - additive low-risk refactor only
+  - keep endpoint and envelope behavior unchanged
+  - no ACL rule or business fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Controller protocol adapter layer
+  module: intent dispatcher
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做编排层规则归位，不改变权限事实定义与业务语义。
+  reason: >
+    1558 screen 将 permission detail 与 alias/schema 归类为 B2-3，需在 B2-1/B2-2 后继续推进 dispatcher purity。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1561.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/intent_dispatcher.py addons/smart_core/controllers/intent_permission_details.py addons/smart_core/controllers/intent_governance.py"
+    - "rg -n \"build_permission_error_details|canon_intent|resolve_request_schema_key\" addons/smart_core/controllers/intent_dispatcher.py addons/smart_core/controllers/intent_permission_details.py addons/smart_core/controllers/intent_governance.py"
+    - "rg -n \"B2-3 implement\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - permission detail helper extraction
+  - intent governance helper extraction
+
+rollback:
+  - git restore addons/smart_core/controllers/intent_dispatcher.py addons/smart_core/controllers/intent_permission_details.py addons/smart_core/controllers/intent_governance.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1560

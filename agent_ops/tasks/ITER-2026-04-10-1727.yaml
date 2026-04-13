@@ -1,0 +1,73 @@
+task_id: ITER-2026-04-10-1727
+title: project detail backend contract completeness scan
+
+type: governance
+status: active
+priority: high
+mode: scan
+batch: 1/1
+
+goal: >
+  扫描并采集 project.project 详情页对应后端 ui.contract(form) 的结构数据证据，
+  为后续消费链对齐 screen 提供输入。
+
+user_visible_outcome:
+  - "形成后端结构证据快照（字段/布局/页签/状态条/动作）"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1727.yaml
+    - artifacts/tmp/project_form_contract_scan_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1727.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1727.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+
+limits:
+  max_files: 5
+  max_output_lines: 600
+
+change_rules:
+  - scan only
+  - no implementation patch
+  - no architecture conclusion
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: governance evidence collection
+  module: backend ui.contract output for project.project form
+  module_owner: smart_core contract interface
+  kernel_or_scenario: scenario
+  reason: >
+    用户要求先核对后端是否给出完整页面结构数据，再进入消费路径对齐分析。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1727.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - backend contract scan artifact for project detail form
+
+rollback:
+  - "git restore artifacts/tmp/project_form_contract_scan_v1.json"
+
+depends_on:
+  - ITER-2026-04-10-1726

@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1797",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "layout_alias_traversal_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "layout traversal now treats pages/tabs as alias and walks only one primary source",
+      "tab/page counting and projection now avoid duplicated alias traversal"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1797.md"
+  },
+  "risk_level": "low",
+  "next_step": "refresh and confirm tab duplication is removed with business tabs preserved"
+}

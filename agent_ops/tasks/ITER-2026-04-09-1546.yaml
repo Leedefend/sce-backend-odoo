@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-09-1546
+title: backend refactor A1 recover intent registry audit multi-module source resolution
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 intent registry 审计脚本的数据源解析，支持从 ENTRY_MODULES 聚合读取多注册文件并恢复 1545 验收闭环。
+
+user_visible_outcome:
+  - "intent registry audit/taxonomy 能正确识别 tier1_surface 新增项"
+
+scope:
+  allowed_paths:
+    - scripts/verify/intent_registry_audit.py
+    - scripts/verify/intent_registry_taxonomy_audit.py
+    - artifacts/architecture/intent_registry_audit_v1.json
+    - artifacts/architecture/intent_registry_taxonomy_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1546.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1546.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1546.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 320
+
+change_rules:
+  - verify script fix only
+  - no runtime handler/controller changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance verification layer
+  module: intent registry audit scripts
+  module_owner: scripts verify
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅修复治理审计输入口径，不改变业务事实。
+  reason: >
+    1545 fail 根因为审计脚本只读 core_bootstrap，需恢复与 ENTRY_MODULES 对齐。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1546.yaml"
+    - "python3 -m py_compile scripts/verify/intent_registry_audit.py scripts/verify/intent_registry_taxonomy_audit.py"
+    - "python3 scripts/verify/intent_registry_audit.py"
+    - "python3 scripts/verify/intent_registry_taxonomy_audit.py"
+    - "python3 - <<'PY'\nimport json\na=json.load(open('artifacts/architecture/intent_registry_audit_v1.json','r',encoding='utf-8'))\nt=json.load(open('artifacts/architecture/intent_registry_taxonomy_audit_v1.json','r',encoding='utf-8'))\nmissing=a['coverage']['missing_from_registry']\nfor name in ['app.catalog','app.nav','app.open','meta.describe_model','meta.intent_catalog','system.init.inspect','ui.contract.enhanced','ui.contract.model.view']:\n    assert name not in missing, name\nassert t['entry_count']>=12\nprint('multi-module registry audit PASS; remaining missing=',len(missing),'entries=',t['entry_count'])\nPY"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - multi-module aware intent registry audit
+
+rollback:
+  - git restore scripts/verify/intent_registry_audit.py scripts/verify/intent_registry_taxonomy_audit.py
+
+depends_on:
+  - ITER-2026-04-09-1545

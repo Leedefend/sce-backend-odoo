@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-09-1531
+title: backend refactor envelope consistency audit baseline
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  建立公开 API 返回壳一致性审计基线，识别不符合统一 envelope 口径的 controller 返回路径。
+
+user_visible_outcome:
+  - "后端输出壳一致性可审计，后续 E1 统一 envelope 有明确整改清单"
+
+scope:
+  allowed_paths:
+    - scripts/verify/envelope_consistency_audit.py
+    - artifacts/architecture/envelope_consistency_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1531.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1531.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1531.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+
+change_rules:
+  - audit only
+  - no runtime code mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance verification layer
+  module: Response envelope consistency audit
+  module_owner: scripts verify
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次只做输出契约审计，不改业务事实逻辑。
+  reason: >
+    先量化 envelope 口径不一致位置，为 E1 统一返回壳改造提供边界证据。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1531.yaml"
+    - "python3 scripts/verify/envelope_consistency_audit.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - envelope consistency audit artifact
+
+rollback:
+  - git restore scripts/verify/envelope_consistency_audit.py artifacts/architecture/envelope_consistency_audit_v1.json
+
+depends_on:
+  - ITER-2026-04-09-1530
+

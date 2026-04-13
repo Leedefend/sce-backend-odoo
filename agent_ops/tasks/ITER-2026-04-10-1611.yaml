@@ -1,0 +1,89 @@
+task_id: ITER-2026-04-10-1611
+title: backend refactor v2 app audit common output contract alignment
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  统一 v2_app_*_audit 脚本最小公共输出协议：gate_version、gate_profile、status、errors。
+
+user_visible_outcome:
+  - "所有 v2_app_*_audit 输出具备统一最小字段"
+
+scope:
+  allowed_paths:
+    - scripts/verify/v2_app_reason_code_audit.py
+    - scripts/verify/v2_app_contract_guard_audit.py
+    - scripts/verify/v2_app_contract_snapshot_audit.py
+    - scripts/verify/v2_app_intent_contract_linkage_audit.py
+    - scripts/verify/v2_app_governance_output_schema_audit.py
+    - docs/ops/v2_app_governance_gate_usage_v1.md
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - docs/architecture/backend_core_v2_rebuild_spec_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1611.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1611.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1611.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 12
+  max_output_lines: 760
+
+change_rules:
+  - v2 independent rebuild only
+  - additive output contract alignment
+  - no legacy runtime cutover
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 app audit common output contract
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅统一治理审计输出协议，不涉及业务事实。
+  reason: >
+    连续重构中降低审计脚本输出差异，便于聚合与回归。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1611.yaml"
+    - "python3 scripts/verify/v2_app_reason_code_audit.py --json"
+    - "python3 scripts/verify/v2_app_contract_guard_audit.py --json"
+    - "python3 scripts/verify/v2_app_contract_snapshot_audit.py --json"
+    - "python3 scripts/verify/v2_app_intent_contract_linkage_audit.py --json"
+    - "python3 scripts/verify/v2_app_governance_output_schema_audit.py --json"
+    - 'rg -n "gate_version|gate_profile|errors|status" scripts/verify/v2_app_*audit.py'
+    - 'rg -n "common output contract batch" docs/architecture/backend_core_refactor_blueprint_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 app audit common output contract alignment
+
+rollback:
+  - git restore scripts/verify/v2_app_reason_code_audit.py scripts/verify/v2_app_contract_guard_audit.py scripts/verify/v2_app_contract_snapshot_audit.py scripts/verify/v2_app_intent_contract_linkage_audit.py scripts/verify/v2_app_governance_output_schema_audit.py docs/ops/v2_app_governance_gate_usage_v1.md docs/architecture/backend_core_refactor_blueprint_v1.md docs/architecture/backend_core_v2_rebuild_spec_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1610

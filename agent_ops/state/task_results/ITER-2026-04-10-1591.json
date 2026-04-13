@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1591",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "v2_app_compile": "PASS",
+    "v2_rebuild_audit": "PASS",
+    "symbol_grep": "PASS",
+    "blueprint_status_check": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1591.md",
+    "files": [
+      "addons/smart_core/v2/modules/app/handlers/nav.py",
+      "addons/smart_core/v2/modules/app/handlers/open.py",
+      "addons/smart_core/v2/modules/app/services/catalog_service.py",
+      "addons/smart_core/v2/modules/app/builders/catalog_builder.py",
+      "addons/smart_core/v2/intents/registry.py"
+    ]
+  },
+  "conclusion": "v2 app taxonomy expanded with app.nav and app.open",
+  "risk_level": "low",
+  "next_step": "add app route policy and active-match generation in v2"
+}

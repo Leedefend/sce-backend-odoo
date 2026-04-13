@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1746
+title: form contract structure alignment remediation
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 form contract 结构对齐缺口：关系字段 label/widget 统一以 canonical fields 为真值，消除技术字段名与错误控件类型泄漏。
+
+user_visible_outcome:
+  - "form 关系字段展示为业务标签且控件类型与字段类型一致"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1746.yaml
+    - addons/smart_core/app_config_engine/services/contract_service.py
+    - addons/smart_core/v2/services/ui_contract_service.py
+    - scripts/verify/form_layout_alignment_audit.py
+    - artifacts/contract/form_layout_alignment_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1746.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1746.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 900
+
+change_rules:
+  - backend contract canonicalization only
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: backend scene-orchestration contract supply
+  module: form fieldInfo canonicalization
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修复 contract 语义供给，不变更业务事实。
+  reason: >
+    用户反馈 form 结构仍未对齐；审计样本显示 relation 字段 label=技术名、widget=char。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1746.yaml"
+    - "python3 scripts/verify/form_layout_alignment_audit.py --json"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - form fieldInfo canonicalization remediation patch
+
+rollback:
+  - "git restore addons/smart_core/app_config_engine/services/contract_service.py"
+  - "git restore addons/smart_core/v2/services/ui_contract_service.py"
+
+depends_on:
+  - ITER-2026-04-10-1745

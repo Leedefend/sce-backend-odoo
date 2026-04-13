@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-10-1685
+title: closure hardening after ui-contract chain recovery
+
+type: implementation
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在页面可见恢复后执行最小回归门禁与文档收口，确认 v2_primary 关键链路稳定并固化交付证据。
+
+user_visible_outcome:
+  - "页面恢复后的关键门禁有可追溯验证结果"
+  - "本轮修复链路形成收口报告与下一步建议"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1685.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1685.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1685.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 4
+  max_output_lines: 500
+
+change_rules:
+  - verify and reporting only
+  - no business semantic expansion
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Delivery verification and governance close-out
+  module: v2 app governance closure
+  module_owner: scripts/verify + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次仅做恢复后验证与证据归档，不改业务事实。
+  reason: >
+    页面已恢复显示，需补齐 verify gate 与连续迭代交接记录，确保后续批次可持续推进。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1685.yaml"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - closure gate output
+  - closure report and next-step checkpoint
+
+rollback:
+  - "N/A (verification/reporting batch)"
+
+depends_on:
+  - ITER-2026-04-10-1684

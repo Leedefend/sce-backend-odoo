@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-10-1741
+title: form render profile surface audit (FORM-007)
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  执行 FORM-007：审计 create/edit/readonly 三态在 form contract 的真实表面差异，识别是否仍为模板化同构。
+
+user_visible_outcome:
+  - "获得三态表面差异证据与 BLOCKED/PASS 结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1741.yaml
+    - scripts/verify/form_render_profiles_audit.py
+    - artifacts/contract/form_render_profiles_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1741.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1741.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 900
+
+change_rules:
+  - audit-only batch
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: backend scene-orchestration contract supply governance
+  module: form render profile audit
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只评估 contract 组织语义是否具备三态差异承载能力，不改变业务事实。
+  reason: >
+    根因修复后继续执行 FORM-007，确认 create/edit/readonly 不是同构模板化输出。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1741.yaml"
+    - "python3 scripts/verify/form_render_profiles_audit.py --json"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - FORM-007 audit script and artifact
+
+rollback:
+  - "git restore scripts/verify/form_render_profiles_audit.py"
+
+depends_on:
+  - ITER-2026-04-10-1740

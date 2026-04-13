@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-10-1672
+title: dual-track intent routing policy closure
+
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  建立 v1/v2 双轨路由控制层，支持 legacy_only / v2_shadow / v2_primary 三态，
+  并先覆盖 session.bootstrap、meta.describe_model、ui.contract。
+
+user_visible_outcome:
+  - "三条主链 intent 可按策略独立切换路由模式并可审计"
+
+scope:
+  allowed_paths:
+    - artifacts/v2/v2_intent_route_policy_v1.json
+    - addons/smart_core/core/intent_route_mode_policy.py
+    - addons/smart_core/core/intent_router.py
+    - scripts/verify/v2_dual_track_route_policy_audit.py
+    - agent_ops/tasks/ITER-2026-04-10-1672.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1672.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1672.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 1000
+
+change_rules:
+  - batch 1 route policy only
+  - no shadow compare execution in this batch
+  - no new intent migration
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core dual-track intent route policy
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅增加路由策略与决策分发，不改业务事实、权限或视图契约语义。
+  reason: >
+    将主线切换到双轨运行控制，避免继续无边界 intent 迁移。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1672.yaml"
+    - "python3 scripts/verify/v2_dual_track_route_policy_audit.py --json"
+    - "python3 -m py_compile addons/smart_core/core/intent_route_mode_policy.py addons/smart_core/core/intent_router.py scripts/verify/v2_dual_track_route_policy_audit.py"
+    - 'rg -n "legacy_only|v2_shadow|v2_primary|session.bootstrap|meta.describe_model|ui.contract" artifacts/v2/v2_intent_route_policy_v1.json addons/smart_core/core/intent_route_mode_policy.py addons/smart_core/core/intent_router.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - dual-track routing policy file + policy resolver + router integration + dedicated audit
+
+rollback:
+  - git restore artifacts/v2/v2_intent_route_policy_v1.json addons/smart_core/core/intent_route_mode_policy.py addons/smart_core/core/intent_router.py scripts/verify/v2_dual_track_route_policy_audit.py
+
+depends_on:
+  - ITER-2026-04-10-1671

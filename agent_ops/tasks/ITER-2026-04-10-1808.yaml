@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-10-1808
+title: direct form visibility restore mode
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在结构对齐模式下先执行“直接还原”策略：按契约结构显示字段，仅遵守 runtime invisible，暂停 core/advanced 优化门控。
+
+user_visible_outcome:
+  - "业务 tab 内容直接恢复可见，不再因优化门控被隐藏"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1808.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1808.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1808.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - direct restore first
+  - no backend contract mutation
+  - no optimization expansion
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: field visibility gating
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    用户要求先直接还原页面结构消费，后续阶段再做优化；当前需禁用可见性优化门控。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1808.yaml"
+    - 'rg -n "isFieldVisible\(|projectDetailStructureAlignMode" frontend/apps/web/src/pages/ContractFormPage.vue'
+    - "make frontend.restart"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - direct-restore field visibility path
+  - iteration report and state
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+
+depends_on:
+  - ITER-2026-04-10-1807

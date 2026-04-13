@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-04-10-1587",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "v2_meta_describe_compile": "PASS",
+    "v2_intent_comparison_audit": "PASS",
+    "symbol_grep": "PASS",
+    "blueprint_status_check": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1587.md",
+    "files": [
+      "addons/smart_core/v2/handlers/meta/describe_model.py",
+      "addons/smart_core/v2/services/meta_service.py",
+      "addons/smart_core/v2/builders/meta_builder.py",
+      "addons/smart_core/v2/intents/registry.py"
+    ],
+    "intent_migration": {
+      "legacy_intent_count": 46,
+      "v2_intent_count": 4,
+      "migrated_count": 1,
+      "migration_ratio": 0.0217,
+      "migrated": [
+        "meta.describe_model"
+      ]
+    }
+  },
+  "conclusion": "v2 now includes migrated legacy-equivalent intent meta.describe_model",
+  "risk_level": "low",
+  "next_step": "migrate permission.check readonly flow into v2"
+}

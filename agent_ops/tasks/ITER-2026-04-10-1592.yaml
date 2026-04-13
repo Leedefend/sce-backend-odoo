@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-10-1592
+title: backend refactor v2 independent app route policy and active match generation
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在 v2 独立重构主线上补齐 app 模块的 route policy 与 active_match 生成能力，统一导航目标表达。
+
+user_visible_outcome:
+  - "v2 app.catalog/app.nav/app.open 输出具备统一 route 与 active_match 语义"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/**
+    - scripts/verify/v2_rebuild_audit.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - docs/architecture/backend_core_v2_rebuild_spec_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1592.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1592.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1592.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 18
+  max_output_lines: 760
+
+change_rules:
+  - v2 independent rebuild only
+  - additive app navigation semantics
+  - no legacy runtime cutover
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 app route policy
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只补齐导航语义组织层，不触碰业务事实定义。
+  reason: >
+    用户要求连续重构并高效完成，当前批次用于闭合 app 模块目标语义输出。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1592.yaml"
+    - "python3 -m py_compile addons/smart_core/v2/modules/app/policies/navigation_policy.py addons/smart_core/v2/modules/app/services/catalog_service.py addons/smart_core/v2/modules/app/builders/catalog_builder.py addons/smart_core/v2/modules/app/handlers/nav.py addons/smart_core/v2/modules/app/handlers/open.py"
+    - "python3 scripts/verify/v2_rebuild_audit.py --json"
+    - 'rg -n "class AppNavigationPolicyV2|def build_route|def build_active_match|active_match" addons/smart_core/v2/modules/app'
+    - "rg -n \"app route policy and active match batch\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+    - "rg -n \"route policy|active_match\" docs/architecture/backend_core_v2_rebuild_spec_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 app navigation policy with route and active_match semantics
+
+rollback:
+  - git restore addons/smart_core/v2 scripts/verify/v2_rebuild_audit.py docs/architecture/backend_core_refactor_blueprint_v1.md docs/architecture/backend_core_v2_rebuild_spec_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1591

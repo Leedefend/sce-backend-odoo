@@ -1,0 +1,28 @@
+{
+  "task_id": "ITER-2026-04-10-1811",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "backend_detection_probe": "PASS",
+    "frontend_gate_probe": "PASS",
+    "backend_restart": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "addons/smart_core/v2/services/ui_contract_service.py",
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "extended chatter/attachment detection to oe_chatter and widget/class markers",
+      "align mode no longer hides collaboration block due to preferNative gate",
+      "semantic chatter/attachment flags now fallback to views.form.*.enabled"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1811.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "user refresh and verify collaboration section restoration"
+}

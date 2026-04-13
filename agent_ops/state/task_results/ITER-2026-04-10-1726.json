@@ -1,0 +1,15 @@
+{
+  "task_id": "ITER-2026-04-10-1726",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1726.md"
+  },
+  "conclusion": "project detail tab/action ordering aligned to stable delivery structure",
+  "risk_level": "low",
+  "next_step": "continue visible-tab set freeze for project detail"
+}

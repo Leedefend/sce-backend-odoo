@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-10-1620
+title: v2 independent rebuild master blueprint freeze
+
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  冻结“v2 独立完整重建”总节奏文档，明确六阶段目标、边界、验收与切换条件，
+  避免继续陷入局部迁移节奏。
+
+user_visible_outcome:
+  - "v2 重建路线从问题驱动切换为阶段闭环驱动"
+
+scope:
+  allowed_paths:
+    - docs/architecture/v2_independent_rebuild_master_blueprint_v1.md
+    - docs/architecture/v2_directory_and_responsibility_boundary_v1.md
+    - docs/architecture/v2_minimum_mainline_implementation_order_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1620.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1620.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1620.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 1200
+
+change_rules:
+  - stage-first architecture freeze
+  - no runtime behavior change
+  - no legacy logic mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 rebuild governance blueprint
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅冻结重建节奏与职责边界，不涉及业务事实。
+  reason: >
+    响应用户“先定整体重建节奏再迭代细点”的要求。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1620.yaml"
+    - 'rg -n "阶段 0|阶段 1|阶段 2|阶段 3|阶段 4|阶段 5|阶段 6|切换准入标准" docs/architecture/v2_independent_rebuild_master_blueprint_v1.md'
+    - 'rg -n "controller|registry|dispatcher|handler|service|orchestrator|parser|builder|policy|verify" docs/architecture/v2_directory_and_responsibility_boundary_v1.md'
+    - 'rg -n "最小主链|registry|dispatcher|handler|service|parser|builder|governance gate" docs/architecture/v2_minimum_mainline_implementation_order_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 independent rebuild master blueprint + boundary + mainline order docs
+
+rollback:
+  - git restore docs/architecture/v2_independent_rebuild_master_blueprint_v1.md docs/architecture/v2_directory_and_responsibility_boundary_v1.md docs/architecture/v2_minimum_mainline_implementation_order_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1619

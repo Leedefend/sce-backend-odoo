@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-09-1558
+title: backend refactor B2 dispatcher purity screen and priority freeze
+type: governance
+status: active
+priority: medium
+mode: screen
+batch: 1/1
+
+goal: >
+  完成 intent_dispatcher 纯分发边界筛查，冻结下一轮实现优先级（仅 screen，不改运行时代码）。
+
+user_visible_outcome:
+  - "团队获得 dispatcher purity 候选清单与分批顺序，可直接进入 B2 implement"
+
+scope:
+  allowed_paths:
+    - docs/architecture/dispatcher_purity_screen_v1.md
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1558.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1558.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1558.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - screen only, no runtime code changes
+  - classify candidates by dispatcher purity boundary
+  - freeze implementation priority for next batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance screening layer
+  module: intent dispatcher purity
+  module_owner: smart_core controllers/governance
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做分发边界筛查和优先级冻结，不变更业务事实层。
+  reason: >
+    A1 与 B-line thinness 已收敛，下一步需先锁定 dispatcher 中残留的策略/上下文/提交等混合逻辑。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1558.yaml"
+    - "rg -n \"_prepare_dispatch_request|_finalize_dispatch_response|_execute_intent_request|check_intent_permission|request.env.cr.commit\" addons/smart_core/controllers/intent_dispatcher.py"
+    - "rg -n \"Tier-1|Tier-2|Tier-3|pure dispatch|next implement batch\" docs/architecture/dispatcher_purity_screen_v1.md"
+    - "rg -n \"B2 Dispatcher Purity Screen\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - dispatcher purity candidate screen doc
+  - blueprint status update for B2 screen
+
+rollback:
+  - git restore docs/architecture/dispatcher_purity_screen_v1.md docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1557

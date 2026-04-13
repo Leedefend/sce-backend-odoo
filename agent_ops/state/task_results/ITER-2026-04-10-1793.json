@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1793",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "audit_switch_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "structure audit summary can now be enabled via URL query switches",
+      "debug visibility no longer depends only on HUD/env"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1793.md"
+  },
+  "risk_level": "low",
+  "next_step": "collect structure summary and continue native-like top-area alignment"
+}

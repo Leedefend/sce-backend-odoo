@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-10-1734
+title: form dynamic modifiers closure audit
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  落地 FORM-003 第一批：建立动态 modifiers 审计，识别 form 契约是否仅有静态只读/必填/可见，
+  并输出依赖表达证据。
+
+user_visible_outcome:
+  - "明确 form 契约动态 modifiers 覆盖状态与缺口"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1734.yaml
+    - scripts/verify/form_dynamic_modifiers_audit.py
+    - artifacts/contract/form_dynamic_modifiers_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1734.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1734.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 900
+
+change_rules:
+  - audit-first implementation only
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: backend scene-orchestration contract supply governance
+  module: form dynamic modifiers audit
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做契约语义能力审计，不变更业务事实。
+  reason: >
+    按缺口清单执行 FORM-003，确认 readonly/invisible/required 的动态表达闭环现状。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1734.yaml"
+    - "python3 scripts/verify/form_dynamic_modifiers_audit.py --json"
+
+risk:
+  level: medium-low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - dynamic modifiers audit script and artifact
+
+rollback:
+  - "git restore scripts/verify/form_dynamic_modifiers_audit.py"
+
+depends_on:
+  - ITER-2026-04-10-1733

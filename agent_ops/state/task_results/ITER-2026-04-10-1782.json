@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1782",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "layout_tree_dedup_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "layoutTrees projection no longer globally deduplicates fields",
+      "notebook/page/group sections are less likely to be pruned as empty"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1782.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "user visual check for structure restoration"
+}

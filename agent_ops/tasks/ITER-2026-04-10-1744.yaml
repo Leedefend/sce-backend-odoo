@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1744
+title: frontend render_profile consumer remediation for shared runtime
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 1743 阻断：将 render_profile 消费从单页逻辑下沉到前端公共运行时链路，形成一致的只读/编辑语义消费。
+
+user_visible_outcome:
+  - "详情页公共运行时可识别 render_profile，并影响统一行为决策"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1744.yaml
+    - frontend/apps/web/src/app/pageContract.ts
+    - frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts
+    - frontend/apps/web/src/app/pageContractActionRuntime.ts
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - artifacts/contract/form_render_profile_frontend_consumer_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1744.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1744.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 9
+  max_output_lines: 900
+
+change_rules:
+  - frontend shared consumer remediation only
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: render_profile shared consumer runtime
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    1743 显示仅 ContractFormPage 单点消费 render_profile，需要下沉至公共 runtime。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1744.yaml"
+    - "python3 scripts/verify/form_render_profile_frontend_consumer_audit.py --json"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - frontend render_profile shared consumer remediation patch
+
+rollback:
+  - "git restore frontend/apps/web/src/app/pageContract.ts"
+  - "git restore frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts"
+  - "git restore frontend/apps/web/src/app/pageContractActionRuntime.ts"
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+
+depends_on:
+  - ITER-2026-04-10-1743

@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1786",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "semantic_polish_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue",
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    ],
+    "highlights": [
+      "header shell removed from project detail structure projection",
+      "fallback section title now uses first-field semantic label when available"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1786.md"
+  },
+  "risk_level": "low",
+  "next_step": "collect refreshed structure summary from user"
+}

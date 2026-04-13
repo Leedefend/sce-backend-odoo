@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-10-1689
+title: frontend error-empty observability regression checkpoint
+
+type: implementation
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  执行前端错误态与空态可观测性回归，确认页面失败场景具备稳定反馈与可追踪信息。
+
+user_visible_outcome:
+  - "错误态场景能稳定展示可诊断反馈"
+  - "空态场景无白屏并可正常回退"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1689.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1689.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1689.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 4
+  max_output_lines: 400
+
+change_rules:
+  - verification and reporting only
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: error/empty observability verification
+  module_owner: scripts/verify + frontend runtime
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只验证可观测反馈，不改后端业务事实。
+  reason: >
+    ITER-1688 主链已通过，需要补齐失败态/空态可观测性证据以完成交付稳定性闭环。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1689.yaml"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - "python3 scripts/verify/frontend_api_smoke.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - observability regression checkpoint report
+
+rollback:
+  - "N/A (verification/reporting batch)"
+
+depends_on:
+  - ITER-2026-04-10-1688

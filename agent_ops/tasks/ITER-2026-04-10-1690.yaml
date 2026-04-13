@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-10-1690
+title: frontend visible error-empty evidence capture checkpoint
+
+type: implementation
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在前端交付恢复主链已通过基础上，补充可视化错误态/空态消费链证据，
+  确认菜单点击可用性 smoke 与治理门禁保持一致。
+
+user_visible_outcome:
+  - "菜单树可点击链路稳定，失败用例可定位"
+  - "错误态/空态证据可追溯并可复验"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1690.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1690.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1690.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - artifacts/codex/unified-system-menu-click-usability-smoke/**
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 600
+
+change_rules:
+  - verification and reporting only
+  - no new intents
+  - no backend/frontend functional refactor
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: visible error-empty evidence verification
+  module_owner: scripts/verify + delivery governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅进行前端可观测证据验证，不改业务事实。
+  reason: >
+    根据 1689 next_step，继续补充前端错误态/空态可视证据，形成可交付闭环。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1690.yaml"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - "BASE_URL=http://127.0.0.1:5174 DB_NAME=sc_demo E2E_LOGIN=wutao E2E_PASSWORD=demo node scripts/verify/unified_system_menu_click_usability_smoke.mjs"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - visible error/empty evidence checkpoint report
+
+rollback:
+  - "N/A (verification/reporting batch)"
+
+depends_on:
+  - ITER-2026-04-10-1689

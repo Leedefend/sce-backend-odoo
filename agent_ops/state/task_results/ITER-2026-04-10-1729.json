@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-10-1729",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "backend_restart": "PASS"
+  },
+  "evidence": {
+    "fix_notes": "artifacts/tmp/project_form_contract_fix_notes_v1.json",
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1729.md"
+  },
+  "conclusion": "C1/C2 backend tab-loss fixes applied",
+  "risk_level": "medium-low",
+  "next_step": "run verify batch for action-bound contract snapshot"
+}

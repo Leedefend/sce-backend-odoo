@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1553
+title: backend refactor B-line tier1 platform_meta_api describe_model thinness refinement
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  对 platform_meta_api.describe_model 做薄化重构，保持语义不变并移除 route 方法内 ORM 直读提示。
+
+user_visible_outcome:
+  - "describe_model 接口行为不变，controller_thin_guard 对该方法不再给出 ORM hint"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/platform_meta_api.py
+    - artifacts/architecture/controller_thin_guard_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1553.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1553.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1553.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - preserve endpoint semantics
+  - thinness-only refactor for describe_model path
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Controller protocol adapter layer
+  module: platform_meta_api
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅做 controller 薄化，不改业务事实。
+  reason: >
+    按 1552 screen 顺序推进 B 线 Tier-1 候选。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1553.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/platform_meta_api.py"
+    - "python3 scripts/verify/controller_thin_guard_audit.py"
+    - "python3 - <<'PY'\nimport json\nobj=json.load(open('artifacts/architecture/controller_thin_guard_audit_v1.json','r',encoding='utf-8'))\nfor row in obj['orm_hints']:\n    assert not (row['file']=='addons/smart_core/controllers/platform_meta_api.py' and row['method']=='describe_model')\nprint('describe_model orm_hint cleared PASS')\nPY"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - thin describe_model controller method
+
+rollback:
+  - git restore addons/smart_core/controllers/platform_meta_api.py
+
+depends_on:
+  - ITER-2026-04-09-1552

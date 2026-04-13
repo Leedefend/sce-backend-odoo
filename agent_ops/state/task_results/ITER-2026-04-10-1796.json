@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1796",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "tab_fidelity_and_dedupe_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue",
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "raw contract tab labels now preserved unless placeholder-like",
+      "projected tabs now deduplicated by content signature"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1796.md"
+  },
+  "risk_level": "low",
+  "next_step": "collect refreshed UI evidence and continue top-area alignment"
+}

@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-10-1677
+title: focus intent promotion rollback state machine
+
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  为 session.bootstrap / meta.describe_model / ui.contract 三条 focus intents 建立
+  promotion/rollback 状态机审计，基于 compare diagnosis 的 allow_v2_candidate 信号
+  形成可执行升级与回滚路径，并接入 governance 主门禁。
+
+user_visible_outcome:
+  - "三条 focus intents 具备可审计的升级/回滚状态机与目标路由建议"
+
+scope:
+  allowed_paths:
+    - scripts/verify/v2_focus_intent_promotion_state_machine_audit.py
+    - artifacts/v2/v2_focus_intent_promotion_state_machine_v1.json
+    - scripts/verify/v2_app_governance_gate_audit.py
+    - artifacts/v2/v2_app_governance_output_schema_v1.json
+    - docs/ops/v2_app_governance_gate_usage_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1677.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1677.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1677.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 9
+  max_output_lines: 1200
+
+change_rules:
+  - governance and policy audit only
+  - no new v2 intent migration
+  - no direct route mode writeback in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core focus-intent promotion rollback governance
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅输出双轨路由升级/回滚治理语义与门禁审计，不改业务事实或权限模型。
+  reason: >
+    1676 已将 compare failure 收敛到 READY_FOR_CANDIDATE，需补齐 state machine
+    以约束 v2_primary 提升与异常回滚路径。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1677.yaml"
+    - "python3 scripts/verify/v2_focus_intent_promotion_state_machine_audit.py --json"
+    - "python3 scripts/verify/v2_focus_intent_compare_failure_summary.py --json"
+    - "python3 scripts/verify/v2_dual_track_route_policy_audit.py --json"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - "python3 scripts/verify/v2_app_governance_output_schema_audit.py --json"
+    - "python3 -m py_compile scripts/verify/v2_focus_intent_promotion_state_machine_audit.py scripts/verify/v2_app_governance_gate_audit.py"
+    - 'rg -n "v2_focus_intent_promotion_state_machine_audit.py|allow_v2_candidate|rollback_to_v2_shadow" scripts/verify/v2_focus_intent_promotion_state_machine_audit.py scripts/verify/v2_app_governance_gate_audit.py artifacts/v2/v2_focus_intent_promotion_state_machine_v1.json docs/ops/v2_app_governance_gate_usage_v1.md artifacts/v2/v2_app_governance_output_schema_v1.json'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - focus-intent promotion/rollback state machine audit integrated into governance gate
+
+rollback:
+  - git restore scripts/verify/v2_focus_intent_promotion_state_machine_audit.py artifacts/v2/v2_focus_intent_promotion_state_machine_v1.json scripts/verify/v2_app_governance_gate_audit.py artifacts/v2/v2_app_governance_output_schema_v1.json docs/ops/v2_app_governance_gate_usage_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1676

@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1801",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "projection_fallback_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts"
+    ],
+    "highlights": [
+      "notebook shell now tolerates non-standard child structure",
+      "orphan page nodes can be projected into synthetic notebook tabs"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1801.md"
+  },
+  "risk_level": "low",
+  "next_step": "refresh page and confirm projected tabs recover from 0"
+}

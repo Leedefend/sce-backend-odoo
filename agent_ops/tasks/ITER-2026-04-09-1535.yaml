@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1535
+title: backend refactor E1 tier2 platform_contract_portal_dashboard_api envelope unification
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  按 Tier-2 顺序对 platform_contract_portal_dashboard_api 统一 response envelope 到 ok/data/error/meta/effect 口径。
+
+user_visible_outcome:
+  - "platform_contract_portal_dashboard_api 返回壳与统一口径对齐"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/platform_contract_portal_dashboard_api.py
+    - artifacts/architecture/envelope_consistency_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1535.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1535.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1535.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - preserve endpoint semantics
+  - unification only for platform_contract_portal_dashboard_api
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Contract envelope layer
+  module: platform_contract_portal_dashboard_api
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅对 API 输出壳做统一，不改变业务事实。
+  reason: >
+    按冻结顺序进入 Tier-2 接口 envelope 收口，延续统一响应壳主线。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1535.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/platform_contract_portal_dashboard_api.py"
+    - "python3 scripts/verify/envelope_consistency_audit.py"
+    - "rg -n \"\\\"ok\\\"|\\\"data\\\"|\\\"error\\\"|\\\"meta\\\"|\\\"effect\\\"\" addons/smart_core/controllers/platform_contract_portal_dashboard_api.py"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - platform_contract_portal_dashboard_api envelope unification
+
+rollback:
+  - git restore addons/smart_core/controllers/platform_contract_portal_dashboard_api.py
+
+depends_on:
+  - ITER-2026-04-09-1534

@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-10-1599
+title: backend refactor v2 app intent contract linkage audit
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  建立 v2 app intent 注册与 contract snapshot 的联动审计，防止入口与契约漂移。
+
+user_visible_outcome:
+  - "v2 app intent 与 contract snapshot 的映射关系可验证"
+
+scope:
+  allowed_paths:
+    - scripts/verify/v2_*audit.py
+    - artifacts/v2/**
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - docs/architecture/backend_core_v2_rebuild_spec_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1599.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1599.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1599.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 10
+  max_output_lines: 680
+
+change_rules:
+  - v2 independent rebuild only
+  - additive linkage audit
+  - no legacy runtime cutover
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 app intent contract linkage
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅增强契约治理门禁，不触达业务事实层。
+  reason: >
+    连续重构中需确保 app intent 注册与 contract snapshot 不发生偏移。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1599.yaml"
+    - "python3 scripts/verify/v2_app_contract_snapshot_audit.py --json"
+    - "python3 scripts/verify/v2_app_intent_contract_linkage_audit.py --json"
+    - "python3 scripts/verify/v2_rebuild_audit.py --json"
+    - 'rg -n "intent contract linkage batch" docs/architecture/backend_core_refactor_blueprint_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 app intent contract linkage audit
+
+rollback:
+  - git restore scripts/verify/v2_app_intent_contract_linkage_audit.py docs/architecture/backend_core_refactor_blueprint_v1.md docs/architecture/backend_core_v2_rebuild_spec_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1598

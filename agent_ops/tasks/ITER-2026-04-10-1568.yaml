@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1568
+title: backend refactor C1-4-1 add IntentExecutionResult and BaseIntentHandler adapter
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  新增 IntentExecutionResult 对象并在 BaseIntentHandler.run() 接入对象返回降级适配，保持现有调用方兼容。
+
+user_visible_outcome:
+  - "handler 可逐步迁移为对象返回，且不会打断现有 dict 响应链"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/base_handler.py
+    - addons/smart_core/core/intent_execution_result.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1568.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1568.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1568.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 360
+
+change_rules:
+  - additive low-risk refactor only
+  - preserve legacy dict response shape compatibility
+  - no business fact/ACL/financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Handler base abstraction layer
+  module: BaseIntentHandler
+  module_owner: smart_core core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅增强 handler 输出抽象能力，不改变业务事实和权限事实。
+  reason: >
+    按 C1-4 screen 冻结顺序，先完成对象返回适配底座，再推进 dispatcher/object trial。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1568.yaml"
+    - "python3 -m py_compile addons/smart_core/core/base_handler.py addons/smart_core/core/intent_execution_result.py"
+    - "rg -n \"IntentExecutionResult|to_legacy_dict|adapt_handler_result\" addons/smart_core/core/base_handler.py addons/smart_core/core/intent_execution_result.py"
+    - "rg -n \"C1-4-1 implement\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - IntentExecutionResult object
+  - BaseIntentHandler result adapter wiring
+
+rollback:
+  - git restore addons/smart_core/core/base_handler.py addons/smart_core/core/intent_execution_result.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1567

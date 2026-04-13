@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-10-1686
+title: remediate v2 verify boundary failures and focus-intent gate alignment
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 ITER-1685 门禁失败根因：消除 v2 boundary forbidden import 命中，
+  并对齐 v2_primary smoke/diff/recheck 与当前 ui.contract 返回形态后重跑门禁。
+
+user_visible_outcome:
+  - "v2_app_governance_gate_audit 失败项显著收敛"
+  - "页面可用性修复与治理验证结果一致"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/services/ui_contract_service.py
+    - scripts/verify/v2_primary_minimum_business_smoke.py
+    - scripts/verify/v2_focus_intent_diff_audit.py
+    - scripts/verify/v2_rollback_readiness_recheck.py
+    - agent_ops/tasks/ITER-2026-04-10-1686.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1686.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1686.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 900
+
+change_rules:
+  - fix verification blockers only
+  - no acl/manifest/financial changes
+  - keep frontend behavior unchanged
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend v2 orchestration + verification alignment
+  module: smart_core v2 ui.contract service and verify scripts
+  module_owner: addons/smart_core/v2 + scripts/verify
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次属于语义交付与验证对齐，不改业务事实。
+  reason: >
+    1685 门禁失败由 v2 导入边界与脚本预期漂移引起，需专批修复后再 gate。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1686.yaml"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - reduced/cleared gate failures for targeted checks
+
+rollback:
+  - git restore addons/smart_core/v2/services/ui_contract_service.py
+  - git restore scripts/verify/v2_primary_minimum_business_smoke.py
+  - git restore scripts/verify/v2_focus_intent_diff_audit.py
+  - git restore scripts/verify/v2_rollback_readiness_recheck.py
+
+depends_on:
+  - ITER-2026-04-10-1685

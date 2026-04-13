@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-04-10-1778",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "consumer_visual_alignment_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/components/template/PageHeader.vue",
+      "frontend/apps/web/src/pages/ContractFormPage.vue",
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    ],
+    "highlights": [
+      "project detail now uses compact page header",
+      "project align mode removes extra card container framing",
+      "technical attributes.name labels are filtered from default section titles"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1778.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "collect fresh screenshot and continue structure delta iteration if needed"
+}

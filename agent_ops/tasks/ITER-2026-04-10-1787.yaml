@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-10-1787
+title: contract-to-tab projection audit overlay
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  增加“契约输入 vs 前端投影”对账摘要，明确 tab 数据是否来自 contract 以及在消费链的损耗点。
+
+user_visible_outcome:
+  - "页面可见 views.form.layout 与 semantic layout 的 notebook/page 计数"
+  - "页面可见 contract 输入 tab 与前端投影 tab 对账"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1787.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1787.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1787.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - frontend runtime diagnostics only
+  - no backend semantic mutation
+  - additive compatibility-safe changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: ContractFormPage contract projection audit
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    用户要求核实 tab 是否来自契约，需要直接展示 contract 来源节点与前端投影节点对账。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1787.yaml"
+    - "rg -n \"contractTabAuditSummary|countLayoutKinds|source_layout\" frontend/apps/web/src/pages/ContractFormPage.vue"
+    - "make frontend.restart"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - contract-to-projection audit overlay patch
+  - iteration report and task result
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+
+depends_on:
+  - ITER-2026-04-10-1786

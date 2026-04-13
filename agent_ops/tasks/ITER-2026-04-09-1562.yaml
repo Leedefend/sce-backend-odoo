@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-09-1562
+title: backend refactor B2-4 extract dispatcher legacy compatibility adapter
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  将 intent_dispatcher 中 load_view legacy 数据结构兼容补丁外移到专用 adapter，完成 B2 purity 收尾。
+
+user_visible_outcome:
+  - "dispatcher 不再内置 legacy contract 修补细节，兼容逻辑可独立治理"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/intent_dispatcher.py
+    - addons/smart_core/controllers/intent_legacy_compat.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1562.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1562.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1562.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 360
+
+change_rules:
+  - additive low-risk refactor only
+  - keep external contract behavior unchanged
+  - no business or permission fact changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Controller protocol adapter layer
+  module: intent dispatcher
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只剥离 legacy 输出兼容适配，不改变事实层数据。
+  reason: >
+    1558 screen 将 load_view compatibility 标记为 Tier-3 收尾项，本批完成 B2 purity 最后外移。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1562.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/intent_dispatcher.py addons/smart_core/controllers/intent_legacy_compat.py"
+    - "rg -n \"apply_legacy_load_view_compat\" addons/smart_core/controllers/intent_dispatcher.py addons/smart_core/controllers/intent_legacy_compat.py"
+    - "rg -n \"B2-4 implement\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - extracted legacy compatibility adapter
+  - dispatcher finalize-path adapter wiring
+
+rollback:
+  - git restore addons/smart_core/controllers/intent_dispatcher.py addons/smart_core/controllers/intent_legacy_compat.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1561

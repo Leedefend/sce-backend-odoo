@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1551
+title: backend refactor A1 intent registry closure documentation freeze
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  冻结 A1 intent registry coverage 闭环结果与门禁口径，为下一阶段 B 线提供稳定基线。
+
+user_visible_outcome:
+  - "A1 完成状态与验证口径在文档中可追溯"
+
+scope:
+  allowed_paths:
+    - docs/architecture/intent_registry_closure_v1.md
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1551.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1551.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1551.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - documentation only
+  - no runtime code changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance documentation layer
+  module: intent registry closure
+  module_owner: architecture docs
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅冻结治理结论，不改变业务事实与运行时代码。
+  reason: >
+    A1 已完成 46/46 覆盖，需要文档锁定避免后续语义回退。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1551.yaml"
+    - "rg -n \"46/46|missing=0|Tier-1|Tier-2|Tier-3|strict\" docs/architecture/intent_registry_closure_v1.md"
+    - "rg -n \"A1|intent registry|1550\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - intent registry closure documentation freeze
+
+rollback:
+  - git restore docs/architecture/intent_registry_closure_v1.md docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1550

@@ -1,0 +1,20 @@
+{
+  "task_id": "ITER-2026-04-10-1683",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "menu_route_presence_check": "PASS",
+    "python_compile": "PASS",
+    "backend_restart": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1683.md",
+    "files": [
+      "addons/smart_core/controllers/platform_menu_api.py"
+    ]
+  },
+  "conclusion": "menu api endpoints now use http json envelope without odoo jsonrpc wrapper",
+  "risk_level": "low",
+  "next_step": "user refreshes frontend and validates /api/menu/navigation plain envelope"
+}

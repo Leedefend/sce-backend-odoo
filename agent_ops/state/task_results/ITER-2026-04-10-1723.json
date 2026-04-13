@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-10-1723",
+  "status": "FAIL",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "frontend_api_smoke": "FAIL"
+  },
+  "failure": {
+    "code": "ENV_UNSTABLE",
+    "message": "frontend_api_smoke timeout: local service endpoint unreachable"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1723.md"
+  },
+  "risk_level": "medium",
+  "next_step": "restart services and rerun frontend_api_smoke"
+}

@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-09-1550
+title: backend refactor A1 tier3 final intent registry closure
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  完成 Tier-3 剩余 11 个 intent 的 registry 注册，收敛 A1 coverage missing 到 0。
+
+user_visible_outcome:
+  - "intent registry missing_from_registry 清零"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/intents/registry_entries/__init__.py
+    - addons/smart_core/intents/registry_entries/tier3_final.py
+    - artifacts/architecture/intent_registry_audit_v1.json
+    - artifacts/architecture/intent_registry_taxonomy_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1550.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1550.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1550.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 320
+
+change_rules:
+  - additive registry entries only
+  - no runtime handler/controller changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Intent governance layer
+  module: intent registry entries
+  module_owner: smart_core intents
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅补齐意图注册总账本，不改业务事实。
+  reason: >
+    完成 A1 阶段覆盖闭环，为后续 B/C 批次提供完整可审计入口面。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1550.yaml"
+    - "python3 scripts/verify/intent_registry_audit.py"
+    - "python3 scripts/verify/intent_registry_taxonomy_audit.py"
+    - "python3 - <<'PY'\nimport json\na=json.load(open('artifacts/architecture/intent_registry_audit_v1.json','r',encoding='utf-8'))\nassert len(a['coverage']['missing_from_registry'])==0\nassert a['coverage']['registered_intent_count']>=46\nprint('tier3 final closure PASS; registered=',a['coverage']['registered_intent_count'])\nPY"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - Tier-3 final intent registry entries
+
+rollback:
+  - git restore addons/smart_core/intents/registry_entries/__init__.py addons/smart_core/intents/registry_entries/tier3_final.py
+
+depends_on:
+  - ITER-2026-04-09-1549

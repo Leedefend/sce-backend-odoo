@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-09-1522
+title: backend core refactor stage1 scan and blueprint
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  按低成本分阶段模式启动后端核心重构，先完成现状扫描与蓝图冻结，不直接改动高风险业务代码。
+
+user_visible_outcome:
+  - "输出可执行《后端重构实施蓝图 v1》，明确 intent/handler/parser/contract 四链路的职责边界与迁移顺序"
+
+scope:
+  allowed_paths:
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1522.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1522.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1522.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+
+change_rules:
+  - scan and design only
+  - no runtime behavior changes
+  - no acl/model/schema edits
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance architecture planning
+  module: Backend intent-handler-parser-contract chain
+  module_owner: smart_core backend governance
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批次为扫描与蓝图设计，不直接改业务事实层；先固化职责边界再进入实现批次。
+  reason: >
+    当前后端不确定性集中在意图链、处理链、解析链、输出链，需先形成分批可执行蓝图并锁定反模式禁令。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1522.yaml"
+    - "rg -n \"Intent Dispatcher|Intent Registry|Request Validator|Handler|Domain Service|Orchestrator|Parser|Contract Builder|Response Envelope\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - backend core refactor blueprint v1
+
+rollback:
+  - git restore docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1521
+

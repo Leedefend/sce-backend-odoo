@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-10-1723
+title: frontend action view list-kanban switch delivery fix
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复自定义前端在 ActionView 中列表/看板切换不生效问题，确保用户点击视图切换后
+  能稳定切换并保持路由与加载链一致。
+
+user_visible_outcome:
+  - "列表/看板切换按钮点击后立即生效"
+  - "切换后 URL query 的 view_mode 与当前视图一致"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/views/ActionView.vue
+    - frontend/apps/web/src/app/action_runtime/useActionViewModeRuntime.ts
+    - frontend/apps/web/src/app/pageContract.ts
+    - agent_ops/tasks/ITER-2026-04-10-1723.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1723.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1723.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 700
+
+change_rules:
+  - frontend contract consumer fix only
+  - no backend intent/schema/business fact changes
+  - no menu policy expansion
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: frontend contract-consumer runtime
+  module: frontend/apps/web ActionView
+  module_owner: smart_core + frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    当前用户反馈列表/看板切换未实现，根因为视图切换状态与路由 query 未对齐，导致加载预检
+    仍回落到旧 view_mode。需在前端消费链修复 route 与 preferred mode 的一致性。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1723.yaml"
+    - "python3 scripts/verify/frontend_api_smoke.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - action view mode switching route-sync fix
+
+rollback:
+  - "git restore frontend/apps/web/src/views/ActionView.vue"
+  - "git restore frontend/apps/web/src/app/action_runtime/useActionViewModeRuntime.ts"
+
+depends_on:
+  - ITER-2026-04-10-1722

@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-09-1564
+title: backend refactor C1-1 extract intent_router env cursor policy
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  将 intent_router 中 env 构建与 extra cursor 生命周期管理逻辑抽离到独立 policy helper，保持 route_intent_payload 外部行为不变。
+
+user_visible_outcome:
+  - "intent_router 主体更聚焦分发职责，env/cursor 策略可独立审计与演进"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/core/intent_router.py
+    - addons/smart_core/core/intent_env_policy.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1564.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1564.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1564.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 360
+
+change_rules:
+  - additive low-risk refactor only
+  - keep intent dispatch behavior unchanged
+  - no business fact, ACL, financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Core dispatch orchestration layer
+  module: intent_router
+  module_owner: smart_core core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只进行路由编排层职责拆分，不改变业务事实层。
+  reason: >
+    C-line screen 已将 intent_router env/cursor 混合职责标记为 Tier-1，需要先完成 C1-1 才能继续 C1-2/C1-3。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1564.yaml"
+    - "python3 -m py_compile addons/smart_core/core/intent_router.py addons/smart_core/core/intent_env_policy.py"
+    - "rg -n \"build_dispatch_envs|finalize_dispatch_cursor\" addons/smart_core/core/intent_router.py addons/smart_core/core/intent_env_policy.py"
+    - "rg -n \"C1-1 implement\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - intent router env/cursor policy helper
+  - intent_router helper wiring
+
+rollback:
+  - git restore addons/smart_core/core/intent_router.py addons/smart_core/core/intent_env_policy.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1563

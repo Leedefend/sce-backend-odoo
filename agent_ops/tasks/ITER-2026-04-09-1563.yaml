@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-09-1563
+title: backend refactor C-line boundary screen for handler orchestrator service builder split
+type: governance
+status: active
+priority: medium
+mode: screen
+batch: 1/1
+
+goal: >
+  完成 C-line（handler/orchestrator/service/builder）职责边界筛查，冻结下一阶段实现切片顺序。
+
+user_visible_outcome:
+  - "团队获得 C-line 重构候选全景与优先级，避免直接在核心链路上无序改造"
+
+scope:
+  allowed_paths:
+    - docs/architecture/c_line_boundary_screen_v1.md
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-09-1563.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1563.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1563.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 340
+
+change_rules:
+  - screen only, no runtime code changes
+  - classify by ownership boundary and migration risk
+  - freeze next implement slices for C-line
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance screening layer
+  module: C-line boundary split
+  module_owner: smart_core core/handlers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做职责边界识别与切片冻结，不改变业务事实与权限模型。
+  reason: >
+    B2 纯分发已收敛，需先对 handler/orchestrator/service/builder 混合点完成 screen，确保 C1/C2 实施有序。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1563.yaml"
+    - "rg -n \"_build_envs|_dispatch|extra_cr.commit|load_extensions\" addons/smart_core/core/intent_router.py"
+    - "rg -n \"build_scene_ready_contract_v1|apply_contract_governance|SystemInitComponentsFactory|search_read\" addons/smart_core/handlers/system_init.py"
+    - "rg -n \"Tier-1|Tier-2|Tier-3|next implement slices\" docs/architecture/c_line_boundary_screen_v1.md"
+    - "rg -n \"C-line Boundary Screen\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - C-line boundary screen doc
+  - blueprint C-line status update
+
+rollback:
+  - git restore docs/architecture/c_line_boundary_screen_v1.md docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-09-1562

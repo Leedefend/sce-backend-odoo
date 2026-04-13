@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-10-1791
+title: form shell title noise convergence
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛结构投影中的壳标题噪音（头部重复、default 暴露、页签容器机械命名），提升结构可读性。
+
+user_visible_outcome:
+  - "结构投影摘要中的 shell 标题更业务化"
+  - "不再出现 default 或重复头部标题"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1791.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1791.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1791.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - frontend projection summary only
+  - no backend contract changes
+  - additive compatibility-safe adjustments
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: ContractFormPage structure projection summary
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    结构数量已对齐，需要继续收敛显示语义，避免 default/重复标题干扰判断。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1791.yaml"
+    - "rg -n \"structureProjectionSummary|shellTitles\" frontend/apps/web/src/pages/ContractFormPage.vue"
+    - "make frontend.restart"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - shell title normalization patch
+  - iteration report and task result
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+
+depends_on:
+  - ITER-2026-04-10-1790

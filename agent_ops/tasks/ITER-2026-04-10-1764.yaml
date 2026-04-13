@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-10-1764
+title: ui.contract v2 runtime form truth-source alignment
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 ui.contract 的 v2 运行时装配链路，消除 form 语义中的双 layout 真值源，
+  收敛 layout.fieldInfo 为轻量信息，并补齐 statusbar states 的运行时语义闭环。
+
+user_visible_outcome:
+  - "tmp/json/form.json 中 form_semantics 不再复制 layout 树，layout_source 固定为 views.form.layout"
+  - "layout.fieldInfo 不再包含 type/relation/required/readonly/invisible/help 等字段真值"
+  - "statusbar.field 为 selection 时可返回 states 或明确 reason"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1764.yaml
+    - addons/smart_core/v2/services/ui_contract_service.py
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1764.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1764.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - backend contract semantic layer only
+  - additive compatibility-safe changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend contract semantic layer
+  module: ui.contract v2 runtime form truth-source closure
+  module_owner: smart_core v2 service
+  kernel_or_scenario: kernel
+  reason: >
+    当前运行时响应未反映已落地的 form contract 收敛，根因在 v2 runtime 服务再次注入
+    semantic_page.form_semantics.layout 与重字段 fieldInfo，需要在真实服务链修复。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1764.yaml"
+    - "make restart"
+    - "make frontend.restart"
+    - "python3 scripts/verify/form_layout_single_source_audit.py --json --input tmp/json/form.json"
+    - "python3 scripts/verify/form_field_truth_source_audit.py --json --input tmp/json/form.json"
+    - "python3 scripts/verify/form_statusbar_states_audit.py --json --input tmp/json/form.json"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - runtime form truth-source alignment patch
+  - refreshed runtime verification snapshot and PASS evidence
+
+rollback:
+  - "git restore addons/smart_core/v2/services/ui_contract_service.py"
+
+depends_on:
+  - ITER-2026-04-10-1763
