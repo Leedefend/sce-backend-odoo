@@ -125,7 +125,7 @@
             <field name="source">system</field>
             <field name="payload_json" eval="{
                 'code': 'projects.ledger',
-                'name': '项目台账（试点）',
+                'name': '项目台账',
                 'version': 'v2',
                 'page': {
                     'key': 'projects.ledger.main',

@@ -158,7 +158,7 @@
         <!-- Projects ledger scene -->
         <record id="sc_scene_projects_ledger" model="sc.scene">
             <field name="sequence">50</field>
-            <field name="name">项目台账（试点）</field>
+            <field name="name">项目台账</field>
             <field name="code">projects.ledger</field>
             <field name="layout">grid</field>
             <field name="state">published</field>
