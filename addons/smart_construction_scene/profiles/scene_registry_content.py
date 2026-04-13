@@ -90,7 +90,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
         },
         {
             "code": "projects.ledger",
-            "name": "项目台账（试点）",
+            "name": "项目台账",
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                 "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
