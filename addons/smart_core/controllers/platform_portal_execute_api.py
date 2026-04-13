@@ -58,7 +58,7 @@ class PlatformPortalExecuteAPI(http.Controller):
             return fail(code, message, details=error, http_status=status)
 
         try:
-            result = request.env["sc.execute_button.service"].execute(
+            result = _execute_button_service().execute(
                 model, res_id, method, context=context
             )
         except (UserError, ValidationError, AccessError) as error:
@@ -77,3 +77,7 @@ def _merge_payload(params):
     except Exception:
         pass
     return payload
+
+
+def _execute_button_service():
+    return request.env["sc.execute_button.service"]

@@ -31,11 +31,15 @@ def _ok(data, status=200):
     return _json_response(
         {
             "ok": True,
-            "contract_version": CONTRACT_VERSION,
-            "server_time": _server_time(),
-            "trace_id": trace_id,
-            "warnings": [],
             "data": data,
+            "error": None,
+            "meta": {
+                "contract_version": CONTRACT_VERSION,
+                "server_time": _server_time(),
+                "trace_id": trace_id,
+                "warnings": [],
+            },
+            "effect": None,
         },
         status=status,
     )
@@ -46,16 +50,20 @@ def _fail(code, message, details=None, http_status=400):
     return _json_response(
         {
             "ok": False,
-            "contract_version": CONTRACT_VERSION,
-            "server_time": _server_time(),
-            "trace_id": trace_id,
-            "warnings": [],
+            "data": None,
             "error": {
                 "code": str(code),
                 "message": message,
                 "details": details or {},
                 "trace_id": trace_id,
             },
+            "meta": {
+                "contract_version": CONTRACT_VERSION,
+                "server_time": _server_time(),
+                "trace_id": trace_id,
+                "warnings": [],
+            },
+            "effect": None,
         },
         status=http_status,
     )
@@ -109,6 +117,10 @@ def _is_method_allowed(model, method):
     return False
 
 
+def _execute_button_service():
+    return request.env["sc.execute_button.service"]
+
+
 class PlatformExecuteAPI(http.Controller):
     @http.route("/api/execute_button", type="http", auth="user", methods=["POST"], csrf=False)
     def execute_button(self, **params):
@@ -125,7 +137,7 @@ class PlatformExecuteAPI(http.Controller):
             return _fail("NOT_ALLOWED", "method not allowed", details={"method": method}, http_status=403)
 
         try:
-            result = request.env["sc.execute_button.service"].execute(model, res_id, method, context=context)
+            result = _execute_button_service().execute(model, res_id, method, context=context)
         except Exception as error:
             return _fail_from_exception(error, http_status=500)
 

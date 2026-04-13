@@ -9,6 +9,7 @@ from typing import Any, Dict
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..core.platform_policy_defaults import get_file_upload_allowed_models
 
 _logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class FileUploadHandler(BaseIntentHandler):
         return set(self.ALLOWED_MODELS)
 
     def _err(self, code: int, message: str):
-        return {"ok": False, "error": {"code": code, "message": message}, "code": code}
+        return IntentExecutionResult(ok=False, error={"code": code, "message": message}, code=code)
 
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params = {}
@@ -107,4 +108,4 @@ class FileUploadHandler(BaseIntentHandler):
 
         data = {"id": attachment.id, "name": attachment.name, "model": model, "res_id": res_id}
         meta = {"trace_id": trace_id, "write_mode": "upload", "source": "portal-shell"}
-        return {"ok": True, "data": data, "meta": meta}
+        return IntentExecutionResult(ok=True, data=data, meta=meta)

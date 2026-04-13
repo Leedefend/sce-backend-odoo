@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from . import system_init  # ensure handlers package loaded
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.intent_execution_result import IntentExecutionResult
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class PermissionCheckHandler(BaseIntentHandler):
                     "db": self.env.cr.dbname,
                     "model_present": model_present,
                 }
-            return {"ok": True, "data": data}
+            return IntentExecutionResult(ok=True, data=data, meta={})
         ent = Entitlement.get_effective(self.env.user.company_id) if Entitlement else None
         flags = ent.effective_flags_json or {} if ent else {}
         cap = None
@@ -67,13 +68,13 @@ class PermissionCheckHandler(BaseIntentHandler):
                         "cap_found": bool(cap),
                         "db": self.env.cr.dbname,
                     }
-                return {"ok": True, "data": data}
+                return IntentExecutionResult(ok=True, data=data, meta={})
         else:
             _logger.warning("[permission.check] cap_missing_or_no_flag cap=%s flags=%s", cap_key, flags)
         if debug:
-            return {
-                "ok": True,
-                "data": {
+            return IntentExecutionResult(
+                ok=True,
+                data={
                     "allow": True,
                     "debug": {
                         "flags": flags,
@@ -82,5 +83,6 @@ class PermissionCheckHandler(BaseIntentHandler):
                         "db": self.env.cr.dbname,
                     },
                 },
-            }
-        return {"ok": True, "data": {"allow": True}}
+                meta={},
+            )
+        return IntentExecutionResult(ok=True, data={"allow": True}, meta={})

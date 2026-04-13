@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from odoo import api, SUPERUSER_ID
 from odoo.exceptions import AccessError
 import  inspect
+from .intent_execution_result import adapt_handler_result
 
 _logger = logging.getLogger(__name__)
 _WRITE_INTENT_PATTERN = re.compile(
@@ -156,14 +157,14 @@ class BaseIntentHandler:
         kwargs = {name: mapping[name] for name in param_names if name in mapping}
 
         try:
-            return self.handle(**kwargs)
+            return adapt_handler_result(self.handle(**kwargs))
         except TypeError as e:
             # 再退化一次：尝试按 (params, context) 位置参数调用
             try:
-                return self.handle(mapped_params, mapped_ctx)
+                return adapt_handler_result(self.handle(mapped_params, mapped_ctx))
             except TypeError:
                 # 最后退化：无参
-                return self.handle()
+                return adapt_handler_result(self.handle())
 
     # ---- 轻量工具方法（供测试/增强 handler 使用）----
     def err(self, code: int, message: str):

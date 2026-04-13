@@ -3,6 +3,7 @@
 import os
 import logging
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..security.auth import generate_token
 
 _logger = logging.getLogger(__name__)
@@ -52,14 +53,15 @@ class SessionBootstrapHandler(BaseIntentHandler):
         token_version = int(getattr(user, "token_version", 0) or 0)
         token = generate_token(user.id, token_version=token_version)
         self._audit("ok", ctx, login=login, uid=user.id)
-        return {
-            "ok": True,
-            "data": {
+        return IntentExecutionResult(
+            ok=True,
+            data={
                 "token": token,
                 "token_type": "Bearer",
                 "user": {"id": user.id, "login": user.login, "name": user.name},
             },
-        }
+            meta={},
+        )
 
     def _audit(self, status: str, ctx=None, **extra):
         try:

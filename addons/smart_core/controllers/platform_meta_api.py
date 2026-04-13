@@ -33,11 +33,15 @@ def _ok(data, status=200):
     return _json_response(
         {
             "ok": True,
-            "contract_version": CONTRACT_VERSION,
-            "server_time": _server_time(),
-            "trace_id": trace_id,
-            "warnings": [],
             "data": data,
+            "error": None,
+            "meta": {
+                "contract_version": CONTRACT_VERSION,
+                "server_time": _server_time(),
+                "trace_id": trace_id,
+                "warnings": [],
+            },
+            "effect": None,
         },
         status=status,
     )
@@ -48,16 +52,20 @@ def _fail(code, message, details=None, http_status=400):
     return _json_response(
         {
             "ok": False,
-            "contract_version": CONTRACT_VERSION,
-            "server_time": _server_time(),
-            "trace_id": trace_id,
-            "warnings": [],
+            "data": None,
             "error": {
                 "code": str(code),
                 "message": message,
                 "details": details or {},
                 "trace_id": trace_id,
             },
+            "meta": {
+                "contract_version": CONTRACT_VERSION,
+                "server_time": _server_time(),
+                "trace_id": trace_id,
+                "warnings": [],
+            },
+            "effect": None,
         },
         status=http_status,
     )
@@ -82,6 +90,35 @@ def _merge_payload(params):
     return payload
 
 
+def _resolve_model_env(model_name):
+    if model_name not in request.env:
+        return None
+    return request.env[model_name]
+
+
+def _project_model_env():
+    return request.env["project.project"]
+
+
+def _serialize_model_fields(fields):
+    output = []
+    for field_name, info in fields.items():
+        output.append(
+            {
+                "name": field_name,
+                "string": info.get("string"),
+                "ttype": info.get("type"),
+                "required": bool(info.get("required")),
+                "readonly": bool(info.get("readonly")),
+                "relation": info.get("relation"),
+                "selection": info.get("selection"),
+                "domain": info.get("domain"),
+                "help": info.get("help"),
+            }
+        )
+    return output
+
+
 class PlatformMetaAPI(http.Controller):
     @http.route("/api/meta/project_capabilities", type="http", auth="user", methods=["GET", "POST"], csrf=False)
     def describe_project_capabilities(self, **params):
@@ -94,7 +131,7 @@ class PlatformMetaAPI(http.Controller):
         except Exception:
             return _fail("BAD_REQUEST", "project_id invalid", http_status=400)
 
-        project_env = request.env["project.project"]
+        project_env = _project_model_env()
         project = project_env.browse(project_id)
         if not project.exists():
             return _fail("NOT_FOUND", "Project not found", details={"project_id": project_id}, http_status=404)
@@ -120,32 +157,18 @@ class PlatformMetaAPI(http.Controller):
         model = (payload.get("model") or "").strip()
         if not model:
             return _fail("BAD_REQUEST", "model required", http_status=400)
-        if model not in request.env:
+
+        model_env = _resolve_model_env(model)
+        if model_env is None:
             return _fail("NOT_FOUND", "Unknown model", details={"model": model}, http_status=404)
 
-        env = request.env[model]
         try:
-            env.check_access_rights("read")
+            model_env.check_access_rights("read")
         except Exception:
             return _fail("FORBIDDEN", "Access denied", http_status=403)
 
         try:
-            fields = env.fields_get()
-            out_fields = []
-            for name, info in fields.items():
-                out_fields.append(
-                    {
-                        "name": name,
-                        "string": info.get("string"),
-                        "ttype": info.get("type"),
-                        "required": bool(info.get("required")),
-                        "readonly": bool(info.get("readonly")),
-                        "relation": info.get("relation"),
-                        "selection": info.get("selection"),
-                        "domain": info.get("domain"),
-                        "help": info.get("help"),
-                    }
-                )
+            out_fields = _serialize_model_fields(model_env.fields_get())
         except Exception as error:
             return _fail_from_exception(error, http_status=500)
 

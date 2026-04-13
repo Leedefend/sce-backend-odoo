@@ -5,11 +5,31 @@ from odoo.addons.smart_core.core.delivery_menu_defaults import (
     build_delivery_menu_group,
     build_delivery_menu_root,
 )
+from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 
 
 class MenuService:
     NATIVE_PREVIEW_GROUP_KEY = "native_preview"
     NATIVE_PREVIEW_GROUP_LABEL = "系统菜单"
+
+    def _is_admin_role(self, role_code: str) -> bool:
+        normalized = str(role_code or "").strip().lower()
+        return normalized in {"admin", "platform_admin", "system_admin", "administrator"}
+
+    def _converged_menu(self, *, menu: dict, group_label: str, role_code: str):
+        row = dict(menu or {})
+        label = str(row.get("label") or "").strip()
+        if not label:
+            return None
+        service = MenuDeliveryConvergenceService()
+        category = service._classify_leaf(label, [group_label, label], is_admin=self._is_admin_role(role_code))
+        if category.startswith("hidden_"):
+            return None
+        renamed = service.RENAME_LABELS.get(label)
+        if renamed:
+            row["label"] = renamed
+        row["delivery_bucket"] = category
+        return row
 
     def _iter_leaf_nodes(self, nodes, ancestors=None):
         parent_chain = list(ancestors or [])
@@ -178,6 +198,9 @@ class MenuService:
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
                     continue
+                converged_menu = self._converged_menu(menu=menu, group_label=group_label, role_code=role_code)
+                if not converged_menu:
+                    continue
                 menu_id = menu.get("menu_id")
                 scene_key = str(menu.get("scene_key") or "").strip()
                 route = str(menu.get("route") or "").strip()
@@ -190,7 +213,7 @@ class MenuService:
                     dedupe_routes.add(route)
                 if menu_xmlid:
                     dedupe_xmlids.add(menu_xmlid)
-                groups_by_key[group_key]["menus"].append(menu)
+                groups_by_key[group_key]["menus"].append(converged_menu)
                 if scene_key and scene_key not in scene_group_map:
                     scene_group_map[scene_key] = group_key
 
@@ -204,6 +227,9 @@ class MenuService:
             group_order.append(fallback_key)
 
         for menu in self._flatten_policy_menus(policy):
+            converged_menu = self._converged_menu(menu=menu, group_label=str(groups_by_key.get(group_order[0], {}).get("group_label") or "系统菜单"), role_code=role_code)
+            if not converged_menu:
+                continue
             menu_id = menu.get("menu_id")
             scene_key = str(menu.get("scene_key") or "").strip()
             route = str(menu.get("route") or "").strip()
@@ -219,7 +245,7 @@ class MenuService:
             if menu_xmlid:
                 dedupe_xmlids.add(menu_xmlid)
             target_group_key = scene_group_map.get(scene_key) or group_order[0]
-            groups_by_key[target_group_key]["menus"].append(menu)
+            groups_by_key[target_group_key]["menus"].append(converged_menu)
 
         group_nodes = []
         for group_key in group_order:

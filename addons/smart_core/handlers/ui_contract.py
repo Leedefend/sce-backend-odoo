@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from odoo import api, SUPERUSER_ID
 from odoo.tools.safe_eval import safe_eval
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..core.native_view_contract_projection import inject_primary_view_projection
 
 # ✅ 直接用你的统一服务与分发器
@@ -201,13 +202,23 @@ class UiContractHandler(BaseIntentHandler):
         )
 
         if if_none_match and if_none_match == etag and not force_refresh:
-            return {"ok": True, "data": None,
-                    "meta": {"intent": self.INTENT_TYPE, "op": op, "etag": etag,
-                             "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000),
-                             "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
-                             "schema_version": "1.0.0",
-                             "contract_mode": contract_mode, "contract_surface": contract_surface},
-                    "code": 304}
+            return IntentExecutionResult(
+                ok=True,
+                data=None,
+                meta={
+                    "intent": self.INTENT_TYPE,
+                    "op": op,
+                    "etag": etag,
+                    "version": self.VERSION,
+                    "elapsed_ms": int((time.time() - t0) * 1000),
+                    "contract_version": CONTRACT_VERSION,
+                    "api_version": API_VERSION,
+                    "schema_version": "1.0.0",
+                    "contract_mode": contract_mode,
+                    "contract_surface": contract_surface,
+                },
+                code=304,
+            )
 
         meta_out = dict(meta)
         payload_schema_version = meta_out.pop("schema_version", None)
@@ -219,7 +230,7 @@ class UiContractHandler(BaseIntentHandler):
                          "schema_version": "1.0.0",
                          "contract_mode": contract_mode, "contract_surface": contract_surface})
         meta_out.setdefault("response_schema_version", "1.0.0")
-        return {"ok": True, "data": data or {}, "meta": meta_out}
+        return IntentExecutionResult(ok=True, data=data or {}, meta=meta_out)
 
     def _should_block_frontend_native_op(self, *, op: str, source_mode: str, contract_surface: str) -> bool:
         if op not in FRONTEND_BLOCKED_NATIVE_OPS:
@@ -236,7 +247,17 @@ class UiContractHandler(BaseIntentHandler):
         runtime_su_env = api.Environment(self.env.cr, SUPERUSER_ID, runtime_ctx)
         return ActionDispatcher(runtime_env, runtime_su_env)
 
-    def _dispatch_model_contract(self, *, model, view_type, ctx, view_id=None, action_id=None):
+    def _dispatch_model_contract(
+        self,
+        *,
+        model,
+        view_type,
+        ctx,
+        view_id=None,
+        action_id=None,
+        record_id=None,
+        render_profile="",
+    ):
         payload = {
             "subject": "model",
             "model": model,
@@ -246,6 +267,10 @@ class UiContractHandler(BaseIntentHandler):
         }
         if action_id:
             payload["action_id"] = action_id
+        if record_id:
+            payload["record_id"] = record_id
+        if render_profile in {"create", "edit", "readonly"}:
+            payload["render_profile"] = render_profile
         return self._build_dispatcher(ctx).dispatch(payload)
 
     def _finalize_projected_contract(
@@ -384,7 +409,13 @@ class UiContractHandler(BaseIntentHandler):
         except Exception:
             record_id = None
         requested_view_type = (self._get_param(p, "view_type", "viewType") or "").strip().lower()
-        render_profile = str(self._get_param(p, "render_profile", "renderProfile") or "").strip().lower()
+        render_profile = str(
+            self._get_param(p, "render_profile", "renderProfile", "profile", "mode") or ""
+        ).strip().lower()
+        if render_profile in {"read", "view"}:
+            render_profile = "readonly"
+        if render_profile not in {"create", "edit", "readonly"}:
+            render_profile = ""
 
         # Detail/intake scene should prefer complete form contract surface.
         prefer_form_contract = bool(
@@ -402,6 +433,8 @@ class UiContractHandler(BaseIntentHandler):
                     model=action.res_model,
                     view_type="form",
                     action_id=action_id,
+                    record_id=record_id,
+                    render_profile=render_profile,
                     ctx=action_ctx,
                 )
                 if isinstance(data, dict):

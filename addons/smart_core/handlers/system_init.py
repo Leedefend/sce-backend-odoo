@@ -43,6 +43,8 @@ from odoo.addons.smart_core.core.system_init_extension_fact_merger import (
 )
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context import SystemInitSceneRuntimeSurfaceContext
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
+from odoo.addons.smart_core.core.system_init_dictionary_data_helper import apply_dictionary_startup_data
+from odoo.addons.smart_core.core.intent_execution_result import IntentExecutionResult
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_workspace_home_role_context
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
@@ -782,82 +784,7 @@ class SystemInitHandler(BaseIntentHandler):
             inspect_payload=startup_inspect,
         )
         try:
-            if "sc.dictionary" in env:
-                try:
-                    rows = env["sc.dictionary"].sudo().search_read(
-                        [("type", "=", "role_entry"), ("active", "=", True)],
-                        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
-                        limit=200,
-                        order="sequence asc, id asc",
-                    )
-                    grouped = {}
-                    for row in rows:
-                        scope_type = str(row.get("scope_type") or "").strip() or "global"
-                        scope_ref = str(row.get("scope_ref") or "").strip()
-                        role_code = scope_ref if scope_type == "role" else "__global__"
-                        if not role_code:
-                            continue
-                        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
-                        entry_key = (
-                            str(row.get("code") or "").strip()
-                            or str(value_json.get("entry_key") or "").strip()
-                            or str(row.get("name") or "").strip()
-                        )
-                        if not entry_key:
-                            continue
-                        grouped.setdefault(role_code, []).append(
-                            {
-                                "entry_key": entry_key,
-                                "entry_type": str(value_json.get("entry_type") or "menu").strip() or "menu",
-                                "is_enabled": bool(value_json.get("is_enabled", True)),
-                                "sequence": int(row.get("sequence") or 10),
-                            }
-                        )
-                    if grouped:
-                        data["role_entries"] = [
-                            {"role_code": role_code, "entries": entries}
-                            for role_code, entries in sorted(grouped.items(), key=lambda item: str(item[0]))
-                        ]
-                except Exception:
-                    pass
-
-                try:
-                    home_rows = env["sc.dictionary"].sudo().search_read(
-                        [("type", "=", "home_block"), ("active", "=", True)],
-                        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
-                        limit=200,
-                        order="sequence asc, id asc",
-                    )
-                    home_grouped = {}
-                    for row in home_rows:
-                        scope_type = str(row.get("scope_type") or "").strip() or "global"
-                        scope_ref = str(row.get("scope_ref") or "").strip()
-                        role_code = scope_ref if scope_type == "role" else "__global__"
-                        if not role_code:
-                            continue
-                        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
-                        is_enabled = value_json.get("is_enabled")
-                        if isinstance(is_enabled, bool) and not is_enabled:
-                            continue
-                        block_key = (
-                            str(row.get("code") or "").strip()
-                            or str(value_json.get("block_key") or "").strip()
-                            or str(row.get("name") or "").strip()
-                        )
-                        if not block_key:
-                            continue
-                        sequence = int(row.get("sequence") or 10)
-                        home_grouped.setdefault(role_code, []).append((sequence, block_key))
-                    if home_grouped:
-                        data["home_blocks"] = [
-                            {
-                                "role_code": role_code,
-                                "blocks": [item[1] for item in sorted(blocks, key=lambda pair: (pair[0], pair[1]))],
-                            }
-                            for role_code, blocks in sorted(home_grouped.items(), key=lambda item: str(item[0]))
-                        ]
-                except Exception:
-                    pass
+            data = apply_dictionary_startup_data(env, data)
         except Exception:
             pass
         data = _normalize_access_suggested_action(data)
@@ -910,4 +837,9 @@ class SystemInitHandler(BaseIntentHandler):
         _ = diag_enabled
         _ = diagnostic_info
 
-        return {"status": "success", "data": data, "meta": meta_with_etag, "ok": True}
+        return IntentExecutionResult(
+            ok=True,
+            status="success",
+            data=data,
+            meta=meta_with_etag,
+        )

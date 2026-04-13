@@ -9,6 +9,12 @@ from ..core.load_contract_entry_context import (
     resolve_model_from_entry_context,
 )
 from ..core.native_view_contract_projection import inject_primary_view_projection
+from ..core.load_contract_boundary_helper import (
+    build_contract_response_payload,
+    build_unknown_model_message,
+    read_module_install_state,
+)
+from ..core.intent_execution_result import IntentExecutionResult
 from ..app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from ..core.platform_policy_defaults import get_model_code_mapping
 from ..utils.reason_codes import REASON_OK, REASON_PERMISSION_DENIED
@@ -86,17 +92,15 @@ class LoadContractHandler(BaseIntentHandler):
 
         # 模型存在性
         if not self._model_exists(model_name):
-            # 在 return 404 前追加：
-            try:
-                mod = self.env["ir.module.module"].sudo().search([("name","=","project")], limit=1)
-                mod_state = mod.state if mod else "not found"
-            except Exception:
-                mod_state = "unknown"
-
+            module_state = read_module_install_state(self.env, "project")
             return self._err(
                 404,
-                f"未知模型: {model_name or (raw_model or '').strip()} "
-                f"(db={self.env.cr.dbname}, module(project)={mod_state})"
+                build_unknown_model_message(
+                    model_name=model_name,
+                    raw_model=raw_model,
+                    dbname=self.env.cr.dbname,
+                    module_state=module_state,
+                ),
             )
 
         # ---------- 3) 视图类型 ----------
@@ -178,11 +182,23 @@ class LoadContractHandler(BaseIntentHandler):
         etag = hashlib.sha1(etag_source.encode("utf-8")).hexdigest()
 
         # ---------- 8) If-None-Match → 304 语义 ----------
-        if if_none_match and if_none_match == etag and not force_refresh:
-            return {"status": "not_modified", "code": 304, "data": None, "meta": {"etag": etag}}
-
-        meta_out = dict(meta); meta_out["etag"] = etag
-        return {"status": status, "code": 200, "data": data, "meta": meta_out}
+        response_payload = build_contract_response_payload(
+            status=status,
+            data=data,
+            meta=meta,
+            etag=etag,
+            if_none_match=if_none_match,
+            force_refresh=force_refresh,
+        )
+        if isinstance(response_payload, dict) and response_payload.get("status") == "success" and int(response_payload.get("code") or 200) == 200:
+            return IntentExecutionResult(
+                ok=True,
+                data=response_payload.get("data") or {},
+                meta=response_payload.get("meta") or {},
+                code=200,
+                status="success",
+            )
+        return response_payload
 
     def _model_exists(self, model_name: str) -> bool:
         name = str(model_name or "").strip()
@@ -464,7 +480,7 @@ class LoadContractHandler(BaseIntentHandler):
 
             return {
                 "layout_section_count": len(layout),
-                "layout": layout,
+                "layout_source": "views.form.layout",
                 "has_statusbar": isinstance(form_view.get("statusbar"), dict) and bool(form_view.get("statusbar")),
                 "has_notebook": any(isinstance(node, dict) and node.get("type") == "notebook" for node in layout),
                 "has_chatter": isinstance(form_view.get("chatter"), dict) and bool(form_view.get("chatter")),

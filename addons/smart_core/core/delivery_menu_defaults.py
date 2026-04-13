@@ -54,6 +54,9 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     scene_source = str(menu.get("scene_source") or "").strip()
     if scene_source:
         meta["scene_source"] = scene_source
+    delivery_bucket = str(menu.get("delivery_bucket") or "").strip()
+    if delivery_bucket:
+        meta["delivery_bucket"] = delivery_bucket
     return {
         "key": key,
         "label": label,
