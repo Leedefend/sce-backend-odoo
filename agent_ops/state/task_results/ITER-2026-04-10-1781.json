@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1781",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "structure_visibility_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    ],
+    "highlights": [
+      "generic/empty section titles now fallback to 信息分组 N",
+      "generic/empty tab labels now fallback to 页签 N",
+      "native-like mode now keeps section borders for structure visibility"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1781.md"
+  },
+  "risk_level": "low",
+  "next_step": "user visual check on same project form page"
+}

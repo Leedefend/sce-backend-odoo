@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-04-10-1779",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "consumer_structure_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue",
+      "frontend/apps/web/src/components/template/DetailCommandBar.vue",
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    ],
+    "highlights": [
+      "project detail command bar switched to native-like compact strip",
+      "header action strip now de-duplicates and hides technical labels",
+      "generic technical section titles are suppressed in detail shells"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1779.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "user visual regression on project detail and capture next delta screenshot"
+}

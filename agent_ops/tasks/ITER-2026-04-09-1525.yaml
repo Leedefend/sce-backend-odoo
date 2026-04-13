@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-09-1525
+title: backend refactor A3 intent alias duplication audit
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  审计公开 intent 面上的 alias 与重复语义入口，形成主入口/兼容入口清单，不直接替换运行时逻辑。
+
+user_visible_outcome:
+  - "可审计识别同语义多入口，输出后续合并迁移依据"
+
+scope:
+  allowed_paths:
+    - scripts/verify/intent_alias_duplication_audit.py
+    - artifacts/architecture/intent_alias_duplication_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1525.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1525.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1525.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+
+limits:
+  max_files: 6
+  max_output_lines: 260
+
+change_rules:
+  - audit only
+  - no runtime code mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance verification layer
+  module: Intent alias and duplicate surface audit
+  module_owner: scripts verify
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    入口命名与 alias 映射属于平台事实治理，不涉及业务语义修改。
+  reason: >
+    为后续合并 public intent surface 提供可审计事实证据，避免主链替换前盲改。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1525.yaml"
+    - "python3 scripts/verify/intent_alias_duplication_audit.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - intent alias duplication audit artifact
+
+rollback:
+  - git restore scripts/verify/intent_alias_duplication_audit.py artifacts/architecture/intent_alias_duplication_audit_v1.json
+
+depends_on:
+  - ITER-2026-04-09-1524
+

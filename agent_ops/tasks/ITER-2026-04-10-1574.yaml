@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-10-1574
+title: backend refactor C1-4 ui_contract objectization screen
+status: active
+type: governance
+priority: medium
+mode: screen
+batch: 1/1
+
+goal: >
+  对 ui_contract handler 的对象化迁移做前置筛查，冻结低风险切入点与禁止触达区。
+
+user_visible_outcome:
+  - "明确 ui_contract 对象化边界，避免直接进入高耦合分支"
+
+scope:
+  allowed_paths:
+    - docs/architecture/c1_4_ui_contract_objectization_screen_v1.md
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1574.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1574.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1574.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - screen only, no runtime code changes
+  - focus on low-risk success-path slices first
+  - freeze forbidden high-coupling branches for separate task lines
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Governance screening layer
+  module: ui_contract objectization
+  module_owner: smart_core handlers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅做迁移筛查，不改变业务事实与契约语义。
+  reason: >
+    C1-4 覆盖率已提升至 0.1765，下一阶段需评估 ui_contract 的可安全对象化切片。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1574.yaml"
+    - 'rg -n ''return \{"ok"|return self\._err|handle\(|_build_|_load_|_render_'' addons/smart_core/handlers/ui_contract.py'
+    - "rg -n \"Tier-1|Tier-2|Tier-3|forbidden branch|first safe slice\" docs/architecture/c1_4_ui_contract_objectization_screen_v1.md"
+    - "rg -n \"C1-4 ui_contract screen\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - ui_contract objectization screen doc
+
+rollback:
+  - git restore docs/architecture/c1_4_ui_contract_objectization_screen_v1.md docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1573

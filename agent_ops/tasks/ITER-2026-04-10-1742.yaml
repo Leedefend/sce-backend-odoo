@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-10-1742
+title: form render profile backend split remediation (FORM-007)
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 FORM-007 阻断：在 ui.contract 后端供给层实现 render profile 参数解析与三态分流，确保 create/edit/readonly 非同构输出。
+
+user_visible_outcome:
+  - "create/edit/readonly 在 contract 中获得可观测的表面差异"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1742.yaml
+    - addons/smart_core/handlers/ui_contract.py
+    - addons/smart_core/app_config_engine/services/contract_service.py
+    - addons/smart_core/v2/services/ui_contract_service.py
+    - addons/smart_core/v2/intents/schemas/ui_contract_schema.py
+    - artifacts/contract/form_render_profiles_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1742.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1742.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 900
+
+change_rules:
+  - backend contract-routing remediation only
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: backend scene-orchestration contract supply
+  module: ui.contract render profile routing
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修复 contract 分流语义，不改变业务事实。
+  reason: >
+    1741 审计显示三态同构，需在 handler+contract service 修复 profile 参数解析与表面分流。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1742.yaml"
+    - "python3 scripts/verify/form_render_profiles_audit.py --json"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - render profile backend split remediation patch
+
+rollback:
+  - "git restore addons/smart_core/handlers/ui_contract.py"
+  - "git restore addons/smart_core/app_config_engine/services/contract_service.py"
+
+depends_on:
+  - ITER-2026-04-10-1741

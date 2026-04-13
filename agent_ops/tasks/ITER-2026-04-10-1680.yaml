@@ -1,0 +1,96 @@
+task_id: ITER-2026-04-10-1680
+title: v2_primary minimum business usability validation
+
+type: governance
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  完成 v2_primary 下 focus intents 的最小业务链路可用性验证、v1/v2 漂移审计、
+  rollback 可恢复性复核，并将结果接入治理阻断门禁与最终 GO/NO-GO 决策文档。
+
+user_visible_outcome:
+  - "三条 focus intents 在 v2_primary 的真实业务可用性、差异风险与回滚能力可审计"
+
+scope:
+  allowed_paths:
+    - scripts/verify/v2_primary_minimum_business_smoke.py
+    - scripts/verify/v2_focus_intent_diff_audit.py
+    - scripts/verify/v2_rollback_readiness_recheck.py
+    - scripts/verify/v2_app_governance_gate_audit.py
+    - artifacts/v2/v2_primary_minimum_business_smoke_v1.json
+    - artifacts/v2/v1_v2_focus_intent_diff_report_v1.json
+    - artifacts/v2/v2_rollback_readiness_recheck_v1.json
+    - docs/ops/ITER-1680-business-usability-validation.md
+    - agent_ops/tasks/ITER-2026-04-10-1680.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1680.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1680.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 12
+  max_output_lines: 1400
+
+change_rules:
+  - no new intent and no cross-module migration
+  - no scene architecture refactor
+  - no business model mutation
+  - allow rollback recheck via temporary in-script policy switch and restore
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core focus-intent business usability verification
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只做运行可用性观测与漂移清单输出，不更改业务事实和权限。
+  reason: >
+    1679 已确认治理门禁通过，但需要补齐用户可用性生死线：可用、可解释差异、可回滚。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1680.yaml"
+    - "python3 scripts/verify/v2_primary_minimum_business_smoke.py --json"
+    - "python3 scripts/verify/v2_focus_intent_diff_audit.py --json"
+    - "python3 scripts/verify/v2_rollback_readiness_recheck.py --json"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - "python3 scripts/verify/v2_focus_intent_promotion_state_machine_audit.py --json"
+    - "python3 scripts/verify/v2_focus_intent_compare_failure_summary.py --json"
+    - "python3 -m py_compile scripts/verify/v2_primary_minimum_business_smoke.py scripts/verify/v2_focus_intent_diff_audit.py scripts/verify/v2_rollback_readiness_recheck.py"
+    - 'rg -n "smoke FAIL|diff P0/P1|rollback FAIL|v2_primary_minimum_business_smoke.py|v2_focus_intent_diff_audit.py|v2_rollback_readiness_recheck.py" scripts/verify/v2_app_governance_gate_audit.py docs/ops/ITER-1680-business-usability-validation.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - minimum business smoke evidence
+  - v1/v2 focus intent diff report with risk level
+  - rollback readiness recheck evidence
+  - GO/NO-GO decision document
+
+rollback:
+  - git restore scripts/verify/v2_primary_minimum_business_smoke.py scripts/verify/v2_focus_intent_diff_audit.py scripts/verify/v2_rollback_readiness_recheck.py scripts/verify/v2_app_governance_gate_audit.py artifacts/v2/v2_primary_minimum_business_smoke_v1.json artifacts/v2/v1_v2_focus_intent_diff_report_v1.json artifacts/v2/v2_rollback_readiness_recheck_v1.json docs/ops/ITER-1680-business-usability-validation.md
+
+depends_on:
+  - ITER-2026-04-10-1679

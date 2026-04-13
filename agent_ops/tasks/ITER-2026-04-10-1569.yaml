@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-10-1569
+title: backend refactor C1-4-2 dispatcher normalize supports IntentExecutionResult
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  在 intent_dispatcher._normalize_result_shape 中增加对象结果兼容，使 IntentExecutionResult 或具备 to_legacy_dict 的对象可被统一归一。
+
+user_visible_outcome:
+  - "对象化返回可稳定通过 dispatcher 归一链，不影响现有 dict/tuple/response 口径"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/intent_dispatcher.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1569.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1569.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1569.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 340
+
+change_rules:
+  - additive low-risk refactor only
+  - preserve external envelope behavior
+  - no business fact/ACL/financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Controller protocol adapter layer
+  module: intent_dispatcher
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅增强结果归一兼容能力，不改业务事实。
+  reason: >
+    按 C1-4 路线，完成 BaseIntentHandler 对象适配后，需同步 dispatcher 归一链兼容对象输入。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1569.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/intent_dispatcher.py"
+    - "rg -n \"to_legacy_dict|_normalize_result_shape\" addons/smart_core/controllers/intent_dispatcher.py"
+    - "rg -n \"C1-4-2 implement\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - dispatcher object-result normalize compatibility
+
+rollback:
+  - git restore addons/smart_core/controllers/intent_dispatcher.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1568

@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-10-1584
+title: backend refactor v2 add validator policy templates and registry-list intent
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在 v2 影子骨架上补齐 validator/policy 职责层，并新增一个真实只读意图 system.registry.list，形成更完整的职责链。
+
+user_visible_outcome:
+  - "v2 模块具备 validator/policy 分层与可验证只读意图"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/**
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1584.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1584.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1584.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 20
+  max_output_lines: 520
+
+change_rules:
+  - v2 shadow only
+  - additive low-risk implementation
+  - no cutover to legacy runtime
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel shadow refactor layer
+  module: smart_core v2 validator/policy/read-only intent
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅补齐架构职责模板与只读意图，不触碰业务事实。
+  reason: >
+    按方案A持续推进模块级重构，避免旧代码职责污染。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1584.yaml"
+    - "python3 -m py_compile addons/smart_core/v2/dispatcher.py addons/smart_core/v2/intents/registry.py addons/smart_core/v2/validators/base.py addons/smart_core/v2/policies/permission_policy.py addons/smart_core/v2/handlers/system/registry_list.py addons/smart_core/v2/builders/system_builder.py addons/smart_core/v2/services/system_service.py"
+    - 'rg -n "class BaseIntentValidatorV2|class PermissionPolicyV2|intent_name = \"system.registry.list\"|def list_registered_intents" addons/smart_core/v2'
+    - "rg -n \"v2 validator-policy-readonly intent batch\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 validator and policy template layer
+  - v2 system.registry.list read-only intent
+
+rollback:
+  - git restore addons/smart_core/v2 docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1583

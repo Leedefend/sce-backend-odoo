@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-10-1766
+title: form chatter and attachments surface closure
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  落地 FORM-Batch2 / Task 102-3：补齐 form contract 中 chatter 与 attachments
+  的承载语义，避免长期默认 false 且无关闭原因。
+
+user_visible_outcome:
+  - "form contract 返回 chatter.enabled/attachments.enabled 的可解释值"
+  - "关闭时提供 reason，开启时提供 source"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1766.yaml
+    - addons/smart_core/v2/services/ui_contract_service.py
+    - scripts/verify/form_chatter_attachment_audit.py
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1766.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1766.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 1200
+
+change_rules:
+  - backend contract semantic layer only
+  - additive compatibility-safe changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend contract semantic layer
+  module: form surface regions / chatter attachment semantics
+  module_owner: smart_core v2 service + verify script
+  kernel_or_scenario: kernel
+  reason: >
+    当前运行态 contract 对 chatter/attachments 缺少明确承载判定，
+    前端无法稳定做协同区域呈现与关闭解释。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1766.yaml"
+    - "python3 scripts/verify/form_chatter_attachment_audit.py --json --input tmp/json/form.json"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - chatter/attachment surface closure patch
+  - runtime chatter/attachment audit artifact
+
+rollback:
+  - "git restore addons/smart_core/v2/services/ui_contract_service.py"
+  - "git restore scripts/verify/form_chatter_attachment_audit.py"
+
+depends_on:
+  - ITER-2026-04-10-1765

@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1812",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "frontend_gate_probe": "PASS",
+    "frontend_restart": "PASS",
+    "runtime_api_probe": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "removed collaboration block preferNative visibility gate",
+      "kept semantic/compact/chatter-attachment guards"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1812.md"
+  },
+  "risk_level": "low",
+  "next_step": "user refresh and verify collaboration section now visible"
+}

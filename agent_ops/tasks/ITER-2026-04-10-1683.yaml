@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-10-1683
+title: unify menu api to native http envelope without odoo jsonrpc wrapper
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  将 /api/menu/tree、/api/user_menus、/api/menu/navigation 统一为我们自定义的 http json 输出，
+  避免 Odoo type=json 的 JSON-RPC 包装导致前端消费链错位。
+
+user_visible_outcome:
+  - "菜单接口返回不再携带 jsonrpc/result 包装"
+  - "前端消费 /api/menu/navigation 可直接读取 nav_fact/nav_explained"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/platform_menu_api.py
+    - frontend/apps/web/src/composables/useNavigationMenu.ts
+    - agent_ops/tasks/ITER-2026-04-10-1683.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1683.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1683.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 800
+
+change_rules:
+  - api envelope unification only
+  - no business fact changes
+  - no schema migration
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend API controller envelope layer
+  module: smart_core platform menu api
+  module_owner: addons/smart_core/controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    该批次只统一菜单导航语义的交付包裹形态（transport envelope），不改业务事实与权限事实。
+  reason: >
+    type=json 会自动注入 JSON-RPC envelope，前端契约消费按自定义 envelope 读取时出现树为空。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1683.yaml"
+    - "rg -n \"/api/menu/tree|/api/user_menus|/api/menu/navigation\" addons/smart_core/controllers/platform_menu_api.py"
+    - "python3 -m py_compile addons/smart_core/controllers/platform_menu_api.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - menu api uses http json response envelope only
+
+rollback:
+  - git restore addons/smart_core/controllers/platform_menu_api.py
+  - git restore frontend/apps/web/src/composables/useNavigationMenu.ts
+
+depends_on:
+  - ITER-2026-04-10-1682

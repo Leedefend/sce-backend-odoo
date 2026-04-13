@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-04-10-1775",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "dry_run_with_gap_report": "PASS",
+    "apply_import_with_dispatch": "PASS",
+    "runtime_sample_check": "PASS"
+  },
+  "metrics": {
+    "source_row_count": 694,
+    "project_dispatch_rows": 694,
+    "project_updated_count": 694,
+    "ledger_created_count": 703,
+    "ledger_updated_count": 614,
+    "gap_coverage": {
+      "total_source_fields": 38,
+      "mapped_source_fields": 13,
+      "unmapped_source_fields": 25
+    }
+  },
+  "evidence": {
+    "source_txt": "tmp/项目业务关键信息提取.txt",
+    "xml_output": "tmp/customer_project_metrics_import.xml",
+    "gap_report": "artifacts/import/customer_metrics_mapping_gap_v1.json",
+    "rollback_snapshot": "tmp/customer_metrics_import.rollback.json",
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1775.md"
+  },
+  "conclusion": "Importer now dispatches mapped metrics into business models and provides explicit field-level gap report for unmapped metrics.",
+  "risk_level": "medium-low",
+  "next_step": "open dedicated high-risk accounting/funding mapping batch for unresolved gap fields"
+}

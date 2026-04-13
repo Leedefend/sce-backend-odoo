@@ -1,0 +1,82 @@
+task_id: ITER-2026-04-10-1777
+title: frontend form consumer structure alignment iteration
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  完成 form 页面消费对齐迭代，优先修复前端消费路径对 contract 结构语义的还原不足，
+  使项目详情页在结构层更接近原生 form。
+
+user_visible_outcome:
+  - "项目详情页可稳定渲染 notebook/page 分页结构"
+  - "分组标题和字段布局不再退化为泛化默认区块"
+  - "表单主体区域密度与宽度明显提升"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1777.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts
+    - frontend/apps/web/src/components/template/detailLayout.types.ts
+    - frontend/apps/web/src/components/template/DetailShellLayout.vue
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1777.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1777.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 1200
+
+change_rules:
+  - frontend contract-consumer runtime only
+  - no backend semantic mutation in this batch
+  - additive compatibility-safe adjustments
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: form structure consumer and detail shell renderer
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    用户明确要求先完成消费对齐迭代；当前 contract 已包含 notebook/page/group/header 等结构，
+    需先修复前端消费还原不足导致的页面结构偏差。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1777.yaml"
+    - "rg -n \"resolveLayoutNodeLabel|attributes.string|columns|shell.tabs|projectDetailStructureAlignMode\" frontend/apps/web/src/pages/ContractFormPage.vue frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts frontend/apps/web/src/components/template/DetailShellLayout.vue"
+
+risk:
+  level: medium-low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - frontend form consumer alignment patch
+  - iteration report and task result
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts frontend/apps/web/src/components/template/detailLayout.types.ts frontend/apps/web/src/components/template/DetailShellLayout.vue"
+
+depends_on:
+  - ITER-2026-04-10-1776

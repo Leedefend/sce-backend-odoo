@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-10-1614
+title: backend refactor refresh governance output schema expected checks semantics
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  更新 v2_app_governance_output_schema_v1 快照语义，新增 expected_checks 列表并在 schema audit 中校验，
+  确保治理门禁扩容后检查集合可审计。
+
+user_visible_outcome:
+  - "治理输出快照不仅校验结构，还校验检查集合"
+
+scope:
+  allowed_paths:
+    - artifacts/v2/v2_app_governance_output_schema_v1.json
+    - scripts/verify/v2_app_governance_output_schema_audit.py
+    - docs/ops/v2_app_governance_gate_usage_v1.md
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - docs/architecture/backend_core_v2_rebuild_spec_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1614.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1614.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1614.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 10
+  max_output_lines: 760
+
+change_rules:
+  - v2 independent rebuild only
+  - additive schema guard semantics
+  - no legacy runtime cutover
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 governance output schema guard
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只增强治理审计可观测性，不涉及业务事实。
+  reason: >
+    连续重构中治理门禁检查项扩容后，需要冻结 expected_checks 语义防止静默漂移。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1614.yaml"
+    - "python3 scripts/verify/v2_app_governance_output_schema_audit.py --json"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - 'rg -n "expected_checks" artifacts/v2/v2_app_governance_output_schema_v1.json scripts/verify/v2_app_governance_output_schema_audit.py docs/ops/v2_app_governance_gate_usage_v1.md'
+    - 'rg -n "governance expected_checks snapshot batch" docs/architecture/backend_core_refactor_blueprint_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - governance output schema expected_checks guard
+
+rollback:
+  - git restore artifacts/v2/v2_app_governance_output_schema_v1.json scripts/verify/v2_app_governance_output_schema_audit.py docs/ops/v2_app_governance_gate_usage_v1.md docs/architecture/backend_core_refactor_blueprint_v1.md docs/architecture/backend_core_v2_rebuild_spec_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1613

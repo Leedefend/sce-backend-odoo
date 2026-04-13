@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1679
+title: focus intent v2_primary smoke and rollback readiness
+
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在三条 focus intents 已切换至 v2_primary 后，执行运行期 smoke 与回滚就绪性验证，
+  输出可审计证据，确保后续可继续迭代且可安全回退。
+
+user_visible_outcome:
+  - "v2_primary 运行期链路可用且 rollback-ready 快照有效"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1679.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1679.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1679.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 4
+  max_output_lines: 800
+
+change_rules:
+  - validation evidence only
+  - no code/path policy mutation in this batch
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core focus-intent v2_primary runtime readiness
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅验证路由编排后的运行态可用性和回滚就绪性，不涉及业务事实变更。
+  reason: >
+    1678 完成受控提升后，需要证据化确认 v2_primary 可运行并保留可回退能力。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1679.yaml"
+    - "python3 scripts/verify/v2_dual_track_route_policy_audit.py --json"
+    - "python3 scripts/verify/v2_focus_intent_promotion_state_machine_audit.py --json"
+    - "python3 scripts/verify/v2_focus_intent_compare_failure_summary.py --json"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - 'rg -n "session.bootstrap|meta.describe_model|ui.contract|v2_primary" artifacts/v2/v2_intent_route_policy_v1.json'
+    - 'rg -n "rollback_target_mode|session.bootstrap|meta.describe_model|ui.contract|v2_shadow" artifacts/v2/v2_focus_intent_route_policy_rollback_v1.json'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2_primary smoke and rollback-readiness verification evidence
+
+rollback:
+  - no repository mutation in this batch
+
+depends_on:
+  - ITER-2026-04-10-1678

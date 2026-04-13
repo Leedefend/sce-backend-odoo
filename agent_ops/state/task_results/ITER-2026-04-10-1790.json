@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1790",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "default_shell_projection_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts"
+    ],
+    "highlights": [
+      "default kind no longer starts a new shell container",
+      "default shell title now reuses current shell title to avoid noise"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1790.md"
+  },
+  "risk_level": "low",
+  "next_step": "continue tab/shell semantic dedup and collect refreshed projection summary"
+}

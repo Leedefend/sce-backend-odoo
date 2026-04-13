@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1804",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "projection_runtime_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts"
+    ],
+    "highlights": [
+      "recursive page recovery for notebook tab projection",
+      "page-key dedupe for notebook tabs",
+      "global recursive orphan-page fallback"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1804.md"
+  },
+  "risk_level": "low",
+  "next_step": "refresh target form and confirm detail_shell_raw tab count recovers"
+}

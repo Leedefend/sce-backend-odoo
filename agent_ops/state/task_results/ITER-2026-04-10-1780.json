@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1780",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "node_kind_projection_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "layout node kind normalization now recovers notebook/page/group from container and missing-type nodes",
+      "node.name fallback now requires human-readable label"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1780.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "manual regression on project form structure visibility"
+}

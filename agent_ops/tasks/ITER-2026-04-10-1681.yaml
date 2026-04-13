@@ -1,0 +1,86 @@
+task_id: ITER-2026-04-10-1681
+title: focus intent meta.describe_model field-surface restoration
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 meta.describe_model 在 v2_primary/v2_shadow 下 fields 为空问题，
+  恢复最小业务可用字段面并解除 ITER-1680 的 smoke/rollback 阻断。
+
+user_visible_outcome:
+  - "meta.describe_model 返回非空字段面，1680 阻断校验可通过"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/services/meta_service.py
+    - addons/smart_core/v2/services/meta_describe_model_service.py
+    - addons/smart_core/v2/builders/meta_describe_model_response_builder.py
+    - addons/smart_core/v2/contracts/results/meta_describe_model_result.py
+    - agent_ops/tasks/ITER-2026-04-10-1681.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1681.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1681.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 1200
+
+change_rules:
+  - fix only focus-intent field-surface root cause
+  - no new intents and no cross-module migration
+  - no scene architecture refactor
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core meta.describe_model field-surface restoration
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修复 contract 消费所需字段语义供给，不改业务事实与权限域。
+  reason: >
+    ITER-1680 阻断根因为 meta.describe_model fields 为空，必须先修复后再推进。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1681.yaml"
+    - "python3 scripts/verify/v2_meta_describe_model_execution_audit.py --json"
+    - "python3 scripts/verify/v2_meta_describe_model_contract_audit.py --json"
+    - "python3 scripts/verify/v2_primary_minimum_business_smoke.py --json"
+    - "python3 scripts/verify/v2_rollback_readiness_recheck.py --json"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - "python3 -m py_compile addons/smart_core/v2/services/meta_service.py addons/smart_core/v2/services/meta_describe_model_service.py addons/smart_core/v2/builders/meta_describe_model_response_builder.py addons/smart_core/v2/contracts/results/meta_describe_model_result.py"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - meta.describe_model non-empty field surface restoration with 1680 blockers cleared
+
+rollback:
+  - git restore addons/smart_core/v2/services/meta_service.py addons/smart_core/v2/services/meta_describe_model_service.py addons/smart_core/v2/builders/meta_describe_model_response_builder.py addons/smart_core/v2/contracts/results/meta_describe_model_result.py
+
+depends_on:
+  - ITER-2026-04-10-1680

@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-10-1635
+title: v2 execute_button minimal execution closure
+
+type: product
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  打通 execute_button 最小执行闭环：dispatcher -> schema -> handler -> envelope，
+  并补 execution/failure-path 专项审计。
+
+user_visible_outcome:
+  - "execute_button 在 v2 中可真实执行且失败路径可观测"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/handlers/domain/execute_button.py
+    - addons/smart_core/v2/intents/schemas/execute_button_schema.py
+    - scripts/verify/v2_execute_button_execution_audit.py
+    - scripts/verify/v2_execute_button_failure_path_audit.py
+    - agent_ops/tasks/ITER-2026-04-10-1635.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1635.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1635.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 1000
+
+change_rules:
+  - batch B execution closure only
+  - no write semantics expansion
+  - no governance expansion
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 execute button execution closure
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    execute_button 属于操作事实入口，本批仅最小执行与可观测闭环，不实现业务写副作用。
+  reason: >
+    按 B 批次验证操作链可执行与失败路径闭环。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1635.yaml"
+    - "python3 scripts/verify/v2_execute_button_execution_audit.py --json"
+    - "python3 scripts/verify/v2_execute_button_failure_path_audit.py --json"
+    - "python3 -m py_compile addons/smart_core/v2/handlers/domain/execute_button.py addons/smart_core/v2/intents/schemas/execute_button_schema.py scripts/verify/v2_execute_button_execution_audit.py scripts/verify/v2_execute_button_failure_path_audit.py"
+    - 'rg -n "raise_handler_error|schema_validated|execute_button" addons/smart_core/v2/handlers/domain/execute_button.py addons/smart_core/v2/intents/schemas/execute_button_schema.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - execute_button minimal execution closure with failure-path audits
+
+rollback:
+  - git restore addons/smart_core/v2/handlers/domain/execute_button.py addons/smart_core/v2/intents/schemas/execute_button_schema.py scripts/verify/v2_execute_button_execution_audit.py scripts/verify/v2_execute_button_failure_path_audit.py
+
+depends_on:
+  - ITER-2026-04-10-1634

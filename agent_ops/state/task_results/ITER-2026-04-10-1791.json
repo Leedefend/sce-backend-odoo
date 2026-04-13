@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1791",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "shell_title_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "structure summary now filters empty shells",
+      "summary titles now normalize generic shell names and deduplicate"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1791.md"
+  },
+  "risk_level": "low",
+  "next_step": "continue tab-title and section-title semantic alignment"
+}

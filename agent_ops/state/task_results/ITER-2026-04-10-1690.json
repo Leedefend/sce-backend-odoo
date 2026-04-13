@@ -1,0 +1,18 @@
+{
+  "task_id": "ITER-2026-04-10-1690",
+  "status": "FAIL",
+  "mode": "verify",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "v2_app_governance_gate_audit": "PASS",
+    "unified_system_menu_click_usability_smoke": "FAIL"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1690.md",
+    "smoke_summary": "artifacts/codex/unified-system-menu-click-usability-smoke/20260411T141821Z/summary.json",
+    "failed_cases": "artifacts/codex/unified-system-menu-click-usability-smoke/20260411T141821Z/failed_cases.json"
+  },
+  "conclusion": "visible error/empty evidence checkpoint failed due to one unstable menu navigation case",
+  "risk_level": "P1",
+  "next_step": "STOP: open dedicated low-risk remediation task for menu 377 loading timeout and rerun smoke"
+}

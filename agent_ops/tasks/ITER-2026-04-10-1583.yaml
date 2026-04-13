@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1583
+title: backend refactor v2 shadow module scaffold with clean architecture chain
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在 smart_core 内建立 v2 影子重构骨架，提供职责清晰的最小闭环（registry -> dispatcher -> handler -> service -> builder -> envelope），
+  且不影响现有运行入口。
+
+user_visible_outcome:
+  - "v2 影子模块可独立演进，不受旧模块代码结构影响"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/**
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1583.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1583.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1583.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 20
+  max_output_lines: 500
+
+change_rules:
+  - shadow module only
+  - no legacy runtime cutover
+  - no business fact / ACL semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel shadow refactor layer
+  module: smart_core v2 scaffold
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅搭建架构职责链路骨架，不触碰业务事实。
+  reason: >
+    用户授权按方案A进行模块级重构，先在同模块内建立职责清晰、可验证、可替换的 v2 影子实现。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1583.yaml"
+    - "python3 -m py_compile addons/smart_core/v2/__init__.py addons/smart_core/v2/dispatcher.py addons/smart_core/v2/intents/registry.py addons/smart_core/v2/handlers/base.py addons/smart_core/v2/handlers/system/ping.py addons/smart_core/v2/services/system_service.py addons/smart_core/v2/builders/system_builder.py addons/smart_core/v2/contracts/envelope.py"
+    - 'rg -n "def dispatch_intent\(|intent_name = \"system.ping\"|def build_ping_contract\(" addons/smart_core/v2'
+    - 'rg -n "class IntentRegistry|class IntentDispatcher|class BaseIntentHandlerV2|def make_envelope" addons/smart_core/v2'
+    - "rg -n \"v2 shadow scaffold\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - smart_core v2 shadow architecture scaffold
+
+rollback:
+  - git restore addons/smart_core/v2 docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1582

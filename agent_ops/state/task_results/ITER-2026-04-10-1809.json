@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1809",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "safe_visibility_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "restore technical/hidden semantic filters in align mode",
+      "keep tab-integrity by not re-enabling advanced/core gating"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1809.md"
+  },
+  "risk_level": "low",
+  "next_step": "user verify content remains in business tabs while technical noise is reduced"
+}

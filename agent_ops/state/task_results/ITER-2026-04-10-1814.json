@@ -1,0 +1,38 @@
+{
+  "task_id": "ITER-2026-04-10-1814",
+  "status": "FAIL",
+  "decision": "NO-GO",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "verify_product_release_ready": "FAIL",
+    "verify_e2e_contract": "PASS",
+    "verify_smart_core": "PASS"
+  },
+  "failure_matrix": {
+    "verify.product.release.ready": {
+      "exit_code": 2,
+      "reason": "platform_performance_smoke threshold exceeded on system.init"
+    },
+    "verify.e2e.contract": {
+      "exit_code": 0,
+      "reason": "pass"
+    },
+    "verify.smart_core": {
+      "exit_code": 0,
+      "reason": "pass"
+    }
+  },
+  "evidence": {
+    "exit_codes": "artifacts/release/ITER-2026-04-10-1814.exit_codes.txt",
+    "logs": [
+      "artifacts/release/ITER-2026-04-10-1814.verify_product_release_ready.log",
+      "artifacts/release/ITER-2026-04-10-1814.verify_e2e_contract.log",
+      "artifacts/release/ITER-2026-04-10-1814.verify_smart_core.log"
+    ],
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1814.md"
+  },
+  "risk_level": "medium",
+  "stop_condition": "acceptance_command_failed",
+  "next_step": "recalibrate platform_performance_smoke baseline then rerun release chain"
+}

@@ -1,0 +1,75 @@
+task_id: ITER-2026-04-09-1529
+title: backend refactor B2 request validator skeleton
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  在 dispatcher 流程中引入 Request Validator 骨架，统一 payload/context 类型校验与错误口径。
+
+user_visible_outcome:
+  - "dispatcher 具备显式请求校验入口，后续 schema 校验可在同一位置扩展"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/intent_dispatcher.py
+    - agent_ops/tasks/ITER-2026-04-09-1529.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1529.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1529.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/core/intent_router.py
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+
+change_rules:
+  - additive validator skeleton only
+  - no policy semantics change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Dispatcher orchestration layer
+  module: request validator skeleton
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅在调度层添加校验入口，不涉及业务事实层。
+  reason: >
+    为后续 schema/contract 校验统一入口打基础，避免散落式 if/else 校验回流。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1529.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/intent_dispatcher.py"
+    - 'rg -n "def _validate_dispatch_request\\(|validation_errors" addons/smart_core/controllers/intent_dispatcher.py'
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - request validator skeleton integrated in dispatcher flow
+
+rollback:
+  - git restore addons/smart_core/controllers/intent_dispatcher.py
+
+depends_on:
+  - ITER-2026-04-09-1528
+

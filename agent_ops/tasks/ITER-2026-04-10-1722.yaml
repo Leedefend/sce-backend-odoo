@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-10-1722
+title: industry project ledger menu rename for delivery
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  将行业模块中的“项目台账（试点）”统一为“项目台账”，确保可直接下发给用户的正式菜单命名一致。
+
+user_visible_outcome:
+  - "菜单名称统一为项目台账"
+  - "场景注册与列表配置不再出现试点字样"
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/views/menu.xml
+    - addons/smart_construction_scene/data/sc_scene_orchestration.xml
+    - addons/smart_construction_scene/data/sc_scene_list_profile.xml
+    - addons/smart_construction_scene/profiles/scene_registry_content.py
+    - agent_ops/tasks/ITER-2026-04-10-1722.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1722.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1722.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 8
+  max_output_lines: 700
+
+change_rules:
+  - naming convergence only
+  - no business logic or schema changes
+  - no new menu structure
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: scene_orchestration + domain menu metadata
+  module: smart_construction_core / smart_construction_scene
+  module_owner: industry modules
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅做用户可见菜单语义命名收敛，不改业务事实与规则。
+  reason: >
+    用户要求行业模块菜单去除“试点”字样，形成可下发用户的正式命名。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1722.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - unified menu naming patch for project ledger
+
+rollback:
+  - "git restore addons/smart_construction_core/views/menu.xml"
+  - "git restore addons/smart_construction_scene/data/sc_scene_orchestration.xml"
+  - "git restore addons/smart_construction_scene/data/sc_scene_list_profile.xml"
+  - "git restore addons/smart_construction_scene/profiles/scene_registry_content.py"
+
+depends_on:
+  - ITER-2026-04-10-1721

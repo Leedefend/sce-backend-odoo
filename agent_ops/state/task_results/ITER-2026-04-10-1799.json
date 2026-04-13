@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-10-1799",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "fallback_selection_probe": "PASS",
+    "backend_restart": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "addons/smart_core/app_config_engine/models/app_view_config.py"
+    ],
+    "highlights": [
+      "form fallback now selects richest model form view when action has no explicit form binding",
+      "candidate scoring uses notebook/page density to preserve business tabs"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1799.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "refresh UI and verify business tabs are now projected from views.form.layout"
+}

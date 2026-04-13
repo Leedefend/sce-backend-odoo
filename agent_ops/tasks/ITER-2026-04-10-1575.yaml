@@ -1,0 +1,80 @@
+task_id: ITER-2026-04-10-1575
+title: backend refactor C1-4 ui_contract Tier-1 success-path objectization
+type: governance
+status: active
+priority: medium
+mode: implement
+batch: 1/1
+
+goal: >
+  按 1574 冻结方案，仅将 ui_contract 主成功返回分支切换为 IntentExecutionResult，保持错误分支与高耦合逻辑不变。
+
+user_visible_outcome:
+  - "ui_contract 在不改变语义的情况下进入对象化迁移链路"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/handlers/ui_contract.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1575.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1575.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1575.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 320
+
+change_rules:
+  - Tier-1 safe slice only
+  - do not modify _err branches
+  - do not modify scene/delivery/permission logic
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Handler use-case orchestration layer
+  module: ui_contract
+  module_owner: smart_core handlers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只调整主成功返回封装，不改变业务事实与解释层逻辑。
+  reason: >
+    1574 已冻结 safe slice，本批执行 Tier-1 主成功分支对象化，验证高耦合 handler 的可控迁移。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1575.yaml"
+    - "python3 -m py_compile addons/smart_core/handlers/ui_contract.py"
+    - 'rg -n ''IntentExecutionResult|return \{"ok": True, "data": data or \{\}, "meta": meta_out\}|return self\._err'' addons/smart_core/handlers/ui_contract.py'
+    - "python3 scripts/verify/handler_output_style_audit.py --json"
+    - "rg -n \"C1-4 ui_contract Tier-1 implement\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - ui_contract Tier-1 success-path objectization
+
+rollback:
+  - git restore addons/smart_core/handlers/ui_contract.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1574

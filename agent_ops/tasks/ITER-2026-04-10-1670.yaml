@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-10-1670
+title: v2 load_metadata registry closure
+
+type: product
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  按 v2 A/4 批次完成 load_metadata 的注册与寻址闭环，
+  新增最小 schema/handler 占位并提供专项 registry 审计。
+
+user_visible_outcome:
+  - "load_metadata 已进入 v2 registry，具备可达与可审计基础"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/intents/registry.py
+    - addons/smart_core/v2/intents/schemas/load_metadata_schema.py
+    - addons/smart_core/v2/intents/schemas/__init__.py
+    - addons/smart_core/v2/handlers/meta/load_metadata.py
+    - addons/smart_core/v2/handlers/meta/__init__.py
+    - scripts/verify/v2_load_metadata_registry_audit.py
+    - agent_ops/tasks/ITER-2026-04-10-1670.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1670.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1670.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 10
+  max_output_lines: 1200
+
+change_rules:
+  - batch A registry closure only
+  - no load_metadata business semantics migration
+  - no parser or UI contract deep changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 load_metadata registry closure
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: business_fact
+  backend_sub_layer_reason: >
+    本批仅扩展 load_metadata 在 v2 的注册、schema/handler 最小占位与审计，
+    不进入元数据深层解析或前端交付语义。
+  reason: >
+    复用 v2 样板迁移节奏，推进 load_metadata 的可寻址、可比较、可审计闭环。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1670.yaml"
+    - "python3 scripts/verify/v2_load_metadata_registry_audit.py --json"
+    - "python3 scripts/verify/v2_intent_comparison_audit.py --json"
+    - "python3 -m py_compile addons/smart_core/v2/intents/schemas/load_metadata_schema.py addons/smart_core/v2/handlers/meta/load_metadata.py scripts/verify/v2_load_metadata_registry_audit.py"
+    - 'rg -n "load_metadata|LoadMetadata" addons/smart_core/v2/intents/registry.py addons/smart_core/v2/intents/schemas/__init__.py addons/smart_core/v2/handlers/meta/__init__.py scripts/verify/v2_load_metadata_registry_audit.py'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - load_metadata v2 registry closure with minimal schema/handler placeholders and dedicated audit
+
+rollback:
+  - git restore addons/smart_core/v2/intents/registry.py addons/smart_core/v2/intents/schemas/load_metadata_schema.py addons/smart_core/v2/intents/schemas/__init__.py addons/smart_core/v2/handlers/meta/load_metadata.py addons/smart_core/v2/handlers/meta/__init__.py scripts/verify/v2_load_metadata_registry_audit.py
+
+depends_on:
+  - ITER-2026-04-10-1669

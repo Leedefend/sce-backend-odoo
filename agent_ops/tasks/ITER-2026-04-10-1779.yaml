@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1779
+title: frontend project form structure delta closure round 3
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  继续执行项目详情页消费对齐，聚焦可见结构差异：状态/动作条原生化、分组标题去技术化、
+  主体区间距压缩。
+
+user_visible_outcome:
+  - "状态条与动作条更接近原生位置与视觉"
+  - "信息分组技术标题进一步减少"
+  - "表单核心区域更紧凑，减少空白断层"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1779.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/components/template/DetailCommandBar.vue
+    - frontend/apps/web/src/components/template/DetailShellLayout.vue
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1779.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1779.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 1200
+
+change_rules:
+  - frontend contract-consumer runtime only
+  - no backend semantic mutation
+  - additive compatibility-safe changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: project form structure rendering
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    用户要求继续迭代，当前页面与原生仍有明显结构差异，需要继续做消费层闭环收敛。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1779.yaml"
+    - "rg -n \"native-like|isGenericSectionTitle|form-grid--project-align|page-command-bar--native\" frontend/apps/web/src/pages/ContractFormPage.vue frontend/apps/web/src/components/template/DetailCommandBar.vue frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    - "make frontend.restart"
+
+risk:
+  level: medium-low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - frontend project form alignment patch
+  - iteration report and task result
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue frontend/apps/web/src/components/template/DetailCommandBar.vue frontend/apps/web/src/components/template/DetailShellLayout.vue"
+
+depends_on:
+  - ITER-2026-04-10-1778

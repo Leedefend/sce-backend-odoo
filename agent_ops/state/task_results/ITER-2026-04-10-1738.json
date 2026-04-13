@@ -1,0 +1,16 @@
+{
+  "task_id": "ITER-2026-04-10-1738",
+  "status": "PASS_WITH_RISK",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "form_subview_relation_audit": "PASS"
+  },
+  "evidence": {
+    "audit_artifact": "artifacts/contract/form_subview_relation_v1.json",
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1738.md"
+  },
+  "conclusion": "x2many subviews missing for task_ids/collaborator_ids",
+  "risk_level": "high",
+  "next_step": "open FORM-005 remediation batch for subview provisioning"
+}

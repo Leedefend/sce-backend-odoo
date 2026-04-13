@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-10-1800
+title: runtime-user-first form view retrieval fix
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 sudo 取视图导致用户组继承视图丢失的问题，确保 contract form 结构与原生用户态一致。
+
+user_visible_outcome:
+  - "当前登录用户在原生可见的业务 form 页签能进入 contract"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1800.yaml
+    - addons/smart_core/app_config_engine/models/app_view_config.py
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1800.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1800.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - backend contract retrieval only
+  - no acl/rule/manifest changes
+  - additive compatibility-safe changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend contract semantic layer
+  module: app.view.config _safe_get_view_data
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  reason: >
+    当前 contract 视图使用 sudo 读取，可能漏掉基于用户组条件加载的 inherited view，导致业务 tab 缺失。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1800.yaml"
+    - 'rg -n "ModelRuntime|ModelSudo|runtime_user" addons/smart_core/app_config_engine/models/app_view_config.py'
+    - "make restart"
+    - "make frontend.restart"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - runtime-user-first view retrieval patch
+  - iteration report and task result
+
+rollback:
+  - "git restore addons/smart_core/app_config_engine/models/app_view_config.py"
+
+depends_on:
+  - ITER-2026-04-10-1799

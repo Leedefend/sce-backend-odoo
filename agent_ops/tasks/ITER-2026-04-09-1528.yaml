@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-09-1528
+title: backend refactor B2 dispatcher pure-dispatch extraction slice
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  继续对 intent_dispatcher 抽离：将 _execute_intent_request 内请求准备与响应封装拆分为独立 helper，向 pure-dispatch 结构演进。
+
+user_visible_outcome:
+  - "dispatcher 代码分层更清晰，后续 validator 与 envelope 收口可独立推进"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/intent_dispatcher.py
+    - agent_ops/tasks/ITER-2026-04-09-1528.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1528.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1528.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/smart_core/core/intent_router.py
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+
+limits:
+  max_files: 5
+  max_output_lines: 320
+
+change_rules:
+  - preserve runtime semantics
+  - extraction only
+  - no policy changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Dispatcher orchestration layer
+  module: intent dispatcher pure-dispatch slice
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅做 dispatcher 流程拆分，不改业务事实层。
+  reason: >
+    通过 helper 分层将 dispatcher 转为流程编排壳，减少处理细节耦合。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1528.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/intent_dispatcher.py"
+    - "python3 scripts/verify/controller_thin_guard_audit.py"
+    - 'rg -n "def _prepare_dispatch_request\\(|def _finalize_dispatch_response\\(" addons/smart_core/controllers/intent_dispatcher.py'
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - dispatcher helper extraction slice
+
+rollback:
+  - git restore addons/smart_core/controllers/intent_dispatcher.py
+
+depends_on:
+  - ITER-2026-04-09-1527
+

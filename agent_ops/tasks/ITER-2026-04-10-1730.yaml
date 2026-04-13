@@ -1,0 +1,77 @@
+task_id: ITER-2026-04-10-1730
+title: project form action-bound contract parity verification
+
+type: verification
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  在真实运行环境验证 project.project 表单契约是否已提供 action=531 对齐的 notebook/page
+  结构，并输出可核验证据用于前端消费路径判断。
+
+user_visible_outcome:
+  - "明确区分 backend contract 供给问题与 frontend consumer 对齐问题"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1730.yaml
+    - artifacts/tmp/project_form_action531_contract_verify_v1.json
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1730.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1730.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 500
+
+change_rules:
+  - verification artifact/report only
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: backend scene-orchestration contract supply verification
+  module: smart_core ui.contract action-bound form contract chain
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批只验证后端结构语义供给（layout/notebook/page），不改业务事实与前端渲染策略。
+  reason: >
+    用户反馈项目详情结构与原生差异较大，需要先确认后端 action 绑定契约是否完整供给。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1730.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - action-bound form contract verification artifact with parity conclusion
+
+rollback:
+  - "git restore agent_ops/tasks/ITER-2026-04-10-1730.yaml"
+
+depends_on:
+  - ITER-2026-04-10-1729

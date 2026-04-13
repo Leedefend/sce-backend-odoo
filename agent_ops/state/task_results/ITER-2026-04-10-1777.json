@@ -1,0 +1,28 @@
+{
+  "task_id": "ITER-2026-04-10-1777",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "consumer_alignment_probe": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue",
+      "frontend/apps/web/src/app/runtime/detailLayoutRuntime.ts",
+      "frontend/apps/web/src/components/template/detailLayout.types.ts",
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    ],
+    "highlights": [
+      "layout label fallback now consumes attributes.string/title/name",
+      "container semantic mapping restored for oe_title and oe_button_box",
+      "detail sections now consume columns metadata (1/2)",
+      "project detail tab filtering relaxed to avoid over-prune"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1777.md"
+  },
+  "risk_level": "medium-low",
+  "next_step": "manual frontend regression on project detail structure alignment"
+}

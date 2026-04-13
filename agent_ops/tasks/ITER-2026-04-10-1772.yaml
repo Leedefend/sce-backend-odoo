@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-10-1772
+title: frontend tri-profile interaction sampling verify
+
+type: implementation
+status: active
+priority: high
+mode: verify
+batch: 1/1
+
+goal: >
+  对 create/edit/readonly 三态进行运行态抽样验证，确认 render_surfaces 契约与前端消费切换已经形成闭环。
+
+user_visible_outcome:
+  - "给出三态 action/subview policy 差异验证结果"
+  - "给出前端消费切换关键点存在性结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1772.yaml
+    - scripts/verify/form_tri_profile_surface_sample_audit.py
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1772.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1772.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - verify-only batch
+  - no runtime code change
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: tri-profile interaction verify
+  module_owner: frontend/apps/web + verify scripts
+  kernel_or_scenario: scenario
+  reason: >
+    已完成契约与消费切换，需要用统一脚本验证三态差异是否可观测且前端消费点存在。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1772.yaml"
+    - "python3 scripts/verify/form_tri_profile_surface_sample_audit.py --json"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - tri-profile sample verify artifact
+
+rollback:
+  - "git restore scripts/verify/form_tri_profile_surface_sample_audit.py"
+
+depends_on:
+  - ITER-2026-04-10-1771

@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1810",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "collaboration_visibility_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "re-enabled collaboration block under align mode",
+      "kept semantic chatter/attachment guards"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1810.md"
+  },
+  "risk_level": "low",
+  "next_step": "user verify chatter and attachment section visibility"
+}

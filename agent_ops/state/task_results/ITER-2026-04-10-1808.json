@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1808",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "visibility_restore_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/pages/ContractFormPage.vue"
+    ],
+    "highlights": [
+      "structure align mode now bypasses optimization visibility gates",
+      "only runtime invisible keeps taking effect"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1808.md"
+  },
+  "risk_level": "low",
+  "next_step": "user refresh and verify all business tabs now show content"
+}

@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1805",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "backend_route_probe": "PASS",
+    "backend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "addons/smart_core/app_config_engine/models/app_view_config.py"
+    ],
+    "highlights": [
+      "action-specific form now prefers primary parser",
+      "prefer richer runtime default form when action-bound form is thinner"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1805.md"
+  },
+  "risk_level": "medium",
+  "next_step": "remove user-surface governance over-pruning for project form tabs"
+}

@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1789",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "semantic_title_probe": "PASS",
+    "frontend_restart": "PASS"
+  },
+  "changes": {
+    "files": [
+      "frontend/apps/web/src/components/template/DetailShellLayout.vue"
+    ],
+    "highlights": [
+      "fallback section titles now prefer semantic mapping",
+      "project-detail field clusters map to business-readable section names"
+    ]
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1789.md"
+  },
+  "risk_level": "low",
+  "next_step": "continue section/tab semantic naming convergence and audit"
+}

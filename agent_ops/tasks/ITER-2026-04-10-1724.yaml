@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-10-1724
+title: project form detail native-like convergence
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  收敛 project.project 详情页与原生表单语义差距，优先修复空分组、技术字段暴露与标题语义问题。
+
+user_visible_outcome:
+  - "项目详情页不再出现大量空分组"
+  - "项目核心字段标签改为业务中文语义"
+  - "详情页结构更接近原生项目表单"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - frontend/apps/web/src/components/template/DetailShellLayout.vue
+    - agent_ops/tasks/ITER-2026-04-10-1724.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1724.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1724.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 700
+
+change_rules:
+  - frontend form rendering convergence only
+  - no backend intent/schema/business rule changes
+  - no menu policy changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: frontend contract-consumer runtime
+  module: frontend/apps/web ContractFormPage
+  module_owner: smart_core + frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    用户反馈 project.project 详情页与原生差距过大，需要在不改后端契约的前提下提升表单语义一致性。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1724.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - project detail form convergence patch
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+
+depends_on:
+  - ITER-2026-04-10-1723

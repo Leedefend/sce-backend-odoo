@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-09-1555
+title: backend refactor B-line tier3 controller thinness final candidates refinement
+type: product-implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  对 Tier-3 两个候选（platform_meta_api.describe_project_capabilities / platform_execute_api.execute_button）做薄化重构，保持语义不变并清除 ORM hints。
+
+user_visible_outcome:
+  - "controller_thin_guard 的 ORM hints 收敛到 0"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/controllers/platform_meta_api.py
+    - addons/smart_core/controllers/platform_execute_api.py
+    - artifacts/architecture/controller_thin_guard_audit_v1.json
+    - agent_ops/tasks/ITER-2026-04-09-1555.yaml
+    - agent_ops/reports/2026-04-09/report.ITER-2026-04-09-1555.md
+    - agent_ops/state/task_results/ITER-2026-04-09-1555.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 7
+  max_output_lines: 320
+
+change_rules:
+  - preserve endpoint semantics
+  - thinness-only refactor for route methods
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Controller protocol adapter layer
+  module: platform_meta_api + platform_execute_api
+  module_owner: smart_core controllers
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    仅做 controller 薄化，不改业务事实。
+  reason: >
+    完成 B 线 thinness 现有候选收口。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-09-1555.yaml"
+    - "python3 -m py_compile addons/smart_core/controllers/platform_meta_api.py addons/smart_core/controllers/platform_execute_api.py"
+    - "python3 scripts/verify/controller_thin_guard_audit.py"
+    - "python3 - <<'PY'\nimport json\nobj=json.load(open('artifacts/architecture/controller_thin_guard_audit_v1.json','r',encoding='utf-8'))\nassert obj['summary']['orm_hint_count']==0\nprint('controller thin orm_hint fully cleared PASS')\nPY"
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - Tier-3 thinness candidates refinement
+
+rollback:
+  - git restore addons/smart_core/controllers/platform_meta_api.py addons/smart_core/controllers/platform_execute_api.py
+
+depends_on:
+  - ITER-2026-04-09-1554

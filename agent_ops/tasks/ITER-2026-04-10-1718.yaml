@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-10-1718
+title: action header return-workbench fallback recovery
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 action 页面“返回工作台”点击无响应问题，确保缺失/空目标时仍触发稳定回退导航。
+
+user_visible_outcome:
+  - "点击返回工作台立即发生页面跳转"
+  - "空目标情况下不再静默无响应"
+
+scope:
+  allowed_paths:
+    - frontend/apps/web/src/app/pageContractActionRuntime.ts
+    - frontend/apps/web/src/app/action_runtime/useActionViewHeaderRuntime.ts
+    - agent_ops/tasks/ITER-2026-04-10-1718.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1718.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1718.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 800
+
+change_rules:
+  - action header navigation fallback fix only
+  - no backend changes
+  - no intent contract expansion
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Frontend contract-consumer runtime
+  module: action header fallback navigation
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅修复前端导航回退行为，不改变业务事实语义。
+  reason: >
+    用户反馈 action 页面返回工作台按钮无响应，需恢复稳定可达路径。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1718.yaml"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - stable workbench return behavior in action header
+
+rollback:
+  - "git restore frontend/apps/web/src/app/pageContractActionRuntime.ts"
+  - "git restore frontend/apps/web/src/app/action_runtime/useActionViewHeaderRuntime.ts"
+
+depends_on:
+  - ITER-2026-04-10-1717

@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-10-1751
+title: frontend form surface direct-consumption closure
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复前端未完整直消费 form 表面结构问题，接入 views.form.header_buttons/
+  button_box/stat_buttons，形成完整消费链。
+
+user_visible_outcome:
+  - "前端动作区优先消费后端 form 表面结构，页面结构信息不再丢失"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1751.yaml
+    - frontend/apps/web/src/pages/ContractFormPage.vue
+    - scripts/verify/form_render_profile_frontend_consumer_audit.py
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1751.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1751.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 6
+  max_output_lines: 900
+
+change_rules:
+  - frontend contract-consumer completion only
+  - no business model/schema changes
+  - no ACL or financial semantics changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: frontend contract-consumer runtime
+  module: form surface action direct consumption
+  module_owner: frontend/apps/web
+  kernel_or_scenario: scenario
+  reason: >
+    用户指出前端未完整消费页面结构信息，本批补齐 form 表面动作结构直消费。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1751.yaml"
+    - "python3 scripts/verify/form_render_profile_frontend_consumer_audit.py --json"
+
+risk:
+  level: medium-low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - frontend form surface direct-consumption patch
+
+rollback:
+  - "git restore frontend/apps/web/src/pages/ContractFormPage.vue"
+  - "git restore scripts/verify/form_render_profile_frontend_consumer_audit.py"
+
+depends_on:
+  - ITER-2026-04-10-1750
+

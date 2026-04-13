@@ -1,0 +1,87 @@
+task_id: ITER-2026-04-10-1624
+title: v2 session.bootstrap governance integration and sample freeze
+
+type: product
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  将 session.bootstrap 样板纳入 v2 治理门禁，冻结契约快照与专项审计，
+  完成 D/4 治理闭环。
+
+user_visible_outcome:
+  - "session.bootstrap 样板具备门禁接入、快照冻结与失败路径可回归能力"
+
+scope:
+  allowed_paths:
+    - scripts/verify/v2_session_bootstrap_contract_audit.py
+    - scripts/verify/v2_app_governance_gate_audit.py
+    - docs/ops/v2_app_governance_gate_usage_v1.md
+    - artifacts/v2/session_bootstrap_contract_snapshot_v1.json
+    - artifacts/v2/v2_app_governance_output_schema_v1.json
+    - docs/architecture/v2_session_bootstrap_slice_spec_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1624.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1624.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1624.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 10
+  max_output_lines: 1200
+
+change_rules:
+  - batch D governance closure only
+  - no new business intent migration
+  - no legacy endpoint mutation
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 session bootstrap governance integration
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批仅治理样板执行链的契约审计与门禁汇总，不扩展业务事实。
+  reason: >
+    按 1624 目标把 session.bootstrap 从分层样板提升到治理可复制样板。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1624.yaml"
+    - "python3 scripts/verify/v2_session_bootstrap_contract_audit.py --json"
+    - "python3 scripts/verify/v2_app_governance_gate_audit.py --json"
+    - "python3 scripts/verify/v2_app_governance_output_schema_audit.py --json"
+    - "python3 -m py_compile scripts/verify/v2_session_bootstrap_contract_audit.py scripts/verify/v2_app_governance_gate_audit.py"
+    - 'rg -n "v2_session_bootstrap_contract_audit.py" scripts/verify/v2_app_governance_gate_audit.py artifacts/v2/v2_app_governance_output_schema_v1.json docs/ops/v2_app_governance_gate_usage_v1.md'
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - session.bootstrap governance gate integration with contract snapshot and dedicated audit
+
+rollback:
+  - git restore scripts/verify/v2_session_bootstrap_contract_audit.py scripts/verify/v2_app_governance_gate_audit.py docs/ops/v2_app_governance_gate_usage_v1.md artifacts/v2/session_bootstrap_contract_snapshot_v1.json artifacts/v2/v2_app_governance_output_schema_v1.json docs/architecture/v2_session_bootstrap_slice_spec_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1623

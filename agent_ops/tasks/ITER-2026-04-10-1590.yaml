@@ -1,0 +1,84 @@
+task_id: ITER-2026-04-10-1590
+title: backend refactor v2 independent full-rebuild backbone batch
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  启动 v2 独立整体重构主线：建立不依赖旧实现约束的 kernel pipeline + taxonomy module 架构，
+  以 v2 内部规范驱动后续开发。
+
+user_visible_outcome:
+  - "v2 进入独立重构模式，具备统一内核流水线与模块分层目录"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/**
+    - scripts/verify/v2_rebuild_audit.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - docs/architecture/backend_core_v2_rebuild_spec_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1590.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1590.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1590.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 26
+  max_output_lines: 900
+
+change_rules:
+  - v2 independent rebuild only
+  - no legacy runtime coupling
+  - additive low-risk scaffold and runtime-neutral logic
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel independent rebuild layer
+  module: smart_core v2 kernel backbone and taxonomy modules
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批建立独立内核流水线和模块目录，不引入业务事实变更。
+  reason: >
+    用户要求摆脱旧代码约束，直接按整体重构逻辑高效推进。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1590.yaml"
+    - "python3 -m py_compile addons/smart_core/v2/kernel/context.py addons/smart_core/v2/kernel/spec.py addons/smart_core/v2/kernel/pipeline.py addons/smart_core/v2/dispatcher.py addons/smart_core/v2/modules/app/handlers/catalog.py addons/smart_core/v2/modules/app/services/catalog_service.py addons/smart_core/v2/modules/app/builders/catalog_builder.py addons/smart_core/v2/intents/registry.py scripts/verify/v2_rebuild_audit.py"
+    - "python3 scripts/verify/v2_rebuild_audit.py --json"
+    - 'rg -n "class RequestContextV2|class IntentSpecV2|class RebuildPipelineV2|intent_name = \"app.catalog\"" addons/smart_core/v2'
+    - "rg -n \"independent full-rebuild backbone\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+    - "rg -n \"独立重构主线|kernel pipeline|taxonomy modules\" docs/architecture/backend_core_v2_rebuild_spec_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 independent kernel backbone and app taxonomy module
+
+rollback:
+  - git restore addons/smart_core/v2 scripts/verify/v2_rebuild_audit.py docs/architecture/backend_core_refactor_blueprint_v1.md docs/architecture/backend_core_v2_rebuild_spec_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1589

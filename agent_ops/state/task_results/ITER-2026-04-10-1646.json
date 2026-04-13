@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-10-1646",
+  "status": "PASS",
+  "mode": "implement",
+  "verification": {
+    "task_contract_validation": "PASS",
+    "v2_api_data_batch_registry_audit": "PASS",
+    "v2_intent_comparison_audit": "PASS",
+    "py_compile": "PASS",
+    "registry_token_grep": "PASS"
+  },
+  "evidence": {
+    "report": "agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1646.md",
+    "files": [
+      "addons/smart_core/v2/intents/registry.py",
+      "addons/smart_core/v2/intents/schemas/api_data_batch_schema.py",
+      "addons/smart_core/v2/handlers/api/data_batch.py",
+      "scripts/verify/v2_api_data_batch_registry_audit.py"
+    ]
+  },
+  "conclusion": "api.data.batch is now a registered and auditable v2 migrated intent",
+  "risk_level": "low",
+  "next_step": "batch B: api.data.batch minimal execution closure"
+}

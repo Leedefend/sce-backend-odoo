@@ -15443,3 +15443,2778 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-09-1521 PASS：生成 202f424 + fb3c440 两类提交并完成门禁复核`
 - active_commit: `fb3c440`
 - next_step: `Continue: start next objective from clean anchor fb3c440`
+
+### 2026-04-09T19:02:20+08:00
+- blocker_key: `backend_core_refactor_scan_1522`
+- layer_target: `Governance architecture planning`
+- module: `Backend intent-handler-parser-contract chain`
+- reason: 启动后端核心重构，先执行 scan 并冻结实施蓝图 v1
+- completed_step: `ITER-2026-04-09-1522 PASS：新增 backend_core_refactor_blueprint_v1 并通过关键词链路门禁`
+- active_commit: `0049675`
+- next_step: `Continue: open 1523 for intent registry skeleton + registry audit`
+
+### 2026-04-09T19:07:46+08:00
+- blocker_key: `backend_refactor_a1_registry_1523`
+- layer_target: `Backend intent governance layer`
+- module: `Intent registry baseline`
+- reason: 落地 intent registry 骨架与 audit，先建立并行治理锚点
+- completed_step: `ITER-2026-04-09-1523 PASS：新增 intents/registry 与 intent_registry_audit，产出 coverage 缺口清单`
+- active_commit: `0049675`
+- next_step: `Continue: open 1524 for taxonomy classification and naming audit`
+
+### 2026-04-09T19:10:53+08:00
+- blocker_key: `backend_refactor_a2_taxonomy_1524`
+- layer_target: `Backend intent governance layer`
+- module: `Intent taxonomy policy`
+- reason: 建立 intent 分类与 canonical 命名审计口径
+- completed_step: `ITER-2026-04-09-1524 PASS：registry 新增 intent_class/canonical_intent 并通过 taxonomy audit`
+- active_commit: `0049675`
+- next_step: `Continue: open 1525 for alias and duplicate intent surface audit`
+
+### 2026-04-09T19:13:40+08:00
+- blocker_key: `backend_refactor_a3_alias_audit_1525`
+- layer_target: `Governance verification layer`
+- module: `Intent alias and duplicate surface audit`
+- reason: 扫描同语义多入口 alias 事实，为后续主入口合并提供证据
+- completed_step: `ITER-2026-04-09-1525 PASS：新增 alias duplication audit 并产出收口建议`
+- active_commit: `0049675`
+- next_step: `Continue: open 1526 for controller thin guard`
+
+### 2026-04-09T19:16:31+08:00
+- blocker_key: `backend_refactor_b1_thin_guard_1526`
+- layer_target: `Governance verification layer`
+- module: `Controller thin guard`
+- reason: 审计 controller 超限方法与 ORM 操作提示，形成 B1 极薄化优先级
+- completed_step: `ITER-2026-04-09-1526 PASS：新增 controller_thin_guard_audit 并产出结构化审计结果`
+- active_commit: `0049675`
+- next_step: `Continue: open 1527 for first thin-controller implementation slice`
+
+### 2026-04-09T19:27:22+08:00
+- blocker_key: `backend_refactor_b1_thin_impl_1527`
+- layer_target: `Controller protocol adapter layer`
+- module: `intent dispatcher thin slice`
+- reason: 将 handle_intent 主流程下沉到 helper，保持语义不变并降低入口复杂度
+- completed_step: `ITER-2026-04-09-1527 PASS：新增 _execute_intent_request，controller_thin_guard over_threshold 归零`
+- active_commit: `0049675`
+- next_step: `Continue: open 1528 for dispatcher pure-dispatch extraction`
+
+### 2026-04-09T19:30:54+08:00
+- blocker_key: `backend_refactor_b2_dispatch_extract_1528`
+- layer_target: `Dispatcher orchestration layer`
+- module: `intent dispatcher pure-dispatch slice`
+- reason: 继续抽离 dispatcher 内部职责，分离请求准备与响应封装 helper
+- completed_step: `ITER-2026-04-09-1528 PASS：新增 _prepare_dispatch_request/_finalize_dispatch_response`
+- active_commit: `0049675`
+- next_step: `Continue: open 1529 for request validator skeleton`
+
+### 2026-04-09T19:34:09+08:00
+- blocker_key: `backend_refactor_b2_request_validator_1529`
+- layer_target: `Dispatcher orchestration layer`
+- module: `request validator skeleton`
+- reason: 在 dispatcher 入口建立统一请求参数校验骨架
+- completed_step: `ITER-2026-04-09-1529 PASS：新增 _validate_dispatch_request 并接入 validation_errors 输出`
+- active_commit: `0049675`
+- next_step: `Continue: open 1530 for intent-level schema map placeholder`
+
+### 2026-04-09T19:37:56+08:00
+- blocker_key: `backend_refactor_b2_schema_map_1530`
+- layer_target: `Dispatcher orchestration layer`
+- module: `validator schema-map placeholder`
+- reason: 为请求校验错误详情补充 schema_key 挂点
+- completed_step: `ITER-2026-04-09-1530 PASS：新增 INTENT_REQUEST_SCHEMA_MAP 与 schema_key 输出`
+- active_commit: `0049675`
+- next_step: `Continue: open 1531 for envelope consistency audit`
+
+### 2026-04-09T19:42:09+08:00
+- blocker_key: `backend_refactor_e1_envelope_audit_1531`
+- layer_target: `Governance verification layer`
+- module: `Response envelope consistency audit`
+- reason: 建立公开 controller 输出壳一致性审计基线
+- completed_step: `ITER-2026-04-09-1531 PASS：新增 envelope_consistency_audit 并识别 4 个 candidate`
+- active_commit: `0049675`
+- next_step: `Continue: open 1532 for envelope unification candidate plan`
+
+### 2026-04-09T19:46:29+08:00
+- blocker_key: `backend_refactor_e1_candidate_screen_1532`
+- layer_target: `Governance planning layer`
+- module: `Envelope unification candidate screening`
+- reason: 对 4 个 envelope candidate 做风险分级并冻结分批实施顺序
+- completed_step: `ITER-2026-04-09-1532 PASS：新增 envelope_unification_candidate_plan_v1 并完成关键词门禁`
+- active_commit: `0049675`
+- next_step: `Continue: open 1533 for Tier-1 platform_meta_api envelope unification`
+
+### 2026-04-09T20:06:00+08:00
+- blocker_key: `backend_refactor_e1_tier1_meta_1533`
+- layer_target: `Contract envelope layer`
+- module: `platform_meta_api`
+- reason: 执行 Tier-1 第一批 envelope 收口，统一描述类接口输出壳
+- completed_step: `ITER-2026-04-09-1533 PASS：_ok/_fail 已统一到 ok/data/error/meta/effect`
+- active_commit: `0049675`
+- next_step: `Continue: open 1534 for Tier-1 platform_contract_capability_api envelope unification`
+
+### 2026-04-09T20:10:30+08:00
+- blocker_key: `backend_refactor_e1_tier1_capability_1534`
+- layer_target: `Contract envelope layer`
+- module: `platform_contract_capability_api`
+- reason: 执行 Tier-1 第二批 envelope 收口
+- completed_step: `ITER-2026-04-09-1534 PASS：_ok/_fail 已统一到 ok/data/error/meta/effect`
+- active_commit: `0049675`
+- next_step: `Continue: open 1535 for Tier-2 platform_contract_portal_dashboard_api envelope unification`
+
+### 2026-04-09T20:15:20+08:00
+- blocker_key: `backend_refactor_e1_tier2_portal_dashboard_1535`
+- layer_target: `Contract envelope layer`
+- module: `platform_contract_portal_dashboard_api`
+- reason: 执行 Tier-2 envelope 收口
+- completed_step: `ITER-2026-04-09-1535 PASS：_ok/_fail 已统一到 ok/data/error/meta/effect`
+- active_commit: `0049675`
+- next_step: `Continue: open 1536 for Tier-3 platform_execute_api envelope unification`
+
+### 2026-04-09T20:19:40+08:00
+- blocker_key: `backend_refactor_e1_tier3_execute_1536`
+- layer_target: `Contract envelope layer`
+- module: `platform_execute_api`
+- reason: 执行 Tier-3 envelope 收口，完成 E1 计划内四个 candidate 的实现侧改造
+- completed_step: `ITER-2026-04-09-1536 PASS：_ok/_fail 已统一到 ok/data/error/meta/effect`
+- active_commit: `0049675`
+- next_step: `Continue: open audit-rule batch to make envelope consistency metric converge`
+
+### 2026-04-09T20:25:40+08:00
+- blocker_key: `backend_refactor_e1_audit_convergence_1537`
+- layer_target: `Governance verification layer`
+- module: `envelope_consistency_audit`
+- reason: 收敛审计口径到 schema-aware 规则
+- completed_step: `ITER-2026-04-09-1537 PASS_WITH_RISK：候选数扩展到 9，需 screen 分类后再实施`
+- active_commit: `0049675`
+- next_step: `Stop for risk: open dedicated screen batch for 9 envelope candidates classification`
+
+### 2026-04-09T20:33:10+08:00
+- blocker_key: `backend_refactor_e1_envelope_screen_1538`
+- layer_target: `Governance screening layer`
+- module: `envelope candidates`
+- reason: PASS_WITH_RISK 后执行 screen 分类，冻结下一轮实施顺序
+- completed_step: `ITER-2026-04-09-1538 PASS：9 个候选完成 Tier-1/2/3 分类并生成 next_batch 标记`
+- active_commit: `0049675`
+- next_step: `Continue: open 1539 implement batch for Tier-1 envelope-signal candidates`
+
+### 2026-04-09T20:43:00+08:00
+- blocker_key: `backend_refactor_e1_tier1_signal_1539`
+- layer_target: `Governance verification layer`
+- module: `envelope_consistency_audit`
+- reason: 实施 Tier-1 委托信号识别
+- completed_step: `ITER-2026-04-09-1539 FAIL：platform_ui_contract_api 仍被判为 no_envelope_signal`
+- active_commit: `0049675`
+- next_step: `Stop triggered: open 1540 fix batch for route-delegation detection`
+
+### 2026-04-09T20:52:10+08:00
+- blocker_key: `backend_refactor_e1_signal_fix_1540`
+- layer_target: `Governance verification layer`
+- module: `envelope_consistency_audit`
+- reason: 1539 失败恢复修复
+- completed_step: `ITER-2026-04-09-1540 PASS：route delegation 识别已覆盖多语句 return 场景`
+- active_commit: `0049675`
+- next_step: `Continue: open 1541 to close remaining platform_auth_signup_web candidate by audit scope alignment`
+
+### 2026-04-09T20:58:20+08:00
+- blocker_key: `backend_refactor_e1_api_scope_1541`
+- layer_target: `Governance verification layer`
+- module: `envelope_consistency_audit`
+- reason: 收敛 envelope 审计范围到 API 路由
+- completed_step: `ITER-2026-04-09-1541 PASS：inconsistent candidate 已收敛到 0`
+- active_commit: `0049675`
+- next_step: `Continue: open 1542 to enable strict fail-gate when candidate_count > 0`
+
+### 2026-04-09T21:03:40+08:00
+- blocker_key: `backend_refactor_e1_strict_gate_1542`
+- layer_target: `Governance verification layer`
+- module: `envelope_consistency_audit`
+- reason: 将 envelope 一致性审计升级为严格阻断门禁
+- completed_step: `ITER-2026-04-09-1542 PASS：candidate_count>0 时返回 FAIL 与非零退出码`
+- active_commit: `0049675`
+- next_step: `Continue: open 1543 for strict gate documentation freeze`
+
+### 2026-04-09T21:09:00+08:00
+- blocker_key: `backend_refactor_e1_doc_freeze_1543`
+- layer_target: `Governance documentation layer`
+- module: `envelope consistency guard`
+- reason: strict fail-gate 已启用，冻结文档口径
+- completed_step: `ITER-2026-04-09-1543 PASS：新增 envelope_consistency_guard_v1 文档并同步执行状态`
+- active_commit: `0049675`
+- next_step: `Continue: resume backend refactor mainline (intent registry coverage reduction)`
+
+### 2026-04-09T21:14:40+08:00
+- blocker_key: `backend_refactor_a1_missing_screen_1544`
+- layer_target: `Governance screening layer`
+- module: `intent registry missing surfaces`
+- reason: 收敛 intent registry coverage 缺口的实施顺序
+- completed_step: `ITER-2026-04-09-1544 PASS：42 个 missing intent 完成 Tier-1/2/3 分类`
+- active_commit: `0049675`
+- next_step: `Continue: open 1545 implement batch for Tier-1 registry entry migration`
+
+### 2026-04-09T21:24:20+08:00
+- blocker_key: `backend_refactor_a1_tier1_impl_1545`
+- layer_target: `Intent governance layer`
+- module: `intent registry entries`
+- reason: 执行 Tier-1 注册迁移
+- completed_step: `ITER-2026-04-09-1545 FAIL：audit 仍只读取 core_bootstrap，未消费 tier1_surface`
+- active_commit: `0049675`
+- next_step: `Stop triggered: open 1546 fix batch for intent_registry_audit multi-module resolution`
+
+### 2026-04-09T21:31:30+08:00
+- blocker_key: `backend_refactor_a1_audit_source_fix_1546`
+- layer_target: `Governance verification layer`
+- module: `intent registry audit scripts`
+- reason: 1545 失败恢复，修复审计源解析与 ENTRY_MODULES 对齐
+- completed_step: `ITER-2026-04-09-1546 PASS：registry audit/taxonomy 支持多模块 entries 聚合`
+- active_commit: `0049675`
+- next_step: `Continue: open 1547 for Tier-2 first-slice registry migration`
+
+### 2026-04-09T21:38:20+08:00
+- blocker_key: `backend_refactor_a1_tier2_slice1_1547`
+- layer_target: `Intent governance layer`
+- module: `intent registry entries`
+- reason: 执行 Tier-2 首批意图注册迁移
+- completed_step: `ITER-2026-04-09-1547 PASS：registry registered=20, missing=26`
+- active_commit: `0049675`
+- next_step: `Continue: open 1548 for tier2 second-slice registry migration`
+
+### 2026-04-09T21:46:10+08:00
+- blocker_key: `backend_refactor_a1_tier2_slice2_1548`
+- layer_target: `Intent governance layer`
+- module: `intent registry entries`
+- reason: 执行 Tier-2 第二批意图注册迁移
+- completed_step: `ITER-2026-04-09-1548 PASS：registry registered=28, missing=18`
+- active_commit: `0049675`
+- next_step: `Continue: open 1549 for tier2 remaining scene package/governance migration`
+
+### 2026-04-09T21:55:20+08:00
+- blocker_key: `backend_refactor_a1_tier2_slice3_1549`
+- layer_target: `Intent governance layer`
+- module: `intent registry entries`
+- reason: 完成 Tier-2 剩余意图注册迁移
+- completed_step: `ITER-2026-04-09-1549 PASS：registry registered=35, missing=11`
+- active_commit: `0049675`
+- next_step: `Continue: open 1550 for final tier3 registry closure`
+
+### 2026-04-09T22:03:30+08:00
+- blocker_key: `backend_refactor_a1_final_closure_1550`
+- layer_target: `Intent governance layer`
+- module: `intent registry entries`
+- reason: 完成 A1 coverage 最后一批收口
+- completed_step: `ITER-2026-04-09-1550 PASS：registry registered=46, missing=0`
+- active_commit: `0049675`
+- next_step: `Continue: open 1551 for A1 doc freeze then transition to B-line screening`
+
+### 2026-04-09T22:12:30+08:00
+- blocker_key: `backend_refactor_a1_doc_freeze_1551`
+- layer_target: `Governance documentation layer`
+- module: `intent registry closure`
+- reason: 冻结 A1 46/46 闭环结果与门禁口径
+- completed_step: `ITER-2026-04-09-1551 PASS：新增 intent_registry_closure_v1 并更新蓝图状态`
+- active_commit: `0049675`
+- next_step: `Continue: open 1552 screen batch for B-line controller/dispatcher refinement`
+
+### 2026-04-09T22:20:20+08:00
+- blocker_key: `backend_refactor_bline_screen_1552`
+- layer_target: `Governance screening layer`
+- module: `controller thinness candidates`
+- reason: 切换到 B 线并冻结 thinness 实施顺序
+- completed_step: `ITER-2026-04-09-1552 PASS：4 个 ORM-hint 候选完成 Tier-1/2/3 分类`
+- active_commit: `0049675`
+- next_step: `Continue: open 1553 implement batch for Tier-1 describe_model thinness refinement`
+
+### 2026-04-09T22:30:20+08:00
+- blocker_key: `backend_refactor_bline_tier1_1553`
+- layer_target: `Controller protocol adapter layer`
+- module: `platform_meta_api`
+- reason: 执行 B 线 Tier-1 薄化实现
+- completed_step: `ITER-2026-04-09-1553 PASS：describe_model route method 去除 ORM hint`
+- active_commit: `0049675`
+- next_step: `Continue: open 1554 for Tier-2 portal_execute_button thinness refinement`
+
+### 2026-04-09T22:40:20+08:00
+- blocker_key: `backend_refactor_bline_tier2_1554`
+- layer_target: `Controller protocol adapter layer`
+- module: `platform_portal_execute_api`
+- reason: 执行 B 线 Tier-2 薄化实现
+- completed_step: `ITER-2026-04-09-1554 PASS：portal_execute_button route method 去除 ORM hint`
+- active_commit: `0049675`
+- next_step: `Continue: open 1555 for Tier-3 thinness candidates`
+
+### 2026-04-09T22:52:00+08:00
+- blocker_key: `backend_refactor_bline_tier3_1555`
+- layer_target: `Controller protocol adapter layer`
+- module: `platform_meta_api + platform_execute_api`
+- reason: 完成 B 线 Tier-3 薄化实现
+- completed_step: `ITER-2026-04-09-1555 PASS：controller_thin_guard orm_hints=0`
+- active_commit: `0049675`
+- next_step: `Continue: open 1556 for controller_thin_guard strict fail-gate enablement`
+
+### 2026-04-09T23:01:40+08:00
+- blocker_key: `backend_refactor_bline_strict_gate_1556`
+- layer_target: `Governance verification layer`
+- module: `controller_thin_guard`
+- reason: B 线 thinness 收敛后启用严格阻断门禁
+- completed_step: `ITER-2026-04-09-1556 PASS：over_threshold/orm_hints 任一>0 即 FAIL`
+- active_commit: `0049675`
+- next_step: `Continue: open 1557 for B-line strict gate documentation freeze`
+
+### 2026-04-09T23:11:10+08:00
+- blocker_key: `backend_refactor_bline_doc_freeze_1557`
+- layer_target: `Governance documentation layer`
+- module: `controller thin guard`
+- reason: 冻结 B 线 strict gate 与收敛状态
+- completed_step: `ITER-2026-04-09-1557 PASS：新增 controller_thin_guard_v1 并同步蓝图状态`
+- active_commit: `0049675`
+- next_step: `Continue: open dispatcher purity screen batch for next refactor line`
+
+### 2026-04-09T23:28:40+08:00
+- blocker_key: `backend_refactor_b2_dispatcher_purity_screen_1558`
+- layer_target: `Governance screening layer`
+- module: `intent dispatcher purity`
+- reason: 冻结 dispatcher purity 候选与实现顺序，进入 B2 线 implement 准备
+- completed_step: `ITER-2026-04-09-1558 PASS：Tier-1/2/3 候选完成 screen 并冻结 B2-1~B2-4 顺序`
+- active_commit: `0049675`
+- next_step: `Continue: open B2-1 implement batch for db-resolution policy + request normalizer extraction`
+
+### 2026-04-09T23:34:40+08:00
+- blocker_key: `backend_refactor_b2_impl_slice1_1559`
+- layer_target: `Controller protocol adapter layer`
+- module: `intent dispatcher`
+- reason: 执行 B2-1，外移 DB 解析策略与请求归一逻辑
+- completed_step: `ITER-2026-04-09-1559 PASS：新增 intent_request_normalizer 并完成 dispatcher helper 化接线`
+- active_commit: `0049675`
+- next_step: `Continue: open B2-2 implement batch for commit/effect policy extraction`
+
+### 2026-04-09T23:39:30+08:00
+- blocker_key: `backend_refactor_b2_impl_slice2_1560`
+- layer_target: `Controller protocol adapter layer`
+- module: `intent dispatcher`
+- reason: 执行 B2-2，外移 commit/effect 判定策略
+- completed_step: `ITER-2026-04-09-1560 PASS：新增 intent_effect_policy 并完成 dispatcher policy 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open B2-3 implement batch for permission detail + alias/schema governance extraction`
+
+### 2026-04-09T23:44:20+08:00
+- blocker_key: `backend_refactor_b2_impl_slice3_1561`
+- layer_target: `Controller protocol adapter layer`
+- module: `intent dispatcher`
+- reason: 执行 B2-3，外移 permission detail 与 alias/schema governance 规则
+- completed_step: `ITER-2026-04-09-1561 PASS：新增 intent_governance 与 intent_permission_details，并完成 dispatcher 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open B2-4 implement batch for legacy compatibility adapter extraction`
+
+### 2026-04-09T23:49:10+08:00
+- blocker_key: `backend_refactor_b2_impl_slice4_1562`
+- layer_target: `Controller protocol adapter layer`
+- module: `intent dispatcher`
+- reason: 执行 B2-4，外移 load_view legacy compatibility adapter
+- completed_step: `ITER-2026-04-09-1562 PASS：新增 intent_legacy_compat 并完成 finalize-path 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open C-line screen batch for handler/orchestrator/service/builder boundary split`
+
+### 2026-04-09T23:56:30+08:00
+- blocker_key: `backend_refactor_cline_screen_1563`
+- layer_target: `Governance screening layer`
+- module: `C-line boundary split`
+- reason: 冻结 handler/orchestrator/service/builder 边界候选与实现顺序
+- completed_step: `ITER-2026-04-09-1563 PASS：Tier-1/2/3 候选完成 screen 并冻结 C1-1~C1-4`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-1 implement batch for intent_router env/cursor policy extraction`
+
+### 2026-04-10T00:00:10+08:00
+- blocker_key: `backend_refactor_cline_impl_c1_1_1564`
+- layer_target: `Core dispatch orchestration layer`
+- module: `intent_router`
+- reason: 执行 C1-1，外移 env/cursor lifecycle policy
+- completed_step: `ITER-2026-04-09-1564 PASS：新增 intent_env_policy 并完成 intent_router 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-2 implement batch for system_init data fetch helperization`
+
+### 2026-04-10T00:05:20+08:00
+- blocker_key: `backend_refactor_cline_impl_c1_2_1565`
+- layer_target: `Handler use-case orchestration layer`
+- module: `system_init`
+- reason: 执行 C1-2，外移 role_entries/home_blocks 字典抓取聚合逻辑
+- completed_step: `ITER-2026-04-10-1565 PASS：新增 system_init_dictionary_data_helper 并完成 handler 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-3 implement batch for load_contract handler boundary split`
+
+### 2026-04-10T00:09:50+08:00
+- blocker_key: `backend_refactor_cline_impl_c1_3_1566`
+- layer_target: `Handler use-case orchestration layer`
+- module: `load_contract`
+- reason: 执行 C1-3，外移 unknown-model 诊断与 response payload 组装逻辑
+- completed_step: `ITER-2026-04-10-1566 PASS：新增 load_contract_boundary_helper 并完成 handler 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-4 screen batch for handler output objectization`
+
+### 2026-04-10T00:14:30+08:00
+- blocker_key: `backend_refactor_cline_c1_4_screen_1567`
+- layer_target: `Governance screening layer`
+- module: `handler output objectization`
+- reason: 冻结 C1-4 输出对象化接入顺序与风险分层
+- completed_step: `ITER-2026-04-10-1567 PASS：Tier-1/2/3 完成 screen 并冻结 C1-4-1~C1-4-4`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-4-1 implement batch for IntentExecutionResult + BaseIntentHandler adapter`
+
+### 2026-04-10T00:18:20+08:00
+- blocker_key: `backend_refactor_cline_c1_4_1_1568`
+- layer_target: `Handler base abstraction layer`
+- module: `BaseIntentHandler`
+- reason: 执行 C1-4-1，建立 IntentExecutionResult 对象与 run 兼容适配
+- completed_step: `ITER-2026-04-10-1568 PASS：新增 intent_execution_result 并完成 BaseIntentHandler adapter 接线`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-4-2 implement batch for dispatcher normalize object compatibility`
+
+### 2026-04-10T00:22:10+08:00
+- blocker_key: `backend_refactor_cline_c1_4_2_1569`
+- layer_target: `Controller protocol adapter layer`
+- module: `intent_dispatcher`
+- reason: 执行 C1-4-2，增加对象返回归一兼容
+- completed_step: `ITER-2026-04-10-1569 PASS：_normalize_result_shape 支持 to_legacy_dict 对象输入`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-4-3 implement batch for low-risk handler object-return trial`
+
+### 2026-04-10T00:25:50+08:00
+- blocker_key: `backend_refactor_cline_c1_4_3_1570`
+- layer_target: `Handler use-case orchestration layer`
+- module: `login/session_bootstrap`
+- reason: 执行 C1-4-3，低风险 handler 对象返回试点
+- completed_step: `ITER-2026-04-10-1570 PASS：login 与 session.bootstrap 成功路径切换 IntentExecutionResult`
+- active_commit: `0049675`
+- next_step: `Continue: open C1-4-4 batch for output-style audit and objectization guard/doc freeze`
+
+### 2026-04-10T00:30:10+08:00
+- blocker_key: `backend_refactor_cline_c1_4_4_1571`
+- layer_target: `Governance verification layer`
+- module: `handler output objectization guard`
+- reason: 执行 C1-4-4，补齐输出口径审计与 guard 冻结
+- completed_step: `ITER-2026-04-10-1571 PASS：新增 handler_output_style_audit 与 guard 文档，形成 C1-4 闭环`
+- active_commit: `0049675`
+- next_step: `Continue: open next low-risk handler objectization batch to raise migration ratio`
+
+### 2026-04-10T00:34:40+08:00
+- blocker_key: `backend_refactor_cline_c1_4_3_extend_1572`
+- layer_target: `Handler use-case orchestration layer`
+- module: `meta_describe/permission_check`
+- reason: 执行 C1-4-3 扩展批次，提升对象返回覆盖率
+- completed_step: `ITER-2026-04-10-1572 PASS：试点扩展到 4 个 handler，migration ratio 提升到 0.1176`
+- active_commit: `0049675`
+- next_step: `Continue: open next low-risk objectization slice with handler_output_style_audit checkpoint`
+
+### 2026-04-10T00:39:20+08:00
+- blocker_key: `backend_refactor_cline_c1_4_3_extend2_1573`
+- layer_target: `Handler use-case orchestration layer`
+- module: `file_download/file_upload`
+- reason: 执行 C1-4-3 第二轮扩展，提升对象化覆盖率
+- completed_step: `ITER-2026-04-10-1573 PASS：file.download/file.upload 完成对象返回，migration ratio 提升到 0.1765`
+- active_commit: `0049675`
+- next_step: `Continue: open next low-risk objectization slice with handler_output_style_audit checkpoint`
+
+### 2026-04-10T00:44:10+08:00
+- blocker_key: `backend_refactor_cline_c1_4_ui_contract_screen_1574`
+- layer_target: `Governance screening layer`
+- module: `ui_contract objectization`
+- reason: 冻结 ui_contract 对象化安全切片与禁改边界
+- completed_step: `ITER-2026-04-10-1574 PASS：Tier-1/2/3 与 forbidden branch 完成 screen 冻结`
+- active_commit: `0049675`
+- next_step: `Continue: open ui_contract Tier-1 safe implement batch for success-path objectization`
+
+### 2026-04-10T00:49:20+08:00
+- blocker_key: `backend_refactor_cline_c1_4_ui_contract_tier1_1575`
+- layer_target: `Handler use-case orchestration layer`
+- module: `ui_contract`
+- reason: 执行 Tier-1 safe slice，仅迁移主成功返回分支对象化
+- completed_step: `ITER-2026-04-10-1575 PASS：ui_contract 主成功返回接入 IntentExecutionResult，migration ratio 提升到 0.2059`
+- active_commit: `0049675`
+- next_step: `Continue: open Tier-2 ui_contract batch for not_modified/etag objectization`
+
+### 2026-04-10T00:54:10+08:00
+- blocker_key: `backend_refactor_cline_c1_4_ui_contract_tier2_1576`
+- layer_target: `Handler use-case orchestration layer`
+- module: `ui_contract`
+- reason: 执行 Tier-2 safe slice，对象化 not_modified/etag 分支
+- completed_step: `ITER-2026-04-10-1576 PASS：ui_contract etag 分支接入 IntentExecutionResult(code=304)`
+- active_commit: `0049675`
+- next_step: `Continue: open next low-risk objectization slice with handler_output_style_audit checkpoint`
+
+### 2026-04-10T01:00:20+08:00
+- blocker_key: `backend_refactor_cline_c1_4_load_contract_tier1_1577`
+- layer_target: `Handler use-case orchestration layer`
+- module: `load_contract`
+- reason: 执行 Tier-1 safe slice，仅迁移主成功返回对象化
+- completed_step: `ITER-2026-04-10-1577 PASS：load_contract 成功分支接入 IntentExecutionResult，migration ratio 提升到 0.2353`
+- active_commit: `0049675`
+- next_step: `Continue: open next low-risk objectization slice with handler_output_style_audit checkpoint`
+
+### 2026-04-10T01:04:20+08:00
+- blocker_key: `backend_refactor_cline_c1_4_system_init_tier1_1578`
+- layer_target: `Handler use-case orchestration layer`
+- module: `system_init`
+- reason: 执行 Tier-1 safe slice，仅迁移主成功返回对象化
+- completed_step: `ITER-2026-04-10-1578 PASS：system_init 成功返回接入 IntentExecutionResult，migration ratio 提升到 0.2647`
+- active_commit: `0049675`
+- next_step: `Continue: open next low-risk objectization slice with handler_output_style_audit checkpoint`
+
+### 2026-04-10T01:08:10+08:00
+- blocker_key: `backend_refactor_cline_c1_4_api_onchange_tier1_1579`
+- layer_target: `Handler use-case orchestration layer`
+- module: `api_onchange`
+- reason: 执行 Tier-1 safe slice，迁移成功返回对象化
+- completed_step: `ITER-2026-04-10-1579 PASS：api_onchange 成功分支接入 IntentExecutionResult，migration ratio 提升到 0.2941`
+- active_commit: `0049675`
+- next_step: `Continue: open next efficiency batch to enhance objectization audit guidance`
+
+### 2026-04-10T01:12:30+08:00
+- blocker_key: `backend_refactor_cline_efficiency_audit_1580`
+- layer_target: `Governance verification layer`
+- module: `objectization audit tooling`
+- reason: 提升连续迭代效率，自动输出下一候选排序
+- completed_step: `ITER-2026-04-10-1580 PASS：handler_output_style_audit 新增 next_candidates 与 candidate_rank`
+- active_commit: `0049675`
+- next_step: `Continue: execute next candidate batch (api_data_batch safe slice) with audit checkpoint`
+
+### 2026-04-09T22:53:06+08:00
+- blocker_key: `backend_refactor_cline_c1_4_high_efficiency_api_data_batch_1581`
+- layer_target: `Handler use-case orchestration layer`
+- module: `api_data family handlers`
+- reason: 开启高效迭代模式，按同类改动打包迁移成功返回对象化
+- completed_step: `ITER-2026-04-10-1581 PASS：api_data_batch/api_data_unlink 成功返回及 api_data 304 分支接入 IntentExecutionResult，migration ratio=0.3824`
+- active_commit: `0049675`
+- next_step: `Continue: execute next high-efficiency objectization batch on api_data_write and remaining legacy ok branches`
+
+### 2026-04-09T22:53:06+08:00
+- blocker_key: `backend_refactor_cline_c1_4_high_efficiency_api_data_write_1582`
+- layer_target: `Handler use-case orchestration layer`
+- module: `api_data_write`
+- reason: 按候选优先级继续高效迭代，单文件高收益迁移成功返回对象化
+- completed_step: `ITER-2026-04-10-1582 PASS：api_data_write create/write 主链与 replay 成功分支接入 IntentExecutionResult，migration ratio=0.4118`
+- active_commit: `0049675`
+- next_step: `Continue: clear remaining legacy ok branches in api_data and api_data_batch`
+
+### 2026-04-09T23:18:53+08:00
+- blocker_key: `backend_refactor_v2_shadow_scaffold_1583`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 scaffold`
+- reason: 按方案A启动模块级影子重构，先构建不受旧实现影响的职责链骨架
+- completed_step: `ITER-2026-04-10-1583 PASS：完成 v2 registry->dispatcher->handler->service->builder->envelope 最小闭环（system.ping）`
+- active_commit: `0049675`
+- next_step: `Continue: add validator/policy templates and migrate first real read-only intent into v2 parallel path`
+
+### 2026-04-09T23:27:43+08:00
+- blocker_key: `backend_refactor_v2_validator_policy_readonly_1584`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 validator/policy/read-only intent`
+- reason: 在 v2 链路补齐 validator/policy 职责层并新增并行只读意图验证
+- completed_step: `ITER-2026-04-10-1584 PASS：v2 dispatcher 接入 validator/policy，新增 authenticated 的 system.registry.list`
+- active_commit: `0049675`
+- next_step: `Continue: add parser contract boundary and migrate first real meta read-only intent into v2`
+
+### 2026-04-09T23:37:46+08:00
+- blocker_key: `backend_refactor_v2_large_batch_skeleton_1585`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 complete skeleton`
+- reason: 按大批次模式一次性补齐 v2 完整分层骨架与治理守卫
+- completed_step: `ITER-2026-04-10-1585 PASS：补齐 parsers/orchestrators/result/reasons 并新增 v2_boundary_audit 与重建规范文档`
+- active_commit: `0049675`
+- next_step: `Continue: migrate first real meta read-only intent into v2 with old-v2 comparison baseline`
+
+### 2026-04-10T02:45:56+08:00
+- blocker_key: `backend_refactor_v2_meta_readonly_compare_1586`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 meta readonly chain`
+- reason: 在 v2 骨架基础上落地首个 meta 只读意图并建立 old-v2 对照审计
+- completed_step: `ITER-2026-04-10-1586 PASS：新增 meta.registry.catalog 与 v2_intent_comparison_audit 基线`
+- active_commit: `0049675`
+- next_step: `Continue: migrate legacy meta.describe_model into v2 for first migrated intent coverage`
+
+### 2026-04-10T02:52:25+08:00
+- blocker_key: `backend_refactor_v2_meta_describe_migration_1587`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 meta describe migration`
+- reason: 将 legacy 等价只读意图迁移到 v2，形成首个 migrated 覆盖
+- completed_step: `ITER-2026-04-10-1587 PASS：meta.describe_model 已迁移到 v2，migration_ratio 提升到 0.0217`
+- active_commit: `0049675`
+- next_step: `Continue: migrate permission.check readonly flow into v2`
+
+### 2026-04-10T02:58:44+08:00
+- blocker_key: `backend_refactor_v2_permission_check_migration_1588`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 permission check migration`
+- reason: 按连续迁移节奏推进第二个 legacy 等价只读意图
+- completed_step: `ITER-2026-04-10-1588 PASS：permission.check 已迁移到 v2，migration_ratio 提升到 0.0435`
+- active_commit: `0049675`
+- next_step: `Continue: migrate meta.intent_catalog into v2`
+
+### 2026-04-10T04:20:49+08:00
+- blocker_key: `backend_refactor_v2_meta_intent_catalog_migration_1589`
+- layer_target: `Platform kernel shadow refactor layer`
+- module: `smart_core v2 meta intent catalog migration`
+- reason: 连续迁移 meta 链路，提升 legacy-v2 对齐覆盖率
+- completed_step: `ITER-2026-04-10-1589 PASS：meta.intent_catalog 已迁移到 v2，migration_ratio 提升到 0.0652`
+- active_commit: `0049675`
+- next_step: `Continue: migrate session.bootstrap or app.catalog into v2`
+
+### 2026-04-10T04:32:02+08:00
+- blocker_key: `backend_refactor_v2_independent_rebuild_backbone_1590`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 kernel backbone and taxonomy modules`
+- reason: 用户要求停止旧约束映射，直接启用 v2 独立整体重构逻辑
+- completed_step: `ITER-2026-04-10-1590 PASS：完成 kernel pipeline + app taxonomy module + rebuild audit`
+- active_commit: `0049675`
+- next_step: `Continue: expand app taxonomy (app.nav/app.open) under v2 independent rebuild mode`
+
+### 2026-04-10T04:39:28+08:00
+- blocker_key: `backend_refactor_v2_app_taxonomy_expansion_1591`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app taxonomy expansion`
+- reason: 在独立重构主线继续扩展 app 模块核心入口
+- completed_step: `ITER-2026-04-10-1591 PASS：新增 app.nav/app.open 并通过 v2_rebuild_audit`
+- active_commit: `0049675`
+- next_step: `Continue: add app route policy and active-match generation in v2`
+
+### 2026-04-10T04:46:40+08:00
+- blocker_key: `backend_refactor_v2_app_route_policy_1592`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app route policy`
+- reason: 连续重构中补齐 app 导航 route 与 active_match 统一语义
+- completed_step: `ITER-2026-04-10-1592 PASS：app.catalog/app.nav/app.open 接入 route policy 并统一输出 active_match`
+- active_commit: `0049675`
+- next_step: `Continue: add target_type and delivery_mode output in app contracts`
+
+### 2026-04-10T04:52:43+08:00
+- blocker_key: `backend_refactor_v2_app_contract_semantics_1593`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app contract semantics`
+- reason: 连续重构中补齐 app 目标类型与承接模式统一语义
+- completed_step: `ITER-2026-04-10-1593 PASS：app.catalog/app.nav/app.open 统一输出 target_type 与 delivery_mode`
+- active_commit: `0049675`
+- next_step: `Continue: add is_clickable and availability_status/reason_code semantics`
+
+### 2026-04-10T04:55:48+08:00
+- blocker_key: `backend_refactor_v2_app_availability_semantics_1594`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app availability semantics`
+- reason: 连续重构中补齐节点可点击状态与可用性原因字段
+- completed_step: `ITER-2026-04-10-1594 PASS：app.catalog/app.nav/app.open 统一输出 is_clickable/availability_status/reason_code`
+- active_commit: `0049675`
+- next_step: `Continue: add availability status classification policy`
+
+### 2026-04-10T04:59:41+08:00
+- blocker_key: `backend_refactor_v2_app_availability_policy_1595`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app availability policy`
+- reason: 连续重构中将 app 可用性状态改为策略化分类输出
+- completed_step: `ITER-2026-04-10-1595 PASS：availability_status 已策略化为 available/degraded/unavailable`
+- active_commit: `0049675`
+- next_step: `Continue: add reason_code enum audit and contract guard`
+
+
+### 2026-04-10T05:10:58+08:00
+- blocker_key: `backend_refactor_v2_app_reason_code_enum_1596`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app reason code governance`
+- reason: 连续重构中收紧 reason_code 枚举边界并建立门禁
+- completed_step: `ITER-2026-04-10-1596 PASS：reason_code 已枚举化并纳入专项审计`
+- active_commit: `0049675`
+- next_step: `Continue: add v2 app contract field guard audit`
+
+### 2026-04-10T05:15:00+08:00
+- blocker_key: `backend_refactor_v2_app_contract_guard_1597`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app contract guard`
+- reason: 连续重构中冻结 app contract 字段口径并建立专项门禁
+- completed_step: `ITER-2026-04-10-1597 PASS：app contract 字段 guard 已上线并通过审计`
+- active_commit: `0049675`
+- next_step: `Continue: add app contract snapshot baseline and snapshot audit`
+
+### 2026-04-10T05:18:03+08:00
+- blocker_key: `backend_refactor_v2_app_contract_snapshot_1598`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app contract snapshot`
+- reason: 连续重构中建立 app contract 快照回归基线与门禁
+- completed_step: `ITER-2026-04-10-1598 PASS：app contract snapshot 基线与审计已就位`
+- active_commit: `0049675`
+- next_step: `Continue: add app intent-to-contract linkage audit`
+
+### 2026-04-10T05:20:42+08:00
+- blocker_key: `backend_refactor_v2_app_intent_contract_linkage_1599`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app intent contract linkage`
+- reason: 连续重构中建立 intent registry 与 contract snapshot 联动门禁
+- completed_step: `ITER-2026-04-10-1599 PASS：app intent-contract linkage audit 已通过`
+- active_commit: `0049675`
+- next_step: `Continue: add one-shot app governance gate script`
+
+### 2026-04-10T05:22:52+08:00
+- blocker_key: `backend_refactor_v2_app_governance_gate_1600`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance gate`
+- reason: 连续重构中增加 app 治理一键门禁以提升验证效率
+- completed_step: `ITER-2026-04-10-1600 PASS：app governance one-shot gate 审计通过`
+- active_commit: `0049675`
+- next_step: `Continue: normalize verify naming and make target for v2 app governance`
+
+### 2026-04-10T05:50:18+08:00
+- blocker_key: `backend_refactor_v2_app_verify_naming_1601`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app verify entry`
+- reason: 连续重构中统一 v2 app 治理 verify 命名与 make 入口
+- completed_step: `ITER-2026-04-10-1601 PASS：make verify.v2.app.* 入口已统一并通过门禁`
+- active_commit: `0049675`
+- next_step: `Continue: add script alias and usage docs for v2 app governance gate`
+
+### 2026-04-10T05:52:50+08:00
+- blocker_key: `backend_refactor_v2_app_governance_alias_1602`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance usage`
+- reason: 连续重构中补齐 app 门禁别名与使用示例，提升执行效率
+- completed_step: `ITER-2026-04-10-1602 PASS：app governance alias + make all 入口已生效`
+- active_commit: `0049675`
+- next_step: `Continue: optimize governance gate summary and failure reason`
+
+### 2026-04-10T05:55:47+08:00
+- blocker_key: `backend_refactor_v2_app_governance_diagnostics_1603`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance diagnostics`
+- reason: 连续重构中增强 app 门禁输出摘要与失败原因，提升诊断效率
+- completed_step: `ITER-2026-04-10-1603 PASS：governance gate summary/failure_reasons 已落地`
+- active_commit: `0049675`
+- next_step: `Continue: freeze governance output schema and add snapshot guard`
+
+### 2026-04-10T06:09:34+08:00
+- blocker_key: `backend_refactor_v2_app_governance_output_schema_1604`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance output schema`
+- reason: 连续重构中冻结 governance 输出结构并建立 snapshot 门禁
+- completed_step: `ITER-2026-04-10-1604 PASS：governance output schema snapshot guard 已通过`
+- active_commit: `0049675`
+- next_step: `Continue: add lightweight CI entry note for verify.v2.app.all`
+
+### 2026-04-10T06:13:26+08:00
+- blocker_key: `backend_refactor_v2_app_ci_light_entry_1605`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance ci light entry`
+- reason: 连续重构中补齐轻量 CI 门禁入口并建立一致性审计
+- completed_step: `ITER-2026-04-10-1605 PASS：verify.v2.app.ci.light 入口与审计已生效`
+- active_commit: `0049675`
+- next_step: `Continue: link ci-light entry to governance output schema guard`
+
+### 2026-04-10T06:33:53+08:00
+- blocker_key: `backend_refactor_v2_app_ci_light_schema_guard_1606`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app ci-light schema guard`
+- reason: 连续重构中将轻量 CI 入口串联输出 schema guard，稳定治理门禁
+- completed_step: `ITER-2026-04-10-1606 PASS：verify.v2.app.ci.light 已覆盖 schema guard`
+- active_commit: `0049675`
+- next_step: `Continue: integrate ci-light entry audit into governance gate details`
+
+### 2026-04-10T06:57:50+08:00
+- blocker_key: `backend_refactor_v2_app_governance_detail_link_1607`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance gate details`
+- reason: 连续重构中将 ci-light 入口一致性纳入 governance 详情链路
+- completed_step: `ITER-2026-04-10-1607 PASS：governance details 已覆盖 ci-light audit`
+- active_commit: `0049675`
+- next_step: `Continue: add gate_version to governance output and schema snapshot`
+
+### 2026-04-10T07:04:21+08:00
+- blocker_key: `backend_refactor_v2_app_governance_detail_link_1607`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance gate details`
+- reason: 连续重构中将 ci-light 入口一致性纳入 governance 详情链路
+- completed_step: `ITER-2026-04-10-1607 PASS：governance details 已覆盖 ci-light audit`
+- active_commit: `0049675`
+- next_step: `Continue: add gate_version to governance output and schema snapshot`
+
+### 2026-04-10T07:06:10+08:00
+- blocker_key: `backend_refactor_v2_app_governance_gate_version_1608`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance output version`
+- reason: 连续重构中增加 governance 输出版本标识并纳入 schema guard
+- completed_step: `ITER-2026-04-10-1608 PASS：gate_version 已发布并通过 snapshot 守卫`
+- active_commit: `0049675`
+- next_step: `Continue: add gate_profile semantics and schema guard`
+
+### 2026-04-10T07:41:51+08:00
+- blocker_key: `backend_refactor_v2_app_governance_gate_profile_1609`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance gate profile`
+- reason: 连续重构中为治理输出增加 gate_profile 并纳入 schema 守卫
+- completed_step: `ITER-2026-04-10-1609 PASS：gate_profile 已发布并通过 output schema 守卫`
+- active_commit: `0049675`
+- next_step: `Continue: propagate gate_version/gate_profile into ci-light audit output`
+
+### 2026-04-10T07:46:08+08:00
+- blocker_key: `backend_refactor_v2_app_governance_gate_profile_1609`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app governance gate profile`
+- reason: 连续重构中为治理输出增加 gate_profile 并纳入 schema 守卫
+- completed_step: `ITER-2026-04-10-1609 PASS：gate_profile 已发布并通过 output schema 守卫`
+- active_commit: `0049675`
+- next_step: `Continue: propagate gate_version/gate_profile into ci-light audit output`
+
+### 2026-04-10T07:47:52+08:00
+- blocker_key: `backend_refactor_v2_ci_light_audit_output_1610`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 ci-light audit output schema`
+- reason: 连续重构中统一 ci-light 审计输出与主门禁版本/剖面语义
+- completed_step: `ITER-2026-04-10-1610 PASS：ci-light audit 输出已包含 gate_version/gate_profile`
+- active_commit: `0049675`
+- next_step: `Continue: standardize common output contract for v2 app audit scripts`
+
+### 2026-04-10T07:57:24+08:00
+- blocker_key: `backend_refactor_v2_app_common_output_contract_1611`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 app audit output contract`
+- reason: 连续重构中统一 v2_app_*_audit 最小公共输出字段，降低治理脚本输出分叉风险
+- completed_step: `ITER-2026-04-10-1611 PASS：v2 app audit 脚本公共输出契约已统一`
+- active_commit: `0049675`
+- next_step: `Continue: extend common output contract to v2 boundary/rebuild/comparison audits`
+
+### 2026-04-10T08:00:00+08:00
+- blocker_key: `backend_refactor_v2_cross_audit_output_contract_1612`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 cross-audit output contract`
+- reason: 连续重构中统一 v2 核心审计脚本输出字段，提升门禁聚合一致性
+- completed_step: `ITER-2026-04-10-1612 PASS：v2 cross-audit 输出公共契约已统一`
+- active_commit: `0049675`
+- next_step: `Continue: integrate cross-audit checks into governance gate details`
+
+### 2026-04-10T08:05:00+08:00
+- blocker_key: `backend_refactor_v2_cross_audit_gate_integration_1613`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 governance gate detail chain`
+- reason: 连续重构中将 core v2 cross-audit 纳入 app 主门禁，统一验证入口
+- completed_step: `ITER-2026-04-10-1613 PASS：governance gate 已覆盖 cross-audit 三项`
+- active_commit: `0049675`
+- next_step: `Continue: refresh governance output schema snapshot semantics after check expansion`
+
+### 2026-04-10T08:09:00+08:00
+- blocker_key: `backend_refactor_v2_governance_expected_checks_snapshot_1614`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 governance output schema guard`
+- reason: 连续重构中冻结门禁检查集合并加入快照比对，防止治理链路静默漂移
+- completed_step: `ITER-2026-04-10-1614 PASS：governance expected_checks snapshot guard 已生效`
+- active_commit: `0049675`
+- next_step: `Continue: align v2_app_verify_all root errors field with common contract`
+
+### 2026-04-10T08:14:00+08:00
+- blocker_key: `backend_refactor_v2_verify_all_errors_alignment_1615`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 verify-all output contract`
+- reason: 连续重构中补齐 verify_all 根 errors 字段，完成公共输出契约闭环
+- completed_step: `ITER-2026-04-10-1615 PASS：v2_app_verify_all 已对齐 gate_version/gate_profile/status/errors`
+- active_commit: `0049675`
+- next_step: `Continue: add verify_all failure-path test/audit for errors propagation`
+
+### 2026-04-10T08:18:00+08:00
+- blocker_key: `backend_refactor_v2_verify_all_failure_path_guard_1616`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 verify-all failure-path guard`
+- reason: 连续重构中增加 verify_all 失败路径守卫，确保 root errors 传播不回退
+- completed_step: `ITER-2026-04-10-1616 PASS：verify_all failure-path audit + make 入口已生效`
+- active_commit: `0049675`
+- next_step: `Continue: integrate failure-path guard into strict/nightly governance profile`
+
+### 2026-04-10T08:23:00+08:00
+- blocker_key: `backend_refactor_v2_failure_path_gate_integration_1617`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 governance gate detail chain`
+- reason: 连续重构中将 verify_all 失败路径守卫并入主门禁，确保每轮回归覆盖异常传播
+- completed_step: `ITER-2026-04-10-1617 PASS：governance gate 已纳入 verify_all failure-path 守卫`
+- active_commit: `0049675`
+- next_step: `Continue: add concise check-name summary output for governance make entry`
+
+### 2026-04-10T08:31:00+08:00
+- blocker_key: `v2_substantive_system_init_delivery_1618`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 system bootstrap intent`
+- reason: 按用户要求先完成 v2 实质能力，先补核心启动意图 system.init
+- completed_step: `ITER-2026-04-10-1618 PASS：v2 system.init 已完成 registry/handler/service/builder 全链路`
+- active_commit: `0049675`
+- next_step: `Continue: implement v2 system.init.inspect as next substantive intent`
+
+### 2026-04-10T08:36:00+08:00
+- blocker_key: `v2_substantive_system_init_inspect_delivery_1619`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 system bootstrap diagnostics intent`
+- reason: 按实质优先路线继续迁移，补齐 system.init.inspect
+- completed_step: `ITER-2026-04-10-1619 PASS：v2 system.init.inspect 已完成 registry/handler/service/builder 全链路`
+- active_commit: `0049675`
+- next_step: `Continue: implement v2 session.bootstrap as next substantive intent`
+
+### 2026-04-10T08:40:00+08:00
+- blocker_key: `v2_substantive_system_init_inspect_delivery_1619`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 system bootstrap diagnostics intent`
+- reason: 按实质优先路线补齐 system.init.inspect
+- completed_step: `ITER-2026-04-10-1619 PASS：system.init.inspect 完成并通过验收`
+- active_commit: `0049675`
+- next_step: `Continue: freeze v2 independent rebuild master blueprint and six-phase plan`
+
+### 2026-04-10T08:46:00+08:00
+- blocker_key: `v2_independent_rebuild_blueprint_freeze_1620`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 rebuild governance blueprint`
+- reason: 为避免陷入局部迁移，先冻结六阶段总节奏与职责边界
+- completed_step: `ITER-2026-04-10-1620 PASS：v2总蓝图/边界规范/最小主链顺序已冻结`
+- active_commit: `0049675`
+- next_step: `Continue: implement v2 session.bootstrap by staged mainline order`
+
+### 2026-04-10T08:54:00+08:00
+- blocker_key: `v2_session_bootstrap_registry_closure_1621`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 session bootstrap registry closure`
+- reason: 按 A 批次先建立 session.bootstrap 注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1621 PASS：session.bootstrap 注册元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch B dispatcher->handler execution closure for session.bootstrap`
+
+### 2026-04-10T09:02:00+08:00
+- blocker_key: `v2_session_bootstrap_execution_closure_1622`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 session bootstrap execution closure`
+- reason: 按 B 批次打通 session.bootstrap 第一条真实执行链
+- completed_step: `ITER-2026-04-10-1622 PASS：dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch C service/result/builder boundary closure`
+
+### 2026-04-10T10:08:45+08:00
+- blocker_key: `v2_session_bootstrap_boundary_closure_1623`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 session bootstrap boundary closure`
+- reason: 按 C 批次将 session.bootstrap 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1623 PASS：session.bootstrap 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch D governance integration and sample freeze`
+
+### 2026-04-10T10:13:14+08:00
+- blocker_key: `v2_session_bootstrap_governance_integration_1624`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 session bootstrap governance integration`
+- reason: 按 D 批次将 session.bootstrap 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1624 PASS：session.bootstrap 治理接入与快照冻结已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent migration slice using session.bootstrap template`
+
+### 2026-04-10T10:23:52+08:00
+- blocker_key: `v2_meta_describe_model_registry_closure_1625`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 meta describe model registry closure`
+- reason: 以 session.bootstrap 样板路径启动第二条主链，先完成 meta.describe_model 注册闭环
+- completed_step: `ITER-2026-04-10-1625 PASS：meta.describe_model registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch B dispatcher->schema->handler->envelope closure for meta.describe_model`
+
+### 2026-04-10T10:29:23+08:00
+- blocker_key: `v2_meta_describe_model_execution_closure_1626`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 meta describe model execution closure`
+- reason: 按 B 批次打通第二条主链 meta.describe_model 执行与失败路径闭环
+- completed_step: `ITER-2026-04-10-1626 PASS：meta.describe_model dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch C service/result/builder boundary closure for meta.describe_model`
+
+### 2026-04-10T10:35:14+08:00
+- blocker_key: `v2_meta_describe_model_boundary_closure_1627`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 meta describe model boundary closure`
+- reason: 按 C 批次将 meta.describe_model 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1627 PASS：meta.describe_model 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch D governance integration and snapshot freeze for meta.describe_model`
+
+### 2026-04-10T10:40:47+08:00
+- blocker_key: `v2_meta_describe_model_governance_integration_1628`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 meta describe model governance integration`
+- reason: 按 D 批次将 meta.describe_model 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1628 PASS：meta.describe_model 治理接入与快照冻结已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended ui.contract batch A/4)`
+
+### 2026-04-10T10:49:52+08:00
+- blocker_key: `v2_ui_contract_registry_closure_1629`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 ui contract registry closure`
+- reason: 以既有样板节奏启动第三条主链 ui.contract，先完成注册闭环
+- completed_step: `ITER-2026-04-10-1629 PASS：ui.contract registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch B dispatcher->schema->handler->envelope closure for ui.contract`
+
+### 2026-04-10T10:53:38+08:00
+- blocker_key: `v2_ui_contract_execution_closure_1630`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 ui contract execution closure`
+- reason: 按 B 批次打通第三条主链 ui.contract 执行与失败路径闭环
+- completed_step: `ITER-2026-04-10-1630 PASS：ui.contract dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch C service/result/builder boundary closure for ui.contract`
+
+### 2026-04-10T11:00:27+08:00
+- blocker_key: `v2_ui_contract_boundary_closure_1631`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 ui contract boundary closure`
+- reason: 按 C 批次将 ui.contract 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1631 PASS：ui.contract 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement batch D governance integration and snapshot freeze for ui.contract`
+
+### 2026-04-10T11:06:43+08:00
+- blocker_key: `v2_ui_contract_governance_integration_1632`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 ui contract governance integration`
+- reason: 按 D 批次将 ui.contract 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1632 PASS：ui.contract 治理接入与快照冻结已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended execute_button batch A/4)`
+
+### 2026-04-10T11:22:04+08:00
+- blocker_key: `v2_first_usable_scenario_assembly_1633`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 first usable scenario assembly`
+- reason: 从能力复制切换到系统闭环，组装首个用户可用场景 app.init
+- completed_step: `ITER-2026-04-10-1633 PASS：app.init 三链组装、快照与治理门禁已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement execute_button batch A registry closure`
+
+### 2026-04-10T11:27:21+08:00
+- blocker_key: `v2_execute_button_registry_closure_1634`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 execute button registry closure`
+- reason: 按操作闭环主线启动 execute_button，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1634 PASS：execute_button registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement execute_button batch B execution closure`
+
+### 2026-04-10T11:31:51+08:00
+- blocker_key: `v2_execute_button_execution_closure_1635`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 execute button execution closure`
+- reason: 按 B 批次打通 execute_button 执行与失败路径闭环
+- completed_step: `ITER-2026-04-10-1635 PASS：execute_button dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement execute_button batch C service/result/builder boundary closure`
+
+### 2026-04-10T11:38:35+08:00
+- blocker_key: `v2_execute_button_boundary_closure_1636`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 execute button boundary closure`
+- reason: 按 C 批次将 execute_button 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1636 PASS：execute_button 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement execute_button batch D governance integration and snapshot freeze`
+
+### 2026-04-10T11:45:52+08:00
+- blocker_key: `v2_execute_button_governance_integration_1637`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 execute button governance integration`
+- reason: 按 D 批次将 execute_button 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1637 PASS：execute_button 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended api.data batch A/4)`
+
+### 2026-04-10T11:53:21+08:00
+- blocker_key: `v2_api_data_registry_closure_1638`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data registry closure`
+- reason: 按四批节奏启动 api.data 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1638 PASS：api.data registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data batch B execution closure`
+
+### 2026-04-10T11:58:20+08:00
+- blocker_key: `v2_api_data_execution_closure_1639`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data execution closure`
+- reason: 按 B 批次打通 api.data 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1639 PASS：api.data dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data batch C service/result/builder boundary closure`
+
+### 2026-04-10T12:05:15+08:00
+- blocker_key: `v2_api_data_boundary_closure_1640`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data boundary closure`
+- reason: 按 C 批次将 api.data 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1640 PASS：api.data 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data batch D governance integration and snapshot freeze`
+
+### 2026-04-10T12:11:15+08:00
+- blocker_key: `v2_api_data_governance_integration_1641`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data governance integration`
+- reason: 按 D 批次将 api.data 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1641 PASS：api.data 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended api.onchange batch A/4)`
+
+### 2026-04-10T12:18:11+08:00
+- blocker_key: `v2_api_onchange_registry_closure_1642`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api onchange registry closure`
+- reason: 按四批节奏启动 api.onchange 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1642 PASS：api.onchange registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.onchange batch B execution closure`
+
+### 2026-04-10T12:22:06+08:00
+- blocker_key: `v2_api_onchange_execution_closure_1643`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api onchange execution closure`
+- reason: 按 B 批次打通 api.onchange 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1643 PASS：api.onchange dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.onchange batch C service/result/builder boundary closure`
+
+### 2026-04-10T12:28:15+08:00
+- blocker_key: `v2_api_onchange_boundary_closure_1644`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api onchange boundary closure`
+- reason: 按 C 批次将 api.onchange 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1644 PASS：api.onchange 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.onchange batch D governance integration and snapshot freeze`
+
+### 2026-04-10T12:35:00+08:00
+- blocker_key: `v2_api_onchange_governance_integration_1645`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api onchange governance integration`
+- reason: 按 D 批次将 api.onchange 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1645 PASS：api.onchange 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended api.data.batch batch A/4)`
+
+### 2026-04-10T12:39:43+08:00
+- blocker_key: `v2_api_data_batch_registry_closure_1646`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data batch registry closure`
+- reason: 按四批节奏启动 api.data.batch 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1646 PASS：api.data.batch registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.batch batch B execution closure`
+
+### 2026-04-10T12:44:56+08:00
+- blocker_key: `v2_api_data_batch_execution_closure_1647`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data batch execution closure`
+- reason: 按 B 批次打通 api.data.batch 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1647 PASS：api.data.batch dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.batch batch C service/result/builder boundary closure`
+
+### 2026-04-10T12:50:37+08:00
+- blocker_key: `v2_api_data_batch_boundary_closure_1648`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data batch boundary closure`
+- reason: 按 C 批次将 api.data.batch 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1648 PASS：api.data.batch 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.batch batch D governance integration and snapshot freeze`
+
+### 2026-04-10T12:56:32+08:00
+- blocker_key: `v2_api_data_batch_governance_integration_1649`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data batch governance integration`
+- reason: 按 D 批次将 api.data.batch 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1649 PASS：api.data.batch 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended api.data.create batch A/4)`
+
+### 2026-04-10T13:04:05+08:00
+- blocker_key: `v2_api_data_create_registry_closure_1650`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data create registry closure`
+- reason: 按四批节奏启动 api.data.create 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1650 PASS：api.data.create registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.create batch B execution closure`
+
+### 2026-04-10T13:09:43+08:00
+- blocker_key: `v2_api_data_create_execution_closure_1651`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data create execution closure`
+- reason: 按 B 批次打通 api.data.create 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1651 PASS：api.data.create dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.create batch C service/result/builder boundary closure`
+
+### 2026-04-10T13:19:50+08:00
+- blocker_key: `v2_api_data_create_boundary_closure_1652`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data create boundary closure`
+- reason: 按 C 批次将 api.data.create 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1652 PASS：api.data.create 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.create batch D governance integration and snapshot freeze`
+
+### 2026-04-10T13:25:35+08:00
+- blocker_key: `v2_api_data_create_governance_integration_1653`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data create governance integration`
+- reason: 按 D 批次将 api.data.create 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1653 PASS：api.data.create 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended api.data.write batch A/4)`
+
+### 2026-04-10T13:33:08+08:00
+- blocker_key: `v2_api_data_unlink_registry_closure_1654`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data unlink registry closure`
+- reason: 按四批节奏启动 api.data.unlink 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1654 PASS：api.data.unlink registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.unlink batch B execution closure`
+
+### 2026-04-10T13:37:47+08:00
+- blocker_key: `v2_api_data_unlink_execution_closure_1655`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data unlink execution closure`
+- reason: 按 B 批次打通 api.data.unlink 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1655 PASS：api.data.unlink dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.unlink batch C service/result/builder boundary closure`
+
+### 2026-04-10T13:44:39+08:00
+- blocker_key: `v2_api_data_unlink_boundary_closure_1656`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data unlink boundary closure`
+- reason: 按 C 批次将 api.data.unlink 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1656 PASS：api.data.unlink 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement api.data.unlink batch D governance integration and snapshot freeze`
+
+### 2026-04-10T13:51:44+08:00
+- blocker_key: `v2_api_data_unlink_governance_integration_1657`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 api data unlink governance integration`
+- reason: 按 D 批次将 api.data.unlink 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1657 PASS：api.data.unlink 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended file.upload batch A/4)`
+
+### 2026-04-10T14:01:11+08:00
+- blocker_key: `v2_file_upload_registry_closure_1658`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file upload registry closure`
+- reason: 按四批节奏启动 file.upload 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1658 PASS：file.upload registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement file.upload batch B execution closure`
+
+### 2026-04-10T14:05:16+08:00
+- blocker_key: `v2_file_upload_execution_closure_1659`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file upload execution closure`
+- reason: 按 B 批次打通 file.upload 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1659 PASS：file.upload dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement file.upload batch C service/result/builder boundary closure`
+
+### 2026-04-10T14:11:34+08:00
+- blocker_key: `v2_file_upload_boundary_closure_1660`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file upload boundary closure`
+- reason: 按 C 批次将 file.upload 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1660 PASS：file.upload 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement file.upload batch D governance integration and snapshot freeze`
+
+### 2026-04-10T14:27:50+08:00
+- blocker_key: `v2_file_upload_governance_integration_1661`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file upload governance integration`
+- reason: 按 D 批次将 file.upload 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1661 PASS：file.upload 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended file.download batch A/4)`
+
+### 2026-04-10T14:33:15+08:00
+- blocker_key: `v2_file_download_registry_closure_1662`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file download registry closure`
+- reason: 按四批节奏启动 file.download 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1662 PASS：file.download registry 元数据与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement file.download batch B execution closure`
+
+### 2026-04-10T14:38:32+08:00
+- blocker_key: `v2_file_download_execution_closure_1663`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file download execution closure`
+- reason: 按 B 批次打通 file.download 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1663 PASS：file.download dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement file.download batch C service/result/builder boundary closure`
+
+### 2026-04-10T14:47:48+08:00
+- blocker_key: `v2_file_download_boundary_closure_1664`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file download boundary closure`
+- reason: 按 C 批次将 file.download 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1664 PASS：file.download 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement file.download batch D governance integration and snapshot freeze`
+
+### 2026-04-10T15:00:35+08:00
+- blocker_key: `v2_file_download_governance_integration_1665`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 file download governance integration`
+- reason: 按 D 批次将 file.download 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1665 PASS：file.download 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended load_contract batch A/4)`
+
+### 2026-04-10T15:14:37+08:00
+- blocker_key: `v2_load_contract_registry_closure_1666`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 load_contract registry closure`
+- reason: 按四批节奏启动 load_contract 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1666 PASS：load_contract registry 元数据、schema/handler 占位与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement load_contract batch B execution closure`
+
+### 2026-04-10T15:21:07+08:00
+- blocker_key: `v2_load_contract_execution_closure_1667`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 load_contract execution closure`
+- reason: 按 B 批次打通 load_contract 执行链与失败路径闭环
+- completed_step: `ITER-2026-04-10-1667 PASS：load_contract dispatcher->schema->handler->envelope 执行闭环已通过`
+- active_commit: `0049675`
+- next_step: `Continue: implement load_contract batch C service/result/builder boundary closure`
+
+### 2026-04-10T15:28:23+08:00
+- blocker_key: `v2_load_contract_boundary_closure_1668`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 load_contract boundary closure`
+- reason: 按 C 批次将 load_contract 收口为 handler/service/result/builder 分层样板
+- completed_step: `ITER-2026-04-10-1668 PASS：load_contract 分层边界与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement load_contract batch D governance integration and snapshot freeze`
+
+### 2026-04-10T15:40:00+08:00
+- blocker_key: `v2_load_contract_governance_integration_1669`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 load_contract governance integration`
+- reason: 按 D 批次将 load_contract 样板纳入治理主门禁并冻结契约快照
+- completed_step: `ITER-2026-04-10-1669 PASS：load_contract 治理接入、快照冻结与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: choose next v2 intent slice (recommended load_metadata batch A/4)`
+
+### 2026-04-10T15:46:32+08:00
+- blocker_key: `v2_load_metadata_registry_closure_1670`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 load_metadata registry closure`
+- reason: 按四批节奏启动 load_metadata 主链，先完成注册与寻址闭环
+- completed_step: `ITER-2026-04-10-1670 PASS：load_metadata registry 元数据、schema/handler 占位与专项审计已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement load_metadata batch B execution closure`
+
+### 2026-04-10T15:58:26+08:00
+- blocker_key: `v2_intent_migration_freeze_guard_1671`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core v2 migration freeze governance`
+- reason: 主线切换到双轨对比，先启用新增迁移冻结门禁防止节奏跑偏
+- completed_step: `ITER-2026-04-10-1671 PASS：v2 intent migration freeze 门禁已接入 governance 主链并生效`
+- active_commit: `0049675`
+- next_step: `Continue: implement dual-track routing policy for session.bootstrap/meta.describe_model/ui.contract`
+
+### 2026-04-10T16:05:18+08:00
+- blocker_key: `dual_track_route_policy_batch1_1672`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core dual-track intent route policy`
+- reason: 按新主线先建立三条主链的可切换路由控制层
+- completed_step: `ITER-2026-04-10-1672 PASS：legacy_only/v2_shadow/v2_primary 路由策略与入口决策已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement shadow compare executor for session.bootstrap/meta.describe_model/ui.contract`
+
+### 2026-04-10T16:09:52+08:00
+- blocker_key: `dual_track_shadow_compare_batch2_1673`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core dual-track shadow compare executor`
+- reason: 在 v2_shadow 模式下增加旁路 compare 观测能力，不影响主响应
+- completed_step: `ITER-2026-04-10-1673 PASS：v1/v2 shadow compare 执行器与摘要日志已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement focus-intent compare audits and snapshots`
+
+### 2026-04-10T16:15:31+08:00
+- blocker_key: `focus_intent_compare_observability_batch3_1674`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent compare observability`
+- reason: 为三条主链补齐 compare 审计与汇总快照，形成双轨对比证据
+- completed_step: `ITER-2026-04-10-1674 PASS：session/bootstrap、meta.describe_model、ui.contract compare 审计与汇总已闭环`
+- active_commit: `0049675`
+- next_step: `Continue: implement upgrade/rollback state machine for focus intents`
+
+### 2026-04-10T16:28:20+08:00
+- blocker_key: `focus_intent_compare_failure_diagnosis_1675`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent shadow compare diagnosis`
+- reason: compare 证据显示三条链 v2_status=error，先做分层诊断再修正
+- completed_step: `ITER-2026-04-10-1675 PASS：三条 focus intents failure_stage/error_code/repro payload/suggested fix 已收口`
+- active_commit: `0049675`
+- next_step: `Continue: implement compare error correction for focus intents (auth context enrichment first)`
+
+### 2026-04-10T16:46:05+08:00
+- blocker_key: `focus_intent_compare_error_correction_1676`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent compare error correction`
+- reason: 修复三条 focus intents 在 v2_shadow compare 的 AUTHENTICATION_REQUIRED 共性错误
+- completed_step: `ITER-2026-04-10-1676 PASS：认证上下文补齐后 compare v2_status=ok，failure summary 进入 READY_FOR_CANDIDATE`
+- active_commit: `0049675`
+- next_step: `Continue: implement promotion/rollback state machine for focus intents (ITER-2026-04-10-1677)`
+
+### 2026-04-11T16:02:57+08:00
+- blocker_key: `focus_intent_promotion_rollback_state_machine_1677`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent promotion rollback governance`
+- reason: 基于 allow_v2_candidate 信号建立三条 focus intents 的升级/回滚状态机并接入主门禁
+- completed_step: `ITER-2026-04-10-1677 PASS：状态机审计已接入 governance gate，三条 focus intents 均输出 candidate_ready -> promote_to_v2_primary`
+- active_commit: `0049675`
+- next_step: `Continue: open controlled promotion batch to move focus intents from v2_shadow to v2_primary with rollback-ready route policy snapshot (ITER-2026-04-10-1678)`
+
+### 2026-04-11T16:19:10+08:00
+- blocker_key: `focus_intent_controlled_promotion_1678`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent controlled promotion`
+- reason: 按状态机 candidate_ready 结果执行受控提升，并保留 v2_shadow 回滚快照
+- completed_step: `ITER-2026-04-10-1678 PASS：三条 focus intents 路由已切到 v2_primary，rollback-ready 快照已冻结`
+- active_commit: `0049675`
+- next_step: `Continue: run v2_primary runtime smoke and rollback-readiness validation batch for focus intents (ITER-2026-04-10-1679)`
+
+### 2026-04-11T16:28:14+08:00
+- blocker_key: `focus_intent_v2_primary_smoke_1679`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent v2_primary runtime readiness`
+- reason: 受控提升后补齐运行态 smoke 与回滚就绪性证据，确保连续迭代可安全推进
+- completed_step: `ITER-2026-04-10-1679 PASS：v2_primary 路由、状态机 promoted 状态、governance gate 全量通过`
+- active_commit: `0049675`
+- next_step: `Continue: open layered v2_primary usability smoke batch for focus intents with drift checklist (ITER-2026-04-10-1680)`
+
+### 2026-04-11T17:00:56+08:00
+- blocker_key: `iter_1680_business_usability_nogo`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core focus-intent business usability verification`
+- reason: v2_primary 用户可用性生死线验证，检查最小业务链路、差异风险、回滚可恢复性
+- completed_step: `ITER-2026-04-10-1680 FAIL：smoke 与 rollback recheck 阻断失败（meta.describe_model fields 为空），结论 NO-GO`
+- active_commit: `0049675`
+- next_step: `STOP: open focused fix batch only for focus intents to restore meta.describe_model field surface, then rerun ITER-1680 blocking checks`
+
+### 2026-04-11T17:28:13+08:00
+- blocker_key: `iter_1681_meta_describe_field_surface_fix_pass`
+- layer_target: `Platform kernel independent rebuild layer`
+- module: `smart_core meta.describe_model field-surface restoration`
+- reason: 1680 阻断根因修复：恢复 meta.describe_model 非空字段面，并复验 smoke/rollback/gate
+- completed_step: `ITER-2026-04-10-1681 PASS：1680 三条阻断检查已全部通过，结论转为 GO`
+- active_commit: `0049675`
+- next_step: `Continue: open ITER-1682 frontend delivery recovery batch`
+
+### 2026-04-11T18:14:50+08:00
+- blocker_key: `iter_1682_frontend_login_proxy_unblock_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `web vite dev proxy`
+- reason: 自定义前端登录卡住，定位为 dev proxy 默认端口与后端不一致
+- completed_step: `ITER-2026-04-10-1682 PASS：Vite /api 代理默认目标改为 8069，前端已重启并 ready`
+- active_commit: `0049675`
+- next_step: `User retries login at http://localhost:5174 and validates /api/v1/intent returns`
+
+### 2026-04-11T19:21:10+08:00
+- blocker_key: `iter_1683_menu_api_envelope_unification_pass`
+- layer_target: `Backend API controller envelope layer`
+- module: `smart_core platform menu api`
+- reason: 统一菜单接口为自定义 http json 包裹，去除 Odoo JSON-RPC 外层
+- completed_step: `ITER-2026-04-10-1683 PASS：/api/menu/tree|/api/user_menus|/api/menu/navigation 已统一为 type=http 直出 JSON`
+- active_commit: `0049675`
+- next_step: `User hard-refresh frontend and verify menu navigation response/consumption alignment`
+
+
+### 2026-04-11T19:48:12+08:00
+- blocker_key: `iter_1684_v2_schema_symbolic_import_fix_pass`
+- layer_target: `Backend v2 dispatch pipeline`
+- module: `smart_core v2 kernel request-schema handling`
+- reason: 修复 ui.contract 菜单点击报 DISPATCH_FAILED: No module named 'v2'
+- completed_step: `ITER-2026-04-10-1684 PASS：symbolic request_schema 不再触发 import v2.*`
+- active_commit: `0049675`
+- next_step: `User retries menu click and validates ui.contract response`
+
+
+### 2026-04-11T21:18:25+08:00
+- blocker_key: `iter_1685_closure_gate_fail`
+- layer_target: `Delivery verification and governance close-out`
+- module: `v2 app governance closure`
+- reason: 收口门禁执行失败，触发 stop condition
+- completed_step: `ITER-2026-04-10-1685 FAIL：v2_app_governance_gate_audit=FAIL（18/27 失败）`
+- active_commit: `0049675`
+- next_step: `STOP: open dedicated remediation batch for verify import-boundary + smoke/diff/recheck alignment`
+
+
+### 2026-04-11T21:30:08+08:00
+- blocker_key: `iter_1686_verify_remediation_pass`
+- layer_target: `Backend v2 orchestration + verification alignment`
+- module: `smart_core v2 ui.contract service and verify scripts`
+- reason: 修复 1685 门禁失败并恢复治理绿灯
+- completed_step: `ITER-2026-04-10-1686 PASS：v2_app_governance_gate_audit 27/27 PASS`
+- active_commit: `0049675`
+- next_step: `Continue: reopen closure checkpoint as PASS and proceed delivery chain`
+
+
+### 2026-04-11T21:33:15+08:00
+- blocker_key: `iter_1687_closure_pass_checkpoint`
+- layer_target: `Delivery verification close-out`
+- module: `governance closure checkpoint`
+- reason: 1686 修复后回补正式 PASS 收口检查点
+- completed_step: `ITER-2026-04-10-1687 PASS：v2_app_governance_gate_audit 27/27 PASS，closure 恢复为 PASS`
+- active_commit: `0049675`
+- next_step: `Continue: proceed to next delivery iteration batch`
+
+
+### 2026-04-11T21:39:10+08:00
+- blocker_key: `iter_1688_frontend_delivery_recovery_pass_checkpoint`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `web delivery chain recovery`
+- reason: 交付恢复批首轮验收执行并通过
+- completed_step: `ITER-2026-04-10-1688 PASS checkpoint：frontend.restart + governance gate 27/27 PASS`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-1688 page-level interaction regression and evidence capture`
+
+
+### 2026-04-11T21:59:58+08:00
+- blocker_key: `iter_1688_page_interaction_regression_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `web delivery chain recovery`
+- reason: 执行页面级交互回归并验证主链可用性
+- completed_step: `ITER-2026-04-10-1688 PASS checkpoint：login→menu→action→form→return smoke passed`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-1688 error/empty-state observability regression`
+
+
+### 2026-04-11T22:06:03+08:00
+- blocker_key: `iter_1689_observability_checkpoint_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `error/empty observability verification`
+- reason: 完成错误态/空态可观测性回归检查点
+- completed_step: `ITER-2026-04-10-1689 PASS：governance 27/27 PASS + frontend_api_smoke PASS`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-1688 visible error-state evidence capture`
+
+
+### 2026-04-11T22:31:00+08:00
+- blocker_key: `iter_1690_visible_error_empty_evidence_fail`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `visible error-empty evidence verification`
+- reason: 执行可视证据捕获时发现单菜单点击稳定性失败
+- completed_step: `ITER-2026-04-10-1690 FAIL：unified_system_menu_click_usability_smoke fail_count=1 (menu_id=377)`
+- active_commit: `0049675`
+- next_step: `STOP: open dedicated remediation batch for menu 377 load-timeout root cause and rerun smoke`
+
+
+### 2026-04-11T22:50:20+08:00
+- blocker_key: `iter_1691_menu_377_timeout_remediation_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `unified menu usability smoke verification`
+- reason: 修复菜单 smoke 对 networkidle 超时的误判，恢复可用性验证稳定性
+- completed_step: `ITER-2026-04-10-1691 PASS：unified_system_menu_click_usability_smoke leaf_count=66 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-1688 closure with visible error-state screenshot and trace evidence capture`
+
+
+### 2026-04-11T23:26:40+08:00
+- blocker_key: `iter_1692_delivery_menu_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime + startup navigation delivery`
+- module: `system.init navigation output / frontend sidebar delivery`
+- reason: 完成正式交付菜单收敛并输出 user/admin 导航快照
+- completed_step: `ITER-2026-04-10-1692 PASS：menu smoke leaf_count=28 fail_count=0，delivery_user_leaf_count=27`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-2026-04-10-1693 formal entry page convergence for delivery`
+
+
+### 2026-04-11T23:38:55+08:00
+- blocker_key: `iter_1693_formal_entry_page_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `formal entry page usability convergence`
+- reason: 完成正式入口页面交付收口并产出错误/空态可观测证据
+- completed_step: `ITER-2026-04-10-1693 PASS：formal_entry_page_review_audit PASS + delivery review assets generated`
+- active_commit: `0049675`
+- next_step: `Continue: launch pre-delivery final user-trial batch`
+
+
+### 2026-04-11T23:56:40+08:00
+- blocker_key: `iter_1694_budget_cost_internal_error_fix_pass`
+- layer_target: `Backend intent handler runtime`
+- module: `api.data list ordering guard`
+- reason: 修复预算/成本菜单点击 INTERNAL_ERROR（无效排序字段 parent_path）
+- completed_step: `ITER-2026-04-10-1694 PASS：project.budget order fallback applied, smoke still green`
+- active_commit: `0049675`
+- next_step: `Continue: user-side refresh and validate budget/cost menu open path`
+
+
+### 2026-04-12T00:04:30+08:00
+- blocker_key: `iter_1695_page_convergence_launch_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `page convergence launch verification`
+- reason: 用户确认故障已解后启动页面收敛执行检查点
+- completed_step: `ITER-2026-04-10-1695 PASS：menu smoke leaf_count=28 fail_count=0 + formal_entry_page_review_audit PASS`
+- active_commit: `0049675`
+- next_step: `Continue: pre-delivery final user-trial batch`
+
+
+### 2026-04-12T00:19:30+08:00
+- blocker_key: `iter_1696_formal_detail_page_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `formal detail page usability convergence`
+- reason: 按交付版 UI 标准完成详情页页头/操作/分组/Tab/标签收敛
+- completed_step: `ITER-2026-04-10-1696 PASS：detail_page_convergence_audit PASS + menu smoke pass`
+- active_commit: `0049675`
+- next_step: `Continue: list/detail/form unified page-class convergence checklist`
+
+
+### 2026-04-12T00:29:40+08:00
+- blocker_key: `iter_1697_page_class_checklist_guard_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `page-class convergence governance baseline`
+- reason: 建立列表/详情/看板统一规范清单并接入自动审计 guard
+- completed_step: `ITER-2026-04-10-1697 PASS：page_class_convergence_audit PASS + menu smoke pass`
+- active_commit: `0049675`
+- next_step: `Continue: ListPage implementation convergence batch`
+
+
+### 2026-04-12T00:41:50+08:00
+- blocker_key: `iter_1698_list_page_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `list page usability convergence`
+- reason: 执行列表页首轮收敛（筛选单体系 + 页面类 guard）
+- completed_step: `ITER-2026-04-10-1698 PASS：list_page_convergence_audit PASS + menu smoke pass`
+- active_commit: `0049675`
+- next_step: `Continue: KanbanPage convergence batch`
+
+
+### 2026-04-12T00:52:39+08:00
+- blocker_key: `iter_1699_kanban_convergence_acceptance_fail`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `kanban page usability convergence`
+- reason: 完成看板页收敛补丁后，菜单 smoke 在登录 token 获取阶段失败
+- completed_step: `ITER-2026-04-10-1699 FAIL：unified_system_menu_click_usability_smoke login token fetch failed`
+- active_commit: `0049675`
+- next_step: `STOP: start frontend/backend services and rerun 1699 smoke acceptance`
+
+
+### 2026-04-12T01:09:46+08:00
+- blocker_key: `iter_1699_kanban_convergence_recovery_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `kanban page usability convergence`
+- reason: 完成服务恢复并重跑阻断验收，1699 收口转为 PASS
+- completed_step: `ITER-2026-04-10-1699 PASS：kanban_page_convergence_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: next page convergence delivery batch`
+
+
+### 2026-04-12T01:21:43+08:00
+- blocker_key: `iter_1700_unified_page_skeleton_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `unified page skeleton convergence`
+- reason: 落地统一页面骨架组件并完成列表/看板接入与门禁审计
+- completed_step: `ITER-2026-04-10-1700 PASS：page_layout_convergence_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: formal entry page usability refinement batch`
+
+
+### 2026-04-12T01:33:24+08:00
+- blocker_key: `iter_1701_formal_entry_feedback_refinement_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `formal entry feedback refinement`
+- reason: 统一正式入口页面错误/空态反馈文案与 trace 可观测性
+- completed_step: `ITER-2026-04-10-1701 PASS：formal_entry_feedback_refinement_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: formal entry page review checklist refinement batch`
+
+
+### 2026-04-12T01:42:56+08:00
+- blocker_key: `iter_1702_formal_entry_review_refinement_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `formal entry page review governance`
+- reason: 完成交付前正式入口评审清单与自动审计 guard 固化
+- completed_step: `ITER-2026-04-10-1702 PASS：formal_entry_page_review_refinement_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: menu_id 299 return-path remediation batch`
+
+
+### 2026-04-12T01:52:37+08:00
+- blocker_key: `iter_1703_menu_299_return_path_remediation_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `menu 299 return-path remediation`
+- reason: 关闭正式交付评审中 menu_id=299 的返回路径 watchpoint
+- completed_step: `ITER-2026-04-10-1703 PASS：formal_entry_return_path_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: dedicated functional return-path fix batch for menu_id 299`
+
+
+### 2026-04-12T02:10:50+08:00
+- blocker_key: `iter_1704_menu_299_return_path_functional_fix_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `menu 299 return-path functional remediation`
+- reason: 完成项目指标页面返回工作台入口与 fallback 执行修复
+- completed_step: `ITER-2026-04-10-1704 PASS：menu_299_return_path_smoke PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: delivery freeze batch`
+
+
+### 2026-04-12T02:21:14+08:00
+- blocker_key: `iter_1705_delivery_freeze_baseline_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `delivery freeze baseline governance`
+- reason: 冻结正式交付基线文档与验证证据，形成可追溯交付快照
+- completed_step: `ITER-2026-04-10-1705 PASS：delivery_freeze_baseline_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: delivery user-trial orchestration batch`
+
+
+### 2026-04-12T02:31:57+08:00
+- blocker_key: `iter_1706_delivery_user_trial_orchestration_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `delivery user-trial orchestration governance`
+- reason: 完成交付前用户试用路径编排与问题回收模板固化
+- completed_step: `ITER-2026-04-10-1706 PASS：delivery_user_trial_orchestration_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: user-trial execution record batch`
+
+
+### 2026-04-12T02:41:23+08:00
+- blocker_key: `iter_1707_user_trial_execution_record_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `user-trial execution record governance`
+- reason: 形成首轮试用执行记录与问题看板基线，支持后续修复排期
+- completed_step: `ITER-2026-04-10-1707 PASS：user_trial_execution_record_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: P2/P3 user-trial issue remediation planning batch`
+
+
+### 2026-04-12T02:55:50+08:00
+- blocker_key: `iter_1708_user_trial_remediation_planning_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `user-trial remediation planning governance`
+- reason: 完成 P2/P3 OPEN 问题的批次化修复规划映射
+- completed_step: `ITER-2026-04-10-1708 PASS：user_trial_remediation_plan_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-2026-04-10-1709 implementation batch`
+
+
+### 2026-04-12T03:34:09+08:00
+- blocker_key: `iter_1709_menu_315_copy_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `menu 315 copy convergence`
+- reason: 完成预算/成本页面提示文案收敛，关闭 UT-20260410-002
+- completed_step: `ITER-2026-04-10-1709 PASS：menu_315_copy_convergence_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: ITER-2026-04-10-1710 implementation batch`
+
+
+### 2026-04-12T03:47:36+08:00
+- blocker_key: `iter_1710_menu_317_empty_copy_enhancement_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `menu 317 empty-state copy enhancement`
+- reason: 完成投标管理空态文案增强，关闭 UT-20260410-003
+- completed_step: `ITER-2026-04-10-1710 PASS：menu_317_empty_copy_enhancement_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: trial issue board closure batch`
+
+
+### 2026-04-12T04:52:28+08:00
+- blocker_key: `iter_1711_trial_issue_board_closure_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `trial issue board closure governance`
+- reason: 试用问题看板完成收口，P2/P3 问题全部转为 VERIFIED
+- completed_step: `ITER-2026-04-10-1711 PASS：trial_issue_board_closure_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: delivery readiness final-check batch`
+
+
+### 2026-04-12T05:05:35+08:00
+- blocker_key: `iter_1712_delivery_readiness_final_check_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `delivery readiness final-check governance`
+- reason: 完成交付前最终门禁清单与 GO 证据索引收口
+- completed_step: `ITER-2026-04-10-1712 PASS：delivery_readiness_final_check_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Continue: delivery package index publication batch`
+
+
+### 2026-04-12T05:35:16+08:00
+- blocker_key: `iter_1713_delivery_package_index_publication_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `delivery package index governance`
+- reason: 发布交付包统一入口并完成最终可追溯索引
+- completed_step: `ITER-2026-04-10-1713 PASS：delivery_package_index_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Handover-ready: start delivery demo and transfer`
+
+
+### 2026-04-12T06:12:46+08:00
+- blocker_key: `iter_1714_delivery_demo_handover_checklist_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `delivery demo and handover governance`
+- reason: 完成交付演示与移交流程清单，支持正式签收执行
+- completed_step: `ITER-2026-04-10-1714 PASS：delivery_demo_handover_checklist_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Handover-ready: execute delivery demo and acceptance sign-off`
+
+
+### 2026-04-12T06:23:39+08:00
+- blocker_key: `iter_1715_delivery_acceptance_signoff_record_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `delivery acceptance sign-off governance`
+- reason: 完成交付签收记录模板，支持现场签收留痕
+- completed_step: `ITER-2026-04-10-1715 PASS：delivery_acceptance_signoff_record_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Handover-ready: execute on-site acceptance sign-off`
+
+
+### 2026-04-12T06:33:48+08:00
+- blocker_key: `iter_1716_onsite_signoff_draft_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `on-site signoff draft governance`
+- reason: 生成现场签收草案并预填验证基线，支持快速签字执行
+- completed_step: `ITER-2026-04-10-1716 PASS：delivery_acceptance_signoff_draft_audit PASS + menu smoke leaf_count=28 fail_count=0`
+- active_commit: `0049675`
+- next_step: `Handover-ready: fill and sign on-site acceptance record`
+
+
+### 2026-04-12T08:28:00+08:00
+- blocker_key: `iter_1723_action_view_switch_fix_fail_on_env`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ActionView view mode switching`
+- reason: 修复列表/看板切换路由与 preferred mode 不一致问题
+- completed_step: `ITER-2026-04-10-1723 FAIL：frontend_api_smoke timeout (service unreachable)`
+- active_commit: `0049675`
+- next_step: `restart backend/frontend services and rerun frontend_api_smoke`
+
+
+### 2026-04-12T09:16:00+08:00
+- blocker_key: `iter_1724_project_form_native_like_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage project.detail`
+- reason: 用户反馈项目详情页与原生差距过大，执行结构与语义收敛
+- completed_step: `ITER-2026-04-10-1724 PASS：project form native-like convergence + empty section pruning`
+- active_commit: `0049675`
+- next_step: `continue form tab-density convergence for project detail`
+
+
+### 2026-04-12T09:28:00+08:00
+- blocker_key: `iter_1724_project_form_shell_native_mode_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `DetailShellLayout project.detail`
+- reason: 将项目详情壳体切换为原生风格模式，压缩装饰型结构差异
+- completed_step: `ITER-2026-04-10-1724 PASS+：nativeLike shell mode enabled for project.detail`
+- active_commit: `0049675`
+- next_step: `user visual review and next round tab/content density convergence`
+
+
+### 2026-04-12T09:42:00+08:00
+- blocker_key: `iter_1725_project_detail_structure_alignment_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage project.detail`
+- reason: 继续对齐项目详情页结构层，降低 compact 壳与扩展区噪声
+- completed_step: `ITER-2026-04-10-1725 PASS：project detail uses non-compact structure + command-bar fallback`
+- active_commit: `0049675`
+- next_step: `continue tab/action ordering convergence against native page`
+
+
+### 2026-04-12T09:55:00+08:00
+- blocker_key: `iter_1726_project_detail_ordering_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage project.detail`
+- reason: 固定页签顺序与命令区动作优先级，减少结构波动
+- completed_step: `ITER-2026-04-10-1726 PASS：normalizedDetailShells + project action priority applied`
+- active_commit: `0049675`
+- next_step: `continue visible-tab set freeze and native action wording alignment`
+
+
+### 2026-04-12T10:08:00+08:00
+- blocker_key: `iter_1727_project_form_backend_contract_scan_pass`
+- layer_target: `governance evidence collection`
+- module: `backend ui.contract project.project form`
+- reason: 按用户要求先核对后端结构数据完整性证据
+- completed_step: `ITER-2026-04-10-1727 PASS(scan)：collected backend contract scan artifact`
+- active_commit: `0049675`
+- next_step: `open screen stage for consumer-path alignment against scan evidence`
+
+
+### 2026-04-12T10:20:00+08:00
+- blocker_key: `iter_1728_project_form_tab_loss_screen_pass`
+- layer_target: `governance root-cause screening`
+- module: `ui.contract form generation chain`
+- reason: 立即排查原生丰富结构未体现的链路根因
+- completed_step: `ITER-2026-04-10-1728 PASS(screen)：classified C1/C2/C3 tab-loss candidates`
+- active_commit: `0049675`
+- next_step: `open implementation batch for C1/C2 backend fixes and verify with action-bound snapshot`
+
+
+### 2026-04-12T10:32:00+08:00
+- blocker_key: `iter_1729_project_form_tab_loss_fix_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `app_view_config form parsing`
+- reason: 落地 C1/C2 修复，恢复 action 绑定视图 notebook/page 保真路径
+- completed_step: `ITER-2026-04-10-1729 PASS：action_specific source prefix + notebook aggregation fixed`
+- active_commit: `0049675`
+- next_step: `open verify batch to export action=531 contract snapshot and confirm notebook/page counts`
+
+
+### 2026-04-12T10:44:00+08:00
+- blocker_key: `iter_1730_project_form_action_parity_verify_pass_with_risk`
+- layer_target: `backend scene-orchestration contract supply verification`
+- module: `ui.contract project.project form (action=531)`
+- reason: 先核实后端页面结构供给完整性，再决定前端消费收敛方向
+- completed_step: `ITER-2026-04-10-1730 PASS_WITH_RISK：backend supplies tabs via notebook.tabs; consumer mapping gap identified`
+- active_commit: `0049675`
+- next_step: `open implement batch to align frontend notebook.tabs rendering with native-like tabs`
+
+
+### 2026-04-12T10:18:46+08:00
+- blocker_key: `iter_1731_frontend_notebook_tabs_consumer_alignment_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage layout parser`
+- reason: 根据 1730 证据补齐 notebook.tabs 消费归一化，避免 tab/page 标记差异导致页签丢失
+- completed_step: `ITER-2026-04-10-1731 PASS：normalize notebook tabs/tab nodes to page in layout parsing`
+- active_commit: `0049675`
+- next_step: `run visual parity verify for project detail tabs against native baseline`
+
+
+### 2026-04-12T10:26:36+08:00
+- blocker_key: `iter_1732_form_truth_source_audit_pass_with_risk`
+- layer_target: `backend scene-orchestration contract supply governance`
+- module: `form field truth-source audit`
+- reason: 按 FORM-001 优先级先核查 layout.fieldInfo 与 fields 真值冲突
+- completed_step: `ITER-2026-04-10-1732 PASS_WITH_RISK：19 issues, 10 blocking (relational downgrade confirmed)`
+- active_commit: `0049675`
+- next_step: `open FORM-001 remediation batch to enforce fields as canonical truth source`
+
+
+### 2026-04-12T10:43:46+08:00
+- blocker_key: `iter_1733_form_truth_source_remediation_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `view parser + v2 ui.contract runtime normalization`
+- reason: 立即修复关系字段降级，统一 layout.fieldInfo 与 fields 真值源
+- completed_step: `ITER-2026-04-10-1733 PASS：truth-source mismatch resolved (BLOCKED -> PASS)`
+- active_commit: `0049675`
+- next_step: `open FORM-003 dynamic modifiers gap batch`
+
+
+### 2026-04-12T10:48:47+08:00
+- blocker_key: `iter_1734_form_dynamic_modifiers_audit_pass`
+- layer_target: `backend scene-orchestration contract supply governance`
+- module: `form dynamic modifiers audit`
+- reason: 执行 FORM-003 核验，确认 readonly/invisible/required 是否具备动态表达
+- completed_step: `ITER-2026-04-10-1734 PASS：39 modifier rows, 14 dynamic rows`
+- active_commit: `0049675`
+- next_step: `open FORM-006 action truth-source convergence audit`
+
+
+### 2026-04-12T10:53:34+08:00
+- blocker_key: `iter_1735_form_action_dedup_audit_pass_with_risk`
+- layer_target: `backend scene-orchestration contract supply governance`
+- module: `form action dedup audit`
+- reason: 审计动作在 buttons/button_box/stat_buttons 等区域重复承载风险
+- completed_step: `ITER-2026-04-10-1735 PASS_WITH_RISK：11 actions, 2 duplicate action keys`
+- active_commit: `0049675`
+- next_step: `open FORM-006 remediation batch for action source/placement unification`
+
+
+### 2026-04-12T11:00:03+08:00
+- blocker_key: `iter_1736_form_action_dedup_remediation_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form action source/placement normalization`
+- reason: 统一 button_box/stat_buttons 承载规则，消除重复动作
+- completed_step: `ITER-2026-04-10-1736 PASS：duplicate_action_keys 2 -> 0`
+- active_commit: `0049675`
+- next_step: `open FORM-004 surface regions completeness audit`
+
+
+### 2026-04-12T11:04:23+08:00
+- blocker_key: `iter_1737_form_surface_regions_audit_pass`
+- layer_target: `backend scene-orchestration contract supply governance`
+- module: `form surface regions audit`
+- reason: 核验 header/button_box/status/workflow 区域语义完备性
+- completed_step: `ITER-2026-04-10-1737 PASS：header=4, button_box=2, workflow_transitions=6`
+- active_commit: `0049675`
+- next_step: `open FORM-005 subview relation audit`
+
+
+### 2026-04-12T11:09:07+08:00
+- blocker_key: `iter_1738_form_subview_relation_audit_pass_with_risk`
+- layer_target: `backend scene-orchestration contract supply governance`
+- module: `form subview relation audit`
+- reason: 核验 x2many 子视图承载能力，确认复杂 form 是否可交付
+- completed_step: `ITER-2026-04-10-1738 PASS_WITH_RISK：x2many=2, missing_subview=2`
+- active_commit: `0049675`
+- next_step: `open FORM-005 remediation batch for task_ids/collaborator_ids subviews`
+
+
+### 2026-04-12T11:18:42+08:00
+- blocker_key: `iter_1739_form_subview_relation_remediation_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form x2many subview provisioning`
+- reason: 修复 task_ids/collaborator_ids 缺失 subview 导致的复杂 form 断层风险
+- completed_step: `ITER-2026-04-10-1739 PASS：x2many=2, missing_subview=0, weak_subview=0`
+- active_commit: `0049675`
+- next_step: `open FORM-007 render profile surface audit`
+
+
+### 2026-04-12T11:28:34+08:00
+- blocker_key: `iter_1740_form_parser_root_cause_remediation_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form parser x2many subview extraction`
+- reason: 用户要求先做根因修复，将 x2many subview 稳定产出前移到 parser 层
+- completed_step: `ITER-2026-04-10-1740 PASS：parser-level x2many extraction fixed, missing_subview=0`
+- active_commit: `0049675`
+- next_step: `open FORM-007 render profile surface audit`
+
+
+### 2026-04-12T11:41:12+08:00
+- blocker_key: `iter_1741_form_render_profiles_audit_pass_with_risk`
+- layer_target: `backend scene-orchestration contract supply governance`
+- module: `form render profile surface audit`
+- reason: 核验 create/edit/readonly 三态是否具备真实表面差异
+- completed_step: `ITER-2026-04-10-1741 PASS_WITH_RISK：distinct_profile_labels=1, has_meaningful_diff=false`
+- active_commit: `0049675`
+- next_step: `open FORM-007 remediation for backend profile routing and surface split`
+
+
+### 2026-04-12T11:49:33+08:00
+- blocker_key: `iter_1742_form_render_profiles_remediation_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `ui.contract render profile routing`
+- reason: 修复 v2 schema/handler/service 未保留 profile 参数导致三态同构问题
+- completed_step: `ITER-2026-04-10-1742 PASS：distinct_profile_labels=3, has_meaningful_diff=true`
+- active_commit: `0049675`
+- next_step: `open frontend render_profile consumer alignment batch`
+
+
+### 2026-04-12T11:56:08+08:00
+- blocker_key: `iter_1743_frontend_render_profile_consumer_audit_pass_with_risk`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `render_profile consumer alignment audit`
+- reason: 后端三态修复后检查前端公共运行时是否完成一致消费
+- completed_step: `ITER-2026-04-10-1743 PASS_WITH_RISK：files_with_render_profile=1/4, status=BLOCKED`
+- active_commit: `0049675`
+- next_step: `open frontend render_profile consumer remediation for shared runtime`
+
+
+### 2026-04-12T12:03:21+08:00
+- blocker_key: `iter_1744_frontend_render_profile_consumer_remediation_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `render_profile shared consumer runtime`
+- reason: 将 render_profile 从 ContractFormPage 单点消费下沉到 page/runtime/action 公共链路
+- completed_step: `ITER-2026-04-10-1744 PASS：files_with_render_profile=4/4, missing_consumers=[]`
+- active_commit: `0049675`
+- next_step: `open create/edit/readonly interaction regression verify batch`
+
+
+### 2026-04-12T12:09:44+08:00
+- blocker_key: `iter_1745_render_profile_interaction_regression_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `render_profile interaction regression audit`
+- reason: 对 1744 后 create/edit/readonly 三态交互语义做双侧回归核验
+- completed_step: `ITER-2026-04-10-1745 PASS：backend_pass=true, frontend_pass=true, rights_changed_pairs=3`
+- active_commit: `0049675`
+- next_step: `open sampled manual UI evidence batch for delivery`
+
+
+### 2026-04-12T12:17:41+08:00
+- blocker_key: `iter_1746_form_layout_alignment_remediation_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form fieldInfo canonicalization`
+- reason: 用户反馈 form 未对齐，修复关系字段 label/widget 真值源规范化
+- completed_step: `ITER-2026-04-10-1746 PASS：form_layout_alignment issue_count=0`
+- active_commit: `0049675`
+- next_step: `open project form semantic structure parity verify batch`
+
+
+### 2026-04-12T12:40:26+08:00
+- blocker_key: `iter_1747_form_parser_structure_semantics_root_fix_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form parser semantic structure alignment`
+- reason: 用户指出 form 关键结构信息缺失，要求先做解析器根因修复
+- completed_step: `ITER-2026-04-10-1747 PASS：action_531 notebook_count=1, notebook_tab_count=3, issue_count=0`
+- active_commit: `0049675`
+- next_step: `open frontend form notebook/page/header parity implementation batch`
+
+
+### 2026-04-12T12:53:20+08:00
+- blocker_key: `iter_1748_form_semantic_label_convergence_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form semantic label convergence`
+- reason: 用户要求分组和关键结构标签继续收敛，消除空标签
+- completed_step: `ITER-2026-04-10-1748 PASS：action_531 empty_group=0, empty_notebook=0, empty_button=0`
+- active_commit: `0049675`
+- next_step: `open business-friendly group label mapping refinement batch`
+
+
+### 2026-04-12T13:04:10+08:00
+- blocker_key: `iter_1749_form_business_semantic_group_mapping_pass`
+- layer_target: `backend scene-orchestration contract supply`
+- module: `form group semantic label mapping`
+- reason: 用户要求再收敛一轮，确保前端消费链拿到可交付业务分组标签
+- completed_step: `ITER-2026-04-10-1749 PASS：action_531 group labels converged (主体信息/管理信息/分析/任务)`
+- active_commit: `0049675`
+- next_step: `open frontend full consumption parity final batch`
+
+
+### 2026-04-12T13:18:20+08:00
+- blocker_key: `iter_1750_frontend_form_semantic_consumption_closure_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form semantic title/label consumption`
+- reason: 进入前端消费链完整闭环，确保前端不覆盖后端语义标签
+- completed_step: `ITER-2026-04-10-1750 PASS：consumes_node_title=true, generic_hide_overbroad=false`
+- active_commit: `0049675`
+- next_step: `run user visual acceptance for project detail form flow`
+
+
+### 2026-04-12T13:26:10+08:00
+- blocker_key: `iter_1751_frontend_form_surface_direct_consumption_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form surface action direct consumption`
+- reason: 用户指出前端未完整消费页面结构信息，需补齐 form 表面动作直消费
+- completed_step: `ITER-2026-04-10-1751 PASS：header/button_box/stat direct consumption enabled`
+- active_commit: `0049675`
+- next_step: `user visual verify action parity on project detail page`
+
+
+### 2026-04-12T14:43:18+08:00
+- blocker_key: `iter_1752_frontend_native_structure_title_consumption_root_fix_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form native structure title consumption`
+- reason: 用户反馈项目详情页结构与原生差距大，要求先排查并修复消费端标题改写根因
+- completed_step: `ITER-2026-04-10-1752 PASS：frontend preserves backend titles for field/group/page/notebook`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail form parity against tmp/json/form.json`
+
+
+### 2026-04-12T15:02:30+08:00
+- blocker_key: `iter_1753_frontend_tab_order_native_parity_root_fix_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form notebook/page tab consumption order`
+- reason: 用户要求继续收敛页面结构对齐，修复前端页签重排与重命名策略
+- completed_step: `ITER-2026-04-10-1753 PASS：frontend preserves backend notebook/page tab order and labels`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail tab order parity against tmp/json/form.json`
+
+
+### 2026-04-12T15:09:10+08:00
+- blocker_key: `iter_1754_frontend_container_hierarchy_native_parity_root_fix_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form container hierarchy title consumption`
+- reason: 用户要求继续页面结构对齐，修复前端对容器标题的本地抹平策略
+- completed_step: `ITER-2026-04-10-1754 PASS：frontend preserves contract container titles for header/sheet/group/notebook/page`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail hierarchy parity against tmp/json/form.json`
+
+
+### 2026-04-12T15:17:10+08:00
+- blocker_key: `iter_1755_frontend_header_action_statusbar_order_parity_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form header action/statusbar consumption order`
+- reason: 用户要求继续页面结构对齐，修复头部动作区重排与 top3 裁剪
+- completed_step: `ITER-2026-04-10-1755 PASS：frontend preserves contract header action order and count`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail header parity against tmp/json/form.json`
+
+
+### 2026-04-12T15:26:20+08:00
+- blocker_key: `iter_1756_frontend_command_bar_native_like_convergence_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form command bar native-like layout`
+- reason: 用户同意继续收敛，降低头部状态/动作区视觉噪音并贴近原生形态
+- completed_step: `ITER-2026-04-10-1756 PASS：command bar style converged to native-like compact surface`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail command bar parity`
+
+
+### 2026-04-12T15:35:20+08:00
+- blocker_key: `iter_1757_frontend_form_main_content_width_convergence_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form main-content width and density`
+- reason: 用户指出表单核心区域过小，继续收敛 native-like 主体布局宽度
+- completed_step: `ITER-2026-04-10-1757 PASS：native-like body switched to single-column with reduced nested shell overhead`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail form core width`
+
+
+### 2026-04-12T15:42:40+08:00
+- blocker_key: `iter_1758_frontend_form_field_density_convergence_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form field density and spacing`
+- reason: 用户同意继续，进一步收敛 native-like 字段区密度
+- completed_step: `ITER-2026-04-10-1758 PASS：native-like field grid and input height converged (36px)`
+- active_commit: `0049675`
+- next_step: `user visual verify project detail field density`
+
+
+### 2026-04-12T15:50:40+08:00
+- blocker_key: `iter_1759_frontend_tabs_native_convergence_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `form tabs visual/interaction convergence`
+- reason: 用户同意继续，收敛页签栏视觉为更原生的下划线激活样式
+- completed_step: `ITER-2026-04-10-1759 PASS：native tabs converged to underline active style`
+- active_commit: `0049675`
+- next_step: `user visual verify tabs convergence on project detail form`
+
+
+### 2026-04-12T16:08:20+08:00
+- blocker_key: `iter_1760_form_layout_single_source_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `ui.contract form truth source governance`
+- reason: 用户切换到后端契约线，优先收敛 form layout 单真值源
+- completed_step: `ITER-2026-04-10-1760 PASS：semantic_page.form_semantics removed duplicated layout tree, uses layout_source`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch1 Task 101-2 field truth-source unification`
+
+
+### 2026-04-12T16:16:50+08:00
+- blocker_key: `iter_1761_form_field_truth_source_unification_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `ui.contract form field truth source governance`
+- reason: 在 101-1 后继续收敛字段真值源，避免 fieldInfo 与 fields 双源冲突
+- completed_step: `ITER-2026-04-10-1761 PASS：layout.fieldInfo reduced to lightweight render keys; fields kept canonical`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch1 Task 101-3 widget precision convergence`
+
+
+### 2026-04-12T16:24:30+08:00
+- blocker_key: `iter_1762_form_widget_precision_convergence_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form widget precision governance`
+- reason: 完成 FORM-Batch1 第三步，收敛 typed-field widget 精度
+- completed_step: `ITER-2026-04-10-1762 PASS：added html/boolean/selection widget normalization and audit`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch2 statusbar states closure`
+
+
+### 2026-04-12T16:31:30+08:00
+- blocker_key: `iter_1763_form_statusbar_states_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form statusbar semantics`
+- reason: 进入 FORM-Batch2，补齐 statusbar states/source/reason 闭环
+- completed_step: `ITER-2026-04-10-1763 PASS：statusbar states enrichment generalized beyond state field`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch2 stat button separation closure`
+
+### 2026-04-12T22:52:34+08:00
+- blocker_key: `iter_1764_v2_runtime_form_truth_source_alignment_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `ui.contract v2 runtime form truth-source closure`
+- reason: 用户要求重启后直接验证迭代效果；运行态仍旧值，转入服务链根因修复
+- completed_step: `ITER-2026-04-10-1764 PASS：v2 runtime now emits single layout source + lightweight fieldInfo + populated statusbar states`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch2 stat button separation closure and remaining surface-region alignment`
+
+### 2026-04-12T23:05:51+08:00
+- blocker_key: `iter_1765_form_stat_button_separation_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form surface regions / stat button semantics`
+- reason: 按连续迭代进入 FORM-Batch2，收敛 button_box 与 stat_buttons 分离
+- completed_step: `ITER-2026-04-10-1765 PASS：runtime stat buttons deduplicated and separated from button_box with consumable semantics`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch2 chatter/attachment surface closure`
+
+### 2026-04-12T23:10:49+08:00
+- blocker_key: `iter_1766_form_chatter_attachment_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form surface regions / chatter attachment semantics`
+- reason: 连续迭代推进 FORM-Batch2 协同区域语义闭环
+- completed_step: `ITER-2026-04-10-1766 PASS：runtime chatter/attachments now include source and disabled reasons`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch3 subview depth closure`
+
+### 2026-04-12T23:18:00+08:00
+- blocker_key: `iter_1767_form_subview_depth_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form subview depth and relation semantics`
+- reason: 连续迭代推进 FORM-Batch3，补齐 x2many 子视图字段元数据
+- completed_step: `ITER-2026-04-10-1767 PASS：runtime subviews now provide aligned fields metadata, relation_model, and entry semantics`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch3 action single-source closure`
+
+### 2026-04-12T23:23:32+08:00
+- blocker_key: `iter_1768_form_action_single_source_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form action single-source governance`
+- reason: 连续迭代推进 FORM-Batch3 动作主从统一
+- completed_step: `ITER-2026-04-10-1768 PASS：form action surfaces now use composite identity dedupe and canonical normalization`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch4 render profile closure`
+
+### 2026-04-12T23:29:42+08:00
+- blocker_key: `iter_1769_form_render_profile_surface_closure_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form create/edit/readonly render profile closure`
+- reason: 连续迭代推进 FORM-Batch4，补齐三态真实 surface
+- completed_step: `ITER-2026-04-10-1769 PASS：runtime contract now includes differentiated render_surfaces for create/edit/readonly`
+- active_commit: `0049675`
+- next_step: `open FORM-Batch4 render profile consumption spec freeze`
+
+### 2026-04-12T23:34:31+08:00
+- blocker_key: `iter_1770_form_render_profile_spec_freeze_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `form render-profile consumption specification`
+- reason: 连续迭代推进 FORM-Batch4，冻结消费规范避免前后端口径漂移
+- completed_step: `ITER-2026-04-10-1770 PASS：form render-profile consumption spec v1 frozen`
+- active_commit: `0049675`
+- next_step: `open frontend render-surfaces consumer switch batch`
+
+### 2026-04-12T23:45:02+08:00
+- blocker_key: `iter_1771_frontend_render_surfaces_consumer_switch_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage profile-surface consumer`
+- reason: 连续迭代进入前端消费切换，落实 render_surfaces 主路径
+- completed_step: `ITER-2026-04-10-1771 PASS：frontend now consumes render_surfaces actions and x2many profile policies with fallback`
+- active_commit: `0049675`
+- next_step: `open frontend tri-profile interaction sampling verify batch`
+
+### 2026-04-12T23:50:26+08:00
+- blocker_key: `iter_1772_tri_profile_surface_sample_verify_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `tri-profile interaction verify`
+- reason: 连续迭代推进前端消费切换后的三态抽样闭环验证
+- completed_step: `ITER-2026-04-10-1772 PASS：tri-profile runtime surfaces and frontend consumer switch validated on sampled action`
+- active_commit: `0049675`
+- next_step: `open manual tri-profile UX sampling batch`
+
+### 2026-04-13T03:28:28+08:00
+- blocker_key: `iter_1773_customer_project_metrics_import_pass`
+- layer_target: `Data import execution layer`
+- module: `customer project metrics txt/xml/db import`
+- reason: 用户要求将 `tmp/项目业务关键信息提取.txt` 转 XML 并落库，同时重启前后端供登录验证
+- completed_step: `ITER-2026-04-10-1773 PASS：header parsing fixed, shell transaction commit fixed, 694 rows imported to sc_demo with idempotent reapply`
+- active_commit: `0049675`
+- next_step: `open structured field-mapping batch if business requires non-description storage`
+
+
+### 2026-04-13T03:47:58+08:00
+- blocker_key: `iter_1773_project_metrics_field_mapping_pass`
+- layer_target: `Data import execution layer`
+- module: `project metrics mapping to business fields`
+- reason: 用户指出“不能只导项目名”，要求对应数据落到有业务意义的模型字段
+- completed_step: `ITER-2026-04-10-1773 PASS：importer now maps metrics into project.project fields (budget_total/cost_actual/cost_committed/actual_percent/plan_percent)`
+- active_commit: `0049675`
+- next_step: `open authorized multi-model dispatch batch if deeper split to cost/contract models is required`
+
+
+### 2026-04-13T04:01:31+08:00
+- blocker_key: `iter_1774_metrics_business_model_dispatch_pass`
+- layer_target: `Backend data import semantic mapping layer`
+- module: `project metrics model dispatch`
+- reason: 用户要求指标分解到对应业务模型，而非仅项目名称/描述
+- completed_step: `ITER-2026-04-10-1774 PASS：metrics now dispatched into project.project business fields and project.cost.ledger entries`
+- active_commit: `0049675`
+- next_step: `open authorized contract/progress model decomposition batch if needed`
+
+
+### 2026-04-13T04:08:06+08:00
+- blocker_key: `iter_1775_metrics_dispatch_gap_report_pass`
+- layer_target: `Backend import orchestration layer`
+- module: `customer metrics multi-model dispatch + gap report`
+- reason: 用户要求真实业务承接，并明确不可映射字段缺口
+- completed_step: `ITER-2026-04-10-1775 PASS：mapped metrics dispatched to project.project + project.cost.ledger; unmapped fields emitted in artifacts/import/customer_metrics_mapping_gap_v1.json`
+- active_commit: `0049675`
+- next_step: `open dedicated accounting/funding high-risk mapping task for unresolved gap fields`
+
+
+### 2026-04-13T04:20:36+08:00
+- blocker_key: `iter_1776_project_cleanup_and_company_bind_pass`
+- layer_target: `runtime data operation layer`
+- module: `project data cleanup + company binding`
+- reason: 用户要求清理非用户项目数据并将导入项目绑定到用户企业
+- completed_step: `ITER-2026-04-10-1776 PASS：non-imported projects cleared to 0 and 694 imported projects bound to company_id=2`
+- active_commit: `0049675`
+- next_step: `open project master-data consistency audit if required`
+
+
+### 2026-04-13T04:53:10+08:00
+- blocker_key: `iter_1777_frontend_form_consumer_alignment_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `form structure consumer and detail shell renderer`
+- reason: 用户要求先完成消费对齐迭代，优先修复前端结构还原不足
+- completed_step: `ITER-2026-04-10-1777 PASS：label/columns/container semantic mapping and notebook tab filtering alignment applied`
+- active_commit: `0049675`
+- next_step: `run manual frontend project-form alignment regression and open parser batch only for confirmed residual structural gaps`
+
+
+### 2026-04-13T05:04:19+08:00
+- blocker_key: `iter_1778_frontend_form_visual_alignment_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `native-like form header and shell rendering`
+- reason: 用户反馈视觉变化不明显，继续推进可见收敛
+- completed_step: `ITER-2026-04-10-1778 PASS：compact header + project-align container + technical label filtering applied`
+- active_commit: `0049675`
+- next_step: `collect new screenshot and continue residual structure delta closure`
+
+
+### 2026-04-13T05:13:41+08:00
+- blocker_key: `iter_1779_frontend_project_form_structure_delta_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `project form structure rendering`
+- reason: 用户要求继续迭代，收敛状态条/动作条与分组标题结构差异
+- completed_step: `ITER-2026-04-10-1779 PASS：native-like command strip + action dedup/filter + generic section title suppression`
+- active_commit: `0049675`
+- next_step: `collect screenshot and decide parser-side structural audit if residual delta remains`
+
+
+### 2026-04-13T05:19:06+08:00
+- blocker_key: `iter_1780_form_projection_recovery_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `form layout node normalization and projection`
+- reason: 用户反馈结构仍未显现，执行节点 kind 强制恢复
+- completed_step: `ITER-2026-04-10-1780 PASS：container/missing-type nodes now recover notebook/group/page projections`
+- active_commit: `0049675`
+- next_step: `collect refreshed screenshot and run layout coverage audit if needed`
+
+
+### 2026-04-13T05:27:57+08:00
+- blocker_key: `iter_1781_form_structure_visibility_enforcement_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail shell structural visibility`
+- reason: 用户持续反馈没有结构，本轮强制显示结构标题与边界
+- completed_step: `ITER-2026-04-10-1781 PASS：fallback section/tab titles and native-like section boundaries enabled`
+- active_commit: `0049675`
+- next_step: `collect screenshot and launch node-level mapping audit if any residual mismatch`
+
+
+### 2026-04-13T05:34:58+08:00
+- blocker_key: `iter_1782_layout_tree_dedup_collapse_fix_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `form layout tree projection`
+- reason: 持续结构缺失，修复 layoutTrees 全局字段去重导致的 page/group 空化
+- completed_step: `ITER-2026-04-10-1782 PASS：removed global dedup in layoutTrees buildFieldNode path`
+- active_commit: `0049675`
+- next_step: `collect screenshot and run node projection audit json if still missing`
+
+
+### 2026-04-13T05:42:03+08:00
+- blocker_key: `iter_1783_visible_structure_projection_mode_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage structure projection visibility`
+- reason: 用户反馈根本没有结构，强制开启可视化投影模式
+- completed_step: `ITER-2026-04-10-1783 PASS：added structure projection summary and disabled native-like flattening in project detail`
+- active_commit: `0049675`
+- next_step: `collect on-page shell/section/tab counts and continue closure`
+
+
+### 2026-04-13T05:47:47+08:00
+- blocker_key: `iter_1784_notebook_tab_projection_preservation_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail layout notebook projection`
+- reason: 用户提供 tab=0，修复 notebook 页签被过滤问题
+- completed_step: `ITER-2026-04-10-1784 PASS：removed tab empty-section drop and added placeholder sections`
+- active_commit: `0049675`
+- next_step: `collect refreshed shell/section/tab summary and decide input-source audit`
+
+
+### 2026-04-13T05:52:11+08:00
+- blocker_key: `iter_1785_notebook_page_prune_protection_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage layout tree prune`
+- reason: tab 仍为 0，修复 page 节点在 prune 阶段被删除
+- completed_step: `ITER-2026-04-10-1785 PASS：empty page nodes are no longer pruned`
+- active_commit: `0049675`
+- next_step: `collect latest structure projection summary and continue input-source audit if tab still zero`
+
+
+### 2026-04-13T05:58:01+08:00
+- blocker_key: `iter_1786_structure_semantic_polish_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail shell projection semantics`
+- reason: 结构恢复后继续收口语义重复与机械命名
+- completed_step: `ITER-2026-04-10-1786 PASS：header shell dedup + field-driven fallback section titles`
+- active_commit: `0049675`
+- next_step: `collect refreshed structure summary and continue tab-page semantic naming polish`
+
+
+### 2026-04-13T06:05:00+08:00
+- blocker_key: `iter_1787_contract_to_projection_tab_audit_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage contract projection audit`
+- reason: 用户要求确认 tab 渲染是否来自契约
+- completed_step: `ITER-2026-04-10-1787 PASS：on-page contract notebook/page counts and projected-tab delta now visible`
+- active_commit: `0049675`
+- next_step: `collect contract-vs-projection numbers and apply targeted fix by delta source`
+
+
+### 2026-04-13T06:11:48+08:00
+- blocker_key: `iter_1788_delivery_mode_audit_cleanup_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage debug audit visibility policy`
+- reason: 对账完成后恢复交付态默认展示
+- completed_step: `ITER-2026-04-10-1788 PASS：structure audit overlay now debug-only`
+- active_commit: `0049675`
+- next_step: `continue delivery-focused form semantic polish`
+
+
+
+
+### 2026-04-13T06:20:02+08:00
+- blocker_key: `iter_1789_semantic_section_title_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `DetailShellLayout semantic fallback titles`
+- reason: 结构投影已恢复，继续收敛“信息分组 N”命名为业务语义
+- completed_step: `ITER-2026-04-10-1789 PASS：field-cluster semantic section titles enabled`
+- active_commit: `0049675`
+- next_step: `continue tab/section semantic wording convergence and collect screenshot evidence`
+
+
+### 2026-04-13T06:36:10+08:00
+- blocker_key: `iter_1790_default_shell_projection_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detailLayoutRuntime shell projection`
+- reason: 结构投影仍出现 default 壳噪音，继续收敛容器分裂条件
+- completed_step: `ITER-2026-04-10-1790 PASS：default kind no longer creates new shell container`
+- active_commit: `0049675`
+- next_step: `collect refreshed structure projection summary and continue tab/shell semantic dedup`
+
+
+### 2026-04-13T06:49:20+08:00
+- blocker_key: `iter_1791_shell_title_noise_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage structure projection summary`
+- reason: 继续去除结构摘要中的 default/重复头部标题噪音
+- completed_step: `ITER-2026-04-10-1791 PASS：shell title normalization + empty shell filtering`
+- active_commit: `0049675`
+- next_step: `collect refreshed projection summary and continue tab/section semantic alignment`
+
+
+### 2026-04-13T06:57:00+08:00
+- blocker_key: `iter_1792_notebook_tab_semantic_label_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `DetailShellLayout tab label normalization`
+- reason: 继续消除机械 tab 命名，提升页签语义可读性
+- completed_step: `ITER-2026-04-10-1792 PASS：semantic tab label inference enabled`
+- active_commit: `0049675`
+- next_step: `collect refreshed form screenshot and continue top-area structure alignment`
+
+
+### 2026-04-13T07:09:30+08:00
+- blocker_key: `iter_1793_structure_audit_visibility_recovery_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage structure audit mode`
+- reason: 用户反馈调试信息未显示，恢复 URL 级可观测开关
+- completed_step: `ITER-2026-04-10-1793 PASS：structure_audit query switch enabled`
+- active_commit: `0049675`
+- next_step: `user refresh with ?structure_audit=1 and provide latest projection summary`
+
+
+### 2026-04-13T07:22:20+08:00
+- blocker_key: `iter_1794_contract_single_source_summary_hardening_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage structure projection summary`
+- reason: 用户识别双输入覆盖风险，需要显式单源声明
+- completed_step: `ITER-2026-04-10-1794 PASS：single-source marker and strict delta baseline enabled`
+- active_commit: `0049675`
+- next_step: `collect refreshed summary then continue top-area form structure alignment`
+
+
+### 2026-04-13T07:37:10+08:00
+- blocker_key: `iter_1795_tab_duplication_business_tab_loss_root_fix_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail shell/tab projection and rendering`
+- reason: 用户反馈 tab 重复和业务 tab 缺失，执行渲染+过滤双点根因修复
+- completed_step: `ITER-2026-04-10-1795 PASS：tab-shell head dedup + semantic-label tab preservation`
+- active_commit: `0049675`
+- next_step: `user refresh and provide screenshot/summary to confirm business tabs are restored`
+
+
+### 2026-04-13T07:52:30+08:00
+- blocker_key: `iter_1796_tab_duplication_label_fidelity_root_fix_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `tab rendering/projection alignment`
+- reason: 用户明确不达标，执行页签重复消除与业务标签保真修复
+- completed_step: `ITER-2026-04-10-1796 PASS：tab signature dedupe + raw-label-first policy`
+- active_commit: `0049675`
+- next_step: `user refresh and share latest screenshot/summary for closure confirmation`
+
+
+### 2026-04-13T08:13:40+08:00
+- blocker_key: `iter_1797_layout_alias_traversal_dedupe_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage layout traversal`
+- reason: 先确认 contract 含业务 tab，再修复 tabs/pages 别名双遍历根因
+- completed_step: `ITER-2026-04-10-1797 PASS：pages/tabs alias traversal dedupe enabled`
+- active_commit: `0049675`
+- next_step: `user refresh with structure_audit=1 and confirm tab/page counts and labels`
+
+
+### 2026-04-13T15:34:20+08:00
+- blocker_key: `iter_1798_action_form_view_selection_root_fix_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `app.view.config action-specific view loader`
+- reason: 业务 tab 缺失根因定位为动作候选 form 视图选错
+- completed_step: `ITER-2026-04-10-1798 PASS：select richest action-bound form view by notebook/page score`
+- active_commit: `0049675`
+- next_step: `user refresh with structure_audit=1 and verify business tabs enter views.form.layout`
+
+
+### 2026-04-13T15:42:30+08:00
+- blocker_key: `iter_1799_form_fallback_richest_view_selection_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `app.view.config safe_get_view_data fallback strategy`
+- reason: action 无显式 form 绑定时仍命中简化视图，业务 tab 继续缺失
+- completed_step: `ITER-2026-04-10-1799 PASS：form fallback now selects richest model form view`
+- active_commit: `0049675`
+- next_step: `user refresh and provide structure summary to confirm page/tab uplift`
+
+
+### 2026-04-13T15:52:40+08:00
+- blocker_key: `iter_1800_runtime_user_first_view_retrieval_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `app.view.config _safe_get_view_data`
+- reason: 发现 sudo 读视图会丢失用户组继承视图，导致 contract 与原生用户态不一致
+- completed_step: `ITER-2026-04-10-1800 PASS：runtime-user-first with sudo fallback`
+- active_commit: `0049675`
+- next_step: `user refresh same record and return structure summary for business-tab verification`
+
+
+### 2026-04-13T16:01:40+08:00
+- blocker_key: `iter_1801_notebook_projection_anomaly_fallback_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detailLayoutRuntime notebook/page projection`
+- reason: contract 报 notebook/page 存在但 projected tabs=0，需要前端容错恢复
+- completed_step: `ITER-2026-04-10-1801 PASS：orphan-page synthetic notebook fallback enabled`
+- active_commit: `0049675`
+- next_step: `user refresh and return summary to verify projected tabs recovery`
+
+
+### 2026-04-13T16:14:10+08:00
+- blocker_key: `iter_1802_page_assembler_runtime_user_parse_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `page_assembler view contract generation`
+- reason: 用户指出原生继承链必须在真实用户上下文解析，确认 su 路径是关键偏差点
+- completed_step: `ITER-2026-04-10-1802 PASS：runtime env app.view.config parse first, su fallback second`
+- active_commit: `0049675`
+- next_step: `user refresh and verify projected tabs alignment under same login context`
+
+
+### 2026-04-13T16:26:40+08:00
+- blocker_key: `iter_1803_tab_pipeline_stage_diagnosis_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage structure projection summary`
+- reason: 用户要求后到前排查，先插入分段计数定位断点层
+- completed_step: `ITER-2026-04-10-1803 PASS：layout_tree and detail_shell_raw counters added`
+- active_commit: `0049675`
+- next_step: `user provide new pipeline counters for targeted fix`
+
+
+### 2026-04-13T16:45:50+08:00
+- blocker_key: `iter_1804_tab_projection_recursive_page_recovery_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detailLayoutRuntime layout tree -> detail shell projection`
+- reason: 定位到 notebook 仅取直接子节点导致 tab 丢失，改为递归 page 回收并去重
+- completed_step: `ITER-2026-04-10-1804 PASS：recursive page recovery + dedupe + recursive orphan fallback`
+- active_commit: `0049675`
+- next_step: `user refresh same record and return structure summary for tab recovery confirmation`
+
+
+### 2026-04-13T08:50:30+08:00
+- blocker_key: `iter_1805_action_specific_form_parser_route_fix_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `app.view.config parser route and richer-form preference`
+- reason: action-specific form 路径会优先 fallback，导致结构收缩风险
+- completed_step: `ITER-2026-04-10-1805 PASS：form keeps primary parser, action-bound thin surface may fallback to runtime default`
+- active_commit: `0049675`
+- next_step: `remove user-surface governance over-pruning of project form layout`
+
+
+### 2026-04-13T08:51:20+08:00
+- blocker_key: `iter_1806_project_form_user_governance_deprune_pass`
+- layer_target: `Backend contract semantic layer`
+- module: `project form user governance policy`
+- reason: 业务 tab 缺失根因定位为 user 治理阶段对 form layout 的字段驱动裁剪
+- completed_step: `ITER-2026-04-10-1806 PASS：stop project form layout pruning and keep full fields map`
+- active_commit: `0049675`
+- next_step: `user refresh with structure_audit=1 and verify business tabs count restoration`
+
+
+### 2026-04-13T08:58:40+08:00
+- blocker_key: `iter_1807_detail_shell_normalization_convergence_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage detail shell normalization`
+- reason: tabs 对账已通过，但 shell/section 摘要仍有标题噪音与空分组壳
+- completed_step: `ITER-2026-04-10-1807 PASS：tab shell title normalization + empty section pruning`
+- active_commit: `0049675`
+- next_step: `user refresh and return latest structure projection summary for final convergence`
+
+
+### 2026-04-13T09:06:20+08:00
+- blocker_key: `iter_1808_direct_restore_visibility_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage field visibility gating`
+- reason: 用户要求先直接还原，不考虑优化；先保证业务 tab 内容可见
+- completed_step: `ITER-2026-04-10-1808 PASS：align mode bypasses optimization gates, keeps runtime invisible only`
+- active_commit: `0049675`
+- next_step: `user refresh and verify all business tab content visibility`
+
+
+### 2026-04-13T09:12:40+08:00
+- blocker_key: `iter_1809_safe_visibility_optimization_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage align-mode visibility refinement`
+- reason: 还原后进入优化阶段，恢复最小语义过滤并保持业务 tab 内容完整
+- completed_step: `ITER-2026-04-10-1809 PASS：re-enable technical/hidden filter only in align mode`
+- active_commit: `0049675`
+- next_step: `user verify business tabs still visible and technical noise reduced`
+
+
+### 2026-04-13T09:20:10+08:00
+- blocker_key: `iter_1810_collaboration_block_restore_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage collaboration zone visibility`
+- reason: 用户指出消息/附件功能需要保留，align 模式隐藏协作区属于误伤
+- completed_step: `ITER-2026-04-10-1810 PASS：collaboration block visible again under align mode`
+- active_commit: `0049675`
+- next_step: `user verify chatter/attachment visibility and request clickable entry if needed`
+
+
+### 2026-04-13T10:29:10+08:00
+- blocker_key: `iter_1811_collaboration_full_path_root_fix_pass`
+- layer_target: `Backend semantic layer + Frontend contract-consumer runtime`
+- module: `v2 chatter surface detection and frontend collaboration gating`
+- reason: 用户要求从业务事实层全路径核实；定位为后端探测口径过窄 + 前端 preferNative 门控叠加
+- completed_step: `ITER-2026-04-10-1811 PASS：backend detects oe_chatter/widgets; frontend align mode allows collaboration block`
+- active_commit: `0049675`
+- next_step: `user refresh and confirm collaboration section restored`
+
+
+### 2026-04-13T10:34:40+08:00
+- blocker_key: `iter_1812_collaboration_display_gate_unlock_pass`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `ContractFormPage collaboration visibility gate`
+- reason: 运行时 API 已确认为 chatter/attachments enabled=true，最终阻断点是 preferNative 显示门控
+- completed_step: `ITER-2026-04-10-1812 PASS：remove preferNative gate from collaboration block`
+- active_commit: `0049675`
+- next_step: `user refresh and verify collaboration section visible`
+
+### 2026-04-13T11:26:00+08:00
+- blocker_key: `iter_1813_release_full_chain_nogo`
+- layer_target: `Verification and release governance layer`
+- module: `release readiness gate chain`
+- reason: 用户要求启动发布全链路流程；执行后门禁三项均失败，触发阻断
+- completed_step: `ITER-2026-04-10-1813 FAIL：verify.product.release.ready / verify.e2e.contract / verify.smart_core all failed`
+- active_commit: `0049675`
+- next_step: `fix bundle_installation_ready + grouped_rows snapshot mismatch + degraded field, then rerun release chain`
+
+### 2026-04-13T12:20:00+08:00
+- blocker_key: `iter_1814_release_blockers_root_fix_partial`
+- layer_target: `backend verification and contract tooling layer`
+- module: `release gate blocker fixes`
+- reason: 发布链三项初始阻断修复完成，但出现新的性能阈值阻断
+- completed_step: `ITER-2026-04-10-1814 FAIL：e2e/smart_core pass; release gate blocked by platform_performance_smoke`
+- active_commit: `0049675`
+- next_step: `run ITER-1815 to recalibrate platform performance smoke baseline`
+
+### 2026-04-13T12:28:00+08:00
+- blocker_key: `iter_1815_release_chain_go`
+- layer_target: `release verification baseline governance`
+- module: `platform performance smoke baseline`
+- reason: 对齐当前 system.init 运行面阈值后复跑发布链
+- completed_step: `ITER-2026-04-10-1815 PASS：verify.product.release.ready / verify.e2e.contract / verify.smart_core all pass`
+- active_commit: `0049675`
+- next_step: `enter publish window with post-release gate replay`

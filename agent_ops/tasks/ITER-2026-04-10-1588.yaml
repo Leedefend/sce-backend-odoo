@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-10-1588
+title: backend refactor v2 migrate permission.check readonly intent
+type: governance
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  迁移 legacy 的 permission.check 为 v2 并行只读意图，持续提升 migrated 覆盖率。
+
+user_visible_outcome:
+  - "v2 权限检查意图可独立消费，迁移覆盖率持续提升"
+
+scope:
+  allowed_paths:
+    - addons/smart_core/v2/**
+    - scripts/verify/v2_*audit.py
+    - docs/architecture/backend_core_refactor_blueprint_v1.md
+    - agent_ops/tasks/ITER-2026-04-10-1588.yaml
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1588.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1588.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 16
+  max_output_lines: 640
+
+change_rules:
+  - v2 additive migration only
+  - readonly scope only
+  - no legacy runtime cutover
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Platform kernel shadow refactor layer
+  module: smart_core v2 permission check migration
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    本批迁移只读权限检查意图，不触碰 ACL 事实定义。
+  reason: >
+    连续重建目标下推进 legacy-v2 对齐覆盖，保持低风险可验证节奏。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1588.yaml"
+    - "python3 -m py_compile addons/smart_core/v2/handlers/meta/permission_check.py addons/smart_core/v2/services/meta_service.py addons/smart_core/v2/builders/meta_builder.py addons/smart_core/v2/intents/registry.py"
+    - "python3 scripts/verify/v2_intent_comparison_audit.py --json"
+    - 'rg -n "intent_name = \"permission.check\"|def permission_check_stub|def build_permission_check_contract" addons/smart_core/v2'
+    - "rg -n \"v2 permission.check migration batch\" docs/architecture/backend_core_refactor_blueprint_v1.md"
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - v2 permission.check readonly migration
+
+rollback:
+  - git restore addons/smart_core/v2 scripts/verify/v2_intent_comparison_audit.py docs/architecture/backend_core_refactor_blueprint_v1.md
+
+depends_on:
+  - ITER-2026-04-10-1587

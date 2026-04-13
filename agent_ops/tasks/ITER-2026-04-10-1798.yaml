@@ -1,0 +1,78 @@
+task_id: ITER-2026-04-10-1798
+title: action-bound form view selection root fix
+
+type: implementation
+status: active
+priority: high
+mode: implement
+batch: 1/1
+
+goal: >
+  修复 action form 契约取错视图导致业务页签丢失的问题：从动作绑定候选视图中选取结构最完整的 form 视图。
+
+user_visible_outcome:
+  - "ui.contract form 输出包含业务 notebook/page 结构"
+  - "业务 tab 不再仅剩 描述/设置/协作"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-10-1798.yaml
+    - addons/smart_core/app_config_engine/models/app_view_config.py
+    - agent_ops/reports/2026-04-10/report.ITER-2026-04-10-1798.md
+    - agent_ops/state/task_results/ITER-2026-04-10-1798.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - security/**
+    - record_rules/**
+    - "**/__manifest__.py"
+    - "**/*payment*"
+    - "**/*settlement*"
+    - "**/*account*"
+
+limits:
+  max_files: 5
+  max_output_lines: 1200
+
+change_rules:
+  - backend parser selection logic only
+  - no acl/rule/manifest changes
+  - additive compatibility-safe changes
+
+context:
+  branch: codex/next-round
+  baseline_sha: 0049675
+  explicit_user_authorization: true
+
+architecture:
+  layer_target: Backend contract semantic layer
+  module: app.view.config action-specific view loader
+  module_owner: smart_core
+  kernel_or_scenario: scenario
+  reason: >
+    业务 tab 未进入 contract，根因是 form 视图候选选择不稳定，需要按 notebook/page 丰富度择优。
+
+acceptance:
+  commands:
+    - "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-10-1798.yaml"
+    - 'rg -n "candidate_view_ids|count_notebook_pages|load_action_specific_view" addons/smart_core/app_config_engine/models/app_view_config.py'
+    - "make backend.restart"
+    - "make frontend.restart"
+
+risk:
+  level: medium-low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_command_failed
+  - contract_uncertainty
+
+deliverables:
+  - backend view selection root-fix patch
+  - iteration report and task result
+
+rollback:
+  - "git restore addons/smart_core/app_config_engine/models/app_view_config.py"
+
+depends_on:
+  - ITER-2026-04-10-1797
