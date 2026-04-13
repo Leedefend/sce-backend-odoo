@@ -11,6 +11,7 @@ import logging
 import threading
 import types
 from hashlib import md5
+from lxml import etree
 
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError
@@ -243,18 +244,27 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             ctx_flags = dict(self.env.context or {})
             force_parser = bool(ctx_flags.get('contract_force_parser'))
             force_fallback = bool(ctx_flags.get('contract_force_fallback'))
-            action_specific_view = str(view_data.get('_contract_view_source') or '').strip() == 'action_specific'
+            action_specific_source = str(view_data.get('_contract_view_source') or '').strip()
+            action_specific_view = action_specific_source.startswith('action_specific')
 
             parse_service = NativeParseService(self)
             fallback_service = ParseFallbackService(self)
-            if action_specific_view and not force_parser:
+            if action_specific_view and view_type != 'form' and not force_parser:
                 _logger.info(
-                    "VIEW_PARSE_DEBUG: action-specific view detected for %s.%s, prefer fallback parser on bound arch",
+                    "VIEW_PARSE_DEBUG: action-specific view detected for %s.%s source=%s, prefer fallback parser on bound arch",
                     model_name,
                     view_type,
+                    action_specific_source,
                 )
                 parsed_json = self._fallback_parse(model_name, view_type, view_data)
             else:
+                if action_specific_view and view_type == 'form':
+                    _logger.info(
+                        "VIEW_PARSE_DEBUG: action-specific form view detected for %s.%s source=%s, keep primary parser and use fallback only as safety",
+                        model_name,
+                        view_type,
+                        action_specific_source,
+                    )
                 parsed_json = parse_service.parse_with_primary_parser(
                     model_name,
                     view_type,
@@ -406,14 +416,111 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         - 旧：env[model].fields_view_get(view_type=..., toolbar=True)
         返回：{"arch": str, "fields": dict, "toolbar": dict}
         """
-        Model = self.env[model_name].sudo()
+        ModelRuntime = self.env[model_name].with_context(dict(self.env.context or {}))
+        ModelSudo = self.env[model_name].sudo().with_context(dict(self.env.context or {}))
         data = {}
 
         # a) 尝试跟随当前动作绑定的视图（优先精准 view_id）
         try:
             context = dict(self.env.context or {})
             action_id = context.get('contract_action_id')
-            view_id = False
+            candidate_view_ids = []
+
+            def append_candidate(view_id_raw):
+                try:
+                    candidate = int(view_id_raw)
+                except Exception:
+                    return
+                if candidate and candidate not in candidate_view_ids:
+                    candidate_view_ids.append(candidate)
+
+            def count_notebook_pages(arch_raw):
+                arch = str(arch_raw or '').strip()
+                if not arch:
+                    return 0
+                try:
+                    root = etree.fromstring(arch.encode('utf-8'))
+                    return len(root.xpath('.//notebook/page'))
+                except Exception:
+                    return 0
+
+            def load_action_specific_view(view_id):
+                _logger.info("使用指定视图ID %s 加载 %s.%s 视图", view_id, model_name, view_type)
+                selected = None
+                try:
+                    selected = ModelRuntime.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)
+                except Exception as runtime_err:
+                    _logger.warning("runtime user get_view 失败，回退 sudo: %s", runtime_err)
+                    selected = ModelSudo.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)
+                if not (isinstance(selected, dict) and selected.get('arch')):
+                    return None
+                explicit_data = {
+                    'arch': selected.get('arch'),
+                    'fields': selected.get('fields', {}),
+                    'toolbar': selected.get('toolbar', {}),
+                    '_contract_view_id': view_id,
+                    '_contract_view_source': 'action_specific',
+                }
+                try:
+                    try:
+                        fv = ModelRuntime.fields_view_get(view_id=view_id, view_type=view_type, toolbar=True)
+                    except Exception as runtime_fv_err:
+                        _logger.warning("runtime user fields_view_get 失败，回退 sudo: %s", runtime_fv_err)
+                        fv = ModelSudo.fields_view_get(view_id=view_id, view_type=view_type, toolbar=True)
+                    fv_arch = fv.get('arch') if isinstance(fv, dict) else ''
+                    explicit_arch = explicit_data.get('arch') or ''
+                    if fv_arch and len(str(fv_arch)) >= len(str(explicit_arch)):
+                        explicit_data = {
+                            'arch': fv_arch,
+                            'fields': fv.get('fields', {}),
+                            'toolbar': fv.get('toolbar', {}),
+                            '_contract_view_id': view_id,
+                            '_contract_view_source': 'action_specific_fields_view_get',
+                        }
+                except Exception as e:
+                    _logger.warning("action-specific fields_view_get 失败: %s", e)
+                return explicit_data
+
+            def load_default_runtime_view():
+                selected = None
+                try:
+                    selected = ModelRuntime.with_context(load_all_views=True).get_view(view_type=view_type)
+                except Exception as runtime_err:
+                    _logger.warning("runtime user default get_view 失败，回退 sudo: %s", runtime_err)
+                    selected = ModelSudo.with_context(load_all_views=True).get_view(view_type=view_type)
+                if not (isinstance(selected, dict) and selected.get('arch')):
+                    return None
+                return {
+                    'arch': selected.get('arch'),
+                    'fields': selected.get('fields', {}),
+                    'toolbar': selected.get('toolbar', {}),
+                    '_contract_view_id': None,
+                    '_contract_view_source': 'runtime_default',
+                }
+
+            def prefer_richer_form_surface(bound_data):
+                if view_type != 'form' or not isinstance(bound_data, dict):
+                    return bound_data
+                default_data = load_default_runtime_view()
+                if not isinstance(default_data, dict):
+                    return bound_data
+                bound_page_score = count_notebook_pages(bound_data.get('arch'))
+                bound_length_score = len(str(bound_data.get('arch') or ''))
+                bound_score = bound_page_score * 100000 + bound_length_score
+                default_page_score = count_notebook_pages(default_data.get('arch'))
+                default_length_score = len(str(default_data.get('arch') or ''))
+                default_score = default_page_score * 100000 + default_length_score
+                if default_score > bound_score:
+                    _logger.info(
+                        "action-bound form score=%s(page=%s) < runtime default score=%s(page=%s)，采用 runtime default form",
+                        bound_score,
+                        bound_page_score,
+                        default_score,
+                        default_page_score,
+                    )
+                    return default_data
+                return bound_data
+
             if action_id:
                 act = self.env['ir.actions.act_window'].sudo().browse(int(action_id))
                 if act.exists():
@@ -431,59 +538,105 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         try:
                             res = self.env['ir.model.data']._xmlid_to_res_model_res_id(explicit_view_xmlid)
                             if res and res[0] == 'ir.ui.view':
-                                view_id = res[1]
+                                append_candidate(res[1])
                         except Exception as e:
                             _logger.warning("通过 action context 解析指定视图失败: %s", e)
+
                     for v in (act.views or []):
                         if not (v and len(v) >= 2 and v[1] == view_type):
                             continue
-                        if v[0]:
-                            view_id = v[0]
-                            break
-                    if not view_id:
-                        bound_view = self.env['ir.actions.act_window.view'].sudo().search(
-                            [
-                                ('act_window_id', '=', act.id),
-                                ('view_mode', '=', view_type),
-                                ('view_id', '!=', False),
-                            ],
-                            order='sequence asc, id asc',
-                            limit=1,
+                        append_candidate(v[0])
+
+                    if act.view_id and (not getattr(act.view_id, 'type', False) or act.view_id.type == view_type):
+                        append_candidate(act.view_id.id)
+
+                    bound_views = self.env['ir.actions.act_window.view'].sudo().search(
+                        [
+                            ('act_window_id', '=', act.id),
+                            ('view_mode', '=', view_type),
+                            ('view_id', '!=', False),
+                        ],
+                        order='sequence asc, id asc',
+                    )
+                    for bound in bound_views:
+                        if bound.view_id:
+                            append_candidate(bound.view_id.id)
+
+            if candidate_view_ids:
+                if view_type != 'form' or len(candidate_view_ids) == 1:
+                    explicit_data = load_action_specific_view(candidate_view_ids[0])
+                    if explicit_data:
+                        return prefer_richer_form_surface(explicit_data)
+                else:
+                    best_data = None
+                    best_score = -1
+                    best_view_id = None
+                    for candidate_view_id in candidate_view_ids:
+                        explicit_data = load_action_specific_view(candidate_view_id)
+                        if not explicit_data:
+                            continue
+                        page_score = count_notebook_pages(explicit_data.get('arch'))
+                        length_score = len(str(explicit_data.get('arch') or ''))
+                        score = page_score * 100000 + length_score
+                        if score > best_score:
+                            best_score = score
+                            best_data = explicit_data
+                            best_view_id = candidate_view_id
+                    if best_data:
+                        _logger.info(
+                            "动作 %s.%s 视图候选=%s，采用 view_id=%s（page_score=%s）",
+                            model_name,
+                            view_type,
+                            candidate_view_ids,
+                            best_view_id,
+                            best_score,
                         )
-                        if bound_view and bound_view.view_id:
-                            view_id = bound_view.view_id.id
-            if view_id:
-                _logger.info("使用指定视图ID %s 加载 %s.%s 视图", view_id, model_name, view_type)
-                data = Model.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)
-                if isinstance(data, dict) and data.get('arch'):
-                    explicit_data = {
-                        'arch': data.get('arch'),
-                        'fields': data.get('fields', {}),
-                        'toolbar': data.get('toolbar', {}),
-                        '_contract_view_id': view_id,
-                        '_contract_view_source': 'action_specific',
-                    }
-                    try:
-                        fv = Model.fields_view_get(view_id=view_id, view_type=view_type, toolbar=True)
-                        fv_arch = fv.get('arch') if isinstance(fv, dict) else ''
-                        explicit_arch = explicit_data.get('arch') or ''
-                        if fv_arch and len(str(fv_arch)) >= len(str(explicit_arch)):
-                            explicit_data = {
-                                'arch': fv_arch,
-                                'fields': fv.get('fields', {}),
-                                'toolbar': fv.get('toolbar', {}),
-                                '_contract_view_id': view_id,
-                                '_contract_view_source': 'action_specific_fields_view_get',
-                            }
-                    except Exception as e:
-                        _logger.warning("action-specific fields_view_get 失败: %s", e)
-                    return explicit_data
+                        return prefer_richer_form_surface(best_data)
+
+            if view_type == 'form' and action_id and not candidate_view_ids:
+                fallback_candidates = self.env['ir.ui.view'].sudo().search(
+                    [
+                        ('model', '=', model_name),
+                        ('type', '=', 'form'),
+                        ('active', '=', True),
+                    ],
+                    order='priority asc, id asc',
+                    limit=30,
+                )
+                best_data = None
+                best_score = -1
+                best_view_id = None
+                for fallback_view in fallback_candidates:
+                    explicit_data = load_action_specific_view(fallback_view.id)
+                    if not explicit_data:
+                        continue
+                    page_score = count_notebook_pages(explicit_data.get('arch'))
+                    length_score = len(str(explicit_data.get('arch') or ''))
+                    score = page_score * 100000 + length_score
+                    if score > best_score:
+                        best_score = score
+                        best_data = explicit_data
+                        best_view_id = fallback_view.id
+                if best_data:
+                    _logger.info(
+                        "动作 %s.%s 未显式绑定 form，fallback 候选=%s，采用 view_id=%s（score=%s）",
+                        model_name,
+                        view_type,
+                        [row.id for row in fallback_candidates],
+                        best_view_id,
+                        best_score,
+                    )
+                    return prefer_richer_form_surface(best_data)
         except Exception as e:
             _logger.warning("加载指定视图ID失败: %s", e)
 
         # b) 标准方式（按类型）
         try:
-            data = Model.get_view(view_type=view_type)
+            try:
+                data = ModelRuntime.get_view(view_type=view_type)
+            except Exception as runtime_err:
+                _logger.warning("runtime user get_view 失败，回退 sudo: %s", runtime_err)
+                data = ModelSudo.get_view(view_type=view_type)
             if isinstance(data, dict) and data.get('arch'):
                 arch = data.get('arch', '')
                 if arch:
@@ -505,7 +658,11 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
 
         # c) 回退 fields_view_get（低版本 Odoo 有；若没有则捕获异常返回 None）
         try:
-            fv = Model.fields_view_get(view_type=view_type, toolbar=True)
+            try:
+                fv = ModelRuntime.fields_view_get(view_type=view_type, toolbar=True)
+            except Exception as runtime_fv_err:
+                _logger.warning("runtime user fields_view_get 失败，回退 sudo: %s", runtime_fv_err)
+                fv = ModelSudo.fields_view_get(view_type=view_type, toolbar=True)
             return {
                 'arch': fv.get('arch'),
                 'fields': fv.get('fields', {}),
@@ -576,13 +733,22 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             groups = [group_node(group) for group in (page.findall('.//group') if page is not None else [])]
             return {'type': 'page', 'string': page.get('string') if page is not None else '', 'children': groups}
 
+        def notebook_node(notebook):
+            pages = [page_node(page) for page in (notebook.findall('./page') if notebook is not None else [])]
+            return {
+                'type': 'notebook',
+                'string': notebook.get('string') if notebook is not None else '',
+                'children': pages,
+            }
+
         def sheet_node(sheet):
             if sheet is None:
                 return {'type': 'sheet', 'children': []}
-            notebook = sheet.find('.//notebook')
-            if notebook is not None:
-                pages = [page_node(page) for page in notebook.findall('./page')]
-                return {'type': 'sheet', 'children': [{'type': 'notebook', 'children': pages}]}
+            top_groups = [group_node(group) for group in sheet.findall('./group')]
+            notebooks = [notebook_node(notebook) for notebook in sheet.findall('.//notebook')]
+            children = top_groups + [item for item in notebooks if (item.get('children') or item.get('string'))]
+            if children:
+                return {'type': 'sheet', 'children': children}
             groups = [group_node(group) for group in sheet.findall('.//group')]
             if groups:
                 return {'type': 'sheet', 'children': groups}

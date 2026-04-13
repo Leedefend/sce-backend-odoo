@@ -189,8 +189,16 @@ class _BaseViewParserMixin:
         raise ValueError("Invalid view_type: %r" % (view_type,))
 
     # ---------------- 字段元信息（form 布局用） ----------------
+    def _resolve_field_type(self, meta):
+        info = meta or {}
+        return str(info.get('type') or info.get('ttype') or 'char').strip().lower()
+
+    def _resolve_field_relation(self, meta):
+        info = meta or {}
+        return str(info.get('relation') or info.get('comodel_name') or '').strip()
+
     def _widget_for_field(self, meta):
-        ftype = (meta or {}).get('type', 'char')
+        ftype = self._resolve_field_type(meta)
         mapping = {
             'many2one': 'many2one', 'many2many': 'many2many_tags', 'one2many': 'one2many_list',
             'binary': 'image', 'html': 'html', 'text': 'textarea', 'date': 'date',
@@ -201,10 +209,11 @@ class _BaseViewParserMixin:
 
     def _field_info_for_layout(self, field_name, fields_info):
         meta = (fields_info or {}).get(field_name, {}) or {}
-        return {
+        field_type = self._resolve_field_type(meta)
+        field_info = {
             'name': field_name,
             'label': meta.get('string', field_name),
-            'type': meta.get('type', 'char'),
+            'type': field_type,
             'required': bool(meta.get('required', False)),
             'readonly': bool(meta.get('readonly', False)),
             'invisible': bool(meta.get('invisible', False)),
@@ -215,3 +224,7 @@ class _BaseViewParserMixin:
             'selection': meta.get('selection', []),
             'colspan': int(meta.get('col', 1)) if str(meta.get('col', '')).isdigit() else 1,
         }
+        relation = self._resolve_field_relation(meta)
+        if relation:
+            field_info['relation'] = relation
+        return field_info

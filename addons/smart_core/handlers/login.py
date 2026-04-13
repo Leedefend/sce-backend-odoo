@@ -6,6 +6,7 @@ from typing import Dict, Any
 from odoo import SUPERUSER_ID, api
 from odoo.modules.registry import Registry
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds, get_user_from_token
 from ..core.handler_registry import HANDLER_REGISTRY  # 全局注册表
 
@@ -216,7 +217,7 @@ class LoginHandler(BaseIntentHandler):
                 "groups": profile["groups"],
                 "intents": _list_available_intents(),
             }
-        return data, {}
+        return IntentExecutionResult(ok=True, data=data, meta={})
 
 
 class LogoutHandler(BaseIntentHandler):

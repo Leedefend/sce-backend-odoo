@@ -12,6 +12,7 @@ from uuid import uuid4
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from .reason_codes import (
     REASON_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
@@ -451,4 +452,4 @@ class ApiDataBatchHandler(BaseIntentHandler):
             result=data,
         )
         meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell"}
-        return {"ok": True, "data": data, "meta": meta}
+        return IntentExecutionResult(data=data, meta=meta)

@@ -237,7 +237,16 @@ class PageAssembler:
         form_action_source_rows = []
         for vt in view_types:
             try:
-                vcfg = su['app.view.config']._generate_from_fields_view_get(model, vt)
+                try:
+                    vcfg = env['app.view.config']._generate_from_fields_view_get(model, vt)
+                except Exception as runtime_view_err:
+                    _logger.warning(
+                        "runtime env view parse failed; fallback to su env model=%s vt=%s err=%s",
+                        model,
+                        vt,
+                        runtime_view_err,
+                    )
+                    vcfg = su['app.view.config']._generate_from_fields_view_get(model, vt)
                 if vt == 'form':
                     form_action_source_rows = self._extract_form_action_rows_from_view_config(vcfg)
                 v_contract = vcfg.get_contract_api(filter_runtime=True, check_model_acl=True)

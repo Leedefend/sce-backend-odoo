@@ -4,10 +4,12 @@ from odoo.http import request
 from odoo import api, SUPERUSER_ID
 import logging
 from typing import Optional, Type, Dict, Any, Tuple
-import odoo
 from .base_handler import BaseIntentHandler
 from .handler_registry import HANDLER_REGISTRY  # import 时已完成注册
 from .extension_loader import load_extensions
+from .intent_env_policy import build_dispatch_envs, finalize_dispatch_cursor
+from .intent_route_mode_policy import resolve_intent_route_mode
+from .intent_shadow_compare_executor import run_shadow_compare
 
 _logger = logging.getLogger(__name__)
 
@@ -30,50 +32,6 @@ def resolve_handler(intent: str) -> Optional[Type[BaseIntentHandler]]:
         return h
     return None
 
-# ---------- 工具：按 db/context 构造 env/su_env ----------
-def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.Environment, api.Environment, Any]:
-    """
-    返回 (env, su_env, extra_cursor)
-    - 如果切换了 DB，会新开 cursor，调用方必须在 finally 里 cr.close()
-    - 如果没切库，extra_cursor 为 None
-    """
-    import logging
-    _logger = logging.getLogger(__name__)
-    
-    target_db = (params or {}).get("db") or request.env.cr.dbname
-    cur_db = request.env.cr.dbname
-    
-    # 调试：打印数据库信息
-    _logger.info("[intent_router][debug] _build_envs target_db: %s", target_db)
-    _logger.info("[intent_router][debug] _build_envs cur_db: %s", cur_db)
-    _logger.info("[intent_router][debug] _build_envs request.env.cr.dbname: %s", request.env.cr.dbname)
-
-    # 合并上下文：以传入的 add_ctx 覆盖 request.env.context
-    base_ctx = dict(request.env.context or {})
-    if add_ctx:
-        base_ctx.update(add_ctx)
-
-    if target_db == cur_db:
-        env = request.env(context=base_ctx)  # 复用当前 cursor/uid，替换 context
-        su_env = api.Environment(env.cr, SUPERUSER_ID, dict(env.context))
-        return env, su_env, None
-
-    # 切库：新开 registry+cursor
-    reg = odoo.registry(target_db)
-    try:
-        reg.check_signaling()  # ← 关键：捕捉 install/update 导致的注册表变化
-    except Exception:
-        # 不致命，继续
-        pass
-
-    cr = reg.cursor()
-    try:
-        env = api.Environment(cr, request.uid, base_ctx)
-        su_env = api.Environment(cr, SUPERUSER_ID, dict(env.context))
-        return env, su_env, cr
-    except Exception:
-        cr.close()
-        raise
 def _dispatch(intent: str, params: dict, context: dict):
     """
     统一分发：显式依据 params.db 选择环境，合并 context，实例化 Handler 并调用。
@@ -91,7 +49,7 @@ def _dispatch(intent: str, params: dict, context: dict):
         return {"ok": False, "error": {"code": 404, "message": f"Unknown intent: {intent}"}}
 
     # 1) 构造 env / su_env（必要时切库）
-    env, su_env, extra_cr = _build_envs(params or {}, context or {})
+    env, su_env, extra_cr = build_dispatch_envs(params or {}, context or {})
     dispatch_succeeded = False
     try:
         # 2) 实例化 handler，注入 env/su_env/context/params
@@ -119,14 +77,56 @@ def _dispatch(intent: str, params: dict, context: dict):
         return result
     finally:
         # 若新开了 cursor：成功请求要提交，否则关闭时会隐式回滚。
-        if extra_cr is not None:
+        finalize_dispatch_cursor(
+            extra_cursor=extra_cr,
+            dispatch_succeeded=dispatch_succeeded,
+            intent=intent,
+            dbname=env.cr.dbname,
+        )
+
+
+def _dispatch_v2(intent: str, params: dict, context: dict):
+    from ..v2.dispatcher import dispatch_intent
+
+    return dispatch_intent(
+        intent=intent,
+        payload=params or {},
+        context=context or {},
+    )
+
+
+def _enrich_v2_auth_context(context: dict) -> dict:
+    enriched = dict(context or {})
+
+    user_id = int(enriched.get("user_id") or 0)
+    if user_id <= 0:
+        try:
+            request_uid = int(getattr(request, "uid", 0) or 0)
+        except Exception:
+            request_uid = 0
+        if request_uid <= 0:
             try:
-                if dispatch_succeeded:
-                    _logger.info("[intent_router] commit extra cursor intent=%s db=%s", intent, env.cr.dbname)
-                    extra_cr.commit()
-                extra_cr.close()
+                request_uid = int(getattr(getattr(request, "session", None), "uid", 0) or 0)
             except Exception:
-                _logger.exception("[intent] close cursor failed (db=%s)", env.cr.dbname)
+                request_uid = 0
+        if request_uid <= 0:
+            try:
+                request_uid = int(getattr(getattr(request, "env", None), "uid", 0) or 0)
+            except Exception:
+                request_uid = 0
+        if request_uid > 0:
+            enriched["user_id"] = request_uid
+
+    company_id = int(enriched.get("company_id") or 0)
+    if company_id <= 0:
+        try:
+            company_id = int(getattr(getattr(request.env.user, "company_id", None), "id", 0) or 0)
+        except Exception:
+            company_id = 0
+        if company_id > 0:
+            enriched["company_id"] = company_id
+
+    return enriched
 
 def route_intent_payload(payload: dict, ctx) -> dict:
     """
@@ -149,4 +149,41 @@ def route_intent_payload(payload: dict, ctx) -> dict:
                       intent, db, ",".join(sorted(params.keys())) if params else "-")
     except Exception:
         pass
+
+    route_decision = resolve_intent_route_mode(intent)
+    mode = str(route_decision.get("mode") or "legacy_only")
+    _logger.info(
+        "[intent_router][route_mode] intent=%s mode=%s reason=%s snapshot=%s",
+        intent,
+        mode,
+        str(route_decision.get("reason") or ""),
+        str(route_decision.get("snapshot_id") or ""),
+    )
+
+    v2_context = _enrich_v2_auth_context(context)
+
+    if mode == "v2_primary":
+        return _dispatch_v2(intent, params, v2_context)
+
+    if mode == "v2_shadow":
+        primary_result = _dispatch(intent, params, context)
+        compare_summary = run_shadow_compare(
+            intent=intent,
+            route_mode=mode,
+            params=params or {},
+            context=v2_context,
+            v1_result=primary_result,
+            v2_runner=lambda i, p, c: _dispatch_v2(i, p, c),
+        )
+        _logger.info(
+            "[intent_router][v2_shadow_compare] intent=%s trace_id=%s same_shape=%s same_reason_code=%s diff=%s",
+            str(compare_summary.get("intent") or ""),
+            str(compare_summary.get("trace_id") or ""),
+            bool(compare_summary.get("same_shape")),
+            bool(compare_summary.get("same_reason_code")),
+            ",".join(compare_summary.get("diff_summary") or []),
+        )
+        return primary_result
+
+    # legacy_only 继续走 v1 主执行。
     return _dispatch(intent, params, context)

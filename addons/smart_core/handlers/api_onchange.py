@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..utils.reason_codes import normalize_onchange_reason_code
 
 
@@ -250,9 +251,9 @@ class ApiOnchangeHandler(BaseIntentHandler):
         values = self._normalize_values(env_model, params.get("values") if isinstance(params.get("values"), dict) else {})
         changed_fields = self._normalize_changed_fields(env_model, params.get("changed_fields") or params.get("changed"))
         if not changed_fields:
-            return {
-                "ok": True,
-                "data": {
+            return IntentExecutionResult(
+                ok=True,
+                data={
                     "schema_version": "v1",
                     "patch": {},
                     "modifiers_patch": {},
@@ -260,8 +261,8 @@ class ApiOnchangeHandler(BaseIntentHandler):
                     "warnings": [],
                     "applied_fields": [],
                 },
-                "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
-            }
+                meta={"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
+            )
 
         field_onchange = self._build_field_onchange_map(env_model)
 
@@ -285,9 +286,9 @@ class ApiOnchangeHandler(BaseIntentHandler):
             prev["domain"] = field_domain
             modifiers_patch[field_name] = prev
 
-        return {
-            "ok": True,
-            "data": {
+        return IntentExecutionResult(
+            ok=True,
+            data={
                 "schema_version": "v1",
                 "patch": patch,
                 "modifiers_patch": modifiers_patch,
@@ -295,5 +296,5 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 "warnings": warnings,
                 "applied_fields": changed_fields,
             },
-            "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
-        }
+            meta={"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
+        )

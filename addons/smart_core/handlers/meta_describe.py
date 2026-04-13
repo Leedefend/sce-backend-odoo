@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 统一元数据描述（只读意图）：返回字段定义 + 可选展开
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from odoo.http import request
 import hashlib, json, time
 
@@ -14,7 +15,7 @@ class MetaDescribeHandler(BaseIntentHandler):
         p = self.params or {}
         model = p.get("model")
         if not model:
-            return {"ok": False, "error": {"code":400, "message":"缺少 model 参数"}}
+            return IntentExecutionResult(ok=False, error={"code": 400, "message": "缺少 model 参数"})
 
         # 上下文：lang/tz/company 可选
         ctx = (self.env.context or {}).copy()
@@ -56,7 +57,12 @@ class MetaDescribeHandler(BaseIntentHandler):
         etag = hashlib.sha1(etag_src.encode("utf-8")).hexdigest()
 
         if if_none_match and if_none_match == etag:
-            return {"ok": True, "data": None, "meta": {"intent":"meta.describe_model","etag":etag,"elapsed_ms":int((time.time()-t0)*1000)}, "code":304}
+            return IntentExecutionResult(
+                ok=True,
+                data=None,
+                meta={"intent": "meta.describe_model", "etag": etag, "elapsed_ms": int((time.time() - t0) * 1000)},
+                code=304,
+            )
 
         meta = {"intent":"meta.describe_model","etag":etag,"elapsed_ms":int((time.time()-t0)*1000)}
-        return {"ok": True, "data": data, "meta": meta}
+        return IntentExecutionResult(ok=True, data=data, meta=meta)

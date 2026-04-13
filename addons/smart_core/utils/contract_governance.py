@@ -1485,16 +1485,18 @@ def _build_project_lifecycle_summary(data: dict) -> None:
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
     selected = _pick_project_form_fields(data)
-    selected_set = set(selected)
     fields_map = _as_dict(data.get("fields"))
-    data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
+    # Keep full field map for native form-structure fidelity. Restricting fields to
+    # selected subset can prune page containers indirectly in user surface.
+    data["fields"] = fields_map
     data["visible_fields"] = selected
     data["form_profile"] = {
         "core_fields": selected[:8],
         "advanced_fields": selected[8:],
         "max_fields": _PROJECT_FORM_FIELD_MAX,
     }
-    _filter_project_form_layout(data, selected)
+    # Keep parser-native notebook/page tree intact for project form alignment.
+    # Do not prune form layout by selected fields in user mode.
     views = _as_dict(data.get("views"))
     form = _as_dict(views.get("form"))
     form["form_profile"] = _as_dict(data.get("form_profile"))
@@ -1504,7 +1506,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     permissions = _as_dict(data.get("permissions"))
     field_groups = _as_dict(permissions.get("field_groups"))
     if field_groups:
-        permissions["field_groups"] = {name: val for name, val in field_groups.items() if name in selected_set}
+        permissions["field_groups"] = field_groups
     data["permissions"] = permissions
 
     _govern_project_form_actions(data)

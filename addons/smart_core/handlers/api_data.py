@@ -22,6 +22,7 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..core.platform_policy_defaults import get_create_field_fallbacks
 from ..utils.extension_hooks import call_extension_hook_first
 
@@ -712,7 +713,12 @@ class ApiDataHandler(BaseIntentHandler):
         meta_out = dict(meta)
         meta_out["etag"] = etag
         if if_none_match and if_none_match == etag:
-            return {"ok": True, "data": None, "meta": {"op": op, "model": model, "etag": etag}, "code": 304}
+            return IntentExecutionResult(
+                ok=True,
+                data=None,
+                meta={"op": op, "model": model, "etag": etag},
+                code=304,
+            )
         return data, meta_out
 
     def _standard_search_fields(self, model: str, env_model, fields_safe: List[str]) -> List[str]:
@@ -763,6 +769,33 @@ class ApiDataHandler(BaseIntentHandler):
         if len(search_clauses) == 1:
             return [search_clauses[0]]
         return (["|"] * (len(search_clauses) - 1)) + search_clauses
+
+    def _sanitize_order(self, env_model, order: str) -> str:
+        text = str(order or "").strip()
+        if not text:
+            return ""
+        valid_fields = getattr(env_model, "_fields", {}) or {}
+        out_terms: List[str] = []
+        for raw_term in text.split(","):
+            term = str(raw_term or "").strip()
+            if not term:
+                continue
+            tokens = [token for token in term.split() if token]
+            if not tokens:
+                continue
+            field_name = tokens[0]
+            if field_name != "id" and field_name not in valid_fields:
+                _logger.warning("api.data order term dropped: model=%s field=%s term=%s", env_model._name, field_name, term)
+                continue
+            normalized = [field_name]
+            if len(tokens) >= 2 and tokens[1].lower() in {"asc", "desc"}:
+                normalized.append(tokens[1].lower())
+            if len(tokens) >= 4 and tokens[2].lower() == "nulls" and tokens[3].lower() in {"first", "last"}:
+                normalized.extend(["nulls", tokens[3].lower()])
+            out_terms.append(" ".join(normalized))
+        if out_terms:
+            return ", ".join(out_terms)
+        return "id desc"
 
     # ----------------- 操作实现 -----------------
 
@@ -817,7 +850,8 @@ class ApiDataHandler(BaseIntentHandler):
         if search_domain:
             domain = domain + search_domain
 
-        recs = env_model.search(domain or [], order=order or None, limit=limit or None, offset=offset or 0)
+        order_safe = self._sanitize_order(env_model, order)
+        recs = env_model.search(domain or [], order=order_safe or None, limit=limit or None, offset=offset or 0)
         try:
             rows: List[Dict[str, Any]] = recs.read(fields_safe or ["id", "name"])
         except AccessError as ae:
@@ -847,7 +881,7 @@ class ApiDataHandler(BaseIntentHandler):
             model,
             domain,
             group_by,
-            order,
+            order_safe,
             search_term,
             ctx,
         )
@@ -1155,7 +1189,8 @@ class ApiDataHandler(BaseIntentHandler):
         if ids:
             recs = env_model.browse(ids).exists()
         else:
-            recs = env_model.search(domain or [], order=order or None, limit=limit)
+            order_safe = self._sanitize_order(env_model, order)
+            recs = env_model.search(domain or [], order=order_safe or None, limit=limit)
         if not recs:
             data = {
                 "file_name": f"{model.replace('.', '_')}_empty.csv",

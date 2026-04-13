@@ -167,6 +167,18 @@ class ContractService:
         # 0) 先把视图内按钮汇总到顶层，便于统一清洗/权限处理
         self._merge_view_buttons_to_top(data)
 
+        # 0.5) 统一 form layout.fieldInfo 真值源（fields 为 canonical）
+        self._sync_form_layout_field_info(data)
+
+        # 0.55) 统一 form 结构语义壳（surface 类型 + semantic_page 映射 + 空分组标签）
+        self._normalize_form_structure_semantics(data)
+
+        # 0.6) 统一 form 动作承载区域（button_box 主源，stat_buttons 去重）
+        self._dedupe_form_action_surfaces(data)
+
+        # 0.7) 补齐 form x2many 子视图最小承载（tree.columns + policies）
+        self._ensure_form_x2many_subviews(data)
+
         # 1) 对齐表单状态栏字段（form.statusbar.field）
         self._fix_form_statusbar_field(data)
 
@@ -192,6 +204,417 @@ class ContractService:
         self._self_check_strict(data)
 
         return data
+
+    @staticmethod
+    def _iter_layout_nodes(node):
+        if isinstance(node, dict):
+            yield node
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                children = node.get(key)
+                if isinstance(children, list):
+                    for child in children:
+                        yield from ContractService._iter_layout_nodes(child)
+            return
+        if isinstance(node, list):
+            for item in node:
+                yield from ContractService._iter_layout_nodes(item)
+
+    @staticmethod
+    def _canonical_field_type(meta):
+        info = meta if isinstance(meta, dict) else {}
+        return str(info.get("type") or info.get("ttype") or "").strip().lower()
+
+    @staticmethod
+    def _canonical_widget_by_type(field_type):
+        mapping = {
+            "many2one": "many2one",
+            "one2many": "one2many_list",
+            "many2many": "many2many_tags",
+            "boolean": "boolean",
+            "date": "date",
+            "datetime": "datetime",
+            "text": "textarea",
+            "html": "html",
+            "binary": "image",
+        }
+        ftype = str(field_type or "").strip().lower()
+        return mapping.get(ftype, ftype)
+
+    def _sync_form_layout_field_info(self, contract):
+        payload = contract if isinstance(contract, dict) else {}
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        fields_meta = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not fields_meta:
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout = form.get("layout")
+        if not isinstance(layout, (list, dict)):
+            return
+
+        for node in self._iter_layout_nodes(layout):
+            if str(node.get("type") or "").strip().lower() != "field":
+                continue
+            field_name = str(node.get("name") or "").strip()
+            if not field_name:
+                continue
+            canonical = fields_meta.get(field_name)
+            if not isinstance(canonical, dict):
+                continue
+
+            field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+            canonical_type = self._canonical_field_type(canonical)
+            layout_modifiers = field_info.get("modifiers") if isinstance(field_info.get("modifiers"), dict) else {}
+
+            next_field_info = {
+                "name": field_name,
+            }
+
+            canonical_label = str(canonical.get("string") or field_name)
+            current_label = str(field_info.get("label") or "").strip()
+            if (not current_label) or current_label == field_name:
+                next_field_info["label"] = canonical_label
+            else:
+                next_field_info["label"] = current_label
+
+            current_widget = str(field_info.get("widget") or "").strip().lower()
+            canonical_widget = str(canonical.get("widget") or self._canonical_widget_by_type(canonical_type) or "")
+            needs_widget_fix = not current_widget
+            if canonical_type in {"many2one", "one2many", "many2many"} and current_widget in {"", "char", "text", "input"}:
+                needs_widget_fix = True
+            if canonical_type == "html" and current_widget in {"", "char", "text", "input", "textarea"}:
+                needs_widget_fix = True
+            if canonical_type == "boolean" and current_widget in {"", "char", "text", "input", "textarea"}:
+                needs_widget_fix = True
+            if canonical_type == "selection" and current_widget in {"", "char", "text", "input", "textarea"}:
+                needs_widget_fix = True
+            if needs_widget_fix and canonical_widget:
+                next_field_info["widget"] = canonical_widget
+            elif current_widget:
+                next_field_info["widget"] = current_widget
+
+            colspan = field_info.get("colspan")
+            if isinstance(colspan, int) and colspan > 0:
+                next_field_info["colspan"] = colspan
+
+            if layout_modifiers:
+                next_field_info["modifiers"] = layout_modifiers
+
+            node["fieldInfo"] = next_field_info
+
+    def _normalize_form_structure_semantics(self, contract):
+        payload = contract if isinstance(contract, dict) else {}
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+
+        for key in ("header_buttons", "button_box", "stat_buttons"):
+            value = form.get(key)
+            if isinstance(value, list):
+                continue
+            if isinstance(value, dict):
+                form[key] = [item for item in value.values() if isinstance(item, dict)]
+            else:
+                form[key] = []
+
+        layout = form.get("layout")
+        group_index = 1
+        for node in self._iter_layout_nodes(layout):
+            node_type = str(node.get("type") or "").strip().lower()
+            if node_type == "group":
+                label = str(node.get("label") or "").strip()
+                synthetic = label.startswith("信息分组")
+                inferred = self._infer_group_semantic_label(node)
+                normalized_existing = self._normalize_group_label(label, self._collect_group_field_names(node)) if label else ""
+                if normalized_existing and normalized_existing != label:
+                    node["label"] = normalized_existing
+                elif inferred and ((not label) or synthetic):
+                    node["label"] = inferred
+                elif not label:
+                    node["label"] = f"信息分组{group_index}"
+                    group_index += 1
+                continue
+
+            if node_type == "page":
+                title = str(
+                    node.get("title")
+                    or node.get("label")
+                    or node.get("name")
+                    or (node.get("attributes") or {}).get("string")
+                    or ""
+                ).strip()
+                if title:
+                    node["title"] = title
+                    if not str(node.get("label") or "").strip():
+                        node["label"] = title
+                continue
+
+            if node_type == "notebook":
+                tabs = node.get("tabs") if isinstance(node.get("tabs"), list) else []
+                pages = node.get("pages") if isinstance(node.get("pages"), list) else []
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                page_children = [
+                    row for row in children
+                    if isinstance(row, dict) and str(row.get("type") or "").strip().lower() == "page"
+                ]
+                derived_tabs = tabs or pages or page_children
+                normalized_tabs = [row for row in derived_tabs if isinstance(row, dict)]
+                node["tabs"] = normalized_tabs
+                node["pages"] = list(normalized_tabs)
+                notebook_label = str(
+                    node.get("label")
+                    or node.get("title")
+                    or node.get("name")
+                    or (node.get("attributes") or {}).get("string")
+                    or ""
+                ).strip()
+                if (not notebook_label) and normalized_tabs:
+                    first_tab = normalized_tabs[0] if isinstance(normalized_tabs[0], dict) else {}
+                    notebook_label = str(
+                        first_tab.get("title")
+                        or first_tab.get("label")
+                        or first_tab.get("name")
+                        or ""
+                    ).strip()
+                if notebook_label:
+                    node["label"] = notebook_label
+                if page_children:
+                    node["children"] = [
+                        row for row in children
+                        if not (isinstance(row, dict) and str(row.get("type") or "").strip().lower() == "page")
+                    ]
+                continue
+
+            if node_type == "button":
+                button_label = str(node.get("label") or "").strip()
+                if not button_label:
+                    button_label = str(
+                        node.get("name")
+                        or (node.get("attributes") or {}).get("string")
+                        or (node.get("attributes") or {}).get("title")
+                        or "动作"
+                    ).strip()
+                    node["label"] = button_label
+
+        views["form"] = form
+        data["views"] = views
+
+        semantic_page = data.get("semantic_page") if isinstance(data.get("semantic_page"), dict) else {}
+        form_semantics = semantic_page.get("form_semantics") if isinstance(semantic_page.get("form_semantics"), dict) else {}
+        if isinstance(layout, (list, dict)):
+            form_semantics.pop("layout", None)
+            form_semantics["layout_source"] = "views.form.layout"
+            if isinstance(layout, list):
+                form_semantics["layout_section_count"] = len(layout)
+        semantic_page["form_semantics"] = form_semantics
+        data["semantic_page"] = semantic_page
+
+        payload["data"] = data
+
+    @staticmethod
+    def _infer_group_semantic_label(node):
+        item = node if isinstance(node, dict) else {}
+        field_names = ContractService._collect_group_field_names(item)
+        attrs = item.get("attributes") if isinstance(item.get("attributes"), dict) else {}
+        for key in ("string", "title", "name"):
+            value = str(item.get(key) or attrs.get(key) or "").strip()
+            if value and not value.startswith("信息分组"):
+                return ContractService._normalize_group_label(value, field_names)
+
+        children = item.get("children") if isinstance(item.get("children"), list) else []
+        for child in children:
+            if not isinstance(child, dict):
+                continue
+            child_type = str(child.get("type") or "").strip().lower()
+            if child_type != "separator":
+                continue
+            child_attrs = child.get("attributes") if isinstance(child.get("attributes"), dict) else {}
+            sep_title = str(
+                child.get("label")
+                or child.get("title")
+                or child.get("name")
+                or child_attrs.get("string")
+                or ""
+            ).strip()
+            if sep_title:
+                return ContractService._normalize_group_label(sep_title, field_names)
+
+        for child in children:
+            if not isinstance(child, dict):
+                continue
+            child_type = str(child.get("type") or "").strip().lower()
+            if child_type == "field":
+                info = child.get("fieldInfo") if isinstance(child.get("fieldInfo"), dict) else {}
+                field_label = str(info.get("label") or "").strip()
+                if field_label:
+                    return ContractService._normalize_group_label(field_label, field_names)
+            if child_type == "group":
+                sub_label = str(child.get("label") or "").strip()
+                if sub_label and not sub_label.startswith("信息分组"):
+                    return ContractService._normalize_group_label(sub_label, field_names)
+        return ""
+
+    @staticmethod
+    def _collect_group_field_names(node):
+        out = []
+
+        def walk(item):
+            if not isinstance(item, dict):
+                return
+            node_type = str(item.get("type") or "").strip().lower()
+            if node_type == "field":
+                name = str(item.get("name") or "").strip()
+                if name and name not in out:
+                    out.append(name)
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                rows = item.get(key)
+                if isinstance(rows, list):
+                    for row in rows:
+                        walk(row)
+
+        walk(node)
+        return out
+
+    @staticmethod
+    def _normalize_group_label(label, field_names):
+        raw = str(label or "").strip()
+        if not raw:
+            return raw
+
+        fields = {str(name or "").strip() for name in (field_names or []) if str(name or "").strip()}
+        weak_literals = {
+            "任务名称", "名称", "name", "Name", "Name of the Tasks",
+            "已启用", "Active", "active",
+        }
+        if raw in weak_literals:
+            if {"name", "partner_id", "company_id"} & fields:
+                return "主体信息"
+            if {"active", "user_id", "date_start", "date"} & fields:
+                return "管理信息"
+            if {"project_id", "project_manager_id"} & fields:
+                return "项目归属"
+            return "基本信息"
+
+        normalized_map = {
+            "Visibility": "可见性",
+            "Accept Emails From": "接收邮件来自",
+            "Tasks": "任务",
+            "Time Management": "时间管理",
+            "Analytics": "分析",
+        }
+        return normalized_map.get(raw, raw)
+
+    @staticmethod
+    def _action_identity(action):
+        row = action if isinstance(action, dict) else {}
+        payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+        for key in ("name", "xml_id", "key", "id"):
+            value = row.get(key)
+            if value not in (None, ""):
+                return f"{key}:{value}"
+        for key in ("method", "action_id", "xml_id", "ref"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return f"payload.{key}:{value}"
+        label = str(row.get("label") or row.get("string") or "").strip()
+        return f"label:{label}" if label else "unknown"
+
+    def _dedupe_action_list(self, rows):
+        items = rows if isinstance(rows, list) else []
+        out = []
+        seen = set()
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            key = self._action_identity(item)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(item)
+        return out
+
+    def _dedupe_form_action_surfaces(self, contract):
+        payload = contract if isinstance(contract, dict) else {}
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+
+        button_box = self._dedupe_action_list(form.get("button_box"))
+        stat_buttons = self._dedupe_action_list(form.get("stat_buttons"))
+
+        primary_keys = {self._action_identity(item) for item in button_box}
+        if primary_keys:
+            stat_buttons = [
+                item for item in stat_buttons
+                if self._action_identity(item) not in primary_keys
+            ]
+
+        form["button_box"] = button_box
+        form["stat_buttons"] = stat_buttons
+        views["form"] = form
+        data["views"] = views
+        payload["data"] = data
+
+    def _infer_relation_tree_columns(self, relation_model):
+        model = str(relation_model or "").strip()
+        if not model:
+            return ["display_name"]
+        try:
+            relation_fields = self.env[model].sudo().fields_get()
+        except Exception:
+            relation_fields = {}
+        if not isinstance(relation_fields, dict) or not relation_fields:
+            return ["display_name"]
+
+        preferred = ["name", "display_name", "stage_id", "state", "user_id"]
+        selected = [field for field in preferred if field in relation_fields]
+        if not selected:
+            selected = [field for field in relation_fields.keys() if not str(field).startswith("_")][:3]
+        if "display_name" not in selected and "display_name" in relation_fields:
+            selected.insert(0, "display_name")
+        return selected[:6] or ["display_name"]
+
+    def _ensure_form_x2many_subviews(self, contract):
+        payload = contract if isinstance(contract, dict) else {}
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        fields_meta = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not fields_meta:
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+        subviews = form.get("subviews") if isinstance(form.get("subviews"), dict) else {}
+
+        for field_name, meta in fields_meta.items():
+            if not isinstance(meta, dict):
+                continue
+            field_type = str(meta.get("type") or meta.get("ttype") or "").strip().lower()
+            if field_type not in {"one2many", "many2many"}:
+                continue
+            relation = str(meta.get("relation") or meta.get("comodel_name") or "").strip()
+            current = subviews.get(field_name) if isinstance(subviews.get(field_name), dict) else {}
+            tree_cfg = current.get("tree") if isinstance(current.get("tree"), dict) else {}
+            columns = tree_cfg.get("columns") if isinstance(tree_cfg.get("columns"), list) else []
+            if not columns:
+                tree_cfg["columns"] = self._infer_relation_tree_columns(relation)
+            policies = current.get("policies") if isinstance(current.get("policies"), dict) else {}
+            policies.setdefault("inline_edit", True)
+            policies.setdefault("can_create", True)
+            policies.setdefault("can_unlink", True)
+            current["tree"] = tree_cfg
+            current.setdefault("fields", {})
+            current["policies"] = policies
+            subviews[field_name] = current
+
+        form["subviews"] = subviews
+        views["form"] = form
+        data["views"] = views
+        payload["data"] = data
 
     def finalize_data(self, data, *, subject=None, meta=None):
         meta_out = dict(meta or {})
@@ -268,10 +691,13 @@ class ContractService:
         )
         if not form_view:
             return data
-        render_profile = str(_get_param(payload, "render_profile", "renderProfile") or "").strip().lower()
-        if render_profile in {"create", "edit", "readonly"}:
-            data["render_profile"] = render_profile
-            return data
+        render_profile = str(
+            _get_param(payload, "render_profile", "renderProfile", "profile", "mode") or ""
+        ).strip().lower()
+        if render_profile in {"read", "view"}:
+            render_profile = "readonly"
+        if render_profile not in {"create", "edit", "readonly"}:
+            render_profile = ""
         raw_record = _get_param(payload, "record_id", "recordId", "res_id", "resId")
         record_id = None
         try:
@@ -285,6 +711,39 @@ class ContractService:
             if isinstance(head, dict) and not head.get("res_id"):
                 head["res_id"] = record_id
                 data["head"] = head
+
+        if not render_profile:
+            render_profile = "edit" if (record_id and record_id > 0) else "create"
+
+        data["render_profile"] = render_profile
+
+        permissions = data.get("permissions") if isinstance(data.get("permissions"), dict) else {}
+        effective = permissions.get("effective") if isinstance(permissions.get("effective"), dict) else {}
+        rights = effective.get("rights") if isinstance(effective.get("rights"), dict) else {}
+
+        if render_profile == "readonly":
+            rights["write"] = False
+            rights["unlink"] = False
+            rights["create"] = False
+            fields_meta = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+            for meta in fields_meta.values():
+                if isinstance(meta, dict):
+                    meta["readonly"] = True
+            data["fields"] = fields_meta
+        elif render_profile == "create":
+            rights["create"] = True
+            rights["write"] = False
+            rights["unlink"] = False
+            data.pop("res_id", None)
+            head = data.get("head")
+            if isinstance(head, dict):
+                head.pop("res_id", None)
+                data["head"] = head
+
+        effective["rights"] = rights
+        effective["render_profile"] = render_profile
+        permissions["effective"] = effective
+        data["permissions"] = permissions
         return data
 
     def finalize_and_govern_data(
@@ -324,12 +783,13 @@ class ContractService:
 
         UiContractHandler receives already-dispatched data and only needs the
         final handler-side sequence:
-        1. inject render hints
-        2. apply delivery-surface governance
+        1. finalize canonical contract structure
+        2. inject render hints
+        3. apply delivery-surface governance
         """
-        hinted = self.inject_render_hints(data or {}, payload or {})
-        return self.apply_delivery_surface_governance(
-            hinted,
+        return self.finalize_and_govern_data(
+            data or {},
+            payload=payload or {},
             contract_mode=contract_mode,
             contract_surface=contract_surface,
             source_mode=source_mode,
@@ -402,16 +862,58 @@ class ContractService:
             pass
 
     def _fill_statusbar_states_from_selection(self, data):
-        """当 statusbar.field == 'state' 且 states 为空时，从 fields.state.selection 构造 states。"""
+        """当 statusbar.states 为空时，优先从 statusbar.field 对应字段 selection 构造可消费状态。"""
         try:
             fields = (data.get("data") or {}).get("fields") or {}
             form = (data.get("data") or {}).get("views", {}).get("form", {}) or {}
             sb = form.get("statusbar") or {}
-            if sb.get("field") == "state" and not (sb.get("states") or []):
-                sel = (fields.get("state") or {}).get("selection") or []
-                sb["states"] = [{"value": v, "label": lbl} for v, lbl in sel if isinstance(v, (str, int))]
-                form["statusbar"] = sb
-                data["data"]["views"]["form"] = form
+            sb_field = str(sb.get("field") or sb.get("name") or "").strip()
+            if not sb_field:
+                return
+
+            field_meta = fields.get(sb_field) if isinstance(fields.get(sb_field), dict) else {}
+            field_type = str(field_meta.get("type") or field_meta.get("ttype") or "").strip().lower()
+            existing_states = sb.get("states") if isinstance(sb.get("states"), list) else []
+
+            states = []
+            if field_type == "selection":
+                selection = field_meta.get("selection") if isinstance(field_meta.get("selection"), list) else []
+                for idx, pair in enumerate(selection, start=1):
+                    if not (isinstance(pair, (list, tuple)) and len(pair) >= 2):
+                        continue
+                    value = pair[0]
+                    label = str(pair[1] or pair[0] or "").strip()
+                    if value in (None, ""):
+                        continue
+                    states.append({
+                        "value": value,
+                        "label": label,
+                        "sequence": idx,
+                    })
+            elif existing_states:
+                for idx, row in enumerate(existing_states, start=1):
+                    if not isinstance(row, dict):
+                        continue
+                    value = row.get("value")
+                    label = str(row.get("label") or value or "").strip()
+                    if value in (None, ""):
+                        continue
+                    item = dict(row)
+                    item["label"] = label
+                    item.setdefault("sequence", idx)
+                    states.append(item)
+
+            if states:
+                sb["states"] = states
+                sb["states_source"] = "selection" if field_type == "selection" else "statusbar_declared"
+            else:
+                sb["states"] = []
+                sb["states_source"] = "dynamic_relation"
+                sb["states_reason"] = "statusbar field is not static selection"
+
+            sb.setdefault("label", str(field_meta.get("string") or sb_field))
+            form["statusbar"] = sb
+            data["data"]["views"]["form"] = form
         except Exception:
             pass
 

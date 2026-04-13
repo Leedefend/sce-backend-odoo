@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import IntentExecutionResult
 from ..utils.idempotency import (
     apply_idempotency_identity,
     build_idempotency_conflict_response,
@@ -277,7 +278,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         deduplicated=True,
                     )
                     meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell"}
-                    return {"ok": True, "data": data, "meta": meta}
+                    return IntentExecutionResult(data=data, meta=meta)
 
             try:
                 if_match = self._get_if_match(params)
@@ -321,7 +322,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 result=data,
             )
             meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell"}
-            return {"ok": True, "data": data, "meta": meta}
+            return IntentExecutionResult(data=data, meta=meta)
 
         if intent == "api.data.create":
             idempotency_fingerprint = self._idempotency_fingerprint(
@@ -368,7 +369,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         deduplicated=True,
                     )
                     meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell"}
-                    return {"ok": True, "data": data, "meta": meta}
+                    return IntentExecutionResult(data=data, meta=meta)
 
             try:
                 env_model.check_access_rights("create")
@@ -405,6 +406,6 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 result=data,
             )
             meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell"}
-            return {"ok": True, "data": data, "meta": meta}
+            return IntentExecutionResult(data=data, meta=meta)
 
         return self._err(400, f"未知写入意图: {intent}", REASON_UNSUPPORTED_SOURCE)

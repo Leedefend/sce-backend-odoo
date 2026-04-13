@@ -21,6 +21,14 @@ _logger = logging.getLogger(__name__)
 
 
 class _TreeFormParserMixin:
+    def _resolve_field_type(self, meta):
+        info = meta or {}
+        return str(info.get('type') or info.get('ttype') or 'char').strip().lower()
+
+    def _resolve_field_relation(self, meta):
+        info = meta or {}
+        return str(info.get('relation') or info.get('comodel_name') or '').strip()
+
     # ---------------- tree 解析 ----------------
     def _parse_tree_view(self, arch, fields_info):
         columns, row_actions, row_classes = [], [], []
@@ -106,7 +114,10 @@ class _TreeFormParserMixin:
         # 列模式（兼容 + 细节）
         columns_schema = [{
             "name": c,
-            "widget": (modifiers.get(c, {}).get('widget') or (fields_info.get(c, {}) or {}).get('type', 'char')),
+            "widget": (
+                modifiers.get(c, {}).get('widget')
+                or self._resolve_field_type((fields_info.get(c, {}) or {}))
+            ),
             **({k: v for k, v in (modifiers.get(c) or {}).items() if k != 'widget'})
         } for c in columns]
 
@@ -175,8 +186,20 @@ class _TreeFormParserMixin:
 
         # 7) 子视图（inline + 引用式）
         subviews = self._collect_x2many_subviews_from_dom(root, fields_info)
-        if not subviews:
-            subviews = self._infer_x2many_subviews(fields_info)
+        inferred_subviews = self._infer_x2many_subviews(fields_info)
+        for field_name, meta in inferred_subviews.items():
+            if field_name not in subviews:
+                subviews[field_name] = meta
+            else:
+                current = subviews.get(field_name) if isinstance(subviews.get(field_name), dict) else {}
+                if not isinstance(current.get('tree'), dict) or not isinstance(current.get('tree', {}).get('columns'), list):
+                    current['tree'] = (meta.get('tree') if isinstance(meta.get('tree'), dict) else {'columns': ['display_name']})
+                policies = current.get('policies') if isinstance(current.get('policies'), dict) else {}
+                base_policies = meta.get('policies') if isinstance(meta.get('policies'), dict) else {}
+                for k, v in base_policies.items():
+                    policies.setdefault(k, v)
+                current['policies'] = policies
+                subviews[field_name] = current
         _logger.info("FORM_PARSER_DEBUG: subviews keys=%s", list(subviews.keys()))
 
         # 8) 协作能力（优先模型字段判定，其次 DOM 探测）
@@ -441,6 +464,8 @@ class _TreeFormParserMixin:
             if tag in ('group', 'page', 'notebook'):
                 node['label'] = el.get('string', '')
                 node['name'] = el.get('name', '')
+                if tag == 'page':
+                    node['title'] = el.get('string', '') or el.get('name', '') or ''
                 if tag == 'group':
                     try:
                         node['cols'] = int(el.get('col', '2'))
@@ -474,6 +499,7 @@ class _TreeFormParserMixin:
                     for cv in children:
                         if cv.get('type') == 'page':
                             node['tabs'].append(cv)
+                    node['pages'] = list(node['tabs'])
                     node['children'] = []  # 与 tabs 并存时保持空，避免前端重复
                 else:
                     node['children'] = children
@@ -516,7 +542,14 @@ class _TreeFormParserMixin:
 
         # 按钮占位（通常不把按钮放进布局树，header/smart 会单独抽取）
         if tag == 'button':
-            return {'type': 'button', 'name': el.get('name', ''), 'label': el.get('string', ''), 'buttonType': el.get('type', 'object')}
+            button_name = el.get('name', '')
+            button_label = el.get('string', '') or el.get('title', '') or button_name or '动作'
+            return {
+                'type': 'button',
+                'name': button_name,
+                'label': button_label,
+                'buttonType': el.get('type', 'object'),
+            }
 
         # 其他未知节点：以 container 兜底
         node = {'type': self._layout_type(tag), 'attributes': _attrs(el)}
@@ -671,7 +704,7 @@ class _TreeFormParserMixin:
         for el in root.xpath(".//field[@name]"):
             fname = el.get('name')
             finfo = (fields_info or {}).get(fname) or {}
-            ftype = finfo.get('type')
+            ftype = self._resolve_field_type(finfo)
             if ftype not in ('one2many', 'many2many'):
                 continue
             entry = {}
@@ -684,14 +717,17 @@ class _TreeFormParserMixin:
                 entry['form'] = {"layout": self._extract_form_layout_dom(inline_form[0], {})}
 
             # 2) 引用式（views/context）
-            relation = finfo.get('relation')
+            relation = self._resolve_field_relation(finfo)
             try:
                 # views="[(tree,ref),(form,ref)]" 风格
                 views_attr = (el.get('views') or '').strip()
                 if views_attr:
                     views_spec = self._safe_eval_expr(views_attr)
                     if isinstance(views_spec, (list, tuple)):
-                        for vt, vid in views_spec:
+                        for item in views_spec:
+                            if not isinstance(item, (list, tuple)) or len(item) < 1:
+                                continue
+                            vt = str(item[0] or '').strip().lower()
                             if vt in ('tree', 'form'):
                                 blk = self._safe_get_view_data(self.env[relation], vt)
                                 if vt == 'tree':
@@ -761,6 +797,8 @@ class _TreeFormParserMixin:
         if tag in ('group', 'page', 'notebook'):
             layout_node['label'] = attrs.get('string', '')
             layout_node['name'] = attrs.get('name', '')
+            if tag == 'page':
+                layout_node['title'] = attrs.get('string', '') or attrs.get('name', '')
             if tag == 'group':
                 try:
                     layout_node['cols'] = int(attrs.get('col', '2'))
@@ -783,7 +821,7 @@ class _TreeFormParserMixin:
             layout_node['fieldInfo'] = meta
         elif tag == 'button':
             layout_node['name'] = attrs.get('name', '')
-            layout_node['label'] = attrs.get('string', '')
+            layout_node['label'] = attrs.get('string', '') or attrs.get('title', '') or layout_node['name'] or '动作'
             layout_node['buttonType'] = attrs.get('type', 'object')
 
         ch_list = []
@@ -792,7 +830,21 @@ class _TreeFormParserMixin:
             if cv:
                 ch_list.append(cv)
         if ch_list:
-            layout_node['children'] = ch_list
+            if tag == 'notebook':
+                tab_pages = [row for row in ch_list if isinstance(row, dict) and str(row.get('type') or '').strip().lower() == 'page']
+                passthrough_children = [
+                    row for row in ch_list
+                    if not (isinstance(row, dict) and str(row.get('type') or '').strip().lower() == 'page')
+                ]
+                layout_node['tabs'] = tab_pages
+                layout_node['pages'] = list(tab_pages)
+                layout_node['children'] = passthrough_children
+            else:
+                layout_node['children'] = ch_list
+        elif tag == 'notebook':
+            layout_node['tabs'] = []
+            layout_node['pages'] = []
+            layout_node['children'] = []
 
         return layout_node
 
@@ -807,16 +859,20 @@ class _TreeFormParserMixin:
 
     def _field_info_for_layout(self, fname, fields_info):
         meta = (fields_info or {}).get(fname, {}) or {}
-        return {
+        field_type = self._resolve_field_type(meta)
+        payload = {
             'name': fname,
-            'type': meta.get('type', 'char'),
+            'type': field_type,
             'label': meta.get('string') or fname,
             'help': meta.get('help') or '',
-            'relation': meta.get('relation') or '',
             'required': bool(meta.get('required')),  # 仅供前端初始提示
             'readonly': bool(meta.get('readonly')),
             'widget': meta.get('widget') or '',
         }
+        relation = self._resolve_field_relation(meta)
+        if relation:
+            payload['relation'] = relation
+        return payload
 
     # ---------------- 推断x2many子视图 ----------------
     def _infer_x2many_subviews(self, fields_meta):
@@ -825,7 +881,7 @@ class _TreeFormParserMixin:
         """
         sub = {}
         for fname, meta in (fields_meta or {}).items():
-            t = meta.get('type')
+            t = self._resolve_field_type(meta)
             if t in ('one2many', 'many2many'):
                 sub[fname] = {
                     'tree': {'columns': ['display_name']},
