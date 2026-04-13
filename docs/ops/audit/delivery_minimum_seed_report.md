@@ -1,9 +1,9 @@
 # Delivery Minimum Seed Report
 
-- project_id: 4
-- payment_request_id: 45
+- project_id: 2106
+- payment_request_id: 0
 - error_count: 0
-- warning_count: 5
+- warning_count: 2
 
 ## Errors
 

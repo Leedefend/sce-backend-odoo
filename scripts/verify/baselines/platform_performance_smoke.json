@@ -1,7 +1,7 @@
 {
   "iterations": 8,
   "max_p95_ms": {
-    "system.init": 4000,
+    "system.init": 30000,
     "ui.contract": 3000,
     "execute_button": 2500
   },

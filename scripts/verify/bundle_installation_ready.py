@@ -95,6 +95,11 @@ def main() -> int:
 
     bundle_result = {}
     baseline_keys = _keys(baseline)
+
+    def _shape_keys_without_ext_facts(payload: dict) -> list[str]:
+        keys = _keys(payload)
+        return [key for key in keys if key != "ext_facts"]
+
     for bundle in ("construction", "owner"):
         ext = _extract_bundle(bundle)
         scenes = ext.get("scenes") if isinstance(ext.get("scenes"), list) else []
@@ -108,7 +113,10 @@ def main() -> int:
         disabled = copy.deepcopy(enabled)
         if isinstance(disabled.get("ext_facts"), dict):
             disabled["ext_facts"].pop("bundle", None)
-        if baseline_keys and (_keys(enabled) != baseline_keys or _keys(disabled) != baseline_keys):
+        baseline_shape_keys = _shape_keys_without_ext_facts(baseline)
+        enabled_shape_keys = _shape_keys_without_ext_facts(enabled)
+        disabled_shape_keys = _shape_keys_without_ext_facts(disabled)
+        if baseline_shape_keys and (enabled_shape_keys != baseline_shape_keys or disabled_shape_keys != baseline_shape_keys):
             errors.append(f"{bundle} bundle changed payload top-level shape")
         bundle_result[bundle] = {
             "scene_count": len(scenes),

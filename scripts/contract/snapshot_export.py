@@ -304,6 +304,7 @@ def export_snapshot():
     config.parse_config(["-c", args.config, "-d", args.db])
     os.environ.setdefault("SC_LIGHT_IMPORT", "1")
     from odoo.addons.smart_core.handlers.ui_contract import UiContractHandler
+    from odoo.addons.smart_core.core.intent_execution_result import adapt_handler_result
 
     registry = odoo.registry(args.db)
     with registry.cursor() as cr:
@@ -543,7 +544,7 @@ def export_snapshot():
         else:
             handler = UiContractHandler(env, request=None, payload=payload)
             try:
-                res = handler.handle(payload=payload)
+                res = adapt_handler_result(handler.handle(payload=payload))
                 if isinstance(res, dict) and res.get("ok") is False and not args.allow_error_response:
                     raise SystemExit(res.get("error"))
             except Exception as exc:
