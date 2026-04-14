@@ -7,6 +7,8 @@ from . import stock_extend
 from . import product_extend
 from . import quota_spec
 from . import contract_center
+from . import partner_legacy
+from . import project_member_neutral
 from . import document_center
 from . import audit_log
 from . import business_evidence

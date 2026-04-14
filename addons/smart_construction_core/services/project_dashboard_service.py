@@ -6,7 +6,10 @@ from odoo import fields
 from odoo.addons.smart_construction_core.services.evidence_chain_service import EvidenceChainService
 from odoo.addons.smart_construction_core.services.project_decision_engine_service import ProjectDecisionEngineService
 from odoo.addons.smart_construction_core.services.project_metrics_explain_service import ProjectMetricsExplainService
-from odoo.addons.smart_construction_core.services.project_state_explain_service import ProjectStateExplainService
+from odoo.addons.smart_construction_core.services.project_state_explain_service import (
+    ProjectStateExplainService,
+    lifecycle_state_label,
+)
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
@@ -364,7 +367,7 @@ class ProjectDashboardService:
             "project_code": _safe_text(_safe_field(project, "project_code")),
             "partner_name": _safe_rel_name(project, "partner_id"),
             "manager_name": _safe_rel_name(project, "user_id"),
-            "stage_name": _safe_rel_name(project, "stage_id"),
+            "stage_name": lifecycle_state_label(project),
             "health_state": _safe_text(_safe_field(project, "health_state")),
             "lifecycle_state": _safe_text(_safe_field(project, "lifecycle_state")),
             "milestone": _safe_text(_safe_field(project, "sc_execution_state")),

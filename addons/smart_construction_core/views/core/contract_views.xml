@@ -59,6 +59,7 @@
                     <group>
                         <group>
                             <field name="name"/>
+                            <field name="legacy_contract_id" readonly="1"/>
                             <field name="subject"/>
                             <field name="type" required="1"/>
                             <field name="project_id" required="1"/>
@@ -112,6 +113,22 @@
                 </page>
                         <page string="备注">
                             <field name="note"/>
+                        </page>
+                        <page string="迁移对照">
+                            <group>
+                                <group>
+                                    <field name="legacy_contract_id" readonly="1"/>
+                                    <field name="legacy_project_id" readonly="1"/>
+                                    <field name="legacy_document_no" readonly="1"/>
+                                    <field name="legacy_contract_no" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="legacy_external_contract_no" readonly="1"/>
+                                    <field name="legacy_status" readonly="1"/>
+                                    <field name="legacy_deleted_flag" readonly="1"/>
+                                    <field name="legacy_counterparty_text" readonly="1"/>
+                                </group>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>

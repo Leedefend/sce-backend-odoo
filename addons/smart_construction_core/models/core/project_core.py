@@ -466,26 +466,34 @@ class ProjectProject(models.Model):
         return key
 
     def _sync_stage_from_signals(self):
+        """Return signal-derived stage advice without mutating ``stage_id``.
+
+        ``stage_id`` is a UI projection of ``lifecycle_state``. Business signals
+        may still be inspected for diagnostics, but they must not advance the
+        Odoo stage independently.
+        """
+        advisories = []
         for project in self:
             key = project._sc_compute_stage_key()
             stage = project._get_stage_by_key(key)
             if not stage:
                 continue
             current_key = project._get_stage_key_from_stage(project.stage_id)
-            if current_key == 'paused':
-                _logger.debug('sc_stage_sync skip paused project=%s', project.display_name)
-                continue
-            # Auto-sync is monotonic: stage only moves forward to derived stage.
-            if current_key and self._stage_key_rank(key) <= self._stage_key_rank(current_key):
-                _logger.debug(
-                    'sc_stage_sync skip non-advance project=%s current=%s target=%s',
-                    project.display_name,
-                    current_key,
-                    key,
-                )
-                continue
-            if project.stage_id != stage:
-                project.with_context(sc_stage_sync=True).stage_id = stage.id
+            projected_stage = project._get_stage_for_lifecycle(project.lifecycle_state)
+            advisory = {
+                "project_id": project.id,
+                "project_name": project.display_name,
+                "lifecycle_state": project.lifecycle_state,
+                "current_stage_id": project.stage_id.id or False,
+                "current_stage_key": current_key,
+                "lifecycle_stage_id": projected_stage.id if projected_stage else False,
+                "signal_stage_id": stage.id,
+                "signal_stage_key": key,
+                "would_diverge_from_lifecycle": bool(projected_stage and stage != projected_stage),
+            }
+            advisories.append(advisory)
+            _logger.debug("sc_stage_signal_advisory %s", advisory)
+        return advisories
 
     def _sync_stage_from_lifecycle(self, lifecycle_state=None):
         for project in self:
@@ -580,6 +588,162 @@ class ProjectProject(models.Model):
     )
     location = fields.Char('项目地点')
     contract_no = fields.Char('主合同编号')
+    short_name = fields.Char(
+        '项目简称',
+        help='旧系统 SHORT_NAME；项目导入前用于保留项目简称。',
+    )
+    project_environment = fields.Char(
+        '项目环境',
+        help='旧系统 PROJECT_ENV；按原值保留，后续由导入映射决定是否字典化。',
+    )
+    legacy_project_id = fields.Char(
+        '旧系统项目ID',
+        index=True,
+        copy=False,
+        help='旧系统 project.csv 字段 ID；用于后续项目数据导入的幂等匹配。',
+    )
+    legacy_parent_id = fields.Char(
+        '旧系统父级ID',
+        index=True,
+        copy=False,
+        help='旧系统 project.csv 字段 PID；仅保留旧系统层级引用，不在本轮建立父子关系。',
+    )
+    legacy_company_id = fields.Char(
+        '旧系统公司ID',
+        copy=False,
+        help='旧系统 COMPANYID；后续导入映射到 company_id 前保留原始值。',
+    )
+    legacy_company_name = fields.Char(
+        '旧系统公司名称',
+        copy=False,
+        help='旧系统 COMPANYNAME；后续导入映射到 company_id 前保留原始名称。',
+    )
+    legacy_specialty_type_id = fields.Char(
+        '旧系统专业类型ID',
+        copy=False,
+        help='旧系统 SPECIALTY_TYPE_ID；后续导入映射到项目类型/类别字典前保留原始值。',
+    )
+    specialty_type_name = fields.Char(
+        '专业类型名称',
+        help='旧系统 SPECIALTY_TYPE_NAME；优先作为项目类型字典映射的候选标签。',
+    )
+    legacy_price_method = fields.Char(
+        '旧系统计价方式',
+        copy=False,
+        help='旧系统 PRICE_METHOD；本轮只保留原始代码，不改变计价业务逻辑。',
+    )
+    business_nature = fields.Char(
+        '经营性质',
+        help='旧系统 NATURE；按项目主数据事实保留。',
+    )
+    detail_address = fields.Char(
+        '详细地址',
+        help='旧系统 DETAIL_ADDRESS；可与项目地点配合用于后续导入清洗。',
+    )
+    project_profile = fields.Text(
+        '项目简介',
+        help='旧系统 PROFILE；保留项目简介原文。',
+    )
+    project_area = fields.Char(
+        '项目面积',
+        help='旧系统 AREA；按原值保留，后续再决定是否拆分数值与单位。',
+    )
+    legacy_is_shared_base = fields.Char(
+        '旧系统共享库标记',
+        copy=False,
+        help='旧系统 IS_SHARED_BASE；保留 0/1 等原始标记，不在本轮引入共享库流程。',
+    )
+    legacy_sort = fields.Char(
+        '旧系统排序号',
+        copy=False,
+        help='旧系统 SORT；仅用于导入核对。',
+    )
+    legacy_attachment_ref = fields.Char(
+        '旧系统附件引用',
+        copy=False,
+        help='旧系统 FJ；仅保留附件引用，不在本轮导入附件。',
+    )
+    legacy_project_manager_name = fields.Char(
+        '旧系统项目经理',
+        copy=False,
+        help='旧系统 PROJECTMANAGER；后续导入映射到用户字段前保留原始姓名。',
+    )
+    legacy_technical_responsibility_name = fields.Char(
+        '旧系统技术负责人',
+        copy=False,
+        help='旧系统 TECHNICALRESPONSIBILITY；后续导入映射到技术负责人用户字段前保留原始姓名。',
+    )
+    owner_unit_name = fields.Char(
+        '建设单位',
+        help='旧系统 OWNERSUNIT；与现有业主单位关系字段并存，导入后再做伙伴匹配。',
+    )
+    owner_contact_phone = fields.Char(
+        '业主联系电话',
+        help='旧系统 OWNERSCONTACTPHONE；补齐业主联系人电话事实。',
+    )
+    supervision_unit_name = fields.Char(
+        '监理单位',
+        help='旧系统 SUPERVISIONUNIT；保留监理单位文本。',
+    )
+    supervisory_engineer_name = fields.Char(
+        '总监理工程师',
+        help='旧系统 SUPERVISORYENGINEER；保留监理工程师文本。',
+    )
+    supervision_phone = fields.Char(
+        '监理联系电话',
+        help='旧系统 SUPERVISOPHONE；保留监理联系电话。',
+    )
+    project_overview = fields.Text(
+        '项目概况',
+        help='旧系统 PROJECTOVERVIEW；保留项目概况原文。',
+    )
+    legacy_project_nature = fields.Char(
+        '旧系统项目性质',
+        copy=False,
+        help='旧系统 PROJECT_NATURE；后续导入映射前保留原始项目性质。',
+    )
+    legacy_is_material_library = fields.Char(
+        '旧系统机材库标记',
+        copy=False,
+        help='旧系统 IS_MACHINTERIAL_LIBRARY；本轮只保留原始标记，不引入机材库流程。',
+    )
+    other_system_id = fields.Char(
+        '外部系统ID',
+        index=True,
+        copy=False,
+        help='旧系统 OTHER_SYSTEM_ID；用于跨系统追溯。',
+    )
+    other_system_code = fields.Char(
+        '外部系统编码',
+        index=True,
+        copy=False,
+        help='旧系统 OTHER_SYSTEM_CODE；用于跨系统追溯。',
+    )
+    legacy_stage_id = fields.Char(
+        '旧系统项目阶段ID',
+        copy=False,
+        help='旧系统 XMJDID；后续映射到当前阶段/生命周期前保留原始值。',
+    )
+    legacy_stage_name = fields.Char(
+        '旧系统项目阶段',
+        copy=False,
+        help='旧系统 XMJD；后续映射到当前阶段/生命周期前保留原始名称。',
+    )
+    legacy_region_id = fields.Char(
+        '旧系统所属地区ID',
+        copy=False,
+        help='旧系统 SSDQID；后续导入地区字典前保留原始值。',
+    )
+    legacy_region_name = fields.Char(
+        '旧系统所属地区',
+        copy=False,
+        help='旧系统 SSDQ；后续导入地区字典前保留原始名称。',
+    )
+    legacy_state = fields.Char(
+        '旧系统状态',
+        copy=False,
+        help='旧系统 STATE；后续映射到 lifecycle_state 前保留原始状态。',
+    )
     sc_demo_showcase = fields.Boolean(
         '演示项目池',
         default=False,
@@ -1195,11 +1359,9 @@ class ProjectProject(models.Model):
     def init(self):
         # 确保老项目也有默认阶段
         res = super().init()
-        default_stage = self._default_stage_id()
-        if default_stage:
-            projects = self.env['project.project'].search([('stage_id', '=', False)])
-            if projects:
-                projects.write({'stage_id': default_stage})
+        projects = self.env['project.project'].search([('stage_id', '=', False)])
+        if projects:
+            projects._sync_stage_from_lifecycle()
         return res
 
     # ---------- 工程量清单统计 ----------
@@ -2105,26 +2267,25 @@ class ProjectProject(models.Model):
             vals.setdefault("sc_draft_autosave_uid", self.env.user.id)
         if "lifecycle_state" in vals:
             self._validate_lifecycle_transition(vals.get("lifecycle_state"))
-            if "stage_id" not in vals:
-                stage = self._get_stage_for_lifecycle(vals.get("lifecycle_state"))
-                if stage:
-                    vals = dict(vals)
-                    vals["stage_id"] = stage.id
-        if "stage_id" in vals and "lifecycle_state" not in vals and not self.env.context.get("sc_stage_sync"):
+            stage = self._get_stage_for_lifecycle(vals.get("lifecycle_state"))
+            if stage:
+                vals = dict(vals)
+                vals["stage_id"] = stage.id
+        if "stage_id" in vals and "lifecycle_state" not in vals:
             stage = self.env["project.project.stage"].browse(vals.get("stage_id"))
-            target_key = self._get_stage_key_from_stage(stage)
             for project in self:
-                current_key = project._sc_compute_stage_key()
-                if target_key and current_key:
-                    # Manual stage change cannot exceed derived stage.
-                    if self._stage_key_rank(target_key) > self._stage_key_rank(current_key):
-                        raise_guard(
-                            "P0_PROJECT_STAGE_BYPASS_BLOCKED",
-                            f"项目[{project.display_name}]",
-                            "阶段变更",
-                            reasons=[f"当前业务进度不满足进入“{stage.display_name}”"],
-                            hints=["请先补齐 BOQ/任务/结算/付款等业务数据"],
-                        )
+                expected_stage = project._get_stage_for_lifecycle(project.lifecycle_state)
+                if expected_stage and stage != expected_stage:
+                    raise_guard(
+                        "P0_PROJECT_STAGE_PROJECTION_ONLY",
+                        f"项目[{project.display_name}]",
+                        "阶段变更",
+                        reasons=[
+                            "stage_id 是 lifecycle_state 的 UI 投影，不能独立写入。",
+                            f"当前生命周期应投影到“{expected_stage.display_name}”。",
+                        ],
+                        hints=["请通过 lifecycle_state 切换项目真实状态。"],
+                    )
         res = super().write(vals)
         visibility_fields = {
             'user_id',

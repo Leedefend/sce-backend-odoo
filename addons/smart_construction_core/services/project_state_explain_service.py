@@ -2,6 +2,25 @@
 from __future__ import annotations
 
 
+LIFECYCLE_STATE_LABELS = {
+    "draft": "筹备中",
+    "in_progress": "在建",
+    "paused": "暂停",
+    "closing": "收口",
+    "warranty": "质保",
+    "done": "完工",
+    "closed": "关闭",
+}
+
+
+def lifecycle_state_label(project_or_state, default="未设置阶段"):
+    state = getattr(project_or_state, "lifecycle_state", project_or_state)
+    state = str(state or "").strip().lower()
+    if not state:
+        return default
+    return LIFECYCLE_STATE_LABELS.get(state, state)
+
+
 class ProjectStateExplainService:
     def __init__(self, env):
         self.env = env
@@ -14,7 +33,7 @@ class ProjectStateExplainService:
                 "status_explain": "请先选择项目或创建项目。",
             }
         lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
-        stage_label = str(getattr(getattr(project, "stage_id", None), "display_name", "") or "").strip() or "未设置阶段"
+        stage_label = lifecycle_state_label(lifecycle_state)
         status = str(getattr(project, "health_state", "") or getattr(project, "state", "") or "").strip()
         stage_explain_map = {
             "draft": "项目已完成创建与立项准备，下一步应进入执行主线。",

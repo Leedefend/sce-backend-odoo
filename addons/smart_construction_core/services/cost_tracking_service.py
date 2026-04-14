@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from odoo import fields
 
+from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
 from odoo.addons.smart_construction_core.services.cost_tracking_entry_service import CostTrackingEntryService
 from odoo.addons.smart_construction_core.services.cost_tracking_builders import BUILDERS
 from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter import CostTrackingNativeAdapter
@@ -140,7 +141,7 @@ class CostTrackingService:
             "name": _safe_text(_safe_field(project, "name")),
             "project_code": _safe_text(_safe_field(project, "project_code")),
             "manager_name": _safe_rel_name(project, "user_id"),
-            "stage_name": _safe_rel_name(project, "stage_id"),
+            "stage_name": lifecycle_state_label(project),
             "date_start": str(_safe_field(project, "date_start") or ""),
             "date_end": str(_safe_field(project, "date") or _safe_field(project, "date_end") or ""),
             "move_count": int(summary.get("move_count") or 0),
