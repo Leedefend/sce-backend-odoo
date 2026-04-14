@@ -7,6 +7,7 @@ from odoo import _
 from odoo.exceptions import AccessError
 
 from .dto import BusinessInsight, InsightSummary
+from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
 
 
 MISSING = object()
@@ -351,13 +352,9 @@ class ProjectInsightService:
     # Helpers
     # -----------------------------
     def _get_stage(self, project) -> str:
-        # Prefer explicit stage name if present
-        stage_id = self._safe_getattr(project, "stage_id")
-        if stage_id and stage_id is not MISSING:
-            try:
-                return stage_id.display_name or stage_id.name
-            except AccessError:
-                return "stage"
+        stage = lifecycle_state_label(project, default="")
+        if stage:
+            return stage
 
         # fallback to state if any
         state = self._safe_getattr(project, "state")

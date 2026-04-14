@@ -188,15 +188,43 @@
                 <page string="施工信息" name="sc_construction" groups="smart_construction_core.group_sc_cap_project_read">
                     <group col="4" string="施工项目信息" data-sc-anchor="schedule">
                         <field name="project_code" readonly="1" invisible="id == False"/>
+                        <field name="short_name"/>
                         <field name="project_type_id"/>
                         <field name="project_category_id"/>
+                        <field name="specialty_type_name"/>
                         <field name="lifecycle_state"/>
                         <field name="phase_key" invisible="1"/>
+                        <field name="business_nature"/>
+                        <field name="legacy_project_nature"/>
                         <field name="owner_contact"/>
                         <field name="location"/>
+                        <field name="detail_address"/>
+                        <field name="project_area"/>
                         <field name="contract_no"/>
                         <field name="start_date"/>
                         <field name="end_date"/>
+                    </group>
+                    <group col="4" string="旧系统导入标识" data-sc-anchor="legacy-project-import">
+                        <field name="legacy_project_id"/>
+                        <field name="legacy_parent_id"/>
+                        <field name="other_system_id"/>
+                        <field name="other_system_code"/>
+                        <field name="legacy_company_id"/>
+                        <field name="legacy_company_name"/>
+                        <field name="legacy_specialty_type_id"/>
+                        <field name="legacy_price_method"/>
+                        <field name="project_environment"/>
+                        <field name="legacy_is_shared_base"/>
+                        <field name="legacy_sort"/>
+                        <field name="legacy_attachment_ref"/>
+                    </group>
+                    <group col="4" string="旧系统阶段与地区" data-sc-anchor="legacy-project-stage-region">
+                        <field name="legacy_stage_id"/>
+                        <field name="legacy_stage_name"/>
+                        <field name="legacy_region_id"/>
+                        <field name="legacy_region_name"/>
+                        <field name="legacy_state"/>
+                        <field name="legacy_is_material_library"/>
                     </group>
                     <group col="4" string="项目责任人" data-sc-anchor="manager">
                         <field name="manager_id"/>
@@ -207,6 +235,19 @@
                         <field name="business_lead_user_id"/>
                         <field name="cost_lead_user_id"/>
                         <field name="finance_contact_user_id"/>
+                        <field name="legacy_project_manager_name"/>
+                        <field name="legacy_technical_responsibility_name"/>
+                    </group>
+                    <group col="4" string="参建单位与监理" data-sc-anchor="project-participants">
+                        <field name="owner_unit_name"/>
+                        <field name="owner_contact_phone"/>
+                        <field name="supervision_unit_name"/>
+                        <field name="supervisory_engineer_name"/>
+                        <field name="supervision_phone"/>
+                    </group>
+                    <group string="项目文本说明" data-sc-anchor="project-text-facts">
+                        <field name="project_profile"/>
+                        <field name="project_overview"/>
                     </group>
                     <group string="项目成员配置">
                         <field name="project_member_ids" context="{'default_project_id': id}">

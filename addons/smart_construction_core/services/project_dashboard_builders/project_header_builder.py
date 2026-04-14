@@ -7,6 +7,7 @@ from .base import BaseProjectBlockBuilder
 from odoo.addons.smart_construction_core.services.project_task_state_support import (
     ProjectTaskStateSupport,
 )
+from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
 
 
 class ProjectHeaderBuilder(BaseProjectBlockBuilder):
@@ -101,7 +102,7 @@ class ProjectHeaderBuilder(BaseProjectBlockBuilder):
                 "project_code": str(getattr(project, "project_code", "") or ""),
                 "partner_name": str(getattr(getattr(project, "partner_id", None), "display_name", "") or ""),
                 "manager_name": str(getattr(getattr(project, "user_id", None), "display_name", "") or ""),
-                "stage_name": str(getattr(getattr(project, "stage_id", None), "display_name", "") or ""),
+                "stage_name": lifecycle_state_label(project),
                 "company_name": str(getattr(getattr(project, "company_id", None), "display_name", "") or ""),
                 "date_start": str(getattr(project, "date_start", "") or ""),
                 "date_end": str(getattr(project, "date", "") or getattr(project, "date_end", "") or ""),
@@ -113,7 +114,7 @@ class ProjectHeaderBuilder(BaseProjectBlockBuilder):
                 "owner_org": str(getattr(getattr(project, "partner_id", None), "display_name", "") or ""),
                 "contractor_org": str(getattr(getattr(project, "company_id", None), "display_name", "") or ""),
                 "project_manager": str(getattr(getattr(project, "user_id", None), "display_name", "") or ""),
-                "current_stage": str(getattr(getattr(project, "stage_id", None), "display_name", "") or ""),
+                "current_stage": lifecycle_state_label(project),
                 "planned_finish_date": str(getattr(project, "date", "") or getattr(project, "date_end", "") or ""),
             },
             "quick_actions": quick_actions,

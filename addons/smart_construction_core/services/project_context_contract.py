@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
+
 
 def build_project_context(project):
     if not project:
@@ -14,7 +16,7 @@ def build_project_context(project):
             "status": "",
         }
     stage = str(getattr(project, "lifecycle_state", "") or "").strip()
-    stage_label = str(getattr(getattr(project, "stage_id", None), "display_name", "") or "").strip()
+    stage_label = lifecycle_state_label(stage, default="")
     milestone = str(getattr(project, "sc_execution_state", "") or "").strip()
     milestone_label = str(getattr(project, "sc_execution_state_label", "") or "").strip()
     return {

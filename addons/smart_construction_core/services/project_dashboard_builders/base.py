@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
+
 
 class BaseProjectBlockBuilder:
     block_key = ""
@@ -125,12 +127,8 @@ class BaseProjectBlockBuilder:
             }
         stage = str(getattr(project, "lifecycle_state", "") or "").strip()
         milestone = str(getattr(project, "sc_execution_state", "") or "").strip()
-        stage_label = ""
+        stage_label = lifecycle_state_label(project, default="")
         milestone_label = ""
-        try:
-            stage_label = str(getattr(getattr(project, "stage_id", None), "display_name", "") or "")
-        except Exception:
-            stage_label = ""
         try:
             milestone_label = str(getattr(project, "sc_execution_state_label", "") or "")
         except Exception:

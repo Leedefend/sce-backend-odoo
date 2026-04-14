@@ -35,6 +35,49 @@ class ConstructionContract(models.Model):
         copy=False,
         tracking=True,
     )
+    legacy_contract_id = fields.Char(
+        string="旧系统合同ID",
+        index=True,
+        copy=False,
+        help="旧系统 contract.csv 的 Id，用于迁移对照、精确回滚和后续 upsert 判定。",
+    )
+    legacy_project_id = fields.Char(
+        string="旧系统项目ID",
+        index=True,
+        copy=False,
+        help="旧系统 contract.csv 的 XMID，仅作为迁移对照；正式关联仍以 project_id 为准。",
+    )
+    legacy_document_no = fields.Char(
+        string="旧系统单据编号",
+        copy=False,
+        help="旧系统 contract.csv 的 DJBH，用于追溯原始单据。",
+    )
+    legacy_contract_no = fields.Char(
+        string="旧系统合同编号",
+        index=True,
+        copy=False,
+        help="旧系统 contract.csv 的 HTBH。系统正式合同编号仍使用 name 序列。",
+    )
+    legacy_external_contract_no = fields.Char(
+        string="旧系统外部合同编号",
+        copy=False,
+        help="旧系统 contract.csv 的 f_WBHTBH / PID 等外部编号候选，仅用于迁移追溯。",
+    )
+    legacy_status = fields.Char(
+        string="旧系统合同状态",
+        copy=False,
+        help="旧系统 contract.csv 的 DJZT。首轮导入不回放工作流状态。",
+    )
+    legacy_deleted_flag = fields.Char(
+        string="旧系统删除标志",
+        copy=False,
+        help="旧系统 contract.csv 的 DEL。DEL=1 的行默认不进入首轮安全导入。",
+    )
+    legacy_counterparty_text = fields.Char(
+        string="旧系统相对方文本",
+        copy=False,
+        help="旧系统 contract.csv 中按方向推断出的 FBF/CBF 相对方文本，用于 partner 匹配审计。",
+    )
     subject = fields.Char(string="合同名称", required=True, tracking=True)
     type = fields.Selection(
         [
