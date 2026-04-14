@@ -3,6 +3,7 @@
 # 以收敛契约出口并避免 legacy 解析栈继续分叉。
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.intent_execution_result import adapt_handler_result
 from ..core.load_contract_proxy_payload import build_load_contract_proxy_payload
 from ..core.native_view_contract_projection import inject_primary_view_projection
 from .load_contract import LoadContractHandler
@@ -15,12 +16,12 @@ class LoadModelViewHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         payload = build_load_contract_proxy_payload(params)
-        proxied = LoadContractHandler(
+        proxied = adapt_handler_result(LoadContractHandler(
             env=self.env,
             su_env=self.su_env,
             context=self.context,
             payload=payload,
-        ).handle(payload=payload, ctx=ctx or self.context)
+        ).handle(payload=payload, ctx=ctx or self.context))
 
         status = str((proxied or {}).get("status") or "").lower()
         code = int((proxied or {}).get("code") or (304 if status == "not_modified" else 200))
