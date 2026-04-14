@@ -1,0 +1,126 @@
+task_id: ITER-2026-04-13-1818
+title: Project data mapping dry-run special v1
+status: completed
+type: governance-optimization
+priority: high
+mode: screen
+
+goal: >
+  Run a project-only mapping dry run from the exported legacy project CSV to the
+  aligned project.project fields, generate mapping and candidate-match tables,
+  and report readiness for a later first-round project data import without
+  importing data or writing import scripts.
+
+user_visible_outcome:
+  - "项目数据映射干跑总表、字典覆盖率、用户/单位文本匹配候选和导入准备结论形成可审计文档"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1818.yaml
+    - docs/migration_alignment/project_mapping_dry_run_master_v1.md
+    - docs/migration_alignment/project_mapping_company_v1.md
+    - docs/migration_alignment/project_mapping_specialty_type_v1.md
+    - docs/migration_alignment/project_mapping_lifecycle_stage_state_v1.md
+    - docs/migration_alignment/project_mapping_region_v1.md
+    - docs/migration_alignment/project_mapping_business_nature_v1.md
+    - docs/migration_alignment/project_mapping_user_match_v1.md
+    - docs/migration_alignment/project_mapping_partner_match_v1.md
+    - docs/migration_alignment/project_mapping_dry_run_report_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1818.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1818.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 13
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - mapping-dry-run-only
+  - no-legacy-data-import
+  - no-formal-import-script
+  - no-model-or-view-edits
+  - no-contract-payment-supplier-scope
+  - classify-each-field-as-direct-dictionary-text_match-or-defer
+  - output-coverage-and-unresolved-blockers
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  explicit_user_authorization: true
+  legacy_input: tmp/raw/project/project.csv
+  depends_on_completed_alignment: ITER-2026-04-13-1816
+  depends_on_completed_verification: ITER-2026-04-13-1817
+
+architecture:
+  layer_target: Migration Mapping Governance
+  module: project.project legacy-data mapping dry run
+  module_owner: docs/migration_alignment
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch classifies and maps legacy project business facts for later import
+    preparation. It does not add scene orchestration semantics or frontend view
+    structure.
+  reason: >
+    The project model has been aligned and upgraded. The next safe step is to
+    dry-run mapping values and candidate matches from the exported legacy project
+    data before any import implementation or data write.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1818.yaml
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - data_import_attempted
+  - formal_import_script_created
+  - mapping_requires_contract_payment_supplier_model_changes
+  - csv_unreadable
+
+deliverables:
+  - project field mapping master table
+  - company mapping table
+  - specialty type mapping table
+  - lifecycle/stage/state mapping table
+  - region mapping table
+  - business nature/project environment mapping table
+  - user name candidate-match table
+  - partner/company candidate-match table
+  - mapping dry-run report
+
+depends_on:
+  - ITER-2026-04-13-1816
+  - ITER-2026-04-13-1817
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1818.yaml
+  - git restore docs/migration_alignment/project_mapping_dry_run_master_v1.md
+  - git restore docs/migration_alignment/project_mapping_company_v1.md
+  - git restore docs/migration_alignment/project_mapping_specialty_type_v1.md
+  - git restore docs/migration_alignment/project_mapping_lifecycle_stage_state_v1.md
+  - git restore docs/migration_alignment/project_mapping_region_v1.md
+  - git restore docs/migration_alignment/project_mapping_business_nature_v1.md
+  - git restore docs/migration_alignment/project_mapping_user_match_v1.md
+  - git restore docs/migration_alignment/project_mapping_partner_match_v1.md
+  - git restore docs/migration_alignment/project_mapping_dry_run_report_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1818.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1818.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

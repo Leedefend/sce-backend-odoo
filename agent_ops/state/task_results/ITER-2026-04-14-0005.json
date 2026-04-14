@@ -1,0 +1,38 @@
+{
+  "task_id": "ITER-2026-04-14-0005",
+  "status": "PASS",
+  "mode": "contract_12_row_post_write_readonly_review",
+  "database": "sc_demo",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0005.yaml",
+    "scripts/migration/contract_12_row_post_write_review.py",
+    "artifacts/migration/contract_12_row_post_write_review_result_v1.json",
+    "docs/migration_alignment/contract_12_row_post_write_review_v1.md",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0005.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0005.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "status": "ROLLBACK_READY",
+    "target_rows": 12,
+    "matched_contract_rows": 12,
+    "rollback_eligible_rows": 12,
+    "blocking_reasons": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "readonly_post_write_review": "PASS",
+    "review_result_json": "PASS",
+    "task_result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "db_writes": 0,
+    "rollback_performed": false,
+    "rollback_ready": true,
+    "remaining_gate": "explicit authorization required for rollback or broader import"
+  },
+  "next_step": "stop before rollback, broader contract import, contract lines, workflow replay, payment, or settlement work unless explicitly authorized"
+}

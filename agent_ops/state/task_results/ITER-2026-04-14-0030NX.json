@@ -1,0 +1,28 @@
+{
+  "task_id": "ITER-2026-04-14-0030NX",
+  "status": "PASS",
+  "decision": "CONTINUE_ELIGIBLE_FOR_DUPLICATE_RELATION_EVIDENCE_WRITE_GATE",
+  "result": {
+    "source_rows": 21390,
+    "mapped_project_user_rows": 7389,
+    "already_neutral_rows": 34,
+    "remaining_relation_unique_rows": 0,
+    "remaining_duplicate_relation_evidence_rows": 7355,
+    "relation_unique_slice_rows": 0,
+    "duplicate_relation_evidence_slice_rows": 500,
+    "db_writes": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_dry_run": "PASS",
+    "plan_json": "PASS",
+    "relation_unique_slice_file": "PASS_HEADER_ONLY",
+    "duplicate_relation_evidence_slice_file": "PASS"
+  },
+  "risk": {
+    "level": "medium",
+    "summary": "Remaining expansion rows are duplicate relation evidence, not new unique project/user membership relations."
+  },
+  "next_step": "Open a duplicate-relation evidence neutral-carrier write gate; keep project.responsibility and permission semantics out of scope."
+}

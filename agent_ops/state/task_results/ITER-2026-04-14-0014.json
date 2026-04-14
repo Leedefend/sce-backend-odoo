@@ -1,0 +1,43 @@
+{
+  "task_id": "ITER-2026-04-14-0014",
+  "status": "PASS",
+  "mode": "project_v3_100_post_write_readonly_review",
+  "database": "sc_demo",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0014.yaml",
+    "scripts/migration/project_v3_100_post_write_review.py",
+    "artifacts/migration/project_v3_100_post_write_review_result.json",
+    "artifacts/migration/project_v3_100_rollback_target_list.csv",
+    "docs/migration_alignment/project_v3_100_post_write_review.md",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0014.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0014.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "target_rows": 100,
+    "matched_project_rows": 100,
+    "rollback_eligible_rows": 100,
+    "missing_project_ids": 0,
+    "duplicate_legacy_matches": 0,
+    "projection_mismatches": 0,
+    "blocking_reasons": 0,
+    "stage_id": 5,
+    "stage_name": "筹备中",
+    "lifecycle_state": "draft"
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_readonly_review": "PASS",
+    "review_result_json": "PASS",
+    "task_result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "high",
+    "db_writes": 0,
+    "forbidden_domains_touched": false,
+    "rollback_status": "ROLLBACK_READY"
+  },
+  "next_step": "open next bounded project create-only dry-run with increased batch size 200"
+}

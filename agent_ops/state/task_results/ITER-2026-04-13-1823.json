@@ -1,0 +1,65 @@
+{
+  "task_id": "ITER-2026-04-13-1823",
+  "status": "PASS",
+  "date": "2026-04-13",
+  "layer_target": "Migration Dry-Run Tooling",
+  "module": "project.project safe skeleton target-identity rehearsal",
+  "target_database": "sc_demo",
+  "target_identity_snapshot": {
+    "rows": 0,
+    "fields": [
+      "legacy_project_id",
+      "other_system_id",
+      "other_system_code"
+    ],
+    "source": "read_only_odoo_shell_export"
+  },
+  "dry_run_summary": {
+    "sample_rows": 30,
+    "safe_fields": 22,
+    "create": 30,
+    "update": 0,
+    "error": 0,
+    "header_error": 0
+  },
+  "constraints": {
+    "database_write": false,
+    "orm_write": false,
+    "full_import": false,
+    "field_expansion": false,
+    "safe_slice_fields_only": true
+  },
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1823.yaml",
+      "status": "PASS"
+    },
+    {
+      "command": "ENV=dev DB_NAME=sc_demo make odoo.shell.exec",
+      "status": "PASS"
+    },
+    {
+      "command": "cp artifacts/migration/project_existing_identity_snapshot_target_v1.csv data/migration_samples/project_existing_identity_snapshot_target_v1.csv",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/migration/project_dry_run_importer.py --input data/migration_samples/project_sample_v1.csv --existing-identities data/migration_samples/project_existing_identity_snapshot_target_v1.csv --output artifacts/migration/project_dry_run_target_identity_result_v1.json",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m json.tool artifacts/migration/project_dry_run_target_identity_result_v1.json",
+      "status": "PASS"
+    }
+  ],
+  "go_no_go": {
+    "create_only_write_design_gate": "GO_IF_EMPTY_TARGET_CONFIRMED",
+    "upsert_update_write_import": "NO-GO",
+    "reason": "The target identity export is empty, so target-data update behavior is not covered."
+  },
+  "risks": [
+    "target identity snapshot contains zero rows",
+    "target update/upsert behavior remains unverified",
+    "write-mode constraints, ACLs, transactions, and rollback remain unverified"
+  ],
+  "report": "agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1823.md"
+}

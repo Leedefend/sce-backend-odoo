@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-14-0030ZD",
+  "status": "PASS",
+  "decision": "L3_ROLE_SOURCE_REVIEW_PACKET_READY",
+  "result": {
+    "l3_candidates": 10,
+    "requires_role_source": 10,
+    "promotion_ready": 0,
+    "write_allowed": false,
+    "db_writes": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "packet_generation": "PASS",
+    "packet_json": "PASS",
+    "summary_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "summary": "Artifact-only manual review packet generation."
+  },
+  "next_step": "Business reviewers must provide verified role_source_evidence and proposed_role_key before any responsibility write task."
+}

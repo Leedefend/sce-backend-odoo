@@ -1,0 +1,36 @@
+{
+  "task_id": "ITER-2026-04-13-1816",
+  "status": "PASS_AFTER_RECOVERY",
+  "timestamp": "2026-04-13T13:54:04+08:00",
+  "branch": "codex/next-round",
+  "baseline_sha": "d243d59",
+  "layer_target": "Odoo Domain Model + Native View",
+  "module": "smart_construction_core project.project extension",
+  "reason": "Legacy project CSV field alignment for first-round import preparation.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-13-1816.yaml",
+    "addons/smart_construction_core/models/core/project_core.py",
+    "addons/smart_construction_core/views/core/project_views.xml",
+    "docs/migration_alignment/project_model_source_inventory_v1.md",
+    "docs/migration_alignment/project_legacy_field_baseline_v1.md",
+    "docs/migration_alignment/project_model_coverage_audit_v1.md",
+    "docs/migration_alignment/project_model_alignment_proposal_v1.md",
+    "docs/migration_alignment/project_field_implementation_manifest_v1.md",
+    "docs/migration_alignment/project_import_mapping_prep_v1.md",
+    "agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1816.md",
+    "agent_ops/state/task_results/ITER-2026-04-13-1816.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "verification": {
+    "task_contract": "PASS",
+    "python_compile": "PASS",
+    "xml_parse": "PASS",
+    "diff_check": "PASS",
+    "verify_restricted": "FAIL: make target verify.restricted does not exist",
+    "recovery_verify_native_business_fact_static": "PASS",
+    "module_upgrade": "PASS: CODEX_NEED_UPGRADE=1 ENV=dev make mod.upgrade MODULE=smart_construction_core on sc_demo",
+    "field_materialization_check": "PASS: project_field_check PASS []"
+  },
+  "risk": "Low residual risk after recovery; module upgrade and field materialization check passed.",
+  "next_step": "Open mapping dry-run task for company, specialty type, lifecycle/stage/state, region, and user text mapping before data import."
+}

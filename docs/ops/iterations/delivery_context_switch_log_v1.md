@@ -16,6 +16,42 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-13T13:42:17+08:00
+- blocker_key: `project_model_field_alignment_verify_target_missing_stop_v1`
+- layer_target: `Odoo Domain Model + Native View`
+- module: `smart_construction_core project.project extension`
+- reason: 基于旧系统 `tmp/raw/project/project.csv` 执行项目模型字段覆盖审计与首轮项目主数据字段补齐
+- completed_step: `已完成 ITER-2026-04-13-1816 的字段/表单/迁移对齐文档实现；validate_task、Python 编译、XML 解析和 diff --check 通过；make verify.restricted 因 Makefile 不存在该 target 失败并触发停止`
+- active_commit: `d243d59`
+- next_step: `Open verification-recovery batch to replace the missing verify.restricted command with the repository's valid restricted-equivalent gate, then run smart_construction_core module upgrade`
+
+### 2026-04-13T13:54:04+08:00
+- blocker_key: `project_model_field_alignment_upgrade_recovered_pass_v1`
+- layer_target: `Verification Gate + Odoo Module Upgrade`
+- module: `smart_construction_core project.project extension verification`
+- reason: 用户指出上轮未先查 Makefile 命令且未升级数据库，需补齐验证恢复闭环
+- completed_step: `已完成 ITER-2026-04-13-1817：确认 Makefile 无 verify.restricted，改用现有 verify.native.business_fact.static；smart_construction_core 在 sc_demo 上升级 PASS；odoo.shell.exec 字段检查 PASS`
+- active_commit: `d243d59`
+- next_step: `Open mapping dry-run batch for company/specialty/stage-state/region/user-text mapping before any legacy project data import`
+
+### 2026-04-13T14:04:35+08:00
+- blocker_key: `project_mapping_dry_run_pass_with_import_blockers_v1`
+- layer_target: `Migration Mapping Governance`
+- module: `project.project legacy-data mapping dry run`
+- reason: 用户要求基于旧系统项目导出数据生成字段映射、字典覆盖率、用户/单位匹配候选和导入准备结论，不导入数据
+- completed_step: `已完成 ITER-2026-04-13-1818：9 份 project_mapping_* 文档落地，字段类型统计 direct=28/dictionary=8/text_match=5/defer=22；company exact row coverage 87.28%；specialty exact row coverage 40.93%；verify.native.business_fact.static PASS`
+- active_commit: `d243d59`
+- next_step: `Open mapping-approval task for branch company mapping, specialty dictionary normalization, PROJECT_CODE write policy, and lifecycle/state/delete conversion before any import script or data write`
+
+### 2026-04-13T14:19:03+08:00
+- blocker_key: `project_safe_import_slice_freeze_pass_v1`
+- layer_target: `Migration Import Governance`
+- module: `project.project safe import slice`
+- reason: 用户要求冻结“只导有用且安全的信息”的项目主数据首轮导入切片，不导入数据、不写正式导入脚本
+- completed_step: `已完成 ITER-2026-04-13-1819：安全切片文档 7 份落地；allowed=22/forbidden=30/backfill=11；编码策略推荐 B；identity primary_upsert=legacy_project_id；verify.native.business_fact.static PASS`
+- active_commit: `d243d59`
+- next_step: `Open small-sample dry-run importer design task with non-write dry-run plan and sample selection; still no full import or relational/status writes`
+
 ### 2026-04-08T16:38:09+08:00
 - blocker_key: `custom_form_create_editability_recovery_pass_v1`
 - layer_target: `Frontend contract-consumer form runtime`
@@ -18218,3 +18254,849 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-10-1815 PASS：verify.product.release.ready / verify.e2e.contract / verify.smart_core all pass`
 - active_commit: `0049675`
 - next_step: `enter publish window with post-release gate replay`
+
+### 2026-04-13T18:20:00+08:00
+- blocker_key: `iter_1820_project_skeleton_sample_dry_run_pass`
+- layer_target: `Migration Dry-Run Tooling`
+- module: `project.project safe skeleton dry-run importer`
+- reason: 基于已冻结项目安全导入切片执行 30 条小样本 dry-run，验证不写库、不调用 ORM 的项目骨架导入逻辑
+- completed_step: `ITER-2026-04-13-1820 PASS：sample=30, create=30, update=0, error=0`
+- active_commit: `d243d59`
+- next_step: `prepare external existing-identity snapshot and run non-write update-path dry-run before any database write import`
+
+### 2026-04-13T18:21:00+08:00
+- blocker_key: `iter_1821_project_skeleton_update_path_dry_run_pass`
+- layer_target: `Migration Dry-Run Tooling`
+- module: `project.project safe skeleton update-path dry-run`
+- reason: 使用外部 `legacy_project_id` 身份快照验证 create/update 混合分类，继续保持不写库、不调用 ORM
+- completed_step: `ITER-2026-04-13-1821 PASS：sample=30, identity_snapshot=10, create=20, update=10, error=0`
+- active_commit: `d243d59`
+- next_step: `replace simulated snapshot with controlled target-environment identity export and rerun non-write rehearsal`
+
+### 2026-04-13T18:22:00+08:00
+- blocker_key: `iter_1822_project_target_identity_export_path_fail`
+- layer_target: `Migration Dry-Run Tooling`
+- module: `project.project safe skeleton target-identity rehearsal`
+- reason: 用户同意继续后尝试通过 Makefile Odoo shell 只读导出目标环境项目身份快照
+- completed_step: `ITER-2026-04-13-1822 FAIL：odoo.shell.exec returned 2 because container path /mnt/data was not writable`
+- active_commit: `d243d59`
+- next_step: `open recovery batch using a confirmed writable mounted path for read-only identity export, then rerun non-write dry-run`
+
+### 2026-04-13T18:23:00+08:00
+- blocker_key: `iter_1823_project_target_identity_export_recovery_pass`
+- layer_target: `Migration Dry-Run Tooling`
+- module: `project.project safe skeleton target-identity rehearsal`
+- reason: 恢复 1822 导出路径问题，改用 `/mnt/artifacts` 完成目标身份快照只读导出并复跑 no-write dry-run
+- completed_step: `ITER-2026-04-13-1823 PASS：target_identity_rows=0, sample=30, create=30, update=0, error=0`
+- active_commit: `d243d59`
+- next_step: `confirm empty-target assumption, then open create-only write-mode design gate before any database write import`
+
+### 2026-04-13T18:24:00+08:00
+- blocker_key: `iter_1824_project_create_only_write_gate_pass`
+- layer_target: `Migration Governance Documentation`
+- module: `project.project create-only write-mode gate`
+- reason: 基于目标身份快照 0 行与 dry-run create=30 冻结 create-only 写入前设计门禁
+- completed_step: `ITER-2026-04-13-1824 PASS：create-only gate documented; database write not executed`
+- active_commit: `d243d59`
+- next_step: `only proceed to high-risk 30-row create-only write trial after explicit database-write authorization`
+
+### 2026-04-13T18:25:00+08:00
+- blocker_key: `iter_1825_project_create_only_write_trial_pass`
+- layer_target: `Migration Write Trial Tooling`
+- module: `project.project 30-row create-only write trial`
+- reason: 用户明确授权写入后，按 1824 门禁执行 30 条项目骨架 create-only 试导
+- completed_step: `ITER-2026-04-13-1825 PASS：created=30, updated=0, errors=0, post_write_identity_count=30`
+- active_commit: `d243d59`
+- next_step: `run post-write manual review and rollback rehearsal planning before expanding sample size`
+
+### 2026-04-13T18:26:00+08:00
+- blocker_key: `iter_1826_project_native_page_field_registry_recovery_pass`
+- layer_target: `Odoo Runtime Registry Recovery`
+- module: `smart_construction_core project.project registry and view metadata`
+- reason: 用户反馈原生页面 OwlError，原因是 Web 服务字段 registry/cache 未刷新到 `short_name`
+- completed_step: `ITER-2026-04-13-1826 PASS：module upgraded, web service restarted, fields_get(short_name)=char`
+- active_commit: `d243d59`
+- next_step: `user refresh native project page; if a new undefined field appears, run the same field-surface check for that field`
+
+### 2026-04-13T18:27:00+08:00
+- blocker_key: `iter_1827_project_post_write_review_rollback_planning_pass_with_expansion_blocked`
+- layer_target: `Migration Governance Documentation`
+- module: `project.project post-write review and rollback rehearsal planning`
+- reason: 30 条 create-only 写入试导后先做只读复核与回滚对象锁定，不扩大样本、不删除
+- completed_step: `ITER-2026-04-13-1827 PASS_WITH_EXPANSION_BLOCKED：records=30, missing=0, duplicate=0, stage_id_default_warning=30`
+- active_commit: `d243d59`
+- next_step: `implement no-delete rollback dry-run script before any create-only sample expansion`
+
+### 2026-04-13T18:28:00+08:00
+- blocker_key: `iter_1828_project_rollback_dry_run_stage_default_pass_with_expansion_blocked`
+- layer_target: `Migration Dry-Run Tooling`
+- module: `project.project rollback dry-run and stage default diagnosis`
+- reason: 按 30 个 `legacy_project_id` 执行只读 rollback dry-run，并诊断默认 `stage_id`
+- completed_step: `ITER-2026-04-13-1828 PASS_WITH_EXPANSION_BLOCKED：rollback_ready=30/30, stage_id=5/筹备中 for all 30`
+- active_commit: `d243d59`
+- next_step: `confirm default stage_id policy before real rollback authorization or bounded create-only expansion`
+
+### 2026-04-13T18:29:00+08:00
+- blocker_key: `iter_1829_project_state_system_governance_pass`
+- layer_target: `Business Fact Governance Documentation`
+- module: `project.project state system governance`
+- reason: 将项目真实状态与 Odoo UI 阶段分层，冻结 lifecycle_state 主、stage_id 从的状态治理决策
+- completed_step: `ITER-2026-04-13-1829 PASS：truth=lifecycle_state, ui_stage=stage_id, reverse_sync=forbidden`
+- active_commit: `d243d59`
+- next_step: `run read-only implementation alignment audit before changing state code or expanding import`
+
+### 2026-04-13T18:30:00+08:00
+- blocker_key: `iter_1830_project_state_implementation_alignment_audit_pass_with_risk`
+- layer_target: `Business Fact Implementation Audit`
+- module: `project.project state implementation alignment`
+- reason: 对照 lifecycle_state 主、stage_id UI 投影的冻结规则，只读审计当前代码同步链路
+- completed_step: `ITER-2026-04-13-1830 PASS_WITH_RISK：lifecycle_to_stage=yes, stage_to_lifecycle=no, stage_signal_sync_gap=yes`
+- active_commit: `d243d59`
+- next_step: `decide whether to accept signal-based stage sync as UI-only or open implementation alignment batch; do not expand sample yet`
+
+### 2026-04-13T18:31:00+08:00
+- blocker_key: `iter_1831_project_state_closure_decision_pass_with_expansion_blocked`
+- layer_target: `Business Fact Governance Documentation`
+- module: `project.project state closure decision`
+- reason: 对 signal-based stage sync 与 standalone stage write 作出收口决策，冻结 stage 纯 lifecycle 投影目标态
+- completed_step: `ITER-2026-04-13-1831 PASS_WITH_EXPANSION_BLOCKED：recommend=C, signal_sync=no, standalone_stage_write=no, expansion=blocked`
+- active_commit: `d243d59`
+- next_step: `open project state pure-projection implementation closure batch before bounded create-only expansion`
+
+### 2026-04-13T18:32:00+08:00
+- blocker_key: `iter_1832_project_state_pure_projection_closure_pass`
+- layer_target: `Business Fact Model Implementation`
+- module: `smart_construction_core project.project state projection`
+- reason: 按 1831 方案 C 收口 `stage_id` 为 `lifecycle_state` 纯 UI 投影，并阻断 signal-based stage 自动推进
+- completed_step: `ITER-2026-04-13-1832 PASS：stage pure projection closed; native form ok; 30-row readability ok; expansion gate may reopen`
+- active_commit: `d243d59`
+- next_step: `open bounded create-only expansion gate task before importing any additional project rows`
+
+### 2026-04-13T18:33:00+08:00
+- blocker_key: `iter_1833_project_state_read_side_alignment_pass`
+- layer_target: `Business Fact Read-Side Implementation`
+- module: `smart_construction_core project.project state consumers`
+- reason: 在 1832 写侧纯投影收口后，审计并收口项目状态读侧消费者，防止 `stage_id` 被当作业务事实读取
+- completed_step: `ITER-2026-04-13-1833 PASS：project read-side consumers use lifecycle label; native/dashboard/next_actions validation passed`
+- active_commit: `d243d59`
+- next_step: `open ITER-2026-04-13-1834 bounded create-only expansion gate before importing any additional project rows`
+
+### 2026-04-13T18:34:00+08:00
+- blocker_key: `iter_1834_project_create_only_expand_gate_pass`
+- layer_target: `Migration Gate Documentation`
+- module: `project.project create-only expansion readiness`
+- reason: 在状态写侧与读侧收口通过后，生成 100 行扩样候选并执行 no-DB dry-run 准入验证
+- completed_step: `ITER-2026-04-13-1834 PASS：candidate=100, dry_run_create=100, update=0, error=0; no database write executed`
+- active_commit: `d243d59`
+- next_step: `open a dedicated 100-row create-only write authorization batch before writing any additional project rows`
+
+### 2026-04-13T18:35:00+08:00
+- blocker_key: `iter_1835_project_create_only_expand_write_pass`
+- layer_target: `Migration Write Batch`
+- module: `project.project create-only expansion`
+- reason: 用户明确授权“同意 立即执行”，按 1834 扩样候选执行 100 行 sc_demo create-only 写入批次
+- completed_step: `ITER-2026-04-13-1835 PASS：created=100, updated=0, errors=0, projection_mismatches=0`
+- active_commit: `d243d59`
+- next_step: `run 100-row post-write read-only review and rollback dry-run lock; do not expand again yet`
+
+### 2026-04-13T18:36:00+08:00
+- blocker_key: `iter_1836_project_expand_post_write_review_rollback_lock_pass`
+- layer_target: `Migration Read-Only Review`
+- module: `project.project create-only expansion rollback lock`
+- reason: 对 1835 写入的 100 条项目骨架执行只读复核与 rollback dry-run 锁定，不删除、不扩样
+- completed_step: `ITER-2026-04-13-1836 PASS：rollback_ready=100/100, missing=0, duplicate=0, out_of_scope=0, projection_mismatch=0`
+- active_commit: `d243d59`
+- next_step: `stop expansion; choose either manual usability review or explicit rollback authorization batch`
+
+### 2026-04-13T18:37:00+08:00
+- blocker_key: `iter_1837_project_create_only_expand_business_usability_review_pass`
+- layer_target: `Business Usability Validation`
+- module: `smart_construction_core project.project create-only controlled sample review`
+- reason: 对 1836 已锁定的 100 行 create-only 项目样本执行只读业务可用性抽检，确认原生视图、状态标签、读侧输出和基础流程入口可读
+- completed_step: `ITER-2026-04-13-1837 PASS：usability_review_ready=100 locked rows, deep=10, quick=20, native_view_failures=0, keep_for_observation=yes`
+- active_commit: `d243d59`
+- next_step: `open ITER-2026-04-13-1838 observation sample retention decision; do not rollback or expand before that decision`
+
+### 2026-04-13T20:38:00+08:00
+- blocker_key: `iter_1838_contract_migration_source_baseline_pass`
+- layer_target: `Migration Source Baseline`
+- module: `construction.contract migration readiness`
+- reason: 用户切换到合同数据导入主线，先对 `tmp/raw/contract/contract.csv` 与当前 `construction.contract` 模型做只读基线盘点
+- completed_step: `ITER-2026-04-13-1838 PASS：contract_rows=1694, fields=146, direct_import=no-go`
+- active_commit: `d243d59`
+- next_step: `open contract mapping dry-run and safe import slice before any contract write`
+
+### 2026-04-13T20:39:00+08:00
+- blocker_key: `iter_1839_contract_mapping_dry_run_pass_write_blocked`
+- layer_target: `Migration Mapping Dry-Run`
+- module: `construction.contract mapping readiness`
+- reason: 对合同旧导出执行项目关联、合同方向、partner 文本、状态、删除标志和安全切片干跑，不写数据库
+- completed_step: `ITER-2026-04-13-1839 PASS_WITH_WRITE_BLOCKED：rows=1694, known_project_matches=146, partner_exact=0, safe_candidates=0`
+- active_commit: `d243d59`
+- next_step: `open contract field alignment and legacy identity batch before any contract write`
+
+### 2026-04-13T20:40:00+08:00
+- blocker_key: `iter_1840_contract_legacy_identity_alignment_pass_write_blocked`
+- layer_target: `Business Fact Model Field Alignment`
+- module: `construction.contract legacy identity`
+- reason: 为合同迁移补齐旧系统合同身份与追溯字段，解决精确 rollback/upsert 前置条件
+- completed_step: `ITER-2026-04-13-1840 PASS_WITH_WRITE_BLOCKED：added 8 legacy fields; module upgraded; runtime field validation passed; contract_write=no-go`
+- active_commit: `d243d59`
+- next_step: `open contract partner matching batch before any contract write`
+
+### 2026-04-13T20:41:00+08:00
+- blocker_key: `iter_1841_contract_partner_match_recompute_pass_write_blocked`
+- layer_target: `Migration Mapping Dry-Run`
+- module: `construction.contract partner matching`
+- reason: 对合同相对方文本与当前 partner baseline 做只读匹配重算，并重新计算首轮合同安全写入候选
+- completed_step: `ITER-2026-04-13-1841 PASS_WITH_WRITE_BLOCKED：rows=1694, distinct_counterparties=568, partner_defer=1694, safe_candidates=0`
+- active_commit: `d243d59`
+- next_step: `open contract partner master-data preparation and manual confirmation batch before any contract write`
+
+### 2026-04-13T20:42:00+08:00
+- blocker_key: `iter_1842_partner_source_baseline_pass_import_blocked`
+- layer_target: `Partner Migration Source Baseline`
+- module: `res.partner migration readiness for contract counterparty coverage`
+- reason: 对 `tmp/raw/partner/company.csv` 与 `tmp/raw/partner/supplier.csv` 做只读基线盘点，并评估其对合同相对方阻塞项的覆盖关系
+- completed_step: `ITER-2026-04-13-1842 PASS_WITH_IMPORT_BLOCKED：company_rows=7864, supplier_rows=3041, company_single_counterparties=419, conflicts=86, defer=63`
+- active_commit: `d243d59`
+- next_step: `open partner candidate normalization and manual confirmation batch before any partner creation or contract write`
+
+### 2026-04-13T20:43:00+08:00
+- blocker_key: `iter_1843_partner_candidate_confirmation_pass_import_blocked`
+- layer_target: `Partner Candidate Normalization`
+- module: `res.partner candidate confirmation for contract counterparties`
+- reason: 基于 company/supplier 源和合同相对方全集生成人工确认候选表，为后续 partner 写入 dry-run 做准备
+- completed_step: `ITER-2026-04-13-1843 PASS_WITH_IMPORT_BLOCKED：candidate_texts=568, company_single=419, company_multiple=78, cross_source_conflict=8, defer=63`
+- active_commit: `d243d59`
+- next_step: `open company_single manual confirmation slice and partner write dry-run design before creating partners`
+
+### 2026-04-13T20:44:00+08:00
+- blocker_key: `iter_1844_legacy_partner_db_fact_probe_pass_import_blocked`
+- layer_target: `Legacy Partner Business Fact Probe`
+- module: `res.partner and construction.contract migration fact support`
+- reason: 直接只读查询 LegacyDb，验证 partner 主源、跨源冲突、合同 FBF/CBF 文本覆盖和回款反推合同相对方证据
+- completed_step: `ITER-2026-04-13-1844 PASS_WITH_IMPORT_BLOCKED：company_primary_source=yes, supplier=supplemental, repayment_single_counterparty_contracts=628`
+- active_commit: `d243d59`
+- next_step: `generate 628-contract strong-evidence candidate table before any partner or contract write`
+
+### 2026-04-13T20:45:00+08:00
+- blocker_key: `iter_1845_contract_counterparty_strong_evidence_candidates_pass_import_blocked`
+- layer_target: `Contract Counterparty Strong Evidence Candidate Generation`
+- module: `construction.contract counterparty confirmation`
+- reason: 从 LegacyDb 只读生成 `C_JFHKLR.SGHTID/WLDWID` 单一相对方合同候选表，用于后续人工确认与 partner dry-run
+- completed_step: `ITER-2026-04-13-1845 PASS_WITH_IMPORT_BLOCKED：strong_evidence_candidates=628, contract_deleted=12, company_deleted=6`
+- active_commit: `d243d59`
+- next_step: `open partner creation dry-run design for non-deleted strong-evidence candidates`
+
+### 2026-04-13T20:46:00+08:00
+- blocker_key: `iter_1846_partner_strong_evidence_dry_run_input_pass_import_blocked`
+- layer_target: `Partner Creation Dry-Run Input Preparation`
+- module: `res.partner strong-evidence dry-run input`
+- reason: 对 628 个强证据合同候选过滤删除态并按旧 company ID 去重，形成 partner 创建 dry-run 输入
+- completed_step: `ITER-2026-04-13-1846 PASS_WITH_IMPORT_BLOCKED：eligible_contract_rows=610, dedup_partner_candidates=369, credit_code_present=28`
+- active_commit: `d243d59`
+- next_step: `implement no-DB-write partner dry-run importer for 369 strong-evidence candidates`
+
+### 2026-04-13T20:47:00+08:00
+- blocker_key: `iter_1847_migration_rebuild_objective_reset_pass`
+- layer_target: `Migration Governance Baseline`
+- module: `repeatable full rebuild migration objective`
+- reason: 用户明确调整数据迁移总体目标为“可在完整新库重复重建旧业务数据”，一次性脚本仅作为验证手段
+- completed_step: `ITER-2026-04-13-1847 PASS：migration objective reset to repeatable full new-database reconstruction; one-off scripts demoted to probe/dry-run validation`
+- active_commit: `d243d59`
+- next_step: `continue with no-DB-write partner dry-run importer for 369 strong-evidence candidates under rebuild-pipeline gate`
+
+### 2026-04-13T20:48:00+08:00
+- blocker_key: `iter_1848_partner_strong_evidence_no_db_dry_run_pass_import_blocked`
+- layer_target: `Partner Dry-Run Importer`
+- module: `res.partner strong-evidence dry-run`
+- reason: 对 369 个强证据 partner 候选执行 no-DB dry-run，验证 create/reuse/reject 分布
+- completed_step: `ITER-2026-04-13-1848 PASS_WITH_IMPORT_BLOCKED：input_rows=369, create_candidate=369, reuse=0, reject=0`
+- active_commit: `d243d59`
+- next_step: `open res.partner legacy identity and safe field slice batch before any partner write`
+
+### 2026-04-13T20:49:00+08:00
+- blocker_key: `iter_1849_res_partner_legacy_identity_alignment_pass`
+- layer_target: `Business Fact Model Field Alignment`
+- module: `res.partner legacy identity`
+- reason: 为完整新库可重复重建补齐 partner legacy identity 和首轮安全导入字段切片，支持后续幂等与精确回滚
+- completed_step: `ITER-2026-04-13-1849 PASS：added 7 res.partner legacy fields; module upgraded; restart and field materialization checks passed`
+- active_commit: `d243d59`
+- next_step: `open no-DB partner rebuild importer promotion batch before any partner write`
+
+### 2026-04-13T20:50:00+08:00
+- blocker_key: `iter_1850_legacy_db_full_rebuild_blueprint_pass`
+- layer_target: `Migration Rebuild Blueprint`
+- module: `LegacyDb full business-data reconstruction`
+- reason: 只读盘点 LegacyDb 全局规模、核心表字段和关键业务引用，制定完整新库可重复重建迁移方案
+- completed_step: `ITER-2026-04-13-1850 PASS：legacy db blueprint generated; full rebuild plan ready; production rebuild still no-go`
+- active_commit: `d243d59`
+- next_step: `promote partner rebuild importer in no-DB mode under repeatable full-rebuild rules`
+
+### 2026-04-13T20:51:00+08:00
+- blocker_key: `iter_1851_partner_rebuild_importer_no_db_pass`
+- layer_target: `Partner Rebuild Importer No-DB Promotion`
+- module: `res.partner repeatable rebuild importer`
+- reason: 将 369 个强证据 partner 候选的 dry-run 晋级为可重复完整重建管线的 no-DB importer 形态，加入 run id、输入校验、逐行审计与汇总产物
+- completed_step: `ITER-2026-04-13-1851 PASS：input_rows=369, create_candidate=369, blockers=0, write_mode=NO-GO`
+- active_commit: `d243d59`
+- next_step: `define partner write-mode gate and small-sample authorization criteria before any res.partner create`
+
+### 2026-04-13T20:52:00+08:00
+- blocker_key: `iter_1852_partner_write_mode_gate_pass`
+- layer_target: `Migration Write-Mode Gate`
+- module: `res.partner controlled rebuild write gate`
+- reason: 在任何 partner 写入前冻结小样本准入、幂等键、首批 create-only 边界和精确回滚策略
+- completed_step: `ITER-2026-04-13-1852 PASS：write_mode=NO-GO, next_write_candidate=30-row create-only sample, key=legacy_partner_source+legacy_partner_id`
+- active_commit: `d243d59`
+- next_step: `open dedicated partner 30-row create-only sample write batch only after explicit authorization`
+
+### 2026-04-13T20:53:00+08:00
+- blocker_key: `iter_1853_full_rebuild_importer_promotion_standard_pass`
+- layer_target: `Migration Governance Standard`
+- module: `full rebuild importer promotion gate`
+- reason: 将完整新库重建 importer 的晋级门禁标准化，避免一次性 probe 脚本被误升为生产导入器
+- completed_step: `ITER-2026-04-13-1853 PASS：promotion ladder and P0-P6 rebuild queue frozen; partner remains first importer candidate`
+- active_commit: `d243d59`
+- next_step: `use importer promotion standard to gate the next partner write-capable batch; explicit authorization still required before real res.partner create`
+
+### 2026-04-13T20:54:00+08:00
+- blocker_key: `iter_1854_partner_30_row_write_authorization_packet_pass`
+- layer_target: `Migration Write Authorization Gate`
+- module: `res.partner 30-row create-only sample gate`
+- reason: 在真实 partner 写入前锁定 30 行 create-only 样本和授权包，避免把普通继续执行误判为写库授权
+- completed_step: `ITER-2026-04-13-1854 PASS：sample=30, mode=create-only next, current_write=NO-GO, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open dedicated res.partner 30-row create-only write batch only after explicit authorization; otherwise continue no-DB supplier supplement or post-write tooling design`
+
+### 2026-04-13T20:55:00+08:00
+- blocker_key: `iter_1855_partner_post_write_review_rollback_lock_design_pass`
+- layer_target: `Migration Post-Write Governance`
+- module: `res.partner post-write readonly review and rollback dry-run lock`
+- reason: 在任何真实 partner 写入前冻结写后只读复核与 rollback dry-run lock 顺序，避免写入后缺少精确收口路径
+- completed_step: `ITER-2026-04-13-1855 PASS：post-write review and rollback dry-run lock design frozen; db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open explicitly authorized 30-row partner create-only write batch, or continue no-DB supplier supplement screening if authorization is not granted`
+
+### 2026-04-13T20:56:00+08:00
+- blocker_key: `iter_1856_partner_supplier_supplement_screening_pass`
+- layer_target: `Partner Supplement Source Screening`
+- module: `supplier source role in res.partner rebuild pipeline`
+- reason: 在未获得真实 partner 写入授权时，继续 no-DB 筛选 supplier 来源角色，防止 supplier 成为绕过 company primary 的并行创建流
+- completed_step: `ITER-2026-04-13-1856 PASS：supplier=supplemental-only, cross_source_conflict=8, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `continue supplier supplement no-DB design, or open explicitly authorized 30-row partner create-only write batch if real write authorization is granted`
+
+### 2026-04-13T20:57:00+08:00
+- blocker_key: `iter_1857_partner_supplier_supplement_design_gate_pass`
+- layer_target: `Partner Supplement Design Gate`
+- module: `supplier enrichment gate for res.partner rebuild`
+- reason: 冻结 supplier 后续 enrichment 设计门禁，确保 supplier 事实不覆盖 company-primary 身份，也不绕过 partner 写后复核与回滚锁定
+- completed_step: `ITER-2026-04-13-1857 PASS：supplier supplement write remains NO-GO; design gate frozen`
+- active_commit: `d243d59`
+- next_step: `open explicit partner 30-row create-only write authorization, or continue no-DB conflict classification for the 8 cross-source conflict texts`
+
+### 2026-04-13T20:58:00+08:00
+- blocker_key: `iter_1858_partner_cross_source_conflict_classification_pass`
+- layer_target: `Partner Conflict Classification`
+- module: `res.partner cross-source candidate conflicts`
+- reason: 对 8 条 company/supplier 跨源冲突做 no-DB 分类，保留证据但不做最终来源裁决
+- completed_step: `ITER-2026-04-13-1858 PASS：conflict_texts=8, final_source_decisions=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open a no-DB manual decision template for the 8 conflict rows, or open explicitly authorized partner 30-row create-only write if real writes are intended`
+
+### 2026-04-13T20:59:00+08:00
+- blocker_key: `iter_1859_partner_cross_source_manual_decision_template_pass_with_stop`
+- layer_target: `Partner Manual Decision Template`
+- module: `res.partner cross-source conflict decision template`
+- reason: 为 8 条跨源冲突生成待人工填写的决策模板，但不由 agent 代填最终来源裁决
+- completed_step: `ITER-2026-04-13-1859 PASS：manual_template_rows=8, final_source_decisions=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop before final source decisions unless a manual decision source is provided, or open explicitly authorized partner 30-row create-only write if real writes are intended`
+
+### 2026-04-13T21:00:00+08:00
+- blocker_key: `iter_1860_partner_30_row_create_only_write_pass`
+- layer_target: `Migration Write Batch`
+- module: `res.partner 30-row create-only sample write`
+- reason: 用户明确授权“同意授权”，执行 30 行 partner create-only 写入，并输出 rollback target list
+- completed_step: `ITER-2026-04-13-1860 PASS：created=30, updated=0, errors=0, rollback_targets=30`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review and rollback dry-run lock before supplier supplement, contract import, or broader partner write`
+
+### 2026-04-13T21:01:00+08:00
+- blocker_key: `iter_1861_partner_post_write_review_rollback_lock_pass`
+- layer_target: `Migration Post-Write Review`
+- module: `res.partner 30-row rollback dry-run lock`
+- reason: 对 1860 写入结果执行立即只读复核，确认 30 条 partner 可按 legacy_partner_source + legacy_partner_id 精确锁定
+- completed_step: `ITER-2026-04-13-1861 PASS：ROLLBACK_READY, matched=30, rollback_eligible=30, blocking=0`
+- active_commit: `d243d59`
+- next_step: `open keep-observation decision, supplier supplement no-DB planning, or contract readiness re-check; real rollback requires separate explicit authorization`
+
+### 2026-04-13T21:02:00+08:00
+- blocker_key: `iter_1862_contract_anchor_readiness_recheck_pass`
+- layer_target: `Contract Migration Readiness Recheck`
+- module: `construction.contract anchor readiness after partner sample`
+- reason: 用户决定保留 30 条 partner 并继续合同，基于锁定 partner/project anchor 重新计算合同 header 安全候选
+- completed_step: `ITER-2026-04-13-1862 PASS：safe_contract_candidates=12, partner_exact=71, project_written_match=146, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open bounded 12-row contract header dry-run task; contract write remains blocked pending separate authorization`
+
+### 2026-04-13T23:12:00+08:00
+- blocker_key: `iter_1863_contract_header_12_row_dry_run_pass`
+- layer_target: `Contract Migration Dry Run`
+- module: `construction.contract header candidate payload`
+- reason: 在用户选择保留 partner 样本并继续合同线后，先把 12 条合同候选收敛为 no-DB header payload，避免把继续合同误判为真实合同写入授权
+- completed_step: `ITER-2026-04-13-1863 PASS：dry_run_rows=12, ready_for_db_precheck=12, blocked=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open readonly DB precheck for the 12 dry-run rows; contract write remains blocked pending separate explicit authorization`
+
+### 2026-04-14T07:07:00+08:00
+- blocker_key: `iter_1864_contract_header_12_row_readonly_db_precheck_pass`
+- layer_target: `Contract Migration Readonly DB Precheck`
+- module: `construction.contract header candidate DB gates`
+- reason: 对 12 条合同 dry-run 候选执行只读 DB 预检，确认 anchor、legacy 唯一性、默认税率和序列可用，且仍不执行合同写入
+- completed_step: `ITER-2026-04-14-0001 PASS：rows=12, ready_for_write_authorization_gate=12, blocked=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open dedicated contract write authorization packet for the 12 prechecked rows; real contract write remains blocked until explicit authorization`
+
+### 2026-04-14T07:08:00+08:00
+- blocker_key: `iter_1865_contract_12_row_write_authorization_packet_pass_with_stop`
+- layer_target: `Contract Migration Authorization Gate`
+- module: `construction.contract 12-row write authorization packet`
+- reason: 锁定 12 条合同 create-only 候选的 exact payload、允许字段和禁止操作，但不把授权包等同于真实写入授权
+- completed_step: `ITER-2026-04-14-0002 PASS：payload_rows=12, blocked=0, write_authorization=not_granted, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit contract write authorization, or continue only with no-DB post-write review and rollback-lock design`
+
+### 2026-04-14T07:09:00+08:00
+- blocker_key: `iter_1866_contract_post_write_review_rollback_lock_design_pass_with_stop`
+- layer_target: `Contract Migration Post-Write Governance`
+- module: `construction.contract 12-row post-write review and rollback lock`
+- reason: 在真实合同写入前冻结写后只读复核与 rollback lock 设计，确保后续若获批写入也具备精确收口路径
+- completed_step: `ITER-2026-04-14-0003 PASS：post_write_review_design=frozen, rollback_lock_design=frozen, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit contract write authorization`
+
+### 2026-04-14T07:15:00+08:00
+- blocker_key: `iter_1867_contract_12_row_create_only_write_pass`
+- layer_target: `Contract Migration Write Batch`
+- module: `construction.contract 12-row create-only write`
+- reason: 用户明确授权“同意授权”，执行 12 条合同 create-only 写入，并输出 pre/post snapshot 与 rollback target
+- completed_step: `ITER-2026-04-14-0004 PASS：created=12, updated=0, errors=0, rollback_targets=12`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review against the rollback target list before any broader contract import or downstream linkage work`
+
+### 2026-04-14T07:18:00+08:00
+- blocker_key: `iter_1868_contract_12_row_post_write_readonly_review_pass_with_stop`
+- layer_target: `Contract Migration Post-Write Review`
+- module: `construction.contract 12-row rollback eligibility`
+- reason: 对 12 条已写入合同执行立即只读复核，确认可按 legacy_contract_id 精确锁定并具备 rollback eligibility
+- completed_step: `ITER-2026-04-14-0005 PASS：ROLLBACK_READY, matched=12, rollback_eligible=12, blocking=0`
+- active_commit: `d243d59`
+- next_step: `stop before rollback, broader contract import, contract lines, workflow replay, payment, or settlement work unless explicitly authorized`
+
+### 2026-04-14T07:27:00+08:00
+- blocker_key: `iter_1869_full_migration_scope_freeze_pass`
+- layer_target: `Migration Governance Scope Freeze`
+- module: `full legacy data migration batch chain`
+- reason: 用户请求开启完整数据迁移，先冻结全量源范围、当前已物化状态、可继续 lane 与 stop-domain lane，避免 monolithic write
+- completed_step: `ITER-2026-04-14-0006 PASS：project_created=130, partner_created=30, contract_created=12, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open project_expand bounded create-only dry-run; payment/receipt/project_member permission-sensitive lanes remain stopped`
+
+### 2026-04-14T07:29:00+08:00
+- blocker_key: `iter_1870_project_next_100_create_only_dry_run_pass`
+- layer_target: `Project Migration Dry Run`
+- module: `project.project next 100-row create-only candidate`
+- reason: 旧 project_expand_candidate_v1 已物化，基于当前 130 条已写入 project identity 生成下一组非重叠 100 条 create-only 候选
+- completed_step: `ITER-2026-04-14-0007 PASS：candidate_rows=100, create=100, update=0, error=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open project v2 100-row write authorization packet`
+
+### 2026-04-14T07:31:00+08:00
+- blocker_key: `iter_1871_project_v2_100_write_authorization_packet_pass_with_stop`
+- layer_target: `Project Migration Authorization Gate`
+- module: `project.project v2 100-row write authorization packet`
+- reason: 为 project v2 100 条 create-only 候选冻结授权包、允许字段和禁止操作，但不把授权包等同于真实写入授权
+- completed_step: `ITER-2026-04-14-0008 PASS：payload_rows=100, blockers=0, write_authorization=not_granted, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit project v2 100-row write authorization`
+
+### 2026-04-14T07:40:00+08:00
+- blocker_key: `iter_1872_project_v2_100_create_only_write_pass`
+- layer_target: `Project Migration Write Batch`
+- module: `project.project v2 100-row create-only write`
+- reason: 用户明确授权“同意执行”，执行 project v2 100 条 create-only 写入，并输出 pre/post snapshot 与写入结果
+- completed_step: `ITER-2026-04-14-0009 PASS：created=100, updated=0, errors=0, post_write_identity_count=100`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review and rollback-lock batch for the 100 created project records`
+
+### 2026-04-14T07:45:00+08:00
+- blocker_key: `iter_1873_project_v2_100_post_write_readonly_review_pass`
+- layer_target: `Project Migration Post-Write Review`
+- module: `project.project v2 100-row rollback eligibility`
+- reason: 对 project v2 100 条已写入记录执行只读复核，确认按 legacy_project_id 精确匹配且可 rollback-target
+- completed_step: `ITER-2026-04-14-0010 PASS：ROLLBACK_READY, matched=100, rollback_eligible=100, blocking=0`
+- active_commit: `d243d59`
+- next_step: `open next bounded project create-only dry-run batch; payment/receipt/project_member permission-sensitive lanes remain stopped`
+
+### 2026-04-14T07:51:00+08:00
+- blocker_key: `iter_1874_project_next_100_create_only_dry_run_v3_pass`
+- layer_target: `Project Migration Dry Run`
+- module: `project.project next 100-row create-only candidate v3`
+- reason: 在 230 个已物化 project identity 基础上，继续生成下一组非重叠 100 条 create-only 候选且不访问 DB
+- completed_step: `ITER-2026-04-14-0011 PASS：candidate_rows=100, create=100, update=0, error=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open project v3 100-row write authorization packet`
+
+### 2026-04-14T07:54:00+08:00
+- blocker_key: `iter_1875_project_v3_100_write_authorization_packet_pass_with_stop`
+- layer_target: `Project Migration Authorization Gate`
+- module: `project.project v3 100-row write authorization packet`
+- reason: 为 project v3 100 条 create-only 候选冻结授权包、允许字段和禁止操作，但不把授权包等同于真实写入授权
+- completed_step: `ITER-2026-04-14-0012 PASS：payload_rows=100, blockers=0, write_authorization=not_granted, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit project v3 100-row write authorization`
+
+### 2026-04-14T08:00:00+08:00
+- blocker_key: `iter_1876_project_v3_100_create_only_write_pass`
+- layer_target: `Project Migration Write Batch`
+- module: `project.project v3 100-row create-only write`
+- reason: 用户明确授权“同意授权”，执行 project v3 100 条 create-only 写入；用户要求扩大批次数量，但不扩大本次已冻结授权包
+- completed_step: `ITER-2026-04-14-0013 PASS：created=100, updated=0, errors=0, post_write_identity_count=100`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review, then open larger project candidate dry-run if review passes`
+
+### 2026-04-14T08:03:00+08:00
+- blocker_key: `iter_1877_project_v3_100_post_write_readonly_review_pass`
+- layer_target: `Project Migration Post-Write Review`
+- module: `project.project v3 100-row rollback eligibility`
+- reason: 对 project v3 100 条已写入记录执行只读复核，确认按 legacy_project_id 精确匹配且可 rollback-target
+- completed_step: `ITER-2026-04-14-0014 PASS：ROLLBACK_READY, matched=100, rollback_eligible=100, blocking=0`
+- active_commit: `d243d59`
+- next_step: `open next bounded project create-only dry-run with increased batch size 200; payment/receipt/project_member permission-sensitive lanes remain stopped`
+
+### 2026-04-14T08:06:00+08:00
+- blocker_key: `iter_1878_project_next_200_create_only_dry_run_v4_pass`
+- layer_target: `Project Migration Dry Run`
+- module: `project.project next 200-row create-only candidate v4`
+- reason: 用户要求扩大批次数量，在 330 个已物化 project identity 基础上生成下一组非重叠 200 条 create-only 候选且不访问 DB
+- completed_step: `ITER-2026-04-14-0015 PASS：candidate_rows=200, create=200, update=0, error=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open project v4 200-row write authorization packet`
+
+### 2026-04-14T08:08:00+08:00
+- blocker_key: `iter_1879_project_v4_200_write_authorization_packet_pass_with_stop`
+- layer_target: `Project Migration Authorization Gate`
+- module: `project.project v4 200-row write authorization packet`
+- reason: 为扩大后的 project v4 200 条 create-only 候选冻结授权包、允许字段和禁止操作，但不把授权包等同于真实写入授权
+- completed_step: `ITER-2026-04-14-0016 PASS：payload_rows=200, blockers=0, write_authorization=not_granted, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit project v4 200-row write authorization`
+
+### 2026-04-14T08:11:00+08:00
+- blocker_key: `iter_1880_project_v4_200_create_only_write_pass`
+- layer_target: `Project Migration Write Batch`
+- module: `project.project v4 200-row create-only write`
+- reason: 用户明确授权“同意授权”，执行扩大后的 project v4 200 条 create-only 写入
+- completed_step: `ITER-2026-04-14-0017 PASS：created=200, updated=0, errors=0, post_write_identity_count=200`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review and rollback-lock batch for the 200 created project records`
+
+### 2026-04-14T08:13:00+08:00
+- blocker_key: `iter_1881_project_v4_200_post_write_readonly_review_pass`
+- layer_target: `Project Migration Post-Write Review`
+- module: `project.project v4 200-row rollback eligibility`
+- reason: 对 project v4 200 条已写入记录执行只读复核，确认按 legacy_project_id 精确匹配且可 rollback-target
+- completed_step: `ITER-2026-04-14-0018 PASS：ROLLBACK_READY, matched=200, rollback_eligible=200, blocking=0`
+- active_commit: `d243d59`
+- next_step: `open next project candidate dry-run; payment/receipt/project_member permission-sensitive lanes remain stopped`
+
+### 2026-04-14T08:16:00+08:00
+- blocker_key: `iter_1882_project_next_200_create_only_dry_run_v5_pass`
+- layer_target: `Project Migration Dry Run`
+- module: `project.project next 200-row create-only candidate v5`
+- reason: 在 530 个已物化 project identity 基础上生成下一组非重叠 200 条 create-only 候选且不访问 DB
+- completed_step: `ITER-2026-04-14-0019 PASS：candidate_rows=200, create=200, update=0, error=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open project v5 200-row write authorization packet`
+
+### 2026-04-14T08:18:00+08:00
+- blocker_key: `iter_1883_project_v5_200_write_authorization_packet_pass_with_stop`
+- layer_target: `Project Migration Authorization Gate`
+- module: `project.project v5 200-row write authorization packet`
+- reason: 为 project v5 200 条 create-only 候选冻结授权包、允许字段和禁止操作，但不把授权包等同于真实写入授权
+- completed_step: `ITER-2026-04-14-0020 PASS：payload_rows=200, blockers=0, write_authorization=not_granted, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit project v5 200-row write authorization`
+
+### 2026-04-14T08:22:00+08:00
+- blocker_key: `iter_1884_project_v5_200_create_only_write_pass`
+- layer_target: `Project Migration Write Batch`
+- module: `project.project v5 200-row create-only write`
+- reason: 用户明确授权“同意授权”，执行 project v5 200 条 create-only 写入
+- completed_step: `ITER-2026-04-14-0021 PASS：created=200, updated=0, errors=0, post_write_identity_count=200`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review and rollback-lock batch for the 200 created project records`
+
+### 2026-04-14T08:26:00+08:00
+- blocker_key: `iter_1885_project_v5_200_post_write_readonly_review_pass`
+- layer_target: `Project Migration Post-Write Review`
+- module: `project.project v5 200-row rollback eligibility`
+- reason: 对 project v5 200 条已写入记录执行只读复核，确认按 legacy_project_id 精确匹配且可 rollback-target
+- completed_step: `ITER-2026-04-14-0022 PASS：ROLLBACK_READY, matched=200, rollback_eligible=200, blocking=0`
+- active_commit: `d243d59`
+- next_step: `open next project candidate dry-run; payment/receipt/project_member permission-sensitive lanes remain stopped`
+
+### 2026-04-14T08:30:00+08:00
+- blocker_key: `iter_1886_project_remaining_create_only_dry_run_v6_pass`
+- layer_target: `Project Migration Dry Run`
+- module: `project.project remaining create-only candidate v6`
+- reason: 在 730 个已物化 project identity 基础上生成 project 尾批非重叠 create-only 候选且不访问 DB
+- completed_step: `ITER-2026-04-14-0023 PASS：candidate_rows=25, create=25, update=0, error=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open remaining project 25-row write authorization packet`
+
+### 2026-04-14T08:33:00+08:00
+- blocker_key: `iter_1887_project_remaining_25_write_authorization_packet_pass_with_stop`
+- layer_target: `Project Migration Authorization Gate`
+- module: `project.project remaining 25-row write authorization packet`
+- reason: 为 project 尾批 25 条 create-only 候选冻结授权包、允许字段和禁止操作，但不把授权包等同于真实写入授权
+- completed_step: `ITER-2026-04-14-0024 PASS：payload_rows=25, blockers=0, write_authorization=not_granted, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `stop for explicit remaining project 25-row write authorization`
+
+### 2026-04-14T08:36:00+08:00
+- blocker_key: `iter_1888_project_remaining_25_create_only_write_pass`
+- layer_target: `Project Migration Write Batch`
+- module: `project.project remaining 25-row create-only write`
+- reason: 用户明确授权“同意 授权”，执行 project 尾批 25 条 create-only 写入
+- completed_step: `ITER-2026-04-14-0025 PASS：created=25, updated=0, errors=0, post_write_identity_count=25`
+- active_commit: `d243d59`
+- next_step: `run immediate post-write readonly review and rollback-lock batch for the 25 created project records`
+
+### 2026-04-14T08:38:00+08:00
+- blocker_key: `iter_1889_project_remaining_25_post_write_readonly_review_pass`
+- layer_target: `Project Migration Post-Write Review`
+- module: `project.project remaining 25-row rollback eligibility`
+- reason: 对 project 尾批 25 条已写入记录执行只读复核，确认按 legacy_project_id 精确匹配且可 rollback-target
+- completed_step: `ITER-2026-04-14-0026 PASS：ROLLBACK_READY, matched=25, rollback_eligible=25, blocking=0`
+- active_commit: `d243d59`
+- next_step: `project create-only lane complete at 755 rows; stop before opening a new non-project migration lane because payment/receipt/project_member lanes remain permission-sensitive`
+
+### 2026-04-14T08:45:00+08:00
+- blocker_key: `iter_1890_migration_master_plan_lane_governance_freeze_pass`
+- layer_target: `Migration Governance Baseline`
+- module: `migration lane control + importer promotion policy`
+- reason: project lane 已达到 BASELINE_READY_FOR_DOWNSTREAM_MAPPING，需要先冻结 sc_demo/future_prod_db 职责、lane 顺序、L0-L4 importer promotion 门禁与授权边界
+- completed_step: `ITER-2026-04-14-0027 PASS：project lane frozen at 755 rows, next_main_line=partner -> project_member -> contract`
+- active_commit: `d243d59`
+- next_step: `open ITER-2026-04-14-0028 for partner L1 no-DB dry-run and safe-slice generation`
+
+### 2026-04-14T08:52:00+08:00
+- blocker_key: `iter_1891_partner_rebuild_l1_no_db_dry_run_pass`
+- layer_target: `Partner Migration Importer Dry Run`
+- module: `res.partner rebuild importer mapping`
+- reason: 按 0027 冻结路线推进 partner 作为 P1 lane，先完成 L1 no-DB dry-run、去重统计与 safe slice，不授权写库
+- completed_step: `ITER-2026-04-14-0028 PASS：primary_total=7864, supplier_rows=3041, deduplicated=7172, to_create=7037, to_merge=3186, conflicts=135, safe_slice=100`
+- active_commit: `d243d59`
+- next_step: `open partner L2 safe-slice review and L3 bounded-write authorization gate; no partner write is authorized by this dry-run`
+
+### 2026-04-14T08:58:00+08:00
+- blocker_key: `iter_1892_partner_safe_slice_create_only_write_pass`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner safe-slice create-only write`
+- reason: 用户明确“迁移任务统一授权”，按 0028 产出的 100 条 conflict-free safe slice 执行 partner L3 bounded-write，保持单 lane、create-only 与 rollback target
+- completed_step: `ITER-2026-04-14-0029 PASS：created=100, updated=0, errors=0, rollback_target_rows=100`
+- active_commit: `d243d59`
+- next_step: `partner post-write readonly review completed in 0029: ROLLBACK_READY, matched=100, rollback_eligible=100; open project_member mapping and permission-safety dry-run next`
+
+### 2026-04-14T09:03:00+08:00
+- blocker_key: `iter_1893_project_member_mapping_dry_run_failed_source_path`
+- layer_target: `Project Member Migration Permission Dry Run`
+- module: `project_member legacy user/project mapping`
+- reason: project_member 是权限敏感 lane，必须先执行只读映射与权限影响 dry-run
+- completed_step: `ITER-2026-04-14-0030 FAIL：Odoo shell container cannot read /mnt/tmp/raw/project_member/project_member.csv; db_writes=0`
+- active_commit: `d243d59`
+- next_step: `STOP: recover container-visible source path for tmp/raw/project_member/project_member.csv before rerunning readonly dry-run; do not write project_member records`
+
+### 2026-04-14T09:07:00+08:00
+- blocker_key: `iter_1894_project_member_mapping_dry_run_recovery_pass_with_write_blocker`
+- layer_target: `Project Member Migration Permission Dry Run Recovery`
+- module: `project_member legacy user/project mapping`
+- reason: 用户同意解决 0030 源路径失败；通过 artifact shadow copy 让 Odoo shell 可见 source，并重跑只读映射与权限影响 dry-run
+- completed_step: `ITER-2026-04-14-0030R PASS：total=21390, mapped_projects=21390, unmapped_projects=0, mapped_users=7389, placeholder_used=14001, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `STOP before project_member write: screen 14001 placeholder_user classifications and select no-placeholder safe slice`
+
+### 2026-04-14T09:10:00+08:00
+- blocker_key: `iter_1895_project_member_placeholder_screen_no_placeholder_safe_slice_pass`
+- layer_target: `Project Member Migration Safe-Slice Screen`
+- module: `project_member placeholder-user policy and safe-slice selection`
+- reason: 用户同意执行；在不写库前提下筛选 placeholder_user 阻断项，并生成 no-placeholder safe slice
+- completed_step: `ITER-2026-04-14-0030S PASS：mapped_users=7389, placeholder_user=14001, unique_safe_candidates=34, safe_slice_rows=34, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open dedicated 34-row project_member create-only L3 write task only if no-placeholder safe slice is accepted; placeholder rows remain blocked`
+
+### 2026-04-14T09:20:00+08:00
+- blocker_key: `iter_1896_project_member_34_write_blocked_missing_role_fact`
+- layer_target: `Project Member Migration Write Readiness Gate`
+- module: `project_member 34-row safe-slice role-fact validation`
+- reason: 用户同意执行 34-row safe slice 推进；写入前确认 target model 必填 role_key，但 legacy source 与 safe slice 均未提供角色事实
+- completed_step: `ITER-2026-04-14-0030W PASS_WITH_RISK：WRITE_BLOCKED, safe_slice_rows=34, matched_projects=34, matched_users=2, db_writes=0, blocking_reason=required_role_fact_missing`
+- active_commit: `d243d59`
+- next_step: `STOP before project_member write: open a dedicated role-mapping decision task before any create-only write; do not fabricate project.responsibility.role_key`
+
+### 2026-04-14T09:35:00+08:00
+- blocker_key: `iter_1897_project_member_legacy_role_source_direct_db_probe`
+- layer_target: `Project Member Legacy Role Source Discovery`
+- module: `LegacyDb project_member role fact probe`
+- reason: 用户指出事实数据不足时应直接整理旧数据库数据；通过 legacy-sqlserver 只读查询 LegacyDb，核对 project_member 主表和 project/user/role 三元候选表覆盖率
+- completed_step: `ITER-2026-04-14-0030RD PASS_WITH_RISK：BASE_SYSTEM_PROJECT_USER rows=21390, member_role_columns=0, role_like_columns=454, triad_candidates=17, best_triad_mapping_rate=0.0, target_db_writes=0`
+- active_commit: `d243d59`
+- next_step: `STOP before project_member write: open 0030N neutral-membership carrier design; default-role write remains blocked without business approval`
+
+### 2026-04-14T10:12:00+08:00
+- blocker_key: `iter_1898_project_member_neutral_carrier_34_write_pass`
+- layer_target: `Project Member Neutral Migration Carrier`
+- module: `smart_construction_core support model + migration importer`
+- reason: 用户正式改道 0030N；新增 neutral carrier 承载历史成员关系，不写 project.responsibility，不改 record rules，不伪造 role_key
+- completed_step: `ITER-2026-04-14-0030N PASS：target=sc.project.member.staging, created=34, updated=0, project_responsibility_writes=0, rollback_target_rows=34, post_review=ROLLBACK_READY, visibility_changed=false`
+- active_commit: `d243d59`
+- next_step: `continue with neutral carrier expansion for more no-role project_member rows, or open separate role-promotion decision task only after verified role source/default rule exists`
+
+### 2026-04-14T10:15:00+08:00
+- blocker_key: `iter_1899_load_view_proxy_result_adaptation_recovery_pass`
+- layer_target: `Intent Handler Compatibility`
+- module: `smart_core load_view legacy proxy`
+- reason: 0030N 页面 smoke 暴露 load_view 兼容代理直接读取 IntentExecutionResult.get 的既有链路问题；补齐 result adaptation 后重启并重跑页面 smoke
+- completed_step: `ITER-2026-04-14-0030NF PASS：load_view proxy adaptation fixed, make verify.portal.load_view_smoke.container PASS, artifact=/mnt/artifacts/codex/portal-shell-v0_8-1/20260414T021454`
+- active_commit: `d243d59`
+- next_step: `return to migration lane: neutral carrier is ready for controlled expansion; role promotion remains a separate decision`
+
+### 2026-04-14T11:10:00+08:00
+- blocker_key: `iter_1900_project_member_neutral_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Migration Carrier Planning`
+- module: `project_member neutral carrier expansion dry-run`
+- reason: 0030N 已证明 neutral carrier 边界；继续前先只读分类剩余 mapped project/user 行，区分 relation-unique 与 duplicate-relation evidence，避免把重复历史证据误写成责任语义
+- completed_step: `ITER-2026-04-14-0030NX PASS：mapped_project_user_rows=7389, already_neutral_rows=34, remaining_relation_unique_rows=0, remaining_duplicate_relation_evidence_rows=7355, duplicate_evidence_slice_rows=500, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open duplicate-relation evidence neutral-carrier write gate only if the batch accepts multiple legacy rows per same project/user pair; keep project.responsibility and permissions out of scope`
+
+### 2026-04-14T11:15:00+08:00
+- blocker_key: `iter_1901_project_member_duplicate_relation_write_gate_pass`
+- layer_target: `Project Member Neutral Migration Carrier Write Gate`
+- module: `project_member duplicate-relation evidence write gate`
+- reason: 0030NX 确认剩余 mapped project/user 行均为 duplicate-relation evidence；写入前先只读校验 500 行切片、legacy 冲突、rollback plan 与责任/权限边界
+- completed_step: `ITER-2026-04-14-0030NY PASS：slice_rows=500, distinct_relation_keys=328, max_rows_per_relation_key=5, rollback_plan_rows=500, project_responsibility_writes=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open 500-row duplicate-relation evidence bounded-write task for sc.project.member.staging; do not touch project.responsibility or permission semantics`
+
+### 2026-04-14T11:20:00+08:00
+- blocker_key: `iter_1902_project_member_duplicate_relation_500_write_pass`
+- layer_target: `Project Member Neutral Migration Carrier Bounded Write`
+- module: `project_member duplicate-relation evidence 500-row neutral write`
+- reason: 0030NY 已只读确认 500 行 duplicate-relation evidence 切片可写且 rollback plan 完整；执行 neutral carrier bounded write，不触碰 responsibility/permission 语义
+- completed_step: `ITER-2026-04-14-0030NZ PASS：created=500, updated=0, rollback_target_rows=500, project_responsibility_writes=0, visibility_changed=false`
+- active_commit: `d243d59`
+- next_step: `run aggregate neutral-carrier count review before next duplicate-relation evidence batch`
+
+### 2026-04-14T11:35:00+08:00
+- blocker_key: `iter_1903_project_member_neutral_aggregate_review_pass`
+- layer_target: `Project Member Neutral Migration Carrier Review`
+- module: `project_member neutral carrier aggregate review`
+- reason: 0030N 与 0030NZ 已累计写入 neutral carrier；继续扩大批次前只读核对批次计数、role_fact_status 与责任/权限边界
+- completed_step: `ITER-2026-04-14-0030ZQ PASS：total_records=534, 0030N=34, 0030NZ=500, role_fact_status_missing_count=534, distinct_project_user_pairs=362, duplicate_project_user_pair_count=120, project_responsibility_writes=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `continue with the next duplicate-relation evidence gate/write cycle, or start role-source decision work in a separate task`
+
+### 2026-04-14T11:45:00+08:00
+- blocker_key: `iter_1904_project_member_role_fact_decision_freeze_pass`
+- layer_target: `Project Member Role Fact Decision Governance`
+- module: `project_member role fact decision freeze`
+- reason: 用户明确将 0030W 定为正式 stop gate，并冻结“不写 project.responsibility / 不开默认 role_key / 不改 record rules / 转入 neutral carrier + role fact decision”路线
+- completed_step: `ITER-2026-04-14-0030RF PASS：formal_stop_gate=0030W, write_project_responsibility=false, default_role_key_allowed=false, record_rule_change_allowed=false, neutral_carrier=sc.project.member.staging, promotion_status=blocked_until_verified_role_source_or_business_approval`
+- active_commit: `d243d59`
+- next_step: `continue neutral carrier batches, or open a future role-source promotion task only after verified source evidence or business approval exists`
+
+### 2026-04-14T12:00:00+08:00
+- blocker_key: `iter_1905_project_member_neutral_pair_consolidation_design_pass`
+- layer_target: `Migration Evidence Consolidation Design`
+- module: `project_member neutral carrier pair consolidation`
+- reason: 当前 neutral carrier 已有 534 行 evidence rows；设计 project/user pair 归并规则，冻结 evidence layer 与 readonly governance projection 边界
+- completed_step: `ITER-2026-04-14-0030ZA PASS：target_state=PAIR_CONSOLIDATION_RULE_READY, total_evidence_rows=534, total_distinct_pairs=362, duplicate_pair_count=120, max_evidence_per_pair=5, pair_key=project_id+user_id, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open 0030ZB consolidated pair readonly projection, or continue next neutral evidence bounded write batch`
+
+### 2026-04-14T12:20:00+08:00
+- blocker_key: `iter_1906_project_member_consolidated_pair_projection_pass`
+- layer_target: `Migration Evidence Consolidated Pair Projection`
+- module: `project_member consolidated pair readonly projection`
+- reason: 0030ZA 已冻结 pair 规则；将 534 条 evidence rows 只读投影为 362 条可审阅 project/user pair
+- completed_step: `ITER-2026-04-14-0030ZB PASS：total_pairs=362, pairs_with_duplicates=120, pairs_without_duplicates=242, max_evidence_per_pair=5, role_fact_missing_pairs=362, promotion_candidate_pairs=0, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `open 0030ZC responsibility promotion candidate screening`
+
+### 2026-04-14T12:45:00+08:00
+- blocker_key: `iter_1907_project_member_responsibility_promotion_candidate_screen_pass`
+- layer_target: `Migration Responsibility Promotion Candidate Screening`
+- module: `project_member consolidated pair promotion screen`
+- reason: 0030ZB 已生成 362 条 consolidated pair；按 promotion gate 只读筛选哪些 pair 具备 responsibility 提升条件
+- completed_step: `ITER-2026-04-14-0030ZC PASS：total_pairs=362, promotion_candidate_pairs=0, blocked_pairs=362, missing_verified_role_fact_pairs=362, missing_target_role_key_pairs=362, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `continue role-source discovery or business approval workflow before any project.responsibility promotion write`
+
+### 2026-04-14T13:05:00+08:00
+- blocker_key: `iter_1908_project_member_responsibility_candidate_strength_selection_pass`
+- layer_target: `Migration Responsibility Candidate Strength Selection`
+- module: `project_member consolidated pair candidate selection`
+- reason: 用户要求在 ZC 维度进一步筛出“可能有职责的人”；因 0030ZC 已占用为 promotion readiness screen，本轮以 0030ZC2 承接候选强度分层，仍不写 responsibility
+- completed_step: `ITER-2026-04-14-0030ZC2 PASS：total_pairs=362, L0=242, L1=110, L2=0, L3=10, promotion_ready_pairs=0, requires_role_source_pairs=362, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `use L3/L1 candidate map for role-source repair or manual review before any responsibility write`
+
+### 2026-04-14T13:20:00+08:00
+- blocker_key: `iter_1909_project_member_l3_role_source_review_packet_pass`
+- layer_target: `Migration Role Source Review Packet`
+- module: `project_member L3 candidate role-source review`
+- reason: 0030ZC2 已筛出 10 个 L3 优先候选，但全部缺少 role source；进入人工审阅包生成，不写 responsibility
+- completed_step: `ITER-2026-04-14-0030ZD PASS：l3_candidates=10, requires_role_source=10, promotion_ready=0, write_allowed=false, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `wait for business reviewers to provide verified role_source_evidence and proposed_role_key before any responsibility write`
+
+### 2026-04-14T16:10:00+08:00
+- blocker_key: `iter_1910_project_member_l3_role_source_closure_blocked_by_approval`
+- layer_target: `Migration Responsibility Closure Gate`
+- module: `project_member L3 role-source closure`
+- reason: 用户要求基于 L3 review packet 导出业务审核清单、冻结角色来源规则，并执行 3 条样本 approved-only dry-run/apply/audit；当前样本仍缺审批与 role source
+- completed_step: `ITER-2026-04-14-L3-ROLE-SOURCE-CLOSURE BLOCKED_BY_APPROVAL：sample_rows=3, approved_sample_rows=0, created=0, db_writes=0, audit=SKIPPED_NO_WRITE`
+- active_commit: `d243d59`
+- next_step: `fill first three checklist rows with business_decision=approved, valid proposed_role_key, role_source_evidence, and business_reviewer before rerunning apply`
+
+### 2026-04-14T16:25:00+08:00
+- blocker_key: `iter_1911_project_member_l3_forced_write_fail_model_rejected_role_key`
+- layer_target: `Migration Responsibility Forced Sample Write`
+- module: `project_member L3 first-3 forced responsibility write`
+- reason: 用户要求不再执行审批阻断型任务，改用迁移假设强制指定 role_key=project_member 写入前 3 条 L3 checklist 样本
+- completed_step: `ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE FAIL_MODEL_REJECTED_ROLE_KEY：sample_rows=3, forced_role_key=project_member, created=0, db_writes=0, error=Wrong value for project.responsibility.role_key`
+- active_commit: `d243d59`
+- next_step: `choose an existing valid project.responsibility role_key or open a dedicated model-change task to add project_member as a valid selection; do not bypass ORM with raw SQL`
+
+### 2026-04-14T17:00:00+08:00
+- blocker_key: `iter_1912_project_member_l3_role_key_audit_mapped_write_pass`
+- layer_target: `Migration Responsibility Role-Key Audit and Mapped Write`
+- module: `project_member L3 first-3 legal role write`
+- reason: 用户要求停止猜测 role_key，先审计模型字段、selection 合法值和现有数据分布，再冻结业务语义到模型编码并使用真实合法 role_key 写入 3 条样本
+- completed_step: `ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE PASS：legal_role_keys=manager/cost/finance/cashier/material/safety/quality/document, mapped_role_key=manager, created=3, db_writes=3, post_audit_matched=3, rollback_eligible=3`
+- active_commit: `d243d59`
+- next_step: `review the 3-row manager responsibility write impact, then decide rollback or open a new bounded expansion task`
+
+### 2026-04-14T17:25:00+08:00
+- blocker_key: `iter_1913_project_member_l3_mapped_write_impact_review_pass`
+- layer_target: `Migration Responsibility Post-Write Impact Review`
+- module: `project_member L3 mapped manager write impact review`
+- reason: 3 条 manager responsibility 已写入；扩样或回滚前先只读复核可见性、follower 同步和 rollback 目标
+- completed_step: `ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW PASS：reviewed=3, visible_to_user=3, follower_present=3, rollback_eligible=3, db_writes=0`
+- active_commit: `d243d59`
+- next_step: `decide whether to keep the 3-row write, rollback it, or open a separately bounded expansion task`

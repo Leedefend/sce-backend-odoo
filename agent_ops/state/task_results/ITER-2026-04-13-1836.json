@@ -1,0 +1,58 @@
+{
+  "task_id": "ITER-2026-04-13-1836",
+  "status": "PASS",
+  "date": "2026-04-13",
+  "layer_target": "Migration Read-Only Review",
+  "module": "project.project create-only expansion rollback lock",
+  "mode": "read_only_rollback_dry_run_no_delete",
+  "result": {
+    "rollback_status": "ROLLBACK_READY",
+    "total_targets": 100,
+    "matched_rows": 100,
+    "missing_rows": 0,
+    "duplicate_matches": 0,
+    "out_of_scope_matches": 0,
+    "projection_mismatches": 0,
+    "lifecycle_state_summary": [
+      {
+        "lifecycle_state": "draft",
+        "count": 100
+      }
+    ],
+    "stage_id_summary": [
+      {
+        "stage_id": 5,
+        "stage_name": "筹备中",
+        "count": 100
+      }
+    ]
+  },
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1836.yaml",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile scripts/migration/project_expand_rollback_dry_run.py",
+      "status": "PASS"
+    },
+    {
+      "command": "DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_expand_rollback_dry_run.py",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m json.tool artifacts/migration/project_expand_rollback_dry_run_result_v1.json",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1836.json",
+      "status": "PASS"
+    },
+    {
+      "command": "make verify.native.business_fact.static",
+      "status": "PASS"
+    }
+  ],
+  "next_step": "manual usability review or explicit rollback authorization batch",
+  "report": "agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1836.md"
+}

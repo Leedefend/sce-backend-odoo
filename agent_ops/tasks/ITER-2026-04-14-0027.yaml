@@ -1,0 +1,125 @@
+task_id: ITER-2026-04-14-0027
+title: Migration master plan and lane governance freeze v1
+status: in_progress
+type: migration-governance-freeze
+priority: high
+mode: plan
+
+goal: >
+  Freeze the migration master strategy after the project lane reached
+  BASELINE_READY_FOR_DOWNSTREAM_MAPPING, including environment roles, lane
+  promotion sequence, importer promotion gates, rollback boundaries, and
+  authorization boundaries.
+
+user_visible_outcome:
+  - "迁移总路线、lane 顺序、importer promotion 门禁与环境职责已冻结为后续任务基线"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0027.yaml
+    - docs/migration_alignment/migration_master_plan_v1.md
+    - docs/migration_alignment/lane_promotion_sequence_v1.md
+    - docs/migration_alignment/importer_promotion_gate_v1.md
+    - docs/migration_alignment/environment_role_definition_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0027.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0027.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - docs/architecture/execution_baseline_v1.md
+    - ARCHITECTURE_GUARD.md
+    - docs/architecture/ai_development_guard.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0026.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - artifacts/migration/**
+
+limits:
+  max_files: 8
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - docs-only
+  - no-db-write
+  - no-importer-implementation
+  - no-addon-change
+  - no-acl-security-change
+  - no-payment-settlement-account-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  current_database_role: sc_demo migration validation database
+  future_database_role: future_prod_db formal rebuild database
+  upstream_task: ITER-2026-04-14-0026
+  project_lane_status: BASELINE_READY_FOR_DOWNSTREAM_MAPPING
+
+architecture:
+  layer_target: Migration Governance Baseline
+  module: migration lane control + importer promotion policy
+  module_owner: docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene-orchestration layer
+  backend_sub_layer_reason: >
+    This batch freezes migration sequencing and governance envelopes for later
+    importer execution. It does not create or modify business facts.
+  reason: >
+    The project lane is fully materialized and post-write reviewed at 755 rows.
+    The next migration lanes need an explicit control baseline before partner,
+    project_member, and contract dry-run work can proceed.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0027.yaml
+    - test -s docs/migration_alignment/migration_master_plan_v1.md
+    - test -s docs/migration_alignment/lane_promotion_sequence_v1.md
+    - test -s docs/migration_alignment/importer_promotion_gate_v1.md
+    - test -s docs/migration_alignment/environment_role_definition_v1.md
+    - test -s agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0027.md
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-14-0027.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - importer_implementation_attempted
+  - addon_change_attempted
+  - acl_or_security_change_attempted
+  - payment_settlement_account_change_attempted
+
+deliverables:
+  - task contract
+  - migration master plan
+  - lane promotion sequence
+  - importer promotion gate
+  - environment role definition
+  - iteration report
+  - task result json
+  - delivery context log update
+
+depends_on:
+  - ITER-2026-04-14-0026
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-14-0027.yaml
+  - git restore docs/migration_alignment/migration_master_plan_v1.md
+  - git restore docs/migration_alignment/lane_promotion_sequence_v1.md
+  - git restore docs/migration_alignment/importer_promotion_gate_v1.md
+  - git restore docs/migration_alignment/environment_role_definition_v1.md
+  - git restore agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0027.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-14-0027.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

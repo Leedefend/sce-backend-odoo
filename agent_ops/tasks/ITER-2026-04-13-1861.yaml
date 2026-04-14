@@ -1,0 +1,117 @@
+task_id: ITER-2026-04-13-1861
+title: Partner post-write readonly review and rollback dry-run lock v1
+status: in_progress
+type: migration-post-write-review
+priority: high
+mode: execute
+
+goal: >
+  Run the immediate readonly post-write review and rollback dry-run lock for
+  the 30-row res.partner write batch. Do not delete or update partners.
+
+user_visible_outcome:
+  - "30 行 partner 写后只读复核与 rollback dry-run lock 完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1861.yaml
+    - scripts/migration/partner_30_row_post_write_review.py
+    - artifacts/migration/partner_30_row_create_only_sample_v1.csv
+    - artifacts/migration/partner_30_row_rollback_target_list_v1.csv
+    - artifacts/migration/partner_30_row_post_write_review_result_v1.json
+    - docs/migration_alignment/partner_30_row_post_write_review_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1861.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1861.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/partner_30_row_write_result_v1.json
+    - docs/migration_alignment/partner_post_write_review_rollback_lock_design_v1.md
+    - docs/migration_alignment/partner_30_row_write_rollback_lock_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - read-only-review
+  - rollback-dry-run-only
+  - no-db-write
+  - no-orm-write
+  - no-partner-create
+  - no-partner-update
+  - no-partner-delete
+  - no-contract-import
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  target_db: sc_demo
+  source_write_batch: ITER-2026-04-13-1860
+  rollback_key: legacy_partner_source + legacy_partner_id
+
+architecture:
+  layer_target: Migration Post-Write Review
+  module: res.partner 30-row rollback dry-run lock
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The review verifies newly written partner business facts can be precisely
+    locked by legacy identity without deleting or updating data.
+  reason: >
+    ITER-2026-04-13-1860 created 30 partners. The immediate next batch must
+    verify readability, uniqueness, scope, and rollback target precision before
+    any supplier supplement, contract import, or broader partner write.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1861.yaml
+    - python3 -m py_compile scripts/migration/partner_30_row_post_write_review.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/partner_30_row_post_write_review.py
+    - python3 -m json.tool artifacts/migration/partner_30_row_post_write_review_result_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1861.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_name_not_sc_demo
+  - partner_delete_attempted
+  - duplicate_rollback_key
+  - rollback_target_missing
+  - out_of_scope_partner_locked
+
+deliverables:
+  - post-write readonly review script
+  - review result json
+  - review document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1860
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1861.yaml
+  - git restore scripts/migration/partner_30_row_post_write_review.py
+  - git restore artifacts/migration/partner_30_row_post_write_review_result_v1.json
+  - git restore docs/migration_alignment/partner_30_row_post_write_review_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1861.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1861.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

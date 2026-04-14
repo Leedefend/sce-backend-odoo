@@ -1,0 +1,121 @@
+task_id: ITER-2026-04-13-1842
+title: Partner source baseline and contract counterparty coverage v1
+status: PASS_WITH_IMPORT_BLOCKED
+type: migration-source-baseline
+priority: high
+mode: execute
+
+goal: >
+  Profile tmp/raw/partner/company.csv and tmp/raw/partner/supplier.csv, then
+  compare their name coverage against the unresolved contract counterparties
+  from ITER-2026-04-13-1841. Do not create partners or import data.
+
+user_visible_outcome:
+  - "公司/供应商源数据基线与合同相对方覆盖关系完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1842.yaml
+    - scripts/migration/partner_source_baseline.py
+    - artifacts/migration/partner_source_baseline_v1.json
+    - docs/migration_alignment/partner_source_inventory_v1.md
+    - docs/migration_alignment/partner_contract_counterparty_coverage_v1.md
+    - docs/migration_alignment/partner_import_initial_gate_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1842.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1842.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - tmp/raw/partner/company.csv
+    - tmp/raw/partner/supplier.csv
+    - tmp/raw/contract/contract.csv
+    - artifacts/migration/contract_partner_match_recompute_v1.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - read-only-dry-run
+  - no-db-write
+  - no-orm
+  - no-partner-create
+  - no-contract-import
+  - no-model-view-menu-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  company_source: tmp/raw/partner/company.csv
+  supplier_source: tmp/raw/partner/supplier.csv
+  contract_counterparty_artifact: artifacts/migration/contract_partner_match_recompute_v1.json
+
+architecture:
+  layer_target: Partner Migration Source Baseline
+  module: res.partner migration readiness for contract counterparty coverage
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Partner source coverage determines whether contract counterparty business
+    facts can be safely materialized before any contract write batch.
+  reason: >
+    ITER-2026-04-13-1841 left contract write blocked by unresolved partner
+    master data. This batch profiles the newly supplied company and supplier
+    raw exports and checks whether they can cover contract counterparties.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1842.yaml
+    - python3 -m py_compile scripts/migration/partner_source_baseline.py
+    - python3 scripts/migration/partner_source_baseline.py
+    - python3 -m json.tool artifacts/migration/partner_source_baseline_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1842.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - orm_used
+  - partner_create_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - partner source profiling script
+  - source baseline artifact
+  - source inventory document
+  - contract counterparty coverage document
+  - partner import initial gate document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1841
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1842.yaml
+  - git restore scripts/migration/partner_source_baseline.py
+  - git restore artifacts/migration/partner_source_baseline_v1.json
+  - git restore docs/migration_alignment/partner_source_inventory_v1.md
+  - git restore docs/migration_alignment/partner_contract_counterparty_coverage_v1.md
+  - git restore docs/migration_alignment/partner_import_initial_gate_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1842.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1842.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-04-13-1822",
+  "status": "FAIL",
+  "date": "2026-04-13",
+  "layer_target": "Migration Dry-Run Tooling",
+  "module": "project.project safe skeleton target-identity rehearsal",
+  "failed_command": "ENV=dev DB_NAME=sc_demo make odoo.shell.exec",
+  "failure_classification": "ENV_UNSTABLE",
+  "stop_condition": "acceptance_failed",
+  "reason": "The Odoo shell read-only export started successfully, but the container path /mnt/data/migration_samples was not writable, so the identity snapshot could not be written.",
+  "database_write": false,
+  "orm_write": false,
+  "import_executed": false,
+  "completed": [
+    "task contract created",
+    "task contract validated",
+    "Makefile odoo.shell.exec entry used"
+  ],
+  "missing_deliverables": [
+    "data/migration_samples/project_existing_identity_snapshot_target_v1.csv",
+    "artifacts/migration/project_dry_run_target_identity_result_v1.json",
+    "docs/migration_alignment/project_dry_run_target_identity_report_v1.md",
+    "docs/migration_alignment/project_import_go_no_go_v3.md"
+  ],
+  "recovery_suggestion": "Open a recovery batch that writes the Odoo shell export to a confirmed container-mounted writable path such as /mnt/artifacts, then syncs the snapshot into data/migration_samples before rerunning the no-write importer."
+}

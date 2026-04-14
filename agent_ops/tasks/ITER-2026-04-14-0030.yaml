@@ -1,0 +1,125 @@
+task_id: ITER-2026-04-14-0030
+title: Project member mapping and permission-safety dry-run v1
+status: in_progress
+type: migration-permission-sensitive-dry-run
+priority: high
+mode: verify
+
+goal: >
+  Run a no-write project_member mapping dry-run for 21390 source rows, mapping
+  legacy projects and users where possible, using placeholder_user only as a
+  dry-run classification for unmapped users, and documenting permission impact
+  before any member write is allowed.
+
+user_visible_outcome:
+  - "project_member 21390 行映射与权限影响 dry-run 完成，不写库"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0030.yaml
+    - scripts/migration/project_member_mapping_dry_run.py
+    - artifacts/migration/project_member_dry_run_result_v1.json
+    - docs/migration_alignment/project_member_mapping_strategy_v1.md
+    - docs/migration_alignment/project_member_permission_impact_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0030.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - tmp/raw/project_member/project_member.csv
+    - docs/ops/governance/project_member_rule_binding_screen_v1.md
+    - docs/migration_alignment/project_mapping_user_match_v1.md
+    - artifacts/migration/project_member_dry_run_result_v1.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 8
+  max_output_lines: 300
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - no-db-write
+  - readonly-odoo-shell-only
+  - no-user-create
+  - no-project-member-create
+  - no-record-rule-change
+  - no-acl-security-change
+  - no-payment-settlement-account-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  target_db: sc_demo
+  target_lane: project_member
+  importer_level: L1 dry-run
+  upstream_task: ITER-2026-04-14-0029
+  source_rows: 21390
+
+architecture:
+  layer_target: Project Member Migration Permission Dry Run
+  module: project_member legacy user/project mapping
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The batch classifies legacy project-member business facts and authority
+    impact without adding frontend or presentation semantics.
+  reason: >
+    project_member is permission-sensitive and can affect project visibility,
+    record-rule semantics, and responsibility logic. It must run dry-run and
+    authority-impact analysis before any write.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0030.yaml
+    - python3 -m py_compile scripts/migration/project_member_mapping_dry_run.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_member_mapping_dry_run.py
+    - python3 -m json.tool artifacts/migration/project_member_dry_run_result_v1.json
+    - test -s docs/migration_alignment/project_member_mapping_strategy_v1.md
+    - test -s docs/migration_alignment/project_member_permission_impact_v1.md
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-14-0030.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - user_create_attempted
+  - project_member_create_attempted
+  - record_rule_or_acl_change_attempted
+  - payment_settlement_account_change_attempted
+
+deliverables:
+  - task contract
+  - dry-run script
+  - dry-run result json
+  - mapping strategy document
+  - permission impact document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-14-0029
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-14-0030.yaml
+  - git restore scripts/migration/project_member_mapping_dry_run.py
+  - git restore artifacts/migration/project_member_dry_run_result_v1.json
+  - git restore docs/migration_alignment/project_member_mapping_strategy_v1.md
+  - git restore docs/migration_alignment/project_member_permission_impact_v1.md
+  - git restore agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-14-0030.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

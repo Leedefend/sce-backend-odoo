@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-04-14-0030",
+  "status": "FAIL",
+  "mode": "project_member_mapping_permission_dry_run",
+  "database": "sc_demo",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0030.yaml",
+    "scripts/migration/project_member_mapping_dry_run.py",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0030.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "source_rows": 21390,
+    "db_writes": 0,
+    "failure": "Odoo shell container could not read /mnt/tmp/raw/project_member/project_member.csv"
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_readonly_dry_run": "FAIL",
+    "dry_run_result_json": "NOT_RUN",
+    "task_result_json": "PASS",
+    "business_fact_static": "NOT_RUN"
+  },
+  "risk": {
+    "level": "high",
+    "db_writes": 0,
+    "forbidden_domains_touched": false,
+    "stop_condition": "acceptance_failed"
+  },
+  "next_step": "recover source path visibility for tmp/raw/project_member/project_member.csv in Odoo shell container, then rerun readonly dry-run; do not write project_member records"
+}

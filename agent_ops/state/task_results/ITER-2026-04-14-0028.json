@@ -1,0 +1,46 @@
+{
+  "task_id": "ITER-2026-04-14-0028",
+  "status": "PASS",
+  "mode": "partner_rebuild_l1_no_db_dry_run",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0028.yaml",
+    "scripts/migration/partner_rebuild_dry_run.py",
+    "artifacts/migration/partner_dry_run_result_v1.json",
+    "artifacts/migration/partner_safe_slice_v1.csv",
+    "docs/migration_alignment/partner_mapping_strategy_v1.md",
+    "docs/migration_alignment/partner_dedup_strategy_v1.md",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0028.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0028.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "primary_total": 7864,
+    "supplier_rows": 3041,
+    "combined_source_rows": 10905,
+    "deduplicated": 7172,
+    "to_create": 7037,
+    "to_merge": 3186,
+    "conflict_count": 135,
+    "safe_slice_rows": 100
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "dry_run": "PASS",
+    "dry_run_result_json": "PASS",
+    "safe_slice_exists": "PASS",
+    "mapping_doc_exists": "PASS",
+    "dedup_doc_exists": "PASS",
+    "task_result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "db_writes": 0,
+    "odoo_shell": false,
+    "addon_changes": 0,
+    "forbidden_domains_touched": false,
+    "remaining_gate": "L2 safe-slice review before any L3 bounded write"
+  },
+  "next_step": "open partner L2 safe-slice review and L3 bounded-write authorization gate; no partner write is authorized by this dry-run"
+}

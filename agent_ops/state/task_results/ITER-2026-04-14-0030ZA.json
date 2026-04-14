@@ -1,0 +1,37 @@
+{
+  "task_id": "ITER-2026-04-14-0030ZA",
+  "status": "PASS",
+  "decision": "PAIR_CONSOLIDATION_RULE_READY",
+  "result": {
+    "target_state": "PAIR_CONSOLIDATION_RULE_READY",
+    "evidence_layer": "sc.project.member.staging",
+    "consolidated_pair": "readonly governance projection",
+    "pair_key": "project_id + user_id",
+    "duplicate_evidence_retained": true,
+    "responsibility_promotion": "blocked_without_verified_role_fact",
+    "total_evidence_rows": 534,
+    "total_distinct_pairs": 362,
+    "duplicate_pair_count": 120,
+    "max_evidence_per_pair": 5,
+    "pairs_grouped_by_evidence_count": {
+      "1": 242,
+      "2": 81,
+      "3": 29,
+      "4": 7,
+      "5": 3
+    }
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_profile": "PASS",
+    "profile_json": "PASS",
+    "result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "summary": "Readonly profiling and documentation only; no business model or permission logic change."
+  },
+  "next_step": "After PASS, open 0030ZB consolidated pair readonly projection or continue the next neutral evidence bounded write batch."
+}

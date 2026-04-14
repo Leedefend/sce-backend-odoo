@@ -1,0 +1,117 @@
+task_id: ITER-2026-04-13-1841
+title: Contract partner matching and safe candidate recompute v1
+status: PASS_WITH_WRITE_BLOCKED
+type: migration-mapping-dry-run
+priority: high
+mode: execute
+
+goal: >
+  Recompute contract safe candidates using counterparty text matching against
+  the current partner baseline. Do not create partners or import contracts.
+
+user_visible_outcome:
+  - "合同 partner 匹配与安全候选重算完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1841.yaml
+    - scripts/migration/contract_partner_match_recompute.py
+    - artifacts/migration/contract_partner_match_recompute_v1.json
+    - docs/migration_alignment/contract_partner_match_v1.md
+    - docs/migration_alignment/contract_safe_candidate_recompute_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1841.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1841.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - tmp/raw/contract/contract.csv
+    - artifacts/migration/contract_partner_baseline_v1.json
+    - artifacts/migration/contract_mapping_dry_run_result_v1.json
+    - data/migration_samples/project_sample_v1.csv
+    - artifacts/migration/project_create_only_expand_post_write_snapshot_v1.csv
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 8
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - read-only-dry-run
+  - no-db-write
+  - no-orm
+  - no-partner-create
+  - no-contract-import
+  - no-model-view-menu-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  source_file: tmp/raw/contract/contract.csv
+  partner_baseline: artifacts/migration/contract_partner_baseline_v1.json
+
+architecture:
+  layer_target: Migration Mapping Dry-Run
+  module: construction.contract partner matching
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Partner matching determines the required contract counterparty business fact
+    before any construction.contract write can be safe.
+  reason: >
+    ITER-2026-04-13-1839 and 1840 left contract write blocked by partner_id.
+    This batch quantifies counterparty text coverage and recomputes safe
+    candidates without writing data.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1841.yaml
+    - python3 -m py_compile scripts/migration/contract_partner_match_recompute.py
+    - python3 scripts/migration/contract_partner_match_recompute.py
+    - python3 -m json.tool artifacts/migration/contract_partner_match_recompute_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1841.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - orm_used
+  - partner_create_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - partner matching recompute script
+  - recompute result artifact
+  - partner match document
+  - safe candidate recompute document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1840
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1841.yaml
+  - git restore scripts/migration/contract_partner_match_recompute.py
+  - git restore artifacts/migration/contract_partner_match_recompute_v1.json
+  - git restore docs/migration_alignment/contract_partner_match_v1.md
+  - git restore docs/migration_alignment/contract_safe_candidate_recompute_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1841.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1841.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

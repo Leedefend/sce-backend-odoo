@@ -1,0 +1,110 @@
+task_id: ITER-2026-04-13-1831
+title: Project state implementation closure decision v1
+status: completed
+type: governance
+priority: high
+mode: execute
+
+goal: >
+  Decide the governance direction for signal-based stage sync and standalone
+  stage_id writes after the implementation audit found that stage_id is not yet
+  a pure lifecycle_state projection.
+
+user_visible_outcome:
+  - "项目状态实现收口决策完成，明确是否接受 signal sync 与 standalone stage write，并给出扩样结论"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1831.yaml
+    - docs/architecture/project_state_closure_decision_v1.md
+    - docs/architecture/project_state_signal_policy_options_v1.md
+    - docs/architecture/project_state_signal_policy_recommendation_v1.md
+    - docs/architecture/project_state_closure_action_gate_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1831.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1831.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - scripts/**
+
+limits:
+  max_files: 8
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - governance-decision-only
+  - no-code-change
+  - no-field-change
+  - no-model-view-import-change
+  - no-sample-expansion
+  - no-database-write
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  governance_source: ITER-2026-04-13-1829
+  implementation_audit_source: ITER-2026-04-13-1830
+  frozen_rule: "lifecycle_state truth; stage_id UI projection; lifecycle_state maps to stage_id one-way; no stage reverse sync"
+  current_gap: "stage_id still has signal-based projection behavior and standalone write behavior"
+
+architecture:
+  layer_target: Business Fact Governance Documentation
+  module: project.project state closure decision
+  module_owner: docs/architecture + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The decision defines whether the system truth remains lifecycle_state only
+    or whether stage_id may retain independent signal-derived business meaning.
+  reason: >
+    ITER-2026-04-13-1830 found no direct stage_id to lifecycle_state reverse
+    write, but did find signal-based stage sync and standalone stage writes.
+    The governance direction must be frozen before implementation closure or
+    bounded create-only expansion.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1831.yaml
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1831.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - code_change_attempted
+  - ambiguous_state_closure_decision
+
+deliverables:
+  - state closure decision
+  - signal policy options
+  - signal policy recommendation
+  - implementation closure action gate
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1829
+  - ITER-2026-04-13-1830
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1831.yaml
+  - git restore docs/architecture/project_state_closure_decision_v1.md
+  - git restore docs/architecture/project_state_signal_policy_options_v1.md
+  - git restore docs/architecture/project_state_signal_policy_recommendation_v1.md
+  - git restore docs/architecture/project_state_closure_action_gate_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1831.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1831.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

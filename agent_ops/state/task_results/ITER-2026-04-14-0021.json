@@ -1,0 +1,40 @@
+{
+  "task_id": "ITER-2026-04-14-0021",
+  "status": "PASS",
+  "mode": "project_v5_200_create_only_write",
+  "database": "sc_demo",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0021.yaml",
+    "scripts/migration/project_v5_200_create_only_write.py",
+    "artifacts/migration/project_v5_200_pre_write_snapshot.csv",
+    "artifacts/migration/project_v5_200_post_write_snapshot.csv",
+    "artifacts/migration/project_v5_200_write_result.json",
+    "docs/migration_alignment/project_v5_200_create_only_write_report.md",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0021.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0021.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "candidate_rows": 200,
+    "created": 200,
+    "updated": 0,
+    "errors": 0,
+    "post_write_identity_count": 200,
+    "projection_mismatches": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_write": "PASS",
+    "write_result_json": "PASS",
+    "task_result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "high",
+    "db_writes": 200,
+    "forbidden_domains_touched": false,
+    "remaining_gate": "immediate post-write readonly review and rollback lock"
+  },
+  "next_step": "run immediate project v5 200-row post-write readonly review before any further larger write"
+}

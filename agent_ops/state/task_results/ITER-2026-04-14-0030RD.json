@@ -1,0 +1,32 @@
+{
+  "task_id": "ITER-2026-04-14-0030RD",
+  "status": "PASS_WITH_RISK",
+  "decision": "STOP_BEFORE_WRITE",
+  "result": {
+    "legacy_database": "LegacyDb",
+    "project_member_table": "dbo.BASE_SYSTEM_PROJECT_USER",
+    "project_member_rows": 21390,
+    "project_member_role_like_columns": 0,
+    "role_like_columns_in_old_db": 454,
+    "project_user_role_triad_candidate_tables": 17,
+    "best_triad_mapping_rate": 0.0,
+    "authoritative_role_source": false,
+    "neutral_membership_carrier": "recommended_next_design",
+    "default_role_rule": "not_approved",
+    "target_db_writes": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "legacy_db_probe": "PASS",
+    "json_artifact": "PASS",
+    "candidate_csv": "PASS",
+    "docs": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "high",
+    "summary": "Old DB direct probe did not find an authoritative role source for project_member role_key; writing project.responsibility would still require invented role facts."
+  },
+  "next_step": "Open 0030N project_member neutral-membership carrier design before any project_member write."
+}

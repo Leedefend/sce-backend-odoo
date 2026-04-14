@@ -1,0 +1,100 @@
+task_id: ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE
+title: Project member L3 first-3 forced responsibility write v1
+status: failed
+type: migration-responsibility-forced-sample-write
+priority: high
+mode: execute
+depends_on:
+  - ITER-2026-04-14-L3-ROLE-SOURCE-CLOSURE
+
+goal: >
+  Force-write exactly the first three L3 checklist rows into
+  project.responsibility using the migration assumption role_key
+  project_member, then produce write result, post audit, and rollback targets.
+
+user_visible_outcome:
+  - "基于当前 L3 checklist 前 3 条执行真实 project.responsibility 写库样本"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE.yaml
+    - scripts/migration/project_member_l3_sample_forced_write.py
+    - artifacts/migration/project_member_l3_sample_forced_write_result_v1.json
+    - artifacts/migration/project_member_l3_sample_forced_write_post_audit_v1.json
+    - artifacts/migration/project_member_l3_sample_forced_write_rollback_targets_v1.csv
+    - docs/migration_alignment/project_member_l3_sample_forced_write_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE.md
+    - agent_ops/state/task_results/ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_member_l3_business_review_checklist_v1.csv
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+    - frontend/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_sample_rows: 3
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - forced-write-exactly-first-three-l3-checklist-rows
+  - use-role-key-project-member
+  - no-sample-expansion
+  - no-acl-security-change
+  - no-record-rule-change
+  - no-model-or-selection-change
+
+architecture:
+  layer_target: Migration Responsibility Forced Sample Write
+  module: project_member L3 first-3 forced responsibility write
+  module_owner: scripts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch writes responsibility business facts under an explicit migration
+    assumption and must not change ACL, record rules, or model definitions.
+  reason: >
+    User explicitly requested bypassing approval-blocker workflow for exactly
+    the first three L3 checklist rows and forcing project.responsibility writes
+    with role_key=project_member.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE.yaml
+    - python3 -m py_compile scripts/migration/project_member_l3_sample_forced_write.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_member_l3_sample_forced_write.py
+    - python3 -m json.tool artifacts/migration/project_member_l3_sample_forced_write_result_v1.json
+    - python3 -m json.tool artifacts/migration/project_member_l3_sample_forced_write_post_audit_v1.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: high
+  manual_approval_required: true
+  forced_assumption: "role_key=project_member"
+
+rollback:
+  - "Use artifacts/migration/project_member_l3_sample_forced_write_rollback_targets_v1.csv to rollback created project.responsibility rows."
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - acl_or_record_rule_touched
+  - more_than_three_rows_selected
+  - project_member_role_key_rejected_by_model
+  - zero_db_writes
+
+deliverables:
+  - task contract
+  - forced write script
+  - write result json
+  - post audit json
+  - rollback target csv
+  - closure documentation
+  - iteration report
+  - task result json

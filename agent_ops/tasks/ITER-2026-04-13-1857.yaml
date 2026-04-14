@@ -1,0 +1,107 @@
+task_id: ITER-2026-04-13-1857
+title: Partner supplier supplement design gate v1
+status: in_progress
+type: migration-supplement-design-gate
+priority: high
+mode: execute
+
+goal: >
+  Freeze the no-DB supplier supplement design gate for later partner enrichment.
+  Do not create partners and do not update supplier attributes.
+
+user_visible_outcome:
+  - "supplier 补充来源设计门禁冻结"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1857.yaml
+    - docs/migration_alignment/partner_supplier_supplement_design_gate_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1857.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1857.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - docs/migration_alignment/partner_supplier_supplement_screening_v1.md
+    - docs/migration_alignment/partner_30_row_write_authorization_packet_v1.md
+    - docs/migration_alignment/partner_post_write_review_rollback_lock_design_v1.md
+    - artifacts/migration/partner_candidate_confirmation_summary_v1.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - scripts/**
+    - artifacts/**
+    - tmp/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - docs-only
+  - no-db-write
+  - no-orm
+  - no-partner-create
+  - no-partner-update
+  - no-contract-import
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  screening: docs/migration_alignment/partner_supplier_supplement_screening_v1.md
+
+architecture:
+  layer_target: Partner Supplement Design Gate
+  module: supplier enrichment gate for res.partner rebuild
+  module_owner: docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The design controls when supplier-origin business facts may enrich partner
+    records without replacing primary partner identity.
+  reason: >
+    ITER-2026-04-13-1856 screened supplier as supplemental-only. This batch
+    freezes the later enrichment gate so supplier facts do not bypass the
+    company-primary sample write and rollback review sequence.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1857.yaml
+    - python3 -m json.tool artifacts/migration/partner_candidate_confirmation_summary_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1857.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - partner_create_attempted
+  - partner_update_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - supplier supplement design gate
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1856
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1857.yaml
+  - git restore docs/migration_alignment/partner_supplier_supplement_design_gate_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1857.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1857.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

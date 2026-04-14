@@ -1,0 +1,110 @@
+task_id: ITER-2026-04-13-1858
+title: Partner cross-source conflict classification v1
+status: in_progress
+type: migration-conflict-classification
+priority: high
+mode: execute
+
+goal: >
+  Classify the 8 partner cross-source conflict candidates from existing no-DB
+  artifacts. Do not decide the final source and do not create partners.
+
+user_visible_outcome:
+  - "8 条 company/supplier 跨源冲突候选分类完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1858.yaml
+    - artifacts/migration/partner_cross_source_conflicts_v1.csv
+    - docs/migration_alignment/partner_cross_source_conflict_classification_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1858.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1858.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/partner_candidate_confirmation_v1.csv
+    - artifacts/migration/partner_candidate_confirmation_summary_v1.json
+    - docs/migration_alignment/partner_supplier_supplement_design_gate_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - scripts/**
+    - tmp/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 6
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - classification-only
+  - no-final-source-decision
+  - no-db-write
+  - no-orm
+  - no-partner-create
+  - no-partner-update
+  - no-contract-import
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  input_csv: artifacts/migration/partner_candidate_confirmation_v1.csv
+
+architecture:
+  layer_target: Partner Conflict Classification
+  module: res.partner cross-source candidate conflicts
+  module_owner: artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The classification preserves conflicting partner source evidence without
+    fabricating a final business identity decision.
+  reason: >
+    ITER-2026-04-13-1857 froze supplier as supplemental-only. The remaining 8
+    cross-source conflicts need a bounded no-DB classification artifact before
+    any future manual source decision or write-capable enrichment batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1858.yaml
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1858.json
+    - python3 -c "import csv; rows=list(csv.DictReader(open('artifacts/migration/partner_cross_source_conflicts_v1.csv', encoding='utf-8'))); assert len(rows) == 8 and all(r['match_type'] == 'cross_source_conflict' for r in rows)"
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - final_source_decision_attempted
+  - partner_create_attempted
+  - partner_update_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - cross-source conflict csv
+  - conflict classification document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1857
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1858.yaml
+  - git restore artifacts/migration/partner_cross_source_conflicts_v1.csv
+  - git restore docs/migration_alignment/partner_cross_source_conflict_classification_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1858.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1858.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

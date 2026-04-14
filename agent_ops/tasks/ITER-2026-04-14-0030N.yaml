@@ -1,0 +1,163 @@
+task_id: ITER-2026-04-14-0030N
+title: Project member neutral carrier design and 34-row write v1
+status: completed
+type: migration-neutral-carrier-write
+priority: high
+mode: execute
+
+goal: >
+  Design a neutral staging carrier for legacy project_member rows without
+  verified role facts, then write the 34-row safe slice into that carrier
+  without touching project.responsibility or permission rules.
+
+user_visible_outcome:
+  - "project_member 34 行历史成员关系写入 neutral carrier，权限与责任语义不被污染"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0030N.yaml
+    - addons/smart_construction_core/models/support/__init__.py
+    - addons/smart_construction_core/models/support/project_member_neutral.py
+    - scripts/migration/project_member_neutral_34_write.py
+    - scripts/migration/project_member_neutral_34_post_write_review.py
+    - artifacts/migration/project_member_neutral_34_pre_visibility_v1.json
+    - artifacts/migration/project_member_neutral_34_post_visibility_v1.json
+    - artifacts/migration/project_member_neutral_34_write_result_v1.json
+    - artifacts/migration/project_member_rollback_targets_v1.csv
+    - artifacts/migration/project_member_neutral_34_post_write_review_result_v1.json
+    - docs/migration_alignment/project_member_neutral_carrier_design_v1.md
+    - docs/migration_alignment/project_member_neutral_carrier_write_report_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030N.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0030N.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_member_no_placeholder_safe_slice_v1.csv
+    - artifacts/migration/project_member_34_write_readiness_result_v1.json
+    - artifacts/migration/project_member_legacy_role_source_probe_v1.json
+    - docs/migration_alignment/project_member_role_fact_decision_v1.md
+    - docs/migration_alignment/project_member_neutral_membership_option_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - frontend/**
+    - migrations/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 15
+  max_output_lines: 420
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - neutral-carrier-only
+  - no-project-responsibility-write
+  - no-record-rule-change
+  - no-acl-security-change
+  - no-role-key-fabrication
+  - no-menu-view-action-surface
+  - no-permission-chain-wiring
+  - create-only-safe-slice-write
+  - rollback-target-required
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  target_db: sc_demo
+  target_lane: project_member
+  upstream_tasks:
+    - ITER-2026-04-14-0030W
+    - ITER-2026-04-14-0030RD
+  execution_authorization: "user defined 0030N project_member neutral carrier design/write"
+  safe_slice_rows: 34
+
+architecture:
+  layer_target: Project Member Neutral Migration Carrier
+  module: smart_construction_core support model + migration importer
+  module_owner: addons/smart_construction_core/models/support + scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The neutral carrier stores legacy membership relation facts and explicitly
+    avoids responsibility, permission, approval, and record-rule semantics.
+  reason: >
+    The old database confirms project-member relation facts but not role facts.
+    project.responsibility participates in record-rule visibility via
+    project_member_ids.user_id, so neutral staging is required before any
+    formal responsibility promotion.
+
+odoo_module_change:
+  module: smart_construction_core
+  manifest_change: false
+  security_change: false
+  record_rule_change: false
+  view_change: false
+  model_change: true
+  upgrade_required: true
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0030N.yaml
+    - python3 -m py_compile addons/smart_construction_core/models/support/project_member_neutral.py
+    - python3 -m py_compile scripts/migration/project_member_neutral_34_write.py
+    - python3 -m py_compile scripts/migration/project_member_neutral_34_post_write_review.py
+    - make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_demo
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_member_neutral_34_write.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_member_neutral_34_post_write_review.py
+    - python3 -m json.tool artifacts/migration/project_member_neutral_34_write_result_v1.json
+    - python3 -m json.tool artifacts/migration/project_member_neutral_34_post_write_review_result_v1.json
+    - test -s artifacts/migration/project_member_rollback_targets_v1.csv
+    - make verify.native.business_fact.static
+    - make verify.portal.load_view_smoke.container
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - project_responsibility_write_attempted
+  - record_rule_or_acl_change_attempted
+  - project_visibility_changed
+  - rollback_target_missing
+  - neutral_carrier_wired_to_business_logic
+
+deliverables:
+  - task contract
+  - neutral carrier model
+  - neutral carrier write script
+  - neutral carrier post-write review script
+  - visibility snapshots
+  - write result json
+  - rollback target csv
+  - neutral carrier design doc
+  - write report doc
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-14-0030W
+  - ITER-2026-04-14-0030RD
+
+rollback:
+  - "真实数据回滚必须另开授权批次，通过 project_member_rollback_targets_v1.csv 精确删除本批 neutral carrier 记录"
+  - git restore agent_ops/tasks/ITER-2026-04-14-0030N.yaml
+  - git restore addons/smart_construction_core/models/support/__init__.py
+  - git restore addons/smart_construction_core/models/support/project_member_neutral.py
+  - git restore scripts/migration/project_member_neutral_34_write.py
+  - git restore scripts/migration/project_member_neutral_34_post_write_review.py
+  - git restore artifacts/migration/project_member_neutral_34_pre_visibility_v1.json
+  - git restore artifacts/migration/project_member_neutral_34_post_visibility_v1.json
+  - git restore artifacts/migration/project_member_neutral_34_write_result_v1.json
+  - git restore artifacts/migration/project_member_rollback_targets_v1.csv
+  - git restore artifacts/migration/project_member_neutral_34_post_write_review_result_v1.json
+  - git restore docs/migration_alignment/project_member_neutral_carrier_design_v1.md
+  - git restore docs/migration_alignment/project_member_neutral_carrier_write_report_v1.md
+  - git restore agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030N.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-14-0030N.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,102 @@
+task_id: ITER-2026-04-14-0030RF
+title: Project member role fact decision freeze v1
+status: completed
+type: migration-role-fact-decision
+priority: high
+mode: execute
+depends_on:
+  - ITER-2026-04-14-0030W
+  - ITER-2026-04-14-0030RD
+  - ITER-2026-04-14-0030N
+
+goal: >
+  Freeze 0030W as the formal stop gate for project.responsibility writes and
+  document the role fact decision path after neutral carrier execution.
+
+user_visible_outcome:
+  - "冻结 project_member 不写 project.responsibility、不造 role_key、转 neutral carrier + role fact decision 的正式口径"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0030RF.yaml
+    - docs/migration_alignment/project_member_role_fact_decision_v1.md
+    - docs/migration_alignment/project_member_legacy_role_source_audit_v1.md
+    - docs/migration_alignment/project_member_responsibility_promotion_rule_v1.md
+    - docs/migration_alignment/project_member_neutral_carrier_boundary_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030RF.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0030RF.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_member_34_write_readiness_result_v1.json
+    - artifacts/migration/project_member_legacy_role_source_probe_v1.json
+    - artifacts/migration/project_member_neutral_34_write_result_v1.json
+    - artifacts/migration/project_member_neutral_aggregate_review_v1.json
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+    - frontend/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 8
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - documentation-only
+  - decision-freeze-only
+  - no-db-write
+  - no-project-responsibility-write
+  - no-record-rule-change
+  - no-acl-security-change
+  - no-role-key-fabrication
+
+architecture:
+  layer_target: Project Member Role Fact Decision Governance
+  module: docs/migration_alignment + agent_ops
+  module_owner: migration governance
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This task freezes whether role facts exist and how neutral carrier rows can
+    later be promoted. It does not create business responsibility facts.
+  reason: >
+    0030W proved the only blocker for project.responsibility writes is missing
+    required role fact. 0030RD found no authoritative legacy source, while 0030N
+    proved the neutral carrier path. The decision must now be frozen in docs.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0030RF.yaml
+    - test -s docs/migration_alignment/project_member_role_fact_decision_v1.md
+    - test -s docs/migration_alignment/project_member_legacy_role_source_audit_v1.md
+    - test -s docs/migration_alignment/project_member_responsibility_promotion_rule_v1.md
+    - test -s docs/migration_alignment/project_member_neutral_carrier_boundary_v1.md
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-14-0030RF.json
+
+risk:
+  level: low
+  manual_approval_required: false
+
+rollback:
+  - "Revert only the 0030RF documentation and report files if the decision wording needs to be regenerated."
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - decision_conflicts_with_0030W
+  - decision_allows_default_role_without_business_approval
+  - project_responsibility_write_allowed_without_verified_role_source
+
+deliverables:
+  - task contract
+  - updated role fact decision doc
+  - updated legacy role source audit doc
+  - responsibility promotion rule doc
+  - neutral carrier boundary doc
+  - iteration report
+  - task result json

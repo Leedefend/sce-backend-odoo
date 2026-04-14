@@ -1,0 +1,128 @@
+task_id: ITER-2026-04-13-1835
+title: Project 100-row create-only expansion write batch v1
+status: in_progress
+type: migration-write
+priority: high
+mode: execute
+
+goal: >
+  Execute the explicitly authorized 100-row bounded create-only project skeleton
+  write batch in sc_demo using the candidate prepared in ITER-2026-04-13-1834.
+
+user_visible_outcome:
+  - "100 行 project.project create-only 扩样写入完成，并输出写后状态投影与回滚锁定结果"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1835.yaml
+    - scripts/migration/project_create_only_expand_write.py
+    - artifacts/migration/project_expand_candidate_v1.csv
+    - artifacts/migration/project_create_only_expand_pre_write_snapshot_v1.csv
+    - artifacts/migration/project_create_only_expand_post_write_snapshot_v1.csv
+    - artifacts/migration/project_create_only_expand_write_result_v1.json
+    - docs/migration_alignment/project_create_only_expand_write_report_v1.md
+    - docs/migration_alignment/project_create_only_expand_rollback_lock_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1835.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1835.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - data/migration_samples/project_expand_candidate_v1.csv
+    - artifacts/migration/project_expand_dry_run_result_v1.json
+    - agent_ops/state/task_results/ITER-2026-04-13-1834.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 10
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - create-only
+  - sc-demo-only
+  - safe-slice-fields-only
+  - no-update-upsert
+  - no-contract-payment-supplier-write
+  - no-field-schema-change
+  - no-model-view-menu-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  write_authorization: "user explicitly said 同意 立即执行"
+  source_gate: ITER-2026-04-13-1834
+  target_db: sc_demo
+  candidate_rows: 100
+  rollback_key: legacy_project_id
+
+architecture:
+  layer_target: Migration Write Batch
+  module: project.project create-only expansion
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The write batch materializes safe project skeleton business facts while
+    relying on lifecycle_state as truth and stage_id as projection.
+  reason: >
+    ITER-2026-04-13-1834 passed create-only expansion gate with 100 candidates,
+    create=100, update=0, error=0. The user explicitly authorized immediate
+    execution of the bounded write batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1835.yaml
+    - python3 -m py_compile scripts/migration/project_create_only_expand_write.py
+    - DB_NAME=sc_demo make odoo.shell.exec
+    - python3 -m json.tool artifacts/migration/project_create_only_expand_write_result_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1835.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: high
+  manual_approval_required: true
+  manual_approval_evidence: "同意 立即执行"
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_name_not_sc_demo
+  - target_identity_not_empty_before_write
+  - update_or_upsert_detected
+  - unsafe_field_detected
+  - post_write_projection_mismatch
+  - rollback_key_not_unique
+
+deliverables:
+  - 100-row create-only write script
+  - write result artifact
+  - pre/post write snapshots
+  - write report
+  - rollback lock document
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1834
+
+rollback:
+  - "真实数据回滚必须另开授权批次，通过 legacy_project_id 精确删除本批 100 条"
+  - git restore agent_ops/tasks/ITER-2026-04-13-1835.yaml
+  - git restore scripts/migration/project_create_only_expand_write.py
+  - git restore artifacts/migration/project_expand_candidate_v1.csv
+  - git restore artifacts/migration/project_create_only_expand_pre_write_snapshot_v1.csv
+  - git restore artifacts/migration/project_create_only_expand_post_write_snapshot_v1.csv
+  - git restore artifacts/migration/project_create_only_expand_write_result_v1.json
+  - git restore docs/migration_alignment/project_create_only_expand_write_report_v1.md
+  - git restore docs/migration_alignment/project_create_only_expand_rollback_lock_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1835.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1835.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,105 @@
+task_id: ITER-2026-04-13-1855
+title: Partner post-write review and rollback dry-run lock design v1
+status: in_progress
+type: migration-post-write-governance-design
+priority: high
+mode: execute
+
+goal: >
+  Freeze the post-write readonly review and rollback dry-run lock design that
+  must immediately follow any authorized 30-row partner create-only write.
+
+user_visible_outcome:
+  - "partner 写后只读复核与 rollback dry-run lock 设计冻结"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1855.yaml
+    - docs/migration_alignment/partner_post_write_review_rollback_lock_design_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1855.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1855.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - docs/migration_alignment/partner_30_row_write_authorization_packet_v1.md
+    - docs/migration_alignment/partner_write_rollback_policy_v1.md
+    - docs/migration_alignment/partner_small_sample_write_plan_v1.md
+    - artifacts/migration/partner_30_row_create_only_sample_v1.csv
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - scripts/**
+    - artifacts/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - docs-only
+  - no-db-write
+  - no-orm
+  - no-partner-create
+  - no-delete
+  - no-contract-import
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  sample: artifacts/migration/partner_30_row_create_only_sample_v1.csv
+
+architecture:
+  layer_target: Migration Post-Write Governance
+  module: res.partner post-write readonly review and rollback dry-run lock
+  module_owner: docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The design defines how newly created partner business facts are verified and
+    locked for exact rollback by legacy identity after a bounded write.
+  reason: >
+    ITER-2026-04-13-1854 locked the 30-row sample but real partner creation
+    still requires explicit authorization. The post-write review and rollback
+    dry-run design must be frozen before any write-capable batch runs.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1855.yaml
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1855.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - partner_create_attempted
+  - partner_delete_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - post-write review and rollback dry-run design
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1854
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1855.yaml
+  - git restore docs/migration_alignment/partner_post_write_review_rollback_lock_design_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1855.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1855.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

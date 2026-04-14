@@ -1,0 +1,30 @@
+{
+  "task_id": "ITER-2026-04-14-0030ZQ",
+  "status": "PASS",
+  "decision": "CONTINUE_ELIGIBLE_FOR_NEXT_DUPLICATE_RELATION_EVIDENCE_BATCH",
+  "result": {
+    "target_model": "sc.project.member.staging",
+    "total_records": 534,
+    "batch_counts": {
+      "ITER-2026-04-14-0030N": 34,
+      "ITER-2026-04-14-0030NZ": 500
+    },
+    "role_fact_status_missing_count": 534,
+    "distinct_project_user_pairs": 362,
+    "duplicate_project_user_pair_count": 120,
+    "max_rows_per_project_user_pair": 5,
+    "project_responsibility_writes": 0,
+    "db_writes": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_review": "PASS",
+    "aggregate_json": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "summary": "Readonly aggregate review passed; neutral carrier counts match expected written batches."
+  },
+  "next_step": "Continue with the next duplicate-relation evidence gate/write cycle or start role-source decision work in a separate task."
+}

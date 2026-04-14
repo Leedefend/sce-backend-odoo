@@ -1,0 +1,135 @@
+task_id: ITER-2026-04-13-1833
+title: Project state read-side alignment audit and closure v1
+status: completed
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Audit and close project.project state read-side consumers so business logic
+  uses lifecycle_state as the truth source while stage_id remains only a UI,
+  grouping, or compatibility projection.
+
+user_visible_outcome:
+  - "项目状态读侧一致性审计与收口完成，明确是否可进入 create-only 扩样准入"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1833.yaml
+    - addons/smart_construction_core/models/core/project_core.py
+    - addons/smart_construction_core/services/project_state_explain_service.py
+    - addons/smart_construction_core/services/project_dashboard_service.py
+    - addons/smart_construction_core/services/project_dashboard_builders/project_header_builder.py
+    - addons/smart_construction_core/services/project_dashboard_builders/base.py
+    - addons/smart_construction_core/services/project_context_contract.py
+    - addons/smart_construction_core/services/insight/project_insight_service.py
+    - addons/smart_construction_core/services/project_execution_service.py
+    - addons/smart_construction_core/services/cost_tracking_service.py
+    - addons/smart_construction_core/services/project_plan_bootstrap_service.py
+    - scripts/verify/project_state_read_side_guard.py
+    - docs/architecture/project_state_read_side_alignment_v1.md
+    - docs/architecture/project_state_consumers_audit_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1833.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1833.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  review_only_paths:
+    - addons/smart_construction_core/views/core/project_views.xml
+    - addons/smart_construction_core/views/core/project_search_views.xml
+    - addons/smart_construction_core/views/core/project_list_views.xml
+    - addons/smart_construction_core/views/core/project_lifecycle_kanban_views.xml
+    - addons/smart_construction_core/views/projection/project_dashboard_kanban.xml
+    - scripts/verify/project_dashboard_decision_guard.sh
+  forbidden_paths:
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 16
+  max_output_lines: 360
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - project-state-read-side-only
+  - no-import-logic-change
+  - no-import-data
+  - no-sample-expansion
+  - no-frontend-menu-acl-change
+  - no-lifecycle-enum-change
+  - no-stage-write-restoration
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  previous_closure: ITER-2026-04-13-1832
+  frozen_rule: "lifecycle_state truth; stage_id UI projection and compatibility only"
+
+architecture:
+  layer_target: Business Fact Read-Side Implementation
+  module: smart_construction_core project.project state consumers
+  module_owner: addons/smart_construction_core + scripts/verify + docs/architecture + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Business read-side decisions must consume lifecycle_state as the project
+    truth and must not infer business state from stage_id.
+  reason: >
+    ITER-2026-04-13-1832 closed write-side projection semantics. Before
+    create-only expansion, read-side consumers must be audited and guarded so
+    stage_id is not used as an independent business state source.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1833.yaml
+    - python3 scripts/verify/project_state_read_side_guard.py
+    - python3 -m py_compile addons/smart_construction_core/models/core/project_core.py addons/smart_construction_core/services/project_state_explain_service.py addons/smart_construction_core/services/project_dashboard_service.py addons/smart_construction_core/services/project_dashboard_builders/project_header_builder.py addons/smart_construction_core/services/project_dashboard_builders/base.py addons/smart_construction_core/services/project_context_contract.py addons/smart_construction_core/services/insight/project_insight_service.py addons/smart_construction_core/services/project_execution_service.py addons/smart_construction_core/services/cost_tracking_service.py addons/smart_construction_core/services/project_plan_bootstrap_service.py scripts/verify/project_state_read_side_guard.py
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1833.json
+    - make verify.native.business_fact.static
+    - make restart
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - lifecycle_enum_changed
+  - stage_write_restored
+  - business_stage_id_consumer_remains
+  - sample_expansion_attempted
+
+deliverables:
+  - read-side alignment document
+  - consumers audit document
+  - read-side guard script
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1832
+
+rollback:
+  - git restore addons/smart_construction_core/models/core/project_core.py
+  - git restore addons/smart_construction_core/services/project_state_explain_service.py
+  - git restore addons/smart_construction_core/services/project_dashboard_service.py
+  - git restore addons/smart_construction_core/services/project_dashboard_builders/project_header_builder.py
+  - git restore addons/smart_construction_core/services/project_dashboard_builders/base.py
+  - git restore addons/smart_construction_core/services/project_context_contract.py
+  - git restore addons/smart_construction_core/services/insight/project_insight_service.py
+  - git restore addons/smart_construction_core/services/project_execution_service.py
+  - git restore addons/smart_construction_core/services/cost_tracking_service.py
+  - git restore addons/smart_construction_core/services/project_plan_bootstrap_service.py
+  - git restore scripts/verify/project_state_read_side_guard.py
+  - git restore agent_ops/tasks/ITER-2026-04-13-1833.yaml
+  - git restore docs/architecture/project_state_read_side_alignment_v1.md
+  - git restore docs/architecture/project_state_consumers_audit_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1833.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1833.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
