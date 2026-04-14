@@ -1,0 +1,29 @@
+{
+  "task_id": "ITER-2026-04-13-1843",
+  "status": "PASS_WITH_IMPORT_BLOCKED",
+  "decision": "partner_import_no_go",
+  "mode": "read_only_candidate_prep",
+  "output_csv": "artifacts/migration/partner_candidate_confirmation_v1.csv",
+  "metrics": {
+    "counterparty_texts": 568,
+    "contract_rows_in_scope": 1554,
+    "company_single_texts": 419,
+    "company_single_contract_rows": 738,
+    "company_multiple_texts": 78,
+    "company_multiple_contract_rows": 614,
+    "cross_source_conflict_texts": 8,
+    "cross_source_conflict_contract_rows": 123,
+    "defer_texts": 63,
+    "defer_contract_rows": 79
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "candidate_script": "PASS",
+    "summary_json": "PASS",
+    "task_result_json": "PASS",
+    "make_verify_native_business_fact_static": "PASS"
+  },
+  "stop_condition": "partner import blocked until manual confirmation and write dry-run design",
+  "next_step": "open company_single manual confirmation slice and partner write dry-run design before creating partners"
+}

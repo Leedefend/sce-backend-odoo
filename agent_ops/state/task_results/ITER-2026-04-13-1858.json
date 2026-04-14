@@ -1,0 +1,25 @@
+{
+  "task_id": "ITER-2026-04-13-1858",
+  "status": "PASS",
+  "layer_target": "Partner Conflict Classification",
+  "module": "res.partner cross-source candidate conflicts",
+  "kernel_or_scenario": "scenario",
+  "backend_sub_layer": "business-fact layer",
+  "summary": "Classified the 8 existing partner cross-source conflict candidates into a no-DB review slice.",
+  "output_csv": "artifacts/migration/partner_cross_source_conflicts_v1.csv",
+  "conflict_texts": 8,
+  "contract_rows_covered": 123,
+  "final_source_decisions": 0,
+  "database_writes": 0,
+  "orm_calls": 0,
+  "partner_creates": 0,
+  "partner_updates": 0,
+  "verification": {
+    "task_validate": "PASS",
+    "task_result_json_tool": "PASS",
+    "conflict_csv_check": "PASS",
+    "native_business_fact_static": "PASS"
+  },
+  "risk": "Low. The batch preserves conflicts and does not decide final source ownership.",
+  "next_step": "open a no-DB manual decision template for the 8 conflict rows, or open explicitly authorized partner 30-row create-only write if real writes are intended"
+}

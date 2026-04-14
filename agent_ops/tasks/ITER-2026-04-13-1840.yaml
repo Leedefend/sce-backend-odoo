@@ -1,0 +1,120 @@
+task_id: ITER-2026-04-13-1840
+title: Contract model legacy identity field alignment v1
+status: in_progress
+type: odoo-model-field-alignment
+priority: high
+mode: execute
+
+goal: >
+  Add the minimum legacy contract identity and reference fields needed to
+  support future exact rollback/upsert decisions for construction.contract.
+  Do not import contract data in this batch.
+
+user_visible_outcome:
+  - "合同模型 legacy identity 字段对齐完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1840.yaml
+    - addons/smart_construction_core/models/support/contract_center.py
+    - addons/smart_construction_core/views/core/contract_views.xml
+    - docs/migration_alignment/contract_model_legacy_identity_alignment_v1.md
+    - docs/migration_alignment/contract_field_implementation_manifest_v1.md
+    - docs/migration_alignment/contract_import_blocker_update_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1840.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1840.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - docs/migration_alignment/contract_mapping_dry_run_report_v1.md
+    - docs/migration_alignment/contract_safe_import_slice_proposal_v1.md
+    - artifacts/migration/contract_mapping_dry_run_result_v1.json
+  forbidden_paths:
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - additive-fields-only
+  - no-import
+  - no-db-data-write
+  - no-payment-settlement-tax-semantics
+  - no-menu-acl-frontend-change
+  - no-contract-workflow-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  target_module: smart_construction_core
+  target_model: construction.contract
+  source_blocker_batch: ITER-2026-04-13-1839
+
+architecture:
+  layer_target: Business Fact Model Field Alignment
+  module: construction.contract legacy identity
+  module_owner: addons/smart_construction_core/models/support + addons/smart_construction_core/views/core + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Legacy contract identity is a business fact needed for exact migration
+    traceability, rollback targeting, and future upsert decisions.
+  reason: >
+    ITER-2026-04-13-1839 blocked contract write because construction.contract
+    had no confirmed legacy contract identity field. This batch adds only the
+    minimum migration identity/reference fields and read-only form visibility.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1840.yaml
+    - python3 -m py_compile addons/smart_construction_core/models/support/contract_center.py
+    - make verify.native.business_fact.static
+    - CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_construction_core DB_NAME=sc_demo MODULE=smart_construction_core make mod.upgrade
+    - make restart
+    - DB_NAME=sc_demo make odoo.shell.exec
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1840.json
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - import_attempted
+  - payment_settlement_tax_semantics_changed
+  - workflow_state_logic_changed
+  - menu_acl_frontend_changed
+
+deliverables:
+  - task contract
+  - additive model fields
+  - form view read-only legacy identity group
+  - legacy identity alignment doc
+  - implementation manifest
+  - blocker update doc
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1839
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1840.yaml
+  - git restore addons/smart_construction_core/models/support/contract_center.py
+  - git restore addons/smart_construction_core/views/core/contract_views.xml
+  - git restore docs/migration_alignment/contract_model_legacy_identity_alignment_v1.md
+  - git restore docs/migration_alignment/contract_field_implementation_manifest_v1.md
+  - git restore docs/migration_alignment/contract_import_blocker_update_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1840.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1840.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

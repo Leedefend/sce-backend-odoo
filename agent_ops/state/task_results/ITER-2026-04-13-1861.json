@@ -1,0 +1,33 @@
+{
+  "task_id": "ITER-2026-04-13-1861",
+  "status": "PASS",
+  "layer_target": "Migration Post-Write Review",
+  "module": "res.partner 30-row rollback dry-run lock",
+  "kernel_or_scenario": "scenario",
+  "backend_sub_layer": "business-fact layer",
+  "summary": "Ran the immediate readonly post-write review and rollback dry-run lock for the 30-row res.partner write.",
+  "database": "sc_demo",
+  "review_result": {
+    "status": "ROLLBACK_READY",
+    "sample_rows": 30,
+    "rollback_target_rows": 30,
+    "matched_partner_rows": 30,
+    "rollback_eligible_rows": 30,
+    "blocking_reasons": 0
+  },
+  "database_writes": 0,
+  "partner_deletes": 0,
+  "artifacts": [
+    "artifacts/migration/partner_30_row_post_write_review_result_v1.json"
+  ],
+  "verification": {
+    "task_validate": "PASS",
+    "script_py_compile": "PASS",
+    "odoo_shell_readonly_review": "PASS",
+    "review_result_json_tool": "PASS",
+    "task_result_json_tool": "PASS",
+    "native_business_fact_static": "PASS"
+  },
+  "risk": "Rollback targets are precisely locked. Real rollback remains blocked without explicit authorization.",
+  "next_step": "open keep-observation decision, supplier supplement no-DB planning, or contract readiness re-check; real rollback requires separate explicit authorization"
+}

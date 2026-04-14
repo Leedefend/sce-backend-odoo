@@ -1,0 +1,37 @@
+{
+  "task_id": "ITER-2026-04-14-0026",
+  "status": "PASS",
+  "mode": "project_remaining_25_post_write_readonly_review",
+  "database": "sc_demo",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0026.yaml",
+    "scripts/migration/project_remaining_25_post_write_review.py",
+    "artifacts/migration/project_remaining_25_post_write_review_result.json",
+    "artifacts/migration/project_remaining_25_rollback_target_list.csv",
+    "docs/migration_alignment/project_remaining_25_post_write_review.md",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0026.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0026.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "target_rows": 25,
+    "matched_project_rows": 25,
+    "rollback_eligible_rows": 25,
+    "blocking_reasons": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_readonly_review": "PASS",
+    "review_result_json": "PASS",
+    "task_result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "high",
+    "db_writes": 0,
+    "forbidden_domains_touched": false,
+    "rollback_status": "ROLLBACK_READY"
+  },
+  "next_step": "stop before opening a new non-project migration lane; payment/receipt/project_member lanes remain permission-sensitive and stopped"
+}

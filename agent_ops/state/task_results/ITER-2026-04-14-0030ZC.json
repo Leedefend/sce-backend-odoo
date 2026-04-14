@@ -1,0 +1,27 @@
+{
+  "task_id": "ITER-2026-04-14-0030ZC",
+  "status": "PASS",
+  "decision": "NO_RESPONSIBILITY_PROMOTION_CANDIDATES_UNTIL_ROLE_FACT_SOURCE",
+  "result": {
+    "total_pairs": 362,
+    "promotion_candidate_pairs": 0,
+    "blocked_pairs": 362,
+    "missing_verified_role_fact_pairs": 362,
+    "missing_target_role_key_pairs": 362,
+    "existing_responsibility_pair_review_pairs": 0,
+    "db_writes": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_screen": "PASS",
+    "candidates_json": "PASS",
+    "summary_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "summary": "Readonly screening only."
+  },
+  "next_step": "After PASS, continue role-source discovery or business approval workflow before any promotion write task."
+}

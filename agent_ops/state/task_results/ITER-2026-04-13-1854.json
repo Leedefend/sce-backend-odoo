@@ -1,0 +1,41 @@
+{
+  "task_id": "ITER-2026-04-13-1854",
+  "status": "PASS",
+  "layer_target": "Migration Write Authorization Gate",
+  "module": "res.partner 30-row create-only sample gate",
+  "kernel_or_scenario": "scenario",
+  "backend_sub_layer": "business-fact layer",
+  "summary": "Locked the first 30-row create-only partner sample and produced the write authorization packet.",
+  "sample": {
+    "path": "artifacts/migration/partner_30_row_create_only_sample_v1.csv",
+    "rows": 30,
+    "source": "T_Base_CooperatCompany",
+    "dry_run_action": "create_candidate",
+    "selection": "first 30 eligible rows from artifacts/migration/partner_rebuild_importer_rows_v1.csv"
+  },
+  "write_mode": {
+    "current_status": "NO-GO",
+    "next_allowed_mode": "create-only",
+    "requires_explicit_authorization": true,
+    "idempotency_key": [
+      "legacy_partner_source",
+      "legacy_partner_id"
+    ]
+  },
+  "database_writes": 0,
+  "orm_calls": 0,
+  "documents": [
+    "artifacts/migration/partner_30_row_create_only_sample_v1.csv",
+    "docs/migration_alignment/partner_30_row_write_authorization_packet_v1.md",
+    "agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1854.md"
+  ],
+  "verification": {
+    "task_validate": "PASS",
+    "importer_result_json_tool": "PASS",
+    "task_result_json_tool": "PASS",
+    "sample_csv_check": "PASS",
+    "native_business_fact_static": "PASS"
+  },
+  "risk": "This batch is no-DB. The next write-capable batch requires explicit authorization before creating res.partner rows.",
+  "next_step": "open the dedicated res.partner 30-row create-only write batch only after explicit authorization"
+}

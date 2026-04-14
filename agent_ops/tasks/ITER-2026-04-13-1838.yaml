@@ -1,0 +1,131 @@
+task_id: ITER-2026-04-13-1838
+title: Contract migration source baseline and initial gate v1
+status: in_progress
+type: migration-baseline
+priority: high
+mode: execute
+
+goal: >
+  Start the contract-data migration line by building a read-only source
+  baseline for tmp/raw/contract/contract.csv and comparing it with the current
+  construction.contract model surface. This iteration must not import data or
+  modify contract model code.
+
+user_visible_outcome:
+  - "合同数据导入主线启动盘点完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1838.yaml
+    - artifacts/migration/contract_source_profile_v1.json
+    - docs/migration_alignment/contract_migration_source_inventory_v1.md
+    - docs/migration_alignment/contract_legacy_field_baseline_v1.md
+    - docs/migration_alignment/contract_model_current_inventory_v1.md
+    - docs/migration_alignment/contract_import_initial_gate_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1838.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1838.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - tmp/raw/contract/contract.csv
+    - tmp/raw/project/project.csv
+    - addons/smart_construction_core/models/support/contract_center.py
+    - addons/smart_construction_core/views/core/contract_views.xml
+    - addons/smart_construction_core/views/core/contract_line_search.xml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - read-only-baseline
+  - no-db-write
+  - no-import
+  - no-import-script
+  - no-model-view-menu-acl-change
+  - no-field-addition
+  - no-contract-state-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  source_file: tmp/raw/contract/contract.csv
+  target_model: construction.contract
+  target_line_model: construction.contract.line
+  target_db: sc_demo
+
+architecture:
+  layer_target: Migration Source Baseline
+  module: construction.contract migration readiness
+  module_owner: docs/migration_alignment + artifacts/migration + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Contract data is business truth. This batch only profiles the exported
+    business facts and compares them with the current contract model surface.
+  reason: >
+    The user asked to start contract-data import using the same controlled
+    path as project import. The first safe step is a read-only baseline because
+    contract rows depend on project, partner, dictionary, tax, and downstream
+    finance references.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1838.yaml
+    - python3 -m json.tool artifacts/migration/contract_source_profile_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1838.json
+    - make verify.native.business_fact.static
+
+acceptance_criteria:
+  - contract source file inventory is documented
+  - legacy contract field baseline is documented
+  - current construction.contract model surface is documented
+  - initial import gate explicitly blocks direct import
+  - next iteration is scoped to mapping dry-run or safe-slice design only
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - contract_model_code_changed
+  - import_script_created
+  - direct_import_recommended
+
+deliverables:
+  - task contract
+  - contract source profile artifact
+  - source inventory document
+  - legacy field baseline document
+  - current model inventory document
+  - initial import gate document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1837
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1838.yaml
+  - git restore artifacts/migration/contract_source_profile_v1.json
+  - git restore docs/migration_alignment/contract_migration_source_inventory_v1.md
+  - git restore docs/migration_alignment/contract_legacy_field_baseline_v1.md
+  - git restore docs/migration_alignment/contract_model_current_inventory_v1.md
+  - git restore docs/migration_alignment/contract_import_initial_gate_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1838.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1838.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,113 @@
+task_id: ITER-2026-04-13-1852
+title: Partner write-mode gate and small-sample criteria v1
+status: in_progress
+type: migration-write-mode-gate
+priority: high
+mode: execute
+
+goal: >
+  Define the controlled write-mode gate for the 369 strong-evidence partner
+  rebuild candidates. This batch only defines criteria and does not create
+  partners.
+
+user_visible_outcome:
+  - "partner 小样本写入准入门禁冻结"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1852.yaml
+    - docs/migration_alignment/partner_write_mode_gate_v1.md
+    - docs/migration_alignment/partner_small_sample_write_plan_v1.md
+    - docs/migration_alignment/partner_write_rollback_policy_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1852.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1852.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/partner_rebuild_importer_result_v1.json
+    - artifacts/migration/partner_rebuild_importer_rows_v1.csv
+    - docs/migration_alignment/partner_safe_import_slice_v1.md
+    - docs/migration_alignment/partner_rebuild_importer_no_db_report_v1.md
+    - docs/migration_alignment/migration_rebuild_objective_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - scripts/**
+    - artifacts/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 7
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - docs-only
+  - no-db-write
+  - no-orm
+  - no-partner-create
+  - no-contract-import
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  input_result: artifacts/migration/partner_rebuild_importer_result_v1.json
+  input_rows: artifacts/migration/partner_rebuild_importer_rows_v1.csv
+
+architecture:
+  layer_target: Migration Write-Mode Gate
+  module: res.partner controlled rebuild write gate
+  module_owner: docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The gate defines when partner business facts may be written and how they
+    remain repeatable, idempotent, and rollbackable.
+  reason: >
+    ITER-2026-04-13-1851 validated the no-DB rebuild importer shape. Before any
+    partner creation, the write-mode authority, sample size, idempotency key,
+    and rollback policy must be frozen.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1852.yaml
+    - python3 -m json.tool artifacts/migration/partner_rebuild_importer_result_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1852.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - partner_create_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - write-mode gate
+  - small-sample write plan
+  - rollback policy
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1851
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1852.yaml
+  - git restore docs/migration_alignment/partner_write_mode_gate_v1.md
+  - git restore docs/migration_alignment/partner_small_sample_write_plan_v1.md
+  - git restore docs/migration_alignment/partner_write_rollback_policy_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1852.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1852.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

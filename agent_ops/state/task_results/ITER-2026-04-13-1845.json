@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-13-1845",
+  "status": "PASS_WITH_IMPORT_BLOCKED",
+  "decision": "partner_and_contract_import_no_go",
+  "mode": "legacy_db_readonly_candidate_generation",
+  "output_csv": "artifacts/migration/contract_counterparty_strong_evidence_candidates_v1.csv",
+  "metrics": {
+    "candidate_rows": 628,
+    "contract_deleted_0": 616,
+    "contract_deleted_1": 12,
+    "company_deleted_0": 622,
+    "company_deleted_1": 6
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "candidate_script": "PASS",
+    "summary_json": "PASS",
+    "task_result_json": "PASS",
+    "make_verify_native_business_fact_static": "PASS"
+  },
+  "stop_condition": "partner and contract import blocked until manual confirmation and partner write dry-run design",
+  "next_step": "open partner creation dry-run design for non-deleted strong-evidence candidates"
+}

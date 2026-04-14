@@ -1,0 +1,65 @@
+{
+  "task_id": "ITER-2026-04-13-1829",
+  "status": "PASS",
+  "date": "2026-04-13",
+  "layer_target": "Business Fact Governance Documentation",
+  "module": "project.project state system governance",
+  "decision": {
+    "dual_state_system": true,
+    "truth_state": "lifecycle_state",
+    "ui_stage": "stage_id",
+    "sync_direction": "lifecycle_state -> stage_id",
+    "reverse_sync_allowed": false,
+    "stage_drag_changes_lifecycle": false
+  },
+  "mapping": {
+    "draft": "筹备中",
+    "in_progress": "在建",
+    "paused": "停工",
+    "done": "竣工",
+    "closing": "结算中",
+    "warranty": "保修期",
+    "closed": "关闭"
+  },
+  "migration_policy": {
+    "write_lifecycle_state_first": true,
+    "derive_stage_id_from_lifecycle": true,
+    "current_create_only_default": {
+      "lifecycle_state": "draft",
+      "stage": "筹备中"
+    },
+    "contract_status_signed_state": "requires_later_state_extension_gate"
+  },
+  "constraints": {
+    "code_changed": false,
+    "model_changed": false,
+    "import_logic_changed": false,
+    "sample_expanded": false,
+    "database_written": false
+  },
+  "deliverables": [
+    "docs/architecture/project_state_system_inventory_v1.md",
+    "docs/architecture/project_state_role_definition_v1.md",
+    "docs/architecture/project_state_mapping_v1.md",
+    "docs/architecture/project_state_write_policy_v1.md",
+    "docs/architecture/project_state_control_policy_v1.md",
+    "docs/migration_alignment/project_stage_policy_final_v1.md",
+    "docs/architecture/project_state_governance_decision_v1.md"
+  ],
+  "verification": [
+    {
+      "command": "python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1829.yaml",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1829.json",
+      "status": "PASS"
+    },
+    {
+      "command": "make verify.native.business_fact.static",
+      "status": "PASS"
+    }
+  ],
+  "next_suggestion": "Run a read-only implementation alignment audit to compare current code with the lifecycle_state truth / stage_id UI projection policy.",
+  "report": "agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1829.md"
+}

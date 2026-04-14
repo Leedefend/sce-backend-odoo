@@ -1,0 +1,24 @@
+{
+  "task_id": "ITER-2026-04-13-1859",
+  "status": "PASS",
+  "layer_target": "Partner Manual Decision Template",
+  "module": "res.partner cross-source conflict decision template",
+  "kernel_or_scenario": "scenario",
+  "backend_sub_layer": "business-fact layer",
+  "summary": "Prepared a no-DB manual decision template for the 8 partner cross-source conflict rows.",
+  "output_csv": "artifacts/migration/partner_cross_source_manual_decision_template_v1.csv",
+  "rows": 8,
+  "final_source_decisions": 0,
+  "database_writes": 0,
+  "orm_calls": 0,
+  "partner_creates": 0,
+  "partner_updates": 0,
+  "verification": {
+    "task_validate": "PASS",
+    "task_result_json_tool": "PASS",
+    "blank_decision_fields_check": "PASS",
+    "native_business_fact_static": "PASS"
+  },
+  "risk": "Low. Final decision fields are blank by design.",
+  "next_step": "stop before final source decisions unless a manual decision source is provided, or open explicitly authorized partner 30-row create-only write if real writes are intended"
+}

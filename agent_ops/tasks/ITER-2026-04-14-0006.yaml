@@ -1,0 +1,125 @@
+task_id: ITER-2026-04-14-0006
+title: Full migration scope and sequence freeze v1
+status: in_progress
+type: migration-governance-scope-freeze
+priority: high
+mode: execute
+
+goal: >
+  Start the complete data migration objective by freezing the source scope,
+  current materialized state, safe next write lanes, and stop-domain lanes.
+  This batch must not write database records.
+
+user_visible_outcome:
+  - "完整数据迁移已启动为受控批次链；首批冻结范围、顺序与 stop 域"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0006.yaml
+    - scripts/migration/full_migration_scope_freeze.py
+    - artifacts/migration/full_migration_scope_freeze_v1.json
+    - artifacts/migration/full_migration_execution_lanes_v1.csv
+    - docs/migration_alignment/full_migration_scope_freeze_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0006.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0006.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - tmp/raw/project/project.csv
+    - tmp/raw/partner/company.csv
+    - tmp/raw/partner/supplier.csv
+    - tmp/raw/contract/contract.csv
+    - tmp/raw/project_member/project_member.csv
+    - tmp/raw/payment/payment.csv
+    - tmp/raw/receipt/receipt.csv
+    - artifacts/migration/project_create_only_write_result_v1.json
+    - artifacts/migration/project_create_only_expand_write_result_v1.json
+    - artifacts/migration/partner_30_row_write_result_v1.json
+    - artifacts/migration/contract_12_row_write_result_v1.json
+    - artifacts/migration/contract_12_row_post_write_review_result_v1.json
+    - artifacts/migration/legacy_db_full_rebuild_blueprint_v1.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 8
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - no-db-write
+  - no-orm
+  - no-import-execution
+  - scope-freeze-only
+  - stop-financial-lanes
+  - preserve-rollback-boundaries
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  user_request: "开启完整数据迁移动作"
+  target_db: sc_demo
+
+architecture:
+  layer_target: Migration Governance Scope Freeze
+  module: full legacy data migration batch chain
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The batch classifies legacy business fact lanes and their execution order.
+    It does not add frontend or scene presentation semantics.
+  reason: >
+    A full migration request is broad and includes stop-domain sources. The safe
+    first step is a no-DB scope and sequence freeze before any additional write
+    batch.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0006.yaml
+    - python3 -m py_compile scripts/migration/full_migration_scope_freeze.py
+    - python3 scripts/migration/full_migration_scope_freeze.py
+    - python3 -m json.tool artifacts/migration/full_migration_scope_freeze_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-14-0006.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - financial_lane_write_attempted
+  - full_migration_monolith_attempted
+
+deliverables:
+  - task contract
+  - scope freeze script
+  - scope freeze json
+  - execution lanes csv
+  - scope freeze document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-14-0005
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-14-0006.yaml
+  - git restore scripts/migration/full_migration_scope_freeze.py
+  - git restore artifacts/migration/full_migration_scope_freeze_v1.json
+  - git restore artifacts/migration/full_migration_execution_lanes_v1.csv
+  - git restore docs/migration_alignment/full_migration_scope_freeze_v1.md
+  - git restore agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0006.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-14-0006.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

@@ -1,0 +1,28 @@
+{
+  "task_id": "ITER-2026-04-14-0030ZC2",
+  "status": "PASS",
+  "decision": "RESPONSIBILITY_CANDIDATE_STRENGTH_MAP_READY",
+  "result": {
+    "total_pairs": 362,
+    "L0_candidates": 242,
+    "L1_candidates": 110,
+    "L2_candidates": 0,
+    "L3_candidates": 10,
+    "promotion_ready_pairs": 0,
+    "requires_role_source_pairs": 362,
+    "db_writes": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_selection": "PASS",
+    "candidates_json": "PASS",
+    "summary_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "summary": "Readonly candidate strength classification only."
+  },
+  "next_step": "After PASS, use L3/L1 candidate map for role-source repair or manual review before any responsibility write."
+}

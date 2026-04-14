@@ -1,0 +1,96 @@
+task_id: ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW
+title: Project member L3 mapped write post-impact review v1
+status: completed
+type: migration-responsibility-post-write-impact-review
+priority: high
+mode: execute
+depends_on:
+  - ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE
+
+goal: >
+  Run a readonly post-write impact review for the three L3 mapped manager
+  responsibility records, including rollback target eligibility, project/user
+  relation, project visibility, and follower side effects.
+
+user_visible_outcome:
+  - "复核 3 条 manager responsibility 写入后的可见性与 rollback 影响，不扩样"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW.yaml
+    - scripts/migration/project_member_l3_mapped_write_impact_review.py
+    - artifacts/migration/project_member_l3_mapped_write_impact_review_v1.json
+    - docs/migration_alignment/project_member_l3_mapped_write_impact_review_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW.md
+    - agent_ops/state/task_results/ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_member_l3_mapped_write_rollback_targets_v1.csv
+    - artifacts/migration/project_member_l3_mapped_write_result_v1.json
+    - artifacts/migration/project_member_l3_mapped_write_post_audit_v1.json
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+    - frontend/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_sample_rows: 3
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - readonly-impact-review-only
+  - no-db-write
+  - no-sample-expansion
+  - no-acl-security-change
+  - no-record-rule-change
+  - no-rollback-execution
+
+architecture:
+  layer_target: Migration Responsibility Post-Write Impact Review
+  module: project_member L3 mapped manager write impact review
+  module_owner: scripts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch reviews the observable business-fact impact of the three
+    responsibility records without mutating authority or model definitions.
+  reason: >
+    The mapped write created three project.responsibility records. Before any
+    expansion, the write impact and rollback targets must be reviewed.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW.yaml
+    - python3 -m py_compile scripts/migration/project_member_l3_mapped_write_impact_review.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_member_l3_mapped_write_impact_review.py
+    - python3 -m json.tool artifacts/migration/project_member_l3_mapped_write_impact_review_v1.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+rollback:
+  - "No rollback is executed in this review batch."
+  - "Use artifacts/migration/project_member_l3_mapped_write_rollback_targets_v1.csv if rollback is separately authorized."
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - unexpected_db_write
+  - rollback_target_count_not_3
+  - responsibility_records_missing
+  - visibility_or_follower_unreviewable
+
+deliverables:
+  - task contract
+  - readonly impact review script
+  - impact review json
+  - impact review documentation
+  - iteration report
+  - task result json

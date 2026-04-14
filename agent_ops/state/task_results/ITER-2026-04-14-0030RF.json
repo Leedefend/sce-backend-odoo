@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-04-14-0030RF",
+  "status": "PASS",
+  "decision": "ROLE_FACT_DECISION_FROZEN",
+  "result": {
+    "formal_stop_gate": "ITER-2026-04-14-0030W",
+    "write_project_responsibility": false,
+    "default_role_key_allowed": false,
+    "record_rule_change_allowed": false,
+    "neutral_carrier": "sc.project.member.staging",
+    "promotion_status": "blocked_until_verified_role_source_or_business_approval"
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "role_fact_decision_doc": "PASS",
+    "legacy_role_source_audit_doc": "PASS",
+    "promotion_rule_doc": "PASS",
+    "neutral_boundary_doc": "PASS",
+    "result_json": "PASS"
+  },
+  "risk": {
+    "level": "low",
+    "summary": "Documentation-only decision freeze; no database or authority-path changes."
+  },
+  "next_step": "Continue neutral carrier batches or open a future role-source promotion task only after verified source evidence or business approval exists."
+}

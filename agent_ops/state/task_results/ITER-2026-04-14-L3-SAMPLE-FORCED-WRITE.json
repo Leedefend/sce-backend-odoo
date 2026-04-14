@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE",
+  "status": "FAIL_MODEL_REJECTED_ROLE_KEY",
+  "decision": "NO_DB_WRITE_BECAUSE_PROJECT_MEMBER_IS_NOT_A_VALID_ROLE_KEY",
+  "result": {
+    "sample_rows": 3,
+    "forced_role_key": "project_member",
+    "created": 0,
+    "db_writes": 0,
+    "rollback_target_rows": 0,
+    "error": "Wrong value for project.responsibility.role_key: 'project_member'"
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "write": "FAIL_MODEL_REJECTED_ROLE_KEY",
+    "write_json": "PASS",
+    "audit_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "high",
+    "summary": "Forced responsibility write with migration assumption role_key=project_member."
+  },
+  "next_step": "Choose an existing valid role_key or open a dedicated model-change task if project_member must become a valid role selection."
+}

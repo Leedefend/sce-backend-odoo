@@ -1,0 +1,44 @@
+{
+  "task_id": "ITER-2026-04-14-0030S",
+  "status": "PASS",
+  "mode": "project_member_placeholder_screen_no_placeholder_safe_slice",
+  "database": "sc_demo",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-14-0030S.yaml",
+    "scripts/migration/project_member_safe_slice_screen.py",
+    "artifacts/migration/project_member_placeholder_screen_result_v1.json",
+    "artifacts/migration/project_member_no_placeholder_safe_slice_v1.csv",
+    "docs/migration_alignment/project_member_placeholder_screening_v1.md",
+    "docs/migration_alignment/project_member_no_placeholder_safe_slice_v1.md",
+    "agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030S.md",
+    "agent_ops/state/task_results/ITER-2026-04-14-0030S.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "summary": {
+    "total": 21390,
+    "mapped_users": 7389,
+    "placeholder_user": 14001,
+    "safe_candidates": 7389,
+    "unique_safe_candidates": 34,
+    "duplicate_project_user_pairs": 735,
+    "safe_slice_rows": 34
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_readonly_screen": "PASS",
+    "screen_result_json": "PASS",
+    "safe_slice_exists": "PASS",
+    "placeholder_doc_exists": "PASS",
+    "safe_slice_doc_exists": "PASS",
+    "task_result_json": "PASS",
+    "business_fact_static": "PASS"
+  },
+  "risk": {
+    "level": "high",
+    "db_writes": 0,
+    "forbidden_domains_touched": false,
+    "remaining_write_blocker": "14001 placeholder_user rows"
+  },
+  "next_step": "open dedicated 34-row project_member create-only L3 write task only if no-placeholder safe slice is accepted; placeholder rows remain blocked"
+}

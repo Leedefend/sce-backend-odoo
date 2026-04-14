@@ -1,0 +1,101 @@
+task_id: ITER-2026-04-13-1817
+title: Recover project model alignment verification and module upgrade
+status: completed
+type: verification-recovery
+priority: high
+mode: verify
+
+goal: >
+  Complete the missing verification and database upgrade closure for
+  ITER-2026-04-13-1816 by using Makefile targets that exist in this repository,
+  then record the result without expanding the project model field scope.
+
+user_visible_outcome:
+  - "项目模型字段对齐专项完成实际 Makefile 门禁与 smart_construction_core 模块升级验证"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1817.yaml
+    - agent_ops/tasks/ITER-2026-04-13-1816.yaml
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1816.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1817.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1816.json
+    - agent_ops/state/task_results/ITER-2026-04-13-1817.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 7
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - verification-only
+  - no-model-or-view-edits
+  - no-data-import
+  - no-menu-change
+  - no-acl-or-record-rule-change
+  - use-existing-make-targets-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  explicit_user_authorization: true
+  recovers: ITER-2026-04-13-1816
+
+architecture:
+  layer_target: Verification Gate + Odoo Module Upgrade
+  module: smart_construction_core project.project extension verification
+  module_owner: smart_construction_core
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch only verifies and upgrades the additive project business-fact
+    fields introduced by ITER-2026-04-13-1816.
+  reason: >
+    The prior batch used a non-existent Makefile target and did not run the
+    required module upgrade. This recovery batch first binds to actual Makefile
+    targets and then completes the database upgrade verification.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1817.yaml
+    - make verify.native.business_fact.static
+    - CODEX_NEED_UPGRADE=1 ENV=dev make mod.upgrade MODULE=smart_construction_core
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - module_upgrade_failed
+  - verification_target_missing
+
+deliverables:
+  - verification recovery report
+  - task result JSON
+  - delivery context log update
+
+depends_on:
+  - ITER-2026-04-13-1816
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1817.yaml
+  - git restore agent_ops/tasks/ITER-2026-04-13-1816.yaml
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1816.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1817.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1816.json
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1817.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

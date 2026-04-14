@@ -1,0 +1,105 @@
+task_id: ITER-2026-04-14-0003
+title: Contract 12-row post-write review and rollback lock design v1
+status: in_progress
+type: migration-post-write-governance-design
+priority: high
+mode: execute
+
+goal: >
+  Freeze the no-DB post-write review and rollback-lock design for a future
+  explicitly authorized 12-row contract create-only write batch.
+
+user_visible_outcome:
+  - "12 条合同未来写后复核与 rollback lock 设计已冻结；真实合同写入仍等待单独授权"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0003.yaml
+    - docs/migration_alignment/contract_12_row_post_write_review_rollback_lock_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0003.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0003.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/contract_12_row_write_authorization_payload_v1.csv
+    - artifacts/migration/contract_12_row_write_authorization_packet_v1.json
+    - docs/migration_alignment/contract_12_row_write_authorization_packet_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 5
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - no-db-write
+  - no-orm
+  - no-contract-create
+  - no-contract-update
+  - governance-design-only
+  - preserve-contract-write-block
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  target_db: sc_demo
+  upstream_task: ITER-2026-04-14-0002
+  authorization_packet: artifacts/migration/contract_12_row_write_authorization_packet_v1.json
+
+architecture:
+  layer_target: Contract Migration Post-Write Governance
+  module: construction.contract 12-row post-write review and rollback lock
+  module_owner: docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The design defines how future written contract facts are reviewed and
+    rollback-locked by legacy identity without adding presentation semantics.
+  reason: >
+    Before any real contract write, the post-write review and rollback lock
+    sequence must be frozen so that a later write batch has a precise recovery
+    path.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0003.yaml
+    - test -f docs/migration_alignment/contract_12_row_post_write_review_rollback_lock_v1.md
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-14-0003.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - contract_create_attempted
+  - contract_update_attempted
+  - contract_write_authorization_required
+
+deliverables:
+  - task contract
+  - post-write review and rollback-lock design document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-14-0002
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-14-0003.yaml
+  - git restore docs/migration_alignment/contract_12_row_post_write_review_rollback_lock_v1.md
+  - git restore agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0003.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-14-0003.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

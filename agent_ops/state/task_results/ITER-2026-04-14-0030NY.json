@@ -1,0 +1,26 @@
+{
+  "task_id": "ITER-2026-04-14-0030NY",
+  "status": "PASS",
+  "decision": "CONTINUE_ELIGIBLE_FOR_DUPLICATE_RELATION_EVIDENCE_BOUNDED_WRITE",
+  "result": {
+    "slice_rows": 500,
+    "distinct_relation_keys": 328,
+    "max_rows_per_relation_key_in_slice": 5,
+    "rollback_plan_rows": 500,
+    "project_responsibility_writes": 0,
+    "db_writes": 0,
+    "blocking_reasons": 0
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "odoo_shell_write_gate": "PASS",
+    "gate_json": "PASS",
+    "rollback_plan_csv": "PASS"
+  },
+  "risk": {
+    "level": "medium",
+    "summary": "Next write is duplicate relation evidence only and must stay inside sc.project.member.staging."
+  },
+  "next_step": "Open a 500-row duplicate-relation evidence bounded-write task for sc.project.member.staging; do not touch project.responsibility."
+}

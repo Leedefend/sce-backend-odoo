@@ -1,0 +1,120 @@
+task_id: ITER-2026-04-14-0030NX
+title: Project member neutral carrier expansion dry-run v1
+status: completed
+type: migration-neutral-carrier-dry-run
+priority: high
+mode: execute
+depends_on:
+  - ITER-2026-04-14-0030N
+  - ITER-2026-04-14-0030NF
+
+goal: >
+  Classify the remaining mapped project_member legacy rows for neutral carrier
+  expansion without writing the database, separating relation-unique rows from
+  duplicate relation evidence rows and already-written rows.
+
+user_visible_outcome:
+  - "明确 neutral carrier 下一批是否可扩大，以及可扩大到哪些安全分层"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0030NX.yaml
+    - scripts/migration/project_member_neutral_expansion_dry_run.py
+    - artifacts/migration/project_member_neutral_expansion_plan_v1.json
+    - artifacts/migration/project_member_neutral_expansion_relation_unique_slice_v1.csv
+    - artifacts/migration/project_member_neutral_expansion_duplicate_relation_evidence_slice_v1.csv
+    - docs/migration_alignment/project_member_neutral_expansion_strategy_v1.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0030NX.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0030NX.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_member_source_shadow_v1.csv
+    - artifacts/migration/project_member_dry_run_result_v1.json
+    - artifacts/migration/project_member_placeholder_screen_result_v1.json
+    - artifacts/migration/project_member_neutral_34_write_result_v1.json
+    - artifacts/migration/project_member_neutral_34_post_write_review_result_v1.json
+  forbidden_paths:
+    - addons/**
+    - security/**
+    - record_rules/**
+    - migrations/**
+    - frontend/**
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - dry-run-only
+  - no-db-write
+  - no-model-change
+  - no-project-responsibility-write
+  - no-record-rule-change
+  - no-acl-security-change
+  - no-role-key-fabrication
+  - expansion-strategy-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  target_db: sc_demo
+  target_lane: project_member
+  upstream_tasks:
+    - ITER-2026-04-14-0030R
+    - ITER-2026-04-14-0030S
+    - ITER-2026-04-14-0030N
+  execution_authorization: "user said continue; 0030N result is PASS and next_step is neutral carrier expansion"
+
+architecture:
+  layer_target: Project Member Neutral Migration Carrier Planning
+  module: scripts/migration + docs/migration_alignment + agent_ops
+  module_owner: migration governance and importer planning
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch classifies legacy member relation facts and duplicate evidence
+    for later neutral staging. It does not create responsibility, permission,
+    approval, or UI semantics.
+  reason: >
+    The first 34 neutral rows proved the carrier boundary. Before expanding
+    batch size, the remaining mapped rows must be classified so duplicate
+    project/user relation evidence does not get confused with formal
+    responsibility or visibility semantics.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0030NX.yaml
+    - python3 -m py_compile scripts/migration/project_member_neutral_expansion_dry_run.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/project_member_neutral_expansion_dry_run.py
+    - python3 -m json.tool artifacts/migration/project_member_neutral_expansion_plan_v1.json
+    - test -s artifacts/migration/project_member_neutral_expansion_relation_unique_slice_v1.csv
+    - test -s artifacts/migration/project_member_neutral_expansion_duplicate_relation_evidence_slice_v1.csv
+
+risk:
+  level: low
+  manual_approval_required: false
+
+rollback:
+  - "No database rollback required because this batch is readonly."
+  - "Delete generated 0030NX artifacts if classification must be regenerated."
+
+stop_conditions:
+  - acceptance_failed
+  - db_write_detected
+  - forbidden_path_touched
+  - project_responsibility_write_attempted
+  - role_key_fabrication_attempted
+  - classification_uncertain
+
+deliverables:
+  - task contract
+  - expansion dry-run script
+  - expansion plan json
+  - relation-unique safe slice
+  - duplicate-relation evidence slice
+  - expansion strategy doc
+  - iteration report

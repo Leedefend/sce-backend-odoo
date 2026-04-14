@@ -1,0 +1,35 @@
+{
+  "task_id": "ITER-2026-04-14-0030N",
+  "status": "PASS",
+  "decision": "CONTINUE_ELIGIBLE_FOR_NEXT_ROLE_DECISION_OR_NEUTRAL_EXPANSION",
+  "result": {
+    "target_model": "sc.project.member.staging",
+    "created": 34,
+    "updated": 0,
+    "project_responsibility_writes": 0,
+    "rollback_target_rows": 34,
+    "matched_neutral_records": 34,
+    "rollback_eligible_rows": 34,
+    "visibility_changed": false,
+    "post_write_status": "ROLLBACK_READY"
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "model_py_compile": "PASS",
+    "write_py_compile": "PASS",
+    "review_py_compile": "PASS",
+    "module_upgrade": "PASS",
+    "neutral_write": "PASS",
+    "post_write_review": "PASS",
+    "write_json": "PASS",
+    "review_json": "PASS",
+    "rollback_target_csv": "PASS",
+    "business_fact_static": "PASS",
+    "portal_load_view_smoke": "PASS"
+  },
+  "risk": {
+    "level": "medium",
+    "summary": "New neutral staging model is migration-internal and intentionally not wired to ACL/menu/view or record rules in this batch."
+  },
+  "next_step": "Continue with neutral carrier expansion for more no-role project_member rows or open a separate role-promotion decision task."
+}

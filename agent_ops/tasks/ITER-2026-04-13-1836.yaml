@@ -1,0 +1,114 @@
+task_id: ITER-2026-04-13-1836
+title: Project 100-row post-write read-only review and rollback lock v1
+status: in_progress
+type: migration-review
+priority: high
+mode: execute
+
+goal: >
+  Review the 100-row create-only expansion write batch in read-only mode and
+  lock rollback targets by legacy_project_id without deleting any data.
+
+user_visible_outcome:
+  - "100 行扩样写后只读复核与 rollback dry-run 锁定完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1836.yaml
+    - scripts/migration/project_expand_rollback_dry_run.py
+    - artifacts/migration/project_expand_rollback_dry_run_result_v1.json
+    - docs/migration_alignment/project_create_only_expand_post_write_review_v1.md
+    - docs/migration_alignment/project_create_only_expand_rollback_dry_run_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1836.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1836.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_create_only_expand_post_write_snapshot_v1.csv
+    - artifacts/migration/project_create_only_expand_write_result_v1.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 8
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - read-only-review
+  - rollback-dry-run-only
+  - no-delete
+  - no-create-write-unlink
+  - no-sample-expansion
+  - legacy-project-id-lock-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  source_write_batch: ITER-2026-04-13-1835
+  target_db: sc_demo
+  target_rows: 100
+  rollback_key: legacy_project_id
+
+architecture:
+  layer_target: Migration Read-Only Review
+  module: project.project create-only expansion rollback lock
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The review verifies materialized project skeleton business facts and their
+    lifecycle/stage projection without modifying data.
+  reason: >
+    ITER-2026-04-13-1835 created 100 project skeleton rows. Before any further
+    expansion, rollback targets must be precisely locked by legacy_project_id.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1836.yaml
+    - python3 -m py_compile scripts/migration/project_expand_rollback_dry_run.py
+    - DB_NAME=sc_demo make odoo.shell.exec
+    - python3 -m json.tool artifacts/migration/project_expand_rollback_dry_run_result_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1836.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - delete_attempted
+  - create_write_unlink_attempted
+  - rollback_key_not_unique
+  - out_of_scope_match
+  - projection_mismatch
+
+deliverables:
+  - rollback dry-run script
+  - rollback dry-run result
+  - post-write review document
+  - rollback dry-run document
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1835
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1836.yaml
+  - git restore scripts/migration/project_expand_rollback_dry_run.py
+  - git restore artifacts/migration/project_expand_rollback_dry_run_result_v1.json
+  - git restore docs/migration_alignment/project_create_only_expand_post_write_review_v1.md
+  - git restore docs/migration_alignment/project_create_only_expand_rollback_dry_run_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1836.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1836.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

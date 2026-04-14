@@ -1,0 +1,120 @@
+task_id: ITER-2026-04-13-1845
+title: Contract counterparty strong evidence candidate table v1
+status: PASS_WITH_IMPORT_BLOCKED
+type: migration-db-readonly-candidate-generation
+priority: high
+mode: execute
+
+goal: >
+  Generate the strong-evidence contract counterparty candidate table from
+  LegacyDb using C_JFHKLR.SGHTID and WLDWID single-counterparty evidence.
+  Do not create partners or import contracts.
+
+user_visible_outcome:
+  - "628 个强证据合同相对方候选表生成完成"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1845.yaml
+    - scripts/migration/contract_counterparty_strong_evidence_candidates.py
+    - artifacts/migration/contract_counterparty_strong_evidence_candidates_v1.csv
+    - artifacts/migration/contract_counterparty_strong_evidence_summary_v1.json
+    - docs/migration_alignment/contract_counterparty_strong_evidence_candidates_v1.md
+    - docs/migration_alignment/contract_counterparty_strong_evidence_next_gate_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1845.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1845.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - LegacyDb.dbo.T_ProjectContract_Out
+    - LegacyDb.dbo.C_JFHKLR
+    - LegacyDb.dbo.T_Base_CooperatCompany
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 9
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - legacy-db-read-only
+  - no-db-write
+  - no-odoo-orm
+  - no-partner-create
+  - no-contract-import
+  - no-model-view-menu-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  sqlserver_container: legacy-sqlserver
+  sqlserver_database: LegacyDb
+  evidence_source: C_JFHKLR.SGHTID + C_JFHKLR.WLDWID
+
+architecture:
+  layer_target: Contract Counterparty Strong Evidence Candidate Generation
+  module: construction.contract counterparty confirmation
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Strong evidence candidates reconstruct contract counterparty business facts
+    from legacy repayment references before any write batch.
+  reason: >
+    ITER-2026-04-13-1844 found 628 contracts with exactly one repayment
+    counterparty. This batch materializes that read-only candidate table for
+    manual confirmation.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1845.yaml
+    - python3 -m py_compile scripts/migration/contract_counterparty_strong_evidence_candidates.py
+    - python3 scripts/migration/contract_counterparty_strong_evidence_candidates.py
+    - python3 -m json.tool artifacts/migration/contract_counterparty_strong_evidence_summary_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1845.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - legacy_db_write_attempted
+  - odoo_db_write_attempted
+  - partner_create_attempted
+  - contract_import_attempted
+
+deliverables:
+  - task contract
+  - strong evidence candidate script
+  - candidate csv
+  - summary json
+  - candidate document
+  - next gate document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1844
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1845.yaml
+  - git restore scripts/migration/contract_counterparty_strong_evidence_candidates.py
+  - git restore artifacts/migration/contract_counterparty_strong_evidence_candidates_v1.csv
+  - git restore artifacts/migration/contract_counterparty_strong_evidence_summary_v1.json
+  - git restore docs/migration_alignment/contract_counterparty_strong_evidence_candidates_v1.md
+  - git restore docs/migration_alignment/contract_counterparty_strong_evidence_next_gate_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1845.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1845.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

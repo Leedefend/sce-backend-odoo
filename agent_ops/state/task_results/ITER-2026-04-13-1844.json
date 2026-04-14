@@ -1,0 +1,35 @@
+{
+  "task_id": "ITER-2026-04-13-1844",
+  "status": "PASS_WITH_IMPORT_BLOCKED",
+  "decision": "partner_and_contract_import_no_go",
+  "mode": "legacy_db_readonly_fact_probe",
+  "result_artifact": "artifacts/migration/partner_import_decision_support_v1.json",
+  "key_metrics": {
+    "company_rows": 7864,
+    "company_credit_code_rows": 3964,
+    "company_tax_no_rows": 3032,
+    "company_deleted_rows": 676,
+    "supplier_rows": 3041,
+    "supplier_credit_code_rows": 0,
+    "supplier_tax_no_rows": 0,
+    "supplier_bank_account_rows": 2521,
+    "cross_source_exact_names": 2922,
+    "cross_source_ambiguous_names": 264,
+    "jfhlr_wldwid_to_company": 7084,
+    "jfhlr_wldwid_to_supplier": 127,
+    "repayment_contract_linked_contracts": 676,
+    "repayment_contract_linked_rows": 1857,
+    "repayment_single_counterparty_contracts": 628,
+    "repayment_multi_counterparty_contracts": 48
+  },
+  "verification": {
+    "task_validate": "PASS",
+    "py_compile": "PASS",
+    "legacy_db_probe": "PASS",
+    "decision_support_json": "PASS",
+    "task_result_json": "PASS",
+    "make_verify_native_business_fact_static": "PASS"
+  },
+  "stop_condition": "partner and contract import blocked until strong-evidence candidate table is generated and manually confirmed",
+  "next_step": "generate 628-contract strong-evidence candidate table before any partner or contract write"
+}

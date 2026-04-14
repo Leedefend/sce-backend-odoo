@@ -1,0 +1,42 @@
+{
+  "task_id": "ITER-2026-04-13-1819",
+  "status": "PASS",
+  "timestamp": "2026-04-13T14:19:03+08:00",
+  "branch": "codex/next-round",
+  "baseline_sha": "d243d59",
+  "layer_target": "Migration Import Governance",
+  "module": "project.project safe import slice",
+  "reason": "Freeze a safe project master-data import slice before any small sample import.",
+  "changed_files": [
+    "agent_ops/tasks/ITER-2026-04-13-1819.yaml",
+    "docs/migration_alignment/project_safe_import_slice_v1.md",
+    "docs/migration_alignment/project_code_write_policy_v1.md",
+    "docs/migration_alignment/project_safe_import_template_v1.md",
+    "docs/migration_alignment/project_safe_import_preprocess_rules_v1.md",
+    "docs/migration_alignment/project_import_identity_policy_v1.md",
+    "docs/migration_alignment/project_safe_importer_design_v1.md",
+    "docs/migration_alignment/project_safe_import_readiness_v1.md",
+    "agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1819.md",
+    "agent_ops/state/task_results/ITER-2026-04-13-1819.json",
+    "docs/ops/iterations/delivery_context_switch_log_v1.md"
+  ],
+  "slice_counts": {
+    "allowed": 22,
+    "forbidden": 30,
+    "post_import_backfill": 11
+  },
+  "code_policy": "Recommend Strategy B: do not write PROJECT_CODE to official project_code in v1; preserve through a legacy-code carrier only after such carrier exists.",
+  "identity_policy": {
+    "primary_upsert": "legacy_project_id",
+    "fallback_upsert": ["other_system_id", "other_system_code"],
+    "manual_reference_only": ["PROJECT_CODE", "project name + company"]
+  },
+  "small_sample_trial": "Recommended only as dry-run-first with safe template fields; not approved for full import.",
+  "verification": {
+    "task_contract": "PASS",
+    "docs_shape": "PASS",
+    "verify_native_business_fact_static": "PASS",
+    "diff_check": "PASS"
+  },
+  "next_step": "Open a small-sample dry-run importer design task without data writes."
+}

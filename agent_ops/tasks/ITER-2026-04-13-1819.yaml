@@ -1,0 +1,120 @@
+task_id: ITER-2026-04-13-1819
+title: Project master-data safe import slice v1
+status: completed
+type: governance-optimization
+priority: high
+mode: screen
+
+goal: >
+  Freeze the first-round safe project master-data import slice based only on
+  the completed project mapping dry-run results, and define the safe import
+  field set, project-code policy, template, preprocessing rules, identity
+  policy, importer design, and readiness conclusion before any sample import.
+
+user_visible_outcome:
+  - "首轮项目骨架安全导入字段集、编码策略、模板、预处理规则、唯一性策略、导入器设计和准入结论完成冻结"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1819.yaml
+    - docs/migration_alignment/project_safe_import_slice_v1.md
+    - docs/migration_alignment/project_code_write_policy_v1.md
+    - docs/migration_alignment/project_safe_import_template_v1.md
+    - docs/migration_alignment/project_safe_import_preprocess_rules_v1.md
+    - docs/migration_alignment/project_import_identity_policy_v1.md
+    - docs/migration_alignment/project_safe_importer_design_v1.md
+    - docs/migration_alignment/project_safe_import_readiness_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1819.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1819.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 11
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - safe-import-slice-freeze-only
+  - no-legacy-data-import
+  - no-formal-import-execution-script
+  - no-model-or-view-edits
+  - no-menu-or-frontend-edits
+  - no-complex-many2one-write-policy
+  - no-company-specialty-state-user-partner-formal-mapping
+  - use-project-mapping-dry-run-as-only-fact-source
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  explicit_user_authorization: true
+  fact_source: docs/migration_alignment/project_mapping_dry_run_report_v1.md
+  depends_on_completed_mapping_dry_run: ITER-2026-04-13-1818
+
+architecture:
+  layer_target: Migration Import Governance
+  module: project.project safe import slice
+  module_owner: docs/migration_alignment
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    This batch freezes which project business facts may be safely imported in a
+    later project skeleton import. It does not change scene orchestration,
+    frontend rendering, or platform kernel mechanisms.
+  reason: >
+    The dry-run found blockers for company, specialty, lifecycle/state, text
+    matching, and contract/tax/account/cost/attachment fields. A narrower safe
+    slice is required before a small project skeleton import can be designed.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1819.yaml
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - data_import_attempted
+  - formal_import_script_created
+  - scope_expands_to_company_specialty_state_user_partner_formal_mapping
+  - scope_expands_to_contract_payment_supplier_import
+
+deliverables:
+  - safe import field slice document
+  - project code write policy document
+  - safe import template document
+  - preprocessing rules document
+  - import identity policy document
+  - safe importer design document
+  - readiness conclusion document
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1818
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1819.yaml
+  - git restore docs/migration_alignment/project_safe_import_slice_v1.md
+  - git restore docs/migration_alignment/project_code_write_policy_v1.md
+  - git restore docs/migration_alignment/project_safe_import_template_v1.md
+  - git restore docs/migration_alignment/project_safe_import_preprocess_rules_v1.md
+  - git restore docs/migration_alignment/project_import_identity_policy_v1.md
+  - git restore docs/migration_alignment/project_safe_importer_design_v1.md
+  - git restore docs/migration_alignment/project_safe_import_readiness_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1819.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1819.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

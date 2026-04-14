@@ -1,0 +1,32 @@
+{
+  "task_id": "ITER-2026-04-13-1856",
+  "status": "PASS",
+  "layer_target": "Partner Supplement Source Screening",
+  "module": "supplier source role in res.partner rebuild pipeline",
+  "kernel_or_scenario": "scenario",
+  "backend_sub_layer": "business-fact layer",
+  "summary": "Screened supplier as a supplemental role source using existing no-DB artifacts.",
+  "evidence": {
+    "company_rows": 7864,
+    "supplier_rows": 3041,
+    "counterparty_texts": 568,
+    "company_single": 419,
+    "company_multiple": 78,
+    "cross_source_conflict": 8,
+    "defer": 63
+  },
+  "decision": "supplier is supplemental evidence and not a primary create stream for the current partner rebuild line",
+  "database_writes": 0,
+  "orm_calls": 0,
+  "raw_rescans": 0,
+  "partner_creates": 0,
+  "verification": {
+    "task_validate": "PASS",
+    "source_baseline_json_tool": "PASS",
+    "candidate_summary_json_tool": "PASS",
+    "task_result_json_tool": "PASS",
+    "native_business_fact_static": "PASS"
+  },
+  "risk": "Low. Supplier remains no-DB supplemental screening only.",
+  "next_step": "continue supplier supplement no-DB design, or open explicitly authorized 30-row partner create-only write batch if real write authorization is granted"
+}

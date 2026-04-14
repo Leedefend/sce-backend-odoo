@@ -1,0 +1,110 @@
+task_id: ITER-2026-04-14-0008
+title: Project v2 100-row write authorization packet
+status: in_progress
+type: migration-write-authorization-packet
+priority: high
+mode: execute
+
+goal: >
+  Build a no-DB write authorization packet for the v2 100-row project
+  create-only candidate. Preserve the DB write block until explicit
+  authorization is granted.
+
+user_visible_outcome:
+  - "project v2 100 条写入授权包已生成；真实写入等待单独授权"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-14-0008.yaml
+    - scripts/migration/project_v2_100_write_authorization_packet.py
+    - artifacts/migration/project_v2_100_write_authorization_packet.json
+    - docs/migration_alignment/project_v2_100_write_authorization_packet.md
+    - agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0008.md
+    - agent_ops/state/task_results/ITER-2026-04-14-0008.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - artifacts/migration/project_next_100_candidate_v2.csv
+    - artifacts/migration/project_next_100_dry_run_result_v2.json
+    - docs/migration_alignment/project_next_100_create_only_dry_run_v2.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 7
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - no-db-write
+  - no-orm
+  - authorization-packet-only
+  - create-only
+  - preserve-write-block
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  upstream_task: ITER-2026-04-14-0007
+  candidate: artifacts/migration/project_next_100_candidate_v2.csv
+
+architecture:
+  layer_target: Project Migration Authorization Gate
+  module: project.project v2 100-row write authorization packet
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The packet freezes the project facts to materialize later without writing
+    them or introducing presentation semantics.
+  reason: >
+    The v2 dry-run passed. A write authorization packet is required before any
+    DB write.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-14-0008.yaml
+    - python3 -m py_compile scripts/migration/project_v2_100_write_authorization_packet.py
+    - python3 scripts/migration/project_v2_100_write_authorization_packet.py
+    - python3 -m json.tool artifacts/migration/project_v2_100_write_authorization_packet.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-14-0008.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_write_attempted
+  - update_candidate_detected
+  - write_authorization_required
+
+deliverables:
+  - task contract
+  - authorization packet script
+  - authorization packet json
+  - authorization packet document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-14-0007
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-14-0008.yaml
+  - git restore scripts/migration/project_v2_100_write_authorization_packet.py
+  - git restore artifacts/migration/project_v2_100_write_authorization_packet.json
+  - git restore docs/migration_alignment/project_v2_100_write_authorization_packet.md
+  - git restore agent_ops/reports/2026-04-14/report.ITER-2026-04-14-0008.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-14-0008.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

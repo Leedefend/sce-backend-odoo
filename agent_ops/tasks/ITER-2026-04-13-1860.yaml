@@ -1,0 +1,135 @@
+task_id: ITER-2026-04-13-1860
+title: Partner 30-row create-only write batch v1
+status: in_progress
+type: migration-write
+priority: high
+mode: execute
+
+goal: >
+  Execute the explicitly authorized 30-row create-only res.partner write batch
+  in sc_demo using the sample locked in ITER-2026-04-13-1854.
+
+user_visible_outcome:
+  - "30 行 res.partner create-only 写入完成，并输出写后锁定产物"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1860.yaml
+    - scripts/migration/partner_30_row_create_only_write.py
+    - artifacts/migration/partner_30_row_create_only_sample_v1.csv
+    - artifacts/migration/partner_strong_evidence_dry_run_input_v1.csv
+    - artifacts/migration/partner_30_row_pre_write_snapshot_v1.csv
+    - artifacts/migration/partner_30_row_post_write_snapshot_v1.csv
+    - artifacts/migration/partner_30_row_write_result_v1.json
+    - artifacts/migration/partner_30_row_rollback_target_list_v1.csv
+    - docs/migration_alignment/partner_30_row_create_only_write_report_v1.md
+    - docs/migration_alignment/partner_30_row_write_rollback_lock_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1860.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1860.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  read_only_inputs:
+    - docs/migration_alignment/partner_30_row_write_authorization_packet_v1.md
+    - docs/migration_alignment/partner_post_write_review_rollback_lock_design_v1.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1854.json
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 12
+  max_output_lines: 260
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - create-only
+  - sc-demo-only
+  - partner-safe-fields-only
+  - no-update-upsert
+  - no-supplier-supplement-write
+  - no-contract-import
+  - no-payment-settlement-account-write
+  - no-model-view-menu-acl-change
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  write_authorization: "user explicitly said 同意授权"
+  source_gate: ITER-2026-04-13-1854
+  target_db: sc_demo
+  sample_rows: 30
+  rollback_key: legacy_partner_source + legacy_partner_id
+
+architecture:
+  layer_target: Migration Write Batch
+  module: res.partner 30-row create-only sample write
+  module_owner: scripts/migration + artifacts/migration + docs/migration_alignment + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The write batch materializes bounded partner business facts using stable
+    legacy identity and keeps supplier, contract, and financial facts out of
+    scope.
+  reason: >
+    ITER-2026-04-13-1854 locked the 30-row sample and ITER-2026-04-13-1855
+    froze post-write review and rollback dry-run lock requirements. The user
+    explicitly authorized the real 30-row create-only write.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1860.yaml
+    - python3 -m py_compile scripts/migration/partner_30_row_create_only_write.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/partner_30_row_create_only_write.py
+    - python3 -m json.tool artifacts/migration/partner_30_row_write_result_v1.json
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1860.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: high
+  manual_approval_required: true
+  manual_approval_evidence: "同意授权"
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - db_name_not_sc_demo
+  - target_identity_not_empty_before_write
+  - update_or_upsert_detected
+  - unsafe_field_detected
+  - rollback_key_not_unique
+  - partner_create_count_not_30
+
+deliverables:
+  - 30-row create-only write script
+  - write result artifact
+  - pre/post write snapshots
+  - rollback target list
+  - write report
+  - rollback lock document
+  - iteration report
+  - task result json
+
+depends_on:
+  - ITER-2026-04-13-1854
+  - ITER-2026-04-13-1855
+
+rollback:
+  - "真实数据回滚必须另开授权批次，通过 legacy_partner_source + legacy_partner_id 精确删除本批 30 条"
+  - git restore agent_ops/tasks/ITER-2026-04-13-1860.yaml
+  - git restore scripts/migration/partner_30_row_create_only_write.py
+  - git restore artifacts/migration/partner_30_row_pre_write_snapshot_v1.csv
+  - git restore artifacts/migration/partner_30_row_post_write_snapshot_v1.csv
+  - git restore artifacts/migration/partner_30_row_write_result_v1.json
+  - git restore artifacts/migration/partner_30_row_rollback_target_list_v1.csv
+  - git restore docs/migration_alignment/partner_30_row_create_only_write_report_v1.md
+  - git restore docs/migration_alignment/partner_30_row_write_rollback_lock_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1860.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1860.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

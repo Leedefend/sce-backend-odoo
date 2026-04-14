@@ -1,0 +1,112 @@
+task_id: ITER-2026-04-13-1822
+title: Project skeleton target-identity non-write dry-run rehearsal v1
+status: failed
+type: implementation
+priority: high
+mode: execute
+
+goal: >
+  Export a controlled target-environment project identity snapshot and rerun the
+  safe-slice project dry-run importer without writing database records.
+
+user_visible_outcome:
+  - "项目骨架小样本 dry-run 使用目标环境既有身份快照复演 create/update 分类"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1822.yaml
+    - data/migration_samples/project_existing_identity_snapshot_target_v1.csv
+    - artifacts/migration/project_dry_run_target_identity_result_v1.json
+    - docs/migration_alignment/project_dry_run_target_identity_report_v1.md
+    - docs/migration_alignment/project_import_go_no_go_v3.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1822.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1822.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+
+limits:
+  max_files: 8
+  max_output_lines: 240
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - dry-run-only
+  - target-identity-read-only-export
+  - no-database-write
+  - importer-no-orm-call
+  - no-full-import
+  - no-field-expansion
+  - safe-slice-fields-only
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  explicit_user_authorization: true
+  db_name: sc_demo
+  sample_csv: data/migration_samples/project_sample_v1.csv
+  importer: scripts/migration/project_dry_run_importer.py
+  depends_on_update_path: ITER-2026-04-13-1821
+
+architecture:
+  layer_target: Migration Dry-Run Tooling
+  module: project.project safe skeleton target-identity rehearsal
+  module_owner: docs/migration_alignment + data/migration_samples + artifacts/migration
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The task reads existing project identity facts from the target environment
+    and validates dry-run classification without writing any business records.
+  reason: >
+    The simulated update-path dry run passed. The next low-risk step is to
+    replace the simulated identity snapshot with a controlled target-environment
+    read-only identity snapshot.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1822.yaml
+    - ENV=dev DB_NAME=sc_demo make odoo.shell.exec
+    - python3 scripts/migration/project_dry_run_importer.py --input data/migration_samples/project_sample_v1.csv --existing-identities data/migration_samples/project_existing_identity_snapshot_target_v1.csv --output artifacts/migration/project_dry_run_target_identity_result_v1.json
+    - python3 -m json.tool artifacts/migration/project_dry_run_target_identity_result_v1.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - database_write_attempted
+  - importer_orm_call_introduced
+  - full_import_attempted
+  - unsafe_field_in_sample
+
+deliverables:
+  - target-environment identity snapshot
+  - target-identity dry-run result artifact
+  - target-identity dry-run report
+  - go/no-go v3 document
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1821
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1822.yaml
+  - git restore data/migration_samples/project_existing_identity_snapshot_target_v1.csv
+  - git restore artifacts/migration/project_dry_run_target_identity_result_v1.json
+  - git restore docs/migration_alignment/project_dry_run_target_identity_report_v1.md
+  - git restore docs/migration_alignment/project_import_go_no_go_v3.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1822.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1822.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

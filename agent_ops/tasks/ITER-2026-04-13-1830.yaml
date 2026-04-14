@@ -1,0 +1,106 @@
+task_id: ITER-2026-04-13-1830
+title: Project state implementation alignment audit v1
+status: completed
+type: governance
+priority: high
+mode: execute
+
+goal: >
+  Audit whether current code matches the frozen project state governance rule:
+  lifecycle_state is truth, stage_id is UI projection, lifecycle_state maps to
+  stage_id one-way, and stage_id must not reverse-write lifecycle_state.
+
+user_visible_outcome:
+  - "项目状态实现对齐审计完成，明确是否可进入扩样"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1830.yaml
+    - docs/architecture/project_state_implementation_inventory_v1.md
+    - docs/architecture/project_state_sync_path_audit_v1.md
+    - docs/architecture/project_state_implementation_gap_v1.md
+    - docs/architecture/project_state_alignment_actions_v1.md
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1830.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1830.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - scripts/**
+
+limits:
+  max_files: 8
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - read-only-analysis-only
+  - no-code-change
+  - no-field-change
+  - no-model-view-import-change
+  - no-sample-expansion
+  - no-database-write
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  governance_source: ITER-2026-04-13-1829
+  frozen_rule: "lifecycle_state truth; stage_id UI projection; no reverse sync"
+
+architecture:
+  layer_target: Business Fact Implementation Audit
+  module: project.project state implementation alignment
+  module_owner: docs/architecture + agent_ops
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The audit checks whether implementation preserves business truth in
+    lifecycle_state and treats stage_id as a UI projection.
+  reason: >
+    The state governance decision was frozen in ITER-2026-04-13-1829. Before
+    import expansion, current implementation must be audited for sync direction
+    and stage-based business-state leakage.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1830.yaml
+    - python3 -m json.tool agent_ops/state/task_results/ITER-2026-04-13-1830.json
+    - make verify.native.business_fact.static
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - code_change_attempted
+  - ambiguous_state_sync_answer
+
+deliverables:
+  - implementation inventory
+  - sync path audit
+  - gap analysis
+  - alignment actions
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1829
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1830.yaml
+  - git restore docs/architecture/project_state_implementation_inventory_v1.md
+  - git restore docs/architecture/project_state_sync_path_audit_v1.md
+  - git restore docs/architecture/project_state_implementation_gap_v1.md
+  - git restore docs/architecture/project_state_alignment_actions_v1.md
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1830.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1830.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md

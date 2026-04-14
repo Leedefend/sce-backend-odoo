@@ -1,0 +1,101 @@
+task_id: ITER-2026-04-13-1826
+title: Project native page field registry recovery v1
+status: completed
+type: operations
+priority: critical
+mode: execute
+
+goal: >
+  Recover the native project page error caused by project.project.short_name
+  being unavailable to the running web registry.
+
+user_visible_outcome:
+  - "原生项目页面不再因 short_name 字段未定义而报 OwlError"
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-13-1826.yaml
+    - agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1826.md
+    - agent_ops/state/task_results/ITER-2026-04-13-1826.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+    - record_rules/**
+    - addons/**/__manifest__.py
+    - addons/**/security/ir.model.access.csv
+    - addons/**/*payment*
+    - addons/**/*settlement*
+    - addons/**/*account*
+    - scripts/**
+
+limits:
+  max_files: 4
+  max_output_lines: 220
+  forbid_repo_wide_scan: true
+
+change_rules:
+  - operations-only
+  - no-code-change
+  - no-model-change
+  - no-view-change
+  - no-data-import
+  - use-makefile-for-runtime-commands
+
+context:
+  branch: codex/next-round
+  baseline_sha: d243d59
+  reported_error: "\"project.project\".\"short_name\" field is undefined"
+  target_database: sc_demo
+  affected_module: smart_construction_core
+
+architecture:
+  layer_target: Odoo Runtime Registry Recovery
+  module: smart_construction_core project.project registry and view metadata
+  module_owner: operational verification only
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The recovery verifies that project.project business fields are materialized
+    in the target registry and database metadata.
+  reason: >
+    The field exists in code and was writable from Odoo shell, but the web page
+    reports it as undefined, indicating registry/module upgrade or runtime cache
+    inconsistency.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-13-1826.yaml
+    - ENV=dev DB_NAME=sc_demo make odoo.shell.exec
+    - CODEX_NEED_UPGRADE=1 ENV=dev DB_NAME=sc_demo make mod.upgrade MODULE=smart_construction_core
+    - ENV=dev DB_NAME=sc_demo make restart
+    - ENV=dev DB_NAME=sc_demo make odoo.shell.exec
+    - make verify.native.business_fact.static
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - acceptance_failed
+  - forbidden_path_touched
+  - field_missing_after_upgrade
+  - module_upgrade_failed
+  - static_gate_failed
+
+deliverables:
+  - field registry diagnosis
+  - module upgrade result
+  - post-upgrade field check
+  - iteration report
+
+depends_on:
+  - ITER-2026-04-13-1825
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-13-1826.yaml
+  - git restore agent_ops/reports/2026-04-13/report.ITER-2026-04-13-1826.md
+  - git restore agent_ops/state/task_results/ITER-2026-04-13-1826.json
+  - git restore docs/ops/iterations/delivery_context_switch_log_v1.md
