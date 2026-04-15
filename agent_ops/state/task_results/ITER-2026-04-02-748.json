@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-748",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-748.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Run verify.portal.cross_stack_contract_smoke.container and address blocker if needed."
-}

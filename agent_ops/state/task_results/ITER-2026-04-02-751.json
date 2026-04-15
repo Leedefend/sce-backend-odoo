@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-751",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-751.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Run verify.portal.scene_layout_contract_smoke.container and fix blocker if needed."
-}

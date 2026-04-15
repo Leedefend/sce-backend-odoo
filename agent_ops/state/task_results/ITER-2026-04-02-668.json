@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-668",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-668.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Implement lifecycle_hints in execution-advance success branch."
-}

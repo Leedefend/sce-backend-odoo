@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-755",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-755.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Re-run layout stability smoke after token fallback fix."
-}

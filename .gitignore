@@ -119,3 +119,48 @@ agent_ops/state/run_iteration.lock
 # local scratch docs
 CURRENT_COMPLETION_SUMMARY_2026-03-23.md
 SANDBOX_SETUP_INSTRUCTIONS.md
+
+# -----------------------------------------
+# Codex iteration artifact governance
+# -----------------------------------------
+
+# Runtime evidence: keep locally or in external evidence storage, not in Git.
+.runtime_artifacts/
+.runtime_logs/
+.runtime_reports/
+logs/
+tmp/
+var/
+TEMP_*.md
+
+# Agent/Codex process outputs.
+agent_ops/reports/**
+agent_ops/state/task_results/**
+agent_ops/tasks/ITER-*.yaml
+!agent_ops/reports/.gitkeep
+!agent_ops/state/.gitkeep
+
+# High-frequency migration artifacts.
+!artifacts/
+artifacts/*
+!artifacts/continue/
+artifacts/continue/**
+!artifacts/continue/.gitkeep
+artifacts/migration/*.json
+artifacts/migration/*.csv
+artifacts/migration/*.md
+
+# Keep only frozen or baseline artifacts in the repository.
+!artifacts/baselines/
+!artifacts/baselines/**
+!docs/migration_alignment/frozen/
+!docs/migration_alignment/frozen/**
+addons/artifacts/
+artifacts/continue/
+
+# Stable release and governance docs remain eligible for Git.
+!docs/ops/releases/
+!docs/ops/releases/**
+
+# Migration alignment process reports are runtime evidence unless promoted.
+docs/migration_alignment/*_report_v*.md
