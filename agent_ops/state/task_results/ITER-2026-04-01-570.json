@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-01-570",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-570.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Open a bounded P1 implementation batch for primary-toolbar search visibility gating."
-}

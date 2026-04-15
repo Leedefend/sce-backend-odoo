@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-03-28-074",
-  "classification": "PASS",
-  "risk_level": "low",
-  "stop_required": false,
-  "matched_rules": [],
-  "triggered_stop_conditions": [],
-  "next_suggestion": "Submit 074, then continue on another sibling common navigation/provider helper only if it remains detached from scene resolve, access gate, and delivery policy semantics."
-}

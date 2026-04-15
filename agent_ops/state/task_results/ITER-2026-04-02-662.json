@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-662",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-662.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Run semantic guard and project management acceptance verification."
-}

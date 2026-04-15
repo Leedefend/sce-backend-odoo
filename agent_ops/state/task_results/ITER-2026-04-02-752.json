@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-752",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-752.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Re-run scene-layout contract smoke after compatibility fix."
-}

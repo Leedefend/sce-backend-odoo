@@ -1,8 +1,0 @@
-{
-  "task_id": "ITER-2026-04-03-940",
-  "status": "PASS",
-  "report": "agent_ops/reports/2026-04-03/report.ITER-2026-04-03-940.md",
-  "publishability": "scan_only",
-  "artifact": "artifacts/codex/edition-session-context-guard/20260404T133542Z/summary.json",
-  "next_step": "Run 941 screen stage to classify timeout vs edition-key drift path."
-}

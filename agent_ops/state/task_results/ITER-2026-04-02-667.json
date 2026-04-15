@@ -1,9 +1,0 @@
-{
-  "task_id": "ITER-2026-04-02-667",
-  "status": "PASS_WITH_RISK",
-  "report": "agent_ops/reports/2026-04-02/report.ITER-2026-04-02-667.md",
-  "verification": {
-    "validate_task": "PASS"
-  },
-  "next_step": "Switch to a new user-journey objective line via fresh screen batch."
-}

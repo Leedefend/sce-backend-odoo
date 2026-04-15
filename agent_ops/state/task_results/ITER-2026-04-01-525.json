@@ -1,8 +1,0 @@
-{
-  "task_id": "ITER-2026-04-01-525",
-  "status": "PASS",
-  "mode": "screen",
-  "report": "agent_ops/reports/2026-04-01/report.ITER-2026-04-01-525.md",
-  "next_candidate_family": "route preset duplication cleanup",
-  "next_step": "Open a display-only frontend implementation batch for route preset deduplication in the native list toolbar."
-}
