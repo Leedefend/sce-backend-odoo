@@ -22,6 +22,203 @@
             </field>
         </record>
 
+        <record id="view_payment_request_line_tree" model="ir.ui.view">
+            <field name="name">payment.request.line.tree</field>
+            <field name="model">payment.request.line</field>
+            <field name="arch" type="xml">
+                <tree string="付款申请明细" create="false" delete="false">
+                    <field name="request_id"/>
+                    <field name="sequence"/>
+                    <field name="source_line_type"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="amount"/>
+                    <field name="current_pay_amount"/>
+                    <field name="remaining_amount"/>
+                    <field name="source_document_no"/>
+                    <field name="legacy_line_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_payment_request_line_form" model="ir.ui.view">
+            <field name="name">payment.request.line.form</field>
+            <field name="model">payment.request.line</field>
+            <field name="arch" type="xml">
+                <form string="付款申请明细" create="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="request_id"/>
+                                <field name="request_type" readonly="1"/>
+                                <field name="project_id" readonly="1"/>
+                                <field name="partner_id"/>
+                                <field name="contract_id"/>
+                            </group>
+                            <group>
+                                <field name="currency_id"/>
+                                <field name="amount"/>
+                                <field name="current_pay_amount"/>
+                                <field name="paid_before_amount"/>
+                                <field name="remaining_amount"/>
+                            </group>
+                        </group>
+                        <group string="旧系统来源">
+                            <group>
+                                <field name="legacy_line_id" readonly="1"/>
+                                <field name="legacy_parent_id" readonly="1"/>
+                                <field name="legacy_supplier_contract_id" readonly="1"/>
+                                <field name="import_batch" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="source_document_no"/>
+                                <field name="source_line_type"/>
+                                <field name="source_counterparty_text"/>
+                                <field name="source_contract_no"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_payment_request_line_search" model="ir.ui.view">
+            <field name="name">payment.request.line.search</field>
+            <field name="model">payment.request.line</field>
+            <field name="arch" type="xml">
+                <search string="付款申请明细">
+                    <field name="request_id"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="source_line_type"/>
+                    <field name="source_document_no"/>
+                    <field name="legacy_line_id"/>
+                    <filter string="付款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
+                    <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                    <filter string="合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_receipt_invoice_line_tree" model="ir.ui.view">
+            <field name="name">sc.receipt.invoice.line.tree</field>
+            <field name="model">sc.receipt.invoice.line</field>
+            <field name="arch" type="xml">
+                <tree string="收款发票明细" create="false" delete="false">
+                    <field name="request_id"/>
+                    <field name="sequence"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_party_name"/>
+                    <field name="invoice_issue_company"/>
+                    <field name="invoice_amount"/>
+                    <field name="current_receipt_amount"/>
+                    <field name="invoiced_before_amount"/>
+                    <field name="attachment_count"/>
+                    <field name="source_document_no"/>
+                    <field name="legacy_invoice_line_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_receipt_invoice_line_form" model="ir.ui.view">
+            <field name="name">sc.receipt.invoice.line.form</field>
+            <field name="model">sc.receipt.invoice.line</field>
+            <field name="arch" type="xml">
+                <form string="收款发票明细" create="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="request_id"/>
+                                <field name="request_type" readonly="1"/>
+                                <field name="project_id" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="contract_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="currency_id" readonly="1"/>
+                                <field name="invoice_amount"/>
+                                <field name="current_receipt_amount"/>
+                                <field name="invoiced_before_amount"/>
+                                <field name="attachment_count" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="发票信息">
+                            <group>
+                                <field name="invoice_no"/>
+                                <field name="invoice_party_name"/>
+                                <field name="invoice_issue_company"/>
+                            </group>
+                            <group>
+                                <field name="source_document_no"/>
+                                <field name="source_table_name"/>
+                                <field name="amount_source"/>
+                            </group>
+                        </group>
+                        <group string="旧系统来源">
+                            <group>
+                                <field name="legacy_invoice_line_id" readonly="1"/>
+                                <field name="legacy_receipt_id" readonly="1"/>
+                                <field name="legacy_invoice_id" readonly="1"/>
+                                <field name="legacy_invoice_child_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="legacy_pid" readonly="1"/>
+                                <field name="legacy_file_bill_id" readonly="1"/>
+                                <field name="import_batch" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_receipt_invoice_line_search" model="ir.ui.view">
+            <field name="name">sc.receipt.invoice.line.search</field>
+            <field name="model">sc.receipt.invoice.line</field>
+            <field name="arch" type="xml">
+                <search string="收款发票明细">
+                    <field name="request_id"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_party_name"/>
+                    <field name="source_document_no"/>
+                    <field name="legacy_invoice_line_id"/>
+                    <filter string="收款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
+                    <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                    <filter string="往来单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
+                    <filter string="合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_receipt_invoice_line" model="ir.actions.act_window">
+            <field name="name">收款发票明细</field>
+            <field name="res_model">sc.receipt.invoice.line</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_by_request_id': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ])]"/>
+        </record>
+
         <record id="view_payment_request_form" model="ir.ui.view">
             <field name="name">payment.request.form</field>
             <field name="model">payment.request</field>
@@ -42,6 +239,19 @@
                                     type="action"
                                     class="oe_stat_button"
                                     context="{'default_payment_request_id': context.get('active_id'), 'search_default_payment_request_id': context.get('active_id')}"
+                                    groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+                            <button name="%(smart_construction_core.action_payment_request_line)d"
+                                    string="付款申请明细"
+                                    type="action"
+                                    class="oe_stat_button"
+                                    context="{'default_request_id': context.get('active_id'), 'search_default_request_id': context.get('active_id')}"
+                                    groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+                            <button name="%(smart_construction_core.action_receipt_invoice_line)d"
+                                    string="收款发票明细"
+                                    type="action"
+                                    class="oe_stat_button"
+                                    invisible="type != 'receive'"
+                                    context="{'default_request_id': context.get('active_id'), 'search_default_request_id': context.get('active_id')}"
                                     groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
                         </div>
                         <group>
@@ -102,6 +312,48 @@
                         <group>
                             <field name="note"/>
                         </group>
+                        <group string="付款申请明细">
+                            <field name="outflow_line_ids" nolabel="1">
+                                <tree editable="bottom" create="false" delete="false">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="source_line_type"/>
+                                    <field name="partner_id"/>
+                                    <field name="project_id" invisible="1"/>
+                                    <field name="contract_id"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="amount"/>
+                                    <field name="current_pay_amount"/>
+                                    <field name="paid_before_amount"/>
+                                    <field name="remaining_amount"/>
+                                    <field name="source_document_no"/>
+                                    <field name="source_counterparty_text"/>
+                                    <field name="source_contract_no"/>
+                                    <field name="legacy_line_id" readonly="1"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="收款发票明细" invisible="type != 'receive'">
+                            <field name="receipt_invoice_line_ids" nolabel="1">
+                                <tree editable="bottom" create="false" delete="false">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="invoice_no"/>
+                                    <field name="invoice_party_name"/>
+                                    <field name="invoice_issue_company"/>
+                                    <field name="project_id" invisible="1"/>
+                                    <field name="partner_id" invisible="1"/>
+                                    <field name="contract_id"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="invoice_amount"/>
+                                    <field name="current_receipt_amount"/>
+                                    <field name="invoiced_before_amount"/>
+                                    <field name="attachment_count"/>
+                                    <field name="source_document_no"/>
+                                    <field name="legacy_invoice_line_id" readonly="1"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </group>
                         <group string="付款记录">
                             <field name="ledger_line_ids" nolabel="1" readonly="1"
                                    context="{'allow_payment_ledger_create': 1}">
@@ -116,6 +368,18 @@
                     </sheet>
                 </form>
             </field>
+        </record>
+
+        <record id="action_payment_request_line" model="ir.actions.act_window">
+            <field name="name">付款申请明细</field>
+            <field name="res_model">payment.request.line</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_by_request_id': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ])]"/>
         </record>
 
         <record id="action_payment_request" model="ir.actions.act_window">
@@ -148,6 +412,20 @@
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_payment_request"
                   sequence="25"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_payment_request_line"
+                  name="付款申请明细"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_payment_request_line"
+                  sequence="26"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_receipt_invoice_line"
+                  name="收款发票明细"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_receipt_invoice_line"
+                  sequence="27"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     </data>
