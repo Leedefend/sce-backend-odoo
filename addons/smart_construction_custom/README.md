@@ -332,8 +332,8 @@
   - 默认 `true`
 - `department_type`
   - 建议预留，当前可先按：
-    - `functional`
-    - `project`
+  - `functional`
+  - `project`
 - `notes`
 
 推荐初始映射：
