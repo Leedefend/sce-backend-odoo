@@ -12,6 +12,14 @@ from . import project_member_neutral
 from . import document_center
 from . import audit_log
 from . import business_evidence
+from . import outflow_request_line
+from . import receipt_invoice_line
+from . import legacy_workflow_audit
+from . import legacy_expense_deposit_fact
+from . import legacy_invoice_tax_fact
+from . import legacy_receipt_income_fact
+from . import legacy_financing_loan_fact
+from . import legacy_fund_daily_snapshot_fact
 from . import project_extend_boq
 from . import task_extend
 from . import work_breakdown

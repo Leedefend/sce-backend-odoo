@@ -15,6 +15,7 @@ class ResPartner(models.Model):
         [
             ("cooperat_company", "合作单位"),
             ("supplier", "供应商"),
+            ("company_supplier", "合作单位+供应商"),
         ],
         string="旧系统往来单位来源",
         index=True,
