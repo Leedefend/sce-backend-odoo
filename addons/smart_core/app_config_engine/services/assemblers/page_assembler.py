@@ -134,6 +134,24 @@ class PageAssembler:
 
         return filtered or buttons_data
 
+    @staticmethod
+    def _filter_list_actions_to_current_surface(buttons_data):
+        """
+        Native list pages must not expose every same-model act_window as a
+        current-page button. Model-level open actions are navigation candidates,
+        not list-toolbar actions for the active action.
+        """
+        filtered = []
+        for row in list(buttons_data or []):
+            if not isinstance(row, dict):
+                continue
+            kind = str(row.get("kind") or "").strip().lower()
+            level = str(row.get("level") or "").strip().lower()
+            if kind == "open" and level in {"", "toolbar"}:
+                continue
+            filtered.append(row)
+        return filtered
+
     def assemble_page_contract(self, p, action=None):
         """
         页面契约主装配：
@@ -161,6 +179,7 @@ class PageAssembler:
             )
 
         view_types = p["view_types"]
+        primary_view_type = view_types[0] if view_types else "tree"
         env = self.env
         su = self.su_env
 
@@ -320,7 +339,9 @@ class PageAssembler:
             _logger.warning("app.action.config missing; fallback empty actions for model=%s", model)
             buttons_data = []
             versions["actions"] = 0
-        if "form" in view_types:
+        if primary_view_type in ("tree", "list"):
+            buttons_data = self._filter_list_actions_to_current_surface(buttons_data)
+        elif "form" in view_types:
             buttons_data = self._filter_form_actions_to_source_rows(buttons_data, form_action_source_rows)
         data["buttons"] = buttons_data
         toolbar = {
