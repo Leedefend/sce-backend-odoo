@@ -1,9 +1,33 @@
 # -*- coding: utf-8 -*-
+import base64
+
 from odoo.tests.common import TransactionCase, tagged
 
 
 @tagged("post_install", "-at_install", "smoke", "sc_smoke", "smoke_security")
 class TestSmokeSecurity(TransactionCase):
+    @classmethod
+    def _prepare_funding(cls, project, total_amount=1000):
+        project.sudo().write({
+            "code": project.code or f"SMOKE-FUND-{project.id}",
+            "funding_enabled": True,
+        })
+        cls.env["project.funding.baseline"].sudo().create({
+            "project_id": project.id,
+            "total_amount": total_amount,
+            "state": "active",
+        })
+
+    def _attach_dummy(self, record, name="smoke.pdf"):
+        self.env["ir.attachment"].sudo().create({
+            "name": name,
+            "type": "binary",
+            "datas": base64.b64encode(b"smoke").decode("ascii"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "mimetype": "application/pdf",
+        })
+        record.invalidate_recordset()
 
     @classmethod
     def setUpClass(cls):
@@ -41,6 +65,8 @@ class TestSmokeSecurity(TransactionCase):
             "company_ids": [(6, 0, [company.id])],
             "groups_id": [(6, 0, [finance_group.id])],
         })
+        cls.project.sudo().write({"finance_contact_user_id": cls.finance_user.id})
+        cls._prepare_funding(cls.project)
         cls.material_manager = cls.env["res.users"].with_context(no_reset_password=True).create({
             "name": "Smoke Material",
             "login": "smoke_material",
@@ -66,6 +92,7 @@ class TestSmokeSecurity(TransactionCase):
                 "contract_id": self.contract.id,
             }
         )
+        self._attach_dummy(request)
         self.assertEqual(request.project_id, self.project)
         self.assertEqual(
             self.contract.with_user(self.finance_user).subject,

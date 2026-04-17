@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="1">
-        <record id="company_sc_baosheng" model="res.company">
+        <record id="base.main_company" model="res.company">
             <field name="name">四川保盛建设集团有限公司</field>
+            <field name="currency_id" ref="base.CNY"/>
             <field name="sc_short_name">四川保盛</field>
             <field name="sc_is_active" eval="True"/>
         </record>
 
         <record id="department_sc_baosheng_business" model="hr.department">
             <field name="name">经营部</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_id" ref="base.main_company"/>
             <field name="parent_id" eval="False"/>
             <field name="sc_is_active" eval="True"/>
         </record>
         <record id="department_sc_baosheng_engineering" model="hr.department">
             <field name="name">工程部</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_id" ref="base.main_company"/>
             <field name="parent_id" eval="False"/>
             <field name="sc_is_active" eval="True"/>
         </record>
         <record id="department_sc_baosheng_finance" model="hr.department">
             <field name="name">财务部</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_id" ref="base.main_company"/>
             <field name="parent_id" eval="False"/>
             <field name="sc_is_active" eval="True"/>
         </record>
         <record id="department_sc_baosheng_admin" model="hr.department">
             <field name="name">行政部</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_id" ref="base.main_company"/>
             <field name="parent_id" eval="False"/>
             <field name="sc_is_active" eval="True"/>
         </record>
         <record id="department_sc_baosheng_cost" model="hr.department">
             <field name="name">成控部</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_id" ref="base.main_company"/>
             <field name="parent_id" eval="False"/>
             <field name="sc_is_active" eval="True"/>
         </record>
         <record id="department_sc_baosheng_project" model="hr.department">
             <field name="name">项目部</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
+            <field name="company_id" ref="base.main_company"/>
             <field name="parent_id" eval="False"/>
             <field name="sc_is_active" eval="True"/>
         </record>

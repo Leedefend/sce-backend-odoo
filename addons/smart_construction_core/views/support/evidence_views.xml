@@ -64,15 +64,13 @@
         <field name="name">sc.legacy.workflow.audit.tree</field>
         <field name="model">sc.legacy.workflow.audit</field>
         <field name="arch" type="xml">
-            <tree string="历史审批事实" create="false" edit="false" delete="false">
+            <tree string="审批记录查询" create="false" edit="false" delete="false">
                 <field name="approved_at"/>
                 <field name="actor_name"/>
-                <field name="action_classification"/>
-                <field name="target_lane"/>
-                <field name="target_model"/>
-                <field name="target_external_id"/>
-                <field name="legacy_source_table"/>
-                <field name="legacy_workflow_id"/>
+                <field name="action_classification" string="处理结果"/>
+                <field name="target_lane" string="业务分类"/>
+                <field name="legacy_step_name" string="步骤"/>
+                <field name="legacy_template_name" string="流程模板"/>
             </tree>
         </field>
     </record>
@@ -80,39 +78,39 @@
         <field name="name">sc.legacy.workflow.audit.form</field>
         <field name="model">sc.legacy.workflow.audit</field>
         <field name="arch" type="xml">
-            <form string="历史审批事实" create="false" edit="false" delete="false">
+            <form string="审批记录查询" create="false" edit="false" delete="false">
                 <sheet>
                     <group>
                         <group>
                             <field name="name"/>
-                            <field name="target_lane"/>
-                            <field name="target_model"/>
-                            <field name="target_external_id"/>
+                            <field name="target_lane" string="业务分类"/>
+                            <field name="target_model" invisible="1"/>
+                            <field name="target_external_id" invisible="1"/>
                         </group>
                         <group>
-                            <field name="legacy_workflow_id"/>
-                            <field name="legacy_djid"/>
-                            <field name="legacy_business_id"/>
-                            <field name="legacy_source_table"/>
+                            <field name="legacy_workflow_id" invisible="1"/>
+                            <field name="legacy_djid" invisible="1"/>
+                            <field name="legacy_business_id" invisible="1"/>
+                            <field name="legacy_source_table" invisible="1"/>
                         </group>
                     </group>
                     <group>
                         <group>
                             <field name="actor_name"/>
-                            <field name="actor_legacy_user_id"/>
+                            <field name="actor_legacy_user_id" invisible="1"/>
                             <field name="approved_at"/>
                             <field name="received_at"/>
                         </group>
                         <group>
-                            <field name="action_classification"/>
-                            <field name="legacy_status"/>
-                            <field name="legacy_back_type"/>
-                            <field name="legacy_approval_type"/>
+                            <field name="action_classification" string="处理结果"/>
+                            <field name="legacy_status" string="状态"/>
+                            <field name="legacy_back_type" string="退回类型"/>
+                            <field name="legacy_approval_type" string="审批类型"/>
                         </group>
                     </group>
-                    <group string="旧流程上下文">
-                        <field name="legacy_step_name"/>
-                        <field name="legacy_template_name"/>
+                    <group string="流程上下文">
+                        <field name="legacy_step_name" string="步骤"/>
+                        <field name="legacy_template_name" string="流程模板"/>
                         <field name="approval_note"/>
                     </group>
                 </sheet>
@@ -123,15 +121,13 @@
         <field name="name">sc.legacy.workflow.audit.search</field>
         <field name="model">sc.legacy.workflow.audit</field>
         <field name="arch" type="xml">
-            <search string="历史审批事实">
+            <search string="审批记录查询">
                 <field name="actor_name"/>
-                <field name="target_lane"/>
-                <field name="legacy_source_table"/>
-                <field name="legacy_workflow_id"/>
+                <field name="target_lane" string="业务分类"/>
+                <field name="legacy_step_name" string="步骤"/>
                 <group expand="0" string="分组">
-                    <filter string="资产泳道" name="group_target_lane" context="{'group_by': 'target_lane'}"/>
-                    <filter string="来源表" name="group_legacy_source_table" context="{'group_by': 'legacy_source_table'}"/>
-                    <filter string="动作归类" name="group_action_classification" context="{'group_by': 'action_classification'}"/>
+                    <filter string="业务分类" name="group_target_lane" context="{'group_by': 'target_lane'}"/>
+                    <filter string="处理结果" name="group_action_classification" context="{'group_by': 'action_classification'}"/>
                 </group>
             </search>
         </field>
@@ -141,16 +137,14 @@
         <field name="name">sc.legacy.expense.deposit.fact.tree</field>
         <field name="model">sc.legacy.expense.deposit.fact</field>
         <field name="arch" type="xml">
-            <tree string="历史费用/保证金事实" create="false" edit="false" delete="false">
+            <tree string="费用/保证金查询" delete="false">
                 <field name="document_date"/>
                 <field name="document_no"/>
-                <field name="source_family"/>
+                <field name="source_family" string="业务类型"/>
                 <field name="direction"/>
                 <field name="project_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="source_amount"/>
-                <field name="legacy_source_table"/>
-                <field name="legacy_record_id"/>
+                <field name="legacy_partner_name" string="相对方名称"/>
+                <field name="source_amount" string="金额"/>
             </tree>
         </field>
     </record>
@@ -158,39 +152,39 @@
         <field name="name">sc.legacy.expense.deposit.fact.form</field>
         <field name="model">sc.legacy.expense.deposit.fact</field>
         <field name="arch" type="xml">
-            <form string="历史费用/保证金事实" create="false" edit="false" delete="false">
+            <form string="费用/保证金查询" delete="false">
                 <sheet>
                     <group>
                         <group>
                             <field name="display_name"/>
-                            <field name="source_family"/>
+                            <field name="source_family" string="业务类型"/>
                             <field name="direction"/>
                             <field name="document_no"/>
                             <field name="document_date"/>
                         </group>
                         <group>
                             <field name="project_id"/>
-                            <field name="legacy_project_id"/>
-                            <field name="legacy_project_name"/>
-                            <field name="legacy_state"/>
+                            <field name="legacy_project_id" invisible="1"/>
+                            <field name="legacy_project_name" string="项目名称"/>
+                            <field name="legacy_state" string="状态"/>
                         </group>
                     </group>
                     <group>
                         <group>
                             <field name="partner_id"/>
-                            <field name="legacy_partner_id"/>
-                            <field name="legacy_partner_name"/>
+                            <field name="legacy_partner_id" invisible="1"/>
+                            <field name="legacy_partner_name" string="相对方名称"/>
                         </group>
                         <group>
-                            <field name="source_amount"/>
-                            <field name="source_amount_field"/>
+                            <field name="source_amount" string="金额"/>
+                            <field name="source_amount_field" invisible="1"/>
                             <field name="currency_id"/>
                         </group>
                     </group>
-                    <group string="旧系统来源">
-                        <field name="legacy_source_table"/>
-                        <field name="legacy_record_id"/>
-                        <field name="legacy_pid"/>
+                    <group string="备注">
+                        <field name="legacy_source_table" invisible="1"/>
+                        <field name="legacy_record_id" invisible="1"/>
+                        <field name="legacy_pid" invisible="1"/>
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -201,13 +195,12 @@
         <field name="name">sc.legacy.expense.deposit.fact.search</field>
         <field name="model">sc.legacy.expense.deposit.fact</field>
         <field name="arch" type="xml">
-            <search string="历史费用/保证金事实">
+            <search string="费用/保证金查询">
                 <field name="document_no"/>
                 <field name="project_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="legacy_source_table"/>
+                <field name="legacy_partner_name" string="相对方名称"/>
                 <group expand="0" string="分组">
-                    <filter string="业务家族" name="group_source_family" context="{'group_by': 'source_family'}"/>
+                    <filter string="业务类型" name="group_source_family" context="{'group_by': 'source_family'}"/>
                     <filter string="方向" name="group_direction" context="{'group_by': 'direction'}"/>
                     <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 </group>
@@ -219,16 +212,15 @@
         <field name="name">sc.legacy.invoice.tax.fact.tree</field>
         <field name="model">sc.legacy.invoice.tax.fact</field>
         <field name="arch" type="xml">
-            <tree string="历史发票/税务事实" create="false" edit="false" delete="false">
+            <tree string="发票/税务查询" delete="false">
                 <field name="document_date"/>
                 <field name="document_no"/>
-                <field name="source_family"/>
+                <field name="source_family" string="业务类型"/>
                 <field name="direction"/>
                 <field name="project_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="source_amount"/>
-                <field name="source_tax_amount"/>
-                <field name="legacy_source_table"/>
+                <field name="legacy_partner_name" string="相对方名称"/>
+                <field name="source_amount" string="金额"/>
+                <field name="source_tax_amount" string="税额"/>
             </tree>
         </field>
     </record>
@@ -236,12 +228,12 @@
         <field name="name">sc.legacy.invoice.tax.fact.form</field>
         <field name="model">sc.legacy.invoice.tax.fact</field>
         <field name="arch" type="xml">
-            <form string="历史发票/税务事实" create="false" edit="false" delete="false">
+            <form string="发票/税务查询" delete="false">
                 <sheet>
                     <group>
                         <group>
                             <field name="display_name"/>
-                            <field name="source_family"/>
+                            <field name="source_family" string="业务类型"/>
                             <field name="direction"/>
                             <field name="invoice_type"/>
                             <field name="document_no"/>
@@ -249,29 +241,29 @@
                         </group>
                         <group>
                             <field name="project_id"/>
-                            <field name="legacy_project_id"/>
-                            <field name="legacy_project_name"/>
-                            <field name="legacy_state"/>
+                            <field name="legacy_project_id" invisible="1"/>
+                            <field name="legacy_project_name" string="项目名称"/>
+                            <field name="legacy_state" string="状态"/>
                         </group>
                     </group>
                     <group>
                         <group>
                             <field name="partner_id"/>
-                            <field name="legacy_partner_id"/>
-                            <field name="legacy_partner_name"/>
-                            <field name="legacy_partner_tax_no"/>
+                            <field name="legacy_partner_id" invisible="1"/>
+                            <field name="legacy_partner_name" string="相对方名称"/>
+                            <field name="legacy_partner_tax_no" string="相对方税号"/>
                         </group>
                         <group>
-                            <field name="source_amount"/>
-                            <field name="source_tax_amount"/>
-                            <field name="source_amount_field"/>
+                            <field name="source_amount" string="金额"/>
+                            <field name="source_tax_amount" string="税额"/>
+                            <field name="source_amount_field" invisible="1"/>
                             <field name="currency_id"/>
                         </group>
                     </group>
-                    <group string="旧系统来源">
-                        <field name="legacy_source_table"/>
-                        <field name="legacy_record_id"/>
-                        <field name="legacy_pid"/>
+                    <group string="备注">
+                        <field name="legacy_source_table" invisible="1"/>
+                        <field name="legacy_record_id" invisible="1"/>
+                        <field name="legacy_pid" invisible="1"/>
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -282,13 +274,13 @@
         <field name="name">sc.legacy.invoice.tax.fact.search</field>
         <field name="model">sc.legacy.invoice.tax.fact</field>
         <field name="arch" type="xml">
-            <search string="历史发票/税务事实">
+            <search string="发票/税务查询">
                 <field name="document_no"/>
                 <field name="project_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="legacy_partner_tax_no"/>
+                <field name="legacy_partner_name" string="相对方名称"/>
+                <field name="legacy_partner_tax_no" string="相对方税号"/>
                 <group expand="0" string="分组">
-                    <filter string="业务家族" name="group_source_family" context="{'group_by': 'source_family'}"/>
+                    <filter string="业务类型" name="group_source_family" context="{'group_by': 'source_family'}"/>
                     <filter string="方向" name="group_direction" context="{'group_by': 'direction'}"/>
                     <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 </group>
@@ -300,15 +292,14 @@
         <field name="name">sc.legacy.receipt.income.fact.tree</field>
         <field name="model">sc.legacy.receipt.income.fact</field>
         <field name="arch" type="xml">
-            <tree string="历史收款/收入事实" create="false" edit="false" delete="false">
+            <tree string="收款/收入查询" delete="false">
                 <field name="document_date"/>
                 <field name="document_no"/>
-                <field name="source_family"/>
+                <field name="source_family" string="业务类型"/>
                 <field name="income_category"/>
                 <field name="project_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="source_amount"/>
-                <field name="legacy_source_table"/>
+                <field name="legacy_partner_name" string="相对方名称"/>
+                <field name="source_amount" string="金额"/>
             </tree>
         </field>
     </record>
@@ -316,12 +307,12 @@
         <field name="name">sc.legacy.receipt.income.fact.form</field>
         <field name="model">sc.legacy.receipt.income.fact</field>
         <field name="arch" type="xml">
-            <form string="历史收款/收入事实" create="false" edit="false" delete="false">
+            <form string="收款/收入查询" delete="false">
                 <sheet>
                     <group>
                         <group>
                             <field name="display_name"/>
-                            <field name="source_family"/>
+                            <field name="source_family" string="业务类型"/>
                             <field name="direction"/>
                             <field name="income_category"/>
                             <field name="document_no"/>
@@ -329,26 +320,26 @@
                         </group>
                         <group>
                             <field name="project_id"/>
-                            <field name="legacy_project_id"/>
-                            <field name="legacy_project_name"/>
-                            <field name="legacy_state"/>
+                            <field name="legacy_project_id" invisible="1"/>
+                            <field name="legacy_project_name" string="项目名称"/>
+                            <field name="legacy_state" string="状态"/>
                         </group>
                     </group>
                     <group>
                         <group>
                             <field name="partner_id"/>
-                            <field name="legacy_partner_id"/>
-                            <field name="legacy_partner_name"/>
+                            <field name="legacy_partner_id" invisible="1"/>
+                            <field name="legacy_partner_name" string="相对方名称"/>
                         </group>
                         <group>
-                            <field name="source_amount"/>
+                            <field name="source_amount" string="金额"/>
                             <field name="currency_id"/>
                         </group>
                     </group>
-                    <group string="旧系统来源">
-                        <field name="legacy_source_table"/>
-                        <field name="legacy_record_id"/>
-                        <field name="legacy_pid"/>
+                    <group string="备注">
+                        <field name="legacy_source_table" invisible="1"/>
+                        <field name="legacy_record_id" invisible="1"/>
+                        <field name="legacy_pid" invisible="1"/>
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -359,13 +350,13 @@
         <field name="name">sc.legacy.receipt.income.fact.search</field>
         <field name="model">sc.legacy.receipt.income.fact</field>
         <field name="arch" type="xml">
-            <search string="历史收款/收入事实">
+            <search string="收款/收入查询">
                 <field name="document_no"/>
                 <field name="project_id"/>
-                <field name="legacy_partner_name"/>
+                <field name="legacy_partner_name" string="相对方名称"/>
                 <field name="income_category"/>
                 <group expand="0" string="分组">
-                    <filter string="业务家族" name="group_source_family" context="{'group_by': 'source_family'}"/>
+                    <filter string="业务类型" name="group_source_family" context="{'group_by': 'source_family'}"/>
                     <filter string="收入类别" name="group_income_category" context="{'group_by': 'income_category'}"/>
                     <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 </group>
@@ -377,16 +368,15 @@
         <field name="name">sc.legacy.financing.loan.fact.tree</field>
         <field name="model">sc.legacy.financing.loan.fact</field>
         <field name="arch" type="xml">
-            <tree string="历史借款/贷款事实" create="false" edit="false" delete="false">
+            <tree string="借款/贷款查询" delete="false">
                 <field name="document_date"/>
                 <field name="document_no"/>
-                <field name="source_family"/>
-                <field name="source_direction"/>
+                <field name="source_family" string="业务类型"/>
+                <field name="source_direction" string="资金方向"/>
                 <field name="project_id"/>
-                <field name="legacy_counterparty_name"/>
-                <field name="source_amount"/>
+                <field name="legacy_counterparty_name" string="相对方名称"/>
+                <field name="source_amount" string="金额"/>
                 <field name="due_date"/>
-                <field name="legacy_source_table"/>
             </tree>
         </field>
     </record>
@@ -394,47 +384,47 @@
         <field name="name">sc.legacy.financing.loan.fact.form</field>
         <field name="model">sc.legacy.financing.loan.fact</field>
         <field name="arch" type="xml">
-            <form string="历史借款/贷款事实" create="false" edit="false" delete="false">
+            <form string="借款/贷款查询" delete="false">
                 <sheet>
                     <group>
                         <group>
                             <field name="display_name"/>
-                            <field name="source_family"/>
-                            <field name="source_direction"/>
+                            <field name="source_family" string="业务类型"/>
+                            <field name="source_direction" string="资金方向"/>
                             <field name="document_no"/>
                             <field name="document_date"/>
                             <field name="due_date"/>
                         </group>
                         <group>
                             <field name="project_id"/>
-                            <field name="legacy_project_id"/>
-                            <field name="legacy_project_name"/>
-                            <field name="legacy_state"/>
+                            <field name="legacy_project_id" invisible="1"/>
+                            <field name="legacy_project_name" string="项目名称"/>
+                            <field name="legacy_state" string="状态"/>
                         </group>
                     </group>
                     <group>
                         <group>
                             <field name="partner_id"/>
-                            <field name="legacy_counterparty_id"/>
-                            <field name="legacy_counterparty_name"/>
+                            <field name="legacy_counterparty_id" invisible="1"/>
+                            <field name="legacy_counterparty_name" string="相对方名称"/>
                         </group>
                         <group>
-                            <field name="source_amount"/>
-                            <field name="source_amount_field"/>
+                            <field name="source_amount" string="金额"/>
+                            <field name="source_amount_field" invisible="1"/>
                             <field name="currency_id"/>
                         </group>
                     </group>
-                    <group string="旧系统上下文">
+                    <group string="业务上下文">
                         <field name="purpose"/>
-                        <field name="source_type_label"/>
-                        <field name="source_extra_ref"/>
-                        <field name="source_extra_label"/>
+                        <field name="source_type_label" string="业务类型说明"/>
+                        <field name="source_extra_ref" string="关联对象"/>
+                        <field name="source_extra_label" string="关联说明"/>
                         <field name="note"/>
                     </group>
-                    <group string="旧系统来源">
-                        <field name="legacy_source_table"/>
-                        <field name="legacy_record_id"/>
-                        <field name="legacy_pid"/>
+                    <group>
+                        <field name="legacy_source_table" invisible="1"/>
+                        <field name="legacy_record_id" invisible="1"/>
+                        <field name="legacy_pid" invisible="1"/>
                     </group>
                 </sheet>
             </form>
@@ -444,13 +434,13 @@
         <field name="name">sc.legacy.financing.loan.fact.search</field>
         <field name="model">sc.legacy.financing.loan.fact</field>
         <field name="arch" type="xml">
-            <search string="历史借款/贷款事实">
+            <search string="借款/贷款查询">
                 <field name="document_no"/>
                 <field name="project_id"/>
-                <field name="legacy_counterparty_name"/>
+                <field name="legacy_counterparty_name" string="相对方名称"/>
                 <field name="purpose"/>
                 <group expand="0" string="分组">
-                    <filter string="业务家族" name="group_source_family" context="{'group_by': 'source_family'}"/>
+                    <filter string="业务类型" name="group_source_family" context="{'group_by': 'source_family'}"/>
                     <filter string="资金方向" name="group_source_direction" context="{'group_by': 'source_direction'}"/>
                     <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 </group>
@@ -462,15 +452,14 @@
         <field name="name">sc.legacy.fund.daily.snapshot.fact.tree</field>
         <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
         <field name="arch" type="xml">
-            <tree string="历史资金日报" create="false" edit="false" delete="false">
+            <tree string="资金日报" delete="false">
                 <field name="snapshot_date"/>
                 <field name="document_no"/>
                 <field name="project_id"/>
-                <field name="source_account_balance_total"/>
-                <field name="source_bank_balance_total"/>
-                <field name="source_bank_system_difference"/>
+                <field name="source_account_balance_total" string="账面余额合计"/>
+                <field name="source_bank_balance_total" string="银行余额合计"/>
+                <field name="source_bank_system_difference" string="账实差额"/>
                 <field name="subject"/>
-                <field name="legacy_record_id"/>
             </tree>
         </field>
     </record>
@@ -478,33 +467,33 @@
         <field name="name">sc.legacy.fund.daily.snapshot.fact.form</field>
         <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
         <field name="arch" type="xml">
-            <form string="历史资金日报" create="false" edit="false" delete="false">
+            <form string="资金日报" delete="false">
                 <sheet>
                     <group>
                         <group>
                             <field name="display_name"/>
-                            <field name="source_family"/>
+                            <field name="source_family" string="业务类型"/>
                             <field name="document_no"/>
                             <field name="snapshot_date"/>
-                            <field name="legacy_state"/>
+                            <field name="legacy_state" string="状态"/>
                             <field name="subject"/>
                         </group>
                         <group>
                             <field name="project_id"/>
-                            <field name="legacy_project_id"/>
-                            <field name="legacy_project_name"/>
+                            <field name="legacy_project_id" invisible="1"/>
+                            <field name="legacy_project_name" string="项目名称"/>
                         </group>
                     </group>
                     <group string="快照金额">
-                        <field name="source_account_balance_total"/>
-                        <field name="source_bank_balance_total"/>
-                        <field name="source_bank_system_difference"/>
+                        <field name="source_account_balance_total" string="账面余额合计"/>
+                        <field name="source_bank_balance_total" string="银行余额合计"/>
+                        <field name="source_bank_system_difference" string="账实差额"/>
                         <field name="currency_id"/>
                     </group>
-                    <group string="旧系统来源">
-                        <field name="legacy_source_table"/>
-                        <field name="legacy_record_id"/>
-                        <field name="legacy_pid"/>
+                    <group string="备注">
+                        <field name="legacy_source_table" invisible="1"/>
+                        <field name="legacy_record_id" invisible="1"/>
+                        <field name="legacy_pid" invisible="1"/>
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -515,11 +504,10 @@
         <field name="name">sc.legacy.fund.daily.snapshot.fact.search</field>
         <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
         <field name="arch" type="xml">
-            <search string="历史资金日报">
+            <search string="资金日报">
                 <field name="document_no"/>
                 <field name="project_id"/>
                 <field name="subject"/>
-                <field name="legacy_record_id"/>
                 <group expand="0" string="分组">
                     <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="日报日期" name="group_snapshot_date" context="{'group_by': 'snapshot_date'}"/>
@@ -529,79 +517,89 @@
     </record>
 
     <record id="action_sc_legacy_fact_workflow_audit" model="ir.actions.act_window">
-        <field name="name">历史审批事实</field>
+        <field name="name">审批记录查询</field>
         <field name="res_model">sc.legacy.workflow.audit</field>
         <field name="view_mode">tree,form</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="action_sc_legacy_fact_expense_deposit" model="ir.actions.act_window">
-        <field name="name">历史费用/保证金</field>
+        <field name="name">费用/保证金查询</field>
         <field name="res_model">sc.legacy.expense.deposit.fact</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        <field name="search_view_id" ref="view_sc_legacy_expense_deposit_fact_search"/>
+        <field name="context">{'sc_manual_entry': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="action_sc_legacy_fact_invoice_tax" model="ir.actions.act_window">
-        <field name="name">历史发票/税务</field>
+        <field name="name">发票/税务查询</field>
         <field name="res_model">sc.legacy.invoice.tax.fact</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        <field name="search_view_id" ref="view_sc_legacy_invoice_tax_fact_search"/>
+        <field name="context">{'sc_manual_entry': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="action_sc_legacy_fact_receipt_income" model="ir.actions.act_window">
-        <field name="name">历史收款/收入</field>
+        <field name="name">收款/收入查询</field>
         <field name="res_model">sc.legacy.receipt.income.fact</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        <field name="search_view_id" ref="view_sc_legacy_receipt_income_fact_search"/>
+        <field name="context">{'sc_manual_entry': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="action_sc_legacy_fact_financing_loan" model="ir.actions.act_window">
-        <field name="name">历史借款/贷款</field>
+        <field name="name">借款/贷款查询</field>
         <field name="res_model">sc.legacy.financing.loan.fact</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        <field name="search_view_id" ref="view_sc_legacy_financing_loan_fact_search"/>
+        <field name="context">{'sc_manual_entry': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="action_sc_legacy_fact_fund_daily_snapshot" model="ir.actions.act_window">
-        <field name="name">历史资金日报</field>
+        <field name="name">资金日报</field>
         <field name="res_model">sc.legacy.fund.daily.snapshot.fact</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        <field name="search_view_id" ref="view_sc_legacy_fund_daily_snapshot_fact_search"/>
+        <field name="context">{'sc_manual_entry': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
 
     <menuitem id="menu_sc_legacy_fact_assets"
-              name="历史迁移资产"
+              name="业务资料查询"
               parent="smart_construction_core.menu_sc_finance_center"
               sequence="95"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_super_admin"/>
     <menuitem id="menu_sc_legacy_fact_fund_daily_snapshot"
-              name="历史资金日报"
+              name="资金日报"
               parent="menu_sc_legacy_fact_assets"
               action="action_sc_legacy_fact_fund_daily_snapshot"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_super_admin"/>
     <menuitem id="menu_sc_legacy_fact_financing_loan"
-              name="历史借款/贷款"
+              name="借款/贷款查询"
               parent="menu_sc_legacy_fact_assets"
               action="action_sc_legacy_fact_financing_loan"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_super_admin"/>
     <menuitem id="menu_sc_legacy_fact_receipt_income"
-              name="历史收款/收入"
+              name="收款/收入查询"
               parent="menu_sc_legacy_fact_assets"
               action="action_sc_legacy_fact_receipt_income"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_super_admin"/>
     <menuitem id="menu_sc_legacy_fact_expense_deposit"
-              name="历史费用/保证金"
+              name="费用/保证金查询"
               parent="menu_sc_legacy_fact_assets"
               action="action_sc_legacy_fact_expense_deposit"
               sequence="40"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_super_admin"/>
     <menuitem id="menu_sc_legacy_fact_invoice_tax"
-              name="历史发票/税务"
+              name="发票/税务查询"
               parent="menu_sc_legacy_fact_assets"
               action="action_sc_legacy_fact_invoice_tax"
               sequence="50"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_super_admin"/>
     <menuitem id="menu_sc_legacy_fact_workflow_audit"
-              name="历史审批事实"
+              name="审批记录查询"
               parent="menu_sc_legacy_fact_assets"
               action="action_sc_legacy_fact_workflow_audit"
               sequence="60"

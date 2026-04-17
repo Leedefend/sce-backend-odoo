@@ -1,5 +1,5 @@
 <odoo>
-    <!-- 企业启用：在 platform base 自洽加载后，再由行业模块补 Business Full 入口 -->
+    <!-- 企业启用：在 platform base 自洽加载后，再由行业模块并入统一智能施工菜单树并补 Business Full 入口 -->
     <record id="smart_enterprise_base.action_enterprise_company" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_business_full'))]"/>
     </record>
@@ -13,6 +13,7 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_business_full'))]"/>
     </record>
     <record id="smart_enterprise_base.menu_enterprise_base_root" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_business_full'))]"/>
     </record>
     <record id="smart_enterprise_base.menu_enterprise_company" model="ir.ui.menu">
@@ -353,7 +354,7 @@
       <field name="groups_id" eval="[(6, 0, [ref('purchase.group_purchase_user')])]"/>
     </record>
 
-    <!-- 迁移事实模型：重建后原生页面只读可见，不开放业务编辑 -->
+    <!-- 迁移承接业务模型：只读角色仅可查，经办/审批角色可在原生页面日常录入与编辑。 -->
     <record id="access_sc_legacy_workflow_audit_finance_read" model="ir.model.access">
       <field name="name">sc.legacy.workflow.audit finance read</field>
       <field name="model_id" ref="model_sc_legacy_workflow_audit"/>
@@ -382,6 +383,15 @@
       <field name="perm_create" eval="0"/>
       <field name="perm_unlink" eval="0"/>
     </record>
+    <record id="access_sc_legacy_expense_deposit_fact_finance_user" model="ir.model.access">
+      <field name="name">sc.legacy.expense.deposit.fact finance user</field>
+      <field name="model_id" ref="model_sc_legacy_expense_deposit_fact"/>
+      <field name="group_id" ref="smart_construction_core.group_sc_cap_finance_user"/>
+      <field name="perm_read" eval="1"/>
+      <field name="perm_write" eval="1"/>
+      <field name="perm_create" eval="1"/>
+      <field name="perm_unlink" eval="0"/>
+    </record>
     <record id="access_sc_legacy_expense_deposit_fact_super_admin" model="ir.model.access">
       <field name="name">sc.legacy.expense.deposit.fact super admin</field>
       <field name="model_id" ref="model_sc_legacy_expense_deposit_fact"/>
@@ -399,6 +409,15 @@
       <field name="perm_read" eval="1"/>
       <field name="perm_write" eval="0"/>
       <field name="perm_create" eval="0"/>
+      <field name="perm_unlink" eval="0"/>
+    </record>
+    <record id="access_sc_legacy_invoice_tax_fact_finance_user" model="ir.model.access">
+      <field name="name">sc.legacy.invoice.tax.fact finance user</field>
+      <field name="model_id" ref="model_sc_legacy_invoice_tax_fact"/>
+      <field name="group_id" ref="smart_construction_core.group_sc_cap_finance_user"/>
+      <field name="perm_read" eval="1"/>
+      <field name="perm_write" eval="1"/>
+      <field name="perm_create" eval="1"/>
       <field name="perm_unlink" eval="0"/>
     </record>
     <record id="access_sc_legacy_invoice_tax_fact_super_admin" model="ir.model.access">
@@ -420,6 +439,15 @@
       <field name="perm_create" eval="0"/>
       <field name="perm_unlink" eval="0"/>
     </record>
+    <record id="access_sc_legacy_receipt_income_fact_finance_user" model="ir.model.access">
+      <field name="name">sc.legacy.receipt.income.fact finance user</field>
+      <field name="model_id" ref="model_sc_legacy_receipt_income_fact"/>
+      <field name="group_id" ref="smart_construction_core.group_sc_cap_finance_user"/>
+      <field name="perm_read" eval="1"/>
+      <field name="perm_write" eval="1"/>
+      <field name="perm_create" eval="1"/>
+      <field name="perm_unlink" eval="0"/>
+    </record>
     <record id="access_sc_legacy_receipt_income_fact_super_admin" model="ir.model.access">
       <field name="name">sc.legacy.receipt.income.fact super admin</field>
       <field name="model_id" ref="model_sc_legacy_receipt_income_fact"/>
@@ -439,6 +467,15 @@
       <field name="perm_create" eval="0"/>
       <field name="perm_unlink" eval="0"/>
     </record>
+    <record id="access_sc_legacy_financing_loan_fact_finance_user" model="ir.model.access">
+      <field name="name">sc.legacy.financing.loan.fact finance user</field>
+      <field name="model_id" ref="model_sc_legacy_financing_loan_fact"/>
+      <field name="group_id" ref="smart_construction_core.group_sc_cap_finance_user"/>
+      <field name="perm_read" eval="1"/>
+      <field name="perm_write" eval="1"/>
+      <field name="perm_create" eval="1"/>
+      <field name="perm_unlink" eval="0"/>
+    </record>
     <record id="access_sc_legacy_financing_loan_fact_super_admin" model="ir.model.access">
       <field name="name">sc.legacy.financing.loan.fact super admin</field>
       <field name="model_id" ref="model_sc_legacy_financing_loan_fact"/>
@@ -456,6 +493,15 @@
       <field name="perm_read" eval="1"/>
       <field name="perm_write" eval="0"/>
       <field name="perm_create" eval="0"/>
+      <field name="perm_unlink" eval="0"/>
+    </record>
+    <record id="access_sc_legacy_fund_daily_snapshot_fact_finance_user" model="ir.model.access">
+      <field name="name">sc.legacy.fund.daily.snapshot.fact finance user</field>
+      <field name="model_id" ref="model_sc_legacy_fund_daily_snapshot_fact"/>
+      <field name="group_id" ref="smart_construction_core.group_sc_cap_finance_user"/>
+      <field name="perm_read" eval="1"/>
+      <field name="perm_write" eval="1"/>
+      <field name="perm_create" eval="1"/>
       <field name="perm_unlink" eval="0"/>
     </record>
     <record id="access_sc_legacy_fund_daily_snapshot_fact_super_admin" model="ir.model.access">

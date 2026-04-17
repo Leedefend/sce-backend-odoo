@@ -29,8 +29,6 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         "smart_construction_core.group_sc_cap_finance_user",
         "smart_core.group_smart_core_finance_approver",
         "smart_construction_core.group_sc_cap_finance_manager",
-        "smart_construction_custom.group_sc_role_finance",
-        "smart_construction_custom.group_sc_role_executive",
     ]
     ACL_MODE = "explicit_check"
 

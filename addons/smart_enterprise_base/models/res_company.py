@@ -12,7 +12,59 @@ class ResCompany(models.Model):
     sc_is_active = fields.Boolean("启用", default=True)
     sc_department_count = fields.Integer("部门数", compute="_compute_sc_department_count")
 
-    @api.depends_context("active_test")
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._ensure_fiscalyear_db_defaults()
+        for vals in vals_list:
+            if "account_opening_date" in self._fields and not vals.get("account_opening_date"):
+                vals["account_opening_date"] = fields.Date.context_today(self).replace(month=1, day=1)
+            if "po_lead" in self._fields and vals.get("po_lead") is None:
+                vals["po_lead"] = 0.0
+            if "fiscalyear_last_day" in self._fields and not vals.get("fiscalyear_last_day"):
+                vals["fiscalyear_last_day"] = 31
+            if "fiscalyear_last_month" in self._fields and not vals.get("fiscalyear_last_month"):
+                vals["fiscalyear_last_month"] = "12"
+        return super().create(vals_list)
+
+    def init(self):
+        super().init()
+        self._ensure_fiscalyear_db_defaults()
+
+    def _ensure_fiscalyear_db_defaults(self):
+        self.env.cr.execute(
+            """
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'res_company'
+               AND column_name IN (
+                   'account_opening_date',
+                   'fiscalyear_last_day',
+                   'fiscalyear_last_month',
+                   'po_lead'
+               )
+            """
+        )
+        columns = {row[0] for row in self.env.cr.fetchall()}
+        if "account_opening_date" in columns:
+            self.env.cr.execute(
+                """
+                ALTER TABLE res_company
+                ALTER COLUMN account_opening_date SET DEFAULT date_trunc('year', CURRENT_DATE)::date
+                """
+            )
+        if "fiscalyear_last_day" in columns:
+            self.env.cr.execute(
+                "ALTER TABLE res_company ALTER COLUMN fiscalyear_last_day SET DEFAULT 31"
+            )
+        if "fiscalyear_last_month" in columns:
+            self.env.cr.execute(
+                "ALTER TABLE res_company ALTER COLUMN fiscalyear_last_month SET DEFAULT '12'"
+            )
+        if "po_lead" in columns:
+            self.env.cr.execute(
+                "ALTER TABLE res_company ALTER COLUMN po_lead SET DEFAULT 0.0"
+            )
+
     def _compute_sc_department_count(self):
         Department = self.env["hr.department"].sudo()
         grouped = Department.read_group(

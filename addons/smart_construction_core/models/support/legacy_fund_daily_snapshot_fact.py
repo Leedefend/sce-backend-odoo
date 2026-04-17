@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from uuid import uuid4
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools.float_utils import float_is_zero
@@ -9,6 +11,26 @@ class ScLegacyFundDailySnapshotFact(models.Model):
     _description = "Legacy Fund Daily Snapshot Fact"
     _order = "snapshot_date desc, id desc"
     _rec_name = "display_name"
+
+    def _manual_entry_source_table(self):
+        return "manual.sc.legacy.fund.daily.snapshot.fact"
+
+    def _apply_manual_entry_defaults(self, vals):
+        if vals.get("legacy_source_table") and vals.get("legacy_record_id"):
+            return vals
+        vals = dict(vals)
+        vals.setdefault("legacy_source_table", self._manual_entry_source_table())
+        vals.setdefault("legacy_record_id", "MANUAL-%s" % uuid4().hex)
+        project_id = vals.get("project_id")
+        if project_id and not vals.get("legacy_project_id"):
+            project = self.env["project.project"].browse(project_id)
+            vals["legacy_project_id"] = project.legacy_project_id or project.project_code or str(project.id)
+            vals.setdefault("legacy_project_name", project.name)
+        return vals
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        return super().create([self._apply_manual_entry_defaults(vals) for vals in vals_list])
 
     display_name = fields.Char(string="摘要", compute="_compute_display_name", store=True)
     legacy_source_table = fields.Char(

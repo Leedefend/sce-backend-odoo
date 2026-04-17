@@ -136,6 +136,7 @@ class TenderBid(models.Model):
                 ):
                     contract_vals = {
                         "name": f"{bid.project_id.name}-收入合同",
+                        "subject": bid.tender_name or f"{bid.project_id.name}-收入合同",
                         "project_id": bid.project_id.id,
                         "partner_id": bid.owner_id.id,
                         "amount_final": bid.bid_amount or bid.amount_total or 0.0,

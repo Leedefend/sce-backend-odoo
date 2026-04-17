@@ -92,6 +92,32 @@ class TestProjectObjectButtonRuntimeBackend(TransactionCase):
         buttons = arch.xpath("//button[@name='action_view_stage_requirements']")
         self.assertFalse(buttons)
 
+    def test_legacy_provenance_sections_are_hidden_from_pm_view(self):
+        view = (
+            self.env["project.project"]
+            .with_user(self.pm_user)
+            .get_view(
+                self.env.ref("smart_construction_core.view_project_form_sc_core").id,
+                view_type="form",
+            )
+        )
+
+        arch = etree.fromstring(view["arch"].encode())
+        self.assertFalse(arch.xpath("//group[@string='旧系统导入标识']"))
+        self.assertFalse(arch.xpath("//group[@string='旧系统阶段与地区']"))
+
+        super_view = (
+            self.env["project.project"]
+            .with_user(self.super_admin_user)
+            .get_view(
+                self.env.ref("smart_construction_core.view_project_form_sc_core").id,
+                view_type="form",
+            )
+        )
+        super_arch = etree.fromstring(super_view["arch"].encode())
+        self.assertTrue(super_arch.xpath("//group[@string='旧系统导入标识']"))
+        self.assertTrue(super_arch.xpath("//group[@string='旧系统阶段与地区']"))
+
     def test_next_actions_do_not_expose_stage_requirements_fallback_to_delivered_roles(self):
         for user in (self.pm_user, self.executive_user):
             payload = self.project.with_user(user).sc_get_next_actions(limit=3)

@@ -380,14 +380,14 @@ class ScCapability(models.Model):
 
             payload = cap.default_payload or {}
             menu_xmlid = payload.get("menu_xmlid")
-            if menu_xmlid and not self.env.ref(menu_xmlid, raise_if_not_found=False):
+            if menu_xmlid and self._should_lint_payload_xmlid(menu_xmlid) and not self.env.ref(menu_xmlid, raise_if_not_found=False):
                 issues.append({
                     "code": "MENU_XMLID_NOT_FOUND",
                     "message": _("Menu xmlid not found."),
                     "detail": {"capability_key": cap.key, "menu_xmlid": menu_xmlid},
                 })
             action_xmlid = payload.get("action_xmlid")
-            if action_xmlid and not self.env.ref(action_xmlid, raise_if_not_found=False):
+            if action_xmlid and self._should_lint_payload_xmlid(action_xmlid) and not self.env.ref(action_xmlid, raise_if_not_found=False):
                 issues.append({
                     "code": "ACTION_XMLID_NOT_FOUND",
                     "message": _("Action xmlid not found."),
@@ -417,6 +417,14 @@ class ScCapability(models.Model):
                     })
 
         return issues
+
+    @api.model
+    def _should_lint_payload_xmlid(self, xmlid):
+        module = str(xmlid or "").split(".", 1)[0]
+        if not module:
+            return False
+        module_rec = self.env["ir.module.module"].sudo().search([("name", "=", module)], limit=1)
+        return not module_rec or module_rec.state == "installed"
 
 
 class ScScene(models.Model):

@@ -29,27 +29,33 @@
                             type="object"
                             string="从中标清单生成"
                             class="oe_highlight"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             modifiers='{"invisible":[["state","!=","draft"]]}'/>
                     <button name="action_confirm"
                             type="object"
                             class="oe_highlight"
                             string="确认合同"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             modifiers='{"invisible":[["state","!=","draft"]]}'/>
                     <button name="action_set_running"
                             type="object"
                             string="开始执行"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             modifiers='{"invisible":[["state","not in",["draft","confirmed"]]]}'/>
                     <button name="action_close"
                             type="object"
                             string="完成"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             modifiers='{"invisible":[["state","not in",["running","confirmed"]]]}'/>
                     <button name="action_cancel"
                             type="object"
                             string="作废"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             modifiers='{"invisible":[["state","=","cancel"]]}'/>
                     <button name="action_reset_draft"
                             type="object"
                             string="重置为草稿"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             modifiers='{"invisible":[["state","!=","cancel"]]}'/>
                     <field name="state"
                            widget="statusbar"

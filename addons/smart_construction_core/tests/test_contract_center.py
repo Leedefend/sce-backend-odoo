@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
 
@@ -26,6 +28,15 @@ class TestConstructionContract(TransactionCase):
         company = self.env.ref("base.main_company")
         country = self.env.ref("base.cn", raise_if_not_found=False)
         tax_group = self._ensure_tax_group()
+        existing = self.env["account.tax"].search(
+            [
+                ("name", "=", name),
+                ("company_id", "=", company.id),
+            ],
+            limit=1,
+        )
+        if existing:
+            return existing
         vals = {
             "name": name,
             "amount_type": "percent",
@@ -71,6 +82,20 @@ class TestConstructionContract(TransactionCase):
             "price_bidded": 500.0,
         })
 
+    def _create_user(self, login, group_xmlids):
+        company = self.env.ref("base.main_company")
+        groups = [(6, 0, [self.env.ref(xmlid).id for xmlid in group_xmlids])]
+        return self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": login,
+                "login": login,
+                "email": f"{login}@example.com",
+                "company_id": company.id,
+                "company_ids": [(6, 0, [company.id])],
+                "groups_id": groups,
+            }
+        )
+
     @tagged("post_install", "-at_install", "sc_regression", "contract")
     def test_contract_state_and_amount(self):
         contract = self.env["construction.contract"].create(
@@ -113,6 +138,53 @@ class TestConstructionContract(TransactionCase):
         self.assertEqual(contract.state, "running")
         contract.action_close()
         self.assertEqual(contract.state, "closed")
+
+    def test_contract_workflow_buttons_follow_execution_groups(self):
+        contract_user = self._create_user(
+            "contract_button_user",
+            ["smart_construction_core.group_sc_cap_contract_user"],
+        )
+        finance_read = self._create_user(
+            "contract_button_finance_read",
+            ["smart_construction_core.group_sc_cap_finance_read"],
+        )
+
+        exec_view = (
+            self.env["construction.contract"]
+            .with_user(contract_user)
+            .sudo(False)
+            .get_view(
+                self.env.ref("smart_construction_core.view_construction_contract_form").id,
+                view_type="form",
+            )
+        )
+        exec_arch = etree.fromstring(exec_view["arch"].encode())
+        exec_buttons = {
+            button.get("name")
+            for button in exec_arch.xpath("//header/button[@type='object']")
+        }
+        self.assertTrue(
+            {
+                "action_generate_lines_from_budget",
+                "action_confirm",
+                "action_set_running",
+                "action_close",
+                "action_cancel",
+                "action_reset_draft",
+            }.issubset(exec_buttons)
+        )
+
+        readonly_view = self.env.ref("smart_construction_core.view_construction_contract_form")
+        readonly_arch = etree.fromstring(readonly_view.arch_db.encode())
+        readonly_buttons = readonly_arch.xpath("//header/button[@type='object']")
+        required_groups = {
+            "smart_construction_core.group_sc_cap_contract_user",
+            "smart_construction_core.group_sc_cap_contract_manager",
+        }
+        self.assertTrue(readonly_buttons)
+        for button in readonly_buttons:
+            groups = {item.strip() for item in (button.get("groups") or "").split(",") if item.strip()}
+            self.assertEqual(groups, required_groups)
 
     @tagged("post_install", "-at_install", "sc_regression", "contract")
     def test_generate_lines_from_budget(self):

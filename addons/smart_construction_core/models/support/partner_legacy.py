@@ -16,11 +16,13 @@ class ResPartner(models.Model):
             ("cooperat_company", "合作单位"),
             ("supplier", "供应商"),
             ("company_supplier", "合作单位+供应商"),
+            ("contract_counterparty", "合同补充相对方"),
+            ("receipt_counterparty", "收款补充相对方"),
         ],
         string="旧系统往来单位来源",
         index=True,
         copy=False,
-        help="旧系统 partner 来源表。首轮强证据批次默认使用 T_Base_CooperatCompany。",
+        help="旧系统 partner 来源表及补充业务相对方来源，用于迁移审计和可重放数据资产。",
     )
     legacy_partner_name = fields.Char(
         string="旧系统往来单位名称",

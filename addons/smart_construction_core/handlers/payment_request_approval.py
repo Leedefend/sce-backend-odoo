@@ -370,7 +370,6 @@ class PaymentRequestSubmitHandler(_BasePaymentApprovalHandler):
     ACCESS_GROUPS = [
         "smart_construction_core.group_sc_cap_finance_user",
         "smart_core.group_smart_core_finance_approver",
-        "smart_construction_custom.group_sc_role_finance",
     ]
 
 
@@ -383,7 +382,6 @@ class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
     ACTION_NAME = "approve"
     ACCESS_GROUPS = [
         "smart_core.group_smart_core_finance_approver",
-        "smart_construction_custom.group_sc_role_executive",
     ]
 
 
@@ -396,7 +394,6 @@ class PaymentRequestRejectHandler(_BasePaymentApprovalHandler):
     ACTION_NAME = "reject"
     ACCESS_GROUPS = [
         "smart_core.group_smart_core_finance_approver",
-        "smart_construction_custom.group_sc_role_executive",
     ]
 
     def _validate_action_params(self, params: dict) -> str:
@@ -418,5 +415,4 @@ class PaymentRequestDoneHandler(_BasePaymentApprovalHandler):
     ACCESS_GROUPS = [
         "smart_construction_core.group_sc_cap_finance_manager",
         "smart_core.group_smart_core_finance_approver",
-        "smart_construction_custom.group_sc_role_finance",
     ]
