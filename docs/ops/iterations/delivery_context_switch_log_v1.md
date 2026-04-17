@@ -22006,3 +22006,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check PASS; rollback-only approval lifecycle PASS`
 - next_step: `Continue payment lifecycle verification from approved to done and ledger registration.`
 - stop_condition: `none`
+### 2026-04-17T23:16:00+08:00
+- blocker_key: `iter_payment_done_ledger_lifecycle_screen_pass_with_next_settlement_blocker`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN`
+- completed_step: `Rollback-only lifecycle screen confirmed approved/validated payment requests cannot reach done directly because completion requires settled payment; manual ledger registration is also blocked when payment.request has no settlement_id`
+- verification: `validate_task PASS; rollback-only direct done screen PASS with expected ValidationError; rollback-only manual ledger screen PASS with expected settlement prerequisite UserError`
+- next_step: `Open dedicated settlement prerequisite screen to classify the correct daily-business path for settlement-linked payment requests.`
+- stop_condition: `none`

@@ -1,0 +1,72 @@
+task_id: ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN
+title: Payment done and ledger lifecycle screen
+type: business-flow-screen
+status: active
+priority: high
+
+goal: >
+  Verify whether a newly submitted and approved payable request can be completed
+  and whether payment ledger registration is automatic or manual.
+
+user_visible_outcome:
+  - "Determine if daily payment processing can continue from approved request to done and ledger."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/payment_done_ledger_lifecycle_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 6ab6e46
+  prior_task: ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC
+
+architecture:
+  layer_target: Business Flow Verification
+  module: smart_construction_core payment lifecycle
+  module_owner: construction industry business flow
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Done and ledger states are payment lifecycle business facts. The check must
+    not be patched in frontend or scene orchestration.
+  reason: >
+    Submit and approval now work. The remaining operational question is whether
+    payment completion and ledger registration can proceed.
+
+change_rules:
+  - screen only
+  - use rollback-only runtime records
+  - do not persist test payment or ledger records
+  - do not modify addons, frontend, ACL, settlement, account, or payment code
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_persists_business_data
+  - acceptance_failed
+
+deliverables:
+  - done and ledger lifecycle screen result
+  - next implementation recommendation
+
+rollback:
+  - git restore docs/ops/business_continuity/payment_done_ledger_lifecycle_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC
