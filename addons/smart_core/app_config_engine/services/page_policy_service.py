@@ -51,31 +51,9 @@ class PagePolicyService:
         if not field_order:
             return
 
-        keep_names = list(field_order)
-
-        tree = views.get("tree") if isinstance(views.get("tree"), dict) else {}
-        keep_names.extend(self.normalize_field_list(tree.get("columns") if isinstance(tree.get("columns"), list) else []))
-
-        kanban = views.get("kanban") if isinstance(views.get("kanban"), dict) else {}
-        keep_names.extend(self.normalize_field_list(kanban.get("fields") if isinstance(kanban.get("fields"), list) else []))
-
-        search = data.get("search") if isinstance(data.get("search"), dict) else {}
-        keep_names.extend(
-            self.normalize_field_list(
-                item.get("field")
-                for item in (search.get("group_by") if isinstance(search.get("group_by"), list) else [])
-                if isinstance(item, dict)
-            )
-        )
-
-        statusbar = form.get("statusbar") if isinstance(form.get("statusbar"), dict) else {}
-        status_field = str(statusbar.get("field") or "").strip()
-        if status_field:
-            keep_names.append(status_field)
-
-        keep_names = self.normalize_field_list(keep_names)
-        data["fields"] = {name: fields_map.get(name) for name in keep_names if name in fields_map}
-        data["visible_fields"] = list(field_order)
+        data["layout_visible_fields"] = list(field_order)
+        if not isinstance(data.get("visible_fields"), list):
+            data["visible_fields"] = list(field_order)
 
     def safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()

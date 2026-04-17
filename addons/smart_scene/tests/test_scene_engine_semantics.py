@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import importlib.util
 import sys
 import types
@@ -70,6 +71,79 @@ class TestSceneEngineSemantics(unittest.TestCase):
         self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "search")
         self.assertEqual((((payload.get("scene") or {}).get("layout_mode"))), "entry_flow")
         self.assertEqual((((payload.get("scene") or {}).get("interaction_mode"))), "query")
+        list_profile = ((payload.get("page") or {}).get("list_profile")) or {}
+        self.assertEqual(list_profile.get("owner_layer"), "scene_orchestration")
+        self.assertEqual(list_profile.get("search_mode"), "faceted")
+        self.assertEqual(list_profile.get("filter_count"), 1)
+
+    def test_build_scene_contract_from_specs_derives_list_presentation_profile(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "projects.list"},
+            page_hint={"key": "projects.list", "title": "项目列表"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "semantic_page": {
+                    "list_semantics": {
+                        "owner_layer": "scene_orchestration",
+                        "columns": [
+                            {"name": "name", "label": "项目"},
+                            {"name": "stage_id", "label": "阶段"},
+                        ],
+                        "row_primary": "name",
+                        "row_secondary": "stage_id",
+                        "status_field": "lifecycle_state",
+                    }
+                },
+                "search_surface": {
+                    "mode": "faceted",
+                    "filters": [{"key": "active", "label": "有效"}],
+                },
+            },
+        )
+
+        list_profile = ((payload.get("page") or {}).get("list_profile")) or {}
+        self.assertEqual(list_profile.get("owner_layer"), "scene_orchestration")
+        self.assertEqual([row.get("name") for row in list_profile.get("columns") or []], ["name", "stage_id"])
+        self.assertEqual(list_profile.get("row_primary"), "name")
+        self.assertEqual(list_profile.get("status_field"), "lifecycle_state")
+        self.assertEqual(list_profile.get("filter_count"), 1)
+
+    def test_build_scene_contract_from_specs_derives_relation_entry_envelope(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "projects.form"},
+            page_hint={"key": "projects.form", "title": "项目"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "semantic_page": {
+                    "relation_entries": [
+                        {
+                            "field": "project_type_id",
+                            "model": "sc.dictionary",
+                            "create_mode": "page",
+                            "can_read": True,
+                            "can_create": False,
+                            "reason_code": "PAGE_ENTRY_READONLY",
+                            "default_vals": {"type": "project_type"},
+                            "action_id": 101,
+                            "menu_id": 11,
+                        }
+                    ]
+                }
+            },
+        )
+
+        entries = ((payload.get("page") or {}).get("relation_entries")) or []
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].get("owner_layer"), "scene_orchestration")
+        self.assertEqual(entries[0].get("field"), "project_type_id")
+        self.assertEqual(entries[0].get("create_mode"), "page")
+        self.assertTrue(entries[0].get("can_read"))
+        self.assertFalse(entries[0].get("can_create"))
+        self.assertEqual(entries[0].get("reason_code"), "PAGE_ENTRY_READONLY")
 
     def test_build_scene_contract_from_specs_projects_readonly_permission_surface_into_permissions(self):
         payload = target.build_scene_contract_from_specs(
@@ -181,6 +255,11 @@ class TestSceneEngineSemantics(unittest.TestCase):
             (((payload.get("permissions") or {}).get("record_state_summary")) or {}).get("missing_required_count"),
             1,
         )
+        lifecycle = ((payload.get("page") or {}).get("lifecycle")) or {}
+        self.assertEqual(lifecycle.get("owner_layer"), "scene_orchestration")
+        self.assertEqual(lifecycle.get("state_field"), "state")
+        self.assertEqual([row.get("key") for row in lifecycle.get("steps") or []], ["draft", "approved"])
+        self.assertEqual(lifecycle.get("active_transition_count"), 1)
 
     def test_build_scene_contract_from_specs_projects_workflow_gate_when_transitions_missing(self):
         payload = target.build_scene_contract_from_specs(
@@ -496,6 +575,55 @@ class TestSceneEngineSemantics(unittest.TestCase):
             "toolbar_disabled",
         )
 
+    def test_scene_action_grouping_preserves_source_action_and_permission_facts(self):
+        semantic_surface = {
+            "semantic_page": {
+                "permission_verdicts": {
+                    "execute": {"allowed": True},
+                },
+                "actions": {
+                    "header_actions": [
+                        {"key": "submit", "label": "提交", "semantic": "primary_action", "enabled": True},
+                        {"key": "sync", "label": "同步", "enabled": False, "reason_code": "busy"},
+                    ],
+                    "record_actions": [
+                        {"key": "delete", "label": "删除", "semantic": "danger", "enabled": True},
+                    ],
+                    "toolbar_actions": [
+                        {"key": "export", "label": "导出", "enabled": True},
+                    ],
+                },
+            }
+        }
+        original = copy.deepcopy(semantic_surface)
+
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "workspace.record"},
+            page_hint={"key": "workspace.record", "title": "记录"},
+            zone_specs=[],
+            built_zones={},
+            diagnostics={"source": "test"},
+            semantic_surface=semantic_surface,
+        )
+
+        self.assertEqual(semantic_surface, original)
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("primary_actions") or [])],
+            ["submit"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("secondary_actions") or [])],
+            ["export"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in ((payload.get("actions") or {}).get("danger_actions") or [])],
+            ["delete"],
+        )
+        self.assertEqual(
+            (((payload.get("permissions") or {}).get("disabled_actions")) or {}).get("sync"),
+            "busy",
+        )
+
     def test_build_scene_contract_from_specs_projects_semantic_action_classification_into_overlay_groups(self):
         payload = target.build_scene_contract_from_specs(
             scene_hint={"key": "workspace.record"},
@@ -648,6 +776,59 @@ class TestSceneEngineSemantics(unittest.TestCase):
         self.assertEqual(summary.get("active_transition_count"), 1)
         self.assertEqual(summary.get("missing_required_fields"), [])
         self.assertEqual(summary.get("closed_states"), ["done"])
+
+    def test_build_scene_contract_reports_scene_envelope_observability(self):
+        payload = target.build_scene_contract_from_specs(
+            scene_hint={"key": "projects.form"},
+            page_hint={"key": "projects.form", "title": "项目"},
+            zone_specs=[],
+            built_zones={},
+            record={"state": "draft"},
+            diagnostics={"source": "test"},
+            semantic_surface={
+                "workflow_surface": {
+                    "state_field": "state",
+                    "states": ["draft", "approved"],
+                    "transitions": [{"from": "draft", "to": "approved"}],
+                },
+                "search_surface": {"mode": "faceted", "filters": [{"key": "mine"}]},
+                "semantic_page": {
+                    "lifecycle": {"state_field": "stage_id"},
+                    "list_profile": {"columns": ["name"]},
+                    "action_groups": [{"key": "workflow", "actions": ["submit"]}],
+                    "actions": {
+                        "header_actions": [
+                            {"key": "submit", "label": "提交", "enabled": True},
+                        ],
+                    },
+                    "list_semantics": {
+                        "columns": [{"name": "name", "label": "项目"}],
+                        "row_primary": "name",
+                    },
+                    "relation_entries": [
+                        {
+                            "field": "project_type_id",
+                            "model": "sc.dictionary",
+                            "create_mode": "page",
+                            "can_read": True,
+                            "can_create": False,
+                        }
+                    ],
+                },
+            },
+        )
+
+        observability = ((payload.get("diagnostics") or {}).get("scene_envelope_observability")) or {}
+        scene_presence = observability.get("scene_envelope_presence") or {}
+        compatibility_presence = observability.get("compatibility_field_presence") or {}
+        self.assertTrue(scene_presence.get("action_surface"))
+        self.assertTrue(scene_presence.get("lifecycle"))
+        self.assertTrue(scene_presence.get("list_profile"))
+        self.assertTrue(scene_presence.get("relation_entries"))
+        self.assertTrue(compatibility_presence.get("action_groups"))
+        self.assertTrue(compatibility_presence.get("lifecycle"))
+        self.assertTrue(compatibility_presence.get("list_profile"))
+        self.assertTrue(compatibility_presence.get("field_relation_entry"))
 
 
 if __name__ == "__main__":

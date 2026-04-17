@@ -228,3 +228,41 @@ class TestActionDispatcherServerMapping(TransactionCase):
         dispatcher._enrich_nav_models(tree)
         model = str(tree[0].get("model") or "").strip()
         self.assertEqual(model, "construction.work.breakdown")
+
+
+@tagged("post_install", "-at_install", "smart_core", "project_form_surface")
+class TestProjectFormSurfacePreference(TransactionCase):
+    def test_view_config_prefers_richer_default_form_over_narrow_action_binding(self):
+        narrow_view = self.env["ir.ui.view"].sudo().create(
+            {
+                "name": "Tmp narrow project form for action-open",
+                "model": "project.project",
+                "type": "form",
+                "arch_db": """
+                    <form string="Tmp project form">
+                        <sheet>
+                            <group>
+                                <field name="name"/>
+                            </group>
+                        </sheet>
+                    </form>
+                """,
+            }
+        )
+        action = self.env["ir.actions.act_window"].sudo().create(
+            {
+                "name": "Tmp narrow project action",
+                "res_model": "project.project",
+                "view_mode": "form",
+                "view_id": narrow_view.id,
+            }
+        )
+
+        config = self.env["app.view.config"].sudo().with_context(contract_action_id=action.id)
+        data = config._safe_get_view_data("project.project", "form")
+
+        source = str(data.get("_contract_view_source") or "").strip()
+        arch = str(data.get("arch") or "")
+        self.assertNotEqual(source, "action_specific", data)
+        self.assertFalse(source.startswith("action_specific"), data)
+        self.assertGreater(len(arch), len(narrow_view.arch_db or ""))

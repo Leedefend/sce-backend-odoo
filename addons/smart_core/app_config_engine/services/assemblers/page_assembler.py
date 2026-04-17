@@ -282,9 +282,6 @@ class PageAssembler:
             data["views"][vt] = v_contract
         versions["view"] = ",".join(v_versions) if v_versions else "1"
 
-        if self.env.context.get("contract_action_id"):
-            self._restrict_form_fields_to_layout(data)
-
         # 4) 搜索条件（运行时需要当前用户上下文，因此用 env）
         try:
             scfg = env['app.search.config']._generate_from_search(model)

@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
+import ast
+import pathlib
+
 from odoo.tests.common import TransactionCase, tagged
 
 from ..handlers.load_contract import LoadContractHandler
-from ..app_config_engine.services.assemblers.page_assembler import PageAssembler
+from ..app_config_engine.services.contract_service import ContractService
+from ..app_config_engine.services.page_policy_service import PagePolicyService
+from ..v2.services.ui_contract_service import UIContractServiceV2
 from ..utils.contract_governance import apply_contract_governance
 
 
@@ -112,7 +117,7 @@ class TestLoadContractCapabilityProfile(TransactionCase):
         self.assertEqual(kanban_semantics.get("support_tier"), "lightweight")
 
     def test_form_field_restriction_keeps_tree_columns(self):
-        assembler = PageAssembler.__new__(PageAssembler)
+        service = PagePolicyService.__new__(PagePolicyService)
         data = {
             "views": {
                 "tree": {
@@ -140,12 +145,218 @@ class TestLoadContractCapabilityProfile(TransactionCase):
             },
         }
 
-        assembler._restrict_form_fields_to_layout(data)
+        service.restrict_form_fields_to_layout(data)
 
         self.assertEqual(data.get("visible_fields"), ["name", "login", "active"])
         self.assertIn("company_id", data.get("fields") or {})
         self.assertIn("sc_department_id", data.get("fields") or {})
         self.assertIn("login", data.get("fields") or {})
+
+    def test_page_assembler_no_longer_calls_form_field_restriction(self):
+        source_path = pathlib.Path(__file__).resolve().parents[1] / "app_config_engine" / "services" / "assemblers" / "page_assembler.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        calls = []
+
+        class Finder(ast.NodeVisitor):
+            def visit_FunctionDef(self, node):
+                if node.name != "assemble_page_contract":
+                    return
+                self.generic_visit(node)
+
+            def visit_Call(self, node):
+                func = node.func
+                if isinstance(func, ast.Attribute) and func.attr == "_restrict_form_fields_to_layout":
+                    calls.append(node.lineno)
+                self.generic_visit(node)
+
+        Finder().visit(tree)
+
+        self.assertEqual(calls, [])
+
+    def test_contract_service_preserves_semantic_layout_and_tab_titles(self):
+        service = ContractService.__new__(ContractService)
+        contract = {
+            "data": {
+                "views": {
+                    "form": {
+                        "layout": [
+                            {
+                                "type": "notebook",
+                                "children": [],
+                                "tabs": [
+                                    {
+                                        "children": [
+                                            {
+                                                "type": "page",
+                                                "children": [
+                                                    {"type": "field", "name": "name"},
+                                                ],
+                                                "attributes": {"string": "项目概览"},
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                },
+                "semantic_page": {
+                    "form_semantics": {},
+                },
+            }
+        }
+
+        service._normalize_form_structure_semantics(contract)
+
+        semantic_page = contract.get("data", {}).get("semantic_page") or {}
+        form_semantics = semantic_page.get("form_semantics") or {}
+        layout = form_semantics.get("layout")
+        notebook = (((contract.get("data") or {}).get("views") or {}).get("form") or {}).get("layout") or []
+        notebook = notebook[0] if notebook else {}
+        tabs = notebook.get("tabs") or []
+
+        self.assertIsInstance(layout, list)
+        self.assertEqual(form_semantics.get("layout_source"), "views.form.layout")
+        self.assertEqual(form_semantics.get("layout_section_count"), 1)
+        self.assertEqual(tabs[0].get("title"), "项目概览")
+        self.assertEqual(tabs[0].get("label"), "项目概览")
+        self.assertEqual(notebook.get("label"), "项目概览")
+
+    def test_v2_ui_contract_service_preserves_semantic_layout(self):
+        contract = {
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "notebook",
+                            "children": [],
+                            "tabs": [
+                                {
+                                    "children": [
+                                        {
+                                            "type": "page",
+                                            "children": [
+                                                {"type": "field", "name": "name"},
+                                            ],
+                                            "name": "实施详情",
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            },
+            "semantic_page": {
+                "form_semantics": {},
+            },
+        }
+
+        normalized = UIContractServiceV2._normalize_form_structure_semantics(contract)
+        form_semantics = (((normalized.get("semantic_page") or {}).get("form_semantics") or {}))
+        layout = form_semantics.get("layout")
+        notebook = (((normalized.get("views") or {}).get("form") or {}).get("layout") or [])
+        notebook = notebook[0] if notebook else {}
+        tabs = notebook.get("tabs") or []
+
+        self.assertIsInstance(layout, list)
+        self.assertEqual(form_semantics.get("layout_source"), "views.form.layout")
+        self.assertEqual(form_semantics.get("layout_section_count"), 1)
+        self.assertEqual(tabs[0].get("title"), "实施详情")
+        self.assertEqual(tabs[0].get("label"), "实施详情")
+        self.assertEqual(notebook.get("label"), "实施详情")
+
+    def test_notebook_tab_titles_prefer_native_string_over_placeholders(self):
+        service = ContractService.__new__(ContractService)
+        contract = {
+            "data": {
+                "views": {
+                    "form": {
+                        "layout": [
+                            {
+                                "type": "notebook",
+                                "tabs": [
+                                    {"type": "page", "title": "页签1", "label": "页签1", "string": "投标管理"},
+                                    {"type": "page", "title": "Time Management", "label": "Time Management", "string": "Settings"},
+                                ],
+                            }
+                        ],
+                    }
+                },
+                "semantic_page": {"form_semantics": {}},
+            }
+        }
+
+        service._normalize_form_structure_semantics(contract)
+
+        tabs = (((contract.get("data") or {}).get("views") or {}).get("form") or {}).get("layout")[0].get("tabs")
+        self.assertEqual(tabs[0].get("title"), "投标管理")
+        self.assertEqual(tabs[0].get("label"), "投标管理")
+        self.assertEqual(tabs[1].get("title"), "设置")
+        self.assertEqual(tabs[1].get("label"), "设置")
+
+    def test_v2_notebook_tab_titles_prefer_native_string_over_placeholders(self):
+        contract = {
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "notebook",
+                            "tabs": [
+                                {"type": "page", "title": "页签1", "label": "页签1", "string": "投标管理"},
+                                {"type": "page", "title": "Time Management", "label": "Time Management", "string": "Settings"},
+                            ],
+                        }
+                    ],
+                }
+            },
+            "semantic_page": {"form_semantics": {}},
+        }
+
+        normalized = UIContractServiceV2._normalize_form_structure_semantics(contract)
+
+        tabs = (((normalized.get("views") or {}).get("form") or {}).get("layout") or [])[0].get("tabs")
+        self.assertEqual(tabs[0].get("title"), "投标管理")
+        self.assertEqual(tabs[0].get("label"), "投标管理")
+        self.assertEqual(tabs[1].get("title"), "设置")
+        self.assertEqual(tabs[1].get("label"), "设置")
+
+    def test_project_form_backfill_nodes_keep_field_info(self):
+        data = {
+            "head": {"model": "project.project", "view_type": "form"},
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                            ],
+                        }
+                    ],
+                }
+            },
+            "fields": {
+                "name": {"string": "名称", "type": "char", "required": True, "readonly": False},
+                "stage_id": {"string": "阶段", "type": "many2one", "required": False, "readonly": False},
+                "owner_id": {"string": "业主单位", "type": "many2one", "required": False, "readonly": False},
+            },
+        }
+
+        governed = apply_contract_governance(data, "user")
+        layout = ((governed.get("views") or {}).get("form") or {}).get("layout") or []
+        sheet = layout[0]
+        backfill_group = next(
+            (node for node in (sheet.get("children") or []) if isinstance(node, dict) and node.get("name") == "visible_fields_backfill_group"),
+            {},
+        )
+        children = [node for node in (backfill_group.get("children") or []) if isinstance(node, dict)]
+        self.assertTrue(children)
+        for node in children:
+            field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+            self.assertEqual(field_info.get("label"), governed["fields"][node["name"]]["string"])
+            if governed["fields"][node["name"]]["type"] == "many2one":
+                self.assertEqual(field_info.get("widget"), "many2one")
 
     def test_project_task_form_governance_uses_whitelist_and_labels(self):
         data = {

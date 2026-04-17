@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import ast
 import unittest
+from pathlib import Path
 
 from ..utils.contract_governance import (
     apply_contract_governance,
@@ -41,6 +43,7 @@ def _sample_payload():
             "code": {"string": "项目编号(别名)", "type": "char", "required": False, "readonly": True},
             "project_type_id": {"string": "项目类型", "type": "many2one", "required": False, "readonly": False},
             "manager_id": {"string": "项目经理", "type": "many2one", "required": False, "readonly": False},
+            "owner_id": {"string": "项目负责人", "type": "many2one", "required": False, "readonly": False},
             "company_id": {"string": "公司", "type": "many2one", "required": False, "readonly": False},
             "analytic_account_id": {"string": "分析账户", "type": "many2one", "required": False, "readonly": False},
             "budget_total": {"string": "预算", "type": "monetary", "required": False, "readonly": False},
@@ -284,6 +287,29 @@ def _sample_nested_project_form_payload():
     return payload
 
 
+def _collect_layout_field_names(nodes):
+    ordered = []
+
+    def walk(node):
+        if isinstance(node, list):
+            for item in node:
+                walk(item)
+            return
+        if not isinstance(node, dict):
+            return
+        if node.get("type") == "field":
+            name = node.get("name")
+            if name and name not in ordered:
+                ordered.append(name)
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            nested = node.get(key)
+            if isinstance(nested, list):
+                walk(nested)
+
+    walk(nodes)
+    return ordered
+
+
 class TestProjectFormGovernance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -345,6 +371,73 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertEqual(description_fields, ["privacy_visibility", "rating_status"])
         self.assertEqual(settings_fields, ["manager_id", "company_id", "analytic_account_id"])
 
+    def test_user_mode_backfills_visible_fields_into_layout(self):
+        data = _sample_payload()
+        # Simulate a native parser layout that kept the visible allow-list but
+        # omitted a subset of business fields from the structural tree.
+        data["views"]["form"]["layout"] = [
+            {"type": "header"},
+            {"type": "sheet"},
+            {"type": "field", "name": "name"},
+            {"type": "field", "name": "project_type_id"},
+            {"type": "field", "name": "manager_id"},
+            {"type": "field", "name": "company_id"},
+            {"type": "field", "name": "analytic_account_id"},
+            {"type": "field", "name": "phase_key"},
+            {"type": "field", "name": "last_update_status"},
+            {"type": "field", "name": "privacy_visibility"},
+            {"type": "field", "name": "rating_status"},
+            {"type": "field", "name": "rating_status_period"},
+        ]
+        out = apply_contract_governance(data, "user")
+
+        visible_fields = out.get("visible_fields") or []
+        layout = ((out.get("views") or {}).get("form") or {}).get("layout") or []
+        layout_field_names = _collect_layout_field_names(layout)
+
+        self.assertIn("owner_id", visible_fields)
+        self.assertIn("budget_total", visible_fields)
+        self.assertIn("stage_id", visible_fields)
+        self.assertIn("owner_id", layout_field_names)
+        self.assertIn("budget_total", layout_field_names)
+        self.assertIn("stage_id", layout_field_names)
+        self.assertEqual(layout[1].get("type"), "sheet")
+        sheet_children = layout[1].get("children") or []
+        backfill_group = next(
+            (node for node in sheet_children if isinstance(node, dict) and node.get("name") == "visible_fields_backfill_group"),
+            {},
+        )
+        self.assertEqual(backfill_group.get("string"), "补充业务信息")
+        backfill_children = [node for node in (backfill_group.get("children") or []) if isinstance(node, dict)]
+        backfill_fields = [node.get("name") for node in backfill_children]
+        self.assertEqual(set(backfill_fields), {"owner_id", "budget_total", "stage_id"})
+        for node in backfill_children:
+            field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+            self.assertEqual(field_info.get("label"), out["fields"][node.get("name")]["string"])
+            if out["fields"][node.get("name")]["type"] == "many2one":
+                self.assertEqual(field_info.get("widget"), "many2one")
+
+    def test_generic_semantic_governance_no_longer_backfills_layout(self):
+        source_path = Path(__file__).resolve().parents[1] / "utils" / "contract_governance.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        calls = []
+
+        class Finder(ast.NodeVisitor):
+            def visit_FunctionDef(self, node):
+                if node.name != "_apply_form_render_semantics":
+                    return
+                self.generic_visit(node)
+
+            def visit_Call(self, node):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id == "_backfill_form_layout_from_visible_fields":
+                    calls.append(node.lineno)
+                self.generic_visit(node)
+
+        Finder().visit(tree)
+
+        self.assertEqual(calls, [])
+
     def test_user_mode_governs_enterprise_company_create_form(self):
         data = _sample_company_form_payload()
         out = apply_contract_governance(data, "user")
@@ -401,10 +494,35 @@ class TestProjectFormGovernance(unittest.TestCase):
             self.assertIn("label", first_group)
             self.assertIn("actions", first_group)
             self.assertLessEqual(len(first_group.get("actions") or []), 5)
+        scene_actions = ((out.get("semantic_page") or {}).get("actions")) or {}
+        self.assertEqual(scene_actions.get("owner_layer"), "scene_orchestration")
+        self.assertIsInstance(scene_actions.get("header_actions"), list)
+        self.assertIsInstance(scene_actions.get("record_actions"), list)
+        self.assertEqual(
+            [row.get("key") for row in scene_actions.get("header_actions") or []],
+            [row.get("key") for row in buttons if isinstance(row, dict) and row.get("level") == "header"],
+        )
+        self.assertEqual(
+            [row.get("key") for row in scene_actions.get("record_actions") or []],
+            [row.get("key") for row in buttons if isinstance(row, dict) and row.get("level") in {"smart", "row"}],
+        )
+        scene_contract = out.get("scene_contract_v1") or {}
+        self.assertEqual(scene_contract.get("contract_version"), "v1")
+        self.assertEqual(scene_contract.get("owner_layer"), "scene_orchestration")
+        self.assertEqual(
+            ((scene_contract.get("semantic_page") or {}).get("actions") or {}).get("owner_layer"),
+            "scene_orchestration",
+        )
+        self.assertTrue(((scene_contract.get("actions") or {}).get("primary_actions") or []))
         lifecycle = out.get("lifecycle") or {}
         self.assertIsInstance(lifecycle, dict)
         self.assertIn("state_field", lifecycle)
         self.assertIn("allowed_transitions", lifecycle)
+        workflow_surface = out.get("workflow_surface") or {}
+        self.assertEqual(workflow_surface.get("owner_layer"), "business_fact")
+        self.assertEqual(workflow_surface.get("state_field"), lifecycle.get("state_field"))
+        self.assertIsInstance(workflow_surface.get("states"), list)
+        self.assertIsInstance(workflow_surface.get("transitions"), list)
         filters = ((out.get("search") or {}).get("filters")) or []
         self.assertLessEqual(len(filters), 8)
         self.assertEqual(out.get("render_profile"), "create")
@@ -577,6 +695,25 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertGreaterEqual(int(surface_policies.get("actions_primary_max", 0)), 0)
         self.assertLessEqual(int(surface_policies.get("filters_primary_max", 99)), 4)
         self.assertLessEqual(int(surface_policies.get("actions_primary_max", 99)), 3)
+        list_profile = out.get("list_profile") or {}
+        list_semantics = ((out.get("semantic_page") or {}).get("list_semantics")) or {}
+        self.assertEqual(list_semantics.get("owner_layer"), "scene_orchestration")
+        self.assertEqual(
+            [row.get("name") for row in list_semantics.get("columns") or []],
+            list_profile.get("columns") or [],
+        )
+        self.assertEqual(list_semantics.get("row_primary"), list_profile.get("row_primary"))
+        self.assertEqual(list_semantics.get("status_field"), list_profile.get("status_field"))
+        scene_contract = out.get("scene_contract_v1") or {}
+        self.assertEqual(scene_contract.get("contract_version"), "v1")
+        scene_list_semantics = ((scene_contract.get("semantic_page") or {}).get("list_semantics")) or {}
+        self.assertEqual(scene_list_semantics.get("owner_layer"), "scene_orchestration")
+        self.assertEqual(
+            [row.get("name") for row in scene_list_semantics.get("columns") or []],
+            list_profile.get("columns") or [],
+        )
+        self.assertTrue((scene_contract.get("search_surface") or {}).get("filters"))
+        self.assertTrue((scene_contract.get("actions") or {}).get("primary_actions"))
 
     def test_project_kanban_adds_profile_and_filters_fields(self):
         data = _sample_kanban_payload()
@@ -595,6 +732,67 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIsInstance(fields, list)
         self.assertIn("name", fields)
         self.assertNotIn("message_ids", fields)
+
+    def test_action_open_form_surface_is_not_overwritten_by_multi_view_head(self):
+        data = _sample_payload()
+        data["head"]["view_type"] = "kanban,tree,form"
+        data["view_type"] = "form"
+        data["render_profile"] = "edit"
+        data["res_id"] = 2
+        data["views"]["kanban"] = _sample_kanban_payload()["views"]["kanban"]
+
+        out = apply_contract_governance(data, "user")
+
+        visible_fields = out.get("visible_fields") or []
+        self.assertNotIn("kanban_profile", out)
+        self.assertIn("project_type_id", visible_fields)
+        self.assertIn("owner_id", visible_fields)
+        self.assertIn("company_id", visible_fields)
+        self.assertGreater(len(visible_fields), 7)
+
+    def test_ui_contract_handler_does_not_apply_governance_after_service_shape(self):
+        source_path = Path(__file__).resolve().parents[1] / "handlers" / "ui_contract.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        calls = []
+
+        class Finder(ast.NodeVisitor):
+            def visit_FunctionDef(self, node):
+                if node.name == "handle":
+                    self.generic_visit(node)
+
+            def visit_Call(self, node):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id == "apply_contract_governance":
+                    calls.append(node.lineno)
+                self.generic_visit(node)
+
+        Finder().visit(tree)
+
+        self.assertEqual(calls, [])
+
+    def test_governance_preserves_native_notebook_tab_labels(self):
+        data = _sample_payload()
+        data["head"]["view_type"] = "kanban,tree,form"
+        data["view_type"] = "form"
+        data["render_profile"] = "edit"
+        data["res_id"] = 2
+        data["views"]["form"]["layout"] = [
+            {
+                "type": "notebook",
+                "tabs": [
+                    {"type": "page", "title": "页签1", "label": "页签1", "string": "投标管理"},
+                    {"type": "page", "title": "Time Management", "label": "Time Management", "string": "Settings"},
+                ],
+            }
+        ]
+
+        out = apply_contract_governance(data, "user")
+        tabs = ((((out.get("views") or {}).get("form") or {}).get("layout") or [])[0] or {}).get("tabs") or []
+
+        self.assertEqual(tabs[0].get("title"), "投标管理")
+        self.assertEqual(tabs[0].get("label"), "投标管理")
+        self.assertEqual(tabs[1].get("title"), "设置")
+        self.assertEqual(tabs[1].get("label"), "设置")
 
     def test_user_mode_realigns_access_policy_after_field_governance(self):
         data = _sample_payload()
