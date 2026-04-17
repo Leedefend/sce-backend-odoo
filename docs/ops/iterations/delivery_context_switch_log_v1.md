@@ -22134,3 +22134,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; read-only Odoo shell rebuilt strict 1556-ID unresolved set; read-only LegacyDb screen found T_GYSHT_INFO.Id direct match=1, T_CGHT_INFO.Id direct match=0, C_ZFSQGL_CB.GLYWID rows=1880 / unique IDs=1543`
 - next_step: `do not replay contract_id for the residual 1556 group; continue business continuity with optional contract/settlement flow and only replay earlier deterministic exact-contract candidates in a separately authorized write batch`
+- date: 2026-04-18
+- task: ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: imported payment contract replay candidates
+- reason: rebuild exact target-side contract replay candidates before any high-risk payment write batch
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell dry-run PASS; parent_missing_contract=17994 exact_one_line_contract_candidate=2744 multi_line_contract_excluded=143 no_line_contract=15107`
+- next_step: `open a dedicated high-risk replay task only for the 2744 exact-one candidates, or continue no-write business continuity checks for daily/non-contract payment operation`
