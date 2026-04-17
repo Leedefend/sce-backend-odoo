@@ -1,0 +1,109 @@
+task_id: ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE
+title: Make business fact verification tolerant of real customer data baseline
+type: verification-governance
+status: pass
+priority: high
+
+goal: >
+  Adjust payment and settlement verification guards so they can run against
+  real imported customer business data without being blocked by missing demo
+  showroom projects. Missing demo-only fixtures must be classified as SKIP_ENV
+  instead of FAIL, while real consistency/evidence errors still fail.
+
+user_visible_outcome:
+  - "真实业务数据环境下，验证脚本能跑完并输出可用结论，不再被 demo 数据缺失误阻断。"
+
+scope:
+  allowed_paths:
+    - scripts/verify/payment_fact_consistency_guard.sh
+    - scripts/verify/settlement_evidence_guard.sh
+    - docs/ops/business_continuity/business_fact_verify_real_data_tolerance_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: d9cf2b3
+  explicit_user_authorization: >
+    User requested that test scripts be adjusted so they can run under real
+    customer business data instead of blocking on missing demo-only data.
+  prior_task: ITER-2026-04-18-SETTLEMENT-OPTIONAL-BACKEND-IMPLEMENTATION
+
+architecture:
+  layer_target: Runtime Verification Governance
+  module: scripts/verify business fact guards
+  module_owner: verification and gate surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: none
+  backend_sub_layer_reason: >
+    This task does not change backend business facts or scene orchestration. It
+    only changes verification classification for demo-fixture absence in real
+    customer data environments.
+  reason: >
+    The previous optional-settlement batch proved the business code path works,
+    but verification targets failed because demo showroom projects were absent
+    from the active real-data database. That should be an environment/demo
+    fixture classification, not a blocker for real-data business continuity
+    checks.
+
+change_rules:
+  - keep existing consistency and evidence mismatches as FAIL
+  - classify missing configured demo projects as SKIP_ENV when no target demo projects are present
+  - do not fabricate demo data
+  - do not change payment, settlement, account, ACL, manifest, frontend, or migration semantics
+  - keep artifacts written to /mnt/artifacts/backend
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE.yaml
+    - bash -n scripts/verify/payment_fact_consistency_guard.sh scripts/verify/settlement_evidence_guard.sh
+    - DB_NAME=sc_demo make verify.payment_fact_consistency.v1
+    - DB_NAME=sc_demo make verify.settlement_evidence_guard
+
+risk:
+  level: medium
+  manual_approval_required: true
+  explicit_user_authorization: >
+    User explicitly requested the verification script adjustment in this turn.
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed_on_real_consistency_error
+  - business_semantics_change_detected
+  - scope_expands_beyond_verification_classification
+
+deliverables:
+  - updated guards with real-data-tolerant demo fixture classification
+  - verification artifacts for payment fact consistency and settlement evidence
+  - documentation of SKIP_ENV vs FAIL semantics
+
+verification_result:
+  status: PASS
+  commands:
+    - command: python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE.yaml
+      result: PASS
+    - command: bash -n scripts/verify/payment_fact_consistency_guard.sh scripts/verify/settlement_evidence_guard.sh
+      result: PASS
+    - command: DB_NAME=sc_demo make verify.payment_fact_consistency.v1
+      result: PASS
+      classification: SKIP_ENV
+      artifact: artifacts/backend/payment_fact_consistency_guard.json
+    - command: DB_NAME=sc_demo make verify.settlement_evidence_guard
+      result: PASS
+      classification: SKIP_ENV
+      artifact: artifacts/backend/settlement_evidence_guard.json
+
+rollback:
+  - git restore scripts/verify/payment_fact_consistency_guard.sh scripts/verify/settlement_evidence_guard.sh docs/ops/business_continuity/business_fact_verify_real_data_tolerance_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE.yaml
+
+depends_on:
+  - ITER-2026-04-18-SETTLEMENT-OPTIONAL-BACKEND-IMPLEMENTATION
