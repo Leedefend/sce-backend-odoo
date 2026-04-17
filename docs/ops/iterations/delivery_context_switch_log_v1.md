@@ -22046,3 +22046,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; legacy settlement fact existence screen PASS; settlement amount fact screen PASS; db_writes=0`
 - next_step: `Open dedicated new-system business-logic adjustment screen because there is no old settlement source-of-truth to supplement.`
 - stop_condition: `none`
+### 2026-04-18T04:25:00+08:00
+- blocker_key: `iter_legacy_no_settlement_model_logic_screen_stop_high_risk_implementation_required`
+- status: `PASS_WITH_RISK`
+- active_task: `ITER-2026-04-18-LEGACY-NO-SETTLEMENT-MODEL-LOGIC-SCREEN`
+- completed_step: `Read-only logic screen located the adjustment boundary: settlement order submit/approve invokes unscoped sc.data.validator validation, causing SC.VAL.3WAY.001 to scan all historical payment requests and block new settlement transitions because old imported payments have no settlement_id`
+- verification: `validate_task PASS; code locator rg PASS; targeted code read PASS; db_writes=0`
+- next_step: `Open a dedicated high-risk backend business-logic implementation batch to scope settlement-transition validation and keep new payment/ledger guards strict.`
+- stop_condition: `implementation_required_in_payment_or_settlement_validation_semantics`
