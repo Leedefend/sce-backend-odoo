@@ -1,0 +1,73 @@
+task_id: ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN
+title: Legacy orphan request compliance screen
+type: business-flow-screen
+status: active
+priority: high
+
+goal: >
+  Count and classify existing imported payable requests without upstream
+  settlement links so the replay strategy can be chosen safely.
+
+user_visible_outcome:
+  - "Determine whether old payable requests can be aligned to new-system settlement facts without losing business truth."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/legacy_orphan_request_compliance_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8cb7490
+  prior_task: ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN
+
+architecture:
+  layer_target: Business Flow Verification
+  module: imported payable request compliance
+  module_owner: construction industry business flow
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Imported payable request state, ledger evidence, and upstream settlement
+    linkage are business facts. The screen only classifies existing facts.
+  reason: >
+    New settlement submit/approve is blocked by existing imported payable
+    requests without settlement links. The affected population and downstream
+    evidence must be classified before replay.
+
+change_rules:
+  - screen only
+  - read-only database queries only
+  - do not persist business records
+  - do not modify addons, frontend, ACL, finance, or lifecycle code
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_persists_business_data
+  - acceptance_failed
+
+deliverables:
+  - legacy orphan payable request classification
+  - next replay recommendation
+
+rollback:
+  - git restore docs/ops/business_continuity/legacy_orphan_request_compliance_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN
