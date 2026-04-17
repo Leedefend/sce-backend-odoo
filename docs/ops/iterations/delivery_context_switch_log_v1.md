@@ -22179,3 +22179,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; AGENTS.md section 6.9 added with two-file allowlist and required rollback-only submit/continuity verification`
 - next_step: `open dedicated high-risk no-contract payment submit implementation task for payment_request.py and payment_request_available_actions.py`
+- date: 2026-04-18
+- task: ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Business Fact Rule
+- module: no-contract payment submit semantics
+- reason: allow confirmed daily/non-contract payment facts to continue through new-system submit without weakening settlement payment consistency
+- status: `PASS`
+- verification: `validate_task PASS; py_compile PASS; rollback-only no-contract submit PASS; rollback-only selected-contract submit PASS; selected-settlement without contract blocked PASS; verify.imported_business_continuity.v1 PASS`
+- next_step: `continue business continuity operability screening on remaining imported payment lifecycle actions and daily business paths`

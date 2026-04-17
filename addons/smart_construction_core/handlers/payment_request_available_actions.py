@@ -98,11 +98,8 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         if key == "submit":
             if int(record._get_attachment_count() or 0) <= 0:
                 return False, "PAYMENT_ATTACHMENTS_REQUIRED"
-            if not record.contract_id:
-                return False, REASON_MISSING_PARAMS
-            if record.contract_id and str(record.contract_id.state or "") == "cancel":
-                return False, REASON_BUSINESS_RULE_FAILED
             try:
+                record._check_contract_submit_gate()
                 record._check_project_lifecycle(record.project_id, "submit")
                 record._check_settlement_state(record.settlement_id)
                 record._enforce_funding_gate({"state": "submit"})
