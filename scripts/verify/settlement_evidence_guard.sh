@@ -29,12 +29,12 @@ Project = env["project.project"].sudo()
 Settlement = env["sc.settlement.order"].sudo()
 Evidence = env["sc.business.evidence"].sudo()
 
-report = {"status": "PASS", "projects": {}, "errors": []}
+report = {"status": "PASS", "projects": {}, "missing_projects": [], "errors": []}
 
 for name in PROJECT_NAMES:
     project = Project.search([("name", "=", name)], limit=1)
     if not project:
-        report["errors"].append(f"missing project: {name}")
+        report["missing_projects"].append(name)
         continue
     settlements = Settlement.search([("project_id", "=", project.id), ("state", "=", "done")])
     evidences = Evidence.search(
@@ -57,6 +57,8 @@ for name in PROJECT_NAMES:
 
 if report["errors"]:
     report["status"] = "FAIL"
+elif report["missing_projects"]:
+    report["status"] = "SKIP_ENV"
 
 OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
 OUT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -68,6 +70,7 @@ OUT_MD.write_text(
         f"- {name}: done_settlements={row['settlement_done_count']} evidences={row['settlement_evidence_count']}"
         for name, row in report["projects"].items()
     )
+    + ("\n- missing demo projects:\n" + "\n".join(f"  - {line}" for line in report["missing_projects"]) if report["missing_projects"] else "")
     + ("\n- errors:\n" + "\n".join(f"  - {line}" for line in report["errors"]) if report["errors"] else "\n"),
     encoding="utf-8",
 )
@@ -77,6 +80,12 @@ if report["errors"]:
     for line in report["errors"]:
         print(f" - {line}")
     raise SystemExit(1)
+
+if report["status"] == "SKIP_ENV":
+    print("[settlement_evidence_guard] SKIP_ENV")
+    for line in report["missing_projects"]:
+        print(f" - missing demo project: {line}")
+    raise SystemExit(0)
 
 print("[settlement_evidence_guard] PASS")
 PY

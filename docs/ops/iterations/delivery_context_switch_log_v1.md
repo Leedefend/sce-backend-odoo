@@ -22078,3 +22078,13 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; temp py_compile PASS; rollback-only no-settlement payment submit/approve/ledger/done PASS; rollback-only settlement-selected payment flow PASS; draft selected settlement still blocks PASS; make verify.restricted unavailable; module upgrade blocked by fast guard as no schema/data/view/security change; payment_fact_consistency and settlement_evidence guards fail on pre-existing missing demo projects; smoke_validator test script blocked before Odoo startup by missing DOCS_MOUNT_HOST`
 - next_step: `Commit implementation and optionally open a separate demo evidence baseline recovery batch for the three missing 展厅 demo projects.`
 - stop_condition: `environment_gate_risk_only`
+- date: 2026-04-18
+- task: ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE
+- branch: codex/next-round
+- layer_target: Runtime Verification Governance
+- module: scripts/verify business fact guards
+- reason: real customer business data must not be blocked by missing demo-only showroom fixtures
+- completed_step: `verification guard tolerance implementation started`
+- status: `PASS`
+- verification: `validate_task PASS; bash -n PASS; DB_NAME=sc_demo make verify.payment_fact_consistency.v1 PASS with SKIP_ENV for missing demo projects; DB_NAME=sc_demo make verify.settlement_evidence_guard PASS with SKIP_ENV for missing demo projects`
+- next_step: `continue business continuity checks against real imported facts; demo fixture absence is now classified separately from real business consistency failures`

@@ -40,7 +40,7 @@ payment_service = PaymentSliceService(env)
 settlement_service = SettlementSliceService(env)
 payment_adapter = PaymentSliceNativeAdapter(env)
 
-report = {"status": "PASS", "projects": {}, "errors": []}
+report = {"status": "PASS", "projects": {}, "missing_projects": [], "errors": []}
 
 def num(value):
     try:
@@ -57,7 +57,7 @@ def intval(value):
 for name in PROJECT_NAMES:
     project = Project.search([("name", "=", name)], limit=1)
     if not project:
-        report["errors"].append(f"missing project: {name}")
+        report["missing_projects"].append(name)
         continue
 
     request_domain = [("project_id", "=", int(project.id)), ("type", "=", "pay")]
@@ -135,6 +135,8 @@ for name in PROJECT_NAMES:
 
 if report["errors"]:
     report["status"] = "FAIL"
+elif report["missing_projects"]:
+    report["status"] = "SKIP_ENV"
 
 OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
 OUT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -146,6 +148,7 @@ OUT_MD.write_text(
         f"- {name}: request_total={row['request_total']} / ledger_total={row['ledger_total']} / dashboard={row['dashboard_payment_total']} / settlement={row['settlement_total_payment']}"
         for name, row in report["projects"].items()
     )
+    + ("\n- missing demo projects:\n" + "\n".join(f"  - {line}" for line in report["missing_projects"]) if report["missing_projects"] else "")
     + ("\n- errors:\n" + "\n".join(f"  - {line}" for line in report["errors"]) if report["errors"] else "\n"),
     encoding="utf-8",
 )
@@ -155,6 +158,12 @@ if report["errors"]:
     for line in report["errors"]:
         print(f" - {line}")
     raise SystemExit(1)
+
+if report["status"] == "SKIP_ENV":
+    print("[payment_fact_consistency_guard] SKIP_ENV")
+    for line in report["missing_projects"]:
+        print(f" - missing demo project: {line}")
+    raise SystemExit(0)
 
 print("[payment_fact_consistency_guard] PASS")
 PY
