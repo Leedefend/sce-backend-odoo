@@ -1,0 +1,95 @@
+task_id: ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN
+title: Dry-run deterministic imported payment contract replay candidates
+type: governance-screen
+status: pass
+priority: high
+mode: screen
+
+goal: >
+  Rebuild the deterministic imported payment contract replay candidate set
+  without writing payment records, so a later high-risk replay batch can be
+  scoped precisely.
+
+user_visible_outcome:
+  - "把真正可以按旧业务事实补合同依据的付款候选集算准，其他日常支出继续按无合同办理。"
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/contract_replay_dry_run_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: cb422d3
+  prior_task: ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN
+
+architecture:
+  layer_target: Business Fact Screening
+  module: imported payment contract replay candidates
+  module_owner: construction industry business continuity
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Whether an imported payment may inherit a contract_id is a business fact
+    derived from exact old-system source evidence. This dry-run must not provide
+    UI semantics or fabricate missing contract facts.
+  reason: >
+    Prior screens proved the residual unresolved legacy contract ID group is not
+    replay-eligible, while earlier exact-one contract evidence remains a
+    possible dedicated high-risk replay scope. The candidate set must be rebuilt
+    read-only before any write batch.
+
+change_rules:
+  - screen only; no database writes
+  - do not modify payment, contract, settlement, account, ACL, manifest, frontend, or migration data
+  - only count candidates whose exact target contract_id is already resolved
+  - exclude residual unresolved legacy contract ID values from replay eligibility
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN.yaml
+    - read-only Odoo shell dry-run for deterministic contract replay candidates
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - database_write_attempted
+  - candidate_rule_unclear
+  - replay_count_drift_not_explained
+
+deliverables:
+  - dry-run screen document with candidate counts and high-risk replay boundary
+
+verification_result:
+  status: PASS
+  commands:
+    - command: python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN.yaml
+      result: PASS
+    - command: read-only Odoo shell dry-run for deterministic contract replay candidates
+      result: PASS
+      summary: >
+        Among 17994 imported payment requests missing parent contract_id, 2744
+        have exactly one resolved line contract, 143 have multiple line
+        contracts, and 15107 have no line contract. No database writes were
+        performed.
+
+rollback:
+  - git restore docs/ops/business_continuity/contract_replay_dry_run_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-18-LEGACY-PAYMENT-BASIS-EVIDENCE-SCREEN
+  - ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN
