@@ -21886,3 +21886,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check mismatch=0; snapshot/rollback CSV PASS`
 - next_step: `Continue with operational usability verification for imported and fresh payment flows.`
 - stop_condition: `none`
+### 2026-04-17T21:48:31+08:00
+- blocker_key: `iter_business_continuity_operational_verify_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-BUSINESS-CONTINUITY-OPERATIONAL-VERIFY`
+- completed_step: `Operational continuity verified: projects 701 running/55 draft; contracts 6685 usable/108 draft with no missing required links; payments 12194 done+validated and 12108 company+contract linked with mismatch=0`
+- verification: `validate_task PASS; Odoo shell read-only verify PASS`
+- next_step: `Use verified state for UI/business-flow testing; ambiguous payment links require separate source-fact enrichment if needed.`
+- stop_condition: `none`
