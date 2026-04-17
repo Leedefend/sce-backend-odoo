@@ -1,0 +1,90 @@
+task_id: ITER-2026-04-17-FINANCE-PROJECT-VISIBILITY-PERMISSION-GOVERNANCE
+title: Finance project visibility permission governance for legacy fact operability
+type: permission-governance
+status: active
+priority: high
+
+goal: >
+  Align finance user authority with imported business facts so finance users can
+  continue operating payment work on contract-backed legacy projects without
+  fabricating project member facts or changing financial business semantics.
+
+user_visible_outcome:
+  - "Finance users can use contract-backed imported project facts for payment handling in the new system."
+
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/security/sc_record_rules.xml
+    - docs/ops/business_continuity/finance_project_visibility_permission_governance_v1.md
+    - docs/ops/audit/system_group_business_acl_guard.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-FINANCE-PROJECT-VISIBILITY-PERMISSION-GOVERNANCE.yaml
+  forbidden_paths:
+    - addons/**/__manifest__.py
+    - addons/**/ir.model.access.csv
+    - addons/**/record_rules/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 06aae3e
+  explicit_user_authorization: true
+  authorization_note: >
+    User replied "同意" after the prior PASS_WITH_RISK screen identified a
+    dedicated permission-governance lane for finance user project visibility.
+
+architecture:
+  layer_target: Authority / Record Rule Governance
+  module: smart_construction_core
+  module_owner: construction industry authority surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The missing capability is not presentation grouping or frontend interaction.
+    It is authority over already-existing business facts: imported projects with
+    contract/payment facts must be readable by finance operators. The batch must
+    not fabricate ownership facts such as project membership or finance_contact.
+  reason: >
+    Imported legacy data can be structurally carried by project, contract, and
+    payment facts, but finance users are blocked by project.project record-rule
+    isolation when old projects lack complete member/contact assignments.
+
+change_rules:
+  - dedicated high-risk permission-governance batch
+  - additive/scoped authority correction only
+  - do not modify ACL CSV files
+  - do not modify payment amount, approval, settlement, or accounting semantics
+  - do not fabricate project member or finance contact facts
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-FINANCE-PROJECT-VISIBILITY-PERMISSION-GOVERNANCE.yaml
+    - python3 -m xml.etree.ElementTree addons/smart_construction_core/security/sc_record_rules.xml
+    - CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_construction_core make mod.upgrade MODULE=smart_construction_core
+    - make verify.system_group.business_acl.guard
+
+risk:
+  level: high
+  manual_approval_required: true
+  approved_by_user: true
+
+stop_conditions:
+  - forbidden_path_touched
+  - access_scope_uncertain
+  - module_upgrade_failed
+  - verify_system_group_business_acl_guard_failed
+  - financial_business_semantics_changed
+
+deliverables:
+  - scoped record-rule authority correction
+  - business-continuity permission governance note
+  - delivery context log checkpoint
+
+rollback:
+  - git restore addons/smart_construction_core/security/sc_record_rules.xml docs/ops/business_continuity/finance_project_visibility_permission_governance_v1.md docs/ops/audit/system_group_business_acl_guard.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-FINANCE-PROJECT-VISIBILITY-PERMISSION-GOVERNANCE.yaml
+  - CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_construction_core make mod.upgrade MODULE=smart_construction_core
+
+depends_on:
+  - ITER-2026-04-17-LEGACY-FACT-BUSINESS-OPERABILITY-SCREEN

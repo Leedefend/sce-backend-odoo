@@ -21910,3 +21910,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo rollback-only checks PASS; rollback persistence marker counts=0`
 - next_step: `Open dedicated permission-governance lane for finance user project visibility before payment submit can be considered operable.`
 - stop_condition: `PASS_WITH_RISK: permission governance blocker`
+### 2026-04-17T22:18:00+08:00
+- blocker_key: `iter_finance_project_visibility_permission_governance_in_progress`
+- status: `IN_PROGRESS`
+- active_task: `ITER-2026-04-17-FINANCE-PROJECT-VISIBILITY-PERMISSION-GOVERNANCE`
+- completed_step: `Dedicated high-risk permission-governance batch opened for finance user visibility over contract-backed imported project facts; implementation and validation running in same batch`
+- verification: `pending`
+- next_step: `Upgrade smart_construction_core and run finance-user rollback-only operational verification.`
+- stop_condition: `none`
+### 2026-04-17T22:26:00+08:00
+- blocker_key: `iter_finance_project_visibility_permission_governance_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-FINANCE-PROJECT-VISIBILITY-PERMISSION-GOVERNANCE`
+- completed_step: `Finance users can now read and create payment work on contract-backed imported project facts without fabricating project membership; payment submit reaches normal business funding gate instead of record-rule visibility failure`
+- verification: `validate_task PASS; XML parse PASS; smart_construction_core upgrade PASS; rollback-only finance operational check PASS; verify.system_group.business_acl.guard PASS`
+- next_step: `Open the next business-fact operability screen for the funding-carrier gate that now blocks payment submit.`
+- stop_condition: `none`
