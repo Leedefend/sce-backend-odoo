@@ -1,0 +1,81 @@
+task_id: ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC
+title: Approval tier config sync for payable request lifecycle
+type: approval-config-sync
+status: active
+priority: high
+
+goal: >
+  Materialize the missing tier definition configuration so submitted payable
+  requests generate tier.review records and can be approved by finance managers.
+
+user_visible_outcome:
+  - "Submitted payable requests can generate approval reviews and progress through manager approval."
+
+scope:
+  allowed_paths:
+    - scripts/ops/approval_tier_config_sync.py
+    - docs/ops/business_continuity/approval_tier_config_sync_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 3d50b09
+  prior_task: ITER-2026-04-17-PAYMENT-TIER-APPLICABILITY-SCREEN
+
+architecture:
+  layer_target: Approval Configuration
+  module: base_tier_validation runtime config
+  module_owner: approval workflow configuration surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Tier definitions are persisted approval workflow facts. The gap is missing
+    configuration data, not model code, frontend rendering, or scene
+    orchestration.
+  reason: >
+    tier.definition exists but contains no records, so submitted payable requests
+    cannot create tier.review records.
+
+change_rules:
+  - provide check/write modes
+  - create exactly one active tier.definition for payment.request if absent
+  - bind reviewer group to finance manager capability
+  - bind existing approved/rejected server actions
+  - do not modify addons, frontend, ACL, payment, settlement, or account code
+  - write rollback evidence before mutation
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC.yaml
+    - python3 -m py_compile scripts/ops/approval_tier_config_sync.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/ops/approval_tier_config_sync.py
+    - DB_NAME=sc_demo make odoo.shell.exec with os.environ["SYNC_MODE"]="write" wrapper
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/ops/approval_tier_config_sync.py
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - duplicate_active_definition_created
+  - rollback_evidence_missing
+  - acceptance_failed
+
+deliverables:
+  - approval tier config sync script
+  - runtime config evidence
+  - rollback-only approval verification
+
+rollback:
+  - use artifacts/ops/approval_tier_config_sync_rollback_v1.json to remove created tier.definition if needed
+  - git restore scripts/ops/approval_tier_config_sync.py docs/ops/business_continuity/approval_tier_config_sync_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC.yaml
+
+depends_on:
+  - ITER-2026-04-17-PAYMENT-TIER-APPLICABILITY-SCREEN

@@ -21990,3 +21990,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo shell read-only screen PASS; db_writes=0`
 - next_step: `Open dedicated approval-tier config replay batch for payment.request using finance manager reviewer group and existing tier server actions.`
 - stop_condition: `none`
+### 2026-04-17T23:01:00+08:00
+- blocker_key: `iter_approval_tier_config_sync_in_progress`
+- status: `IN_PROGRESS`
+- active_task: `ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC`
+- completed_step: `Approval tier config replay batch opened to create one runtime tier.definition for payment.request using finance manager reviewer group and existing approved/rejected server actions`
+- verification: `pending`
+- next_step: `Run check/write/check tier config sync, then rollback-only submit and approval verification.`
+- stop_condition: `none`
+### 2026-04-17T23:09:00+08:00
+- blocker_key: `iter_approval_tier_config_sync_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-APPROVAL-TIER-CONFIG-SYNC`
+- completed_step: `Approval tier config replayed: one active payment.request tier.definition bound to finance manager group and runtime-compatible approved/rejected server actions; rollback-only payment submit creates pending tier.review and manager approval moves request to approved/validated`
+- verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check PASS; rollback-only approval lifecycle PASS`
+- next_step: `Continue payment lifecycle verification from approved to done and ledger registration.`
+- stop_condition: `none`
