@@ -1,0 +1,76 @@
+task_id: ITER-2026-04-18-LEGACY-SETTLEMENT-FACT-EXISTENCE-SCREEN
+title: Legacy settlement fact existence screen
+type: business-fact-screen
+status: active
+priority: high
+
+goal: >
+  Verify whether imported legacy business facts contain settlement-order or
+  settlement-equivalent facts that can be mapped into the new sc.settlement
+  business carrier.
+
+user_visible_outcome:
+  - "Decide whether to supplement missing settlement facts from old business data or prepare a new-system model/business-logic adjustment path."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/legacy_settlement_fact_existence_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-LEGACY-SETTLEMENT-FACT-EXISTENCE-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: cb1c1e7
+  prior_task: ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN
+
+architecture:
+  layer_target: Business Fact Verification
+  module: legacy settlement fact mapping
+  module_owner: construction industry business facts
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Settlement existence, payment linkage, ledger evidence, and source-document
+    mapping are business facts. The screen must not use frontend or scene
+    orchestration to infer missing settlement semantics.
+  reason: >
+    The next decision depends on whether old imported data already contains
+    settlement facts. If settlement facts exist, replay should supplement the
+    new carrier. If not, the new-system business model or validation logic may
+    need a dedicated adjustment batch.
+
+change_rules:
+  - screen only
+  - read-only database queries only
+  - do not persist business records
+  - do not modify addons, frontend, ACL, finance, settlement, payment, or account code
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-LEGACY-SETTLEMENT-FACT-EXISTENCE-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_persists_business_data
+  - acceptance_failed
+
+deliverables:
+  - legacy settlement fact existence classification
+  - next-step decision: supplement facts or open model-logic adjustment screen
+
+rollback:
+  - git restore docs/ops/business_continuity/legacy_settlement_fact_existence_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-LEGACY-SETTLEMENT-FACT-EXISTENCE-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN

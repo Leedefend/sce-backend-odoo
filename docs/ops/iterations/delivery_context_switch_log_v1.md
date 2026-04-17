@@ -22038,3 +22038,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo read-only compliance screen PASS; db_writes=0`
 - next_step: `Open replay candidate design batch for completed ledger-backed requests, keeping draft/no-ledger requests out of completed replay unless more business evidence is found.`
 - stop_condition: `none`
+### 2026-04-18T04:18:00+08:00
+- blocker_key: `iter_legacy_settlement_fact_existence_screen_pass_no_old_settlement_facts`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-18-LEGACY-SETTLEMENT-FACT-EXISTENCE-SCREEN`
+- completed_step: `Read-only existence screen confirmed old/imported data has no settlement-order rows, no sc.legacy settlement carrier, and no nonzero settlement amount aggregates; available facts are payment/ledger facts rather than settlement facts`
+- verification: `validate_task PASS; legacy settlement fact existence screen PASS; settlement amount fact screen PASS; db_writes=0`
+- next_step: `Open dedicated new-system business-logic adjustment screen because there is no old settlement source-of-truth to supplement.`
+- stop_condition: `none`
