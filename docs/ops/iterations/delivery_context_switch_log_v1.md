@@ -21958,3 +21958,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo shell read-only screen PASS; db_writes=0`
 - next_step: `Open dedicated dev/demo runtime mail sender config batch, then re-run rollback-only payment submit.`
 - stop_condition: `none`
+### 2026-04-17T22:44:00+08:00
+- blocker_key: `iter_dev_mail_sender_config_sync_in_progress`
+- status: `IN_PROGRESS`
+- active_task: `ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC`
+- completed_step: `Dev/demo mail sender config sync batch opened for non-production sender facts only`
+- verification: `pending`
+- next_step: `Run check/write/check mail sender sync and re-run rollback-only payment submit.`
+- stop_condition: `none`
+### 2026-04-17T22:49:00+08:00
+- blocker_key: `iter_dev_mail_sender_config_sync_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC`
+- completed_step: `Dev/demo sender facts configured: mail.default.from and company email set to noreply@smartconstruction.local; sc_fx_finance user/partner email set to sc_fx_finance@smartconstruction.local; rollback-only payment submit now reaches state submit`
+- verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check PASS; rollback-only full payment submit PASS`
+- next_step: `Continue broader daily-business operability checks beyond payment submit, including approval/review transition and downstream payment lifecycle if needed.`
+- stop_condition: `none`
