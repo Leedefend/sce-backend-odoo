@@ -21926,3 +21926,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; XML parse PASS; smart_construction_core upgrade PASS; rollback-only finance operational check PASS; verify.system_group.business_acl.guard PASS`
 - next_step: `Open the next business-fact operability screen for the funding-carrier gate that now blocks payment submit.`
 - stop_condition: `none`
+### 2026-04-17T22:32:00+08:00
+- blocker_key: `iter_funding_carrier_fact_operability_screen_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-FUNDING-CARRIER-FACT-OPERABILITY-SCREEN`
+- completed_step: `Read-only screen classified payment submit funding gate: 652 imported contract-backed projects all have code but none have funding_enabled or active funding baselines; 642 have positive contract sums suitable for deterministic funding baseline replay, 10 zero-contract-sum projects excluded`
+- verification: `validate_task PASS; Odoo shell read-only screen PASS; db_writes=0`
+- next_step: `Open dedicated funding carrier fact replay batch with dry-run/check/write and rollback evidence.`
+- stop_condition: `none`
