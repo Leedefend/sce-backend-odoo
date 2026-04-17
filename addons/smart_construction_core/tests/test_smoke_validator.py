@@ -36,18 +36,18 @@ class TestValidatorSmoke(TransactionCase):
         # at least rule registry is wired
         self.assertGreaterEqual(len(payload["rules"]), 1)
 
-    def test_validator_catches_missing_settlement(self):
+    def test_validator_allows_payment_without_settlement(self):
         project = self.env["project.project"].create({"name": "Validator Project"})
         self._prepare_funding(project)
         partner = self.env["res.partner"].create({"name": "Validator Partner"})
-        bad_pr = self.env["payment.request"].create(
+        no_settlement_pr = self.env["payment.request"].create(
             {
-                "name": "VAL-PR-BAD",
+                "name": "VAL-PR-NO-SETTLEMENT",
                 "type": "pay",
                 "project_id": project.id,
                 "partner_id": partner.id,
                 "amount": 100,
-                "state": "approve",  # 规则要求此状态必须关联结算单
+                "state": "approve",
             }
         )
         payload = self.env["sc.data.validator"].run(return_dict=True)
@@ -57,7 +57,7 @@ class TestValidatorSmoke(TransactionCase):
             if (r.get("code") or r.get("rule")) == "SC.VAL.3WAY.001"
         )
         issue_ids = [i["res_id"] for i in rule.get("issues", [])]
-        self.assertIn(bad_pr.id, issue_ids)
+        self.assertNotIn(no_settlement_pr.id, issue_ids)
 
     def test_payment_request_submit_happy_path(self):
         # 构造完整链路：项目 -> 合同 -> 采购 -> 结算 -> 付款申请
@@ -135,18 +135,18 @@ class TestValidatorSmoke(TransactionCase):
 
     def test_validator_scope_only_checks_target_payment_request(self):
         """
-        验证 scope 仅校验目标单据：good_pr 需通过，bad_pr 需失败。
+        验证 scope 仅校验目标单据：good_pr 需通过，无结算单付款也需通过。
         """
 
         validator = self.env["sc.data.validator"]
 
-        # bad_pr：缺少 settlement_id，但处于必须有关联的状态
+        # no_settlement_pr：未选择结算单，但可作为合法付款事实存在
         project1 = self.env["project.project"].create({"name": "Scope Project BAD"})
         self._prepare_funding(project1)
         partner1 = self.env["res.partner"].create({"name": "Scope Vendor BAD"})
-        bad_pr = self.env["payment.request"].create(
+        no_settlement_pr = self.env["payment.request"].create(
             {
-                "name": "VAL-PR-BAD-SCOPE",
+                "name": "VAL-PR-NO-SETTLEMENT-SCOPE",
                 "type": "pay",
                 "project_id": project1.id,
                 "partner_id": partner1.id,
@@ -223,16 +223,15 @@ class TestValidatorSmoke(TransactionCase):
             }
         )
 
-        # scope 指向 bad_pr：应抛异常
-        with self.assertRaises(UserError):
-            validator.validate_or_raise(
-                scope={
-                    "res_model": "payment.request",
-                    "res_ids": [bad_pr.id],
-                    "project_id": bad_pr.project_id.id,
-                    "company_id": bad_pr.company_id.id,
-                }
-            )
+        # scope 指向未选择结算单的付款：应通过
+        validator.validate_or_raise(
+            scope={
+                "res_model": "payment.request",
+                "res_ids": [no_settlement_pr.id],
+                "project_id": no_settlement_pr.project_id.id,
+                "company_id": no_settlement_pr.company_id.id,
+            }
+        )
 
     def test_payment_request_overpay_blocked(self):
         project = self.env["project.project"].create({"name": "Overpay Project"})

@@ -61,9 +61,7 @@ class PaymentLedger(models.Model):
     def _check_request_state(self, request):
         if not request or request.state != "approved":
             raise UserError("付款申请未处于已批准状态，不能登记付款。")
-        if not request.settlement_id:
-            raise UserError("付款申请未关联结算单，不能登记付款。")
-        if request.settlement_id.state not in ("approve", "done"):
+        if request.settlement_id and request.settlement_id.state not in ("approve", "done"):
             raise UserError("结算单未处于已审批状态，不能登记付款。")
 
     def _check_amount(self):
