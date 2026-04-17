@@ -22030,3 +22030,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; procurement metadata screen PASS; rollback-only procurement source flow classified zero settlement amount; settlement line schema screen PASS; rollback-only settlement-line downstream payment flow PASS after forced approved state for downstream classification`
 - next_step: `Open dedicated legacy orphan payment compliance screen to count and classify imported payment requests missing settlement_id before choosing replay strategy.`
 - stop_condition: `none`
+### 2026-04-17T23:38:00+08:00
+- blocker_key: `iter_legacy_orphan_request_compliance_screen_pass_with_replay_candidates`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-17-LEGACY-ORPHAN-REQUEST-COMPLIANCE-SCREEN`
+- completed_step: `Read-only compliance screen confirmed all 30102 payment requests miss settlement_id; 12194 are done and all have ledger evidence, while 17908 are draft with no ledger evidence`
+- verification: `validate_task PASS; Odoo read-only compliance screen PASS; db_writes=0`
+- next_step: `Open replay candidate design batch for completed ledger-backed requests, keeping draft/no-ledger requests out of completed replay unless more business evidence is found.`
+- stop_condition: `none`
