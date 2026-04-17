@@ -21603,6 +21603,15 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - active_commit: `unavailable-local-unstaged`
 - next_step: `Open screen batch to classify the shortlist into backend facts vs frontend over-filtering`
 
+### 2026-04-17T15:34:00+08:00
+- blocker_key: `iter_contract_form_native_custom_diff_scan_pass`
+- layer_target: `Contract/frontend divergence diagnosis`
+- module: `construction.contract form view + ui.contract + frontend contract consumer`
+- reason: user reported large divergence between native Odoo contract form and custom frontend contract form
+- completed_step: `ITER-2026-04-17-CONTRACT-FORM-NATIVE-CUSTOM-DIFF-SCAN PASS：native XML and model-form contract preserve full form structure; action_open contract delivery narrows construction.contract to amount/legacy fields, and frontend ContractFormPage then projects that contract through DetailShellLayout instead of the generic native layout renderer`
+- active_commit: `codex/next-round @ de00c98 (unstaged + read-only scan artifacts)`
+- next_step: `Open backend-first implementation batch to align construction.contract action_open form delivery with model-form delivery; only after that verify whether frontend detail-shell projection still needs generic native-layout routing`
+
 ### 2026-04-16T17:22:00+08:00
 - blocker_key: `project_form_fact_to_frontend_diversion_screen_v1`
 - layer_target: `scene-orchestration layer`
@@ -21647,3 +21656,201 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-17-CODEX-TRACE-LAYER PASS：trace wrapper, local ignore boundary, usage doc, syntax check, ignored latest.log, and dry-run trace artifact creation verified`
 - active_commit: `codex/next-round @ b17cfed (unstaged)`
 - next_step: `Trace layer is ready for opt-in use; next eligible low-risk enhancement would be diff intelligence only if a new task contract is opened`
+
+### 2026-04-17T13:10:44+08:00
+- blocker_key: `iter_payment_approval_imported_fact_alignment_pass`
+- layer_target: `Domain business-fact read model`
+- module: `smart_construction_core payment.request historical approval facts`
+- reason: user corrected the direction from triggering new approval to aligning new-system visibility with already imported business facts
+- completed_step: `ITER-2026-04-17-PAYMENT-APPROVAL-IMPORTED-FACT-ALIGNMENT PASS：payment.request now surfaces imported historical approval facts read-only; 7 explicit legacy approve facts read as historical_approved while current workflow state remains draft`
+- active_commit: `codex/next-round @ de00c98 (unstaged)`
+- next_step: `If physical state migration is required, open a separate high-risk write batch with policy for legacy-approved records that lack current contract/settlement anchors`
+
+### 2026-04-17T13:29:41+08:00
+- blocker_key: `iter_legacy_payment_approval_semantic_screen_pass`
+- layer_target: `Migration semantic screening`
+- module: `LegacyDb S_Execute_Approval payment.request approval facts`
+- reason: user approved deeper parsing of old approval source fields to distinguish real approval facts from workflow trace rows
+- completed_step: `ITER-2026-04-17-LEGACY-PAYMENT-APPROVAL-SEMANTIC-SCREEN PASS：parsed 60337 payment-target workflow rows; only 7 rows/targets are explicit historical_approved, while 23309 targets are historical_pending_or_trace_only`
+- active_commit: `codex/next-round @ de00c98 (unstaged)`
+- next_step: `Open a separate implementation batch only if the read-only payment.request surface should distinguish trace-only workflow evidence from explicit historical approval`
+
+### 2026-04-17T13:39:40+08:00
+- blocker_key: `iter_legacy_payment_approval_downstream_fact_screen_pass`
+- layer_target: `Migration business-fact screening`
+- module: `Legacy payment.request downstream approval evidence`
+- reason: user clarified that legacy audit status may be incomplete, and later business facts can prove approval completion
+- completed_step: `ITER-2026-04-17-LEGACY-PAYMENT-APPROVAL-DOWNSTREAM-FACT-SCREEN PASS：combined audit rows with actual outflow evidence; 12194 trace-only outflow requests are now classifiable as historical_approved_by_downstream_business_fact`
+- active_commit: `codex/next-round @ de00c98 (unstaged)`
+- next_step: `Open implementation batch to update the read-only payment.request approval surface to use audit-or-downstream-business-fact classification; keep current workflow state mutation out of scope unless separately approved`
+
+### 2026-04-17T13:50:02+08:00
+- blocker_key: `iter_legacy_payment_approval_downstream_fact_state_sync_pass`
+- layer_target: `Migration business-fact state synchronization`
+- module: `payment.request imported downstream approval state`
+- reason: user authorized one-step synchronization of downstream-proven payment requests to approved/completed new-system state
+- completed_step: `ITER-2026-04-17-LEGACY-PAYMENT-APPROVAL-DOWNSTREAM-FACT-STATE-SYNC PASS：12194 downstream-proven outflow payment requests set to state=done and validation_status=validated; 12194 matching payment.ledger rows created; post-write DB check PASS`
+- active_commit: `codex/next-round @ de00c98 (unstaged + sc_demo DB writes)`
+- next_step: `Restart backend only if UI sessions show stale values; otherwise continue with frontend/business verification of completed payment-request visibility`
+
+### 2026-04-17T16:05:00+08:00
+- blocker_key: `iter_contract_form_action_model_frontend_align_pass`
+- layer_target: `scene-orchestration layer + frontend contract consumer`
+- module: `smart_core ui.contract form projection + v2 intent envelope + frontend ContractFormPage`
+- reason: user reported native contract form and custom frontend contract form diverged after a prior backend alignment; action-open must preserve model form truth and only add action-entry context
+- completed_step: `ITER-2026-04-17-CONTRACT-FORM-ACTION-MODEL-FRONTEND-ALIGN PASS：construction.contract action_open/model form parity restored at 32 unique fields and equal layout counts; v2 meta.contract_surface native guard PASS; frontend native-like shell now consumes generic usable form contracts`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `If another contract mismatch is reported, inspect native header object-button visibility separately; do not reopen action/model form-body parity unless the runtime parity check regresses`
+
+### 2026-04-17T16:28:00+08:00
+- blocker_key: `iter_contract_form_native_detail_ui_align_pass`
+- layer_target: `frontend contract consumer`
+- module: `frontend/apps/web contract detail renderer`
+- reason: user requested a dedicated round to align the custom contract detail page with the native Odoo contract form screenshots after backend action/model parity had been restored
+- completed_step: `ITER-2026-04-17-CONTRACT-FORM-NATIVE-DETAIL-UI-ALIGN PASS：native-like rendering gates moved from project-only to generic usable form contracts; outer card/grid/header/shell normalization and compact label-value field layout now apply to construction.contract; frontend typecheck/build PASS; frontend restarted at http://127.0.0.1:5174/`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should verify remaining visual delta by area: header/statusbar, body density, notebook tabs, or one2many grid`
+
+### 2026-04-17T16:54:39+08:00
+- blocker_key: `iter_contract_form_native_button_align_pass`
+- layer_target: `frontend contract consumer + ui.contract button semantic supply`
+- module: `frontend/apps/web contract detail action renderer`
+- reason: user confirmed the page structure had taken effect but the custom detail buttons still diverged from native Odoo
+- completed_step: `ITER-2026-04-17-CONTRACT-FORM-NATIVE-BUTTON-ALIGN PASS：native-like contract detail header now consumes form header_buttons before action-window toolbar/navigation actions, preserves native button order, and executes object buttons using the backend payload type; frontend typecheck/build/diff-check PASS; frontend restarted at http://127.0.0.1:5174/`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should verify visible header buttons and order: 从中标清单生成、确认合同、开始执行、完成、作废、重置为草稿`
+
+### 2026-04-17T17:12:24+08:00
+- blocker_key: `iter_contract_form_create_duplicate_m2o_fix_pass`
+- layer_target: `frontend contract consumer`
+- module: `frontend/apps/web contract form renderer`
+- reason: user reported that create pages were not adjusted, and detail pages duplicated contract number/company while company showed a raw id
+- completed_step: `ITER-2026-04-17-CONTRACT-FORM-CREATE-DUPLICATE-M2O-FIX PASS：generic create forms can now enter native-like rendering when the backend supplies a usable form contract; native-like shells de-duplicate repeated fields; many2one readonly display uses relation labels and preserves current-record labels through option loading; frontend typecheck/build/diff-check PASS; frontend restarted at http://127.0.0.1:5174/`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should verify contract create-page structure, and detail-page contract number/company single rendering with company name display`
+
+### 2026-04-17T17:32:02+08:00
+- blocker_key: `iter_list_view_native_semantic_consolidation_pass`
+- layer_target: `frontend contract consumer`
+- module: `frontend/apps/web list view renderer`
+- reason: user requested applying the same "do not fabricate frontend semantics" convergence approach to list views
+- completed_step: `ITER-2026-04-17-LIST-VIEW-NATIVE-SEMANTIC-CONSOLIDATION PASS：native-like list mode now suppresses frontend-fabricated business filter tabs/copy, consumes backend quick filters when present, preserves backend group order, and removes frontend row-hint/mode adornments; frontend typecheck/build/diff-check PASS; frontend restarted at http://127.0.0.1:5174/`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should verify native-like list pages: backend columns/labels remain, frontend-generated tabs are absent unless contract filters exist, and grouped rows keep backend order`
+
+### 2026-04-17T17:58:00+08:00
+- blocker_key: `iter_list_search_group_native_parity_pass`
+- layer_target: `scene-orchestration layer + frontend contract consumer`
+- module: `smart_core ui.contract/search-surface projection + frontend/apps/web list search/group consumer`
+- reason: user opened a dedicated topic to align list-page search and grouping combination capability directly with native Odoo and fill backend semantic gaps
+- completed_step: `ITER-2026-04-17-LIST-SEARCH-GROUP-NATIVE-PARITY PASS：app.search.config now projects native search fields, filters, searchpanel definitions, group-by candidates, and default sort; action-bound search views are overlaid at runtime without model-cache pollution; native-like list pages render backend filter/group chips generically; validate_task/py_compile/frontend typecheck/build/native integrity guard/diff-check PASS`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should compare custom list search/filter/group chips with native Odoo action search view behavior; if searchpanel values are required as selectable left-panel options, open the next scene-orchestration batch to supply searchpanel value options from backend`
+
+### 2026-04-17T18:06:00+08:00
+- blocker_key: `iter_list_action_surface_native_parity_pass`
+- layer_target: `scene-orchestration layer + frontend contract consumer`
+- module: `smart_core action-surface projection + frontend/apps/web native-like list renderer`
+- reason: user reported that the custom list page showed many buttons that do not exist on the native Odoo list page
+- completed_step: `ITER-2026-04-17-LIST-ACTION-SURFACE-NATIVE-PARITY PASS：list-primary contracts no longer project same-model act_window navigation entries as current-page buttons; search group_by only includes explicit native search-view group entries; native-like list mode suppresses frontend-fabricated batch/export/group helper buttons; validate_task/py_compile/frontend typecheck/build/native integrity guard/diff-check PASS; backend and frontend restarted; runtime action 585 buttons_count=0 toolbar=0 group_by=0`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should verify custom contract list action surface against native Odoo: no same-model navigation buttons, no local batch/export helper bar, and only explicit backend search/group controls`
+
+### 2026-04-17T18:29:00+08:00
+- blocker_key: `iter_list_native_search_menu_parity_pass`
+- layer_target: `scene-orchestration layer + frontend contract consumer`
+- module: `smart_core native search-menu projection + frontend/apps/web native-like list renderer`
+- reason: user clarified that native Odoo exposes group-by controls through the search dropdown opened from the search field, not persistent group buttons
+- completed_step: `ITER-2026-04-17-LIST-NATIVE-SEARCH-MENU-PARITY PASS：search contract now supplies native_search_menu sections for filters/group_by/favorites/searchpanel; scene search_surface preserves interaction_model=native_search_menu; native-like ListPage opens a backend-driven search dropdown from the search input and no longer renders group_by as persistent buttons; validate_task/py_compile/frontend typecheck/build/native integrity guard/diff-check PASS; backend and frontend restarted`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should verify native-like search interaction: default page has no group-by button strip, search input opens dropdown, and backend-provided group/filter entries activate from inside that dropdown`
+
+### 2026-04-17T18:37:00+08:00
+- blocker_key: `iter_list_native_search_menu_empty_state_fix_pass`
+- layer_target: `frontend contract consumer`
+- module: `frontend/apps/web native-like ListPage search dropdown`
+- reason: user reported that clicking the search arrow had no visible reaction after the native_search_menu rollout
+- completed_step: `ITER-2026-04-17-LIST-NATIVE-SEARCH-MENU-EMPTY-STATE-FIX PASS：ListPage now opens the native search dropdown whenever backend declares native_search_menu sections, even if sections have no items; empty menus show a visible empty-state message; validate_task/frontend typecheck/build/diff-check PASS; frontend restarted at http://127.0.0.1:5174/`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `Manual browser refresh should click the search arrow and verify a dropdown opens; if sections are empty, it should show the empty-state message instead of doing nothing`
+
+### 2026-04-17T18:58:00+08:00
+- blocker_key: `iter_native_searchmodel_runtime_parity_pass`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core app.search.config native SearchModel runtime projection`
+- reason: user confirmed the search dropdown shell works but native menu content/buttons are not fully carried over
+- completed_step: `ITER-2026-04-17-NATIVE-SEARCHMODEL-RUNTIME-PARITY PASS：backend now projects current action domain as a default native search-menu filter and carries standard SearchModel/ControlPanel controls in native_search_menu.controls; action 585 runtime now returns filters=[施工合同] from domain [('type','=','out')] plus controls add_custom_filter/add_custom_group/save_current_search; validate_task/py_compile/native integrity guard/diff-check PASS; backend restarted`
+- active_commit: `codex/next-round @ de00c98 (unstaged; unrelated payment-request dirty files still present)`
+- next_step: `If the native ControlPanel buttons must be visible, open the next frontend consumer batch to render native_search_menu.controls without treating them as business filters`
+### 2026-04-17T19:14:51+08:00
+- blocker_key: `iter_native_searchmenu_control_projection_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-NATIVE-SEARCHMENU-CONTROL-PROJECTION`
+- completed_step: `Backend native search menu now projects standard SearchModel controls into section items; action 585/menu 386 runtime evidence shows construction.contract native search arch only contains field name, so project-specific filters/groups were not fabricated; sections now include filters=[施工合同, 添加自定义筛选], group_by=[添加自定义分组], favorites=[保存当前搜索]`
+- verification: `validate_task PASS; py_compile PASS; make verify.contract.native_integrity_guard PASS; backend dev restart PASS`
+- next_step: `If refreshed custom UI still does not display these section items, open a frontend generic consumer batch to render kind=control items without model-specific branching.`
+- stop_condition: `none`
+### 2026-04-17T20:26:54+08:00
+- blocker_key: `iter_frontend_native_searchmenu_control_render_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-FRONTEND-NATIVE-SEARCHMENU-CONTROL-RENDER`
+- completed_step: `Frontend ListPage now renders backend native search menu controls by merging native_search_menu.controls into declared sections and falling back to generic normalized filter/group/saved/searchpanel props when transitional sections are empty; kind=control entries are displayed but do not mutate route state`
+- verification: `validate_task PASS; pnpm typecheck:strict PASS; pnpm build PASS; git diff --check PASS; frontend daily restart PASS`
+- next_step: `Refresh 127.0.0.1:5174/r/585?menu_id=386 and verify search dropdown shows backend entries; if visual parity still differs, open a generic native search-menu styling/interaction batch.`
+- stop_condition: `none`
+### 2026-04-17T20:33:50+08:00
+- blocker_key: `iter_frontend_native_searchmenu_interaction_guard_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-FRONTEND-NATIVE-SEARCHMENU-INTERACTION-GUARD`
+- completed_step: `ListPage native search menu click behavior now distinguishes executable entries from display/control/default action-domain entries; kind=control/searchpanel/default/source=action_domain items no longer mutate route state, preventing empty-list regressions after clicking menu rows`
+- verification: `validate_task PASS; pnpm typecheck:strict PASS; pnpm build PASS; git diff --check PASS; frontend daily restart PASS`
+- next_step: `User refreshes r/585?menu_id=386 and verifies that clicking display/control rows no longer empties the list; next eligible batch is visual/interaction parity for custom filter/group dialogs if needed.`
+- stop_condition: `none`
+### 2026-04-17T20:44:16+08:00
+- blocker_key: `iter_business_continuity_fact_usability_scan_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-BUSINESS-CONTINUITY-FACT-USABILITY-SCAN`
+- completed_step: `Bounded scan of sc_demo imported business fact continuity completed; 12 candidate signals recorded across project lifecycle/ownership, contract state flattening, payment company/contract linkage, workflow audit classification, populated legacy financial facts, and empty execution surfaces`
+- verification: `validate_task PASS; scan stage only`
+- next_step: `Open screen batch to classify candidates into business-fact alignment, scene-orchestration/action guidance, data-quality exception, or query-only legacy fact surface.`
+- stop_condition: `none`
+### 2026-04-17T20:46:01+08:00
+- blocker_key: `iter_business_continuity_fact_usability_screen_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-BUSINESS-CONTINUITY-FACT-USABILITY-SCREEN`
+- completed_step: `Screened 12 imported business continuity candidates into five lanes: Project Continuity Foundation, Contract Continuity Alignment, Payment Continuity High-Risk Track, Settlement/Legacy Financial Fact Consumption, and Fresh-Work Operational Surfaces`
+- verification: `validate_task PASS; screen stage only`
+- next_step: `Open Lane A task for project continuity foundation before touching contract/payment high-risk continuity writes.`
+- stop_condition: `none`
+### 2026-04-17T20:49:57+08:00
+- blocker_key: `iter_project_continuity_foundation_screen_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-PROJECT-CONTINUITY-FOUNDATION-SCREEN`
+- completed_step: `Project continuity screen completed: 701/756 imported projects have downstream business facts while all remain draft/initiation/ready; first safe rule is lifecycle_state=in_progress, phase_key=execution, sc_execution_state=in_progress for downstream-fact projects only; company/customer facts remain out of scope due no evidence`
+- verification: `validate_task PASS; screen stage only`
+- next_step: `Direct lifecycle sync is blocked by transition prerequisites; open PROJECT-CONTINUITY-TRANSITION-GUARD-RECOVERY before state writes.`
+- stop_condition: `PASS_WITH_RISK: 0/756 projects satisfy owner/location/BOQ prerequisites for ORM draft -> in_progress transition`
+### 2026-04-17T21:00:03+08:00
+- blocker_key: `iter_project_continuity_transition_guard_recovery_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-PROJECT-CONTINUITY-TRANSITION-GUARD-RECOVERY`
+- completed_step: `Imported project continuity guard recovered and executed: explicit context + legacy_project_id + downstream facts allow draft->in_progress without weakening normal transition guards; 701 projects synced to in_progress/execution/in_progress; 55 no-downstream projects remain draft/initiation/ready`
+- verification: `validate_task PASS; py_compile PASS; dry-run PASS; write PASS; post-write check PASS; native integrity guard PASS; backend restart PASS`
+- next_step: `Continue Lane B contract continuity alignment using the same downstream-fact principle.`
+- stop_condition: `none`
+### 2026-04-17T21:02:25+08:00
+- blocker_key: `iter_contract_continuity_alignment_screen_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-CONTRACT-CONTINUITY-ALIGNMENT-SCREEN`
+- completed_step: `Contract continuity screen completed: 6793 imported contracts all draft; 4783 running candidates by payment/request-line evidence, 1902 confirmed candidates by approved workflow audit, 108 remain draft; no state writes in screen batch`
+- verification: `validate_task PASS; screen stage only`
+- next_step: `Open CONTRACT-CONTINUITY-DOWNSTREAM-FACT-STATE-SYNC implementation batch.`
+- stop_condition: `none`
+### 2026-04-17T21:07:29+08:00
+- blocker_key: `iter_contract_continuity_downstream_fact_state_sync_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-CONTRACT-CONTINUITY-DOWNSTREAM-FACT-STATE-SYNC`
+- completed_step: `Imported contract continuity state sync executed: 4783 contracts set running by payment/request-line evidence, 1902 set confirmed by approved audit evidence, 108 no-downstream contracts remain draft; payment/settlement states untouched`
+- verification: `validate_task PASS; py_compile PASS; dry-run PASS; write PASS; post-write check PASS; SQL distribution PASS`
+- next_step: `Payment continuity is a dedicated high-risk track and must not be mixed into contract sync.`
+- stop_condition: `none`

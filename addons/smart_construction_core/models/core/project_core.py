@@ -2198,11 +2198,47 @@ class ProjectProject(models.Model):
             ],
         }.get(target_state, [])
 
+    def _sc_imported_continuity_context_enabled(self):
+        return bool(self.env.context.get("sc_imported_project_continuity_sync"))
+
+    def _sc_has_imported_continuity_downstream_fact(self):
+        self.ensure_one()
+        if not self.legacy_project_id:
+            return False
+        checks = [
+            ("construction.contract", [("project_id", "=", self.id)]),
+            ("payment.request", [("project_id", "=", self.id)]),
+            ("payment.ledger", [("project_id", "=", self.id)]),
+            ("sc.legacy.receipt.income.fact", [("project_id", "=", self.id)]),
+            ("sc.legacy.expense.deposit.fact", [("project_id", "=", self.id)]),
+            ("sc.legacy.invoice.tax.fact", [("project_id", "=", self.id)]),
+            ("sc.legacy.financing.loan.fact", [("project_id", "=", self.id)]),
+            ("sc.legacy.fund.daily.snapshot.fact", [("project_id", "=", self.id)]),
+        ]
+        for model_name, domain in checks:
+            if model_name not in self.env:
+                continue
+            if self.env[model_name].sudo().search_count(domain, limit=1):
+                return True
+        return False
+
+    def _sc_can_use_imported_continuity_transition(self, target_state):
+        self.ensure_one()
+        if target_state != "in_progress":
+            return False
+        if not self._sc_imported_continuity_context_enabled():
+            return False
+        if self.lifecycle_state != "draft":
+            return False
+        return self._sc_has_imported_continuity_downstream_fact()
+
     def _sc_validate_for_transition(self, target_state):
         required_fields = self._sc_required_fields_for_transition(target_state)
         if not required_fields:
             return
         for project in self:
+            if project._sc_can_use_imported_continuity_transition(target_state):
+                continue
             missing = []
             for field_name in required_fields:
                 if not project[field_name]:
@@ -2250,7 +2286,8 @@ class ProjectProject(models.Model):
                 project._guard_project_close_by_settlement(target_state)
                 project._guard_project_close_by_payment(target_state)
             if target_state in ("in_progress", "done", "closing", "warranty", "closed"):
-                project._guard_project_close_by_boq(target_state)
+                if not project._sc_can_use_imported_continuity_transition(target_state):
+                    project._guard_project_close_by_boq(target_state)
 
     def action_set_lifecycle_state(self, target_state):
         """项目状态切换入口，统一接入状态机校验。"""
