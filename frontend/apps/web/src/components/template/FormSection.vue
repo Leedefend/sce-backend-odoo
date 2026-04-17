@@ -1,13 +1,18 @@
 <template>
-  <section :class="['template-form-section', toneClass]" data-component="FormSection">
-    <div class="template-form-section-head">
+  <section :class="['template-form-section', toneClass, { 'template-form-section--native': nativeLike }]" data-component="FormSection">
+    <div v-if="title || $slots.action" class="template-form-section-head">
       <h3 class="template-form-section-title">{{ title }}</h3>
       <slot name="action" />
     </div>
     <p v-if="hint" class="template-form-section-hint">{{ hint }}</p>
     <div class="template-form-section-grid" :style="gridStyle">
       <template v-if="fields.length">
-        <div v-for="field in fields" :key="field.key" :class="['field', field.spanClass || defaultSpanClass(field.type)]">
+        <div
+          v-for="field in fields"
+          :key="field.key"
+          :class="['field', field.spanClass || defaultSpanClass(field.type)]"
+          :data-field-type="field.type"
+        >
           <label class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
           <template v-if="field.readonly">
             <slot name="readonly" :field="field">
@@ -88,6 +93,7 @@ const props = withDefaults(defineProps<{
   columns?: 1 | 2;
   tone?: 'core' | 'advanced';
   fields?: FormSectionFieldSchema[];
+  nativeLike?: boolean;
   selectPlaceholder?: (label: string) => string;
   inputPlaceholder?: (label: string) => string;
 }>(), {
@@ -95,6 +101,7 @@ const props = withDefaults(defineProps<{
   columns: 2,
   tone: 'core',
   fields: () => [],
+  nativeLike: false,
   selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
   inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
 });
@@ -194,11 +201,37 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   column-gap: 24px;
 }
 
+.template-form-section--native {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.template-form-section--native .template-form-section-grid {
+  row-gap: 6px;
+  column-gap: 32px;
+}
+
 .field {
   display: grid;
   gap: 0;
   min-width: 0;
   align-content: start;
+}
+
+.template-form-section--native .field {
+  grid-template-columns: minmax(96px, 26%) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  min-height: 28px;
+}
+
+.template-form-section--native .field--full {
+  grid-template-columns: 1fr;
+}
+
+.template-form-section--native .field--full[data-field-type='one2many'] > .label,
+.template-form-section--native .field--full[data-field-type='many2many'] > .label {
+  display: none;
 }
 
 .field--half {
@@ -216,6 +249,15 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   margin-bottom: 4px;
 }
 
+.template-form-section--native .label {
+  margin-bottom: 0;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.3;
+  text-align: left;
+}
+
 .required {
   color: #b91c1c;
   margin-left: 2px;
@@ -227,6 +269,56 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   min-height: 40px;
   display: inline-flex;
   align-items: center;
+}
+
+.template-form-section--native .readonly-value {
+  min-height: 28px;
+  color: #111827;
+}
+
+.template-form-section--native :deep(.relation-editor) {
+  gap: 4px;
+}
+
+.template-form-section--native :deep(.o2m-toolbar) {
+  justify-content: flex-start;
+  min-height: 26px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+}
+
+.template-form-section--native :deep(.o2m-list) {
+  display: block;
+  border: 1px solid #e5e7eb;
+  border-top: 0;
+}
+
+.template-form-section--native :deep(.o2m-row) {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border-top: 1px solid #eef0f2;
+}
+
+.template-form-section--native :deep(.o2m-row-state) {
+  display: none;
+}
+
+.template-form-section--native :deep(.o2m-fields) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 4px;
+}
+
+.template-form-section--native :deep(.o2m-field) {
+  gap: 2px;
+}
+
+.template-form-section--native :deep(.o2m-field .meta) {
+  color: #4b5563;
+  font-size: 11px;
 }
 
 .input {
@@ -274,6 +366,11 @@ select.input {
     grid-template-columns: 1fr !important;
     row-gap: 16px;
     column-gap: 0;
+  }
+
+  .template-form-section--native .field {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
   }
 }
 </style>

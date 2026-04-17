@@ -325,6 +325,7 @@
       :quick-filters="[...vm.filters.quickFilters.primary, ...vm.filters.quickFilters.overflow]"
       :saved-filters="listSavedFilterOptions"
       :group-by-options="listGroupByToolbarOptions"
+      :native-search-menu="sceneReadyListSurface.nativeSearchMenu"
       :search-panel-options="listSearchPanelOptions"
       :searchable-field-options="listSearchableFieldOptions"
       :searchable-field-total-count="listSearchableFieldTotalCount"
@@ -373,6 +374,7 @@
       :collapsed-group-keys="collapsedGroupKeys"
       :on-group-collapsed-change="handleGroupCollapsedChange"
       :on-group-page-change="handleGroupedRowsPageChange"
+      :native-like="preferNativeListSurface"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -1526,6 +1528,7 @@ function resolveSceneFirstListSurface(contract: Record<string, unknown>, fallbac
   const filters = Array.isArray(searchSurface.filters) ? searchSurface.filters : [];
   const groupBy = Array.isArray(searchSurface.group_by) ? searchSurface.group_by : [];
   const searchPanel = Array.isArray(searchSurface.searchpanel) ? searchSurface.searchpanel : [];
+  const nativeSearchMenu = actionViewRecord(searchSurface.native_search_menu);
   const searchableFields = Array.isArray(searchSurface.fields)
     ? searchSurface.fields
     : Array.isArray(searchSurface.searchable_fields)
@@ -1538,6 +1541,7 @@ function resolveSceneFirstListSurface(contract: Record<string, unknown>, fallbac
     || filters.length
     || groupBy.length
     || searchPanel.length
+    || Object.keys(nativeSearchMenu).length
     || searchableFields.length,
   );
   if (!hasSceneSurface) return fallback;
@@ -1550,6 +1554,7 @@ function resolveSceneFirstListSurface(contract: Record<string, unknown>, fallbac
     groupBy: groupBy.length ? groupBy : fallback.groupBy,
     searchPanel: searchPanel.length ? searchPanel : fallback.searchPanel,
     searchableFields: searchableFields.length ? searchableFields : fallback.searchableFields,
+    nativeSearchMenu: Object.keys(nativeSearchMenu).length ? nativeSearchMenu : fallback.nativeSearchMenu,
   };
 }
 

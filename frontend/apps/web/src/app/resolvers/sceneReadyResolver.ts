@@ -104,6 +104,7 @@ export function resolveListSceneReady(entry: SceneReadyEntry | null) {
     groupBy: Array.isArray(searchSurface.group_by) ? searchSurface.group_by : [],
     searchPanel: Array.isArray(searchSurface.searchpanel) ? searchSurface.searchpanel : [],
     searchableFields: Array.isArray(searchSurface.fields) ? searchSurface.fields : [],
+    nativeSearchMenu: asDict(searchSurface.native_search_menu),
     actions,
     actionSurface,
     permissionSurface,

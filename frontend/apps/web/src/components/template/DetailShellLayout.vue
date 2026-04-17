@@ -37,6 +37,7 @@
               :tone="section.tone"
               :columns="resolveSectionColumns(section)"
               :fields="section.fields"
+              :native-like="nativeLike"
               @field-change="$emit('field-change', $event)"
             >
               <template #readonly="{ field }">
@@ -74,6 +75,7 @@
             :tone="section.tone"
             :columns="resolveSectionColumns(section)"
             :fields="section.fields"
+            :native-like="nativeLike"
             @field-change="$emit('field-change', $event)"
           >
             <template v-if="showAdvancedToggle(section)" #action>
@@ -144,6 +146,8 @@ function activeTabLabel(shell: DetailShellView) {
 
 function tabSectionTitle(shell: DetailShellView, section: DetailSectionView, sectionIndex: number) {
   const title = normalizeSectionTitle(String(section.title || '').trim());
+  if (props.nativeLike && !title) return '';
+  if (props.nativeLike && isFieldDerivedTitle(title, section)) return '';
   if (!title) return fallbackSectionTitle(sectionIndex, section);
   if (title === activeTabLabel(shell)) return '';
   if (section.fields.length <= 2 && section.fields[0]?.label === title) return '';
@@ -166,6 +170,8 @@ function showTabSectionMeta(shell: DetailShellView, section: DetailSectionView, 
 
 function sectionTitle(section: DetailSectionView, sectionIndex: number) {
   const title = normalizeSectionTitle(String(section.title || '').trim());
+  if (props.nativeLike && !title) return '';
+  if (props.nativeLike && isFieldDerivedTitle(title, section)) return '';
   if (!title) return fallbackSectionTitle(sectionIndex, section);
   return title;
 }
@@ -187,6 +193,7 @@ function isGenericSectionTitle(rawTitle: string): boolean {
 }
 
 function fallbackSectionTitle(sectionIndex: number, section?: DetailSectionView): string {
+  if (props.nativeLike) return '';
   const semanticTitle = resolveSemanticSectionTitle(section);
   if (semanticTitle) return semanticTitle;
   const firstFieldLabel = String(section?.fields?.[0]?.label || '').trim();
@@ -210,6 +217,10 @@ function resolveSemanticSectionTitle(section?: DetailSectionView): string {
 
 function normalizeTabLabel(shell: DetailShellView, tabKey: string, rawLabel: string): string {
   const label = String(rawLabel || '').trim();
+  const tab = shell.tabs?.find((item) => item.key === tabKey);
+  if (props.nativeLike && tab && tab.sections.some((section) => isFieldDerivedTitle(label, section))) {
+    return resolveSemanticTabLabel(shell, tabKey) || fallbackTabLabel(shell.tabs?.findIndex((item) => item.key === tabKey) ?? 0);
+  }
   if (label && !isGenericTabLabel(label)) return label;
   const semanticLabel = resolveSemanticTabLabel(shell, tabKey);
   if (semanticLabel) return semanticLabel;
@@ -230,9 +241,19 @@ function resolveSemanticTabLabel(shell: DetailShellView, tabKey: string): string
     const semanticTitle = resolveSemanticSectionTitle(section);
     if (semanticTitle && semanticTitle !== '主体信息' && semanticTitle !== '管理信息') return semanticTitle;
     const sectionTitle = String(section.title || '').trim();
+    if (props.nativeLike && isFieldDerivedTitle(sectionTitle, section)) continue;
     if (sectionTitle && !isGenericSectionTitle(sectionTitle)) return sectionTitle;
   }
   return '';
+}
+
+function isFieldDerivedTitle(titleRaw: string, section?: DetailSectionView): boolean {
+  const title = String(titleRaw || '').trim();
+  const firstFieldLabel = String(section?.fields?.[0]?.label || '').trim();
+  if (!title || !firstFieldLabel) return false;
+  if (title === firstFieldLabel) return true;
+  if (title === `${firstFieldLabel}信息`) return true;
+  return section?.fields?.length === 1 && title.includes(firstFieldLabel);
 }
 
 function fallbackTabLabel(tabIndex: number): string {
@@ -323,7 +344,7 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-detail-shell__body--native {
   grid-template-columns: 1fr;
-  gap: 4px;
+  gap: 0;
 }
 
 .contract-detail-tabs {
@@ -379,7 +400,7 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-detail-tabs__panel {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .contract-form-shell {
@@ -392,11 +413,11 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-form-shell--native {
-  border: 1px solid #eceff3;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   background: #fff;
   box-shadow: none;
-  padding: 6px 8px;
+  padding: 4px 0;
 }
 
 .contract-form-shell--sheet {
@@ -423,20 +444,20 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-form-shell--native.contract-form-shell--nested {
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   background: #fff;
   box-shadow: none;
-  padding: 6px 8px;
+  padding: 4px 0;
 }
 
 .contract-form-shell--native :deep(.template-form-section-grid) {
-  row-gap: 10px;
-  column-gap: 14px;
+  row-gap: 6px;
+  column-gap: 32px;
 }
 
 .contract-form-shell--native :deep(.template-form-section-head) {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .contract-form-shell--native :deep(.template-form-section-title) {
@@ -451,15 +472,15 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-form-shell--native :deep(.input) {
-  height: 36px;
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  height: 28px;
+  min-height: 28px;
+  padding: 3px 8px;
+  border-radius: 3px;
   font-size: 13px;
 }
 
 .contract-form-shell--native :deep(.readonly-value) {
-  min-height: 36px;
+  min-height: 28px;
   font-size: 13px;
 }
 
