@@ -21902,3 +21902,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; replay plan PASS; replay check PASS`
 - next_step: `Use replay --mode check after legacy data load; use replay --mode write only in controlled replay windows.`
 - stop_condition: `none`
+### 2026-04-17T22:12:27+08:00
+- blocker_key: `iter_legacy_fact_business_operability_screen_pass_with_risk`
+- status: `PASS_WITH_RISK`
+- active_task: `ITER-2026-04-17-LEGACY-FACT-BUSINESS-OPERABILITY-SCREEN`
+- completed_step: `Rollback-only operability screen completed: contract create/line/confirm/running flow works on imported project facts; payment facts are structurally ready but finance user payment handling is blocked by project.project record-rule visibility`
+- verification: `validate_task PASS; Odoo rollback-only checks PASS; rollback persistence marker counts=0`
+- next_step: `Open dedicated permission-governance lane for finance user project visibility before payment submit can be considered operable.`
+- stop_condition: `PASS_WITH_RISK: permission governance blocker`
