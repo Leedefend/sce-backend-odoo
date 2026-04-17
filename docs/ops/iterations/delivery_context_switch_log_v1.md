@@ -22062,3 +22062,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; diff_check PASS; implementation not started because payment/settlement business semantics are high-risk forbidden paths under current repo rules`
 - next_step: `Open dedicated high-risk backend implementation batch for optional settlement semantics with exact payment/settlement file allowlist and verification commands.`
 - stop_condition: `implementation_required_in_payment_or_settlement_code`
+### 2026-04-18T04:48:00+08:00
+- blocker_key: `iter_settlement_optional_backend_implementation_blocked_by_repo_stop_rule`
+- status: `BLOCKED`
+- active_task: `ITER-2026-04-18-SETTLEMENT-OPTIONAL-BACKEND-IMPLEMENTATION`
+- completed_step: `High-risk implementation task contract created with exact intended payment/settlement file allowlist, but implementation did not start because AGENTS.md Section 6 has no exception for optional payment/settlement business semantics`
+- verification: `task contract pending validation; code changes blocked before touching addons`
+- next_step: `Add or authorize a repository-level narrow exception for this dedicated optional-settlement business semantics batch, then execute implementation and verification.`
+- stop_condition: `no_repo_rule_exception_for_payment_settlement_business_semantics`
