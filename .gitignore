@@ -157,6 +157,7 @@ artifacts/migration/*.md
 !docs/migration_alignment/frozen/**
 addons/artifacts/
 artifacts/continue/
+artifacts/codex_trace/
 
 # Stable release and governance docs remain eligible for Git.
 !docs/ops/releases/

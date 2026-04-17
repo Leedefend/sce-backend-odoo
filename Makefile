@@ -32,6 +32,9 @@ CODEX_DB          ?= $(DB_NAME)
 ENV ?= dev
 ENV_FILE ?=
 ENV_FILE_RESOLVED :=
+PRE_ENV_DB_NAME := $(DB_NAME)
+PRE_ENV_DB := $(DB)
+PRE_ENV_BD := $(BD)
 ifneq ($(strip $(ENV_FILE)),)
 ENV_FILE_RESOLVED := $(ENV_FILE)
 else ifneq (,$(wildcard .env.$(ENV)))
@@ -44,6 +47,16 @@ ENV_FILE := $(ENV_FILE_RESOLVED)
 ifneq ($(strip $(ENV_FILE_RESOLVED)),)
 include $(ENV_FILE_RESOLVED)
 export
+endif
+
+ifneq ($(strip $(PRE_ENV_DB_NAME)),)
+DB_NAME := $(PRE_ENV_DB_NAME)
+endif
+ifneq ($(strip $(PRE_ENV_DB)),)
+DB := $(PRE_ENV_DB)
+endif
+ifneq ($(strip $(PRE_ENV_BD)),)
+BD := $(PRE_ENV_BD)
 endif
 
 # ------------------ Compose ------------------
@@ -431,30 +444,38 @@ FRONTEND_DEV_LOG ?= /tmp/sc-frontend-dev.log
 FRONTEND_DEV_PID ?= /tmp/sc-frontend-dev.pid
 
 frontend.dev: guard.prod.forbid
-	@if [ -f "$(FRONTEND_DEV_PID)" ] && kill -0 "$$(cat "$(FRONTEND_DEV_PID)")" 2>/dev/null; then \
-		echo "[frontend.dev] already running pid=$$(cat "$(FRONTEND_DEV_PID)")"; \
-		exit 0; \
-	fi
-	@echo "[frontend.dev] starting vite on http://localhost:5174"
-	@nohup pnpm -C frontend dev > "$(FRONTEND_DEV_LOG)" 2>&1 & echo $$! > "$(FRONTEND_DEV_PID)"
-	@sleep 2
-	@tail -n 20 "$(FRONTEND_DEV_LOG)" || true
+	@FRONTEND_PROFILE=$${FRONTEND_PROFILE:-daily} \
+	  FRONTEND_DEV_PIDFILE="$(FRONTEND_DEV_PID)" \
+	  FRONTEND_DEV_LOGFILE="$(FRONTEND_DEV_LOG)" \
+	  bash scripts/dev/frontend_dev_reset.sh
 
-frontend.stop:
+frontend.stop: guard.prod.forbid
 	@echo "[frontend.stop] stopping frontend dev server"
-	@pid=""; \
+	@if [ -f "$(FRONTEND_DEV_PID)" ]; then \
+		pid="$$(cat "$(FRONTEND_DEV_PID)" 2>/dev/null || true)"; \
+		if [ -n "$$pid" ] && kill -0 "$$pid" 2>/dev/null; then \
+			kill "$$pid" 2>/dev/null || true; \
+			echo "[frontend.stop] killed pid=$$pid"; \
+		fi; \
+	fi
+	@pids=""; \
 	if command -v lsof >/dev/null 2>&1; then \
-		pid="$$(lsof -ti tcp:5174 -sTCP:LISTEN 2>/dev/null | head -n1 || true)"; \
+		pids="$$(lsof -tiTCP:5174 -sTCP:LISTEN 2>/dev/null || true)"; \
+	elif command -v ss >/dev/null 2>&1; then \
+		pids="$$(ss -ltnp 2>/dev/null | awk '$$4 ~ /:5174$$/ {print $$NF}' | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | sort -u)"; \
 	fi; \
-	if [ -n "$$pid" ]; then \
-		kill $$pid 2>/dev/null || true; \
-		echo "[frontend.stop] killed pid=$$pid"; \
+	if [ -n "$$pids" ]; then \
+		for pid in $$pids; do kill "$$pid" 2>/dev/null || true; echo "[frontend.stop] killed listener pid=$$pid"; done; \
 	else \
 		echo "[frontend.stop] no listener on :5174"; \
 	fi
 	@rm -f "$(FRONTEND_DEV_PID)"
 
-frontend.restart: frontend.stop frontend.dev
+frontend.restart: guard.prod.forbid
+	@FRONTEND_PROFILE=$${FRONTEND_PROFILE:-daily} \
+	  FRONTEND_DEV_PIDFILE="$(FRONTEND_DEV_PID)" \
+	  FRONTEND_DEV_LOGFILE="$(FRONTEND_DEV_LOG)" \
+	  bash scripts/dev/frontend_dev_reset.sh
 	@echo "[frontend.restart] done"
 
 frontend.logs:
@@ -471,13 +492,41 @@ prod.restart.full: guard.prod.danger check-compose-project check-compose-env
 deploy.prod.sim.oneclick: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
 	@$(RUN_ENV) COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" bash scripts/deploy/prod_sim_oneclick.sh
 
-.PHONY: dev.rebuild
+.PHONY: dev.rebuild db.rebuild.customer db.rebuild.customer.full customer.fresh_init.finalize verify.customer_fresh_init migration.assets.replay guard.db.sc_demo.protect
 dev.rebuild: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env gate.compose.config
 	@$(RUN_ENV) bash scripts/dev/down.sh || true
 	@$(RUN_ENV) bash scripts/dev/up.sh
 	@$(MAKE) db.reset
 	@$(MAKE) demo.reset DB=$(DB_NAME)
 	@echo "[dev.rebuild] done"
+
+guard.db.sc_demo.protect:
+	@if [ "$(DB_NAME)" = "sc_demo" ]; then \
+		echo "[guard.db.sc_demo.protect] REFUSE destructive/fresh-rebuild operation on DB_NAME=sc_demo" >&2; \
+		echo "[guard.db.sc_demo.protect] Use a temporary database such as codex_tmp_fresh_rebuild_$$(date +%Y%m%d_%H%M%S)" >&2; \
+		exit 2; \
+	fi
+
+verify.customer_fresh_init: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/customer_fresh_init_baseline.sh
+
+customer.fresh_init.finalize: guard.prod.forbid guard.db.sc_demo.protect check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/customer_fresh_init_finalize.sh
+
+db.rebuild.customer: guard.codex.fast.noheavy guard.prod.forbid guard.db.sc_demo.protect check-compose-project check-compose-env gate.compose.config
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
+	@$(MAKE) --no-print-directory mod.install MODULE=smart_construction_custom DB_NAME=$(DB_NAME) WITHOUT_DEMO=--without-demo=all
+	@$(MAKE) --no-print-directory customer.fresh_init.finalize DB_NAME=$(DB_NAME)
+	@$(MAKE) --no-print-directory restart
+	@$(MAKE) --no-print-directory verify.customer_fresh_init DB_NAME=$(DB_NAME)
+	@echo "[db.rebuild.customer] done db=$(DB_NAME) module=smart_construction_custom demo=disabled"
+
+migration.assets.replay: guard.codex.fast.noheavy guard.prod.forbid guard.db.sc_demo.protect check-compose-project check-compose-env gate.compose.config
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/migration_asset_replay.sh
+
+db.rebuild.customer.full: db.rebuild.customer migration.assets.replay
+	@$(MAKE) --no-print-directory verify.customer_fresh_init DB_NAME=$(DB_NAME)
+	@echo "[db.rebuild.customer.full] done db=$(DB_NAME) module=smart_construction_custom migration_assets=replayed"
 
 .PHONY: odoo.recreate odoo.logs odoo.exec
 odoo.recreate: check-compose-project check-compose-env
