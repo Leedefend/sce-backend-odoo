@@ -21862,3 +21862,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; downstream screen PASS; sync check PASS; sync write PASS; result JSON PASS; snapshot/rollback CSV PASS; git diff --check PASS`
 - next_step: `Continue with fresh-work operational usability checks for creating and processing new-system daily business after imported continuity facts are usable.`
 - stop_condition: `none`
+### 2026-04-17T21:34:00+08:00
+- blocker_key: `iter_fresh_work_operational_usability_scan_pass_with_next_high_risk_lane`
+- status: `PASS_WITH_NEXT_HIGH_RISK_LANE`
+- active_task: `ITER-2026-04-17-FRESH-WORK-OPERATIONAL-USABILITY-SCAN`
+- completed_step: `Read-only scan confirmed project/contract/payment actions, views, and create access exist; imported project/contract/completed-payment continuity facts are usable; remaining material blocker is payment company/contract linkage completeness`
+- verification: `validate_task PASS; Odoo shell read-only scan PASS`
+- next_step: `Open dedicated high-risk payment linkage fact alignment screen before any write.`
+- stop_condition: `high_risk_domain_needed`
