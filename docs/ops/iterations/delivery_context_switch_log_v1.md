@@ -22098,3 +22098,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; bash -n PASS; DB_NAME=sc_demo make verify.business_fact_consistency.v1 PASS with SKIP_ENV for missing demo projects; DB_NAME=sc_demo make verify.imported_business_continuity.v1 PASS with rollback-only payment flow done/validated and rollback persistence check clean`
 - next_step: `continue with deterministic contract-linkage gap reduction for the remaining imported payment requests, without requiring settlement where no settlement business fact exists`
+- date: 2026-04-18
+- task: ITER-2026-04-18-IMPORTED-PAYMENT-CONTRACT-LINKAGE-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: imported payment contract linkage facts
+- reason: classify the remaining missing contract_id payment requests before any replay/write batch
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell classification PASS; missing_contract=17994 exact_one=0 none=11248 multi=6746`
+- next_step: `do not run contract_id write replay under project+partner+direction; screen stronger legacy source evidence before any write`
