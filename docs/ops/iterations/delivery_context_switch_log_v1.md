@@ -21974,3 +21974,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check PASS; rollback-only full payment submit PASS`
 - next_step: `Continue broader daily-business operability checks beyond payment submit, including approval/review transition and downstream payment lifecycle if needed.`
 - stop_condition: `none`
+### 2026-04-17T22:53:00+08:00
+- blocker_key: `iter_payment_approval_lifecycle_operability_screen_pass_with_next_tier_blocker`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-17-PAYMENT-APPROVAL-LIFECYCLE-OPERABILITY-SCREEN`
+- completed_step: `Rollback-only payment lifecycle screen confirmed submit works, but no tier.review records are generated; validation_status remains no; finance manager approval/done are blocked by PAYMENT_TIER_INCOMPLETE`
+- verification: `validate_task PASS; Odoo rollback-only lifecycle screen PASS; rollback persistence enforced`
+- next_step: `Open dedicated approval-tier applicability screen for payment.request tier definitions.`
+- stop_condition: `none`
