@@ -22107,3 +22107,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; read-only Odoo shell classification PASS; missing_contract=17994 exact_one=0 none=11248 multi=6746`
 - next_step: `do not run contract_id write replay under project+partner+direction; screen stronger legacy source evidence before any write`
+- date: 2026-04-18
+- task: ITER-2026-04-18-LEGACY-PAYMENT-BASIS-EVIDENCE-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: imported legacy payment basis facts
+- reason: distinguish contract-basis payments from enterprise daily/non-contract spending using old source evidence
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell legacy evidence scan PASS; actual outflow source has no direct supplier-contract field for loadable rows; outflow/request-line evidence identifies deterministic contract-basis candidates and non-contract/ambiguous groups`
+- next_step: `screen supplier-contract resolution for unresolved legacy_supplier_contract_id before any high-risk contract_id write replay`
