@@ -277,7 +277,7 @@ class ScSettlementOrder(models.Model):
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=False)
             rec._check_purchase_orders_or_raise(strict=False)
-        self.env["sc.data.validator"].validate_or_raise()
+        self.env["sc.data.validator"].validate_or_raise(scope=self._validation_scope())
         self.write({"state": "submit"})
 
     def action_approve(self):
@@ -285,7 +285,7 @@ class ScSettlementOrder(models.Model):
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
-        self.env["sc.data.validator"].validate_or_raise()
+        self.env["sc.data.validator"].validate_or_raise(scope=self._validation_scope())
         self.write({"state": "approve"})
         self.env["sc.evidence.policy"].ensure_records(
             self.filtered(lambda rec: rec.project_id),
@@ -303,6 +303,15 @@ class ScSettlementOrder(models.Model):
             auto_build=False,
             event_code="settlement_done",
         )
+
+    def _validation_scope(self):
+        first = self[:1]
+        return {
+            "res_model": self._name,
+            "res_ids": self.ids,
+            "project_id": first.project_id.id if first and first.project_id else False,
+            "company_id": first.company_id.id if first and first.company_id else False,
+        }
 
     def action_cancel(self):
         self._check_payments_before_cancel()

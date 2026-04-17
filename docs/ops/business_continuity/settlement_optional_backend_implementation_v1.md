@@ -2,27 +2,19 @@
 
 ## Status
 
-Blocked before code changes.
-
-The user has approved the business decision and requested immediate execution,
-but the repository execution rules still require an immediate stop when
-touching `*payment*` or `*settlement*` files unless a matching narrow exception
-exists.
-
-No current exception covers optional payment/settlement business semantics.
+Implemented after explicit user authorization for this high-risk business
+semantics batch.
 
 ## Intended Implementation
 
-When the repo rule exception is added or the task is otherwise authorized at the
-repository governance level, the implementation should change only these
-surfaces:
+The implementation changed only these surfaces:
 
 - `addons/smart_construction_core/models/core/payment_request.py`
 - `addons/smart_construction_core/models/core/payment_ledger.py`
 - `addons/smart_construction_core/models/core/settlement_order.py`
 - `addons/smart_construction_core/tools/validator/rule_3way_link_integrity.py`
 
-## Required Semantics
+## Implemented Semantics
 
 Payment request without settlement:
 
@@ -45,25 +37,51 @@ Settlement submit/approve:
 - must not scan all historical payment requests and fail because old imported
   payments have no `settlement_id`
 
-## Verification Required
+## Implementation Notes
 
-The later implementation batch must verify:
+- `SC.VAL.3WAY.001` no longer treats missing `settlement_id` as an error.
+- `SC.VAL.3WAY.001` still reports settlement records without required purchase
+  sources when settlement is selected and the settlement is in an approved/done
+  state.
+- Settlement submit/approve now passes a scoped validator payload for the target
+  settlement order records.
+- Payment ledger creation still requires an approved payment request. If a
+  settlement is selected, the settlement must still be approved or done.
+- Smoke validator tests were updated to assert that no-settlement payment
+  requests are valid payment facts.
 
+## Verification
+
+Passed:
+
+- task contract validation
+- Python compile using a temp pyc output directory
 - rollback-only no-settlement payment: create, submit, approve, ledger, done
-- rollback-only settlement-linked payment: strict settlement balance and state
-  checks still pass/fail correctly
-- new settlement submit/approve is not blocked by unrelated historical orphan
-  payments
-- `make verify.restricted`
-- `DB_NAME=sc_demo make mod.upgrade MODULE=smart_construction_core`
+- rollback-only settlement-linked payment: settlement submit/approve, payment
+  submit, approve, ledger, done
+- strict check: payment linked to draft settlement is still blocked by
+  `P0_PAYMENT_SETTLEMENT_NOT_READY`
+- smoke validator Python compile
 
-## Reason For Stop
+Conditional / environment-limited:
 
-AGENTS.md Section 6 currently says the agent must stop if any `*payment*` or
-`*settlement*` file is touched.
+- `python3 -m py_compile ...` writing into source `__pycache__` failed because
+  an existing pycache path is not writable. The same files compiled successfully
+  when pyc output was redirected to `/tmp/codex_py_compile_optional_settlement`.
+- `DB_NAME=sc_demo make mod.upgrade MODULE=smart_construction_core` was blocked
+  by the repository fast upgrade guard because this batch did not touch views,
+  security, data, or schema.
+- `make verify.restricted` is not defined in the current Makefile.
+- `DB_NAME=sc_demo make verify.payment_fact_consistency.v1` failed on existing
+  missing demo projects:
+  - `展厅-智慧园区运营中心`
+  - `展厅-装配式住宅试点`
+  - `展厅-产线升级改造工程`
+- `DB_NAME=sc_demo make verify.settlement_evidence_guard` failed on the same
+  existing missing demo projects.
+- `DB_NAME=sc_demo MODULE=smart_construction_core TEST_TAGS=smoke_validator
+  scripts/test/test_safe.sh` did not start Odoo tests because the script
+  environment is missing `DOCS_MOUNT_HOST`.
 
-The available exception for payment/settlement is limited to orchestration
-boundary recovery and does not cover changing business validation semantics.
-
-This document records the ready implementation boundary but does not bypass the
-repo stop rule.
+These conditional failures are not caused by the optional settlement code path
+validated in the rollback-only Odoo shell flow.

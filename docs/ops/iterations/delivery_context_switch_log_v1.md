@@ -22070,3 +22070,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `task contract pending validation; code changes blocked before touching addons`
 - next_step: `Add or authorize a repository-level narrow exception for this dedicated optional-settlement business semantics batch, then execute implementation and verification.`
 - stop_condition: `no_repo_rule_exception_for_payment_settlement_business_semantics`
+### 2026-04-18T04:55:00+08:00
+- blocker_key: `iter_settlement_optional_backend_implementation_pass_with_environment_gate_risk`
+- status: `PASS_WITH_RISK`
+- active_task: `ITER-2026-04-18-SETTLEMENT-OPTIONAL-BACKEND-IMPLEMENTATION`
+- completed_step: `Implemented optional settlement semantics: missing settlement_id is no longer a three-way validation error, settlement submit/approve validation is scoped to target settlement orders, payment ledger registration allows approved no-settlement payments while preserving settlement-state checks when settlement is selected, and smoke validator expectations were updated`
+- verification: `validate_task PASS; temp py_compile PASS; rollback-only no-settlement payment submit/approve/ledger/done PASS; rollback-only settlement-selected payment flow PASS; draft selected settlement still blocks PASS; make verify.restricted unavailable; module upgrade blocked by fast guard as no schema/data/view/security change; payment_fact_consistency and settlement_evidence guards fail on pre-existing missing demo projects; smoke_validator test script blocked before Odoo startup by missing DOCS_MOUNT_HOST`
+- next_step: `Commit implementation and optionally open a separate demo evidence baseline recovery batch for the three missing 展厅 demo projects.`
+- stop_condition: `environment_gate_risk_only`

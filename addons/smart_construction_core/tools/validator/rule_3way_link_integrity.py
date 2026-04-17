@@ -22,49 +22,20 @@ class ThreeWayLinkIntegrityRule(BaseRule):
         pr_states_need_settle = ("approve", "approved", "done")
         settle_states_need_po = ("approve", "done")
         targeted_payment_scope = scoped_model == "payment.request" and bool(scoped_res_ids)
+        targeted_settlement_scope = scoped_model == "sc.settlement.order" and bool(scoped_res_ids)
 
-        def _suggest_settlements(rec):
-            """给出同项目+同供应商的候选结算单（最近3条批准态优先）。"""
-            domain = [
-                ("project_id", "=", rec.project_id.id),
-                ("partner_id", "=", rec.partner_id.id),
-                ("state", "in", settle_states_need_po),
-            ]
-            candidates = Settlement.search(
-                self._scope_domain("sc.settlement.order") + domain,
-                limit=3,
-                order="create_date desc, id desc",
-            )
-            return [
-                {
-                    "res_model": "sc.settlement.order",
-                    "res_id": s.id,
-                    "display_name": s.display_name or s.name,
-                    "project_id": s.project_id.id,
-                    "partner_id": s.partner_id.id,
-                    "reason": _("同项目同供应商的最近结算单"),
-                    "score": 0.8,
-                    "action": {"type": "open_form", "res_model": "sc.settlement.order", "res_id": s.id},
-                }
-                for s in candidates
-            ]
+        payment_domain = self._scope_domain("payment.request")
+        if targeted_settlement_scope:
+            payment_domain = [("settlement_id", "in", scoped_res_ids)]
 
-        for pr in Payment.search(self._scope_domain("payment.request")):
+        for pr in Payment.search(payment_domain):
             checked += 1
             # 仅对支出付款单执行三单匹配校验
             if pr.type != "pay" or pr.state not in pr_states_need_settle:
                 continue
             if not pr.settlement_id:
-                issues.append(
-                    {
-                        "model": "payment.request",
-                        "res_id": pr.id,
-                        "message": _("付款申请未关联结算单"),
-                        "refs": {"name": pr.name},
-                        "suggestions": _suggest_settlements(pr),
-                    }
-                )
-            elif pr.settlement_id.state in settle_states_need_po and not pr.settlement_id.purchase_order_ids:
+                continue
+            if pr.settlement_id.state in settle_states_need_po and not pr.settlement_id.purchase_order_ids:
                 issues.append(
                     {
                         "model": "payment.request",
