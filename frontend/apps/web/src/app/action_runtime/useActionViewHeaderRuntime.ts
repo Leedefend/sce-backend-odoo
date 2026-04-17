@@ -1,4 +1,6 @@
 import type { Ref } from 'vue';
+import type { LocationQueryRaw } from 'vue-router';
+import type { ContractActionDeps } from '../pageContractActionRuntime';
 
 type UseActionViewHeaderRuntimeOptions = {
   batchMessage: Ref<string>;
@@ -9,18 +11,10 @@ type UseActionViewHeaderRuntimeOptions = {
   resolveFocusActionPushState: (input: { action: unknown; workspaceContextQuery: Record<string, unknown> }) => { target: unknown };
   resolveWorkspaceContextQuery: () => Record<string, unknown>;
   routerPush: (target: unknown) => Promise<unknown>;
-  executePageContractAction: (input: {
-    actionKey: string;
-    router: unknown;
-    actionIntent: unknown;
-    actionTarget: unknown;
-    query: Record<string, unknown>;
-    onRefresh: () => void;
-    onFallback: (key: string) => Promise<boolean>;
-  }) => Promise<boolean>;
-  router: unknown;
-  pageActionIntent: Ref<unknown>;
-  pageActionTarget: Ref<unknown>;
+  executePageContractAction: (input: ContractActionDeps) => Promise<boolean>;
+  router: ContractActionDeps['router'];
+  pageActionIntent: (key: string, fallback?: string) => string;
+  pageActionTarget: (key: string) => Record<string, unknown>;
   isHeaderActionDisabled?: (actionKey: string) => boolean;
   onHeaderActionBlocked?: (actionKey: string) => void;
 };
@@ -48,9 +42,9 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
     const handled = await options.executePageContractAction({
       actionKey,
       router: options.router,
-      actionIntent: options.pageActionIntent.value,
-      actionTarget: options.pageActionTarget.value,
-      query: options.resolveWorkspaceContextQuery(),
+      actionIntent: options.pageActionIntent,
+      actionTarget: options.pageActionTarget,
+      query: options.resolveWorkspaceContextQuery() as LocationQueryRaw,
       onRefresh: reload,
       onFallback: async (key) => {
         if (key === 'open_my_work') {

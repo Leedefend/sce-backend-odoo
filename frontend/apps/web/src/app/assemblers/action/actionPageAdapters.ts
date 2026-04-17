@@ -17,7 +17,14 @@ export function toChipVM(value: unknown): ChipVM | null {
   const key = String(row.key || '').trim();
   const label = String(row.label || row.key || '').trim();
   if (!key || !label) return null;
-  return { key, label };
+  return {
+    key,
+    label,
+    field: String(row.field || '').trim() || undefined,
+    context: asDict(row.context),
+    contextRaw: String(row.contextRaw || row.context_raw || '').trim() || undefined,
+    isDefault: row.isDefault === true || row.is_default === true,
+  };
 }
 
 export function toActionButtonVM(value: unknown): ActionButtonVM | null {
@@ -31,6 +38,17 @@ export function toActionButtonVM(value: unknown): ActionButtonVM | null {
     label,
     enabled: typeof enabledRaw === 'boolean' ? enabledRaw : true,
     hint: String(row.hint || '').trim() || undefined,
+    kind: String(row.kind || '').trim() || undefined,
+    actionId: Number.isFinite(Number(row.actionId ?? row.action_id)) ? Number(row.actionId ?? row.action_id) : null,
+    methodName: String(row.methodName || row.method_name || '').trim() || undefined,
+    model: String(row.model || '').trim() || undefined,
+    target: String(row.target || '').trim() || undefined,
+    url: String(row.url || '').trim() || undefined,
+    selection: row.selection === 'single' || row.selection === 'multi' ? row.selection : 'none',
+    context: asDict(row.context),
+    domainRaw: String(row.domainRaw || row.domain_raw || '').trim() || undefined,
+    mutation: asDict(row.mutation) as ActionButtonVM['mutation'],
+    refreshPolicy: asDict(row.refreshPolicy || row.refresh_policy) as ActionButtonVM['refreshPolicy'],
   };
 }
 

@@ -248,8 +248,12 @@ const releaseState = computed(() => {
   const state = (readModel.value.current_release_state && typeof readModel.value.current_release_state === 'object')
     ? readModel.value.current_release_state as Record<string, unknown>
     : {};
-  const activeSnapshot = state.active_snapshot || {};
-  const runtimeSummary = state.runtime_summary || {};
+  const activeSnapshot = (state.active_snapshot && typeof state.active_snapshot === 'object')
+    ? state.active_snapshot as Record<string, unknown>
+    : {};
+  const runtimeSummary = (state.runtime_summary && typeof state.runtime_summary === 'object')
+    ? state.runtime_summary as Record<string, unknown>
+    : {};
   return {
     product_key: String((readModel.value.identity as Record<string, unknown> | undefined)?.product_key || '').trim(),
     active_version: String(activeSnapshot.version || runtimeSummary.active_snapshot_version || '').trim(),

@@ -105,7 +105,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         const contextRaw = String(raw.context_raw || '').trim();
         const context = options.parseContractContextRaw(contextRaw);
         const isDefault = raw.default === true || raw.is_default === true;
-        return { field, label, context, contextRaw, isDefault };
+        return { key: field, field, label, context, contextRaw, isDefault };
       })
       .filter(Boolean)
       .slice(0, 12);
@@ -140,4 +140,3 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
     activeGroupByLabel,
   };
 }
-

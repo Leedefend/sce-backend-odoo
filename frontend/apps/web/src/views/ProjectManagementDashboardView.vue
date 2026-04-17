@@ -325,6 +325,11 @@ type GenericEntry = {
   scene_label?: string;
   state_fallback_text?: string;
   title?: string;
+  project_context?: Record<string, unknown>;
+  flow_map?: Record<string, unknown>;
+  completion?: Record<string, unknown>;
+  metrics_explain?: Array<Record<string, unknown>>;
+  state_explain?: Record<string, unknown>;
   summary?: Record<string, unknown>;
   blocks?: Array<{ key?: string; title?: string; state?: string; caption?: string; empty_hint?: string }>;
   suggested_action?: RuntimeHint;

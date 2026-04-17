@@ -181,7 +181,7 @@ export function buildDetailShellViews(options: {
       continue;
     }
     pushNotebookShell();
-    const startsContainer = kind === 'sheet' || kind === 'page' || kind === 'notebook';
+    const startsContainer = kind === 'sheet' || kind === 'page';
     if (!current || startsContainer) {
       pushShell();
       current = {

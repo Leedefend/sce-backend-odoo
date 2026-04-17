@@ -92,12 +92,15 @@ function normalizeMenuSceneKey(sceneKey: unknown) {
   return normalized;
 }
 
-function isProjectIntakeMenuNode(node: { meta?: Record<string, unknown> } | null | undefined) {
-  const sceneKey = normalizeMenuSceneKey(node?.meta?.scene_key);
+function isProjectIntakeMenuNode(node: { meta?: unknown } | null | undefined) {
+  const meta = node?.meta && typeof node.meta === 'object'
+    ? node.meta as Record<string, unknown>
+    : {};
+  const sceneKey = normalizeMenuSceneKey(meta.scene_key);
   if (sceneKey === PROJECT_INTAKE_SCENE_KEY) {
     return true;
   }
-  const menuXmlid = String(node?.meta?.menu_xmlid || '').trim();
+  const menuXmlid = String(meta.menu_xmlid || '').trim();
   return menuXmlid === PROJECT_INITIATION_MENU_XMLID;
 }
 
@@ -119,7 +122,7 @@ async function resolve() {
         });
         return;
       }
-      const policy = evaluateCapabilityPolicy({ source: result.node?.meta, available: session.capabilities });
+      const policy = evaluateCapabilityPolicy({ source: result.node?.meta as Record<string, unknown> | undefined, available: session.capabilities });
       if (policy.state !== 'enabled') {
         await router.replace({
           name: 'workbench',

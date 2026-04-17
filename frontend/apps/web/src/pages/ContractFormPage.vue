@@ -19,7 +19,7 @@
           class="primary"
           :disabled="isQuickSubmitDisabled"
           :title="sceneWriteDisabledReason"
-          @click="saveRecord"
+          @click="() => saveRecord()"
         >
           {{ submitButtonLabel }}
         </button>
@@ -56,7 +56,7 @@
           class="primary"
           :disabled="isQuickSubmitDisabled"
           :title="sceneWriteDisabledReason"
-          @click="saveRecord"
+          @click="() => saveRecord()"
         >
           {{ submitButtonLabel }}
         </button>
@@ -229,7 +229,7 @@
           <p class="zone-collaboration-line">讨论区：{{ semanticHasChatter ? '已启用' : '未启用' }}</p>
           <p class="zone-collaboration-line">附件区：{{ semanticHasAttachments ? '已启用' : '未启用' }}</p>
         </section>
-        <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
+        <div v-if="hasAdvancedFields && !isProjectCreatePage && !isProjectFormPage" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
           </button>
@@ -240,7 +240,7 @@
       <PageFooterTemplate v-if="isProjectCreatePage" hint="填写完成后点击“创建项目”">
         <template #default>
           <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
-          <button class="primary" :disabled="isIntakeCreateDisabled" :title="sceneWriteDisabledReason" @click="saveRecord">
+          <button class="primary" :disabled="isIntakeCreateDisabled" :title="sceneWriteDisabledReason" @click="() => saveRecord()">
             {{ intakeCreateButtonLabel }}
           </button>
         </template>
@@ -366,9 +366,12 @@ type ContractAction = {
 
 type LayoutNode = LayoutNodeView & {
   descriptor?: FieldDescriptor;
+  groupsXmlids?: string[];
 };
 
-type LayoutTreeSection = LayoutTreeSectionView;
+type LayoutTreeSection = LayoutTreeSectionView & {
+  groupsXmlids?: string[];
+};
 
 type RelationOption = {
   id: number;
@@ -531,12 +534,12 @@ const semanticRelationZoneItems = computed<Array<{ field: string; label: string;
 });
 const semanticHasChatter = computed(() => {
   if (semanticFormSemantics.value.has_chatter === true) return true;
-  const chatter = contract.value?.views?.form?.chatter;
+  const chatter = asRecord(asRecord(asRecord(contract.value).views).form).chatter;
   return Boolean(chatter && typeof chatter === 'object' && (chatter as Record<string, unknown>).enabled === true);
 });
 const semanticHasAttachments = computed(() => {
   if (semanticFormSemantics.value.has_attachments === true) return true;
-  const attachments = contract.value?.views?.form?.attachments;
+  const attachments = asRecord(asRecord(asRecord(contract.value).views).form).attachments;
   return Boolean(attachments && typeof attachments === 'object' && (attachments as Record<string, unknown>).enabled === true);
 });
 const semanticPermissionVerdicts = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.permission_verdicts));
@@ -549,7 +552,7 @@ function resolveSurfaceActionRows(kind: 'header_buttons' | 'button_box' | 'stat_
   const actions = asRecord(activeSurface.actions);
   const rows = actions[kind];
   if (Array.isArray(rows)) return rows;
-  const formView = asRecord((contract.value as Record<string, unknown> | null)?.views?.form);
+  const formView = asRecord(asRecord(asRecord(contract.value).views).form);
   const fallback = formView[kind];
   return Array.isArray(fallback) ? fallback : [];
 }
@@ -941,7 +944,7 @@ const contractActionStrip = computed(() => {
   });
   return out;
 });
-const statusbarFieldName = computed(() => String(contract.value?.views?.form?.statusbar?.field || '').trim());
+const statusbarFieldName = computed(() => String(asRecord(asRecord(contract.value?.views?.form).statusbar).field || '').trim());
 const statusbarSteps = computed<DetailStatusbarStep[]>(() => {
   const fieldName = statusbarFieldName.value;
   if (!fieldName) return [];
@@ -2304,7 +2307,7 @@ const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
 
 const contractFieldSemantics = computed<Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }>>(() => {
   const out: Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }> = {};
-  const raw = contract.value?.field_semantics;
+  const raw = asRecord(contract.value).field_semantics;
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return;
@@ -2491,26 +2494,20 @@ function isFieldVisible(name: string) {
   }
   const state = runtimeState(name);
   if (state.invisible) return false;
-  if (projectDetailStructureAlignMode.value) {
-    const semantic = fieldSemanticMeta(name);
-    if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
-    if (semantic.surface_role === 'hidden' && !showHud.value) return false;
-    return true;
-  }
   const semantic = fieldSemanticMeta(name);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
   const visible = contractVisibleFields.value;
   if (visible.length && !visible.includes(name)) return false;
   if (semantic.surface_role === 'core') return true;
-  if (semantic.surface_role === 'advanced') return advancedExpanded.value;
+  if (semantic.surface_role === 'advanced') return true;
   const core = coreFieldNames.value;
   const advanced = advancedFieldNames.value;
   const hasCore = core.length > 0;
   const hasAdvanced = advanced.length > 0;
   if (!hasCore && !hasAdvanced) return true;
   if (hasCore && core.includes(name)) return true;
-  if (hasAdvanced && advanced.includes(name)) return advancedExpanded.value;
+  if (hasAdvanced && advanced.includes(name)) return true;
   // Some contracts only tag advanced fields; keep non-tagged fields visible in that case.
   if (!hasCore) return true;
   return renderProfile.value !== 'create';
@@ -2625,6 +2622,45 @@ function resolveLayoutNodeLabel(node: Record<string, unknown>): string {
   ).trim();
 }
 
+function resolveLayoutNodeGroups(node: Record<string, unknown>): string[] {
+  const attrs = node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes)
+    ? node.attributes as Record<string, unknown>
+    : {};
+  const seen = new Set<string>();
+  const push = (raw: unknown) => {
+    if (Array.isArray(raw)) {
+      raw.forEach((item) => push(item));
+      return;
+    }
+    const text = String(raw || '').trim();
+    if (!text) return;
+    text.split(',').map((item) => item.trim()).filter(Boolean).forEach((group) => {
+      seen.add(group);
+    });
+  };
+  [
+    node.groups_xmlids,
+    node.groupsXmlids,
+    node.groups,
+    attrs.groups_xmlids,
+    attrs.groupsXmlids,
+    attrs.groups,
+  ].forEach((value) => push(value));
+  return Array.from(seen);
+}
+
+function mergeLayoutNodeGroups(...groupLists: Array<string[] | undefined | null>): string[] {
+  const seen = new Set<string>();
+  groupLists.forEach((groups) => {
+    if (!Array.isArray(groups)) return;
+    groups.forEach((group) => {
+      const text = String(group || '').trim();
+      if (text) seen.add(text);
+    });
+  });
+  return Array.from(seen);
+}
+
 function isHumanReadableLayoutLabel(labelRaw: unknown): boolean {
   const label = String(labelRaw || '').trim();
   if (!label) return false;
@@ -2665,11 +2701,14 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
 
-  function pushField(nameRaw: unknown, viewLabelRaw?: unknown) {
+  function pushField(nameRaw: unknown, viewLabelRaw?: unknown, inheritedGroups?: string[]) {
     const name = String(nameRaw || '').trim();
     if (!name || used.has(name)) return;
-    const groups = fieldGroups[name]?.groups_xmlids;
-    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
+    const groups = mergeLayoutNodeGroups(
+      Array.isArray(fieldGroups[name]?.groups_xmlids) ? fieldGroups[name]?.groups_xmlids : [],
+      inheritedGroups,
+    );
+    if (!hasGroupAccess(groups)) return;
     const descriptor = fieldMap[name];
     if (!descriptor) return;
     const resolved = evaluateFieldPolicy(
@@ -2682,31 +2721,34 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       policyContext.value,
     );
     if (!resolved.visible) return;
-    used.add(name);
-    const state = runtimeState(name);
-    const viewLabel = String(viewLabelRaw || '').trim();
-    nodes.push({
-      key: `field_${name}`,
-      kind: 'field',
-      name,
-      label: viewLabel || String(descriptor?.string || name),
-      readonly: Boolean(
-        resolved.readonly
-        || state.readonly
-        || (recordId.value ? !rights.value.write : !rights.value.create)
-        || !canPersistBySceneRuntime.value
-      ),
-      required: Boolean(resolved.required || state.required),
-      descriptor,
-    });
+      used.add(name);
+      const state = runtimeState(name);
+      const viewLabel = String(viewLabelRaw || '').trim();
+      nodes.push({
+        key: `field_${name}`,
+        kind: 'field',
+        name,
+        label: viewLabel || String(descriptor?.string || name),
+        readonly: Boolean(
+          resolved.readonly
+          || state.readonly
+          || (recordId.value ? !rights.value.write : !rights.value.create)
+          || !canPersistBySceneRuntime.value
+        ),
+        required: Boolean(resolved.required || state.required),
+        descriptor,
+        groupsXmlids: groups,
+      });
   }
 
-  function walkLayout(nodeRaw: unknown, parentKey: string) {
+  function walkLayout(nodeRaw: unknown, parentKey: string, inheritedGroups: string[] = []) {
     if (!nodeRaw || typeof nodeRaw !== 'object') return;
     const node = nodeRaw as Record<string, unknown>;
     const kind = normalizeLayoutNodeKind(node.type, undefined, node);
     if (!kind) return;
     const label = resolveLayoutNodeLabel(node);
+    const groupsXmlids = mergeLayoutNodeGroups(inheritedGroups, resolveLayoutNodeGroups(node));
+    if (!hasGroupAccess(groupsXmlids)) return;
     const nodeKey = `${parentKey}_${kind}_${String(node.name || label || nodes.length)}`;
 
     if (kind === 'header' || kind === 'sheet' || kind === 'group' || kind === 'notebook' || kind === 'page') {
@@ -2717,17 +2759,18 @@ const layoutNodes = computed<LayoutNode[]>(() => {
         label,
         readonly: true,
         required: false,
+        groupsXmlids,
       });
     }
     if (kind === 'field') {
       const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
         ? (node.fieldInfo as Record<string, unknown>)
         : null;
-      pushField(node.name, node.title || node.string || node.label || fieldInfo?.label);
+      pushField(node.name, node.title || node.string || node.label || fieldInfo?.label, groupsXmlids);
       return;
     }
     forEachLayoutChildren(node, (child, sourceKey, index) => {
-      walkLayout(normalizeLayoutChildNode(child, sourceKey), `${nodeKey}_${sourceKey}_${index}`);
+      walkLayout(normalizeLayoutChildNode(child, sourceKey), `${nodeKey}_${sourceKey}_${index}`, groupsXmlids);
     });
   }
 
@@ -2807,11 +2850,14 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
   };
   const structuralKinds = new Set<LayoutTreeSection['kind']>(['header', 'sheet', 'group', 'notebook', 'page']);
 
-  function buildFieldNode(nameRaw: unknown, viewLabelRaw?: unknown): LayoutNode | null {
+  function buildFieldNode(nameRaw: unknown, viewLabelRaw?: unknown, inheritedGroups?: string[]): LayoutNode | null {
     const name = String(nameRaw || '').trim();
     if (!name) return null;
-    const groups = fieldGroups[name]?.groups_xmlids;
-    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return null;
+    const groups = mergeLayoutNodeGroups(
+      Array.isArray(fieldGroups[name]?.groups_xmlids) ? fieldGroups[name]?.groups_xmlids : [],
+      inheritedGroups,
+    );
+    if (!hasGroupAccess(groups)) return null;
     const descriptor = fieldMap[name];
     if (!descriptor) return null;
     const resolved = evaluateFieldPolicy(
@@ -2839,6 +2885,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
       ),
       required: Boolean(resolved.required || state.required),
       descriptor,
+      groupsXmlids: groups,
     };
   }
 
@@ -2851,18 +2898,20 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
     rootDefault.fields.push(field);
   }
 
-  function walk(nodeRaw: unknown, parent: LayoutTreeSection | null, parentKey: string) {
+  function walk(nodeRaw: unknown, parent: LayoutTreeSection | null, parentKey: string, inheritedGroups: string[] = []) {
     if (!nodeRaw || typeof nodeRaw !== 'object') return;
     const node = nodeRaw as Record<string, unknown>;
     const kind = normalizeLayoutNodeKind(node.type, undefined, node);
     if (!kind) return;
     const label = resolveLayoutNodeLabel(node);
+    const nodeGroups = mergeLayoutNodeGroups(inheritedGroups, resolveLayoutNodeGroups(node));
+    if (!hasGroupAccess(nodeGroups)) return;
     const nodeKey = `${parentKey}_${kind}_${String(node.name || label || roots.length)}`;
     if (kind === 'field') {
       const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
         ? (node.fieldInfo as Record<string, unknown>)
         : null;
-      appendField(parent, buildFieldNode(node.name, node.title || node.string || node.label || fieldInfo?.label));
+      appendField(parent, buildFieldNode(node.name, node.title || node.string || node.label || fieldInfo?.label, nodeGroups));
       return;
     }
     const nextParent = structuralKinds.has(kind as LayoutTreeSection['kind'])
@@ -2873,6 +2922,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
         columns: resolveLayoutNodeColumns(node),
         fields: [],
         children: [],
+        groupsXmlids: nodeGroups,
       }
       : parent;
     if (nextParent && nextParent !== parent) {
@@ -2880,7 +2930,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
       else roots.push(nextParent);
     }
     forEachLayoutChildren(node, (child, sourceKey, index) => {
-      walk(normalizeLayoutChildNode(child, sourceKey), nextParent, `${nodeKey}_${sourceKey}_${index}`);
+      walk(normalizeLayoutChildNode(child, sourceKey), nextParent, `${nodeKey}_${sourceKey}_${index}`, nodeGroups);
     });
   }
 
@@ -2903,6 +2953,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
   if (rootDefault.fields.length > 0) roots.push(rootDefault);
 
   const prune = (section: LayoutTreeSection): LayoutTreeSection | null => {
+    if (!hasGroupAccess(section.groupsXmlids)) return null;
     const children = section.children
       .map((child) => prune(child))
       .filter((child): child is LayoutTreeSection => Boolean(child));
@@ -2910,6 +2961,7 @@ const layoutTrees = computed<LayoutTreeSection[]>(() => {
     if (visibleFieldCount <= 0 && !children.length && section.kind === 'group') return null;
     return {
       ...section,
+      groupsXmlids: section.groupsXmlids,
       children,
     };
   };

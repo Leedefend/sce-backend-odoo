@@ -260,22 +260,24 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     return fallbackNames;
   }
 
-  function advancedRowTitle(row: Record<string, unknown>) {
-    return String(row.display_name || row.name || row.id || options.pageText('advanced_row_title_fallback', '记录')).trim();
+  function advancedRowTitle(row: unknown) {
+    const typed = asDict(row);
+    return String(typed.display_name || typed.name || typed.id || options.pageText('advanced_row_title_fallback', '记录')).trim();
   }
 
   function advancedFieldLabel(field: string) {
-    return String(options.contractColumnLabels.value[field] || field).trim();
+    return String(contractColumnLabels.value[field] || field).trim();
   }
 
-  function advancedRowMeta(row: Record<string, unknown>) {
+  function advancedRowMeta(row: unknown) {
+    const typed = asDict(row);
     const preferredKeys = options.advancedFields.value.length
       ? options.advancedFields.value
-      : Object.keys(row);
+      : Object.keys(typed);
     const entries = preferredKeys
-      .filter((key) => key !== 'id' && key !== 'name' && key !== 'display_name' && key in row)
+      .filter((key) => key !== 'id' && key !== 'name' && key !== 'display_name' && key in typed)
       .slice(0, 3)
-      .map((key) => `${advancedFieldLabel(key)}: ${String(row[key] ?? '-')}`);
+      .map((key) => `${advancedFieldLabel(key)}: ${String(typed[key] ?? '-')}`);
     if (!entries.length) return options.pageText('advanced_row_meta_empty', '无附加字段');
     return entries.join(' · ');
   }

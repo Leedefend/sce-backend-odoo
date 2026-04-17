@@ -1,3 +1,5 @@
+import type { MutationContract, ProjectionRefreshPolicy } from '../../sceneActionProtocol';
+
 export type ActionPageStatus = 'loading' | 'ok' | 'empty' | 'error';
 
 export type FocusActionVM = {
@@ -9,6 +11,10 @@ export type FocusActionVM = {
 export type ChipVM = {
   key: string;
   label: string;
+  field?: string;
+  context?: Record<string, unknown>;
+  contextRaw?: string;
+  isDefault?: boolean;
 };
 
 export type ChipGroupVM = {
@@ -20,8 +26,19 @@ export type ChipGroupVM = {
 export type ActionButtonVM = {
   key: string;
   label: string;
-  enabled?: boolean;
+  enabled: boolean;
   hint?: string;
+  kind: string;
+  actionId: number | null;
+  methodName: string;
+  model: string;
+  target: string;
+  url: string;
+  selection: 'none' | 'single' | 'multi';
+  context: Record<string, unknown>;
+  domainRaw: string;
+  mutation?: MutationContract;
+  refreshPolicy?: ProjectionRefreshPolicy;
 };
 
 export type ActionGroupVM = {
@@ -39,7 +56,13 @@ export type ProjectionMetricVM = {
 
 export type GroupSummaryVM = {
   visible: boolean;
-  items: Array<Record<string, unknown>>;
+  items: Array<{
+    key: string;
+    label: string;
+    count: number;
+    domain: unknown[];
+    value?: unknown;
+  }>;
 };
 
 export type ListContentVM = {
@@ -117,7 +140,7 @@ export type ActionPageVM = {
   hud?: {
     visible: boolean;
     title: string;
-    entries: Array<{ label: string; value: unknown }>;
+    entries: Array<{ label: string; value: string | number | boolean }>;
   };
   sections: {
     quickFilters: boolean;

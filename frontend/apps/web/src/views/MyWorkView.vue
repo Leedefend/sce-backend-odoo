@@ -507,7 +507,7 @@ const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {
   const pageOrchestration = pageContract.contract.value?.page_orchestration_v1;
   const pageZones = Array.isArray(pageOrchestration?.zones) ? pageOrchestration.zones : [];
   if (pageOrchestration && pageZones.length > 0) {
-    return pageOrchestration as PageOrchestrationContract;
+    return pageOrchestration as unknown as PageOrchestrationContract;
   }
   return resolvePageOrchestrationContractFromSceneV1(
     pageContract.contract.value?.scene_contract_v1,
@@ -845,7 +845,7 @@ const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
     id: String(sec.key || ''),
     key: String(sec.key || ''),
     title: String(sec.label || sec.key || ''),
-    hint: `${pageText('batch_selected_prefix', '已选 ')}${Number(sec.count || 0)}${pageText('batch_selected_suffix', ' 条待办')}`,
+    hint: `${pageText('batch_selected_prefix', '已选 ')}${Number((sec as Record<string, unknown>).count || 0)}${pageText('batch_selected_suffix', ' 条待办')}`,
     action_key: 'switch_section',
     section_key: String(sec.key || ''),
   }));

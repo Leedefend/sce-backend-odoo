@@ -1,16 +1,12 @@
 import type { Ref } from 'vue';
+import type { ExecuteButtonRequest } from '@sc/schema';
+import type { MutationContract } from '../sceneActionProtocol';
 
 type Dict = Record<string, unknown>;
 
 type ContractActionSelection = 'none' | 'single' | 'multi';
 
-type MutationPayload = {
-  execute_intent?: string;
-  payload_schema?: {
-    required?: string[];
-  };
-  model?: string;
-};
+type MutationPayload = MutationContract;
 
 type ContractActionButtonLike = {
   key: string;
@@ -51,7 +47,7 @@ type UseActionViewActionRuntimeOptions = {
     model?: string;
     context: Dict;
   }) => Promise<unknown>;
-  executeButton: (payload: Dict) => Promise<unknown>;
+  executeButton: (payload: ExecuteButtonRequest) => Promise<unknown>;
   buildButtonRequest: (input: {
     model: string;
     recordId: number;
@@ -59,7 +55,7 @@ type UseActionViewActionRuntimeOptions = {
     actionKey: string;
     kind: string;
     context?: Dict;
-  }) => Dict;
+  }) => ExecuteButtonRequest;
   navigateByResponse: (response: unknown) => Promise<boolean>;
 };
 
@@ -148,7 +144,7 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
         }
         options.batchMessage.value = options.resolveDoneMessage({ successCount, failureCount, text: options.pageText });
         if (successCount > 0) {
-          await applyActionRefreshPolicy(action.refreshPolicy);
+          await options.applyActionRefreshPolicy(action.refreshPolicy);
         }
       } finally {
         options.batchBusy.value = false;

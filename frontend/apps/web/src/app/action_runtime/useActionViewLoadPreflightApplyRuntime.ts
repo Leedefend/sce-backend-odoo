@@ -24,8 +24,8 @@ type ApplyPreflightContinueOptions = {
 type ApplyPreflightBlockedOptions = {
   result: BlockedResult;
   setError: (error: Error, fallbackMessage?: string) => void;
-  deriveListStatus: (input: string) => 'loading' | 'ok' | 'empty' | 'error';
-  statusRef: Ref<'loading' | 'ok' | 'empty' | 'error'>;
+  deriveListStatus: (input: unknown) => 'idle' | 'loading' | 'ok' | 'empty' | 'error';
+  statusRef: Ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>;
 };
 
 export function useActionViewLoadPreflightApplyRuntime() {
@@ -92,4 +92,3 @@ export function useActionViewLoadPreflightApplyRuntime() {
     applyLoadPreflightBlockedState,
   };
 }
-

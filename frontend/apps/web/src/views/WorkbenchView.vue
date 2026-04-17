@@ -285,12 +285,16 @@ const workbenchOrchestrationDatasets = computed<Record<string, unknown>>(() => {
 });
 const headerActions = computed(() => {
   if (pageGlobalActions.value.length) {
-    return pageGlobalActions.value;
+    return pageGlobalActions.value.map((item) => ({
+      ...item,
+      disabled: Boolean((item as { disabled?: boolean }).disabled),
+      disabledReason: String((item as { disabledReason?: string }).disabledReason || ''),
+    }));
   }
   return [
-    { key: 'open_workbench', label: pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')), intent: 'ui.contract' },
-    { key: 'open_menu', label: pageActionText('open_menu', pageText('action_open_menu', '打开菜单')), intent: 'ui.contract' },
-    { key: 'refresh_page', label: pageActionText('refresh_page', pageText('action_refresh', '刷新')), intent: 'api.data' },
+    { key: 'open_workbench', label: pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')), intent: 'ui.contract', disabled: false, disabledReason: '' },
+    { key: 'open_menu', label: pageActionText('open_menu', pageText('action_open_menu', '打开菜单')), intent: 'ui.contract', disabled: false, disabledReason: '' },
+    { key: 'refresh_page', label: pageActionText('refresh_page', pageText('action_refresh', '刷新')), intent: 'api.data', disabled: false, disabledReason: '' },
   ];
 });
 const tiles = computed<EnrichedWorkbenchTile[]>(() => {

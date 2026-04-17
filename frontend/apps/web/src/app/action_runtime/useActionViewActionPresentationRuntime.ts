@@ -20,6 +20,7 @@ type ActionGroup = {
 
 type UseActionViewActionPresentationRuntimeOptions = {
   actionContract: Ref<Dict | null>;
+  sceneContractV1: Ref<Dict>;
   sceneReadyListSurface: Ref<{ actions: Array<Record<string, unknown>>; actionSurface?: unknown }>;
   strictContractMode: Ref<boolean>;
   toContractActionButton: (row: Dict, dedup: Set<string>) => ContractActionButton | null;
@@ -37,13 +38,63 @@ type UseActionViewActionPresentationRuntimeOptions = {
   pageText: (key: string, fallback: string) => string;
 };
 
+const SCENE_ACTION_GROUPS = [
+  ['primary_actions', 'basic'],
+  ['contextual_actions', 'drilldown'],
+  ['secondary_actions', 'other'],
+  ['danger_actions', 'other'],
+  ['recommended_actions', 'basic'],
+] as const;
+
+function sceneActionRows(sceneContractV1: Dict): Array<Record<string, unknown>> {
+  const actions = sceneContractV1.actions && typeof sceneContractV1.actions === 'object'
+    ? sceneContractV1.actions as Dict
+    : {};
+  const rows: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+  SCENE_ACTION_GROUPS.forEach(([sourceKey, groupKey]) => {
+    const groupRows = actions[sourceKey];
+    if (!Array.isArray(groupRows)) return;
+    groupRows.forEach((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+      const row = item as Record<string, unknown>;
+      const key = String(row.key || '').trim();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      rows.push({ ...row, scene_action_group: sourceKey, group_key: groupKey });
+    });
+  });
+  return rows;
+}
+
+function sceneActionGroups(sceneContractV1: Dict): ContractActionGroupRaw[] {
+  const actions = sceneContractV1.actions && typeof sceneContractV1.actions === 'object'
+    ? sceneContractV1.actions as Dict
+    : {};
+  const groups: ContractActionGroupRaw[] = [];
+  SCENE_ACTION_GROUPS.forEach(([sourceKey, groupKey]) => {
+    const groupRows = actions[sourceKey];
+    if (!Array.isArray(groupRows) || !groupRows.length) return;
+    groups.push({
+      key: groupKey,
+      label: groupKey,
+      actions: groupRows.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item)),
+    });
+  });
+  return groups;
+}
+
 export function useActionViewActionPresentationRuntime(options: UseActionViewActionPresentationRuntimeOptions) {
+  const sceneContractActionRows = computed(() => sceneActionRows(options.sceneContractV1.value));
+  const sceneContractActionGroups = computed(() => sceneActionGroups(options.sceneContractV1.value));
+
   const contractActionButtons = computed<ContractActionButton[]>(() => {
     const contract = options.actionContract.value;
     const merged: Array<Record<string, unknown>> = [];
-    const sceneActions = options.sceneReadyListSurface.value.actions;
-    if (sceneActions.length) {
-      merged.push(...sceneActions);
+    if (sceneContractActionRows.value.length) {
+      merged.push(...sceneContractActionRows.value);
+    } else if (options.sceneReadyListSurface.value.actions.length) {
+      merged.push(...options.sceneReadyListSurface.value.actions);
     } else {
       if (!contract) return [];
       if (Array.isArray(contract.actions)) merged.push(...(contract.actions as Array<Record<string, unknown>>));
@@ -63,7 +114,12 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   });
 
   const actionPrimaryBudget = computed(() => {
-    const raw = Number(options.actionContract.value?.surface_policies?.actions_primary_max ?? 4);
+    const surfacePolicies = options.actionContract.value?.surface_policies;
+    const raw = Number(
+      surfacePolicies && typeof surfacePolicies === 'object'
+        ? (surfacePolicies as Dict).actions_primary_max ?? 4
+        : 4,
+    );
     if (!Number.isFinite(raw) || raw < 0) return 4;
     return Math.floor(raw);
   });
@@ -72,9 +128,11 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
     return options.resolveContractActionPresentation({
       strictContractMode: options.strictContractMode.value,
       actionSurface: (options.sceneReadyListSurface.value.actionSurface || {}) as Dict,
-      contractActionGroupsRaw: Array.isArray(options.actionContract.value?.action_groups)
-        ? (options.actionContract.value?.action_groups as ContractActionGroupRaw[])
-        : [],
+      contractActionGroupsRaw: sceneContractActionGroups.value.length
+        ? sceneContractActionGroups.value
+        : Array.isArray(options.actionContract.value?.action_groups)
+          ? (options.actionContract.value?.action_groups as ContractActionGroupRaw[])
+          : [],
       allButtons: contractActionButtons.value,
       actionPrimaryBudget: actionPrimaryBudget.value,
       pageText: options.pageText,
