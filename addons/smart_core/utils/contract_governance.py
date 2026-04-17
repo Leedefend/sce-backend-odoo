@@ -1016,7 +1016,15 @@ def _is_project_kanban_contract(data: dict) -> bool:
         or kanban_view.get("model")
         or permissions.get("model")
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    current_view_type = _safe_text(data.get("view_type")).lower()
+    if current_view_type and current_view_type != "kanban":
+        return False
+    render_profile = _safe_text(data.get("render_profile")).lower()
+    if render_profile in {_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY}:
+        return False
+    if _safe_text(data.get("record_id") or data.get("res_id")) and isinstance(views.get("form"), dict):
+        return False
+    view_type = _safe_text(current_view_type or head.get("view_type")).lower()
     if not view_type and isinstance(views.get("kanban"), dict):
         view_type = "kanban"
     primary_model = _governance_primary_model(data)
@@ -1412,6 +1420,18 @@ def _build_project_action_groups(rows: list[dict]) -> list[dict]:
     return result
 
 
+def _emit_scene_action_semantics(data: dict, *, header_rows: list[dict], record_rows: list[dict]) -> None:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    actions = _as_dict(semantic_page.get("actions"))
+    actions["header_actions"] = [dict(row) for row in header_rows if isinstance(row, dict)]
+    actions["record_actions"] = [dict(row) for row in record_rows if isinstance(row, dict)]
+    actions.setdefault("toolbar_actions", [])
+    actions["owner_layer"] = "scene_orchestration"
+    actions["source"] = "contract_governance.curated_action_facts"
+    semantic_page["actions"] = actions
+    data["semantic_page"] = semantic_page
+
+
 def _govern_project_form_actions(data: dict) -> None:
     toolbar = _as_dict(data.get("toolbar"))
     if isinstance(toolbar.get("header"), list):
@@ -1438,6 +1458,11 @@ def _govern_project_form_actions(data: dict) -> None:
     smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
     curated = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
     data["buttons"] = curated
+    _emit_scene_action_semantics(
+        data,
+        header_rows=header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX],
+        record_rows=smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX],
+    )
     data["action_groups"] = _build_project_action_groups(curated)
 
 
@@ -1481,6 +1506,14 @@ def _build_project_lifecycle_summary(data: dict) -> None:
         "blockers": [],
         "progress_percent": 0 if state_keys else None,
     }
+    data["workflow_surface"] = {
+        "owner_layer": "business_fact",
+        "source": "contract_governance.workflow_facts",
+        "state_field": _safe_text(workflow.get("state_field"), "stage_id"),
+        "states": state_keys,
+        "transitions": transitions[:8],
+        "highlight_states": workflow.get("highlight_states") if isinstance(workflow.get("highlight_states"), list) else [],
+    }
 
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
@@ -1490,6 +1523,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     # selected subset can prune page containers indirectly in user surface.
     data["fields"] = fields_map
     data["visible_fields"] = selected
+    _backfill_form_layout_from_visible_fields(data)
     data["form_profile"] = {
         "core_fields": selected[:8],
         "advanced_fields": selected[8:],
@@ -1614,10 +1648,15 @@ def _govern_standard_list_for_user(
 
     semantic_page = _as_dict(data.get("semantic_page"))
     list_semantics = _as_dict(semantic_page.get("list_semantics"))
+    list_semantics["owner_layer"] = "scene_orchestration"
+    list_semantics["source"] = "contract_governance.curated_list_facts"
     list_semantics["columns"] = [
         {"name": name, "label": column_labels.get(name, name)}
         for name in selected
     ]
+    list_semantics["row_primary"] = row_primary
+    list_semantics["row_secondary"] = row_secondary
+    list_semantics["status_field"] = status_field
     semantic_page["list_semantics"] = list_semantics
     data["semantic_page"] = semantic_page
 
@@ -1796,6 +1835,201 @@ def _normalize_scene_semantic_surface(data: dict) -> None:
         data["released_scene_semantic_surface"] = released_scene_surface
 
 
+def _search_surface_from_contract(data: dict) -> dict:
+    search = _as_dict(data.get("search"))
+    if not search:
+        return {}
+    surface: dict[str, Any] = {
+        "owner_layer": "scene_orchestration",
+        "source": "contract_governance.search_surface",
+    }
+    for source_key, target_key in (
+        ("filters", "filters"),
+        ("fields", "fields"),
+        ("group_by", "group_by"),
+        ("groupBy", "group_by"),
+        ("searchpanel", "searchpanel"),
+        ("search_panel", "searchpanel"),
+        ("searchPanel", "searchpanel"),
+        ("default_state", "default_state"),
+    ):
+        value = search.get(source_key)
+        if isinstance(value, (list, dict)) and value:
+            surface[target_key] = _deep_clone_json_like(value)
+    default_sort = _safe_text(search.get("default_sort") or search.get("defaultSort") or data.get("default_sort"))
+    if default_sort:
+        surface["default_sort"] = default_sort
+    mode = _safe_text(search.get("mode"))
+    if mode:
+        surface["mode"] = mode
+    elif any(surface.get(key) for key in ("filters", "group_by", "searchpanel")):
+        surface["mode"] = "faceted"
+    return surface if len(surface) > 2 else {}
+
+
+def _scene_actions_from_contract(data: dict) -> dict:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    semantic_actions = _as_dict(semantic_page.get("actions"))
+    out: dict[str, Any] = {}
+
+    header_actions = semantic_actions.get("header_actions")
+    record_actions = semantic_actions.get("record_actions")
+    toolbar_actions = semantic_actions.get("toolbar_actions")
+    if isinstance(header_actions, list) and header_actions:
+        out["primary_actions"] = _deep_clone_json_like(header_actions)
+    if isinstance(record_actions, list) and record_actions:
+        out["contextual_actions"] = _deep_clone_json_like(record_actions)
+    if isinstance(toolbar_actions, list) and toolbar_actions:
+        out["secondary_actions"] = _deep_clone_json_like(toolbar_actions)
+
+    if not out:
+        grouped_rows = data.get("action_groups")
+        if isinstance(grouped_rows, list):
+            for group in grouped_rows:
+                if not isinstance(group, dict):
+                    continue
+                key = _safe_lower(group.get("key"))
+                rows = group.get("actions")
+                if not isinstance(rows, list) or not rows:
+                    continue
+                if key in {"basic", "primary", "workflow"} and "primary_actions" not in out:
+                    out["primary_actions"] = _deep_clone_json_like(rows)
+                elif key in {"drilldown", "record", "contextual"} and "contextual_actions" not in out:
+                    out["contextual_actions"] = _deep_clone_json_like(rows)
+                elif "secondary_actions" not in out:
+                    out["secondary_actions"] = _deep_clone_json_like(rows)
+
+    if not out:
+        rows = data.get("buttons")
+        if isinstance(rows, list) and rows:
+            out["primary_actions"] = _deep_clone_json_like(rows[:_USER_SURFACE_ACTION_MAX])
+
+    if out:
+        out["owner_layer"] = "scene_orchestration"
+        out["source"] = "contract_governance.action_surface"
+    return out
+
+
+def _ensure_scene_contract_v1_envelope(data: dict) -> None:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    list_profile = _as_dict(data.get("list_profile"))
+    if list_profile and not _as_dict(semantic_page.get("list_semantics")):
+        list_semantics = {
+            "owner_layer": "scene_orchestration",
+            "source": "contract_governance.list_profile_bridge",
+            "columns": [
+                {"name": _safe_text(name), "label": _safe_text((_as_dict(list_profile.get("column_labels"))).get(_safe_text(name)), _safe_text(name))}
+                for name in (list_profile.get("columns") if isinstance(list_profile.get("columns"), list) else [])
+                if _safe_text(name)
+            ],
+            "hidden_columns": [
+                _safe_text(name)
+                for name in (list_profile.get("hidden_columns") if isinstance(list_profile.get("hidden_columns"), list) else [])
+                if _safe_text(name)
+            ],
+            "row_primary": _safe_text(list_profile.get("row_primary")),
+            "row_secondary": _safe_text(list_profile.get("row_secondary")),
+            "status_field": _safe_text(list_profile.get("status_field")),
+        }
+        semantic_page["list_semantics"] = list_semantics
+
+    search_surface = _search_surface_from_contract(data)
+    actions = _scene_actions_from_contract(data)
+    if not semantic_page and not search_surface and not actions:
+        return
+
+    scene_contract = _as_dict(data.get("scene_contract_v1"))
+    scene_contract["contract_version"] = "v1"
+    scene_contract.setdefault("owner_layer", "scene_orchestration")
+    scene_contract.setdefault("source", "ui.contract.delivery_surface")
+    if semantic_page:
+        current_semantic_page = _as_dict(scene_contract.get("semantic_page"))
+        current_semantic_page.update(_deep_clone_json_like(semantic_page))
+        scene_contract["semantic_page"] = current_semantic_page
+    if search_surface and not _as_dict(scene_contract.get("search_surface")):
+        scene_contract["search_surface"] = search_surface
+    if actions:
+        current_actions = _as_dict(scene_contract.get("actions"))
+        for key, value in actions.items():
+            current_actions.setdefault(key, value)
+        scene_contract["actions"] = current_actions
+    diagnostics = _as_dict(scene_contract.get("diagnostics"))
+    diagnostics.setdefault("scene_contract_supply", "ui_contract_governance_bridge")
+    diagnostics.setdefault("scene_contract_supply_owner_layer", "scene_orchestration")
+    scene_contract["diagnostics"] = diagnostics
+    data["scene_contract_v1"] = scene_contract
+
+
+def _native_node_label(node: dict) -> str:
+    attributes = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+    label = _safe_text(attributes.get("string") or node.get("string"))
+    translations = {
+        "description": "描述",
+        "settings": "设置",
+    }
+    return translations.get(label.strip().lower(), label)
+
+
+def _preserve_native_layout_labels(data: dict) -> None:
+    views = data.get("views") if isinstance(data.get("views"), dict) else {}
+    form = views.get("form") if isinstance(views.get("form"), dict) else {}
+    layout = form.get("layout")
+    if not isinstance(layout, list):
+        return
+
+    def visit(nodes):
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            if _safe_text(node.get("type")).lower() == "page":
+                label = _native_node_label(node)
+                if label:
+                    node["title"] = label
+                    node["label"] = label
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                nested = node.get(key)
+                if isinstance(nested, list):
+                    visit(nested)
+
+    visit(layout)
+    form["layout"] = layout
+    views["form"] = form
+    data["views"] = views
+
+
+def _emit_relation_entry_semantics(data: dict) -> None:
+    fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+    entries: list[dict[str, Any]] = []
+    for field_name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        relation_entry = _as_dict(descriptor.get("relation_entry"))
+        if not relation_entry:
+            continue
+        field = _safe_text(field_name)
+        if not field:
+            continue
+        entries.append(
+            {
+                "field": field,
+                "model": _safe_text(relation_entry.get("model") or descriptor.get("relation")),
+                "create_mode": _safe_text(relation_entry.get("create_mode"), "disabled"),
+                "can_read": bool(relation_entry.get("can_read", True)),
+                "can_create": bool(relation_entry.get("can_create", False)),
+                "reason_code": _safe_text(relation_entry.get("reason_code")),
+                "default_vals": _as_dict(relation_entry.get("default_vals")),
+                "action_id": relation_entry.get("action_id"),
+                "menu_id": relation_entry.get("menu_id"),
+                "source": _safe_text(relation_entry.get("source"), "field.relation_entry"),
+            }
+        )
+    if not entries:
+        return
+    semantic_page = _as_dict(data.get("semantic_page"))
+    semantic_page["relation_entries"] = entries
+    semantic_page["relation_entries_owner_layer"] = "scene_orchestration"
+    data["semantic_page"] = semantic_page
+
+
 def _to_bool(value: Any, fallback: bool = False) -> bool:
     if isinstance(value, bool):
         return value
@@ -1967,6 +2201,107 @@ def _apply_form_field_groups(data: dict) -> None:
     ]
 
 
+def _collect_layout_field_names(nodes: Any) -> list[str]:
+    ordered: list[str] = []
+
+    def _iter_children(node: dict) -> list[list]:
+        rows: list[list] = []
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                rows.append(candidate)
+        return rows
+
+    def _collect(items: list) -> None:
+        for node in items:
+            if not isinstance(node, dict):
+                continue
+            if _safe_lower(node.get("type")) == "field":
+                name = _safe_text(node.get("name"))
+                if name and name not in ordered:
+                    ordered.append(name)
+            for children in _iter_children(node):
+                _collect(children)
+
+    if isinstance(nodes, list):
+        _collect(nodes)
+    elif isinstance(nodes, dict):
+        _collect([nodes])
+    return ordered
+
+
+def _find_layout_sheet_node(nodes: Any) -> dict | None:
+    if isinstance(nodes, dict):
+        nodes = [nodes]
+    if not isinstance(nodes, list):
+        return None
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if _safe_lower(node.get("type")) == "sheet":
+            return node
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                found = _find_layout_sheet_node(candidate)
+                if found:
+                    return found
+    return None
+
+
+def _backfill_form_layout_from_visible_fields(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return
+    visible_fields = [
+        _safe_text(name)
+        for name in (data.get("visible_fields") or [])
+        if _safe_text(name) in fields_map
+    ]
+    if not visible_fields:
+        return
+
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    if not isinstance(layout, list) or not layout:
+        return
+
+    existing = set(_collect_layout_field_names(layout))
+    missing = [
+        name
+        for name in visible_fields
+        if name not in existing and not _is_technical_field(name, _as_dict(fields_map.get(name)))
+    ]
+    if not missing:
+        return
+
+    backfill_group = {
+        "type": "group",
+        "name": "visible_fields_backfill_group",
+        "string": "补充业务信息",
+        "children": [
+            _make_labeled_field_node(name, fields_map)
+            for name in missing
+        ],
+    }
+
+    target = _find_layout_sheet_node(layout)
+    if target:
+        children = target.get("children")
+        if not isinstance(children, list):
+            children = []
+        children.append(backfill_group)
+        target["children"] = children
+    else:
+        layout.append(backfill_group)
+    form["layout"] = layout
+    views["form"] = form
+    data["views"] = views
+
+
 def _make_labeled_field_node(
     name: str,
     fields_map: dict[str, Any],
@@ -1978,9 +2313,29 @@ def _make_labeled_field_node(
         label = _safe_text(_ENTERPRISE_USER_FIELD_LABELS.get(name) or _ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
     if not label:
         label = _safe_text(descriptor.get("string") if descriptor else "", name)
+    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
+    widget = _safe_text(descriptor.get("widget"))
+    if not widget:
+        widget = {
+            "many2one": "many2one",
+            "one2many": "one2many_list",
+            "many2many": "many2many_tags",
+            "boolean": "boolean",
+            "date": "date",
+            "datetime": "datetime",
+            "text": "textarea",
+            "html": "html",
+            "binary": "image",
+        }.get(ttype, "")
     node = {"type": "field", "name": name}
     if label:
         node["string"] = label
+    node["fieldInfo"] = {
+        "name": name,
+        "label": label or name,
+    }
+    if widget:
+        node["fieldInfo"]["widget"] = widget
     return node
 
 
@@ -3014,6 +3369,9 @@ def apply_contract_governance(
         _apply_sanitize_governance(data, effective_mode)
         _apply_semantic_governance(data, effective_mode)
         override_failures = _apply_domain_overrides(data, effective_mode)
+        _preserve_native_layout_labels(data)
+        _emit_relation_entry_semantics(data)
+        _ensure_scene_contract_v1_envelope(data)
     else:
         override_failures = []
     _annotate_field_semantics(data)

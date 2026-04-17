@@ -15,7 +15,6 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatche
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.menu_dispatcher import MenuDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.utils.contract_governance import (
-    apply_contract_governance,
     resolve_contract_mode,
     resolve_contract_surface,
 )
@@ -180,13 +179,6 @@ class UiContractHandler(BaseIntentHandler):
             data or {},
             payload=p,
             contract_mode=contract_mode,
-            contract_surface=contract_surface,
-            source_mode=source_mode,
-            inject_contract_mode=False,
-        )
-        data = apply_contract_governance(
-            data,
-            contract_mode,
             contract_surface=contract_surface,
             source_mode=source_mode,
             inject_contract_mode=False,

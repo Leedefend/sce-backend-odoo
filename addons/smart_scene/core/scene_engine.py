@@ -88,6 +88,122 @@ def _derive_record_state_summary(
     return summary
 
 
+def _derive_lifecycle_display(summary: Dict[str, Any]) -> Dict[str, Any]:
+    payload = _as_dict(summary)
+    if not _text(payload.get("state_field")) and not _as_list(payload.get("states")):
+        return {}
+    current_state = _text(payload.get("current_state"))
+    highlight_states = {_text(value) for value in _as_list(payload.get("highlight_states")) if _text(value)}
+    steps: List[Dict[str, Any]] = []
+    for row in _as_list(payload.get("states")):
+        if isinstance(row, dict):
+            key = _text(row.get("key") or row.get("value") or row.get("name"))
+            label = _text(row.get("label") or row.get("string") or key)
+        else:
+            key = _text(row)
+            label = key
+        if not key:
+            continue
+        steps.append(
+            {
+                "key": key,
+                "label": label,
+                "active": bool(current_state and key == current_state),
+                "highlight": key in highlight_states,
+            }
+        )
+    return {
+        "owner_layer": "scene_orchestration",
+        "source": "permissions.record_state_summary",
+        "state_field": _text(payload.get("state_field")),
+        "current_state": current_state,
+        "steps": steps,
+        "allowed_transitions": _as_list(payload.get("active_transitions")),
+        "transition_count": int(payload.get("workflow_transition_count") or 0),
+        "active_transition_count": int(payload.get("active_transition_count") or 0),
+        "page_status": _text(payload.get("page_status")),
+    }
+
+
+def _derive_list_search_profile(semantic_payload: Dict[str, Any]) -> Dict[str, Any]:
+    semantic_page = _as_dict(semantic_payload.get("semantic_page"))
+    list_semantics = _as_dict(semantic_page.get("list_semantics"))
+    search_surface = _as_dict(semantic_payload.get("search_surface"))
+    columns = _as_list(list_semantics.get("columns"))
+    if not columns and not search_surface:
+        return {}
+    filters = _as_list(search_surface.get("filters") or search_surface.get("searchpanel"))
+    return {
+        "owner_layer": "scene_orchestration",
+        "source": "semantic_page.list_semantics",
+        "columns": columns,
+        "row_primary": _text(list_semantics.get("row_primary")),
+        "row_secondary": _text(list_semantics.get("row_secondary")),
+        "status_field": _text(list_semantics.get("status_field")),
+        "search_mode": _text(search_surface.get("mode")),
+        "filters": filters,
+        "filter_count": len(filters),
+    }
+
+
+def _derive_relation_entries(semantic_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    semantic_page = _as_dict(semantic_payload.get("semantic_page"))
+    entries: List[Dict[str, Any]] = []
+    for row in _as_list(semantic_page.get("relation_entries")):
+        item = _as_dict(row)
+        field = _text(item.get("field"))
+        model = _text(item.get("model"))
+        if not field or not model:
+            continue
+        entries.append(
+            {
+                "field": field,
+                "model": model,
+                "create_mode": _text(item.get("create_mode") or "disabled"),
+                "can_read": bool(item.get("can_read", True)),
+                "can_create": bool(item.get("can_create", False)),
+                "reason_code": _text(item.get("reason_code")),
+                "default_vals": _as_dict(item.get("default_vals")),
+                "action_id": item.get("action_id"),
+                "menu_id": item.get("menu_id"),
+                "owner_layer": "scene_orchestration",
+                "source": _text(item.get("source") or "semantic_page.relation_entries"),
+            }
+        )
+    return entries
+
+
+def _build_scene_envelope_presence(
+    *,
+    semantic_payload: Dict[str, Any],
+    page_payload: Dict[str, Any],
+    derived_actions: Dict[str, Any],
+) -> Dict[str, Any]:
+    semantic_page = _as_dict(semantic_payload.get("semantic_page"))
+    scene_presence = {
+        "action_surface": bool(
+            _as_list(derived_actions.get("primary_actions"))
+            or _as_list(derived_actions.get("secondary_actions"))
+            or _as_list(derived_actions.get("contextual_actions"))
+            or _as_list(derived_actions.get("danger_actions"))
+            or _as_list(derived_actions.get("recommended_actions"))
+        ),
+        "lifecycle": bool(_as_dict(page_payload.get("lifecycle"))),
+        "list_profile": bool(_as_dict(page_payload.get("list_profile"))),
+        "relation_entries": bool(_as_list(page_payload.get("relation_entries"))),
+    }
+    compatibility_presence = {
+        "action_groups": bool(_as_list(semantic_page.get("action_groups"))),
+        "lifecycle": bool(_as_dict(semantic_page.get("lifecycle")) or _as_dict(semantic_payload.get("lifecycle"))),
+        "list_profile": bool(_as_dict(semantic_page.get("list_profile")) or _as_dict(semantic_payload.get("list_profile"))),
+        "field_relation_entry": bool(_as_list(semantic_page.get("relation_entries"))),
+    }
+    return {
+        "scene_envelope_presence": scene_presence,
+        "compatibility_field_presence": compatibility_presence,
+    }
+
+
 def _semantic_page_closed_state(semantic_page: Dict[str, Any], record: Dict[str, Any]) -> tuple[bool, str]:
     action_gating = _as_dict(semantic_page.get("action_gating"))
     record_state = _as_dict(action_gating.get("record_state"))
@@ -393,9 +509,24 @@ def build_scene_contract_from_specs(
         semantic_page=_as_dict(semantic_payload.get("semantic_page")),
         disabled_actions=_as_dict((derived_permissions or {}).get("disabled_actions")),
     )
+    page_payload = dict(page_hint or {})
+    lifecycle_display = _derive_lifecycle_display(_as_dict((derived_permissions or {}).get("record_state_summary")))
+    if lifecycle_display:
+        page_payload["lifecycle"] = lifecycle_display
+    list_search_profile = _derive_list_search_profile(semantic_payload)
+    if list_search_profile:
+        page_payload["list_profile"] = list_search_profile
+    relation_entries = _derive_relation_entries(semantic_payload)
+    if relation_entries:
+        page_payload["relation_entries"] = relation_entries
+    diagnostics_payload["scene_envelope_observability"] = _build_scene_envelope_presence(
+        semantic_payload=semantic_payload,
+        page_payload=page_payload,
+        derived_actions=derived_actions,
+    )
     return build_scene_contract(
         scene=resolved.get("scene") or {},
-        page=resolved.get("page") or {},
+        page={**(resolved.get("page") or {}), **page_payload},
         zones=built_zones,
         record=record or {},
         nav_ref=nav_ref or {

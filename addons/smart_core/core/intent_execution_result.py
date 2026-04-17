@@ -30,6 +30,9 @@ class IntentExecutionResult:
             payload["status"] = str(self.status)
         return payload
 
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.to_legacy_dict().get(key, default)
+
 
 def adapt_handler_result(result: Any) -> Any:
     if isinstance(result, IntentExecutionResult):

@@ -65,8 +65,43 @@ class TestPagePolicyService(unittest.TestCase):
 
         service.restrict_form_fields_to_layout(data)
 
-        self.assertEqual(set(data["fields"].keys()), {"name", "user_id", "state"})
+        self.assertEqual(set(data["fields"].keys()), {"name", "user_id", "state", "other"})
         self.assertEqual(data["visible_fields"], ["name", "user_id"])
+        self.assertEqual(
+            data["views"]["form"]["layout"][0]["children"],
+            [{"type": "field", "name": "name"}, {"type": "field", "name": "user_id"}],
+        )
+        self.assertEqual(data["layout_visible_fields"], ["name", "user_id"])
+
+    def test_restrict_form_fields_to_layout_does_not_overwrite_existing_visible_fields(self):
+        service = service_module.PagePolicyService(_FakeEnv(), {"res.users"})
+        data = {
+            "visible_fields": ["governed_name", "governed_owner_id"],
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "user_id"},
+                            ],
+                        },
+                    ],
+                },
+            },
+            "fields": {
+                "name": {"type": "char"},
+                "user_id": {"type": "many2one"},
+                "governed_name": {"type": "char"},
+                "governed_owner_id": {"type": "many2one"},
+            },
+        }
+
+        service.restrict_form_fields_to_layout(data)
+
+        self.assertEqual(data["visible_fields"], ["governed_name", "governed_owner_id"])
+        self.assertEqual(data["layout_visible_fields"], ["name", "user_id"])
 
     def test_apply_access_policy_marks_core_relation_as_block(self):
         service = service_module.PagePolicyService(_FakeEnv(), {"res.users"})

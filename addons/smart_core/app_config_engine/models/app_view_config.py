@@ -249,7 +249,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
 
             parse_service = NativeParseService(self)
             fallback_service = ParseFallbackService(self)
-            if action_specific_view and view_type != 'form' and not force_parser:
+            if action_specific_view and not force_parser:
                 _logger.info(
                     "VIEW_PARSE_DEBUG: action-specific view detected for %s.%s source=%s, prefer fallback parser on bound arch",
                     model_name,
@@ -519,6 +519,14 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         default_page_score,
                     )
                     return default_data
+                source = str(bound_data.get('_contract_view_source') or '').strip()
+                if source.startswith('action_specific'):
+                    _logger.info(
+                        "action-bound form retained because it is not narrower than runtime default; source=%s score=%s(page=%s)",
+                        source,
+                        bound_score,
+                        bound_page_score,
+                    )
                 return bound_data
 
             if action_id:

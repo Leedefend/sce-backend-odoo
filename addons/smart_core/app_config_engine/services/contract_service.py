@@ -339,16 +339,17 @@ class ContractService:
 
             if node_type == "page":
                 title = str(
-                    node.get("title")
+                    node.get("string")
+                    or (node.get("attributes") or {}).get("string")
+                    or node.get("title")
                     or node.get("label")
                     or node.get("name")
-                    or (node.get("attributes") or {}).get("string")
                     or ""
                 ).strip()
                 if title:
+                    title = self._normalize_group_label(title, self._collect_group_field_names(node))
                     node["title"] = title
-                    if not str(node.get("label") or "").strip():
-                        node["label"] = title
+                    node["label"] = title
                 continue
 
             if node_type == "notebook":
@@ -361,6 +362,52 @@ class ContractService:
                 ]
                 derived_tabs = tabs or pages or page_children
                 normalized_tabs = [row for row in derived_tabs if isinstance(row, dict)]
+                for tab_index, tab in enumerate(normalized_tabs, start=1):
+                    tab_title = str(
+                        tab.get("string")
+                        or (tab.get("attributes") or {}).get("string")
+                        or tab.get("title")
+                        or tab.get("label")
+                        or tab.get("name")
+                        or ""
+                    ).strip()
+                    if not tab_title:
+                        tab_children = tab.get("children") if isinstance(tab.get("children"), list) else []
+                        for child in tab_children:
+                            if not isinstance(child, dict):
+                                continue
+                            child_type = str(child.get("type") or "").strip().lower()
+                            if child_type == "page":
+                                tab_title = str(
+                                    child.get("string")
+                                    or (child.get("attributes") or {}).get("string")
+                                    or child.get("title")
+                                    or child.get("label")
+                                    or child.get("name")
+                                    or ""
+                                ).strip()
+                                if tab_title:
+                                    break
+                        if not tab_title:
+                            for child in tab_children:
+                                if not isinstance(child, dict):
+                                    continue
+                                child_label = str(
+                                    child.get("label")
+                                    or child.get("title")
+                                    or child.get("name")
+                                    or (child.get("attributes") or {}).get("string")
+                                    or ""
+                                ).strip()
+                                if child_label and not child_label.startswith("信息分组"):
+                                    tab_title = child_label
+                                    break
+                        if not tab_title:
+                            tab_title = f"页签{tab_index}"
+                    if tab_title:
+                        tab_title = self._normalize_group_label(tab_title, self._collect_group_field_names(tab))
+                        tab["title"] = tab_title
+                        tab["label"] = tab_title
                 node["tabs"] = normalized_tabs
                 node["pages"] = list(normalized_tabs)
                 notebook_label = str(
@@ -404,10 +451,12 @@ class ContractService:
         semantic_page = data.get("semantic_page") if isinstance(data.get("semantic_page"), dict) else {}
         form_semantics = semantic_page.get("form_semantics") if isinstance(semantic_page.get("form_semantics"), dict) else {}
         if isinstance(layout, (list, dict)):
-            form_semantics.pop("layout", None)
+            form_semantics["layout"] = layout
             form_semantics["layout_source"] = "views.form.layout"
             if isinstance(layout, list):
                 form_semantics["layout_section_count"] = len(layout)
+            elif isinstance(layout, dict):
+                form_semantics["layout_section_count"] = 1
         semantic_page["form_semantics"] = form_semantics
         data["semantic_page"] = semantic_page
 
@@ -503,6 +552,8 @@ class ContractService:
             "Tasks": "任务",
             "Time Management": "时间管理",
             "Analytics": "分析",
+            "Description": "描述",
+            "Settings": "设置",
         }
         return normalized_map.get(raw, raw)
 
