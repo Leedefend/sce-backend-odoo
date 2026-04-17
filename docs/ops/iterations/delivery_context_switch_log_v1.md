@@ -21982,3 +21982,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo rollback-only lifecycle screen PASS; rollback persistence enforced`
 - next_step: `Open dedicated approval-tier applicability screen for payment.request tier definitions.`
 - stop_condition: `none`
+### 2026-04-17T22:56:00+08:00
+- blocker_key: `iter_payment_tier_applicability_screen_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-PAYMENT-TIER-APPLICABILITY-SCREEN`
+- completed_step: `Read-only tier screen confirmed tier.definition and tier.review models exist but there are zero tier.definition records and zero payment.request tier definitions, so payment submit cannot generate tier.review`
+- verification: `validate_task PASS; Odoo shell read-only screen PASS; db_writes=0`
+- next_step: `Open dedicated approval-tier config replay batch for payment.request using finance manager reviewer group and existing tier server actions.`
+- stop_condition: `none`
