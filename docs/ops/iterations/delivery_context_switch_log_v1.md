@@ -21950,3 +21950,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check PASS; rollback-only finance submit reached mail sender runtime blocker after funding gate passed`
 - next_step: `Open mail/notification runtime configuration screen for payment submit message delivery blocker.`
 - stop_condition: `none`
+### 2026-04-17T22:43:00+08:00
+- blocker_key: `iter_mail_runtime_submit_blocker_screen_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN`
+- completed_step: `Read-only screen classified payment submit mail blocker: no mail server, no smtp_user, no mail.default.from, company email empty, sc_fx_finance email and partner email empty`
+- verification: `validate_task PASS; Odoo shell read-only screen PASS; db_writes=0`
+- next_step: `Open dedicated dev/demo runtime mail sender config batch, then re-run rollback-only payment submit.`
+- stop_condition: `none`
