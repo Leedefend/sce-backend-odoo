@@ -22170,3 +22170,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `BLOCKED_BY_GOVERNANCE`
 - verification: `validate_task PASS; no payment code touched; required paths identified as payment_request.py and payment_request_available_actions.py`
 - next_step: `add a narrow AGENTS/governance exception for dedicated no-contract payment business-continuity batches, then implement and verify the two-file backend semantic fix`
+- date: 2026-04-18
+- task: ITER-2026-04-18-NO-CONTRACT-PAYMENT-GOVERNANCE-EXCEPTION
+- branch: codex/next-round
+- layer_target: Agent Governance
+- module: high-risk payment continuity exception
+- reason: add a narrow execution rule for the user-authorized no-contract payment business-continuity fix
+- status: `PASS`
+- verification: `validate_task PASS; AGENTS.md section 6.9 added with two-file allowlist and required rollback-only submit/continuity verification`
+- next_step: `open dedicated high-risk no-contract payment submit implementation task for payment_request.py and payment_request_available_actions.py`

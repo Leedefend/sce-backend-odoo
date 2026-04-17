@@ -467,6 +467,43 @@ When this exception is used:
 - if uncertainty remains about financial semantics, authority leakage, or
   runtime safety, the agent MUST stop immediately
 
+### 6.9 Narrow Exception For Dedicated No-Contract Payment Business-Continuity Batches
+
+The generic stop condition for `*payment*` remains the default and MUST still
+trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled no-contract payment business-continuity
+changes only when all of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated no-contract payment
+  business-continuity objective
+- the task allowlist explicitly includes only these exact payment paths:
+  - `addons/smart_construction_core/models/core/payment_request.py`
+  - `addons/smart_construction_core/handlers/payment_request_available_actions.py`
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are scoped only to allowing `payment.request` submit
+  without `contract_id` when no `settlement_id` is selected for daily or
+  non-contract outflows
+- selected-contract checks, canceled-contract checks, selected-settlement
+  consistency checks, settlement amount checks, funding gates, attachment
+  checks, project lifecycle checks, data-validator checks, tier-validation,
+  audit/evidence behavior, ACLs, accounting, ledgers, manifests, and frontend
+  behavior remain outside scope unless separately authorized by a new task line
+- the implementation keeps `payment.request.available_actions` prechecks
+  consistent with `payment.request.action_submit`
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- verification MUST include rollback-only no-contract submit, selected-contract
+  submit, selected-settlement consistency, and imported business continuity
+  checks
+- if uncertainty remains about financial semantics, settlement semantics,
+  approval safety, or account/ledger impact, the agent MUST stop immediately
+
 ---
 
 ## 7. Allowed Change Rules

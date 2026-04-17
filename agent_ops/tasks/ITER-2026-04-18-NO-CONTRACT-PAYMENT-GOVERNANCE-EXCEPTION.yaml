@@ -1,0 +1,93 @@
+task_id: ITER-2026-04-18-NO-CONTRACT-PAYMENT-GOVERNANCE-EXCEPTION
+title: Add narrow governance exception for no-contract payment continuity fix
+type: governance-exception
+status: pass
+priority: high
+mode: implement
+
+goal: >
+  Add a narrow AGENTS governance exception allowing the dedicated no-contract
+  payment business-continuity backend fix under explicit user authorization.
+
+user_visible_outcome:
+  - "为无合同日常付款办理能力补齐开一个可审计、窄范围的高风险执行入口。"
+
+scope:
+  allowed_paths:
+    - AGENTS.md
+    - docs/ops/business_continuity/no_contract_payment_governance_exception_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-GOVERNANCE-EXCEPTION.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: 98a9229
+  prior_task: ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK
+  explicit_user_authorization: true
+  authorization_message: "同意 执行"
+
+architecture:
+  layer_target: Agent Governance
+  module: high-risk payment continuity exception
+  module_owner: agent_ops governance surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The follow-up implementation concerns payment business facts, but this
+    batch only changes governance rules so the implementation can be audited.
+  reason: >
+    Current AGENTS rules stop on any *payment* path touch and only allow an
+    orchestration-boundary exception. A narrow exception is required before the
+    authorized business-continuity fix can proceed.
+
+change_rules:
+  - governance text only
+  - do not modify business code in this batch
+  - exception must be narrow to two payment files and no-contract submit behavior
+  - settlement/account/ledger/ACL/manifest/frontend must remain out of scope
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-GOVERNANCE-EXCEPTION.yaml
+
+risk:
+  level: high
+  manual_approval_required: true
+  approval_received: true
+
+stop_conditions:
+  - business_code_touched
+  - exception_scope_too_broad
+  - frontend_or_account_scope_added
+
+deliverables:
+  - updated AGENTS.md narrow exception
+  - governance exception report
+
+verification_result:
+  status: PASS
+  commands:
+    - command: python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-GOVERNANCE-EXCEPTION.yaml
+      result: PASS
+  summary: >
+    Added AGENTS.md section 6.9 for dedicated no-contract payment
+    business-continuity batches. The exception is limited to two payment files
+    and preserves settlement, accounting, ACL, manifest, frontend, funding,
+    attachment, lifecycle, validator, tier-validation, audit, and evidence
+    behavior.
+
+rollback:
+  - git restore AGENTS.md docs/ops/business_continuity/no_contract_payment_governance_exception_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-GOVERNANCE-EXCEPTION.yaml
+
+depends_on:
+  - ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK
