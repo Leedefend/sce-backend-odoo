@@ -22152,3 +22152,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; high-risk Odoo shell replay PASS updated_count=2744; post-write exact_one_remaining_after=0; verify.imported_business_continuity.v1 PASS; verify.business_fact_consistency.v1 SKIP_ENV for existing missing demo projects`
 - next_step: `continue business continuity checks on remaining no-contract and multi-contract payment operation; do not infer parent contract for the 15107 no-line-contract or 143 multi-contract records`
+- date: 2026-04-18
+- task: ITER-2026-04-18-NO-CONTRACT-PAYMENT-OPERATION-GAP-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: no-contract payment operation gap
+- reason: confirm whether remaining no-contract payments can continue through normal new-system submit actions
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; static read-only inspection found action_submit and available_actions still require contract_id before submit`
+- next_step: `STOP before code change; open dedicated high-risk backend payment business-semantics task to allow no-contract daily/non-contract payments without weakening settlement/contract-selected checks`
