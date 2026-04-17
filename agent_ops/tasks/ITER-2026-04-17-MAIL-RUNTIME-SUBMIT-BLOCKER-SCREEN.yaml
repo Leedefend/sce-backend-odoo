@@ -1,0 +1,73 @@
+task_id: ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN
+title: Mail runtime submit blocker screen for payment continuation
+type: runtime-config-screen
+status: active
+priority: high
+
+goal: >
+  Screen the mail sender runtime configuration that blocks payment submit after
+  imported project funding facts are available.
+
+user_visible_outcome:
+  - "Identify the mail configuration fact required for payment submit to continue beyond notification delivery."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/mail_runtime_submit_blocker_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 7c99278
+  prior_task: ITER-2026-04-17-FUNDING-CARRIER-FACT-SYNC
+
+architecture:
+  layer_target: Runtime Configuration
+  module: Odoo mail runtime
+  module_owner: deployment/runtime configuration surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: runtime_config
+  backend_sub_layer_reason: >
+    The blocker is raised by mail notification delivery after payment submit
+    reaches workflow processing. It is not a project, contract, approval, or
+    funding business fact.
+  reason: >
+    Payment submit now passes finance visibility and funding carrier gates, but
+    fails because the runtime lacks a usable sender email address.
+
+change_rules:
+  - screen only
+  - do not write runtime config
+  - do not modify addons, scripts, or frontend
+  - do not change payment workflow semantics
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_writes_runtime_config
+  - acceptance_failed
+
+deliverables:
+  - mail runtime blocker classification
+  - next implementation recommendation
+
+rollback:
+  - git restore docs/ops/business_continuity/mail_runtime_submit_blocker_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-FUNDING-CARRIER-FACT-SYNC
