@@ -21878,3 +21878,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo shell read-only screen PASS`
 - next_step: `Open dedicated high-risk payment linkage write batch for deterministic candidates only.`
 - stop_condition: `none`
+### 2026-04-17T21:46:09+08:00
+- blocker_key: `iter_payment_linkage_fact_sync_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-PAYMENT-LINKAGE-FACT-SYNC`
+- completed_step: `Payment linkage fact sync executed: 12108 payment_request.company_id values and 10305 payment_request.contract_id values updated from deterministic contract facts; 17994 records remain unlinked because they are ambiguous or have no candidate`
+- verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check mismatch=0; snapshot/rollback CSV PASS`
+- next_step: `Continue with operational usability verification for imported and fresh payment flows.`
+- stop_condition: `none`
