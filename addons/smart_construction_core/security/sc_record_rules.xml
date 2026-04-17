@@ -31,6 +31,7 @@
              项目中心：项目 record rules
              - read/user: 仅限负责或关注的项目
              - manager: 放行全部
+             - finance user: 可读取已有合同事实承载的项目，用于承接付款办理
         ========================================================== -->
         <record id="rule_sc_project_read_project_project" model="ir.rule">
             <field name="name">SC Project Read - project.project member only</field>
@@ -94,6 +95,16 @@
                     ('cost_lead_user_id', '=', user.id),
                     ('finance_contact_user_id', '=', user.id),
                     ('project_member_ids.user_id', '=', user.id)
+                ] if not user.has_group('smart_construction_core.group_sc_cap_finance_user') else ['|','|','|','|','|','|','|','|',
+                    ('user_id', '=', user.id),
+                    ('create_uid', '=', user.id),
+                    ('project_manager_user_id', '=', user.id),
+                    ('technical_lead_user_id', '=', user.id),
+                    ('business_lead_user_id', '=', user.id),
+                    ('cost_lead_user_id', '=', user.id),
+                    ('finance_contact_user_id', '=', user.id),
+                    ('project_member_ids.user_id', '=', user.id),
+                    ('contract_ids', '!=', False)
                 ]
             </field>
             <field name="perm_read" eval="True"/>
@@ -342,13 +353,13 @@
 
         <!-- =========================================================
              财务中心：付款申请 record rules
-             - read/user: 仅限负责或关注的项目
+             - read/user: 仅限负责、关注或已有合同事实承载的项目
              - manager: 放行全部
         ========================================================== -->
         <record id="rule_sc_finance_read_payment_request" model="ir.rule">
             <field name="name">SC Finance Read - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('project_id.contract_ids', '!=', False)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
@@ -359,7 +370,7 @@
         <record id="rule_sc_finance_user_payment_request" model="ir.rule">
             <field name="name">SC Finance User - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('project_id.contract_ids', '!=', False)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -380,13 +391,13 @@
 
         <!-- =========================================================
              财务中心：付款台账 record rules
-             - read/user: 仅限负责或关注的项目
+             - read/user: 仅限负责、关注或已有合同事实承载的项目
              - manager: 放行全部
         ========================================================== -->
         <record id="rule_sc_finance_read_payment_ledger" model="ir.rule">
             <field name="name">SC Finance Read - payment.ledger by project member</field>
             <field name="model_id" ref="model_payment_ledger"/>
-            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('project_id.contract_ids', '!=', False)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
@@ -397,7 +408,7 @@
         <record id="rule_sc_finance_user_payment_ledger" model="ir.rule">
             <field name="name">SC Finance User - payment.ledger by project member</field>
             <field name="model_id" ref="model_payment_ledger"/>
-            <field name="domain_force">['|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id)]</field>
+            <field name="domain_force">['|','|','|','|','|','|','|', ('project_id.user_id', '=', user.id), ('project_id.project_manager_user_id', '=', user.id), ('project_id.technical_lead_user_id', '=', user.id), ('project_id.business_lead_user_id', '=', user.id), ('project_id.cost_lead_user_id', '=', user.id), ('project_id.finance_contact_user_id', '=', user.id), ('project_id.project_member_ids.user_id', '=', user.id), ('project_id.contract_ids', '!=', False)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
