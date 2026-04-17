@@ -1,0 +1,104 @@
+task_id: ITER-2026-04-18-IMPORTED-BUSINESS-CONTINUITY-GUARD
+title: Add real imported business continuity guard
+type: verification-governance
+status: pass
+priority: high
+
+goal: >
+  Add a reusable verification guard that runs against real imported customer
+  business facts and proves the new system can both carry historical facts and
+  continue a daily payment flow on top of an imported project/contract carrier.
+
+user_visible_outcome:
+  - "真实导入业务事实不只可查看，还能通过可重放脚本验证新系统付款办理链路可继续运转。"
+
+scope:
+  allowed_paths:
+    - Makefile
+    - scripts/verify/business_fact_consistency_guard.sh
+    - scripts/verify/imported_business_continuity_guard.sh
+    - docs/ops/business_continuity/imported_business_continuity_guard_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-IMPORTED-BUSINESS-CONTINUITY-GUARD.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: 8b6cdbb
+  prior_task: ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE
+  explicit_user_authorization: >
+    User requested continuing the business continuity mainline after making
+    real-data verification non-blocking for demo fixture absence.
+
+architecture:
+  layer_target: Runtime Verification Governance
+  module: imported business continuity verification guards
+  module_owner: verification and gate surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: none
+  backend_sub_layer_reason: >
+    This task does not change backend business facts or scene orchestration. It
+    adds runtime verification around existing imported facts and rollback-only
+    operational flow checks.
+  reason: >
+    The continuity line needs a repeatable guard that validates real imported
+    projects, contracts, payments, and ledgers, then proves a new payment can be
+    processed against an imported carrier without creating persistent records.
+
+change_rules:
+  - do not modify business models or financial semantics
+  - do not fabricate imported facts
+  - rollback any runtime records created by the operability probe
+  - keep demo fixture absence classified separately from real consistency errors
+  - preserve existing mismatch checks as blocking failures
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-IMPORTED-BUSINESS-CONTINUITY-GUARD.yaml
+    - bash -n scripts/verify/business_fact_consistency_guard.sh scripts/verify/imported_business_continuity_guard.sh
+    - DB_NAME=sc_demo make verify.business_fact_consistency.v1
+    - DB_NAME=sc_demo make verify.imported_business_continuity.v1
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - acceptance_failed_on_real_business_consistency_error
+  - persistent_business_record_created_by_probe
+  - scope_expands_beyond_verification
+
+deliverables:
+  - real imported business continuity guard
+  - Makefile verification target
+  - documentation of guard semantics and rollback-only guarantee
+
+verification_result:
+  status: PASS
+  commands:
+    - command: python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-IMPORTED-BUSINESS-CONTINUITY-GUARD.yaml
+      result: PASS
+    - command: bash -n scripts/verify/business_fact_consistency_guard.sh scripts/verify/imported_business_continuity_guard.sh
+      result: PASS
+    - command: DB_NAME=sc_demo make verify.business_fact_consistency.v1
+      result: PASS
+      classification: SKIP_ENV
+      artifact: artifacts/backend/business_fact_consistency_guard.json
+    - command: DB_NAME=sc_demo make verify.imported_business_continuity.v1
+      result: PASS
+      artifact: artifacts/backend/imported_business_continuity_guard.json
+
+rollback:
+  - git restore Makefile scripts/verify/business_fact_consistency_guard.sh scripts/verify/imported_business_continuity_guard.sh docs/ops/business_continuity/imported_business_continuity_guard_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-IMPORTED-BUSINESS-CONTINUITY-GUARD.yaml
+
+depends_on:
+  - ITER-2026-04-18-BUSINESS-FACT-VERIFY-REAL-DATA-TOLERANCE

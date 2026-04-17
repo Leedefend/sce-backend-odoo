@@ -22088,3 +22088,13 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; bash -n PASS; DB_NAME=sc_demo make verify.payment_fact_consistency.v1 PASS with SKIP_ENV for missing demo projects; DB_NAME=sc_demo make verify.settlement_evidence_guard PASS with SKIP_ENV for missing demo projects`
 - next_step: `continue business continuity checks against real imported facts; demo fixture absence is now classified separately from real business consistency failures`
+- date: 2026-04-18
+- task: ITER-2026-04-18-IMPORTED-BUSINESS-CONTINUITY-GUARD
+- branch: codex/next-round
+- layer_target: Runtime Verification Governance
+- module: imported business continuity verification guards
+- reason: real imported business facts need a replayable guard proving both historical fact carriage and rollback-only daily payment operability
+- completed_step: `imported continuity guard implementation started`
+- status: `PASS`
+- verification: `validate_task PASS; bash -n PASS; DB_NAME=sc_demo make verify.business_fact_consistency.v1 PASS with SKIP_ENV for missing demo projects; DB_NAME=sc_demo make verify.imported_business_continuity.v1 PASS with rollback-only payment flow done/validated and rollback persistence check clean`
+- next_step: `continue with deterministic contract-linkage gap reduction for the remaining imported payment requests, without requiring settlement where no settlement business fact exists`

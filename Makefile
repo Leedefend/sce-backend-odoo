@@ -1425,6 +1425,11 @@ verify.business_fact_consistency.v1: guard.prod.forbid check-compose-project che
 	@bash scripts/verify/business_fact_consistency_guard.sh
 	@echo "[OK] verify.business_fact_consistency.v1 done"
 
+.PHONY: verify.imported_business_continuity.v1
+verify.imported_business_continuity.v1: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/verify/imported_business_continuity_guard.sh
+	@echo "[OK] verify.imported_business_continuity.v1 done"
+
 .PHONY: verify.payment_fact_consistency.v1
 verify.payment_fact_consistency.v1: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/payment_fact_consistency_guard.sh
