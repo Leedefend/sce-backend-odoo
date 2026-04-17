@@ -1,0 +1,74 @@
+task_id: ITER-2026-04-17-PAYMENT-APPROVAL-LIFECYCLE-OPERABILITY-SCREEN
+title: Payment approval lifecycle operability screen after submit
+type: business-flow-screen
+status: active
+priority: high
+
+goal: >
+  Screen the payment lifecycle after successful submit to identify whether
+  imported/funded projects can continue through approval and completion in the
+  new system.
+
+user_visible_outcome:
+  - "Identify the next blocker after payment submit for daily payment processing."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/payment_approval_lifecycle_operability_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-PAYMENT-APPROVAL-LIFECYCLE-OPERABILITY-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 7099a3b
+  prior_task: ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC
+
+architecture:
+  layer_target: Business Flow Verification
+  module: smart_construction_core payment lifecycle
+  module_owner: construction industry business flow
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The next behavior depends on payment workflow state, tier validation facts,
+    and finance manager authority. These are business workflow facts, not
+    frontend rendering or scene orchestration semantics.
+  reason: >
+    Payment submit now succeeds; the next operational question is whether the
+    new system can continue through approval and completion.
+
+change_rules:
+  - screen only
+  - use rollback-only runtime records
+  - do not write persistent business data
+  - do not modify addons, frontend, ACL, payment, settlement, or account code
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-PAYMENT-APPROVAL-LIFECYCLE-OPERABILITY-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_persists_business_data
+  - acceptance_failed
+
+deliverables:
+  - approval lifecycle screen result
+  - next implementation recommendation
+
+rollback:
+  - git restore docs/ops/business_continuity/payment_approval_lifecycle_operability_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-PAYMENT-APPROVAL-LIFECYCLE-OPERABILITY-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC
