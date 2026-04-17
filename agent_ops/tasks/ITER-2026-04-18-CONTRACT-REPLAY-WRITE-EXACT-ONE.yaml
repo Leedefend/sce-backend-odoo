@@ -1,0 +1,113 @@
+task_id: ITER-2026-04-18-CONTRACT-REPLAY-WRITE-EXACT-ONE
+title: Replay exact-one imported payment contract facts to parent requests
+type: high-risk-business-data-replay
+status: pass
+priority: high
+mode: implement
+
+goal: >
+  Write parent payment.request.contract_id only for imported payment requests
+  whose lines already resolve to exactly one target construction.contract.
+
+user_visible_outcome:
+  - "把旧业务事实中已经明确属于合同依据的付款主单同步为有合同，其余日常支出继续允许无合同办理。"
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/contract_replay_write_exact_one_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-WRITE-EXACT-ONE.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: 6b1ea57
+  prior_task: ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN
+  explicit_user_authorization: true
+  authorization_message: "同意执行"
+
+architecture:
+  layer_target: Business Fact Replay
+  module: imported payment contract facts
+  module_owner: construction industry business continuity
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Writing payment.request.contract_id from exact-one resolved line contracts
+    synchronizes target records with already proven imported business facts.
+    It does not change backend semantics, UI structure, financial rules, ACLs,
+    or settlement behavior.
+  reason: >
+    The dry-run screen found 2744 payment requests where parent contract_id is
+    empty and all resolved line contracts collapse to exactly one target
+    construction.contract. The user explicitly authorized executing this
+    high-risk replay.
+
+change_rules:
+  - database write is limited to payment.request.contract_id for the exact-one candidate set
+  - expected write count must be 2744 before write; drift stops execution
+  - do not write payment.request.line, settlement, account, ledger, ACL, manifest, frontend, or migration data
+  - do not infer contracts from unresolved legacy_supplier_contract_id or text-only evidence
+  - record rollback boundary and verification result in docs
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-WRITE-EXACT-ONE.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec high-risk exact-one contract replay
+    - DB_NAME=sc_demo make odoo.shell.exec post-write verification
+
+risk:
+  level: high
+  manual_approval_required: true
+  approval_received: true
+
+stop_conditions:
+  - forbidden_path_touched
+  - candidate_count_not_2744
+  - attempted_write_outside_payment_request_contract_id
+  - post_write_verification_failed
+  - contract_rule_drift
+
+deliverables:
+  - write report with count, rule, verification, risk, and rollback instruction
+
+verification_result:
+  status: PASS
+  commands:
+    - command: python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-WRITE-EXACT-ONE.yaml
+      result: PASS
+    - command: DB_NAME=sc_demo make odoo.shell.exec high-risk exact-one contract replay
+      result: PASS
+      summary: >
+        Candidate count matched the expected 2744 before write. The replay wrote
+        payment.request.contract_id for 2744 records and recorded updated IDs in
+        artifacts/business_continuity/contract_replay_write_exact_one_20260418.log.
+    - command: DB_NAME=sc_demo make odoo.shell.exec post-write verification
+      result: PASS
+      summary: >
+        Remaining payment requests missing contract_id have 0 exact-one line
+        contract candidates; 143 multi-contract and 15107 no-line-contract
+        records remain excluded.
+    - command: DB_NAME=sc_demo make verify.imported_business_continuity.v1
+      result: PASS
+    - command: DB_NAME=sc_demo make verify.business_fact_consistency.v1
+      result: SKIP_ENV
+      summary: >
+        Existing real-data environment lacks the demo projects required by this
+        guard; the command exits OK and is not a replay failure.
+
+rollback:
+  - DB_NAME=sc_demo make odoo.shell.exec rollback by clearing contract_id for the recorded updated payment.request IDs
+  - git restore docs/ops/business_continuity/contract_replay_write_exact_one_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-CONTRACT-REPLAY-WRITE-EXACT-ONE.yaml
+
+depends_on:
+  - ITER-2026-04-18-CONTRACT-REPLAY-DRY-RUN-SCREEN

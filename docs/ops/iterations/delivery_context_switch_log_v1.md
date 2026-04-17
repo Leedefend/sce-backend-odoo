@@ -22143,3 +22143,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; read-only Odoo shell dry-run PASS; parent_missing_contract=17994 exact_one_line_contract_candidate=2744 multi_line_contract_excluded=143 no_line_contract=15107`
 - next_step: `open a dedicated high-risk replay task only for the 2744 exact-one candidates, or continue no-write business continuity checks for daily/non-contract payment operation`
+- date: 2026-04-18
+- task: ITER-2026-04-18-CONTRACT-REPLAY-WRITE-EXACT-ONE
+- branch: codex/next-round
+- layer_target: Business Fact Replay
+- module: imported payment contract facts
+- reason: synchronize parent payment.request.contract_id only where imported line contracts collapse to exactly one target construction.contract
+- status: `PASS`
+- verification: `validate_task PASS; high-risk Odoo shell replay PASS updated_count=2744; post-write exact_one_remaining_after=0; verify.imported_business_continuity.v1 PASS; verify.business_fact_consistency.v1 SKIP_ENV for existing missing demo projects`
+- next_step: `continue business continuity checks on remaining no-contract and multi-contract payment operation; do not infer parent contract for the 15107 no-line-contract or 143 multi-contract records`
