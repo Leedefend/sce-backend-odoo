@@ -21934,3 +21934,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo shell read-only screen PASS; db_writes=0`
 - next_step: `Open dedicated funding carrier fact replay batch with dry-run/check/write and rollback evidence.`
 - stop_condition: `none`
+### 2026-04-17T22:34:00+08:00
+- blocker_key: `iter_funding_carrier_fact_sync_in_progress`
+- status: `IN_PROGRESS`
+- active_task: `ITER-2026-04-17-FUNDING-CARRIER-FACT-SYNC`
+- completed_step: `Funding carrier fact replay batch opened with check/write script for 642 deterministic positive-contract-sum imported projects`
+- verification: `pending`
+- next_step: `Run check/write/check replay verification and confirm payment submit can pass funding carrier prerequisite.`
+- stop_condition: `none`
+### 2026-04-17T22:40:00+08:00
+- blocker_key: `iter_funding_carrier_fact_sync_pass_with_next_mail_runtime_blocker`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-17-FUNDING-CARRIER-FACT-SYNC`
+- completed_step: `Funding carrier facts replayed: 642 imported contract-backed projects enabled for funding and 642 active funding baselines created from positive non-cancelled contract final sums; post-check target_without_active_baseline_count=0`
+- verification: `validate_task PASS; py_compile PASS; check PASS; write PASS; post-check PASS; rollback-only finance submit reached mail sender runtime blocker after funding gate passed`
+- next_step: `Open mail/notification runtime configuration screen for payment submit message delivery blocker.`
+- stop_condition: `none`
