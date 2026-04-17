@@ -1,0 +1,100 @@
+task_id: ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN
+title: Screen residual legacy contract source for unresolved payment contract IDs
+type: governance-screen
+status: pass
+priority: high
+mode: screen
+
+goal: >
+  Screen whether the unresolved legacy supplier contract IDs referenced by
+  imported payment request lines exist in residual old-system supplier or
+  purchase contract source tables.
+
+user_visible_outcome:
+  - "确认旧付款明细上的未解析合同ID到底来自旧库哪类合同事实，避免在新系统伪造合同依据。"
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/residual_legacy_contract_source_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2a3bdbf
+  prior_task: ITER-2026-04-18-SUPPLIER-CONTRACT-RESOLUTION-SCREEN
+
+architecture:
+  layer_target: Business Fact Screening
+  module: residual legacy contract source facts
+  module_owner: construction industry business continuity
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Determining whether a legacy contract ID exists in old supplier or purchase
+    contract source tables is business truth. This task does not orchestrate UI
+    semantics and must not fabricate missing contract facts.
+  reason: >
+    The prior screen found 1731 payment requests carrying 1556 legacy supplier
+    contract IDs that do not resolve in the target DB or existing supplier
+    contract manifest. A residual source-table screen is required before any
+    replay or model adjustment can be considered.
+
+change_rules:
+  - screen only; no database writes
+  - do not write payment, contract, settlement, account, ACL, manifest, frontend, or migration data
+  - do not weaken fact requirements to force a contract link
+  - classify source-table existence separately from replay eligibility
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN.yaml
+    - read-only old-system source-table screen for the 1556 unresolved legacy contract IDs
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - database_write_attempted
+  - source_table_identity_unclear
+  - replay_eligibility_claimed_without_exact_business_fact
+
+deliverables:
+  - screen document with source-table match counts and no-write recommendation
+
+verification_result:
+  status: PASS
+  commands:
+    - command: python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN.yaml
+      result: PASS
+    - command: read-only Odoo shell rebuilt unresolved legacy contract ID set
+      result: PASS
+      summary: >
+        Rebuilt 1950 single legacy contract IDs from imported payment lines and
+        filtered them against the 5301 supplier-contract manifest IDs, yielding
+        the 1556 strict unresolved IDs.
+    - command: read-only LegacyDb source-table screen against T_GYSHT_INFO and T_CGHT_INFO
+      result: PASS
+      summary: >
+        Of the 1556 strict unresolved IDs, only 1 directly matches
+        T_GYSHT_INFO.Id and 0 match T_CGHT_INFO.Id. 1543 IDs appear as
+        C_ZFSQGL_CB.GLYWID payment-line relationship values, so the residual
+        group is not contract replay eligible.
+
+rollback:
+  - git restore docs/ops/business_continuity/residual_legacy_contract_source_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-RESIDUAL-LEGACY-CONTRACT-SOURCE-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-18-SUPPLIER-CONTRACT-RESOLUTION-SCREEN
