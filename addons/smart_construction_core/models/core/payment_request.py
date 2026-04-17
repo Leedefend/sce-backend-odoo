@@ -299,6 +299,16 @@ class PaymentRequest(models.Model):
                 hints=["请先完成结算单审批后再提交付款申请"],
             )
 
+    def _check_contract_submit_gate(self):
+        """Allow no-contract submit only when no settlement is selected."""
+        for rec in self:
+            if rec.contract_id:
+                if rec.contract_id.state == "cancel":
+                    raise UserError("关联合同已取消，不能提交付款/收款申请。")
+                continue
+            if rec.settlement_id:
+                raise UserError("已选择结算单的付款/收款申请必须选择关联合同后再提交。")
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
@@ -677,10 +687,7 @@ class PaymentRequest(models.Model):
                     "提交付款/收款申请",
                     reasons=["attachments are required on submit"],
                 )
-            if not rec.contract_id:
-                raise UserError("请先选择关联合同后再提交付款/收款申请。")
-            if rec.contract_id.state == "cancel":
-                raise UserError("关联合同已取消，不能提交付款/收款申请。")
+            rec._check_contract_submit_gate()
             rec._check_project_lifecycle(rec.project_id, "submit")
             rec._check_settlement_state(rec.settlement_id)
         self._enforce_funding_gate({"state": "submit"})
