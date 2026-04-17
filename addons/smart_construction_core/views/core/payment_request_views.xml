@@ -17,6 +17,8 @@
                     <field name="partner_id"/>
                     <field name="amount"/>
                     <field name="state"/>
+                    <field name="legacy_approval_state"/>
+                    <field name="legacy_approval_approved_count"/>
                     <field name="date_request"/>
                 </tree>
             </field>
@@ -323,6 +325,13 @@
                         </group>
                         <group>
                             <field name="note"/>
+                        </group>
+                        <group string="历史审批事实">
+                            <field name="legacy_approval_state" readonly="1"/>
+                            <field name="legacy_approval_audit_count" readonly="1"/>
+                            <field name="legacy_approval_approved_count" readonly="1"/>
+                            <field name="legacy_approval_last_at" readonly="1"/>
+                            <field name="legacy_approval_summary" readonly="1"/>
                         </group>
                         <group string="付款申请明细">
                             <field name="outflow_line_ids" nolabel="1">

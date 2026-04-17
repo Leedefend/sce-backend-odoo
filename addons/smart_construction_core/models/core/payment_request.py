@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
@@ -187,6 +189,38 @@ class PaymentRequest(models.Model):
         string="状态",
         default="draft",
         tracking=True,
+    )
+    legacy_approval_state = fields.Selection(
+        [
+            ("none", "无历史审批事实"),
+            ("historical_pending_or_unknown", "历史待处理/未知"),
+            ("historical_approved", "历史已审批"),
+            ("historical_rejected_or_back", "历史退回/拒绝"),
+            ("historical_mixed", "历史审批混合"),
+        ],
+        string="历史审批状态",
+        compute="_compute_legacy_approval_facts",
+        store=False,
+    )
+    legacy_approval_audit_count = fields.Integer(
+        string="历史审批记录数",
+        compute="_compute_legacy_approval_facts",
+        store=False,
+    )
+    legacy_approval_approved_count = fields.Integer(
+        string="历史同意记录数",
+        compute="_compute_legacy_approval_facts",
+        store=False,
+    )
+    legacy_approval_last_at = fields.Datetime(
+        string="最近历史审批时间",
+        compute="_compute_legacy_approval_facts",
+        store=False,
+    )
+    legacy_approval_summary = fields.Char(
+        string="历史审批摘要",
+        compute="_compute_legacy_approval_facts",
+        store=False,
     )
 
     def _get_active_funding_baseline(self, project):
@@ -422,6 +456,83 @@ class PaymentRequest(models.Model):
             req.unpaid_amount = unpaid
             rounding = req.currency_id.rounding if req.currency_id else 0.01
             req.is_fully_paid = float_compare(unpaid, 0.0, precision_rounding=rounding) <= 0
+
+    def _compute_legacy_approval_facts(self):
+        for rec in self:
+            rec.legacy_approval_state = "none"
+            rec.legacy_approval_audit_count = 0
+            rec.legacy_approval_approved_count = 0
+            rec.legacy_approval_last_at = False
+            rec.legacy_approval_summary = ""
+
+        records = self.filtered(lambda item: isinstance(item.id, int))
+        if not records:
+            return
+
+        ModelData = self.env["ir.model.data"].sudo()
+        workflow_model = "sc.legacy.workflow.audit"
+        if workflow_model not in self.env:
+            return
+        Audit = self.env[workflow_model].sudo()
+
+        external_by_res_id = defaultdict(list)
+        res_id_by_external = {}
+        for item in ModelData.search(
+            [
+                ("module", "=", "migration_assets"),
+                ("model", "=", self._name),
+                ("res_id", "in", records.ids),
+            ]
+        ):
+            external_by_res_id[int(item.res_id)].append(item.name)
+            res_id_by_external[item.name] = int(item.res_id)
+
+        if not res_id_by_external:
+            return
+
+        facts_by_res_id = defaultdict(list)
+        audits = Audit.search(
+            [
+                ("target_model", "=", self._name),
+                ("target_external_id", "in", list(res_id_by_external)),
+            ],
+            order="approved_at asc, id asc",
+        )
+        for audit in audits:
+            res_id = res_id_by_external.get(audit.target_external_id)
+            if res_id:
+                facts_by_res_id[res_id].append(audit)
+
+        for rec in records:
+            facts = facts_by_res_id.get(int(rec.id), [])
+            if not facts:
+                continue
+            approved = [item for item in facts if item.action_classification == "approve"]
+            rejected = [
+                item
+                for item in facts
+                if item.action_classification in ("reject_or_back", "reject_or_cancel")
+            ]
+            if approved and rejected:
+                state = "historical_mixed"
+            elif approved:
+                state = "historical_approved"
+            elif rejected:
+                state = "historical_rejected_or_back"
+            else:
+                state = "historical_pending_or_unknown"
+            last_at = max((item.approved_at for item in facts if item.approved_at), default=False)
+            rec.legacy_approval_state = state
+            rec.legacy_approval_audit_count = len(facts)
+            rec.legacy_approval_approved_count = len(approved)
+            rec.legacy_approval_last_at = last_at
+            rec.legacy_approval_summary = _(
+                "历史审批记录：%(total)s；同意：%(approved)s；退回/拒绝：%(rejected)s"
+            ) % {
+                "total": len(facts),
+                "approved": len(approved),
+                "rejected": len(rejected),
+            }
 
     def _check_can_done(self):
         for rec in self:
