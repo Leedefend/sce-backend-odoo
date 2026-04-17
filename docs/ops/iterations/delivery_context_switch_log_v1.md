@@ -22116,3 +22116,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; read-only Odoo shell legacy evidence scan PASS; actual outflow source has no direct supplier-contract field for loadable rows; outflow/request-line evidence identifies deterministic contract-basis candidates and non-contract/ambiguous groups`
 - next_step: `screen supplier-contract resolution for unresolved legacy_supplier_contract_id before any high-risk contract_id write replay`
+- date: 2026-04-18
+- task: ITER-2026-04-18-SUPPLIER-CONTRACT-RESOLUTION-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: supplier contract resolution facts
+- reason: classify whether single unresolved legacy_supplier_contract_id values can resolve to target construction.contract records
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell resolution scan PASS; 1731 refs / 1556 unique legacy IDs have 0 target contract matches and 0 ir.model.data matches; host manifest comparison shows 0 supplier_contract_external_id_manifest matches`
+- next_step: `screen residual legacy contract source tables for those 1556 IDs before any write; keep the 1731 rows out of contract_id replay eligibility`
