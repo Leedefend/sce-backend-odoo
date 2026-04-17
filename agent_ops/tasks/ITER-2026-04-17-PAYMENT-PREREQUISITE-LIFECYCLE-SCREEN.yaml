@@ -1,0 +1,73 @@
+task_id: ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN
+title: Payment completion prerequisite lifecycle screen
+type: business-flow-screen
+status: active
+priority: high
+
+goal: >
+  Classify the business-fact prerequisite that lets an approved payment request
+  register ledger facts and continue to done in daily operation.
+
+user_visible_outcome:
+  - "Determine the correct new-system daily path for payment completion after approval."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/payment_prerequisite_lifecycle_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 2cd2478
+  prior_task: ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN
+
+architecture:
+  layer_target: Business Flow Verification
+  module: smart_construction_core payment lifecycle prerequisites
+  module_owner: construction industry business flow
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Ledger registration and completion depend on real lifecycle facts, not
+    frontend presentation or scene orchestration.
+  reason: >
+    Approved payment requests are blocked before done because ledger
+    registration requires a linked upstream business fact. The source and
+    daily operating path must be classified before implementation.
+
+change_rules:
+  - screen only
+  - use read-only metadata and rollback-only runtime records
+  - do not persist test business records
+  - do not modify addons, frontend, ACL, finance, or lifecycle code
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_persists_business_data
+  - acceptance_failed
+
+deliverables:
+  - payment completion prerequisite classification
+  - next implementation recommendation
+
+rollback:
+  - git restore docs/ops/business_continuity/payment_prerequisite_lifecycle_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-PAYMENT-DONE-LEDGER-LIFECYCLE-SCREEN

@@ -22014,3 +22014,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; rollback-only direct done screen PASS with expected ValidationError; rollback-only manual ledger screen PASS with expected settlement prerequisite UserError`
 - next_step: `Open dedicated settlement prerequisite screen to classify the correct daily-business path for settlement-linked payment requests.`
 - stop_condition: `none`
+### 2026-04-17T23:24:00+08:00
+- blocker_key: `iter_payment_prerequisite_lifecycle_screen_pass_with_next_procurement_source_blocker`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN`
+- completed_step: `Read-only metadata and rollback-only flow screen confirmed payment completion depends on sc.settlement.order; settlement orders exist as a model and UI action but there are zero records, settlement approval expects purchase order source facts, and downstream payment submit is blocked when settlement amount remaining is zero`
+- verification: `validate_task PASS; metadata screen PASS; settlement order schema screen PASS; rollback-only linked payment flow classified draft-settlement and zero-balance blockers; source field screen PASS`
+- next_step: `Open dedicated procurement-to-settlement prerequisite screen to decide whether to replay purchase source facts, materialize settlement orders from existing business facts, or expose an existing source action.`
+- stop_condition: `none`
