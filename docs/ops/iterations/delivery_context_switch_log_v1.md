@@ -22054,3 +22054,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; code locator rg PASS; targeted code read PASS; db_writes=0`
 - next_step: `Open a dedicated high-risk backend business-logic implementation batch to scope settlement-transition validation and keep new payment/ledger guards strict.`
 - stop_condition: `implementation_required_in_payment_or_settlement_validation_semantics`
+### 2026-04-18T04:40:00+08:00
+- blocker_key: `iter_settlement_optional_business_logic_decision_high_risk_stop`
+- status: `PASS_WITH_RISK`
+- active_task: `ITER-2026-04-18-SETTLEMENT-OPTIONAL-BUSINESS-LOGIC-DECISION`
+- completed_step: `Owner decision frozen: settlement order is an optional user-selected business carrier, not a mandatory prerequisite for every payment request; when settlement is selected, settlement state/consistency/balance checks remain strict`
+- verification: `validate_task PASS; diff_check PASS; implementation not started because payment/settlement business semantics are high-risk forbidden paths under current repo rules`
+- next_step: `Open dedicated high-risk backend implementation batch for optional settlement semantics with exact payment/settlement file allowlist and verification commands.`
+- stop_condition: `implementation_required_in_payment_or_settlement_code`
