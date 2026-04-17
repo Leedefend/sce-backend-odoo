@@ -1,0 +1,79 @@
+task_id: ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC
+title: Dev mail sender config sync for payment submit continuation
+type: runtime-config-sync
+status: active
+priority: high
+
+goal: >
+  Provide deterministic non-production sender facts in sc_demo so payment submit
+  notification processing no longer fails because every sender email is empty.
+
+user_visible_outcome:
+  - "Payment submit can continue past mail sender validation in the dev/demo runtime."
+
+scope:
+  allowed_paths:
+    - scripts/ops/dev_mail_sender_config_sync.py
+    - docs/ops/business_continuity/dev_mail_sender_config_sync_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 1323f0d
+  prior_task: ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN
+
+architecture:
+  layer_target: Runtime Configuration
+  module: Odoo mail runtime
+  module_owner: deployment/runtime configuration surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: runtime_config
+  backend_sub_layer_reason: >
+    The blocker is a missing dev/demo sender configuration fact. It is not a
+    business fact, scene orchestration, or frontend rendering gap.
+  reason: >
+    Payment submit reaches mail notification logic, but sc_demo has no default
+    sender, company email, or finance user email.
+
+change_rules:
+  - provide check/write modes
+  - set non-production sender facts only
+  - do not configure real production SMTP
+  - do not modify addons or payment workflow semantics
+  - write rollback evidence before mutation
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC.yaml
+    - python3 -m py_compile scripts/ops/dev_mail_sender_config_sync.py
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/ops/dev_mail_sender_config_sync.py
+    - DB_NAME=sc_demo make odoo.shell.exec with os.environ["SYNC_MODE"]="write" wrapper
+    - DB_NAME=sc_demo make odoo.shell.exec < scripts/ops/dev_mail_sender_config_sync.py
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - production_smtp_configured
+  - rollback_evidence_missing
+  - acceptance_failed
+
+deliverables:
+  - dev mail sender config sync script
+  - runtime config evidence
+  - payment submit verification result
+
+rollback:
+  - use artifacts/ops/dev_mail_sender_config_sync_rollback_v1.json to restore prior mail.default.from, company email, and finance user email values
+  - git restore scripts/ops/dev_mail_sender_config_sync.py docs/ops/business_continuity/dev_mail_sender_config_sync_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-DEV-MAIL-SENDER-CONFIG-SYNC.yaml
+
+depends_on:
+  - ITER-2026-04-17-MAIL-RUNTIME-SUBMIT-BLOCKER-SCREEN
